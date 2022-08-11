@@ -306,7 +306,17 @@ class Vector(DessiaObject):
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector):
+    def is_colinear_to(self, other_vector: 'Vector'):
+        """
+        Checks if two vectors are colinear.
+        The two vectors should be of same dimension.
+
+        :param other_vector: A Vector-like object
+        :type other_vector: class:`volmdlr.Vector2D` or class:`volmdlr.Vector3D` or
+            class:`volmdlr.Point2D` or class:`volmdlr.Point3D`
+        :return: `True` if the two vectors are colinear, `False` otherwise
+        :rtype: bool
+        """
         try:
             return math.isclose(abs(self.dot(other_vector)) / self.norm() / other_vector.norm(),
                                 1,
@@ -316,7 +326,17 @@ class Vector(DessiaObject):
             return False
 
     @classmethod
-    def mean_point(cls, points):
+    def mean_point(cls, points: List['Vector']):
+        """
+        Find the mean point from a list of points. All the objects of this list
+        should be of same dimension.
+
+        :param points: A list of Vector-like objects
+        :type points: list
+        :return: The mean point or vector
+        :rtype: class:`volmdlr.Vector2D` or class:`volmdlr.Vector3D` or
+            class:`volmdlr.Point2D` or class:`volmdlr.Point3D`
+        """
         n = 1
         point = points[0].copy()
         for point2 in points[1:]:
@@ -326,12 +346,31 @@ class Vector(DessiaObject):
         return point
 
     @classmethod
-    def remove_duplicate(cls, points):
+    def remove_duplicate(cls, points: List['Vector']):
+        """
+        An approximative method to remove duplicated points from a list.
+        All the objects of this list should be of same dimension.
+
+        :param points: A list of Vector-like objects with potential duplicates
+        :type points: list
+        :return: The new list of Vector-like objects without duplicates&
+        :rtype: list
+        """
         dict_ = {p.approx_hash(): p for p in points}
         return list(dict_.values())
 
 
 class Vector2D(Vector):
+    """
+    Class representing a 2 dimensional vector.
+
+    :param x: The vector's abscissa
+    :type x: float
+    :parm y: The vector's ordinate
+    :type y: float
+    :parma name: The vector's name
+    :type name: str
+    """
     def __init__(self, x: float, y: float, name=''):
         self.x = x
         self.y = y
@@ -390,33 +429,72 @@ class Vector2D(Vector):
     def __eq__(self, other_vector):
         return self.is_close(other_vector)
 
-    def is_close(self, other_vector, tol=1e-6):
+    def is_close(self, other_vector: 'Vector2D', tol: float = 1e-6):
+        """
+        Checks if two vectors are close to each other considering the
+        euclidean distance. The tolerance can be modified. The two vectors
+        should be of same dimension.
+
+        :param other_vector: A Vector2D-like object
+        :type other_vector: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        :param tol: The tolerance under which the euclidean distance is
+            considered equal to 0
+        :type tol: float
+        :return: `True` if the two Vector2D-like objects are close enought
+            to each other, `False` otherwise
+        :rtype: bool
+        """
         if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
             return False
-        # return math.isclose(self.x, other_vector.x, abs_tol=tol) \
-        # and math.isclose(self.y, other_vector.y, abs_tol=tol)
         return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
 
     def approx_hash(self):
+        """
+        Computes an approximative hash value based on the coordiantes.
+
+        :return: An approximative hash value
+        :rtype: int
+        """
         return round(1e6 * (self.x + self.y))
 
     def to_dict(self, *args, **kwargs):
+        """
+        Transforms a Vector2D object into a dictionary.
+
+        :return: A dictionary containing all the Vector2D's information
+        :rtype: dict
+        """
         return {'object_class': 'volmdlr.Vector2D',
                 'x': self.x, 'y': self.y,
                 'name': self.name}
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of a 2 dimensional vector.
+
+        :param deep: *not used*
+        :param memo: *not used*
+        :return: A copy of the Vector2D-like object
+        :rtype: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        """
         return self.__class__(self.x, self.y)
 
     def norm(self):
         """
-        :returns: norm of vector
+        Computes the euclidiean norm of a 2 dimensional vector.
+
+        :returns: Norm of the Vector2D-like object
+        :rtype: float
         """
         return CVector2Dnorm(self.x, self.y)
 
     def normalize(self):
         """
-        normalize the vector modifying its coordinates in place
+        In place operation, normalizing the coordinates of the 2 dimensional
+        vector.
+
+        :returns: None
+        :rtype: None
         """
         n = self.norm()
         if math.isclose(n, 0, abs_tol=1e-9):
@@ -425,47 +503,109 @@ class Vector2D(Vector):
         self.x /= n
         self.y /= n
 
-    def dot(self, other_vector):
+    def dot(self, other_vector: 'Vector2D'):
+        """
+        Computes the dot product (scalar product) of two 2 dimensional vectors.
+
+        :param other_vector: A Vector2D-like object
+        :type other_vector: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        :return: A scalar, result of the dot product
+        :rtype: float
+        """
         return CVector2DDot(self.x,
                             self.y,
                             other_vector.x,
                             other_vector.y)
 
-    def cross(self, other_vector):
+    def cross(self, other_vector: 'Vector2D'):
+        """
+        Computes the cross product of two 2 dimensional vectors.
+
+        :param other_vector: A Vector2D-like object
+        :type other_vector: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        :return: A scalar, result of the cross product
+        :rtype: float
+        """
         return self.x * other_vector.y - self.y * other_vector.x
 
-    def point_distance(self, other_vector):
+    def point_distance(self, other_vector: 'Vector2D'):
+        """
+        Computes the euclidiean distance between two Vector2D objects.
+
+        :param other_vector: A Vector2D object
+        :type other_vector: class:`volmdlr.Vector2D`
+        :return: The euclidiean distance
+        :rtype: float
+        """
         return (self - other_vector).norm()
 
     def rotation_parameters(self, center: 'Point2D', angle: float):
-        """Calculates the parameters to be used in rotation methods"""
+        """
+        Calculates the parameters to be used in rotation methods
+
+        :param center: The center of rotation
+        :type center: class:`volmdlr.Point2D`
+        :param angle: The angle of the rotation in radian
+        :type angle: float
+        :returns: The abscissa and ordinate of the rotated vector
+        :rtype: tuple
+        """
         u = self - center
         v2x = math.cos(angle) * u[0] - math.sin(angle) * u[1] + center[0]
         v2y = math.sin(angle) * u[0] + math.cos(angle) * u[1] + center[1]
         return v2x, v2y
 
     def rotation(self, center: 'Point2D', angle: float):
-        """Rotates the vector and returns a new rotated vector"""
+        """
+        Rotates the 2 dimensional vector and returns a new rotated vector
+
+        :param center: The center of rotation
+        :type center: class:`volmdlr.Point2D`
+        :param angle: The angle of the rotation in radian
+        :type angle: float
+        :returns: A rotated Vector2D-like object
+        :rtype: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        """
         v2x, v2y = self.rotation_parameters(center, angle)
         return self.__class__(v2x, v2y)
 
     def rotation_inplace(self, center: 'Point2D', angle: float):
-        """Rotates the vector and changes its values inplace"""
+        """
+        Rotates the 2 dimensional vector and changes its values inplace
+
+        :param center: The center of rotation
+        :type center: class:`volmdlr.Point2D`
+        :param angle: The angle of the rotation in radian
+        :type angle: float
+        :returns: None
+        :rtype: None
+        """
         v2x, v2y = self.rotation_parameters(center, angle)
         self.x = v2x
         self.y = v2y
 
     def translation(self, offset: 'Vector2D'):
         """
-        Translates the vector and returns a new translated vector
-        :param offset: an other Vector2D
+        Translates the 2 dimensional vector and returns a new translated vector
+
+        :param offset: The offset vector of the translation
+        :type offset: class:`volmdlr.Vector2D`
+        :returns: A translated Vector2D-like object
+        :rtype: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
         """
         v2x = self.x + offset[0]
         v2y = self.y + offset[1]
         return self.__class__(v2x, v2y)
 
     def translation_inplace(self, offset: 'Vector2D'):
-        """Translates the vector and changes its values inplace"""
+        """
+        Translates the vector and changes its values inplace
+
+        :param offset: The offset vector of the translation
+        :type offset: class:`volmdlr.Vector2D`
+        :returns: None
+        :rtype: None
+        """
         v2x = self.x + offset[0]
         v2y = self.y + offset[1]
         self.x = v2x
@@ -473,8 +613,19 @@ class Vector2D(Vector):
 
     def frame_mapping(self, frame: 'Frame2D', side: str):
         """
-        Changes vector frame_mapping and return a new vector
-        side = 'old' or 'new'
+        # TODO: Needs correction. Add an example ?
+        Transforms a 2 dimensional vector from the current reference frame to a
+        new one. Choose side equals to 'old' if the current reference frame is
+        the old one ; choose side equals to 'new' if the input reference frame
+        is the old one. This way, choosing 'old' will return the frame mapped
+        vector of the input reference frame.
+
+        :param frame: The input reference frame
+        :type frame: class:`volmdlr.Frame2D`
+        :param side: Choose between 'old' and 'new'
+        :type side: str
+        :returns: A frame mapped Vector2D-like object
+        :rtype: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
         """
         if side == 'old':
             new_vector = frame.old_coordinates(self)
@@ -484,8 +635,14 @@ class Vector2D(Vector):
 
     def frame_mapping_inplace(self, frame: 'Frame2D', side: str):
         """
-        Changes vector frame_mapping in place
-        side = 'old' or 'new'
+        # TODO: To be completed
+
+        :param frame: The input reference frame
+        :type frame: class:`volmdlr.Frame2D`
+        :param side: Choose between 'old' and 'new'
+        :type side: str
+        :returns: None
+        :rtype: None
         """
         if side == 'old':
             new_vector = frame.old_coordinates(self)
@@ -494,11 +651,26 @@ class Vector2D(Vector):
         self.x = new_vector.x
         self.y = new_vector.y
 
-    def to_3d(self, plane_origin, vx, vy):
+    def to_3d(self, plane_origin: 'Vector3D', vx: 'Vector3D', vy: 'Vector3D'):
+        """
+        Returns the 3 dimensional vector corresponding to the 2 dimensional
+        vector placed on the 3 dimensional plane (XY) of the 3 dimensional
+        frame (centered on `plane_origin`, having for basis (`vx`, `vy`, vz),
+        vz being the cross product of `vx` and `vy`).
+
+        :param plane_origin: The origin of the plane, on which lies the
+            Vector2D
+        :type plane_origin: class:`volmdlr.Vector3D`
+        :param vx: The first direction of the plane
+        :type vx: class:`volmdlr.Vector3D`
+        :param vy: The second direction of the plane
+        :type vy: class:`volmdlr.Vector3D`
+        :return: The Vector3D from the Vector2D set in the 3 dimensional space
+        :rtype: class:`volmdlr.Vector3D`
+        """
         return Vector3D(plane_origin.x + vx.x * self.x + vy.x * self.y,
                         plane_origin.y + vx.y * self.x + vy.y * self.y,
-                        plane_origin.z + vx.z * self.x + vy.z * self.y,
-                        )
+                        plane_origin.z + vx.z * self.x + vy.z * self.y)
 
     def to_point(self):
         return Point2D(self.x, self.y)
