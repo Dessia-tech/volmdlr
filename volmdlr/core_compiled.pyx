@@ -12,6 +12,7 @@ import math
 import warnings
 import random
 
+import matplotlib.axes
 import numpy as npy
 from mpl_toolkits.mplot3d import proj3d
 import matplotlib.pyplot as plt
@@ -673,27 +674,94 @@ class Vector2D(Vector):
                         plane_origin.z + vx.z * self.x + vy.z * self.y)
 
     def to_point(self):
+        """
+        Transforms a Vector2D into a Point2D and returns it.
+
+        :return: A Point2D
+        :rtype: class:`volmdlr.Point2D`
+        """
         return Point2D(self.x, self.y)
 
     def normal_vector(self):
-        n = Vector2D(-self.y, self.x)
-        return n
+        """
+        Returns the normal vector located pi/2 (counterclockwise) to the
+        2 dimensional vector.
+
+        :return: A normal Vector2D
+        :rtype: class:`volmdlr.Vector2D`
+        """
+        return Vector2D(-self.y, self.x)
 
     def unit_normal_vector(self):
+        """
+        Returns the unit normal vector located pi/2 (counterclockwise) to the
+        2 dimensional vector.
+
+        :return: A unit normal Vector2D
+        :rtype: class:`volmdlr.Vector2D`
+        """
         n = self.normal_vector()
         n.normalize()
         return n
 
     def deterministic_unit_normal_vector(self):
+        """
+        # TODO: to be deleted ?
+        # TODO: Or unit_normal_vector should be renamed deterministic_unit_normal_vector ?
+        """
         return self.unit_normal_vector()
 
     @classmethod
-    def random(cls, xmin, xmax, ymin, ymax):
+    def random(cls, xmin: float, xmax: float, ymin: float, ymax: float):
+        """
+        Retunrs a random 2 dimensional point.
+
+        :param xmin: The minimal abscissa
+        :type xmin: float
+        :param xmax: The maximal abscissa
+        :type xmax: float
+        :param ymin: The minimal ordinate
+        :type ymin: float
+        :param ymax: The maximal ordinate
+        :type ymax: float
+        :return: A random Vector2D
+        :rtype: class:`volmdlr.Vector2D`
+        """
         return cls(random.uniform(xmin, xmax),
                    random.uniform(ymin, ymax))
 
-    def plot(self, amplitude=0.5, width=None, head_width=None, origin=None,
-             ax=None, color='k', line=False, label=None, normalize=False):
+    def plot(self, amplitude: float = 0.5, width: float = None,
+             head_width: float = None, origin: 'Vector2D' = None,
+             ax: 'matplotlib.axes.Axes' = None,
+             color: str = 'k', line: bool = False, label: str = None,
+             normalize: bool = False):
+        """
+        Plots the 2 dimensional vector. If the vector has a norm greater than
+        1e-9, it will be plotted with an arrow, else it will be plotted with
+        a point.
+
+        :param amplitude: A general parameter to quickly change the aspect of
+            the arrow
+        :type amplitude: float, optional
+        :param width: The width of the tail of the arrow
+        :type width: float, optional
+        :param head_width: The width of the head of the arrow
+        :type head_width: float, optional
+        :param origin: The starting point of the tail of the arrow
+        :type origin: class:`volmdlr.Vector2D`, optional
+        :param ax: The Axes on which the Vector2D will be drawn
+        :type ax: class:`matplotlib.axes.Axes`, optional
+        :param color: The color of the arrow
+        :type color: str, optional
+        :param line: #TODO: delete this attribute ?
+        :type line: bool, optional
+        :param label: The text you want to display
+        :type label: str, optional
+        :param normalize: `True` if the Vector2D should be normalized,
+        :type normalize: bool, optional
+        :return: A matplotlib Axes object on which the Vector2D have been plotted
+        :rtype: class:`matplotlib.axes.Axes`
+        """
         if origin is None:
             origin = Vector2D(0., 0.)
 
@@ -733,7 +801,7 @@ class Vector2D(Vector):
         if line:
             style = '-' + color
             linestyle = '-.'
-            origin = Point2D(origin)
+            origin = Point2D(*origin)
             p1, p2 = origin, origin + self
             u = p2 - p1
             p3 = p1 - 3 * u
