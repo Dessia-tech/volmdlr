@@ -994,7 +994,7 @@ class Cylinder(RevolvedProfile):
         return Cylinder(new_position, new_axis, self.radius, self.length,
                         color=self.color, alpha=self.alpha, name=self.name)
 
-    def min_distance_to_other_cylinder(self, other_cylinder: volmdlr.primitives3d.Cylinder):
+    def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder'):
         """
         Compute the minimal distance between two volmdlr cylinders
 
@@ -1002,8 +1002,12 @@ class Cylinder(RevolvedProfile):
         :return: minimal distance between two 3D cylinders
         """
         # Local frames of cylinders
-        frame0 = volmdlr.Frame3D.from_point_and_vector(self.position, self.axis)
-        frame1 = volmdlr.Frame3D.from_point_and_vector(other_cylinder.position, other_cylinder.axis)
+        frame0 = volmdlr.Frame3D.from_point_and_vector(point=self.position,
+                                                       vector=self.axis,
+                                                       main_axis=volmdlr.Z3D)
+        frame1 = volmdlr.Frame3D.from_point_and_vector(point=other_cylinder.position,
+                                                       vector=other_cylinder.axis,
+                                                       main_axis=volmdlr.Z3D)
 
         # Objective function
         def dist_points(x):
@@ -1039,7 +1043,7 @@ class Cylinder(RevolvedProfile):
             return x[5]
 
         constraints = [
-            NonlinearConstraint(fun=constraint_radius_0(), lb=0, ub=self.radius ** 2),
+            NonlinearConstraint(fun=constraint_radius_0, lb=0, ub=self.radius ** 2),
             NonlinearConstraint(fun=constraint_height_0, lb=-self.length / 2, ub=self.length / 2),
             NonlinearConstraint(fun=constraint_radius_1, lb=0, ub=other_cylinder.radius ** 2),
             NonlinearConstraint(fun=constraint_height_1, lb=-other_cylinder.length / 2, ub=other_cylinder.length / 2)
@@ -1047,7 +1051,7 @@ class Cylinder(RevolvedProfile):
 
         return minimize(fun=dist_points, x0=x0, constraints=constraints).fun
 
-    def is_intersecting_other_cylinder(self, other_cylinder: volmdlr.primitives3d.Cylinder):
+    def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder'):
         """
         :param other_cylinder: volmdlr Cylinder
         :return: boolean, True if cylinders are intersecting, False otherwise
