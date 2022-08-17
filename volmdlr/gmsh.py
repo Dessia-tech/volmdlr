@@ -605,15 +605,17 @@ class Gmsh(DessiaObject):
         elements = self.elements[0]
 
         tetrahedron_elements = elements['elements_type_4']
-        tetrahedrons_mesh = []
+        element_groups = []
         for tetrahedrons in tetrahedron_elements:
+            tetrahedrons_mesh = []
             for tetrahedron in tetrahedrons:
                 tetrahedrons_mesh.append(volmdlr.mesh.TetrahedralElement([points[tetrahedron[0]],
                                                                           points[tetrahedron[1]],
                                                                           points[tetrahedron[2]],
                                                                           points[tetrahedron[3]]]))
 
-        element_groups = [volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name='')]
+            element_groups.append(volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name=''))
+        # element_groups = [volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name='')]
         mesh = volmdlr.mesh.Mesh(element_groups)
         mesh.nodes = points
         mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
@@ -630,8 +632,9 @@ class Gmsh(DessiaObject):
         elements = self.elements[0]
 
         triangles_elements = elements['elements_type_2']
-        triangles_mesh, element_groups = [], []
+        element_groups = []
         for triangles in triangles_elements:
+            triangles_mesh = []
             for triangle in triangles:
                 if points[0].__class__.__name__[-2::] == '3D':
                     triangles_mesh.append(volmdlr.mesh.TriangularElement3D([points[triangle[0]],
@@ -641,8 +644,8 @@ class Gmsh(DessiaObject):
                     triangles_mesh.append(volmdlr.mesh.TriangularElement2D([points[triangle[0]],
                                                                             points[triangle[1]],
                                                                             points[triangle[2]]]))
-
-        element_groups = [volmdlr.mesh.ElementsGroup(triangles_mesh, name='')]
+            element_groups.append(volmdlr.mesh.ElementsGroup(triangles_mesh, name=''))
+        # element_groups = [volmdlr.mesh.ElementsGroup(triangles_mesh, name='')]
         mesh = volmdlr.mesh.Mesh(element_groups)
         mesh.nodes = points
         mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
