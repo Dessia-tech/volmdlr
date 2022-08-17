@@ -5,6 +5,8 @@ Generate random cylinders and create the casing for them
 
 from time import time
 from math import acos
+
+import volmdlr
 from scipy.optimize import minimize, NonlinearConstraint
 from volmdlr.primitives3d import Cylinder
 import volmdlr as vm
@@ -137,7 +139,7 @@ def min_distance_between_cylinders(cyl0: Cylinder, cyl1: Cylinder):
         return p0.point_distance(p1)
 
     # Arguments: local frames of cylinders
-    frame0 = new_frame(cyl0.position, cyl0.axis)
+    frame0 = vm.Frame3D.from_point_and_vector(cyl0.position, cyl0.axis)
     frame1 = new_frame(cyl1.position, cyl1.axis)
 
     args = (frame0, frame1)
