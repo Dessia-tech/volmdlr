@@ -37,11 +37,25 @@ cylinders[2].color = (0, 0, 1)
 volume_model = vm.core.VolumeModel(cylinders)
 volume_model.babylonjs()
 
-print("Collision detection methods")
+print("Collision detection methods\n")
 start = time()
 
-print("Intersecting red & green:", cylinders[0].is_intersecting_other_cylinder(cylinders[1]))
-print("Intersecting red & blue:", cylinders[0].is_intersecting_other_cylinder(cylinders[2]))
-print("Intersecting green & blue:", cylinders[1].is_intersecting_other_cylinder(cylinders[2]))
+print(
+    f"""\nRed & green:
+min distance is {cylinders[0].min_distance_to_other_cylinder(cylinders[1])}m, 
+collision: {cylinders[0].is_intersecting_other_cylinder(cylinders[1])}"""
+)
 
-print(f"\nIntersection computing duration: {time() - start}s")
+print(
+    f"""\nRed & blue:
+min distance is {cylinders[0].min_distance_to_other_cylinder(cylinders[2])}m, 
+collision: {cylinders[0].is_intersecting_other_cylinder(cylinders[2])}"""
+)
+
+print(
+    f"""\nGreen & blue:
+min distance is {cylinders[1].min_distance_to_other_cylinder(cylinders[2])}m, 
+collision: {cylinders[1].is_intersecting_other_cylinder(cylinders[2])}"""
+)
+
+print(f"\nCollision detection computing time: {time() - start}s")
