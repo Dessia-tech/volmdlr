@@ -3866,7 +3866,7 @@ class Face3D(volmdlr.core.Primitive3D):
     #     raise NotImplementedError(
     #         f'area method must be overloaded by {self.__class__.__name__}')
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, sens: str = 'T'):
         xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle()
         subsurfaces2d = [self.surface2d]
         line_x = None
@@ -3899,15 +3899,15 @@ class Face3D(volmdlr.core.Primitive3D):
             for i, subsurface2d in enumerate(subsurfaces2d):
                 face = self.__class__(self.surface3d, subsurface2d)
                 face_content, face_id = face.to_step_without_splitting(
-                    current_id)
+                    current_id, sens)
                 face_ids.append(face_id[0])
                 content += face_content
                 current_id = face_id[0] + 1
             return content, face_ids
         else:
-            return self.to_step_without_splitting(current_id)
+            return self.to_step_without_splitting(current_id, sens)
 
-    def to_step_without_splitting(self, current_id):
+    def to_step_without_splitting(self, current_id, sens: str = 'T'):
         content, surface3d_ids = self.surface3d.to_step(current_id)
         current_id = max(surface3d_ids) + 1
 
@@ -3915,8 +3915,8 @@ class Face3D(volmdlr.core.Primitive3D):
             current_id)
         # surface_id=surface3d_id)
         content += outer_contour_content
-        content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(
-            outer_contour_id + 1, self.name, outer_contour_id)
+        content += "#{} = FACE_BOUND('{}',#{},.{}.);\n".format(
+            outer_contour_id + 1, self.name, outer_contour_id, sens)
         contours_ids = [outer_contour_id + 1]
         current_id = outer_contour_id + 2
         for inner_contour3d in self.inner_contours3d:
@@ -3925,16 +3925,16 @@ class Face3D(volmdlr.core.Primitive3D):
             # surface_id=surface3d_id)
             content += inner_contour_content
             face_bound_id = inner_contour_id + 1
-            content += "#{} = FACE_BOUND('',#{},.T.);\n".format(
-                face_bound_id, inner_contour_id)
+            content += "#{} = FACE_BOUND('',#{},.{}.);\n".format(
+                face_bound_id, inner_contour_id, sens)
             contours_ids.append(face_bound_id)
             current_id = face_bound_id + 1
 
-        content += "#{} = ADVANCED_FACE('{}',({}),#{},.T.);\n".format(
+        content += "#{} = ADVANCED_FACE('{}',({}),#{},.{}.);\n".format(
             current_id,
             self.name,
             volmdlr.core.step_ids_to_str(contours_ids),
-            surface3d_ids[0])
+            surface3d_ids[0], sens)
         # TODO: create an ADVANCED_FACE for each surface3d_ids ?
         return content, [current_id]
 
@@ -6555,8 +6555,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def to_step(self, current_id):
         step_content = ''
         face_ids = []
-        for face in self.faces:
-            face_content, face_sub_ids = face.to_step(current_id)
+        for face in self.faces:           
+            p0 = face.outer_contour3d.average_center_point()
+            print('-')
+            p1 = p0 + 0.001*face.surface3d.frame.w
+            if self.point_belongs(p1):
+                sens = 'F'
+            else:
+                sens = 'T'
+
+            face_content, face_sub_ids = face.to_step(current_id, sens)
             step_content += face_content
             face_ids.extend(face_sub_ids)
             current_id = max(face_sub_ids) + 1
