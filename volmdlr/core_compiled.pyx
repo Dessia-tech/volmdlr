@@ -7,7 +7,7 @@ Cython functions
 
 """
 # from __future__ import annotations
-from typing import TypeVar, List, Tuple, Text, Any, Dict
+from typing import TypeVar, List, Tuple, Text, Any, Dict, Union
 import math
 import warnings
 import random
@@ -313,8 +313,8 @@ class Vector(DessiaObject):
         The two vectors should be of same dimension.
 
         :param other_vector: A Vector-like object
-        :type other_vector: class:`volmdlr.Vector2D` or class:`volmdlr.Vector3D` or
-            class:`volmdlr.Point2D` or class:`volmdlr.Point3D`
+        :type other_vector: :class:`volmdlr.Vector2D` or :class:`volmdlr.Vector3D` or
+            :class:`volmdlr.Point2D` or :class:`volmdlr.Point3D`
         :return: `True` if the two vectors are colinear, `False` otherwise
         :rtype: bool
         """
@@ -333,10 +333,9 @@ class Vector(DessiaObject):
         should be of same dimension.
 
         :param points: A list of Vector-like objects
-        :type points: list
+        :type points: List[:class:`volmdlr.Point2D`]
         :return: The mean point or vector
-        :rtype: class:`volmdlr.Vector2D` or class:`volmdlr.Vector3D` or
-            class:`volmdlr.Point2D` or class:`volmdlr.Point3D`
+        :rtype: :class:`volmdlr.Vector2D` | :class:`volmdlr.Vector3D` | :class:`volmdlr.Point2D` | :class:`volmdlr.Point3D`
         """
         n = 1
         point = points[0].copy()
@@ -367,9 +366,9 @@ class Vector2D(Vector):
 
     :param x: The vector's abscissa
     :type x: float
-    :parm y: The vector's ordinate
+    :param y: The vector's ordinate
     :type y: float
-    :parma name: The vector's name
+    :param name: The vector's name
     :type name: str
     """
     def __init__(self, x: float, y: float, name=''):
@@ -437,7 +436,7 @@ class Vector2D(Vector):
         should be of same dimension.
 
         :param other_vector: A Vector2D-like object
-        :type other_vector: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        :type other_vector: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
         :param tol: The tolerance under which the euclidean distance is
             considered equal to 0
         :type tol: float
@@ -476,7 +475,7 @@ class Vector2D(Vector):
         :param deep: *not used*
         :param memo: *not used*
         :return: A copy of the Vector2D-like object
-        :rtype: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        :rtype: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
         """
         return self.__class__(self.x, self.y)
 
@@ -509,7 +508,7 @@ class Vector2D(Vector):
         Computes the dot product (scalar product) of two 2 dimensional vectors.
 
         :param other_vector: A Vector2D-like object
-        :type other_vector: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        :type other_vector: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
         :return: A scalar, result of the dot product
         :rtype: float
         """
@@ -523,7 +522,7 @@ class Vector2D(Vector):
         Computes the cross product of two 2 dimensional vectors.
 
         :param other_vector: A Vector2D-like object
-        :type other_vector: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        :type other_vector: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
         :return: A scalar, result of the cross product
         :rtype: float
         """
@@ -534,7 +533,7 @@ class Vector2D(Vector):
         Computes the euclidiean distance between two Vector2D objects.
 
         :param other_vector: A Vector2D object
-        :type other_vector: class:`volmdlr.Vector2D`
+        :type other_vector: :class:`volmdlr.Vector2D`
         :return: The euclidiean distance
         :rtype: float
         """
@@ -545,7 +544,7 @@ class Vector2D(Vector):
         Calculates the parameters to be used in rotation methods
 
         :param center: The center of rotation
-        :type center: class:`volmdlr.Point2D`
+        :type center: :class:`volmdlr.Point2D`
         :param angle: The angle of the rotation in radian
         :type angle: float
         :returns: The abscissa and ordinate of the rotated vector
@@ -561,11 +560,11 @@ class Vector2D(Vector):
         Rotates the 2 dimensional vector and returns a new rotated vector
 
         :param center: The center of rotation
-        :type center: class:`volmdlr.Point2D`
+        :type center: :class:`volmdlr.Point2D`
         :param angle: The angle of the rotation in radian
         :type angle: float
         :returns: A rotated Vector2D-like object
-        :rtype: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        :rtype: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
         """
         v2x, v2y = self.rotation_parameters(center, angle)
         return self.__class__(v2x, v2y)
@@ -575,7 +574,7 @@ class Vector2D(Vector):
         Rotates the 2 dimensional vector and changes its values inplace
 
         :param center: The center of rotation
-        :type center: class:`volmdlr.Point2D`
+        :type center: :class:`volmdlr.Point2D`
         :param angle: The angle of the rotation in radian
         :type angle: float
         :returns: None
@@ -590,9 +589,9 @@ class Vector2D(Vector):
         Translates the 2 dimensional vector and returns a new translated vector
 
         :param offset: The offset vector of the translation
-        :type offset: class:`volmdlr.Vector2D`
+        :type offset: :class:`volmdlr.Vector2D`
         :returns: A translated Vector2D-like object
-        :rtype: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        :rtype: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
         """
         v2x = self.x + offset[0]
         v2y = self.y + offset[1]
@@ -603,7 +602,7 @@ class Vector2D(Vector):
         Translates the vector and changes its values inplace
 
         :param offset: The offset vector of the translation
-        :type offset: class:`volmdlr.Vector2D`
+        :type offset: :class:`volmdlr.Vector2D`
         :returns: None
         :rtype: None
         """
@@ -622,11 +621,11 @@ class Vector2D(Vector):
         vector of the input reference frame.
 
         :param frame: The input reference frame
-        :type frame: class:`volmdlr.Frame2D`
+        :type frame: :class:`volmdlr.Frame2D`
         :param side: Choose between 'old' and 'new'
         :type side: str
         :returns: A frame mapped Vector2D-like object
-        :rtype: class:`volmdlr.Vector2D` or class:`volmdlr.Point2D`
+        :rtype: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
         """
         if side == 'old':
             new_vector = frame.old_coordinates(self)
@@ -639,7 +638,7 @@ class Vector2D(Vector):
         # TODO: To be completed
 
         :param frame: The input reference frame
-        :type frame: class:`volmdlr.Frame2D`
+        :type frame: :class:`volmdlr.Frame2D`
         :param side: Choose between 'old' and 'new'
         :type side: str
         :returns: None
@@ -661,13 +660,13 @@ class Vector2D(Vector):
 
         :param plane_origin: The origin of the plane, on which lies the
             Vector2D
-        :type plane_origin: class:`volmdlr.Vector3D`
+        :type plane_origin: :class:`volmdlr.Vector3D`
         :param vx: The first direction of the plane
-        :type vx: class:`volmdlr.Vector3D`
+        :type vx: :class:`volmdlr.Vector3D`
         :param vy: The second direction of the plane
-        :type vy: class:`volmdlr.Vector3D`
+        :type vy: :class:`volmdlr.Vector3D`
         :return: The Vector3D from the Vector2D set in the 3 dimensional space
-        :rtype: class:`volmdlr.Vector3D`
+        :rtype: :class:`volmdlr.Vector3D`
         """
         return Vector3D(plane_origin.x + vx.x * self.x + vy.x * self.y,
                         plane_origin.y + vx.y * self.x + vy.y * self.y,
@@ -678,7 +677,7 @@ class Vector2D(Vector):
         Transforms a Vector2D into a Point2D and returns it.
 
         :return: A Point2D
-        :rtype: class:`volmdlr.Point2D`
+        :rtype: :class:`volmdlr.Point2D`
         """
         return Point2D(self.x, self.y)
 
@@ -688,7 +687,7 @@ class Vector2D(Vector):
         2 dimensional vector.
 
         :return: A normal Vector2D
-        :rtype: class:`volmdlr.Vector2D`
+        :rtype: :class:`volmdlr.Vector2D`
         """
         return Vector2D(-self.y, self.x)
 
@@ -698,7 +697,7 @@ class Vector2D(Vector):
         2 dimensional vector.
 
         :return: A unit normal Vector2D
-        :rtype: class:`volmdlr.Vector2D`
+        :rtype: :class:`volmdlr.Vector2D`
         """
         n = self.normal_vector()
         n.normalize()
@@ -725,7 +724,7 @@ class Vector2D(Vector):
         :param ymax: The maximal ordinate
         :type ymax: float
         :return: A random Vector2D
-        :rtype: class:`volmdlr.Vector2D`
+        :rtype: :class:`volmdlr.Vector2D`
         """
         return cls(random.uniform(xmin, xmax),
                    random.uniform(ymin, ymax))
@@ -748,9 +747,9 @@ class Vector2D(Vector):
         :param head_width: The width of the head of the arrow
         :type head_width: float, optional
         :param origin: The starting point of the tail of the arrow
-        :type origin: class:`volmdlr.Vector2D`, optional
+        :type origin: :class:`volmdlr.Vector2D`, optional
         :param ax: The Axes on which the Vector2D will be drawn
-        :type ax: class:`matplotlib.axes.Axes`, optional
+        :type ax: :class:`matplotlib.axes.Axes`, optional
         :param color: The color of the arrow
         :type color: str, optional
         :param line: #TODO: delete this attribute ?
@@ -760,7 +759,7 @@ class Vector2D(Vector):
         :param normalize: `True` if the Vector2D should be normalized,
         :type normalize: bool, optional
         :return: A matplotlib Axes object on which the Vector2D have been plotted
-        :rtype: class:`matplotlib.axes.Axes`
+        :rtype: :class:`matplotlib.axes.Axes`
         """
         if origin is None:
             origin = Vector2D(0., 0.)
