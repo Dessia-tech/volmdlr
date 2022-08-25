@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import plot_data.graph
 
+import dessia_common as dc
+
 import volmdlr
 import volmdlr.core
 import volmdlr.edges
@@ -187,13 +189,13 @@ def representation_relationship_representation_relationship_with_transformation_
         if isinstance(object_dict[arguments[2]], list):
             for shell3d in object_dict[arguments[2]]:
                 frame3d = object_dict[arguments[4]]
-                shell3d.frame_mapping(frame3d, 'old', copy=False)
+                shell3d.frame_mapping_inplace(frame3d, 'old')
                 # return shell3d
             return None
         else:
             shell3d = object_dict[arguments[2]]
             frame3d = object_dict[arguments[4]]
-            shell3d.frame_mapping(frame3d, 'old', copy=False)
+            shell3d.frame_mapping_inplace(frame3d, 'old')
             # return shell3d
             return None
     else:
@@ -247,7 +249,8 @@ class StepFunction:
         self.arg = arguments
 
 
-class Step:
+class Step(dc.DessiaObject):
+
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines
         self.functions, self.all_connections = self.read_lines()
@@ -264,6 +267,7 @@ class Step:
 
     @classmethod
     def from_stream(cls, stream: BinaryIO = None):
+        stream.seek(0)
         lines = []
         for line in stream:
             line = line.decode("ISO-8859-1")

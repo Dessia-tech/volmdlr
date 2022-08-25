@@ -40,14 +40,14 @@ box_red.color = (1, 0.1, 0.1)
 box_red.name = 'box_red'
 
 box_green = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.8, 0), vm.Vector3D(1, 0, 0),
-                         vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'new', copy=True)
+                         vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'new')
 
 box_green.color = (0.1, 1, 0.1)
 box_green.name = 'box_green'
 
 
 box_blue = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.2, 0), vm.Vector3D(1, 0, 0),
-                         vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'old', copy=True)
+                         vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'old')
 box_blue.color = (0.1, 0.1, 1)
 box_blue.name = 'box_blue'
 
@@ -81,6 +81,20 @@ for shell in new_box:
 #     face.color = 
 vm.core.VolumeModel(new_box).babylonjs()
 
+orange_box = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.1, 0.2),
+                                          vm.Vector3D(1.5, 0, 0),
+                                          vm.Vector3D(0, 2, 0),
+                                          vm.Vector3D(0, 0, 0.5)), 'old')
+orange_box.color = (255/255, 127/255, 80/255)
+orange_box.alpha = 0.6
+vm.core.VolumeModel([new_box[0], orange_box]).babylonjs()
+
+redbox_union_orangebox = new_box[0].union(orange_box)
+for shell in redbox_union_orangebox:
+    shell.color = (1, 0.1, 0.1)
+    shell.alpha = 0.6
+vm.core.VolumeModel(redbox_union_orangebox).babylonjs()
+
 box = primitives3d.Block(
     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0),
                vm.Vector3D(0, 0.3, 0), vm.Vector3D(0, 0, 0.3)),
@@ -102,8 +116,9 @@ for i in range(1):
     #     model = vm.core.VolumeModel([box, box_red])
     #     model.babylonjs(debug=True)
     #     raise
-    box_red = box_red.translation(vm.Vector3D(0.01, 0, 0), copy=True)
+    box_red = box_red.translation(vm.Vector3D(0.01, 0, 0))
 #
 #
 model = vm.core.VolumeModel([box, box_red])
+model._check_platform()
 model.babylonjs(debug=True)
