@@ -273,6 +273,18 @@ class Block(volmdlr.faces.ClosedShell3D):
             .rectangular_cut(-hlx, hlx, -hly, hly)
 
         return [xm_face, xp_face, ym_face, yp_face, zm_face, zp_face]
+    
+    def center_faces(self):
+        vertices = self.vertices()
+        c0_x = (vertices[0] + vertices[1] + vertices[4] + vertices[5])/4
+        c1_x = (vertices[2] + vertices[3] + vertices[6] + vertices[7])/4
+        
+        c0_y = (vertices[0] + vertices[3] + vertices[4] + vertices[7])/4
+        c1_y = (vertices[1] + vertices[2] + vertices[5] + vertices[6])/4
+        
+        c0_z = (vertices[0] + vertices[1] + vertices[2] + vertices[3])/4
+        c1_z = (vertices[4] + vertices[5] + vertices[6] + vertices[7])/4
+        return c0_x, c1_x, c0_y, c1_y, c0_z, c1_z
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
