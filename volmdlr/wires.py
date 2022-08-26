@@ -1582,11 +1582,13 @@ class Contour2D(Contour, Wire2D):
         return Ix, Iy, Ixy
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
-                  surface_style: plot_data.SurfaceStyle = None):
+                  surface_style: plot_data.SurfaceStyle = None,
+                  tooltip: str = None):
         plot_data_primitives = [item.plot_data() for item in self.primitives]
         return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
                                    edge_style=edge_style,
                                    surface_style=surface_style,
+                                   tooltip=tooltip,
                                    name=self.name)
 
     def is_inside(self, contour2):
