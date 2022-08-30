@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
-* 
+* New method in primitives3d.Block to calculate directly point in the middle of the faces
 
 
 ### Fixed
