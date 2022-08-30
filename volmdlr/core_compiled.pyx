@@ -2089,25 +2089,24 @@ class Frame3D(Basis3D):
             # The local frame is oriented like the global frame
             return cls(O3D, X3D, Y3D, Z3D)
 
-        elif vector == -main_axis:
+        if vector == -main_axis:
             return cls(O3D, -X3D, -Y3D, -Z3D)
 
-        else:
-            # The local frame is oriented differently from the global frame
-            # Rotation angle
-            dot = main_axis.dot(vector)
-            rot_angle = math.acos(dot / (vector.norm() * main_axis.norm()))
+        # The local frame is oriented differently from the global frame
+        # Rotation angle
+        dot = main_axis.dot(vector)
+        rot_angle = math.acos(dot / (vector.norm() * main_axis.norm()))
 
-            # Rotation axis
-            vector2 = vector - main_axis
-            rot_axis = main_axis.cross(vector2)
-            rot_axis.normalize()
+        # Rotation axis
+        vector2 = vector - main_axis
+        rot_axis = main_axis.cross(vector2)
+        rot_axis.normalize()
 
-            u = X3D.rotation(O3D, rot_axis, rot_angle)
-            v = Y3D.rotation(O3D, rot_axis, rot_angle)
-            w = Z3D.rotation(O3D, rot_axis, rot_angle)
+        u = X3D.rotation(O3D, rot_axis, rot_angle)
+        v = Y3D.rotation(O3D, rot_axis, rot_angle)
+        w = Z3D.rotation(O3D, rot_axis, rot_angle)
 
-            return cls(point, u, v, w)
+        return cls(point, u, v, w)
 
     def babylonjs(self, size=0.1, parent=None):
         s = 'var origin = new BABYLON.Vector3({},{},{});\n'.format(*self.origin)
