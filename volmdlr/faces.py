@@ -4544,8 +4544,7 @@ class PlaneFace3D(Face3D):
                     else:
                         if new_face_contour not in valid_new_faces_contours:
                             valid_new_faces_contours.append(new_face_contour)
-                        continue
-                    break
+                    continue
                 new_faces_contours = valid_new_faces_contours
             for contour in new_faces_contours:
                 list_faces.append(
