@@ -4486,7 +4486,8 @@ class PlaneFace3D(Face3D):
                             primitives1.extend(cutting_contour.primitives)
                         if cutting_contour not in primitives2:
                             primitives2.extend(cutting_contour.primitives)
-
+                if not inner_contour_spliting_points:
+                    continue
                 primitives1.extend(inner_contour.extract_with_points(inner_contour_spliting_points[0],
                                                                      inner_contour_spliting_points[1], True))
                 primitives2.extend(inner_contour.extract_with_points(inner_contour_spliting_points[0],
@@ -4515,12 +4516,14 @@ class PlaneFace3D(Face3D):
 
         return list_cutting_contours
 
-    def divide_face(self, list_cutting_contours, inside, intersection_method=True):
-        '''
-            :param list_cutting_contours: list of contours cutting the face
-            :param inside: when extracting a contour from another contour. It defines the extracted contour as being between the two points if True and outside these points if False
-            return a list new faces resulting from face division
-        '''
+    def divide_face(self, list_cutting_contours, inside):
+        """
+        :param list_cutting_contours: list of contours cutting the face
+        :param inside: when extracting a contour from another contour. It defines the extracted
+        contour as being between the two points if True and outside these points if False
+        return a list new faces resulting from face division
+        """
+
         list_faces = []
         list_open_cutting_contours = []
         list_closed_cutting_contours = []
@@ -4536,9 +4539,13 @@ class PlaneFace3D(Face3D):
                 valid_new_faces_contours = []
                 for new_face_contour in new_faces_contours:
                     for inner_contour in self.surface2d.inner_contours:
-                        if not new_face_contour.is_superposing(inner_contour) and \
-                                new_face_contour not in valid_new_faces_contours:
+                        if new_face_contour.is_superposing(inner_contour):
+                            break
+                    else:
+                        if new_face_contour not in valid_new_faces_contours:
                             valid_new_faces_contours.append(new_face_contour)
+                        continue
+                    break
                 new_faces_contours = valid_new_faces_contours
             for contour in new_faces_contours:
                 list_faces.append(
