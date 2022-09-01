@@ -1386,15 +1386,52 @@ class VolumeModel(dc.DessiaObject):
             elif isinstance(primitive, volmdlr.faces.OpenShell3D):
                 lines.extend(primitive.get_geo_lines(update_data, point_mesh_size))
 
-        lines.append('Mesh.CharacteristicLengthExtendFromBoundary = 0;')
-        lines.append('Mesh.MeshSizeExtendFromBoundary = 0;')
-        lines.append('Mesh.CharacteristicLengthMin = ' + str(characteristic_length_min) + ';')
-        lines.append('Mesh.CharacteristicLengthMax = ' + str(characteristic_length_max) + ';')
-        lines.append('Mesh.AngleToleranceFacetOverlap = 0;')
-        lines.append('Mesh.ToleranceInitialDelaunay = 1e-12;')
+        # lines.append('Mesh.CharacteristicLengthExtendFromBoundary = 0;')
+        # lines.append('Mesh.MeshSizeExtendFromBoundary = 0;')
+        # lines.append('Mesh.CharacteristicLengthMin = ' + str(characteristic_length_min) + ';')
+        # lines.append('Mesh.CharacteristicLengthMax = ' + str(characteristic_length_max) + ';')
+        # lines.append('Mesh.AngleToleranceFacetOverlap = 0;')
+        # lines.append('Mesh.ToleranceInitialDelaunay = 1e-12;')
+        # lines.append('Coherence;')
+        # lines.append('Geometry.AutoCoherence = 1;')
+        # lines.append('Mesh.CharacteristicLengthFromCurvature = 0.1;')
+
+        meshsize_factor = 0.9
+        meshsizes_max = []
+        field_num = 1
+        field_nums = []
+
+        for i, primitive in enumerate(self.primitives):
+            if isinstance(primitive, volmdlr.faces.ClosedShell3D):
+                bbx = primitive.bounding_box
+                dim1, dim2, dim3 = (bbx.xmax-bbx.xmin), (bbx.ymax-bbx.ymin), (bbx.zmax-bbx.zmin)
+
+                volume = dim1 * dim2 * dim3
+                size = ((volume ** (1./3.))/10) * meshsize_factor
+                meshsizes_max.append(size)
+
+                lines.append('Field['+str(field_num)+'] = MathEval;')
+                lines.append('Field['+str(field_num)+'].F = "'+str(size)+'";')
+
+                lines.append('Field['+str(field_num+1)+'] = Restrict;')
+                lines.append('Field['+str(field_num+1)+'].VolumesList = {'+str(i+1)+'};')
+                field_nums.append(field_num+1)
+                field_num +=2
+
+            elif isinstance(primitive, volmdlr.faces.OpenShell3D):
+                continue
+
+        meshsize_max = max(meshsizes_max)
+        meshsize_min = meshsize_max/100
+
+        lines.append('Mesh.CharacteristicLengthMin = ' + str(meshsize_min) + ';')
+        lines.append('Mesh.CharacteristicLengthMax = ' + str(meshsize_max) + ';')
+
+        lines.append('Field['+str(field_num)+'] = MinAniso;')
+        lines.append('Field['+str(field_num)+'].FieldsList = {'+str(field_nums)[1:-1]+'};')
+        lines.append('Background Field = '+str(field_num)+';')
+
         lines.append('Coherence;')
-        lines.append('Geometry.AutoCoherence = 1;')
-        lines.append('Mesh.CharacteristicLengthFromCurvature = 0.1;')
 
         with open(file_name + '.geo', 'w', encoding="utf-8") as f:
             for line in lines:
