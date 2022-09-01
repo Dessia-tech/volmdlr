@@ -187,13 +187,13 @@ def representation_relationship_representation_relationship_with_transformation_
         if isinstance(object_dict[arguments[2]], list):
             for shell3d in object_dict[arguments[2]]:
                 frame3d = object_dict[arguments[4]]
-                shell3d.frame_mapping(frame3d, 'old', copy=False)
+                shell3d.frame_mapping(frame3d, 'old')
                 # return shell3d
             return None
         else:
             shell3d = object_dict[arguments[2]]
             frame3d = object_dict[arguments[4]]
-            shell3d.frame_mapping(frame3d, 'old', copy=False)
+            shell3d.frame_mapping(frame3d, 'old')
             # return shell3d
             return None
     else:
