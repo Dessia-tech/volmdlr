@@ -4600,19 +4600,27 @@ class PlaneFace3D(Face3D):
         if list_open_cutting_contours:
             new_faces_contours = self.surface2d.outer_contour.divide(
                 list_open_cutting_contours, inside)
+            new_inner_contours = len(new_faces_contours) * [[]]
             if self.surface2d.inner_contours:
                 valid_new_faces_contours = []
+                valid_inner_contours = []
                 for new_face_contour in new_faces_contours:
                     for inner_contour in self.surface2d.inner_contours:
                         if new_face_contour.is_superposing(inner_contour):
                             break
                     else:
                         if new_face_contour not in valid_new_faces_contours:
+                            inner_contours = []
+                            for inner_contour in self.surface2d.inner_contours:
+                                if new_face_contour.is_inside(inner_contour):
+                                    inner_contours.append(inner_contour)
                             valid_new_faces_contours.append(new_face_contour)
+                            valid_inner_contours.append(inner_contours)
                 new_faces_contours = valid_new_faces_contours
-            for contour in new_faces_contours:
+                new_inner_contours = valid_inner_contours
+            for contour, inner_contours in zip(new_faces_contours, new_inner_contours):
                 list_faces.append(
-                    PlaneFace3D(self.surface3d, Surface2D(contour, [])))
+                    PlaneFace3D(self.surface3d, Surface2D(contour, inner_contours)))
 
         if list_closed_cutting_contours:
             new_contour = list_closed_cutting_contours[0]
