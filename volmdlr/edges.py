@@ -91,6 +91,8 @@ class Edge(dc.DessiaObject):
         :return:
         """
         length = self.length()
+        if not discretization_resolution:
+            return [self.start, self.end]
         return [self.point_at_abscissa(i * length / discretization_resolution) for i in
                 range(discretization_resolution + 1)]
 
