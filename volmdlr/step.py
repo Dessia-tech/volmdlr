@@ -588,7 +588,7 @@ class Step(dc.DessiaObject):
                     frame_mapped_shell_node.append(s_node)
                     break
         shell_nodes_copy = shell_nodes.copy()
-        remove_nodes = list(set(frame_mapped_shell_node+not_shell_nodes))
+        remove_nodes = list(set(frame_mapped_shell_node + not_shell_nodes))
         [shell_nodes.remove(node) for node in remove_nodes]
 
         for node in shell_nodes + frame_mapping_nodes:
