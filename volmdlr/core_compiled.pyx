@@ -18,6 +18,7 @@ from mpl_toolkits.mplot3d import proj3d
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrow, FancyArrowPatch
 
+import volmdlr.edges
 from dessia_common import DessiaObject
 import plot_data
 
@@ -312,9 +313,8 @@ class Vector(DessiaObject):
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.
 
-        :param other_vector: A Vector-like object
-        :type other_vector: :class:`volmdlr.Vector2D` or :class:`volmdlr.Vector3D` or
-            :class:`volmdlr.Point2D` or :class:`volmdlr.Point3D`
+        :param other_vector: A vector-like object
+        :type other_vector: :class:`volmdlr.Vector`
         :return: `True` if the two vectors are colinear, `False` otherwise
         :rtype: bool
         """
@@ -332,10 +332,10 @@ class Vector(DessiaObject):
         Find the mean point from a list of points. All the objects of this list
         should be of same dimension.
 
-        :param points: A list of Vector-like objects
-        :type points: List[:class:`volmdlr.Point2D`]
+        :param points: A list of vector-like objects
+        :type points: List[:class:`volmdlr.Vector`]
         :return: The mean point or vector
-        :rtype: :class:`volmdlr.Vector2D` | :class:`volmdlr.Vector3D` | :class:`volmdlr.Point2D` | :class:`volmdlr.Point3D`
+        :rtype: :class:`volmdlr.Vector`
         """
         n = 1
         point = points[0].copy()
@@ -351,10 +351,10 @@ class Vector(DessiaObject):
         An approximative method to remove duplicated points from a list.
         All the objects of this list should be of same dimension.
 
-        :param points: A list of Vector-like objects with potential duplicates
-        :type points: list
-        :return: The new list of Vector-like objects without duplicates&
-        :rtype: list
+        :param points: A list of vector-like objects with potential duplicates
+        :type points: List[:class:`volmdlr.Vector`]
+        :return: The new list of vector-like objects without duplicates&
+        :rtype: List[:class:`volmdlr.Vector`]
         """
         dict_ = {p.approx_hash(): p for p in points}
         return list(dict_.values())
@@ -436,7 +436,7 @@ class Vector2D(Vector):
         should be of same dimension.
 
         :param other_vector: A Vector2D-like object
-        :type other_vector: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
+        :type other_vector: :class:`volmdlr.Vector2D`
         :param tol: The tolerance under which the euclidean distance is
             considered equal to 0
         :type tol: float
@@ -475,7 +475,7 @@ class Vector2D(Vector):
         :param deep: *not used*
         :param memo: *not used*
         :return: A copy of the Vector2D-like object
-        :rtype: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
+        :rtype: :class:`volmdlr.Vector2D`
         """
         return self.__class__(self.x, self.y)
 
@@ -508,7 +508,7 @@ class Vector2D(Vector):
         Computes the dot product (scalar product) of two 2 dimensional vectors.
 
         :param other_vector: A Vector2D-like object
-        :type other_vector: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
+        :type other_vector: :class:`volmdlr.Vector2D`
         :return: A scalar, result of the dot product
         :rtype: float
         """
@@ -522,7 +522,7 @@ class Vector2D(Vector):
         Computes the cross product of two 2 dimensional vectors.
 
         :param other_vector: A Vector2D-like object
-        :type other_vector: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
+        :type other_vector: :class:`volmdlr.Vector2D`
         :return: A scalar, result of the cross product
         :rtype: float
         """
@@ -564,7 +564,7 @@ class Vector2D(Vector):
         :param angle: The angle of the rotation in radian
         :type angle: float
         :returns: A rotated Vector2D-like object
-        :rtype: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
+        :rtype: :class:`volmdlr.Vector2D`
         """
         v2x, v2y = self.rotation_parameters(center, angle)
         return self.__class__(v2x, v2y)
@@ -591,7 +591,7 @@ class Vector2D(Vector):
         :param offset: The offset vector of the translation
         :type offset: :class:`volmdlr.Vector2D`
         :returns: A translated Vector2D-like object
-        :rtype: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
+        :rtype: :class:`volmdlr.Vector2D`
         """
         v2x = self.x + offset[0]
         v2y = self.y + offset[1]
@@ -625,7 +625,7 @@ class Vector2D(Vector):
         :param side: Choose between 'old' and 'new'
         :type side: str
         :returns: A frame mapped Vector2D-like object
-        :rtype: :class:`volmdlr.Vector2D` or :class:`volmdlr.Point2D`
+        :rtype: :class:`volmdlr.Vector2D`
         """
         if side == 'old':
             new_vector = frame.old_coordinates(self)
@@ -841,19 +841,62 @@ class Point2D(Vector2D):
                        self.y / value)
 
     def to_dict(self, *args, **kwargs):
+        """
+        Transforms a Point2D object into a dictionary.
+
+        :return: A dictionary containing all the Vector2D's information
+        :rtype: dict
+        """
         return {'object_class': 'volmdlr.Point2D',
                 'x': self.x, 'y': self.y,
                 'name': self.name}
 
-    def to_3d(self, plane_origin, vx, vy):
+    def to_3d(self, plane_origin: 'Vector3D', vx: 'Vector3D', vy:'Vector3D'):
+        """
+        Returns the 3 dimensional point corresponding to the 2 dimensional
+        point placed on the 3 dimensional plane (XY) of the 3 dimensional
+        frame (centered on `plane_origin`, having for basis (`vx`, `vy`, vz),
+        vz being the cross product of `vx` and `vy`).
+
+        :param plane_origin: The origin of the plane, on which lies the
+            Vector2D
+        :type plane_origin: :class:`volmdlr.Vector3D`
+        :param vx: The first direction of the plane
+        :type vx: :class:`volmdlr.Vector3D`
+        :param vy: The second direction of the plane
+        :type vy: :class:`volmdlr.Vector3D`
+        :return: The Point3D from the Point2D set in the 3 dimensional space
+        :rtype: :class:`volmdlr.Point3D`
+        """
         return Point3D(plane_origin.x + vx.x * self.x + vy.x * self.y,
                        plane_origin.y + vx.y * self.x + vy.y * self.y,
                        plane_origin.z + vx.z * self.x + vy.z * self.y)
 
     def to_vector(self):
+        """
+        Transforms a Point2D into a Vector2D and returns it.
+
+        :return: A Vector2D
+        :rtype: :class:`volmdlr.Vector2D`
+        """
         return Vector2D(self.x, self.y)
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=True):
+        """
+        Plots the 2 dimensional point as a dot.
+
+        :param ax: The Axes on which the Vector2D will be drawn
+        :type ax: :class:`matplotlib.axes.Axes`, optional
+        :param color: The color of the arrow
+        :type color: str, optional
+        :param alpha: The transparency of the point from 0 to 1. 0 beeing
+            fully transparent
+        :type alpha: float, optional
+        :param plot_points: # TODO: delete this attribute
+        :type plot_points: bool, optional
+        :return: A matplotlib Axes object on which the Point2D have been plotted
+        :rtype: :class:`matplotlib.axes.Axes`
+        """
         if ax is None:
             fig, ax = plt.subplots()
 
@@ -861,23 +904,37 @@ class Point2D(Vector2D):
         return ax
 
     def point_distance(self, other_point: 'Point2D'):
+        """
+        Computes the euclidiean distance between two Point2D objects.
+
+        :param other_point: A Point2D object
+        :type other_point: :class:`volmdlr.Point2D`
+        :return: The euclidiean distance
+        :rtype: float
+        """
         return (self - other_point).norm()
 
     @classmethod
-    def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
-        #        point11, point12 = line1
-        #        point21, point22 = line2
+    def line_intersection(cls, line1: 'volmdlr.edges.Line2D',
+                          line2: 'volmdlr.edges.Line2D',
+                          curvilinear_abscissa: bool = False):
+        """
+        Returns a Point2D based on the intersection between two infinte lines.
+
+        :param line1: The first line
+        :type line1: :class:`volmdlr.edges.Line2D`
+        :param line2: The second line
+        :type line2: :class:`volmdlr.edges.Line2D`
+        :param curvilinear_abscissa: `True` will return, in addition to the
+            intersection point, the curvilinear abscissa of the point on the
+            first line and on the second line. Otherwise, only the point will
+            be returned
+        :type curvilinear_abscissa: bool, optional
+        :return: The two-dimensional point at the intersection of the two lines
+        :rtype: :class:`volmdlr.Point2D`
+        """
         (x1, y1), (x2, y2) = line1
         (x3, y3), (x4, y4) = line2
-
-#        x1 = line1.points[0][0]
-#        y1 = line1.points[0][1]
-#        x2 = line1.points[1][0]
-#        y2 = line1.points[1][1]
-#        x3 = line2.points[0][0]
-#        y3 = line2.points[0][1]
-#        x4 = line2.points[1][0]
-#        y4 = line2.points[1][1]
 
         denominateur = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
         if math.isclose(denominateur, 0, abs_tol=1e-6):
@@ -897,19 +954,30 @@ class Point2D(Vector2D):
                 t = t / denominateur
                 u = (x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)
                 u = -u / denominateur
-                return (cls(x, y), t, u)
+                return cls(x, y), t, u
 
     @classmethod
-    def segment_intersection(cls, segment1, segment2,
-                             curvilinear_abscissa=False):
-        x1 = segment1.points[0].x
-        y1 = segment1.points[0].y
-        x2 = segment1.points[1].x
-        y2 = segment1.points[1].y
-        x3 = segment2.points[0].x
-        y3 = segment2.points[0].y
-        x4 = segment2.points[1].x
-        y4 = segment2.points[1].y
+    def segment_intersection(cls, segment1: 'volmdlr.edges.LineSegment2D',
+                             segment2: 'volmdlr.edges.LineSegment2D',
+                             curvilinear_abscissa: bool = False):
+        """
+        Returns a Point2D based on the intersection between two finite lines.
+
+        :param segment1: The first line segment
+        :type segment1: :class:`volmdlr.edges.LineSegment2D`
+        :param segment2: The second line segment
+        :type segment2: :class:`volmdlr.edges.LineSegment2D`
+        :param curvilinear_abscissa: `True` will return, in addition to the
+            intersection point, the curvilinear abscissa of the point on the
+            first line segment and on the second line segment. Otherwise, only
+            the point will be returned
+        :type curvilinear_abscissa: bool, optional
+        :return: The two-dimensional point at the intersection of the two lines
+            segments
+        :rtype: :class:`volmdlr.Point2D`
+        """
+        (x1, y1), (x2, y2) = segment1
+        (x3, y3), (x4, y4) = segment2
 
         denominateur = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
         if math.isclose(denominateur, 0, abs_tol=1e-6):
@@ -922,15 +990,15 @@ class Point2D(Vector2D):
         t = t / denominateur
         u = (x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)
         u = -u / denominateur
-        if (0 <= t and t <= 1) or (0 <= u and u <= 1):
+        if (0 <= t <= 1) or (0 <= u <= 1):
             x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
             x = x / denominateur
             y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)
             y = y / denominateur
             if not curvilinear_abscissa:
-                return cls((x, y))
+                return cls(x, y)
             else:
-                return (cls((x, y)), t, u)
+                return cls(x, y), t, u
         else:
             if not curvilinear_abscissa:
                 return None
@@ -939,14 +1007,57 @@ class Point2D(Vector2D):
 
     def plot_data(self, marker=None, color='black', size=1,
                   opacity=1, arrow=False, stroke_width=None):
+        """
+        Transforms the two-dimensional point into a plot_data twe-dimensional 
+        point.
+        
+        :param marker: # TODO: unused parameter
+        :type marker: str, optional
+        :param color: # TODO: unused parameter
+        :type color: str, optional
+        :param size: # TODO: unused parameter
+        :type size: float, optional
+        :param opacity: # TODO: unused parameter
+        :type opacity: float, optional
+        :param arrow: # TODO: unused parameter
+        :type arrow: bool, optional
+        :param stroke_width: # TODO: unused parameter
+        :type stroke_width: float, optional
+        :return: a plot_data two-dimensional point
+        :rtype: :class:`plot_data.Point2D`
+        """
         return plot_data.Point2D(self.x, self.y)
 
     @classmethod
-    def middle_point(cls, point1, point2):
+    def middle_point(cls, point1: 'volmdlr.Vector2D',
+                     point2: 'volmdlr.Vector2D'):
+        """
+        Computes the middle point between two two-dimensional vector-like 
+        objects.
+        
+        :param point1: the first point
+        :type point1: :class:`volmdlr.Vector2D`
+        :param point2: the second point
+        :type point2: :class:`volmdlr.Vector2D`
+        :return: the middle point
+        :rtype: :class:`volmdlr.Point2D`
+        """
         return (point1 + point2) * 0.5
 
     @classmethod
-    def line_projection(cls, point, line):
+    def line_projection(cls, point: 'volmdlr.Vector2D',
+                        line: 'volmdlr.edges.Line2D'):
+        """
+        Computes the projection of a two-dimensional vector-like object on an
+        infinite two-dimensional line
+
+        :param point: the point to be projected
+        :type point: :class:`volmdlr.Vector2D`
+        :param line: the infinite line
+        :type line: :class:`volmdlr.edges.Line2D`
+        :return: the projected point
+        :rtype: :class:`volmdlr.Point2D`
+        """
         p1, p2 = line[0], line[1]
         n = line.unit_normal_vector()
         pp1 = point - p1
@@ -958,6 +1069,15 @@ class Point2D(Vector2D):
             distances.append(self.point_distance(p))
         return points[distances.index(min(distances))]
 
+    def nearest_point2(self, points):
+        min_distance = self.point_distance(points[0])
+        min_point = points[0]
+        for point in points:
+            pd = self.point_distance(point)
+            if pd < min_distance:
+                min_distance = pd
+                min_point = point
+        return min_point
 
     def axial_symmetry(self, line):
         '''

@@ -502,6 +502,9 @@ class CompositePrimitive2D(Primitive2D):
 
 
 class Primitive3D(dc.PhysicalObject, CompositePrimitive):
+    """
+
+    """
     def __init__(self, color=None, alpha=1, name=''):
         self.color = color
         self.alpha = alpha
@@ -858,7 +861,12 @@ class VolumeModel(dc.PhysicalObject):
                                  'faces']
     _dessia_methods = ['to_stl_model']
     """
-
+    A class containing one or several :class:`volmdlr.core.Primitive3D`.
+    
+    :param primitives: The vector's abscissa
+    :type primitives: List[:class:`volmdlr.core.Primitive3D`]
+    :param name: The VolumeModel's name
+    :type name: str
     """
 
     def __init__(self, primitives: List[Primitive3D], name: str = ''):
