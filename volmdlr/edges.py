@@ -296,7 +296,7 @@ class LineSegment(Edge):
                     self.__class__(split_point, self.end)]
 
     def get_geo_lines(self, tag: int, start_point_tag: int, end_point_tag: int):
-        '''
+        """
         gets the lines that define a LineSegment in a .geo file
 
         :param tag: The linesegment index
@@ -308,7 +308,7 @@ class LineSegment(Edge):
 
         :return: A line
         :rtype: str
-        '''
+        """
 
         return 'Line(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + str(end_point_tag) + '};'
 
@@ -1510,7 +1510,7 @@ class Arc(Edge):
         return point.point_distance(point.nearest_point(points))
 
     def get_geo_lines(self, tag: int, start_point_tag: int, center_point_tag: int, end_point_tag: int):
-        '''
+        """
         gets the lines that define an Arc in a .geo file
 
         :param tag: The linesegment index
@@ -1524,7 +1524,7 @@ class Arc(Edge):
 
         :return: A line
         :rtype: str
-        '''
+        """
 
         return 'Circle(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + \
             str(center_point_tag) + ', ' + str(end_point_tag) + '};'
@@ -3939,7 +3939,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return res.x[0]
 
     def get_geo_lines(self, tag: int, control_points_tags: List[int]):
-        '''
+        """
         gets the lines that define a BsplineCurve in a .geo file
 
         :param tag: The BsplineCurve index
@@ -3951,7 +3951,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
 
         :return: A line
         :rtype: str
-        '''
+        """
 
         return 'BSpline(' + str(tag) + ') = {' + str(control_points_tags)[1:-1] + '};'
 

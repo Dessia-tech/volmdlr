@@ -11,6 +11,7 @@ import math
 import subprocess
 import webbrowser
 import numpy as npy
+from itertools import chain
 
 import gmsh
 
@@ -1355,49 +1356,63 @@ class VolumeModel(dc.DessiaObject):
 
         stream.write(step_content)
 
-    def to_geo(self, file_name: str,
-               point_mesh_size: float = 1,
-               characteristic_length_min: float = None,
-               characteristic_length_max: float = None):
-        '''
-        gets the .geo file for the VolumeModel
-        '''
+    def get_geo_lines(self):
+        """
+        gets the lines that define a VolumeModel in a .geo file
+
+        :param mesh_size: DESCRIPTION
+        :type mesh_size: float
+
+        :return: DESCRIPTION
+        :rtype: TYPE
+        """
+
         update_data = {'point_account':0,
                        'line_account':0,
                        'line_loop_account':0,
                        'surface_account':0,
                        'surface_loop_account':0}
-        if not characteristic_length_min:
-            print('yes')
-            characteristic_length_min = point_mesh_size
-        if not characteristic_length_max:
-            characteristic_length_max = 1.5*characteristic_length_min
 
         lines = []
         volume = 0
         for primitive in self.primitives:
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
                 volume += 1
-                lines_primitives, update_data = primitive.get_geo_lines(update_data,
-                                                                        point_mesh_size)
+                lines_primitives, update_data = primitive.get_geo_lines(update_data)
                 lines.extend(lines_primitives)
                 surface_loop = ((lines[-1].split('('))[1].split(')')[0])
                 lines.append('Volume(' + str(volume) + ') = {' + surface_loop + '};')
             elif isinstance(primitive, volmdlr.faces.OpenShell3D):
-                lines.extend(primitive.get_geo_lines(update_data, point_mesh_size))
+                lines.extend(primitive.get_geo_lines(update_data))
 
-        # lines.append('Mesh.CharacteristicLengthExtendFromBoundary = 0;')
-        # lines.append('Mesh.MeshSizeExtendFromBoundary = 0;')
-        # lines.append('Mesh.CharacteristicLengthMin = ' + str(characteristic_length_min) + ';')
-        # lines.append('Mesh.CharacteristicLengthMax = ' + str(characteristic_length_max) + ';')
-        # lines.append('Mesh.AngleToleranceFacetOverlap = 0;')
-        # lines.append('Mesh.ToleranceInitialDelaunay = 1e-12;')
-        # lines.append('Coherence;')
-        # lines.append('Geometry.AutoCoherence = 1;')
-        # lines.append('Mesh.CharacteristicLengthFromCurvature = 0.1;')
+        return lines
 
-        meshsize_factor = 0.9
-        meshsizes_max = []
+    def to_geo(self, file_name: str,
+               factor: float,
+               curvature_mesh_size: int = 0,
+               min_points: int = 3,
+               initial_mesh_size: float = 5):
+        """
+        gets the .geo file for the VolumeModel
+
+        :param file_name: DESCRIPTION
+        :type file_name: str
+        :param factor: DESCRIPTION
+        :type factor: float
+        :param curvature_mesh_size: DESCRIPTION, defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: DESCRIPTION, defaults to 3
+        :type min_points: int, optional
+        :param initial_mesh_size: DESCRIPTION, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: DESCRIPTION
+        :rtype: TYPE
+        """
+
+        lines = self.get_geo_lines()
+
+        # meshsizes_max = []
         field_num = 1
         field_nums = []
 
@@ -1405,15 +1420,39 @@ class VolumeModel(dc.DessiaObject):
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
                 bbx = primitive.bounding_box
                 dim1, dim2, dim3 = (bbx.xmax-bbx.xmin), (bbx.ymax-bbx.ymin), (bbx.zmax-bbx.zmin)
-
                 volume = dim1 * dim2 * dim3
-                size = ((volume ** (1./3.))/10) * meshsize_factor
-                meshsizes_max.append(size)
+
+                if factor == 0:
+                    factor = 1e-3
+
+                size = ((volume ** (1./3.))/initial_mesh_size) * factor
+
+                # meshsizes_max.append(size)
+
+                primitives, primitives_length = [], []
+                for face in primitive.faces:
+                    for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                        if isinstance(contour, volmdlr.wires.Circle2D):
+                            primitives.append(contour)
+                            primitives.append(contour)
+                            primitives_length(contour.length()/2)
+                            primitives_length(contour.length()/2)
+                        else:
+                            for p, primitive in enumerate(contour.primitives):
+                                if ((primitive not in primitives)
+                                        and (primitive.reverse() not in primitives)):
+                                    primitives.append(primitive)
+                                    primitives_length(primitive.length())
+
+                for i, length in enumerate(primitives_length):
+                    if length < size:               
+                        lines.append('Transfinite Curve {'+str(i)+'} = '+str(min_points)+' Using Progression 1;')
 
                 lines.append('Field['+str(field_num)+'] = MathEval;')
                 lines.append('Field['+str(field_num)+'].F = "'+str(size)+'";')
 
                 lines.append('Field['+str(field_num+1)+'] = Restrict;')
+                lines.append('Field['+str(field_num+1)+'].InField = {'+str(field_num)+'};')
                 lines.append('Field['+str(field_num+1)+'].VolumesList = {'+str(i+1)+'};')
                 field_nums.append(field_num+1)
                 field_num +=2
@@ -1421,15 +1460,17 @@ class VolumeModel(dc.DessiaObject):
             elif isinstance(primitive, volmdlr.faces.OpenShell3D):
                 continue
 
-        meshsize_max = max(meshsizes_max)
-        meshsize_min = meshsize_max/100
+        # meshsize_max = max(meshsizes_max)
+        # meshsize_min = meshsize_max/100
 
-        lines.append('Mesh.CharacteristicLengthMin = ' + str(meshsize_min) + ';')
-        lines.append('Mesh.CharacteristicLengthMax = ' + str(meshsize_max) + ';')
+        # lines.append('Mesh.CharacteristicLengthMin = ' + str(meshsize_min) + ';')
+        # lines.append('Mesh.CharacteristicLengthMax = ' + str(meshsize_max) + ';')
 
         lines.append('Field['+str(field_num)+'] = MinAniso;')
         lines.append('Field['+str(field_num)+'].FieldsList = {'+str(field_nums)[1:-1]+'};')
         lines.append('Background Field = '+str(field_num)+';')
+
+        lines.append('Mesh.MeshSizeFromCurvature = '+str(curvature_mesh_size)+';')
 
         lines.append('Coherence;')
 
@@ -1440,15 +1481,26 @@ class VolumeModel(dc.DessiaObject):
         f.close()
 
     def to_msh(self, file_name: str, mesh_dimension: int,
-               point_mesh_size: float = 1,
-               characteristic_length_min: float = None,
-               characteristic_length_max: float = None):
-        '''
+               factor: float,
+               mesh_size_initial: float = 5):
+        """
         gets .msh file for the VolumeModel generated by gmsh
-        '''
 
-        self.to_geo(file_name, point_mesh_size,
-                    characteristic_length_min, characteristic_length_max)
+        :param file_name: DESCRIPTION
+        :type file_name: str
+        :param mesh_dimension: DESCRIPTION
+        :type mesh_dimension: int
+        :param factor: DESCRIPTION
+        :type factor: float
+        :param mesh_size_initial: DESCRIPTION, defaults to 5
+        :type mesh_size_initial: float, optional
+
+        :return: DESCRIPTION
+        :rtype: TYPE
+        """
+
+        self.to_geo(file_name, factor,
+                   mesh_size_initial)
 
         gmsh.initialize()
         gmsh.open(file_name+".geo")

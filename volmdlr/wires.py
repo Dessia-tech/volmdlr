@@ -1427,8 +1427,33 @@ class Contour(Wire):
     def point_over_contour(self, point, abs_tol=1e-6):
         return self.point_over_wire(point, abs_tol)
 
+    def to_polygon(self, angle_resolution):
+        """
+        COPY/PASTE from Contour2D > angle_resolution NOT USED
+
+        :param angle_resolution: DESCRIPTION
+        :type angle_resolution: TYPE
+
+        :return: DESCRIPTION
+        :rtype: TYPE
+        """
+
+        polygon_points = []
+        # print([(line.start, line.end) for line in self.primitives])
+
+        for primitive in self.primitives:
+            polygon_points.extend(primitive.polygon_points()[:-1])
+        #     print('1: ', primitive.polygon_points())
+        #     print('2 :', primitive.polygon_points()[:-1])
+        # print(polygon_points)
+
+        if isinstance(self, Contour2D):
+            return ClosedPolygon2D(polygon_points)
+        else:
+            return ClosedPolygon3D(polygon_points)
+
     def get_geo_lines(self, tag: int, primitives_tags: List[int]):
-        '''
+        """
         gets the lines that define a Contour in a .geo file
 
         :param tag: The contour index
@@ -1438,7 +1463,7 @@ class Contour(Wire):
 
         :return: A line
         :rtype: str
-        '''
+        """
 
         return 'Line Loop(' + str(tag) + ') = {' + str(primitives_tags)[1:-1] + '};'
 
@@ -1859,18 +1884,6 @@ class Contour2D(Contour, Wire2D):
     def triangulation(self):
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
-
-    def to_polygon(self, angle_resolution):
-
-        polygon_points = []
-        # print([(line.start, line.end) for line in self.primitives])
-
-        for primitive in self.primitives:
-            polygon_points.extend(primitive.polygon_points()[:-1])
-        #     print('1: ', primitive.polygon_points())
-        #     print('2 :', primitive.polygon_points()[:-1])
-        # print(polygon_points)
-        return ClosedPolygon2D(polygon_points)
 
     def grid_triangulation(self, x_density: float = None,
                            y_density: float = None,
@@ -4216,18 +4229,6 @@ class Contour3D(Contour, Wire3D):
     #             if self.point_over_contour(mid_point):
     #                 return True
     #     return False
-
-    def to_polygon(self, angle_resolution):
-
-        polygon_points = []
-        # print([(line.start, line.end) for line in self.primitives])
-
-        for primitive in self.primitives:
-            polygon_points.extend(primitive.polygon_points()[:-1])
-        #     print('1: ', primitive.polygon_points())
-        #     print('2 :', primitive.polygon_points()[:-1])
-        # print(polygon_points)
-        return ClosedPolygon3D(polygon_points)
 
 
 class Circle3D(Contour3D):

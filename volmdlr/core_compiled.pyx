@@ -729,20 +729,23 @@ class Point2D(Vector2D):
 
         return point_symmetry
 
-    def get_geo_lines(self, tag: int, point_mesh_size: float = 1):
+    def get_geo_lines(self, tag: int, point_mesh_size: float = None):
         '''
         gets the lines that define a Point2D in a .geo file
 
         :param tag: The point index
         :type tag: int
-        :param mesh_size: The target mesh size close to the point, defaults to 1
+        :param mesh_size: The target mesh size close to the point, defaults to None
         :type mesh_size: float, optional
 
         :return: A line
         :rtype: str
         '''
 
-        return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+', '+str(point_mesh_size)+'};'
+        if point_mesh_size:
+            return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+', '+str(point_mesh_size)+'};'
+        else:
+            'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+'};'
 
 
 O2D = Point2D(0, 0)
@@ -1194,20 +1197,23 @@ class Point3D(Vector3D):
             distances.append(self.point_distance(p))
         return points[distances.index(min(distances))]
 
-    def get_geo_lines(self, tag: int, point_mesh_size: float = 1):
-        '''
+    def get_geo_lines(self, tag: int, point_mesh_size: float = None):
+        """
         gets the lines that define a Point3D in a .geo file
 
         :param tag: The point index
         :type tag: int
-        :param mesh_size: The target mesh size close to the point, defaults to 1
+        :param mesh_size: The target mesh size close to the point, defaults to None
         :type mesh_size: float, optional
 
         :return: A line
         :rtype: str
-        '''
+        """
 
-        return 'Point('+str(tag)+') = {'+str([*self])[1:-1]+', '+str(point_mesh_size)+'};'
+        if point_mesh_size:
+            return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+', '+str(point_mesh_size)+'};'
+        else:
+            'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+'};'
 
 
 O3D = Point3D(0, 0, 0)

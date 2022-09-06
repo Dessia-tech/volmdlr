@@ -4080,9 +4080,9 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.surface3d.point2d_to_3d(point_inside2d)
 
     def get_geo_lines(self, mesh_size_list=None):
-        '''
+        """
         gets the lines that define a Face3D in a .geo file
-        '''
+        """
 
         lines, line_surface, lines_tags = [], [], []
         point_account, line_account, line_loop_account = 0, 0, 1
