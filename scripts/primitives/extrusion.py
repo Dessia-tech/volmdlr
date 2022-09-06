@@ -37,3 +37,5 @@ profile=primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [c2]
 model=vm.core.VolumeModel([profile])
 
 model.babylonjs()
+
+model.to_step('extrusion')
