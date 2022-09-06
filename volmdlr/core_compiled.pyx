@@ -482,7 +482,7 @@ class Vector2D(Vector):
         """
         Computes the euclidiean norm of a 2 dimensional vector.
 
-        :returns: Norm of the Vector2D-like object
+        :return: Norm of the Vector2D-like object
         :rtype: float
         """
         return CVector2Dnorm(self.x, self.y)
@@ -492,7 +492,7 @@ class Vector2D(Vector):
         In place operation, normalizing the coordinates of the 2 dimensional
         vector.
 
-        :returns: None
+        :return: None
         :rtype: None
         """
         n = self.norm()
@@ -546,7 +546,7 @@ class Vector2D(Vector):
         :type center: :class:`volmdlr.Point2D`
         :param angle: The angle of the rotation in radian
         :type angle: float
-        :returns: The abscissa and ordinate of the rotated vector
+        :return: The abscissa and ordinate of the rotated vector
         :rtype: tuple
         """
         u = self - center
@@ -562,7 +562,7 @@ class Vector2D(Vector):
         :type center: :class:`volmdlr.Point2D`
         :param angle: The angle of the rotation in radian
         :type angle: float
-        :returns: A rotated Vector2D-like object
+        :return: A rotated Vector2D-like object
         :rtype: :class:`volmdlr.Vector2D`
         """
         v2x, v2y = self.rotation_parameters(center, angle)
@@ -576,7 +576,7 @@ class Vector2D(Vector):
         :type center: :class:`volmdlr.Point2D`
         :param angle: The angle of the rotation in radian
         :type angle: float
-        :returns: None
+        :return: None
         :rtype: None
         """
         v2x, v2y = self.rotation_parameters(center, angle)
@@ -589,7 +589,7 @@ class Vector2D(Vector):
 
         :param offset: The offset vector of the translation
         :type offset: :class:`volmdlr.Vector2D`
-        :returns: A translated Vector2D-like object
+        :return: A translated Vector2D-like object
         :rtype: :class:`volmdlr.Vector2D`
         """
         v2x = self.x + offset[0]
@@ -602,7 +602,7 @@ class Vector2D(Vector):
 
         :param offset: The offset vector of the translation
         :type offset: :class:`volmdlr.Vector2D`
-        :returns: None
+        :return: None
         :rtype: None
         """
         v2x = self.x + offset[0]
@@ -623,7 +623,7 @@ class Vector2D(Vector):
         :type frame: :class:`volmdlr.Frame2D`
         :param side: Choose between 'old' and 'new'
         :type side: str
-        :returns: A frame mapped Vector2D-like object
+        :return: A frame mapped Vector2D-like object
         :rtype: :class:`volmdlr.Vector2D`
         """
         if side == 'old':
@@ -640,7 +640,7 @@ class Vector2D(Vector):
         :type frame: :class:`volmdlr.Frame2D`
         :param side: Choose between 'old' and 'new'
         :type side: str
-        :returns: None
+        :return: None
         :rtype: None
         """
         if side == 'old':
@@ -1028,8 +1028,8 @@ class Point2D(Vector2D):
         return plot_data.Point2D(self.x, self.y)
 
     @classmethod
-    def middle_point(cls, point1: 'volmdlr.Vector2D',
-                     point2: 'volmdlr.Vector2D'):
+    def middle_point(cls, point1: Vector2D,
+                     point2: Vector2D):
         """
         Computes the middle point between two two-dimensional vector-like 
         objects.
@@ -1044,7 +1044,7 @@ class Point2D(Vector2D):
         return (point1 + point2) * 0.5
 
     @classmethod
-    def line_projection(cls, point: 'volmdlr.Vector2D',
+    def line_projection(cls, point: Vector2D,
                         line: 'volmdlr.edges.Line2D'):
         """
         Computes the projection of a two-dimensional vector-like object on an
@@ -1062,38 +1062,38 @@ class Point2D(Vector2D):
         pp1 = point - p1
         return pp1 - pp1.dot(n) * n + p1
 
-    def nearest_point(self, points):
-        distances = []
-        for p in points:
-            distances.append(self.point_distance(p))
-        return points[distances.index(min(distances))]
+    def nearest_point(self, points: List[Vector2D]):
+        """
+        Finds the nearest point out of a list of two-dimensional vector-like
+        objects.
 
-    def nearest_point2(self, points):
+        :param points: a list of points
+        :type points: List[:class:`volmdlr.Vector2D`]
+        :return: the nearest point out of the list
+        :rtype: :class:`volmdlr.Vector2D`
+        """
         min_distance = self.point_distance(points[0])
         min_point = points[0]
         for point in points:
             pd = self.point_distance(point)
             if pd < min_distance:
-                min_distance = pd
-                min_point = point
+                min_distance, min_point = pd, point
         return min_point
 
-    def axial_symmetry(self, line):
-        '''
-        finds out the symmetric point according to a line
-        '''
+    def axial_symmetry(self, line: 'volmdlr.edges.Line2D'):
+        """
+        Returns the symmetric two-dimensional point according to a line.
+
+        :param line: the line used for axial symmetry
+        :type line: :class:`volmdlr.edges.Line2D`
+        :return: the symmetrical point
+        :rtype: :class:`volmdlr.Point2D`
+        """
 
         point_projection = line.point_projection(self)[0]
         point_symmetry = point_projection + (point_projection - self)
 
         return point_symmetry
-
-    def coordinates(self):
-        '''
-        gets x,y coordinates of a point2d
-        '''
-
-        return (self.x, self.y)
 
 
 O2D = Point2D(0, 0)
