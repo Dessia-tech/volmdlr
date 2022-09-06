@@ -4079,7 +4079,7 @@ class Face3D(volmdlr.core.Primitive3D):
         point_inside2d = self.surface2d.random_point_inside()
         return self.surface3d.point2d_to_3d(point_inside2d)
 
-    def get_geo_lines(self, mesh_size_list=None):
+    def geo_lines(self, mesh_size_list=None):
         """
         gets the lines that define a Face3D in a .geo file
         """
@@ -4117,7 +4117,7 @@ class Face3D(volmdlr.core.Primitive3D):
                     contour = contour.to_polygon(1)
                 for i, point in enumerate(contour.points):
                     lines.append(point.get_geo_lines(tag=point_account + i + 1,
-                                                     mesh_size=1))
+                                                     point_mesh_size=None))
 
                 for p, primitive in enumerate(contour.primitives):
                     if p != len(contour.primitives) - 1:
@@ -4144,7 +4144,7 @@ class Face3D(volmdlr.core.Primitive3D):
         gets the .geo file for the Face3D
         '''
 
-        lines = self.get_geo_lines(mesh_size_list)
+        lines = self.geo_lines(mesh_size_list)
 
         with open(file_name + '.geo', 'w', encoding="utf-8") as f:
             for line in lines:
@@ -7007,7 +7007,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                            'line_loop_account':0,
                                            'surface_account':0,
                                            'surface_loop_account':0},
-                      point_mesh_size: float =1):
+                      point_mesh_size: float = None):
         '''
         gets the lines that define an OpenShell3D in a .geo file
         '''

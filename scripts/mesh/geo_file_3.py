@@ -106,12 +106,21 @@ dict_obj = {
 }
 
 model = volmdlr.core.VolumeModel.dict_to_object(dict_obj)
-# m.babylonjs()
+# model.babylonjs()
 
 # %% geo file generation
 
-model.to_geo('model_two_closed_shell', point_mesh_size = 0.5)
+model.to_geo(file_name = 'model_two_closed_shell_geo',
+             factor = 0.5,
+             curvature_mesh_size = 0,
+             min_points = None,
+             initial_mesh_size = 5)
 
 # %% gmsh file generation
 
-# model.to_msh('model_two_closed_shell', 2)
+model.to_msh(file_name = 'model_two_closed_shell',
+             mesh_dimension = 2,
+             factor = 1,
+             curvature_mesh_size = 0,
+             min_points = None,
+             initial_mesh_size = 5)
