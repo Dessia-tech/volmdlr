@@ -3313,6 +3313,9 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         Creates a table of equivalence between the parameter t (evaluation
         of the BSplineCruve) and the cumulative distance.
         """
+        
+        resolution = min(resolution, int(self.length()/1e-6))
+        
         points3d = []
         ts = [start_parameter + i / resolution * (end_parameter - start_parameter)
               for i in range(resolution + 1)]
