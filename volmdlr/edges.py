@@ -3375,9 +3375,9 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         This is an approximation. Resolution parameter can increased
         for more accurate result.
         """
-        if abscissa == 0:
+        if math.isclose(abscissa, 0, abs_tol=1e-10):
             return self.start
-        elif abscissa == self.length():
+        elif math.isclose(abscissa, self.length(), abs_tol=1e-10):
             return self.end
         lut = self.look_up_table(resolution=resolution)
         if 0 < abscissa < self.length():
