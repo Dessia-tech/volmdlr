@@ -4560,11 +4560,18 @@ class PlaneFace3D(Face3D):
         if list_closed_cutting_contours:
             new_contour = list_closed_cutting_contours[0]
             if len(new_contour.primitives) >= 3 and new_contour.primitives[0].start == new_contour.primitives[-1].end:
+                inner_contours1 = [new_contour]
+                inner_contours2 = []
+                for inner_contour in self.surface2d.inner_contours:
+                    if new_contour.is_inside(inner_contour):
+                        inner_contours2.append(inner_contour)
+                    else:
+                        inner_contours1.append(inner_contour)
                 surf3d = self.surface3d
-                surf2d = Surface2D(self.surface2d.outer_contour, [new_contour])
+                surf2d = Surface2D(self.surface2d.outer_contour, inner_contours1)
                 new_plane = PlaneFace3D(surf3d, surf2d)
                 list_faces.append(new_plane)
-                list_faces.append(PlaneFace3D(surf3d, Surface2D(new_contour, [])))
+                list_faces.append(PlaneFace3D(surf3d, Surface2D(new_contour, inner_contours2)))
             else:
                 surf3d = self.surface3d
                 surf2d = Surface2D(self.surface2d.outer_contour, [])
