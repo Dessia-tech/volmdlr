@@ -22,6 +22,8 @@ from geomdl import utilities
 from geomdl.fitting import interpolate_surface, approximate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 
+import gmsh
+
 import dessia_common as dc
 import volmdlr.core
 import volmdlr.core_compiled
@@ -545,6 +547,185 @@ class Surface2D(volmdlr.core.Primitive2D):
         new_contour = self.frame_mapping(frame, side)
         self.outer_contour = new_contour.outer_contour
         self.inner_contours = new_contour.inner_contours
+
+    def geo_lines(self, mesh_size_list=None):
+        """
+        gets the lines that define a Surface2D in a .geo file
+        """
+
+        lines, line_surface, lines_tags = [], [], []
+        point_account, line_account, line_loop_account = 0, 0, 1
+        for c, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
+
+            if isinstance(contour, volmdlr.wires.Circle2D):
+                # point=[contour.radius, contour.center.y, 0]
+                # lines.append('Point('+str(point_account+1)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # point = [*contour.center, 0]
+                # lines.append('Point('+str(point_account+2)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # point=[-contour.radius, contour.center.y, 0]
+                # lines.append('Point('+str(point_account+3)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # lines.append('Circle('+str(line_account+1)+') = {'+str(point_account+1)+','+str(point_account+2)+','+str(point_account+3)+'};')
+                # lines.append('Circle('+str(line_account+2)+') = {'+str(point_account+3)+','+str(point_account+2)+','+str(point_account+1)+'};')
+
+                # lines_tags.extend([line_account+1, line_account+2])
+
+                # lines.append('Line Loop('+str(line_loop_account+1)+') = {'+str(lines_tags)[1:-1]+'};')
+
+                # line_surface.append(line_loop_account+1)
+
+                # lines_tags = []
+                # point_account, line_account, line_loop_account = point_account+3, line_account+2, line_loop_account+1
+
+                pass
+
+            elif isinstance(contour, (volmdlr.wires.Contour2D, volmdlr.wires.ClosedPolygon2D)):
+                if not isinstance(contour, volmdlr.wires.ClosedPolygon2D):
+                    contour = contour.to_polygon(1)
+                for i, point in enumerate(contour.points):
+                    lines.append(point.get_geo_lines(tag=point_account + i + 1,
+                                                     point_mesh_size=None))
+
+                for p, primitive in enumerate(contour.primitives):
+                    if p != len(contour.primitives) - 1:
+                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
+                                                             start_point_tag=point_account + p + 1,
+                                                             end_point_tag=point_account + p + 2))
+                    else:
+                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
+                                                             start_point_tag=point_account + p + 1,
+                                                             end_point_tag=point_account + 1))
+                    lines_tags.append(line_account + p + 1)
+
+                lines.append('Line Loop(' + str(c + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
+                line_surface.append(line_loop_account)
+                point_account, line_account, line_loop_account = point_account + i + 1, line_account + p + 1, line_loop_account + 1
+                lines_tags = []
+
+        lines.append('Plane Surface(' + str(1) + ') = {' + str(line_surface)[1:-1] + '};')
+
+        return lines
+
+    def mesh_lines(self,
+                   factor: float,
+                   curvature_mesh_size: int = None,
+                   min_points: int = None,
+                   initial_mesh_size: float = 5):
+            """
+            gets the lines that define mesh parameters for a Surface2D, to be added to a .geo file
+
+            :param factor: A float, between 0 and 1, that describes the mesh quality
+            (1 for coarse mesh - 0 for fine mesh)
+            :type factor: float
+            :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+            (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+            :type curvature_mesh_size: int, optional
+            :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+            :type min_points: int, optional
+            :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+            :type initial_mesh_size: float, optional
+
+            :return: A list of lines that describe mesh parameters
+            :rtype: List[str]
+            """
+
+            lines = []
+            if factor == 0:
+                factor = 1e-3
+
+            size = (math.sqrt(self.area())/initial_mesh_size) * factor
+
+            if min_points:
+                primitives, primitives_length = [], []
+                for c, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
+                    if isinstance(contour, volmdlr.wires.Circle2D):
+                        primitives.append(contour)
+                        primitives.append(contour)
+                        primitives_length(contour.length()/2)
+                        primitives_length(contour.length()/2)
+                    else:
+                        for p, primitive in enumerate(contour.primitives):
+                            if ((primitive not in primitives)
+                                    and (primitive.reverse() not in primitives)):
+                                primitives.append(primitive)
+                                primitives_length(primitive.length())
+
+                for i, length in enumerate(primitives_length):
+                    if length < min_points*size:
+                        lines.append('Transfinite Curve {'+str(i)+'} = '+str(min_points)+' Using Progression 1;')
+
+            lines.append('Field[1] = MathEval;')
+            lines.append('Field[1].F = "'+str(size)+'";')
+            lines.append('Background Field = 1;')
+            if curvature_mesh_size:
+                lines.append('Mesh.MeshSizeFromCurvature = '+str(curvature_mesh_size)+';')
+
+            lines.append('Coherence;')
+
+            return lines
+
+    def to_geo(self, file_name: str,
+               factor: float,
+               curvature_mesh_size: int = None,
+               min_points: int = None,
+               initial_mesh_size: float = 5):
+        '''
+        gets the .geo file for the Surface2D
+        '''
+
+        lines = self.geo_lines()
+        lines.extend(self.mesh_lines(factor, curvature_mesh_size,
+                                     min_points, initial_mesh_size))
+
+        with open(file_name + '.geo', 'w', encoding="utf-8") as f:
+            for line in lines:
+                f.write(line)
+                f.write('\n')
+        f.close()
+
+    def to_msh(self, file_name: str, mesh_dimension: int,
+               factor: float,
+               curvature_mesh_size: int = 0,
+               min_points: int = None,
+               initial_mesh_size: float = 5):
+        """
+        gets .msh file for the Surface2D generated by gmsh
+
+        :param file_name: The msh. file name
+        :type file_name: str
+        :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+        :type mesh_dimension: int
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        self.to_geo(file_name, factor,
+                    curvature_mesh_size,
+                    min_points,
+                    initial_mesh_size)
+
+        gmsh.initialize()
+        gmsh.open(file_name+".geo")
+
+        gmsh.model.geo.synchronize()
+        gmsh.model.mesh.generate(mesh_dimension)
+
+        gmsh.write(file_name+".msh")
+
+        gmsh.finalize()
 
 
 class Surface3D(dc.DessiaObject):
@@ -7008,9 +7189,18 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                            'surface_account':0,
                                            'surface_loop_account':0},
                       point_mesh_size: float = None):
-        '''
-        gets the lines that define an OpenShell3D in a .geo file
-        '''
+        """
+        gets the lines that define an OpenShell3D geometry in a .geo file
+
+        :param update_data: Data used for VolumeModel defined with different shells
+        defaults to {'point_account':0,'line_account':0,'line_loop_account':0, 'surface_account':0'surface_loop_account':0}
+        :type update_data: dict, optional
+        :param point_mesh_size: The mesh size at a specific point, defaults to None
+        :type point_mesh_size: float, optional
+
+        :return: A list of lines that describe the geomery & the updated data
+        :rtype: Tuple(List[str], dict)
+        """
 
         primitives = []
         points = set()
