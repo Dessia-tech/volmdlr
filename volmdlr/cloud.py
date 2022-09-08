@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 import dessia_common as dc
 import volmdlr as vm
-import volmdlr.core
+# import volmdlr.core
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 import volmdlr.step as vstep
@@ -270,6 +270,7 @@ class PointCloud2D(dc.DessiaObject):
     def to_polygon(self, convexe=False):
         if not self.points:
             return None
+
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         if convexe:
             polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)

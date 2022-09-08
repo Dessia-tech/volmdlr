@@ -5,11 +5,11 @@
 """
 # from binaryornot.check import is_binary
 import io
-from typing import BinaryIO
+# from typing import BinaryIO
 from typing import List
 import struct
 # import kaitaistruct
-from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
+from kaitaistruct import KaitaiStream
 
 
 from binaryornot.check import is_binary
@@ -83,8 +83,12 @@ class Stl(dc.DessiaObject):
         stream.seek(0)
 
         stream = KaitaiStream(stream)
-        name = stream.read_bytes(80).decode('utf8')
-        # print(name)
+        name_slice = stream.read_bytes(80)
+        try:
+            name = name_slice.decode('utf-8')
+        except UnicodeDecodeError:
+            name = name_slice.decode('latin-1')
+
         num_triangles = stream.read_u4le()
         # print(num_triangles)
 
