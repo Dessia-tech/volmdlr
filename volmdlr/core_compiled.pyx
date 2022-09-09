@@ -817,6 +817,17 @@ Y2D = Vector2D(0, 1)
 
 
 class Point2D(Vector2D):
+    """
+    Class representing a 2 dimensional point.
+
+    :param x: The vector's abscissa
+    :type x: float
+    :param y: The vector's ordinate
+    :type y: float
+    :param name: The vector's name
+    :type name: str
+    """
+
     def __init__(self, x: float, y: float, name: Text = ''):
         Vector2D.__init__(self, x=x, y=y, name=name)
 
@@ -928,7 +939,7 @@ class Point2D(Vector2D):
             intersection point, the curvilinear abscissa of the point on the
             first line and on the second line. Otherwise, only the point will
             be returned
-        :type curvilinear_abscissa: bool, optional
+        :type curvilinear_abscissa: bool | str, optional
         :return: The two-dimensional point at the intersection of the two lines
         :rtype: :class:`volmdlr.Point2D`
         """
