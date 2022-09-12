@@ -1341,7 +1341,7 @@ class LineSegment2D(LineSegment):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
-        return self.discretization_points(number_points = discretization_resolution)
+        return self.discretization_points(number_points=discretization_resolution)
 
     def to_wire(self, n: int):
         '''
