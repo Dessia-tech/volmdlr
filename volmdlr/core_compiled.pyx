@@ -939,7 +939,7 @@ class Point2D(Vector2D):
             intersection point, the curvilinear abscissa of the point on the
             first line and on the second line. Otherwise, only the point will
             be returned
-        :type curvilinear_abscissa: bool | str, optional
+        :type curvilinear_abscissa: bool, optional
         :return: The two-dimensional point at the intersection of the two lines
         :rtype: :class:`volmdlr.Point2D`
         """
