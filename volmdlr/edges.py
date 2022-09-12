@@ -886,7 +886,7 @@ class BSplineCurve2D(BSplineCurve):
         return normal_vector
 
     def straight_line_area(self):
-        points = self.discretization_points(100)
+        points = self.discretization_points(number_points=100)
         x = [point.x for point in points]
         y = [point.y for point in points]
         x1 = [x[-1]] + x[0:-1]
@@ -895,7 +895,7 @@ class BSplineCurve2D(BSplineCurve):
                          - sum(i * j for i, j in zip(y, x1)))
 
     def straight_line_center_of_mass(self):
-        polygon_points = self.discretization_points(100)
+        polygon_points = self.discretization_points(number_points=100)
         cog = volmdlr.O2D
         for point in polygon_points:
             cog += point
@@ -1341,7 +1341,7 @@ class LineSegment2D(LineSegment):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
+        return self.discretization_points(number_points = discretization_resolution)
 
     def to_wire(self, n: int):
         '''
