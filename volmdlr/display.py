@@ -176,9 +176,9 @@ class DisplayMesh2D(DisplayMesh):
             p1 = self.points[n1]
             p2 = self.points[n2]
             p3 = self.points[n3]
-            area += 0.5*abs((p2-p1).cross(p3-p1))
+            area += 0.5 * abs((p2 - p1).cross(p3 - p1))
         return area
-            
+
 
 class DisplayMesh3D(DisplayMesh):
     _linesegment_class = volmdlr.edges.LineSegment3D

@@ -96,7 +96,7 @@ class Edge(dc.DessiaObject):
         """
         if number_points is None:
             number_points = 2
-        step = self.length() / (number_points-1)
+        step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def polygon_points(self, discretization_resolution: int):
@@ -3662,7 +3662,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         return BSplineCurve2D(self.degree, control_points2d,
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic, self.name)
-
 
     def polygon_points(self):
         warnings.warn('polygon_points is deprecated,\

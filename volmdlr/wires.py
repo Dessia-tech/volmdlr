@@ -3042,7 +3042,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                         # Rolling the remaining list
                         if number_remaining_points > 4:
                             deq = deque(remaining_points)
-                            deq.rotate(int(0.3 * number_remaining_points))#random.randint(1, number_remaining_points-1))
+                            # random.randint(1, number_remaining_points-1))
+                            deq.rotate(int(0.3 * number_remaining_points))
                             remaining_points = list(deq)
 
                         break
