@@ -85,14 +85,19 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError(f'point_at_absciss method not implememented by {self.__class__.__name__}')
 
-    def discretization_points(self, discretization_resolution: int = 10):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
-        discretize a Edge to have "n" points (including start and end points)
-        :return:
+        discretize a Edge to have "n" points
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+            to mesh an arc
+        :return: a list of sampled points
         """
-        length = self.length()
-        return [self.point_at_abscissa(i * length / discretization_resolution) for i in
-                range(discretization_resolution + 1)]
+        if number_points is None:
+            number_points = 2
+        step = self.length() / (number_points-1)
+        return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
@@ -942,7 +947,7 @@ class BSplineCurve2D(BSplineCurve):
             point.rotation_inplace(center, angle)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.discretization_points(200)
+        polygon_points = self.discretization_points(number_points=200)
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
@@ -968,7 +973,7 @@ class BSplineCurve2D(BSplineCurve):
         return list_intersections
 
     def line_crossings(self, line2d: Line2D):
-        polygon_points = self.discretization_points(50)
+        polygon_points = self.discretization_points(number_points=50)
         crossings = []
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             l = LineSegment2D(p1, p2)
@@ -1002,7 +1007,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def point_distance(self, point):
         distance = math.inf
-        polygon_points = self.discretization_points(n=20)
+        polygon_points = self.discretization_points(number_points=20)
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             line = LineSegment2D(p1, p2)
             dist = line.point_distance(point)
@@ -1332,19 +1337,6 @@ class LineSegment2D(LineSegment):
 
         return Line2D(offset_point_1, offset_point_2)
 
-    def discretization_points(self, discretization_resolution: int = 10):
-        """
-        discretize a LineSegment2D to have "n" points (including start and end points)
-        :param discretization_resolution: number of points to discretize
-        :return: discretization_points
-        """
-        if discretization_resolution == 0:
-            return [self.start, self.end]
-        length = self.length()
-        return [self.point_at_abscissa(
-            i * length / (discretization_resolution - 1))
-            for i in range(discretization_resolution)]
-
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
@@ -1364,7 +1356,7 @@ class LineSegment2D(LineSegment):
         find out the nearest point on the linesegment to point
         '''
 
-        points = self.discretization_points(500)
+        points = self.discretization_points(number_points=500)
         return point.nearest_point(points)
 
     def axial_symmetry(self, line):
@@ -1475,17 +1467,30 @@ class Arc(Edge):
         points = self.discretization_points(angle_resolution=100)
         return point.point_distance(point.nearest_point(points))
 
-    def discretization_points(self, discretization_resolution=40):
-        number_points = math.ceil(self.angle * discretization_resolution) + 2
-        length = self.length()
-        return [self.point_at_abscissa(i * length / number_points)
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
+        """
+        discretize a Edge to have "n" points
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+            to mesh an arc
+        :return: a list of sampled points
+        """
+        if not number_points:
+            if not angle_resolution:
+                number_points = 2
+            else:
+                number_points = math.ceil(self.angle * angle_resolution) + 2
+
+        step = self.length() / (number_points - 1)
+        return [self.point_at_abscissa(i * step)
                 for i in range(number_points)]
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
+        return self.discretization_points(number_points=discretization_resolution)
 
 
 class Arc2D(Arc):
@@ -1739,7 +1744,7 @@ class Arc2D(Arc):
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
             area = math.pi * self.radius ** 2 - 0.5 * self.radius ** 2 * (
-                    angle - math.sin(angle))
+                angle - math.sin(angle))
         else:
             angle = self.angle
             area = 0.5 * self.radius ** 2 * (angle - math.sin(angle))
@@ -1760,11 +1765,11 @@ class Arc2D(Arc):
 
         # Full arc section
         Ix1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
-                math.sin(2 * angle1) - math.sin(2 * angle2)))
+            math.sin(2 * angle1) - math.sin(2 * angle2)))
         Iy1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
-                math.sin(2 * angle2) - math.sin(2 * angle1)))
+            math.sin(2 * angle2) - math.sin(2 * angle1)))
         Ixy1 = self.radius ** 4 / 8 * (
-                math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
+            math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
 
         # Triangle
         xi, yi = (self.start - self.center)
@@ -1772,7 +1777,7 @@ class Arc2D(Arc):
         Ix2 = (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi) / 12.
         Iy2 = (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi) / 12.
         Ixy2 = (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
-                xi * yj - xj * yi) / 24.
+            xi * yj - xj * yi) / 24.
         if Ix2 < 0.:
             Ix2, Iy2, Ixy2 = -Ix2, -Iy2, -Ixy2
         if self.angle < math.pi:
@@ -1818,11 +1823,11 @@ class Arc2D(Arc):
         triangle_cog = self.center + 2 / 3. * h * u
         if self.angle < math.pi:
             cog = (
-                          self.center_of_mass() * self.area() - triangle_area * triangle_cog) / abs(
+                self.center_of_mass() * self.area() - triangle_area * triangle_cog) / abs(
                 self.straight_line_area())
         else:
             cog = (
-                          self.center_of_mass() * self.area() + triangle_area * triangle_cog) / abs(
+                self.center_of_mass() * self.area() + triangle_area * triangle_cog) / abs(
                 self.straight_line_area())
 
         # ax = self.plot()
@@ -1929,11 +1934,11 @@ class Arc2D(Arc):
         angle1 = self.angle1
 
         Ix = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
-                math.sin(2 * angle1) - math.sin(2 * angle2)))
+            math.sin(2 * angle1) - math.sin(2 * angle2)))
         Iy = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
-                math.sin(2 * angle2) - math.sin(2 * angle1)))
+            math.sin(2 * angle2) - math.sin(2 * angle1)))
         Ixy = self.radius ** 4 / 8 * (
-                math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
+            math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
         # Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
 
         # Must be computed at center, so huygens related to center
@@ -2115,7 +2120,7 @@ class FullArc2D(Arc2D):
          [self._center, self.start, self.end, self.interior]]
 
     def polygonization(self):
-        return volmdlr.wires.ClosedPolygon2D(self.discretization_points(15))
+        return volmdlr.wires.ClosedPolygon2D(self.discretization_points(angle_resolution=15))
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False,
              linestyle='-', linewidth=1):
@@ -2249,10 +2254,11 @@ class ArcEllipse2D(Edge):
         interior_new, center_new = frame.new_coordinates(
             self.interior), frame.new_coordinates(self.center)
 
-        # from :
-        # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
-        def theta_A_B(s, i, e,
-                      c):  # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
+        def theta_A_B(s, i, e, c):
+            """
+            from : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
+            theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
+            """
             xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
                 1] - c[1], e[0] - c[0], e[1] - c[1]
             A = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],
@@ -2329,25 +2335,24 @@ class ArcEllipse2D(Edge):
 
     points = property(_get_points)
 
-    def discretization_points(self, discretization_resolution=40):
-        number_points_tesselation = math.ceil(
-            discretization_resolution * abs(0.5 * self.angle / math.pi))
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
+        """
+        discretize a Edge to have "n" points
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+            to mesh an arc
+        :return: a list of sampled points
+        """
+        if not number_points:
+            if not angle_resolution:
+                number_points = 2
+            else:
+                number_points = math.ceil(angle_resolution * abs(0.5 * self.angle / math.pi))
 
-        frame2d = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
-
-        polygon_points_2D = [(volmdlr.Point2D((self.Gradius * math.cos(
-            self.offset_angle + self.angle * i / (number_points_tesselation)),
-                                               self.Sradius * math.sin(
-                                                   self.offset_angle + self.angle * i / (
-                                                       number_points_tesselation)))))
-                             for i in
-                             range(number_points_tesselation + 1)]
-
-        global_points = []
-        for pt in polygon_points_2D:
-            global_points.append(frame2d.old_coordinates(pt))
-
-        return global_points
+        step = self.length() / (number_points - 1)
+        return [self.point_at_abscissa(i * step)
+                for i in range(number_points)]
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
@@ -2439,7 +2444,7 @@ class Line3D(Line):
 
     def point_at_abscissa(self, abscissa):
         return self.point1 + (
-                self.point2 - self.point1) * abscissa
+            self.point2 - self.point1) * abscissa
 
     def point_belongs(self, point3d):
         if point3d == self.point1:
@@ -2623,7 +2628,7 @@ class Line3D(Line):
 
         if (x2 - x1 + y1 - y2) != 0 and (y4 - y3) != 0:
             t1 = (x3 - x1 + (x4 - x3) * (y1 - y3) / (y4 - y3)) / (
-                    x2 - x1 + y1 - y2)
+                x2 - x1 + y1 - y2)
             t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
             res1 = z1 + (z2 - z1) * t1
             res2 = z3 + (z4 - z3) * t2
@@ -2632,7 +2637,7 @@ class Line3D(Line):
 
         if (z2 - z1 + y1 - y2) != 0 and (y4 - y3) != 0:
             t1 = (z3 - z1 + (z4 - z3) * (y1 - y3) / (y4 - y3)) / (
-                    z2 - z1 + y1 - y2)
+                z2 - z1 + y1 - y2)
             t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
             res1 = x1 + (x2 - x1) * t1
             res2 = x3 + (x4 - x3) * t2
@@ -2641,7 +2646,7 @@ class Line3D(Line):
 
         if (z2 - z1 + x1 - x2) != 0 and (x4 - x3) != 0:
             t1 = (z3 - z1 + (z4 - z3) * (x1 - x3) / (x4 - x3)) / (
-                    z2 - z1 + x1 - x2)
+                z2 - z1 + x1 - x2)
             t2 = (x1 - x3 + (x2 - x1) * t1) / (x4 - x3)
             res1 = y1 + (y2 - y1) * t1
             res2 = y3 + (y4 - y3) * t2
@@ -2727,7 +2732,7 @@ class LineSegment3D(LineSegment):
 
     def point_at_abscissa(self, abscissa):
         return self.start + abscissa * (
-                self.end - self.start) / self.length()
+            self.end - self.start) / self.length()
 
     def point_belongs(self, point, abs_tol=1e-7):
         distance = self.start.point_distance(point) + self.end.point_distance(
@@ -2791,7 +2796,7 @@ class LineSegment3D(LineSegment):
         # 2 unknown 3eq with t1 et t2 unknown
         if (x2 - x1 + y1 - y2) != 0 and (y4 - y3) != 0:
             t1 = (x3 - x1 + (x4 - x3) * (y1 - y3) / (y4 - y3)) / (
-                    x2 - x1 + y1 - y2)
+                x2 - x1 + y1 - y2)
             t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
             res1 = z1 + (z2 - z1) * t1
             res2 = z3 + (z4 - z3) * t2
@@ -2800,7 +2805,7 @@ class LineSegment3D(LineSegment):
 
         if (z2 - z1 + y1 - y2) != 0 and (y4 - y3) != 0:
             t1 = (z3 - z1 + (z4 - z3) * (y1 - y3) / (y4 - y3)) / (
-                    z2 - z1 + y1 - y2)
+                z2 - z1 + y1 - y2)
             t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
             res1 = x1 + (x2 - x1) * t1
             res2 = x3 + (x4 - x3) * t2
@@ -2809,7 +2814,7 @@ class LineSegment3D(LineSegment):
 
         if (z2 - z1 + x1 - x2) != 0 and (x4 - x3) != 0:
             t1 = (z3 - z1 + (z4 - z3) * (x1 - x3) / (x4 - x3)) / (
-                    z2 - z1 + x1 - x2)
+                z2 - z1 + x1 - x2)
             t2 = (x1 - x3 + (x2 - x1) * t1) / (x4 - x3)
             res1 = y1 + (y2 - y1) * t1
             res2 = y3 + (y4 - y3) * t2
@@ -3658,8 +3663,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic, self.name)
 
-    def discretization_points(self):
-        return self.points
 
     def polygon_points(self):
         warnings.warn('polygon_points is deprecated,\
@@ -4164,16 +4167,16 @@ class Arc3D(Arc):
             return (a * ((math.cos(x[0])) ** 2) * r1 ** 2 + e * (
                     (math.sin(x[0])) ** 2) * r1 ** 2
                     + o + h * ((math.cos(x[1])) ** 2) * r2 ** 2 + j * (
-                            (math.sin(x[1])) ** 2) * r2 ** 2
-                    + b * math.sin(2 * x[0]) * r1 ** 2 - 2 * r1 * math.cos(
+                (math.sin(x[1])) ** 2) * r2 ** 2
+                + b * math.sin(2 * x[0]) * r1 ** 2 - 2 * r1 * math.cos(
                         x[0]) * k
-                    - 2 * r1 * r2 * math.cos(x[0]) * math.cos(x[1]) * c
-                    - 2 * r1 * r2 * math.cos(x[0]) * math.sin(
+                - 2 * r1 * r2 * math.cos(x[0]) * math.cos(x[1]) * c
+                - 2 * r1 * r2 * math.cos(x[0]) * math.sin(
                         x[1]) * d - 2 * r1 * math.sin(x[0]) * l
-                    - 2 * r1 * r2 * math.sin(x[0]) * math.cos(x[1]) * f
-                    - 2 * r1 * r2 * math.sin(x[0]) * math.sin(
+                - 2 * r1 * r2 * math.sin(x[0]) * math.cos(x[1]) * f
+                - 2 * r1 * r2 * math.sin(x[0]) * math.sin(
                         x[1]) * g + 2 * r2 * math.cos(x[1]) * m
-                    + 2 * r2 * math.sin(x[1]) * n + i * math.sin(
+                + 2 * r2 * math.sin(x[1]) * n + i * math.sin(
                         2 * x[1]) * r2 ** 2)
 
         x01 = npy.array([self.angle / 2, other_arc.angle / 2])
@@ -4212,11 +4215,11 @@ class Arc3D(Arc):
         def distance_squared(x):
             return (a * x[0] ** 2 + j + d * (
                     (math.sin(x[1])) ** 2) * r ** 2 + f * (
-                            (math.cos(x[1])) ** 2) * r ** 2
-                    - 2 * x[0] * g - 2 * x[0] * r * math.sin(x[1]) * b - 2 * x[
+                (math.cos(x[1])) ** 2) * r ** 2
+                - 2 * x[0] * g - 2 * x[0] * r * math.sin(x[1]) * b - 2 * x[
                         0] * r * math.cos(x[1]) * c
-                    + 2 * r * math.sin(x[1]) * h + 2 * r * math.cos(x[1]) * i
-                    + math.sin(2 * x[1]) * e * r ** 2)
+                + 2 * r * math.sin(x[1]) * h + 2 * r * math.cos(x[1]) * i
+                + math.sin(2 * x[1]) * e * r ** 2)
 
         x01 = npy.array([0.5, self.angle / 2])
         x02 = npy.array([0.5, 0])
@@ -4421,7 +4424,7 @@ class FullArc3D(Arc3D):
 
     def __eq__(self, other_arc):
         return (self.center == other_arc.center) \
-               and (self.start == other_arc.start)
+            and (self.start == other_arc.start)
 
     @property
     def center(self):
@@ -4685,27 +4688,6 @@ class ArcEllipse3D(Edge):
         volmdlr.core.CompositePrimitive3D.__init__(self,
                                                    primitives=self.discretization_points(),
                                                    name=name)
-
-    def discretization_points(self, discretization_resolution=40):
-        number_points_tesselation = math.ceil(
-            discretization_resolution * abs(0.5 * self.angle / math.pi))
-
-        frame3d = volmdlr.Frame3D(self.center, self.major_dir,
-                                  self.minor_dir, self.normal)
-
-        polygon_points_3D = [volmdlr.Point3D(self.Gradius * math.cos(
-            self.offset_angle + self.angle * i / (number_points_tesselation)),
-                                             self.Sradius * math.sin(
-                                                 self.offset_angle + self.angle * i / (
-                                                     number_points_tesselation)),
-                                             0) for i in
-                             range(number_points_tesselation + 1)]
-
-        global_points = []
-        for pt in polygon_points_3D:
-            global_points.append(frame3d.old_coordinates(pt))
-
-        return global_points
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\

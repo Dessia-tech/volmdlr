@@ -2053,14 +2053,15 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
-        if -1e-3 < x < 0:
+        if x < 0:
             x = 0.
-        elif 1 < x < 1 + 1e-3:
+        elif 1 < x:
             x = 1
-        if -1e-3 < y < 0:
+        if y < 0:
             y = 0
-        elif 1 < y < 1 + 1e-3:
+        elif y > 1:
             y = 1
+            
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
@@ -3554,8 +3555,8 @@ class BSplineSurface3D(Surface3D):
             pt0 = volmdlr.O2D
             points = []
 
-            for l in lines:
-                inter = contour.line_intersections(l)
+            for line in lines:
+                inter = contour.line_intersections(line)
                 if inter:
                     pt = [inter[0][0], inter[1][0]]
                 else:
@@ -3565,7 +3566,7 @@ class BSplineSurface3D(Surface3D):
                 pt0 = pt[0]
                 edge = volmdlr.edges.LineSegment2D(pt[0], pt[1])
 
-                points.extend(edge.discretization_points(10))
+                points.extend(edge.discretization_points(number_points=10))
 
             points3d = []
             for p in points:
