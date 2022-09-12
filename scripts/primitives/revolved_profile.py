@@ -121,6 +121,11 @@ translated_model.babylonjs()
 turned_model.babylonjs()
 model.to_step('revolved_profile.step')
 
+model_copy = model.copy()
+
+
+assert model_copy == model
+
 # ax = None
 # for primitive in turned_model.primitives:
 #     for face in primitive.faces:
