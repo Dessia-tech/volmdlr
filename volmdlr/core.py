@@ -1413,6 +1413,9 @@ class VolumeModel(dc.DessiaObject):
         field_nums = []
         lines = []
 
+        lines.append('Mesh.CharacteristicLengthMin = 0;')
+        lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
+
         for i, primitive in enumerate(self.primitives):
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
                 bbx = primitive.bounding_box
@@ -1445,9 +1448,6 @@ class VolumeModel(dc.DessiaObject):
                     for i, length in enumerate(primitives_length):
                         if length < min_points*size:
                             lines.append('Transfinite Curve {'+str(i)+'} = '+str(min_points)+' Using Progression 1;')
-
-                lines.append('Mesh.CharacteristicLengthMin = 0;')
-                lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
 
                 lines.append('Field['+str(field_num)+'] = MathEval;')
                 lines.append('Field['+str(field_num)+'].F = "'+str(size)+'";')
