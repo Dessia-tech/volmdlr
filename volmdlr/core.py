@@ -1446,11 +1446,14 @@ class VolumeModel(dc.DessiaObject):
                         if length < min_points*size:
                             lines.append('Transfinite Curve {'+str(i)+'} = '+str(min_points)+' Using Progression 1;')
 
+                lines.append('Mesh.CharacteristicLengthMin = 0;')
+                lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
+
                 lines.append('Field['+str(field_num)+'] = MathEval;')
                 lines.append('Field['+str(field_num)+'].F = "'+str(size)+'";')
 
                 lines.append('Field['+str(field_num+1)+'] = Restrict;')
-                lines.append('Field['+str(field_num+1)+'].InField = {'+str(field_num)+'};')
+                lines.append('Field['+str(field_num+1)+'].InField = '+str(field_num)+';')
                 lines.append('Field['+str(field_num+1)+'].VolumesList = {'+str(i+1)+'};')
                 field_nums.append(field_num+1)
                 field_num +=2
