@@ -652,6 +652,15 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
+    def copy(self, deep=True, memo=None):
+        return self.__class__(plane_origin=self.plane_origin.copy(),
+                              x=self.x.copy(), y=self.y.copy(),
+                              contour2d=self.contour2d.copy(),
+                              axis=self.axis.copy(), angle=self.angle,
+                              axis_point=self.axis_point.copy(),
+                              color=self.color, alpha=self.alpha,
+                              name=self.name)
+
     def shell_faces(self):
         faces = []
 
