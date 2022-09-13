@@ -951,8 +951,8 @@ class BSplineCurve2D(BSplineCurve):
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
-        for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-            linesegment = LineSegment2D(p1, p2)
+        for point1, point2 in zip(polygon_points[:-1], polygon_points[1:]):
+            linesegment = LineSegment2D(point1, point2)
             intersections = linesegment.line_intersections(line2d)
             initial_abscissa += linesegment.length()
             if intersections:
@@ -1158,7 +1158,15 @@ class LineSegment2D(LineSegment):
 
             return [point_projection1]
         else:
-            return []
+            vector1 = self.start - line.point1
+            vector2 = self.start - line.point2
+            vector3 = self.end - line.point1
+            vector4 = self.end - line.point2
+            if math.isclose(vector1.cross(vector2), 0, abs_tol=1e-6):
+                return [self.start]
+            if math.isclose(vector3.cross(vector4), 0, abs_tol=1e-6):
+                return [self.end]
+        return []
 
     def linesegment_intersections(self, linesegment: 'LineSegment2D'):
         """
