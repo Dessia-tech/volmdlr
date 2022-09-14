@@ -22,7 +22,7 @@ untracked_modules = ['volmdlr/templates.py',
 
 print('untracked modules:', untracked_modules)
 
-with open('coverage.json', 'r') as file:
+with open('../coverage.json', 'r') as file:
     d = json.load(file)
 
 
