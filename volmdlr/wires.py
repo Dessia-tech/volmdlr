@@ -829,6 +829,15 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 
         return min(distance)
 
+    def point_distance(self, point):
+        distance, distance_point = math.inf, None
+        for prim in self.primitives:
+            prim_distance, prim_point = prim.point_distance(point)
+            if prim_distance < distance:
+                distance = prim_distance
+                distance_point = prim_point
+        return distance, distance_point
+
     def extrusion(self, extrusion_vector):
         faces = []
         for primitive in self.primitives:
