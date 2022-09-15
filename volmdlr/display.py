@@ -71,15 +71,32 @@ class DisplayMesh(dc.DessiaObject):
         Merge several meshes into one
         """
         # Collect points
+        import time
+
+        t = time.time()
+        ip = 0
+        point_index = {}
+        points = set()
+        for mesh in meshes:
+            for point in mesh.points:
+                points.add(point)
+        points = list(points)
+        for point in points:
+            point_index[point] = ip
+            ip += 1
+        print('2.', time.time()-t)
+
+        t = time.time()
         ip = 0
         point_index = {}
         points = []
         for mesh in meshes:
             for point in mesh.points:
-                if not point in point_index:
+                if point not in point_index:
                     point_index[point] = ip
                     ip += 1
                     points.append(point)
+        print('3.', time.time()-t)
 
         triangles = []
         for mesh in meshes:
