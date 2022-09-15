@@ -4177,7 +4177,7 @@ class PlaneFace3D(Face3D):
 
     def linesegment3d_inside(self, linesegement3d: volmdlr.edges.LineSegment3D):
         length = linesegement3d.length()
-        points = [linesegement3d.point_at_abscissa(length * n / 20) for n in range(1, 19)]
+        points = [linesegement3d.point_at_abscissa(length * n / 200) for n in range(1, 199)]
         for point in points:
             if not self.point_belongs(point):
                 return False
