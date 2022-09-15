@@ -1511,6 +1511,40 @@ class VolumeModel(dc.DessiaObject):
                 f.write('\n')
         f.close()
 
+    def to_geo_with_stl(self, file_name: str,
+               factor: float,
+               curvature_mesh_size: int = 0,
+               min_points: int = None,
+               initial_mesh_size: float = 5):
+        """
+        gets the .geo file for the VolumeModel, with saving each closed shell in a stl file
+
+        :param file_name: The geo. file name
+        :type file_name: str
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        lines = self.get_geo_lines()
+        lines.extend(self.get_mesh_lines(factor, curvature_mesh_size,
+                                         min_points, initial_mesh_size))
+        lines.append('Mesh 2;')
+        for i, primitive in enumerate(self.primitives):
+            if isinstance(primitive, volmdlr.faces.ClosedShell3D):
+
+        
+
     def to_msh(self, file_name: str, mesh_dimension: int,
                factor: float,
                curvature_mesh_size: int = 0,
