@@ -4347,14 +4347,17 @@ class PlaneFace3D(Face3D):
 
         return intersections
 
-    def validate_inner_contour_intersections(self, intersections):
+    def validate_inner_contour_intersections(self, intersections, face2=None):
         intersection_primitives = []
         for point1, point2 in combinations(intersections, 2):
             if point1 != point2:
-
                 line_segment3d = volmdlr.edges.LineSegment3D(point1, point2)
                 if self.linesegment3d_inside(line_segment3d) and line_segment3d not in intersection_primitives:
-                    intersection_primitives.append(line_segment3d)
+                    if face2 is not None:
+                        if face2.linesegment3d_inside(line_segment3d):
+                            intersection_primitives.append(line_segment3d)
+                    else:
+                        intersection_primitives.append(line_segment3d)
         return intersection_primitives
 
     def get_face_intersections(self, face2):
@@ -4379,7 +4382,7 @@ class PlaneFace3D(Face3D):
             elif face2.surface2d.inner_contours:
                 intersection_primitives = face2.validate_inner_contour_intersections(intersections)
             elif len(intersections) > 2:
-                intersection_primitives = self.validate_inner_contour_intersections(intersections)
+                intersection_primitives = self.validate_inner_contour_intersections(intersections, face2)
                 if not intersections:
                     raise NotImplementedError
             else:
