@@ -1257,7 +1257,7 @@ class HollowCylinder(RevolvedProfile):
         new_position = self.position.copy()
         new_axis = self.axis.copy()
         return HollowCylinder(new_position, new_axis, self.inner_radius, self.outer_radius, self.length,
-                        color=self.color, alpha=self.alpha, name=self.name)
+                              color=self.color, alpha=self.alpha, name=self.name)
 
     @classmethod
     def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
