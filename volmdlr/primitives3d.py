@@ -888,6 +888,18 @@ class Cylinder(RevolvedProfile):
     def volume(self):
         return self.length * math.pi * self.radius**2
 
+    @classmethod
+    def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
+                             radius: float,
+                             color: Tuple[float, float, float] = None, alpha: float = 1,
+                             name: str = ''):
+        position = 0.5 * (point1 + point2)
+        length = point1.point_distance(point2)
+        axis = point2 - point1
+        axis.normalize()
+        return cls(position, axis, radius, length=length,
+                   color=color, alpha=alpha, name=name)
+
     def FreeCADExport(self, ip):
         if self.radius > 0:
             name = 'primitive' + str(ip)
