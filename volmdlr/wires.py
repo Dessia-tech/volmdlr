@@ -2819,7 +2819,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         def line_colides_with_hull(line, concave_hull):
             for hull_line in concave_hull:
                 if line.start != hull_line.start and line.start != hull_line.end and line.end != hull_line.start and line.end != hull_line.end:
-                    if line.line_intersections(hull_line):
+                    if line.line_intersections(hull_line.to_line()):
                         return True
             return False
 
