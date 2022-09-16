@@ -3558,7 +3558,9 @@ class BSplineSurface3D(Surface3D):
             for line in lines:
                 inter = contour.line_intersections(line)
                 if inter:
-                    pt = [inter[0][0], inter[1][0]]
+                    pt = set()
+                    for p in inter:
+                        pt.add(p[0])
                 else:
                     raise NotImplementedError
 
