@@ -29,8 +29,7 @@ points2d = [volmdlr.Point2D(-1, 1),
             volmdlr.Point2D(2, 2),
             volmdlr.Point2D(-2, -2),
             volmdlr.Point2D(1, -1)]
-bspline = vme.BSplineCurve2D(3, points2d, knot_multiplicities=[4, 4],
-                               knots=[0.0, 1.0])
+bspline = vme.BSplineCurve2D(3, points2d, knot_multiplicities=[4, 4], knots=[0.0, 1.0])
 bspline_middle_point = bspline.point_at_abscissa(bspline.length()*0.5)
 bspline_tangent = bspline.tangent(0.5)
 infinit_line1 = vme.Line2D(bspline_middle_point,

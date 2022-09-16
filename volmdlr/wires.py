@@ -7,6 +7,8 @@ Module containing wires & contours
 import warnings
 import itertools
 import math
+import random
+from collections import deque
 from statistics import mean
 from typing import List
 import numpy as npy
@@ -1171,14 +1173,13 @@ class Contour(Wire):
 
         return list_contours
 
-    def discretized_primitives(self, n: float):
+    def discretized_primitives(self, number_points: float):
         """
         discretize each contour's primitive and return a list of discretized primitives
         """
-
         edges = []
         for primitive in self.primitives:
-            points = primitive.discretization_points(n)
+            points = primitive.discretization_points(number_points=number_points)
             for p1, p2 in zip(points[:-1], points[1:]):
                 edges.append(volmdlr.edges.LineSegment2D(p1, p2))
 
@@ -1854,12 +1855,16 @@ class Contour2D(Contour, Wire2D):
                                        number_points_y=20)
 
     def to_polygon(self, angle_resolution):
+        """
+        Transform the contour to a polygon.
+        :param angle_resolution: arcs are discretized with respect of an angle resolution in points per radians
+        """
 
         polygon_points = []
         # print([(line.start, line.end) for line in self.primitives])
 
         for primitive in self.primitives:
-            polygon_points.extend(primitive.discretization_points(0)[:-1])
+            polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
         return ClosedPolygon2D(polygon_points)
 
     def grid_triangulation(self, x_density: float = None,
@@ -2814,7 +2819,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         def line_colides_with_hull(line, concave_hull):
             for hull_line in concave_hull:
                 if line.start != hull_line.start and line.start != hull_line.end and line.end != hull_line.start and line.end != hull_line.end:
-                    if line.line_intersections(hull_line):
+                    if line.line_intersections(hull_line.to_line()):
                         return True
             return False
 
@@ -3009,28 +3014,14 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         number_remaining_points = len(remaining_points)
         while number_remaining_points > 3:
             current_polygon = ClosedPolygon2D(remaining_points)
-            # print('remaining_points')
-            # print(len(remaining_points))
-            # pl2 = ClosedPolygon2D(remaining_points[1:]+remaining_points[0:1])
-            # pl3 = ClosedPolygon2D(remaining_points[2:]+remaining_points[0:2])
-            # current_polygon.plot(ax = ax)
-            # pl2.plot(point_numbering=True)
-            # pl3.plot(point_numbering=True)
 
             found_ear = False
             for p1, p2, p3 in zip(remaining_points,
                                   remaining_points[1:] + remaining_points[0:1],
                                   remaining_points[2:] + remaining_points[
                                                          0:2]):
-                # ax.text(*p2, '{}')
-                # ax = current_polygon.plot(point_numbering=True)
                 if p1 != p3:
                     line_segment = volmdlr.edges.LineSegment2D(p1, p3)
-                # line_segment.plot(color='grey', ax=ax)
-
-                # ax2 = p1.plot(color='r')
-                # p2.plot(color='g', ax=ax2)
-                # p3.plot(color='b', ax=ax2)
 
                 # Checking if intersections does not contrain the verticies
                 # of line_segment
@@ -3045,16 +3036,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                             break
 
                 if not intersect:
-                    # if not current_polygon.linesegment_intersections(line_segment):
-                    # May be an ear
-                    # print('ear?')
-                    # if current_polygon.point_belongs(line_segment.middle_point()):
-                    #     line_segment.middle_point().plot(color='g', ax=ax)
-                    # else:
-                    #     line_segment.middle_point().plot(color='r', ax=ax)
-                    # print(current_polygon.point_belongs(
-                    #         line_segment.middle_point()))
-
                     if current_polygon.point_belongs(
                             line_segment.middle_point()):
                         # Confirmed as an ear
@@ -3064,15 +3045,23 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                           initial_point_to_index[p3],
                                           initial_point_to_index[p2]))
                         remaining_points.remove(p2)
-                        # ax.text(*points[initial_point_to_index[p2]], str(number_remaining_points))
                         number_remaining_points -= 1
                         found_ear = True
+
+                        # Rolling the remaining list
+                        if number_remaining_points > 4:
+                            deq = deque(remaining_points)
+                            # random.randint(1, number_remaining_points-1))
+                            deq.rotate(int(0.3 * number_remaining_points))
+                            remaining_points = list(deq)
+
                         break
 
+            # Searching for a flat ear
             if not found_ear:
                 remaining_polygon = ClosedPolygon2D(remaining_points)
                 if remaining_polygon.area() > 0.:
-                    # Searching for a flat ear
+
                     found_flat_ear = False
                     for p1, p2, p3 in zip(remaining_points,
                                           remaining_points[
@@ -3086,10 +3075,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                             break
 
                     if not found_flat_ear:
-                        # remaining_polygon.plot(point_numbering=True, plot_points=True)
-                        # vmd.DisplayMesh2D(points, triangles).plot()
-                        # print(remaining_points)
-                        # raise ValueError('There are no ear in the polygon, it seems malformed')
                         print(
                             'Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
                         return vmd.DisplayMesh2D(points, triangles)
@@ -3181,17 +3166,14 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             if not value:
                 if i % 2 == 0:
                     if len(list(intersetions1.values())[i + 1]) == 2:
-                        translation1 = (list(intersetions1.values())[
-                                            i + 1][0] +
+                        translation1 = (list(intersetions1.values())[i + 1][0] +
                                         list(intersetions1.values())[
                                             i + 1][1]) * 0.5
                         break
                 if i % 2 != 0:
                     if len(list(intersetions1.values())[i - 1]) == 2:
-                        translation1 = (list(intersetions1.values())[
-                                            i - 1][0] +
-                                        list(intersetions1.values())[
-                                            i - 1][1]) * 0.5
+                        translation1 = (list(intersetions1.values())[i - 1][0]
+                                        + list(intersetions1.values())[i - 1][1]) * 0.5
                         break
 
         return translation1
@@ -3583,7 +3565,7 @@ class Circle2D(Contour2D):
 
     def to_polygon(self, angle_resolution: float):
         return ClosedPolygon2D(
-            self.discretization_points(resolution=angle_resolution))
+            self.discretization_points(angle_resolution=angle_resolution))
 
     @classmethod
     def from_arc(cls, arc: volmdlr.edges.Arc2D):
@@ -3819,11 +3801,10 @@ class Circle2D(Contour2D):
         return self.__class__(center=self.center.axial_symmetry(line),
                               radius=self.radius)
 
-    def discretization_points(self, resolution=40):
-        number_points = math.ceil(self.angle * resolution) + 2
-        length = self.length()
-        return [self.point_at_abscissa(i * length / number_points)
-                for i in range(number_points)]
+    def discretization_points(self, angle_resolution: float = 10):
+        number_points = math.ceil(volmdlr.TWO_PI * angle_resolution) + 2
+        step = self.length() / (number_points - 1)
+        return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
