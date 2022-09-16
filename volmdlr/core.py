@@ -1539,11 +1539,36 @@ class VolumeModel(dc.DessiaObject):
         lines = self.get_geo_lines()
         lines.extend(self.get_mesh_lines(factor, curvature_mesh_size,
                                          min_points, initial_mesh_size))
-        lines.append('Mesh 2;')
+
+        contours, faces_account = [], 0
+        surfaces = []
         for i, primitive in enumerate(self.primitives):
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
+                if i==0:
+                    surfaces.append(list(range(1, 1+len(primitive.faces))))
+                    face_contours = [face.outer_contour3d for face in primitive.faces]
+                    contours.append(face_contours)
+                    lines.append('Mesh 2;')
+                    lines.append('Physical Surface(' + str(i+1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                    lines.append('Save "'+file_name+'.stl" ;')
+                    faces_account += len(primitive.faces)+1
+                else:
+                    surfaces.append(list(range(faces_account, faces_account+len(primitive.faces))))
+                    face_contours = [face.outer_contour3d for face in primitive.faces]
+                    for k, face_c in enumerate(face_contours):
+                        for l, contour_l in enumerate(contours):
+                            for c, contour in enumerate(contour_l):
+                                if face_c.is_superposing(contour):
+                                    surfaces[i][k] = surfaces[l][c]
+                                    continue
 
-        
+                    lines.append('Mesh 2;')
+                    lines.append('Physical Surface(' + str(i+1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                    lines.append('Save "'+file_name+'.stl" ;')
+                    faces_account += len(primitive.faces)+1
+                    contours.append(face_contours)
+
+        return lines
 
     def to_msh(self, file_name: str, mesh_dimension: int,
                factor: float,
