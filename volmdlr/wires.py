@@ -1762,25 +1762,28 @@ class Contour2D(Contour, Wire2D):
         return list_contours
 
     def get_pattern(self):
-        """ A pattern is portion of the contour from which the contour can be
+        """
+        #TODO : should this be kept ? - Axel, 16/09/22
+        A pattern is portion of the contour from which the contour can be
         reconstructed by rotations of this portion"""
-        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        # xmin, xmax, ymin, ymax = self.bounding_rectangle()
 
         # ax=plt.subplot()
         # line = Line2D(Point2D([xi, 0]),Point2D([xi,1]))
         line = volmdlr.edges.Line2D(volmdlr.Point2D([0, -0.17]),
                                     volmdlr.Point2D([0, 0.17]))
-        line_2 = line.Rotation(self.center_of_mass(), 0.26)
-        line_3 = line.Rotation(self.center_of_mass(), -0.26)
+        line_2 = line.rotation(self.center_of_mass(), 0.26)
+        line_3 = line.rotation(self.center_of_mass(), -0.26)
 
         intersections = []
 
         intersections += self.line_intersections(line_2)
         intersections += self.line_intersections(line_3)
+        primitives = []
         if isinstance(intersections[0][0], volmdlr.Point2D) and \
                 isinstance(intersections[1][0], volmdlr.Point2D):
-            ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
-                               self.primitives.index(intersections[1][1])])
+            # ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
+            #                    self.primitives.index(intersections[1][1])])
 
             ip3, ip4 = sorted([self.primitives.index(intersections[2][1]),
                                self.primitives.index(intersections[3][1])])
@@ -1788,14 +1791,12 @@ class Contour2D(Contour, Wire2D):
             sp11, sp12 = intersections[1][1].split(intersections[1][0])
             sp22, sp21 = intersections[2][1].split(intersections[2][0])
 
-            primitives = []
-
             a = volmdlr.edges.Arc2D(sp12.end, sp12.interior, sp12.start)
             primitives.append(a)
             primitives.extend(self.primitives[:ip3])
             primitives.append(sp22)
-            l = volmdlr.edges.LineSegment2D(sp22.start, sp12.end)
-            interior = l.point_at_abscissa(l.Length() / 2)
+            ls = volmdlr.edges.LineSegment2D(sp22.start, sp12.end)
+            interior = ls.point_at_abscissa(ls.length() / 2)
             primitives.append(
                 volmdlr.edges.Arc2D(sp22.start, interior, sp12.end))
 
