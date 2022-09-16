@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
-* 
+* New point_distance method for Wire3D
 
 
 ### Fixed
@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Point, Edges and Wires: axial_symmetry
 * Surface2D: rotation, rotation_inplace
 * Wire2D: bsplinecurve_crossings,  bsplinecurve_intersections
+* Cylinder: min_distance_to_other_cylinder, is_intersecting_other_cylinder
 
 
 ### Fixed

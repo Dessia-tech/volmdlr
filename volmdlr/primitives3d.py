@@ -7,6 +7,8 @@ Common primitives 3D
 import math
 
 from typing import Tuple, List, Dict
+from scipy.optimize import minimize, NonlinearConstraint
+
 import numpy as npy
 import matplotlib.pyplot as plt
 
@@ -1000,6 +1002,72 @@ class Cylinder(RevolvedProfile):
         new_axis = self.axis.copy()
         return Cylinder(new_position, new_axis, self.radius, self.length,
                         color=self.color, alpha=self.alpha, name=self.name)
+
+    def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder'):
+        """
+        Compute the minimal distance between two volmdlr cylinders
+
+        :param other_cylinder: volmdlr Cylinder
+        :return: minimal distance between two 3D cylinders
+        """
+        # Local frames of cylinders
+        frame0 = volmdlr.Frame3D.from_point_and_vector(point=self.position,
+                                                       vector=self.axis,
+                                                       main_axis=volmdlr.Z3D)
+        frame1 = volmdlr.Frame3D.from_point_and_vector(point=other_cylinder.position,
+                                                       vector=other_cylinder.axis,
+                                                       main_axis=volmdlr.Z3D)
+
+        # Objective function
+        def dist_points(x):
+            """
+            :param x: coords of a point in cylinder 0 local frame, coords of a point in cylinder 1 local frame
+            :return: distance between the two points
+            """
+            point0 = frame0.old_coordinates(volmdlr.Point3D(x[0], x[1], x[2]))
+            point1 = frame1.old_coordinates(volmdlr.Point3D(x[3], x[4], x[5]))
+
+            return point0.point_distance(point1)
+
+        # Initial vector
+        p0 = frame0.old_coordinates(volmdlr.O3D)
+        p1 = frame1.old_coordinates(volmdlr.O3D)
+        x0 = (p0.x, p0.y, p0.z, p1.x, p1.y, p1.z)
+
+        # Constraints
+        def constraint_radius_0(x):
+            # radius of cylinder 0
+            return x[0] ** 2 + x[1] ** 2
+
+        def constraint_height_0(x):
+            # height of cylinder 0
+            return x[2]
+
+        def constraint_radius_1(x):
+            # radius of cylinder 1
+            return x[3] ** 2 + x[4] ** 2
+
+        def constraint_height_1(x):
+            # height of cylinder 1
+            return x[5]
+
+        constraints = [
+            NonlinearConstraint(fun=constraint_radius_0, lb=0, ub=self.radius ** 2),
+            NonlinearConstraint(fun=constraint_height_0, lb=-self.length / 2, ub=self.length / 2),
+            NonlinearConstraint(fun=constraint_radius_1, lb=0, ub=other_cylinder.radius ** 2),
+            NonlinearConstraint(fun=constraint_height_1, lb=-other_cylinder.length / 2, ub=other_cylinder.length / 2)
+        ]
+
+        return minimize(fun=dist_points, x0=x0, constraints=constraints).fun
+
+    def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder'):
+        """
+        :param other_cylinder: volmdlr Cylinder
+        :return: boolean, True if cylinders are intersecting, False otherwise
+        """
+        dist = self.min_distance_to_other_cylinder(other_cylinder)
+
+        return dist < 1e-5
 
 
 class Cone(RevolvedProfile):
