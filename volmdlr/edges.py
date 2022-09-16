@@ -3320,32 +3320,53 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                                         bbox[0][1], bbox[1][1],
                                         bbox[0][2], bbox[1][2])
 
-    def look_up_table(self, resolution=20, start_parameter: float = 0,
+    def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):
         """
         Creates a table of equivalence between the parameter t (evaluation
-        of the BSplineCruve) and the cumulative distance.
-        """
-        resolution = min(resolution, int(self.length() / 1e-6))
-        points3d = []
-        ts = [start_parameter + i / resolution * (end_parameter - start_parameter)
-              for i in range(resolution + 1)]
-        points = self.curve.evaluate_list(ts)
-        for pt in points:
-            points3d.append(volmdlr.Point3D(*pt))
-        linesegments = [volmdlr.edges.LineSegment3D(p1, p2)
-                        for p1, p2 in zip(points3d[:-1], points3d[1:])]
-        distances = [0]
-        for lineseg in linesegments:
-            distances.append(lineseg.length() + distances[-1])
+        of the BSplineCurve) and the cumulative distance.
 
-        return [(ts[i], distances[i]) for i in range(resolution + 1)]
-
-    def point_at_abscissa(self, abscissa, resolution=1000):
+        :param resolution: The precision of the table. Autoadjusted by the
+            algorithm. Default value set to 20
+        :type resolution: int, optional
+        :param start_parameter: First parameter evaluated in the table.
+            Default value set to 0
+        :type start_parameter: float, optional
+        :param end_parameter: Last parameter evaluated in the table.
+            Default value set to 1
+        :type start_parameter: float, optional
+        :return: Yields a list of tuples containing the parameter and the
+            cumulated distance along the BSplineCruve3D from the evaluation of
+            start_parameter
+        :rtype: Tuple[float, float]
         """
-        Returns the vm.Point3D at a given curvilinear abscissa.
-        This is an approximation. Resolution parameter can increased
+        resolution = max(10, min(resolution, int(self.length() / 1e-4)))
+        delta_param = 1 / resolution * (end_parameter - start_parameter)
+        distance = 0
+        for i in range(resolution+1):
+            if i == 0:
+                yield start_parameter, 0
+            else:
+                param1 = start_parameter + (i - 1) * delta_param
+                param2 = start_parameter + i * delta_param
+                point1 = volmdlr.Point3D(*self.curve.evaluate_single(param1))
+                point2 = volmdlr.Point3D(*self.curve.evaluate_single(param2))
+                distance += point1.point_distance(point2)
+                yield param2, distance
+
+    def point_at_abscissa(self, abscissa: float, resolution: int = 1000):
+        """
+        Returns the 3 dimensional point at a given curvilinear abscissa.
+        This is an approximation. Resolution parameter can be increased
         for more accurate result.
+
+        :param abscissa: The distance on the BSplineCurve3D from its start
+        :type abscissa: float
+        :param resolution: The precision of the approximation. Default value
+            set to 1000
+        :type resolution: int, optional
+        :return: The Point3D at the given curvilinear abscissa.
+        :rtype: :class:`volmdlr.Point3D`
         """
         if math.isclose(abscissa, 0, abs_tol=1e-10):
             return self.start
@@ -3353,14 +3374,14 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
             return self.end
         lut = self.look_up_table(resolution=resolution)
         if 0 < abscissa < self.length():
+            last_param = 0
             for i, (t, dist) in enumerate(lut):
                 if abscissa < dist:
-                    t1 = lut[i - 1][0]
+                    t1 = last_param
                     t2 = t
-                    # dist1 = lut[i-1][1]
-                    # dist2 = dist
                     return volmdlr.Point3D(
                         *self.curve.evaluate_single((t1 + t2) / 2))
+                last_param = t
         else:
             raise ValueError('Curvilinear abscissa is bigger than length,'
                              ' or negative')
@@ -3620,21 +3641,19 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                               name=bspline_curve.name)
 
     def cut_before(self, parameter: float):
-        # if parameter == 0:
-        if math.isclose(parameter, 0, abs_tol=1e-6):
+        # Is a value of parameter below 4e-3 a real need for precision ?
+        if math.isclose(parameter, 0, abs_tol=4e-3):
             return self
-        # elif parameter == 1:
-        elif math.isclose(parameter, 1, abs_tol=1e-6):
+        elif math.isclose(parameter, 1, abs_tol=4e-3):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
         curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
-        # if parameter == 0.:
-        if math.isclose(parameter, 0, abs_tol=1e-6):
+        # Is a value of parameter below 4e-3 a real need for precision ?
+        if math.isclose(parameter, 0, abs_tol=4e-3):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
-        # elif parameter == 1.:
-        elif math.isclose(parameter, 1, abs_tol=1e-6):
+        elif math.isclose(parameter, 1, abs_tol=4e-3):
             return self
         curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[0])
