@@ -997,6 +997,7 @@ class Contour(Wire):
             counter1 += 1
             if counter1 >= 100 * length_list_points:
                 self.plot()
+                return [] # TODO Wick bug fix, to be deleted as soon as possible
                 raise NotImplementedError
             if len(list_point_pairs) == 1:
                 counter += 1
@@ -1151,13 +1152,16 @@ class Contour(Wire):
                 contour_n = cls(contour_primitives[:])
                 contour_n.validate_contour_primitives()
                 contour_n.order_contour()
-                list_contours.append(contour_n)
+                if len(contour_n.primitives) != 0:
+                    list_contours.append(contour_n)
+                # list_contours.append(contour_n)
                 contour_primitives = []
             elif len(edges) == 0 and len(contour_primitives) != 0:
                 contour_n = cls(contour_primitives[:])
                 contour_n.validate_contour_primitives()
                 contour_n.order_contour()
-                list_contours.append(contour_n)
+                if len(contour_n.primitives) != 0:
+                    list_contours.append(contour_n)
                 finished = True
 
         return list_contours
