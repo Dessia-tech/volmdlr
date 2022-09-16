@@ -288,7 +288,7 @@ class Wire:
             new_primitives.append(prim.reverse())
         return new_primitives
 
-    def is_followed_by(self, wire_2, tol=1e-6):prim_index
+    def is_followed_by(self, wire_2, tol=1e-6):
         '''
         check if the wire is followed by wire_2
         '''
