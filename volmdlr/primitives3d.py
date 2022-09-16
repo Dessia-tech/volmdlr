@@ -851,11 +851,11 @@ class Cylinder(RevolvedProfile):
                                  axis, color=color, alpha=alpha, name=name)
 
     def _bounding_box(self):
+        """
+        This was copied for HollowCylinder. Inheritence removed to avoid problems
+        """
 
-        if hasattr(self, 'radius'):
-            radius = self.radius
-        elif hasattr(self, 'outer_radius'):
-            radius = self.outer_radius
+        radius = self.radius
 
         pointA = self.position - self.length / 2 * self.axis
         pointB = self.position + self.length / 2 * self.axis
@@ -887,6 +887,18 @@ class Cylinder(RevolvedProfile):
 
     def volume(self):
         return self.length * math.pi * self.radius**2
+
+    @classmethod
+    def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
+                             radius: float,
+                             color: Tuple[float, float, float] = None, alpha: float = 1,
+                             name: str = ''):
+        position = 0.5 * (point1 + point2)
+        length = point1.point_distance(point2)
+        axis = point2 - point1
+        axis.normalize()
+        return cls(position, axis, radius, length=length,
+                   color=color, alpha=alpha, name=name)
 
     def FreeCADExport(self, ip):
         if self.radius > 0:
@@ -1177,7 +1189,7 @@ class Cone(RevolvedProfile):
         return self.length * math.pi * self.radius**2 / 3
 
 
-class HollowCylinder(Cylinder):
+class HollowCylinder(RevolvedProfile):
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  inner_radius: float, outer_radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1,
@@ -1205,9 +1217,59 @@ class HollowCylinder(Cylinder):
         RevolvedProfile.__init__(self, position, axis, y, contour, position,
                                  axis, color=color, alpha=alpha, name=name)
 
+    def _bounding_box(self):
+
+        radius = self.outer_radius
+
+        pointA = self.position - self.length / 2 * self.axis
+        pointB = self.position + self.length / 2 * self.axis
+
+        dx2 = (pointA[0] - pointB[0])**2
+        dy2 = (pointA[1] - pointB[1])**2
+        dz2 = (pointA[2] - pointB[2])**2
+
+        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
+
+        if pointA[0] > pointB[0]:
+            pointA, pointB = pointB, pointA
+        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+
+        if pointA[1] > pointB[1]:
+            pointA, pointB = pointB, pointA
+        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+
+        if pointA[2] > pointB[2]:
+            pointA, pointB = pointB, pointA
+        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
     def volume(self):
         return self.length * math.pi * (self.outer_radius**2
                                         - self.inner_radius**2)
+
+    def copy(self):
+        new_position = self.position.copy()
+        new_axis = self.axis.copy()
+        return HollowCylinder(new_position, new_axis, self.inner_radius, self.outer_radius, self.length,
+                              color=self.color, alpha=self.alpha, name=self.name)
+
+    @classmethod
+    def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
+                             inner_radius: float, outer_radius: float,
+                             color: Tuple[float, float, float] = None, alpha: float = 1,
+                             name: str = ''):
+        position = 0.5 * (point1 + point2)
+        length = point1.point_distance(point2)
+        axis = point2 - point1
+        axis.normalize()
+        return cls(position, axis, inner_radius=inner_radius, outer_radius=outer_radius, length=length,
+                   color=color, alpha=alpha, name=name)
 
     def FreeCADExport(self, ip):
         if self.outer_radius > 0.:

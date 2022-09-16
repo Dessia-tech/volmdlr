@@ -4686,11 +4686,11 @@ class Triangle3D(PlaneFace3D):
         """
         return self.point1.approx_hash() + self.point2.approx_hash() + self.point3.approx_hash()
 
-    def _data_eq(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
             return False
         self_set = set([self.point1, self.point2, self.point3])
-        other_set = set([other_.point1, other_.point2, other_.point3])
+        other_set = set([other_object.point1, other_object.point2, other_object.point3])
         if self_set != other_set:
             return False
         return True
@@ -6549,10 +6549,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def _data_hash(self):
         return sum(face._data_hash() for face in self.faces)
 
-    def _data_eq(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
             return False
-        for face1, face2 in zip(self.faces, other_.faces):
+        for face1, face2 in zip(self.faces, other_object.faces):
             if not face1._data_eq(face2):
                 return False
 
