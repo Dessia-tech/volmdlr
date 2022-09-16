@@ -1305,6 +1305,7 @@ class VolumeModel(dc.PhysicalObject):
     def volmdlr_volume_model(self):
         return [self]
 
+
 class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):
         VolumeModel.__init__(self, primitives=primitives, name=name)
