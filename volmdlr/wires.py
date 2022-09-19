@@ -1193,6 +1193,7 @@ class Contour(Wire):
                 edge_connected = edge
                 return edge_connected
         return edge_connected
+
     @staticmethod
     def find_connected_edges(edges, contours_primitives_lists, contour_primitives, tol):
         for line in edges:
@@ -1202,7 +1203,6 @@ class Contour(Wire):
                 if remove:
                     edges.remove(line)
             if not edges:
-                finished = True
                 break
             if not contour_primitives:
                 contour_primitives.append(line)

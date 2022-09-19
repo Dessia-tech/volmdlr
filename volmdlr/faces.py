@@ -4595,6 +4595,31 @@ class PlaneFace3D(Face3D):
             return True
         return False
 
+    def is_intersecting(self, face2, list_coincident_faces=None, tol: float = 1e-6):
+        """
+        Verifies if two face are intersecting
+        :param face2: face 2
+        :param list_coincident_faces: list of coincident faces, if existent
+        :param tol: tolerance for calculations
+        :return: True if faces intersect, False otherwise
+        """
+        if list_coincident_faces is None:
+            list_coincident_faces = []
+        if (self.bounding_box.bbox_intersection(face2.bounding_box) or
+            self.bounding_box.distance_to_bbox(face2.bounding_box) <= tol) and \
+                (self, face2) not in list_coincident_faces:
+            edge_intersections = []
+            for prim1 in self.outer_contour3d.primitives:
+                edge_intersections = face2.edge_intersections(prim1)
+                if edge_intersections:
+                    return True
+            if not edge_intersections:
+                for prim2 in face2.outer_contour3d.primitives:
+                    edge_intersections = self.edge_intersections(prim2)
+                    if edge_intersections:
+                        return True
+        return False
+
     @staticmethod
     def merge_faces(list_coincident_faces: List[Face3D]):
         valid_coicident_faces = list_coincident_faces[:]
@@ -7176,39 +7201,24 @@ class ClosedShell3D(OpenShell3D):
             return False
         return disjoint
 
-    def intersecting_faces_combinations(self, shell2,
-                                        list_coincident_faces, tol=1e-8):
-        '''
-            :param shell2: ClosedShell3D
+    def intersecting_faces_combinations(self, shell2, list_coincident_faces, tol=1e-8):
+        """
+        :param shell2: ClosedShell3D
             for two closed shells, it calculates and return a list of face
             combinations (list = [(face_shell1, face_shell2),...])
             for intersecting faces. if two faces can not be intersected,
             there is no combination for those
-            :param tol: Corresponde to the tolerance to consider two faces as intersecting faces
-        '''
-        # list_coicident_faces = self.get_coincident_faces(shell2)
+        :param tol: Corresponde to the tolerance to consider two faces as intersecting faces
+        :param shell2:
+        :param list_coincident_faces:
+        :param tol:
+        :return:
+        """
         face_combinations = []
         for face1 in self.faces:
             for face2 in shell2.faces:
-                if (face1.bounding_box.bbox_intersection(
-                        face2.bounding_box) or
-                    face1.bounding_box.distance_to_bbox(
-                        face2.bounding_box) <= tol) and \
-                        (face1, face2) not in list_coincident_faces:
-                    edge_intersections = []
-                    for prim1 in face1.outer_contour3d.primitives:
-                        edge_intersections = face2.edge_intersections(prim1)
-                        if edge_intersections:
-                            break
-                    if not edge_intersections:
-                        for prim2 in face2.outer_contour3d.primitives:
-                            edge_intersections = face1.edge_intersections(prim2)
-                            if edge_intersections:
-                                break
-                    if edge_intersections:
-                        face_combinations.append((face1, face2))
-                    # face_combinations.append((face1, face2))
-
+                if face1.is_intersecting(face2, list_coincident_faces, tol):
+                    face_combinations.append((face1, face2))
         return face_combinations
 
     @staticmethod
@@ -7221,7 +7231,7 @@ class ClosedShell3D(OpenShell3D):
             It is done so it is not needed to calculate the same intersecting primitive twice.
         '''
         intersecting_combinations = {}
-        for k, combination in enumerate(intersecting_faces_combinations):
+        for combination in intersecting_faces_combinations:
             face_intersections = combination[0].face_intersections(combination[1], tol)
             if face_intersections:
                 intersecting_combinations[combination] = face_intersections
