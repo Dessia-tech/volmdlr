@@ -1122,7 +1122,7 @@ class Contour(Wire):
         self.primitives = new_primitives_contour
 
     @staticmethod
-    def touching_edges_pairs(edges): #TO DO: move this to edges?
+    def touching_edges_pairs(edges):  # TO DO: move this to edges?
         touching_primitives = []
         for i, primitive1 in enumerate(edges):
             for j, primitive2 in enumerate(edges):
