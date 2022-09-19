@@ -1158,10 +1158,10 @@ class Contour(Wire):
         """
         remove = False
         for i, primitives in enumerate(contours_primitives_lists):
-            if edge.end == primitives[0].start or edge.start == primitives[0].start:
+            if primitives[0].start in (edge.end, edge.start):
                 contours_primitives_lists[i] = [edge.copy(deep=True)] + primitives
                 remove = True
-            elif edge.start == primitives[-1].end or edge.end == primitives[-1].end:
+            elif primitives[-1].end in (edge.start, edge.end):
                 contours_primitives_lists[i] = primitives + [edge.copy(deep=True)]
                 remove = True
         return contours_primitives_lists, remove
@@ -1193,17 +1193,38 @@ class Contour(Wire):
                 edge_connected = edge
                 return edge_connected
         return edge_connected
+    @staticmethod
+    def find_connected_edges(edges, contours_primitives_lists, contour_primitives, tol):
+        for line in edges:
+            if contours_primitives_lists:
+                contours_primitives_lists, remove = Contour.connected_to_splited_primitives(
+                    line, contours_primitives_lists)
+                if remove:
+                    edges.remove(line)
+            if not edges:
+                finished = True
+                break
+            if not contour_primitives:
+                contour_primitives.append(line)
+                edges.remove(line)
+                break
+            edge_connected = Contour.is_edge_connected(contour_primitives, line, tol)
+            if edge_connected is not None:
+                contour_primitives.append(edge_connected)
+                edges.remove(edge_connected)
+                break
+        return edges, contour_primitives, contours_primitives_lists
 
     @classmethod
     def contours_from_edges(cls, edges, tol=1e-7):
         if not edges:
             return []
         touching_primitives = cls.touching_edges_pairs(edges)
-        for prim1, prim2 in touching_primitives:
-            if prim1 in edges:
-                edges.remove(prim1)
-            if prim2 in edges:
-                edges.remove(prim2)
+        for prims in touching_primitives:
+            if prims[0] in edges:
+                edges.remove(prims[0])
+            if prims[1] in edges:
+                edges.remove(prims[1])
         contours_primitives_lists = cls.contours_primitives_touching_primitives(touching_primitives)
         if not edges:
             return [cls(primitives) for primitives in contours_primitives_lists]
@@ -1213,24 +1234,10 @@ class Contour(Wire):
 
         while not finished:
             len1 = len(edges)
-            for line in edges:
-                if contours_primitives_lists:
-                    contours_primitives_lists, remove = cls.connected_to_splited_primitives(
-                        line, contours_primitives_lists)
-                    if remove:
-                        edges.remove(line)
-                if not edges:
-                    finished = True
-                    break
-                if not contour_primitives:
-                    contour_primitives.append(line)
-                    edges.remove(line)
-                    break
-                edge_connected = cls.is_edge_connected(contour_primitives, line, tol)
-                if edge_connected is not None:
-                    contour_primitives.append(edge_connected)
-                    edges.remove(edge_connected)
-                    break
+            edges, contour_primitives, contours_primitives_lists = cls.find_connected_edges(
+                edges, contours_primitives_lists, contour_primitives, tol)
+            if not edges:
+                finished = True
             valid = False
             if len(edges) != 0 and len(edges) == len1 and len(contour_primitives) != 0:
                 valid = True
@@ -1452,7 +1459,8 @@ class Contour(Wire):
 
     def edges_order_with_adjacent_contour(self, contour):
         """
-        check if the shared edges between two adjacent contours are traversed with two different directions along each contour
+        check if the shared edges between two adjacent contours are traversed with two
+        different directions along each contour
         """
 
         contour1 = self
@@ -2850,11 +2858,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         :param points: list of points corresponding to the cloud of points
         :type points: class: 'volmdlr.Point2D'
         :param concavity: Sets how sharp the concave angles can be. It goes from -1 (not concave at all. in fact,
-                          the hull will be left convex) up to +1 (very sharp angles can occur. Setting concavity to +1 might
-                          result in 0º angles!) concavity is defined as the cosine of the concave angles.
+                          the hull will be left convex) up to +1 (very sharp angles can occur. Setting concavity to
+                          +1 might result in 0º angles!) concavity is defined as the cosine of the concave angles.
         :type concavity: float
         :param scale_factor: Sets how big is the area where concavities are going to be searched.
-                             The bigger, the more sharp the angles can be. Setting it to a very high value might affect the performance of the program.
+                             The bigger, the more sharp the angles can be. Setting it to a very high value might
+                             affect the performance of the program.
                              This value should be relative to how close to each other the points to be connected are.
         :type scale_factor: float
 
@@ -2895,7 +2904,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         def line_colides_with_hull(line, concave_hull):
             for hull_line in concave_hull:
-                if line.start != hull_line.start and line.start != hull_line.end and line.end != hull_line.start and line.end != hull_line.end:
+                if line.start != hull_line.start and line.start != hull_line.end and line.end != hull_line.start and\
+                        line.end != hull_line.end:
                     if line.line_intersections(hull_line.to_line()):
                         return True
             return False
@@ -4236,7 +4246,8 @@ class Contour3D(Contour, Wire3D):
 
     def merge_with(self, contour3d):
         '''
-        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
+        merge two adjacent contours, sharing primitives, and returns one outer contour and inner
+        contours (if there are any)
         '''
 
         merged_primitives = self.merge_primitives_with(contour3d)
