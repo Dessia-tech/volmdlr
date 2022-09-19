@@ -9,13 +9,16 @@ Cython functions
 # from __future__ import annotations
 from typing import TypeVar, List, Tuple, Text, Any, Dict
 import math
-from dessia_common import DessiaObject
-import matplotlib.pyplot as plt
-from matplotlib.patches import FancyArrow, FancyArrowPatch
 import warnings
 import random
+
 import numpy as npy
 from mpl_toolkits.mplot3d import proj3d
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyArrow, FancyArrowPatch
+
+from dessia_common import DessiaObject
+import plot_data
 
 # =============================================================================
 
@@ -221,12 +224,13 @@ def polygon_point_belongs(point, points):
 
 cdef(double, (double, double)) CLineSegment2DPointDistance((double, double) p1, (double, double) p2, (double, double) point):
     cdef double t
-    cdef(double, double) u, projection
 
-    u = (p2[0] - p1[0], p2[1] - p1[1])
+    ux, uy = Csub2D(p2[0], p2[1], p1[0], p1[1])
     ppx, ppy = Csub2D(point[0], point[1], p1[0], p1[1])
-    t = max(0, min(1, CVector2DDot(ppx, ppy, u[0], u[1]) / CVector2Dnorm(u[0], u[1])**2))
-    vx, vy = Cmul2D(u[0], u[1], t)
+
+    t = max(0, min(1, CVector2DDot(ppx, ppy, ux, uy) / CVector2Dnorm(ux, uy)**2))
+    vx, vy = Cmul2D(ux, uy, t)
+
     projection = Cadd2D(p1[0], p1[1], vx, vy)
     ppx, ppy = projection[0] - point[0], projection[1] - point[1]
     return CVector2Dnorm(ppx, ppy), projection
@@ -235,6 +239,21 @@ cdef(double, (double, double)) CLineSegment2DPointDistance((double, double) p1, 
 def LineSegment2DPointDistance(points, point):
     return CLineSegment2DPointDistance(tuple(points[0]), tuple(points[1]), tuple(point))
 
+# =============================================================================
+
+cdef (double, (double, double, double)) CLineSegment3DPointDistance((double, double, double) p1, (double, double, double) p2, (double, double, double) point):
+    cdef double t
+
+    ux, uy, uz = Csub3D(p2[0], p2[1], p2[2], p1[0], p1[1], p1[2])
+    ppx, ppy, ppz = Csub3D(point[0], point[1], point[2], p1[0], p1[1], p1[2])
+    t = max(0, min(1, CVector3DDot(ppx, ppy, ppz, ux, uy, uz) / CVector3Dnorm(ux, uy, uz)**2))
+    vx, vy, vz = Cmul3D(ux, uy, uz, t)
+    projection = Cadd3D(p1[0], p1[1], p1[2], vx, vy, vz)
+    ppx, ppy, ppz = projection[0]-point[0], projection[1]-point[1], projection[2]-point[2]
+    return CVector3Dnorm(ppx, ppy, ppz), projection
+
+def LineSegment3DPointDistance(points, point):
+    return CLineSegment3DPointDistance(tuple(points[0]), tuple(points[1]), tuple(point))
 
 # =============================================================================
 #  Points, Vectors
@@ -681,13 +700,7 @@ class Point2D(Vector2D):
 
     def plot_data(self, marker=None, color='black', size=1,
                   opacity=1, arrow=False, stroke_width=None):
-        return {'type': 'point',
-                'data': [self.x, self.y],
-                'color': color,
-                'marker': marker,
-                'size': size,
-                'opacity': opacity
-                }
+        return plot_data.Point2D(self.x, self.y)
 
     @classmethod
     def middle_point(cls, point1, point2):
@@ -716,6 +729,13 @@ class Point2D(Vector2D):
         point_symmetry = point_projection + (point_projection - self)
 
         return point_symmetry
+
+    def coordinates(self):
+        '''
+        gets x,y coordinates of a point2d
+        '''
+
+        return (self.x, self.y)
 
 
 O2D = Point2D(0, 0)
@@ -1166,6 +1186,13 @@ class Point3D(Vector3D):
         for p in points:
             distances.append(self.point_distance(p))
         return points[distances.index(min(distances))]
+
+    def coordinates(self):
+        '''
+        gets x,y,z coordinates of a point3d
+        '''
+
+        return (self.x, self.y, self.z)
 
 
 O3D = Point3D(0, 0, 0)
@@ -1910,6 +1937,15 @@ class Frame3D(Basis3D):
                 'w': self.w.to_dict()
                 }
 
+    # @classmethod
+    # def dict_to_object(cls, dict_, global_dict=None,
+    #                    pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    #     return Frame3D(Point3D.dict_to_object(dict_['origin']),
+    #                    Vector3D.dict_to_object(dict_['u']),
+    #                    Vector3D.dict_to_object(dict_['v']),
+    #                    Vector3D.dict_to_object(dict_['w']),
+    #                    dict_.get('name', ''))
+
     def basis(self):
         return Basis3D(self.u, self.v, self.w)
 
@@ -2031,6 +2067,46 @@ class Frame3D(Basis3D):
             w = u.cross(v)
 
         return cls(origin, u, v, w, arguments[0][1:-1])
+
+    @classmethod
+    def from_point_and_vector(cls, point: Point3D, vector: Vector3D, main_axis: Vector3D = X3D):
+        """
+        Create a new frame from a point and vector by rotating the global frame.
+        Global frame rotate in order to have 'vector' and 'main_axis' collinear.
+        This method is very useful to compute a local frame of an object.
+
+        :param point: origin of the new frame
+        :param vector: vector used to define one of the main axis (by default X-axis) of the local frame
+        :param main_axis: the axis of global frame you want to match 'vector' (can be X3D, Y3D or Z3D).
+        :return: created local frame
+        """
+        if main_axis not in [X3D, Y3D, Z3D]:
+            raise ValueError("main_axis must be X, Y or Z of the global frame")
+
+        vector.normalize()
+
+        if vector == main_axis:
+            # The local frame is oriented like the global frame
+            return cls(O3D, X3D, Y3D, Z3D)
+
+        if vector == -main_axis:
+            return cls(O3D, -X3D, -Y3D, -Z3D)
+
+        # The local frame is oriented differently from the global frame
+        # Rotation angle
+        dot = main_axis.dot(vector)
+        rot_angle = math.acos(dot / (vector.norm() * main_axis.norm()))
+
+        # Rotation axis
+        vector2 = vector - main_axis
+        rot_axis = main_axis.cross(vector2)
+        rot_axis.normalize()
+
+        u = X3D.rotation(O3D, rot_axis, rot_angle)
+        v = Y3D.rotation(O3D, rot_axis, rot_angle)
+        w = Z3D.rotation(O3D, rot_axis, rot_angle)
+
+        return cls(point, u, v, w)
 
     def babylonjs(self, size=0.1, parent=None):
         s = 'var origin = new BABYLON.Vector3({},{},{});\n'.format(*self.origin)

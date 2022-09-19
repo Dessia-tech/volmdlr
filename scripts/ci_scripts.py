@@ -40,7 +40,6 @@ scripts = [
             'faces/BSplineSurface/bspline_surface_interpolation.py',
             'faces/BSplineSurface/bspline_surface_merge.py',
             'faces/BSplineSurface/bspline_surface_split.py',
-            'faces/BSplineSurface/bspline_surface_to_2d.py',
             'faces/BSplineSurface/from_cylindrical_to_bspline_surface.py',
             'faces/BSplineSurface/bspline_surface_definition.py',
             'faces/BSplineSurface/bspline_surfaces_grid3d.py',
