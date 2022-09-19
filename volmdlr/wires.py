@@ -997,7 +997,6 @@ class Contour(Wire):
             counter1 += 1
             if counter1 >= 100 * length_list_points:
                 self.plot()
-                return [] # TODO Wick bug fix, to be deleted as soon as possible
                 raise NotImplementedError
             if len(list_point_pairs) == 1:
                 counter += 1
@@ -1112,9 +1111,36 @@ class Contour(Wire):
         self.primitives = new_primitives_contour
 
     @classmethod
-    def contours_from_edges(cls, edges, tol=5e-5):
+    def contours_from_edges(cls, edges, tol=1e-7):
         if not edges:
             return []
+        touching_primitives = []
+        for i, primitive1 in enumerate(edges):
+            for j, primitive2 in enumerate(edges):
+                if j > i:
+                    if primitive2.end != primitive1.start != primitive2.start and\
+                            primitive2.end != primitive1.end != primitive2.start:
+                        if primitive1.point_belongs(primitive2.start) or primitive1.point_belongs(primitive2.end):
+                            touching_primitives.append([primitive2, primitive1])
+                        elif primitive2.point_belongs(primitive1.start) or primitive2.point_belongs(primitive1.end):
+                            touching_primitives.append([primitive1, primitive2])
+        contours_primitives_lists = []
+        if touching_primitives:
+            for prim1, prim2 in touching_primitives:
+                if prim1 in edges:
+                    edges.remove(prim1)
+                if prim2 in edges:
+                    edges.remove(prim2)
+            for prim1, prim2 in touching_primitives:
+                intersection = prim1.linesegment_intersections(prim2)
+                prim2_split = prim2.split(intersection[0])
+                for prim in prim2_split:
+                    if prim1.start == prim.start:
+                        contours_primitives_lists.append([prim1, prim.reverse()])
+                    else:
+                        contours_primitives_lists.append([prim1, prim])
+        if not edges:
+            return [cls(primitives) for primitives in contours_primitives_lists]
         list_contours = []
         finished = False
         contour_primitives = []
@@ -1122,6 +1148,20 @@ class Contour(Wire):
         while not finished:
             len1 = len(edges)
             for line in edges:
+                if contours_primitives_lists:
+                    remove = False
+                    for i, primitives in enumerate(contours_primitives_lists):
+                        if line.end == primitives[0].start or line.start == primitives[0].start:
+                            contours_primitives_lists[i] = [line.copy(deep=True)] + primitives
+                            remove = True
+                        elif line.start == primitives[-1].end or line.end == primitives[-1].end:
+                            contours_primitives_lists[i] = primitives + [line.copy(deep=True)]
+                            remove = True
+                    if remove:
+                        edges.remove(line)
+                        if not edges:
+                            finished = True
+                        break
                 points = [p for prim in contour_primitives for p in prim]
                 if not contour_primitives:
                     contour_primitives.append(line)
@@ -1163,7 +1203,7 @@ class Contour(Wire):
                 if len(contour_n.primitives) != 0:
                     list_contours.append(contour_n)
                 finished = True
-
+        list_contours = list_contours + [cls(primitives).order_contour() for primitives in contours_primitives_lists]
         return list_contours
 
     def discretized_primitives(self, n: float):
@@ -2113,9 +2153,12 @@ class Contour2D(Contour, Wire2D):
         return Contour2D(new_primitives)
 
     def merge_with(self, contour2d):
-        '''
-        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
-        '''
+        """
+        merge two adjacent contours, sharing primitives, and returns one outer
+        contour and inner contours (if there are any)
+        :param contour2d: contour to merge with
+        :return: merged contours
+        """
 
         if self.is_inside(contour2d) and not self.is_sharing_primitives_with(contour2d):
             return [self]

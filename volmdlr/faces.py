@@ -4447,22 +4447,18 @@ class PlaneFace3D(Face3D):
         face_intersecting_primitives2d = []
         for intersecting_combination in dict_intersecting_combinations.keys():
             if self in intersecting_combination:
-                for intersection_wire in dict_intersecting_combinations[
-                        intersecting_combination]:
+                for intersection_wire in dict_intersecting_combinations[intersecting_combination]:
+                    if len(intersection_wire.primitives) != 1:
+                        raise NotImplementedError
                     primitive2 = intersection_wire.primitives[0]
-                    primitive2_2d = volmdlr.edges.LineSegment2D(
-                        self.surface3d.point3d_to_2d(
-                            primitive2.start), self.surface3d.point3d_to_2d(
-                            primitive2.end))
-                    if not self.surface2d.outer_contour.primitive_over_contour(
-                            primitive2_2d, tol=1e-7):
+                    primitive2_2d = self.surface3d.contour3d_to_2d(primitive2)
+                    if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d, tol=1e-7):
                         face_intersecting_primitives2d.append(primitive2_2d)
 
         if not face_intersecting_primitives2d:
             return []
 
-        list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(
-            face_intersecting_primitives2d[:])
+        list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
         if self.surface2d.inner_contours:
             cutting_contours = []
             for cutting_contour in list_cutting_contours:
