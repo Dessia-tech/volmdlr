@@ -2053,14 +2053,15 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
-        if -1e-3 < x < 0:
+        if x < 0:
             x = 0.
-        elif 1 < x < 1 + 1e-3:
+        elif 1 < x:
             x = 1
-        if -1e-3 < y < 0:
+        if y < 0:
             y = 0
-        elif 1 < y < 1 + 1e-3:
+        elif y > 1:
             y = 1
+
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
@@ -3202,7 +3203,7 @@ class BSplineSurface3D(Surface3D):
         '''
 
         if len(cylindrical_faces) == 1:
-            return cls.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v, 50, 50)
+            return cls.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v, points_x=50, points_y=50)
 
         if len(cylindrical_faces) > 1:
             bspline_surfaces = []
@@ -3554,10 +3555,12 @@ class BSplineSurface3D(Surface3D):
             pt0 = volmdlr.O2D
             points = []
 
-            for l in lines:
-                inter = contour.line_intersections(l)
+            for line in lines:
+                inter = contour.line_intersections(line)
                 if inter:
-                    pt = [inter[0][0], inter[1][0]]
+                    pt = set()
+                    for p in inter:
+                        pt.add(p[0])
                 else:
                     raise NotImplementedError
 
@@ -3565,7 +3568,7 @@ class BSplineSurface3D(Surface3D):
                 pt0 = pt[0]
                 edge = volmdlr.edges.LineSegment2D(pt[0], pt[1])
 
-                points.extend(edge.discretization_points(10))
+                points.extend(edge.discretization_points(number_points=10))
 
             points3d = []
             for p in points:
@@ -4702,11 +4705,11 @@ class Triangle3D(PlaneFace3D):
         """
         return self.point1.approx_hash() + self.point2.approx_hash() + self.point3.approx_hash()
 
-    def _data_eq(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
             return False
         self_set = set([self.point1, self.point2, self.point3])
-        other_set = set([other_.point1, other_.point2, other_.point3])
+        other_set = set([other_object.point1, other_object.point2, other_object.point3])
         if self_set != other_set:
             return False
         return True
@@ -6542,8 +6545,8 @@ class BSplineFace3D(Face3D):
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
-    _non_serializable_attributes = ['bounding_box']
-    _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
+    _non_serializable_attributes = ['bounding_box', 'primitives']
+    _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box', 'primitives']
     _non_data_hash_attributes = []
     STEP_FUNCTION = 'OPEN_SHELL'
 
@@ -6565,10 +6568,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def _data_hash(self):
         return sum(face._data_hash() for face in self.faces)
 
-    def _data_eq(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
             return False
-        for face1, face2 in zip(self.faces, other_.faces):
+        for face1, face2 in zip(self.faces, other_object.faces):
             if not face1._data_eq(face2):
                 return False
 
@@ -6945,9 +6948,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
 
 class ClosedShell3D(OpenShell3D):
-    _standalone_in_db = True
-    _non_serializable_attributes = ['bounding_box']
-    _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
     STEP_FUNCTION = 'CLOSED_SHELL'
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
