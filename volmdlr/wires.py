@@ -1121,35 +1121,90 @@ class Contour(Wire):
 
         self.primitives = new_primitives_contour
 
-    @classmethod
-    def contours_from_edges(cls, edges, tol=1e-7):
-        if not edges:
-            return []
+    @staticmethod
+    def touching_edges_pairs(edges): #TO DO: move this to edges?
         touching_primitives = []
         for i, primitive1 in enumerate(edges):
             for j, primitive2 in enumerate(edges):
                 if j > i:
-                    if primitive2.end != primitive1.start != primitive2.start and\
+                    if primitive2.end != primitive1.start != primitive2.start and \
                             primitive2.end != primitive1.end != primitive2.start:
                         if primitive1.point_belongs(primitive2.start) or primitive1.point_belongs(primitive2.end):
                             touching_primitives.append([primitive2, primitive1])
                         elif primitive2.point_belongs(primitive1.start) or primitive2.point_belongs(primitive1.end):
                             touching_primitives.append([primitive1, primitive2])
+        return touching_primitives
+
+    @staticmethod
+    def contours_primitives_touching_primitives(touching_primitives):
         contours_primitives_lists = []
-        if touching_primitives:
-            for prim1, prim2 in touching_primitives:
-                if prim1 in edges:
-                    edges.remove(prim1)
-                if prim2 in edges:
-                    edges.remove(prim2)
-            for prim1, prim2 in touching_primitives:
-                intersection = prim1.linesegment_intersections(prim2)
-                prim2_split = prim2.split(intersection[0])
-                for prim in prim2_split:
-                    if prim1.start == prim.start:
-                        contours_primitives_lists.append([prim1, prim.reverse()])
-                    else:
-                        contours_primitives_lists.append([prim1, prim])
+        for prim1, prim2 in touching_primitives:
+            intersection = prim1.linesegment_intersections(prim2)
+            prim2_split = prim2.split(intersection[0])
+            for prim in prim2_split:
+                if prim1.start == prim.start:
+                    contours_primitives_lists.append([prim1, prim.reverse()])
+                else:
+                    contours_primitives_lists.append([prim1, prim])
+        return contours_primitives_lists
+
+    @staticmethod
+    def connected_to_splited_primitives(edge, contours_primitives_lists):
+        """
+        Verifies if edge is connected to one of the primitives inside contours
+        :param edge: edge for verification
+        :param contours_primitives_lists: contours primitives lists
+        :return: update contours_primitives_lists and a boolean to indicate if the edge should be removed or not
+        """
+        remove = False
+        for i, primitives in enumerate(contours_primitives_lists):
+            if edge.end == primitives[0].start or edge.start == primitives[0].start:
+                contours_primitives_lists[i] = [edge.copy(deep=True)] + primitives
+                remove = True
+            elif edge.start == primitives[-1].end or edge.end == primitives[-1].end:
+                contours_primitives_lists[i] = primitives + [edge.copy(deep=True)]
+                remove = True
+        return contours_primitives_lists, remove
+
+    @staticmethod
+    def is_edge_connected(contour_primitives, edge, tol):
+        """
+        Verifies if edge is connected to one of the primitives inside contour_primitives
+        :param contour_primitives: list of primitives to create a contour
+        :param edge: edge for verification
+        :param tol: tolerance use in verification
+        :return: returns the edge if true, and None if not connected
+        """
+        edge_connected = None
+        points = [p for prim in contour_primitives for p in prim]
+        if (edge.start in points or edge.end in points) and edge not in contour_primitives:
+            edge_connected = edge
+            return edge_connected
+
+        for point in points:
+            if point.is_close(edge.start, tol=tol) and \
+                    edge not in contour_primitives:
+                edge.start = point
+                edge_connected = edge
+                return edge_connected
+            if point.is_close(edge.end, tol=tol) and \
+                    edge not in contour_primitives:
+                edge.end = point
+                edge_connected = edge
+                return edge_connected
+        return edge_connected
+
+    @classmethod
+    def contours_from_edges(cls, edges, tol=1e-7):
+        if not edges:
+            return []
+        touching_primitives = cls.touching_edges_pairs(edges)
+        for prim1, prim2 in touching_primitives:
+            if prim1 in edges:
+                edges.remove(prim1)
+            if prim2 in edges:
+                edges.remove(prim2)
+        contours_primitives_lists = cls.contours_primitives_touching_primitives(touching_primitives)
         if not edges:
             return [cls(primitives) for primitives in contours_primitives_lists]
         list_contours = []
@@ -1160,60 +1215,35 @@ class Contour(Wire):
             len1 = len(edges)
             for line in edges:
                 if contours_primitives_lists:
-                    remove = False
-                    for i, primitives in enumerate(contours_primitives_lists):
-                        if line.end == primitives[0].start or line.start == primitives[0].start:
-                            contours_primitives_lists[i] = [line.copy(deep=True)] + primitives
-                            remove = True
-                        elif line.start == primitives[-1].end or line.end == primitives[-1].end:
-                            contours_primitives_lists[i] = primitives + [line.copy(deep=True)]
-                            remove = True
+                    contours_primitives_lists, remove = cls.connected_to_splited_primitives(
+                        line, contours_primitives_lists)
                     if remove:
                         edges.remove(line)
-                        if not edges:
-                            finished = True
-                        break
-                points = [p for prim in contour_primitives for p in prim]
+                if not edges:
+                    finished = True
+                    break
                 if not contour_primitives:
                     contour_primitives.append(line)
                     edges.remove(line)
                     break
-
-                if (line.start in points or line.end in points) and\
-                        line not in contour_primitives:
-                    contour_primitives.append(line)
-                    edges.remove(line)
+                edge_connected = cls.is_edge_connected(contour_primitives, line, tol)
+                if edge_connected is not None:
+                    contour_primitives.append(edge_connected)
+                    edges.remove(edge_connected)
                     break
-
-                for point in points:
-                    if point.is_close(line.start, tol=tol) and\
-                            line not in contour_primitives:
-                        line.start = point
-                        contour_primitives.append(line)
-                        edges.remove(line)
-                        break
-                    if point.is_close(line.end, tol=tol) and\
-                            line not in contour_primitives:
-                        line.end = point
-                        contour_primitives.append(line)
-                        edges.remove(line)
-                        break
-
+            valid = False
             if len(edges) != 0 and len(edges) == len1 and len(contour_primitives) != 0:
-                contour_n = cls(contour_primitives[:])
-                contour_n.validate_contour_primitives()
-                contour_n.order_contour()
-                if len(contour_n.primitives) != 0:
-                    list_contours.append(contour_n)
-                # list_contours.append(contour_n)
-                contour_primitives = []
+                valid = True
             elif len(edges) == 0 and len(contour_primitives) != 0:
+                valid = True
+                finished = True
+            if valid:
                 contour_n = cls(contour_primitives[:])
                 contour_n.validate_contour_primitives()
                 contour_n.order_contour()
                 if len(contour_n.primitives) != 0:
                     list_contours.append(contour_n)
-                finished = True
+                contour_primitives = []
         list_contours = list_contours + [cls(primitives).order_contour() for primitives in contours_primitives_lists]
         return list_contours
 
