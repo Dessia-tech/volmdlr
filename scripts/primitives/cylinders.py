@@ -19,3 +19,7 @@ model=vm.core.VolumeModel([cylinder1, cylinder2])
 
 model.babylonjs(debug=True)
 
+point1 = vm.Point3D(0.1, 0.3, -1.3)
+point2 = vm.Point3D(-0.1, 0.2, 1)
+cyl3 = primitives3d.Cylinder.from_extremal_points(point1, point2, 0.2)
+cyl4 = primitives3d.HollowCylinder.from_extremal_points(point1, point2, 0.1, 0.2)
