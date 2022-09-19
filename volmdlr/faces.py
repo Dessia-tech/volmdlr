@@ -4050,6 +4050,18 @@ class Face3D(volmdlr.core.Primitive3D):
         point_inside2d = self.surface2d.random_point_inside()
         return self.surface3d.point2d_to_3d(point_inside2d)
 
+    @classmethod
+    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+        surface3d = Face3D.dict_to_object(dict_['surface3d'],
+                                          global_dict=global_dict,
+                                          pointers_memo=pointers_memo,
+                                          path=f'{path}/surface3d')
+        surface2d = Surface2D.dict_to_object(dict_['surface2d'],
+                                             global_dict=global_dict,
+                                             pointers_memo=pointers_memo,
+                                             path=f'{path}/surface2d')
+        return cls(surface3d, surface2d, dict_['name'])
+
 
 class PlaneFace3D(Face3D):
     """
