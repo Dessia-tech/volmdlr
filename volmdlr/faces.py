@@ -1905,8 +1905,8 @@ class BSplineSurface3D(Surface3D):
         if not isinstance(self._surface,
                           BSpline.Surface):
             raise ValueError('Not a geomdl bspline. It is a: ', self._surface)
-        else:
-            raise ValueError('self._surface', self._surface)
+        # else:
+        #     raise ValueError('self._surface', self._surface)
 
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
         volmdlr.core.Primitive3D.__init__(self, name=name)
