@@ -242,8 +242,9 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
     _non_hash_attributes = ['name']
     _generic_eq = True
 
-    def __init__(self, points):
+    def __init__(self, points, name: str = ''):
         self.points = points
+        self.name = name
         self.linear_elements = self._to_linear_elements()
         self.form_functions = self._form_functions()
         # self._line_segments = None
@@ -594,6 +595,7 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
 
     def __init__(self, points, name: str = ''):
         self.points = points
+        self.name = name
         # self.linear_elements = self._to_linear_elements()
         self.form_functions = self._form_functions()
         # self.line_segments = self._line_segments()
