@@ -3886,14 +3886,25 @@ class Contour3D(Contour, Wire3D):
                      raw_edges[0].start.point_distance(raw_edges[1].end)]
         index = distances.index(min(distances))
         if min(distances) > 5e-4:
-            ax = raw_edges[0].plot()
-            raw_edges[1].plot(ax=ax)
+
+            # Green color : well-placed and well-read
+            ax = raw_edges[0].plot(color='g')
+            # Red color : can't be connected to green edge
+            raw_edges[1].plot(ax=ax, color='r')
+            # Black color : to be placed
+            [re.plot(ax=ax) for re in raw_edges[2:]]
+
+            # ax = raw_edges[0].plot()
+            # raw_edges[1].plot(ax=ax)
+            # print(raw_edges)
+            # [re.plot(ax=ax, color='r') for re in raw_edges[2:]]
             deltax1 = abs(raw_edges[0].start.x - raw_edges[1].end.x)
             deltax2 = abs(raw_edges[0].end.x - raw_edges[1].end.x)
             deltay1 = abs(raw_edges[0].start.y - raw_edges[1].end.y)
             deltay2 = abs(raw_edges[0].end.y - raw_edges[1].end.y)
             deltaz1 = abs(raw_edges[0].start.z - raw_edges[1].end.z)
             deltaz2 = abs(raw_edges[0].end.z - raw_edges[1].end.z)
+            return None
             raise NotImplementedError(
                 'First 2 edges of contour not follwing each other',
                 'delta = {}, {}, {}, {}, {}, {}'.format(deltax1, deltax2,
@@ -3913,21 +3924,26 @@ class Contour3D(Contour, Wire3D):
             raise NotImplementedError
 
         last_edge = edges[-1]
-        for raw_edge in raw_edges[2:]:
+        for i, raw_edge in enumerate(raw_edges[2:]):
             distances = [raw_edge.start.point_distance(last_edge.end),
                          raw_edge.end.point_distance(last_edge.end)]
             index = distances.index(min(distances))
             if min(distances) > 5e-4:
-                ax = last_edge.plot(color='b')
+                # Green color : well-placed and well-read
+                ax = last_edge.plot(color='g')
+                [re.plot(ax=ax, color='g') for re in raw_edges[:2+i]]
+                last_edge.end.plot(ax=ax, color='g')
+                # Red color : can't be connected to green dot
                 raw_edge.plot(ax=ax, color='r')
-                last_edge.end.plot(ax=ax, color='b')
-                raw_edges[0].plot(ax=ax, color='g')
+                # Black color : to be placed
+                [re.plot(ax=ax) for re in raw_edges[2+i+1:]]
                 deltax1 = abs(raw_edge.start.x - last_edge.end.x)
                 deltax2 = abs(raw_edge.end.x - last_edge.end.x)
                 deltay1 = abs(raw_edge.start.y - last_edge.end.y)
                 deltay2 = abs(raw_edge.end.y - last_edge.end.y)
                 deltaz1 = abs(raw_edge.start.z - last_edge.end.z)
                 deltaz2 = abs(raw_edge.end.z - last_edge.end.z)
+                return None
                 raise NotImplementedError(
                     'Edges of contour not follwing each other',
                     'delta = {}, {}, {}, {}, {}, {}'.format(deltax1, deltax2,

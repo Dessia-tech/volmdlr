@@ -3313,14 +3313,23 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         Creates a table of equivalence between the parameter t (evaluation
         of the BSplineCruve) and the cumulative distance.
         """
+        resolution = min(resolution, int(self.length() / 1e-5))
+
         points3d = []
         ts = [start_parameter + i / resolution * (end_parameter - start_parameter)
               for i in range(resolution + 1)]
         points = self.curve.evaluate_list(ts)
         for pt in points:
             points3d.append(volmdlr.Point3D(*pt))
-        linesegments = [volmdlr.edges.LineSegment3D(p1, p2)
-                        for p1, p2 in zip(points3d[:-1], points3d[1:])]
+        try:
+            linesegments = [volmdlr.edges.LineSegment3D(p1, p2)
+                            for p1, p2 in zip(points3d[:-1], points3d[1:])]
+        except NotImplementedError:
+            # for pt, t in zip(points3d, ts):
+            #     print(t, pt)
+            for pt1, pt2 in zip(points3d[:-1], points3d[1:]):
+                print(pt1.point_distance(pt2))
+            raise NotImplementedError
         distances = [0]
         for lineseg in linesegments:
             distances.append(lineseg.length() + distances[-1])
@@ -3606,21 +3615,29 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                               name=bspline_curve.name)
 
     def cut_before(self, parameter: float):
+        print('length', self.length())
+        print('param', parameter)
         # if parameter == 0:
-        if math.isclose(parameter, 0, abs_tol=1e-6):
+        if math.isclose(parameter, 0, abs_tol=2e-5):
             return self
         # elif parameter == 1:
-        elif math.isclose(parameter, 1, abs_tol=1e-6):
+        elif math.isclose(parameter, 1, abs_tol=2e-5):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
-        curves = operations.split_curve(self.curve, parameter)
+        try:
+            curves = operations.split_curve(self.curve, parameter)
+        except ValueError:
+            if parameter < 0.5:
+                return self
+            else:
+                raise ValueError('Nothing will be left from the BSplineCurve3D')
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
         # if parameter == 0.:
-        if math.isclose(parameter, 0, abs_tol=1e-6):
+        if math.isclose(parameter, 0, abs_tol=2e-5):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
         # elif parameter == 1.:
-        elif math.isclose(parameter, 1, abs_tol=1e-6):
+        elif math.isclose(parameter, 1, abs_tol=2e-5):
             return self
         curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[0])
