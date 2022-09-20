@@ -2067,7 +2067,9 @@ class BSplineSurface3D(Surface3D):
         try:
             a, b, c = self.surface.evaluate_single((x, y))
         except AttributeError:
-            print(list(self.surface))
+            print('error', list(self.surface))
+            msg = 'error: '+str(list(self.surface))
+            raise ValueError(msg)
         return volmdlr.Point3D(a, b, c)
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
