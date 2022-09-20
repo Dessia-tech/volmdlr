@@ -1910,7 +1910,7 @@ class BSplineSurface3D(Surface3D):
 
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
         volmdlr.core.Primitive3D.__init__(self, name=name)
-        print('self.surface: ', self.surface)
+        print('self.surface: Init BSplineSurface3D: ', self.surface)
         # Hidden Attributes
         self._displacements = None
         self._grids2d = None
@@ -1922,6 +1922,7 @@ class BSplineSurface3D(Surface3D):
 
     @surface.setter
     def check_surface(self, value):
+        print('yes')
         if not isinstance(value, BSpline.Surface):
             raise ValueError('Not a bspline')
         else:
@@ -2073,6 +2074,10 @@ class BSplineSurface3D(Surface3D):
         return blending_mat
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        if not isinstance(self._surface,
+                          BSpline.Surface):
+            raise ValueError('pt2d_3d : Not a geomdl bspline. It is a: ', self._surface)
+
         x, y = point2d
         if x < 0:
             x = 0.
