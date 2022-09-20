@@ -1898,9 +1898,16 @@ class BSplineSurface3D(Surface3D):
         surface.knotvector_v = knot_vector_v
         surface.delta = 0.05
         # surface_points = surface.evalpts
-        print('surface : ', surface)
-        print('type(surface): ', type(surface))
+        # print('surface : ', surface)
+        # print('type(surface): ', type(surface))
         self._surface = surface
+
+        if not isinstance(self._surface,
+                          BSpline.Surface):
+            raise ValueError('Not a geomdl bspline. It is a: ', self._surface)
+        else:
+            raise ValueError('self._surface', self._surface)
+
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
         volmdlr.core.Primitive3D.__init__(self, name=name)
         print('self.surface: ', self.surface)
@@ -2081,7 +2088,8 @@ class BSplineSurface3D(Surface3D):
             a, b, c = self.surface.evaluate_single((x, y))
         except AttributeError:
             print('error', list(self.surface))
-            msg = 'error: '+str(list(self.surface))
+            # msg = 'error: '+str(list(self.surface))
+            msg = 'error: '+str(self.surface)
             raise ValueError(msg)
         return volmdlr.Point3D(a, b, c)
 
