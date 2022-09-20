@@ -3343,7 +3343,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         resolution = max(10, min(resolution, int(self.length() / 1e-4)))
         delta_param = 1 / resolution * (end_parameter - start_parameter)
         distance = 0
-        for i in range(resolution+1):
+        for i in range(resolution + 1):
             if i == 0:
                 yield start_parameter, 0
             else:
