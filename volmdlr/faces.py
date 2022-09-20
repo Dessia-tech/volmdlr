@@ -2074,9 +2074,12 @@ class BSplineSurface3D(Surface3D):
         return blending_mat
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
-        if not isinstance(self._surface,
-                          BSpline.Surface):
-            raise ValueError('pt2d_3d : Not a geomdl bspline. It is a: ', self._surface)
+        # if not isinstance(self._surface,
+        #                   BSpline.Surface):
+        #     raise ValueError('pt2d_3d : Not a geomdl bspline. It is a: ', self._surface)
+
+        if type(self.surface) == type(iter([])):
+            self.surface = next(self.surface)
 
         x, y = point2d
         if x < 0:
