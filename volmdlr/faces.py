@@ -1909,6 +1909,18 @@ class BSplineSurface3D(Surface3D):
         self._grids2d_deformed = None
 
     @property
+    def surface(self):
+        return self._surface
+
+    @surface.setter
+    def check_surface(self, value):
+        if not isinstance(value, BSpline.Surface()):
+            raise ValueError('Not a bspline')
+        else:
+            print('set a bspline, ok', value)
+            self._surface = value
+
+    @property
     def x_periodicity(self):
         p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
         p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
