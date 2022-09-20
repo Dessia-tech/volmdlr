@@ -1898,27 +1898,28 @@ class BSplineSurface3D(Surface3D):
         surface.knotvector_v = knot_vector_v
         surface.delta = 0.05
         # surface_points = surface.evalpts
-
+        print('surface : ', surface)
+        print('type(surface): ', type(surface))
         self.surface = surface
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
         volmdlr.core.Primitive3D.__init__(self, name=name)
-
+        print('self.surface: ', self.surface)
         # Hidden Attributes
         self._displacements = None
         self._grids2d = None
         self._grids2d_deformed = None
 
-    @property
-    def surface(self):
-        return self._surface
+    # @property
+    # def surface(self):
+    #     return self._surface
 
-    @surface.setter
-    def check_surface(self, value):
-        if not isinstance(value, BSpline.Surface()):
-            raise ValueError('Not a bspline')
-        else:
-            print('set a bspline, ok', value)
-            self._surface = value
+    # @surface.setter
+    # def check_surface(self, value):
+    #     if not isinstance(value, BSpline.Surface):
+    #         raise ValueError('Not a bspline')
+    #     else:
+    #         print('set a bspline, ok', value)
+    #         self._surface = value
 
     @property
     def x_periodicity(self):
