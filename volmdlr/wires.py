@@ -3687,10 +3687,6 @@ class Circle2D(Contour2D):
     def line_intersections(self, line2d: volmdlr.edges.Line2D, tol=1e-9):
         full_arc_2d = volmdlr.edges.FullArc2D(
             center=self.center, start_end=self.point_at_abscissa(0),
-<<<<<<< HEAD
-            is_trigo=True, name=self.name)
-        return full_arc_2d.line_intersections(line2d, tol)
-=======
             name=self.name)
         return full_arc_2d.line_intersections(line2d, tol)
 
@@ -3700,7 +3696,6 @@ class Circle2D(Contour2D):
             center=self.center, start_end=self.point_at_abscissa(0),
             name=self.name)
         return full_arc_2d.linesegment_intersections(lineseg2d, tol)
->>>>>>> origin/mesh_fe
 
     def circle_intersections(self, circle: 'volmdlr.wires.Circle2D'):
         x0, y0 = self.center
@@ -3933,30 +3928,6 @@ class Contour3D(Contour, Wire3D):
 
     def __hash__(self):
         return sum(hash(e) for e in self.primitives)
-<<<<<<< HEAD
-
-    def __eq__(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
-            return False
-        if len(self.primitives) != len(other_.primitives):
-            return False
-        equal = 0
-        for prim1 in self.primitives:
-            reverse1 = prim1.reverse()
-            found = False
-            for prim2 in other_.primitives:
-                reverse2 = prim2.reverse()
-                if (prim1 == prim2 or reverse1 == prim2
-                        or reverse2 == prim1 or reverse1 == reverse2):
-                    equal += 1
-                    found = True
-            if not found:
-                return False
-        if equal == len(self.primitives):
-            return True
-        return False
-=======
->>>>>>> origin/mesh_fe
 
     @property
     def edge_polygon(self):
@@ -4799,11 +4770,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return ClosedPolygon3D(points, self.name)
 
     def __hash__(self):
-<<<<<<< HEAD
-        return sum(hash(p) for p in self.points)
-=======
         return sum(hash(point) for point in self.points)
->>>>>>> origin/mesh_fe
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
@@ -5153,39 +5120,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             elif math.isclose(ratio, 0, abs_tol=0.3):
                 closing_point_index = list_closing_point_indexes[-1]
             else:
-<<<<<<< HEAD
-                if passed_by_zero_index:
-                    ratio = (list_closing_point_indexes[
-                                 0] - closing_point_index) / ratio_denom
-                    if math.isclose(ratio, 1, abs_tol=0.3):
-                        closing_point_index = list_closing_point_indexes[0]
-                    else:
-                        closing_point_index = list_closing_point_indexes[-1]
-                else:
-                    if closing_point_index > list_closing_point_indexes[0]:
-                        ratio1 = (closing_point_index -
-                                  list_closing_point_indexes[
-                                      0]) / ratio_denom
-                        if math.isclose(ratio1, 0, abs_tol=0.3) and\
-                                math.isclose(ratio, 1, abs_tol=0.3):
-                            passed_by_zero_index = True
-                            closing_point_index = list_closing_point_indexes[0]
-                        else:
-                            closing_point_index = list_closing_point_indexes[-1]
-                    else:
-                        if closing_point_index < ratio_denom / 4:
-                            passed_by_zero_index = True
-                        elif ratio_denom - list_closing_point_indexes[
-                                -1] >= 5:
-                            closing_point_index = \
-                                list_closing_point_indexes[-1] + 5
-                        else:
-                            closing_point_index = \
-                                list_closing_point_indexes[-1]
-=======
                 closing_point_index, passed_by_zero_index = ClosedPolygon3D.sewing_closing_point_past_point0(
                     closing_point_index, list_closing_point_indexes, passed_by_zero_index, ratio_denominator)
->>>>>>> origin/mesh_fe
 
         elif closing_point_index in list_closing_point_indexes:
             closing_point_index = list_closing_point_indexes[-1]

@@ -3887,18 +3887,10 @@ class BSplineSurface3D(Surface3D):
         # grid3d
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-<<<<<<< HEAD
-            grid2d = volmdlr.Point2D.grid2d_with_direction(
-                50, 50, xmin[i], xmax[i], ymin[i], ymax[i], grid2d_direction[i])[0]
-            grid3d = []
-            for p in grid2d:
-                grid3d.append(bspline.point2d_to_3d(p))
-=======
             grid3d = bspline.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(0, 1),
                                                                         y_limits=(0, 1),
                                                                         points_nbr=(nb, nb),
                                                                         direction=grid2d_direction[i]))
->>>>>>> origin/mesh_fe
 
             points3d.extend(grid3d)
 
@@ -4854,21 +4846,11 @@ class PlaneFace3D(Face3D):
             for face in valid_coicident_faces:
                 adjacent_faces = False
                 face_inside = False
-<<<<<<< HEAD
-                contour = face.outer_contour3d.to_2d(
-                    face0.surface3d.frame.origin,
-                    face0.surface3d.frame.u,
-                    face0.surface3d.frame.v)
-                if contour.is_sharing_primitives_with(merged_contour, False):
-                    merged_contour_results = merged_contour.merge_with(
-                        contour)
-=======
                 contour = face.outer_contour3d.to_2d(face0.surface3d.frame.origin,
                                                      face0.surface3d.frame.u,
                                                      face0.surface3d.frame.v)
                 if contour.is_sharing_primitives_with(merged_contour):
                     merged_contour_results = merged_contour.union(contour)
->>>>>>> origin/mesh_fe
                     merged_contour = merged_contour_results[0]
                     merged_inner_contours = merged_contour_results[1:]
                     list_inner_contours.extend(merged_inner_contours)
@@ -5361,14 +5343,6 @@ class CylindricalFace3D(Face3D):
         points = contour2d.tessel_points
         min_h, min_theta = min(pt[1] for pt in points), min(pt[0] for pt in points)
         max_h, max_theta = max(pt[1] for pt in points), max(pt[0] for pt in points)
-
-<<<<<<< HEAD
-        min_h, min_theta = min(pt[1] for pt in points), min(
-            pt[0] for pt in points)
-        max_h, max_theta = max(pt[1] for pt in points), max(
-            pt[0] for pt in points)
-=======
->>>>>>> origin/mesh_fe
         return min_h, min_theta, max_h, max_theta
 
     def minimum_distance_points_cyl(self, other_cyl):
@@ -5519,16 +5493,9 @@ class CylindricalFace3D(Face3D):
 
         poly2d = planeface.polygon2D
         pfpoints = poly2d.points
-<<<<<<< HEAD
-        xmin, ymin = min(pt[0] for pt in pfpoints), min(
-            pt[1] for pt in pfpoints)
-        xmax, ymax = max(pt[0] for pt in pfpoints), max(
-            pt[1] for pt in pfpoints)
-=======
         xmin, ymin = min(pt[0] for pt in pfpoints), min(pt[1] for pt in pfpoints)
         xmax, ymax = max(pt[0] for pt in pfpoints), max(pt[1] for pt in pfpoints)
 
->>>>>>> origin/mesh_fe
         origin, vx, vy = planeface.plane.origin, planeface.plane.vectors[0], \
             planeface.plane.vectors[1]
         pf1_2d, pf2_2d = volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D(
@@ -6838,11 +6805,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         # self.bounding_box = self._bounding_box()
 
     def _data_hash(self):
-<<<<<<< HEAD
-        return sum(f._data_hash() for f in self.faces)
-=======
         return sum(face._data_hash() for face in self.faces)
->>>>>>> origin/mesh_fe
 
     def _data_eq(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:
