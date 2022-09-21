@@ -1933,8 +1933,6 @@ class Contour2D(Contour, Wire2D):
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
 
-<<<<<<< HEAD
-=======
     def to_polygon(self, angle_resolution):
         """
         Transform the contour to a polygon.
@@ -1948,7 +1946,7 @@ class Contour2D(Contour, Wire2D):
             polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
         return ClosedPolygon2D(polygon_points)
 
->>>>>>> origin/dev
+
     def grid_triangulation(self, x_density: float = None,
                            y_density: float = None,
                            min_points_x: int = 20,
