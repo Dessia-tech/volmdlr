@@ -1003,6 +1003,7 @@ class Plane3D(Surface3D):
         """
         self.frame = frame
         self.name = name
+        Surface3D.__init__(self, name=name)
 
     def __hash__(self):
         return hash(self.frame)
@@ -1010,14 +1011,15 @@ class Plane3D(Surface3D):
     def __eq__(self, other_plane):
         if other_plane.__class__.__name__ != self.__class__.__name__:
             return False
-        return (self.frame.origin == other_plane.frame.origin and
-                self.frame.w.is_colinear_to(other_plane.frame.w))
+        return self.frame == other_plane.frame
+        # return (self.frame.origin == other_plane.frame.origin and
+        #         self.frame.w.is_colinear_to(other_plane.frame.w))
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
-        # improve the object structure ?
-        dict_ = dc.DessiaObject.base_dict(self)
-        dict_['frame'] = self.frame.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/frame')
-        return dict_
+    # def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    #     # improve the object structure ?
+    #     dict_ = dc.DessiaObject.base_dict(self)
+    #     dict_['frame'] = self.frame.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/frame')
+    #     return dict_
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2232,14 +2234,15 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
-        if -1e-3 < x < 0:
+        if x < 0:
             x = 0.
-        elif 1 < x < 1 + 1e-3:
+        elif 1 < x:
             x = 1
-        if -1e-3 < y < 0:
+        if y < 0:
             y = 0
-        elif 1 < y < 1 + 1e-3:
+        elif y > 1:
             y = 1
+
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
@@ -3386,7 +3389,7 @@ class BSplineSurface3D(Surface3D):
         '''
 
         if len(cylindrical_faces) == 1:
-            return cls.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v, 50, 50)
+            return cls.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v, points_x=50, points_y=50)
 
         if len(cylindrical_faces) > 1:
             bspline_surfaces = []
@@ -3738,10 +3741,12 @@ class BSplineSurface3D(Surface3D):
             pt0 = volmdlr.O2D
             points = []
 
-            for l in lines:
-                inter = contour.line_intersections(l)
+            for line in lines:
+                inter = contour.line_intersections(line)
                 if inter:
-                    pt = [inter[0][0], inter[1][0]]
+                    pt = set()
+                    for p in inter:
+                        pt.add(p[0])
                 else:
                     raise NotImplementedError
 
@@ -3749,7 +3754,7 @@ class BSplineSurface3D(Surface3D):
                 pt0 = pt[0]
                 edge = volmdlr.edges.LineSegment2D(pt[0], pt[1])
 
-                points.extend(edge.discretization_points(10))
+                points.extend(edge.discretization_points(number_points=10))
 
             points3d = []
             for p in points:
@@ -4354,9 +4359,9 @@ class PlaneFace3D(Face3D):
     _standalone_in_db = False
     _generic_eq = True
     _non_serializable_attributes = ['bounding_box', 'polygon2D']
-    _non_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
-                          'inner_contours3d']
-    _non_hash_attributes = []
+    _non_data_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
+                               'inner_contours3d']
+    _non_data_hash_attributes = []
 
     def __init__(self, surface3d: Plane3D, surface2d: Surface2D,
                  name: str = ''):
@@ -4388,17 +4393,17 @@ class PlaneFace3D(Face3D):
     #         polygon2D = volmdlr.ClosedPolygon2D(polygon_points)
     #     return repaired_points, polygon2D
 
-    @classmethod
-    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
-        plane3d = Plane3D.dict_to_object(dict_['surface3d'],
-                                         global_dict=global_dict,
-                                         pointers_memo=pointers_memo,
-                                         path=f'{path}/surface3d')
-        surface2d = Surface2D.dict_to_object(dict_['surface2d'],
-                                             global_dict=global_dict,
-                                             pointers_memo=pointers_memo,
-                                             path=f'{path}/surface2d')
-        return cls(plane3d, surface2d, dict_['name'])
+    # @classmethod
+    # def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    #     plane3d = Plane3D.dict_to_object(dict_['surface3d'],
+    #                                      global_dict=global_dict,
+    #                                      pointers_memo=pointers_memo,
+    #                                      path=f'{path}/surface3d')
+    #     surface2d = Surface2D.dict_to_object(dict_['surface2d'],
+    #                                          global_dict=global_dict,
+    #                                          pointers_memo=pointers_memo,
+    #                                          path=f'{path}/surface2d')
+    #     return cls(plane3d, surface2d, dict_['name'])
 
     def area(self):
         return self.surface2d.outer_contour.area()
@@ -4640,6 +4645,10 @@ class PlaneFace3D(Face3D):
                 intersection_primitives = self.validate_inner_contour_intersections(intersections)
             elif face2.surface2d.inner_contours:
                 intersection_primitives = face2.validate_inner_contour_intersections(intersections)
+            elif len(intersections) > 2:
+                intersection_primitives = self.validate_inner_contour_intersections(intersections)
+                if not intersections:
+                    raise NotImplementedError
             else:
                 intersection_primitives = [volmdlr.edges.LineSegment3D(
                     intersections[0], intersections[1])]
@@ -4658,6 +4667,8 @@ class PlaneFace3D(Face3D):
         bbox2 = face2.bounding_box
         if not bbox1.bbox_intersection(bbox2) and \
                 bbox1.distance_to_bbox(bbox2) >= tol:
+            return []
+        if self.face_inside(face2) or face2.face_inside(self):
             return []
         intersections = self.get_face_intersections(face2)
         valid_intersections = self.validate_face_intersections(face2, intersections)
@@ -4913,9 +4924,9 @@ class Triangle3D(PlaneFace3D):
 
     # _generic_eq = True
     # _non_serializable_attributes = ['bounding_box', 'polygon2D']
-    # _non_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
+    # _non_data_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
     #                       'inner_contours3d']
-    # _non_hash_attributes = []
+    # _non_data_hash_attributes = []
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  point3: volmdlr.Point3D, alpha=1, color=None, name: str = ''):
@@ -4946,11 +4957,11 @@ class Triangle3D(PlaneFace3D):
         """
         return self.point1.approx_hash() + self.point2.approx_hash() + self.point3.approx_hash()
 
-    def _data_eq(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
             return False
         self_set = set([self.point1, self.point2, self.point3])
-        other_set = set([other_.point1, other_.point2, other_.point3])
+        other_set = set([other_object.point1, other_object.point2, other_object.point3])
         if self_set != other_set:
             return False
         return True
@@ -6786,16 +6797,15 @@ class BSplineFace3D(Face3D):
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
-    _non_serializable_attributes = ['bounding_box']
-    _non_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
-    _non_hash_attributes = []
+    _non_serializable_attributes = ['bounding_box', 'primitives']
+    _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box', 'primitives']
+    _non_data_hash_attributes = []
     STEP_FUNCTION = 'OPEN_SHELL'
 
     def __init__(self, faces: List[Face3D],
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
         self.faces = faces
-        self.name = name
         if not color:
             self.color = (0.8, 0.8, 0.8)
         else:
@@ -6803,14 +6813,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self.alpha = alpha
         self._bbox = None
         # self.bounding_box = self._bounding_box()
+        volmdlr.core.CompositePrimitive3D.__init__(self,
+                                                   primitives=faces, color=color, alpha=alpha,
+                                                   name=name)
 
     def _data_hash(self):
         return sum(face._data_hash() for face in self.faces)
 
-    def _data_eq(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
             return False
-        for face1, face2 in zip(self.faces, other_.faces):
+        for face1, face2 in zip(self.faces, other_object.faces):
             if not face1._data_eq(face2):
                 return False
 
@@ -7063,8 +7076,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if min_dist is not None:
             p1, p2 = min_dist
             return p1.point_distance(p2)
-        else:
-            return None
+        return 0
 
     def minimum_distance_point(self,
                                point: volmdlr.Point3D) -> volmdlr.Point3D:
@@ -7312,9 +7324,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
 
 class ClosedShell3D(OpenShell3D):
-    _standalone_in_db = True
-    _non_serializable_attributes = ['bounding_box']
-    _non_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
     STEP_FUNCTION = 'CLOSED_SHELL'
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,

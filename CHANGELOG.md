@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<<<<<<< HEAD
 ## Unrealeased
 
 ### New Features
@@ -32,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unrealeased
 
+=======
+## v0.5.0
+>>>>>>> origin/dev
 
 ### New Features
 
@@ -39,7 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Point, Edges and Wires: axial_symmetry
 * Surface2D: rotation, rotation_inplace
 * Wire2D: bsplinecurve_crossings,  bsplinecurve_intersections
-
+* Cylinder: min_distance_to_other_cylinder, is_intersecting_other_cylinder
+* New point_distance method for Wire3D
 
 ### Fixed
 
@@ -53,7 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D.split (consider point==start/end)
 * Contour3D.bounding_box (use _utd_bounding_box to be defined as a property)
 * BSplineSurface3D.grid2d_deformed (add more constraints to compute surface deformation)
-
+* BSplineSurface3D.from_cylindrical_faces (consider **kwargs parameters)
+* Duplicated methods cleaned
+* triangulation of planar faces
 
 ### Performance improvements
 
@@ -63,12 +70,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Add hidden attribute _bounding_rectangle for Contour2D
 * Add hidden attribute _length for BSplineCurve2D/3D
 * Consider different types of primitives in Wire.wire_intersections/wire_crossings
+* Add hidden attribute _length for Edge
+
 
 
 ### Refactorings
 
 * Define _eq_ in Contour (to be used for both 2D and 3D)
 * Use Grid2D object in different BSplineSurface3D methods (especially: to_2d_with_dimension)
+* Define length in LineSegment (to be used for both 2D and 3D)
+* Delete diplicated methods (length and point_at_abscissa) from Contour3D (inherit from Wire)
+* Define a Parent class 'Bsplinecurve' to mutulize Bsplinecurve2D/3D methods
+* Clean duplicated methods
+* Define length in LineSegment (to be used for both 2D and 3D)
+* Delete diplicated methods (length and point_at_abscissa) from Contour3D (inherit from Wire)
+* Define a Parent class 'Bsplinecurve' to mutulize Bsplinecurve2D/3D methods
+
+
 
 
 

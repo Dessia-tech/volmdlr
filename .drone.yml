@@ -29,7 +29,9 @@ steps:
   - cd ../tests
   - coverage run --source volmdlr -m unittest discover
   - cd ../scripts
-  - coverage run --source volmdlr -a ci_scripts.py
+  - coverage run --source volmdlr ci_scripts.py
+  - cd ..
+  - coverage combine scripts/.coverage tests/.coverage
   - coverage json
   - coverage report
   - python coverage.py
