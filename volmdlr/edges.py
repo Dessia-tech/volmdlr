@@ -3769,7 +3769,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
     def triangulation(self):
         return None
 
-<<<<<<< HEAD
     def abscissa(self, point3d):
         '''
         copied from BSplineCurve2D
@@ -3811,8 +3810,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
 
         return 'BSpline(' + str(tag) + ') = {' + str(control_points_tags)[1:-1] + '};'
 
-=======
->>>>>>> origin/dev
 
 class BezierCurve3D(BSplineCurve3D):
 
