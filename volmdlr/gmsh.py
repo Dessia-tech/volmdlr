@@ -617,8 +617,8 @@ class Gmsh(DessiaObject):
             element_groups.append(volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name=''))
         # element_groups = [volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name='')]
         mesh = volmdlr.mesh.Mesh(element_groups)
-        mesh.nodes = points
-        mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+        # mesh.nodes = points
+        # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
 
         return mesh
 
@@ -647,8 +647,8 @@ class Gmsh(DessiaObject):
             element_groups.append(volmdlr.mesh.ElementsGroup(triangles_mesh, name=''))
         # element_groups = [volmdlr.mesh.ElementsGroup(triangles_mesh, name='')]
         mesh = volmdlr.mesh.Mesh(element_groups)
-        mesh.nodes = points
-        mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+        # mesh.nodes = points
+        # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
 
         return mesh
 
