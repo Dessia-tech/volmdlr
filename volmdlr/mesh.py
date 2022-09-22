@@ -829,6 +829,20 @@ class Mesh(DessiaObject):
             z = [n.z for n in nodes]
             return min(x), max(x), min(y), max(y), min(z), max(z)
 
+    def delete_duplicated_nodes(self, tol=1e-4):
+        nodes_list = list(self.nodes)
+
+        for i,n1 in enumerate(nodes_list):
+            for j,n2 in enumerate(nodes_list):
+                if n1 != n2:
+                    d = n1.point_distance(n2)
+                    if d<tol:
+                        nodes_list.pop(j)
+
+        self.nodes = nodes_list
+        self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
+
+        return self
 
 #     def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
 #         plot_datas = []
