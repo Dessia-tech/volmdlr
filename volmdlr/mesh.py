@@ -698,6 +698,8 @@ class ElementsGroup(DessiaObject):
         self.nodes = self._nodes()
         self.name = name
 
+        self._elements_per_node = None
+
         DessiaObject.__init__(self, name=name)
 
     def _nodes(self):
@@ -713,15 +715,20 @@ class ElementsGroup(DessiaObject):
                 return element
         return None
 
-    def node_element_dict(self):
-        dict_node_element = {}
-        for element in self.elements:
-            for point in element.points:
-                try:
-                    dict_node_element[point].append(element)
-                except KeyError:
-                    dict_node_element[point] = [element]
-        return dict_node_element
+    @property
+    def elements_per_node(self):
+        if self._elements_per_node is not None:
+            return self._elements_per_node
+        else:
+            dict_node_element = {}
+            for element in self.elements:
+                for point in element.points:
+                    try:
+                        dict_node_element[point].append(element)
+                    except KeyError:
+                        dict_node_element[point] = [element]
+            self._elements_per_node = dict_node_element
+            return dict_node_element
 
 #     def rotation(self, center, angle, copy=True):
 #         if copy:
@@ -847,19 +854,48 @@ class Mesh(DessiaObject):
             return min(x), max(x), min(y), max(y), min(z), max(z)
 
     def delete_duplicated_nodes(self, tol=1e-4):
-        nodes_list = list(self.nodes)
+        mesh = self.__class__(self.elements_groups)
+        nodes_list = list(mesh.nodes)
+        nodes_index_deleted, nodes_index_remained = [], []
+        nodes_index = []
 
         for i,n1 in enumerate(nodes_list):
-            for j,n2 in enumerate(nodes_list):
-                if n1 != n2:
-                    d = n1.point_distance(n2)
-                    if d<tol:
-                        nodes_list.pop(j)
+            for j in range(i+1, len(nodes_list)):
+                d = n1.point_distance(nodes_list[j])
+                if d<tol:
+                    nodes_index_deleted.append(j)
+                    nodes_index_remained.append(i)
+                    nodes_index.append((j, i))
 
-        self.nodes = nodes_list
-        self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
+        # dict_node_element_groups = []
+        # for group in self.elements_groups:
+        #     dict_node_element_groups.append(group.node_element_dict())
 
-        return self
+        # dict_node_element_groups = [group.node_element_dict() for group in self.elements_groups]
+
+        # nodes_index_deleted.sort(reverse=True)
+        # for k, index in enumerate(nodes_index_deleted):
+        #     nodes_list.pop(index)
+        #     for group in self.elements_groups:
+        #         if self.nodes[index] in group.nodes:
+        #             dict_node_element = group.elements_per_node
+        #             for element in dict_node_element[self.nodes[index]]:
+        #                 element.points.index[self.nodes[index]] = self.nodes[nodes_index_remained[k]]
+
+        nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
+        for k, index in enumerate(nodes_index):
+            nodes_list.pop(index[0])
+            for group in mesh.elements_groups:
+                if mesh.nodes[index[0]] in group.nodes:
+                    dict_node_element = group.elements_per_node
+                    for element in dict_node_element[mesh.nodes[index[0]]]:
+                        # element.points.index(self.nodes[index[0]]) = self.nodes[index[1]]
+                        element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
+
+        mesh.nodes = nodes_list
+        mesh.node_to_index = {self.nodes[i]: i for i in range(len(mesh.nodes))}
+
+        return mesh
 
 #     def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
 #         plot_datas = []
