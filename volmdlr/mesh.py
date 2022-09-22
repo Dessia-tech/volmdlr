@@ -695,16 +695,33 @@ class ElementsGroup(DessiaObject):
 
     def __init__(self, elements, name: str):
         self.elements = elements
+        self.nodes = self._nodes()
         self.name = name
 
         DessiaObject.__init__(self, name=name)
 
+    def _nodes(self):
+        nodes = set()
+        for element in self.elements:
+            for point in element.points:
+                nodes.add(point)
+        return nodes
 
     def point_to_element(self, point):
         for element in self.elements:
             if element.point_belongs(point):
                 return element
         return None
+
+    def node_element_dict(self):
+        dict_node_element = {}
+        for element in self.elements:
+            for point in element.points:
+                try:
+                    dict_node_element[point].append(element)
+                except KeyError:
+                    dict_node_element[point] = [element]
+        return dict_node_element
 
 #     def rotation(self, center, angle, copy=True):
 #         if copy:
