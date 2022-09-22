@@ -1415,6 +1415,7 @@ class VolumeModel(dc.DessiaObject):
 
         lines.append('Mesh.CharacteristicLengthMin = 0;')
         lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
+        lines.append('Geometry.Tolerance = 1e-20;')
 
         for i, primitive in enumerate(self.primitives):
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
