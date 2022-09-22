@@ -856,31 +856,13 @@ class Mesh(DessiaObject):
     def delete_duplicated_nodes(self, tol=1e-4):
         mesh = self.__class__(self.elements_groups)
         nodes_list = list(mesh.nodes)
-        nodes_index_deleted, nodes_index_remained = [], []
         nodes_index = []
 
-        for i,n1 in enumerate(nodes_list):
+        for i,node in enumerate(nodes_list):
             for j in range(i+1, len(nodes_list)):
-                d = n1.point_distance(nodes_list[j])
+                d = node.point_distance(nodes_list[j])
                 if d<tol:
-                    nodes_index_deleted.append(j)
-                    nodes_index_remained.append(i)
                     nodes_index.append((j, i))
-
-        # dict_node_element_groups = []
-        # for group in self.elements_groups:
-        #     dict_node_element_groups.append(group.node_element_dict())
-
-        # dict_node_element_groups = [group.node_element_dict() for group in self.elements_groups]
-
-        # nodes_index_deleted.sort(reverse=True)
-        # for k, index in enumerate(nodes_index_deleted):
-        #     nodes_list.pop(index)
-        #     for group in self.elements_groups:
-        #         if self.nodes[index] in group.nodes:
-        #             dict_node_element = group.elements_per_node
-        #             for element in dict_node_element[self.nodes[index]]:
-        #                 element.points.index[self.nodes[index]] = self.nodes[nodes_index_remained[k]]
 
         nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
         for k, index in enumerate(nodes_index):
@@ -889,11 +871,10 @@ class Mesh(DessiaObject):
                 if mesh.nodes[index[0]] in group.nodes:
                     dict_node_element = group.elements_per_node
                     for element in dict_node_element[mesh.nodes[index[0]]]:
-                        # element.points.index(self.nodes[index[0]]) = self.nodes[index[1]]
                         element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
 
         mesh.nodes = nodes_list
-        mesh.node_to_index = {self.nodes[i]: i for i in range(len(mesh.nodes))}
+        mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
 
         return mesh
 
