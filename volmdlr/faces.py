@@ -683,7 +683,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             if curvature_mesh_size:
                 lines.append('Mesh.MeshSizeFromCurvature = '+str(curvature_mesh_size)+';')
 
-            lines.append('Coherence;')
+            # lines.append('Coherence;')
 
             return lines
 
