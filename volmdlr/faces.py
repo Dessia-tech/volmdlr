@@ -558,28 +558,26 @@ class Surface2D(volmdlr.core.Primitive2D):
         for c, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
 
             if isinstance(contour, volmdlr.wires.Circle2D):
-                # point=[contour.radius, contour.center.y, 0]
-                # lines.append('Point('+str(point_account+1)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+                points = [volmdlr.Point2D(contour.center.x-contour.radius, contour.center.y),
+                          contour.center,
+                          volmdlr.Point2D(contour.center.x+contour.radius, contour.center.y)]
+                index = []
+                for i, point in enumerate(points):
+                    lines.append(point.get_geo_lines(tag=point_account + i + 1,
+                                                     point_mesh_size=None))
+                    index.append(point_account + i + 1)
 
-                # point = [*contour.center, 0]
-                # lines.append('Point('+str(point_account+2)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+                lines.append('Circle('+str(line_account+1)+') = {'+str(index[0])+', '+str(index[1])+', '+str(index[2])+'};')
+                lines.append('Circle('+str(line_account+2)+') = {'+str(index[2])+', '+str(index[1])+', '+str(index[0])+'};')
 
-                # point=[-contour.radius, contour.center.y, 0]
-                # lines.append('Point('+str(point_account+3)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+                lines_tags.append(line_account + 1)
+                lines_tags.append(line_account + 2)
 
-                # lines.append('Circle('+str(line_account+1)+') = {'+str(point_account+1)+','+str(point_account+2)+','+str(point_account+3)+'};')
-                # lines.append('Circle('+str(line_account+2)+') = {'+str(point_account+3)+','+str(point_account+2)+','+str(point_account+1)+'};')
+                lines.append('Line Loop(' + str(c + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
+                line_surface.append(line_loop_account)
 
-                # lines_tags.extend([line_account+1, line_account+2])
-
-                # lines.append('Line Loop('+str(line_loop_account+1)+') = {'+str(lines_tags)[1:-1]+'};')
-
-                # line_surface.append(line_loop_account+1)
-
-                # lines_tags = []
-                # point_account, line_account, line_loop_account = point_account+3, line_account+2, line_loop_account+1
-
-                pass
+                point_account, line_account, line_loop_account = point_account + 2 + 1, line_account + 1 + 1, line_loop_account + 1
+                lines_tags = []
 
             elif isinstance(contour, (volmdlr.wires.Contour2D, volmdlr.wires.ClosedPolygon2D)):
                 if not isinstance(contour, volmdlr.wires.ClosedPolygon2D):
@@ -662,7 +660,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             if curvature_mesh_size:
                 lines.append('Mesh.MeshSizeFromCurvature = '+str(curvature_mesh_size)+';')
 
-            lines.append('Coherence;')
+            # lines.append('Coherence;')
 
             return lines
 
