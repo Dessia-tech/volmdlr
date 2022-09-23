@@ -579,29 +579,6 @@ class Surface2D(volmdlr.core.Primitive2D):
                 point_account, line_account, line_loop_account = point_account + 2 + 1, line_account + 1 + 1, line_loop_account + 1
                 lines_tags = []
 
-                # point=[contour.radius, contour.center.y, 0]
-                # lines.append('Point('+str(point_account+1)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
-
-                # point = [*contour.center, 0]
-                # lines.append('Point('+str(point_account+2)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
-
-                # point=[-contour.radius, contour.center.y, 0]
-                # lines.append('Point('+str(point_account+3)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
-
-                # lines.append('Circle('+str(line_account+1)+') = {'+str(point_account+1)+','+str(point_account+2)+','+str(point_account+3)+'};')
-                # lines.append('Circle('+str(line_account+2)+') = {'+str(point_account+3)+','+str(point_account+2)+','+str(point_account+1)+'};')
-
-                # lines_tags.extend([line_account+1, line_account+2])
-
-                # lines.append('Line Loop('+str(line_loop_account+1)+') = {'+str(lines_tags)[1:-1]+'};')
-
-                # line_surface.append(line_loop_account+1)
-
-                # lines_tags = []
-                # point_account, line_account, line_loop_account = point_account+3, line_account+2, line_loop_account+1
-
-                # pass
-
             elif isinstance(contour, (volmdlr.wires.Contour2D, volmdlr.wires.ClosedPolygon2D)):
                 if not isinstance(contour, volmdlr.wires.ClosedPolygon2D):
                     contour = contour.to_polygon(1)
