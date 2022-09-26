@@ -300,6 +300,23 @@ class LineSegment(Edge):
             return [self.__class__(self.start, split_point),
                     self.__class__(split_point, self.end)]
 
+    def get_geo_lines(self, tag: int, start_point_tag: int, end_point_tag: int):
+        """
+        gets the lines that define a LineSegment in a .geo file
+
+        :param tag: The linesegment index
+        :type tag: int
+        :param start_point_tag: The linesegment' start point index
+        :type start_point_tag: int
+        :param end_point_tag: The linesegment' end point index
+        :type end_point_tag: int
+
+        :return: A line
+        :rtype: str
+        """
+
+        return 'Line(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + str(end_point_tag) + '};'
+
 
 class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
@@ -1499,6 +1516,26 @@ class Arc(Edge):
         please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(number_points=discretization_resolution)
+
+    def get_geo_lines(self, tag: int, start_point_tag: int, center_point_tag: int, end_point_tag: int):
+        """
+        gets the lines that define an Arc in a .geo file
+
+        :param tag: The linesegment index
+        :type tag: int
+        :param start_point_tag: The linesegment' start point index
+        :type start_point_tag: int
+        :param center_point_tag: The linesegment' center point index
+        :type center_point_tag: int
+        :param end_point_tag: The linesegment' end point index
+        :type end_point_tag: int
+
+        :return: A line
+        :rtype: str
+        """
+
+        return 'Circle(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + \
+            str(center_point_tag) + ', ' + str(end_point_tag) + '};'
 
 
 class Arc2D(Arc):
@@ -3730,6 +3767,47 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
 
     def triangulation(self):
         return None
+
+    def abscissa(self, point3d):
+        '''
+        copied from BSplineCurve2D
+        '''
+        l = self.length()
+
+        res = scp.optimize.least_squares(
+            lambda u: (point3d - self.point_at_abscissa(u)).norm(),
+            x0=npy.array(l / 2),
+            bounds=([0], [l]),
+            # ftol=tol / 10,
+            # xtol=tol / 10,
+            # loss='soft_l1'
+        )
+
+        if res.fun > 1e-1:
+            print('distance =', res.cost)
+            ax = self.plot()
+            point3d.plot(ax=ax)
+            best_point = self.point_at_abscissa(res.x)
+            best_point.plot(ax=ax, color='r')
+            raise ValueError('abscissa not found')
+        return res.x[0]
+
+    def get_geo_lines(self, tag: int, control_points_tags: List[int]):
+        """
+        gets the lines that define a BsplineCurve in a .geo file
+
+        :param tag: The BsplineCurve index
+        :type tag: int
+        :param start_point_tag: The linesegment' start point index
+        :type start_point_tag: int
+        :param end_point_tag: The linesegment' end point index
+        :type end_point_tag: int
+
+        :return: A line
+        :rtype: str
+        """
+
+        return 'BSpline(' + str(tag) + ') = {' + str(control_points_tags)[1:-1] + '};'
 
 
 class BezierCurve3D(BSplineCurve3D):
