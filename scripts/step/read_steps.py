@@ -9,17 +9,12 @@ import volmdlr.step
 
 for step_file in [
     'tore1.step',
-    'bracket.STEP',
-    'bracket.stp',
-    'Bracket_v64.STEP',
-    'bracketv3.stp',
-    'FinalDesign-UWMadison.STEP',
-    'GE jet engine bracket v.3m.step',
-    'iter8finaldesign.stp',
+    # 'iter8finaldesign.stp',
     'cone1.step',
     'cone2.step',
     'cylinder.step',
     'block.step',
+    'bracket2.step',
     # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
 ]:
     print('Reading step file: ', step_file)
