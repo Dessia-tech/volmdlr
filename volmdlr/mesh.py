@@ -854,8 +854,8 @@ class Mesh(DessiaObject):
             return min(x), max(x), min(y), max(y), min(z), max(z)
 
     def delete_duplicated_nodes(self, tol=1e-4):
-        mesh = self.__class__(self.elements_groups)
-        nodes_list = list(mesh.nodes)
+        mesh = self.__class__(self.elements_groups[:])
+        nodes_list = list(mesh.nodes[:])
         nodes_index = []
 
         for i,node in enumerate(nodes_list):
@@ -864,17 +864,18 @@ class Mesh(DessiaObject):
                 if d<tol:
                     nodes_index.append((j, i))
 
-        nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
-        for k, index in enumerate(nodes_index):
-            nodes_list.pop(index[0])
-            for group in mesh.elements_groups:
-                if mesh.nodes[index[0]] in group.nodes:
-                    dict_node_element = group.elements_per_node
-                    for element in dict_node_element[mesh.nodes[index[0]]]:
-                        element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
+        if nodes_index:
+            nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
+            for k, index in enumerate(nodes_index):
+                nodes_list.pop(index[0])
+                for group in mesh.elements_groups:
+                    if mesh.nodes[index[0]] in group.nodes:
+                        dict_node_element = group.elements_per_node
+                        for element in dict_node_element[mesh.nodes[index[0]]]:
+                            element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
 
-        mesh.nodes = nodes_list
-        mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+            mesh.nodes = nodes_list
+            mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
 
         return mesh
 
