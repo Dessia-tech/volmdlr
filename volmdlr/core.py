@@ -1358,8 +1358,262 @@ class VolumeModel(dc.PhysicalObject):
 
         stream.write(step_content)
 
-    def volmdlr_volume_model(self):
-        return [self]
+    def get_geo_lines(self):
+        """
+        gets the lines that define a VolumeModel geometry in a .geo file
+
+        :return: A list of lines that describe the geomery
+        :rtype: List[str]
+        """
+
+        update_data = {'point_account':0,
+                       'line_account':0,
+                       'line_loop_account':0,
+                       'surface_account':0,
+                       'surface_loop_account':0}
+
+        lines = []
+        volume = 0
+        for primitive in self.primitives:
+            if isinstance(primitive, volmdlr.faces.ClosedShell3D):
+                volume += 1
+                lines_primitives, update_data = primitive.get_geo_lines(update_data)
+                lines.extend(lines_primitives)
+                surface_loop = ((lines[-1].split('('))[1].split(')')[0])
+                lines.append('Volume(' + str(volume) + ') = {' + surface_loop + '};')
+            elif isinstance(primitive, volmdlr.faces.OpenShell3D):
+                lines_primitives, update_data = primitive.get_geo_lines(update_data)
+                lines.extend(lines_primitives)
+
+        return lines
+
+    def get_mesh_lines(self,
+               factor: float,
+               curvature_mesh_size: int = 0,
+               min_points: int = None,
+               initial_mesh_size: float = 5):
+        """
+        gets the lines that define mesh parameters for a VolumeModel, to be added to a .geo file
+
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A list of lines that describe mesh parameters
+        :rtype: List[str]
+        """
+
+        # meshsizes_max = []
+        field_num = 1
+        field_nums = []
+        lines = []
+
+        lines.append('Mesh.CharacteristicLengthMin = 0;')
+        lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
+        lines.append('Geometry.Tolerance = 1e-20;')
+
+        for i, primitive in enumerate(self.primitives):
+            if isinstance(primitive, volmdlr.faces.ClosedShell3D):
+                bbx = primitive.bounding_box
+                dim1, dim2, dim3 = (bbx.xmax-bbx.xmin), (bbx.ymax-bbx.ymin), (bbx.zmax-bbx.zmin)
+                volume = dim1 * dim2 * dim3
+
+                if factor == 0:
+                    factor = 1e-3
+
+                size = ((volume ** (1./3.))/initial_mesh_size) * factor
+
+                # meshsizes_max.append(size)
+
+                if min_points:
+                    primitives, primitives_length = [], []
+                    for face in primitive.faces:
+                        for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                            if isinstance(contour, volmdlr.wires.Circle2D):
+                                primitives.append(contour)
+                                primitives.append(contour)
+                                primitives_length(contour.length()/2)
+                                primitives_length(contour.length()/2)
+                            else:
+                                for p, primitive in enumerate(contour.primitives):
+                                    if ((primitive not in primitives)
+                                            and (primitive.reverse() not in primitives)):
+                                        primitives.append(primitive)
+                                        primitives_length(primitive.length())
+
+                    for i, length in enumerate(primitives_length):
+                        if length < min_points*size:
+                            lines.append('Transfinite Curve {'+str(i)+'} = '+str(min_points)+' Using Progression 1;')
+
+                lines.append('Field['+str(field_num)+'] = MathEval;')
+                lines.append('Field['+str(field_num)+'].F = "'+str(size)+'";')
+
+                lines.append('Field['+str(field_num+1)+'] = Restrict;')
+                lines.append('Field['+str(field_num+1)+'].InField = '+str(field_num)+';')
+                lines.append('Field['+str(field_num+1)+'].VolumesList = {'+str(i+1)+'};')
+                field_nums.append(field_num+1)
+                field_num +=2
+
+            elif isinstance(primitive, volmdlr.faces.OpenShell3D):
+                continue
+
+        # meshsize_max = max(meshsizes_max)
+        # meshsize_min = meshsize_max/100
+
+        # lines.append('Mesh.CharacteristicLengthMin = ' + str(meshsize_min) + ';')
+        # lines.append('Mesh.CharacteristicLengthMax = ' + str(meshsize_max) + ';')
+
+        lines.append('Field['+str(field_num)+'] = MinAniso;')
+        lines.append('Field['+str(field_num)+'].FieldsList = {'+str(field_nums)[1:-1]+'};')
+        lines.append('Background Field = '+str(field_num)+';')
+
+        lines.append('Mesh.MeshSizeFromCurvature = '+str(curvature_mesh_size)+';')
+
+        lines.append('Coherence;')
+
+        return lines
+
+    def to_geo(self, file_name: str,
+               factor: float,
+               curvature_mesh_size: int = 0,
+               min_points: int = None,
+               initial_mesh_size: float = 5):
+        """
+        gets the .geo file for the VolumeModel
+
+        :param file_name: The geo. file name
+        :type file_name: str
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        lines = self.get_geo_lines()
+        lines.extend(self.get_mesh_lines(factor, curvature_mesh_size,
+                                         min_points, initial_mesh_size))
+        with open(file_name + '.geo', 'w', encoding="utf-8") as f:
+            for line in lines:
+                f.write(line)
+                f.write('\n')
+        f.close()
+
+    def to_geo_with_stl(self, file_name: str,
+               factor: float,
+               curvature_mesh_size: int = 0,
+               min_points: int = None,
+               initial_mesh_size: float = 5):
+        """
+        gets the .geo file for the VolumeModel, with saving each closed shell in a stl file
+
+        :param file_name: The geo. file name
+        :type file_name: str
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        lines = self.get_geo_lines()
+        lines.extend(self.get_mesh_lines(factor, curvature_mesh_size,
+                                         min_points, initial_mesh_size))
+
+        contours, faces_account = [], 0
+        surfaces = []
+        for i, primitive in enumerate(self.primitives):
+            if isinstance(primitive, volmdlr.faces.ClosedShell3D):
+                if i==0:
+                    surfaces.append(list(range(1, 1+len(primitive.faces))))
+                    face_contours = [face.outer_contour3d for face in primitive.faces]
+                    contours.append(face_contours)
+                    lines.append('Mesh 2;')
+                    lines.append('Physical Surface(' + str(i+1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                    lines.append('Save "'+file_name+'.stl" ;')
+                    faces_account += len(primitive.faces)+1
+                else:
+                    surfaces.append(list(range(faces_account, faces_account+len(primitive.faces))))
+                    face_contours = [face.outer_contour3d for face in primitive.faces]
+                    for k, face_c in enumerate(face_contours):
+                        for l, contour_l in enumerate(contours):
+                            for c, contour in enumerate(contour_l):
+                                if face_c.is_superposing(contour):
+                                    surfaces[i][k] = surfaces[l][c]
+                                    continue
+
+                    lines.append('Mesh 2;')
+                    lines.append('Physical Surface(' + str(i+1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                    lines.append('Save "'+file_name+'.stl" ;')
+                    faces_account += len(primitive.faces)+1
+                    contours.append(face_contours)
+
+        return lines
+
+    def to_msh(self, file_name: str, mesh_dimension: int,
+               factor: float,
+               curvature_mesh_size: int = 0,
+               min_points: int = None,
+               initial_mesh_size: float = 5):
+        """
+        gets .msh file for the VolumeModel generated by gmsh
+
+        :param file_name: The msh. file name
+        :type file_name: str
+        :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+        :type mesh_dimension: int
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        self.to_geo(file_name, factor,
+                    curvature_mesh_size,
+                    min_points,
+                    initial_mesh_size)
+
+        gmsh.initialize()
+        gmsh.open(file_name+".geo")
+
+        gmsh.model.geo.synchronize()
+        gmsh.model.mesh.generate(mesh_dimension)
+
+        gmsh.write(file_name+".msh")
+
+        gmsh.finalize()
 
 
 class MovingVolumeModel(VolumeModel):

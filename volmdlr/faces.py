@@ -566,7 +566,6 @@ class Surface2D(volmdlr.core.Primitive2D):
                     lines.append(point.get_geo_lines(tag=point_account + i + 1,
                                                      point_mesh_size=None))
                     index.append(point_account + i + 1)
-
                 lines.append('Circle('+str(line_account+1)+') = {'+str(index[0])+', '+str(index[1])+', '+str(index[2])+'};')
                 lines.append('Circle('+str(line_account+2)+') = {'+str(index[2])+', '+str(index[1])+', '+str(index[0])+'};')
 
