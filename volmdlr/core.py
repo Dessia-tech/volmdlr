@@ -1024,8 +1024,8 @@ class VolumeModel(dc.PhysicalObject):
         ax = fig.add_subplot(111, projection='3d', adjustable='box')
         for primitive in self.primitives:
             primitive.plot(ax)
-        if equal_aspect:
-            ax.set_aspect('equal')
+        # if equal_aspect:
+        #     ax.set_aspect('equal')
 
         ax.margins(0.1)
         return ax
