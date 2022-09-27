@@ -597,7 +597,8 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
 
     def _triangular_elements(self):
 
-        indices_combinations = [x for x in combinations(list(range(len(self.points))), r=3)]
+        indices_combinations = list(combinations(list(range(len(self.points))), r=3))
+        # indices_combinations = [x for x in combinations(list(range(len(self.points))), r=3)]
         triangular_elements = []
 
         for indices in indices_combinations:
