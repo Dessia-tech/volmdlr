@@ -7193,6 +7193,122 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return ax
 
+    def get_geo_lines(self, update_data = {'point_account':0,
+                                           'line_account':0,
+                                           'line_loop_account':0,
+                                           'surface_account':0,
+                                           'surface_loop_account':0},
+                      point_mesh_size: float = None):
+        """
+        gets the lines that define an OpenShell3D geometry in a .geo file
+
+        :param update_data: Data used for VolumeModel defined with different shells
+        defaults to {'point_account':0,'line_account':0,'line_loop_account':0, 'surface_account':0'surface_loop_account':0}
+        :type update_data: dict, optional
+        :param point_mesh_size: The mesh size at a specific point, defaults to None
+        :type point_mesh_size: float, optional
+
+        :return: A list of lines that describe the geomery & the updated data
+        :rtype: Tuple(List[str], dict)
+        """
+
+        primitives = []
+        points = set()
+        for face in self.faces:
+            for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                if isinstance(contour, volmdlr.wires.Circle2D):
+                    points.add(volmdlr.Point3D(contour.radius, contour.center.y, 0))
+                    points.add(volmdlr.Point3D(contour.center.x, contour.center.y, 0))
+                    points.add(volmdlr.Point3D(-contour.radius, contour.center.y, 0))
+
+                else:
+                    for p, primitive in enumerate(contour.primitives):
+                        if isinstance(primitive, volmdlr.edges.LineSegment):
+                            points.add(primitive.start)
+                            points.add(primitive.end)
+
+                        if isinstance(primitive, volmdlr.edges.Arc):
+                            points.add(primitive.start)
+                            points.add(primitive.center)
+                            points.add(primitive.end)
+
+                        if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
+                            for point in primitive.control_points:
+                                points.add(point)
+
+                        if ((primitive not in primitives)
+                                and (primitive.reverse() not in primitives)):
+                            primitives.append(primitive)
+
+        indices_check = len(primitives) * [None]
+
+        point_account = update_data['point_account']
+        line_account, line_loop_account = update_data['line_account']+1, update_data['line_loop_account']
+        lines, line_surface, lines_tags = [], [], []
+
+        points = list(points)
+        for p, point in enumerate(points):
+            lines.append(point.get_geo_lines(tag=p + point_account + 1,
+                                             point_mesh_size=point_mesh_size))
+
+        for f, face in enumerate(self.faces):
+            line_surface = []
+            for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                lines_tags = []
+                if isinstance(contour, volmdlr.wires.Circle2D):
+                    pass
+                else:
+                    for p, primitive in enumerate(contour.primitives):
+
+                        try:
+                            # line_account += 1
+                            # print(line_account)
+                            index = primitives.index(primitive)
+                            if isinstance(primitive, volmdlr.edges.LineSegment):
+                                start_point_tag = points.index(primitive.start) + 1
+                                end_point_tag = points.index(primitive.end) + 1
+                                lines.append(primitive.get_geo_lines(tag=line_account,
+                                                                     start_point_tag=start_point_tag+point_account,
+                                                                     end_point_tag=end_point_tag+point_account))
+                            elif isinstance(primitive, volmdlr.edges.Arc):
+                                start_point_tag = points.index(primitive.start) + 1
+                                center_point_tag = points.index(primitive.center) + 1
+                                end_point_tag = points.index(primitive.end) + 1
+                                lines.append(primitive.get_geo_lines(tag=line_account,
+                                                                     start_point_tag=start_point_tag+point_account,
+                                                                     center_point_tag=center_point_tag+point_account,
+                                                                     end_point_tag=end_point_tag+point_account))
+
+                            lines_tags.append(line_account)
+                            indices_check[index] = line_account
+                            line_account += 1
+
+                        except ValueError:
+                            index = primitives.index(primitive.reverse())
+                            lines_tags.append(-indices_check[index])
+
+                    lines.append(contour.get_geo_lines(line_loop_account+1, lines_tags))
+
+                    line_surface.append(line_loop_account+1)
+                    line_loop_account += 1
+                    lines_tags = []
+
+            lines.append(face.get_geo_lines((f + 1 + update_data['surface_account']),
+                                            line_surface))
+
+            line_surface = []
+
+        lines.append('Surface Loop(' + str(1 + update_data['surface_loop_account']) + ') = {' + str(list(range(update_data['surface_account']+1,
+                                                                                                               update_data['surface_account'] + len(self.faces) + 1)))[1:-1] + '};')
+
+        update_data['point_account'] += len(points)
+        update_data['line_account'] += line_account-1
+        update_data['line_loop_account'] += line_loop_account
+        update_data['surface_account'] += len(self.faces)
+        update_data['surface_loop_account'] += 1
+
+        return lines, update_data
+
 
 class ClosedShell3D(OpenShell3D):
     STEP_FUNCTION = 'CLOSED_SHELL'
