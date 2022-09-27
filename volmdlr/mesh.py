@@ -736,7 +736,7 @@ class ElementsGroup(DessiaObject):
     #         for elem in self.elements:
     #             elem.translation(offset, copy=False)
 
-    def plot(self, ax=None, color='k', fill=False):
+    def plot(self, ax=None, color='k'):#, fill=False):
         if ax is None:
             _, ax = plt.subplots()
             ax.set_aspect('equal')
