@@ -737,6 +737,24 @@ class Point2D(Vector2D):
 
         return (self.x, self.y)
 
+    def get_geo_lines(self, tag: int, point_mesh_size: float = None):
+        '''
+        gets the lines that define a Point2D in a .geo file
+
+        :param tag: The point index
+        :type tag: int
+        :param mesh_size: The target mesh size close to the point, defaults to None
+        :type mesh_size: float, optional
+
+        :return: A line
+        :rtype: str
+        '''
+
+        if point_mesh_size:
+            return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+', '+str(point_mesh_size)+'};'
+        else:
+            return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+'};'
+
 
 O2D = Point2D(0, 0)
 
@@ -1193,6 +1211,24 @@ class Point3D(Vector3D):
         '''
 
         return (self.x, self.y, self.z)
+
+    def get_geo_lines(self, tag: int, point_mesh_size: float = None):
+        """
+        gets the lines that define a Point3D in a .geo file
+
+        :param tag: The point index
+        :type tag: int
+        :param mesh_size: The target mesh size close to the point, defaults to None
+        :type mesh_size: float, optional
+
+        :return: A line
+        :rtype: str
+        """
+
+        if point_mesh_size:
+            return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+', '+str(point_mesh_size)+'};'
+        else:
+            return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+'};'
 
 
 O3D = Point3D(0, 0, 0)
