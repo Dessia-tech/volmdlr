@@ -433,6 +433,148 @@ class QuadrilateralElement2D(vmw.ClosedPolygon2D):
         vmw.ClosedPolygon2D.__init__(self, points)
 
 
+class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+
+    def __init__(self, points):
+        self.points = points
+        # self.linear_elements = self._to_linear_elements()
+        # self.form_functions = self._form_functions()
+        # self.line_segments = self.line_segments
+        self.center = (self.points[0]+self.points[1]+self.points[2])/3
+
+        # self.area = self._area()
+        self._line_segments = None
+        TriangularElement.__init__(self, points)
+
+
+    def _to_linear_elements(self):
+        vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
+                            self.points[1].y - self.points[0].y)
+        vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
+                            self.points[2].y - self.points[1].y)
+        vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
+                            self.points[0].y - self.points[2].y)
+        normal1 = vm.Vector2D(-vec1.y, vec1.x)
+        normal2 = vm.Vector2D(-vec2.y, vec2.x)
+        normal3 = vm.Vector2D(-vec3.y, vec3.x)
+        normal1.normalize()
+        normal2.normalize()
+        normal3.normalize()
+        if normal1.dot(vec2) < 0:
+            normal1 = - normal1
+        if normal2.dot(vec3) < 0:
+            normal2 = - normal2
+        if normal3.dot(vec1) < 0:
+            normal3 = - normal3
+        linear_element_1 = LinearElement(self.points[0], self.points[1],
+                                          normal1)
+        linear_element_2 = LinearElement(self.points[1], self.points[2],
+                                          normal2)
+        linear_element_3 = LinearElement(self.points[2], self.points[0],
+                                          normal3)
+        return [linear_element_1, linear_element_2, linear_element_3]
+
+    def _form_functions(self):
+        a = vm.Matrix33(1, self.points[0].x, self.points[0].y,
+                        1, self.points[1].x, self.points[1].y,
+                        1, self.points[2].x, self.points[2].y)
+        try:
+            inv_a = a.inverse()
+        except ValueError:
+            self.plot()
+            print('buggy element area', self.area)
+            raise FlatElementError('form function bug')
+        x1 = inv_a.vector_multiplication(vm.X3D)
+        x2 = inv_a.vector_multiplication(vm.Y3D)
+        x3 = inv_a.vector_multiplication(vm.Z3D)
+        return x1, x2, x3
+
+    # def _quadratic_form_functions(self):
+    #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,self.points[0][0]*self.points[0][1],self.points[0][1]**2],
+    #           [1, self.points[1][0], self.points[1][1],self.points[1][0]**2,self.points[1][0]*self.points[1][1],self.points[1][1]**2],
+    #           [1, self.points[2][0], self.points[2][1],self.points[2][0]**2,self.points[2][0]*self.points[2][1],self.points[2][1]**2],
+    #           [1, self.points[3][0], self.points[3][1],self.points[3][0]**2,self.points[3][0]*self.points[3][1],self.points[3][1]**2],
+    #           [1, self.points[4][0], self.points[4][1],self.points[4][0]**2,self.points[4][0]*self.points[4][1],self.points[4][1]**2],
+    #           [1, self.points[5][0], self.points[5][1],self.points[5][0]**2,self.points[5][0]*self.points[5][1],self.points[5][1]**2]]
+
+    #     try :
+    #         inv_a = a.inverse()
+    #     except ValueError:
+    #         self.plot()
+    #         print(self._area())
+    #         raise FlatElementError('form function bug')
+    #     x1 = inv_a.dot([1,0,0,0,0,0])
+    #     x2 = inv_a.dot([1,0,0,0,0,0])
+    #     x3 = inv_a.dot([1,0,0,0,0,0])
+    #     x4=inv_a.dot([1,0,0,0,0,0])
+
+    #     return x1, x2, x3
+
+    def _area(self):
+        u = self.points[1] - self.points[0]
+        v = self.points[2] - self.points[0]
+        return abs(u.cross(v)) / 2
+
+    # def point_belongs(self, point):
+    #     polygon = volmdlr.wires.ClosedPolygon2D(self.points)
+    #     point_belongs = polygon.point_belongs(point)
+    #     return point_belongs
+
+    # def rotation(self, center, angle, copy=True):
+    #     if copy:
+    #         return TriangularElement([pt.rotation(center, angle, copy=True)
+    #                                   for pt in self.points])
+    #     else:
+    #         for pt in self.points:
+    #             pt.Rotation(center, angle, copy=False)
+
+    # def translation(self, offset, copy=True):
+    #     if copy:
+    #         return TriangularElement([pt.translation(offset, copy=True)
+    #                                   for pt in self.points])
+    #     else:
+    #         for pt in self.points:
+    #             pt.translation(offset, copy=False)
+
+    def axial_symmetry(self, line):
+        new_points = []
+        for point in self.points:
+            new_points.append(point.axial_symmetry(line))
+        return self.__class__(new_points)
+
+    # def plot(self, ax=None, color='k', width=None,
+    #           plot_points=False, fill=False):
+    #     if ax is None:
+    #         fig, ax = plt.subplots()
+    #         ax.set_aspect('equal')
+
+    #     if fill:
+    #         x = [p[0] for p in self.points]
+    #         y = [p[1] for p in self.points]
+    #         plt.fill(x, y, facecolor=color, edgecolor="k")
+    #         return ax
+
+    #     for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
+    #         if width is None:
+    #             width = 1
+    #         if plot_points:
+    #             ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
+    #                     marker='o', linewidth=width)
+    #         else:
+    #             ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
+    #                     linewidth=width)
+    #     return ax
+
+    # def triangle_to_polygon(self):
+    #     points = self.points
+    #     return volmdlr.wires.ClosedPolygon2D(points)
+
+
 class ElementsGroup(DessiaObject):
     _standalone_in_db = False
     _non_serializable_attributes = []
