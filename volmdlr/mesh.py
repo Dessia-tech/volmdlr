@@ -1,29 +1,31 @@
-# #!/usr/bin/env python3
-# # -*- coding: utf-8 -*-
-# """
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Module containing mesh and relative objects
+"""
 
-# @author: Gasmi
-# """
-
-# import matplotlib.pyplot as plt
+from typing import TypeVar, List, Tuple, Dict
+from dessia_common import DessiaObject
+from itertools import combinations
+import matplotlib.pyplot as plt
+import numpy as npy
 # import volmdlr.core_compiled
-# import volmdlr
-# import volmdlr.core
+import volmdlr as vm
+import volmdlr.wires as vmw
+import volmdlr.edges as vme
 # from volmdlr.core_compiled import Matrix33
 
 # from itertools import combinations
 # import numpy as npy
-# import volmdlr.edges
 # import volmdlr.wires
 # import volmdlr.faces
 # from volmdlr.core_compiled import Matrix33
-# import math
-# from dessia_common import DessiaObject
-# from typing import TypeVar, List, Tuple,Dict
+import math
 # import matplotlib
 # import random
 # from itertools import product
 # from matplotlib.colors import LinearSegmentedColormap
+
 # cdict = {'red':  [(0.0, 0.0, 0.0),
 #                    (1.0, 1.0, 1.0)],
 #          'green': [(0.0, 0.0, 0.0),
@@ -32,8 +34,8 @@
 #                    (1.0, 0.0, 0.0)]}
 # blue_red = LinearSegmentedColormap('BLueRed', cdict)
 
-# class FlatElementError(Exception):
-#     pass
+class FlatElementError(Exception):
+    pass
 
 # def find_duplicate_linear_element(linear_elements1, linear_elements2):
 #     duplicates = []
@@ -43,354 +45,355 @@
 #     return duplicates
 
 
-# class LinearElement(volmdlr.edges.LineSegment2D):
-#     _standalone_in_db = False
-#     _non_serializable_attributes = []
-#     _non_eq_attributes = ['name']
-#     _non_hash_attributes = ['name']
-#     _generic_eq = True
-#     def __init__(self, start:volmdlr.Point2D,end:volmdlr.Point2D, interior_normal:volmdlr.Vector2D,name=''):
-#         self.points=[start, end]
-#         self.interior_normal = interior_normal
+class LinearElement(volmdlr.edges.LineSegment2D):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
 
-#         volmdlr.edges.LineSegment2D.__init__(self,start=start,end=end,name=name)
+    def __init__(self, start:volmdlr.Point2D,end:volmdlr.Point2D, interior_normal:volmdlr.Vector2D,name=''):
+        self.points=[start, end]
+        self.interior_normal = interior_normal
 
-#     def __hash__(self):
-#         return self.start.__hash__() + self.end.__hash__()
+        volmdlr.edges.LineSegment2D.__init__(self,start=start,end=end,name=name)
 
-#     def __eq__(self, other_linear_element):
-#         if self.__class__ != other_linear_element.__class__:
-#             return False
-#         return (self.start == other_linear_element.start and self.end == other_linear_element.end) \
-#             or (self.start== other_linear_element.end and self.end == other_linear_element.start)
+    # def __hash__(self):
+    #     return self.start.__hash__() + self.end.__hash__()
 
-
-#     def plot(self, ax=None, color='k', width=None, plot_points=False):
-#         if ax is None:
-#             fig, ax = plt.subplots()
-#             ax.set_aspect('equal')
-#         if width is None:
-#             width=1
-#         if plot_points:
-#             ax.plot([self.start.x, self.end.x], [self.start.y, self.end.y], color=color, marker='o', linewidth=width)
-#         else:
-#             ax.plot([self.start.x, self.end.x], [self.start.y, self.end.y], color=color, linewidth=width)
-#         return ax
+    # def __eq__(self, other_linear_element):
+    #     if self.__class__ != other_linear_element.__class__:
+    #         return False
+    #     return (self.start == other_linear_element.start and self.end == other_linear_element.end) \
+    #         or (self.start== other_linear_element.end and self.end == other_linear_element.start)
 
 
-# class TriangularElement(volmdlr.wires.Triangle2D):
-#     _standalone_in_db = False
-#     _non_serializable_attributes = []
-#     _non_eq_attributes = ['name']
-#     _non_hash_attributes = ['name']
-#     _generic_eq = True
-
-#     def __init__(self, points):
-#         self.points = points
-#         self.linear_elements = self._to_linear_elements()
-#         self.form_functions = self._form_functions()
-
-#         self.center = (self.points[0]+self.points[1]+self.points[2])/3
-
-#         self.area = self._area()
-
-#         volmdlr.wires.Triangle2D.__init__(self,points=points, name='')
-
-#     def _to_linear_elements(self):
-#         vec1 = volmdlr.Vector2D(self.points[1].x - self.points[0].x,
-#                                 self.points[1].y - self.points[0].y)
-#         vec2 = volmdlr.Vector2D(self.points[2].x - self.points[1].x,
-#                                 self.points[2].y - self.points[1].y)
-#         vec3 = volmdlr.Vector2D(self.points[0].x - self.points[2].x,
-#                                 self.points[0].y - self.points[2].y)
-#         normal1 = volmdlr.Vector2D(-vec1.y, vec1.x)
-#         normal2 = volmdlr.Vector2D(-vec2.y, vec2.x)
-#         normal3 = volmdlr.Vector2D(-vec3.y, vec3.x)
-#         normal1.normalize()
-#         normal2.normalize()
-#         normal3.normalize()
-#         if normal1.dot(vec2) < 0:
-#             normal1 = - normal1
-#         if normal2.dot(vec3) < 0:
-#             normal2 = - normal2
-#         if normal3.dot(vec1) < 0:
-#             normal3 = - normal3
-#         linear_element_1 = LinearElement(self.points[0], self.points[1],
-#                                          normal1)
-#         linear_element_2 = LinearElement(self.points[1], self.points[2],
-#                                          normal2)
-#         linear_element_3 = LinearElement(self.points[2], self.points[0],
-#                                          normal3)
-#         return [linear_element_1, linear_element_2, linear_element_3]
-
-#     def _form_functions(self):
-#         a = Matrix33(1, self.points[0].x, self.points[0].y,
-#                      1, self.points[1].x, self.points[1].y,
-#                      1, self.points[2].x, self.points[2].y)
-#         try:
-#             inv_a = a.inverse()
-#         except ValueError:
-#             self.plot()
-#             print('buggy element area', self.area)
-#             raise FlatElementError('form function bug')
-#         x1 = inv_a.vector_multiplication(volmdlr.X3D)
-#         x2 = inv_a.vector_multiplication(volmdlr.Y3D)
-#         x3 = inv_a.vector_multiplication(volmdlr.Z3D)
-
-#         return x1, x2, x3
-
-#     # def _quadratic_form_functions(self):
-#     #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,self.points[0][0]*self.points[0][1],self.points[0][1]**2],
-#     #           [1, self.points[1][0], self.points[1][1],self.points[1][0]**2,self.points[1][0]*self.points[1][1],self.points[1][1]**2],
-#     #           [1, self.points[2][0], self.points[2][1],self.points[2][0]**2,self.points[2][0]*self.points[2][1],self.points[2][1]**2],
-#     #           [1, self.points[3][0], self.points[3][1],self.points[3][0]**2,self.points[3][0]*self.points[3][1],self.points[3][1]**2],
-#     #           [1, self.points[4][0], self.points[4][1],self.points[4][0]**2,self.points[4][0]*self.points[4][1],self.points[4][1]**2],
-#     #           [1, self.points[5][0], self.points[5][1],self.points[5][0]**2,self.points[5][0]*self.points[5][1],self.points[5][1]**2]]
-
-#     #     try :
-#     #         inv_a = a.inverse()
-#     #     except ValueError:
-#     #         self.plot()
-#     #         print(self._area())
-#     #         raise FlatElementError('form function bug')
-#     #     x1 = inv_a.dot([1,0,0,0,0,0])
-#     #     x2 = inv_a.dot([1,0,0,0,0,0])
-#     #     x3 = inv_a.dot([1,0,0,0,0,0])
-#     #     x4=inv_a.dot([1,0,0,0,0,0])
-
-#     #     return x1, x2, x3
-
-#     def _area(self):
-#         u = self.points[1] - self.points[0]
-#         v = self.points[2] - self.points[0]
-#         return abs(u.cross(v)) / 2
-
-#     def point_belongs(self, point):
-#         polygon = volmdlr.wires.ClosedPolygon2D(self.points)
-#         point_belongs = polygon.point_belongs(point)
-#         return point_belongs
-
-#     def rotation(self, center, angle, copy=True):
-#         if copy:
-#             return TriangularElement([pt.rotation(center, angle, copy=True)
-#                                       for pt in self.points])
-#         else:
-#             for pt in self.points:
-#                 pt.Rotation(center, angle, copy=False)
-
-#     def translation(self, offset, copy=True):
-#         if copy:
-#             return TriangularElement([pt.translation(offset, copy=True)
-#                                       for pt in self.points])
-#         else:
-#             for pt in self.points:
-#                 pt.translation(offset, copy=False)
-
-#     def axial_symmetry(self, line, copy=True):
-#         p1, p2 = line.points
-#         symmetric_points = []
-#         for point in self.points:
-#             u = p2 - p1
-#             t = (point-p1).dot(u) / u.norm()**2
-#             projection = p1 + t * u
-#             symmetric_point = volmdlr.Point2D(*(2 * projection - point))
-#             symmetric_points.append(symmetric_point)
-#         if copy:
-#             return TriangularElement(symmetric_points)
-#         else:
-#             for i, point in enumerate(self.points):
-#                 point = symmetric_points[i]
-
-#     def plot(self, ax=None, color='k', width=None,
-#              plot_points=False, fill=False):
-#         if ax is None:
-#             fig, ax = plt.subplots()
-#             ax.set_aspect('equal')
-
-#         if fill:
-#             x = [p[0] for p in self.points]
-#             y = [p[1] for p in self.points]
-#             plt.fill(x, y, facecolor=color, edgecolor="k")
-#             return ax
-
-#         for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
-#             if width is None:
-#                 width = 1
-#             if plot_points:
-#                 ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-#                         marker='o', linewidth=width)
-#             else:
-#                 ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-#                         linewidth=width)
-#         return ax
-
-#     def triangle_to_polygon(self):
-#         points = self.points
-#         return volmdlr.wires.ClosedPolygon2D(points)
+    # def plot(self, ax=None, color='k', width=None, plot_points=False):
+    #     if ax is None:
+    #         fig, ax = plt.subplots()
+    #         ax.set_aspect('equal')
+    #     if width is None:
+    #         width=1
+    #     if plot_points:
+    #         ax.plot([self.start.x, self.end.x], [self.start.y, self.end.y], color=color, marker='o', linewidth=width)
+    #     else:
+    #         ax.plot([self.start.x, self.end.x], [self.start.y, self.end.y], color=color, linewidth=width)
+    #     return ax
 
 
-# class ElementsGroup(DessiaObject):
-#     _standalone_in_db = False
-#     _non_serializable_attributes = []
-#     _non_eq_attributes = ['name']
-#     _non_hash_attributes = ['name']
-#     _generic_eq = True
+class TriangularElement(volmdlr.wires.Triangle2D):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
 
-#     def __init__(self, elements:List[TriangularElement], name:str):
-#         self.elements = elements
-#         self.name = name
+    def __init__(self, points):
+        self.points = points
+        self.linear_elements = self._to_linear_elements()
+        self.form_functions = self._form_functions()
 
-#         DessiaObject.__init__(self, name=name)
+        self.center = (self.points[0]+self.points[1]+self.points[2])/3
 
-#     def point_to_element(self, point):
-#         for element in self.elements:
-#             if element.point_belongs(point):
-#                 return element
-#         return None
+        self.area = self._area()
 
-#     def rotation(self, center, angle, copy=True):
-#         if copy:
-#             return Mesh([elem.rotation(center, angle, copy=True)
-#                          for elem in self.elements])
-#         else:
-#             for elem in self.elements:
-#                 elem.rotation(center, angle, copy=False)
+        volmdlr.wires.Triangle2D.__init__(self,points=points, name='')
 
-#     def translation(self, offset, copy=True):
-#         if copy:
-#             return Mesh([elem.translation(offset, copy=True)
-#                          for elem in self.elements])
-#         else:
-#             for elem in self.elements:
-#                 elem.translation(offset, copy=False)
+    def _to_linear_elements(self):
+        vec1 = volmdlr.Vector2D(self.points[1].x - self.points[0].x,
+                                self.points[1].y - self.points[0].y)
+        vec2 = volmdlr.Vector2D(self.points[2].x - self.points[1].x,
+                                self.points[2].y - self.points[1].y)
+        vec3 = volmdlr.Vector2D(self.points[0].x - self.points[2].x,
+                                self.points[0].y - self.points[2].y)
+        normal1 = volmdlr.Vector2D(-vec1.y, vec1.x)
+        normal2 = volmdlr.Vector2D(-vec2.y, vec2.x)
+        normal3 = volmdlr.Vector2D(-vec3.y, vec3.x)
+        normal1.normalize()
+        normal2.normalize()
+        normal3.normalize()
+        if normal1.dot(vec2) < 0:
+            normal1 = - normal1
+        if normal2.dot(vec3) < 0:
+            normal2 = - normal2
+        if normal3.dot(vec1) < 0:
+            normal3 = - normal3
+        linear_element_1 = LinearElement(self.points[0], self.points[1],
+                                          normal1)
+        linear_element_2 = LinearElement(self.points[1], self.points[2],
+                                          normal2)
+        linear_element_3 = LinearElement(self.points[2], self.points[0],
+                                          normal3)
+        return [linear_element_1, linear_element_2, linear_element_3]
 
-#     def plot(self, ax=None, color='k', fill=False):
-#         if ax is None:
-#             fig, ax = plt.subplots()
-#             ax.set_aspect('equal')
-#         for element in self.elements:
-#             element.plot(ax=ax, color=color, fill=fill)
-#         return ax
+    def _form_functions(self):
+        a = Matrix33(1, self.points[0].x, self.points[0].y,
+                      1, self.points[1].x, self.points[1].y,
+                      1, self.points[2].x, self.points[2].y)
+        try:
+            inv_a = a.inverse()
+        except ValueError:
+            self.plot()
+            print('buggy element area', self.area)
+            raise FlatElementError('form function bug')
+        x1 = inv_a.vector_multiplication(volmdlr.X3D)
+        x2 = inv_a.vector_multiplication(volmdlr.Y3D)
+        x3 = inv_a.vector_multiplication(volmdlr.Z3D)
+
+        return x1, x2, x3
+
+    # def _quadratic_form_functions(self):
+    #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,self.points[0][0]*self.points[0][1],self.points[0][1]**2],
+    #           [1, self.points[1][0], self.points[1][1],self.points[1][0]**2,self.points[1][0]*self.points[1][1],self.points[1][1]**2],
+    #           [1, self.points[2][0], self.points[2][1],self.points[2][0]**2,self.points[2][0]*self.points[2][1],self.points[2][1]**2],
+    #           [1, self.points[3][0], self.points[3][1],self.points[3][0]**2,self.points[3][0]*self.points[3][1],self.points[3][1]**2],
+    #           [1, self.points[4][0], self.points[4][1],self.points[4][0]**2,self.points[4][0]*self.points[4][1],self.points[4][1]**2],
+    #           [1, self.points[5][0], self.points[5][1],self.points[5][0]**2,self.points[5][0]*self.points[5][1],self.points[5][1]**2]]
+
+    #     try :
+    #         inv_a = a.inverse()
+    #     except ValueError:
+    #         self.plot()
+    #         print(self._area())
+    #         raise FlatElementError('form function bug')
+    #     x1 = inv_a.dot([1,0,0,0,0,0])
+    #     x2 = inv_a.dot([1,0,0,0,0,0])
+    #     x3 = inv_a.dot([1,0,0,0,0,0])
+    #     x4=inv_a.dot([1,0,0,0,0,0])
+
+    #     return x1, x2, x3
+
+    def _area(self):
+        u = self.points[1] - self.points[0]
+        v = self.points[2] - self.points[0]
+        return abs(u.cross(v)) / 2
+
+    # def point_belongs(self, point):
+    #     polygon = volmdlr.wires.ClosedPolygon2D(self.points)
+    #     point_belongs = polygon.point_belongs(point)
+    #     return point_belongs
+
+    # def rotation(self, center, angle, copy=True):
+    #     if copy:
+    #         return TriangularElement([pt.rotation(center, angle, copy=True)
+    #                                   for pt in self.points])
+    #     else:
+    #         for pt in self.points:
+    #             pt.Rotation(center, angle, copy=False)
+
+    # def translation(self, offset, copy=True):
+    #     if copy:
+    #         return TriangularElement([pt.translation(offset, copy=True)
+    #                                   for pt in self.points])
+    #     else:
+    #         for pt in self.points:
+    #             pt.translation(offset, copy=False)
+
+    def axial_symmetry(self, line, copy=True):
+        p1, p2 = line.points
+        symmetric_points = []
+        for point in self.points:
+            u = p2 - p1
+            t = (point-p1).dot(u) / u.norm()**2
+            projection = p1 + t * u
+            symmetric_point = volmdlr.Point2D(*(2 * projection - point))
+            symmetric_points.append(symmetric_point)
+        if copy:
+            return TriangularElement(symmetric_points)
+        else:
+            for i, point in enumerate(self.points):
+                point = symmetric_points[i]
+
+    def plot(self, ax=None, color='k', width=None,
+              plot_points=False, fill=False):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+
+        if fill:
+            x = [p[0] for p in self.points]
+            y = [p[1] for p in self.points]
+            plt.fill(x, y, facecolor=color, edgecolor="k")
+            return ax
+
+        for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
+            if width is None:
+                width = 1
+            if plot_points:
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
+                        marker='o', linewidth=width)
+            else:
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
+                        linewidth=width)
+        return ax
+
+    # def triangle_to_polygon(self):
+    #     points = self.points
+    #     return volmdlr.wires.ClosedPolygon2D(points)
 
 
-# class Mesh(DessiaObject):
-#     _standalone_in_db = True
-#     _non_serializable_attributes = ['node_to_index']
-#     _non_eq_attributes = ['name']
-#     _non_hash_attributes = ['name']
-#     _generic_eq = True
+class ElementsGroup(DessiaObject):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
 
-#     def __init__(self, elements_groups: List[ElementsGroup]):
-#         self.elements_groups = elements_groups
-#         self.nodes = self._set_nodes_number()
-#         self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
+    def __init__(self, elements:List[TriangularElement], name:str):
+        self.elements = elements
+        self.name = name
 
-#         DessiaObject.__init__(self, name='')
+        DessiaObject.__init__(self, name=name)
 
-#     def __add__(self, other_mesh):
-#         new_nodes = self.nodes[:]
-#         new_nodes_index = {p: i for i, p in enumerate(self.points)}
-#         ip = len(new_nodes)
-#         for point in other_mesh.nodes:
-#             if point not in new_nodes_index:
-#                 new_nodes_index[point] = ip
-#                 ip += 1
-#                 new_nodes.append(point)
+    def point_to_element(self, point):
+        for element in self.elements:
+            if element.point_belongs(point):
+                return element
+        return None
 
-#         new_elements_groups = self.elements_groups[:]
-#         for i1, i2, i3 in other_mesh.elements_groups:
-#             p1 = other_mesh.nodes[i1]
-#             p2 = other_mesh.nodes[i2]
-#             p3 = other_mesh.nodes[i3]
-#             new_elements_groups.append((new_nodes_index[p1],
-#                                         new_nodes_index[p2],
-#                                         new_nodes_index[p3]))
-#         return self.__class__(new_elements_groups)
+    # def rotation(self, center, angle, copy=True):
+    #     if copy:
+    #         return Mesh([elem.rotation(center, angle, copy=True)
+    #                       for elem in self.elements])
+    #     else:
+    #         for elem in self.elements:
+    #             elem.rotation(center, angle, copy=False)
 
-#     def _set_nodes_number(self):
-#         nodes = set()
-#         for elements_group in self.elements_groups:
-#             for element in elements_group.elements:
-#                 nodes.add(element.points[0])
-#                 nodes.add(element.points[1])
-#                 nodes.add(element.points[2])
-#         return tuple(nodes)
+    # def translation(self, offset, copy=True):
+    #     if copy:
+    #         return Mesh([elem.translation(offset, copy=True)
+    #                       for elem in self.elements])
+    #     else:
+    #         for elem in self.elements:
+    #             elem.translation(offset, copy=False)
 
-#     def point_to_element(self, point):
-#         for element_group in self.elements_groups:
-#             element = element_group.point_to_element(point)
-#             if element is not None:
-#                 return element
-#         return None
+    def plot(self, ax=None, color='k', fill=False):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        for element in self.elements:
+            element.plot(ax=ax, color=color, fill=fill)
+        return ax
 
-#     def set_node_displacement_index(self):
-#         indexes = {}
-#         for node in self.nodes:
-#             indexes[node] = [2*self.node_to_index[node],
-#                              2*self.node_to_index[node]+1]
-#         return indexes
 
-#     def boundary_dict(self):
-#         boundary_dict = {}
-#         for elements_group1, elements_group2 in combinations(
-#                 self.elements_groups, 2):
-#             linear_elements1 = []
-#             linear_elements2 = []
-#             for element in elements_group1.elements:
-#                 linear_elements1.extend(element.linear_elements)
-#             for element in elements_group2.elements:
-#                 linear_elements2.extend(element.linear_elements)
-#             duplicate_linear_elements = find_duplicate_linear_element(
-#                 linear_elements1, linear_elements2)
-#             if duplicate_linear_elements:
-#                 boundary_dict[(elements_group1,
-#                                elements_group2)] = duplicate_linear_elements
-#         return boundary_dict
+class Mesh(DessiaObject):
+    _standalone_in_db = True
+    _non_serializable_attributes = ['node_to_index']
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
 
-#     def plot(self, ax=None):
-#         if ax is None:
-#             fig, ax = plt.subplots()
-#             ax.set_aspect('equal')
-#         for elements_group in self.elements_groups:
-#             elements_group.plot(ax=ax)
-#         return ax
+    def __init__(self, elements_groups: List[ElementsGroup]):
+        self.elements_groups = elements_groups
+        self.nodes = self._set_nodes_number()
+        self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
 
-#     def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
-#         plot_datas = []
-#         for element_group in self.elements_groups:
-#             for element in element_group.elements:
-#                 c1 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
-#                     element.points[0], element.points[1])])
-#                 c2 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
-#                     element.points[1], element.points[2])])
-#                 c3 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
-#                     element.points[2], element.points[0])])
-#                 plot_datas.append(c1.plot_data())
-#                 plot_datas.append(c2.plot_data())
-#                 plot_datas.append(c3.plot_data())
-#                 # plot_datas.extend([c1, c2, c3])
-#         return plot_datas
+        DessiaObject.__init__(self, name='')
 
-#     def plot_displaced_mesh(self,
-#                             node_displacement: Dict[volmdlr.Point2D,
-#                                                     List[float]],
-#                             ax=None, amplification=0.5):
+    # def __add__(self, other_mesh):
+    #     new_nodes = self.nodes[:]
+    #     new_nodes_index = {p: i for i, p in enumerate(self.points)}
+    #     ip = len(new_nodes)
+    #     for point in other_mesh.nodes:
+    #         if point not in new_nodes_index:
+    #             new_nodes_index[point] = ip
+    #             ip += 1
+    #             new_nodes.append(point)
 
-#         deformed_mesh = self.copy()
-#         nodes = deformed_mesh.nodes
+    #     new_elements_groups = self.elements_groups[:]
+    #     for i1, i2, i3 in other_mesh.elements_groups:
+    #         p1 = other_mesh.nodes[i1]
+    #         p2 = other_mesh.nodes[i2]
+    #         p3 = other_mesh.nodes[i3]
+    #         new_elements_groups.append((new_nodes_index[p1],
+    #                                     new_nodes_index[p2],
+    #                                     new_nodes_index[p3]))
+    #     return self.__class__(new_elements_groups)
 
-#         for node in nodes:
-#             for displaced_node in node_displacement:
-#                 if node == displaced_node:
-#                     node.x += amplification*node_displacement[
-#                         displaced_node][0]
-#                     node.y += amplification*node_displacement[
-#                         displaced_node][1]
+    def _set_nodes_number(self):
+        nodes = set()
+        for elements_group in self.elements_groups:
+            for element in elements_group.elements:
+                nodes.add(element.points[0])
+                nodes.add(element.points[1])
+                nodes.add(element.points[2])
+        return tuple(nodes)
 
-#         ax = deformed_mesh.plot(ax=ax)
-#         ax.set_aspect('equal')
+    def point_to_element(self, point):
+        for element_group in self.elements_groups:
+            element = element_group.point_to_element(point)
+            if element is not None:
+                return element
+        return None
 
-#         return ax
+    # def set_node_displacement_index(self):
+    #     indexes = {}
+    #     for node in self.nodes:
+    #         indexes[node] = [2*self.node_to_index[node],
+    #                           2*self.node_to_index[node]+1]
+    #     return indexes
+
+    # def boundary_dict(self):
+    #     boundary_dict = {}
+    #     for elements_group1, elements_group2 in combinations(
+    #             self.elements_groups, 2):
+    #         linear_elements1 = []
+    #         linear_elements2 = []
+    #         for element in elements_group1.elements:
+    #             linear_elements1.extend(element.linear_elements)
+    #         for element in elements_group2.elements:
+    #             linear_elements2.extend(element.linear_elements)
+    #         duplicate_linear_elements = find_duplicate_linear_element(
+    #             linear_elements1, linear_elements2)
+    #         if duplicate_linear_elements:
+    #             boundary_dict[(elements_group1,
+    #                             elements_group2)] = duplicate_linear_elements
+    #     return boundary_dict
+
+    def plot(self, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        for elements_group in self.elements_groups:
+            elements_group.plot(ax=ax)
+        return ax
+
+    # def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
+    #     plot_datas = []
+    #     for element_group in self.elements_groups:
+    #         for element in element_group.elements:
+    #             c1 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
+    #                 element.points[0], element.points[1])])
+    #             c2 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
+    #                 element.points[1], element.points[2])])
+    #             c3 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
+    #                 element.points[2], element.points[0])])
+    #             plot_datas.append(c1.plot_data())
+    #             plot_datas.append(c2.plot_data())
+    #             plot_datas.append(c3.plot_data())
+    #             # plot_datas.extend([c1, c2, c3])
+    #     return plot_datas
+
+    # def plot_displaced_mesh(self,
+    #                         node_displacement: Dict[volmdlr.Point2D,
+    #                                                 List[float]],
+    #                         ax=None, amplification=0.5):
+
+    #     deformed_mesh = self.copy()
+    #     nodes = deformed_mesh.nodes
+
+    #     for node in nodes:
+    #         for displaced_node in node_displacement:
+    #             if node == displaced_node:
+    #                 node.x += amplification*node_displacement[
+    #                     displaced_node][0]
+    #                 node.y += amplification*node_displacement[
+    #                     displaced_node][1]
+
+    #     ax = deformed_mesh.plot(ax=ax)
+    #     ax.set_aspect('equal')
+
+    #     return ax
 
 
 # class Mesher(DessiaObject):
@@ -517,13 +520,13 @@
 #         return x1 * (y3 - y2) + x2 * (y1 - y3) + x3 * (y2 - y1)
 
 #     def _contains_no_points(self,p1:volmdlr.Point2D,p2:volmdlr.Point2D,p3:volmdlr.Point2D, polygon:volmdlr.wires.ClosedPolygon2D):
-#        triangle=volmdlr.wires.Triangle2D([p1,p2,p3])
-#        for pn in polygon.points:
+#         triangle=volmdlr.wires.Triangle2D([p1,p2,p3])
+#         for pn in polygon.points:
 #             if pn in [p1, p2, p3]:
 #                 continue
 #             elif triangle.is_inside_triangle(pn):
 #                 return False
-#        return True
+#         return True
 
 #     def _is_ear(self,p1:volmdlr.Point2D,p2:volmdlr.Point2D,p3:volmdlr.Point2D, polygon:volmdlr.wires.ClosedPolygon2D):
 #         triangle=volmdlr.wires.Triangle2D([p1,p2,p3])
@@ -591,13 +594,13 @@
 #                             ear_vertex.append(p)
 #                     elif p in ear_vertex:
 
-#                          ear_vertex.remove(p)
+#                           ear_vertex.remove(p)
 
 #         return possible_triangles
 
 
 #     def basic_triangulation(self,polygon1:volmdlr.wires.ClosedPolygon2D,polygon2:volmdlr.wires.ClosedPolygon2D,
-#                            segment_to_nodes:Dict[volmdlr.edges.LineSegment2D,List[volmdlr.Point2D]]):
+#                             segment_to_nodes:Dict[volmdlr.edges.LineSegment2D,List[volmdlr.Point2D]]):
 #         triangles=[]
 
 #         for j in range(len(polygon1.line_segments)):
@@ -622,9 +625,9 @@
 
 #                 for  i in range(v-1,u-1):
 
-#                      new_triangle=volmdlr.wires.Triangle2D([pj[i],qj[v-1],pj[i+1]])
+#                       new_triangle=volmdlr.wires.Triangle2D([pj[i],qj[v-1],pj[i+1]])
 
-#                      triangles.append(new_triangle)
+#                       triangles.append(new_triangle)
 #             else :
 #                   for i in range(u-1):
 #                     new_triangle_1=volmdlr.wires.Triangle2D([qj[i+1],qj[i],pj[i]])
@@ -636,9 +639,9 @@
 
 #                   for  i in range(u-1,v-1):
 
-#                      new_triangle=volmdlr.wires.Triangle2D([qj[i],pj[u-1],qj[i+1]])
+#                       new_triangle=volmdlr.wires.Triangle2D([qj[i],pj[u-1],qj[i+1]])
 
-#                      triangles.append(new_triangle)
+#                       triangles.append(new_triangle)
 
 #         return triangles
 
@@ -671,7 +674,7 @@
 #                     if new_polygon.area() > polygon.area():
 #                         good_offset=polygon.offset(p*offset_len/(10*k))
 #                         if not good_offset.self_intersects()[0]:
-#                            polygon_offsets.append(good_offset)
+#                             polygon_offsets.append(good_offset)
 
 #                         else :
 
@@ -680,8 +683,8 @@
 
 #                     else :
 
-#                          offset_values.append(-p*offset_len/(10*k))
-#                          polygon_offsets.append(new_polygon)
+#                           offset_values.append(-p*offset_len/(10*k))
+#                           polygon_offsets.append(new_polygon)
 #                     xmin_2,xmax_2,ymin_2,ymax_2=polygon_offsets[-1].bounding_rectangle()
 #                     offset_len2=min(xmax_2-xmin_2, ymax_2-ymin_2)
 #                     offset2=polygon_offsets[-1].offset(-p*offset_len2/(10*k))
@@ -772,8 +775,8 @@
 #             l=len(polygon_offsets)
 
 #             if len(polygon_offsets[-1].line_segments)==len(polygon_offsets[l-2].line_segments):
-#                offset_triangles+=self.basic_triangulation(polygon_offsets[l-2],polygon_offsets[-1],segment_to_nodes)
-#                if  not empty :
+#                 offset_triangles+=self.basic_triangulation(polygon_offsets[l-2],polygon_offsets[-1],segment_to_nodes)
+#                 if  not empty :
 
 #                     last_points=[]
 #                     for segment in polygon_offsets[-1].line_segments:
@@ -786,7 +789,7 @@
 
 #                         if triangle.area>10e-9:
 #                             offset_triangles.append(triangle)
-#                else :
+#                 else :
 #                     if far :
 #                         offset_triangles+=self.mesh_in_between(interior_polygon,polygon_offsets[-1],True)
 
@@ -904,15 +907,15 @@
 
 #                             else :
 
-#                                  if out_point_image[point][0][1] != new_proj :
+#                                   if out_point_image[point][0][1] != new_proj :
 
 #                                       projection_points[out_point_image[point][0][0]].remove(out_point_image[point][0][1])
 #                                       projection_points[out_point_image[point][0][0]].append(new_proj)
 #                                       if new_proj not in projection_points[index_0]:
 #                                             projection_points[index_0].insert(index_point,new_proj)
 
-#                                  else :
-#                                      if new_proj not in projection_points[index_0]:
+#                                   else :
+#                                       if new_proj not in projection_points[index_0]:
 #                                         projection_points[index_0].insert(index_point,new_proj)
 #                     else :
 #                         x=0
@@ -920,11 +923,11 @@
 #                           i=0
 
 #                           if projection.point_distance(near_segment.start) > projection.point_distance(near_segment.end) :
-#                              i+=1
+#                               i+=1
 #                           l = near_segment.length()/projection.point_distance(near_segment.points[i])
 
 #                           if out_segment.length()/projection.point_distance(near_segment.points[i])<3:
-#                              x=10
+#                               x=10
 #                           else :
 #                               x=3
 #                           if l <= x :
@@ -933,12 +936,12 @@
 #                             projection_points[index_0].insert(index_point,projection)
 #                           else :
 
-#                                if new_proj not in projection_points[index_0]:
-#                                    projection_points[index_0].insert(index_point,new_proj)
+#                                 if new_proj not in projection_points[index_0]:
+#                                     projection_points[index_0].insert(index_point,new_proj)
 
 #                         else :
-#                              if new_proj not in projection_points[index_0]:
-#                                    projection_points[index_0].insert(index_point,new_proj)
+#                               if new_proj not in projection_points[index_0]:
+#                                     projection_points[index_0].insert(index_point,new_proj)
 
 #         for out_segment in out_polygon.line_segments:
 
@@ -975,24 +978,24 @@
 #             if u<v :
 #                 for j in range(u-1):
 
-#                    new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],segment_to_nodes[out_segment][j+1],
+#                     new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],segment_to_nodes[out_segment][j+1],
 #                                       segment_to_nodes[out_segment][j]])
 
-#                    all_triangles.append(new_triangle)
-#                    new_triangle_0=volmdlr.wires.Triangle2D([projection_points[index_0][j+1],projection_points[index_0][j],
-#                                        segment_to_nodes[out_segment][j+1]])
+#                     all_triangles.append(new_triangle)
+#                     new_triangle_0=volmdlr.wires.Triangle2D([projection_points[index_0][j+1],projection_points[index_0][j],
+#                                         segment_to_nodes[out_segment][j+1]])
 
-#                    all_triangles.append(new_triangle_0)
+#                     all_triangles.append(new_triangle_0)
 
 #                 for j in  range(u-1,v-1):
-#                    new_triangle=volmdlr.wires.Triangle2D([segment_to_nodes[out_segment][j],  segment_to_nodes[out_segment][j+1],
+#                     new_triangle=volmdlr.wires.Triangle2D([segment_to_nodes[out_segment][j],  segment_to_nodes[out_segment][j+1],
 #                                   projection_points[index_0][u-1]])
-#                    all_triangles.append(new_triangle)
+#                     all_triangles.append(new_triangle)
 
 #             if u==2 and v==2:
 #                 if projection_points[index_0][1] != projection_points[index_0][0] :
 #                     new_triangle_1=volmdlr.wires.Triangle2D([projection_points[index_0][0],projection_points[index_0][1],
-#                                        segment_to_nodes[out_segment][1]])
+#                                         segment_to_nodes[out_segment][1]])
 #                     all_triangles.append(new_triangle_1)
 
 #                 new_triangle_2=volmdlr.wires.Triangle2D([projection_points[index_0][0],segment_to_nodes[out_segment][0],
@@ -1237,10 +1240,10 @@
 #         A= [a for a in list(all_aspect_ratios.values())]
 
 #         if max_aspect_ratio is None:
-#            max_aspect = max(A)
+#             max_aspect = max(A)
 
 #         if min_aspect_ratio is None:
-#            min_aspect = min(A)
+#             min_aspect = min(A)
 
 #         aspect_ratio_to_color = {}
 #         for a in A:
@@ -1249,8 +1252,8 @@
 #             else:
 #                 x = (a - min_aspect) / (max_aspect - min_aspect)
 #             color = (color_map[0][0]-(color_map[0][0]-color_map[1][0])*x,
-#                      color_map[0][1]-(color_map[0][1]-color_map[1][1])*x,
-#                      color_map[0][2]-(color_map[0][2]-color_map[1][2])*x)
+#                       color_map[0][1]-(color_map[0][1]-color_map[1][1])*x,
+#                       color_map[0][2]-(color_map[0][2]-color_map[1][2])*x)
 #             aspect_ratio_to_color[a] = color
 
 #         for triangle in all_triangles:
