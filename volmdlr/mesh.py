@@ -5,10 +5,10 @@ Module containing mesh and relative objects
 """
 
 from typing import List  # TypeVar, Tuple, Dict
-from dessia_common import DessiaObject
 from itertools import combinations
 import matplotlib.pyplot as plt
 import numpy as npy
+from dessia_common import DessiaObject
 # import volmdlr.core_compiled
 import volmdlr as vm
 import volmdlr.wires as vmw
