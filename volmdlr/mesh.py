@@ -113,7 +113,7 @@ class LinearElement(volmdlr.edges.LineSegment2D):
     #     return ax
 
 
-class TriangularElement(volmdlr.wires.Triangle2D):
+class TriangularElement(vmw.Triangle):
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -122,25 +122,27 @@ class TriangularElement(volmdlr.wires.Triangle2D):
 
     def __init__(self, points):
         self.points = points
-        self.linear_elements = self._to_linear_elements()
-        self.form_functions = self._form_functions()
-
+        # self.linear_elements = self._to_linear_elements()
+        # self.form_functions = self._form_functions()
+        # self.line_segments = self.line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
 
-        self.area = self._area()
+        self._line_segments = None
 
-        volmdlr.wires.Triangle2D.__init__(self,points=points, name='')
+        # self.area = self._area()
+
+        # vmw.Triangle.__init__(self, points)
 
     def _to_linear_elements(self):
-        vec1 = volmdlr.Vector2D(self.points[1].x - self.points[0].x,
-                                self.points[1].y - self.points[0].y)
-        vec2 = volmdlr.Vector2D(self.points[2].x - self.points[1].x,
-                                self.points[2].y - self.points[1].y)
-        vec3 = volmdlr.Vector2D(self.points[0].x - self.points[2].x,
-                                self.points[0].y - self.points[2].y)
-        normal1 = volmdlr.Vector2D(-vec1.y, vec1.x)
-        normal2 = volmdlr.Vector2D(-vec2.y, vec2.x)
-        normal3 = volmdlr.Vector2D(-vec3.y, vec3.x)
+        vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
+                            self.points[1].y - self.points[0].y)
+        vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
+                            self.points[2].y - self.points[1].y)
+        vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
+                            self.points[0].y - self.points[2].y)
+        normal1 = vm.Vector2D(-vec1.y, vec1.x)
+        normal2 = vm.Vector2D(-vec2.y, vec2.x)
+        normal3 = vm.Vector2D(-vec3.y, vec3.x)
         normal1.normalize()
         normal2.normalize()
         normal3.normalize()
@@ -159,19 +161,18 @@ class TriangularElement(volmdlr.wires.Triangle2D):
         return [linear_element_1, linear_element_2, linear_element_3]
 
     def _form_functions(self):
-        a = Matrix33(1, self.points[0].x, self.points[0].y,
-                      1, self.points[1].x, self.points[1].y,
-                      1, self.points[2].x, self.points[2].y)
+        a = vm.Matrix33(1, self.points[0].x, self.points[0].y,
+                        1, self.points[1].x, self.points[1].y,
+                        1, self.points[2].x, self.points[2].y)
         try:
             inv_a = a.inverse()
         except ValueError:
             self.plot()
             print('buggy element area', self.area)
             raise FlatElementError('form function bug')
-        x1 = inv_a.vector_multiplication(volmdlr.X3D)
-        x2 = inv_a.vector_multiplication(volmdlr.Y3D)
-        x3 = inv_a.vector_multiplication(volmdlr.Z3D)
-
+        x1 = inv_a.vector_multiplication(vm.X3D)
+        x2 = inv_a.vector_multiplication(vm.Y3D)
+        x3 = inv_a.vector_multiplication(vm.Z3D)
         return x1, x2, x3
 
     # def _quadratic_form_functions(self):
@@ -221,43 +222,26 @@ class TriangularElement(volmdlr.wires.Triangle2D):
     #         for pt in self.points:
     #             pt.translation(offset, copy=False)
 
-    def axial_symmetry(self, line, copy=True):
-        p1, p2 = line.points
-        symmetric_points = []
+    def axial_symmetry(self, line):
+        new_points = []
         for point in self.points:
-            u = p2 - p1
-            t = (point-p1).dot(u) / u.norm()**2
-            projection = p1 + t * u
-            symmetric_point = volmdlr.Point2D(*(2 * projection - point))
-            symmetric_points.append(symmetric_point)
-        if copy:
-            return TriangularElement(symmetric_points)
-        else:
-            for i, point in enumerate(self.points):
-                point = symmetric_points[i]
+            new_points.append(point.axial_symmetry(line))
+        return self.__class__(new_points)
 
-    def plot(self, ax=None, color='k', width=None,
-              plot_points=False, fill=False):
-        if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-
-        if fill:
-            x = [p[0] for p in self.points]
-            y = [p[1] for p in self.points]
-            plt.fill(x, y, facecolor=color, edgecolor="k")
-            return ax
-
-        for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
-            if width is None:
-                width = 1
-            if plot_points:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-                        marker='o', linewidth=width)
-            else:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-                        linewidth=width)
-        return ax
+    # def axial_symmetry(self, line, copy=True):
+    #     p1, p2 = line.points
+    #     symmetric_points = []
+    #     for point in self.points:
+    #         u = p2 - p1
+    #         t = (point-p1).dot(u) / u.norm()**2
+    #         projection = p1 + t * u
+    #         symmetric_point = volmdlr.Point2D(*(2 * projection - point))
+    #         symmetric_points.append(symmetric_point)
+    #     if copy:
+    #         return TriangularElement(symmetric_points)
+    #     else:
+    #         for i, point in enumerate(self.points):
+    #             point = symmetric_points[i]
 
     # def triangle_to_polygon(self):
     #     points = self.points
