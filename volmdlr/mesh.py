@@ -876,11 +876,11 @@ class Mesh(DessiaObject):
         for n in nodes:
             x.append(n.x)
             y.append(n.y)
-        return min(x), max(x), min(y), max(y)
+        if len([*nodes[0]]) == 2:
+            return min(x), max(x), min(y), max(y)
 
-        if len([*nodes[0]]) == 3:
-            z = [n.z for n in nodes]
-            return min(x), max(x), min(y), max(y), min(z), max(z)
+        z = [n.z for n in nodes]
+        return min(x), max(x), min(y), max(y), min(z), max(z)
 
     def delete_duplicated_nodes(self, tol=1e-4):
         mesh = self.__class__(self.elements_groups[:])
