@@ -575,6 +575,106 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
     #     return volmdlr.wires.ClosedPolygon2D(points)
 
 
+class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+
+    def __init__(self, points, name: str = ''):
+        self.points = points
+        self.name = name
+        # self.linear_elements = self._to_linear_elements()
+        self.form_functions = self._form_functions()
+        # self.line_segments = self._line_segments()
+        self.center = (self.points[0]+self.points[1]+self.points[2]+self.points[3])/4
+        self.triangular_elements = self._triangular_elements()
+
+        self.volume = self._volume()
+        DessiaObject.__init__(self, name=name)
+
+    def _triangular_elements(self):
+
+        indices_combinations = [x for x in combinations(list(range(len(self.points))), r=3)]
+        triangular_elements = []
+
+        for indices in indices_combinations:
+            triangular_elements.append(TriangularElement3D([self.points[indices[0]],
+                                                            self.points[indices[1]],
+                                                            self.points[indices[2]]]))
+
+        return triangular_elements
+
+    def plot(self, ax=None, color='k'):
+        if ax is None:
+            ax = plt.figure().add_subplot(projection='3d')
+        for point in self.points:
+            point.plot(ax=ax)
+        for triangle in self.triangular_elements:
+            triangle.plot(ax=ax)
+        return ax
+
+    def _volume(self):
+
+        data = []
+        for i in range(3):
+            data.extend([*self.points[i+1] - self.points[0]])
+
+        return abs(1/6 * (npy.linalg.det(npy.array(data).reshape(3,3))))
+
+    def _form_functions(self):
+        # coeff = [1, -1, 1, 1]
+        # alpha = []
+        # for i in range(4):
+        #     data = []
+        #     for c in range(4):
+        #         if c != i:
+        #             data.extend([self.points[c].x, self.points[c].y, self.points[c].z])
+        #     alpha.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
+        # gamma = []
+        # for i in range(4):
+        #     data = []
+        #     for c in range(4):
+        #         if c != i:
+        #             data.extend([1, self.points[c].x, self.points[c].z])
+        #     gamma.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
+
+        # coeff = [-1, 1, -1, 1]
+        # betha = []
+        # for i in range(4):
+        #     data = []
+        #     for c in range(4):
+        #         if c != i:
+        #             data.extend([1, self.points[c].y, self.points[c].z])
+        #     betha.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
+        # delta = []
+        # for i in range(4):
+        #     data = []
+        #     for c in range(4):
+        #         if c != i:
+        #             data.extend([1, self.points[c].x, self.points[c].y])
+        #     delta.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
+
+        coeff = [1, -1, 1, -1]
+        N = []
+        for i in range(4):
+            data_alpha, data_gamma, data_betha, data_delta = [], [], [], []
+            for c in range(4):
+                if c != i:
+                    data_alpha.extend([self.points[c].x, self.points[c].y, self.points[c].z])
+                    data_gamma.extend([1, self.points[c].x, self.points[c].z])
+                    data_betha.extend([1, self.points[c].y, self.points[c].z])
+                    data_delta.extend([1, self.points[c].x, self.points[c].y])
+
+            N.append([(coeff[i] * (npy.linalg.det(npy.array(data_alpha).reshape(3,3)))),
+                  ((-1)* coeff[i] * (npy.linalg.det(npy.array(data_betha).reshape(3,3)))),
+                  (coeff[i] * (npy.linalg.det(npy.array(data_gamma).reshape(3,3)))),
+                  ((-1)* coeff[i] * (npy.linalg.det(npy.array(data_delta).reshape(3,3))))])
+
+        return N[0], N[1], N[2], N[3]
+
+
 class ElementsGroup(DessiaObject):
     _standalone_in_db = False
     _non_serializable_attributes = []
