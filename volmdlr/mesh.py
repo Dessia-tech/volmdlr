@@ -6,6 +6,7 @@ Module containing mesh and relative objects
 
 from typing import List  # TypeVar, Tuple, Dict
 from itertools import combinations
+import math
 import matplotlib.pyplot as plt
 import numpy as npy
 from dessia_common import DessiaObject
@@ -20,7 +21,6 @@ import volmdlr.edges as vme
 # import volmdlr.wires
 # import volmdlr.faces
 # from volmdlr.core_compiled import Matrix33
-import math
 # import matplotlib
 # import random
 # from itertools import product
@@ -168,10 +168,10 @@ class TriangularElement(vmw.Triangle):
                         1, self.points[2].x, self.points[2].y)
         try:
             inv_a = a.inverse()
-        except ValueError:
-            self.plot()
-            print('buggy element area', self.area)
-            raise FlatElementError('form function bug')
+        except ValueError as expt:
+            # self.plot()
+            print('buggy element area', self._area())
+            raise FlatElementError('form function bug') from expt
         x1 = inv_a.vector_multiplication(vm.X3D)
         x2 = inv_a.vector_multiplication(vm.Y3D)
         x3 = inv_a.vector_multiplication(vm.Z3D)
@@ -303,10 +303,10 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
                         1, self.points[2].x, self.points[2].y)
         try:
             inv_a = a.inverse()
-        except ValueError:
+        except ValueError as expt:
             self.plot()
             print('buggy element area', self.area)
-            raise FlatElementError('form function bug')
+            raise FlatElementError('form function bug') as expt
         x1 = inv_a.vector_multiplication(vm.X3D)
         x2 = inv_a.vector_multiplication(vm.Y3D)
         x3 = inv_a.vector_multiplication(vm.Z3D)
@@ -486,10 +486,10 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
                         1, self.points[2].x, self.points[2].y)
         try:
             inv_a = a.inverse()
-        except ValueError:
+        except ValueError as expt:
             self.plot()
             print('buggy element area', self.area)
-            raise FlatElementError('form function bug')
+            raise FlatElementError('form function bug') from expt
         x1 = inv_a.vector_multiplication(vm.X3D)
         x2 = inv_a.vector_multiplication(vm.Y3D)
         x3 = inv_a.vector_multiplication(vm.Z3D)
