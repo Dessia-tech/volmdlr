@@ -682,17 +682,42 @@ class ElementsGroup(DessiaObject):
     _non_hash_attributes = ['name']
     _generic_eq = True
 
-    def __init__(self, elements:List[TriangularElement], name:str):
+    def __init__(self, elements, name: str):
         self.elements = elements
+        self.nodes = self._nodes()
         self.name = name
 
+        self._elements_per_node = None
+
         DessiaObject.__init__(self, name=name)
+
+    def _nodes(self):
+        nodes = set()
+        for element in self.elements:
+            for point in element.points:
+                nodes.add(point)
+        return nodes
 
     def point_to_element(self, point):
         for element in self.elements:
             if element.point_belongs(point):
                 return element
         return None
+
+    @property
+    def elements_per_node(self):
+        if self._elements_per_node is not None:
+            return self._elements_per_node
+        else:
+            dict_node_element = {}
+            for element in self.elements:
+                for point in element.points:
+                    try:
+                        dict_node_element[point].append(element)
+                    except KeyError:
+                        dict_node_element[point] = [element]
+            self._elements_per_node = dict_node_element
+            return dict_node_element
 
     # def rotation(self, center, angle, copy=True):
     #     if copy:
@@ -715,7 +740,7 @@ class ElementsGroup(DessiaObject):
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
         for element in self.elements:
-            element.plot(ax=ax, color=color, fill=fill)
+            element.plot(ax=ax, color=color) #fill=fill
         return ax
 
 
