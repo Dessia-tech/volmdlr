@@ -12,10 +12,10 @@ import webbrowser
 from datetime import datetime
 # import volmdlr.stl as vmstl
 from typing import List
+from itertools import chain
 
 import matplotlib.pyplot as plt
 import numpy as npy
-from itertools import chain
 import gmsh
 
 import dessia_common as dc
