@@ -782,9 +782,11 @@ class Mesh(DessiaObject):
         nodes = set()
         for elements_group in self.elements_groups:
             for element in elements_group.elements:
-                nodes.add(element.points[0])
-                nodes.add(element.points[1])
-                nodes.add(element.points[2])
+                for point in element.points:
+                    nodes.add(point)
+                # nodes.add(element.points[0])
+                # nodes.add(element.points[1])
+                # nodes.add(element.points[2])
         return tuple(nodes)
 
     def point_to_element(self, point):
@@ -820,8 +822,11 @@ class Mesh(DessiaObject):
 
     def plot(self, ax=None):
         if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
+            if self.elements_groups[0].elements[0].__class__.__name__[-2::] == '2D':
+                fig, ax = plt.subplots()
+                ax.set_aspect('equal')
+            else:
+                ax = plt.figure().add_subplot(projection='3d')
         for elements_group in self.elements_groups:
             elements_group.plot(ax=ax)
         return ax
@@ -862,6 +867,44 @@ class Mesh(DessiaObject):
     #     ax.set_aspect('equal')
 
     #     return ax
+
+    def bounding_rectangle(self):
+        nodes = self.nodes
+        x, y = [], []
+        for n in nodes:
+            x.append(n.x)
+            y.append(n.y)
+        return min(x), max(x), min(y), max(y)
+
+        if len([*nodes[0]]) == 3:
+            z = [n.z for n in nodes]
+            return min(x), max(x), min(y), max(y), min(z), max(z)
+
+    def delete_duplicated_nodes(self, tol=1e-4):
+        mesh = self.__class__(self.elements_groups[:])
+        nodes_list = list(mesh.nodes[:])
+        nodes_index = []
+
+        for i,node in enumerate(nodes_list):
+            for j in range(i+1, len(nodes_list)):
+                d = node.point_distance(nodes_list[j])
+                if d<tol:
+                    nodes_index.append((j, i))
+
+        if nodes_index:
+            nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
+            for k, index in enumerate(nodes_index):
+                nodes_list.pop(index[0])
+                for group in mesh.elements_groups:
+                    if mesh.nodes[index[0]] in group.nodes:
+                        dict_node_element = group.elements_per_node
+                        for element in dict_node_element[mesh.nodes[index[0]]]:
+                            element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
+
+            mesh.nodes = nodes_list
+            mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+
+        return mesh
 
 
 # class Mesher(DessiaObject):
