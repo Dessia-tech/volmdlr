@@ -8,6 +8,7 @@ from dessia_common import DessiaObject
 import volmdlr
 import volmdlr.mesh
 
+
 class Gmsh(DessiaObject):
     _standalone_in_db = False
     _non_serializable_attributes = []
@@ -20,14 +21,14 @@ class Gmsh(DessiaObject):
                  nodes: dict,
                  elements: dict,
                  entities: dict,
-                 physical_names = None,
-                 partitioned_entities = None,
-                 periodic = None,
+                 physical_names=None,
+                 partitioned_entities=None,
+                 periodic=None,
                  # ghost_elements = None,
-                 parametrizations = None,
-                 node_data = None,
-                 element_data = None,
-                 element_node_data = None,
+                 parametrizations=None,
+                 node_data=None,
+                 element_data=None,
+                 element_node_data=None,
                  # interpolation_scheme = None,
                  name: str = ''):
 
@@ -70,19 +71,19 @@ class Gmsh(DessiaObject):
         # interpolation_scheme = Gmsh.from_file_interpolation_scheme(file_data['InterpolationScheme'])
 
         return cls(mesh_format=mesh_format,
-                    entities=entities,
-                    nodes=nodes,
-                    elements=elements,
-                    physical_names=physical_names,
-                    partitioned_entities=partitioned_entities,
-                    periodic=periodic,
-                    # ghost_elements=ghost_elements,
-                    parametrizations=parametrizations,
-                    node_data=node_data,
-                    element_data=element_data,
-                    element_node_data=element_node_data,
-                    # interpolation_scheme=interpolation_scheme
-                    name='')
+                   entities=entities,
+                   nodes=nodes,
+                   elements=elements,
+                   physical_names=physical_names,
+                   partitioned_entities=partitioned_entities,
+                   periodic=periodic,
+                   # ghost_elements=ghost_elements,
+                   parametrizations=parametrizations,
+                   node_data=node_data,
+                   element_data=element_data,
+                   element_node_data=element_node_data,
+                   # interpolation_scheme=interpolation_scheme
+                   name='')
 
     @staticmethod
     def from_file_elements(lines):
@@ -102,23 +103,23 @@ class Gmsh(DessiaObject):
             if num_elements_in_block:
                 element_type = line[2]
                 try:
-                    elements['elements_type_'+ element_type]
+                    elements['elements_type_' + element_type]
                 except KeyError:
                     elements_types.append(elements_type)
-                    elements['elements_type_'+ element_type] = []
+                    elements['elements_type_' + element_type] = []
                     elements_type = []
 
-                step = step +1
+                step = step + 1
                 elements_list = []
-                for i in range(step, step+num_elements_in_block):
+                for i in range(step, step + num_elements_in_block):
                     line = lines[i].split()
-                    element = [int(index)-1 for index in line[1::]]
+                    element = [int(index) - 1 for index in line[1::]]
                     # elements['elements_type_'+ element_type].append(element)
                     elements_list.append(element)
                     elements_type.append(element)
-                elements['elements_type_'+ element_type].append(elements_list)
+                elements['elements_type_' + element_type].append(elements_list)
 
-            step = i+1 #num_nodes_in_block
+            step = i + 1  # num_nodes_in_block
 
             if step == len(lines):
                 break
@@ -186,7 +187,7 @@ class Gmsh(DessiaObject):
                     int(lines[0].split()[2]), int(lines[0].split()[3])]
 
         points_data = []
-        for i in range(1, entities[0]+1):
+        for i in range(1, entities[0] + 1):
             line = lines[i].split()
             points = {}
             points['pointTag'] = int(line[0])
@@ -199,7 +200,7 @@ class Gmsh(DessiaObject):
             points_data.append(points)
 
         curves_data = []
-        for i in range(entities[0]+1, entities[0]+entities[1]+1):
+        for i in range(entities[0] + 1, entities[0] + entities[1] + 1):
             line = lines[i].split()
             curves = {}
             curves['curveTag'] = int(line[0])
@@ -220,7 +221,7 @@ class Gmsh(DessiaObject):
             curves_data.append(curves)
 
         surfaces_data = []
-        for i in range(entities[0]+entities[1]+1, entities[0]+entities[1]+entities[2]+1):
+        for i in range(entities[0] + entities[1] + 1, entities[0] + entities[1] + entities[2] + 1):
             line = lines[i].split()
             surfaces = {}
             surfaces['surfaceTag'] = int(line[0])
@@ -241,7 +242,7 @@ class Gmsh(DessiaObject):
             surfaces_data.append(surfaces)
 
         volumes_data = []
-        for i in range(entities[0]+entities[1]+entities[2]+1, len(lines)):
+        for i in range(entities[0] + entities[1] + entities[2] + 1, len(lines)):
             line = lines[i].split()
             volumes = {}
             volumes['volumeTag'] = int(line[0])
@@ -342,13 +343,13 @@ class Gmsh(DessiaObject):
                 entity_dim = line[0]
                 # nodes['nodes_dim_'+ entity_dim] = []
                 try:
-                    nodes['nodes_dim_'+ entity_dim]
+                    nodes['nodes_dim_' + entity_dim]
                 except KeyError:
-                    nodes['nodes_dim_'+ entity_dim] = []
+                    nodes['nodes_dim_' + entity_dim] = []
 
-                step = step + num_nodes_in_block+1
+                step = step + num_nodes_in_block + 1
                 points = []
-                for i in range(step, step+num_nodes_in_block):
+                for i in range(step, step + num_nodes_in_block):
                     line = lines[i].split()
                     points.append(volmdlr.mesh.Node3D(float(line[0]),
                                                       float(line[1]),
@@ -362,10 +363,10 @@ class Gmsh(DessiaObject):
                     #                                     float(line[1]),
                     #                                     float(line[2])))
 
-                nodes['nodes_dim_'+ entity_dim].append(points)
+                nodes['nodes_dim_' + entity_dim].append(points)
                 nodes_points.extend(points)
 
-                step = step+num_nodes_in_block
+                step = step + num_nodes_in_block
 
             else:
                 step += 1
@@ -520,15 +521,15 @@ class Gmsh(DessiaObject):
             return {}
 
         physical_names = {}
-        for i in range(1, int(lines[0].split()[0])+1):
+        for i in range(1, int(lines[0].split()[0]) + 1):
             physical_dim = (lines[i].split()[0])
             try:
-                physical_names['physical_dim_'+ physical_dim]
+                physical_names['physical_dim_' + physical_dim]
             except KeyError:
-                physical_names['physical_dim_'+ physical_dim] = []
+                physical_names['physical_dim_' + physical_dim] = []
 
-            physical_names['physical_dim_'+ physical_dim].append({'physicalTag': int(lines[1][0]),
-                                                                  'Name': lines[i][5:-1]})
+            physical_names['physical_dim_' + physical_dim].append({'physicalTag': int(lines[1][0]),
+                                                                   'Name': lines[i][5:-1]})
 
         return physical_names
 
@@ -637,4 +638,4 @@ class Gmsh(DessiaObject):
     @staticmethod
     def to_2d(list_nodes):
         return [volmdlr.mesh.Node2D(node[0], node[1]) for
-                      node in list_nodes]
+                node in list_nodes]
