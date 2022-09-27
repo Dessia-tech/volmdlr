@@ -548,7 +548,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         self.outer_contour = new_contour.outer_contour
         self.inner_contours = new_contour.inner_contours
 
-    def geo_lines(self, mesh_size_list=None):
+    def geo_lines(self): #, mesh_size_list=None):
         """
         gets the lines that define a Surface2D in a .geo file
         """
@@ -4265,7 +4265,7 @@ class Face3D(volmdlr.core.Primitive3D):
         point_inside2d = self.surface2d.random_point_inside()
         return self.surface3d.point2d_to_3d(point_inside2d)
 
-    def geo_lines(self, mesh_size_list=None):
+    def geo_lines(self):#, mesh_size_list=None):
         """
         gets the lines that define a Face3D in a .geo file
         """
@@ -4325,12 +4325,12 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return lines
 
-    def to_geo(self, file_name: str, mesh_size_list=None):
+    def to_geo(self, file_name: str):#, mesh_size_list=None):
         '''
         gets the .geo file for the Face3D
         '''
 
-        lines = self.geo_lines(mesh_size_list)
+        lines = self.geo_lines()
 
         with open(file_name + '.geo', 'w', encoding="utf-8") as f:
             for line in lines:
