@@ -1241,10 +1241,6 @@ class Contour(Wire):
 
     @classmethod
     def contours_from_edges(cls, edges, tol=1e-7):
-        # ax = edges[0].plot()
-        # for e in edges:
-        #     e.plot(ax)
-        edges_backup = edges[:]
         if not edges:
             return []
         touching_primitives = cls.touching_edges_pairs(edges)
