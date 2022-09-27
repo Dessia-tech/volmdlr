@@ -5,20 +5,22 @@
 """
 # from binaryornot.check import is_binary
 import io
+import struct
+import warnings
 # from typing import BinaryIO
 from typing import List
-import struct
+
+from binaryornot.check import is_binary
 # import kaitaistruct
 from kaitaistruct import KaitaiStream
 
-
-from binaryornot.check import is_binary
-
-# from kaitaistruct import KaitaiStream
-
 import dessia_common as dc
 import volmdlr as vm
+import volmdlr.core as vmc
 import volmdlr.faces as vmf
+
+
+# from kaitaistruct import KaitaiStream
 
 
 class Stl(dc.DessiaObject):
@@ -83,8 +85,12 @@ class Stl(dc.DessiaObject):
         stream.seek(0)
 
         stream = KaitaiStream(stream)
-        name = stream.read_bytes(80).decode('utf8')
-        # print(name)
+        name_slice = stream.read_bytes(80)
+        try:
+            name = name_slice.decode('utf-8')
+        except UnicodeDecodeError:
+            name = name_slice.decode('latin-1')
+
         num_triangles = stream.read_u4le()
         # print(num_triangles)
 
@@ -120,7 +126,8 @@ class Stl(dc.DessiaObject):
         return cls(triangles, name=name)
 
     @classmethod
-    def from_text_stream(cls, stream: io.StringIO, distance_multiplier: float = 0.001):
+    def from_text_stream(cls, stream: io.StringIO,
+                         distance_multiplier: float = 0.001):
         stream.seek(0)
 
         header = stream.readline()
@@ -137,20 +144,31 @@ class Stl(dc.DessiaObject):
                                          distance_multiplier * float(z)))
             if 'endfacet' in line:
                 try:
-                    triangles.append(vmf.Triangle3D(points[0], points[1], points[2]))
+                    triangles.append(vmf.Triangle3D(points[0],
+                                                    points[1],
+                                                    points[2]))
                 except ZeroDivisionError:
                     pass
                 points = []
         return cls(triangles, name=name)
 
     @classmethod
-    def from_file(cls, filename: str = None, distance_multiplier: float = 0.001):
-        if is_binary(filename):
-            with open(filename, 'rb') as file:
-                return cls.from_binary_stream(file, distance_multiplier=distance_multiplier)
+    def from_file(cls, filename: str = None,
+                  distance_multiplier: float = 0.001):
+        warnings.warn("Use load_from_file instead of from_file",
+                      DeprecationWarning)
+        return cls.load_from_file(filename, distance_multiplier)
 
-        with open(filename, 'r', errors='ignore') as file:
-            return cls.from_text_stream(file, distance_multiplier=distance_multiplier)
+    @classmethod
+    def load_from_file(cls, filepath: str, distance_multiplier: float = 0.001):
+        if is_binary(filepath):
+            with open(filepath, 'rb') as file:
+                return cls.from_binary_stream(
+                    file, distance_multiplier=distance_multiplier)
+
+        with open(filepath, 'r', errors='ignore') as file:
+            return cls.from_text_stream(
+                file, distance_multiplier=distance_multiplier)
 
     # Commented because seemed invalid
     # @classmethod
@@ -224,6 +242,10 @@ class Stl(dc.DessiaObject):
 
     def to_open_shell(self):
         return vmf.OpenShell3D(self.triangles, name=self.name)
+
+    def to_volume_model(self):
+        closed_shell = self.to_closed_shell()
+        return vmc.VolumeModel([closed_shell], name=self.name)
 
     def extract_points(self):
 

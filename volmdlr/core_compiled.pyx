@@ -743,6 +743,13 @@ class Point2D(Vector2D):
 
         return point_symmetry
 
+    def coordinates(self):
+        '''
+        gets x,y coordinates of a point2d
+        '''
+
+        return (self.x, self.y)
+
 
 O2D = Point2D(0, 0)
 
@@ -1192,6 +1199,13 @@ class Point3D(Vector3D):
         for p in points:
             distances.append(self.point_distance(p))
         return points[distances.index(min(distances))]
+
+    def coordinates(self):
+        '''
+        gets x,y,z coordinates of a point3d
+        '''
+
+        return (self.x, self.y, self.z)
 
 
 O3D = Point3D(0, 0, 0)
@@ -1936,6 +1950,15 @@ class Frame3D(Basis3D):
                 'w': self.w.to_dict()
                 }
 
+    # @classmethod
+    # def dict_to_object(cls, dict_, global_dict=None,
+    #                    pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    #     return Frame3D(Point3D.dict_to_object(dict_['origin']),
+    #                    Vector3D.dict_to_object(dict_['u']),
+    #                    Vector3D.dict_to_object(dict_['v']),
+    #                    Vector3D.dict_to_object(dict_['w']),
+    #                    dict_.get('name', ''))
+
     def basis(self):
         return Basis3D(self.u, self.v, self.w)
 
@@ -2057,6 +2080,46 @@ class Frame3D(Basis3D):
             w = u.cross(v)
 
         return cls(origin, u, v, w, arguments[0][1:-1])
+
+    @classmethod
+    def from_point_and_vector(cls, point: Point3D, vector: Vector3D, main_axis: Vector3D = X3D):
+        """
+        Create a new frame from a point and vector by rotating the global frame.
+        Global frame rotate in order to have 'vector' and 'main_axis' collinear.
+        This method is very useful to compute a local frame of an object.
+
+        :param point: origin of the new frame
+        :param vector: vector used to define one of the main axis (by default X-axis) of the local frame
+        :param main_axis: the axis of global frame you want to match 'vector' (can be X3D, Y3D or Z3D).
+        :return: created local frame
+        """
+        if main_axis not in [X3D, Y3D, Z3D]:
+            raise ValueError("main_axis must be X, Y or Z of the global frame")
+
+        vector.normalize()
+
+        if vector == main_axis:
+            # The local frame is oriented like the global frame
+            return cls(O3D, X3D, Y3D, Z3D)
+
+        if vector == -main_axis:
+            return cls(O3D, -X3D, -Y3D, -Z3D)
+
+        # The local frame is oriented differently from the global frame
+        # Rotation angle
+        dot = main_axis.dot(vector)
+        rot_angle = math.acos(dot / (vector.norm() * main_axis.norm()))
+
+        # Rotation axis
+        vector2 = vector - main_axis
+        rot_axis = main_axis.cross(vector2)
+        rot_axis.normalize()
+
+        u = X3D.rotation(O3D, rot_axis, rot_angle)
+        v = Y3D.rotation(O3D, rot_axis, rot_angle)
+        w = Z3D.rotation(O3D, rot_axis, rot_angle)
+
+        return cls(point, u, v, w)
 
     def babylonjs(self, size=0.1, parent=None):
         s = 'var origin = new BABYLON.Vector3({},{},{});\n'.format(*self.origin)
