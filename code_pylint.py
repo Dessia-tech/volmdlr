@@ -6,7 +6,7 @@ MAX_ERROR_BY_TYPE = {
                      'invalid-name': 1127,
                      'no-else-return': 169,
                      'consider-using-f-string': 164,
-                     'no-member': 56,
+                     'no-member': 47,
                      'inconsistent-return-statements': 17,
                      'unused-variable': 70,
                      'arguments-differ': 40,

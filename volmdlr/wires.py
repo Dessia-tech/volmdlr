@@ -3480,7 +3480,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
 class Triangle(ClosedPolygonMixin):
     def __init_(self, point1, point2,
-            point3, name: str = ''):
+                point3, name: str = ''):
 
         self.point1 = point1
         self.point2 = point2
@@ -5223,6 +5223,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         if polygon1_2d.is_convex() and polygon2_2d.is_convex():
             return self.convex_sewing(polygon2, x, y)
         return self.concave_sewing(polygon2, x, y)
+
 
 class Triangle3D(Triangle):
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,

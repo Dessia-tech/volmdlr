@@ -4,7 +4,7 @@
 Module containing mesh and relative objects
 """
 
-from typing import List #TypeVar, Tuple, Dict
+from typing import List  # TypeVar, Tuple, Dict
 from dessia_common import DessiaObject
 from itertools import combinations
 import matplotlib.pyplot as plt
@@ -34,6 +34,7 @@ import math
 #                    (1.0, 0.0, 0.0)]}
 # blue_red = LinearSegmentedColormap('BLueRed', cdict)
 
+
 class FlatElementError(Exception):
     pass
 
@@ -43,6 +44,7 @@ class FlatElementError(Exception):
 #         if linear_element in linear_elements2 and linear_element not in duplicates:
 #             duplicates.append(linear_element)
 #     return duplicates
+
 
 class Node2D(vm.Point2D):
     def __hash__(self):
@@ -100,7 +102,6 @@ class LinearElement(vme.LineSegment2D):
     #     return (self.start == other_linear_element.start and self.end == other_linear_element.end) \
     #         or (self.start== other_linear_element.end and self.end == other_linear_element.start)
 
-
     # def plot(self, ax=None, color='k', width=None, plot_points=False):
     #     if ax is None:
     #         fig, ax = plt.subplots()
@@ -126,7 +127,7 @@ class TriangularElement(vmw.Triangle):
         # self.linear_elements = self._to_linear_elements()
         # self.form_functions = self._form_functions()
         # self.line_segments = self.line_segments()
-        self.center = (self.points[0]+self.points[1]+self.points[2])/3
+        self.center = (self.points[0] + self.points[1] + self.points[2]) / 3
 
         self._line_segments = None
 
@@ -136,11 +137,11 @@ class TriangularElement(vmw.Triangle):
 
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
-                            self.points[1].y - self.points[0].y)
+                           self.points[1].y - self.points[0].y)
         vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
-                            self.points[2].y - self.points[1].y)
+                           self.points[2].y - self.points[1].y)
         vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
-                            self.points[0].y - self.points[2].y)
+                           self.points[0].y - self.points[2].y)
         normal1 = vm.Vector2D(-vec1.y, vec1.x)
         normal2 = vm.Vector2D(-vec2.y, vec2.x)
         normal3 = vm.Vector2D(-vec3.y, vec3.x)
@@ -154,11 +155,11 @@ class TriangularElement(vmw.Triangle):
         if normal3.dot(vec1) < 0:
             normal3 = - normal3
         linear_element_1 = LinearElement(self.points[0], self.points[1],
-                                          normal1)
+                                         normal1)
         linear_element_2 = LinearElement(self.points[1], self.points[2],
-                                          normal2)
+                                         normal2)
         linear_element_3 = LinearElement(self.points[2], self.points[0],
-                                          normal3)
+                                         normal3)
         return [linear_element_1, linear_element_2, linear_element_3]
 
     def _form_functions(self):
@@ -264,18 +265,18 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         # self._line_segments = None
 
         # self.line_segments = self.get_line_segments()
-        self.center = (self.points[0]+self.points[1]+self.points[2])/3
+        self.center = (self.points[0] + self.points[1] + self.points[2]) / 3
 
         self.area = self._area()
         # vmw.Triangle.__init__(self, points)
 
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
-                            self.points[1].y - self.points[0].y)
+                           self.points[1].y - self.points[0].y)
         vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
-                            self.points[2].y - self.points[1].y)
+                           self.points[2].y - self.points[1].y)
         vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
-                            self.points[0].y - self.points[2].y)
+                           self.points[0].y - self.points[2].y)
         normal1 = vm.Vector2D(-vec1.y, vec1.x)
         normal2 = vm.Vector2D(-vec2.y, vec2.x)
         normal3 = vm.Vector2D(-vec3.y, vec3.x)
@@ -289,11 +290,11 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         if normal3.dot(vec1) < 0:
             normal3 = - normal3
         linear_element_1 = LinearElement(self.points[0], self.points[1],
-                                          normal1)
+                                         normal1)
         linear_element_2 = LinearElement(self.points[1], self.points[2],
-                                          normal2)
+                                         normal2)
         linear_element_3 = LinearElement(self.points[2], self.points[0],
-                                          normal3)
+                                         normal3)
         return [linear_element_1, linear_element_2, linear_element_3]
 
     def _form_functions(self):
@@ -392,7 +393,7 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
     #     return volmdlr.wires.ClosedPolygon2D(points)
 
     def plot(self, ax=None, color='k', width=None,
-              plot_points=False, fill=False):
+             plot_points=False, fill=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -403,7 +404,7 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
             plt.fill(x, y, facecolor=color, edgecolor="k")
             return ax
 
-        for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
+        for p1, p2 in zip(self.points, self.points[1:] + [self.points[0]]):
             if width is None:
                 width = 1
             if plot_points:
@@ -446,20 +447,19 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
         # self.linear_elements = self._to_linear_elements()
         # self.form_functions = self._form_functions()
         # self.line_segments = self.line_segments
-        self.center = (self.points[0]+self.points[1]+self.points[2])/3
+        self.center = (self.points[0] + self.points[1] + self.points[2]) / 3
 
         # self.area = self._area()
         self._line_segments = None
         TriangularElement.__init__(self, points)
 
-
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
-                            self.points[1].y - self.points[0].y)
+                           self.points[1].y - self.points[0].y)
         vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
-                            self.points[2].y - self.points[1].y)
+                           self.points[2].y - self.points[1].y)
         vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
-                            self.points[0].y - self.points[2].y)
+                           self.points[0].y - self.points[2].y)
         normal1 = vm.Vector2D(-vec1.y, vec1.x)
         normal2 = vm.Vector2D(-vec2.y, vec2.x)
         normal3 = vm.Vector2D(-vec3.y, vec3.x)
@@ -473,11 +473,11 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
         if normal3.dot(vec1) < 0:
             normal3 = - normal3
         linear_element_1 = LinearElement(self.points[0], self.points[1],
-                                          normal1)
+                                         normal1)
         linear_element_2 = LinearElement(self.points[1], self.points[2],
-                                          normal2)
+                                         normal2)
         linear_element_3 = LinearElement(self.points[2], self.points[0],
-                                          normal3)
+                                         normal3)
         return [linear_element_1, linear_element_2, linear_element_3]
 
     def _form_functions(self):
@@ -589,7 +589,7 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
         # self.linear_elements = self._to_linear_elements()
         self.form_functions = self._form_functions()
         # self.line_segments = self._line_segments()
-        self.center = (self.points[0]+self.points[1]+self.points[2]+self.points[3])/4
+        self.center = (self.points[0] + self.points[1] + self.points[2] + self.points[3]) / 4
         self.triangular_elements = self._triangular_elements()
 
         self.volume = self._volume()
@@ -620,9 +620,9 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
 
         data = []
         for i in range(3):
-            data.extend([*self.points[i+1] - self.points[0]])
+            data.extend([*self.points[i + 1] - self.points[0]])
 
-        return abs(1/6 * (npy.linalg.det(npy.array(data).reshape(3,3))))
+        return abs(1 / 6 * (npy.linalg.det(npy.array(data).reshape(3, 3))))
 
     def _form_functions(self):
         # coeff = [1, -1, 1, 1]
@@ -668,10 +668,10 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
                     data_betha.extend([1, self.points[c].y, self.points[c].z])
                     data_delta.extend([1, self.points[c].x, self.points[c].y])
 
-            N.append([(coeff[i] * (npy.linalg.det(npy.array(data_alpha).reshape(3,3)))),
-                  ((-1)* coeff[i] * (npy.linalg.det(npy.array(data_betha).reshape(3,3)))),
-                  (coeff[i] * (npy.linalg.det(npy.array(data_gamma).reshape(3,3)))),
-                  ((-1)* coeff[i] * (npy.linalg.det(npy.array(data_delta).reshape(3,3))))])
+            N.append([(coeff[i] * (npy.linalg.det(npy.array(data_alpha).reshape(3, 3)))),
+                      ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_betha).reshape(3, 3)))),
+                      (coeff[i] * (npy.linalg.det(npy.array(data_gamma).reshape(3, 3)))),
+                      ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_delta).reshape(3, 3))))])
 
         return N[0], N[1], N[2], N[3]
 
@@ -741,7 +741,7 @@ class ElementsGroup(DessiaObject):
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
         for element in self.elements:
-            element.plot(ax=ax, color=color) #fill=fill
+            element.plot(ax=ax, color=color)  # fill=fill
         return ax
 
 
@@ -886,10 +886,10 @@ class Mesh(DessiaObject):
         nodes_list = list(mesh.nodes[:])
         nodes_index = []
 
-        for i,node in enumerate(nodes_list):
-            for j in range(i+1, len(nodes_list)):
+        for i, node in enumerate(nodes_list):
+            for j in range(i + 1, len(nodes_list)):
                 d = node.point_distance(nodes_list[j])
-                if d<tol:
+                if d < tol:
                     nodes_index.append((j, i))
 
         if nodes_index:
