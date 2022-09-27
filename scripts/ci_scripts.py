@@ -2,67 +2,70 @@ import os
 import time
 
 scripts = [
-            # Core.py
-            'core/points.py',
-            'core/grid2d_with_direction.py',
-            'core/points_axial_symmetry.py',
-            # geometry
-            'geometry.py',
-            # Edges
-            'edges/arcs2D.py',
-            'edges/arcs3D.py',
-            'edges/bspline.py',
-            'edges/bspline2.py',
-            'edges/areas_moment_cog_check.py',
-            'edges/lines2d.py',
-            # Wires
-            'wires/roundedlines.py',
-            'wires/polygon2D.py',
-            'wires/polygon3d.py',
-            'wires/triangle2D.py',
-            'wires/axial_symmetry.py',
-            # Primitives
-            'primitives/extrusion.py',
-            'primitives/sweep.py',
-            'primitives/revolved_profile.py',
-            'primitives/block3d.py',
-            'primitives/sphere_to_point.py',
-            'primitives/cone.py',
-            'primitives/cylinders.py',
-            # Faces
-            'faces/triangle3d.py',
-            'faces/bspline.py',
-            'faces/bspline_bark.py',
-            'faces/union.py',
-            'faces/blocks_set_operations.py',
-            'faces/BSplineSurface/bspline_curves.py',
-            'faces/BSplineSurface/bspline_curves_point_belongs.py',
-            'faces/BSplineSurface/bspline_surface_interpolation.py',
-            'faces/BSplineSurface/bspline_surface_merge.py',
-            'faces/BSplineSurface/bspline_surface_split.py',
-            'faces/BSplineSurface/from_cylindrical_to_bspline_surface.py',
-            'faces/BSplineSurface/bspline_surface_definition.py',
-            'faces/BSplineSurface/bspline_surfaces_grid3d.py',
-            # Cloud
-            'cloud/sewing_two_polygons.py',
-            'cloud/sewing_stl.py',
-            # Contours
-            'contours/contour_split.py',
-            'contours/contour_merge_with_1.py',
-            'contours/contour_merge_with_2.py',
-            'contours/cut_by_line.py',
-            'contours/contour_cut_by_wire.py',
-            # Steps
-            'step/read_steps.py',
-            # Stl
-            'stl/read_stls.py',
-            # Distance
-            'distance/arc3D_arc3D.py',
-            'distance/arc3D_ls3D.py',
-            # Showcases
-            'showcases/simple_shapes.py',
-            'showcases/casing.py',
-            'grid.py'
+            # # Core.py
+            # 'core/points.py',
+            # 'core/grid2d_with_direction.py',
+            # 'core/points_axial_symmetry.py',
+            # # geometry
+            # 'geometry.py',
+            # # Edges
+            # 'edges/arcs2D.py',
+            # 'edges/arcs3D.py',
+            # 'edges/bspline.py',
+            # 'edges/bspline2.py',
+            # 'edges/areas_moment_cog_check.py',
+            # 'edges/lines2d.py',
+            # # Wires
+            # 'wires/roundedlines.py',
+            # 'wires/polygon2D.py',
+            # 'wires/polygon3d.py',
+            # 'wires/triangle2D.py',
+            # 'wires/axial_symmetry.py',
+            # # Primitives
+            # 'primitives/extrusion.py',
+            # 'primitives/sweep.py',
+            # 'primitives/revolved_profile.py',
+            # 'primitives/block3d.py',
+            # 'primitives/sphere_to_point.py',
+            # 'primitives/cone.py',
+            # 'primitives/cylinders.py',
+            # # Faces
+            # 'faces/triangle3d.py',
+            # 'faces/bspline.py',
+            # 'faces/bspline_bark.py',
+            # 'faces/union.py',
+            # 'faces/blocks_set_operations.py',
+            # 'faces/BSplineSurface/bspline_curves.py',
+            # 'faces/BSplineSurface/bspline_curves_point_belongs.py',
+            # 'faces/BSplineSurface/bspline_surface_interpolation.py',
+            # 'faces/BSplineSurface/bspline_surface_merge.py',
+            # 'faces/BSplineSurface/bspline_surface_split.py',
+            # 'faces/BSplineSurface/from_cylindrical_to_bspline_surface.py',
+            # 'faces/BSplineSurface/bspline_surface_definition.py',
+            # 'faces/BSplineSurface/bspline_surfaces_grid3d.py',
+            # # Cloud
+            # 'cloud/sewing_two_polygons.py',
+            # 'cloud/sewing_stl.py',
+            # # Contours
+            # 'contours/contour_split.py',
+            # 'contours/contour_merge_with_1.py',
+            # 'contours/contour_merge_with_2.py',
+            # 'contours/cut_by_line.py',
+            # 'contours/contour_cut_by_wire.py',
+            # # Steps
+            # 'step/read_steps.py',
+            # # Stl
+            # 'stl/read_stls.py',
+            # # Distance
+            # 'distance/arc3D_arc3D.py',
+            # 'distance/arc3D_ls3D.py',
+            # # Showcases
+            # 'showcases/simple_shapes.py',
+            # 'showcases/casing.py',
+            # 'grid.py'
+            'mesh/geo_file_1.py',
+            'mesh/geo_file_2.py',
+            'mesh/geo_file_3.py'
             ]
 
 # Testing if all scripts exists before launching them
