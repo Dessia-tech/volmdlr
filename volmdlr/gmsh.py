@@ -62,12 +62,12 @@ class Gmsh(DessiaObject):
         elements = Gmsh.from_file_elements(file_data['Elements'])
         partitioned_entities = Gmsh.from_file_partitioned_entities(file_data['PartitionedEntities'])
         periodic = Gmsh.from_file_periodic(file_data['Periodic'])
-        ghost_elements = Gmsh.from_file_ghost_elements(file_data['GhostElements'])
+        # ghost_elements = Gmsh.from_file_ghost_elements(file_data['GhostElements'])
         parametrizations = Gmsh.from_file_parametrizations(file_data['Parametrizations'])
         node_data = Gmsh.from_file_node_data(file_data['NodeData'])
         element_data = Gmsh.from_file_element_data(file_data['ElementData'])
         element_node_data = Gmsh.from_file_element_node_data(file_data['ElementNodeData'])
-        interpolation_scheme = Gmsh.from_file_interpolation_scheme(file_data['InterpolationScheme'])
+        # interpolation_scheme = Gmsh.from_file_interpolation_scheme(file_data['InterpolationScheme'])
 
         return cls(mesh_format=mesh_format,
                     entities=entities,
