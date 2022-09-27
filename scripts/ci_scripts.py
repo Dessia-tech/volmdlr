@@ -66,6 +66,7 @@ scripts = [
             'mesh/geo_file_1.py',
             'mesh/geo_file_2.py',
             'mesh/geo_file_3.py'
+            'mesh/read_msh_file.py'
             ]
 
 # Testing if all scripts exists before launching them
