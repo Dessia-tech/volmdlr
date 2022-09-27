@@ -3479,7 +3479,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
 
 class Triangle(ClosedPolygonMixin):
-    def __init_(self, point1, point2,
+    def __init__(self, point1, point2,
                 point3, name: str = ''):
 
         self.point1 = point1
