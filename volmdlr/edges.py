@@ -546,7 +546,7 @@ class BSplineCurve(Edge):
         return cls.from_geomdl_curve(curve)
 
     def tangent(self, position: float = 0.0):
-        point, tangent = operations.tangent(self.curve, position,
+        _, tangent = operations.tangent(self.curve, position,
                                             normalize=True)
 
         dimension = f'Vector{self.__class__.__name__[-2::]}'
@@ -635,7 +635,7 @@ class Line2D(Line):
 
     def plot(self, ax=None, color='k', dashed=True):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if version.parse(_mpl_version) >= version.parse('3.3.2'):
             if dashed:
@@ -1239,7 +1239,7 @@ class LineSegment2D(LineSegment):
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
              plot_points=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         p1, p2 = self.start, self.end
         if arrow:

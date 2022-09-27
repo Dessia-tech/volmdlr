@@ -1452,14 +1452,14 @@ class VolumeModel(dc.PhysicalObject):
                 if min_points:
                     primitives, primitives_length = [], []
                     for face in primitive.faces:
-                        for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                        for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
                             if isinstance(contour, volmdlr.wires.Circle2D):
                                 primitives.append(contour)
                                 primitives.append(contour)
                                 primitives_length(contour.length() / 2)
                                 primitives_length(contour.length() / 2)
                             else:
-                                for p, primitive in enumerate(contour.primitives):
+                                for _, primitive in enumerate(contour.primitives):
                                     if ((primitive not in primitives)
                                             and (primitive.reverse() not in primitives)):
                                         primitives.append(primitive)
