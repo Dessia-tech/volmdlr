@@ -1370,11 +1370,11 @@ class VolumeModel(dc.PhysicalObject):
         :rtype: List[str]
         """
 
-        update_data = {'point_account':0,
-                       'line_account':0,
-                       'line_loop_account':0,
-                       'surface_account':0,
-                       'surface_loop_account':0}
+        update_data = {'point_account': 0,
+                       'line_account': 0,
+                       'line_loop_account': 0,
+                       'surface_account': 0,
+                       'surface_loop_account': 0}
 
         lines = []
         volume = 0
@@ -1392,10 +1392,10 @@ class VolumeModel(dc.PhysicalObject):
         return lines
 
     def get_mesh_lines(self,
-               factor: float,
-               curvature_mesh_size: int = 0,
-               min_points: int = None,
-               initial_mesh_size: float = 5):
+                       factor: float,
+                       curvature_mesh_size: int = 0,
+                       min_points: int = None,
+                       initial_mesh_size: float = 5):
         """
         gets the lines that define mesh parameters for a VolumeModel, to be added to a .geo file
 
@@ -1426,13 +1426,13 @@ class VolumeModel(dc.PhysicalObject):
         for i, primitive in enumerate(self.primitives):
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
                 bbx = primitive.bounding_box
-                dim1, dim2, dim3 = (bbx.xmax-bbx.xmin), (bbx.ymax-bbx.ymin), (bbx.zmax-bbx.zmin)
+                dim1, dim2, dim3 = (bbx.xmax - bbx.xmin), (bbx.ymax - bbx.ymin), (bbx.zmax - bbx.zmin)
                 volume = dim1 * dim2 * dim3
 
                 if factor == 0:
                     factor = 1e-3
 
-                size = ((volume ** (1./3.))/initial_mesh_size) * factor
+                size = ((volume ** (1. / 3.)) / initial_mesh_size) * factor
 
                 # meshsizes_max.append(size)
 
@@ -1443,8 +1443,8 @@ class VolumeModel(dc.PhysicalObject):
                             if isinstance(contour, volmdlr.wires.Circle2D):
                                 primitives.append(contour)
                                 primitives.append(contour)
-                                primitives_length(contour.length()/2)
-                                primitives_length(contour.length()/2)
+                                primitives_length(contour.length() / 2)
+                                primitives_length(contour.length() / 2)
                             else:
                                 for p, primitive in enumerate(contour.primitives):
                                     if ((primitive not in primitives)
@@ -1453,17 +1453,18 @@ class VolumeModel(dc.PhysicalObject):
                                         primitives_length(primitive.length())
 
                     for i, length in enumerate(primitives_length):
-                        if length < min_points*size:
-                            lines.append('Transfinite Curve {'+str(i)+'} = '+str(min_points)+' Using Progression 1;')
+                        if length < min_points * size:
+                            lines.append('Transfinite Curve {' + str(i) + '} = ' +
+                                         str(min_points) + ' Using Progression 1;')
 
-                lines.append('Field['+str(field_num)+'] = MathEval;')
-                lines.append('Field['+str(field_num)+'].F = "'+str(size)+'";')
+                lines.append('Field[' + str(field_num) + '] = MathEval;')
+                lines.append('Field[' + str(field_num) + '].F = "' + str(size) + '";')
 
-                lines.append('Field['+str(field_num+1)+'] = Restrict;')
-                lines.append('Field['+str(field_num+1)+'].InField = '+str(field_num)+';')
-                lines.append('Field['+str(field_num+1)+'].VolumesList = {'+str(i+1)+'};')
-                field_nums.append(field_num+1)
-                field_num +=2
+                lines.append('Field[' + str(field_num + 1) + '] = Restrict;')
+                lines.append('Field[' + str(field_num + 1) + '].InField = ' + str(field_num) + ';')
+                lines.append('Field[' + str(field_num + 1) + '].VolumesList = {' + str(i + 1) + '};')
+                field_nums.append(field_num + 1)
+                field_num += 2
 
             elif isinstance(primitive, volmdlr.faces.OpenShell3D):
                 continue
@@ -1474,11 +1475,11 @@ class VolumeModel(dc.PhysicalObject):
         # lines.append('Mesh.CharacteristicLengthMin = ' + str(meshsize_min) + ';')
         # lines.append('Mesh.CharacteristicLengthMax = ' + str(meshsize_max) + ';')
 
-        lines.append('Field['+str(field_num)+'] = MinAniso;')
-        lines.append('Field['+str(field_num)+'].FieldsList = {'+str(field_nums)[1:-1]+'};')
-        lines.append('Background Field = '+str(field_num)+';')
+        lines.append('Field[' + str(field_num) + '] = MinAniso;')
+        lines.append('Field[' + str(field_num) + '].FieldsList = {' + str(field_nums)[1:-1] + '};')
+        lines.append('Background Field = ' + str(field_num) + ';')
 
-        lines.append('Mesh.MeshSizeFromCurvature = '+str(curvature_mesh_size)+';')
+        lines.append('Mesh.MeshSizeFromCurvature = ' + str(curvature_mesh_size) + ';')
 
         lines.append('Coherence;')
 
@@ -1519,10 +1520,10 @@ class VolumeModel(dc.PhysicalObject):
         f.close()
 
     def to_geo_with_stl(self, file_name: str,
-               factor: float,
-               curvature_mesh_size: int = 0,
-               min_points: int = None,
-               initial_mesh_size: float = 5):
+                        factor: float,
+                        curvature_mesh_size: int = 0,
+                        min_points: int = None,
+                        initial_mesh_size: float = 5):
         """
         gets the .geo file for the VolumeModel, with saving each closed shell in a stl file
 
@@ -1551,16 +1552,16 @@ class VolumeModel(dc.PhysicalObject):
         surfaces = []
         for i, primitive in enumerate(self.primitives):
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
-                if i==0:
-                    surfaces.append(list(range(1, 1+len(primitive.faces))))
+                if i == 0:
+                    surfaces.append(list(range(1, 1 + len(primitive.faces))))
                     face_contours = [face.outer_contour3d for face in primitive.faces]
                     contours.append(face_contours)
                     lines.append('Mesh 2;')
-                    lines.append('Physical Surface(' + str(i+1) + ') = {' + str(surfaces[i])[1:-1] + '};')
-                    lines.append('Save "'+file_name+'.stl" ;')
-                    faces_account += len(primitive.faces)+1
+                    lines.append('Physical Surface(' + str(i + 1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                    lines.append('Save "' + file_name + '.stl" ;')
+                    faces_account += len(primitive.faces) + 1
                 else:
-                    surfaces.append(list(range(faces_account, faces_account+len(primitive.faces))))
+                    surfaces.append(list(range(faces_account, faces_account + len(primitive.faces))))
                     face_contours = [face.outer_contour3d for face in primitive.faces]
                     for k, face_c in enumerate(face_contours):
                         for l, contour_l in enumerate(contours):
@@ -1570,9 +1571,9 @@ class VolumeModel(dc.PhysicalObject):
                                     continue
 
                     lines.append('Mesh 2;')
-                    lines.append('Physical Surface(' + str(i+1) + ') = {' + str(surfaces[i])[1:-1] + '};')
-                    lines.append('Save "'+file_name+'.stl" ;')
-                    faces_account += len(primitive.faces)+1
+                    lines.append('Physical Surface(' + str(i + 1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                    lines.append('Save "' + file_name + '.stl" ;')
+                    faces_account += len(primitive.faces) + 1
                     contours.append(face_contours)
 
         return lines
@@ -1610,12 +1611,12 @@ class VolumeModel(dc.PhysicalObject):
                     initial_mesh_size)
 
         gmsh.initialize()
-        gmsh.open(file_name+".geo")
+        gmsh.open(file_name + ".geo")
 
         gmsh.model.geo.synchronize()
         gmsh.model.mesh.generate(mesh_dimension)
 
-        gmsh.write(file_name+".msh")
+        gmsh.write(file_name + ".msh")
 
         gmsh.finalize()
 

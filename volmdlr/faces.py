@@ -558,17 +558,19 @@ class Surface2D(volmdlr.core.Primitive2D):
         for c, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
 
             if isinstance(contour, volmdlr.wires.Circle2D):
-                points = [volmdlr.Point2D(contour.center.x-contour.radius, contour.center.y),
+                points = [volmdlr.Point2D(contour.center.x - contour.radius, contour.center.y),
                           contour.center,
-                          volmdlr.Point2D(contour.center.x+contour.radius, contour.center.y)]
+                          volmdlr.Point2D(contour.center.x + contour.radius, contour.center.y)]
                 index = []
                 for i, point in enumerate(points):
                     lines.append(point.get_geo_lines(tag=point_account + i + 1,
                                                      point_mesh_size=None))
                     index.append(point_account + i + 1)
 
-                lines.append('Circle('+str(line_account+1)+') = {'+str(index[0])+', '+str(index[1])+', '+str(index[2])+'};')
-                lines.append('Circle('+str(line_account+2)+') = {'+str(index[2])+', '+str(index[1])+', '+str(index[0])+'};')
+                lines.append('Circle(' + str(line_account + 1) +
+                             ') = {' + str(index[0]) + ', ' + str(index[1]) + ', ' + str(index[2]) + '};')
+                lines.append('Circle(' + str(line_account + 2) +
+                             ') = {' + str(index[2]) + ', ' + str(index[1]) + ', ' + str(index[0]) + '};')
 
                 lines_tags.append(line_account + 1)
                 lines_tags.append(line_account + 2)
@@ -611,58 +613,58 @@ class Surface2D(volmdlr.core.Primitive2D):
                    curvature_mesh_size: int = None,
                    min_points: int = None,
                    initial_mesh_size: float = 5):
-            """
-            gets the lines that define mesh parameters for a Surface2D, to be added to a .geo file
+        """
+        gets the lines that define mesh parameters for a Surface2D, to be added to a .geo file
 
-            :param factor: A float, between 0 and 1, that describes the mesh quality
-            (1 for coarse mesh - 0 for fine mesh)
-            :type factor: float
-            :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
-            (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
-            :type curvature_mesh_size: int, optional
-            :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
-            :type min_points: int, optional
-            :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
-            :type initial_mesh_size: float, optional
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
 
-            :return: A list of lines that describe mesh parameters
-            :rtype: List[str]
-            """
+        :return: A list of lines that describe mesh parameters
+        :rtype: List[str]
+        """
 
-            lines = []
-            if factor == 0:
-                factor = 1e-3
+        lines = []
+        if factor == 0:
+            factor = 1e-3
 
-            size = (math.sqrt(self.area())/initial_mesh_size) * factor
+        size = (math.sqrt(self.area()) / initial_mesh_size) * factor
 
-            if min_points:
-                primitives, primitives_length = [], []
-                for c, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
-                    if isinstance(contour, volmdlr.wires.Circle2D):
-                        primitives.append(contour)
-                        primitives.append(contour)
-                        primitives_length(contour.length()/2)
-                        primitives_length(contour.length()/2)
-                    else:
-                        for p, primitive in enumerate(contour.primitives):
-                            if ((primitive not in primitives)
-                                    and (primitive.reverse() not in primitives)):
-                                primitives.append(primitive)
-                                primitives_length(primitive.length())
+        if min_points:
+            primitives, primitives_length = [], []
+            for c, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
+                if isinstance(contour, volmdlr.wires.Circle2D):
+                    primitives.append(contour)
+                    primitives.append(contour)
+                    primitives_length(contour.length() / 2)
+                    primitives_length(contour.length() / 2)
+                else:
+                    for p, primitive in enumerate(contour.primitives):
+                        if ((primitive not in primitives)
+                                and (primitive.reverse() not in primitives)):
+                            primitives.append(primitive)
+                            primitives_length(primitive.length())
 
-                for i, length in enumerate(primitives_length):
-                    if length < min_points*size:
-                        lines.append('Transfinite Curve {'+str(i)+'} = '+str(min_points)+' Using Progression 1;')
+            for i, length in enumerate(primitives_length):
+                if length < min_points * size:
+                    lines.append('Transfinite Curve {' + str(i) + '} = ' + str(min_points) + ' Using Progression 1;')
 
-            lines.append('Field[1] = MathEval;')
-            lines.append('Field[1].F = "'+str(size)+'";')
-            lines.append('Background Field = 1;')
-            if curvature_mesh_size:
-                lines.append('Mesh.MeshSizeFromCurvature = '+str(curvature_mesh_size)+';')
+        lines.append('Field[1] = MathEval;')
+        lines.append('Field[1].F = "' + str(size) + '";')
+        lines.append('Background Field = 1;')
+        if curvature_mesh_size:
+            lines.append('Mesh.MeshSizeFromCurvature = ' + str(curvature_mesh_size) + ';')
 
-            # lines.append('Coherence;')
+        # lines.append('Coherence;')
 
-            return lines
+        return lines
 
     def to_geo(self, file_name: str,
                factor: float,
@@ -716,12 +718,12 @@ class Surface2D(volmdlr.core.Primitive2D):
                     initial_mesh_size)
 
         gmsh.initialize()
-        gmsh.open(file_name+".geo")
+        gmsh.open(file_name + ".geo")
 
         gmsh.model.geo.synchronize()
         gmsh.model.mesh.generate(mesh_dimension)
 
-        gmsh.write(file_name+".msh")
+        gmsh.write(file_name + ".msh")
 
         gmsh.finalize()
 
@@ -7193,11 +7195,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return ax
 
-    def get_geo_lines(self, update_data = {'point_account':0,
-                                           'line_account':0,
-                                           'line_loop_account':0,
-                                           'surface_account':0,
-                                           'surface_loop_account':0},
+    def get_geo_lines(self, update_data={'point_account': 0,
+                                         'line_account': 0,
+                                         'line_loop_account': 0,
+                                         'surface_account': 0,
+                                         'surface_loop_account': 0},
                       point_mesh_size: float = None):
         """
         gets the lines that define an OpenShell3D geometry in a .geo file
@@ -7243,7 +7245,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         indices_check = len(primitives) * [None]
 
         point_account = update_data['point_account']
-        line_account, line_loop_account = update_data['line_account']+1, update_data['line_loop_account']
+        line_account, line_loop_account = update_data['line_account'] + 1, update_data['line_loop_account']
         lines, line_surface, lines_tags = [], [], []
 
         points = list(points)
@@ -7268,16 +7270,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                 start_point_tag = points.index(primitive.start) + 1
                                 end_point_tag = points.index(primitive.end) + 1
                                 lines.append(primitive.get_geo_lines(tag=line_account,
-                                                                     start_point_tag=start_point_tag+point_account,
-                                                                     end_point_tag=end_point_tag+point_account))
+                                                                     start_point_tag=start_point_tag + point_account,
+                                                                     end_point_tag=end_point_tag + point_account))
                             elif isinstance(primitive, volmdlr.edges.Arc):
                                 start_point_tag = points.index(primitive.start) + 1
                                 center_point_tag = points.index(primitive.center) + 1
                                 end_point_tag = points.index(primitive.end) + 1
                                 lines.append(primitive.get_geo_lines(tag=line_account,
-                                                                     start_point_tag=start_point_tag+point_account,
-                                                                     center_point_tag=center_point_tag+point_account,
-                                                                     end_point_tag=end_point_tag+point_account))
+                                                                     start_point_tag=start_point_tag + point_account,
+                                                                     center_point_tag=center_point_tag + point_account,
+                                                                     end_point_tag=end_point_tag + point_account))
 
                             lines_tags.append(line_account)
                             indices_check[index] = line_account
@@ -7287,9 +7289,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             index = primitives.index(primitive.reverse())
                             lines_tags.append(-indices_check[index])
 
-                    lines.append(contour.get_geo_lines(line_loop_account+1, lines_tags))
+                    lines.append(contour.get_geo_lines(line_loop_account + 1, lines_tags))
 
-                    line_surface.append(line_loop_account+1)
+                    line_surface.append(line_loop_account + 1)
                     line_loop_account += 1
                     lines_tags = []
 
@@ -7298,11 +7300,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
             line_surface = []
 
-        lines.append('Surface Loop(' + str(1 + update_data['surface_loop_account']) + ') = {' + str(list(range(update_data['surface_account']+1,
+        lines.append('Surface Loop(' + str(1 + update_data['surface_loop_account']) + ') = {' + str(list(range(update_data['surface_account'] + 1,
                                                                                                                update_data['surface_account'] + len(self.faces) + 1)))[1:-1] + '};')
 
         update_data['point_account'] += len(points)
-        update_data['line_account'] += line_account-1
+        update_data['line_account'] += line_account - 1
         update_data['line_loop_account'] += line_loop_account
         update_data['surface_account'] += len(self.faces)
         update_data['surface_loop_account'] += 1
