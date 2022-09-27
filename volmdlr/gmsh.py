@@ -23,12 +23,12 @@ class Gmsh(DessiaObject):
                  physical_names = None,
                  partitioned_entities = None,
                  periodic = None,
-                 ghost_elements = None,
+                 # ghost_elements = None,
                  parametrizations = None,
                  node_data = None,
                  element_data = None,
                  element_node_data = None,
-                 interpolation_scheme = None,
+                 # interpolation_scheme = None,
                  name: str = ''):
 
         self.mesh_format = mesh_format
@@ -38,12 +38,12 @@ class Gmsh(DessiaObject):
         self.elements = elements,
         self.partitioned_entities = partitioned_entities,
         self.periodic = periodic,
-        self.ghost_elements = ghost_elements,
+        # self.ghost_elements = ghost_elements,
         self.parametrizations = parametrizations,
         self.node_data = node_data,
         self.element_data = element_data,
         self.element_node_data = element_node_data,
-        self.interpolation_scheme = interpolation_scheme,
+        # self.interpolation_scheme = interpolation_scheme,
         self.name = name
 
         DessiaObject.__init__(self, name=name)
@@ -76,12 +76,13 @@ class Gmsh(DessiaObject):
                     physical_names=physical_names,
                     partitioned_entities=partitioned_entities,
                     periodic=periodic,
-                    ghost_elements=ghost_elements,
+                    # ghost_elements=ghost_elements,
                     parametrizations=parametrizations,
                     node_data=node_data,
                     element_data=element_data,
                     element_node_data=element_node_data,
-                    interpolation_scheme=interpolation_scheme)
+                    # interpolation_scheme=interpolation_scheme
+                    name='')
 
     @staticmethod
     def from_file_elements(lines):
