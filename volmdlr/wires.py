@@ -4026,8 +4026,8 @@ class Contour3D(Contour, Wire3D):
         # self.primitives = new_primitives
 
         initial_points = []
-        for p in self.primitives:
-            initial_points.append((p.start, p.end))
+        for primitive in self.primitives:
+            initial_points.append((primitive.start, primitive.end))
 
         new_primitives = []
         if self.is_ordered():
@@ -4167,9 +4167,9 @@ class Contour3D(Contour, Wire3D):
         '''
 
         new_primitives = []
-        for p in self.primitives:
-            if p.start != p.end:
-                new_primitives.append(p)
+        for primitive in self.primitives:
+            if primitive.start != primitive.end:
+                new_primitives.append(primitive)
 
         return Contour3D(new_primitives)
 
