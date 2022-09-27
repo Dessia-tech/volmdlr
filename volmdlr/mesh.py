@@ -4,7 +4,7 @@
 Module containing mesh and relative objects
 """
 
-from typing import TypeVar, List, Tuple, Dict
+from typing import List #TypeVar, Tuple, Dict
 from dessia_common import DessiaObject
 from itertools import combinations
 import matplotlib.pyplot as plt
@@ -77,18 +77,19 @@ class Node3D(vm.Point3D):
         return cls(point3d.x, point3d.y, point3d.z)
 
 
-class LinearElement(volmdlr.edges.LineSegment2D):
+class LinearElement(vme.LineSegment2D):
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
 
-    def __init__(self, start:volmdlr.Point2D,end:volmdlr.Point2D, interior_normal:volmdlr.Vector2D,name=''):
-        self.points=[start, end]
+    def __init__(self, start: vm.Point2D, end: vm.Point2D,
+                 interior_normal: vm.Vector2D, name: str = ''):
+        self.points = [start, end]
         self.interior_normal = interior_normal
 
-        volmdlr.edges.LineSegment2D.__init__(self,start=start,end=end,name=name)
+        vme.LineSegment2D.__init__(self, start=start, end=end, name=name)
 
     # def __hash__(self):
     #     return self.start.__hash__() + self.end.__hash__()
