@@ -306,7 +306,7 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         except ValueError as expt:
             self.plot()
             print('buggy element area', self.area)
-            raise FlatElementError('form function bug') as expt
+            raise FlatElementError('form function bug') from expt
         x1 = inv_a.vector_multiplication(vm.X3D)
         x2 = inv_a.vector_multiplication(vm.Y3D)
         x3 = inv_a.vector_multiplication(vm.Z3D)
