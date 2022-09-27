@@ -414,6 +414,25 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         return ax
 
 
+class QuadrilateralElement2D(vmw.ClosedPolygon2D):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+
+    def __init__(self, points):
+        self.points = points
+        # self.linear_elements = self._to_linear_elements()
+        # self.form_functions = self._form_functions()
+        # self.line_segments = self.line_segments
+        self.center = self.center_of_mass()
+
+        self.area = self.area()
+        self._line_segments = None
+        vmw.ClosedPolygon2D.__init__(self, points)
+
+
 class ElementsGroup(DessiaObject):
     _standalone_in_db = False
     _non_serializable_attributes = []
