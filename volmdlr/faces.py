@@ -4263,6 +4263,79 @@ class Face3D(volmdlr.core.Primitive3D):
         point_inside2d = self.surface2d.random_point_inside()
         return self.surface3d.point2d_to_3d(point_inside2d)
 
+    def geo_lines(self, mesh_size_list=None):
+        """
+        gets the lines that define a Face3D in a .geo file
+        """
+
+        lines, line_surface, lines_tags = [], [], []
+        point_account, line_account, line_loop_account = 0, 0, 1
+        for c, contour in enumerate(list(chain(*[[self.outer_contour3d], self.inner_contours3d]))):
+
+            if isinstance(contour, volmdlr.wires.Circle2D):
+                # point=[contour.radius, contour.center.y, 0]
+                # lines.append('Point('+str(point_account+1)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # point = [*contour.center, 0]
+                # lines.append('Point('+str(point_account+2)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # point=[-contour.radius, contour.center.y, 0]
+                # lines.append('Point('+str(point_account+3)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # lines.append('Circle('+str(line_account+1)+') = {'+str(point_account+1)+','+str(point_account+2)+','+str(point_account+3)+'};')
+                # lines.append('Circle('+str(line_account+2)+') = {'+str(point_account+3)+','+str(point_account+2)+','+str(point_account+1)+'};')
+
+                # lines_tags.extend([line_account+1, line_account+2])
+
+                # lines.append('Line Loop('+str(line_loop_account+1)+') = {'+str(lines_tags)[1:-1]+'};')
+
+                # line_surface.append(line_loop_account+1)
+
+                # lines_tags = []
+                # point_account, line_account, line_loop_account = point_account+3, line_account+2, line_loop_account+1
+
+                pass
+
+            elif isinstance(contour, (volmdlr.wires.Contour3D, volmdlr.wires.ClosedPolygon3D)):
+                if not isinstance(contour, volmdlr.wires.ClosedPolygon3D):
+                    contour = contour.to_polygon(1)
+                for i, point in enumerate(contour.points):
+                    lines.append(point.get_geo_lines(tag=point_account + i + 1,
+                                                     point_mesh_size=None))
+
+                for p, primitive in enumerate(contour.primitives):
+                    if p != len(contour.primitives) - 1:
+                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
+                                                             start_point_tag=point_account + p + 1,
+                                                             end_point_tag=point_account + p + 2))
+                    else:
+                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
+                                                             start_point_tag=point_account + p + 1,
+                                                             end_point_tag=point_account + 1))
+                    lines_tags.append(line_account + p + 1)
+
+                lines.append('Line Loop(' + str(c + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
+                line_surface.append(line_loop_account)
+                point_account, line_account, line_loop_account = point_account + i + 1, line_account + p + 1, line_loop_account + 1
+                lines_tags = []
+
+        lines.append('Plane Surface(' + str(1) + ') = {' + str(line_surface)[1:-1] + '};')
+
+        return lines
+
+    def to_geo(self, file_name: str, mesh_size_list=None):
+        '''
+        gets the .geo file for the Face3D
+        '''
+
+        lines = self.geo_lines(mesh_size_list)
+
+        with open(file_name + '.geo', 'w', encoding="utf-8") as f:
+            for line in lines:
+                f.write(line)
+                f.write('\n')
+        f.close()
+
 
 class PlaneFace3D(Face3D):
     """
@@ -4817,6 +4890,13 @@ class PlaneFace3D(Face3D):
         if not list_cutting_contours:
             return [self]
         return self.divide_face(list_cutting_contours, contour_extract_inside)
+
+    def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
+        '''
+        gets the lines that define a PlaneFace3D in a .geo file
+        '''
+
+        return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
 
 class Triangle3D(PlaneFace3D):
@@ -5542,6 +5622,13 @@ class CylindricalFace3D(Face3D):
             return 'x'
         else:
             return 'y'
+
+    def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
+        '''
+        gets the lines that define a CylindricalFace3D in a .geo file
+        '''
+
+        return 'Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
 
 class ToroidalFace3D(Face3D):
