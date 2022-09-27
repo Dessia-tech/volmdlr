@@ -62,7 +62,8 @@ scripts = [
             # Showcases
             'showcases/simple_shapes.py',
             'showcases/casing.py',
-            'grid.py'
+            'grid.py',
+            'mesh/read_msh_file.py'
             ]
 
 # Testing if all scripts exists before launching them
