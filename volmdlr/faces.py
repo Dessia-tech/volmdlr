@@ -4576,7 +4576,7 @@ class PlaneFace3D(Face3D):
                 continue
 
             inner_contour_spliting_points = dict(sorted(inner_contour_spliting_points.items(),
-                                                        key=lambda item: inner_contour.abscissa(item[0])))
+                                                        key=lambda item, ic=inner_contour: ic.abscissa(item[0])))
             spliting_points = list(inner_contour_spliting_points.keys())
             if len(inner_contour_spliting_points) != 2:
                 spliting_points = spliting_points + [spliting_points[0]]
@@ -4675,6 +4675,64 @@ class PlaneFace3D(Face3D):
 
         return list_cutting_contours
 
+    def get_open_contour_divided_faces_inner_contours(self, new_faces_contours):
+        """
+        If there is any inner contour, verifies which ones belong to the new divided faces from
+        an open cutting contour
+        :param new_faces_contours: new faces outer contour
+        :return: valid_new_faces_contours, valid_new_faces_contours
+        """
+        valid_new_faces_contours = []
+        valid_inner_contours = []
+        for new_face_contour in new_faces_contours:
+            for inner_contour in self.surface2d.inner_contours:
+                if new_face_contour.is_superposing(inner_contour):
+                    break
+            else:
+                if new_face_contour not in valid_new_faces_contours:
+                    inner_contours = []
+                    for inner_contour in self.surface2d.inner_contours:
+                        if new_face_contour.is_inside(inner_contour):
+                            inner_contours.append(inner_contour)
+                    valid_new_faces_contours.append(new_face_contour)
+                    valid_inner_contours.append(inner_contours)
+        return valid_new_faces_contours, valid_inner_contours
+
+    @staticmethod
+    def get_closed_contour_divided_faces_inner_contours(list_faces, new_contour):
+        """
+        If there is any inner contour, verifies which ones belong to the new divided faces from
+        an closed cutting contour
+        :param list_faces: list of new faces
+        :param new_contour: current new face outer contour
+        :return: a list of new faces with its inner contours
+        """
+        new_list_faces = []
+        for new_face in list_faces:
+            if new_face.surface2d.outer_contour.is_inside(new_contour):
+                inner_contours1 = []
+                inner_contours2 = []
+                for i, inner_contour in enumerate(new_face.surface2d.inner_contours):
+                    if new_contour.is_inside(inner_contour):
+                        if any(inner_contour.primitive_over_contour(prim)
+                               for prim in new_contour.primitives):
+                            new_face.surface2d.inner_contours[i] = new_contour
+                            break
+                        inner_contours2.append(inner_contour)
+                    elif not any(inner_contour.primitive_over_contour(prim) for prim in
+                                 new_contour.primitives):
+                        inner_contours1.append(inner_contour)
+                else:
+                    surf3d = new_face.surface3d
+                    if inner_contours1:
+                        surf2d = Surface2D(new_face.surface2d.outer_contour, inner_contours1)
+                        new_plane = PlaneFace3D(surf3d, surf2d)
+                        new_list_faces.append(new_plane)
+                    if inner_contours2:
+                        new_list_faces.append(
+                            PlaneFace3D(surf3d, Surface2D(new_contour, inner_contours2)))
+        return new_list_faces
+
     def divide_face(self, list_cutting_contours, inside):
         """
         :param list_cutting_contours: list of contours cutting the face
@@ -4689,82 +4747,43 @@ class PlaneFace3D(Face3D):
         for cutting_contour in list_cutting_contours:
             if cutting_contour.primitives[0].start != cutting_contour.primitives[-1].end:
                 list_open_cutting_contours.append(cutting_contour)
-            else:
-                list_closed_cutting_contours.append(cutting_contour)
+                continue
+            list_closed_cutting_contours.append(cutting_contour)
         if list_open_cutting_contours:
             new_faces_contours = self.surface2d.outer_contour.divide(
                 list_open_cutting_contours, inside)
             new_inner_contours = len(new_faces_contours) * [[]]
             if self.surface2d.inner_contours:
-                valid_new_faces_contours = []
-                valid_inner_contours = []
-                for new_face_contour in new_faces_contours:
-                    for inner_contour in self.surface2d.inner_contours:
-                        if new_face_contour.is_superposing(inner_contour):
-                            break
-                    else:
-                        if new_face_contour not in valid_new_faces_contours:
-                            inner_contours = []
-                            for inner_contour in self.surface2d.inner_contours:
-                                if new_face_contour.is_inside(inner_contour):
-                                    inner_contours.append(inner_contour)
-                            valid_new_faces_contours.append(new_face_contour)
-                            valid_inner_contours.append(inner_contours)
-                new_faces_contours = valid_new_faces_contours
-                new_inner_contours = valid_inner_contours
+                new_faces_contours, new_inner_contours = self.get_open_contour_divided_faces_inner_contours(
+                    new_faces_contours)
             for contour, inner_contours in zip(new_faces_contours, new_inner_contours):
-                list_faces.append(
-                    PlaneFace3D(self.surface3d, Surface2D(contour, inner_contours)))
+                list_faces.append(PlaneFace3D(self.surface3d, Surface2D(contour, inner_contours)))
 
         if list_closed_cutting_contours:
-            # new_contour = list_closed_cutting_contours[0]
             for new_contour in list_closed_cutting_contours:
-                if len(new_contour.primitives) >= 3 and new_contour.primitives[0].start == new_contour.primitives[
-                        -1].end:
+                if len(new_contour.primitives) >= 3 and\
+                        new_contour.primitives[0].start == new_contour.primitives[-1].end:
                     inner_contours1 = [new_contour]
                     inner_contours2 = []
                     if list_faces:
-                        new_list_faces = []
-                        for new_face in list_faces:
-                            if new_face.surface2d.outer_contour.is_inside(new_contour):
-                                inner_contours1 = []
-                                inner_contours2 = []
-                                for i, inner_contour in enumerate(new_face.surface2d.inner_contours):
-                                    if new_contour.is_inside(inner_contour):
-                                        if any(inner_contour.primitive_over_contour(prim)
-                                               for prim in new_contour.primitives):
-                                            new_face.surface2d.inner_contours[i] = new_contour
-                                            break
-                                        inner_contours2.append(inner_contour)
-                                    elif not any(inner_contour.primitive_over_contour(prim) for prim in
-                                                 new_contour.primitives):
-                                        inner_contours1.append(inner_contour)
-                                else:
-                                    surf3d = new_face.surface3d
-                                    if inner_contours1:
-                                        surf2d = Surface2D(new_face.surface2d.outer_contour, inner_contours1)
-                                        new_plane = PlaneFace3D(surf3d, surf2d)
-                                        new_list_faces.append(new_plane)
-                                    if inner_contours2:
-                                        new_list_faces.append(
-                                            PlaneFace3D(surf3d, Surface2D(new_contour, inner_contours2)))
+                        new_list_faces = self.get_closed_contour_divided_faces_inner_contours(list_faces, new_contour)
                         list_faces = list_faces + new_list_faces
-                    else:
-                        for inner_contour in self.surface2d.inner_contours:
-                            if new_contour.is_inside(inner_contour):
-                                inner_contours2.append(inner_contour)
-                            else:
-                                inner_contours1.append(inner_contour)
-                        surf3d = self.surface3d
-                        surf2d = Surface2D(self.surface2d.outer_contour, inner_contours1)
-                        new_plane = PlaneFace3D(surf3d, surf2d)
-                        list_faces.append(new_plane)
-                        list_faces.append(PlaneFace3D(surf3d, Surface2D(new_contour, inner_contours2)))
-                else:
+                        continue
+                    for inner_contour in self.surface2d.inner_contours:
+                        if new_contour.is_inside(inner_contour):
+                            inner_contours2.append(inner_contour)
+                            continue
+                        inner_contours1.append(inner_contour)
                     surf3d = self.surface3d
-                    surf2d = Surface2D(self.surface2d.outer_contour, [])
+                    surf2d = Surface2D(self.surface2d.outer_contour, inner_contours1)
                     new_plane = PlaneFace3D(surf3d, surf2d)
                     list_faces.append(new_plane)
+                    list_faces.append(PlaneFace3D(surf3d, Surface2D(new_contour, inner_contours2)))
+                    continue
+                surf3d = self.surface3d
+                surf2d = Surface2D(self.surface2d.outer_contour, [])
+                new_plane = PlaneFace3D(surf3d, surf2d)
+                list_faces.append(new_plane)
 
         return list_faces
 
@@ -4791,13 +4810,6 @@ class PlaneFace3D(Face3D):
         """
         if list_coincident_faces is None:
             list_coincident_faces = []
-        # face_debug = dessia_common.DessiaObject.load_from_file(
-        #     '/Users/wirajandasilva/Downloads/debug_face_inters.json')
-        # if self == face_debug or face2 == face_debug:
-        #     ax = self.plot()
-        #     face2.plot(ax, 'r')
-        #     print('coming here')
-        #     # raise NotImplementedError
         if (self.bounding_box.bbox_intersection(face2.bounding_box) or
             self.bounding_box.distance_to_bbox(face2.bounding_box) <= tol) and \
                 (self, face2) not in list_coincident_faces:
@@ -4872,13 +4884,9 @@ class PlaneFace3D(Face3D):
     def set_operations_new_faces(self, intersecting_combinations,
                                  contour_extract_inside):
         self_copy = self.copy(deep=True)
-        # if len(self.surface2d.inner_contours) == 4:
-        #     self.plot()
-        #     print('coming heree')
         list_cutting_contours = self_copy.get_face_cutting_contours(
             intersecting_combinations)
         if not list_cutting_contours:
-            # self_copy.plot()
             return [self_copy]
         return self_copy.divide_face(list_cutting_contours, contour_extract_inside)
 
@@ -7861,10 +7869,7 @@ class ClosedShell3D(OpenShell3D):
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
         faces += shell2.get_non_intersecting_faces(self, intersecting_faces,
                                                    intersection_method=True)
-        # new_faces = []
-        # for face in self.faces + shell2.faces:
-        #     if face not in faces + intersecting_faces:
-        #         new_faces.append(face)
+
         new_valid_faces = self.subtraction_faces(shell2, intersecting_faces,
                                                  intersecting_combinations,
                                                  # list_coincident_faces

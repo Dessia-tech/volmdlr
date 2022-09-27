@@ -1015,11 +1015,10 @@ class Contour(Wire):
                     if list_point_pairs[0][0] in points or list_point_pairs[0][::-1] in points:
                         finished = True
                         continue
-                    else:
-                        warnings.warn('There may exist a problem with this'
-                                      ' contour, it seems it cannot be reordered.'
-                                      ' Please, verify its points')
-                        finished = True
+                    warnings.warn('There may exist a problem with this'
+                                  ' contour, it seems it cannot be reordered.'
+                                  ' Please, verify its points')
+                    finished = True
                     # ax = self.plot()
                     # for point_pair in list_point_pairs:
                     #     point_pair[0].plot(ax=ax, color='r')
@@ -2161,20 +2160,19 @@ class Contour2D(Contour, Wire2D):
                 finished = True
             counter += 1
             if counter >= 100 * len(list_contour):
-                if base_contour.is_inside(contours[0]):
-                    contours.remove(cutting_contour)
-                    continue
-                    # list_valid_contours.append(base_contour)
-                    # finished = True
-                else:
-                    contours = contours[::-1]
-                if counter > 100 * len(list_contour) + len(contours):
-                    print('new_base_contours:', len(new_base_contours))
-                    print('len(contours):', len(contours))
-                    ax = contours[0].plot()
-                    base_contour.plot(ax=ax, color='b')
-                    warnings.warn('There probably exists an open contour (two wires that could not be connected)')
-                    finished = True
+                # if base_contour.is_inside(contours[0]):
+                #     contours.remove(cutting_contour)
+                #     continue
+                #     # list_valid_contours.append(base_contour)
+                #     # finished = True
+                # contours = contours[::-1]
+                # if counter > 100 * len(list_contour) + len(contours):
+                print('new_base_contours:', len(new_base_contours))
+                print('len(contours):', len(contours))
+                ax = contours[0].plot()
+                base_contour.plot(ax=ax, color='b')
+                warnings.warn('There probably exists an open contour (two wires that could not be connected)')
+                finished = True
 
                 # finished = True
 
