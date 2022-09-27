@@ -194,7 +194,7 @@ class Wire:
         return self.extract_primitives(point1, primitives[ind[0]], point2,
                                        primitives[ind[1]], inside)
 
-    def point_belongs(self, point, abs_tol=1e-7): #TOdo diplicate with point_over_contour?
+    def point_belongs(self, point, abs_tol=1e-7):  # TOdo diplicate with point_over_contour?
         '''
         find out if a point is on the wire or not. If it belongs, we return the primitive's index
         '''
