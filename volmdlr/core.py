@@ -474,7 +474,7 @@ class CompositePrimitive2D(Primitive2D):
              plot_points=False, equal_aspect=True):
 
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if equal_aspect:
             ax.set_aspect('equal')

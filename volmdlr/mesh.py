@@ -395,7 +395,7 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
     def plot(self, ax=None, color='k', width=None,
              plot_points=False, fill=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
             ax.set_aspect('equal')
 
         if fill:
@@ -738,7 +738,7 @@ class ElementsGroup(DessiaObject):
 
     def plot(self, ax=None, color='k', fill=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
             ax.set_aspect('equal')
         for element in self.elements:
             element.plot(ax=ax, color=color)  # fill=fill
@@ -824,7 +824,7 @@ class Mesh(DessiaObject):
     def plot(self, ax=None):
         if ax is None:
             if self.elements_groups[0].elements[0].__class__.__name__[-2::] == '2D':
-                fig, ax = plt.subplots()
+                _, ax = plt.subplots()
                 ax.set_aspect('equal')
             else:
                 ax = plt.figure().add_subplot(projection='3d')
@@ -894,7 +894,7 @@ class Mesh(DessiaObject):
 
         if nodes_index:
             nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
-            for k, index in enumerate(nodes_index):
+            for _, index in enumerate(nodes_index):
                 nodes_list.pop(index[0])
                 for group in mesh.elements_groups:
                     if mesh.nodes[index[0]] in group.nodes:
