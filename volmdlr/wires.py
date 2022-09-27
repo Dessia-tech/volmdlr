@@ -191,11 +191,10 @@ class Wire:
                     for i in indice:
                         if i != shared[0]:
                             ind.append(i)
-
         return self.extract_primitives(point1, primitives[ind[0]], point2,
                                        primitives[ind[1]], inside)
 
-    def point_belongs(self, point, abs_tol=1e-7):
+    def point_belongs(self, point, abs_tol=1e-7): #TOdo diplicate with point_over_contour?
         '''
         find out if a point is on the wire or not. If it belongs, we return the primitive's index
         '''
@@ -209,8 +208,7 @@ class Wire:
         '''
         compute the curvilinear abscisse of a point on a wire
         '''
-
-        if self.point_belongs(point, 1e-6):
+        if self.point_over_wire(point, 1e-6):
             length = 0
             for primitive in self.primitives:
                 if primitive.point_belongs(point, 1e-6):
@@ -323,8 +321,9 @@ class Wire:
             else:
                 vector2 = primitive.unit_direction_vector(0.5)
             if vector1.is_colinear_to(vector2):
-                mid_point = primitive.middle_point()
-                if self.point_over_contour(mid_point, tol):
+                # mid_point = primitive.middle_point()
+                points = primitive.discretization_points(number_points=10)
+                if all(self.point_over_contour(point, tol) for point in points):
                     return True
         return False
 
@@ -1012,14 +1011,19 @@ class Contour(Wire):
             if len(list_point_pairs) == 1:
                 counter += 1
                 if counter > 3:
-                    warnings.warn('There may exist a problem with this'
-                                  ' contour, it seems it cannot be reordered.'
-                                  ' Please, verify its points')
-                    finished = True
+                    # for point_pair in list_point_pairs:
+                    if list_point_pairs[0][0] in points or list_point_pairs[0][::-1] in points:
+                        finished = True
+                        continue
+                    else:
+                        warnings.warn('There may exist a problem with this'
+                                      ' contour, it seems it cannot be reordered.'
+                                      ' Please, verify its points')
+                        finished = True
                     # ax = self.plot()
-                    #                     # for point_pair in list_point_pairs:
-                    #                     #     point_pair[0].plot(ax=ax, color='r')
-                    #                     #     point_pair[1].plot(ax=ax, color='r')
+                    # for point_pair in list_point_pairs:
+                    #     point_pair[0].plot(ax=ax, color='r')
+                    #     point_pair[1].plot(ax=ax, color='r')
                     # raise NotImplementedError
 
         return points
@@ -1129,6 +1133,8 @@ class Contour(Wire):
                 if j > i:
                     if primitive2.end != primitive1.start != primitive2.start and \
                             primitive2.end != primitive1.end != primitive2.start:
+                        if primitive1.unit_direction_vector().is_colinear_to(primitive2.unit_direction_vector()):
+                            continue
                         if primitive1.point_belongs(primitive2.start) or primitive1.point_belongs(primitive2.end):
                             touching_primitives.append([primitive2, primitive1])
                         elif primitive2.point_belongs(primitive1.start) or primitive2.point_belongs(primitive1.end):
@@ -1139,32 +1145,51 @@ class Contour(Wire):
     def contours_primitives_touching_primitives(touching_primitives):
         contours_primitives_lists = []
         for prim1, prim2 in touching_primitives:
-            intersection = prim1.linesegment_intersections(prim2)
-            prim2_split = prim2.split(intersection[0])
+            if prim2.point_belongs(prim1.start):
+                intersection = prim1.start
+            elif prim2.point_belongs(prim1.end):
+                intersection = prim1.end
+            # intersection = prim1.linesegment_intersections(prim2)
+            # if prim1 == prim2:
+            # print(prim1.start, prim1.end)
+            # print(prim2.start, prim2.end)
+            # ax=prim1.plot()
+            # prim1.start.plot(ax, 'b')
+            # prim1.end.plot(ax, 'b')
+            # prim2.plot(ax, 'r')
+            # prim2.start.plot(ax, 'y')
+            # prim2.end.plot(ax, 'y')
+            prim2_split = prim2.split(intersection)
             for prim in prim2_split:
-                if prim1.start == prim.start:
-                    contours_primitives_lists.append([prim1, prim.reverse()])
-                else:
+                if prim1.start == prim.start or prim1.end == prim.end:
+                    prim = prim.reverse()
+                if [prim1, prim] not in contours_primitives_lists:
                     contours_primitives_lists.append([prim1, prim])
+                # else:
+                #     contours_primitives_lists.append([prim1, prim])
         return contours_primitives_lists
 
     @staticmethod
-    def connected_to_splited_primitives(edge, contours_primitives_lists):
+    def connected_to_splited_primitives(edge, contours_list):
         """
         Verifies if edge is connected to one of the primitives inside contours
         :param edge: edge for verification
-        :param contours_primitives_lists: contours primitives lists
+        :param contours_list: contours lists
         :return: update contours_primitives_lists and a boolean to indicate if the edge should be removed or not
         """
         remove = False
-        for i, primitives in enumerate(contours_primitives_lists):
-            if primitives[0].start in (edge.end, edge.start):
-                contours_primitives_lists[i] = [edge.copy(deep=True)] + primitives
-                remove = True
-            elif primitives[-1].end in (edge.start, edge.end):
-                contours_primitives_lists[i] = primitives + [edge.copy(deep=True)]
-                remove = True
-        return contours_primitives_lists, remove
+        for i, contour in enumerate(contours_list):
+            # for i, primitives in enumerate(contour.primitves):
+            if not contour.primitive_over_contour(edge):
+                if contour.primitives[0].start in (edge.end, edge.start):
+                    # for prim in primitives:
+                    #     if prim.point_belong(edge.end)
+                    contours_list[i].primitives = [edge.copy(deep=True)] + contour.primitives
+                    remove = True
+                elif contour.primitives[-1].end in (edge.start, edge.end):
+                    contours_list[i].primitives = contour.primitives + [edge.copy(deep=True)]
+                    remove = True
+        return contours_list, remove
 
     @staticmethod
     def is_edge_connected(contour_primitives, edge, tol):
@@ -1195,15 +1220,15 @@ class Contour(Wire):
         return edge_connected
 
     @staticmethod
-    def find_connected_edges(edges, contours_primitives_lists, contour_primitives, tol):
+    def find_connected_edges(edges, contours_list, contour_primitives, tol):
         for line in edges:
-            if contours_primitives_lists:
-                contours_primitives_lists, remove = Contour.connected_to_splited_primitives(
-                    line, contours_primitives_lists)
+            if contours_list:
+                contours_list, remove = Contour.connected_to_splited_primitives(line, contours_list)
                 if remove:
                     edges.remove(line)
-            if not edges:
-                break
+                    break
+            # if not edges:
+            #     break
             if not contour_primitives:
                 contour_primitives.append(line)
                 edges.remove(line)
@@ -1213,10 +1238,14 @@ class Contour(Wire):
                 contour_primitives.append(edge_connected)
                 edges.remove(edge_connected)
                 break
-        return edges, contour_primitives, contours_primitives_lists
+        return edges, contour_primitives, contours_list
 
     @classmethod
     def contours_from_edges(cls, edges, tol=1e-7):
+        # ax = edges[0].plot()
+        # for e in edges:
+        #     e.plot(ax)
+        edges_backup = edges[:]
         if not edges:
             return []
         touching_primitives = cls.touching_edges_pairs(edges)
@@ -1226,16 +1255,17 @@ class Contour(Wire):
             if prims[1] in edges:
                 edges.remove(prims[1])
         contours_primitives_lists = cls.contours_primitives_touching_primitives(touching_primitives)
+        contours_list = [cls(primitives) for primitives in contours_primitives_lists]
         if not edges:
-            return [cls(primitives) for primitives in contours_primitives_lists]
+            return contours_list
         list_contours = []
         finished = False
         contour_primitives = []
 
         while not finished:
             len1 = len(edges)
-            edges, contour_primitives, contours_primitives_lists = cls.find_connected_edges(
-                edges, contours_primitives_lists, contour_primitives, tol)
+            edges, contour_primitives, contours_list = cls.find_connected_edges(
+                edges, contours_list, contour_primitives, tol)
             if not edges:
                 finished = True
             valid = False
@@ -1349,7 +1379,6 @@ class Contour(Wire):
                             list_p.append(point)
                         if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
                             list_p.append(point)
-
                         try:
                             self.primitive_to_index(edge1)
                             edges1.add(edge1)
@@ -1693,7 +1722,7 @@ class Contour2D(Contour, Wire2D):
                 points_contour2.append(prim.start)
             if prim.end not in points_contour2:
                 points_contour2.append(prim.end)
-            points_contour2.append(prim.middle_point())
+            points_contour2.extend(prim.discretization_points(number_points=10))
         for point in points_contour2:
             if not self.point_belongs(point) and not self.point_over_contour(point, abs_tol=1e-7):
                 return False
@@ -2098,13 +2127,14 @@ class Contour2D(Contour, Wire2D):
                 cutting_points = []
                 point1, point2 = [cutting_contour.primitives[0].start,
                                   cutting_contour.primitives[-1].end]
-                if base_contour.point_over_contour(
-                        point1) and base_contour.point_over_contour(point2):
+                if base_contour.point_over_contour(point1) and base_contour.point_over_contour(point2):
                     cutting_points = [point1, point2]
+                elif len(new_base_contours) == 1:
+                    contours.remove(cutting_contour)
+                    continue
                 if cutting_points:
                     contour1, contour2 = base_contour.get_divided_contours(
-                        cutting_points[0], cutting_points[1], cutting_contour,
-                        inside)
+                        cutting_points[0], cutting_points[1], cutting_contour, inside)
 
                     new_base_contours.remove(base_contour)
                     for cntr in [contour1, contour2]:
@@ -2131,12 +2161,22 @@ class Contour2D(Contour, Wire2D):
                 finished = True
             counter += 1
             if counter >= 100 * len(list_contour):
-                # print('new_base_contours:', len(new_base_contours))
-                # print('len(contours):', len(contours))
-                # ax=contours[0].plot()
-                # base_contour.plot(ax=ax, color='b')
-                warnings.warn('There probably exists an open contour (two wires that could not be connected)')
-                finished = True
+                if base_contour.is_inside(contours[0]):
+                    contours.remove(cutting_contour)
+                    continue
+                    # list_valid_contours.append(base_contour)
+                    # finished = True
+                else:
+                    contours = contours[::-1]
+                if counter > 100 * len(list_contour) + len(contours):
+                    print('new_base_contours:', len(new_base_contours))
+                    print('len(contours):', len(contours))
+                    ax = contours[0].plot()
+                    base_contour.plot(ax=ax, color='b')
+                    warnings.warn('There probably exists an open contour (two wires that could not be connected)')
+                    finished = True
+
+                # finished = True
 
         return list_valid_contours
 
@@ -4180,10 +4220,19 @@ class Contour3D(Contour, Wire3D):
         """
         Flawed method, to be enforced by overloading
         """
-        n = 50
-        l = self.length()
-        points = [self.point_at_abscissa(i / n * l)
-                  for i in range(n)]
+        points = []
+        for prim in self.primitives:
+            n = 20
+            l = prim.length()
+            points_ = [prim.point_at_abscissa(i / n * l)
+                       for i in range(n)]
+            for point in points_:
+                if point not in points:
+                    points.append(point)
+        # n = 50
+        # l = self.length()
+        # points = [self.point_at_abscissa(i / n * l)
+        #           for i in range(n)]
         return volmdlr.core.BoundingBox.from_points(points)
 
     @property
