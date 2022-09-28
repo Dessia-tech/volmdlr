@@ -6935,8 +6935,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         used_faces, list_faces = {}, []
         initial_faces = self.faces[:]
 
-        for i, face1 in enumerate(initial_faces):
-            for j, face2 in enumerate(shell.faces):
+        for _, face1 in enumerate(initial_faces):
+            for _, face2 in enumerate(shell.faces):
                 if face1.surface3d.is_coincident(face2.surface3d):
                     if face1.face_inside(face2):
                         try:
