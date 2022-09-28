@@ -65,7 +65,7 @@ scripts = [
             # 'grid.py'
             'mesh/geo_file_1.py',
             'mesh/geo_file_2.py',
-            'mesh/geo_file_3.py'
+            'mesh/geo_file_3.py',
             'mesh/read_msh_file.py'
             ]
 
