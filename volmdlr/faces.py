@@ -6927,6 +6927,41 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return ax
 
+    def project_coincident_faces_of(self, shell):
+        """
+        Divides self's faces based on coincident shell's faces
+        """
+
+        used_faces, list_faces = {}, []
+        initial_faces = self.faces[:]
+
+        for i, face1 in enumerate(initial_faces):
+            for j, face2 in enumerate(shell.faces):
+                if face1.surface3d.is_coincident(face2.surface3d):
+                    if face1.face_inside(face2):
+                        try:
+                            faces_combinaton = (used_faces[face1], face2)
+                        except KeyError:
+                            faces_combinaton = (face1, face2)
+
+                        f1 = faces_combinaton[0]
+                        f2 = faces_combinaton[1]
+
+                        divided_faces = f1.divide_face([f2.surface2d.outer_contour], True)
+                        areas = [face.area() for face in divided_faces]
+                        used_faces[face1] = divided_faces[areas.index(max(areas))]
+
+                        list_faces.extend(divided_faces[areas.index(min(areas))].divide_face(
+                            f2.surface2d.inner_contours, True))
+
+        for face in initial_faces:
+            try:
+                list_faces.append(used_faces[face])
+            except KeyError:
+                list_faces.append(face)
+
+        return self.__class__(list_faces)
+
 
 class ClosedShell3D(OpenShell3D):
     STEP_FUNCTION = 'CLOSED_SHELL'
