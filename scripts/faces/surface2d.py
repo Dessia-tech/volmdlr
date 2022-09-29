@@ -39,9 +39,16 @@ contour = volmdlr.primitives2d.ClosedRoundedLineSegments2D([p1, p2,
 # contour.plot()
 hole = wires.Circle2D(pc, 0.5*r)
 surface = faces.Surface2D(contour, [hole])
-surface.plot()
+
+triangulation = contour.offset_triangulation()
+ax = triangulation.plot()
 
 surface._check_platform()
+
+surface.plot()
+
+
+
 
 # contours = contour.split_regularly(10)
 # ax =  contours[0].plot()

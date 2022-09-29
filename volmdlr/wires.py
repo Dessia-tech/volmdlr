@@ -1828,7 +1828,7 @@ class Contour2D(Contour, Wire2D):
 
     def split_regularly(self, n):
         """
-        Split in n slices
+        Split in n slices on X axis
         """
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         cutted_contours = []
@@ -1926,21 +1926,62 @@ class Contour2D(Contour, Wire2D):
 
         return vmd.DisplayMesh2D(points, triangles)
 
-    # def extract_contours(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D):
-    #     split_primitives  = []
-    #     # primitives = [p for p in contour.primitives]
-    #     primitives = self.primitives
-    #     for point in [point1, point2]:
-    #         dist_min = math.inf
-    #         for primitive in primitives:
-    #             # print(point)
-    #             dist = primitive.point_distance(point)
-    #             if dist < dist_min:
-    #                 dist_min = dist
-    #                 prim_opt = primitive
-    #         split_primitives.append(prim_opt)
-    #     print(len(split_primitives))
-    #     return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1])
+    def is_trigo(self):
+        return self.edge_polygon.is_trigo()
+
+    def offset_triangulation(self, mesh_size=None):
+        points = []
+        triangles = []
+        
+        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        max_dim = max(xmax-xmin, ymax-ymin)
+        min_dim = min(xmax-xmin, ymax-ymin)
+        
+        if mesh_size is None:
+            mesh_size = min_dim*0.1
+        print(max_dim, min_dim, mesh_size)
+
+        if self.is_trigo():
+            offset = -mesh_size
+        else:
+            offset = mesh_size
+
+        offset_contour = self
+        area = offset_contour.area()
+        # ax = offset_contour.plot()
+        # ax = None
+        polygons = []
+        for i in range(math.floor(min_dim/mesh_size)):
+            print(i)
+            length = offset_contour.length()
+            number_points = math.floor(length/mesh_size)
+            actual_mesh_size = length/number_points
+            points = [offset_contour.point_at_abscissa(i*actual_mesh_size) for i in range(number_points)]
+            polygon = ClosedPolygon2D(points)
+
+
+            offset_contour = offset_contour.offset(mesh_size)
+            # ax = offset_contour.plot(ax=ax, color='blue')
+            new_area = offset_contour.area()
+            if new_area > area:
+                print('Break area')
+                break
+            intersects, _, _ = polygon.self_intersects()
+            if intersects:
+                # polygon.plot(point_numbering=True, ax=ax, color='r')
+                print('Break intersects')
+                break
+            
+            polygons.append(polygon)
+            
+
+            area = new_area
+
+        ax = None
+        for polygon in polygons:
+            ax = polygon.plot(ax=ax)
+
+        return vmd.DisplayMesh2D(points, triangles)
 
     def contour_intersections(self, contour2d):
         intersecting_points = []
