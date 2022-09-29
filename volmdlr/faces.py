@@ -58,6 +58,11 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         volmdlr.core.Primitive2D.__init__(self, name=name)
 
+    def copy(self):
+        return self.__class__(outer_contour=self.outer_contour.copy(),
+                              inner_contours=[c.copy() for c in self.inner_contours],
+                              name=self.name)
+
     def area(self):
         return self.outer_contour.area() - sum(contour.area() for contour in self.inner_contours)
 
