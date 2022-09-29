@@ -693,7 +693,7 @@ class ElementsGroup(DessiaObject):
     _non_hash_attributes = ['name']
     _generic_eq = True
 
-    def __init__(self, elements, name: str):
+    def __init__(self, elements, name: str = ''):
         self.elements = elements
         self.nodes = self._nodes()
         self.name = name
@@ -853,29 +853,82 @@ class Mesh(DessiaObject):
             z = [n.z for n in nodes]
             return min(x), max(x), min(y), max(y), min(z), max(z)
 
+    # def delete_duplicated_nodes(self, tol=1e-4):
+    #     mesh = self.__class__(self.elements_groups[:])
+    #     nodes_list = list(mesh.nodes[:])
+    #     nodes_index = []
+
+    #     for i,node in enumerate(nodes_list):
+    #         for j in range(i+1, len(nodes_list)):
+    #             d = node.point_distance(nodes_list[j])
+    #             if d<tol:
+    #                 nodes_index.append((j, i))
+
+    #     if nodes_index:
+    #         nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
+    #         for k, index in enumerate(nodes_index):
+    #             nodes_list.pop(index[0])
+    #             for group in mesh.elements_groups:
+    #                 if mesh.nodes[index[0]] in group.nodes:
+    #                     dict_node_element = group.elements_per_node
+    #                     for element in dict_node_element[mesh.nodes[index[0]]]:
+    #                         element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
+
+    #         mesh.nodes = nodes_list
+    #         mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+
+    #     return mesh
+
     def delete_duplicated_nodes(self, tol=1e-4):
         mesh = self.__class__(self.elements_groups[:])
         nodes_list = list(mesh.nodes[:])
         nodes_index = []
+        points_deleted, points_replaced = [], []
 
         for i,node in enumerate(nodes_list):
             for j in range(i+1, len(nodes_list)):
                 d = node.point_distance(nodes_list[j])
                 if d<tol:
                     nodes_index.append((j, i))
+                    points_deleted.append(nodes_list[j])
+                    points_replaced.append(node)
+
+        # if nodes_index:
+        #     nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
+        #     for k, index in enumerate(nodes_index):
+        #         nodes_list.pop(index[0])
+        #         for group in mesh.elements_groups:
+        #             if mesh.nodes[index[0]] in group.nodes:
+        #                 dict_node_element = group.elements_per_node
+        #                 for element in dict_node_element[mesh.nodes[index[0]]]:
+        #                     element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
+
+        #     mesh.nodes = nodes_list
+        #     mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
 
         if nodes_index:
             nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
             for k, index in enumerate(nodes_index):
                 nodes_list.pop(index[0])
-                for group in mesh.elements_groups:
-                    if mesh.nodes[index[0]] in group.nodes:
-                        dict_node_element = group.elements_per_node
-                        for element in dict_node_element[mesh.nodes[index[0]]]:
-                            element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
 
-            mesh.nodes = nodes_list
-            mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+        elements_groups = []
+        for group in mesh.elements_groups:
+            elements = []
+            for element in group.elements:
+                points = []
+                for point in element.points:
+                    if point in points_deleted:
+                        print('yes')
+                        points.append(points_replaced[points_deleted.index(point)])
+                    else:
+                        points.append(point)
+                elements.append(element.__class__(points))
+            elements_groups.append(ElementsGroup(elements))
+
+            mesh = Mesh(elements_groups)
+
+            # mesh.nodes = nodes_list
+            # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
 
         return mesh
 
