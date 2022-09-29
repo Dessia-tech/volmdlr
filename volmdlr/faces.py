@@ -1339,6 +1339,12 @@ class ToroidalSurface3D(Surface3D):
         self.r = r
         self.name = name
 
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
     def _bounding_box(self):
         d = self.R + self.r
         p1 = self.frame.origin + self.frame.u * d + self.frame.v * d + self.frame.w * self.r
@@ -5442,8 +5448,8 @@ class ToroidalFace3D(Face3D):
         return self._bbox
 
     @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
 
     def get_bounding_box(self):
         return self.surface3d._bounding_box()
