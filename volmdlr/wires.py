@@ -2122,6 +2122,9 @@ class Contour2D(Contour, Wire2D):
                 cutting_points = []
                 point1, point2 = [cutting_contour.primitives[0].start,
                                   cutting_contour.primitives[-1].end]
+                middle_point = cutting_contour.point_at_abscissa(cutting_contour.length() / 2)
+                if not base_contour.point_belongs(middle_point):
+                    continue
                 if base_contour.point_over_contour(point1) and base_contour.point_over_contour(point2):
                     cutting_points = [point1, point2]
                 elif len(new_base_contours) == 1:
@@ -2141,7 +2144,7 @@ class Contour2D(Contour, Wire2D):
                             #          True not in [cntr.primitive_over_contour(prim)
                             #                       for prim in cut_contour.primitives]):
                             #     valid_contour = False
-                            points_at_abs = cut_contour.discretization_points(cut_contour.length() / 20)
+                            points_at_abs = cut_contour.discretization_points(cut_contour.length() / 5)
                             for point_at_abs in points_at_abs[1:-1]:
                                 if cntr.point_belongs(point_at_abs) and \
                                         (not cntr.point_over_contour(point_at_abs) and
@@ -2149,7 +2152,9 @@ class Contour2D(Contour, Wire2D):
                                                       for prim in cut_contour.primitives]):
                                     all_divided_contour = False
                                     break
-
+                            else:
+                                continue
+                            break
                         if all_divided_contour and cntr.area() != 0.0:
                             list_valid_contours.append(cntr)
                         else:
