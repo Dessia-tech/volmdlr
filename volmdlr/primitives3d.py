@@ -822,7 +822,6 @@ class Cylinder(RevolvedProfile):
     Creates a full cylinder with the position, the axis of revolution,
     the radius and the length.
     """
-    _non_serializable_attributes = ['faces', 'contour3D']
 
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  radius: float, length: float,
@@ -1400,7 +1399,6 @@ class Sweep(volmdlr.faces.ClosedShell3D):
     """
     Sweep a 2D contour along a Wire3D
     """
-    _non_serializable_attributes = ['faces']
 
     def __init__(self, contour2d: List[volmdlr.wires.Contour2D],
                  wire3d: volmdlr.wires.Wire3D, *,
@@ -1550,36 +1548,32 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                      alpha=self.alpha, name=self.name)
 
 
-class Sphere(volmdlr.faces.ClosedShell3D):
-    _non_serializable_attributes = ['faces']
-
+# class Sphere(volmdlr.Primitive3D):
+class Sphere(RevolvedProfile):
     def __init__(self, center, radius,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
+        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.center = center
         self.radius = radius
         self.position = center
 
-        face = volmdlr.faces.SphericalSurface3D(volmdlr.Frame3D(self.center, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D),
-                                                self.radius).rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
-        volmdlr.faces.ClosedShell3D.__init__(self, faces=[face], color=color, alpha=alpha, name=name)
+        # Revolved Profile for complete sphere
+        s = volmdlr.Point2D(-self.radius, 0.01 * self.radius)
+        i = volmdlr.Point2D(0, 1.01 * self.radius)
+        e = volmdlr.Point2D(self.radius, 0.01 * self.radius)  # Not coherent but it works at first, to change !!
 
-        # # Revolved Profile for complete sphere
-        # s = volmdlr.Point2D(-self.radius, 0.01 * self.radius)
-        # i = volmdlr.Point2D(0, 1.01 * self.radius)
-        # e = volmdlr.Point2D(self.radius, 0.01 * self.radius)  # Not coherent but it works at first, to change !!
+        # s = volmdlr.Point2D((-self.radius, 0))
+        # i = volmdlr.Point2D(((math.sqrt(2)/2)*self.radius,(math.sqrt(2)/2)*self.radius))
+        # e = volmdlr.Point2D(((-math.sqrt(2)/2)*self.radius,(-math.sqrt(2)/2)*self.radius))
 
-        # # s = volmdlr.Point2D((-self.radius, 0))
-        # # i = volmdlr.Point2D(((math.sqrt(2)/2)*self.radius,(math.sqrt(2)/2)*self.radius))
-        # # e = volmdlr.Point2D(((-math.sqrt(2)/2)*self.radius,(-math.sqrt(2)/2)*self.radius))
+        contour = volmdlr.wires.Contour2D([
+            volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
 
-        # contour = volmdlr.wires.Contour2D([
-        #     volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
-
-        # axis = volmdlr.X3D
-        # y = axis.random_unit_normal_vector()
-        # RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
-        #                          color=color, alpha=alpha, name=name)
+        axis = volmdlr.X3D
+        y = axis.random_unit_normal_vector()
+        RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
+                                 color=color, alpha=alpha, name=name)
 
     def volume(self):
         return 4 / 3 * math.pi * self.radius**3
