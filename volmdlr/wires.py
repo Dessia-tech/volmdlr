@@ -2133,18 +2133,24 @@ class Contour2D(Contour, Wire2D):
 
                     new_base_contours.remove(base_contour)
                     for cntr in [contour1, contour2]:
-                        valid_contour = True
+                        all_divided_contour = True
                         for cut_contour in list_cutting_contours:
-                            point_at_abs = cut_contour.point_at_abscissa(
-                                cut_contour.length() / 2)
-                            if cntr.point_belongs(
-                                    point_at_abs) and (not cntr.point_over_contour(
-                                    point_at_abs) or True not in [
-                                    cntr.primitive_over_contour(
-                                        prim) for prim in cut_contour.primitives]):
-                                valid_contour = False
+                            # point_at_abs = cut_contour.point_at_abscissa(cut_contour.length() / 2)
+                            # if cntr.point_belongs(point_at_abs) and\
+                            #         (not cntr.point_over_contour(point_at_abs) or
+                            #          True not in [cntr.primitive_over_contour(prim)
+                            #                       for prim in cut_contour.primitives]):
+                            #     valid_contour = False
+                            points_at_abs = cut_contour.discretization_points(cut_contour.length() / 20)
+                            for point_at_abs in points_at_abs[1:-1]:
+                                if cntr.point_belongs(point_at_abs) and \
+                                        (not cntr.point_over_contour(point_at_abs) and
+                                         True not in [cntr.primitive_over_contour(prim)
+                                                      for prim in cut_contour.primitives]):
+                                    all_divided_contour = False
+                                    break
 
-                        if valid_contour and cntr.area() != 0.0:
+                        if all_divided_contour and cntr.area() != 0.0:
                             list_valid_contours.append(cntr)
                         else:
                             new_base_contours.append(cntr)
