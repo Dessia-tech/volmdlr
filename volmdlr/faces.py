@@ -7235,8 +7235,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             points.add(primitive.end)
 
                         if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
-                            for point in primitive.control_points:
-                                points.add(point)
+                            # for point in primitive.control_points:
+                                # points.add(point)
+                                for point in primitive.discretization_points():
+                                    points.add(point)
 
                         if ((primitive not in primitives)
                                 and (primitive.reverse() not in primitives)):
@@ -7266,6 +7268,15 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             # line_account += 1
                             # print(line_account)
                             index = primitives.index(primitive)
+                            if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
+                                discretization_points = primitive.discretization_points()
+                                start_point_tag = points.index(discretization_points[0]) + 1
+                                end_point_tag = points.index(discretization_points[1]) + 1
+                                primitive_linesegments = volmdlr.LineSegment3D(discretization_points[0], discretization_points[1])
+                                lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
+                                                                                  start_point_tag=start_point_tag + point_account,
+                                                                                  end_point_tag=end_point_tag + point_account))
+
                             if isinstance(primitive, volmdlr.edges.LineSegment):
                                 start_point_tag = points.index(primitive.start) + 1
                                 end_point_tag = points.index(primitive.end) + 1
