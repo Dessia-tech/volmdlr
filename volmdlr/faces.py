@@ -58,6 +58,11 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         volmdlr.core.Primitive2D.__init__(self, name=name)
 
+    def copy(self):
+        return self.__class__(outer_contour=self.outer_contour.copy(),
+                              inner_contours=[c.copy() for c in self.inner_contours],
+                              name=self.name)
+
     def area(self):
         return self.outer_contour.area() - sum(contour.area() for contour in self.inner_contours)
 
@@ -1333,6 +1338,12 @@ class ToroidalSurface3D(Surface3D):
         self.R = R
         self.r = r
         self.name = name
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
 
     def _bounding_box(self):
         d = self.R + self.r
@@ -5481,8 +5492,8 @@ class ToroidalFace3D(Face3D):
         return self._bbox
 
     @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
 
     def get_bounding_box(self):
         return self.surface3d._bounding_box()

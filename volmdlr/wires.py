@@ -1844,25 +1844,28 @@ class Contour2D(Contour, Wire2D):
         return list_contours
 
     def get_pattern(self):
-        """ A pattern is portion of the contour from which the contour can be
+        """
+        #TODO : should this be kept ? - Axel, 16/09/22
+        A pattern is portion of the contour from which the contour can be
         reconstructed by rotations of this portion"""
-        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        # xmin, xmax, ymin, ymax = self.bounding_rectangle()
 
         # ax=plt.subplot()
         # line = Line2D(Point2D([xi, 0]),Point2D([xi,1]))
         line = volmdlr.edges.Line2D(volmdlr.Point2D([0, -0.17]),
                                     volmdlr.Point2D([0, 0.17]))
-        line_2 = line.Rotation(self.center_of_mass(), 0.26)
-        line_3 = line.Rotation(self.center_of_mass(), -0.26)
+        line_2 = line.rotation(self.center_of_mass(), 0.26)
+        line_3 = line.rotation(self.center_of_mass(), -0.26)
 
         intersections = []
 
         intersections += self.line_intersections(line_2)
         intersections += self.line_intersections(line_3)
+        primitives = []
         if isinstance(intersections[0][0], volmdlr.Point2D) and \
                 isinstance(intersections[1][0], volmdlr.Point2D):
-            ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
-                               self.primitives.index(intersections[1][1])])
+            # ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
+            #                    self.primitives.index(intersections[1][1])])
 
             ip3, ip4 = sorted([self.primitives.index(intersections[2][1]),
                                self.primitives.index(intersections[3][1])])
@@ -1870,14 +1873,12 @@ class Contour2D(Contour, Wire2D):
             sp11, sp12 = intersections[1][1].split(intersections[1][0])
             sp22, sp21 = intersections[2][1].split(intersections[2][0])
 
-            primitives = []
-
             a = volmdlr.edges.Arc2D(sp12.end, sp12.interior, sp12.start)
             primitives.append(a)
             primitives.extend(self.primitives[:ip3])
             primitives.append(sp22)
-            l = volmdlr.edges.LineSegment2D(sp22.start, sp12.end)
-            interior = l.point_at_abscissa(l.Length() / 2)
+            ls = volmdlr.edges.LineSegment2D(sp22.start, sp12.end)
+            interior = ls.point_at_abscissa(ls.length() / 2)
             primitives.append(
                 volmdlr.edges.Arc2D(sp22.start, interior, sp12.end))
 
@@ -3955,14 +3956,19 @@ class Contour3D(Contour, Wire3D):
             else:
                 return cls(raw_edges, name=name)
 
+        # Making things right for first 2 primitives
         distances = [raw_edges[0].end.point_distance(raw_edges[1].start),
                      raw_edges[0].start.point_distance(raw_edges[1].start),
                      raw_edges[0].end.point_distance(raw_edges[1].end),
                      raw_edges[0].start.point_distance(raw_edges[1].end)]
         index = distances.index(min(distances))
-        if min(distances) > 5e-4:
-            ax = raw_edges[0].plot()
-            raw_edges[1].plot(ax=ax)
+        if min(distances) > 6e-4:
+            # Green color : well-placed and well-read
+            ax = raw_edges[0].plot(color='g')
+            # Red color : can't be connected to green edge
+            raw_edges[1].plot(ax=ax, color='r')
+            # Black color : to be placed
+            [re.plot(ax=ax) for re in raw_edges[2:]]
             deltax1 = abs(raw_edges[0].start.x - raw_edges[1].end.x)
             deltax2 = abs(raw_edges[0].end.x - raw_edges[1].end.x)
             deltay1 = abs(raw_edges[0].start.y - raw_edges[1].end.y)
@@ -3970,11 +3976,12 @@ class Contour3D(Contour, Wire3D):
             deltaz1 = abs(raw_edges[0].start.z - raw_edges[1].end.z)
             deltaz2 = abs(raw_edges[0].end.z - raw_edges[1].end.z)
             raise NotImplementedError(
+                f'Number of edges: {len(raw_edges)}',
                 'First 2 edges of contour not follwing each other',
-                'delta = {}, {}, {}, {}, {}, {}'.format(deltax1, deltax2,
-                                                        deltay1, deltay2,
-                                                        deltaz1, deltaz2))
-        # Making things right for first 2 primitives
+                f'delta_x = {deltax1}, {deltax2}',
+                f'delta_y = {deltay1}, {deltay2}',
+                f'delta_z = {deltaz1}, {deltaz2}',
+                f'distance = {min(distances)}')
 
         if index == 0:
             edges = [raw_edges[0], raw_edges[1]]
@@ -3987,16 +3994,25 @@ class Contour3D(Contour, Wire3D):
         else:
             raise NotImplementedError
 
+        # Connecting the next edges
         last_edge = edges[-1]
-        for raw_edge in raw_edges[2:]:
+        for i, raw_edge in enumerate(raw_edges[2:]):
             distances = [raw_edge.start.point_distance(last_edge.end),
                          raw_edge.end.point_distance(last_edge.end)]
             index = distances.index(min(distances))
-            if min(distances) > 5e-4:
-                ax = last_edge.plot(color='b')
+            if min(distances) > 6e-4:
+                # Green color : well-placed and well-read
+                ax = last_edge.plot(color='g')
+                [re.plot(ax=ax, color='g') for re in raw_edges[:2 + i]]
+                [re.start.plot(ax=ax, color='g') for re in raw_edges[:2 + i]]
+                [re.start.plot(ax=ax, color='g') for re in raw_edges[:2 + i]]
+                last_edge.end.plot(ax=ax, color='r')
+                # Red color : can't be connected to red dot
                 raw_edge.plot(ax=ax, color='r')
-                last_edge.end.plot(ax=ax, color='b')
-                raw_edges[0].plot(ax=ax, color='g')
+                # Black color : to be placed
+                [re.plot(ax=ax) for re in raw_edges[2 + i + 1:]]
+                [re.start.plot(ax=ax) for re in raw_edges[2 + i + 1:]]
+                [re.end.plot(ax=ax) for re in raw_edges[2 + i + 1:]]
                 deltax1 = abs(raw_edge.start.x - last_edge.end.x)
                 deltax2 = abs(raw_edge.end.x - last_edge.end.x)
                 deltay1 = abs(raw_edge.start.y - last_edge.end.y)
@@ -4004,10 +4020,12 @@ class Contour3D(Contour, Wire3D):
                 deltaz1 = abs(raw_edge.start.z - last_edge.end.z)
                 deltaz2 = abs(raw_edge.end.z - last_edge.end.z)
                 raise NotImplementedError(
+                    f'Number of edges: {len(raw_edges)}',
                     'Edges of contour not follwing each other',
-                    'delta = {}, {}, {}, {}, {}, {}'.format(deltax1, deltax2,
-                                                            deltay1, deltay2,
-                                                            deltaz1, deltaz2))
+                    f'delta_x = {deltax1}, {deltax2}',
+                    f'delta_y = {deltay1}, {deltay2}',
+                    f'delta_z = {deltaz1}, {deltaz2}',
+                    f'distance = {min(distances)}')
             if index == 0:
                 last_edge = raw_edge
             elif index == 1:
