@@ -3767,6 +3767,17 @@ class BSplineSurface3D(Surface3D):
 
         return surface3d.linesegment_intersections(linesegment)
 
+    def point_on_plane(self, point):
+        points_2d = [volmdlr.Point2D(0.1,0.1),
+                     volmdlr.Point2D(0.1,0.8),
+                     volmdlr.Point2D(0.8,0.5)]
+        points = [self.point2d_to_3d(pt) for pt in points_2d]
+
+        surface3d = Plane3D.from_3_points(points[0],
+                                          points[1],
+                                          points[2])
+        return surface3d.point_on_plane(point)
+
 
 class BezierSurface3D(BSplineSurface3D):
 

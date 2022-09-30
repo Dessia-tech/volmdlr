@@ -687,10 +687,36 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
 
 
     def in_shell(self, shell):
-        for point in self.points:
-            if not shell.point_belongs(point) or not shell.point_in_shell_face(point):
-                return False
-        return True
+
+        # 1
+        # for point in self.points:
+        #     # if shell.point_belongs(point):
+        #     #     return True
+        #     if not shell.point_belongs(point):# or not shell.point_in_shell_face(point):
+        #         return False
+        # return True
+
+        # 2
+        if shell.point_belongs(self.center):
+            return True
+        return False
+
+        # 3
+        # for point in self.points:
+        #     if shell.point_belongs(point):
+        #         return True
+        # return False
+
+        # 4
+        # truue = set()
+        # for point in self.points:
+        #     # if (shell.point_belongs(point) or shell.point_in_shell_face(point)):
+        #     #     truue.add(True)
+        #     truue.add((shell.point_belongs(point) or shell.point_in_shell_face(point)))
+
+        #     if False in truue:
+        #         return False
+        # return True
 
 
 class ElementsGroup(DessiaObject):
