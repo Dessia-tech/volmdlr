@@ -1499,6 +1499,10 @@ class Contour2D(Contour, Wire2D):
         return Contour3D(p3d)
 
     def point_belongs(self, point):
+        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
+            return False
+
         if self.edge_polygon.point_belongs(point):
             return True
         # TODO: This is incomplete!!!
