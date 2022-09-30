@@ -686,6 +686,13 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
         return N[0], N[1], N[2], N[3]
 
 
+    def in_shell(self, shell):
+        for point in self.points:
+            if not shell.point_belongs(point) or not shell.point_in_shell_face(point):
+                return False
+        return True
+
+
 class ElementsGroup(DessiaObject):
     _standalone_in_db = False
     _non_serializable_attributes = []
