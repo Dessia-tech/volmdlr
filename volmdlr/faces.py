@@ -58,6 +58,11 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         volmdlr.core.Primitive2D.__init__(self, name=name)
 
+    def copy(self):
+        return self.__class__(outer_contour=self.outer_contour.copy(),
+                              inner_contours=[c.copy() for c in self.inner_contours],
+                              name=self.name)
+
     def area(self):
         return self.outer_contour.area() - sum(contour.area() for contour in self.inner_contours)
 
@@ -1334,6 +1339,12 @@ class ToroidalSurface3D(Surface3D):
         self.r = r
         self.name = name
 
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
     def _bounding_box(self):
         d = self.R + self.r
         p1 = self.frame.origin + self.frame.u * d + self.frame.v * d + self.frame.w * self.r
@@ -2053,14 +2064,15 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
-        if -1e-3 < x < 0:
+        if x < 0:
             x = 0.
-        elif 1 < x < 1 + 1e-3:
+        elif 1 < x:
             x = 1
-        if -1e-3 < y < 0:
+        if y < 0:
             y = 0
-        elif 1 < y < 1 + 1e-3:
+        elif y > 1:
             y = 1
+
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
@@ -3202,7 +3214,7 @@ class BSplineSurface3D(Surface3D):
         '''
 
         if len(cylindrical_faces) == 1:
-            return cls.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v, 50, 50)
+            return cls.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v, points_x=50, points_y=50)
 
         if len(cylindrical_faces) > 1:
             bspline_surfaces = []
@@ -3554,10 +3566,12 @@ class BSplineSurface3D(Surface3D):
             pt0 = volmdlr.O2D
             points = []
 
-            for l in lines:
-                inter = contour.line_intersections(l)
+            for line in lines:
+                inter = contour.line_intersections(line)
                 if inter:
-                    pt = [inter[0][0], inter[1][0]]
+                    pt = set()
+                    for p in inter:
+                        pt.add(p[0])
                 else:
                     raise NotImplementedError
 
@@ -3565,7 +3579,7 @@ class BSplineSurface3D(Surface3D):
                 pt0 = pt[0]
                 edge = volmdlr.edges.LineSegment2D(pt[0], pt[1])
 
-                points.extend(edge.discretization_points(10))
+                points.extend(edge.discretization_points(number_points=10))
 
             points3d = []
             for p in points:
@@ -4378,6 +4392,10 @@ class PlaneFace3D(Face3D):
                 intersection_primitives = self.validate_inner_contour_intersections(intersections)
             elif face2.surface2d.inner_contours:
                 intersection_primitives = face2.validate_inner_contour_intersections(intersections)
+            elif len(intersections) > 2:
+                intersection_primitives = self.validate_inner_contour_intersections(intersections)
+                if not intersections:
+                    raise NotImplementedError
             else:
                 intersection_primitives = [volmdlr.edges.LineSegment3D(
                     intersections[0], intersections[1])]
@@ -4396,6 +4414,8 @@ class PlaneFace3D(Face3D):
         bbox2 = face2.bounding_box
         if not bbox1.bbox_intersection(bbox2) and \
                 bbox1.distance_to_bbox(bbox2) >= tol:
+            return []
+        if self.face_inside(face2) or face2.face_inside(self):
             return []
         intersections = self.get_face_intersections(face2)
         valid_intersections = self.validate_face_intersections(face2, intersections)
@@ -4677,11 +4697,11 @@ class Triangle3D(PlaneFace3D):
         """
         return self.point1.approx_hash() + self.point2.approx_hash() + self.point3.approx_hash()
 
-    def _data_eq(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
             return False
         self_set = set([self.point1, self.point2, self.point3])
-        other_set = set([other_.point1, other_.point2, other_.point3])
+        other_set = set([other_object.point1, other_object.point2, other_object.point3])
         if self_set != other_set:
             return False
         return True
@@ -5428,8 +5448,8 @@ class ToroidalFace3D(Face3D):
         return self._bbox
 
     @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
 
     def get_bounding_box(self):
         return self.surface3d._bounding_box()
@@ -6517,8 +6537,8 @@ class BSplineFace3D(Face3D):
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
-    _non_serializable_attributes = ['bounding_box']
-    _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
+    _non_serializable_attributes = ['bounding_box', 'primitives']
+    _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box', 'primitives']
     _non_data_hash_attributes = []
     STEP_FUNCTION = 'OPEN_SHELL'
 
@@ -6534,16 +6554,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self._bbox = None
         # self.bounding_box = self._bounding_box()
         volmdlr.core.CompositePrimitive3D.__init__(self,
-                                                   primitives=faces,
+                                                   primitives=faces, color=color, alpha=alpha,
                                                    name=name)
 
     def _data_hash(self):
         return sum(face._data_hash() for face in self.faces)
 
-    def _data_eq(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
             return False
-        for face1, face2 in zip(self.faces, other_.faces):
+        for face1, face2 in zip(self.faces, other_object.faces):
             if not face1._data_eq(face2):
                 return False
 
@@ -6788,8 +6808,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if min_dist is not None:
             p1, p2 = min_dist
             return p1.point_distance(p2)
-        else:
-            return None
+        return 0
 
     def minimum_distance_point(self,
                                point: volmdlr.Point3D) -> volmdlr.Point3D:
@@ -6921,9 +6940,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
 
 class ClosedShell3D(OpenShell3D):
-    _standalone_in_db = True
-    _non_serializable_attributes = ['bounding_box']
-    _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
     STEP_FUNCTION = 'CLOSED_SHELL'
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
