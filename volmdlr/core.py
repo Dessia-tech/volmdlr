@@ -449,8 +449,10 @@ class CompositePrimitive2D(Primitive2D):
         CompositePrimitive2D translation. Object is updated inplace
         :param offset: translation vector
         """
-        for point in self.primitives:
-            point.translation_inplace(offset)
+        primitives = []
+        for primitive in self.primitives:
+            primitives.append(primitive.translation(offset))
+        self.primitives = primitives
         self.update_basis_primitives()
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
