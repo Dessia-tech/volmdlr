@@ -321,7 +321,6 @@ class Wire:
             else:
                 vector2 = primitive.unit_direction_vector(0.5)
             if vector1.is_colinear_to(vector2):
-                # mid_point = primitive.middle_point()
                 points = primitive.discretization_points(number_points=10)
                 if all(self.point_over_contour(point, tol) for point in points):
                     return True
@@ -1148,24 +1147,12 @@ class Contour(Wire):
                 intersection = prim1.start
             elif prim2.point_belongs(prim1.end):
                 intersection = prim1.end
-            # intersection = prim1.linesegment_intersections(prim2)
-            # if prim1 == prim2:
-            # print(prim1.start, prim1.end)
-            # print(prim2.start, prim2.end)
-            # ax=prim1.plot()
-            # prim1.start.plot(ax, 'b')
-            # prim1.end.plot(ax, 'b')
-            # prim2.plot(ax, 'r')
-            # prim2.start.plot(ax, 'y')
-            # prim2.end.plot(ax, 'y')
             prim2_split = prim2.split(intersection)
             for prim in prim2_split:
                 if prim1.start == prim.start or prim1.end == prim.end:
                     prim = prim.reverse()
                 if [prim1, prim] not in contours_primitives_lists:
                     contours_primitives_lists.append([prim1, prim])
-                # else:
-                #     contours_primitives_lists.append([prim1, prim])
         return contours_primitives_lists
 
     @staticmethod
@@ -1178,11 +1165,8 @@ class Contour(Wire):
         """
         remove = False
         for i, contour in enumerate(contours_list):
-            # for i, primitives in enumerate(contour.primitves):
             if not contour.primitive_over_contour(edge):
                 if contour.primitives[0].start in (edge.end, edge.start):
-                    # for prim in primitives:
-                    #     if prim.point_belong(edge.end)
                     contours_list[i].primitives = [edge.copy(deep=True)] + contour.primitives
                     remove = True
                 elif contour.primitives[-1].end in (edge.start, edge.end):
@@ -1226,8 +1210,6 @@ class Contour(Wire):
                 if remove:
                     edges.remove(line)
                     break
-            # if not edges:
-            #     break
             if not contour_primitives:
                 contour_primitives.append(line)
                 edges.remove(line)
@@ -2139,12 +2121,6 @@ class Contour2D(Contour, Wire2D):
                     for cntr in [contour1, contour2]:
                         all_divided_contour = True
                         for cut_contour in list_cutting_contours:
-                            # point_at_abs = cut_contour.point_at_abscissa(cut_contour.length() / 2)
-                            # if cntr.point_belongs(point_at_abs) and\
-                            #         (not cntr.point_over_contour(point_at_abs) or
-                            #          True not in [cntr.primitive_over_contour(prim)
-                            #                       for prim in cut_contour.primitives]):
-                            #     valid_contour = False
                             points_at_abs = cut_contour.discretization_points(cut_contour.length() / 5)
                             for point_at_abs in points_at_abs[1:-1]:
                                 if cntr.point_belongs(point_at_abs) and \
@@ -2181,8 +2157,6 @@ class Contour2D(Contour, Wire2D):
                 base_contour.plot(ax=ax, color='b')
                 warnings.warn('There probably exists an open contour (two wires that could not be connected)')
                 finished = True
-
-                # finished = True
 
         return list_valid_contours
 
@@ -4246,16 +4220,12 @@ class Contour3D(Contour, Wire3D):
         points = []
         for prim in self.primitives:
             n = 20
-            l = prim.length()
-            points_ = [prim.point_at_abscissa(i / n * l)
+            length = prim.length()
+            points_ = [prim.point_at_abscissa(i / n * length)
                        for i in range(n)]
             for point in points_:
                 if point not in points:
                     points.append(point)
-        # n = 50
-        # l = self.length()
-        # points = [self.point_at_abscissa(i / n * l)
-        #           for i in range(n)]
         return volmdlr.core.BoundingBox.from_points(points)
 
     @property
