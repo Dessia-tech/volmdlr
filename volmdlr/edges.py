@@ -3751,6 +3751,15 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
     def triangulation(self):
         return None
 
+    def linesegment_intersection(self, linesegment: LineSegment3D):
+        points = self.discretization_points()
+        linesegments = [LineSegment3D(start, end) for start, end in zip(points[:-1], points[1:])]
+        for line_segment in linesegments:
+            intersection = line_segment.linesegment_intersection(linesegment)
+            if intersection:
+                return intersection
+        return None
+
 
 class BezierCurve3D(BSplineCurve3D):
 
