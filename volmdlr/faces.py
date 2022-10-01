@@ -4477,9 +4477,9 @@ class PlaneFace3D(Face3D):
                 remove_cutting_contour.append(spliting_points_and_cutting_contour[point1])
                 remove_spliting_points.extend([point1, point2])
                 primitives1 = inner_contour.extract_with_points(point1, point2, True) + \
-                              spliting_points_and_cutting_contour[point1].primitives
+                    spliting_points_and_cutting_contour[point1].primitives
                 primitives2 = inner_contour.extract_with_points(point1, point2, False) + \
-                              spliting_points_and_cutting_contour[point1].primitives
+                    spliting_points_and_cutting_contour[point1].primitives
                 contour1 = volmdlr.wires.Contour2D(primitives1).order_contour()
                 contour2 = volmdlr.wires.Contour2D(primitives2).order_contour()
                 if contour1.is_inside(inner_contour):
@@ -4626,7 +4626,7 @@ class PlaneFace3D(Face3D):
             is_inside1 = True
             is_inside2 = False
         elif (cutting_contour.primitives[0].start == inner_contour_spliting_points1[-1] and
-                 cutting_contour.primitives[-1].end == inner_contour_spliting_points2[-1]):
+              cutting_contour.primitives[-1].end == inner_contour_spliting_points2[-1]):
             is_inside1 = True
             is_inside2 = False
         elif (cutting_contour.primitives[0].start != inner_contour_spliting_points1[-1] and
@@ -5595,7 +5595,7 @@ class CylindricalFace3D(Face3D):
         xmax, ymax = max(pt[0] for pt in pfpoints), max(pt[1] for pt in pfpoints)
 
         origin, vx, vy = planeface.plane.origin, planeface.plane.vectors[0], \
-                         planeface.plane.vectors[1]
+            planeface.plane.vectors[1]
         pf1_2d, pf2_2d = volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D(
             (xmin, ymax))
         pf3_2d, pf4_2d = volmdlr.Point2D((xmax, ymin)), volmdlr.Point2D(
@@ -7894,7 +7894,7 @@ class ClosedShell3D(OpenShell3D):
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces) + \
-                shell2.get_non_intersecting_faces(self, intersecting_faces)
+            shell2.get_non_intersecting_faces(self, intersecting_faces)
         if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces:
             return [self, shell2]
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
