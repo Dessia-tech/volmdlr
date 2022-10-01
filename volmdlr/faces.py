@@ -4167,7 +4167,7 @@ class PlaneFace3D(Face3D):
     #     return cls(plane3d, surface2d, dict_['name'])
 
     def area(self):
-        return self.surface2d.outer_contour.area()
+        return self.surface2d.area()
 
     def copy(self, deep=True, memo=None):
         return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(),
