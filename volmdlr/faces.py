@@ -3713,7 +3713,7 @@ class BSplineSurface3D(Surface3D):
         for i, bspline in enumerate(bsplines_new):
             grid3d = bspline.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(0, 1),
                                                                         y_limits=(0, 1),
-                                                                        points_nbr=(nb, nb),
+                                                                        points_nbr=(50, 50),
                                                                         direction=grid2d_direction[i]))
 
             points3d.extend(grid3d)
