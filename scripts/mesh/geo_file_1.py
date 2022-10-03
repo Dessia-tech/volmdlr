@@ -9,7 +9,7 @@ Created on Wed Jun 15 2022
 import volmdlr
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
-import gmsh
+# import gmsh
 
 # %% Extrusion
 

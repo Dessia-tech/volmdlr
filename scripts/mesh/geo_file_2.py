@@ -10,7 +10,7 @@ import volmdlr
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
 import volmdlr.edges
-import gmsh
+# import gmsh
 
 # %% Extrusion
 
