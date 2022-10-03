@@ -6575,6 +6575,13 @@ class BSplineFace3D(Face3D):
                 return True
         return False
 
+    def to_planeface3d(self):
+        s3d = self.surface3d.to_plane3d()
+        s2d = Surface2D(outer_contour = s3d.contour3d_to_2d(self.outer_contour3d),
+                        inner_contours = [s3d.contour3d_to_2d(contour) for contour in self.inner_contour3d])
+
+        return PlaneFace3D(surface3d=s3d, surface2d=s2d)
+
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
