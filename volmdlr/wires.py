@@ -716,6 +716,12 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         return self.__class__(primitives=primitives_symmetry)
 
+    def symmetry(self):
+        """
+        TODO: code this
+        """
+        raise NotImplementedError('Not coded yet')
+
     def is_symmetric(self, wire2d, line):
         '''
         checks if the two wires2d are symmetric or not according to line
@@ -1779,15 +1785,19 @@ class Contour2D(Contour, Wire2D):
 
     def get_pattern(self):
         """ A pattern is portion of the contour from which the contour can be
-        reconstructed by rotations of this portion"""
+        reconstructed by rotations of this portion
+        Remove in v0.6.0 
+        """
+        warnings.warn('The method Contour2D.get_pattern seems deprecated. If you use this method please report it to devs.',
+                     warnings.DeprecationWarning)
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
 
         # ax=plt.subplot()
         # line = Line2D(Point2D([xi, 0]),Point2D([xi,1]))
         line = volmdlr.edges.Line2D(volmdlr.Point2D([0, -0.17]),
                                     volmdlr.Point2D([0, 0.17]))
-        line_2 = line.Rotation(self.center_of_mass(), 0.26)
-        line_3 = line.Rotation(self.center_of_mass(), -0.26)
+        line_2 = line.rotation(self.center_of_mass(), 0.26)
+        line_3 = line.rotation(self.center_of_mass(), -0.26)
 
         intersections = []
 
@@ -1810,15 +1820,23 @@ class Contour2D(Contour, Wire2D):
             primitives.append(a)
             primitives.extend(self.primitives[:ip3])
             primitives.append(sp22)
-            l = volmdlr.edges.LineSegment2D(sp22.start, sp12.end)
-            interior = l.point_at_abscissa(l.Length() / 2)
+            line_segment = volmdlr.edges.LineSegment2D(sp22.start, sp12.end)
+            interior = line_segment.point_at_abscissa(line_segment.length() / 2)
             primitives.append(
                 volmdlr.edges.Arc2D(sp22.start, interior, sp12.end))
 
         return Contour2D(primitives)
 
     def contour_from_pattern(self):
+        """
+        Seems deprecated. Who use this?
+        Remove in v0.6.0
+        """
         # TODO: Delete this function?
+        msg = ('The method Contour2D.contour_from_pattern seems unused and will' +
+               ' be removed unless someones report using it')
+        warnings.warn(msg,
+                      warnings.DeprecationWarning)
         pattern = self.get_pattern()
         pattern_rotations = []
         # pattern_rotations.append(self)
