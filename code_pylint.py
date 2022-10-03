@@ -11,7 +11,7 @@ MAX_ERROR_BY_TYPE = {
                      'unused-variable': 64,
                      'arguments-differ': 39,
                      'too-many-locals': 76,
-                     'unused-argument': 28,
+                     'unused-argument': 46,
                      'too-many-arguments': 61,
                      'consider-using-enumerate': 22,
                      'too-many-branches': 29,
