@@ -1473,6 +1473,10 @@ class Contour2D(Contour, Wire2D):
     #         equal = (equal and prim1 == prim2)
     #     return equal
 
+    def copy(self):
+        return self.__class__(primitives=[p.copy() for p in self.primitives],
+                              name=self.name)
+
     @property
     def edge_polygon(self):
         if not self._utd_edge_polygon:
