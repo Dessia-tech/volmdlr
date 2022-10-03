@@ -6556,6 +6556,25 @@ class BSplineFace3D(Face3D):
 
         return merged_face
 
+    def face_inside(self, face2):
+        """
+        verifies if a face is inside another face.
+        It returns True if face2 is inside or False if the opposite
+        """
+
+        surface3d = self.surface3d.to_plane3d()
+        if isinstance(face2, BSplineFace3D):
+            surface3d_2 = face2.surface3d.to_plane3d()
+
+        if surface3d.is_coincident(surface3d_2):
+            self_contour2d = self.outer_contour3d.to_2d(
+                surface3d.frame.origin, surface3d.frame.u, surface3d.frame.v)
+            face2_contour2d = face2.outer_contour3d.to_2d(
+                surface3d.frame.origin, surface3d.frame.u, surface3d.frame.v)
+            if self_contour2d.is_inside(face2_contour2d):
+                return True
+        return False
+
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
