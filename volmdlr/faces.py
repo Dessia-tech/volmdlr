@@ -976,6 +976,8 @@ class Plane3D(Surface3D):
         """
         Verifies if two planes are parallel and coincident
         """
+        if isinstance(plane2, BSplineSurface3D):
+            plane2 = plane2.to_plane3d()
         if self.frame.w.is_colinear_to(plane2.frame.w):
             if plane2.point_on_plane(self.frame.origin):
                 return True
@@ -3788,6 +3790,12 @@ class BSplineSurface3D(Surface3D):
                                           points[1],
                                           points[2])
         return surface3d
+
+    def is_coincident(self, surface3d):
+        if isinstance(surface3d, BSplineSurface3D):
+            return self.to_plane3d().is_coincident(surface3d.to_plane3d())
+        else:
+            return self.to_plane3d().is_coincident(surface3d)
 
 
 class BezierSurface3D(BSplineSurface3D):
