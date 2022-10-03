@@ -1359,6 +1359,7 @@ class Contour(Wire):
         '''
         return extremitises points of a list of points on a contour
         '''
+        # TODO: rewrite this awfull code!
         points = []
         primitives = self.primitives
         for i in range(0, len(primitives)):
@@ -1637,23 +1638,23 @@ class Contour2D(Contour, Wire2D):
             return self
 
         initial_points = []
-        for p in self.primitives:
-            initial_points.append((p.start, p.end))
+        for primitive in self.primitives:
+            initial_points.append((primitive.start, primitive.end))
 
         new_primitives = []
         points = self.ordering_contour()
-        for p1, p2 in points:
+        for point1, point2 in points:
             try:
-                index = initial_points.index((p1, p2))
+                index = initial_points.index((point1, point2))
             except ValueError:
-                index = initial_points.index((p2, p1))
+                index = initial_points.index((point2, point1))
 
             if isinstance(self.primitives[index], volmdlr.edges.LineSegment2D):
-                new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
+                new_primitives.append(volmdlr.edges.LineSegment2D(point1, point2))
             elif isinstance(self.primitives[index], volmdlr.edges.Arc2D):
-                new_primitives.append(volmdlr.edges.Arc2D(p1, self.primitives[index].interior, p2))
+                new_primitives.append(volmdlr.edges.Arc2D(point1, self.primitives[index].interior, point2))
             elif isinstance(self.primitives[index], volmdlr.edges.BSplineCurve2D):
-                if (p1, p2) == (self.primitives[index].start, self.primitives[index].end):
+                if (point1, point2) == (self.primitives[index].start, self.primitives[index].end):
                     new_primitives.append(self.primitives[index])
                 else:
                     new_primitives.append(self.primitives[index].reverse())
@@ -1671,30 +1672,30 @@ class Contour2D(Contour, Wire2D):
         return contours
 
     def cut_by_linesegments(self, lines: List[volmdlr.edges.LineSegment2D]):
-        for c in lines:
-            if not isinstance(c, volmdlr.edges.LineSegment2D):
-                raise KeyError(
-                    'contour must be a list of LineSegment2D object')
+        # for c in lines:
+        #     if not isinstance(c, volmdlr.edges.LineSegment2D):
+        #         raise KeyError(
+        #             'contour must be a list of LineSegment2D object')
 
         cut_lines = []
-        for p in lines:
-            cut_lines.append(p.to_line())
+        for cut_ls in lines:
+            cut_lines.append(cut_ls.to_line())
 
         contour_to_cut = [self]
-        for l in cut_lines:
+        for line in cut_lines:
             new_contour_to_cut = []
-            for c in contour_to_cut:
-                cs = c.cut_by_line(l)
+            for contour in contour_to_cut:
+                cs = contour.cut_by_line(line)
                 new_contour_to_cut.extend(cs)
             contour_to_cut.extend(new_contour_to_cut)
 
         p1 = Contour2D(lines).center_of_mass()
         dist_min = math.inf
-        for c in contour_to_cut:
-            if c.area() > 1e-10:
-                p0 = c.center_of_mass()
+        for contour in contour_to_cut:
+            if contour.area() > 1e-10:
+                p0 = contour.center_of_mass()
                 if p0.point_distance(p1) < dist_min:
-                    c_opti = c
+                    c_opti = contour
                     dist_min = p0.point_distance(p1)
         return c_opti
 
