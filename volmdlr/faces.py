@@ -30,7 +30,7 @@ import volmdlr.wires
 import volmdlr.display as vmd
 import volmdlr.geometry
 import volmdlr.grid
-
+import time
 
 def knots_vector_inv(knots_vector):
     '''
@@ -7083,8 +7083,10 @@ class ClosedShell3D(OpenShell3D):
         Ray Casting algorithm
         Returns True if the point is inside the Shell, False otherwise
         """
-
+        # t_0 = time.time_ns()
         bbox = self.bounding_box
+        # print(time.time_ns() - t_0)
+        # stop
         if not bbox.point_belongs(point3d):
             return False
 
