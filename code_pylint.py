@@ -7,6 +7,7 @@ MAX_ERROR_BY_TYPE = {
                      'no-else-return': 75,
                      'consider-using-f-string': 156,
                      'no-member': 45,
+
                      'inconsistent-return-statements': 17,
                      'unused-variable': 63,
                      'arguments-differ': 9,
