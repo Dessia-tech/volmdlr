@@ -4797,6 +4797,9 @@ class PlaneFace3D(Face3D):
             if new_face.surface2d.outer_contour.is_inside(new_contour):
                 inner_contours1 = []
                 inner_contours2 = []
+                if not new_face.surface2d.inner_contours:
+                    new_face.surface2d.inner_contours = [new_contour]
+                    break
                 for i, inner_contour in enumerate(new_face.surface2d.inner_contours):
                     if new_contour.is_inside(inner_contour):
                         if any(inner_contour.primitive_over_contour(prim)
@@ -4835,8 +4838,7 @@ class PlaneFace3D(Face3D):
                 new_faces_contours)
         for contour, inner_contours in zip(new_faces_contours, new_inner_contours):
             new_face = PlaneFace3D(self.surface3d, Surface2D(contour, inner_contours))
-            if not math.isclose(new_face.area(), 0, abs_tol=1e-6):
-                list_faces.append(new_face)
+            list_faces.append(new_face)
         return list_faces
 
     def divide_face_with_closed_cutting_contours(self, list_closed_cutting_contours, list_faces):
