@@ -148,7 +148,6 @@ class Wire:
         inside: extracted contour is between the two points if True and outside
         these points if False
         """
-        split_primitives = []
         primitives = self.primitives
         indices = []
 
@@ -1212,8 +1211,6 @@ class Contour(Wire):
         '''
 
         list_p = []
-        edges1 = set()
-        # edges2 = set()
 
         for edge_1, edge_2 in itertools.product(self.primitives,
                                                 contour.primitives):
@@ -1238,46 +1235,6 @@ class Contour(Wire):
                             return True
                         return False
         return False
-
-    def shared_primitives_extremities(self, contour):
-        '''
-        extract shared primitives extremities between two adjacent contours
-        '''
-
-        if self.is_superposing(contour):
-            warnings.warn('The contours are superposing')
-            return []
-
-        list_p, edges1 = [], set()
-        for edge_1, edge_2 in itertools.product(self.primitives,
-                                                contour.primitives):
-            edges = [edge_1, edge_2, edge_1]
-            for edge1, edge2 in zip(edges, edges[1:]):
-                for point in [edge2.start, edge2.end]:
-                    if edge1.point_belongs(point, 1e-6):
-                        if not list_p:
-                            list_p.append(point)
-                        if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
-                            list_p.append(point)
-
-                        try:
-                            self.primitive_to_index(edge1)
-                            edges1.add(edge1)
-                        except KeyError:
-                            edges1.add(edge2)
-
-                    if len(list_p) == 2 and all_points is False:
-                        if self.is_overlapping(contour, list_p):
-                            return False
-                        return True
-        if len(list_p) < 2:
-            return False
-        if len(list_p) >= 2 and all_points is True:
-            if len(list_p) == 2 and self.is_overlapping(contour, list_p):
-                return False
-            return (edges1, list_p)
-        else:
-            return False
 
     def shared_primitives_extremities(self, contour):
         '''
