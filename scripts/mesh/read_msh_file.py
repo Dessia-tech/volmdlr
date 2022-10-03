@@ -7,15 +7,15 @@ Created on Thu Jun 16 2022
 """
 
 import volmdlr
-import volmdlr.gmsh
+import volmdlr.gmsh_vm
 
 # %% 2D
 
 file_path = 'model.msh'
 
-gmsh = volmdlr.gmsh.Gmsh.from_file(file_path)
+mesh_gmsh = volmdlr.gmsh_vm.Gmsh.from_file(file_path)
 
-mesh = gmsh.define_triangular_element_mesh()
+mesh = mesh_gmsh.define_triangular_element_mesh()
 
 mesh.plot()
 
@@ -23,8 +23,8 @@ mesh.plot()
 
 file_path = 'block.msh'
 
-gmsh = volmdlr.gmsh.Gmsh.from_file(file_path)
+mesh_gmsh = volmdlr.gmsh_vm.Gmsh.from_file(file_path)
 
-mesh = gmsh.define_tetrahedron_element_mesh()
+mesh = mesh_gmsh.define_tetrahedron_element_mesh()
 
 # mesh.plot()
