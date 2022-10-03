@@ -3791,11 +3791,11 @@ class BSplineSurface3D(Surface3D):
                                           points[2])
         return surface3d
 
-    def is_coincident(self, surface3d):
-        if isinstance(surface3d, BSplineSurface3D):
-            return self.to_plane3d().is_coincident(surface3d.to_plane3d())
-        else:
-            return self.to_plane3d().is_coincident(surface3d)
+    # def is_coincident(self, surface3d):
+    #     if isinstance(surface3d, BSplineSurface3D):
+    #         return self.to_plane3d().is_coincident(surface3d.to_plane3d())
+    #     else:
+    #         return self.to_plane3d().is_coincident(surface3d)
 
 
 class BezierSurface3D(BSplineSurface3D):
@@ -6556,29 +6556,29 @@ class BSplineFace3D(Face3D):
 
         return merged_face
 
-    def face_inside(self, face2):
-        """
-        verifies if a face is inside another face.
-        It returns True if face2 is inside or False if the opposite
-        """
+    # def face_inside(self, face2):
+    #     """
+    #     verifies if a face is inside another face.
+    #     It returns True if face2 is inside or False if the opposite
+    #     """
 
-        surface3d = self.surface3d.to_plane3d()
-        if isinstance(face2, BSplineFace3D):
-            surface3d_2 = face2.surface3d.to_plane3d()
+    #     surface3d = self.surface3d.to_plane3d()
+    #     if isinstance(face2, BSplineFace3D):
+    #         surface3d_2 = face2.surface3d.to_plane3d()
 
-        if surface3d.is_coincident(surface3d_2):
-            self_contour2d = self.outer_contour3d.to_2d(
-                surface3d.frame.origin, surface3d.frame.u, surface3d.frame.v)
-            face2_contour2d = face2.outer_contour3d.to_2d(
-                surface3d.frame.origin, surface3d.frame.u, surface3d.frame.v)
-            if self_contour2d.is_inside(face2_contour2d):
-                return True
-        return False
+    #     if surface3d.is_coincident(surface3d_2):
+    #         self_contour2d = self.outer_contour3d.to_2d(
+    #             surface3d.frame.origin, surface3d.frame.u, surface3d.frame.v)
+    #         face2_contour2d = face2.outer_contour3d.to_2d(
+    #             surface3d.frame.origin, surface3d.frame.u, surface3d.frame.v)
+    #         if self_contour2d.is_inside(face2_contour2d):
+    #             return True
+    #     return False
 
     def to_planeface3d(self):
         s3d = self.surface3d.to_plane3d()
         s2d = Surface2D(outer_contour = s3d.contour3d_to_2d(self.outer_contour3d),
-                        inner_contours = [s3d.contour3d_to_2d(contour) for contour in self.inner_contour3d])
+                        inner_contours = [s3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
 
         return PlaneFace3D(surface3d=s3d, surface2d=s2d)
 
