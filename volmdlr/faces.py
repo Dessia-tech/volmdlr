@@ -4903,7 +4903,6 @@ class PlaneFace3D(Face3D):
         list_faces = self.divide_face_with_closed_cutting_contours(list_closed_cutting_contours, list_faces)
         return list_faces
 
-
     def is_adjacent(self, face2: Face3D):
         contour1 = self.outer_contour3d.to_2d(
             self.surface3d.frame.origin,
@@ -4915,7 +4914,7 @@ class PlaneFace3D(Face3D):
             self.surface3d.frame.v)
         if contour1.is_sharing_primitives_with(contour2, False):
             return True
-            
+
     def is_intersecting(self, face2, list_coincident_faces=None, tol: float = 1e-6):
         """
         Verifies if two face are intersecting
