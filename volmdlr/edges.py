@@ -1626,7 +1626,7 @@ class Arc2D(Arc):
         """
 
         if (self.start.point_distance(point2d) <= abs_tol
-            or self.end.point_distance(point2d) <= abs_tol):
+                or self.end.point_distance(point2d) <= abs_tol):
             return True
 
         if self.is_trigo:
@@ -1647,7 +1647,7 @@ class Arc2D(Arc):
                                                              vector_point)
             point_end_angle = volmdlr.core.clockwise_angle(vector_point,
                                                            vector_end)
-            if math.isclose(arc_angle, point_start_angle+point_end_angle, abs_tol=abs_tol):
+            if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=abs_tol):
                 return True
         return False
 
