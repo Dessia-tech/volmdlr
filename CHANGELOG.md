@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 * Gmsh: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
+* Circle2D: primitives (defined with 2 Arc2D)
 *
 
 ### Fixed
