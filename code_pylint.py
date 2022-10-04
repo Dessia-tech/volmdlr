@@ -1,6 +1,7 @@
 from pylint.lint import Run
 
-MIN_NOTE = 7.64
+
+MIN_NOTE = 7.9
 
 MAX_ERROR_BY_TYPE = {
                      'invalid-name': 1103,
@@ -32,7 +33,7 @@ MAX_ERROR_BY_TYPE = {
                      'attribute-defined-outside-init': 8,
                      'too-many-return-statements': 6,
                      'consider-merging-isinstance': 6,
-                     'cyclic-import': 6,
+                     'cyclic-import': 4,
                      'consider-iterating-dictionary': 2,
                      'raise-missing-from': 4,
                      'no-else-continue': 4,
