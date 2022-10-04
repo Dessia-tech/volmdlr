@@ -11,11 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 * Gmsh: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
+* Arc: reverse
 *
 
 ### Fixed
 
 * Contour3D: average_center_point (use edge_polygon.points instead of points)
+* Arc2D: point_belongs (use is_trigo, consider point=start or end)
 *
 
 ### Performance improvements
