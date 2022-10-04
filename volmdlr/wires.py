@@ -1131,7 +1131,8 @@ class Contour(Wire):
                 if j > i:
                     if primitive2.end != primitive1.start != primitive2.start and \
                             primitive2.end != primitive1.end != primitive2.start:
-                        if primitive1.unit_direction_vector(abscissa=0).is_colinear_to(primitive2.unit_direction_vector(abscissa=0)):
+                        if primitive1.unit_direction_vector(abscissa=0).is_colinear_to(
+                                primitive2.unit_direction_vector(abscissa=0)):
                             continue
                         if primitive1.point_belongs(primitive2.start) or primitive1.point_belongs(primitive2.end):
                             touching_primitives.append([primitive2, primitive1])
