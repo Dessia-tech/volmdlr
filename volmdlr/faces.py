@@ -4810,7 +4810,7 @@ class Triangle3D(PlaneFace3D):
 
     def copy(self, deep=True, memo=None):
         return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
-                          self.name)
+                          self.alpha, self.color, self.name)
 
     def triangulation(self):
         return vmd.DisplayMesh3D([vmd.Node3D.from_point(self.point1),
