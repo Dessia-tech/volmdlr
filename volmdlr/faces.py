@@ -7236,7 +7236,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
                         if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
                             # for point in primitive.control_points:
-                                # points.add(point)
+                            # points.add(point)
                             for point in primitive.discretization_points():
                                 points.add(point)
 
@@ -7272,7 +7272,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                 discretization_points = primitive.discretization_points()
                                 start_point_tag = points.index(discretization_points[0]) + 1
                                 end_point_tag = points.index(discretization_points[1]) + 1
-                                primitive_linesegments = volmdlr.edges.LineSegment3D(discretization_points[0], discretization_points[1])
+                                primitive_linesegments = volmdlr.edges.LineSegment3D(
+                                    discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
                                                                                   start_point_tag=start_point_tag + point_account,
                                                                                   end_point_tag=end_point_tag + point_account))
