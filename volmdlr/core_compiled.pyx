@@ -614,6 +614,19 @@ class Point2D(Vector2D):
     def to_vector(self):
         return Vector2D(self.x, self.y)
 
+    def to_step(self, current_id, vertex=False):
+        content = "#{} = CARTESIAN_POINT('{}',({:.6f},{:.6f}));\n"\
+                        .format(current_id, self.name,
+                                1000.*self.x,
+                                1000.*self.y)
+        if vertex:
+            content += "#{} = VERTEX_POINT('{}',#{});\n".format(current_id+1,
+                                                                self.name,
+                                                                current_id)
+            current_id += 1
+
+        return content, current_id
+
     def plot(self, ax=None, color='k', alpha=1, plot_points=True):
         if ax is None:
             fig, ax = plt.subplots()

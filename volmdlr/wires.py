@@ -550,19 +550,20 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         intersection_points_primitives = []
         for primitive in self.primitives:
             intersections = primitive.line_intersections(line)
-            if intersections and intersections[0] not in intersection_points:
-                if not self.is_crossing_start_end_point(intersections,
-                                                        primitive):
-                    intersection_points.append(intersections[0])
-                    intersection_points_primitives.append(
-                        (intersections[0],
-                         primitive))
-                elif self.is_start_end_crossings_valid(line, intersections,
-                                                       primitive):
-                    intersection_points.append(intersections[0])
-                    intersection_points_primitives.append(
-                        (intersections[0],
-                         primitive))
+            for intersection in intersections:
+                if intersection not in intersection_points:
+                    if not self.is_crossing_start_end_point(intersections,
+                                                            primitive):
+                        intersection_points.append(intersection)
+                        intersection_points_primitives.append(
+                            (intersection,
+                             primitive))
+                    elif self.is_start_end_crossings_valid(line, intersections,
+                                                           primitive):
+                        intersection_points.append(intersection)
+                        intersection_points_primitives.append(
+                            (intersection,
+                             primitive))
         return intersection_points_primitives
 
     def wire_intersections(self, wire):
@@ -1285,7 +1286,16 @@ class Contour(Wire):
         """
         edges = []
         for primitive in self.primitives:
-            points = primitive.discretization_points(number_points=number_points)
+            if hasattr(primitive, 'discretise'):
+                points = primitive.discretise(n)
+                warnings.warn('Use discretisation_points method instead of discretise')
+            elif hasattr(primitive, 'polygon_points'):
+                points = primitive.polygon_points(n)
+                warnings.warn('Use discretisation_points method instead of polygon_points')
+            elif hasattr(primitive, 'discretisation_points'):
+                points = primitive.discretisation_points(n)
+            else:
+                raise NotImplementedError(f'Class {primitive} is missing a discretisation_points method')
             for p1, p2 in zip(points[:-1], points[1:]):
                 edges.append(volmdlr.edges.LineSegment2D(p1, p2))
 
@@ -1766,6 +1776,7 @@ class Contour2D(Contour, Wire2D):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
             if self.point_belongs(p):
                 return p
+        raise ValueError('Could not find a point inside')
 
     def order_contour(self):
         if self.is_ordered() or len(self.primitives) < 2:
@@ -1832,6 +1843,89 @@ class Contour2D(Contour, Wire2D):
                     c_opti = c
                     dist_min = p0.point_distance(p1)
         return c_opti
+    
+    def repair_cut_contour(self, n, intersections, line):
+        """
+        Choose:
+        n=0 for Side 1: opposite side of begining of contour
+        n=1 for Side 2: start of contour to first intersect (i=0) and
+         i odd to i+1 even
+        """
+        if n not in [0, 1]:
+            raise ValueError
+
+        n_inter = len(intersections)
+        contours = []
+        # primitives_split = [primitive.split(point)
+        #                     for point, primitive in intersections]
+        x = [(ip, line.abscissa(point))
+             for ip, (point, _) in enumerate(intersections)]
+        # intersection_to_primitives_index = {
+        #     i: self.primitives.index(primitive)
+        #     for i, (_, primitive) in enumerate(intersections)}
+        sorted_inter_index = [x[0] for x in sorted(x, key=lambda p: p[1])]
+        sorted_inter_index_dict = {i: ii for ii, i in
+                                   enumerate(sorted_inter_index)}
+        sorted_inter_index_dict[n_inter] = sorted_inter_index_dict[0]
+        if n == 1:
+            intersections.append(intersections[0])
+
+        remaining_transitions = [i for i in range(n_inter // 2)]
+        # enclosing_transitions = {}
+        while len(remaining_transitions) > 0:
+            nb_max_enclosed_transitions = -1
+            enclosed_transitions = {}
+            for it in remaining_transitions:
+                i1 = sorted_inter_index_dict[2 * it + n]
+                i2 = sorted_inter_index_dict[2 * it + 1 + n]
+                net = abs(i2 - i1) - 1
+                if net > nb_max_enclosed_transitions:
+                    nb_max_enclosed_transitions = net
+                    best_transition = it
+                    if i1 < i2:
+                        enclosed_transitions[it] = [(i + abs(n-1)) // 2 for i
+                                                    in sorted_inter_index[
+                                                    i2 - 1:i1:-2]]
+                    else:
+                        enclosed_transitions[it] = [(i + abs(n-1)) // 2 for i
+                                                    in sorted_inter_index[
+                                                    i2 + 1:i1:2]]
+
+            remaining_transitions.remove(best_transition)
+            point_start, primitive1 = intersections[2 * best_transition + n]
+            point2, primitive2 = intersections[2 * best_transition + 1 + n]
+            primitives = self.extract_primitives(point_start, primitive1,
+                                                 point2, primitive2,
+                                                 inside=not n)
+            last_point = point2
+            for transition in enclosed_transitions[best_transition]:
+                point1, primitive1 = intersections[2 * transition + n]
+                point2, primitive2 = intersections[2 * transition + 1 + n]
+                primitives.append(
+                    volmdlr.edges.LineSegment2D(last_point, point1))
+                primitives.extend(
+                    self.extract_primitives(point1, primitive1, point2,
+                                            primitive2, inside=not n))
+                last_point = point2
+                if transition in remaining_transitions:
+                    remaining_transitions.remove(transition)
+
+            primitives.append(
+                volmdlr.edges.LineSegment2D(last_point, point_start))
+
+            # points = (volmdlr.edges.LineSegment2D(last_point, point_start)).discretise(5)
+            # line_segment=volmdlr.edges.LineSegment2D(last_point, point_start)
+            # for p in points[1:-1]:
+            #     r = line_segment.split(p)
+            #     primitives.append(r[0])
+            #     line_segment = r[1]
+            #     if p == points[-2]:
+            #         primitives.append(r[1])
+
+            contour = Contour2D(primitives)
+            contour.order_contour()
+            contours.append(contour)
+        return contours
 
     def cut_by_line(self, line: volmdlr.edges.Line2D) -> List['Contour2D']:
         """
@@ -1842,6 +1936,11 @@ class Contour2D(Contour, Wire2D):
         if not intersections or len(intersections) < 2:
             return [self]
         if len(intersections) % 2 != 0:
+            ax = self.plot()
+            line.plot(ax=ax)
+            [i[0].plot(ax=ax) for i in intersections]
+            self.save_to_file('/home/axel/Bureau/contour2d')
+            line.save_to_file('/home/axel/Bureau/line2d')
             raise NotImplementedError(
                 '{} intersections not supported yet'.format(
                     len(intersections)))
@@ -2248,16 +2347,13 @@ class Contour2D(Contour, Wire2D):
         return Contour2D(new_primitives)
 
     def merge_with(self, contour2d):
-        """
-        merge two adjacent contours, sharing primitives, and returns one outer
-        contour and inner contours (if there are any)
-        :param contour2d: contour to merge with
-        :return: merged contours
-        """
-
-        if self.is_inside(contour2d) and not self.is_sharing_primitives_with(contour2d):
+        '''
+        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
+        '''
+        is_sharing_primitive = self.is_sharing_primitives_with(contour2d)
+        if self.is_inside(contour2d) and not is_sharing_primitive:
             return [self]
-        elif contour2d.is_inside(self) and not self.is_sharing_primitives_with(contour2d):
+        elif contour2d.is_inside(self) and not is_sharing_primitive:
             return [contour2d]
 
         merged_primitives = self.merge_primitives_with(contour2d)
@@ -3523,7 +3619,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             middle_point.plot(ax=ax, color='r')
             line_segment1.plot(ax=ax, color='y')
             line_segment2.plot(ax=ax, color='b')
-            # closing_point.plot(ax=ax)
+            closing_point.plot(ax=ax)
+            raise NotImplementedError('There should not be a plot inside this method')
 
         return closing_point
 
@@ -3736,6 +3833,21 @@ class Circle2D(Contour2D):
             center=self.center, start_end=self.point_at_abscissa(0),
             name=self.name)
         return full_arc_2d.linesegment_intersections(lineseg2d, tol)
+
+    def cut_by_line(self, line: volmdlr.edges.Line2D):
+        intersection_points = self.line_intersections(line)
+        if not intersection_points:
+            return [self]
+        elif len(intersection_points) == 1:
+            raise NotImplementedError
+        elif len(intersection_points) == 2:
+            linesegment = volmdlr.edges.LineSegment2D(*intersection_points)
+            arc1, arc2 = self.split(*intersection_points)
+            contour1 = Contour2D([arc1, linesegment.copy()])
+            contour2 = Contour2D([arc2, linesegment.copy()])
+            return [contour1, contour2]
+        else:
+            raise ValueError
 
     def circle_intersections(self, circle: 'volmdlr.wires.Circle2D'):
         x0, y0 = self.center
@@ -4076,14 +4188,21 @@ class Contour3D(Contour, Wire3D):
             edges.append(last_edge)
         return cls(edges, name=name)
 
-    def to_step(self, current_id, surface_id=None):
-
+    def to_step(self, current_id, surface_id=None, surface3d=None):
         content = ''
         edge_ids = []
         for primitive in self.primitives:
-            if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
-                continue
-            primitive_content, primitive_ids = primitive.to_step(current_id)
+            if primitive.__class__.__name__ == 'BSplineCurve3D':
+                method_name = f'{primitive.__class__.__name__.lower()}_to_2d'
+                curve2d = getattr(surface3d, method_name)(primitive)[0]
+                if curve2d.__class__.__name__ == 'LineSegment3D':
+                    curve2d = curve2d.to_bspline_curve()
+                primitive_content, primitive_ids = primitive.to_step(
+                    current_id, surface_id, curve2d)
+            else:
+                primitive_content, primitive_ids = primitive.to_step(
+                    current_id,
+                    surface_id)
             content += primitive_content
             current_id = primitive_ids[-1] + 1
             for primitive_id in primitive_ids:
