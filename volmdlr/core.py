@@ -21,7 +21,6 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 
-# from mpl_toolkits.mplot3d import Axes3D
 
 npy.seterr(divide='raise')
 
@@ -622,6 +621,34 @@ class CompositePrimitive3D(Primitive3D):
             ax = fig.add_subplot(111, projection='3d')
         for primitive in self.primitives:
             primitive.plot(ax=ax, color=color, alpha=alpha)
+        return ax
+
+
+class BoundingRectangle(dc.DessiaObject):
+
+    def __init__(self, xmin: float, xmax: float, ymin: float, ymax: float, name: str = '', **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        self.name = name
+
+    def plot(self, ax=None):
+
+        if not ax:
+            ax = plt.subplot()
+
+        p0 = [self.xmin, self.ymin]
+        p1 = [self.xmax, self.ymin]
+        p2 = [self.xmax, self.ymax]
+        p3 = [self.xmin, self.ymax]
+
+        x = [p0[0], p1[0], p2[0], p3[0], p0[0]]
+        y = [p0[1], p1[1], p2[1], p3[1], p0[1]]
+
+        ax.plot(x, y, color='gray')
+        ax.scatter(x, y, color='r')
         return ax
 
 
