@@ -1506,6 +1506,9 @@ class Arc(Edge):
                       DeprecationWarning)
         return self.discretization_points(number_points=discretization_resolution)
 
+    def reverse(self):
+        return self.__class__(start=self.end, interior=self.interior, end=self.start)
+
 
 class Arc2D(Arc):
     """
