@@ -637,7 +637,7 @@ class BoundingRectangle(dc.DessiaObject):
     def plot(self, ax=None):
 
         if not ax:
-            ax = plt.subplot()
+            _, ax = plt.subplots()
 
         p0 = [self.xmin, self.ymin]
         p1 = [self.xmax, self.ymin]
@@ -647,10 +647,15 @@ class BoundingRectangle(dc.DessiaObject):
         x = [p0[0], p1[0], p2[0], p3[0], p0[0]]
         y = [p0[1], p1[1], p2[1], p3[1], p0[1]]
 
-        ax.plot(x, y, color='gray')
+        ax.plot(x, y, color='gray', linestyle='dashdot')
         ax.scatter(x, y, color='r')
         return ax
 
+    def area(self):
+        return (self.xmax - self.xmin) * (self.ymax - self.ymin)
+
+    def center(self):
+        return[0.5*(self.xmin + self.xmax), 0.5*(self.ymin + self.ymax)]
 
 class BoundingBox(dc.DessiaObject):
     """
