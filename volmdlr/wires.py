@@ -1170,7 +1170,6 @@ class Contour(Wire):
 
         edges = []
         for primitive in self.primitives:
-<<<<<<< HEAD
             if hasattr(primitive, 'discretise'):
                 points = primitive.discretise(n)
                 warnings.warn('Use discretisation_points method instead of discretise')
@@ -1181,9 +1180,6 @@ class Contour(Wire):
                 points = primitive.discretisation_points(n)
             else:
                 raise NotImplementedError(f'Class {primitive} is missing a discretisation_points method')
-=======
-            points = primitive.discretization_points(n)
->>>>>>> origin/fix-bool_op-substract
             for p1, p2 in zip(points[:-1], points[1:]):
                 edges.append(volmdlr.edges.LineSegment2D(p1, p2))
 

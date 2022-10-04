@@ -1959,6 +1959,17 @@ class BSplineSurface3D(Surface3D):
         self._grids2d = None
         self._grids2d_deformed = None
 
+    def to_plane3d(self):
+        points_2d = [volmdlr.Point2D(0.1, 0.1),
+                     volmdlr.Point2D(0.1, 0.8),
+                     volmdlr.Point2D(0.8, 0.5)]
+        points = [self.point2d_to_3d(pt) for pt in points_2d]
+
+        surface3d = Plane3D.from_3_points(points[0],
+                                          points[1],
+                                          points[2])
+        return surface3d
+
     @property
     def x_periodicity(self):
         p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
@@ -6257,6 +6268,13 @@ class BSplineFace3D(Face3D):
                         surface2d=surface2d,
                         name=name)
         self._bbox = None
+
+    def to_planeface3d(self):
+        s3d = self.surface3d.to_plane3d()
+        s2d = Surface2D(outer_contour=s3d.contour3d_to_2d(self.outer_contour3d),
+                        inner_contours=[s3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
+
+        return PlaneFace3D(surface3d=s3d, surface2d=s2d)
 
     @property
     def bounding_box(self):
