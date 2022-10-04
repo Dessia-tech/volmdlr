@@ -4,22 +4,24 @@
 
 """
 
-import os
-import tempfile
-from datetime import datetime
 import math
+import os
 import subprocess
+import tempfile
 import webbrowser
-import numpy as npy
+from datetime import datetime
+# import volmdlr.stl as vmstl
+from typing import List
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import numpy as npy
 
 import dessia_common as dc
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
-# import volmdlr.stl as vmstl
+
+# from mpl_toolkits.mplot3d import Axes3D
 
 npy.seterr(divide='raise')
 
@@ -387,8 +389,8 @@ class CompositePrimitive2D(Primitive2D):
     """
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
                                     '_primitives_to_index']
-    _non_hash_attributes = ['name', '_utd_primitives_to_index',
-                            '_primitives_to_index']
+    _non_data_hash_attributes = ['name', '_utd_primitives_to_index',
+                                 '_primitives_to_index']
 
     def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)
@@ -413,35 +415,60 @@ class CompositePrimitive2D(Primitive2D):
 
     #     self.basis_primitives = basis_primitives
 
-    def rotation(self, center, angle, copy=True):
-        if copy:
-            return self.__class__([p.rotation(center, angle, copy=True)
-                                   for p in self.primitives])
-        else:
-            for p in self.primitives:
-                p.rotation(center, angle, copy=False)
-            self.update_basis_primitives()
-
-    def translation(self, offset, copy=True):
-        if copy:
-            return self.__class__([p.translation(offset, copy=True)
-                                   for p in self.primitives])
-        else:
-            for p in self.primitives:
-                p.translation(offset, copy=False)
-            self.update_basis_primitives()
-
-    def frame_mapping(self, frame, side, copy=True):
+    def rotation(self, center: volmdlr.Point2D, angle: float):
         """
+        CompositePrimitive2D rotation
+        :param center: rotation center
+        :param angle: angle rotation
+        :return: a new rotated CompositePrimitive2D
+        """
+        return self.__class__([point.rotation(center, angle)
+                               for point in self.primitives])
+
+    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
+        """
+        CompositePrimitive2D rotation. Object is updated inplace
+        :param center: rotation center
+        :param angle: rotation angle
+        """
+        for point in self.primitives:
+            point.rotation_inplace(center, angle)
+        self.update_basis_primitives()
+
+    def translation(self, offset: volmdlr.Vector2D):
+        """
+        CompositePrimitive2D translation
+        :param offset: translation vector
+        :return: A new translated CompositePrimitive2D
+        """
+        return self.__class__([point.translation(offset)
+                               for point in self.primitives])
+
+    def translation_inplace(self, offset: volmdlr.Vector2D):
+        """
+        CompositePrimitive2D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        for point in self.primitives:
+            point.translation_inplace(offset)
+        self.update_basis_primitives()
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and return a new CompositePrimitive2D
         side = 'old' or 'new'
         """
-        if copy:
-            return self.__class__([p.frame_mapping(frame, side, copy=True)
-                                   for p in self.primitives])
-        else:
-            for p in self.primitives:
-                p.frame_mapping(frame, side, copy=False)
-            self.update_basis_primitives()
+        return self.__class__([primitive.frame_mapping(frame, side)
+                               for primitive in self.primitives])
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        for primitive in self.primitives:
+            primitive.frame_mapping_inplace(frame, side)
+        self.update_basis_primitives()
 
     def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, equal_aspect=True):
@@ -513,19 +540,22 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
         return [babylon_mesh]
 
     def babylon_points(self):
-
         points = []
-        if hasattr(self, 'primitives'):
+        if hasattr(self, 'primitives') and \
+                hasattr(self.primitives[0], 'start'):
             points = [[self.primitives[0].start.x,
                        self.primitives[0].start.y,
-                       self.primitives[0].start.z],
-                      [self.primitives[0].end.x,
-                       self.primitives[0].end.y,
-                       self.primitives[0].end.z]]
-            points += [[line.end.x, line.end.y, line.end.z]
-                       for line in self.primitives[1:]]
+                       self.primitives[0].start.z]]
+            for primitive in self.primitives:
+                if hasattr(primitive, 'curve'):
+                    points.extend(primitive.curve.evalpts)
+                else:
+                    points.append([primitive.end.x, primitive.end.y,
+                                   primitive.end.z])
         elif hasattr(self, 'curve'):
             points = self.curve.evalpts
+        elif hasattr(self, 'polygon_points'):
+            points = self.polygon_points(50)
         return points
 
     def babylon_lines(self, points=None):
@@ -545,16 +575,16 @@ class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['basis_primitives']
-    _non_eq_attributes = ['name', 'basis_primitives']
-    _non_hash_attributes = []
+    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_data_hash_attributes = []
     """
     A collection of simple primitives3D
     """
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
         self.primitives = primitives
 
-        Primitive3D.__init__(self, name=name)
+        Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
         self._utd_primitives_to_index = False
 
     # def primitive_to_index(self, primitive):
@@ -582,7 +612,8 @@ class CompositePrimitive3D(Primitive3D):
 
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
         for primitive in self.primitives:
             primitive.plot(ax=ax, color=color, alpha=alpha)
         return ax
@@ -605,7 +636,7 @@ class BoundingBox(dc.DessiaObject):
         self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
 
     def __hash__(self):
-        return sum(hash(p) for p in self.points)
+        return sum(hash(point) for point in self.points)
 
     def __add__(self, other_bbox):
         return BoundingBox(min(self.xmin, other_bbox.xmin),
@@ -821,16 +852,16 @@ class VolumeModel(dc.PhysicalObject):
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['shells', 'bounding_box']
-    _non_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                          'faces']
-    _non_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                            'faces']
+    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                               'faces']
+    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                                 'faces']
     _dessia_methods = ['to_stl_model']
     """
-    :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
+
     """
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives
         self.name = name
         self.shells = []
@@ -841,9 +872,10 @@ class VolumeModel(dc.PhysicalObject):
         self.bounding_box = self._bounding_box()
         # else:
         #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
+        dc.DessiaObject.__init__(self, name=name)
 
     def __hash__(self):
-        return sum(hash(p) for p in self.primitives)
+        return sum(hash(point) for point in self.primitives)
 
     # def _extract_shells(self):
     #     shells = []
@@ -871,42 +903,68 @@ class VolumeModel(dc.PhysicalObject):
             volume += primitive.volume()
         return volume
 
-    def rotation(self, center, axis, angle, copy=True):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                 angle: float):
         """
-        Rotate the whole model around a center and an axis of a given angle
+        VolumeModel rotation
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated VolumeModel
         """
-        if copy:
-            new_primitives = [
-                primitive.rotation(center, axis, angle, copy=True) for
-                primitive in self.primitives]
-            return VolumeModel(new_primitives, self.name)
-        else:
-            for primitive in self.primitives:
-                primitive.rotation(center, axis, angle, copy=False)
-            self.bounding_box = self._bounding_box()
+        new_primitives = [
+            primitive.rotation(center, axis, angle) for
+            primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
 
-    def translation(self, offset, copy=True):
-        if copy:
-            new_primitives = [primitive.translation(offset, copy=True) for
-                              primitive in self.primitives]
-            return VolumeModel(new_primitives, self.name)
-        else:
-            for primitives in self.primitives:
-                primitives.translation(offset, copy=False)
-            self.bounding_box = self._bounding_box()
-
-    def frame_mapping(self, frame, side, copy=True):
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                         angle: float):
         """
+        VolumeModel rotation. Object is updated inplace
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: rotation angle
+        """
+        for primitive in self.primitives:
+            primitive.rotation_inplace(center, axis, angle)
+        self.bounding_box = self._bounding_box()
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        VolumeModel translation
+        :param offset: translation vector
+        :return: A new translated VolumeModel
+        """
+        new_primitives = [primitive.translation(offset) for
+                          primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        VolumeModel translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        for primitives in self.primitives:
+            primitives.translation_inplace(offset)
+        self.bounding_box = self._bounding_box()
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new VolumeModel
         side = 'old' or 'new'
         """
-        if copy:
-            new_primitives = [primitive.frame_mapping(frame, side, copy=True)
-                              for primitive in self.primitives]
-            return VolumeModel(new_primitives, self.name)
-        else:
-            for primitives in self.primitives:
-                primitives.frame_mapping(frame, side, copy=False)
-            self.bounding_box = self._bounding_box()
+        new_primitives = [primitive.frame_mapping(frame, side)
+                          for primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        for primitives in self.primitives:
+            primitives.frame_mapping_inplace(frame, side)
+        self.bounding_box = self._bounding_box()
 
     def copy(self, deep=True, memo=None):
         """
@@ -1070,7 +1128,6 @@ class VolumeModel(dc.PhysicalObject):
         return output
 
     # def babylon_script(self, use_cdn=True, debug=False):
-    #
     #     # env = Environment(loader=PackageLoader('volmdlr', 'templates'),
     #     #                   autoescape=select_autoescape(['html', 'xml']))
     #     #
@@ -1115,8 +1172,6 @@ class VolumeModel(dc.PhysicalObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
-            if hasattr(primitive, 'babylon_lines'):
-                lines.extend(primitive.babylon_lines())
             if hasattr(primitive, 'babylon_curves'):
                 lines.append(primitive.babylon_curves())
         bbox = self._bounding_box()
@@ -1254,7 +1309,7 @@ class VolumeModel(dc.PhysicalObject):
                 draughting_id)
             color_id = draughting_id + 1
             primitive_color = (1, 1, 1)
-            if hasattr(primitive, 'color'):
+            if hasattr(primitive, 'color') and primitive.color is not None:
                 primitive_color = primitive.color
             step_content += "#{} = COLOUR_RGB('',{}, {}, {});\n".format(
                 color_id,
@@ -1325,7 +1380,7 @@ class MovingVolumeModel(VolumeModel):
         primitives = []
         for primitive, frame in zip(self.primitives, self.step_frames[istep]):
             primitives.append(
-                primitive.frame_mapping(frame, side='old', copy=True))
+                primitive.frame_mapping(frame, side='old'))
         return VolumeModel(primitives)
 
     # def babylon_script(self, use_cdn=True, debug=False):

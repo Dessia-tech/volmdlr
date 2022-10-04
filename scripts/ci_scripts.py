@@ -5,6 +5,7 @@ scripts = [
             # Core.py
             'core/points.py',
             'core/grid2d_with_direction.py',
+            'core/points_axial_symmetry.py',
             # geometry
             'geometry.py',
             # Edges
@@ -19,6 +20,7 @@ scripts = [
             'wires/polygon2D.py',
             'wires/polygon3d.py',
             'wires/triangle2D.py',
+            'wires/axial_symmetry.py',
             # Primitives
             'primitives/extrusion.py',
             'primitives/sweep.py',
@@ -38,7 +40,6 @@ scripts = [
             'faces/BSplineSurface/bspline_surface_interpolation.py',
             'faces/BSplineSurface/bspline_surface_merge.py',
             'faces/BSplineSurface/bspline_surface_split.py',
-            'faces/BSplineSurface/bspline_surface_to_2d.py',
             'faces/BSplineSurface/from_cylindrical_to_bspline_surface.py',
             'faces/BSplineSurface/bspline_surface_definition.py',
             'faces/BSplineSurface/bspline_surfaces_grid3d.py',
