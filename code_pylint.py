@@ -8,12 +8,12 @@ MAX_ERROR_BY_TYPE = {
                      'no-else-return': 75,
                      'consider-using-f-string': 164,
                      'no-member': 131,
-                     'inconsistent-return-statements': 17,
+                     'inconsistent-return-statements': 18,
                      'unused-variable': 64,
                      'arguments-differ': 39,
                      'too-many-locals': 76,
                      'unused-argument': 46,
-                     'too-many-arguments': 61,
+                     'too-many-arguments': 63,
                      'consider-using-enumerate': 22,
                      'too-many-branches': 29,
                      'too-many-statements': 18,
@@ -27,10 +27,9 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-public-methods': 8,
                      'too-many-instance-attributes': 12,
                      'undefined-loop-variable': 5,
-                     'unused-import': 1,
                      'unspecified-encoding': 9,
                      'too-many-nested-blocks': 6,
-                     'attribute-defined-outside-init': 8,
+                     'attribute-defined-outside-init': 9,
                      'too-many-return-statements': 6,
                      'consider-merging-isinstance': 6,
                      'cyclic-import': 4,
@@ -82,7 +81,8 @@ MAX_ERROR_BY_TYPE = {
                      'wrong-import-position': 0,
                      'singleton-comparison': 0,
                      'unreachable': 0,
-                     'consider-using-in': 0
+                     'consider-using-in': 0,
+                     'unused-import': 0
                      }
 
 import os

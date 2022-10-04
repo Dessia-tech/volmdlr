@@ -7,7 +7,7 @@ Module containing wires & contours
 import warnings
 import itertools
 import math
-import random
+# import random
 from collections import deque
 from statistics import mean
 from typing import List

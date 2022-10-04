@@ -22,7 +22,7 @@ from geomdl import utilities
 from geomdl.fitting import interpolate_surface, approximate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 
-import dessia_common
+# import dessia_common
 import dessia_common as dc
 import volmdlr.core
 import volmdlr.core_compiled
