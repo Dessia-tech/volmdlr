@@ -86,8 +86,9 @@ class Wire:
                 return primitive.point_at_abscissa(
                     curvilinear_abscissa - length)
             length += primitive_length
+        # In case we did not find yet, ask last primitive its end
         if math.isclose(curvilinear_abscissa, length, abs_tol=1e-6):
-            return primitive.point_at_abscissa(primitive_length)
+            return self.primitives[-1].end  # point_at_abscissa(primitive_length)
         raise ValueError('abscissa out of contour length')
 
     def extract_primitives(self, point1, primitive1, point2, primitive2,

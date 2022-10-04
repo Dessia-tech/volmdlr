@@ -16,7 +16,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-arguments': 63,
                      'consider-using-enumerate': 22,
                      'too-many-branches': 29,
-                     'too-many-statements': 18,
+                     'too-many-statements': 21,
                      'super-init-not-called': 23,
                      'no-name-in-module': 22,
                      'abstract-method': 20,
