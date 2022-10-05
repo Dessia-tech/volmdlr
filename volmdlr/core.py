@@ -650,7 +650,6 @@ class BoundingRectangle(dc.DessiaObject):
 
         if not ax:
             _, ax = plt.subplots()
-
         x = [self.xmin, self.xmax, self.xmax, self.xmin, self.xmin]
         y = [self.ymin, self.ymin, self.ymax, self.ymax, self.ymin]
 
