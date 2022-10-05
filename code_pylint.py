@@ -1,43 +1,42 @@
 from pylint.lint import Run
 
+
 MIN_NOTE = 7.9
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 1111,
+                     'invalid-name': 1103,
                      'no-else-return': 75,
-                     'consider-using-f-string': 156,
-                     'no-member': 54,
-
-                     'inconsistent-return-statements': 17,
-                     'unused-variable': 63,
-                     'arguments-differ': 9,
-                     'too-many-locals': 77,
-                     'unused-argument': 45,
-                     'too-many-arguments': 66,
+                     'consider-using-f-string': 164,
+                     'no-member': 131,
+                     'inconsistent-return-statements': 18,
+                     'unused-variable': 64,
+                     'arguments-differ': 39,
+                     'too-many-locals': 76,
+                     'unused-argument': 46,
+                     'too-many-arguments': 63,
                      'consider-using-enumerate': 22,
                      'too-many-branches': 29,
                      'too-many-statements': 21,
-                     'super-init-not-called': 26,
-                     'no-name-in-module': 4,
-                     'abstract-method': 18,
+                     'super-init-not-called': 23,
+                     'no-name-in-module': 22,
+                     'abstract-method': 20,
                      'duplicate-code': 11,
                      'no-self-use': 16,
                      'arguments-renamed': 17,
-                     'non-parent-init-called': 13,
+                     'non-parent-init-called': 11,
                      'too-many-public-methods': 8,
                      'too-many-instance-attributes': 12,
-                     'undefined-loop-variable': 6,
-                     'unused-import': 9,
+                     'undefined-loop-variable': 5,
                      'unspecified-encoding': 9,
                      'too-many-nested-blocks': 6,
                      'attribute-defined-outside-init': 9,
                      'too-many-return-statements': 6,
                      'consider-merging-isinstance': 6,
                      'cyclic-import': 4,
-                     'consider-iterating-dictionary': 4,
+                     'consider-iterating-dictionary': 2,
                      'raise-missing-from': 4,
                      'no-else-continue': 4,
-                     'undefined-variable': 2,
+                     'undefined-variable': 4,
                      'simplifiable-if-expression': 3,
                      'redefined-builtin': 3,
                      'broad-except': 3,
@@ -56,7 +55,7 @@ MAX_ERROR_BY_TYPE = {
                      'wildcard-import': 1,
                      'cell-var-from-loop': 1,
                      'import-outside-toplevel': 1,
-                     'unsubscriptable-object': 1,
+                     'unsubscriptable-object': 3,
                      # No tolerance errors
                      'unidiomatic-typecheck': 0,
                      'unexpected-special-method-signature': 0,
@@ -82,7 +81,8 @@ MAX_ERROR_BY_TYPE = {
                      'wrong-import-position': 0,
                      'singleton-comparison': 0,
                      'unreachable': 0,
-                     'consider-using-in': 0
+                     'consider-using-in': 0,
+                     'unused-import': 0
                      }
 
 import os
