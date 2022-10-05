@@ -643,7 +643,7 @@ class BoundingRectangle(dc.DessiaObject):
         self.ymax = ymax
         self.name = name
 
-    def plot(self, ax=None, color='gray', linestyle='dashdot'):
+    def plot(self, ax=None, color='k', linestyle='dotted'):
         """
         Plot of the bounding rectangle and its vertex
         """
@@ -655,7 +655,7 @@ class BoundingRectangle(dc.DessiaObject):
         y = [self.ymin, self.ymin, self.ymax, self.ymax, self.ymin]
 
         ax.plot(x, y, color=color, linestyle=linestyle)
-        ax.scatter(x, y, color='r')
+        ax.scatter(x, y, color=color)
         return ax
 
     def area(self):

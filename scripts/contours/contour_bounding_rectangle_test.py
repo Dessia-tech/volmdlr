@@ -26,12 +26,12 @@ ax0 = b_rec.plot(color='b', linestyle='dotted')
 
 #Test plot avec contour
 ax = contour1.plot()
-b_rec.plot(ax, 'r', 'solid')
+b_rec.plot(ax, linestyle='dotted')
 
 # test area et centre
 center = b_rec.center()
 area = b_rec.area()
-ax.scatter(center[0], center[1])
+ax.scatter(center[0], center[1], color='r', marker='+')
 
 line_fig2_seg1 = vme.LineSegment2D(vm.Point2D(0, 1), vm.Point2D(0.25, 0.5))
 line_fig2_seg2 = vme.LineSegment2D(vm.Point2D(0.25, 0.5), vm.Point2D(1, 0.5))
