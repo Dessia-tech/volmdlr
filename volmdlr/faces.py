@@ -4759,7 +4759,7 @@ class Triangle3D(PlaneFace3D):
         point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
         point2 = volmdlr.Point3D.dict_to_object(dict_['point2'])
         point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
-        return cls(point1, point2, point3, dict_['alpha'],dict_['color'],dict_['name'])
+        return cls(point1, point2, point3, dict_['alpha'], dict_['color'], dict_['name'])
 
     def area(self) -> float:
         """
