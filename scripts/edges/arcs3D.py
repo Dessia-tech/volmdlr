@@ -41,7 +41,7 @@ arc1 = volmdlr.edges.Arc3D(volmdlr.Point3D(-0.03096, 0.001162, -0.02),
                 volmdlr.Point3D(-0.026119083, 0.0, -0.02),
                 volmdlr.Vector3D(0.0, 0.0, 0.001))
 
-ax = arc1.plot()
+ax = arc1.plot(ax=ax)
 # for p in arc1.polygon_points():
 #     p.plot(ax=ax)
 

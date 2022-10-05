@@ -4,22 +4,24 @@
 
 """
 
-import os
-import tempfile
-from datetime import datetime
 import math
+import os
 import subprocess
+import tempfile
 import webbrowser
-import numpy as npy
+from datetime import datetime
+# import volmdlr.stl as vmstl
+from typing import List
 
 import matplotlib.pyplot as plt
-# from mpl_toolkits.mplot3d import Axes3D
+import numpy as npy
 
 import dessia_common as dc
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
-# import volmdlr.stl as vmstl
+
+# from mpl_toolkits.mplot3d import Axes3D
 
 npy.seterr(divide='raise')
 
@@ -387,8 +389,8 @@ class CompositePrimitive2D(Primitive2D):
     """
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
                                     '_primitives_to_index']
-    _non_hash_attributes = ['name', '_utd_primitives_to_index',
-                            '_primitives_to_index']
+    _non_data_hash_attributes = ['name', '_utd_primitives_to_index',
+                                 '_primitives_to_index']
 
     def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)
@@ -413,7 +415,7 @@ class CompositePrimitive2D(Primitive2D):
 
     #     self.basis_primitives = basis_primitives
 
-    def rotation(self, center: volmdlr.Point3D, angle: float):
+    def rotation(self, center: volmdlr.Point2D, angle: float):
         """
         CompositePrimitive2D rotation
         :param center: rotation center
@@ -423,14 +425,16 @@ class CompositePrimitive2D(Primitive2D):
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
 
-    def rotation_inplace(self, center: volmdlr.Point3D, angle: float):
+    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
         CompositePrimitive2D rotation. Object is updated inplace
         :param center: rotation center
         :param angle: rotation angle
         """
-        for point in self.primitives:
-            point.rotation_inplace(center, angle)
+        primitives = []
+        for primitive in self.primitives:
+            primitives.append(primitive.rotation(center, angle))
+        self.primitives = primitives
         self.update_basis_primitives()
 
     def translation(self, offset: volmdlr.Vector2D):
@@ -439,16 +443,18 @@ class CompositePrimitive2D(Primitive2D):
         :param offset: translation vector
         :return: A new translated CompositePrimitive2D
         """
-        return self.__class__([point.translation(offset)
-                               for point in self.primitives])
+        return self.__class__([primitive.translation(offset)
+                               for primitive in self.primitives])
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
         CompositePrimitive2D translation. Object is updated inplace
         :param offset: translation vector
         """
-        for point in self.primitives:
-            point.translation_inplace(offset)
+        primitives = []
+        for primitive in self.primitives:
+            primitives.append(primitive.translation(offset))
+        self.primitives = primitives
         self.update_basis_primitives()
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
@@ -464,8 +470,10 @@ class CompositePrimitive2D(Primitive2D):
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
+        primitives = []
         for primitive in self.primitives:
-            primitive.frame_mapping_inplace(frame, side)
+            primitives.append(primitive.frame_mapping(frame, side))
+        self.primitives = primitives
         self.update_basis_primitives()
 
     def plot(self, ax=None, color='k', alpha=1,
@@ -539,7 +547,8 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
 
     def babylon_points(self):
         points = []
-        if hasattr(self, 'primitives'):
+        if hasattr(self, 'primitives') and \
+                hasattr(self.primitives[0], 'start'):
             points = [[self.primitives[0].start.x,
                        self.primitives[0].start.y,
                        self.primitives[0].start.z]]
@@ -572,16 +581,16 @@ class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['basis_primitives']
-    _non_eq_attributes = ['name', 'basis_primitives']
-    _non_hash_attributes = []
+    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_data_hash_attributes = []
     """
     A collection of simple primitives3D
     """
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
         self.primitives = primitives
 
-        Primitive3D.__init__(self, name=name)
+        Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
         self._utd_primitives_to_index = False
 
     # def primitive_to_index(self, primitive):
@@ -845,20 +854,20 @@ class BoundingBox(dc.DessiaObject):
         return s
 
 
-class VolumeModel(dc.DessiaObject):
+class VolumeModel(dc.PhysicalObject):
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['shells', 'bounding_box']
-    _non_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                          'faces']
-    _non_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                            'faces']
+    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                               'faces']
+    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                                 'faces']
     _dessia_methods = ['to_stl_model']
     """
-    :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
+
     """
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives
         self.name = name
         self.shells = []
@@ -869,6 +878,7 @@ class VolumeModel(dc.DessiaObject):
         self.bounding_box = self._bounding_box()
         # else:
         #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
+        dc.DessiaObject.__init__(self, name=name)
 
     def __hash__(self):
         return sum(hash(point) for point in self.primitives)
@@ -1305,7 +1315,7 @@ class VolumeModel(dc.DessiaObject):
                 draughting_id)
             color_id = draughting_id + 1
             primitive_color = (1, 1, 1)
-            if hasattr(primitive, 'color'):
+            if hasattr(primitive, 'color') and primitive.color is not None:
                 primitive_color = primitive.color
             step_content += "#{} = COLOUR_RGB('',{}, {}, {});\n".format(
                 color_id,
@@ -1352,6 +1362,9 @@ class VolumeModel(dc.DessiaObject):
         step_content += STEP_FOOTER
 
         stream.write(step_content)
+
+    def volmdlr_volume_model(self):
+        return [self]
 
 
 class MovingVolumeModel(VolumeModel):
