@@ -300,6 +300,12 @@ class LineSegment(Edge):
             return [self.__class__(self.start, split_point),
                     self.__class__(split_point, self.end)]
 
+    def middle_point(self):
+        return 0.5 * (self.start + self.end)
+
+    def point_at_abscissa(self, abscissa):
+        return self.start + self.unit_direction_vector() * abscissa
+
 
 class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
@@ -1092,11 +1098,11 @@ class LineSegment2D(LineSegment):
                 'end': self.end.to_dict()
                 }
 
-    def middle_point(self):
-        return 0.5 * (self.start + self.end)
-
-    def point_at_abscissa(self, abscissa):
-        return self.start + self.unit_direction_vector() * abscissa
+    # def middle_point(self):
+    #     return 0.5 * (self.start + self.end)
+    #
+    # def point_at_abscissa(self, abscissa):
+    #     return self.start + self.unit_direction_vector() * abscissa
 
     def point_belongs(self, point, abs_tol=1e-6):
         distance = self.start.point_distance(point) + self.end.point_distance(
@@ -2739,9 +2745,9 @@ class LineSegment3D(LineSegment):
                 'end': self.end.to_dict()
                 }
 
-    def point_at_abscissa(self, abscissa):
-        return self.start + abscissa * (
-            self.end - self.start) / self.length()
+    # def point_at_abscissa(self, abscissa):
+    #     return self.start + abscissa * (
+    #         self.end - self.start) / self.length()
 
     def point_belongs(self, point, abs_tol=1e-7):
         distance = self.start.point_distance(point) + self.end.point_distance(
@@ -2756,8 +2762,8 @@ class LineSegment3D(LineSegment):
     def unit_normal_vector(self, abscissa=0.):
         return None
 
-    def middle_point(self):
-        return self.point_at_abscissa(0.5 * self.length())
+    # def middle_point(self):
+    #     return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
         distance, point = volmdlr.core_compiled.LineSegment3DPointDistance(
@@ -3819,7 +3825,6 @@ class Arc3D(Arc):
         ymax = max(point.y for point in points)
         zmin = min(point.z for point in points)
         zmax = max(point.z for point in points)
-
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
