@@ -643,7 +643,7 @@ class BoundingRectangle(dc.DessiaObject):
         self.ymax = ymax
         self.name = name
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, color='gray', linestyle='dashdot'):
         """
         Plot of the bounding rectangle and its vertex
         """
@@ -651,15 +651,10 @@ class BoundingRectangle(dc.DessiaObject):
         if not ax:
             _, ax = plt.subplots()
 
-        p0 = [self.xmin, self.ymin]
-        p1 = [self.xmax, self.ymin]
-        p2 = [self.xmax, self.ymax]
-        p3 = [self.xmin, self.ymax]
+        x = [self.xmin, self.xmax, self.xmax, self.xmin, self.xmin]
+        y = [self.ymin, self.ymin, self.ymax, self.ymax, self.ymin]
 
-        x = [p0[0], p1[0], p2[0], p3[0], p0[0]]
-        y = [p0[1], p1[1], p2[1], p3[1], p0[1]]
-
-        ax.plot(x, y, color='gray', linestyle='dashdot')
+        ax.plot(x, y, color=color, linestyle=linestyle)
         ax.scatter(x, y, color='r')
         return ax
 
@@ -709,7 +704,7 @@ class BoundingRectangle(dc.DessiaObject):
         """
         if not self.b_rectangle_intersection(b_rectangle2):
             return 0
-        if self.is_inside_b_rectangle(b_rectangle2) or b_rectangle2.is_inside_brectangle(self):
+        if self.is_inside_b_rectangle(b_rectangle2) or b_rectangle2.is_inside_b_rectangle(self):
             return min(self.area(), b_rectangle2.area())
 
         lx = min(self.xmax, b_rectangle2.xmax) - max(self.xmin, b_rectangle2.xmin)
@@ -748,20 +743,20 @@ class BoundingRectangle(dc.DessiaObject):
         if self.point_belongs(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
                         self.ymax - point[1], point[1] - self.ymin])
-        else:
-            if point[0] < self.xmin:
-                dx = self.xmin - point[0]
-            elif self.xmax < point[0]:
-                dx = point[0] - self.xmax
-            else:
-                dx = 0
 
-            if point[1] < self.ymin:
-                dy = self.ymin - point[1]
-            elif self.ymax < point[1]:
-                dy = point[1] - self.ymax
-            else:
-                dy = 0
+        if point[0] < self.xmin:
+            dx = self.xmin - point[0]
+        elif self.xmax < point[0]:
+            dx = point[0] - self.xmax
+        else:
+            dx = 0
+
+        if point[1] < self.ymin:
+            dy = self.ymin - point[1]
+        elif self.ymax < point[1]:
+            dy = point[1] - self.ymax
+        else:
+            dy = 0
 
         return (dx ** 2 + dy ** 2) ** 0.5
 
@@ -935,36 +930,36 @@ class BoundingBox(dc.DessiaObject):
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
     def point_belongs(self, point):
-        return self.xmin < point[0] and point[0] < self.xmax \
-               and self.ymin < point[1] and point[1] < self.ymax \
-               and self.zmin < point[2] and point[2] < self.zmax
+        return self.xmin < point[0] < self.xmax \
+               and self.ymin < point[1] < self.ymax \
+               and self.zmin < point[2] < self.zmax
 
     def distance_to_point(self, point):
         if self.point_belongs(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
                         self.ymax - point[1], point[1] - self.ymin,
                         self.zmax - point[2], point[2] - self.zmin])
+
+        if point[0] < self.xmin:
+            dx = self.xmin - point[0]
+        elif self.xmax < point[0]:
+            dx = point[0] - self.xmax
         else:
-            if point[0] < self.xmin:
-                dx = self.xmin - point[0]
-            elif self.xmax < point[0]:
-                dx = point[0] - self.xmax
-            else:
-                dx = 0
+            dx = 0
 
-            if point[1] < self.ymin:
-                dy = self.ymin - point[1]
-            elif self.ymax < point[1]:
-                dy = point[1] - self.ymax
-            else:
-                dy = 0
+        if point[1] < self.ymin:
+            dy = self.ymin - point[1]
+        elif self.ymax < point[1]:
+            dy = point[1] - self.ymax
+        else:
+            dy = 0
 
-            if point[2] < self.zmin:
-                dz = self.zmin - point[2]
-            elif self.zmax < point[2]:
-                dz = point[2] - self.zmax
-            else:
-                dz = 0
+        if point[2] < self.zmin:
+            dz = self.zmin - point[2]
+        elif self.zmax < point[2]:
+            dz = point[2] - self.zmax
+        else:
+            dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
     def babylon_script(self):
