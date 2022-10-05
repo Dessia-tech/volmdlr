@@ -20,17 +20,18 @@ xmin = bd_rectangle[0]
 xmax = bd_rectangle[1]
 ymin = bd_rectangle[2]
 ymax = bd_rectangle[3]
-bdr = BoundingRectangle(xmin, xmax, ymin, ymax)
+b_rec = BoundingRectangle(xmin, xmax, ymin, ymax)
+
 # Test plot sans contour
-ax0 = bdr.plot()
+ax0 = b_rec.plot()
 
 ## Test plot avec contour
 ax = contour1.plot()
-bdr.plot(ax)
+b_rec.plot(ax)
 
 # test area et centre
-center = bdr.center()
-area = bdr.area()
+center = b_rec.center()
+area = b_rec.area()
 ax.scatter(center[0], center[1])
 
 
@@ -54,13 +55,57 @@ xmin = bd_rectangle[0]
 xmax = bd_rectangle[1]
 ymin = bd_rectangle[2]
 ymax = bd_rectangle[3]
-bdr2 = BoundingRectangle(xmin, xmax, ymin, ymax)
+b_rec2 = BoundingRectangle(xmin, xmax, ymin, ymax)
+
 # Test plot sans contour
-ax2 = bdr2.plot()
+ax2 = b_rec2.plot()
 
 ## Test plot avec contour
 
 ax3 = contour2.plot()
-ax3 = bdr2.plot(ax3)
-center2 = bdr2.center()
+ax3 = b_rec2.plot(ax3)
+center2 = b_rec2.center()
 ax3.scatter(center2[0], center2[1])
+
+#test boundingbox intersection true
+print(b_rec.b_rectangle_intersection(b_rec2))
+
+#test boundingbox intersection flase
+line_fig3_seg1 = vme.LineSegment2D(vm.Point2D(5, 1), vm.Point2D(5.25, 0.5))
+line_fig3_seg2 = vme.LineSegment2D(vm.Point2D(5.25, 0.5), vm.Point2D(6, 0.5))
+line_fig3_seg3 = vme.LineSegment2D(vm.Point2D(6, 0.5), vm.Point2D(5.45, 0))
+line_fig3_seg4 = vme.LineSegment2D(vm.Point2D(5.45, 0), vm.Point2D(6, -1))
+line_fig3_seg5 = vme.LineSegment2D(vm.Point2D(6, -1), vm.Point2D(5, -0.5))
+line_fig3_seg6 = vme.LineSegment2D(vm.Point2D(5, -0.5), vm.Point2D(4, -1))
+line_fig3_seg7 = vme.LineSegment2D(vm.Point2D(4, -1),vm.Point2D(3.55, 0))
+line_fig3_seg8 = vme.LineSegment2D(vm.Point2D(3.55, 0),vm.Point2D(4, 0.5))
+line_fig3_seg9 = vme.LineSegment2D(vm.Point2D(4, 0.5),vm.Point2D(3.75, 0.5))
+line_fig3_seg10 = vme.LineSegment2D(vm.Point2D(3.75, 0.5),vm.Point2D(5, 1))
+
+contour3 = vmw.Contour2D([line_fig3_seg1, line_fig3_seg2, line_fig3_seg3, line_fig3_seg4,
+                          line_fig3_seg5, line_fig3_seg6, line_fig3_seg7, line_fig3_seg8, line_fig3_seg9, line_fig3_seg10 ])
+bd_rectangle = contour3.bounding_rectangle()
+
+xmin = bd_rectangle[0]
+xmax = bd_rectangle[1]
+ymin = bd_rectangle[2]
+ymax = bd_rectangle[3]
+b_rec3 = BoundingRectangle(xmin, xmax, ymin, ymax)
+
+b_rec3.plot(ax3)
+#Test intersection
+print(b_rec.b_rectangle_intersection(b_rec2))
+#test non intersection
+print(b_rec.b_rectangle_intersection(b_rec3))
+#test distance
+print(b_rec.distance_to_b_rectangle(b_rec3))
+#test distance avec intersection = 0
+print(b_rec.distance_to_b_rectangle(b_rec2)) #d=0
+
+#test distance to point
+print(b_rec.distance_to_point([0.45, 0.45])) #
+
+print(b_rec.distance_to_point([2, 0.45])) # d= 1
+
+
+print(b_rec.distance_to_point([2, 2]))
