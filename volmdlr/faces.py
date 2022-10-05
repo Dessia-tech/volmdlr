@@ -7970,8 +7970,8 @@ class ClosedShell3D(OpenShell3D):
 
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
-        faces = self.intersection_faces(shell2, intersecting_faces,intersecting_combinations)
-        faces += self.get_non_intersecting_faces(shell2,intersecting_faces, intersection_method=True) +\
-                 shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
+        faces = self.intersection_faces(shell2, intersecting_faces, intersecting_combinations)
+        faces += self.get_non_intersecting_faces(shell2, intersecting_faces, intersection_method=True) +\
+            shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
         new_shell = ClosedShell3D(faces)
         return [new_shell]

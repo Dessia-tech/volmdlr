@@ -2113,8 +2113,8 @@ class Contour2D(Contour, Wire2D):
                 # if base_contour.is_inside(contours[0]):
                 #     contours.remove(cutting_contour)
                 #     continue
-                    # list_valid_contours.append(base_contour)
-                    # finished = True
+                # list_valid_contours.append(base_contour)
+                # finished = True
                 contours = contours[::-1]
                 if counter > 100 * len(list_contour) + len(contours):
                     print('new_base_contours:', len(new_base_contours))
