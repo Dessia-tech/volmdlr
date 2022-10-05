@@ -11,6 +11,8 @@ import random
 from collections import deque
 from statistics import mean
 from typing import List
+
+import networkx as nx
 import numpy as npy
 from scipy.spatial import Delaunay, ConvexHull
 
@@ -1252,8 +1254,28 @@ class Contour(Wire):
                 valid = True
                 finished = True
             if valid:
+                graph = nx.Graph()
+                for prim in contour_primitives[:]:
+                    graph.add_edge(prim.start, prim.end)
+                for node in graph.nodes:
+                    degree = graph.degree(node)
+                    if degree > 2:
+                        for i, neihgbor in enumerate(graph.neighbors(node)):
+                            if graph.degree(neihgbor) == 1:
+                                i_edge = volmdlr.edges.LineSegment2D(node, neihgbor)
+                                if i_edge in contour_primitives:
+                                    contour_primitives.remove(i_edge)
+                                    # print(True)
+                                    edges.append(volmdlr.edges.LineSegment2D(node, neihgbor))
+                                    finished = False
+                                    # print(True)
+                                    if i + 1 == degree - 2:
+                                        break
+                            # print(True)
                 contour_n = cls(contour_primitives[:])
-                contour_n.validate_contour_primitives()
+                # contour_n.validate_contour_primitives()
+                if len(contour_primitives) == 0:
+                    print(True)
                 contour_n.order_contour()
                 if len(contour_n.primitives) != 0:
                     list_contours.append(contour_n)
@@ -2147,16 +2169,16 @@ class Contour2D(Contour, Wire2D):
                 # if base_contour.is_inside(contours[0]):
                 #     contours.remove(cutting_contour)
                 #     continue
-                #     # list_valid_contours.append(base_contour)
-                #     # finished = True
-                # contours = contours[::-1]
-                # if counter > 100 * len(list_contour) + len(contours):
-                print('new_base_contours:', len(new_base_contours))
-                print('len(contours):', len(contours))
-                ax = contours[0].plot()
-                base_contour.plot(ax=ax, color='b')
-                warnings.warn('There probably exists an open contour (two wires that could not be connected)')
-                finished = True
+                    # list_valid_contours.append(base_contour)
+                    # finished = True
+                contours = contours[::-1]
+                if counter > 100 * len(list_contour) + len(contours):
+                    print('new_base_contours:', len(new_base_contours))
+                    print('len(contours):', len(contours))
+                    ax = contours[0].plot()
+                    base_contour.plot(ax=ax, color='b')
+                    warnings.warn('There probably exists an open contour (two wires that could not be connected)')
+                    finished = True
 
         return list_valid_contours
 

@@ -4873,7 +4873,7 @@ class PlaneFace3D(Face3D):
             list_faces.append(new_plane)
         return list_faces
 
-    def divide_face(self, list_cutting_contours, inside):
+    def divide_face(self, list_cutting_contours: List[volmdlr.wires.Contour2D], inside):
         """
         :param list_cutting_contours: list of contours cutting the face
         :param inside: when extracting a contour from another contour. It defines the extracted
@@ -4908,12 +4908,14 @@ class PlaneFace3D(Face3D):
                 (self, face2) not in list_coincident_faces:
 
             edge_intersections = []
-            for prim1 in self.outer_contour3d.primitives:
+            for prim1 in self.outer_contour3d.primitives + [prim for inner_contour in self.inner_contours3d
+                                                            for prim in inner_contour.primitives]:
                 edge_intersections = face2.edge_intersections(prim1)
                 if edge_intersections:
                     return True
             if not edge_intersections:
-                for prim2 in face2.outer_contour3d.primitives:
+                for prim2 in face2.outer_contour3d.primitives + [prim for inner_contour in face2.inner_contours3d
+                                                                 for prim in inner_contour.primitives]:
                     edge_intersections = self.edge_intersections(prim2)
                     if edge_intersections:
                         return True
@@ -7943,29 +7945,17 @@ class ClosedShell3D(OpenShell3D):
             shell2, tol)
         if validate_set_operation:
             return validate_set_operation
-
         list_coincident_faces = self.get_coincident_faces(shell2)
-        face_combinations = self.intersecting_faces_combinations(
-            shell2, list_coincident_faces, tol)
-
-        intersecting_combinations = self.dict_intersecting_combinations(
-            face_combinations, tol)
+        face_combinations = self.intersecting_faces_combinations(shell2, list_coincident_faces, tol)
+        intersecting_combinations = self.dict_intersecting_combinations(face_combinations, tol)
 
         if len(intersecting_combinations) == 0:
             return [self, shell2]
 
-        intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(
-            intersecting_combinations)
+        intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
-        faces = self.intersection_faces(shell2, intersecting_faces,
-                                        intersecting_combinations,
-                                        # list_coincident_faces
-                                        )
-        faces += self.get_non_intersecting_faces(shell2,
-                                                 intersecting_faces,
-                                                 intersection_method=True) + shell2.get_non_intersecting_faces(self,
-                                                                                                               intersecting_faces,
-                                                                                                               intersection_method=True)
-
+        faces = self.intersection_faces(shell2, intersecting_faces,intersecting_combinations)
+        faces += self.get_non_intersecting_faces(shell2,intersecting_faces, intersection_method=True) +\
+                 shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
         new_shell = ClosedShell3D(faces)
         return [new_shell]
