@@ -63,7 +63,7 @@ ax2 = b_rec2.plot()
 ## Test plot avec contour
 
 ax3 = contour2.plot()
-ax3 = b_rec2.plot(ax3)
+b_rec2.plot(ax3)
 center2 = b_rec2.center()
 ax3.scatter(center2[0], center2[1])
 
@@ -77,10 +77,10 @@ line_fig3_seg3 = vme.LineSegment2D(vm.Point2D(6, 0.5), vm.Point2D(5.45, 0))
 line_fig3_seg4 = vme.LineSegment2D(vm.Point2D(5.45, 0), vm.Point2D(6, -1))
 line_fig3_seg5 = vme.LineSegment2D(vm.Point2D(6, -1), vm.Point2D(5, -0.5))
 line_fig3_seg6 = vme.LineSegment2D(vm.Point2D(5, -0.5), vm.Point2D(4, -1))
-line_fig3_seg7 = vme.LineSegment2D(vm.Point2D(4, -1),vm.Point2D(3.55, 0))
-line_fig3_seg8 = vme.LineSegment2D(vm.Point2D(3.55, 0),vm.Point2D(4, 0.5))
-line_fig3_seg9 = vme.LineSegment2D(vm.Point2D(4, 0.5),vm.Point2D(3.75, 0.5))
-line_fig3_seg10 = vme.LineSegment2D(vm.Point2D(3.75, 0.5),vm.Point2D(5, 1))
+line_fig3_seg7 = vme.LineSegment2D(vm.Point2D(4, -1),vm.Point2D(4.55, 0))
+line_fig3_seg8 = vme.LineSegment2D(vm.Point2D(4.55, 0),vm.Point2D(4, 0.5))
+line_fig3_seg9 = vme.LineSegment2D(vm.Point2D(4, 0.5),vm.Point2D(4.75, 0.5))
+line_fig3_seg10 = vme.LineSegment2D(vm.Point2D(4.75, 0.5),vm.Point2D(5, 1))
 
 contour3 = vmw.Contour2D([line_fig3_seg1, line_fig3_seg2, line_fig3_seg3, line_fig3_seg4,
                           line_fig3_seg5, line_fig3_seg6, line_fig3_seg7, line_fig3_seg8, line_fig3_seg9, line_fig3_seg10 ])
@@ -91,8 +91,8 @@ xmax = bd_rectangle[1]
 ymin = bd_rectangle[2]
 ymax = bd_rectangle[3]
 b_rec3 = BoundingRectangle(xmin, xmax, ymin, ymax)
-
-b_rec3.plot(ax3)
+ax4 =contour3.plot(ax3)
+b_rec3.plot(ax4)
 #Test intersection
 print(b_rec.b_rectangle_intersection(b_rec2))
 #test non intersection

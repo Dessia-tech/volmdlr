@@ -624,18 +624,15 @@ class CompositePrimitive3D(Primitive3D):
 
 class BoundingRectangle(dc.DessiaObject):
     """
-    Calculate the properties and plot a bounding rectangle around a contour 2D from the bounding_rectangle volmdlr.wires.Contour2D method
-    :param: xmin from volmdlr.wires.Contour2D method
-    :type: float
-
-    :param: xmax from volmdlr.wires.Contour2D method
-    :type: float
-
-    :param: ymin from volmdlr.wires.Contour2D method
-    :type: float
-
-    :param: ymax from volmdlr.wires.Contour2D method
-    :type: float
+    Bounding rectangle
+    :param xmin: minimal x coordinate
+    :type xmin: float
+    :param xmax: maximal x coordinate
+    :type xmax: float
+    :param ymin: minimal y coordinate
+    :type ymin: float
+    :param ymax: maximal y coordinate
+    :type ymax: float
     """
 
     def __init__(self, xmin: float, xmax: float, ymin: float, ymax: float, name: str = ''):
@@ -680,20 +677,18 @@ class BoundingRectangle(dc.DessiaObject):
 
     def b_rectangle_intersection(self, b_rectangle2):
         """
-        Return True if there is an intersection with another bounding and false otherwise
-
-        :param: bounding rectangle to verify intersection
-        :type: BoundingRectangle
+        Return True if there is an intersection with another specified bounding rectangle or False otherwise
+        :param b_rectangle2: bounding rectangle to verify intersection
+        :type b_rectangle2: BoundingRectangle
         """
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
                and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
 
     def is_inside_b_rectangle(self, b_rectangle2):
         """
-        Return true if the bounding rectangle is inside another specified bounding rectangle and false otherwise
-
-        :param: bounding rectangle
-        :type: BoundingRectangle
+        Return true if the bounding rectangle is totally inside another specified bounding rectangle and false otherwise
+        :param b_rectangle2: bounding rectangle
+        :type b_rectangle2: BoundingRectangle
         """
         return (self.xmin >= b_rectangle2.xmin - 1e-6) and (self.xmax <= b_rectangle2.xmax + 1e-6) \
                and (self.ymin >= b_rectangle2.ymin - 1e-6) and (self.ymax <= b_rectangle2.ymax + 1e-6)
@@ -701,19 +696,16 @@ class BoundingRectangle(dc.DessiaObject):
     def point_belongs(self, point):
         """
         Return True if a specified point is inside the bounding rectangle and False otherwise
-
-        :param: Point
-        :type: List = [x, y]
+        :param point: Point
+        :type point: List = [x, y]
         """
-        return self.xmin < point[0] and self.xmax > point[0] \
-               and self.ymin < point[1] and self.ymax > point[1]
+        return self.xmin < point[0] < self.xmax and self.ymin < point[1] < self.ymax
 
     def intersection_area(self, b_rectangle2):
         """
         Calculate the intersection area between two bounding rectangle
-
-        :param: Bounding rectangle
-        :type: BoundingRectangle
+        :param b_rectangle2: Bounding rectangle
+        :type b_rectangle2: BoundingRectangle
         """
         if not self.b_rectangle_intersection(b_rectangle2):
             return 0
@@ -728,9 +720,8 @@ class BoundingRectangle(dc.DessiaObject):
     def distance_to_b_rectangle(self, b_rectangle2):
         """
         Calculate the minimal distance between two bounding rectangles
-
-        :param: Bounding rectangle
-        :type: BoundingRectangle
+        :param b_rectangle2: Bounding rectangle
+        :type b_rectangle2: BoundingRectangle
         """
         if self.b_rectangle_intersection(b_rectangle2):
             return 0
@@ -750,11 +741,9 @@ class BoundingRectangle(dc.DessiaObject):
 
     def distance_to_point(self, point):
         """
-        If point inside bounding rectangle calculate the minimal distance to any bounding rectangle edge (perpendicular distance)
-        If point outside b_rectangle calculate the minimal distance between the point and the bounding rectangle edge/vertex
-
-        :param: Point
-        :type: List = [x, y]
+        Calculate the minimal distance betwenn the bounding rectangle and a specified point
+        :param point: Point 2D
+        :type point: list
         """
         if self.point_belongs(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
