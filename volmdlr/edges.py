@@ -1506,25 +1506,8 @@ class Arc(Edge):
                       DeprecationWarning)
         return self.discretization_points(number_points=discretization_resolution)
 
-    def get_geo_lines(self, tag: int, start_point_tag: int, center_point_tag: int, end_point_tag: int):
-        """
-        gets the lines that define an Arc in a .geo file
-
-        :param tag: The linesegment index
-        :type tag: int
-        :param start_point_tag: The linesegment' start point index
-        :type start_point_tag: int
-        :param center_point_tag: The linesegment' center point index
-        :type center_point_tag: int
-        :param end_point_tag: The linesegment' end point index
-        :type end_point_tag: int
-
-        :return: A line
-        :rtype: str
-        """
-
-        return 'Circle(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + \
-            str(center_point_tag) + ', ' + str(end_point_tag) + '};'
+    def reverse(self):
+        return self.__class__(start=self.end, interior=self.interior, end=self.start)
 
 
 class Arc2D(Arc):
@@ -1641,25 +1624,47 @@ class Arc2D(Arc):
         """
         check if a Point2D belongs to the Arc2D
         """
-        vector_start = self.start - self.center
-        vector_end = self.end - self.center
-        vector_point = point2d - self.center
-        r1 = vector_start.norm()
-        cp = vector_point.norm()
-        if math.isclose(cp, r1, abs_tol=abs_tol):
-            if (self.start.x < self.end.x) and (self.start.y < self.end.y):
-                arc_angle = - volmdlr.core.clockwise_angle(vector_start,
-                                                           vector_end)
-                point_angle = - volmdlr.core.clockwise_angle(vector_start,
+
+        if (self.start.point_distance(point2d) <= abs_tol
+                or self.end.point_distance(point2d) <= abs_tol):
+            return True
+
+        if self.is_trigo:
+            arc_trigo = self.reverse()
+        else:
+            arc_trigo = self
+
+        vector_start = arc_trigo.start - arc_trigo.center
+        vector_end = arc_trigo.end - arc_trigo.center
+        vector_point = point2d - arc_trigo.center
+        radius = vector_start.norm()
+        center_point_dis = vector_point.norm()
+
+        if math.isclose(center_point_dis, radius, abs_tol=abs_tol):
+            arc_angle = volmdlr.core.clockwise_angle(vector_start,
+                                                     vector_end)
+            point_start_angle = volmdlr.core.clockwise_angle(vector_start,
                                                              vector_point)
-            else:
-                arc_angle = volmdlr.core.clockwise_angle(vector_start,
-                                                         vector_end)
-                point_angle = volmdlr.core.clockwise_angle(vector_start,
-                                                           vector_point)
-            if point_angle <= arc_angle:
+            point_end_angle = volmdlr.core.clockwise_angle(vector_point,
+                                                           vector_end)
+            if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=abs_tol):
                 return True
         return False
+
+        # if math.isclose(center_point_dis, radius, abs_tol=abs_tol):
+        #     if (arc_trigo.start.x < arc_trigo.end.x) and (arc_trigo.start.y < arc_trigo.end.y):
+        #         arc_angle = - volmdlr.core.clockwise_angle(vector_start,
+        #                                                    vector_end)
+        #         point_angle = - volmdlr.core.clockwise_angle(vector_start,
+        #                                                      vector_point)
+        #     else:
+        #         arc_angle = volmdlr.core.clockwise_angle(vector_start,
+        #                                                  vector_end)
+        #         point_angle = volmdlr.core.clockwise_angle(vector_start,
+        #                                                    vector_point)
+        #     if point_angle <= arc_angle:
+        #         return True
+        # return False
 
     # def to_circle(self):
     #     return volmdlr.wires.Circle2D(self.center, self.radius)
@@ -3845,7 +3850,6 @@ class Arc3D(Arc):
         ymax = max(point.y for point in points)
         zmin = min(point.z for point in points)
         zmax = max(point.z for point in points)
-
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
