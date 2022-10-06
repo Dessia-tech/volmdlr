@@ -687,11 +687,11 @@ class BoundingRectangle(dc.DessiaObject):
         return (self.xmin >= b_rectangle2.xmin - 1e-6) and (self.xmax <= b_rectangle2.xmax + 1e-6) \
             and (self.ymin >= b_rectangle2.ymin - 1e-6) and (self.ymax <= b_rectangle2.ymax + 1e-6)
 
-    def point_belongs(self, point):
+    def point_belongs(self, point: volmdlr.Point2D):
         """
         Return True if a specified point is inside the bounding rectangle and False otherwise
-        :param point: Point
-        :type point: List = [x, y]
+        :param point: a 2 dimensional point
+        :type point: :class:`volmdlr.Point2D`
         """
         return self.xmin < point[0] < self.xmax and self.ymin < point[1] < self.ymax
 
