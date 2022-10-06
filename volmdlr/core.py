@@ -667,7 +667,7 @@ class BoundingRectangle(dc.DessiaObject):
         """
         Calculate the center of the bounding rectangle
         """
-        return [0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax)]
+        return volmdlr.Point2D(0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax))
 
     def b_rectangle_intersection(self, b_rectangle2):
         """
