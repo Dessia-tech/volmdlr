@@ -224,10 +224,10 @@ class Grid2D(DessiaObject):
         for i in range(0, length_1 - 1):
             for j in range(0, length_2 - 1):
                 quadrilateral_polygons.append(volmdlr.wires.ClosedPolygon2D(
-                    (self.lists_points[i][j],
+                    [self.lists_points[i][j],
                      self.lists_points[i + 1][j],
                      self.lists_points[i + 1][j + 1],
-                     self.lists_points[i][j + 1])))
+                     self.lists_points[i][j + 1]]))
 
         return quadrilateral_polygons
 

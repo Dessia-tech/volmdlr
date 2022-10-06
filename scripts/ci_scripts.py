@@ -35,6 +35,7 @@ scripts = [
             'faces/bspline_bark.py',
             'faces/union.py',
             'faces/blocks_set_operations.py',
+            'faces/surface2d.py',
             'faces/BSplineSurface/bspline_curves.py',
             'faces/BSplineSurface/bspline_curves_point_belongs.py',
             'faces/BSplineSurface/bspline_surface_interpolation.py',
