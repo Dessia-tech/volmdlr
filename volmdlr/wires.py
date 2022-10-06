@@ -1521,7 +1521,7 @@ class Contour(Wire):
         # print([(line.start, line.end) for line in self.primitives])
 
         for primitive in self.primitives:
-            polygon_points.extend(primitive.polygon_points()[:-1])
+            polygon_points.extend(primitive.polygon_points(8)[:-1])
         #     print('1: ', primitive.polygon_points())
         #     print('2 :', primitive.polygon_points()[:-1])
         # print(polygon_points)

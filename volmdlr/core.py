@@ -4,13 +4,15 @@
 
 """
 
+
 import math
 import os
 import subprocess
 import tempfile
 import webbrowser
-import numpy as npy
-from itertools import chain
+from datetime import datetime
+# import volmdlr.stl as vmstl
+from typing import List
 
 import gmsh
 
