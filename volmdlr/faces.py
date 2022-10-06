@@ -4338,6 +4338,13 @@ class Face3D(volmdlr.core.Primitive3D):
                 f.write('\n')
         f.close()
 
+    def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
+        '''
+        gets the lines that define a PlaneFace3D in a .geo file
+        '''
+
+        return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
+
 
 class PlaneFace3D(Face3D):
     """
