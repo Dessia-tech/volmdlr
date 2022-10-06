@@ -7372,8 +7372,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         for i, face1 in enumerate(self.faces):
             for j, face2 in enumerate(shell.faces):
-                if face1.surface3d.is_coincident(face2.surface3d):
-                    if face1.face_inside(face2):
+                # check bspline_faces
+                face_1, face_2 = face1, face2
+                if isinstance(face1, BSplineFace3D):
+                    face_1 = face1.to_planeface3d(face1.surface3d.to_plane3d())
+                if isinstance(face2, BSplineFace3D):
+                    face_2 = face2.to_planeface3d(face2.surface3d.to_plane3d())
+                # print(face_1, face_2)
+                # print('i: ', i, 'j: ', j)
+                if face_1.surface3d.is_coincident(face_2.surface3d):
+
+                    if face_1.face_inside(face_2):
                         try:
                             faces_combinaton = (used_faces[face1], face2)
                         except KeyError:
@@ -7382,12 +7391,24 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                         f1 = faces_combinaton[0]
                         f2 = faces_combinaton[1]
 
+                        if isinstance(f1, BSplineFace3D) and isinstance(f2, BSplineFace3D):
+                            s3d = f1.surface3d.to_plane3d()
+                            f1 = f1.to_planeface3d(s3d)
+                            f2 = f2.to_planeface3d(s3d)
+                        if isinstance(f1, BSplineFace3D) and isinstance(f2, PlaneFace3D):
+                            f1 = f1.to_planeface3d(f2.surface3d)
+                        if isinstance(f2, BSplineFace3D) and isinstance(f1, PlaneFace3D):
+                            f2 = f2.to_planeface3d(f1.surface3d)
+
                         divided_faces = f1.divide_face([f2.surface2d.outer_contour], True)
                         areas = [face.area() for face in divided_faces]
                         used_faces[face1] = divided_faces[areas.index(max(areas))]
 
-                        list_faces.extend(divided_faces[areas.index(min(areas))].divide_face(
-                            f2.surface2d.inner_contours, True))
+                        if f2.surface2d.inner_contours:
+                            list_faces.extend(divided_faces[areas.index(min(areas))].divide_face(
+                                f2.surface2d.inner_contours, True))
+                        else:
+                            list_faces.append(divided_faces[areas.index(min(areas))])
 
         for face in self.faces:
             try:
