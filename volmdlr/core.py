@@ -692,7 +692,7 @@ class BoundingRectangle(dc.DessiaObject):
         :param point: A 2 dimensional point
         :type point: :class:`volmdlr.Point2D`
         """
-        return self.xmin < point[0] < self.xmax and self.ymin < point[1] < self.ymax
+        return self.xmin < point.x < self.xmax and self.ymin < point.y < self.ymax
 
     def intersection_area(self, b_rectangle2):
         """
@@ -739,20 +739,20 @@ class BoundingRectangle(dc.DessiaObject):
         :type point: :class:`volmdlr.Point2D`
         """
         if self.point_belongs(point):
-            return min([self.xmax - point[0], point[0] - self.xmin,
-                        self.ymax - point[1], point[1] - self.ymin])
+            return min([self.xmax - point.x, point.y - self.xmin,
+                        self.ymax - point.y, point.y - self.ymin])
 
-        if point[0] < self.xmin:
-            dx = self.xmin - point[0]
-        elif self.xmax < point[0]:
-            dx = point[0] - self.xmax
+        if point.x < self.xmin:
+            dx = self.xmin - point.x
+        elif self.xmax < point.x:
+            dx = point.x - self.xmax
         else:
             dx = 0
 
-        if point[1] < self.ymin:
-            dy = self.ymin - point[1]
-        elif self.ymax < point[1]:
-            dy = point[1] - self.ymax
+        if point.y < self.ymin:
+            dy = self.ymin - point.y
+        elif self.ymax < point.y:
+            dy = point.y - self.ymax
         else:
             dy = 0
 
