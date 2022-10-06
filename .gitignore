@@ -5,7 +5,6 @@
 *.fcstd
 *.fcstd1
 
-*.json
 
 # Python gitignore
 # Byte-compiled / optimized / DLL files
