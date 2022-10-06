@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+<<<<<<< HEAD
 * VolumeModel: to_geo (generate .geo file), to_msh (generate .msh file)
 * Gmsh (read .msh file)
 
@@ -42,10 +43,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * 
 
+=======
+* Gmsh: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
+* Circle2D: primitives (defined with 2 Arc2D)
+*
+
+### Fixed
+
+* Contour3D: average_center_point (use edge_polygon.points instead of points)
+*
+>>>>>>> origin/circle_primitives
 
 ### Performance improvements
 
 *
+<<<<<<< HEAD
 
 
 ### Refactorings
@@ -58,6 +70,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unrealeased
 
+=======
+*
+
+### Refactorings
+
+*
+*
+
+
+## v0.5.0
+>>>>>>> origin/circle_primitives
 
 ### New Features
 

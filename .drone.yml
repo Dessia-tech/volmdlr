@@ -34,7 +34,7 @@ steps:
   - coverage combine scripts/.coverage tests/.coverage
   - coverage json
   - coverage report
-  - python coverage.py
+  - python coverage_script.py
 
 - name: generate sdist
   image: python:3.8
