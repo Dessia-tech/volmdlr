@@ -1,4 +1,7 @@
 import unittest
+
+import volmdlr
+
 from volmdlr.core import BoundingRectangle
 
 
@@ -11,7 +14,7 @@ class TestBoundingRectangle(unittest.TestCase):
         self.assertEqual(self.b_rectangle1.area(), 2.25)  # add assertion here
 
     def test_center(self):
-        self.assertEqual(self.b_rectangle1.center(), [0.25, 0.25])  # add assertion here
+        self.assertEqual(self.b_rectangle1.center(), volmdlr.Point2D(0.25, 0.25))  # add assertion here
 
     def test_intersection(self):
         self.assertTrue(self.b_rectangle1.b_rectangle_intersection(self.b_rectangle2))
