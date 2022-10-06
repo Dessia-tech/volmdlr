@@ -676,7 +676,7 @@ class BoundingRectangle(dc.DessiaObject):
         :type b_rectangle2: BoundingRectangle
         """
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
-               and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+            and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
 
     def is_inside_b_rectangle(self, b_rectangle2):
         """
@@ -685,7 +685,7 @@ class BoundingRectangle(dc.DessiaObject):
         :type b_rectangle2: BoundingRectangle
         """
         return (self.xmin >= b_rectangle2.xmin - 1e-6) and (self.xmax <= b_rectangle2.xmax + 1e-6) \
-               and (self.ymin >= b_rectangle2.ymin - 1e-6) and (self.ymax <= b_rectangle2.ymax + 1e-6)
+            and (self.ymin >= b_rectangle2.ymin - 1e-6) and (self.ymax <= b_rectangle2.ymax + 1e-6)
 
     def point_belongs(self, point):
         """
