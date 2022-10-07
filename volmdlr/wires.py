@@ -3770,8 +3770,10 @@ class Circle2D(Contour2D):
         if len(intersection_points) == 1:
             raise NotImplementedError
         if len(intersection_points) == 2:
-            linesegment = volmdlr.edges.LineSegment2D(*intersection_points)
-            arc1, arc2 = self.split(*intersection_points)
+            linesegment = volmdlr.edges.LineSegment2D(intersection_points[0],
+                                                      intersection_points[1])
+            arc1, arc2 = self.split(intersection_points[0],
+                                    intersection_points[1])
             contour1 = Contour2D([arc1, linesegment.copy()])
             contour2 = Contour2D([arc2, linesegment.copy()])
             return [contour1, contour2]
