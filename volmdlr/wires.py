@@ -1240,7 +1240,9 @@ class Contour(Wire):
                 if len(contour_n.primitives) != 0:
                     list_contours.append(contour_n)
                 contour_primitives = []
-        list_contours = list_contours + [cls(primitives).order_contour() for primitives in contours_primitives_lists]
+        list_contours = list_contours + [cls(primitives).order_contour()
+                                         for primitives
+                                         in contours_primitives_lists]
         return list_contours
 
     def discretized_primitives(self, number_points: float):
@@ -1249,10 +1251,10 @@ class Contour(Wire):
         """
         edges = []
         for primitive in self.primitives:
-            points = primitive.discretization_points(number_points=number_points)
+            auto_nb_pts = min(number_points, int(primitive.length() / 1e-6))
+            points = primitive.discretization_points(number_points=auto_nb_pts)
             for p1, p2 in zip(points[:-1], points[1:]):
                 edges.append(volmdlr.edges.LineSegment2D(p1, p2))
-
         return edges
 
     def shares_primitives(self, contour):
