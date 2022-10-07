@@ -948,7 +948,7 @@ class BSplineCurve2D(BSplineCurve):
                         volmdlr.core.step_ids_to_str(points_ids),
                         tuple(self.knot_multiplicities),
                         tuple(self.knots))
-        return content, point_id+1
+        return content, point_id + 1
 
     def polygon_points(self, n=15):
         l = self.length()
@@ -3069,8 +3069,8 @@ class LineSegment3D(LineSegment):
         Convert a LineSegment3D to a BSplineCurve3D
         """
         degree = 1
-        points = [self.point_at_abscissa(abscissa/self.length())
-                  for abscissa in range(resolution+1)]
+        points = [self.point_at_abscissa(abscissa / self.length())
+                  for abscissa in range(resolution + 1)]
         bspline_curve = BSplineCurve3D.from_points_interpolation(points,
                                                                  degree)
         return bspline_curve
@@ -3537,10 +3537,10 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
                    ".UNSPECIFIED.,.F.,.F.,{},{}," \
                    ".UNSPECIFIED.);\n".format(
-            curve_id, self.name, self.degree,
-            volmdlr.core.step_ids_to_str(points_ids),
-            tuple(self.knot_multiplicities),
-            tuple(self.knots))
+                       curve_id, self.name, self.degree,
+                       volmdlr.core.step_ids_to_str(points_ids),
+                       tuple(self.knot_multiplicities),
+                       tuple(self.knots))
 
         if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(

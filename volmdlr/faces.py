@@ -196,7 +196,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         for inner_contour in self.inner_contours:
             splitted_inner_contours = inner_contour.cut_by_line(line)
             splitted_inner_contours_table.append(splitted_inner_contours)
-            
+
         # First part of the external contour
         for outer_split in splitted_outer_contours:
             inner_contours = []

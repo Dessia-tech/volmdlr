@@ -1821,7 +1821,7 @@ class Contour2D(Contour, Wire2D):
                     c_opti = contour
                     dist_min = p0.point_distance(p1)
         return c_opti
-    
+
     def repair_cut_contour(self, n, intersections, line):
         """
         Choose:
@@ -1861,11 +1861,11 @@ class Contour2D(Contour, Wire2D):
                     nb_max_enclosed_transitions = net
                     best_transition = it
                     if i1 < i2:
-                        enclosed_transitions[it] = [(i + abs(n-1)) // 2 for i
+                        enclosed_transitions[it] = [(i + abs(n - 1)) // 2 for i
                                                     in sorted_inter_index[
                                                     i2 - 1:i1:-2]]
                     else:
-                        enclosed_transitions[it] = [(i + abs(n-1)) // 2 for i
+                        enclosed_transitions[it] = [(i + abs(n - 1)) // 2 for i
                                                     in sorted_inter_index[
                                                     i2 + 1:i1:2]]
 
