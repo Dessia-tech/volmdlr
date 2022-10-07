@@ -646,9 +646,9 @@ class BoundingRectangle(dc.DessiaObject):
             return self.xmin
         elif key == 1:
             return self.xmax
-        elif key = 2:
+        elif key == 2:
             return self.ymin
-        elif key = 3:
+        elif key == 3:
             return self.ymax
         else:
             raise IndexError
