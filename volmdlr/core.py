@@ -641,17 +641,17 @@ class BoundingRectangle(dc.DessiaObject):
         self.ymin = ymin
         self.ymax = ymax
         dc.DessiaObject.__init__(self, name=name)
+
     def __getitem__(self, key):
         if key == 0:
             return self.xmin
-        elif key == 1:
+        if key == 1:
             return self.xmax
-        elif key == 2:
+        if key == 2:
             return self.ymin
-        elif key == 3:
+        if key == 3:
             return self.ymax
-        else:
-            raise IndexError
+        raise IndexError
 
     def items(self):
         return self.xmin, self.xmax, self.ymin, self.ymax
