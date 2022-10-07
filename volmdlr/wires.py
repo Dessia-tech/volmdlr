@@ -1451,9 +1451,13 @@ class Contour(Wire):
         shared_tuple = contour1.shared_primitives_with(contour2)
         # [shared_primitives_1, shared_primitives_2] = contour1.shared_primitives_with(contour2)
 
-        p1_start = contour1.primitives[shared_tuple[0][0]].start
-        p2_start = contour2.primitives[shared_tuple[0][1]].start
-        p2_end = contour2.primitives[shared_tuple[0][1]].end
+        # p1_start = contour1.primitives[shared_tuple[0][0]].start
+        # p2_start = contour2.primitives[shared_tuple[0][1]].start
+        # p2_end = contour2.primitives[shared_tuple[0][1]].end
+
+        p1_start = shared_tuple[0][0].start
+        p2_start = shared_tuple[1][-1].start
+        p2_end = shared_tuple[1][-1].end
 
         if (p1_start.point_distance(p2_start)) < (p1_start.point_distance(p2_end)):
             return False
