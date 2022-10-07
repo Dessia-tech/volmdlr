@@ -2258,12 +2258,14 @@ class Contour2D(Contour, Wire2D):
             closing_wire = wire.extract_without_primitives(point1, point2, True)
 
             w=volmdlr.wires.Wire2D(closing_wire)
+            ax=contour_to_cut.plot()
             w.plot(ax, 'g')
 
             for p in points_intersections:
-                if Wire2D(closing_wire).point_over_wire(p):
-                    closing_wire = wire.extract_without_primitives(point1, point2, False)
-                    break
+                if p not in [point1, point2]:
+                    if Wire2D(closing_wire).point_over_wire(p):
+                        closing_wire = wire.extract_without_primitives(point1, point2, False)
+                        break
 
             w=volmdlr.wires.Wire2D(closing_wire)
             w.plot(ax, 'm')
