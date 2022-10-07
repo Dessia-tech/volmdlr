@@ -42,10 +42,10 @@ def bounding_rectangle_adjacent_contours(contours: List):
     ymax : float
 
     '''
-    xmin, xmax, ymin, ymax = contours[0].bounding_rectangle()
+    xmin, xmax, ymin, ymax = contours[0].bounding_rectangle().points()
 
     for i in range(1, len(contours)):
-        xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle()
+        xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle().points()
         xmin = min(xmin, xmin_contour)
         xmax = max(xmax, xmax_contour)
         ymin = min(ymin, ymin_contour)
