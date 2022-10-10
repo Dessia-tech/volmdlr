@@ -7408,24 +7408,40 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 # print(face_1, face_2)
                 # print('i: ', i, 'j: ', j)
                 if face_1.surface3d.is_coincident(face_2.surface3d):
+                    try:
+                        faces_combinaton = (used_faces[face1], face2)
+                    except KeyError:
+                        faces_combinaton = (face1, face2)
+
+                    f1 = faces_combinaton[0]
+                    f2 = faces_combinaton[1]
+
+                    if isinstance(f1, BSplineFace3D) and isinstance(f2, BSplineFace3D):
+                        s3d = f1.surface3d.to_plane3d()
+                        f1 = f1.to_planeface3d(s3d)
+                        f2 = f2.to_planeface3d(s3d)
+                    if isinstance(f1, BSplineFace3D) and isinstance(f2, PlaneFace3D):
+                        f1 = f1.to_planeface3d(f2.surface3d)
+                    if isinstance(f2, BSplineFace3D) and isinstance(f1, PlaneFace3D):
+                        f2 = f2.to_planeface3d(f1.surface3d)
 
                     if face_1.face_inside(face_2):
-                        try:
-                            faces_combinaton = (used_faces[face1], face2)
-                        except KeyError:
-                            faces_combinaton = (face1, face2)
+                        # try:
+                        #     faces_combinaton = (used_faces[face1], face2)
+                        # except KeyError:
+                        #     faces_combinaton = (face1, face2)
 
-                        f1 = faces_combinaton[0]
-                        f2 = faces_combinaton[1]
+                        # f1 = faces_combinaton[0]
+                        # f2 = faces_combinaton[1]
 
-                        if isinstance(f1, BSplineFace3D) and isinstance(f2, BSplineFace3D):
-                            s3d = f1.surface3d.to_plane3d()
-                            f1 = f1.to_planeface3d(s3d)
-                            f2 = f2.to_planeface3d(s3d)
-                        if isinstance(f1, BSplineFace3D) and isinstance(f2, PlaneFace3D):
-                            f1 = f1.to_planeface3d(f2.surface3d)
-                        if isinstance(f2, BSplineFace3D) and isinstance(f1, PlaneFace3D):
-                            f2 = f2.to_planeface3d(f1.surface3d)
+                        # if isinstance(f1, BSplineFace3D) and isinstance(f2, BSplineFace3D):
+                        #     s3d = f1.surface3d.to_plane3d()
+                        #     f1 = f1.to_planeface3d(s3d)
+                        #     f2 = f2.to_planeface3d(s3d)
+                        # if isinstance(f1, BSplineFace3D) and isinstance(f2, PlaneFace3D):
+                        #     f1 = f1.to_planeface3d(f2.surface3d)
+                        # if isinstance(f2, BSplineFace3D) and isinstance(f1, PlaneFace3D):
+                        #     f2 = f2.to_planeface3d(f1.surface3d)
 
                         divided_faces = f1.divide_face([f2.surface2d.outer_contour], True)
                         for f in divided_faces:
@@ -7448,6 +7464,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                         #         f2.surface2d.inner_contours, True))
                         # else:
                         #     list_faces.append(divided_faces[areas.index(min(areas))])
+
+                    else:
+                        list_faces.extend(f1.cut_by_face(f2))
 
         for face in self.faces:
             try:
