@@ -601,7 +601,7 @@ class Step(dc.DessiaObject):
         for node in shell_nodes + frame_mapping_nodes:
             self.graph.add_edge('#0', node)
 
-        self.draw_graph(self.graph, reduced=True)
+        # self.draw_graph(self.graph, reduced=True)
 
         nodes = []
         i = 1
