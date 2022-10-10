@@ -7465,14 +7465,22 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                         # else:
                         #     list_faces.append(divided_faces[areas.index(min(areas))])
 
-                    else:
-                        list_faces.extend(f1.cut_by_face(f2))
+                        for face in self.faces:
+                            try:
+                                list_faces.append(used_faces[face])
+                            except KeyError:
+                                list_faces.append(face)
 
-        for face in self.faces:
-            try:
-                list_faces.append(used_faces[face])
-            except KeyError:
-                list_faces.append(face)
+                    else:
+                        divided_faces = f1.cut_by_face(f2)
+                        # list_faces.extend(f1.cut_by_face(f2))
+                        used_faces[face1] = divided_faces
+
+                        for face in self.faces:
+                            try:
+                                list_faces.extend(used_faces[face])
+                            except KeyError:
+                                list_faces.append(face)
 
         return self.__class__(list_faces)
 
