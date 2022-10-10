@@ -1629,10 +1629,7 @@ class Arc2D(Arc):
                 or self.end.point_distance(point2d) <= abs_tol):
             return True
 
-        if self.is_trigo:
-            arc_trigo = self.reverse()
-        else:
-            arc_trigo = self
+        arc_trigo = self.reverse() if self.is_trigo else self
 
         vector_start = arc_trigo.start - arc_trigo.center
         vector_end = arc_trigo.end - arc_trigo.center
@@ -1650,21 +1647,6 @@ class Arc2D(Arc):
             if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=abs_tol):
                 return True
         return False
-
-        # if math.isclose(center_point_dis, radius, abs_tol=abs_tol):
-        #     if (arc_trigo.start.x < arc_trigo.end.x) and (arc_trigo.start.y < arc_trigo.end.y):
-        #         arc_angle = - volmdlr.core.clockwise_angle(vector_start,
-        #                                                    vector_end)
-        #         point_angle = - volmdlr.core.clockwise_angle(vector_start,
-        #                                                      vector_point)
-        #     else:
-        #         arc_angle = volmdlr.core.clockwise_angle(vector_start,
-        #                                                  vector_end)
-        #         point_angle = volmdlr.core.clockwise_angle(vector_start,
-        #                                                    vector_point)
-        #     if point_angle <= arc_angle:
-        #         return True
-        # return False
 
     # def to_circle(self):
     #     return volmdlr.wires.Circle2D(self.center, self.radius)
