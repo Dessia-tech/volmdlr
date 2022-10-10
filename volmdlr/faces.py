@@ -5050,6 +5050,33 @@ class PlaneFace3D(Face3D):
             return [self_copy]
         return self_copy.divide_face(list_cutting_contours, contour_extract_inside)
 
+    def cut_by_face(self, face):
+        outer_contour_1 = self.surface3d.contour3d_to_2d(self.outer_contour3d)
+        # inner_contours2d_1 = [self.surface3d.contour3d_to_2d(contour) for contour in self.inner_contours3d]
+        inner_contours2d_1 = []
+        for contour in self.inner_contours3d:
+            inner_contours2d_1.append(self.surface3d.contour3d_to_2d(contour))
+        # surface2d_1 = Surface2D(outer_contour_1, inner_contours2d_1)
+
+        outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
+        inner_contours2d_2 = [self.surface3d.contour3d_to_2d(contour) for contour in face.inner_contours3d]
+        # surface2d_2 = Surface2D(outer_contour_2, inner_contours2d_2)
+
+        contours = outer_contour_1.cut_by_wire(outer_contour_2)
+
+        surfaces = []
+        for contour in contours:
+            inners = []
+            for inner_c in inner_contours2d_1:
+                if contour.is_inside(inner_c):
+                    inners.append(inner_c)
+            for inner_c in inner_contours2d_2:
+                if contour.is_inside(inner_c):
+                    inners.append(inner_c)
+            surfaces.append(Surface2D(contour, inners))
+
+        return [self.__class__(self.surface3d, surface2d) for surface2d in surfaces]
+
 
 class Triangle3D(PlaneFace3D):
     """
