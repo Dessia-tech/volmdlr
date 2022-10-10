@@ -4154,9 +4154,7 @@ class Contour3D(Contour, Wire3D):
                 primitive_content, primitive_ids = primitive.to_step(
                     current_id, surface_id, curve2d)
             else:
-                primitive_content, primitive_ids = primitive.to_step(
-                    current_id,
-                    surface_id)
+                primitive_content, primitive_ids = primitive.to_step(current_id, surface_id)
             content += primitive_content
             current_id = primitive_ids[-1] + 1
             for primitive_id in primitive_ids:

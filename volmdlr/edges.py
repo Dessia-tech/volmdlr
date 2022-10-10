@@ -930,7 +930,7 @@ class BSplineCurve2D(BSplineCurve):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, surface_id=None):
         points_ids = []
         content = ''
         point_id = current_id
@@ -2705,7 +2705,7 @@ class Line3D(Line):
 
         return None
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, surface_id=None):
         p1_content, p1_id = self.point1.to_step(current_id)
         # p2_content, p2_id = self.point2.to_step(current_id+1)
         current_id = p1_id + 1
@@ -4441,7 +4441,7 @@ class Arc3D(Arc):
             return [surface.rectangular_cut(0, angle,
                                             arc2d.angle1, arc2d.angle2)]
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, surface_id=None):
         if self.angle >= math.pi:
             l = self.length()
             arc1, arc2 = self.split(self.point_at_abscissa(0.33 * l))
