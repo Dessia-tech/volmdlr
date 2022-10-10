@@ -2868,7 +2868,7 @@ class BSplineSurface3D(Surface3D):
         convert a linesegment2d from the parametric to the dimensioned frame
         '''
 
-        points = linesegment2d.discretization_points(20)
+        points = linesegment2d.discretization_points(number_points = 20)
         points_dim = [
             self.point2d_parametric_to_dimension(
                 p, grid2d) for p in points]
