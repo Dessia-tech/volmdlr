@@ -36,6 +36,7 @@ scripts = [
             'faces/union.py',
             'faces/blocks_set_operations.py',
             'faces/surface2d.py',
+            # 'faces/export_to_step.py', #TO BE USED WHEN THE EXPORT IS IMPROVED
             'faces/BSplineSurface/bspline_curves.py',
             'faces/BSplineSurface/bspline_curves_point_belongs.py',
             'faces/BSplineSurface/bspline_surface_interpolation.py',
