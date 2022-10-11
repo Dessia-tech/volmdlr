@@ -300,6 +300,12 @@ class LineSegment(Edge):
             return [self.__class__(self.start, split_point),
                     self.__class__(split_point, self.end)]
 
+    def middle_point(self):
+        return 0.5 * (self.start + self.end)
+
+    def point_at_abscissa(self, abscissa):
+        return self.start + self.unit_direction_vector() * abscissa
+
 
 class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
@@ -1121,11 +1127,11 @@ class LineSegment2D(LineSegment):
                 'end': self.end.to_dict()
                 }
 
-    def middle_point(self):
-        return 0.5 * (self.start + self.end)
-
-    def point_at_abscissa(self, abscissa):
-        return self.start + self.unit_direction_vector() * abscissa
+    # def middle_point(self):
+    #     return 0.5 * (self.start + self.end)
+    #
+    # def point_at_abscissa(self, abscissa):
+    #     return self.start + self.unit_direction_vector() * abscissa
 
     def point_belongs(self, point, abs_tol=1e-6):
         distance = self.start.point_distance(point) + self.end.point_distance(
@@ -1540,9 +1546,6 @@ class Arc2D(Arc):
                  interior: volmdlr.Point2D,
                  end: volmdlr.Point2D,
                  name: str = ''):
-        self._utd_center = False
-        self._utd_is_trigo = False
-        self._utd_angle = False
         self._center = None
         self._is_trigo = None
         self._angle = None
@@ -1560,9 +1563,8 @@ class Arc2D(Arc):
 
     @property
     def center(self):
-        if not self._utd_center:
+        if not self._center:
             self._center = self.get_center()
-            self._utd_center = True
         return self._center
 
     def get_center(self):
@@ -1587,14 +1589,13 @@ class Arc2D(Arc):
 
     @property
     def is_trigo(self):
-        if not self._utd_is_trigo:
+        if not self._is_trigo:
             self._is_trigo = self.get_arc_direction()
-            self._utd_is_trigo = True
         return self._is_trigo
 
     @property
     def clockwise_and_trigowise_paths(self):
-        if not self._utd_clockwise_and_trigowise_paths:
+        if not self._clockwise_and_trigowise_paths:
             radius_1 = self.start - self.center
             radius_2 = self.end - self.center
             radius_i = self.interior - self.center
@@ -1614,9 +1615,8 @@ class Arc2D(Arc):
 
     @property
     def angle(self):
-        if not self._utd_angle:
+        if not self._angle:
             self._angle = self.get_angle()
-            self._utd_angle = True
         return self._angle
 
     def get_angle(self):
@@ -1889,13 +1889,12 @@ class Arc2D(Arc):
             for p in [self.center, self.start, self.interior, self.end]:
                 p.plot(ax=ax, color=color, alpha=alpha)
 
-        ax.add_patch(matplotlib.patches.Arc(self.center, 2 * self.radius,
+        ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y), 2 * self.radius,
                                             2 * self.radius, angle=0,
                                             theta1=self.angle1 * 0.5 / math.pi * 360,
                                             theta2=self.angle2 * 0.5 / math.pi * 360,
                                             color=color,
                                             alpha=alpha))
-
         return ax
 
     def to_3d(self, plane_origin, x, y):
@@ -1924,6 +1923,10 @@ class Arc2D(Arc):
         self.start.rotation_inplace(center, angle)
         self.interior.rotation_inplace(center, angle)
         self.end.rotation_inplace(center, angle)
+        self._angle = None
+        self._is_trigo = None
+        self._center = None
+        self._clockwise_and_trigowise_paths = None
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -1942,6 +1945,10 @@ class Arc2D(Arc):
         self.start.translation_inplace(offset)
         self.interior.translation_inplace(offset)
         self.end.translation_inplace(offset)
+        self._angle = None
+        self._is_trigo = None
+        self._center = None
+        self._clockwise_and_trigowise_paths = None
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -2767,9 +2774,9 @@ class LineSegment3D(LineSegment):
                 'end': self.end.to_dict()
                 }
 
-    def point_at_abscissa(self, abscissa):
-        return self.start + abscissa * (
-            self.end - self.start) / self.length()
+    # def point_at_abscissa(self, abscissa):
+    #     return self.start + abscissa * (
+    #         self.end - self.start) / self.length()
 
     def point_belongs(self, point, abs_tol=1e-7):
         # distance = self.start.point_distance(point) + self.end.point_distance(point)
@@ -2788,8 +2795,8 @@ class LineSegment3D(LineSegment):
     def unit_normal_vector(self, abscissa=0.):
         return None
 
-    def middle_point(self):
-        return self.point_at_abscissa(0.5 * self.length())
+    # def middle_point(self):
+    #     return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
         distance, point = volmdlr.core_compiled.LineSegment3DPointDistance(
@@ -3888,7 +3895,6 @@ class Arc3D(Arc):
         ymax = max(point.y for point in points)
         zmin = min(point.z for point in points)
         zmax = max(point.z for point in points)
-
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
