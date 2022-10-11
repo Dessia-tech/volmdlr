@@ -27,14 +27,14 @@ r4=0.015
 pc=vm.Point2D((0,0))
 
 p1=vm.Point2D((0,r2))
-p2=p1.Rotation(pc,0.5*theta1)
-p3=p1.Rotation(pc,theta1)
+p2=p1.rotation(pc,0.5*theta1)
+p3=p1.rotation(pc,theta1)
 a1=vm.Arc2D(p1,p2,p3)
 
 p4=vm.Point2D((0,r1))
-p4.Rotation(pc,theta1+theta3,False)
-p5=p4.Rotation(pc,theta2)
-p6=p1.Rotation(pc,theta)
+p4.rotation_inplace(pc,theta1+theta3)
+p5=p4.rotation(pc,theta2)
+p6=p1.rotation(pc,theta)
 
 l1=primitives2D.OpenedRoundedLineSegments2D([p3,p4,p5,p6],{1:r3,2:r3})
 
@@ -43,8 +43,8 @@ l1=primitives2D.OpenedRoundedLineSegments2D([p3,p4,p5,p6],{1:r3,2:r3})
 L=[a1,l1]
 for i in range(Z-1):
     thetar=(i+1)*theta
-    L.append(a1.Rotation(pc,thetar,True))
-    L.append(l1.Rotation(pc,thetar,True))
+    L.append(a1.rotation(pc,thetar))
+    L.append(l1.rotation(pc,thetar))
 #p7=vm.Point2D((0,r4))
 l2=vm.Circle2D(pc,r4)
 
