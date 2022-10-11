@@ -121,7 +121,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         :param offset: translation vector
         """
         for point in self.points:
-            point.rotation_inplace(offset)
+            point.translation_inplace(offset)
 
     def offset(self, offset):
         nb = len(self.points)
