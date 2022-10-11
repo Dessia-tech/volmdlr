@@ -1898,19 +1898,16 @@ class BSplineSurface3D(Surface3D):
         surface.knotvector_v = knot_vector_v
         surface.delta = 0.05
         # surface_points = surface.evalpts
-        # print('surface : ', surface)
-        # print('type(surface): ', type(surface))
+
         self._surface = surface
 
         if not isinstance(self._surface,
                           BSpline.Surface):
             raise ValueError('Not a geomdl bspline. It is a: ', self._surface)
-        # else:
-        #     raise ValueError('self._surface', self._surface)
 
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
         volmdlr.core.Primitive3D.__init__(self, name=name)
-        print('self.surface: Init BSplineSurface3D: ', self.surface)
+
         # Hidden Attributes
         self._displacements = None
         self._grids2d = None
@@ -1922,7 +1919,6 @@ class BSplineSurface3D(Surface3D):
 
     @surface.setter
     def surface(self, value): #check_surface
-        print('yes')
         if not isinstance(value, BSpline.Surface):
             raise ValueError('Not a bspline')
         else:
@@ -2074,12 +2070,11 @@ class BSplineSurface3D(Surface3D):
         return blending_mat
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+
         if not isinstance(self._surface,
                           BSpline.Surface):
-            raise ValueError('pt2d_3d : Not a geomdl bspline. It is a: ', self._surface)
-
-        # if type(self.surface) == type(iter([])):
-        #     self.surface = next(self.surface)
+            raise ValueError('In BSplineSurface3D.point2d_to_3d: \
+                             Not a geomdl bspline. It is a: ', self._surface)
 
         x, y = point2d
         if x < 0:
@@ -2091,14 +2086,13 @@ class BSplineSurface3D(Surface3D):
         elif y > 1:
             y = 1
 
-        # print(self.surface)
         try:
             a, b, c = self.surface.evaluate_single((x, y))
         except AttributeError:
-            print('error', list(self.surface))
-            # msg = 'error: '+str(list(self.surface))
-            msg = 'error: '+str(self.surface)
+            print('In BSplineSurface3D.point2d_to_3d: Error', list(self.surface))
+            msg = 'In BSplineSurface3D.point2d_to_3d: Error: '+ str(self.surface)
             raise ValueError(msg)
+
         return volmdlr.Point3D(a, b, c)
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
