@@ -25,7 +25,7 @@ for stl_file in [
                 'simple.stl',
                 'cube_ascii.stl'
                   ]:
-    stl_path = os.path.join('stl', stl_file)
+    # stl_path = os.path.join('stl', stl_file)
     # print('start')
     # volum = volmdlr.core.VolumeModel(cloud_faces)
     # print('saving file' + stl_file)
@@ -34,7 +34,7 @@ for stl_file in [
     # faces.extend(cloud_faces)
     # print()
 
-    stl = vmstl.Stl.from_file(stl_path)
+    stl = vmstl.Stl.from_file(stl_file)
     shell = stl.to_closed_shell()
     shell.alpha = 0.3
     assert len(shell.faces)
