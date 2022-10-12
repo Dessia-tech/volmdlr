@@ -7,6 +7,8 @@ Common primitives 3D
 import math
 
 from typing import Tuple, List, Dict
+
+import dessia_common
 from scipy.optimize import minimize, NonlinearConstraint
 
 import numpy as npy
@@ -1729,15 +1731,51 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
             raise NotImplementedError  # a adapter pour les bpsline
 
 
-class Loft(object):
-    def __init__(self, profiles: list[volmdlr.wires.ClosedPolygon3D], name: str = ''):
+class Loft(dessia_common.PhysicalObject):
+    def __init__(self, profiles: list[volmdlr.wires.ClosedPolygon3D], color:  Tuple[float, float, float] = None,
+                 alpha: float = 0.8, name: str = ''):
         self.profiles = profiles
-        self.name = name
-
-    """
-    2 profiles with the same number of points
-    """
-
+        self.color = color
+        self.alpha = alpha
+        dessia_common.PhysicalObject.__init__(self, name=name)
     def shell_faces(self):
+        """
+         2 profiles with the same number of points
+        """
+        #global faces
+        if len(self.profiles) == 2:
+            i_profil = self.profiles[0]
+            j_profil = self.profiles[1]
+            n = 0
+            faces =[]
+            for l1, l2, p1, p2 in zip(i_profil.primitives, j_profil.primitives, i_profil.points, j_profil.points):
+                if n < len(i_profil.points)-1:
+                    p3 = i_profil.points[n+1]
+                    p4 = j_profil.points[n+1]
+                elif n == len(i_profil.points):
+                    p3 = i_profil.points[-1]
+                    p4 = j_profil.points[-1]
+                else:
+                    p3 = i_profil.points[0]
+                    p4 = j_profil.points[0]
+                l1 = volmdlr.edges.LineSegment3D(p1, p3)
+                l2 = volmdlr.edges.LineSegment3D(p3, p4)
+                l3 = volmdlr.edges.LineSegment3D(p4, p2)
+                l4 = volmdlr.edges.LineSegment3D(p2, p1)
+                plane3d = volmdlr.faces.Plane3D.from_3_points(p1, p3, p2)
+                contour3d = volmdlr.wires.Contour3D([l1, l2, l3, l4])
 
-        for i, profil in enumerate(self.profiles):
+                contour2d = contour3d.to_2d(plane3d.frame.origin,
+                                            plane3d.frame.u, plane3d.frame.v)
+
+                surface2d = volmdlr.faces.Surface2D(outer_contour=contour2d, inner_contours=[])
+                # lines = [l1, l3, l2, l4]
+                # contour = volmdlr.wires.Contour2D(lines)
+                # surface2d = volmdlr.faces.Surface2D(contour,[])
+                surface = volmdlr.faces.PlaneFace3D(plane3d, surface2d)
+                # ruled_surface = volmdlr.faces.RuledSurface3D(volmdlr.wires.Wire3D([l1]), volmdlr.wires.Wire3D([l2]))
+
+                # faces.append(volmdlr.faces.Surface3D(wires, alpha=0.9, color=(1, 0.1, 0.1)))
+                faces.append(surface)
+                n += 1
+            return volmdlr.core.VolumeModel(faces).babylonjs()
