@@ -1412,6 +1412,10 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
+    # def symetric(self, symmetry_plan: ):
+    #     new_wire3d = self.wire3d.primitives.
+    #     return Sweep(new_contour2d, new_wire3d, color=self.color,
+    #                  alpha=self.alpha, name=self.name)
     def shell_faces(self):
         """
         For now it does not take into account rotation of sections
@@ -1723,3 +1727,17 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
             return cls(bsplinecurve, vectextru, name)
         else:
             raise NotImplementedError  # a adapter pour les bpsline
+
+
+class Loft(object):
+    def __init__(self, profiles: list[volmdlr.wires.ClosedPolygon3D], name: str = ''):
+        self.profiles = profiles
+        self.name = name
+
+    """
+    2 profiles with the same number of points
+    """
+
+    def shell_faces(self):
+
+        for i, profil in enumerate(self.profiles):

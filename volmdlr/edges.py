@@ -847,7 +847,7 @@ class BSplineCurve2D(BSplineCurve):
         points_y = [p.y for p in points]
 
         return volmdlr.core.BoundingRectangle(min(points_x), max(points_x),
-                min(points_y), max(points_y))
+                                              min(points_y), max(points_y))
 
     def length(self):
         return length_curve(self.curve)
@@ -1746,7 +1746,7 @@ class Arc2D(Arc):
     def bounding_rectangle(self):
         # TODO: Enhance this!!!
         return volmdlr.core.BoundingRectangle(self.center.x - self.radius, self.center.x + self.radius,
-                self.center.y - self.radius, self.center.y + self.radius)
+                                              self.center.y - self.radius, self.center.y + self.radius)
 
     def straight_line_area(self):
         if self.angle >= math.pi:

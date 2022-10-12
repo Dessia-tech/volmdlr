@@ -456,6 +456,6 @@ for i, i_polygon in enumerate(polygons):
             faces = [vmf.Triangle3D(*triangle_points, alpha=0.9,
                                     color=(1, 0.1, 0.1))
                      for triangle_points in list_triangles_points]
-            # vm.core.VolumeModel(faces).babylonjs()
+            vm.core.VolumeModel(faces).babylonjs()
             assert i_polygon.check_sewing(j_polygon, faces)
             break
