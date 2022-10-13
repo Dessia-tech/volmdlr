@@ -126,7 +126,8 @@ class Wire:
                 prim = primitive1.split(point1)[1]
                 if prim:
                     primitives.append(prim)
-                primitives.extend(self.primitives[self.primitive_to_index(primitive1) + 1:self.primitive_to_index(primitive2)])
+                primitives.extend(self.primitives[self.primitive_to_index(
+                    primitive1) + 1:self.primitive_to_index(primitive2)])
                 prim = primitive2.split(point2)[0]
                 if prim:
                     primitives.append(prim)
