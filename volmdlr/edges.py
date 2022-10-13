@@ -1678,6 +1678,11 @@ class Arc2D(Arc):
         return intersection_points
 
     def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
+        if point2d.point_distance(self.start) < tol:
+            return 0
+        elif point2d.point_distance(self.end) < tol:
+            return self.length()
+
         p = point2d - self.center
         u = self.start - self.center
         u.normalize()
@@ -1996,7 +2001,8 @@ class Arc2D(Arc):
                       self.point_at_abscissa(0.5 * abscissa),
                       split_point),
                 Arc2D(split_point,
-                      self.point_at_abscissa(1.5 * abscissa),
+                      self.point_at_abscissa((self.abscissa(self.end) \
+                                              - abscissa)*0.5 + abscissa),
                       self.end)
                 ]
 
