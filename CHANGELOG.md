@@ -10,51 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
-<<<<<<< HEAD
-* VolumeModel: to_geo (generate .geo file), to_msh (generate .msh file)
-* Gmsh (read .msh file)
-
-
-### Fixed
-
-* 
-
-
-### Performance improvements
-
-*
-
-
-### Refactorings
-
-* Define a Parent class 'Triangle' for Triangle2D/3D
-* 
-* 
-
-
-## Unrealeased
-
-### New Features
-
-* VolumeModel: to_geo (generate .geo file), to_msh (generate .msh file)
-
-
-### Fixed
-
-* 
-
-=======
 * Gmsh: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
-<<<<<<< HEAD
-<<<<<<< HEAD
-* Circle2D: primitives (defined with 2 Arc2D)
-=======
-* Arc: reverse
->>>>>>> fix_pt_belongs_arc2d
-=======
 * Circle2D: primitives (defined with 2 Arc2D)
 * Arc: reverse
->>>>>>> origin/fix_merge_with
 *
 
 ### Fixed
@@ -63,25 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour: edges_order_with_adjacent_contour
 * Arc2D: point_belongs (use is_trigo, consider point=start or end)
 *
->>>>>>> origin/circle_primitives
 
 ### Performance improvements
 
 *
-<<<<<<< HEAD
-
-
-### Refactorings
-
-* 
-* 
-* 
-
-
-
-## Unrealeased
-
-=======
 *
 
 ### Refactorings
@@ -91,7 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## v0.5.0
->>>>>>> origin/circle_primitives
 
 ### New Features
 
