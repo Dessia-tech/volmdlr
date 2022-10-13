@@ -163,19 +163,19 @@ class TriangularElement(vmw.Triangle):
         return [linear_element_1, linear_element_2, linear_element_3]
 
     def _form_functions(self):
-        a = vm.Matrix33(1, self.points[0].x, self.points[0].y,
-                        1, self.points[1].x, self.points[1].y,
-                        1, self.points[2].x, self.points[2].y)
+        a_matrix = vm.Matrix33(1, self.points[0].x, self.points[0].y,
+                               1, self.points[1].x, self.points[1].y,
+                               1, self.points[2].x, self.points[2].y)
         try:
-            inv_a = a.inverse()
+            inv_a = a_matrix.inverse()
         except ValueError as expt:
             # self.plot()
             print('buggy element area', self._area())
             raise FlatElementError('form function bug') from expt
-        x1 = inv_a.vector_multiplication(vm.X3D)
-        x2 = inv_a.vector_multiplication(vm.Y3D)
-        x3 = inv_a.vector_multiplication(vm.Z3D)
-        return x1, x2, x3
+        x_1 = inv_a.vector_multiplication(vm.X3D)
+        x_2 = inv_a.vector_multiplication(vm.Y3D)
+        x_3 = inv_a.vector_multiplication(vm.Z3D)
+        return x_1, x_2, x_3
 
     # def _quadratic_form_functions(self):
     #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,
@@ -205,9 +205,9 @@ class TriangularElement(vmw.Triangle):
     #     return x1, x2, x3
 
     def _area(self):
-        u = self.points[1] - self.points[0]
-        v = self.points[2] - self.points[0]
-        return abs(u.cross(v)) / 2
+        u_vect = self.points[1] - self.points[0]
+        v_vect = self.points[2] - self.points[0]
+        return abs(u_vect.cross(v_vect)) / 2
 
     # def point_belongs(self, point):
     #     polygon = volmdlr.wires.ClosedPolygon2D(self.points)
@@ -304,19 +304,19 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         return [linear_element_1, linear_element_2, linear_element_3]
 
     def _form_functions(self):
-        a = vm.Matrix33(1, self.points[0].x, self.points[0].y,
-                        1, self.points[1].x, self.points[1].y,
-                        1, self.points[2].x, self.points[2].y)
+        a_matrix = vm.Matrix33(1, self.points[0].x, self.points[0].y,
+                               1, self.points[1].x, self.points[1].y,
+                               1, self.points[2].x, self.points[2].y)
         try:
-            inv_a = a.inverse()
+            inv_a = a_matrix.inverse()
         except ValueError as expt:
             self.plot()
             print('buggy element area', self.area)
             raise FlatElementError('form function bug') from expt
-        x1 = inv_a.vector_multiplication(vm.X3D)
-        x2 = inv_a.vector_multiplication(vm.Y3D)
-        x3 = inv_a.vector_multiplication(vm.Z3D)
-        return x1, x2, x3
+        x_1 = inv_a.vector_multiplication(vm.X3D)
+        x_2 = inv_a.vector_multiplication(vm.Y3D)
+        x_3 = inv_a.vector_multiplication(vm.Z3D)
+        return x_1, x_2, x_3
 
     # def _quadratic_form_functions(self):
     #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,
@@ -346,9 +346,9 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
     #     return x1, x2, x3
 
     def _area(self):
-        u = self.points[1] - self.points[0]
-        v = self.points[2] - self.points[0]
-        return abs(u.cross(v)) / 2
+        u_vect = self.points[1] - self.points[0]
+        v_vect = self.points[2] - self.points[0]
+        return abs(u_vect.cross(v_vect)) / 2
 
     # def point_belongs(self, point):
     #     polygon = volmdlr.wires.ClosedPolygon2D(self.points)
@@ -465,47 +465,47 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
         self._line_segments = None
         TriangularElement.__init__(self, points)
 
-    def _to_linear_elements(self):
-        vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
-                           self.points[1].y - self.points[0].y)
-        vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
-                           self.points[2].y - self.points[1].y)
-        vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
-                           self.points[0].y - self.points[2].y)
-        normal1 = vm.Vector2D(-vec1.y, vec1.x)
-        normal2 = vm.Vector2D(-vec2.y, vec2.x)
-        normal3 = vm.Vector2D(-vec3.y, vec3.x)
-        normal1.normalize()
-        normal2.normalize()
-        normal3.normalize()
-        if normal1.dot(vec2) < 0:
-            normal1 = - normal1
-        if normal2.dot(vec3) < 0:
-            normal2 = - normal2
-        if normal3.dot(vec1) < 0:
-            normal3 = - normal3
-        linear_element_1 = LinearElement(self.points[0], self.points[1],
-                                         normal1)
-        linear_element_2 = LinearElement(self.points[1], self.points[2],
-                                         normal2)
-        linear_element_3 = LinearElement(self.points[2], self.points[0],
-                                         normal3)
-        return [linear_element_1, linear_element_2, linear_element_3]
+    # def _to_linear_elements(self):
+    #     vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
+    #                        self.points[1].y - self.points[0].y)
+    #     vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
+    #                        self.points[2].y - self.points[1].y)
+    #     vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
+    #                        self.points[0].y - self.points[2].y)
+    #     normal1 = vm.Vector2D(-vec1.y, vec1.x)
+    #     normal2 = vm.Vector2D(-vec2.y, vec2.x)
+    #     normal3 = vm.Vector2D(-vec3.y, vec3.x)
+    #     normal1.normalize()
+    #     normal2.normalize()
+    #     normal3.normalize()
+    #     if normal1.dot(vec2) < 0:
+    #         normal1 = - normal1
+    #     if normal2.dot(vec3) < 0:
+    #         normal2 = - normal2
+    #     if normal3.dot(vec1) < 0:
+    #         normal3 = - normal3
+    #     linear_element_1 = LinearElement(self.points[0], self.points[1],
+    #                                      normal1)
+    #     linear_element_2 = LinearElement(self.points[1], self.points[2],
+    #                                      normal2)
+    #     linear_element_3 = LinearElement(self.points[2], self.points[0],
+    #                                      normal3)
+    #     return [linear_element_1, linear_element_2, linear_element_3]
 
-    def _form_functions(self):
-        a = vm.Matrix33(1, self.points[0].x, self.points[0].y,
-                        1, self.points[1].x, self.points[1].y,
-                        1, self.points[2].x, self.points[2].y)
-        try:
-            inv_a = a.inverse()
-        except ValueError as expt:
-            self.plot()
-            print('buggy element area', self.area)
-            raise FlatElementError('form function bug') from expt
-        x1 = inv_a.vector_multiplication(vm.X3D)
-        x2 = inv_a.vector_multiplication(vm.Y3D)
-        x3 = inv_a.vector_multiplication(vm.Z3D)
-        return x1, x2, x3
+    # def _form_functions(self):
+    #     a = vm.Matrix33(1, self.points[0].x, self.points[0].y,
+    #                     1, self.points[1].x, self.points[1].y,
+    #                     1, self.points[2].x, self.points[2].y)
+    #     try:
+    #         inv_a = a.inverse()
+    #     except ValueError as expt:
+    #         self.plot()
+    #         print('buggy element area', self.area)
+    #         raise FlatElementError('form function bug') from expt
+    #     x1 = inv_a.vector_multiplication(vm.X3D)
+    #     x2 = inv_a.vector_multiplication(vm.Y3D)
+    #     x3 = inv_a.vector_multiplication(vm.Z3D)
+    #     return x1, x2, x3
 
     # def _quadratic_form_functions(self):
     #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,
@@ -534,10 +534,10 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
 
     #     return x1, x2, x3
 
-    def _area(self):
-        u = self.points[1] - self.points[0]
-        v = self.points[2] - self.points[0]
-        return abs(u.cross(v)) / 2
+    # def _area(self):
+    #     u = self.points[1] - self.points[0]
+    #     v = self.points[2] - self.points[0]
+    #     return abs(u.cross(v)) / 2
 
     # def point_belongs(self, point):
     #     polygon = volmdlr.wires.ClosedPolygon2D(self.points)
@@ -677,22 +677,22 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
         #     delta.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
 
         coeff = [1, -1, 1, -1]
-        N = []
+        form_funct = []
         for i in range(4):
             data_alpha, data_gamma, data_betha, data_delta = [], [], [], []
-            for c in range(4):
-                if c != i:
-                    data_alpha.extend([self.points[c].x, self.points[c].y, self.points[c].z])
-                    data_gamma.extend([1, self.points[c].x, self.points[c].z])
-                    data_betha.extend([1, self.points[c].y, self.points[c].z])
-                    data_delta.extend([1, self.points[c].x, self.points[c].y])
+            for c_coef in range(4):
+                if c_coef != i:
+                    data_alpha.extend([self.points[c_coef].x, self.points[c_coef].y, self.points[c_coef].z])
+                    data_gamma.extend([1, self.points[c_coef].x, self.points[c_coef].z])
+                    data_betha.extend([1, self.points[c_coef].y, self.points[c_coef].z])
+                    data_delta.extend([1, self.points[c_coef].x, self.points[c_coef].y])
 
-            N.append([(coeff[i] * (npy.linalg.det(npy.array(data_alpha).reshape(3, 3)))),
-                      ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_betha).reshape(3, 3)))),
-                      (coeff[i] * (npy.linalg.det(npy.array(data_gamma).reshape(3, 3)))),
-                      ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_delta).reshape(3, 3))))])
+            form_funct.append([(coeff[i] * (npy.linalg.det(npy.array(data_alpha).reshape(3, 3)))),
+                               ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_betha).reshape(3, 3)))),
+                               (coeff[i] * (npy.linalg.det(npy.array(data_gamma).reshape(3, 3)))),
+                               ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_delta).reshape(3, 3))))])
 
-        return N[0], N[1], N[2], N[3]
+        return form_funct[0], form_funct[1], form_funct[2], form_funct[3]
 
 
 class ElementsGroup(DessiaObject):
@@ -728,16 +728,16 @@ class ElementsGroup(DessiaObject):
     def elements_per_node(self):
         if self._elements_per_node is not None:
             return self._elements_per_node
-        else:
-            dict_node_element = {}
-            for element in self.elements:
-                for point in element.points:
-                    try:
-                        dict_node_element[point].append(element)
-                    except KeyError:
-                        dict_node_element[point] = [element]
-            self._elements_per_node = dict_node_element
-            return dict_node_element
+
+        dict_node_element = {}
+        for element in self.elements:
+            for point in element.points:
+                try:
+                    dict_node_element[point].append(element)
+                except KeyError:
+                    dict_node_element[point] = [element]
+        self._elements_per_node = dict_node_element
+        return dict_node_element
 
     # def rotation(self, center, angle, copy=True):
     #     if copy:
@@ -907,8 +907,8 @@ class Mesh(DessiaObject):
 
         for i, node in enumerate(nodes_list):
             for j in range(i + 1, len(nodes_list)):
-                d = node.point_distance(nodes_list[j])
-                if d < tol:
+                dist = node.point_distance(nodes_list[j])
+                if dist < tol:
                     nodes_index.append((j, i))
 
         if nodes_index:
