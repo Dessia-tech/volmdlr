@@ -63,7 +63,7 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
         dist1 = (pt1 - pti).norm()
         dist2 = (pt2 - pti).norm()
         dist3 = (pt1 - pt2).norm()
-        alpha = math.acos(-(dist3**2 - dist1**2 - dist2**2) / (2 * dist1 * dist2)) / 2.
+        alpha = math.acos(-(dist3 ** 2 - dist1 ** 2 - dist2 ** 2) / (2 * dist1 * dist2)) / 2.
         dist = radius / math.tan(alpha)
 
         u1 = (pt1 - pti) / dist1
@@ -147,9 +147,9 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 
     def __init__(self, points, radius, adapt_radius=False, name=''):
         volmdlr.primitives.RoundedLineSegments.__init__(
-                self, points, radius, 'volmdlr.edges.LineSegment3D',
-                'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
-                name='')
+            self, points, radius, 'volmdlr.edges.LineSegment3D',
+            'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
+            name='')
 
         volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
 
@@ -189,8 +189,8 @@ class Block(volmdlr.faces.ClosedShell3D):
     @classmethod
     def from_bounding_box(cls, bounding_box):
         bb = bounding_box
-        xmin, xmax, ymin, ymax, zmin, zmax = bb.xmin, bb.xmax,\
-            bb.ymin, bb.ymax, bb.zmin, bb.zmax
+        xmin, xmax, ymin, ymax, zmin, zmax = bb.xmin, bb.xmax, \
+                                             bb.ymin, bb.ymax, bb.zmin, bb.zmax
         origin = bb.center
         sx, sy, sz = xmax - xmin, ymax - ymin, zmax - zmin
         frame = volmdlr.Frame3D(origin, sx * volmdlr.Vector3D(1, 0, 0),
@@ -263,17 +263,17 @@ class Block(volmdlr.faces.ClosedShell3D):
         zp_frame = volmdlr.Frame3D(frame.origin + 0.5 * self.frame.w,
                                    frame.u, frame.v, frame.w)
 
-        xm_face = volmdlr.faces.Plane3D(xm_frame)\
+        xm_face = volmdlr.faces.Plane3D(xm_frame) \
             .rectangular_cut(-hly, hly, -hlz, hlz)
-        xp_face = volmdlr.faces.Plane3D(xp_frame)\
+        xp_face = volmdlr.faces.Plane3D(xp_frame) \
             .rectangular_cut(-hly, hly, -hlz, hlz)
-        ym_face = volmdlr.faces.Plane3D(ym_frame)\
+        ym_face = volmdlr.faces.Plane3D(ym_frame) \
             .rectangular_cut(-hlz, hlz, -hlx, hlx)
-        yp_face = volmdlr.faces.Plane3D(yp_frame)\
+        yp_face = volmdlr.faces.Plane3D(yp_frame) \
             .rectangular_cut(-hlz, hlz, -hlx, hlx)
-        zm_face = volmdlr.faces.Plane3D(zm_frame)\
+        zm_face = volmdlr.faces.Plane3D(zm_frame) \
             .rectangular_cut(-hlx, hlx, -hly, hly)
-        zp_face = volmdlr.faces.Plane3D(zp_frame)\
+        zp_face = volmdlr.faces.Plane3D(zp_frame) \
             .rectangular_cut(-hlx, hlx, -hly, hly)
 
         return [xm_face, xp_face, ym_face, yp_face, zm_face, zp_face]
@@ -571,7 +571,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
-        self.extrusion_vector, self.x, self.y =\
+        self.extrusion_vector, self.x, self.y = \
             self.frame_mapping_parameters(frame, side)
         self.plane_origin.frame_mapping_inplace(frame, side)
 
@@ -690,7 +690,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive' + str(ip)
         s = 'W=[]\n'
-#        for ic, contour in enumerate(self.contours3D):
+        #        for ic, contour in enumerate(self.contours3D):
         s += 'L=[]\n'
         for ibp, basis_primitive in enumerate(self.contour3d.edges):
             s += basis_primitive.FreeCADExport('L{}_{}'.format(1, ibp), 8)
@@ -861,9 +861,9 @@ class Cylinder(RevolvedProfile):
         pointA = self.position - self.length / 2 * self.axis
         pointB = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (pointA[0] - pointB[0]) ** 2
+        dy2 = (pointA[1] - pointB[1]) ** 2
+        dz2 = (pointA[2] - pointB[2]) ** 2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
@@ -871,23 +871,23 @@ class Cylinder(RevolvedProfile):
 
         if pointA[0] > pointB[0]:
             pointA, pointB = pointB, pointA
-        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
+        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
 
         if pointA[1] > pointB[1]:
             pointA, pointB = pointB, pointA
-        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
+        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
 
         if pointA[2] > pointB[2]:
             pointA, pointB = pointB, pointA
-        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
-        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
+        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def volume(self):
-        return self.length * math.pi * self.radius**2
+        return self.length * math.pi * self.radius ** 2
 
     @classmethod
     def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
@@ -917,7 +917,7 @@ class Cylinder(RevolvedProfile):
             ay = str(ay)
             az = str(az)
             return name + '=Part.makeCylinder(' + r + ',' + e + ',fc.Vector(' + x + ',' + y + \
-                ',' + z + '),fc.Vector(' + ax + ',' + ay + ',' + az + '),360)\n'
+                   ',' + z + '),fc.Vector(' + ax + ',' + ay + ',' + az + '),360)\n'
         else:
             return ''
 
@@ -1088,7 +1088,6 @@ class Cone(RevolvedProfile):
                  radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
-
         self.position = position
         axis.normalize()
         self.axis = axis
@@ -1116,26 +1115,26 @@ class Cone(RevolvedProfile):
         pointA = self.position - self.length / 2 * self.axis
         pointB = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (pointA[0] - pointB[0]) ** 2
+        dy2 = (pointA[1] - pointB[1]) ** 2
+        dz2 = (pointA[2] - pointB[2]) ** 2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        x_bound = (pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[0])
+        x_bound = (pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * self.radius,
+                   pointA[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * self.radius, pointB[0])
         xmin = min(x_bound)
         xmax = max(x_bound)
 
-        y_bound = (pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[1])
+        y_bound = (pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * self.radius,
+                   pointA[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * self.radius, pointB[1])
         ymin = min(y_bound)
         ymax = max(y_bound)
 
-        z_bound = (pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[2])
+        z_bound = (pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2)) ** 0.5) * self.radius,
+                   pointA[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2)) ** 0.5) * self.radius, pointB[2])
         zmin = min(z_bound)
         zmax = max(z_bound)
 
@@ -1187,7 +1186,7 @@ class Cone(RevolvedProfile):
         self.axis.rotation_inplace(center, axis, angle)
 
     def volume(self):
-        return self.length * math.pi * self.radius**2 / 3
+        return self.length * math.pi * self.radius ** 2 / 3
 
 
 class HollowCylinder(RevolvedProfile):
@@ -1225,9 +1224,9 @@ class HollowCylinder(RevolvedProfile):
         pointA = self.position - self.length / 2 * self.axis
         pointB = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (pointA[0] - pointB[0]) ** 2
+        dy2 = (pointA[1] - pointB[1]) ** 2
+        dz2 = (pointA[2] - pointB[2]) ** 2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
@@ -1235,24 +1234,24 @@ class HollowCylinder(RevolvedProfile):
 
         if pointA[0] > pointB[0]:
             pointA, pointB = pointB, pointA
-        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
+        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
 
         if pointA[1] > pointB[1]:
             pointA, pointB = pointB, pointA
-        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
+        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
 
         if pointA[2] > pointB[2]:
             pointA, pointB = pointB, pointA
-        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
-        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
+        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2)) ** 0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def volume(self):
-        return self.length * math.pi * (self.outer_radius**2
-                                        - self.inner_radius**2)
+        return self.length * math.pi * (self.outer_radius ** 2
+                                        - self.inner_radius ** 2)
 
     def copy(self):
         new_position = self.position.copy()
@@ -1288,7 +1287,8 @@ class HollowCylinder(RevolvedProfile):
 
             if self.inner_radius != 0.:
                 s += 'C1 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(ri,
-                                                                                                      x, y, z, ax, ay, az)
+                                                                                                      x, y, z, ax, ay,
+                                                                                                      az)
                 s += 'W1 = Part.Wire(C1.Edges)\n'
                 s += 'F1 = Part.Face(W1)\n'
                 s += 'F2 = F2.cut(F1)\n'
@@ -1444,14 +1444,14 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         end_plane = volmdlr.faces.Plane3D(
             volmdlr.Frame3D(self.wire3d.primitives[-1].point_at_abscissa(
                 l_last_primitive),
-                            u, v, w))
+                u, v, w))
 
         faces = [volmdlr.faces.PlaneFace3D(
             start_plane,
             volmdlr.faces.Surface2D(self.contour2d, [])),
-                 volmdlr.faces.PlaneFace3D(
-            end_plane,
-            volmdlr.faces.Surface2D(self.contour2d, []))]
+            volmdlr.faces.PlaneFace3D(
+                end_plane,
+                volmdlr.faces.Surface2D(self.contour2d, []))]
 
         for wire_primitive in self.wire3d.primitives:
             # tangent, normal = wire_primitive.frenet(0.)
@@ -1582,7 +1582,7 @@ class Sphere(RevolvedProfile):
                                  color=color, alpha=alpha, name=name)
 
     def volume(self):
-        return 4 / 3 * math.pi * self.radius**3
+        return 4 / 3 * math.pi * self.radius ** 3
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive' + str(ip)
@@ -1732,26 +1732,185 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
 
 class Loft(dessia_common.PhysicalObject):
-    def __init__(self, profiles: list[volmdlr.wires.ClosedPolygon3D], color:  Tuple[float, float, float] = None,
+    def __init__(self, profiles: list[volmdlr.wires.ClosedPolygon3D], color: Tuple[float, float, float] = None,
                  alpha: float = 0.8, name: str = ''):
         self.profiles = profiles
         self.color = color
         self.alpha = alpha
         dessia_common.PhysicalObject.__init__(self, name=name)
-    def shell_faces(self):
+
+    def volmdlr_primitives(self):
         """
          2 profiles with the same number of points
         """
-        #global faces
-        if len(self.profiles) == 2:
-            i_profil = self.profiles[0]
-            j_profil = self.profiles[1]
+        verify_number_points_profiles_equal = self._verify_number_points
+        if verify_number_points_profiles_equal:
+            return self._primitives()
+
+        self.profiles = self._new_primitives()
+        return self._primitives()
+
+            # return self.new_points_primitives(,
+
+    def _new_primitives(self):
+        """
+        The Loft needs the number of segments to match in order to create surfaces between corresponding segments.
+        If the numbers of segments match in all profiles, this step is skipped.
+        If at least one of the profiles has a different number of segments, the following procedure is applied:
+            1. the profiles are temporarily aligned so that they are coplanar and their avarage point centers matches.
+            2. we then calculate a line segment starting from the calculated center and passing in every vertex in one
+            profile, with this line we calculate the intersection with the second profile. the same is done in the
+            opposite direction.
+        Then we create a dictionary to save the vertex coordinates and the intersection points, these points will be
+        used to connect the polygons
+        The operation is extended to all profiles, to yield the equal number of segments.
+        The total number of segments in each profile would be equal to the sum of all numbers of segments of all
+        profiles (provided none of the vertices happen to be at the same polar angle).
+        """
+        #n = len(self.profiles)
+        #new_primitives = self.profiles
+        new_primitives = []
+        for i, i_profil in enumerate(self.profiles):
+        # i = 0
+        # while i < n:
+        #     i_profil = self.profiles[i]
+            center1 = i_profil.average_center_point()
+            new_profil1 = i_profil.translation(-center1)
+            new_profil1_2d = new_profil1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+            new_points = new_profil1.points
+            for j, j_profil in enumerate(self.profiles):
+                if j != i:
+                    center2 = j_profil.average_center_point()
+                    #center1_, center2_ = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
+                    new_profil2 = j_profil.translation(-center2)
+                    #new_profil1, new_profil2 = profil1.copy(), profil2.translation(center1 - center2)
+                    #new_center1, new_center2 = new_profil1.average_center_point(), new_profil2.average_center_point()
+                    # plane3d = volmdlr.faces.Plane3D.from_points(profil1.points)
+                    # new_profil1_2d, new_profil2_2d = \
+                    #     new_profil1.to_2d(new_center1, plane3d.frame.u, plane3d.frame.v), new_profil2.to_2d(new_center2, plane3d.frame.u, plane3d.frame.v)
+                    new_profil2_2d = new_profil2.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+                    new_profil_2d_list = [new_profil1_2d, new_profil2_2d]
+                    dict_closing_pairs = {}
+                    faces = []
+                    new_profil_list = []
+                    new_polygon1_2d_points = new_profil1_2d.points + [new_profil1_2d.points[0]]
+                    new_points_2d = new_profil1_2d.points
+                    for k, point in enumerate(new_profil2_2d.points):
+                        vec_dir = point.copy()
+                        center = volmdlr.O2D
+                        vec_dir.normalize()
+
+                        line = volmdlr.edges.LineSegment2D(center, vec_dir * 2)
+                        # line.plot(ax=ax2d, color='b')
+                        # z = profil_3d.points[0].z
+                        dic_corresp = {}
+                        point_intersections = {}
+                        for l, line_segment in enumerate(new_profil1_2d.line_segments):
+                            point_intersection = line_segment.linesegment_intersections(line)
+                            if point_intersection:
+                                point_intersections[line_segment] = point_intersection[0]
+                                new_point = volmdlr.Point3D(point_intersection[0].x, point_intersection[0].y, 0)
+                                if new_point not in new_points:
+                                    new_points_2d.insert(l+1, point_intersection[0])
+                                    new_points.insert(l+1, new_point)
+                                    dic_corresp[k] = l+1
+                            else:
+                                if line.point_belongs(line_segment.start):
+                                    point_intersections[line_segment] = line_segment.start
+                                    dic_corresp[k] = l+1
+
+                                if line.point_belongs(line_segment.end):
+                                    point_intersections[line_segment] = line_segment.end
+                                    dic_corresp[k] = l+2
+                        new_profil1_2d = volmdlr.wires.ClosedPolygon2D(new_points_2d)
+            new_profil = volmdlr.wires.ClosedPolygon3D(new_points)
+            new_primitives.append(new_profil.translation(center1))
+                    # if i == 0:
+                    #     for k, profil_2d in enumerate(new_profil_2d_list):
+                    #         if k == 0:
+                    #             profil1 = new_profil_2d_list[0]
+                    #             profil2 = new_profil_2d_list[1]
+                    #             res, points_intersection = self._line_intersection_point(profil1, profil2, new_profil2)
+                    #             # new_profil_3d = volmdlr.wires.ClosedPolygon3D(res).translation(center2)
+                    #             # new_primitives[j] = new_profil_3d
+                    #         else:
+                    #             profil1 = new_profil_2d_list[1]
+                    #             profil2 = new_profil_2d_list[0]
+                    #             res, points_intersection = self._line_intersection_point(profil1, profil2, new_profil1)
+                    #             # new_profil_3d = volmdlr.wires.ClosedPolygon3D(res).translation(center1)
+                    #             # new_primitives[i] = new_profil_3d
+                    # else:
+                    #     profil1 = new_profil_2d_list[1]
+                    #     profil2 = new_profil_2d_list[0]
+                    #     res, points_intersection = self._line_intersection_point(profil1, profil2, new_profil1)
+                        # new_profil_3d = volmdlr.wires.ClosedPolygon3D(res).translation(center1)
+                        # new_primitives[i] = new_profil_3d
+
+            #
+            # i += 1
+        return new_primitives
+
+    @staticmethod
+    def _line_intersection_point(profil1, profil2, profil_3d):
+        """
+        """
+        # vec_dir = profil1_vertex.copy()
+        new_points = profil_3d.points
+        for i, point in enumerate(profil1.points):
+            vec_dir = point.copy()
+            center = volmdlr.O2D
+            vec_dir.normalize()
+
+            line = volmdlr.edges.LineSegment2D(center, vec_dir*2)
+            # line.plot(ax=ax2d, color='b')
+            #z = profil_3d.points[0].z
+            dic_corresp = {}
+            point_intersections = {}
+            for j, line_segment in enumerate(profil2.line_segments):
+                point_intersection = line_segment.linesegment_intersections(line)
+                if point_intersection:
+                    point_intersections[line_segment] = point_intersection[0]
+                    new_point = volmdlr.Point3D(point_intersection[0].x, point_intersection[0].y, 0)
+                    if new_point not in new_points:
+                        new_points.insert(j + 1, new_point)
+                        dic_corresp[i] = j + 1
+                else:
+                    if line.point_belongs(line_segment.start):
+                        point_intersections[line_segment] = line_segment.start
+
+                    if line.point_belongs(line_segment.end):
+                        point_intersections[line_segment] = line_segment.end
+
+            # point_distance = list(point_intersections.values())[0].point_distance(profil1_vertex)
+            # point_intersection = list(point_intersections.values())[0]
+            # line_segment = list(point_intersections.keys())[0]
+            # for line, point in list(point_intersections.items())[1:]:
+            #     dist = profil1_vertex.point_distance(point)
+            #     if dist < point_distance:
+            #         point_distance = dist
+            #         point_intersection = point
+            #         line_segment = line
+            #
+            # # point_intersection.plot(ax=ax2d)
+            #
+            # if point_intersection.point_distance(
+            #         line_segment.start) < point_intersection.point_distance(
+            #     line_segment.end):
+            #     closing_point = line_segment.start
+            # else:
+            #     closing_point = line_segment.end
+            line.plot(profil2.plot())
+        return new_points, point_intersections
+
+    def _primitives(self):
+        faces = []
+        for i, i_profil in enumerate(self.profiles[:-1]):
+            j_profil = self.profiles[i + 1]
             n = 0
-            faces =[]
-            for l1, l2, p1, p2 in zip(i_profil.primitives, j_profil.primitives, i_profil.points, j_profil.points):
-                if n < len(i_profil.points)-1:
-                    p3 = i_profil.points[n+1]
-                    p4 = j_profil.points[n+1]
+            for p1, p2 in zip(i_profil.points, j_profil.points):
+                if n < len(i_profil.points) - 1:
+                    p3 = i_profil.points[n + 1]
+                    p4 = j_profil.points[n + 1]
                 elif n == len(i_profil.points):
                     p3 = i_profil.points[-1]
                     p4 = j_profil.points[-1]
@@ -1769,13 +1928,16 @@ class Loft(dessia_common.PhysicalObject):
                                             plane3d.frame.u, plane3d.frame.v)
 
                 surface2d = volmdlr.faces.Surface2D(outer_contour=contour2d, inner_contours=[])
-                # lines = [l1, l3, l2, l4]
-                # contour = volmdlr.wires.Contour2D(lines)
-                # surface2d = volmdlr.faces.Surface2D(contour,[])
-                surface = volmdlr.faces.PlaneFace3D(plane3d, surface2d)
-                # ruled_surface = volmdlr.faces.RuledSurface3D(volmdlr.wires.Wire3D([l1]), volmdlr.wires.Wire3D([l2]))
 
-                # faces.append(volmdlr.faces.Surface3D(wires, alpha=0.9, color=(1, 0.1, 0.1)))
+                surface = volmdlr.faces.PlaneFace3D(plane3d, surface2d)
+
                 faces.append(surface)
                 n += 1
-            return volmdlr.core.VolumeModel(faces).babylonjs()
+        return faces  # volmdlr.core.VolumeModel(faces).babylonjs()
+
+    @property
+    def _verify_number_points(self):
+        """
+        Return True if all the contours have the same number of points and False otherwise.
+        """
+        return all(len(self.profiles[0].points) == len(profil.points) for profil in self.profiles)
