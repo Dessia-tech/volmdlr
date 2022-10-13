@@ -178,12 +178,18 @@ class TriangularElement(vmw.Triangle):
         return x1, x2, x3
 
     # def _quadratic_form_functions(self):
-    #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,self.points[0][0]*self.points[0][1],self.points[0][1]**2],
-    #           [1, self.points[1][0], self.points[1][1],self.points[1][0]**2,self.points[1][0]*self.points[1][1],self.points[1][1]**2],
-    #           [1, self.points[2][0], self.points[2][1],self.points[2][0]**2,self.points[2][0]*self.points[2][1],self.points[2][1]**2],
-    #           [1, self.points[3][0], self.points[3][1],self.points[3][0]**2,self.points[3][0]*self.points[3][1],self.points[3][1]**2],
-    #           [1, self.points[4][0], self.points[4][1],self.points[4][0]**2,self.points[4][0]*self.points[4][1],self.points[4][1]**2],
-    #           [1, self.points[5][0], self.points[5][1],self.points[5][0]**2,self.points[5][0]*self.points[5][1],self.points[5][1]**2]]
+    #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,
+    #           self.points[0][0]*self.points[0][1],self.points[0][1]**2],
+    #           [1, self.points[1][0], self.points[1][1],self.points[1][0]**2,
+    #            self.points[1][0]*self.points[1][1],self.points[1][1]**2],
+    #           [1, self.points[2][0], self.points[2][1],self.points[2][0]**2,
+    #            self.points[2][0]*self.points[2][1],self.points[2][1]**2],
+    #           [1, self.points[3][0], self.points[3][1],self.points[3][0]**2,
+    #            self.points[3][0]*self.points[3][1],self.points[3][1]**2],
+    #           [1, self.points[4][0], self.points[4][1],self.points[4][0]**2,
+    #            self.points[4][0]*self.points[4][1],self.points[4][1]**2],
+    #           [1, self.points[5][0], self.points[5][1],self.points[5][0]**2,
+    #            self.points[5][0]*self.points[5][1],self.points[5][1]**2]]
 
     #     try :
     #         inv_a = a.inverse()
@@ -313,12 +319,18 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         return x1, x2, x3
 
     # def _quadratic_form_functions(self):
-    #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,self.points[0][0]*self.points[0][1],self.points[0][1]**2],
-    #           [1, self.points[1][0], self.points[1][1],self.points[1][0]**2,self.points[1][0]*self.points[1][1],self.points[1][1]**2],
-    #           [1, self.points[2][0], self.points[2][1],self.points[2][0]**2,self.points[2][0]*self.points[2][1],self.points[2][1]**2],
-    #           [1, self.points[3][0], self.points[3][1],self.points[3][0]**2,self.points[3][0]*self.points[3][1],self.points[3][1]**2],
-    #           [1, self.points[4][0], self.points[4][1],self.points[4][0]**2,self.points[4][0]*self.points[4][1],self.points[4][1]**2],
-    #           [1, self.points[5][0], self.points[5][1],self.points[5][0]**2,self.points[5][0]*self.points[5][1],self.points[5][1]**2]]
+    #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,
+    #           self.points[0][0]*self.points[0][1],self.points[0][1]**2],
+    #           [1, self.points[1][0], self.points[1][1],self.points[1][0]**2,
+    #            self.points[1][0]*self.points[1][1],self.points[1][1]**2],
+    #           [1, self.points[2][0], self.points[2][1],self.points[2][0]**2,
+    #            self.points[2][0]*self.points[2][1],self.points[2][1]**2],
+    #           [1, self.points[3][0], self.points[3][1],self.points[3][0]**2,
+    #            self.points[3][0]*self.points[3][1],self.points[3][1]**2],
+    #           [1, self.points[4][0], self.points[4][1],self.points[4][0]**2,
+    #            self.points[4][0]*self.points[4][1],self.points[4][1]**2],
+    #           [1, self.points[5][0], self.points[5][1],self.points[5][0]**2,
+    #            self.points[5][0]*self.points[5][1],self.points[5][1]**2]]
 
     #     try :
     #         inv_a = a.inverse()
@@ -496,12 +508,18 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
         return x1, x2, x3
 
     # def _quadratic_form_functions(self):
-    #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,self.points[0][0]*self.points[0][1],self.points[0][1]**2],
-    #           [1, self.points[1][0], self.points[1][1],self.points[1][0]**2,self.points[1][0]*self.points[1][1],self.points[1][1]**2],
-    #           [1, self.points[2][0], self.points[2][1],self.points[2][0]**2,self.points[2][0]*self.points[2][1],self.points[2][1]**2],
-    #           [1, self.points[3][0], self.points[3][1],self.points[3][0]**2,self.points[3][0]*self.points[3][1],self.points[3][1]**2],
-    #           [1, self.points[4][0], self.points[4][1],self.points[4][0]**2,self.points[4][0]*self.points[4][1],self.points[4][1]**2],
-    #           [1, self.points[5][0], self.points[5][1],self.points[5][0]**2,self.points[5][0]*self.points[5][1],self.points[5][1]**2]]
+    #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,
+    #           self.points[0][0]*self.points[0][1],self.points[0][1]**2],
+    #           [1, self.points[1][0], self.points[1][1],self.points[1][0]**2,
+    #            self.points[1][0]*self.points[1][1],self.points[1][1]**2],
+    #           [1, self.points[2][0], self.points[2][1],self.points[2][0]**2,
+    #            self.points[2][0]*self.points[2][1],self.points[2][1]**2],
+    #           [1, self.points[3][0], self.points[3][1],self.points[3][0]**2,
+    #            self.points[3][0]*self.points[3][1],self.points[3][1]**2],
+    #           [1, self.points[4][0], self.points[4][1],self.points[4][0]**2,
+    #            self.points[4][0]*self.points[4][1],self.points[4][1]**2],
+    #           [1, self.points[5][0], self.points[5][1],self.points[5][0]**2,
+    #            self.points[5][0]*self.points[5][1],self.points[5][1]**2]]
 
     #     try :
     #         inv_a = a.inverse()
@@ -911,7 +929,9 @@ class Mesh(DessiaObject):
 
 # class Mesher(DessiaObject):
 
-#     def __init__(self,interior_contours:List[volmdlr.wires.Contour2D],exterior_contours:List[volmdlr.wires.Contour2D],triangles:List[TriangularElement],nodes_len:float):
+#     def __init__(self,interior_contours:List[volmdlr.wires.Contour2D],
+#                  exterior_contours:List[volmdlr.wires.Contour2D],
+#                  triangles:List[TriangularElement],nodes_len:float):
 #         self.nodes_len=nodes_len
 #         self.interior_contours=interior_contours
 #         self.exterior_contours=exterior_contours
@@ -922,7 +942,9 @@ class Mesh(DessiaObject):
 #         return (i+di)%n
 
 
-#     def edge_max_distance(self,polygone:volmdlr.wires.ClosedPolygon2D,P0:volmdlr.Point2D,P1:volmdlr.Point2D,P2:volmdlr.Point2D,indexes:List[float]):
+#     def edge_max_distance(self,polygone:volmdlr.wires.ClosedPolygon2D,
+#                           P0:volmdlr.Point2D,P1:volmdlr.Point2D,
+#                           P2:volmdlr.Point2D,indexes:List[float]):
 #         n=len(polygone.points)
 #         distance=0
 #         j=None
@@ -961,8 +983,8 @@ class Mesh(DessiaObject):
 
 #         return p
 
-# def
-# triangulation_polygone_recursive(self,polygone:volmdlr.wires.ClosedPolygon2D,triangles:List[volmdlr.wires.Triangle2D]):
+# def triangulation_polygone_recursive(self,polygone:volmdlr.wires.ClosedPolygon2D,
+#                                      triangles:List[volmdlr.wires.Triangle2D]):
 
 #         n=len(polygone.points)
 #         j0=self.left_edge(polygone)
@@ -1032,7 +1054,8 @@ class Mesh(DessiaObject):
 #     def _triangle_sum(self,x1, y1, x2, y2, x3, y3):
 #         return x1 * (y3 - y2) + x2 * (y1 - y3) + x3 * (y2 - y1)
 
-#     def _contains_no_points(self,p1:volmdlr.Point2D,p2:volmdlr.Point2D,p3:volmdlr.Point2D, polygon:volmdlr.wires.ClosedPolygon2D):
+#     def _contains_no_points(self,p1:volmdlr.Point2D,p2:volmdlr.Point2D,p3:volmdlr.Point2D,
+#                             polygon:volmdlr.wires.ClosedPolygon2D):
 #         triangle=volmdlr.wires.Triangle2D([p1,p2,p3])
 #         for pn in polygon.points:
 #             if pn in [p1, p2, p3]:
@@ -1041,7 +1064,8 @@ class Mesh(DessiaObject):
 #                 return False
 #         return True
 
-#     def _is_ear(self,p1:volmdlr.Point2D,p2:volmdlr.Point2D,p3:volmdlr.Point2D, polygon:volmdlr.wires.ClosedPolygon2D):
+#     def _is_ear(self,p1:volmdlr.Point2D,p2:volmdlr.Point2D,p3:volmdlr.Point2D,
+#                 polygon:volmdlr.wires.ClosedPolygon2D):
 #         triangle=volmdlr.wires.Triangle2D([p1,p2,p3])
 #         ear = self._contains_no_points(p1, p2, p3, polygon) and \
 #             self._is_convex(p1, p2, p3) and \
@@ -1158,7 +1182,8 @@ class Mesh(DessiaObject):
 
 #         return triangles
 
-#     def alternative_triangulation(self,polygon:volmdlr.wires.ClosedPolygon2D,interior_polygon:volmdlr.wires.ClosedPolygon2D,empty:bool,far:bool):
+#     def alternative_triangulation(self,polygon:volmdlr.wires.ClosedPolygon2D,
+#                                   interior_polygon:volmdlr.wires.ClosedPolygon2D,empty:bool,far:bool):
 #         # ax=plt.subplot()
 #         all_aspect_ratios=[]
 #         segment_to_nodes={}
@@ -1422,7 +1447,8 @@ class Mesh(DessiaObject):
 
 #                                   if out_point_image[point][0][1] != new_proj :
 
-#                                       projection_points[out_point_image[point][0][0]].remove(out_point_image[point][0][1])
+#                                      projection_points[out_point_image[point][0][0]].remove(
+#                                          out_point_image[point][0][1])
 #                                       projection_points[out_point_image[point][0][0]].append(new_proj)
 #                                       if new_proj not in projection_points[index_0]:
 #                                             projection_points[index_0].insert(index_point,new_proj)
@@ -1435,7 +1461,8 @@ class Mesh(DessiaObject):
 #                         if out_point_image[point]==[]:
 #                           i=0
 
-#                           if projection.point_distance(near_segment.start) > projection.point_distance(near_segment.end) :
+#                          if projection.point_distance(near_segment.start) > \
+#                              projection.point_distance(near_segment.end) :
 #                               i+=1
 #                           l = near_segment.length()/projection.point_distance(near_segment.points[i])
 
@@ -1466,53 +1493,62 @@ class Mesh(DessiaObject):
 
 #                 for j in range(v-1):
 
-#                     new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],projection_points[index_0][j+1],
-#                                         segment_to_nodes[out_segment][j]])
+#                     new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],
+#                                                            projection_points[index_0][j+1],
+#                                                            segment_to_nodes[out_segment][j]])
 
 
 #                     all_triangles.append(new_triangle)
-#                     new_triangle_0=volmdlr.wires.Triangle2D([projection_points[index_0][j+1],segment_to_nodes[out_segment][j],
-#                                         segment_to_nodes[out_segment][j+1]])
+#                     new_triangle_0=volmdlr.wires.Triangle2D([projection_points[index_0][j+1],
+#                                                              segment_to_nodes[out_segment][j],
+#                                                              segment_to_nodes[out_segment][j+1]])
 
 
 #                     all_triangles.append(new_triangle)
-#                     new_triangle_0=volmdlr.wires.Triangle2D([projection_points[index_0][j+1],segment_to_nodes[out_segment][j],
-#                                         segment_to_nodes[out_segment][j+1]])
+#                     new_triangle_0=volmdlr.wires.Triangle2D([projection_points[index_0][j+1]
+#                                                              segment_to_nodes[out_segment][j],
+#                                                              segment_to_nodes[out_segment][j+1]])
 
 
 #                     all_triangles.append(new_triangle_0)
 
 #                 for j in  range(v-1,u-1):
-#                       new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],projection_points[index_0][j+1],
-#                                       segment_to_nodes[out_segment][v-1]])
+#                       new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],
+#                                                              projection_points[index_0][j+1],
+#                                                              segment_to_nodes[out_segment][v-1]])
 #                       all_triangles.append(new_triangle)
 
 
 #             if u<v :
 #                 for j in range(u-1):
 
-#                     new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],segment_to_nodes[out_segment][j+1],
-#                                       segment_to_nodes[out_segment][j]])
+#                     new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],
+#                                                            segment_to_nodes[out_segment][j+1],
+#                                                            segment_to_nodes[out_segment][j]])
 
 #                     all_triangles.append(new_triangle)
-#                     new_triangle_0=volmdlr.wires.Triangle2D([projection_points[index_0][j+1],projection_points[index_0][j],
-#                                         segment_to_nodes[out_segment][j+1]])
+#                     new_triangle_0=volmdlr.wires.Triangle2D([projection_points[index_0][j+1],
+#                                                              projection_points[index_0][j],
+#                                                              segment_to_nodes[out_segment][j+1]])
 
 #                     all_triangles.append(new_triangle_0)
 
 #                 for j in  range(u-1,v-1):
-#                     new_triangle=volmdlr.wires.Triangle2D([segment_to_nodes[out_segment][j],  segment_to_nodes[out_segment][j+1],
-#                                   projection_points[index_0][u-1]])
+#                     new_triangle=volmdlr.wires.Triangle2D([segment_to_nodes[out_segment][j],
+#                                                            segment_to_nodes[out_segment][j+1],
+#                                                            projection_points[index_0][u-1]])
 #                     all_triangles.append(new_triangle)
 
 #             if u==2 and v==2:
 #                 if projection_points[index_0][1] != projection_points[index_0][0] :
-#                     new_triangle_1=volmdlr.wires.Triangle2D([projection_points[index_0][0],projection_points[index_0][1],
-#                                         segment_to_nodes[out_segment][1]])
+#                     new_triangle_1=volmdlr.wires.Triangle2D([projection_points[index_0][0],
+#                                                              projection_points[index_0][1],
+#                                                              segment_to_nodes[out_segment][1]])
 #                     all_triangles.append(new_triangle_1)
 
-#                 new_triangle_2=volmdlr.wires.Triangle2D([projection_points[index_0][0],segment_to_nodes[out_segment][0],
-#                                     segment_to_nodes[out_segment][1]])
+#                 new_triangle_2=volmdlr.wires.Triangle2D([projection_points[index_0][0],
+#                                                          segment_to_nodes[out_segment][0],
+#                                                          segment_to_nodes[out_segment][1]])
 
 #                 all_triangles.append(new_triangle_2)
 
@@ -1610,8 +1646,8 @@ class Mesh(DessiaObject):
 
 
 #             if self.interior_contours:
-# if exterior_polygons[-1].polygon_distance(interior_polygons[-1]) >
-# exterior_polygons[-1].max_length()/3 :
+#                 if exterior_polygons[-1].polygon_distance(interior_polygons[-1]) > \
+#                     exterior_polygons[-1].max_length()/3 :
 
 #                     triangles+=self.alternative_triangulation(exterior_polygons[-1],interior_polygons[-1],True,True)
 #                 else :
