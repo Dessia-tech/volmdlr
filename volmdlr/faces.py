@@ -3802,13 +3802,13 @@ class Face3D(volmdlr.core.Primitive3D):
     min_x_density = 1
     min_y_density = 1
 
-    def __init__(self, surface3d, surface2d: Surface2D,
+    def __init__(self, surface3d, surface2d: Surface2D, color, alpha=1,
                  name: str = ''):
         self.surface3d = surface3d
         self.surface2d = surface2d
         # self.bounding_box = self._bounding_box()
 
-        volmdlr.core.Primitive3D.__init__(self, name=name)
+        volmdlr.core.Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
 
     def __hash__(self):
         return hash(self.surface3d) + hash(self.surface2d)
@@ -6493,10 +6493,9 @@ class RuledFace3D(Face3D):
                  surface3d: RuledSurface3D,
                  surface2d: Surface2D,
                  name: str = '',
-                 color=None):
+                 color=None, alpha=1):
         Face3D.__init__(self, surface3d=surface3d,
-                        surface2d=surface2d,
-                        name=name)
+                        surface2d=surface2d, color=color, alpha=alpha, name=name)
         self._bbox = None
 
     @property

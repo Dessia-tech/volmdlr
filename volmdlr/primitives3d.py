@@ -1731,17 +1731,14 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
             raise NotImplementedError  # a adapter pour les bpsline
 
 
-class Loft(dessia_common.PhysicalObject):
-    def __init__(self, profiles: list[volmdlr.wires.ClosedPolygon3D], color: Tuple[float, float, float] = None,
+class Loft(volmdlr.core.Primitive3D):
+    def __init__(self, profiles: list[volmdlr.wires.ClosedPolygon3D], color: Tuple[float, float, float],
                  alpha: float = 0.8, name: str = ''):
         self.profiles = profiles
-        self.color = color
-        self.alpha = alpha
-        dessia_common.PhysicalObject.__init__(self, name=name)
+        volmdlr.core.Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
 
     def volmdlr_primitives(self):
         """
-         2 profiles with the same number of points
         """
         verify_number_points_profiles_equal = self._verify_number_points
         if verify_number_points_profiles_equal:
@@ -1750,9 +1747,10 @@ class Loft(dessia_common.PhysicalObject):
         self.profiles = self._new_primitives()
         return self._primitives()
 
-            # return self.new_points_primitives(,
-
     def _new_primitives(self):
+        #TODO: 1. sort both points of profiles based on dict_corresp.
+        #TODO: 2. Develop an algorithm when the profiles have the same number of segments, which segments are the optimal\
+        # to start the loft (avoid crossing surface lofts)
         """
         The Loft needs the number of segments to match in order to create surfaces between corresponding segments.
         If the numbers of segments match in all profiles, this step is skipped.
@@ -1766,14 +1764,11 @@ class Loft(dessia_common.PhysicalObject):
         The operation is extended to all profiles, to yield the equal number of segments.
         The total number of segments in each profile would be equal to the sum of all numbers of segments of all
         profiles (provided none of the vertices happen to be at the same polar angle).
+        This method can be very costy if there is many profiles or profiles defined with many points
         """
-        #n = len(self.profiles)
-        #new_primitives = self.profiles
+
         new_primitives = []
         for i, i_profil in enumerate(self.profiles):
-        # i = 0
-        # while i < n:
-        #     i_profil = self.profiles[i]
             center1 = i_profil.average_center_point()
             new_profil1 = i_profil.translation(-center1)
             new_profil1_2d = new_profil1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
@@ -1781,27 +1776,15 @@ class Loft(dessia_common.PhysicalObject):
             for j, j_profil in enumerate(self.profiles):
                 if j != i:
                     center2 = j_profil.average_center_point()
-                    #center1_, center2_ = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
                     new_profil2 = j_profil.translation(-center2)
-                    #new_profil1, new_profil2 = profil1.copy(), profil2.translation(center1 - center2)
-                    #new_center1, new_center2 = new_profil1.average_center_point(), new_profil2.average_center_point()
-                    # plane3d = volmdlr.faces.Plane3D.from_points(profil1.points)
-                    # new_profil1_2d, new_profil2_2d = \
-                    #     new_profil1.to_2d(new_center1, plane3d.frame.u, plane3d.frame.v), new_profil2.to_2d(new_center2, plane3d.frame.u, plane3d.frame.v)
                     new_profil2_2d = new_profil2.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
-                    new_profil_2d_list = [new_profil1_2d, new_profil2_2d]
-                    dict_closing_pairs = {}
-                    faces = []
-                    new_profil_list = []
-                    new_polygon1_2d_points = new_profil1_2d.points + [new_profil1_2d.points[0]]
                     new_points_2d = new_profil1_2d.points
                     for k, point in enumerate(new_profil2_2d.points):
                         vec_dir = point.copy()
                         center = volmdlr.O2D
                         vec_dir.normalize()
-
                         line = volmdlr.edges.LineSegment2D(center, vec_dir * 2)
-                        # line.plot(ax=ax2d, color='b')
+
                         # z = profil_3d.points[0].z
                         dic_corresp = {}
                         point_intersections = {}
@@ -1817,123 +1800,30 @@ class Loft(dessia_common.PhysicalObject):
                             else:
                                 if line.point_belongs(line_segment.start):
                                     point_intersections[line_segment] = line_segment.start
-                                    dic_corresp[k] = l+1
+                                    dic_corresp[k] = l
 
                                 if line.point_belongs(line_segment.end):
                                     point_intersections[line_segment] = line_segment.end
-                                    dic_corresp[k] = l+2
+                                    dic_corresp[k] = l+1
                         new_profil1_2d = volmdlr.wires.ClosedPolygon2D(new_points_2d)
             new_profil = volmdlr.wires.ClosedPolygon3D(new_points)
             new_primitives.append(new_profil.translation(center1))
-                    # if i == 0:
-                    #     for k, profil_2d in enumerate(new_profil_2d_list):
-                    #         if k == 0:
-                    #             profil1 = new_profil_2d_list[0]
-                    #             profil2 = new_profil_2d_list[1]
-                    #             res, points_intersection = self._line_intersection_point(profil1, profil2, new_profil2)
-                    #             # new_profil_3d = volmdlr.wires.ClosedPolygon3D(res).translation(center2)
-                    #             # new_primitives[j] = new_profil_3d
-                    #         else:
-                    #             profil1 = new_profil_2d_list[1]
-                    #             profil2 = new_profil_2d_list[0]
-                    #             res, points_intersection = self._line_intersection_point(profil1, profil2, new_profil1)
-                    #             # new_profil_3d = volmdlr.wires.ClosedPolygon3D(res).translation(center1)
-                    #             # new_primitives[i] = new_profil_3d
-                    # else:
-                    #     profil1 = new_profil_2d_list[1]
-                    #     profil2 = new_profil_2d_list[0]
-                    #     res, points_intersection = self._line_intersection_point(profil1, profil2, new_profil1)
-                        # new_profil_3d = volmdlr.wires.ClosedPolygon3D(res).translation(center1)
-                        # new_primitives[i] = new_profil_3d
 
-            #
-            # i += 1
         return new_primitives
-
-    @staticmethod
-    def _line_intersection_point(profil1, profil2, profil_3d):
-        """
-        """
-        # vec_dir = profil1_vertex.copy()
-        new_points = profil_3d.points
-        for i, point in enumerate(profil1.points):
-            vec_dir = point.copy()
-            center = volmdlr.O2D
-            vec_dir.normalize()
-
-            line = volmdlr.edges.LineSegment2D(center, vec_dir*2)
-            # line.plot(ax=ax2d, color='b')
-            #z = profil_3d.points[0].z
-            dic_corresp = {}
-            point_intersections = {}
-            for j, line_segment in enumerate(profil2.line_segments):
-                point_intersection = line_segment.linesegment_intersections(line)
-                if point_intersection:
-                    point_intersections[line_segment] = point_intersection[0]
-                    new_point = volmdlr.Point3D(point_intersection[0].x, point_intersection[0].y, 0)
-                    if new_point not in new_points:
-                        new_points.insert(j + 1, new_point)
-                        dic_corresp[i] = j + 1
-                else:
-                    if line.point_belongs(line_segment.start):
-                        point_intersections[line_segment] = line_segment.start
-
-                    if line.point_belongs(line_segment.end):
-                        point_intersections[line_segment] = line_segment.end
-
-            # point_distance = list(point_intersections.values())[0].point_distance(profil1_vertex)
-            # point_intersection = list(point_intersections.values())[0]
-            # line_segment = list(point_intersections.keys())[0]
-            # for line, point in list(point_intersections.items())[1:]:
-            #     dist = profil1_vertex.point_distance(point)
-            #     if dist < point_distance:
-            #         point_distance = dist
-            #         point_intersection = point
-            #         line_segment = line
-            #
-            # # point_intersection.plot(ax=ax2d)
-            #
-            # if point_intersection.point_distance(
-            #         line_segment.start) < point_intersection.point_distance(
-            #     line_segment.end):
-            #     closing_point = line_segment.start
-            # else:
-            #     closing_point = line_segment.end
-            line.plot(profil2.plot())
-        return new_points, point_intersections
 
     def _primitives(self):
         faces = []
-        for i, i_profil in enumerate(self.profiles[:-1]):
-            j_profil = self.profiles[i + 1]
-            n = 0
-            for p1, p2 in zip(i_profil.points, j_profil.points):
-                if n < len(i_profil.points) - 1:
-                    p3 = i_profil.points[n + 1]
-                    p4 = j_profil.points[n + 1]
-                elif n == len(i_profil.points):
-                    p3 = i_profil.points[-1]
-                    p4 = j_profil.points[-1]
-                else:
-                    p3 = i_profil.points[0]
-                    p4 = j_profil.points[0]
-                l1 = volmdlr.edges.LineSegment3D(p1, p3)
-                l2 = volmdlr.edges.LineSegment3D(p3, p4)
-                l3 = volmdlr.edges.LineSegment3D(p4, p2)
-                l4 = volmdlr.edges.LineSegment3D(p2, p1)
-                plane3d = volmdlr.faces.Plane3D.from_3_points(p1, p3, p2)
-                contour3d = volmdlr.wires.Contour3D([l1, l2, l3, l4])
+        profiles = self.profiles
+        for i, i_profil in enumerate(profiles[:-1]):
+            j_profil = profiles[i + 1]
 
-                contour2d = contour3d.to_2d(plane3d.frame.origin,
-                                            plane3d.frame.u, plane3d.frame.v)
+            for line1, line2 in zip(i_profil.line_segments, j_profil.line_segments):
+                ruled_surface = volmdlr.faces.RuledSurface3D(line1, line2, name='Test')
+                ruled_face = ruled_surface.rectangular_cut(0, 1, 0, 1, name=ruled_surface.name)
 
-                surface2d = volmdlr.faces.Surface2D(outer_contour=contour2d, inner_contours=[])
+                faces.append(ruled_face)
 
-                surface = volmdlr.faces.PlaneFace3D(plane3d, surface2d)
-
-                faces.append(surface)
-                n += 1
-        return faces  # volmdlr.core.VolumeModel(faces).babylonjs()
+        return faces
 
     @property
     def _verify_number_points(self):
