@@ -655,6 +655,7 @@ class BoundingRectangle(dc.DessiaObject):
 
     def items(self):
         return self.xmin, self.xmax, self.ymin, self.ymax
+
     def plot(self, ax=None, color='k', linestyle='dotted'):
         """
         Plot of the bounding rectangle and its vertex.
