@@ -13,8 +13,8 @@ polygon1 = vmw.ClosedPolygon3D(points_polygon1)
 
 polygon2 = vmw.ClosedPolygon3D(points_polygon2)
 
-#frame = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), volmdlr.Vector3D(1, 0, 0), volmdlr.Vector3D(1, 0, 0), volmdlr.Vector3D(1, 0, 0))
-#circle = vmw.Circle3D(frame, 0.3)
+# frame = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), volmdlr.Vector3D(1, 0, 0), volmdlr.Vector3D(1, 0, 0), volmdlr.Vector3D(1, 0, 0))
+# circle1 = vmw.Circle3D(frame, 0.3)
 
 
 lists_profiles = [polygon1, polygon2]
@@ -34,3 +34,4 @@ loft.babylonjs()
 # ruled_surface = vmf.RuledSurface3D(polygon1, polygon2, name='Test')
 # ruled_face = ruled_surface.rectangular_cut(0, 1, 0, 1, name=ruled_surface.name)
 # ruled_face.babylonjs()
+
