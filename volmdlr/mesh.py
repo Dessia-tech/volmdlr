@@ -54,6 +54,8 @@ class Node2D(vm.Point2D):
         if other_node.__class__.__name__ not in ['Vector2D', 'Point2D',
                                                  'Node2D']:
             return False
+        return math.isclose(self.x, other_node.x, abs_tol=1e-12) \
+            and math.isclose(self.y, other_node.y, abs_tol=1e-12)
 
     @classmethod
     def from_point(cls, point2d):
@@ -68,6 +70,8 @@ class Node3D(vm.Point3D):
         if other_node.__class__.__name__ not in ['Vector3D', 'Point3D',
                                                  'Node3D']:
             return False
+        return math.isclose(self.x, other_node.x, abs_tol=1e-12) \
+            and math.isclose(self.y, other_node.y, abs_tol=1e-12)
 
     @classmethod
     def from_point(cls, point3d):
