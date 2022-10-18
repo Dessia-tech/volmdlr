@@ -583,8 +583,6 @@ class Step(dc.DessiaObject):
 
     def to_volume_model(self, show_times=False):
         """
-        no_bug_mode=True loops on instanciate method's KeyErrors until all
-        the KeyErrors can be instanciated.
         show_times=True displays the numer of times a given class has been
         instanciated and the totatl time of all the instanciations of this
         given class.
@@ -621,7 +619,7 @@ class Step(dc.DessiaObject):
         for node in shell_nodes + frame_mapping_nodes:
             self.graph.add_edge('#0', node)
 
-        # self.draw_graph(self.graph, reduced=True, save=True)
+        # self.draw_graph(self.graph, reduced=True)
 
         nodes = []
         i = 1

@@ -1038,8 +1038,8 @@ class VolumeModel(dc.PhysicalObject):
         for primitive in self.primitives:
             primitive.plot(ax)
         if equal_aspect:
-            ax.set_aspect('equal')
-
+            # ax.set_aspect('equal')
+            ax.set_aspect('auto')
         ax.margins(0.1)
         return ax
 
@@ -1282,7 +1282,10 @@ class VolumeModel(dc.PhysicalObject):
         current_id = 8
 
         for primitive in self.primitives:
-            primitive_content, primitive_id = primitive.to_step(current_id)
+            if primitive.__class__.__name__ == 'OpenShell3D':
+                primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
+            else:
+                primitive_content, primitive_id = primitive.to_step(current_id)
 
             step_content += primitive_content
 
@@ -1361,8 +1364,15 @@ class VolumeModel(dc.PhysicalObject):
                     presentation_style_id, suface_style_usage_id, curve_style_id)
 
             styled_item_id = presentation_style_id + 1
-            step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
-                    styled_item_id, presentation_style_id, primitive_id)
+            if primitive.__class__.__name__ == 'OpenShell3D':
+                for face_id in face_ids:
+                    step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
+                        styled_item_id, presentation_style_id, face_id)
+                    styled_item_id += 1
+                styled_item_id -= 1
+            else:
+                step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
+                        styled_item_id, presentation_style_id, primitive_id)
 
             current_id = styled_item_id + 1
 

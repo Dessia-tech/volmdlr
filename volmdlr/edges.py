@@ -929,6 +929,30 @@ class BSplineCurve2D(BSplineCurve):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
+    def to_step(self, current_id, surface_id=None):
+        points_ids = []
+        content = ''
+        point_id = current_id
+        for point in self.control_points:
+            point_content, point_id = point.to_step(point_id,
+                                                    vertex=False)
+            content += point_content
+            points_ids.append(point_id)
+            point_id += 1
+
+        content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
+                   ".UNSPECIFIED.,.F.,.F.,{},{}," \
+                   ".UNSPECIFIED.);\n".format(
+                        point_id, self.name, self.degree,
+                        volmdlr.core.step_ids_to_str(points_ids),
+                        tuple(self.knot_multiplicities),
+                        tuple(self.knots))
+        return content, point_id + 1
+
+    def polygon_points(self, n=15):
+        l = self.length()
+        return [self.point_at_abscissa(i * l / n) for i in range(n + 1)]
+
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
         BSplineCurve2D rotation
@@ -2680,7 +2704,7 @@ class Line3D(Line):
 
         return None
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, surface_id=None):
         p1_content, p1_id = self.point1.to_step(current_id)
         # p2_content, p2_id = self.point2.to_step(current_id+1)
         current_id = p1_id + 1
@@ -2749,11 +2773,15 @@ class LineSegment3D(LineSegment):
     #         self.end - self.start) / self.length()
 
     def point_belongs(self, point, abs_tol=1e-7):
-        distance = self.start.point_distance(point) + self.end.point_distance(
-            point)
-        if math.isclose(distance, self.length(), abs_tol=abs_tol):
+        # distance = self.start.point_distance(point) + self.end.point_distance(point)
+        # if math.isclose(distance, self.length(), abs_tol=abs_tol):
+        #     return True
+        # return False
+
+        if self.point_distance(point)[0] < abs_tol:
             return True
-        return False
+        else:
+            return False
 
     def normal_vector(self, abscissa=0.):
         return None
@@ -3035,6 +3063,17 @@ class LineSegment3D(LineSegment):
             return None
         return LineSegment2D(*p2d, name=self.name)
 
+    def to_bspline_curve(self, resolution=10):
+        """
+        Convert a LineSegment3D to a BSplineCurve3D
+        """
+        degree = 1
+        points = [self.point_at_abscissa(abscissa / self.length())
+                  for abscissa in range(resolution + 1)]
+        bspline_curve = BSplineCurve3D.from_points_interpolation(points,
+                                                                 degree)
+        return bspline_curve
+
     def reverse(self):
         return LineSegment3D(self.end.copy(), self.start.copy())
 
@@ -3280,10 +3319,11 @@ class LineSegment3D(LineSegment):
         line = self.to_line()
         content, line_id = line.to_step(current_id)
 
-        if surface_id:
-            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                line_id + 1, line_id, surface_id)
-            line_id += 1
+        # if surface_id:
+        #     print()
+        #     content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
+        #         line_id + 1, line_id, surface_id)
+        #     line_id += 1
 
         current_id = line_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
@@ -3484,43 +3524,58 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         return cls(degree, points, knot_multiplicities, knots, weight_data,
                    closed_curve, name)
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, surface_id=None, curve2d=None):
 
         points_ids = []
         content = ''
-        for point in self.points:
-            point_content, point_id = point.to_step(current_id,
-                                                    vertex=True)
+        point_id = current_id
+        for point in self.control_points:
+            point_content, point_id = point.to_step(point_id,
+                                                    vertex=False)
             content += point_content
             points_ids.append(point_id)
+            point_id += 1
 
-        curve_id = point_id + 1
+        curve_id = point_id
         content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
-                   ".UNSPECIFIED.,.F.,.F.,({}),{}," \
-                   ".PIECEWISE_BEZIER_KNOTS.);\n".format(curve_id,
-                                                         self.name,
-                                                         self.degree,
-                                                         volmdlr.core.step_ids_to_str(
-                                                             points_ids),
-                                                         volmdlr.core.step_ids_to_str(
-                                                             self.knot_multiplicities),
-                                                         tuple(self.knots)
-                                                         )
+                   ".UNSPECIFIED.,.F.,.F.,{},{}," \
+                   ".UNSPECIFIED.);\n".format(
+                       curve_id, self.name, self.degree,
+                       volmdlr.core.step_ids_to_str(points_ids),
+                       tuple(self.knot_multiplicities),
+                       tuple(self.knots))
 
         if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                curve_id + 1, curve_id, surface_id)
-            curve_id += 1
+                curve_id + 1, curve_id, curve_id + 2)
+            content += "#{} = PCURVE('',#{},#{});\n".format(
+                curve_id + 2, surface_id, curve_id + 3)
 
-        current_id = curve_id + 1
+            # 2D parametric curve
+            curve2d_content, curve2d_id = curve2d.to_step(curve_id + 5)
+
+            content += "#{} = DEFINITIONAL_REPRESENTATION('',(#{}),#{});\n".format(
+                curve_id + 3, curve2d_id - 1, curve_id + 4)
+            content += "#{} = ( GEOMETRIC_REPRESENTATION_CONTEXT(2) PARAMETRIC_REPRESENTATION_CONTEXT() REPRESENTATION_CONTEXT('2D SPACE','') );\n".format(curve_id + 4)
+
+            content += curve2d_content
+            current_id = curve2d_id
+        else:
+            current_id = curve_id + 1
+
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         current_id = start_id + 1
         end_content, end_id = self.end.to_step(current_id + 1, vertex=True)
         content += start_content + end_content
         current_id = end_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
-            current_id, self.name,
-            start_id, end_id, curve_id)
+        if surface_id:
+            content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
+                current_id, self.name,
+                start_id, end_id, curve_id + 1)
+        else:
+            content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
+                current_id, self.name,
+                start_id, end_id, curve_id)
         return content, [current_id]
 
     def point_distance(self, pt1):
@@ -3749,6 +3804,16 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
             return 1 / maximum_curvarture, point
         maximum_curvarture = self.maximum_curvature(point_in_curve)
         return 1 / maximum_curvarture
+
+    @classmethod
+    def from_geomdl_curve(cls, curve):
+        knots = list(sorted(set(curve.knotvector)))
+        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
+        return cls(degree=curve.degree,
+                   control_points=[volmdlr.Point3D(*pts)
+                                   for pts in curve.ctrlpts],
+                   knots=knots,
+                   knot_multiplicities=knot_multiplicities)
 
     def global_minimum_curvature(self, nb_eval: int = 21):
         check = [i / (nb_eval - 1) for i in range(nb_eval)]
@@ -4379,7 +4444,7 @@ class Arc3D(Arc):
             return [surface.rectangular_cut(0, angle,
                                             arc2d.angle1, arc2d.angle2)]
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, surface_id=None):
         if self.angle >= math.pi:
             l = self.length()
             arc1, arc2 = self.split(self.point_at_abscissa(0.33 * l))
