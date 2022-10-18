@@ -42,10 +42,10 @@ def bounding_rectangle_adjacent_contours(contours: List):
     ymax : float
 
     '''
-    xmin, xmax, ymin, ymax = contours[0].bounding_rectangle().items()
+    xmin, xmax, ymin, ymax = contours[0].bounding_rectangle().bounds()
 
     for i in range(1, len(contours)):
-        xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle().items()
+        xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle().bounds()
         xmin = min(xmin, xmin_contour)
         xmax = max(xmax, xmax_contour)
         ymin = min(ymin, ymin_contour)
@@ -1713,10 +1713,10 @@ class Contour2D(Contour, Wire2D):
         return self._bounding_rectangle
 
     def get_bouding_rectangle(self):
-        xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle().items()
+        xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle().bounds()
         for edge in self.primitives[1:]:
             xmin_edge, xmax_edge, ymin_edge, ymax_edge = \
-                edge.bounding_rectangle().items()
+                edge.bounding_rectangle().bounds()
             xmin = min(xmin, xmin_edge)
             xmax = max(xmax, xmax_edge)
             ymin = min(ymin, ymin_edge)
@@ -1737,7 +1737,7 @@ class Contour2D(Contour, Wire2D):
         self.primitives = self.inverted_primitives()
 
     def random_point_inside(self):
-        xmin, xmax, ymin, ymax = self.bounding_rectangle().items()
+        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
         for _ in range(2000):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
             if self.point_belongs(p):
@@ -1867,7 +1867,7 @@ class Contour2D(Contour, Wire2D):
         """
         Split in n slices
         """
-        xmin, xmax, ymin, ymax = self.bounding_rectangle().items()
+        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
         cutted_contours = []
         iteration_contours = [self]
         for i in range(n - 1):
@@ -2591,7 +2591,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return delaunay_triangles
 
     def offset(self, offset):
-        xmin, xmax, ymin, ymax = self.bounding_rectangle().items()
+        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
 
         max_offset_len = min(xmax - xmin, ymax - ymin) / 2
         if offset <= -max_offset_len:
