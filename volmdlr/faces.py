@@ -7328,7 +7328,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         for face in initial_faces:
             try:
-                if type(used_faces[face]) == list:
+                if isinstance(used_faces[face], list):
                     list_faces.extend(used_faces[face])
                 else:
                     list_faces.append(used_faces[face])
