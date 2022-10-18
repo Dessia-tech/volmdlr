@@ -2489,6 +2489,14 @@ class BSplineSurface3D(Surface3D):
             ax = p.plot(ax=ax)
         return ax
 
+    def simplify_surface(self):
+        points = [self.control_points[0], self.control_points[math.ceil(len(self.control_points) / 2)],
+                  self.control_points[-1]]
+        plane3d = Plane3D.from_3_points(*points)
+        if all(plane3d.point_on_plane(point) for point in self.control_points):
+            return plane3d
+        return self
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
@@ -2535,6 +2543,7 @@ class BSplineSurface3D(Surface3D):
         bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
                              u_multiplicities, v_multiplicities, u_knots,
                              v_knots, weight_data, name)
+        bsplinesurface = bsplinesurface.simplify_surface()
         # if u_closed:
         #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
         # if v_closed:
@@ -3934,33 +3943,15 @@ class Face3D(volmdlr.core.Primitive3D):
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
         contours = [object_dict[int(arguments[1][0][1:])]]
-        points = [contours[0].primitives[0].start, contours[0].point_at_abscissa(contours[0].length() / 2),
-                  contours[0].point_at_abscissa(0.9 * contours[0].length())]
-        plane3d = Plane3D.from_3_points(*points)
-
-        # Detecting inner and outer contours
-        if all(plane3d.point_on_plane(primitive[0]) for primitive in contours[0].primitives):
-            surface = plane3d
-        else:
-            surface = object_dict[int(arguments[2])]
-
+        surface = object_dict[int(arguments[2])]
         if hasattr(surface, 'face_from_contours3d'):
             if (len(contours) == 1) and isinstance(contours[0],
                                                    volmdlr.Point3D):
                 return surface
 
             return surface.face_from_contours3d(contours, name)
-        else:
-            raise NotImplementedError(
-                'Not implemented :face_from_contours3d in {}'.format(surface))
-
-    # def area(self):
-    #     """
-    #     Calculates the face's area
-    #     :return: face's area
-    #     """
-    #     raise NotImplementedError(
-    #         f'area method must be overloaded by {self.__class__.__name__}')
+        raise NotImplementedError(
+            'Not implemented :face_from_contours3d in {}'.format(surface))
 
     def to_step(self, current_id):
         xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle()

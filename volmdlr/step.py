@@ -201,6 +201,7 @@ def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representat
         new_faces = [face.frame_mapping(frame3d, 'new') for face in shell3d.faces]
         shell3d.faces = new_faces
 
+
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
     if arguments[2] in object_dict:
