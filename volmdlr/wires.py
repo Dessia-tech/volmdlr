@@ -1111,7 +1111,8 @@ class Contour(Wire):
                 if j > i:
                     if primitive2.end != primitive1.start != primitive2.start and \
                             primitive2.end != primitive1.end != primitive2.start:
-                        if primitive1.unit_direction_vector().is_colinear_to(primitive2.unit_direction_vector()):
+                        if primitive1.unit_direction_vector(abscissa=0).is_colinear_to(
+                                primitive2.unit_direction_vector(abscissa=0)):
                             continue
                         if primitive1.point_belongs(primitive2.start) or primitive1.point_belongs(primitive2.end):
                             touching_primitives.append([primitive2, primitive1])
@@ -1451,9 +1452,13 @@ class Contour(Wire):
         shared_tuple = contour1.shared_primitives_with(contour2)
         # [shared_primitives_1, shared_primitives_2] = contour1.shared_primitives_with(contour2)
 
-        p1_start = contour1.primitives[shared_tuple[0][0]].start
-        p2_start = contour2.primitives[shared_tuple[0][1]].start
-        p2_end = contour2.primitives[shared_tuple[0][1]].end
+        # p1_start = contour1.primitives[shared_tuple[0][0]].start
+        # p2_start = contour2.primitives[shared_tuple[0][1]].start
+        # p2_end = contour2.primitives[shared_tuple[0][1]].end
+
+        p1_start = shared_tuple[0][0].start
+        p2_start = shared_tuple[1][-1].start
+        p2_end = shared_tuple[1][-1].end
 
         if (p1_start.point_distance(p2_start)) < (p1_start.point_distance(p2_end)):
             return False
@@ -3597,10 +3602,11 @@ class Circle2D(Contour2D):
         self.center = center
         self.radius = radius
         self.angle = volmdlr.TWO_PI
+        self.primitives = self._primitives()
 
         # self.points = self.tessellation_points()
 
-        Contour2D.__init__(self, [self], name=name)  # !!! this is dangerous
+        Contour2D.__init__(self, self.primitives, name=name)  # !!! this is dangerous
 
     def __hash__(self):
         return int(round(1e6 * (self.center.x + self.center.y + self.radius)))
@@ -3615,6 +3621,16 @@ class Circle2D(Contour2D):
                              other_circle.center.y, abs_tol=1e-06) \
             and math.isclose(self.radius, other_circle.radius,
                              abs_tol=1e-06)
+
+    def _primitives(self):
+        points = [
+            self.center + volmdlr.Point2D(self.center.x + self.radius, self.center.y),
+            self.center + volmdlr.Point2D(self.center.x, self.center.y - self.radius),
+            self.center + volmdlr.Point2D(self.center.x - self.radius, self.center.y),
+            self.center + volmdlr.Point2D(self.center.x, self.center.y + self.radius)]
+
+        return [volmdlr.edges.Arc2D(points[0], points[1], points[2]),
+                volmdlr.edges.Arc2D(points[2], points[3], points[0])]
 
     def to_polygon(self, angle_resolution: float):
         return ClosedPolygon2D(
