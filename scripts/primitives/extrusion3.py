@@ -31,3 +31,4 @@ extrusion = ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_circle,
 print(extrusion.volume())
 model = vmc.VolumeModel([extrusion])
 model.babylonjs()
+model._check_platform()

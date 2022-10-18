@@ -23,7 +23,7 @@ from geomdl.fitting import interpolate_surface, approximate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 
 # import dessia_common
-import dessia_common as dc
+from dessia_common.core import DessiaObject
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.edges as vme
@@ -553,7 +553,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         self.inner_contours = new_contour.inner_contours
 
 
-class Surface3D(dc.DessiaObject):
+class Surface3D(DessiaObject):
     x_periodicity = None
     y_periodicity = None
     """
@@ -5039,7 +5039,7 @@ class Triangle3D(PlaneFace3D):
         self._bbox = None
         # self.bounding_box = self._bounding_box()
 
-        dc.DessiaObject.__init__(self, name=name)
+        DessiaObject.__init__(self, name=name)
 
         # Don't use inheritence for performance: class method fakes face3D behavior
         # Face3D.__init__(self,
@@ -5101,7 +5101,7 @@ class Triangle3D(PlaneFace3D):
         return self._surface2d
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
-        dict_ = dc.DessiaObject.base_dict(self)
+        dict_ = DessiaObject.base_dict(self)
         dict_['point1'] = self.point1.to_dict()
         dict_['point2'] = self.point2.to_dict()
         dict_['point3'] = self.point3.to_dict()
@@ -6901,7 +6901,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             self.color = color
         self.alpha = alpha
         self._bbox = None
-        # self.bounding_box = self._bounding_box()
         volmdlr.core.CompositePrimitive3D.__init__(self,
                                                    primitives=faces, color=color, alpha=alpha,
                                                    name=name)
@@ -6917,6 +6916,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 return False
 
         return True
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+        This method does not use pointers for faces as it has no sense to have duplicate faces
+        """
+        dict_ = DessiaObject.base_dict(self)
+        dict_.update({'color': self.color,
+                      'alpha': self.alpha,
+                      'faces': [f.to_dict(use_pointers=False) for f in self.faces]})
+
+        return dict_
 
     @classmethod
     def from_step(cls, arguments, object_dict):
