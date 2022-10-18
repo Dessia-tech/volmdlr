@@ -2243,6 +2243,7 @@ class Contour2D(Contour, Wire2D):
                 f'{len(intersections)} intersections not supported yet')
 
         points_intersections = [point for point, prim in intersections]
+
         sorted_points = wire.sort_points_along_wire(points_intersections)
         list_contours = []
         contour_to_cut = self
@@ -2253,6 +2254,13 @@ class Contour2D(Contour, Wire2D):
             point2 = sorted_points[cutting_points_counter + 1]
 
             closing_wire = wire.extract_without_primitives(point1, point2, True)
+
+            for p in points_intersections:
+                if p not in [point1, point2]:
+                    if Wire2D(closing_wire).point_over_wire(p):
+                        closing_wire = wire.extract_without_primitives(point1, point2, False)
+                        break
+
             closing_wire_prim = []
             for closing_w in closing_wire:
                 if closing_w:
@@ -2262,6 +2270,7 @@ class Contour2D(Contour, Wire2D):
                                                                      point2,
                                                                      closing_contour,
                                                                      True)
+
             if sorted_points.index(point1) + 2 < len(sorted_points) - 1:
                 if contour1.point_over_contour(
                         sorted_points[sorted_points.index(point1) + 2]):
