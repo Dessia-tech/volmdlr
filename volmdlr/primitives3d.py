@@ -1768,45 +1768,71 @@ class Loft(volmdlr.core.Primitive3D):
         """
 
         new_primitives = []
+        dic_corresp = {}
         for i, i_profil in enumerate(self.profiles):
             center1 = i_profil.average_center_point()
+            # = i_profil.points[0]
             new_profil1 = i_profil.translation(-center1)
             new_profil1_2d = new_profil1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
-            new_points = new_profil1.points
+            if not new_profil1_2d.is_trigo():
+                temp = new_profil1_2d.points[1:]
+                temp.reverse()
+                new_profil1_2d = volmdlr.wires.ClosedPolygon2D([new_profil1_2d.points[0]] + temp)
+            #new_points = new_profil1_2d.points
+            new_points_2d = new_profil1_2d.points
             for j, j_profil in enumerate(self.profiles):
                 if j != i:
                     center2 = j_profil.average_center_point()
+                    #center2 = j_profil.points[0]
                     new_profil2 = j_profil.translation(-center2)
                     new_profil2_2d = new_profil2.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
-                    new_points_2d = new_profil1_2d.points
+                    if not new_profil2_2d.is_trigo():
+                        temp = new_profil2_2d.points[1:]
+                        temp.reverse()
+                        new_profil2_2d = volmdlr.wires.ClosedPolygon2D([new_profil2_2d.points[0]] + temp)
                     for k, point in enumerate(new_profil2_2d.points):
                         vec_dir = point.copy()
                         center = volmdlr.O2D
                         vec_dir.normalize()
-                        line = volmdlr.edges.LineSegment2D(center, vec_dir * 2)
+                        line = volmdlr.edges.LineSegment2D(center, vec_dir * 5)
 
                         # z = profil_3d.points[0].z
-                        dic_corresp = {}
-                        point_intersections = {}
+                        # ax = line.plot()
+                        # new_profil1_2d.plot(ax)
+                        # new_profil2_2d.plot(ax)
+                        #point_intersections = {}
                         for l, line_segment in enumerate(new_profil1_2d.line_segments):
                             point_intersection = line_segment.linesegment_intersections(line)
                             if point_intersection:
-                                point_intersections[line_segment] = point_intersection[0]
-                                new_point = volmdlr.Point3D(point_intersection[0].x, point_intersection[0].y, 0)
-                                if new_point not in new_points:
+                                #point_intersections[line_segment] = point_intersection[0]
+                                #new_point_3D = volmdlr.Point3D(point_intersection[0].x, point_intersection[0].y, 0)
+
+                                if point_intersection[0] not in new_points_2d:
                                     new_points_2d.insert(l+1, point_intersection[0])
-                                    new_points.insert(l+1, new_point)
-                                    dic_corresp[k] = l+1
+                                    #new_points.insert(l+1, new_point)
+                                    if j == 0 and k == 0:
+                                        dic_corresp[i] = point_intersection[0]
                             else:
                                 if line.point_belongs(line_segment.start):
-                                    point_intersections[line_segment] = line_segment.start
-                                    dic_corresp[k] = l
+
+                                    #point_intersections[line_segment] = line_segment.start
+                                    if j == 0 and k == 0:
+                                        dic_corresp[i] = new_points_2d[l]
+                                    #dic_corresp[k] = l
 
                                 if line.point_belongs(line_segment.end):
-                                    point_intersections[line_segment] = line_segment.end
-                                    dic_corresp[k] = l+1
+                                    #point_intersections[line_segment] = line_segment.end
+                                    if j == 0 and k == 0:
+                                        dic_corresp[i] = new_points_2d[l+1]
+                                    #dic_corresp[k] = l+1
                         new_profil1_2d = volmdlr.wires.ClosedPolygon2D(new_points_2d)
-            new_profil = volmdlr.wires.ClosedPolygon3D(new_points)
+            if dic_corresp and i > 0:
+                start_index = new_points_2d.index(dic_corresp.get(i))
+                if start_index > 0:
+                    new_points_2d = new_points_2d[start_index:] + new_points_2d[:start_index]
+            new_profil = volmdlr.wires.ClosedPolygon2D(new_points_2d).to_3d(volmdlr.Point3D(0, 0, 0),
+                                                                            volmdlr.Vector3D(1, 0, 0),
+                                                                            volmdlr.Vector3D(0, 1, 0))
             new_primitives.append(new_profil.translation(center1))
 
         return new_primitives

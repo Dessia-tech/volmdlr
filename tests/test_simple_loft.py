@@ -6,15 +6,23 @@ import volmdlr.primitives3d as p3d
 points_polygon1 = [volmdlr.Point3D(0.5, 0.5, 0), volmdlr.Point3D(0.5, -0.5, 0), volmdlr.Point3D(-0.5, -0.5, 0),
                    volmdlr.Point3D(-0.5, 0.5, 0)]
 
-points_polygon2 = [volmdlr.Point3D(0.25, 0.25, 0.5), volmdlr.Point3D(0.25, -0.25, 0.5), volmdlr.Point3D(0.0, -0.4, 0.5),
-                   volmdlr.Point3D(-0.25, -0.25, 0.5), volmdlr.Point3D(-0.25, 0.25, 0.5), volmdlr.Point3D(0.0, 0.4, 0.5)]
+# points_polygon2 = [volmdlr.Point3D(0.25, 0.25, 0.5), volmdlr.Point3D(0.25, -0.25, 0.5), volmdlr.Point3D(0.0, -0.4, 0.5),
+#                    volmdlr.Point3D(-0.25, -0.25, 0.5), volmdlr.Point3D(-0.25, 0.25, 0.5), volmdlr.Point3D(0.0, 0.4, 0.5)]
+
+# points_polygon2 = [volmdlr.Point3D(0.25, 0.25, 0.5), volmdlr.Point3D(0.0, 0.4, 0.5), volmdlr.Point3D(-0.25, 0.25, 0.5),
+#                    volmdlr.Point3D(-0.25, -0.25, 0.5), volmdlr.Point3D(0.0, -0.4, 0.5), volmdlr.Point3D(0.25, -0.25, 0.5)]
+
+points_polygon2 = [volmdlr.Point3D(0.25, 0.15, 0.5), volmdlr.Point3D(0.25, -0.15, 0.5), volmdlr.Point3D(0.0, -0.3, 0.5),
+                   volmdlr.Point3D(-0.25, -0.15, 0.5), volmdlr.Point3D(-0.25, 0.15, 0.5), volmdlr.Point3D(0.0, 0.3, 0.5)]
+
+
 
 polygon1 = vmw.ClosedPolygon3D(points_polygon1)
 
 polygon2 = vmw.ClosedPolygon3D(points_polygon2)
 
-# frame = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), volmdlr.Vector3D(1, 0, 0), volmdlr.Vector3D(1, 0, 0), volmdlr.Vector3D(1, 0, 0))
-# circle1 = vmw.Circle3D(frame, 0.3)
+frame = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), volmdlr.Vector3D(1, 0, 0), volmdlr.Vector3D(1, 0, 0), volmdlr.Vector3D(1, 0, 0))
+circle1 = vmw.Circle3D(frame, 0.3)
 
 
 lists_profiles = [polygon1, polygon2]
