@@ -274,7 +274,7 @@ class Block(volmdlr.faces.ClosedShell3D):
 
         return [xm_face, xp_face, ym_face, yp_face, zm_face, zp_face]
 
-    def center_faces(self):
+    def faces_center(self):
         vertices = self.vertices()
         c0_x = (vertices[0] + vertices[1] + vertices[4] + vertices[5])/4
         c1_x = (vertices[2] + vertices[3] + vertices[6] + vertices[7])/4
