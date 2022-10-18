@@ -110,17 +110,16 @@ class Edge(dc.DessiaObject):
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
+        if obj.__class__.__name__ == 'LineSegment3D':
+            return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
             return LineSegment3D(p1, p2, arguments[0][1:-1])
+        if hasattr(obj, 'trim'):
+            if obj.__class__.__name__ == 'Circle3D':
+                p1, p2 = p2, p1
+            return obj.trim(p1, p2)
 
-        else:
-            if hasattr(obj, 'trim'):
-                if obj.__class__.__name__ == 'Circle3D':
-                    p1, p2 = p2, p1
-                return obj.trim(p1, p2)
-
-            else:
-                raise NotImplementedError(f'Unsupported: {object_dict[arguments[3]]}')
+        raise NotImplementedError(f'Unsupported: {object_dict[arguments[3]]}')
 
     def normal_vector(self, abscissa):
         """
@@ -3456,6 +3455,10 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
+        lines = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        dir_vector = lines[0].unit_direction_vector()
+        if all(line.unit_direction_vector() == dir_vector for line in lines):
+            return LineSegment3D(points[0], points[-1])
         # curve_form = arguments[3]
         if arguments[4] == '.F.':
             closed_curve = False

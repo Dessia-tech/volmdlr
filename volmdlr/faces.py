@@ -3869,11 +3869,16 @@ class Face3D(volmdlr.core.Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        contours = [object_dict[int(arguments[1][0][1:])]]
-
-        # Detecting inner and outer contours
         name = arguments[0][1:-1]
-        surface = object_dict[int(arguments[2])]
+        contours = [object_dict[int(arguments[1][0][1:])]]
+        points = [contours[0].primitives[0].start, contours[0].point_at_abscissa(contours[0].length() / 2),
+                  contours[0].point_at_abscissa(0.9 * contours[0].length())]
+        plane3d = Plane3D.from_3_points(*points)
+        # Detecting inner and outer contours
+        if all(plane3d.point_on_plane(primitive[0]) for primitive in contours[0].primitives):
+            surface = plane3d
+        else:
+            surface = object_dict[int(arguments[2])]
 
         if hasattr(surface, 'face_from_contours3d'):
             if (len(contours) == 1) and isinstance(contours[0],

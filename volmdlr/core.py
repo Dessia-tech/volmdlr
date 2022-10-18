@@ -871,14 +871,8 @@ class VolumeModel(dc.PhysicalObject):
         self.primitives = primitives
         self.name = name
         self.shells = []
-        # if self.primitives:
-        #     self.shells = self._extract_shells()
-        # if self.shells:
-
-        self.bounding_box = self._bounding_box()
-        # else:
-        #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
-        dc.DessiaObject.__init__(self, name=name)
+        self._bbox = None
+        dc.PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
         return sum(hash(point) for point in self.primitives)
@@ -899,6 +893,50 @@ class VolumeModel(dc.PhysicalObject):
         for p1, p2 in zip(self.primitives, other.primitives):
             equ = equ and p1 == p2
         return equ
+
+    @property
+    def bounding_box(self):
+        """
+        Returns the boundary box
+        """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model
+        """
+        bboxes = []
+        points = []
+        for primitive in self.primitives:
+            if hasattr(primitive, 'bounding_box'):
+                bboxes.append(primitive.bounding_box)
+            else:
+                if primitive.__class__.__name__ == 'volmdlr.Point3D':
+                    points.append(primitive)
+        if bboxes:
+            xmin = min(box.xmin for box in bboxes)
+            xmax = max(box.xmax for box in bboxes)
+            ymin = min(box.ymin for box in bboxes)
+            ymax = max(box.ymax for box in bboxes)
+            zmin = min(box.zmin for box in bboxes)
+            zmax = max(box.zmax for box in bboxes)
+        elif points:
+            xmin = min(p[0] for p in points)
+            xmax = max(p[0] for p in points)
+            ymin = min(p[1] for p in points)
+            ymax = max(p[1] for p in points)
+            zmin = min(p[2] for p in points)
+            zmax = max(p[2] for p in points)
+        else:
+            # raise ValueError('Bounding box cant be determined')
+            return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def volume(self) -> float:
         """
@@ -978,37 +1016,6 @@ class VolumeModel(dc.PhysicalObject):
         """
         new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
-
-    def _bounding_box(self) -> BoundingBox:
-        """
-        Computes the bounding box of the model
-        """
-        bboxes = []
-        points = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'bounding_box'):
-                bboxes.append(primitive.bounding_box)
-            else:
-                if primitive.__class__.__name__ == 'volmdlr.Point3D':
-                    points.append(primitive)
-        if bboxes:
-            xmin = min(box.xmin for box in bboxes)
-            xmax = max(box.xmax for box in bboxes)
-            ymin = min(box.ymin for box in bboxes)
-            ymax = max(box.ymax for box in bboxes)
-            zmin = min(box.zmin for box in bboxes)
-            zmax = max(box.zmax for box in bboxes)
-        elif points:
-            xmin = min(p[0] for p in points)
-            xmax = max(p[0] for p in points)
-            ymin = min(p[1] for p in points)
-            ymax = max(p[1] for p in points)
-            zmin = min(p[2] for p in points)
-            zmax = max(p[2] for p in points)
-        else:
-            # raise ValueError('Bounding box cant be determined')
-            return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def plot2d(self, ax=None, color=None):
         fig = plt.figure()
