@@ -164,8 +164,7 @@ class PointCloud3D(dc.DessiaObject):
                     poly2_simplified = poly2
                 list_triangles_points = poly1_simplified.sewing(poly2_simplified,
                                                                 vec1, vec2)
-                list_faces = [vmf.Triangle3D(*triangle_points, alpha=0.9,
-                                             color=(1, 0.1, 0.1))
+                list_faces = [vmf.Triangle3D(*triangle_points)
                               for triangle_points in list_triangles_points]
                 faces.extend(list_faces)
         return vmf.ClosedShell3D(faces)

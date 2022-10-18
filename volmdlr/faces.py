@@ -5025,13 +5025,11 @@ class Triangle3D(PlaneFace3D):
     # _non_data_hash_attributes = []
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
-                 point3: volmdlr.Point3D, alpha=1, color=None, name: str = ''):
+                 point3: volmdlr.Point3D, name: str = ''):
         self.point1 = point1
         self.point2 = point2
         self.point3 = point3
         self.points = [self.point1, self.point2, self.point3]
-        self.color = color
-        self.alpha = alpha
         self.name = name
 
         self._utd_surface3d = False
@@ -5105,8 +5103,6 @@ class Triangle3D(PlaneFace3D):
         dict_['point1'] = self.point1.to_dict()
         dict_['point2'] = self.point2.to_dict()
         dict_['point3'] = self.point3.to_dict()
-        dict_['alpha'] = self.alpha
-        dict_['color'] = self.color
         dict_['name'] = self.name
 
         return dict_
@@ -5116,7 +5112,7 @@ class Triangle3D(PlaneFace3D):
         point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
         point2 = volmdlr.Point3D.dict_to_object(dict_['point2'])
         point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
-        return cls(point1, point2, point3, dict_['alpha'], dict_['color'], dict_['name'])
+        return cls(point1, point2, point3, dict_['name'])
 
     def area(self) -> float:
         """
@@ -5169,7 +5165,7 @@ class Triangle3D(PlaneFace3D):
 
     def copy(self, deep=True, memo=None):
         return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
-                          self.alpha, self.color, self.name)
+                          self.name)
 
     def triangulation(self):
         return vmd.DisplayMesh3D([vmd.Node3D.from_point(self.point1),
@@ -5188,7 +5184,7 @@ class Triangle3D(PlaneFace3D):
         new_point3 = self.point3.translation(offset)
 
         new_triangle = Triangle3D(new_point1, new_point2, new_point3,
-                                  self.alpha, self.color, self.name)
+                                  self.name)
         return new_triangle
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
@@ -5215,7 +5211,7 @@ class Triangle3D(PlaneFace3D):
         new_point2 = self.point2.rotation(center, axis, angle)
         new_point3 = self.point3.rotation(center, axis, angle)
         new_triangle = Triangle3D(new_point1, new_point2, new_point3,
-                                  self.alpha, self.color, self.name)
+                                  self.name)
         return new_triangle
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
