@@ -23,8 +23,8 @@ p2 = [vm.Point2D(-1, 2), vm.Point2D(1, 2),
       vm.Point2D(3, 2), vm.Point2D(4, 2),
       vm.Point2D(4, 4), vm.Point2D(-1, 4)]
 
-contour1 = volmdlr.wires.Contour2D((vm.wires.ClosedPolygon2D(p1).discretized_primitives(5))).order_contour()
-contour2 = volmdlr.wires.Contour2D((vm.wires.ClosedPolygon2D(p2).discretized_primitives(3))).order_contour()
+contour1 = volmdlr.wires.Contour2D((vm.wires.ClosedPolygon2D(p1).discretized_primitives(5*4)))#.order_contour()
+contour2 = volmdlr.wires.Contour2D((vm.wires.ClosedPolygon2D(p2).discretized_primitives(3*4)))#.order_contour()
 
 
 fig, axs = plt.subplots(2, 4)

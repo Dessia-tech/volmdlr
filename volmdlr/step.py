@@ -207,7 +207,12 @@ def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_repre
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
-    return STEP_TO_VOLMDLR[name].from_step(
+    return STEP_TO_VOLMDLR['BOUNDED_CURVE, '
+                           'B_SPLINE_CURVE, '
+                           'B_SPLINE_CURVE_WITH_KNOTS, '
+                           'CURVE, GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_CURVE, '
+                           'REPRESENTATION_ITEM'].from_step(
         modified_arguments, object_dict)
 
 
@@ -216,7 +221,11 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
-    return STEP_TO_VOLMDLR[name].from_step(
+    return STEP_TO_VOLMDLR['BOUNDED_SURFACE, B_SPLINE_SURFACE, '
+                           'B_SPLINE_SURFACE_WITH_KNOTS, '
+                           'GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_SURFACE, '
+                           'REPRESENTATION_ITEM, SURFACE'].from_step(
         modified_arguments, object_dict)
 
 
@@ -588,9 +597,8 @@ class Step(dc.DessiaObject):
                     frame_mapped_shell_node.append(s_node)
                     break
         shell_nodes_copy = shell_nodes.copy()
-        [shell_nodes.remove(node) for node in frame_mapped_shell_node]
-
-        [shell_nodes.remove(node) for node in not_shell_nodes]
+        remove_nodes = list(set(frame_mapped_shell_node + not_shell_nodes))
+        [shell_nodes.remove(node) for node in remove_nodes]
 
         for node in shell_nodes + frame_mapping_nodes:
             self.graph.add_edge('#0', node)
@@ -734,7 +742,7 @@ STEP_TO_VOLMDLR = {
     'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
     'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
 
-    # added on 12/08/2021 by Mack in order to read BsplinePipe
+    # Bsplines
     'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
 
     # TOPOLOGICAL ENTITIES

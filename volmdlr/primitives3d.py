@@ -7,6 +7,8 @@ Common primitives 3D
 import math
 
 from typing import Tuple, List, Dict
+from scipy.optimize import minimize, NonlinearConstraint
+
 import numpy as npy
 import matplotlib.pyplot as plt
 
@@ -664,6 +666,15 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
+    def copy(self, deep=True, memo=None):
+        return self.__class__(plane_origin=self.plane_origin.copy(),
+                              x=self.x.copy(), y=self.y.copy(),
+                              contour2d=self.contour2d.copy(),
+                              axis=self.axis.copy(), angle=self.angle,
+                              axis_point=self.axis_point.copy(),
+                              color=self.color, alpha=self.alpha,
+                              name=self.name)
+
     def shell_faces(self):
         faces = []
 
@@ -823,7 +834,6 @@ class Cylinder(RevolvedProfile):
     Creates a full cylinder with the position, the axis of revolution,
     the radius and the length.
     """
-    _non_serializable_attributes = ['faces', 'contour3D']
 
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  radius: float, length: float,
@@ -852,11 +862,11 @@ class Cylinder(RevolvedProfile):
                                  axis, color=color, alpha=alpha, name=name)
 
     def _bounding_box(self):
+        """
+        This was copied for HollowCylinder. Inheritence removed to avoid problems
+        """
 
-        if hasattr(self, 'radius'):
-            radius = self.radius
-        elif hasattr(self, 'outer_radius'):
-            radius = self.outer_radius
+        radius = self.radius
 
         pointA = self.position - self.length / 2 * self.axis
         pointB = self.position + self.length / 2 * self.axis
@@ -888,6 +898,18 @@ class Cylinder(RevolvedProfile):
 
     def volume(self):
         return self.length * math.pi * self.radius**2
+
+    @classmethod
+    def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
+                             radius: float,
+                             color: Tuple[float, float, float] = None, alpha: float = 1,
+                             name: str = ''):
+        position = 0.5 * (point1 + point2)
+        length = point1.point_distance(point2)
+        axis = point2 - point1
+        axis.normalize()
+        return cls(position, axis, radius, length=length,
+                   color=color, alpha=alpha, name=name)
 
     def FreeCADExport(self, ip):
         if self.radius > 0:
@@ -1004,6 +1026,72 @@ class Cylinder(RevolvedProfile):
         return Cylinder(new_position, new_axis, self.radius, self.length,
                         color=self.color, alpha=self.alpha, name=self.name)
 
+    def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder'):
+        """
+        Compute the minimal distance between two volmdlr cylinders
+
+        :param other_cylinder: volmdlr Cylinder
+        :return: minimal distance between two 3D cylinders
+        """
+        # Local frames of cylinders
+        frame0 = volmdlr.Frame3D.from_point_and_vector(point=self.position,
+                                                       vector=self.axis,
+                                                       main_axis=volmdlr.Z3D)
+        frame1 = volmdlr.Frame3D.from_point_and_vector(point=other_cylinder.position,
+                                                       vector=other_cylinder.axis,
+                                                       main_axis=volmdlr.Z3D)
+
+        # Objective function
+        def dist_points(x):
+            """
+            :param x: coords of a point in cylinder 0 local frame, coords of a point in cylinder 1 local frame
+            :return: distance between the two points
+            """
+            point0 = frame0.old_coordinates(volmdlr.Point3D(x[0], x[1], x[2]))
+            point1 = frame1.old_coordinates(volmdlr.Point3D(x[3], x[4], x[5]))
+
+            return point0.point_distance(point1)
+
+        # Initial vector
+        p0 = frame0.old_coordinates(volmdlr.O3D)
+        p1 = frame1.old_coordinates(volmdlr.O3D)
+        x0 = (p0.x, p0.y, p0.z, p1.x, p1.y, p1.z)
+
+        # Constraints
+        def constraint_radius_0(x):
+            # radius of cylinder 0
+            return x[0] ** 2 + x[1] ** 2
+
+        def constraint_height_0(x):
+            # height of cylinder 0
+            return x[2]
+
+        def constraint_radius_1(x):
+            # radius of cylinder 1
+            return x[3] ** 2 + x[4] ** 2
+
+        def constraint_height_1(x):
+            # height of cylinder 1
+            return x[5]
+
+        constraints = [
+            NonlinearConstraint(fun=constraint_radius_0, lb=0, ub=self.radius ** 2),
+            NonlinearConstraint(fun=constraint_height_0, lb=-self.length / 2, ub=self.length / 2),
+            NonlinearConstraint(fun=constraint_radius_1, lb=0, ub=other_cylinder.radius ** 2),
+            NonlinearConstraint(fun=constraint_height_1, lb=-other_cylinder.length / 2, ub=other_cylinder.length / 2)
+        ]
+
+        return minimize(fun=dist_points, x0=x0, constraints=constraints).fun
+
+    def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder'):
+        """
+        :param other_cylinder: volmdlr Cylinder
+        :return: boolean, True if cylinders are intersecting, False otherwise
+        """
+        dist = self.min_distance_to_other_cylinder(other_cylinder)
+
+        return dist < 1e-5
+
 
 class Cone(RevolvedProfile):
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -1112,7 +1200,7 @@ class Cone(RevolvedProfile):
         return self.length * math.pi * self.radius**2 / 3
 
 
-class HollowCylinder(Cylinder):
+class HollowCylinder(RevolvedProfile):
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  inner_radius: float, outer_radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1,
@@ -1140,9 +1228,59 @@ class HollowCylinder(Cylinder):
         RevolvedProfile.__init__(self, position, axis, y, contour, position,
                                  axis, color=color, alpha=alpha, name=name)
 
+    def _bounding_box(self):
+
+        radius = self.outer_radius
+
+        pointA = self.position - self.length / 2 * self.axis
+        pointB = self.position + self.length / 2 * self.axis
+
+        dx2 = (pointA[0] - pointB[0])**2
+        dy2 = (pointA[1] - pointB[1])**2
+        dz2 = (pointA[2] - pointB[2])**2
+
+        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
+
+        if pointA[0] > pointB[0]:
+            pointA, pointB = pointB, pointA
+        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+
+        if pointA[1] > pointB[1]:
+            pointA, pointB = pointB, pointA
+        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+
+        if pointA[2] > pointB[2]:
+            pointA, pointB = pointB, pointA
+        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
     def volume(self):
         return self.length * math.pi * (self.outer_radius**2
                                         - self.inner_radius**2)
+
+    def copy(self):
+        new_position = self.position.copy()
+        new_axis = self.axis.copy()
+        return HollowCylinder(new_position, new_axis, self.inner_radius, self.outer_radius, self.length,
+                              color=self.color, alpha=self.alpha, name=self.name)
+
+    @classmethod
+    def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
+                             inner_radius: float, outer_radius: float,
+                             color: Tuple[float, float, float] = None, alpha: float = 1,
+                             name: str = ''):
+        position = 0.5 * (point1 + point2)
+        length = point1.point_distance(point2)
+        axis = point2 - point1
+        axis.normalize()
+        return cls(position, axis, inner_radius=inner_radius, outer_radius=outer_radius, length=length,
+                   color=color, alpha=alpha, name=name)
 
     def FreeCADExport(self, ip):
         if self.outer_radius > 0.:
@@ -1273,7 +1411,6 @@ class Sweep(volmdlr.faces.ClosedShell3D):
     """
     Sweep a 2D contour along a Wire3D
     """
-    _non_serializable_attributes = ['faces']
 
     def __init__(self, contour2d: List[volmdlr.wires.Contour2D],
                  wire3d: volmdlr.wires.Wire3D, *,
@@ -1423,36 +1560,32 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                      alpha=self.alpha, name=self.name)
 
 
-class Sphere(volmdlr.faces.ClosedShell3D):
-    _non_serializable_attributes = ['faces']
-
+# class Sphere(volmdlr.Primitive3D):
+class Sphere(RevolvedProfile):
     def __init__(self, center, radius,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
+        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.center = center
         self.radius = radius
         self.position = center
 
-        face = volmdlr.faces.SphericalSurface3D(volmdlr.Frame3D(self.center, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D),
-                                                self.radius).rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
-        volmdlr.faces.ClosedShell3D.__init__(self, faces=[face], color=color, alpha=alpha, name=name)
+        # Revolved Profile for complete sphere
+        s = volmdlr.Point2D(-self.radius, 0.01 * self.radius)
+        i = volmdlr.Point2D(0, 1.01 * self.radius)
+        e = volmdlr.Point2D(self.radius, 0.01 * self.radius)  # Not coherent but it works at first, to change !!
 
-        # # Revolved Profile for complete sphere
-        # s = volmdlr.Point2D(-self.radius, 0.01 * self.radius)
-        # i = volmdlr.Point2D(0, 1.01 * self.radius)
-        # e = volmdlr.Point2D(self.radius, 0.01 * self.radius)  # Not coherent but it works at first, to change !!
+        # s = volmdlr.Point2D((-self.radius, 0))
+        # i = volmdlr.Point2D(((math.sqrt(2)/2)*self.radius,(math.sqrt(2)/2)*self.radius))
+        # e = volmdlr.Point2D(((-math.sqrt(2)/2)*self.radius,(-math.sqrt(2)/2)*self.radius))
 
-        # # s = volmdlr.Point2D((-self.radius, 0))
-        # # i = volmdlr.Point2D(((math.sqrt(2)/2)*self.radius,(math.sqrt(2)/2)*self.radius))
-        # # e = volmdlr.Point2D(((-math.sqrt(2)/2)*self.radius,(-math.sqrt(2)/2)*self.radius))
+        contour = volmdlr.wires.Contour2D([
+            volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
 
-        # contour = volmdlr.wires.Contour2D([
-        #     volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
-
-        # axis = volmdlr.X3D
-        # y = axis.random_unit_normal_vector()
-        # RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
-        #                          color=color, alpha=alpha, name=name)
+        axis = volmdlr.X3D
+        y = axis.random_unit_normal_vector()
+        RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
+                                 color=color, alpha=alpha, name=name)
 
     def volume(self):
         return 4 / 3 * math.pi * self.radius**3

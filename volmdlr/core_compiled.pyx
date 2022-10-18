@@ -2068,6 +2068,46 @@ class Frame3D(Basis3D):
 
         return cls(origin, u, v, w, arguments[0][1:-1])
 
+    @classmethod
+    def from_point_and_vector(cls, point: Point3D, vector: Vector3D, main_axis: Vector3D = X3D):
+        """
+        Create a new frame from a point and vector by rotating the global frame.
+        Global frame rotate in order to have 'vector' and 'main_axis' collinear.
+        This method is very useful to compute a local frame of an object.
+
+        :param point: origin of the new frame
+        :param vector: vector used to define one of the main axis (by default X-axis) of the local frame
+        :param main_axis: the axis of global frame you want to match 'vector' (can be X3D, Y3D or Z3D).
+        :return: created local frame
+        """
+        if main_axis not in [X3D, Y3D, Z3D]:
+            raise ValueError("main_axis must be X, Y or Z of the global frame")
+
+        vector.normalize()
+
+        if vector == main_axis:
+            # The local frame is oriented like the global frame
+            return cls(O3D, X3D, Y3D, Z3D)
+
+        if vector == -main_axis:
+            return cls(O3D, -X3D, -Y3D, -Z3D)
+
+        # The local frame is oriented differently from the global frame
+        # Rotation angle
+        dot = main_axis.dot(vector)
+        rot_angle = math.acos(dot / (vector.norm() * main_axis.norm()))
+
+        # Rotation axis
+        vector2 = vector - main_axis
+        rot_axis = main_axis.cross(vector2)
+        rot_axis.normalize()
+
+        u = X3D.rotation(O3D, rot_axis, rot_angle)
+        v = Y3D.rotation(O3D, rot_axis, rot_angle)
+        w = Z3D.rotation(O3D, rot_axis, rot_angle)
+
+        return cls(point, u, v, w)
+
     def babylonjs(self, size=0.1, parent=None):
         s = 'var origin = new BABYLON.Vector3({},{},{});\n'.format(*self.origin)
         s += 'var o_u = new BABYLON.Vector3({}, {}, {});\n'.format(*(size * self.u + self.origin))
