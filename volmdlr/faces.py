@@ -7297,26 +7297,41 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         for face1 in initial_faces:
             for face2 in shell.faces:
+
                 if face1.surface3d.is_coincident(face2.surface3d):
+                    try:
+                        faces_combinaton = (used_faces[face1], face2)
+                    except KeyError:
+                        faces_combinaton = (face1, face2)
+
+                    f1 = faces_combinaton[0]
+                    f2 = faces_combinaton[1]
+
                     if face1.face_inside(face2):
-                        try:
-                            faces_combinaton = (used_faces[face1], face2)
-                        except KeyError:
-                            faces_combinaton = (face1, face2)
-
-                        f1 = faces_combinaton[0]
-                        f2 = faces_combinaton[1]
-
                         divided_faces = f1.divide_face([f2.surface2d.outer_contour], True)
-                        areas = [face.area() for face in divided_faces]
-                        used_faces[face1] = divided_faces[areas.index(max(areas))]
+                        for f in divided_faces:
+                            if f.outer_contour3d.is_superposing(f2.outer_contour3d):
+                                to_be_divided = f
+                            else:
+                                used_faces[face1] = f
 
-                        list_faces.extend(divided_faces[areas.index(min(areas))].divide_face(
-                            f2.surface2d.inner_contours, True))
+                        if f2.surface2d.inner_contours:
+                            list_faces.extend(to_be_divided.divide_face(
+                                f2.surface2d.inner_contours, True))
+                        else:
+                            list_faces.append(to_be_divided)
+
+                    else:
+                        divided_faces = f1.cut_by_face(f2)
+                        # list_faces.extend(f1.cut_by_face(f2))
+                        used_faces[face1] = divided_faces
 
         for face in initial_faces:
             try:
-                list_faces.append(used_faces[face])
+                if type(used_faces[face]) == list:
+                    list_faces.extend(used_faces[face])
+                else:
+                    list_faces.append(used_faces[face])
             except KeyError:
                 list_faces.append(face)
 
