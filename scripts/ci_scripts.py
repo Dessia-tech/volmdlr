@@ -44,6 +44,8 @@ scripts = [
             'faces/BSplineSurface/from_cylindrical_to_bspline_surface.py',
             'faces/BSplineSurface/bspline_surface_definition.py',
             'faces/BSplineSurface/bspline_surfaces_grid3d.py',
+            # Shells
+            'shells/operations.py',
             # Cloud
             'cloud/sewing_two_polygons.py',
             'cloud/sewing_stl.py',
