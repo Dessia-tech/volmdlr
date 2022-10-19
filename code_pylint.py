@@ -13,7 +13,7 @@ MAX_ERROR_BY_TYPE = {
                      'arguments-differ': 39,
                      'too-many-locals': 76,
                      'unused-argument': 46,
-                     'too-many-arguments': 64,
+                     'too-many-arguments': 65,
                      'consider-using-enumerate': 22,
                      'too-many-branches': 29,
                      'too-many-statements': 21,
