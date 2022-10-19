@@ -10,10 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
-* Gmsh: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
+* GmshParser: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
 * Circle2D: primitives (defined with 2 Arc2D)
 * Arc: reverse
-*
+* Node2D/3D, TriangularElement, QuadrilateralElement2D, TriangularElement3D
+* ElementsGroup: nodes, elements_per_node
+* Mesh: bounding_rectangle, delete_duplicated_nodes
+
 
 ### Fixed
 
@@ -30,8 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactorings
 
-*
-*
+* Refacor and update old code in mesh.py
+* Define a Parent class 'Triangle' for Triangle2D/3D
 
 
 ## v0.5.0
@@ -71,8 +74,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Consider different types of primitives in Wire.wire_intersections/wire_crossings
 * Add hidden attribute _length for Edge
 
-
-
 ### Refactorings
 
 * Define _eq_ in Contour (to be used for both 2D and 3D)
@@ -84,9 +85,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Define length in LineSegment (to be used for both 2D and 3D)
 * Delete diplicated methods (length and point_at_abscissa) from Contour3D (inherit from Wire)
 * Define a Parent class 'Bsplinecurve' to mutulize Bsplinecurve2D/3D methods
-
-
-
 
 
 ## v0.4.0
