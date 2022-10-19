@@ -655,7 +655,7 @@ class BoundingRectangle(dc.DessiaObject):
 
     def bounds(self):
         """
-        Return the bounds of the BoundingRectangle
+        Return the bounds of the BoundingRectangle.
         """
         return self.xmin, self.xmax, self.ymin, self.ymax
 
