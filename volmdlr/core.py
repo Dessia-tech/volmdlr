@@ -654,6 +654,9 @@ class BoundingRectangle(dc.DessiaObject):
         raise IndexError
 
     def bounds(self):
+        """
+        Return the bounds of the BoundingRectangle
+        """
         return self.xmin, self.xmax, self.ymin, self.ymax
 
     def plot(self, ax=None, color='k', linestyle='dotted'):
