@@ -134,7 +134,6 @@ class Wire:
         else:
             primitives.extend(self.primitives[0:self.primitive_to_index(primitive1)])
             if ip1 == ip2:
-                # primitives.extend(self.primitives[0:ip1])
                 prim = primitive1.split(point1)
                 if prim[0]:
                     primitives.append(prim[0])
@@ -142,16 +141,13 @@ class Wire:
                     prim = prim[1].split(point2)[1]
                     if prim:
                         primitives.append(prim)
-                # primitives.extend(self.primitives[ip2 + 1::])
             else:
-                # primitives.extend(self.primitives[0:ip1])
                 prim = primitive1.split(point1)[0]
                 if prim:
                     primitives.append(prim)
                 prim = primitive2.split(point2)[1]
                 if prim:
                     primitives.append(prim)
-                # primitives.extend(self.primitives[ip2 + 1::])
             primitives.extend(self.primitives[self.primitive_to_index(primitive2) + 1::])
 
         return primitives
