@@ -4119,41 +4119,6 @@ class Face3D(volmdlr.core.Primitive3D):
             return True
         return False
 
-    def cut_by_face(self, face):
-        """
-        Cuts face1 with another coincident face2
-
-        :param face: a face3d
-        :type face: Face3D
-        :return: a list of faces3d
-        :rtype: List[Face3D]
-        """
-
-        outer_contour_1 = self.surface3d.contour3d_to_2d(self.outer_contour3d)
-        inner_contours2d_1 = []
-        for contour in self.inner_contours3d:
-            inner_contours2d_1.append(self.surface3d.contour3d_to_2d(contour))
-
-        outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
-        inner_contours2d_2 = []
-        for contour in face.inner_contours3d:
-            inner_contours2d_2.append(self.surface3d.contour3d_to_2d(contour))
-
-        contours = outer_contour_1.cut_by_wire(outer_contour_2)
-
-        surfaces = []
-        for contour in contours:
-            inners = []
-            for inner_c in inner_contours2d_1:
-                if contour.is_inside(inner_c):
-                    inners.append(inner_c)
-            for inner_c in inner_contours2d_2:
-                if contour.is_inside(inner_c):
-                    inners.append(inner_c)
-            surfaces.append(Surface2D(contour, inners))
-
-        return [self.__class__(self.surface3d, surface2d) for surface2d in surfaces]
-
 
 class PlaneFace3D(Face3D):
     """
@@ -5040,6 +5005,38 @@ class PlaneFace3D(Face3D):
         if not list_cutting_contours:
             return [self_copy]
         return self_copy.divide_face(list_cutting_contours, contour_extract_inside)
+
+    def cut_by_coincident_face(self, face):
+        """
+        Cuts face1 with another coincident face2
+
+        :param face: a face3d
+        :type face: Face3D
+        :return: a list of faces3d
+        :rtype: List[Face3D]
+        """
+
+        if not self.surface3d.is_coincident(face.surface3d):
+            raise ValueError('The faces are not coincident')
+
+        outer_contour_1 = self.surface2d.outer_contour
+        outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
+
+        inner_contours = self.surface2d.inner_contours
+        inner_contours.extend([self.surface3d.contour3d_to_2d(
+            contour) for contour in face.inner_contours3d])
+
+        contours = outer_contour_1.cut_by_wire(outer_contour_2)
+
+        surfaces = []
+        for contour in contours:
+            inners = []
+            for inner_c in inner_contours:
+                if contour.is_inside(inner_c):
+                    inners.append(inner_c)
+            surfaces.append(Surface2D(contour, inners))
+
+        return [self.__class__(self.surface3d, surface2d) for surface2d in surfaces]
 
 
 class Triangle3D(PlaneFace3D):
