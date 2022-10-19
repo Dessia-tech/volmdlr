@@ -19,8 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Contour3D: average_center_point (use edge_polygon.points instead of points)
 * Contour: edges_order_with_adjacent_contour
+* Arc2D: Abscissa (consider point2d == arc2d.start/end)
 * Arc2D: point_belongs (use is_trigo, consider point=start or end)
-*
+
 
 ### Performance improvements
 
