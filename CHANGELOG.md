@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Define a Parent class 'Triangle' for Triangle2D/3D
 
 
+### Unittests
+
+* Wire: extract_primitives, extract_without_primitives
+
+
+
 ## v0.5.0
 
 ### New Features
