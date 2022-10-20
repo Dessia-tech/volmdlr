@@ -4810,6 +4810,7 @@ class PlaneFace3D(Face3D):
                 if not new_face.surface2d.inner_contours:
                     new_face.surface2d.inner_contours = [new_contour]
                     break
+                new_contour_not_sharing_primitives = True
                 for i, inner_contour in enumerate(new_face.surface2d.inner_contours):
                     if new_contour.is_inside(inner_contour):
                         if any(inner_contour.primitive_over_contour(prim)
@@ -4820,9 +4821,15 @@ class PlaneFace3D(Face3D):
                     elif not any(inner_contour.primitive_over_contour(prim) for prim in
                                  new_contour.primitives):
                         inner_contours1.append(inner_contour)
+                    else:
+                        new_contour_not_sharing_primitives = False
                 else:
                     surf3d = new_face.surface3d
                     if inner_contours1:
+                        if new_contour_not_sharing_primitives:
+                            inner_contours1.append(new_contour)
+                            new_face.surface2d.inner_contours = inner_contours1
+                            break
                         surf2d = Surface2D(new_face.surface2d.outer_contour, inner_contours1)
                         new_plane = PlaneFace3D(surf3d, surf2d)
                         new_list_faces.append(new_plane)
