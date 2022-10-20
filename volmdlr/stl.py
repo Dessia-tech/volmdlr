@@ -46,7 +46,8 @@ class Stl(dc.DessiaObject):
 
     def __init__(self, triangles: List[vmf.Triangle3D], name: str = ''):
         self.triangles = triangles
-        self.name = name
+        dc.DessiaObject.__init__(self, name=name)
+        
         self.normals = None
 
     @classmethod

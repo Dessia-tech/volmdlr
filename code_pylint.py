@@ -4,18 +4,18 @@ from pylint.lint import Run
 MIN_NOTE = 7.78
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 1095,
+                     'invalid-name': 1050,
                      'no-else-return': 75,
                      'consider-using-f-string': 156,
-                     'no-member': 137,
+                     'no-member': 127,
                      'inconsistent-return-statements': 18,
                      'unused-variable': 62,
-                     'arguments-differ': 40,
-                     'too-many-locals': 76,
+                     'arguments-differ': 44,
+                     'too-many-locals': 75,
                      'unused-argument': 27,
                      'too-many-arguments': 64,
                      'consider-using-enumerate': 22,
-                     'too-many-branches': 29,
+                     'too-many-branches': 27,
                      'too-many-statements': 21,
                      'super-init-not-called': 23,
                      'no-name-in-module': 22,
@@ -55,7 +55,7 @@ MAX_ERROR_BY_TYPE = {
                      'wildcard-import': 1,
                      'cell-var-from-loop': 1,
                      'import-outside-toplevel': 1,
-                     'unsubscriptable-object': 3,
+                     'unsubscriptable-object': 1,
                      # No tolerance errors
                      'unidiomatic-typecheck': 0,
                      'unexpected-special-method-signature': 0,
