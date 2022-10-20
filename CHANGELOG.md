@@ -21,9 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Contour3D: average_center_point (use edge_polygon.points instead of points)
 * Contour: edges_order_with_adjacent_contour
-* Arc2D: Abcissa (consider point2d == arc2d.start/end)
-* Wire: extract_primitives (consider point1 and point2 belong to the same primitive, delete Contour.extract_primitives)
-*
+* Arc2D: abscissa (consider point2d == arc2d.start/end)
+* Arc2D: split (how to choose the interior point)
+* Wire: extract_primitives (consider point1 and point2 belong to the same primitive, REMOVE Contour.extract_primitives)
 
 
 ### Performance improvements
