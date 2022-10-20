@@ -1,25 +1,25 @@
 from pylint.lint import Run
 
 
-MIN_NOTE = 7.9
+MIN_NOTE = 7.78
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 1103,
+                     'invalid-name': 1095,
                      'no-else-return': 75,
-                     'consider-using-f-string': 164,
-                     'no-member': 131,
+                     'consider-using-f-string': 156,
+                     'no-member': 137,
                      'inconsistent-return-statements': 18,
-                     'unused-variable': 64,
-                     'arguments-differ': 39,
+                     'unused-variable': 62,
+                     'arguments-differ': 40,
                      'too-many-locals': 76,
-                     'unused-argument': 46,
-                     'too-many-arguments': 63,
+                     'unused-argument': 27,
+                     'too-many-arguments': 64,
                      'consider-using-enumerate': 22,
                      'too-many-branches': 29,
                      'too-many-statements': 21,
                      'super-init-not-called': 23,
                      'no-name-in-module': 22,
-                     'abstract-method': 20,
+                     'abstract-method': 24,
                      'duplicate-code': 11,
                      'no-self-use': 16,
                      'arguments-renamed': 17,
