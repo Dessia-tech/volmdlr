@@ -36,6 +36,7 @@ scripts = [
             'faces/union.py',
             'faces/blocks_set_operations.py',
             'faces/surface2d.py',
+            # 'faces/export_to_step.py', #TO BE USED WHEN THE EXPORT IS IMPROVED
             'faces/BSplineSurface/bspline_curves.py',
             'faces/BSplineSurface/bspline_curves_point_belongs.py',
             'faces/BSplineSurface/bspline_surface_interpolation.py',
@@ -65,7 +66,8 @@ scripts = [
             # Showcases
             'showcases/simple_shapes.py',
             'showcases/casing.py',
-            'grid.py'
+            'grid.py',
+            'mesh/read_msh_file.py'
             ]
 
 # Testing if all scripts exists before launching them
