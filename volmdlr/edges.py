@@ -1994,7 +1994,8 @@ class Arc2D(Arc):
                       self.point_at_abscissa(0.5 * abscissa),
                       split_point),
                 Arc2D(split_point,
-                      self.point_at_abscissa(1.5 * abscissa),
+                      self.point_at_abscissa((self.abscissa(self.end)
+                                              - abscissa) * 0.5 + abscissa),
                       self.end)
                 ]
 
