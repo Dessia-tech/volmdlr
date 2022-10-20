@@ -7396,7 +7396,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         """
 
         used_faces, list_faces = {}, []
-
+        import random
         for i, face1 in enumerate(self.faces):
             for j, face2 in enumerate(shell.faces):
                 # check bspline_faces
@@ -7408,6 +7408,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 # print(face_1, face_2)
                 # print('i: ', i, 'j: ', j)
                 if face_1.surface3d.is_coincident(face_2.surface3d):
+                    print('i: ', i)
+                    print('j: ', j)
+                    face_1.color = (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1))
+                    face_2.color = (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1))
+                    print('___')
                     try:
                         faces_combinaton = (used_faces[face1], face2)
                     except KeyError:
@@ -7426,6 +7431,14 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                         f2 = f2.to_planeface3d(f1.surface3d)
 
                     if face_1.face_inside(face_2):
+                        print('_inside_')
+                        face_1.color = (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1))
+                        face_2.color = (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1))
+
+                        print('i: ', i)
+                        print('j: ', j)
+                        print('_inside_')
+
                         # try:
                         #     faces_combinaton = (used_faces[face1], face2)
                         # except KeyError:
@@ -7443,19 +7456,22 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                         # if isinstance(f2, BSplineFace3D) and isinstance(f1, PlaneFace3D):
                         #     f2 = f2.to_planeface3d(f1.surface3d)
 
-                        divided_faces = f1.divide_face([f2.surface2d.outer_contour], True)
+                        divided_faces = f1.divide_face(
+                            [f1.surface3d.contour3d_to_2d(f2.outer_contour3d)], True)
                         for f in divided_faces:
                             if f.outer_contour3d.is_superposing(f2.outer_contour3d):
-                                to_be_divided = f
+                                # to_be_divided = f
+                                list_faces.append(f)
                             else:
                                 used_faces[face1] = f
-
+                        """
                         if f2.surface2d.inner_contours:
                             list_faces.extend(to_be_divided.divide_face(
-                                f2.surface2d.inner_contours, True))
+                                [to_be_divided.surface3d.contour3d_to_2d(inner) \
+                                 for inner in f2.inner_contours3d], True))
                         else:
                             list_faces.append(to_be_divided)
-
+                        """
                         # areas = [face.area() for face in divided_faces]
                         # used_faces[face1] = divided_faces[areas.index(max(areas))]
 
@@ -7465,22 +7481,22 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                         # else:
                         #     list_faces.append(divided_faces[areas.index(min(areas))])
 
-                        for face in self.faces:
-                            try:
-                                list_faces.append(used_faces[face])
-                            except KeyError:
-                                list_faces.append(face)
+                    # else:
+                    #     divided_faces = f1.cut_by_face(f2)
+                    #     # list_faces.extend(f1.cut_by_face(f2))
+                    #     used_faces[face1] = divided_faces
 
-                    else:
-                        divided_faces = f1.cut_by_face(f2)
-                        # list_faces.extend(f1.cut_by_face(f2))
-                        used_faces[face1] = divided_faces
+                    #     for face in self.faces:
+                    #         try:
+                    #             list_faces.extend(used_faces[face])
+                    #         except KeyError:
+                    #             list_faces.append(face)
 
-                        for face in self.faces:
-                            try:
-                                list_faces.extend(used_faces[face])
-                            except KeyError:
-                                list_faces.append(face)
+        for face in self.faces:
+            try:
+                list_faces.append(used_faces[face])
+            except KeyError:
+                list_faces.append(face)
 
         return self.__class__(list_faces)
 
