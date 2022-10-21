@@ -13,7 +13,7 @@ UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-fin
 MIN_NOTE = 7.9
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 1019,
+                     'invalid-name': 1023,
                      'no-else-return': 74,
                      'consider-using-f-string': 155,
                      'no-member': 127,
@@ -22,7 +22,7 @@ MAX_ERROR_BY_TYPE = {
                      'arguments-differ': 44,
                      'too-many-locals': 75,
                      'line-too-long': 32,
-                     'unused-argument': 27,
+                     'unused-argument': 48,
                      'too-many-arguments': 64,
                      'line-too-long errors': 32,
                      'consider-using-enumerate': 22,
