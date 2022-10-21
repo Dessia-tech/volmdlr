@@ -25,7 +25,8 @@ frame = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), volmdlr.Vector3D(1, 0, 0), v
 circle1 = vmw.Circle3D(frame, 0.3)
 
 
-lists_profiles = [polygon1, polygon2]
+# lists_profiles = [polygon1, polygon2]
+lists_profiles = [polygon1, circle1]
 
 loft = p3d.Loft(lists_profiles, color=(1, 0.5, 0.2))
 loft.babylonjs()

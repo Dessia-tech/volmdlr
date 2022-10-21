@@ -1740,7 +1740,8 @@ class Loft(volmdlr.core.Primitive3D):
     def volmdlr_primitives(self):
         """
         """
-        verify_number_points_profiles_equal = self._verify_number_points
+        # verify_number_points_profiles_equal = self._verify_number_points
+        verify_number_points_profiles_equal = False
         if verify_number_points_profiles_equal:
             return self._primitives()
 
@@ -1770,10 +1771,16 @@ class Loft(volmdlr.core.Primitive3D):
         new_primitives = []
         dic_corresp = {}
         for i, i_profil in enumerate(self.profiles):
-            center1 = i_profil.average_center_point()
+            if isinstance(i_profil, volmdlr.wires.Circle3D):
+                center1 = i_profil.center
+            else:
+                center1 = i_profil.average_center_point()
             # = i_profil.points[0]
             new_profil1 = i_profil.translation(-center1)
             new_profil1_2d = new_profil1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+            if isinstance(new_profil1_2d, volmdlr.wires.Circle2D):
+                discretization = new_profil1_2d.polygon_points(10)
+                new_profil1_2d = volmdlr.wires.ClosedPolygon2D(discretization[:-1])
             if not new_profil1_2d.is_trigo():
                 temp = new_profil1_2d.points[1:]
                 temp.reverse()
@@ -1782,10 +1789,16 @@ class Loft(volmdlr.core.Primitive3D):
             new_points_2d = new_profil1_2d.points
             for j, j_profil in enumerate(self.profiles):
                 if j != i:
-                    center2 = j_profil.average_center_point()
+                    if isinstance(j_profil, volmdlr.wires.Circle3D):
+                        center2 = j_profil.center
+                    else:
+                        center2 = j_profil.average_center_point()
                     #center2 = j_profil.points[0]
                     new_profil2 = j_profil.translation(-center2)
                     new_profil2_2d = new_profil2.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+                    if isinstance(new_profil2_2d, volmdlr.wires.Circle2D):
+                        discretization = new_profil2_2d.polygon_points(10)
+                        new_profil2_2d = volmdlr.wires.ClosedPolygon2D(discretization[:-1])
                     if not new_profil2_2d.is_trigo():
                         temp = new_profil2_2d.points[1:]
                         temp.reverse()
@@ -1826,6 +1839,9 @@ class Loft(volmdlr.core.Primitive3D):
                                         dic_corresp[i] = new_points_2d[l+1]
                                     #dic_corresp[k] = l+1
                         new_profil1_2d = volmdlr.wires.ClosedPolygon2D(new_points_2d)
+                # elif j != i and isinstance(j_profil, volmdlr.wires.Circle3D):
+                #     pass
+
             if dic_corresp and i > 0:
                 start_index = new_points_2d.index(dic_corresp.get(i))
                 if start_index > 0:
@@ -1855,5 +1871,6 @@ class Loft(volmdlr.core.Primitive3D):
     def _verify_number_points(self):
         """
         Return True if all the contours have the same number of points and False otherwise.
+        TODO: Take into account other primitives
         """
         return all(len(self.profiles[0].points) == len(profil.points) for profil in self.profiles)
