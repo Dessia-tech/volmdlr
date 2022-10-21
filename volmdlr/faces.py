@@ -7590,7 +7590,10 @@ class ClosedShell3D(OpenShell3D):
         tests = []
 
         # for ray in rays[:3]:
+        ax = self.plot()
+        point3d.plot(ax)
         for ray in rays[:nb_rays]:
+            ray.plot(ax)
             #
             count = 0
             ray_intersection = []
@@ -7599,6 +7602,7 @@ class ClosedShell3D(OpenShell3D):
                 count += len(point_inters)
             if count % 2 == 0:
                 is_inside = False
+            print(count, is_inside)
             tests.append(is_inside)
             rays_intersections.append(ray_intersection)
         for test1, test2 in zip(tests[:-1], tests[1:]):
