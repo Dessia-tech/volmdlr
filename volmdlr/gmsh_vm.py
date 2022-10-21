@@ -33,17 +33,17 @@ class GmshParser(DessiaObject):
                  name: str = ''):
 
         self.mesh_format = mesh_format
-        self.physical_names = physical_names,
-        self.entities = entities,
-        self.nodes = nodes,
-        self.elements = elements,
-        self.partitioned_entities = partitioned_entities,
-        self.periodic = periodic,
+        self.physical_names = physical_names
+        self.entities = entities
+        self.nodes = nodes
+        self.elements = elements
+        self.partitioned_entities = partitioned_entities
+        self.periodic = periodic
         # self.ghost_elements = ghost_elements,
-        self.parametrizations = parametrizations,
-        self.node_data = node_data,
-        self.element_data = element_data,
-        self.element_node_data = element_node_data,
+        self.parametrizations = parametrizations
+        self.node_data = node_data
+        self.element_data = element_data
+        self.element_node_data = element_node_data
         # self.interpolation_scheme = interpolation_scheme,
         self.name = name
 

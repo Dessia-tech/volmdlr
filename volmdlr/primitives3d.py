@@ -371,8 +371,8 @@ class Block(volmdlr.faces.ClosedShell3D):
             new_w = basis.old_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         else:
-            raise ValueError(f'side value not valid, please specify'
-                             f'a correct value: \'old\' or \'new\'')
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
         return new_frame
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -526,8 +526,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         name = 'primitive' + str(ip)
         s = 'Wo = []\n'
         s += 'Eo = []\n'
-        for ip, primitive in enumerate(self.outer_contour3d.primitives):
-            s += primitive.FreeCADExport('L{}'.format(ip))
+        for prim_index, primitive in enumerate(self.outer_contour3d.primitives):
+            s += primitive.FreeCADExport('L{}'.format(prim_index))
             s += 'Eo.append(Part.Edge(L{}))\n'.format(ip)
         s += 'Wo.append(Part.Wire(Eo[:]))\n'
         s += 'Fo = Part.Face(Wo)\n'
@@ -536,9 +536,9 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         s += 'W = []\n'
         for ic, contour in enumerate(self.inner_contours3d):
             s += 'E = []\n'
-            for ip, primitive in enumerate(contour.primitives):
-                s += primitive.FreeCADExport('L{}_{}'.format(ic, ip))
-                s += 'E.append(Part.Edge(L{}_{}))\n'.format(ic, ip)
+            for primitive_index, primitive in enumerate(contour.primitives):
+                s += primitive.FreeCADExport('L{}_{}'.format(ic, primitive_index))
+                s += 'E.append(Part.Edge(L{}_{}))\n'.format(ic, primitive_index)
             s += 'Wi = Part.Wire(E[:])\n'
             s += 'Fi.append(Part.Face(Wi))\n'
 
