@@ -18,7 +18,8 @@ untracked_modules = ['volmdlr/templates.py',
                      'volmdlr/gmsh.py',
                      'models/__init__.py',
                      'workflows/__init__.py',
-                     'workflows/core.py'
+                     'workflows/core.py',
+                     'volmdlr/models/contours.py'
                      ]
 
 print('untracked modules:', untracked_modules)
@@ -38,7 +39,7 @@ for file_name, data in d['files'].items():
     if '/'.join(file_name.split('/')[-2:]) in untracked_modules:
         print(file_name, '-> in untrack list')
     else:
-        # print('Testing if {} is above {}'.format(file_name, MIN_FILE_COVERAGE))
+        print('Testing if {} is above {}'.format(file_name, MIN_FILE_COVERAGE))
         assert(data['summary']['percent_covered']) > MIN_FILE_COVERAGE
         min_actual_coverage = min(min_actual_coverage, data['summary']['percent_covered'])
 
