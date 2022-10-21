@@ -380,7 +380,7 @@ class Primitive2D(CompositePrimitive):
     def __init__(self, name=''):
         self.name = name
 
-        dc.DessiaObject.__init__(self, name=name)
+        CompositePrimitive.__init__(self, name=name)
 
 
 class CompositePrimitive2D(Primitive2D):

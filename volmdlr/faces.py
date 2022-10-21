@@ -1912,7 +1912,7 @@ class BSplineSurface3D(Surface3D):
 
         self.surface = surface
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
-        volmdlr.core.Primitive3D.__init__(self, name=name)
+        Surface3D.__init__(self, name=name)
 
         # Hidden Attributes
         self._displacements = None

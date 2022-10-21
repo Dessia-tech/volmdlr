@@ -1,15 +1,15 @@
 from pylint.lint import Run
 
 
-MIN_NOTE = 7.78
+MIN_NOTE = 7.9
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 1050,
+                     'invalid-name': 1024,
                      'no-else-return': 75,
                      'consider-using-f-string': 156,
                      'no-member': 127,
                      'inconsistent-return-statements': 18,
-                     'unused-variable': 62,
+                     'unused-variable': 61,
                      'arguments-differ': 44,
                      'too-many-locals': 75,
                      'unused-argument': 27,
@@ -17,7 +17,7 @@ MAX_ERROR_BY_TYPE = {
                      'consider-using-enumerate': 22,
                      'too-many-branches': 27,
                      'too-many-statements': 21,
-                     'super-init-not-called': 23,
+                     'super-init-not-called': 19,
                      'no-name-in-module': 22,
                      'abstract-method': 24,
                      'duplicate-code': 11,
@@ -30,7 +30,7 @@ MAX_ERROR_BY_TYPE = {
                      'unspecified-encoding': 9,
                      'too-many-nested-blocks': 6,
                      'attribute-defined-outside-init': 9,
-                     'too-many-return-statements': 6,
+                     'too-many-return-statements': 4,
                      'consider-merging-isinstance': 6,
                      'cyclic-import': 4,
                      'consider-iterating-dictionary': 2,
@@ -43,7 +43,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-boolean-expressions': 3,
                      'too-many-lines': 3,
                      'redundant-keyword-arg': 3,
-                     'no-value-for-parameter': 2,
+                     'no-value-for-parameter': 1,
                      'consider-using-with': 2,
                      'consider-using-get': 2,
                      'eval-used': 2,

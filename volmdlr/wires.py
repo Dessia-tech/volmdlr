@@ -1474,9 +1474,9 @@ class Contour(Wire):
         primitives = self.primitives
         for i in range(0, len(primitives)):
             pts = []
-            for p in list_p:  # due to errors
-                if primitives[i].point_belongs(p):
-                    pts.append(p)
+            for point in list_p:  # due to errors
+                if primitives[i].point_belongs(point):
+                    pts.append(point)
             if len(pts) == 1:
                 points.append(pts[0])
                 break
@@ -1486,9 +1486,9 @@ class Contour(Wire):
 
         for i in range(len(primitives) - 1, -1, -1):
             pts = []
-            for p in list_p:  # due to errors
-                if primitives[i].point_belongs(p):
-                    pts.append(p)
+            for point in list_p:  # due to errors
+                if primitives[i].point_belongs(point):
+                    pts.append(point)
             if len(pts) == 1:
                 if pts[0] not in points:
                     points.append(pts[0])
@@ -1935,16 +1935,16 @@ class Contour2D(Contour, Wire2D):
         y = [bounding_rectangle[2] + i * dy / m for i in range(m + 1)]
 
         point_index = {}
-        ip = 0
+        number_points = 0
         points = []
         triangles = []
         for xi in x:
             for yi in y:
                 p = volmdlr.Point2D(xi, yi)
                 if self.point_belongs(p):
-                    point_index[p] = ip
+                    point_index[p] = point_index
                     points.append(p)
-                    ip += 1
+                    number_points += 1
 
         for i in range(n):
             for j in range(m):
@@ -4886,15 +4886,15 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                                              ) for n in range(resolution)]
 
         self_new_points, other_new_points = [], []
-        for l in lines:
+        for line in lines:
             for self_line in self_poly2d.line_segments:
-                intersect = l.linesegment_intersections(self_line)
+                intersect = line.linesegment_intersections(self_line)
                 if intersect:
                     self_new_points.extend(intersect)
                     break
 
             for other_line in other_poly2d.line_segments:
-                intersect = l.linesegment_intersections(other_line)
+                intersect = line.linesegment_intersections(other_line)
                 if intersect:
                     other_new_points.extend(intersect)
                     break
