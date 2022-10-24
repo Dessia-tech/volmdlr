@@ -12,17 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * GmshParser: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
 * Circle2D: primitives (defined with 2 Arc2D)
+* LineSegment: Abcissa (consider point2d == arc2d.start/end)
 * Node2D/3D, TriangularElement, QuadrilateralElement2D, TriangularElement3D
 * ElementsGroup: nodes, elements_per_node
 * Mesh: bounding_rectangle, delete_duplicated_nodes
-
 
 ### Fixed
 
 * Contour3D: average_center_point (use edge_polygon.points instead of points)
 * Contour: edges_order_with_adjacent_contour
-* Arc2D: Abscissa (consider point2d == arc2d.start/end)
+* Arc2D: abscissa (consider point2d == arc2d.start/end)
 * Arc2D: split (how to choose the interior point)
+* Wire: extract_primitives (consider point1 and point2 belong to the same primitive, REMOVE Contour.extract_primitives)
 
 
 ### Performance improvements
@@ -33,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Refacor and update old code in mesh.py
 * Define a Parent class 'Triangle' for Triangle2D/3D
+
+
+### Unittests
+
+* Wire: extract_primitives, extract_without_primitives
+
 
 
 ## v0.5.0
