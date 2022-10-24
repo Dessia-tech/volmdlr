@@ -239,7 +239,13 @@ class LineSegment(Edge):
             self._length = self.end.point_distance(self.start)
         return self._length
 
-    def abscissa(self, point):
+    def abscissa(self, point, tol=1e-6):
+        if point.point_distance(self.start) < tol:
+            return 0
+        if point.point_distance(self.end) < tol:
+            print('abscissa:', point.point_distance(self.end))
+            return self.length()
+
         u = self.end - self.start
         length = u.norm()
         t = (point - self.start).dot(u) / length
@@ -1627,11 +1633,12 @@ class Arc2D(Arc):
         r1 = vector_start.norm()
         cp = vector_point.norm()
         if math.isclose(cp, r1, abs_tol=abs_tol):
-            if (self.start.x < self.end.x) and (self.start.y < self.end.y):
+            if self.get_arc_direction():
                 arc_angle = - volmdlr.core.clockwise_angle(vector_start,
                                                            vector_end)
                 point_angle = - volmdlr.core.clockwise_angle(vector_start,
                                                              vector_point)
+
             else:
                 arc_angle = volmdlr.core.clockwise_angle(vector_start,
                                                          vector_end)
@@ -1994,7 +2001,8 @@ class Arc2D(Arc):
                       self.point_at_abscissa(0.5 * abscissa),
                       split_point),
                 Arc2D(split_point,
-                      self.point_at_abscissa(1.5 * abscissa),
+                      self.point_at_abscissa((self.abscissa(self.end)
+                                              - abscissa) * 0.5 + abscissa),
                       self.end)
                 ]
 
