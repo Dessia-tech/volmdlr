@@ -1180,7 +1180,7 @@ class LineSegment2D(LineSegment):
         """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
         # TODO: May be these commented conditions should be used for linesegment_crossings
-        if point:  # and (point != self.start) and (point != self.end): 
+        if point:  # and (point != self.start) and (point != self.end):
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
                 return []
