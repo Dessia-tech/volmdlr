@@ -1780,10 +1780,10 @@ class Loft(volmdlr.core.Primitive3D):
             new_profil1 = i_profil.translation(-center1)
             new_profil1_2d = new_profil1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
 
-            # if not new_profil1_2d.is_trigo():
-            #     new_profil1_2d.points.reverse()
-            #     new_profil1_2d.points = [new_profil1_2d.points[-1]] + new_profil1_2d.points[:-1]
-            #     new_profil1_2d = volmdlr.wires.ClosedPolygon2D(new_profil1_2d.points)
+            if not new_profil1_2d.is_trigo():
+                new_profil1_2d.points.reverse()
+                new_profil1_2d.points = [new_profil1_2d.points[-1]] + new_profil1_2d.points[:-1]
+                new_profil1_2d = volmdlr.wires.ClosedPolygon2D(new_profil1_2d.points)
             # new_points = new_profil1_2d.points
             new_points_2d = new_profil1_2d.points
             for j, j_profil in enumerate(self.profiles):
@@ -1792,10 +1792,10 @@ class Loft(volmdlr.core.Primitive3D):
                     center2 = j_profil.average_center_point()
                     new_profil2 = j_profil.translation(-center2)
                     new_profil2_2d = new_profil2.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
-                    # if not new_profil2_2d.is_trigo():
-                    #     new_profil2_2d.points.reverse()
-                    #     new_profil2_2d.points = [new_profil2_2d.points[-1]] + new_profil2_2d.points[:-1]
-                    #     new_profil2_2d = volmdlr.wires.ClosedPolygon2D(new_profil2_2d.points)
+                    if not new_profil2_2d.is_trigo():
+                        new_profil2_2d.points.reverse()
+                        new_profil2_2d.points = [new_profil2_2d.points[-1]] + new_profil2_2d.points[:-1]
+                        new_profil2_2d = volmdlr.wires.ClosedPolygon2D(new_profil2_2d.points)
 
                     for k, point in enumerate(new_profil2_2d.points):
                         vec_dir = point.copy()
