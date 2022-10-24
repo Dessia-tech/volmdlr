@@ -466,6 +466,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         return self.__class__(frame=self.frame.copy(),
                               outer_contour2d=self.outer_contour2d.copy(),
                               inner_contours2d=[c.copy() for c in self.inner_contours2d],
+                              length=self.length,
                               color=self.color,
                               alpha=self.alpha,
                               name=self.name)
@@ -588,13 +589,10 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         :return: a new rotated ExtrudedProfile
         """
         return self.__class__(
-            plane_origin=self.plane_origin.rotation(center, axis, angle),
-            x=self.x.rotation(volmdlr.O3D, axis, angle),
-            y=self.y.rotation(volmdlr.O3D, axis, angle),
+            frame=self.frame.rotation(center, axis, angle),
             outer_contour2d=self.outer_contour2d,
             inner_contours2d=self.inner_contours2d,
-            extrusion_vector=self.extrusion_vector.rotation(volmdlr.O3D,
-                                                            axis, angle),
+            length=self.length,
             color=self.color, alpha=self.alpha)
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -617,11 +615,10 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         :return: A new translated ExtrudedProfile
         """
         return self.__class__(
-            plane_origin=self.plane_origin.translation(offset),
-            x=self.x, y=self.y,
+            frame=self.frame.translation(offset),
             outer_contour2d=self.outer_contour2d,
             inner_contours2d=self.inner_contours2d,
-            extrusion_vector=self.extrusion_vector,
+            length=self.length,
             color=self.color, alpha=self.alpha)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
