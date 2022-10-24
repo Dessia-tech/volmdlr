@@ -415,33 +415,41 @@ class Block(volmdlr.faces.ClosedShell3D):
 
 class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     """
-
+    Create an extrusion volume from a 2D profile.
+    :param frame: Contour2D local Frame
+    :type frame: volmdlr.Frame3D
+    :param outer_contour2d: Outer contour of profile
+    :type outer_contour2d: volmdlr.wires.Contour2D
+    :param inner_contours2d: Inner contours of profile
+    :type inner_contours2d: List[volmdlr.wires.Contour2D]
+    :param length: Length of extrusion volume. Give a negative value if you want to change the extrusion sense
+    :type length: float
     """
     _non_serializable_attributes = ['faces', 'inner_contours3d',
                                     'outer_contour3d']
 
-    def __init__(self, plane_origin: volmdlr.Point3D,
-                 x: volmdlr.Vector3D, y: volmdlr.Vector3D,
+    def __init__(self, frame: volmdlr.Frame3D,
                  outer_contour2d: volmdlr.wires.Contour2D,
                  inner_contours2d: List[volmdlr.wires.Contour2D],
-                 extrusion_vector: volmdlr.Vector3D,
+                 length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
-        self.plane_origin = plane_origin
+        self.plane_origin = frame.origin
 
         self.outer_contour2d = outer_contour2d
-        self.outer_contour3d = outer_contour2d.to_3d(plane_origin, x, y)
+        self.outer_contour3d = outer_contour2d.to_3d(frame.origin, frame.u, frame.v)
 
         self.inner_contours2d = inner_contours2d
-        self.extrusion_vector = extrusion_vector
+        self.length = length
+        self.extrusion_vector = frame.w * length
         self.inner_contours3d = []
-        self.x = x
-        self.y = y
+        self.x = frame.u
+        self.y = frame.v
         self.color = color
 
         bool_areas = []
         for contour in inner_contours2d:
-            self.inner_contours3d.append(contour.to_3d(plane_origin, x, y))
+            self.inner_contours3d.append(contour.to_3d(self.plane_origin, self.x, self.y))
             if contour.area() > outer_contour2d.area():
                 bool_areas.append(True)
             else:
@@ -455,12 +463,9 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                                              alpha=alpha, name=name)
 
     def copy(self, deep=True, memo=None):
-        return self.__class__(plane_origin=self.plane_origin.copy(),
-                              x=self.x.copy(),
-                              y=self.y.copy(),
+        return self.__class__(frame=self.frame.copy(),
                               outer_contour2d=self.outer_contour2d.copy(),
                               inner_contours2d=[c.copy() for c in self.inner_contours2d],
-                              extrusion_vector=self.extrusion_vector.copy(),
                               color=self.color,
                               alpha=self.alpha,
                               name=self.name)
