@@ -150,18 +150,15 @@ for error_type, number_errors in stats_by_msg.items():
 
         if number_errors > max_errors:
             error_detected = True
-            print('\nFix some {} errors: {}/{}'.format(error_type,
-                                                     number_errors,
-                                                     max_errors))
+            print(f'\nFix some {error_type} errors: {number_errors}/{max_errors}')
 
             messages = extract_messages_by_type(error_type)
             messages_to_show = sorted(random.sample(messages, min(30, len(messages))),
                                       key=lambda m: (m.path, m.line))
             for message in messages_to_show:
-                print('{} line {}: {}'.format(message.path, message.line, message.msg))
+                print(f'{message.path} line {message.line}: {message.msg}')
         elif number_errors < max_errors:
-            print('\nYou can lower number of {} to {} (actual {})'.format(
-                error_type, number_errors, max_errors))
+            print(f'\nYou can lower number of {error_type} to {number_errors} (actual {max_errors})')
 
 
 if error_detected:

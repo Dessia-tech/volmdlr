@@ -576,11 +576,11 @@ class GmshParser(DessiaObject):
         defines a volmdlr mesh with TetrahedronElement from a .msh file
         """
 
-        nodes = self.nodes[0]
-        points = nodes['all_nodes']
-        elements = self.elements[0]
+        # nodes = self.nodes[0]
+        points = self.nodes['all_nodes']
+        # elements = self.elements[0]
 
-        tetrahedron_elements = elements['elements_type_4']
+        tetrahedron_elements = self.elements['elements_type_4']
         element_groups = []
         for tetrahedrons in tetrahedron_elements:
             tetrahedrons_mesh = []
@@ -603,11 +603,11 @@ class GmshParser(DessiaObject):
         defines a volmdlr mesh with TriangularElement from a .msh file
         """
 
-        nodes = self.nodes[0]
-        points = nodes['all_nodes']
-        elements = self.elements[0]
+        # nodes = self.nodes[0]
+        points = self.nodes['all_nodes']
+        # elements = self.elements[0]
 
-        triangles_elements = elements['elements_type_2']
+        triangles_elements = self.elements['elements_type_2']
         element_groups = []
         for triangles in triangles_elements:
             triangles_mesh = []
