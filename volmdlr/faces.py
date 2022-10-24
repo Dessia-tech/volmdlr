@@ -3802,7 +3802,7 @@ class Face3D(volmdlr.core.Primitive3D):
     min_x_density = 1
     min_y_density = 1
 
-    def __init__(self, surface3d, surface2d: Surface2D, color, alpha=1,
+    def __init__(self, surface3d, surface2d: Surface2D, color=(0.8, 0.8, 0.8), alpha=1,
                  name: str = ''):
         self.surface3d = surface3d
         self.surface2d = surface2d

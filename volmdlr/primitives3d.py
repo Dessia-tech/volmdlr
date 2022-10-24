@@ -1749,8 +1749,8 @@ class Loft(volmdlr.core.Primitive3D):
         return self._primitives()
 
     def _new_primitives(self):
-        #TODO: 1. sort both points of profiles based on dict_corresp.
-        #TODO: 2. Develop an algorithm when the profiles have the same number of segments, which segments are the optimal\
+        # TODO: 1. sort both points of profiles based on dict_corresp.
+        # TODO: 2. Develop an algorithm when the profiles have the same number of segments, which segments are the optimal\
         # to start the loft (avoid crossing surface lofts)
         """
         The Loft needs the number of segments to match in order to create surfaces between corresponding segments.
@@ -1770,39 +1770,33 @@ class Loft(volmdlr.core.Primitive3D):
 
         new_primitives = []
         dic_corresp = {}
+        # _, ax = plt.subplots()
+        # fig = plt.figure()
+        # ax3d = fig.add_subplot(111, projection='3d')
         for i, i_profil in enumerate(self.profiles):
-            if isinstance(i_profil, volmdlr.wires.Circle3D):
-                center1 = i_profil.center
-            else:
-                center1 = i_profil.average_center_point()
+            # i_profil = i_profil.simplify()
+            center1 = i_profil.average_center_point()
             # = i_profil.points[0]
             new_profil1 = i_profil.translation(-center1)
             new_profil1_2d = new_profil1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
-            if isinstance(new_profil1_2d, volmdlr.wires.Circle2D):
-                discretization = new_profil1_2d.polygon_points(10)
-                new_profil1_2d = volmdlr.wires.ClosedPolygon2D(discretization[:-1])
-            if not new_profil1_2d.is_trigo():
-                temp = new_profil1_2d.points[1:]
-                temp.reverse()
-                new_profil1_2d = volmdlr.wires.ClosedPolygon2D([new_profil1_2d.points[0]] + temp)
-            #new_points = new_profil1_2d.points
+
+            # if not new_profil1_2d.is_trigo():
+            #     new_profil1_2d.points.reverse()
+            #     new_profil1_2d.points = [new_profil1_2d.points[-1]] + new_profil1_2d.points[:-1]
+            #     new_profil1_2d = volmdlr.wires.ClosedPolygon2D(new_profil1_2d.points)
+            # new_points = new_profil1_2d.points
             new_points_2d = new_profil1_2d.points
             for j, j_profil in enumerate(self.profiles):
+                # j_profil = j_profil.simplify()
                 if j != i:
-                    if isinstance(j_profil, volmdlr.wires.Circle3D):
-                        center2 = j_profil.center
-                    else:
-                        center2 = j_profil.average_center_point()
-                    #center2 = j_profil.points[0]
+                    center2 = j_profil.average_center_point()
                     new_profil2 = j_profil.translation(-center2)
                     new_profil2_2d = new_profil2.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
-                    if isinstance(new_profil2_2d, volmdlr.wires.Circle2D):
-                        discretization = new_profil2_2d.polygon_points(10)
-                        new_profil2_2d = volmdlr.wires.ClosedPolygon2D(discretization[:-1])
-                    if not new_profil2_2d.is_trigo():
-                        temp = new_profil2_2d.points[1:]
-                        temp.reverse()
-                        new_profil2_2d = volmdlr.wires.ClosedPolygon2D([new_profil2_2d.points[0]] + temp)
+                    # if not new_profil2_2d.is_trigo():
+                    #     new_profil2_2d.points.reverse()
+                    #     new_profil2_2d.points = [new_profil2_2d.points[-1]] + new_profil2_2d.points[:-1]
+                    #     new_profil2_2d = volmdlr.wires.ClosedPolygon2D(new_profil2_2d.points)
+
                     for k, point in enumerate(new_profil2_2d.points):
                         vec_dir = point.copy()
                         center = volmdlr.O2D
@@ -1810,46 +1804,61 @@ class Loft(volmdlr.core.Primitive3D):
                         line = volmdlr.edges.LineSegment2D(center, vec_dir * 5)
 
                         # z = profil_3d.points[0].z
-                        # ax = line.plot()
-                        # new_profil1_2d.plot(ax)
-                        # new_profil2_2d.plot(ax)
-                        #point_intersections = {}
-                        for l, line_segment in enumerate(new_profil1_2d.line_segments):
-                            point_intersection = line_segment.linesegment_intersections(line)
+                        # axl = line.plot()
+                        # new_profil1_2d.plot(axl)
+                        # new_profil2_2d.plot(axl)
+                        # point_intersections = {}
+                        line_segment = new_profil1_2d.primitives
+                        l = 0
+                        next_line = True
+                        while next_line and l < len(line_segment):
+                            # for l, line_segment in enumerate(new_profil1_2d.primitives):
+                            point_intersection = line_segment[l].linesegment_intersections(line)
+                            # point_intersection = line_segment.linesegment_intersections(line)
                             if point_intersection:
-                                #point_intersections[line_segment] = point_intersection[0]
-                                #new_point_3D = volmdlr.Point3D(point_intersection[0].x, point_intersection[0].y, 0)
+                                # point_intersections[line_segment] = point_intersection[0]
+                                # new_point_3D = volmdlr.Point3D(point_intersection[0].x, point_intersection[0].y, 0)
 
                                 if point_intersection[0] not in new_points_2d:
-                                    new_points_2d.insert(l+1, point_intersection[0])
-                                    #new_points.insert(l+1, new_point)
-                                    if j == 0 and k == 0:
-                                        dic_corresp[i] = point_intersection[0]
-                            else:
-                                if line.point_belongs(line_segment.start):
-
-                                    #point_intersections[line_segment] = line_segment.start
-                                    if j == 0 and k == 0:
-                                        dic_corresp[i] = new_points_2d[l]
-                                    #dic_corresp[k] = l
-
-                                if line.point_belongs(line_segment.end):
-                                    #point_intersections[line_segment] = line_segment.end
-                                    if j == 0 and k == 0:
-                                        dic_corresp[i] = new_points_2d[l+1]
-                                    #dic_corresp[k] = l+1
+                                    new_points_2d.insert(l + 1, point_intersection[0])
+                                    next_line = False
+                                    # new_points.insert(l+1, new_point)
+                                if j == 0 and k == 0:
+                                    # print(point_intersection[0])
+                                    dic_corresp[i] = point_intersection[0]
+                            # else:
+                            #     if line.point_belongs(line_segment[l].start):
+                            #     #
+                            #     #     #point_intersections[line_segment] = line_segment.start
+                            #         if j == 0 and k == 0:
+                            #     #         print(new_points_2d[l])
+                            #             dic_corresp[i] = new_points_2d[l]
+                            #     #     #dic_corresp[k] = l
+                            #     #
+                            #     if line.point_belongs(line_segment[l].end):
+                            #     #     #point_intersections[line_segment] = line_segment.end
+                            #         if j == 0 and k == 0:
+                            #     #         print(new_points_2d[l+1])
+                            #             dic_corresp[i] = new_points_2d[l+1]
+                            # dic_corresp[k] = l+1
+                            l += 1
                         new_profil1_2d = volmdlr.wires.ClosedPolygon2D(new_points_2d)
+
                 # elif j != i and isinstance(j_profil, volmdlr.wires.Circle3D):
                 #     pass
 
-            if dic_corresp and i > 0:
-                start_index = new_points_2d.index(dic_corresp.get(i))
-                if start_index > 0:
-                    new_points_2d = new_points_2d[start_index:] + new_points_2d[:start_index]
-            new_profil = volmdlr.wires.ClosedPolygon2D(new_points_2d).to_3d(volmdlr.Point3D(0, 0, 0),
-                                                                            volmdlr.Vector3D(1, 0, 0),
-                                                                            volmdlr.Vector3D(0, 1, 0))
-            new_primitives.append(new_profil.translation(center1))
+            # if dic_corresp and i > 0:
+            #     start_index = new_points_2d.index(dic_corresp.get(i))
+            #     if start_index > 0:
+            #         new_points_2d = new_points_2d[start_index:] + new_points_2d[:start_index]
+            new_profil = volmdlr.wires.ClosedPolygon2D(new_points_2d)
+            # new_profil.plot(ax)
+            # new_profil.line_segments[0].plot(ax, 'r')
+            new_profil3d = new_profil.to_3d(volmdlr.O3D, volmdlr.X3D,
+                                            volmdlr.Y3D)
+            # new_profil3d.plot(ax3d)
+            # new_profil3d.line_segments[0].plot(ax3d, 'r')
+            new_primitives.append(new_profil3d.translation(center1))
 
         return new_primitives
 

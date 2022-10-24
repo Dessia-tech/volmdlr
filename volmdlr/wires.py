@@ -3857,7 +3857,7 @@ class Circle2D(Contour2D):
     def discretization_points(self, angle_resolution: float = 10):
         number_points = math.ceil(volmdlr.TWO_PI * angle_resolution) + 2
         step = self.length() / (number_points - 1)
-        return [self.point_at_abscissa(i * step) for i in range(number_points)]
+        return [self.point_at_abscissa(i * step) for i in range(number_points-1)]
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
@@ -4761,7 +4761,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         if len(self.points) > 1:
             for p1, p2 in zip(self.points,
                               list(self.points[1:]) + [self.points[0]]):
-                lines.append(volmdlr.edges.LineSegment3D(p1, p2))
+                if p1 != p2:
+                    lines.append(volmdlr.edges.LineSegment3D(p1, p2))
         return lines
 
     def copy(self, *args, **kwargs):
