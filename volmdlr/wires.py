@@ -1111,7 +1111,8 @@ class Contour(Wire):
                 if j > i:
                     if primitive2.end != primitive1.start != primitive2.start and \
                             primitive2.end != primitive1.end != primitive2.start:
-                        if primitive1.unit_direction_vector().is_colinear_to(primitive2.unit_direction_vector()):
+                        if primitive1.unit_direction_vector(abscissa=0).is_colinear_to(
+                                primitive2.unit_direction_vector(abscissa=0)):
                             continue
                         if primitive1.point_belongs(primitive2.start) or primitive1.point_belongs(primitive2.end):
                             touching_primitives.append([primitive2, primitive1])
@@ -1588,6 +1589,10 @@ class Contour2D(Contour, Wire2D):
         return Contour3D(p3d)
 
     def point_belongs(self, point):
+        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
+            return False
+
         if self.edge_polygon.point_belongs(point):
             return True
         # TODO: This is incomplete!!!
@@ -3531,16 +3536,32 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return self.__class__(points=axial_points)
 
 
-class Triangle2D(ClosedPolygon2D):
-    def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
-                 point3: volmdlr.Point2D, name: str = ''):
+class Triangle(ClosedPolygonMixin):
+    def __init__(self, point1, point2,
+                 point3, name: str = ''):
+
         self.point1 = point1
         self.point2 = point2
         self.point3 = point3
         self.name = name
+        self._line_segments = None
 
-        # ClosedPolygon2D.__init__(self, points=[point1, point2, point3],
-        # name=name)
+
+class Triangle2D(Triangle):
+    def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
+                 point3: volmdlr.Point2D, name: str = ''):
+        # self.point1 = point1
+        # self.point2 = point2
+        # self.point3 = point3
+        # self.name = name
+
+        # # ClosedPolygon2D.__init__(self, points=[point1, point2, point3],
+        # # name=name)
+
+        Triangle.__init__(self, point1,
+                          point2,
+                          point3,
+                          name)
 
     def area(self):
         u = self.point2 - self.point1
@@ -3597,10 +3618,11 @@ class Circle2D(Contour2D):
         self.center = center
         self.radius = radius
         self.angle = volmdlr.TWO_PI
+        self.primitives = self._primitives()
 
         # self.points = self.tessellation_points()
 
-        Contour2D.__init__(self, [self], name=name)  # !!! this is dangerous
+        Contour2D.__init__(self, self.primitives, name=name)  # !!! this is dangerous
 
     def __hash__(self):
         return int(round(1e6 * (self.center.x + self.center.y + self.radius)))
@@ -3615,6 +3637,16 @@ class Circle2D(Contour2D):
                              other_circle.center.y, abs_tol=1e-06) \
             and math.isclose(self.radius, other_circle.radius,
                              abs_tol=1e-06)
+
+    def _primitives(self):
+        points = [
+            self.center + volmdlr.Point2D(self.center.x + self.radius, self.center.y),
+            self.center + volmdlr.Point2D(self.center.x, self.center.y - self.radius),
+            self.center + volmdlr.Point2D(self.center.x - self.radius, self.center.y),
+            self.center + volmdlr.Point2D(self.center.x, self.center.y + self.radius)]
+
+        return [volmdlr.edges.Arc2D(points[0], points[1], points[2]),
+                volmdlr.edges.Arc2D(points[2], points[3], points[0])]
 
     def to_polygon(self, angle_resolution: float):
         return ClosedPolygon2D(
@@ -4101,8 +4133,8 @@ class Contour3D(Contour, Wire3D):
         # self.primitives = new_primitives
 
         initial_points = []
-        for p in self.primitives:
-            initial_points.append((p.start, p.end))
+        for primitive in self.primitives:
+            initial_points.append((primitive.start, primitive.end))
 
         new_primitives = []
         if self.is_ordered():
@@ -4247,9 +4279,9 @@ class Contour3D(Contour, Wire3D):
         '''
 
         new_primitives = []
-        for p in self.primitives:
-            if p.start != p.end:
-                new_primitives.append(p)
+        for primitive in self.primitives:
+            if primitive.start != primitive.end:
+                new_primitives.append(primitive)
 
         return Contour3D(new_primitives)
 
@@ -5304,3 +5336,20 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         if polygon1_2d.is_convex() and polygon2_2d.is_convex():
             return self.convex_sewing(polygon2, x, y)
         return self.concave_sewing(polygon2, x, y)
+
+
+class Triangle3D(Triangle):
+    def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
+                 point3: volmdlr.Point3D, name: str = ''):
+        # self.point1 = point1
+        # self.point2 = point2
+        # self.point3 = point3
+        # self.name = name
+
+        # # ClosedPolygon2D.__init__(self, points=[point1, point2, point3],
+        # # name=name)
+
+        Triangle.__init__(self, point1,
+                          point2,
+                          point3,
+                          name)
