@@ -5,6 +5,9 @@
 """
 
 import math
+
+import volmdlr
+
 import volmdlr as vm
 import volmdlr.core as vmc
 import volmdlr.edges as vme
@@ -24,9 +27,9 @@ circles = [inner_circle, first_circle]
 for i in range(1, number_holes):
     circles.append(first_circle.rotation(vm.O2D, i*delta_angle))
 
+frame = volmdlr.Frame3D(vm.O3D, vm.Y3D, vm.Z3D, vm.X3D)
 
-extrusion = ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_circle,
-                                            circles, vm.X3D*0.1)
+extrusion = ExtrudedProfile(frame, outer_circle, circles, length=0.1)
 
 print(extrusion.volume())
 model = vmc.VolumeModel([extrusion])

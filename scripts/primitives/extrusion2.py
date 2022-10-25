@@ -7,6 +7,7 @@ Created on Sun Mar  5 22:01:35 2017
 
 
 """
+import volmdlr
 
 #import numpy as npy
 import volmdlr as vm
@@ -35,9 +36,9 @@ c2.plot(ax=ax, color='r')
 #c3.MPLPlot()
 
 
+frame = volmdlr.Frame3D(vm.O3D, vm.Y3D, vm.Z3D, vm.X3D)
 
-
-profile = primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, c1, [], 0.1*vm.X3D)
+profile = primitives3d.ExtrudedProfile(frame, c1, [], 0.1)
 
 model = vmc.VolumeModel([profile])
 model.babylonjs()
