@@ -36,6 +36,7 @@ scripts = [
             'faces/union.py',
             'faces/blocks_set_operations.py',
             'faces/surface2d.py',
+            # 'faces/export_to_step.py', #TO BE USED WHEN THE EXPORT IS IMPROVED
             'faces/BSplineSurface/bspline_curves.py',
             'faces/BSplineSurface/bspline_curves_point_belongs.py',
             'faces/BSplineSurface/bspline_surface_interpolation.py',
@@ -44,6 +45,11 @@ scripts = [
             'faces/BSplineSurface/from_cylindrical_to_bspline_surface.py',
             'faces/BSplineSurface/bspline_surface_definition.py',
             'faces/BSplineSurface/bspline_surfaces_grid3d.py',
+            # 'faces/faces_with_inner_contours.py', #TO BE USED WHEN HOLES IS MERGED
+            
+            # Shells
+            'shells/operations.py',
+            
             # Cloud
             'cloud/sewing_two_polygons.py',
             'cloud/sewing_stl.py',
@@ -63,7 +69,8 @@ scripts = [
             # Showcases
             'showcases/simple_shapes.py',
             'showcases/casing.py',
-            'grid.py'
+            'grid.py',
+            'mesh/read_msh_file.py'
             ]
 
 # Testing if all scripts exists before launching them

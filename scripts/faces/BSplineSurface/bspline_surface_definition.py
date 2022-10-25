@@ -185,3 +185,6 @@ bspline_surface = vm.faces.BSplineSurface3D(degree_u = degree_u,
 bspline_face = bspline_surface.rectangular_cut(0, 1, 0, 1)
 # bspline_face.babylonjs()
 
+import json
+import dessia_common as dc
+bspline_face2 = dc.DessiaObject.dict_to_object(json.loads(json.dumps(bspline_face.to_dict())))
