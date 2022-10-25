@@ -537,7 +537,7 @@ class BSplineCurve(Edge):
 
     def tangent(self, position: float = 0.0):
         _, tangent = operations.tangent(self.curve, position,
-                                            normalize=True)
+                                        normalize=True)
 
         dimension = f'Vector{self.__class__.__name__[-2::]}'
         tangent = getattr(volmdlr, dimension)(*tangent)

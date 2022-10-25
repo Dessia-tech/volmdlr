@@ -1290,7 +1290,6 @@ class VolumeModel(dc.PhysicalObject):
             product_definition_context_id = primitive_id + 1
             step_content += f"#{product_definition_context_id} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n"
 
-
             product_context_id = product_definition_context_id + 1
             step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
             product_id = product_context_id + 1

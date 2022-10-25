@@ -118,6 +118,7 @@ def item_defined_transformation(arguments, object_dict):
     return [volmdlr_object1, volmdlr_object2]
 #
 
+
 def manifold_surface_shape_representation(arguments, object_dict):
     # Shell3D
     shells = []
@@ -205,7 +206,7 @@ def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representat
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
     if arguments[2] in object_dict:
-        if isinstance(object_dict[arguments[2]], list): #arguments = {, , [], [], item_....}
+        if isinstance(object_dict[arguments[2]], list):  # arguments = {, , [], [], item_....}
             if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
                           and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
                 frame_map_closed_shell(object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]])
