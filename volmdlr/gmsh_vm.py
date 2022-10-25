@@ -9,7 +9,7 @@ import volmdlr
 import volmdlr.mesh
 
 
-class Gmsh(DessiaObject):
+class GmshParser(DessiaObject):
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -55,20 +55,20 @@ class Gmsh(DessiaObject):
         defines a gmsh object from .msh file
         """
 
-        file_data = Gmsh.read_file(file_path)
-        mesh_format = Gmsh.from_file_mesh_format(file_data['MeshFormat'])
-        physical_names = Gmsh.from_file_physical_names(file_data['PhysicalNames'])
-        entities = Gmsh.from_file_entities(file_data['Entities'])
-        nodes = Gmsh.from_file_nodes(file_data['Nodes'])
-        elements = Gmsh.from_file_elements(file_data['Elements'])
-        partitioned_entities = Gmsh.from_file_partitioned_entities(file_data['PartitionedEntities'])
-        periodic = Gmsh.from_file_periodic(file_data['Periodic'])
-        # ghost_elements = Gmsh.from_file_ghost_elements(file_data['GhostElements'])
-        parametrizations = Gmsh.from_file_parametrizations(file_data['Parametrizations'])
-        node_data = Gmsh.from_file_node_data(file_data['NodeData'])
-        element_data = Gmsh.from_file_element_data(file_data['ElementData'])
-        element_node_data = Gmsh.from_file_element_node_data(file_data['ElementNodeData'])
-        # interpolation_scheme = Gmsh.from_file_interpolation_scheme(file_data['InterpolationScheme'])
+        file_data = GmshParser.read_file(file_path)
+        mesh_format = GmshParser.from_file_mesh_format(file_data['MeshFormat'])
+        physical_names = GmshParser.from_file_physical_names(file_data['PhysicalNames'])
+        entities = GmshParser.from_file_entities(file_data['Entities'])
+        nodes = GmshParser.from_file_nodes(file_data['Nodes'])
+        elements = GmshParser.from_file_elements(file_data['Elements'])
+        partitioned_entities = GmshParser.from_file_partitioned_entities(file_data['PartitionedEntities'])
+        periodic = GmshParser.from_file_periodic(file_data['Periodic'])
+        # ghost_elements = GmshParser.from_file_ghost_elements(file_data['GhostElements'])
+        parametrizations = GmshParser.from_file_parametrizations(file_data['Parametrizations'])
+        node_data = GmshParser.from_file_node_data(file_data['NodeData'])
+        element_data = GmshParser.from_file_element_data(file_data['ElementData'])
+        element_node_data = GmshParser.from_file_element_node_data(file_data['ElementNodeData'])
+        # interpolation_scheme = GmshParser.from_file_interpolation_scheme(file_data['InterpolationScheme'])
 
         return cls(mesh_format=mesh_format,
                    entities=entities,
@@ -374,13 +374,13 @@ class Gmsh(DessiaObject):
             if len(nodes_points) == int(lines[0].split()[1]):
                 break
 
-        if Gmsh.check_2d(nodes_points):
+        if GmshParser.check_2d(nodes_points):
             for key, value in nodes.items():
                 values = []
                 for points in value:
-                    values.append(Gmsh.to_2d(points))
+                    values.append(GmshParser.to_2d(points))
             nodes[key] = values
-            nodes['all_nodes'] = Gmsh.to_2d(nodes_points)
+            nodes['all_nodes'] = GmshParser.to_2d(nodes_points)
         else:
             nodes['all_nodes'] = nodes_points
 
