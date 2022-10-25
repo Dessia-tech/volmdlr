@@ -19,8 +19,8 @@ class TestClosedShell3D(unittest.TestCase):
         contour = volmdlr.wires.ClosedPolygon2D([volmdlr.Point2D(0, 0), volmdlr.Point2D(-1, 0),
                                                  volmdlr.Point2D(-1, 1), volmdlr.Point2D(1, 1),
                                                  volmdlr.Point2D(1, -1), volmdlr.Point2D(0, -1)])
-        extrude1 = volmdlr.primitives3d.ExtrudedProfile(
-            volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, contour, [], -volmdlr.Z3D)
+        frame_extrude1 = volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, -volmdlr.Z3D)
+        extrude1 = volmdlr.primitives3d.ExtrudedProfile(frame_extrude1, contour, [], 1)
         frame1 = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), 2 * volmdlr.X3D, 2 * volmdlr.Y3D, volmdlr.Z3D)
         block1 = volmdlr.primitives3d.Block(frame1)
         union1 = extrude1.union(block1)
@@ -33,11 +33,12 @@ class TestClosedShell3D(unittest.TestCase):
             (volmdlr.Point2D(-0.03, 0.02), volmdlr.Point2D(-0.020436, 0.029871)),
             (volmdlr.Point2D(-0.020436, 0.029871), volmdlr.Point2D(0.0, 0.029871)),
             (volmdlr.Point2D(0.0, 0.029871), volmdlr.Point2D(0.0, 0.0))]]
-        extruded_prifile1 = primitives3d.ExtrudedProfile(volmdlr.O3D, volmdlr.Y3D, volmdlr.Z3D,
+        frame_extruded_profile1 = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D)
+        extruded_profile1 = primitives3d.ExtrudedProfile(frame_extruded_profile1,
                                                          wires.Contour2D(contour_primitives), [],
-                                                         volmdlr.Vector3D(0.01, 0, 0), (0.4, 0.1, 0.1), 0.6)
-        extruded_prifile2 = extruded_prifile1.translation(volmdlr.Vector3D(0.01, 0, 0))
-        union_shell1_shell2 = extruded_prifile1.union(extruded_prifile2)[0]
+                                                         0.1, (0.4, 0.1, 0.1), 0.6)
+        extruded_prifile2 = extruded_profile1.translation(volmdlr.Vector3D(0.01, 0, 0))
+        union_shell1_shell2 = extruded_profile1.union(extruded_prifile2)[0]
         union_shell1_shell2.merge_faces()
         self.assertEqual(len(union_shell1_shell2.faces), 7)
 

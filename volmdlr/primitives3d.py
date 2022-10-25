@@ -431,9 +431,10 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def __init__(self, frame: volmdlr.Frame3D,
                  outer_contour2d: volmdlr.wires.Contour2D,
                  inner_contours2d: List[volmdlr.wires.Contour2D],
-                 length: float,
+                 length: float = 1.0,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
+        self.frame = frame
         self.plane_origin = frame.origin
 
         self.outer_contour2d = outer_contour2d
@@ -504,8 +505,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         s = 'Wo = []\n'
         s += 'Eo = []\n'
         for ip, primitive in enumerate(self.outer_contour3d.primitives):
-            s += primitive.FreeCADExport('L{}'.format(ip))
-            s += 'Eo.append(Part.Edge(L{}))\n'.format(ip)
+            s += primitive.FreeCADExport(f'L{ip}')
+            s += f'Eo.append(Part.Edge(L{ip}))\n'
         s += 'Wo.append(Part.Wire(Eo[:]))\n'
         s += 'Fo = Part.Face(Wo)\n'
 
@@ -514,8 +515,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         for ic, contour in enumerate(self.inner_contours3d):
             s += 'E = []\n'
             for ip, primitive in enumerate(contour.primitives):
-                s += primitive.FreeCADExport('L{}_{}'.format(ic, ip))
-                s += 'E.append(Part.Edge(L{}_{}))\n'.format(ic, ip)
+                s += primitive.FreeCADExport(f'L{ic}_{ip}')
+                s += f'E.append(Part.Edge(L{ic}_{ip}))\n'
             s += 'Wi = Part.Wire(E[:])\n'
             s += 'Fi.append(Part.Face(Wi))\n'
 
@@ -523,8 +524,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
             s += 'Fo = Fo.cut(Fi)\n'
         e1, e2, e3 = round(1000 * self.extrusion_vector, 6)
 
-        s += '{} = Fo.extrude(fc.Vector({}, {}, {}))\n'.format(name, e1,
-                                                               e2, e3)
+        s += f'{name} = Fo.extrude(fc.Vector({e1}, {e2}, {e3}))\n'
         return s
 
     def area(self):
