@@ -1515,7 +1515,7 @@ class Contour2D(Contour, Wire2D):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
             return False
-        return self.edge_polygon.point_belongs(point):
+        return self.edge_polygon.point_belongs(point)
 
     # def point_over_contour(self, point, abs_tol=1e-6):
     #     belongs = False
