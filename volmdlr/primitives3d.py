@@ -450,7 +450,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
         bool_areas = []
         for contour in inner_contours2d:
-            self.inner_contours3d.append(contour.to_3d(self.plane_origin, self.x, self.y))
+            self.inner_contours3d.append(contour.to_3d(self.frame.origin, self.x, self.y))
             if contour.area() > outer_contour2d.area():
                 bool_areas.append(True)
             else:

@@ -88,8 +88,9 @@ class TestClosedShell3D(unittest.TestCase):
         contour = wires.ClosedPolygon2D([volmdlr.Point2D(0, 0), volmdlr.Point2D(-1, 0),
                                          volmdlr.Point2D(-1, 1), volmdlr.Point2D(1, 1),
                                          volmdlr.Point2D(1, -1), volmdlr.Point2D(0, -1)])
-        extrude1 = volmdlr.primitives3d.ExtrudedProfile(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D,
-                                                        contour, [], -volmdlr.Z3D)
+        frame_extrude1 = volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, -volmdlr.Z3D)
+        extrude1 = volmdlr.primitives3d.ExtrudedProfile(frame_extrude1,
+                                                        contour, [], 1)
         frame1 = volmdlr.Frame3D(volmdlr.Point3D(0, 0.5, -0.5), 2 * volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
         block1 = volmdlr.primitives3d.Block(frame1)
         union1 = extrude1.union(block1)[0]
