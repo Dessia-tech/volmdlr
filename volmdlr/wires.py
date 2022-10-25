@@ -3719,23 +3719,23 @@ class Circle2D(Contour2D):
     def circle_intersections(self, circle: 'volmdlr.wires.Circle2D'):
         x0, y0 = self.center
         x1, y1 = circle.center
-        r0 = self.radius
-        r1 = circle.radius
+        # r0 = self.radius
+        # r1 = circle.radius
 
         d = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
 
         # non intersecting
-        if d > r0 + r1:
+        if d > self.radius + circle.radius:
             return []
         # One circle within other
-        if d < abs(r0 - r1):
+        if d < abs(self.radius - circle.radius):
             return []
         # coincident circles
-        if d == 0 and r0 == r1:
+        if d == 0 and self.radius == circle.radius:
             return []
         else:
-            a = (r0 ** 2 - r1 ** 2 + d ** 2) / (2 * d)
-            h = math.sqrt(r0 ** 2 - a ** 2)
+            a = (self.radius ** 2 - circle.radius ** 2 + d ** 2) / (2 * d)
+            h = math.sqrt(self.radius ** 2 - a ** 2)
             x2 = x0 + a * (x1 - x0) / d
             y2 = y0 + a * (y1 - y0) / d
             x3 = x2 + h * (y1 - y0) / d

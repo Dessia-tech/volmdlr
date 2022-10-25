@@ -615,7 +615,8 @@ class Step(dc.DessiaObject):
                     break
         shell_nodes_copy = shell_nodes.copy()
         remove_nodes = list(set(frame_mapped_shell_node + not_shell_nodes))
-        [shell_nodes.remove(node) for node in remove_nodes]
+        for node in remove_nodes:
+            shell_nodes.remove(node)
 
         for node in shell_nodes + frame_mapping_nodes:
             self.graph.add_edge('#0', node)

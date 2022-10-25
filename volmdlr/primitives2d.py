@@ -61,7 +61,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         point_distance2 = (pt2 - pti).norm()
         point_distance3 = (pt1 - pt2).norm()
         alpha = math.acos(
-            -(point_distance3 ** 2 - point_distance1 ** 2 - point_distance2 ** 2) / (2 * point_distance1 * point_distance2)) / 2.
+            -(point_distance3 ** 2 - point_distance1 ** 2 - point_distance2 ** 2) / (2 * point_distance1\
+                                                                                     * point_distance2)) / 2.
         point_distance = radius / math.tan(alpha)
 
         u1 = (pt1 - pti) / point_distance1
