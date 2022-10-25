@@ -5019,6 +5019,11 @@ class PlaneFace3D(Face3D):
         if not self.surface3d.is_coincident(face.surface3d):
             raise ValueError('The faces are not coincident')
 
+        if self.face_inside(face):
+            return self.divide_face([face.surface2d.outer_contour], True)
+        elif face.is_inside(self):
+            return face.divide_face([self.surface2d.outer_contour], True)
+
         outer_contour_1 = self.surface2d.outer_contour
         outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
 
