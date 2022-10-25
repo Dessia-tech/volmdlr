@@ -28,8 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance improvements
 
-*
-*
+* Custom to dicts for Shells and primitives inheriting
 
 ### Refactorings
 
