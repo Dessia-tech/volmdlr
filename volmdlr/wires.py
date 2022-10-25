@@ -4385,7 +4385,7 @@ class Circle3D(Contour3D):
         content += "#{} = CIRCLE('{}',#{},{});\n".format(
             curve_id, self.name, frame_id, round(self.radius * 1000, 3))
 
-        if kwargs['surface_id']:
+        if 'surface_id' in kwargs:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
                 curve_id + 1, curve_id, kwargs['surface_id'])
             curve_id += 1
