@@ -5021,7 +5021,7 @@ class PlaneFace3D(Face3D):
 
         if self.face_inside(face):
             return self.divide_face([face.surface2d.outer_contour], True)
-        elif face.is_inside(self):
+        if face.is_inside(self):
             return face.divide_face([self.surface2d.outer_contour], True)
 
         outer_contour_1 = self.surface2d.outer_contour
@@ -5764,8 +5764,7 @@ class CylindricalFace3D(Face3D):
 
         if coord.index(max(coord)) == 0:
             return 'x'
-        else:
-            return 'y'
+        return 'y'
 
 
 class ToroidalFace3D(Face3D):
