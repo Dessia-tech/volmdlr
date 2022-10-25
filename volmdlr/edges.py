@@ -239,7 +239,13 @@ class LineSegment(Edge):
             self._length = self.end.point_distance(self.start)
         return self._length
 
-    def abscissa(self, point):
+    def abscissa(self, point, tol=1e-6):
+        if point.point_distance(self.start) < tol:
+            return 0
+        if point.point_distance(self.end) < tol:
+            print('abscissa:', point.point_distance(self.end))
+            return self.length()
+
         u = self.end - self.start
         length = u.norm()
         t = (point - self.start).dot(u) / length
@@ -400,11 +406,11 @@ class BSplineCurve(Edge):
         return self.point_at_abscissa(self.length() * 0.5)
 
     def abscissa(self, point, tol=1e-4):
-        l = self.length()
+        length = self.length()
         res = scp.optimize.least_squares(
             lambda u: (point - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(l / 2),
-            bounds=([0], [l]),
+            x0=npy.array(length / 2),
+            bounds=([0], [length]),
             # ftol=tol / 10,
             # xtol=tol / 10,
             # loss='soft_l1'
@@ -413,10 +419,10 @@ class BSplineCurve(Edge):
         if res.fun > tol:
             print('distance =', res.cost)
             print('res.fun:', res.fun)
-            ax = self.plot()
-            point.plot(ax=ax)
-            best_point = self.point_at_abscissa(res.x)
-            best_point.plot(ax=ax, color='r')
+            # ax = self.plot()
+            # point.plot(ax=ax)
+            # best_point = self.point_at_abscissa(res.x)
+            # best_point.plot(ax=ax, color='r')
             raise ValueError('abscissa not found')
         return res.x[0]
 
@@ -1179,7 +1185,8 @@ class LineSegment2D(LineSegment):
         touching linesegments does not intersect
         """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
-        if point:  # and (point != self.start) and (point != self.end): # TODO: May be these commented conditions should be used for linesegment_crossings
+        # TODO: May be these commented conditions should be used for linesegment_crossings
+        if point:  # and (point != self.start) and (point != self.end):
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
                 return []
@@ -1305,7 +1312,7 @@ class LineSegment2D(LineSegment):
             new_start = frame.new_coordinates(self.start)
             new_end = frame.new_coordinates(self.end)
         else:
-            raise ValueError(f'Please Enter a valid side: old or new')
+            raise ValueError('Please Enter a valid side: old or new')
         return LineSegment2D(new_start, new_end)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
@@ -1320,7 +1327,7 @@ class LineSegment2D(LineSegment):
             new_start = frame.new_coordinates(self.start)
             new_end = frame.new_coordinates(self.end)
         else:
-            raise ValueError(f'Please Enter a valid side: old or new')
+            raise ValueError('Please Enter a valid side: old or new')
         self.start = new_start
         self.end = new_end
 
@@ -1627,11 +1634,12 @@ class Arc2D(Arc):
         r1 = vector_start.norm()
         cp = vector_point.norm()
         if math.isclose(cp, r1, abs_tol=abs_tol):
-            if (self.start.x < self.end.x) and (self.start.y < self.end.y):
+            if self.get_arc_direction():
                 arc_angle = - volmdlr.core.clockwise_angle(vector_start,
                                                            vector_end)
                 point_angle = - volmdlr.core.clockwise_angle(vector_start,
                                                              vector_point)
+
             else:
                 arc_angle = volmdlr.core.clockwise_angle(vector_start,
                                                          vector_end)
@@ -1671,6 +1679,11 @@ class Arc2D(Arc):
         return intersection_points
 
     def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
+        if point2d.point_distance(self.start) < tol:
+            return 0
+        if point2d.point_distance(self.end) < tol:
+            return self.length()
+
         p = point2d - self.center
         u = self.start - self.center
         u.normalize()
@@ -1989,7 +2002,8 @@ class Arc2D(Arc):
                       self.point_at_abscissa(0.5 * abscissa),
                       split_point),
                 Arc2D(split_point,
-                      self.point_at_abscissa(1.5 * abscissa),
+                      self.point_at_abscissa((self.abscissa(self.end)
+                                              - abscissa) * 0.5 + abscissa),
                       self.end)
                 ]
 
@@ -2001,8 +2015,7 @@ class Arc2D(Arc):
             radius = self.radius - offset
 
         return FullArc2D(self.center,
-                         self.center + radius * volmdlr.Point2D(1, 0.),
-                         is_trigo=self.is_trigo)
+                         self.center + radius * volmdlr.Point2D(1, 0.))
 
     def complementary(self):
 
@@ -2380,21 +2393,11 @@ class ArcEllipse2D(Edge):
         pi = self.interior.to_3d(plane_origin, x, y)
         pe = self.end.to_3d(plane_origin, x, y)
         pc = self.center.to_3d(plane_origin, x, y)
-        if self.extra is None:
-            pextra = None
-        else:
-            pextra = self.extra.to_3d(plane_origin, x, y)
-        if ps == pe:
-            p3 = pextra
-        else:
-            p3 = pe
-        plane = volmdlr.faces.Plane3D.from_3_points(ps, pi, p3)
-        n = plane.normal
+
         major_dir = self.major_dir.to_3d(plane_origin, x, y)
         major_dir.normalize()
 
-        return ArcEllipse3D(ps, pi, pe, pc, major_dir, normal=n,
-                            name=self.name, extra=pextra)
+        return ArcEllipse3D(ps, pi, pe, pc, major_dir, name=self.name)
 
     def plot(self, ax=None, color='k', alpha=1):
         if ax is None:
@@ -2571,7 +2574,7 @@ class Line3D(Line):
             new_start = frame.new_coordinates(self.point1)
             new_end = frame.new_coordinates(self.point2)
         else:
-            raise ValueError(f'Please Enter a valid side: old or new')
+            raise ValueError('Please Enter a valid side: old or new')
         return Line3D(new_start, new_end)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
@@ -2586,7 +2589,7 @@ class Line3D(Line):
             new_start = frame.new_coordinates(self.point1)
             new_end = frame.new_coordinates(self.point2)
         else:
-            raise ValueError(f'Please Enter a valid side: old or new')
+            raise ValueError('Please Enter a valid side: old or new')
         self.point1 = new_start
         self.point2 = new_end
         self.bounding_box = self._bounding_box()
@@ -2923,7 +2926,7 @@ class LineSegment3D(LineSegment):
         elif side == 'new':
             return LineSegment3D(
                 *[frame.new_coordinates(point) for point in self.points])
-        raise ValueError(f'Please Enter a valid side: old or new')
+        raise ValueError('Please Enter a valid side: old or new')
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -2937,7 +2940,7 @@ class LineSegment3D(LineSegment):
             new_start = frame.new_coordinates(self.start)
             new_end = frame.new_coordinates(self.end)
         else:
-            raise ValueError(f'Please Enter a valid side: old or new')
+            raise ValueError('Please Enter a valid side: old or new')
         self.start = new_start
         self.end = new_end
         self.bounding_box = self._bounding_box()
@@ -3010,10 +3013,8 @@ class LineSegment3D(LineSegment):
                 s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(
                     name)
             elif type_ == 'dashed':
-                s += 'var {} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, scene);'.format(
-                    name)
-            s += '{}.color = new BABYLON.Color3{};\n'.format(name,
-                                                             tuple(color))
+                s += f'var {name} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, scene);'
+            s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(color))
         elif type_ == 'tube':
             radius = 0.03 * self.start.point_distance(self.end)
             s = 'var points = [new BABYLON.Vector3({},{},{}), new BABYLON.Vector3({},{},{})];\n'.format(
@@ -3149,8 +3150,8 @@ class LineSegment3D(LineSegment):
             dist_min = math.inf
             for p1, p2 in zip(points[0:-1], points[1:]):
                 lines.append(LineSegment3D(p1, p2))
-            for l in lines:
-                p1, p2 = self.Matrix_distance(l)
+            for line in lines:
+                p1, p2 = self.Matrix_distance(line)
                 dist = p1.point_distance(p2)
                 if dist < dist_min:
                     dist_min = dist
@@ -3660,7 +3661,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=4e-3):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
-        elif math.isclose(parameter, 1, abs_tol=4e-3):
+        if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
         curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[0])
@@ -3825,7 +3826,6 @@ class Arc3D(Arc):
         ymax = max(point.y for point in points)
         zmin = min(point.z for point in points)
         zmax = max(point.z for point in points)
-
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
@@ -4136,8 +4136,8 @@ class Arc3D(Arc):
             new_interior = frame.new_coordinates(self.interior.copy())
             new_end = frame.new_coordinates(self.end.copy())
         else:
-            raise ValueError(f'side value not valid, please specify'
-                             f'a correct value: \'old\' or \'new\'')
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
         return new_start, new_interior, new_end
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -4148,8 +4148,7 @@ class Arc3D(Arc):
         new_start, new_interior, new_end =\
             self.frame_mapping_parameters(frame, side)
 
-        return Arc3D(new_start, new_interior, new_end, normal=None,
-                     name=self.name)
+        return Arc3D(new_start, new_interior, new_end, name=self.name)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """

@@ -22,8 +22,8 @@ from geomdl import utilities
 from geomdl.fitting import interpolate_surface, approximate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 
-import dessia_common
-import dessia_common as dc
+# import dessia_common
+from dessia_common.core import DessiaObject
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.edges as vme
@@ -553,7 +553,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         self.inner_contours = new_contour.inner_contours
 
 
-class Surface3D(dc.DessiaObject):
+class Surface3D(DessiaObject):
     x_periodicity = None
     y_periodicity = None
     """
@@ -814,8 +814,8 @@ class Surface3D(dc.DessiaObject):
             new_w = basis.old_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         else:
-            raise ValueError(f'side value not valid, please specify'
-                             f'a correct value: \'old\' or \'new\'')
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
         return new_frame
 
 
@@ -1935,7 +1935,7 @@ class BSplineSurface3D(Surface3D):
 
         self.surface = surface
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
-        volmdlr.core.Primitive3D.__init__(self, name=name)
+        Surface3D.__init__(self, name=name)
 
         # Hidden Attributes
         self._displacements = None
@@ -2139,7 +2139,7 @@ class BSplineSurface3D(Surface3D):
 
             results.append((z.x, z.fun))
             results.append((res.x, res.fun))
-        return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
+        return (volmdlr.Point2D(*min(results, key=lambda r: r[1])[0]))
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
@@ -3103,7 +3103,12 @@ class BSplineSurface3D(Surface3D):
                     f'Class {self.__class__.__name__} does not implement {method_name}')
 
         # #Avoid to have primitives with start=end
-        # start_points = list(set(new_start_points))
+        # start_points = []
+        # for i in range(0, len(new_start_points)-1):
+        #     if new_start_points[i] != new_start_points[i+1]:
+        #         start_points.append(new_start_points[i])
+        # if new_start_points[-1] != new_start_points[0]:
+        #     start_points.append(new_start_points[-1])
 
         return volmdlr.wires.Contour2D(primitives2d)
 
@@ -3692,7 +3697,11 @@ class BSplineSurface3D(Surface3D):
                   other_bspline_face3d.surface2d.outer_contour.center_of_mass()]
         grid2d_direction = (bspline_face3d.pair_with(other_bspline_face3d))[1]
 
-        if self.is_intersected_with(other_bspline_surface3d):
+        if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
+
+            xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
+
+        elif self.is_intersected_with(other_bspline_surface3d):
             # find pimitives to split with
             contour1 = bspline_face3d.outer_contour3d
             contour2 = other_bspline_face3d.outer_contour3d
@@ -3721,32 +3730,33 @@ class BSplineSurface3D(Surface3D):
 
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
+            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
+                len(bsplines_new), [1] * len(bsplines_new)
+
             grid2d_direction = (
                 bsplines_new[0].rectangular_cut(
                     0, 1, 0, 1).pair_with(
                     bsplines_new[1].rectangular_cut(
                         0, 1, 0, 1)))[1]
 
+        else:
+            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
+                                               len(bsplines_new), [1] * len(bsplines_new)
+
         # grid3d
-        nb = 10
         points3d = []
         for i, bspline in enumerate(bsplines_new):
             grid3d = bspline.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(0, 1),
                                                                         y_limits=(0, 1),
-                                                                        points_nbr=(nb, nb),
+                                                                        points_nbr=(50, 50),
                                                                         direction=grid2d_direction[i]))
 
-            if (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
-                    or self.is_intersected_with(other_bspline_surface3d)):
-                if i == 0:
-                    points3d.extend(grid3d[0:nb * nb - nb])
-                else:
-                    points3d.extend(grid3d)
-            else:
-                points3d.extend(grid3d)
+            points3d.extend(grid3d)
 
-        # fitting
-        size_u, size_v, degree_u, degree_v = (nb * 2) - 1, nb, 3, 3
+            # fitting
+        size_u, size_v, degree_u, degree_v = 100, 50, max(
+            bsplines[0].degree_u, bsplines[1].degree_u), max(
+            bsplines[0].degree_v, bsplines[1].degree_v)
 
         merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(
             points3d, size_u, size_v, degree_u, degree_v)
@@ -4916,6 +4926,18 @@ class PlaneFace3D(Face3D):
         list_faces = self.divide_face_with_closed_cutting_contours(list_closed_cutting_contours, list_faces)
         return list_faces
 
+    def is_adjacent(self, face2: Face3D):
+        contour1 = self.outer_contour3d.to_2d(
+            self.surface3d.frame.origin,
+            self.surface3d.frame.u,
+            self.surface3d.frame.v)
+        contour2 = face2.outer_contour3d.to_2d(
+            self.surface3d.frame.origin,
+            self.surface3d.frame.u,
+            self.surface3d.frame.v)
+        if contour1.is_sharing_primitives_with(contour2, False):
+            return True
+
     def is_intersecting(self, face2, list_coincident_faces=None, tol: float = 1e-6):
         """
         Verifies if two face are intersecting
@@ -4940,6 +4962,7 @@ class PlaneFace3D(Face3D):
                     edge_intersections = self.edge_intersections(prim2)
                     if edge_intersections:
                         return True
+
         return False
 
     @staticmethod
@@ -5006,6 +5029,43 @@ class PlaneFace3D(Face3D):
             return [self_copy]
         return self_copy.divide_face(list_cutting_contours, contour_extract_inside)
 
+    def cut_by_coincident_face(self, face):
+        """
+        Cuts face1 with another coincident face2
+
+        :param face: a face3d
+        :type face: Face3D
+        :return: a list of faces3d
+        :rtype: List[Face3D]
+        """
+
+        if not self.surface3d.is_coincident(face.surface3d):
+            raise ValueError('The faces are not coincident')
+
+        if self.face_inside(face):
+            return self.divide_face([face.surface2d.outer_contour], True)
+        if face.is_inside(self):
+            return face.divide_face([self.surface2d.outer_contour], True)
+
+        outer_contour_1 = self.surface2d.outer_contour
+        outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
+
+        inner_contours = self.surface2d.inner_contours
+        inner_contours.extend([self.surface3d.contour3d_to_2d(
+            contour) for contour in face.inner_contours3d])
+
+        contours = outer_contour_1.cut_by_wire(outer_contour_2)
+
+        surfaces = []
+        for contour in contours:
+            inners = []
+            for inner_c in inner_contours:
+                if contour.is_inside(inner_c):
+                    inners.append(inner_c)
+            surfaces.append(Surface2D(contour, inners))
+
+        return [self.__class__(self.surface3d, surface2d) for surface2d in surfaces]
+
 
 class Triangle3D(PlaneFace3D):
     """
@@ -5039,7 +5099,7 @@ class Triangle3D(PlaneFace3D):
         self._bbox = None
         # self.bounding_box = self._bounding_box()
 
-        dc.DessiaObject.__init__(self, name=name)
+        DessiaObject.__init__(self, name=name)
 
         # Don't use inheritence for performance: class method fakes face3D behavior
         # Face3D.__init__(self,
@@ -5101,7 +5161,7 @@ class Triangle3D(PlaneFace3D):
         return self._surface2d
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
-        dict_ = dc.DessiaObject.base_dict(self)
+        dict_ = DessiaObject.base_dict(self)
         dict_['point1'] = self.point1.to_dict()
         dict_['point2'] = self.point2.to_dict()
         dict_['point3'] = self.point3.to_dict()
@@ -5603,7 +5663,6 @@ class CylindricalFace3D(Face3D):
         pfpoints = poly2d.points
         xmin, ymin = min(pt[0] for pt in pfpoints), min(pt[1] for pt in pfpoints)
         xmax, ymax = max(pt[0] for pt in pfpoints), max(pt[1] for pt in pfpoints)
-
         origin, vx, vy = planeface.plane.origin, planeface.plane.vectors[0], \
             planeface.plane.vectors[1]
         pf1_2d, pf2_2d = volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D(
@@ -5728,8 +5787,7 @@ class CylindricalFace3D(Face3D):
 
         if coord.index(max(coord)) == 0:
             return 'x'
-        else:
-            return 'y'
+        return 'y'
 
 
 class ToroidalFace3D(Face3D):
@@ -6582,7 +6640,6 @@ class BSplineFace3D(Face3D):
         Parameters
         ----------
         other_bspline_face3d : volmdlr.faces.BSplineFace3D
-
         Returns
         -------
         corresponding_direction
@@ -6757,7 +6814,6 @@ class BSplineFace3D(Face3D):
         '''
         find points extremities for nearest edges of two faces
         '''
-
         contour1 = self.outer_contour3d
         contour2 = other_bspline_face3d.outer_contour3d
 
@@ -6847,11 +6903,9 @@ class BSplineFace3D(Face3D):
     def adjacent_direction_xy(self, other_face3d):
         '''
         find out in which direction the faces are adjacent
-
         Parameters
         ----------
         other_face3d : volmdlr.faces.BSplineFace3D
-
         Returns
         -------
         adjacent_direction
@@ -6872,11 +6926,9 @@ class BSplineFace3D(Face3D):
     def merge_with(self, other_bspline_face3d):
         '''
         merge two adjacent faces
-
         Parameters
         ----------
         other_bspline_face3d : volmdlr.faces.BSplineFace3D
-
         Returns
         -------
         merged_face : volmdlr.faces.BSplineFace3D
@@ -6908,7 +6960,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             self.color = color
         self.alpha = alpha
         self._bbox = None
-        # self.bounding_box = self._bounding_box()
         volmdlr.core.CompositePrimitive3D.__init__(self,
                                                    primitives=faces, color=color, alpha=alpha,
                                                    name=name)
@@ -6924,6 +6975,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 return False
 
         return True
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+        This method does not use pointers for faces as it has no sense to have duplicate faces
+        """
+        dict_ = DessiaObject.base_dict(self)
+        dict_.update({'color': self.color,
+                      'alpha': self.alpha,
+                      'faces': [f.to_dict(use_pointers=False) for f in self.faces]})
+
+        return dict_
 
     @classmethod
     def from_step(cls, arguments, object_dict):
