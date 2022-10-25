@@ -285,7 +285,7 @@ class Step(dc.DessiaObject):
         self.functions, self.all_connections = self.read_lines()
         self._utd_graph = False
         self._graph = None
-        self.name = name
+        dc.DessiaObject.__init__(self, name=name)
 
     @property
     def graph(self):

@@ -380,7 +380,7 @@ class Primitive2D(CompositePrimitive):
     def __init__(self, name=''):
         self.name = name
 
-        dc.DessiaObject.__init__(self, name=name)
+        CompositePrimitive.__init__(self, name=name)
 
 
 class CompositePrimitive2D(Primitive2D):
@@ -480,7 +480,7 @@ class CompositePrimitive2D(Primitive2D):
              plot_points=False, equal_aspect=True):
 
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if equal_aspect:
             ax.set_aspect('equal')
@@ -637,7 +637,8 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-        self.name = name
+
+        dc.DessiaObject.__init__(self, name=name)
 
         self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
 
