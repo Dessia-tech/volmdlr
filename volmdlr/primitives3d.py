@@ -8,6 +8,7 @@ import math
 
 from typing import Tuple, List, Dict
 from scipy.optimize import minimize, NonlinearConstraint
+from random import uniform
 
 import numpy as npy
 import matplotlib.pyplot as plt
@@ -1125,6 +1126,45 @@ class Cylinder(RevolvedProfile):
         dist = self.min_distance_to_other_cylinder(other_cylinder)
 
         return dist < 1e-5
+
+    def random_point_inside(self) -> volmdlr.Point3D:
+        """
+        :return: a random point inside the Cylinder
+        """
+        theta = uniform(0, 2 * math.pi)
+        radius = math.sqrt(uniform(0, 1)) * self.radius
+
+        x_local = radius * math.cos(theta)
+        y_local = radius * math.sin(theta)
+        z_local = uniform(-self.length / 2, self.length / 2)
+
+        local_frame = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+
+        return local_frame.old_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
+
+    def interpenetration_with_other_cylinder(
+            self, other_cylinder: "Cylinder", n_points: int = 100
+    ) -> float:
+        """
+        :param other_cylinder: volmdlr Cylinder
+        :param n_points: optional parameter used for the discretization in order to analyse the interpenetration
+        :return: a value between 0 (no interpenetration) and 1 (self cylinder is fully include into other_cylinder)
+        """
+        if not self.is_intersecting_other_cylinder(other_cylinder):
+            return 0
+
+        return (
+                len(
+                    [
+                        point
+                        for point in (self.random_point_inside() for _ in range(n_points))
+                        if other_cylinder.point_belongs(point)
+                    ]
+                )
+                / n_points
+        )
 
 
 class Cone(RevolvedProfile):
