@@ -1144,6 +1144,21 @@ class Cylinder(RevolvedProfile):
 
         return local_frame.old_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
 
+    def is_point_inside(self, point: volmdlr.Point3D) -> bool:
+        """
+        :param point: volmdlr Point3D
+        :return: True if the given point is inside the cylinder, False otherwise
+        """
+        local_frame = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+
+        local_point = local_frame.new_coordinates(point)
+
+        return (math.sqrt(local_point.x ** 2 + local_point.y ** 2) <= self.radius) and (
+                -self.length / 2 <= local_point.z <= self.length / 2
+        )
+
     def interpenetration_with_other_cylinder(
             self, other_cylinder: "Cylinder", n_points: int = 100
     ) -> float:
@@ -1160,7 +1175,7 @@ class Cylinder(RevolvedProfile):
                     [
                         point
                         for point in (self.random_point_inside() for _ in range(n_points))
-                        if other_cylinder.point_belongs(point)
+                        if other_cylinder.is_point_inside(point)
                     ]
                 )
                 / n_points
