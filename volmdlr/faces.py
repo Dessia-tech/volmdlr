@@ -6634,6 +6634,11 @@ class BSplineFace3D(Face3D):
 
         return PlaneFace3D(surface3d=s3d, surface2d=s2d)
 
+    # def to_planeface3d(self, plane3d: Plane3D):
+    #     s2d = Surface2D(outer_contour=plane3d.contour3d_to_2d(self.outer_contour3d),
+    #                     inner_contours=[plane3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
+    #     return PlaneFace3D(surface3d=plane3d, surface2d=s2d)
+
     @property
     def bounding_box(self):
         if not self._bbox:
@@ -7590,10 +7595,7 @@ class ClosedShell3D(OpenShell3D):
         tests = []
 
         # for ray in rays[:3]:
-        ax = self.plot()
-        point3d.plot(ax)
         for ray in rays[:nb_rays]:
-            ray.plot(ax)
             #
             count = 0
             ray_intersection = []
@@ -7602,7 +7604,6 @@ class ClosedShell3D(OpenShell3D):
                 count += len(point_inters)
             if count % 2 == 0:
                 is_inside = False
-            print(count, is_inside)
             tests.append(is_inside)
             rays_intersections.append(ray_intersection)
         for test1, test2 in zip(tests[:-1], tests[1:]):
