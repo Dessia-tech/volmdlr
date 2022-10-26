@@ -863,18 +863,6 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         self.plane_origin.frame_mapping_inplace(frame, side)
         self.axis_point.frame_mapping_inplace(frame, side)
 
-    @property
-    def local_frame(self, main_axis: volmdlr.Vector3D = volmdlr.Z3D):
-        """
-        Compute a local Frame3D, that is always the same, by rotating global frame
-
-        :param main_axis: the global frame axis used to create the local frame, by rotating the global frame
-        :return: local Frame3D
-        """
-        return volmdlr.Frame3D.from_point_and_vector(
-            point=self.axis_point, vector=self.axis_point, main_axis=main_axis
-        )
-
 
 class Cylinder(RevolvedProfile):
     """
@@ -1161,7 +1149,11 @@ class Cylinder(RevolvedProfile):
         :param point: volmdlr Point3D
         :return: True if the given point is inside the cylinder, False otherwise
         """
-        local_point = self.local_frame.new_coordinates(point)
+        local_frame = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+
+        local_point = local_frame.new_coordinates(point)
 
         return (math.sqrt(local_point.x ** 2 + local_point.y ** 2) <= self.radius) and (
                 -self.length / 2 <= local_point.z <= self.length / 2
