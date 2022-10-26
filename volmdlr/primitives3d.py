@@ -1060,7 +1060,7 @@ class Cylinder(RevolvedProfile):
         return Cylinder(new_position, new_axis, self.radius, self.length,
                         color=self.color, alpha=self.alpha, name=self.name)
 
-    def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder'):
+    def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder') -> float:
         """
         Compute the minimal distance between two volmdlr cylinders
 
@@ -1117,7 +1117,7 @@ class Cylinder(RevolvedProfile):
 
         return minimize(fun=dist_points, x0=x0, constraints=constraints).fun
 
-    def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder'):
+    def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder') -> bool:
         """
         :param other_cylinder: volmdlr Cylinder
         :return: boolean, True if cylinders are intersecting, False otherwise
