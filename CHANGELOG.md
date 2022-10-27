@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ElementsGroup: nodes, elements_per_node
 * Mesh: bounding_rectangle, delete_duplicated_nodes
 * PlaneFace3D: cut_by_coincident_face
+* Create .geo and .msh files (Mesh geometries with GMSH)
 
 
 ### Fixed
