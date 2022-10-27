@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Node2D/3D, TriangularElement, QuadrilateralElement2D, TriangularElement3D
 * ElementsGroup: nodes, elements_per_node
 * Mesh: bounding_rectangle, delete_duplicated_nodes
+* PlaneFace3D: cut_by_coincident_face
 
 
 ### Fixed
