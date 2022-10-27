@@ -1172,21 +1172,21 @@ class Cylinder(RevolvedProfile):
 
         # doing the discretization on the smallest cylinder to have better precision
         if self.volume() < other_cylinder.volume():
-            smaller_cylinder = self
+            smallest_cylinder = self
         else:
-            smaller_cylinder = other_cylinder
+            smallest_cylinder = other_cylinder
             other_cylinder = self
 
         return (
                 len(
                     [
                         point
-                        for point in (smaller_cylinder.random_point_inside() for _ in range(n_points))
+                        for point in (smallest_cylinder.random_point_inside() for _ in range(n_points))
                         if other_cylinder.point_belongs(point)
                     ]
                 )
                 / n_points
-        ) * smaller_cylinder.volume()
+        ) * smallest_cylinder.volume()
 
 
 class Cone(RevolvedProfile):
