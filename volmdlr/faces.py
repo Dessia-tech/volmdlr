@@ -560,6 +560,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         gets the lines that define a Surface2D in a .geo file
         """
 
+        i, p = None, None
         lines, line_surface, lines_tags = [], [], []
         point_account, line_account, line_loop_account = 0, 0, 1
         for c, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
@@ -4313,6 +4314,7 @@ class Face3D(volmdlr.core.Primitive3D):
         gets the lines that define a Face3D in a .geo file
         """
 
+        i, p = None, None
         lines, line_surface, lines_tags = [], [], []
         point_account, line_account, line_loop_account = 0, 0, 1
         for c, contour in enumerate(list(chain(*[[self.outer_contour3d], self.inner_contours3d]))):
