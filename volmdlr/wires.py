@@ -2183,8 +2183,8 @@ class Contour2D(Contour, Wire2D):
 
             for point in points_intersections:
                 if point not in [point1, point2] and Wire2D(closing_wire).point_over_wire(point):
-                        closing_wire = wire.extract_without_primitives(point1, point2, False)
-                        break
+                    closing_wire = wire.extract_without_primitives(point1, point2, False)
+                    break
 
             closing_wire_prim = []
             for closing_w in closing_wire:
