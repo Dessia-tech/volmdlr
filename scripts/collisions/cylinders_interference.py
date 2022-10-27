@@ -42,7 +42,7 @@ start = time()
 
 for _ in range(100):
     print(
-        f"interpenetration volume: {cylinders[1].interference_volume_with_other_cylinder(cylinders[0], n_points=100)}"
+        f"interpenetration volume: {cylinders[1].interference_volume_with_other_cylinder(cylinders[0], n_points=1000)}"
     )
 
 

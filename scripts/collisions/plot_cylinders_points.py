@@ -14,5 +14,5 @@ c = Cylinder(
 )
 
 ay = c.random_point_inside().plot()
-for _ in range(2000):
+for _ in range(1000):
     c.random_point_inside().plot(ax=ay)
