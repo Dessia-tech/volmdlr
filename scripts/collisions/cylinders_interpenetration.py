@@ -20,7 +20,7 @@ cylinders = [
     Cylinder(
         position=vm.Point3D(0.05, 0, 0),
         axis=vm.Vector3D(0, 1, 0),
-        radius=0.002,
+        radius=0.005,
         length=0.01,
         color=(1, 0, 1),
     ),
@@ -42,7 +42,7 @@ start = time()
 
 for _ in range(100):
     print(
-        f"interpenetration volume: {cylinders[1].interference_volume_with_other_cylinder(cylinders[0], n_points=1000)}"
+        f"interpenetration volume: {cylinders[1].interference_volume_with_other_cylinder(cylinders[0], n_points=100)}"
     )
 
 
