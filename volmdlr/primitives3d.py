@@ -7,8 +7,8 @@ Common primitives 3D
 import math
 
 from typing import Tuple, List, Dict
-from scipy.optimize import minimize, NonlinearConstraint
 from random import uniform
+from scipy.optimize import minimize, NonlinearConstraint
 
 import numpy as npy
 import matplotlib.pyplot as plt
