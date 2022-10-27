@@ -41,10 +41,11 @@ print("Interpenetration")
 start = time()
 
 for _ in range(100):
-    print(f"interpenetration volume: {cylinders[1].interference_volume_with_other_cylinder(cylinders[0], n_points=1000)}")
+    print(
+        f"interpenetration volume: {cylinders[1].interference_volume_with_other_cylinder(cylinders[0], n_points=1000)}"
+    )
 
 
 end = time()
 print(f"\nTotal interpenetration computation time: {end - start}s")
 print(f"Time per calculus: {(end - start)/100}s")
-
