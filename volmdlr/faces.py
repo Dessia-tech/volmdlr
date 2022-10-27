@@ -954,25 +954,25 @@ class Plane3D(Surface3D):
 
     def plane_intersection(self, other_plane):
         line_direction = self.frame.w.cross(other_plane.frame.w)
-
+        return line_direction
         if line_direction.norm() < 1e-6:
             return None
 
         a1, b1, c1, d1 = self.equation_coefficients()
         a2, b2, c2, d2 = other_plane.equation_coefficients()
-
         if a1 * b2 - a2 * b1 != 0.:
             x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
             y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
-            point1 = volmdlr.Point3D((x0, y0, 0))
+            point1 = volmdlr.Point3D(x0, y0, 0)
         else:
             y0 = (b2 * d2 - c2 * d1) / (b1 * c2 - c1 * b2)
             z0 = (c1 * d1 - b1 * d2) / (b1 * c2 - c1 * b2)
-            point1 = volmdlr.Point3D((0, y0, z0))
+            point1 = volmdlr.Point3D(0, y0, z0)
 
         # point2 = point1 + line_direction
         # return volmdlr.Line3D(point1, point2)
-        return volmdlr.Line3D(point1, point1 + line_direction)
+
+        return volmdlr.edges.Line3D(point1, point1 + line_direction)
 
     def is_coincident(self, plane2):
         """
