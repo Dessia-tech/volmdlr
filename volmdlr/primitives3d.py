@@ -1167,9 +1167,6 @@ class Cylinder(RevolvedProfile):
         :param n_points: optional parameter used for the discretization in order to analyse the interpenetration
         :return: a value between 0 (no interpenetration) and 1 (self cylinder is fully include into other_cylinder)
         """
-        if not self.is_intersecting_other_cylinder(other_cylinder):
-            return 0
-
         return (
                 len(
                     [
