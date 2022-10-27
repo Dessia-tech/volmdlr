@@ -1947,10 +1947,10 @@ class Contour2D(Contour, Wire2D):
         triangles = []
         for xi in x:
             for yi in y:
-                p = volmdlr.Point2D(xi, yi)
-                if self.point_belongs(p):
-                    point_index[p] = point_index
-                    points.append(p)
+                point = volmdlr.Point2D(xi, yi)
+                if self.point_belongs(point):
+                    point_index[point] = number_points
+                    points.append(point)
                     number_points += 1
 
         for i in range(n):
