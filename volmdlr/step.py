@@ -205,6 +205,7 @@ def representation_relationship_representation_relationship_with_transformation_
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
         arguments, object_dict):
     modified_arguments = [''] + arguments
+    name = 'B_SPLINE_CURVE'
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
     return STEP_TO_VOLMDLR['BOUNDED_CURVE, '
@@ -218,6 +219,7 @@ def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_repre
 
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
         arguments, object_dict):
+    name = 'B_SPLINE_SURFACE'
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
