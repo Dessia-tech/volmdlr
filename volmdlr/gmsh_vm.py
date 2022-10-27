@@ -379,7 +379,7 @@ class GmshParser(DessiaObject):
                 values = []
                 for points in value:
                     values.append(GmshParser.to_2d(points))
-            nodes[key] = values
+                nodes[key] = values
             nodes['all_nodes'] = GmshParser.to_2d(nodes_points)
         else:
             nodes['all_nodes'] = nodes_points
