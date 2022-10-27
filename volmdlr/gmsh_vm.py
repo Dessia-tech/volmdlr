@@ -630,9 +630,15 @@ class GmshParser(DessiaObject):
 
     @staticmethod
     def check_2d(list_nodes):
+        checking = set()
         for node in list_nodes:
-            if node[2] != 0:
-                return False
+            if node[2] == 0:
+                checking.add(True)
+            else:
+                checking.add(False)
+
+        if False in checking:
+            return False
         return True
 
     @staticmethod
