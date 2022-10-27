@@ -1144,7 +1144,7 @@ class Cylinder(RevolvedProfile):
 
         return local_frame.old_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
 
-    def is_point_inside(self, point: volmdlr.Point3D) -> bool:
+    def point_belongs(self, point: volmdlr.Point3D, **kwargs) -> bool:
         """
         :param point: volmdlr Point3D
         :return: True if the given point is inside the cylinder, False otherwise
@@ -1182,7 +1182,7 @@ class Cylinder(RevolvedProfile):
                     [
                         point
                         for point in (smaller_cylinder.random_point_inside() for _ in range(n_points))
-                        if other_cylinder.is_point_inside(point)
+                        if other_cylinder.point_belongs(point)
                     ]
                 )
                 / n_points
