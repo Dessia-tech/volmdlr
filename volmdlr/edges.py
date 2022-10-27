@@ -239,7 +239,13 @@ class LineSegment(Edge):
             self._length = self.end.point_distance(self.start)
         return self._length
 
-    def abscissa(self, point):
+    def abscissa(self, point, tol=1e-6):
+        if point.point_distance(self.start) < tol:
+            return 0
+        if point.point_distance(self.end) < tol:
+            print('abscissa:', point.point_distance(self.end))
+            return self.length()
+
         u = self.end - self.start
         length = u.norm()
         t = (point - self.start).dot(u) / length
@@ -299,6 +305,12 @@ class LineSegment(Edge):
         else:
             return [self.__class__(self.start, split_point),
                     self.__class__(split_point, self.end)]
+
+    def middle_point(self):
+        return 0.5 * (self.start + self.end)
+
+    def point_at_abscissa(self, abscissa):
+        return self.start + self.unit_direction_vector() * abscissa
 
     def get_geo_lines(self, tag: int, start_point_tag: int, end_point_tag: int):
         """
@@ -411,11 +423,11 @@ class BSplineCurve(Edge):
         return self.point_at_abscissa(self.length() * 0.5)
 
     def abscissa(self, point, tol=1e-4):
-        l = self.length()
+        length = self.length()
         res = scp.optimize.least_squares(
             lambda u: (point - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(l / 2),
-            bounds=([0], [l]),
+            x0=npy.array(length / 2),
+            bounds=([0], [length]),
             # ftol=tol / 10,
             # xtol=tol / 10,
             # loss='soft_l1'
@@ -424,10 +436,10 @@ class BSplineCurve(Edge):
         if res.fun > tol:
             print('distance =', res.cost)
             print('res.fun:', res.fun)
-            ax = self.plot()
-            point.plot(ax=ax)
-            best_point = self.point_at_abscissa(res.x)
-            best_point.plot(ax=ax, color='r')
+            # ax = self.plot()
+            # point.plot(ax=ax)
+            # best_point = self.point_at_abscissa(res.x)
+            # best_point.plot(ax=ax, color='r')
             raise ValueError('abscissa not found')
         return res.x[0]
 
@@ -1126,11 +1138,11 @@ class LineSegment2D(LineSegment):
                 'end': self.end.to_dict()
                 }
 
-    def middle_point(self):
-        return 0.5 * (self.start + self.end)
-
-    def point_at_abscissa(self, abscissa):
-        return self.start + self.unit_direction_vector() * abscissa
+    # def middle_point(self):
+    #     return 0.5 * (self.start + self.end)
+    #
+    # def point_at_abscissa(self, abscissa):
+    #     return self.start + self.unit_direction_vector() * abscissa
 
     def point_belongs(self, point, abs_tol=1e-6):
         distance = self.start.point_distance(point) + self.end.point_distance(
@@ -1207,7 +1219,8 @@ class LineSegment2D(LineSegment):
         touching linesegments does not intersect
         """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
-        if point:  # and (point != self.start) and (point != self.end): # TODO: May be these commented conditions should be used for linesegment_crossings
+        # TODO: May be these commented conditions should be used for linesegment_crossings
+        if point:  # and (point != self.start) and (point != self.end):
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
                 return []
@@ -1333,7 +1346,7 @@ class LineSegment2D(LineSegment):
             new_start = frame.new_coordinates(self.start)
             new_end = frame.new_coordinates(self.end)
         else:
-            raise ValueError(f'Please Enter a valid side: old or new')
+            raise ValueError('Please Enter a valid side: old or new')
         return LineSegment2D(new_start, new_end)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
@@ -1348,7 +1361,7 @@ class LineSegment2D(LineSegment):
             new_start = frame.new_coordinates(self.start)
             new_end = frame.new_coordinates(self.end)
         else:
-            raise ValueError(f'Please Enter a valid side: old or new')
+            raise ValueError('Please Enter a valid side: old or new')
         self.start = new_start
         self.end = new_end
 
@@ -1565,9 +1578,6 @@ class Arc2D(Arc):
                  interior: volmdlr.Point2D,
                  end: volmdlr.Point2D,
                  name: str = ''):
-        self._utd_center = False
-        self._utd_is_trigo = False
-        self._utd_angle = False
         self._center = None
         self._is_trigo = None
         self._angle = None
@@ -1585,9 +1595,8 @@ class Arc2D(Arc):
 
     @property
     def center(self):
-        if not self._utd_center:
+        if not self._center:
             self._center = self.get_center()
-            self._utd_center = True
         return self._center
 
     def get_center(self):
@@ -1612,14 +1621,13 @@ class Arc2D(Arc):
 
     @property
     def is_trigo(self):
-        if not self._utd_is_trigo:
+        if not self._is_trigo:
             self._is_trigo = self.get_arc_direction()
-            self._utd_is_trigo = True
         return self._is_trigo
 
     @property
     def clockwise_and_trigowise_paths(self):
-        if not self._utd_clockwise_and_trigowise_paths:
+        if not self._clockwise_and_trigowise_paths:
             radius_1 = self.start - self.center
             radius_2 = self.end - self.center
             radius_i = self.interior - self.center
@@ -1639,9 +1647,8 @@ class Arc2D(Arc):
 
     @property
     def angle(self):
-        if not self._utd_angle:
+        if not self._angle:
             self._angle = self.get_angle()
-            self._utd_angle = True
         return self._angle
 
     def get_angle(self):
@@ -1681,11 +1688,12 @@ class Arc2D(Arc):
         r1 = vector_start.norm()
         cp = vector_point.norm()
         if math.isclose(cp, r1, abs_tol=abs_tol):
-            if (self.start.x < self.end.x) and (self.start.y < self.end.y):
+            if self.get_arc_direction():
                 arc_angle = - volmdlr.core.clockwise_angle(vector_start,
                                                            vector_end)
                 point_angle = - volmdlr.core.clockwise_angle(vector_start,
                                                              vector_point)
+
             else:
                 arc_angle = volmdlr.core.clockwise_angle(vector_start,
                                                          vector_end)
@@ -1725,6 +1733,11 @@ class Arc2D(Arc):
         return intersection_points
 
     def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
+        if point2d.point_distance(self.start) < tol:
+            return 0
+        if point2d.point_distance(self.end) < tol:
+            return self.length()
+
         p = point2d - self.center
         u = self.start - self.center
         u.normalize()
@@ -1914,13 +1927,12 @@ class Arc2D(Arc):
             for p in [self.center, self.start, self.interior, self.end]:
                 p.plot(ax=ax, color=color, alpha=alpha)
 
-        ax.add_patch(matplotlib.patches.Arc(self.center, 2 * self.radius,
+        ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y), 2 * self.radius,
                                             2 * self.radius, angle=0,
                                             theta1=self.angle1 * 0.5 / math.pi * 360,
                                             theta2=self.angle2 * 0.5 / math.pi * 360,
                                             color=color,
                                             alpha=alpha))
-
         return ax
 
     def to_3d(self, plane_origin, x, y):
@@ -1949,6 +1961,10 @@ class Arc2D(Arc):
         self.start.rotation_inplace(center, angle)
         self.interior.rotation_inplace(center, angle)
         self.end.rotation_inplace(center, angle)
+        self._angle = None
+        self._is_trigo = None
+        self._center = None
+        self._clockwise_and_trigowise_paths = None
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -1967,6 +1983,10 @@ class Arc2D(Arc):
         self.start.translation_inplace(offset)
         self.interior.translation_inplace(offset)
         self.end.translation_inplace(offset)
+        self._angle = None
+        self._is_trigo = None
+        self._center = None
+        self._clockwise_and_trigowise_paths = None
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -2036,7 +2056,8 @@ class Arc2D(Arc):
                       self.point_at_abscissa(0.5 * abscissa),
                       split_point),
                 Arc2D(split_point,
-                      self.point_at_abscissa(1.5 * abscissa),
+                      self.point_at_abscissa((self.abscissa(self.end)
+                                              - abscissa) * 0.5 + abscissa),
                       self.end)
                 ]
 
@@ -2048,8 +2069,7 @@ class Arc2D(Arc):
             radius = self.radius - offset
 
         return FullArc2D(self.center,
-                         self.center + radius * volmdlr.Point2D(1, 0.),
-                         is_trigo=self.is_trigo)
+                         self.center + radius * volmdlr.Point2D(1, 0.))
 
     def complementary(self):
 
@@ -2427,21 +2447,11 @@ class ArcEllipse2D(Edge):
         pi = self.interior.to_3d(plane_origin, x, y)
         pe = self.end.to_3d(plane_origin, x, y)
         pc = self.center.to_3d(plane_origin, x, y)
-        if self.extra is None:
-            pextra = None
-        else:
-            pextra = self.extra.to_3d(plane_origin, x, y)
-        if ps == pe:
-            p3 = pextra
-        else:
-            p3 = pe
-        plane = volmdlr.faces.Plane3D.from_3_points(ps, pi, p3)
-        n = plane.normal
+
         major_dir = self.major_dir.to_3d(plane_origin, x, y)
         major_dir.normalize()
 
-        return ArcEllipse3D(ps, pi, pe, pc, major_dir, normal=n,
-                            name=self.name, extra=pextra)
+        return ArcEllipse3D(ps, pi, pe, pc, major_dir, name=self.name)
 
     def plot(self, ax=None, color='k', alpha=1):
         if ax is None:
@@ -2618,7 +2628,7 @@ class Line3D(Line):
             new_start = frame.new_coordinates(self.point1)
             new_end = frame.new_coordinates(self.point2)
         else:
-            raise ValueError(f'Please Enter a valid side: old or new')
+            raise ValueError('Please Enter a valid side: old or new')
         return Line3D(new_start, new_end)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
@@ -2633,7 +2643,7 @@ class Line3D(Line):
             new_start = frame.new_coordinates(self.point1)
             new_end = frame.new_coordinates(self.point2)
         else:
-            raise ValueError(f'Please Enter a valid side: old or new')
+            raise ValueError('Please Enter a valid side: old or new')
         self.point1 = new_start
         self.point2 = new_end
         self.bounding_box = self._bounding_box()
@@ -2792,9 +2802,9 @@ class LineSegment3D(LineSegment):
                 'end': self.end.to_dict()
                 }
 
-    def point_at_abscissa(self, abscissa):
-        return self.start + abscissa * (
-            self.end - self.start) / self.length()
+    # def point_at_abscissa(self, abscissa):
+    #     return self.start + abscissa * (
+    #         self.end - self.start) / self.length()
 
     def point_belongs(self, point, abs_tol=1e-7):
         distance = self.start.point_distance(point) + self.end.point_distance(
@@ -2809,8 +2819,8 @@ class LineSegment3D(LineSegment):
     def unit_normal_vector(self, abscissa=0.):
         return None
 
-    def middle_point(self):
-        return self.point_at_abscissa(0.5 * self.length())
+    # def middle_point(self):
+    #     return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
         distance, point = volmdlr.core_compiled.LineSegment3DPointDistance(
@@ -2970,7 +2980,7 @@ class LineSegment3D(LineSegment):
         elif side == 'new':
             return LineSegment3D(
                 *[frame.new_coordinates(point) for point in self.points])
-        raise ValueError(f'Please Enter a valid side: old or new')
+        raise ValueError('Please Enter a valid side: old or new')
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -2984,7 +2994,7 @@ class LineSegment3D(LineSegment):
             new_start = frame.new_coordinates(self.start)
             new_end = frame.new_coordinates(self.end)
         else:
-            raise ValueError(f'Please Enter a valid side: old or new')
+            raise ValueError('Please Enter a valid side: old or new')
         self.start = new_start
         self.end = new_end
         self.bounding_box = self._bounding_box()
@@ -3057,10 +3067,8 @@ class LineSegment3D(LineSegment):
                 s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(
                     name)
             elif type_ == 'dashed':
-                s += 'var {} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, scene);'.format(
-                    name)
-            s += '{}.color = new BABYLON.Color3{};\n'.format(name,
-                                                             tuple(color))
+                s += f'var {name} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, scene);'
+            s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(color))
         elif type_ == 'tube':
             radius = 0.03 * self.start.point_distance(self.end)
             s = 'var points = [new BABYLON.Vector3({},{},{}), new BABYLON.Vector3({},{},{})];\n'.format(
@@ -3196,8 +3204,8 @@ class LineSegment3D(LineSegment):
             dist_min = math.inf
             for p1, p2 in zip(points[0:-1], points[1:]):
                 lines.append(LineSegment3D(p1, p2))
-            for l in lines:
-                p1, p2 = self.Matrix_distance(l)
+            for line in lines:
+                p1, p2 = self.Matrix_distance(line)
                 dist = p1.point_distance(p2)
                 if dist < dist_min:
                     dist_min = dist
@@ -3374,32 +3382,53 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                                         bbox[0][1], bbox[1][1],
                                         bbox[0][2], bbox[1][2])
 
-    def look_up_table(self, resolution=20, start_parameter: float = 0,
+    def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):
         """
         Creates a table of equivalence between the parameter t (evaluation
-        of the BSplineCruve) and the cumulative distance.
-        """
-        resolution = min(resolution, int(self.length() / 1e-6))
-        points3d = []
-        ts = [start_parameter + i / resolution * (end_parameter - start_parameter)
-              for i in range(resolution + 1)]
-        points = self.curve.evaluate_list(ts)
-        for pt in points:
-            points3d.append(volmdlr.Point3D(*pt))
-        linesegments = [volmdlr.edges.LineSegment3D(p1, p2)
-                        for p1, p2 in zip(points3d[:-1], points3d[1:])]
-        distances = [0]
-        for lineseg in linesegments:
-            distances.append(lineseg.length() + distances[-1])
+        of the BSplineCurve) and the cumulative distance.
 
-        return [(ts[i], distances[i]) for i in range(resolution + 1)]
-
-    def point_at_abscissa(self, abscissa, resolution=1000):
+        :param resolution: The precision of the table. Autoadjusted by the
+            algorithm. Default value set to 20
+        :type resolution: int, optional
+        :param start_parameter: First parameter evaluated in the table.
+            Default value set to 0
+        :type start_parameter: float, optional
+        :param end_parameter: Last parameter evaluated in the table.
+            Default value set to 1
+        :type start_parameter: float, optional
+        :return: Yields a list of tuples containing the parameter and the
+            cumulated distance along the BSplineCruve3D from the evaluation of
+            start_parameter
+        :rtype: Tuple[float, float]
         """
-        Returns the vm.Point3D at a given curvilinear abscissa.
-        This is an approximation. Resolution parameter can increased
+        resolution = max(10, min(resolution, int(self.length() / 1e-4)))
+        delta_param = 1 / resolution * (end_parameter - start_parameter)
+        distance = 0
+        for i in range(resolution + 1):
+            if i == 0:
+                yield start_parameter, 0
+            else:
+                param1 = start_parameter + (i - 1) * delta_param
+                param2 = start_parameter + i * delta_param
+                point1 = volmdlr.Point3D(*self.curve.evaluate_single(param1))
+                point2 = volmdlr.Point3D(*self.curve.evaluate_single(param2))
+                distance += point1.point_distance(point2)
+                yield param2, distance
+
+    def point_at_abscissa(self, abscissa: float, resolution: int = 1000):
+        """
+        Returns the 3 dimensional point at a given curvilinear abscissa.
+        This is an approximation. Resolution parameter can be increased
         for more accurate result.
+
+        :param abscissa: The distance on the BSplineCurve3D from its start
+        :type abscissa: float
+        :param resolution: The precision of the approximation. Default value
+            set to 1000
+        :type resolution: int, optional
+        :return: The Point3D at the given curvilinear abscissa.
+        :rtype: :class:`volmdlr.Point3D`
         """
         if math.isclose(abscissa, 0, abs_tol=1e-10):
             return self.start
@@ -3407,14 +3436,14 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
             return self.end
         lut = self.look_up_table(resolution=resolution)
         if 0 < abscissa < self.length():
+            last_param = 0
             for i, (t, dist) in enumerate(lut):
                 if abscissa < dist:
-                    t1 = lut[i - 1][0]
+                    t1 = last_param
                     t2 = t
-                    # dist1 = lut[i-1][1]
-                    # dist2 = dist
                     return volmdlr.Point3D(
                         *self.curve.evaluate_single((t1 + t2) / 2))
+                last_param = t
         else:
             raise ValueError('Curvilinear abscissa is bigger than length,'
                              ' or negative')
@@ -3674,21 +3703,19 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                               name=bspline_curve.name)
 
     def cut_before(self, parameter: float):
-        # if parameter == 0:
-        if math.isclose(parameter, 0, abs_tol=1e-6):
+        # Is a value of parameter below 4e-3 a real need for precision ?
+        if math.isclose(parameter, 0, abs_tol=4e-3):
             return self
-        # elif parameter == 1:
-        elif math.isclose(parameter, 1, abs_tol=1e-6):
+        elif math.isclose(parameter, 1, abs_tol=4e-3):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
         curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
-        # if parameter == 0.:
-        if math.isclose(parameter, 0, abs_tol=1e-6):
+        # Is a value of parameter below 4e-3 a real need for precision ?
+        if math.isclose(parameter, 0, abs_tol=4e-3):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
-        # elif parameter == 1.:
-        elif math.isclose(parameter, 1, abs_tol=1e-6):
+        if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
         curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[0])
@@ -3785,6 +3812,15 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
     def triangulation(self):
         return None
 
+    def linesegment_intersection(self, linesegment: LineSegment3D):
+        points = self.discretization_points()
+        linesegments = [LineSegment3D(start, end) for start, end in zip(points[:-1], points[1:])]
+        for line_segment in linesegments:
+            intersection = line_segment.linesegment_intersection(linesegment)
+            if intersection:
+                return intersection
+        return None
+
 
 class BezierCurve3D(BSplineCurve3D):
 
@@ -3844,7 +3880,6 @@ class Arc3D(Arc):
         ymax = max(point.y for point in points)
         zmin = min(point.z for point in points)
         zmax = max(point.z for point in points)
-
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
@@ -4155,8 +4190,8 @@ class Arc3D(Arc):
             new_interior = frame.new_coordinates(self.interior.copy())
             new_end = frame.new_coordinates(self.end.copy())
         else:
-            raise ValueError(f'side value not valid, please specify'
-                             f'a correct value: \'old\' or \'new\'')
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
         return new_start, new_interior, new_end
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -4167,8 +4202,7 @@ class Arc3D(Arc):
         new_start, new_interior, new_end =\
             self.frame_mapping_parameters(frame, side)
 
-        return Arc3D(new_start, new_interior, new_end, normal=None,
-                     name=self.name)
+        return Arc3D(new_start, new_interior, new_end, name=self.name)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """

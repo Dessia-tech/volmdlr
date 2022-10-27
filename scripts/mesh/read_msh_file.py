@@ -13,9 +13,10 @@ import volmdlr.gmsh_vm
 
 file_path = 'model.msh'
 
-mesh_gmsh = volmdlr.gmsh_vm.Gmsh.from_file(file_path)
+gmsh_parser = volmdlr.gmsh_vm.GmshParser.from_file(file_path)
 
-mesh = mesh_gmsh.define_triangular_element_mesh()
+mesh = gmsh_parser.define_triangular_element_mesh()
+
 
 mesh.plot()
 
@@ -23,8 +24,9 @@ mesh.plot()
 
 file_path = 'block.msh'
 
-mesh_gmsh = volmdlr.gmsh_vm.Gmsh.from_file(file_path)
+gmsh_parser = volmdlr.gmsh_vm.GmshParser.from_file(file_path)
 
-mesh = mesh_gmsh.define_tetrahedron_element_mesh()
+mesh = gmsh_parser.define_tetrahedron_element_mesh()
+
 
 # mesh.plot()

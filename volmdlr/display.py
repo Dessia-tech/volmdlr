@@ -48,7 +48,7 @@ class DisplayMesh(dc.DessiaObject):
 
         self.points = points
         self.triangles = triangles
-        self.name = name
+        dc.DessiaObject.__init__(self, name=name)
         self._utd_point_index = False
 
     def check(self):
@@ -74,9 +74,11 @@ class DisplayMesh(dc.DessiaObject):
         ip = 0
         point_index = {}
         points = []
+        if len(meshes) == 1:
+            return cls(meshes[0].points, meshes[0].triangles)
         for mesh in meshes:
             for point in mesh.points:
-                if not point in point_index:
+                if point not in point_index:
                     point_index[point] = ip
                     ip += 1
                     points.append(point)
