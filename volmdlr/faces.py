@@ -585,7 +585,8 @@ class Surface2D(volmdlr.core.Primitive2D):
                 lines.append('Line Loop(' + str(c + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
                 line_surface.append(line_loop_account)
 
-                point_account, line_account, line_loop_account = point_account + 2 + 1, line_account + 1 + 1, line_loop_account + 1
+                point_account = point_account + 2 + 1
+                line_account, line_loop_account = line_account + 1 + 1, line_loop_account + 1
                 lines_tags = []
 
             elif isinstance(contour, (volmdlr.wires.Contour2D, volmdlr.wires.ClosedPolygon2D)):
@@ -608,7 +609,8 @@ class Surface2D(volmdlr.core.Primitive2D):
 
                 lines.append('Line Loop(' + str(c + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
                 line_surface.append(line_loop_account)
-                point_account, line_account, line_loop_account = point_account + i + 1, line_account + p + 1, line_loop_account + 1
+                point_account = point_account + i + 1
+                line_account, line_loop_account = line_account + p + 1, line_loop_account + 1
                 lines_tags = []
 
         lines.append('Plane Surface(' + str(1) + ') = {' + str(line_surface)[1:-1] + '};')
@@ -629,7 +631,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
         (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
         :type curvature_mesh_size: int, optional
-        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
         :type min_points: int, optional
         :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
         :type initial_mesh_size: float, optional
@@ -710,7 +713,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
         (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
         :type curvature_mesh_size: int, optional
-        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
         :type min_points: int, optional
         :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
         :type initial_mesh_size: float, optional
@@ -1243,7 +1247,8 @@ class Plane3D(Surface3D):
         return ax
 
     def babylon_script(self):
-        s = 'var myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", {width: 0.5, height: 0.5, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, scene);\n'
+        s = 'var myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", {width: 0.5, height: 0.5, \
+            sideOrientation: BABYLON.Mesh.DOUBLESIDE}, scene);\n'
         s += 'myPlane.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(
             self.origin[0], self.origin[1], self.origin[2])
 
@@ -2512,7 +2517,8 @@ class BSplineSurface3D(Surface3D):
                 name, points, self.u_multiplicities, self.v_multiplicities,
                 self.degree_u, self.degree_v, self.u_knots, self.v_knots)
         else:
-            script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={},weights={})\n'.format(
+            script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={}, \
+                vknots={},weights={})\n'.format(
                 name, points, self.u_multiplicities, self.v_multiplicities,
                 self.degree_u, self.degree_v, self.u_knots, self.v_knots,
                 self.weights)
@@ -2679,11 +2685,11 @@ class BSplineSurface3D(Surface3D):
         u_close = '.T.' if self.x_periodicity else '.F.'
         v_close = '.T.' if self.y_periodicity else '.F.'
 
-        content += "#{} = B_SPLINE_SURFACE_WITH_KNOTS('{}',{},{},{},.UNSPECIFIED.,{},{},.F.,{},{},{},{},.UNSPECIFIED.);\n" \
-            .format(current_id, self.name, self.degree_u, self.degree_v,
-                    point_matrix_ids, u_close, v_close,
-                    tuple(self.u_multiplicities), tuple(self.v_multiplicities),
-                    tuple(self.u_knots), tuple(self.v_knots))
+        content += "#{} = B_SPLINE_SURFACE_WITH_KNOTS('{}',{},{},{},.UNSPECIFIED.,{},{},.F.,{},{},{},{},.UNSPECIFIED.);\
+            \n".format(current_id, self.name, self.degree_u, self.degree_v,
+                        point_matrix_ids, u_close, v_close,
+                        tuple(self.u_multiplicities), tuple(self.v_multiplicities),
+                        tuple(self.u_knots), tuple(self.v_knots))
         return content, [current_id]
 
     def grid3d(self, grid2d: volmdlr.grid.Grid2D):
@@ -2751,7 +2757,8 @@ class BSplineSurface3D(Surface3D):
         # Euclidean distance
         # D=[] # distances between 3D grid points (based on points combination [equation_points])
         # for i in range(0, len(equation_points)):
-        #     D.append((points_3d[index_points[equation_points[i][0]]].point_distance(points_3d[index_points[equation_points[i][1]]]))**2)
+        #     D.append((points_3d[index_points[equation_points[i][0]]].point_distance(
+        #         points_3d[index_points[equation_points[i][1]]]))**2)
 
         # Geodesic distance
         # xx=[]
@@ -4320,8 +4327,10 @@ class Face3D(volmdlr.core.Primitive3D):
                 # point=[-contour.radius, contour.center.y, 0]
                 # lines.append('Point('+str(point_account+3)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
 
-                # lines.append('Circle('+str(line_account+1)+') = {'+str(point_account+1)+','+str(point_account+2)+','+str(point_account+3)+'};')
-                # lines.append('Circle('+str(line_account+2)+') = {'+str(point_account+3)+','+str(point_account+2)+','+str(point_account+1)+'};')
+                # lines.append('Circle('+str(line_account+1)+') = {'+str(point_account+1)+','+str(point_account+2) \
+                #              +','+str(point_account+3)+'};')
+                # lines.append('Circle('+str(line_account+2)+') = {'+str(point_account+3)+','+str(point_account+2) \
+                #              + ','+str(point_account+1)+'};')
 
                 # lines_tags.extend([line_account+1, line_account+2])
 
@@ -4354,7 +4363,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
                 lines.append('Line Loop(' + str(c + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
                 line_surface.append(line_loop_account)
-                point_account, line_account, line_loop_account = point_account + i + 1, line_account + p + 1, line_loop_account + 1
+                point_account = point_account + i + 1
+                line_account, line_loop_account = line_account + p + 1, line_loop_account + 1
                 lines_tags = []
 
         lines.append('Plane Surface(' + str(1) + ') = {' + str(line_surface)[1:-1] + '};')
@@ -6888,7 +6898,8 @@ class BSplineFace3D(Face3D):
 
     def pair_with(self, other_bspline_face3d):
         '''
-        find out how the uv parametric frames are located compared to each other, and also how grid3d can be defined respected to these directions
+        find out how the uv parametric frames are located compared to each other, and also how grid3d can be defined
+        respected to these directions
 
         Parameters
         ----------
@@ -7689,8 +7700,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                 primitive_linesegments = volmdlr.edges.LineSegment3D(
                                     discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
-                                                                                  start_point_tag=start_point_tag + point_account,
-                                                                                  end_point_tag=end_point_tag + point_account))
+                                                                                  start_point_tag=start_point_tag \
+                                                                                      + point_account,
+                                                                                  end_point_tag=end_point_tag \
+                                                                                      + point_account))
 
                             if isinstance(primitive, volmdlr.edges.LineSegment):
                                 start_point_tag = points.index(primitive.start) + 1
@@ -7726,8 +7739,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
             line_surface = []
 
-        lines.append('Surface Loop(' + str(1 + update_data['surface_loop_account']) + ') = {' + str(list(range(update_data['surface_account'] + 1,
-                                                                                                               update_data['surface_account'] + len(self.faces) + 1)))[1:-1] + '};')
+        lines.append('Surface Loop(' + str(1 + update_data['surface_loop_account']) + ') = {' \
+                     + str(list(range(update_data['surface_account'] + 1,
+                                      update_data['surface_account'] +
+                                      len(self.faces) + 1)))[1:-1] + '};')
 
         update_data['point_account'] += len(points)
         update_data['line_account'] += line_account - 1
@@ -7985,7 +8000,8 @@ class ClosedShell3D(OpenShell3D):
     @staticmethod
     def dict_intersecting_combinations(intersecting_faces_combinations, tol=1e-8):
         '''
-            :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...]) for intersecting faces.
+            :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...])
+            for intersecting faces.
             :type intersecting_faces_combinations: list of face objects combinaitons
             returns a dictionary containing as keys the combination of intersecting faces
             and as the values the resulting primitive from the two intersecting faces.
@@ -8429,9 +8445,10 @@ class ClosedShell3D(OpenShell3D):
                                         )
         faces += self.get_non_intersecting_faces(shell2,
                                                  intersecting_faces,
-                                                 intersection_method=True) + shell2.get_non_intersecting_faces(self,
-                                                                                                               intersecting_faces,
-                                                                                                               intersection_method=True)
+                                                 intersection_method=True) \
+            + shell2.get_non_intersecting_faces(self,
+                                                intersecting_faces,
+                                                intersection_method=True)
 
         new_shell = ClosedShell3D(faces)
         return [new_shell]

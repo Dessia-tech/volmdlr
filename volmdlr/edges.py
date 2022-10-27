@@ -3067,7 +3067,8 @@ class LineSegment3D(LineSegment):
                 s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(
                     name)
             elif type_ == 'dashed':
-                s += f'var {name} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, scene);'
+                s += f'var {name} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, \
+                    scene);'
             s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(color))
         elif type_ == 'tube':
             radius = 0.03 * self.start.point_distance(self.end)
@@ -4707,8 +4708,8 @@ class ArcEllipse3D(Edge):
 
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
-        def theta_A_B(s, i, e,
-                      c):  # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
+        def theta_A_B(s, i, e, c):
+            # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
             xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
                 1] - c[1], e[0] - c[0], e[1] - c[1]
             A = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],

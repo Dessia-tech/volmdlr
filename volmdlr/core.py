@@ -843,7 +843,8 @@ class BoundingBox(dc.DessiaObject):
         s += 'var DTHeight = {};\n'.format(height * 60)
         s += 'var font_type = "Arial";\n'
         s += 'var text = "{}";\n'.format(self.name)
-        s += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, scene);\n'
+        s += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, \
+            scene);\n'
         s += 'var ctx = dynamicTexture.getContext();\n'
         s += 'var size = 0.8;\n'
         s += 'ctx.font = size + "px " + font_type;\n'
@@ -1412,7 +1413,8 @@ class VolumeModel(dc.PhysicalObject):
         :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
         (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
         :type curvature_mesh_size: int, optional
-        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
         :type min_points: int, optional
         :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
         :type initial_mesh_size: float, optional
@@ -1521,7 +1523,8 @@ class VolumeModel(dc.PhysicalObject):
         :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
         (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
         :type curvature_mesh_size: int, optional
-        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
         :type min_points: int, optional
         :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
         :type initial_mesh_size: float, optional
@@ -1568,7 +1571,8 @@ class VolumeModel(dc.PhysicalObject):
         :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
         (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
         :type curvature_mesh_size: int, optional
-        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
         :type min_points: int, optional
         :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
         :type initial_mesh_size: float, optional
@@ -1642,7 +1646,8 @@ class VolumeModel(dc.PhysicalObject):
         :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
         (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
         :type curvature_mesh_size: int, optional
-        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points on that edge), defaults to None
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
         :type min_points: int, optional
         :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
         :type initial_mesh_size: float, optional
