@@ -1159,13 +1159,15 @@ class Cylinder(RevolvedProfile):
                 -self.length / 2 <= local_point.z <= self.length / 2
         )
 
-    def interpenetration_with_other_cylinder(
-            self, other_cylinder: "Cylinder", n_points: int = 1000
+    def interference_volume_with_other_cylinder(
+            self, other_cylinder: "Cylinder", n_points: int = 5000
     ) -> float:
         """
+        Estimation of the interpenetration volume using Monte-Carlo method
+
         :param other_cylinder: volmdlr Cylinder
-        :param n_points: optional parameter used for the discretization in order to analyse the interpenetration
-        :return: a value between 0 (no interpenetration) and 1 (self cylinder is fully include into other_cylinder)
+        :param n_points: optional parameter used for the number of random point used to discretize the cylinder
+        :return: an estimation of the interference volume
         """
         return (
                 len(
@@ -1176,7 +1178,7 @@ class Cylinder(RevolvedProfile):
                     ]
                 )
                 / n_points
-        )
+        ) * self.volume()
 
 
 class Cone(RevolvedProfile):
