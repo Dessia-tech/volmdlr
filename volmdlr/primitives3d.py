@@ -1169,16 +1169,24 @@ class Cylinder(RevolvedProfile):
         :param n_points: optional parameter used for the number of random point used to discretize the cylinder
         :return: an estimation of the interference volume
         """
+
+        # doing the discretization on the smallest cylinder to have better precision
+        if self.volume() < other_cylinder.volume():
+            smaller_cylinder = self
+        else:
+            smaller_cylinder = other_cylinder
+            other_cylinder = self
+
         return (
                 len(
                     [
                         point
-                        for point in (self.random_point_inside() for _ in range(n_points))
+                        for point in (smaller_cylinder.random_point_inside() for _ in range(n_points))
                         if other_cylinder.is_point_inside(point)
                     ]
                 )
                 / n_points
-        ) * self.volume()
+        ) * smaller_cylinder.volume()
 
 
 class Cone(RevolvedProfile):
