@@ -1828,8 +1828,8 @@ class Contour2D(Contour, Wire2D):
             ax = self.plot()
             line.plot(ax=ax)
             [i[0].plot(ax=ax) for i in intersections]
-            self.save_to_file('/home/axel/Bureau/contour2d')
-            line.save_to_file('/home/axel/Bureau/line2d')
+            self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step')
+            line.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step')
             raise NotImplementedError(
                 '{} intersections not supported yet'.format(
                     len(intersections)))

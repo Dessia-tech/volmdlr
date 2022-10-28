@@ -661,39 +661,54 @@ class Surface3D(DessiaObject):
                        - last_primitive.end.y)
         print(f'x_periodicity: {self.x_periodicity}')
         print(not (math.isclose(delta_x1, 0,
-                                      abs_tol=5e-5)))
-        # if self.x_periodicity \
-        #         and not (math.isclose(delta_x1, 0,
-        #                               abs_tol=5e-5)
-        #                  or math.isclose(delta_x2, 0,
-        #                                  abs_tol=5e-5)):
+                                      abs_tol=5e-5)
+                         or math.isclose(delta_x2, 0,
+                                         abs_tol=5e-5)))
         if self.x_periodicity \
                 and not (math.isclose(delta_x1, 0,
-                                      abs_tol=5e-5)):
+                                      abs_tol=5e-5)
+                         or math.isclose(delta_x2, 0,
+                                         abs_tol=5e-5)):
+        # if self.x_periodicity \
+        #         and not (math.isclose(delta_x1, 0,
+        #                               abs_tol=5e-5)):
             delta_x1 = delta_x1 % self.x_periodicity
             delta_x2 = delta_x2 % self.x_periodicity
-            # if math.isclose(delta_x1, self.x_periodicity,
-            #                 abs_tol=1e-4):
-            #     delta_x1 = 0.
-            # if math.isclose(delta_x2, self.x_periodicity,
-            #                 abs_tol=1e-4):
-            #     delta_x2 = 0.
+            print(f'Delta x1: {delta_x1} - Delta x2: {delta_x2}')
+            if math.isclose(delta_x1, self.x_periodicity,
+                            abs_tol=1e-4):
+                delta_x1 = 0.
+                print(f'Delta x1: {delta_x1} - Delta x2: {delta_x2}')
+            if math.isclose(delta_x2, self.x_periodicity,
+                            abs_tol=1e-4):
+                delta_x2 = 0.
+                print(f'Delta x1: {delta_x1} - Delta x2: {delta_x2}')
+            delta = last_primitive.end - primitives[0].start
             for prim in primitives:
                 # prim.start.x = abs(self.x_periodicity
                 #                    - prim.start.x)
                 # prim.end.x = abs(self.x_periodicity
                 #                  - prim.end.x)
-                if prim.start.x > 0:
-                    prim.start.x = prim.start.x - self.x_periodicity
-                elif prim.start.x < 0:
-                    prim.start.x = prim.start.x + self.x_periodicity
-                if prim.end.x > 0:
-                    prim.end.x = prim.end.x - self.x_periodicity
-                elif prim.end.x < 0:
-                    prim.end.x = prim.end.x + self.x_periodicity
-
-                print(f'Changed {prim}: New x start {prim.start.x}')
-                print(f'Changed {prim}: New x end {prim.end.x}')
+                # prim.start.x = delta
+                # print(f'Changed {prim}: New x start {prim.start.x}')
+                # prim.end.x = delta
+                # print(f'Changed {prim}: New x end {prim.end.x}')
+                temp = prim.translation(delta)
+                prim.start.x = temp.start.x
+                prim.end.x = temp.end.x
+                print(f'New primitive : Start - {prim.start} End - {prim.end}')
+                # if prim.start.x > 0:
+                #     prim.start.x = prim.start.x - self.x_periodicity
+                #     print(f'Changed {prim}: New x start {prim.start.x}')
+                # elif prim.start.x < 0:
+                #     prim.start.x = prim.start.x + self.x_periodicity
+                #     print(f'Changed {prim}: New x start {prim.start.x}')
+                # if prim.end.x > 0:
+                #     prim.end.x = prim.end.x - self.x_periodicity
+                #     print(f'Changed {prim}: New x end {prim.end.x}')
+                # elif prim.end.x < 0:
+                #     prim.end.x = prim.end.x + self.x_periodicity
+                #     print(f'Changed {prim}: New x end {prim.end.x}')
         # if self.y_periodicity \
         #         and not (math.isclose(delta_y1, 0,
         #                               abs_tol=5e-5)
@@ -1240,11 +1255,13 @@ class CylindricalSurface3D(Surface3D):
         x, y, z = self.frame.new_coordinates(point3d)
         if y == 0.0:
             y = -0.0
+        elif y == -0.0:
+            y = 0.0
         # print(volmdlr.Point3D(x, y, z))
-        u1 = x / self.radius
-        u2 = y / self.radius
-        # u1 = x
-        # u2 = y
+        # u1 = x / self.radius
+        # u2 = y / self.radius
+        u1 = x
+        u2 = y
         # theta = volmdlr.core.sin_cos_angle(u1, u2)
         theta = math.atan2(u2, u1)
         # print(f'{point3d} - {volmdlr.Point2D(theta, z)}')
@@ -1306,7 +1323,9 @@ class CylindricalSurface3D(Surface3D):
     def fullarc3d_to_2d(self, fullarc3d):
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             p1 = self.point3d_to_2d(fullarc3d.start)
-            return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.X2D)]
+            p2 = p1 + volmdlr.TWO_PI * volmdlr.X2D
+            print(f'FullArc3D : {p1} - {p2}')
+            return [vme.LineSegment2D(p1, p2)]
         else:
             print(fullarc3d.normal, self.frame.w)
             raise ValueError('Impossible!')
@@ -1333,6 +1352,8 @@ class CylindricalSurface3D(Surface3D):
         list_primitives = []
         last_p1x = points[0].x
         for p1, p2 in zip(points[:-1], points[1:]):
+            if p1 == p2:
+                continue
             if math.isclose(p1.x, math.pi, abs_tol=1E-5) and (p1.x - p2.x) > math.pi:
                 p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
             elif math.isclose(p1.x, -math.pi, abs_tol=1E-5) and (p1.x - p2.x) < -math.pi:
@@ -1341,6 +1362,14 @@ class CylindricalSurface3D(Surface3D):
                 p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
             elif math.isclose(p2.x, -math.pi, abs_tol=1E-5) and (p1.x - last_p1x) > 0:
                 p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
+            # if math.isclose(p1.x, volmdlr.TWO_PI, abs_tol=1E-5) and (p1.x - p2.x) < 0:
+            #     p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
+            # elif math.isclose(p1.x, 0, abs_tol=1E-5) and (p1.x - p2.x) > 0:
+            #     p1 = p1 + volmdlr.TWO_PI * volmdlr.X2D
+            # if math.isclose(p2.x, volmdlr.TWO_PI, abs_tol=1E-5) and (p1.x - last_p1x) < 0:
+            #     p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
+            # elif math.isclose(p2.x, 0, abs_tol=1E-5) and (p1.x - last_p1x) > 0:
+            #     p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
             print(p1, p2)
             list_primitives.append(vme.LineSegment2D(p1, p2))
             last_p1x = p1.x
