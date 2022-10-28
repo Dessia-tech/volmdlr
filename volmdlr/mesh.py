@@ -131,7 +131,7 @@ class TriangularElement(vmw.Triangle):
         
         self._line_segments = None
 
-        # self.area = self._area()
+        self.area = self._area()
         
         # vmw.Triangle.__init__(self, points)
         
