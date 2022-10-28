@@ -48,7 +48,7 @@ class TestCylinder(unittest.TestCase):
         dist_1_2 = self.cylinder1.min_distance_to_other_cylinder(self.cylinder2)
         dist_1_3 = self.cylinder1.min_distance_to_other_cylinder(self.cylinder3)
 
-        self.assertAlmostEqual(dist_1_2, 0., delta=1e-5)
+        self.assertAlmostEqual(dist_1_2, 0.0, delta=1e-5)
         self.assertAlmostEqual(dist_1_3, 0.095, delta=1e-5)
 
     def test_is_intersecting_other_cylinder(self):
