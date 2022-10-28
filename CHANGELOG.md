@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc2D: split (how to choose the interior point)
 * Wire: extract_primitives (consider point1 and point2 belong to the same primitive, REMOVE Contour.extract_primitives)
 * LineSegment: abcissa (consider point2d == arc2d.start/end)
+* Cylinder: point_belongs
 
 
 ### Performance improvements
