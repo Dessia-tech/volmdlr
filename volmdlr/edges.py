@@ -4442,7 +4442,7 @@ class Arc3D(Arc):
                                             arc2d.angle1, arc2d.angle2)]
 
 
-    def to_step(self, current_id, **kwargs):
+    def to_step(self, current_id):
         if self.angle >= math.pi:
             l = self.length()
             arc1, arc2 = self.split(self.point_at_abscissa(0.33 * l))
