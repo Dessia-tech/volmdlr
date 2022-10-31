@@ -7,15 +7,26 @@ import volmdlr.step
 
 # import volmdlr.cloud as vmcd
 
+
 for step_file in [
+    #CylindricalSurfaces
+    # 'cylinder-test.step',
+    # 'read_test1.step',
+    'read_test3.step',
+    'read_test7.step',
+    # 'read_test8.step',
+    'read_test10.step',
+    #ToroidalSurface
+    # 'read_test9.step',
     # 'tore1.step',
     # 'iter8finaldesign.stp',
     # 'cone1.step',
     # 'cone2.step',
-    'cylinder-test.step',
-    # 'block.step',
-    'read_test3.step',
-    'read_test2.step'
+
+    # # 'block.step',
+    # # 'read_test6.step',
+
+
     # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
 ]:
     print('Reading step file: ', step_file)
@@ -23,9 +34,9 @@ for step_file in [
     step = volmdlr.step.Step.from_file(filepath=step_file)
 
     model = step.to_volume_model()
-    for primitive in model.primitives:
-        # primitive.color = (1, 0.2, 0.1)
-        primitive.alpha = 0.98
+    # for primitive in model.primitives:
+    #     # primitive.color = (1, 0.2, 0.1)
+    #     primitive.alpha = 0.98
     model.babylonjs()
     # assert len(model.primitives) > 0.
     # model.to_step(step_file + '_reexport')

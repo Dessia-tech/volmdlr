@@ -654,7 +654,7 @@ class Surface3D(DessiaObject):
                        - last_primitive.end.x)
         delta_x2 = abs(primitives[-1].end.x
                        - last_primitive.end.x)
-        print(f'Delta x1: {delta_x1} - Delta x2: {delta_x2}')
+        print(f'1 - Delta x1: {delta_x1} - Delta x2: {delta_x2}')
         delta_y1 = abs(primitives[0].start.y
                        - last_primitive.end.y)
         delta_y2 = abs(primitives[-1].end.y
@@ -669,30 +669,24 @@ class Surface3D(DessiaObject):
                                       abs_tol=5e-5)
                          or math.isclose(delta_x2, 0,
                                          abs_tol=5e-5)):
-        # if self.x_periodicity \
-        #         and not (math.isclose(delta_x1, 0,
-        #                               abs_tol=5e-5)):
+
             delta_x1 = delta_x1 % self.x_periodicity
             delta_x2 = delta_x2 % self.x_periodicity
-            print(f'Delta x1: {delta_x1} - Delta x2: {delta_x2}')
+            print(f'2 - Delta x1: {delta_x1} - Delta x2: {delta_x2}')
             if math.isclose(delta_x1, self.x_periodicity,
                             abs_tol=1e-4):
                 delta_x1 = 0.
-                print(f'Delta x1: {delta_x1} - Delta x2: {delta_x2}')
+                print(f'3 - Delta x1: {delta_x1} - Delta x2: {delta_x2}')
             if math.isclose(delta_x2, self.x_periodicity,
                             abs_tol=1e-4):
                 delta_x2 = 0.
-                print(f'Delta x1: {delta_x1} - Delta x2: {delta_x2}')
+                print(f'4 - Delta x1: {delta_x1} - Delta x2: {delta_x2}')
             delta = last_primitive.end - primitives[0].start
             for prim in primitives:
-                # prim.start.x = abs(self.x_periodicity
-                #                    - prim.start.x)
-                # prim.end.x = abs(self.x_periodicity
-                #                  - prim.end.x)
-                # prim.start.x = delta
-                # print(f'Changed {prim}: New x start {prim.start.x}')
-                # prim.end.x = delta
-                # print(f'Changed {prim}: New x end {prim.end.x}')
+                # if delta_x1 == 0 and math.isclose(delta_x2, math.pi, abs_tol=1E-2):
+                #     temp = prim.start.x
+                #     prim.start.x = prim.end.x
+                #     prim.end.x = temp
                 temp = prim.translation(delta)
                 prim.start.x = temp.start.x
                 prim.end.x = temp.end.x
@@ -709,14 +703,11 @@ class Surface3D(DessiaObject):
                 # elif prim.end.x < 0:
                 #     prim.end.x = prim.end.x + self.x_periodicity
                 #     print(f'Changed {prim}: New x end {prim.end.x}')
-        # if self.y_periodicity \
-        #         and not (math.isclose(delta_y1, 0,
-        #                               abs_tol=5e-5)
-        #                  or math.isclose(delta_y2, 0,
-        #                                  abs_tol=5e-5)):
         if self.y_periodicity \
                 and not (math.isclose(delta_y1, 0,
-                                      abs_tol=5e-5)):
+                                      abs_tol=5e-5)
+                         or math.isclose(delta_y2, 0,
+                                         abs_tol=5e-5)):
             delta_y1 = delta_y1 % self.y_periodicity
             delta_y2 = delta_y2 % self.y_periodicity
             if math.isclose(delta_y1, self.y_periodicity,
@@ -725,13 +716,17 @@ class Surface3D(DessiaObject):
             if math.isclose(delta_y2, self.y_periodicity,
                             abs_tol=1e-4):
                 delta_y2 = 0.
+            delta = last_primitive.end - primitives[0].start
             for prim in primitives:
-                prim.start.y = abs(self.y_periodicity
-                                   - prim.start.y)
-                prim.end.y = abs(self.y_periodicity
-                                 - prim.end.y)
-                print(f'Changed {prim}: New y start {prim.start.y}')
-                print(f'Changed {prim}: New y end {prim.end.y}')
+                temp = prim.translation(delta)
+                prim.start.y = temp.start.y
+                prim.end.y = temp.end.y
+                print(f'New primitive : Start - {prim.start} End - {prim.end}')
+            # for prim in primitives:
+            #     prim.start.y = abs(self.y_periodicity
+            #                        - prim.start.y)
+            #     prim.end.y = abs(self.y_periodicity
+            #                      - prim.end.y)
 
         return primitives, delta_x1, delta_x2, delta_y1, delta_y2
 
@@ -748,8 +743,6 @@ class Surface3D(DessiaObject):
                 primitive3d.__class__.__name__.lower())
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
-                # print(primitives[-1].end)
-                # print("____________________________________________")
 
                 if primitives is None:
                     print('primitives is None')
@@ -771,7 +764,7 @@ class Surface3D(DessiaObject):
                         print('is close')
                         pass
                     elif (math.isclose(delta_x2, 0., abs_tol=1e-3)
-                          and math.isclose(delta_y2, 0., abs_tol=1e-3)
+                          # and math.isclose(delta_y2, 0., abs_tol=1e-3)
                           and math.isclose(dist2, 0, abs_tol=5e-5)):
                         primitives = [p.reverse() for p in primitives[::-1]]
                         print(f'Reversed{primitives}')
@@ -1253,9 +1246,15 @@ class CylindricalSurface3D(Surface3D):
 
     def point3d_to_2d(self, point3d):
         x, y, z = self.frame.new_coordinates(point3d)
-        if y == 0.0:
-            y = -0.0
-        elif y == -0.0:
+        # if x == -0.0:
+        #     x = 0.0
+        # elif x == 0:
+        # #     x =-0.0
+        # if y == 0.0:
+        #     y = -0.0
+        # elif y == -0.0:
+        #     y = 0.0
+        if y == -0.0:
             y = 0.0
         # print(volmdlr.Point3D(x, y, z))
         # u1 = x / self.radius
@@ -1264,16 +1263,117 @@ class CylindricalSurface3D(Surface3D):
         u2 = y
         # theta = volmdlr.core.sin_cos_angle(u1, u2)
         theta = math.atan2(u2, u1)
+        print(theta, z)
+        if y == 0:
+            if theta > 0 and math.copysign(1, y) < 0:
+                print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+                theta = -math.pi
+                print(theta, z)
+                print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+            elif theta < 0 and math.copysign(1, y) > 0:
+                print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+                theta = math.pi
+                print(theta, z)
+                print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
         # print(f'{point3d} - {volmdlr.Point2D(theta, z)}')
         return volmdlr.Point2D(theta, z)
 
     def arc3d_to_2d(self, arc3d):
-        print(arc3d.start, arc3d.end)
+        # print(arc3d.start, arc3d.end)
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # arc3d.plot()
+
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        # angle = abs(start.x-end.x)
+        middle = arc3d.middle_point()
+        angle2d = abs(start.x - end.x)
+        angle3d = arc3d.angle
+        middle_point_2d = self.point3d_to_2d(middle)
+        #Verify if start or end point should be -pi
+        middle_point_x, middle_point_y, _ = self.frame.new_coordinates(middle)
+        if math.isclose(abs(start.x), math.pi, abs_tol=1E-5):
+            if middle_point_y < 0:
+                start = volmdlr.Point2D(-math.pi, start.y)
+                print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+                print('Arc needed change')
+                print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+            else:
+                print('SHOULD IMPLEMENT FOR +PI AS WELL')
+        if math.isclose(abs(end.x), math.pi, abs_tol=1E-5):
+            if middle_point_y < 0:
+                end = volmdlr.Point2D(-math.pi, end.y)
+                print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+                print('Arc needed change')
+                print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+            else:
+                print('SHOULD IMPLEMENT FOR +PI AS WELL')
+        if arc3d.is_trigo:
+            if not math.isclose(angle2d, angle3d, abs_tol=1E-5):
+                diff = end.x - start.x
+                if diff < 0:
+                    print('**************************************************')
+                    print(f'Plus angle : {start} - {end}')
+                    print('**************************************************')
+                    end = start + volmdlr.Point2D(arc3d.angle, 0)
+                elif diff > 0:
+                    print('**************************************************')
+                    print(f'Minus angle : {start} - {end}')
+                    print('**************************************************')
+                    end = start + volmdlr.Point2D(-arc3d.angle, 0)
+
+            if math.isclose(angle3d, math.pi, abs_tol=1E-5) and end.x != 0:
+            #     if start.x == 0.5*math.pi and middle_point_x < 0:
+            #         end = start + volmdlr.Point2D(math.pi, 0)
+            #     elif start.x == -0.5*math.pi and middle_point_x < 0:
+            #         end = start + volmdlr.Point2D(-math.pi, 0)
+            #     elif start.x < 0 and middle_point_y > 0 :
+            #         end = start + volmdlr.Point2D(-math.pi, 0)
+            #         print(f'NEW END : {end}')
+            #     elif start.x > 0 and middle_point_y > 0:
+            #         end = start + volmdlr.Point2D(math.pi, 0)
+            #         print(f'NEW END : {end}')
+
+                if start.x < 0 and (middle_point_2d.x < -0.5*math.pi or middle_point_2d.x > 0.5*math.pi):
+                    end = start + volmdlr.Point2D(-math.pi, 0)
+                elif start.x > 0 and (middle_point_2d.x < -0.5*math.pi or middle_point_2d.x > 0.5*math.pi):
+                    end = start + volmdlr.Point2D(math.pi, 0)
+
+                diff = end.x - start.x
+                print('###################################################################')
+                # start3d = self.frame.new_coordinates(arc3d.start)
+                # end3d = self.frame.new_coordinates(arc3d.end)
+                # print('Points in 3D')
+                # print(f'Start : {start3d} End : {end3d}')
+                # print(f'{self.frame.new_coordinates(arc3d.interior)}')
+                # print(f'Middle point : {self.frame.new_coordinates(arc3d.middle_point())}')
+                # print(f'Frame : {arc3d.frame}')
+                # print(f'Arc points : {arc3d.points}')
+                # print(arc3d.reverse().points)
+                # print(arc3d.clockwise_and_trigowise_paths)
+                print(f'Get arc direction :{arc3d.get_arc_direction()}')
+                # print(f'Get normal : {arc3d.get_normal()}')
+                # print(f'Normal : {arc3d.normal}')
+                # print(diff)
+                # print(start, end)
+                print('###################################################################')
+                # if diff <= 0:
+                #     end = start + volmdlr.Point2D(math.pi, 0)
+                #     print(f'Diff < 0 : {start, end}')
+                # else:
+                #     end = start + volmdlr.Point2D(-math.pi, 0)
+                #     print(f'Else : {start, end}')
+
+
+        #     if start.x > 0 and end.x < 0:
+        #         temp = start
+        #         start = end
+        #         end = temp
+        #     print('**************************************************')
+        #     print(f'Interior2d : {interior} - Interior3d : {arc3d.interior}')
+        #     print('**************************************************')
         # if arc3d.is_trigo:
-        # end = start + volmdlr.Point2D(arc3d.angle, 0)
+        #     end = start + volmdlr.Point2D(arc3d.angle, 0)
         # else:
         #     end = start + volmdlr.Point2D(-arc3d.angle, 0)
         # interior = self.point3d_to_2d(arc3d.interior)
@@ -1281,7 +1381,10 @@ class CylindricalSurface3D(Surface3D):
         #     end = start + volmdlr.Point2D(arc3d.angle, 0)
         # else:
         #     end = start - volmdlr.Point2D(arc3d.angle, 0)
-        print(start, end)
+        # print('**************************************************')
+        # print(f'Right angle: {angle3d} - got : {angle2d}')
+        # print(start, end)
+        # print('**************************************************')
         return [vme.LineSegment2D(start, end)]
 
     def linesegment3d_to_2d(self, linesegment3d):
