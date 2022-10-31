@@ -4454,8 +4454,7 @@ class Arc3D(Arc):
                 arcs2_id[0] + 1)
             content += arc2_content + arc3_content
             return content, [arcs1_id[0], arcs2_id[0], arcs3_id[0]]
-        else:
-            return self.to_step_without_splitting(current_id)
+        return self.to_step_without_splitting(current_id)
 
     def to_step_without_splitting(self, current_id, surface_id=None):
         u = self.start - self.center

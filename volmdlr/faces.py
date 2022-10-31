@@ -7075,7 +7075,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         step_content = ''
         face_ids = []
         for face in self.faces:
-            face_content, face_sub_ids = face.to_step(current_id)
+            if isinstance(face, Face3D):
+                face_content, face_sub_ids = face.to_step(current_id)
+            else:
+                face_content, face_sub_ids = face.to_step(current_id)
+                face_sub_ids = [face_sub_ids]
             step_content += face_content
             face_ids.extend(face_sub_ids)
             current_id = max(face_sub_ids) + 1
