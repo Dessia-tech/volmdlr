@@ -1490,6 +1490,10 @@ class Contour2D(Contour, Wire2D):
         return self._edge_polygon
 
     def _get_edge_polygon(self):
+
+        if len(self.primitives) == 1 and self.primitives[0].start == self.primitives[0].end:
+            return ClosedPolygon2D(self.primitives[0].discretization_points(number_points=200))
+
         points = []
         for edge in self.primitives:
 

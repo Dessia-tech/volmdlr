@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Wire: extract_primitives (consider point1 and point2 belong to the same primitive, REMOVE Contour.extract_primitives)
 * LineSegment: abcissa (consider point2d == arc2d.start/end)
 * Contour2D: cut_by_wire
+* Contour2D: point_belongs (bug when contour has only one primitive, like FullArc2D)
 
 
 ### Performance improvements
