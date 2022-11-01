@@ -11,18 +11,26 @@ import volmdlr.step
 for step_file in [
     #CylindricalSurfaces
     # 'cylinder-test.step',
-    # 'read_test1.step',
-    'read_test3.step',
-    'read_test7.step',
+    # 'read_test3.step',
+    # 'read_test4.step',
+    # 'read_test6.step',
+    # 'read_test7.step',
     # 'read_test8.step',
     'read_test10.step',
+    # 'pipe.step',
+    # 'bracket2.step',
+    # 'angle_bar.step'
+    # 'Video_Version.step'
     #ToroidalSurface
+    # 'read_test5.step',
     # 'read_test9.step',
+    # 'read_test11.step',
     # 'tore1.step',
     # 'iter8finaldesign.stp',
     # 'cone1.step',
     # 'cone2.step',
-
+    #bspline
+    # 'Hollow_Loft.step'
     # # 'block.step',
     # # 'read_test6.step',
 

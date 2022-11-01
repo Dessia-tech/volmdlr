@@ -1588,6 +1588,10 @@ class Arc2D(Arc):
             center = volmdlr.Point2D(*npy.linalg.solve(A, b))
         return center
 
+    def reverse(self):
+        return self.__class__(self.end.copy(),
+                              self.interior.copy(),
+                              self.start.copy())
     @property
     def is_trigo(self):
         if not self._is_trigo:
@@ -2072,6 +2076,7 @@ class FullArc2D(Arc2D):
 
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
                  name: str = ''):
+        self.start_end = start_end
         self.__center = center
         interior = start_end.rotation(center, math.pi)
         Arc2D.__init__(self, start=start_end, interior=interior,
@@ -4139,7 +4144,11 @@ class Arc3D(Arc):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points():
+        # ax = self.start.plot()
+        # self.end.plot(ax)
+        for px, py, pz in self.discretization_points(number_points=25):
+            # px, py, pz = point
+            # point.plot(ax)
             x.append(px)
             y.append(py)
             z.append(pz)
@@ -4890,5 +4899,12 @@ class ArcEllipse3D(Edge):
         return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(
             name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
 
+    def point_at_abscissa(self, abscissa):
+        if self.is_trigo:
+            return self.start.rotation(self.center, self.normal,
+                                       abscissa / self.Gradius)
+        else:
+            return self.start.rotation(self.center, self.normal,
+                                       -abscissa / self.Gradius)
     def triangulation(self):
         return None

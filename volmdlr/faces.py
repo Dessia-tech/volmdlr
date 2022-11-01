@@ -622,6 +622,10 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
+            outer_contour3d = self.contour2d_to_3d(outer_contour2d)
+            if isinstance(self, CylindricalSurface3D):
+                contours3d[0].plot()
+                outer_contour3d.plot()
             inner_contours2d = []
         elif lc3d > 1:
             area = -1
@@ -764,25 +768,25 @@ class Surface3D(DessiaObject):
                         print('is close')
                         pass
                     elif (math.isclose(delta_x2, 0., abs_tol=1e-3)
-                          # and math.isclose(delta_y2, 0., abs_tol=1e-3)
+                          and math.isclose(delta_y2, 0., abs_tol=1e-3)
                           and math.isclose(dist2, 0, abs_tol=5e-5)):
                         primitives = [p.reverse() for p in primitives[::-1]]
                         print(f'Reversed{primitives}')
                     else:
-                        ax2 = contour3d.plot()
-                        primitive3d.plot(ax=ax2, color='r')
-                        last_primitive3d.plot(ax=ax2, color='b')
-                        # self.plot(ax=ax2)
-
-                        ax = last_primitive.plot(color='b', plot_points=True)
-                        # primitives[0].plot(ax=ax, color='r', plot_points=True)
-                        # primitives[-1].plot(ax=ax, color='r', plot_points=True)
-                        for p in primitives:
-                            p.plot(ax=ax, color='r', plot_points=True)
-                        if self.x_periodicity:
-                            vme.Line2D(volmdlr.Point2D(self.x_periodicity, 0),
-                                       volmdlr.Point2D(self.x_periodicity, 1)) \
-                                .plot(ax=ax)
+                        # ax2 = contour3d.plot()
+                        # primitive3d.plot(ax=ax2, color='r')
+                        # last_primitive3d.plot(ax=ax2, color='b')
+                        # # self.plot(ax=ax2)
+                        #
+                        # ax = last_primitive.plot(color='b', plot_points=True)
+                        # # primitives[0].plot(ax=ax, color='r', plot_points=True)
+                        # # primitives[-1].plot(ax=ax, color='r', plot_points=True)
+                        # for p in primitives:
+                        #     p.plot(ax=ax, color='r', plot_points=True)
+                        # if self.x_periodicity:
+                        #     vme.Line2D(volmdlr.Point2D(self.x_periodicity, 0),
+                        #                volmdlr.Point2D(self.x_periodicity, 1)) \
+                        #         .plot(ax=ax)
                         print('Primitives not following each other in contour:')
                         print('Surface 3D:', self)
                         print('3D primitive in red:', primitive3d)
@@ -1245,146 +1249,70 @@ class CylindricalSurface3D(Surface3D):
         return self.frame.old_coordinates(p)
 
     def point3d_to_2d(self, point3d):
+        """
+        Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a cartesian coordinates point at a
+        CylindricalSurface3D.
+        :param point3d: Point at the CylindricalSuface3D
+        :type point3d: volmdlr.Point3D
+        """
         x, y, z = self.frame.new_coordinates(point3d)
-        # if x == -0.0:
-        #     x = 0.0
-        # elif x == 0:
-        # #     x =-0.0
-        # if y == 0.0:
-        #     y = -0.0
-        # elif y == -0.0:
-        #     y = 0.0
         if y == -0.0:
             y = 0.0
-        # print(volmdlr.Point3D(x, y, z))
         # u1 = x / self.radius
         # u2 = y / self.radius
-        u1 = x
-        u2 = y
-        # theta = volmdlr.core.sin_cos_angle(u1, u2)
-        theta = math.atan2(u2, u1)
-        print(theta, z)
-        if y == 0:
-            if theta > 0 and math.copysign(1, y) < 0:
-                print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-                theta = -math.pi
-                print(theta, z)
-                print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-            elif theta < 0 and math.copysign(1, y) > 0:
-                print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-                theta = math.pi
-                print(theta, z)
-                print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-        # print(f'{point3d} - {volmdlr.Point2D(theta, z)}')
+        theta = math.atan2(y, x)
         return volmdlr.Point2D(theta, z)
 
     def arc3d_to_2d(self, arc3d):
-        # print(arc3d.start, arc3d.end)
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111, projection='3d')
-        # arc3d.plot()
-
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        middle = arc3d.middle_point()
-        angle2d = abs(start.x - end.x)
-        angle3d = arc3d.angle
-        middle_point_2d = self.point3d_to_2d(middle)
-        #Verify if start or end point should be -pi
-        middle_point_x, middle_point_y, _ = self.frame.new_coordinates(middle)
-        if math.isclose(abs(start.x), math.pi, abs_tol=1E-5):
-            if middle_point_y < 0:
-                start = volmdlr.Point2D(-math.pi, start.y)
-                print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
-                print('Arc needed change')
-                print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
-            else:
-                print('SHOULD IMPLEMENT FOR +PI AS WELL')
-        if math.isclose(abs(end.x), math.pi, abs_tol=1E-5):
-            if middle_point_y < 0:
-                end = volmdlr.Point2D(-math.pi, end.y)
-                print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
-                print('Arc needed change')
-                print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
-            else:
-                print('SHOULD IMPLEMENT FOR +PI AS WELL')
-        if arc3d.is_trigo:
-            if not math.isclose(angle2d, angle3d, abs_tol=1E-5):
-                diff = end.x - start.x
-                if diff < 0:
-                    print('**************************************************')
-                    print(f'Plus angle : {start} - {end}')
-                    print('**************************************************')
-                    end = start + volmdlr.Point2D(arc3d.angle, 0)
-                elif diff > 0:
-                    print('**************************************************')
-                    print(f'Minus angle : {start} - {end}')
-                    print('**************************************************')
-                    end = start + volmdlr.Point2D(-arc3d.angle, 0)
-
-            if math.isclose(angle3d, math.pi, abs_tol=1E-5) and end.x != 0:
-            #     if start.x == 0.5*math.pi and middle_point_x < 0:
-            #         end = start + volmdlr.Point2D(math.pi, 0)
-            #     elif start.x == -0.5*math.pi and middle_point_x < 0:
-            #         end = start + volmdlr.Point2D(-math.pi, 0)
-            #     elif start.x < 0 and middle_point_y > 0 :
-            #         end = start + volmdlr.Point2D(-math.pi, 0)
-            #         print(f'NEW END : {end}')
-            #     elif start.x > 0 and middle_point_y > 0:
-            #         end = start + volmdlr.Point2D(math.pi, 0)
-            #         print(f'NEW END : {end}')
-
-                if start.x < 0 and (middle_point_2d.x < -0.5*math.pi or middle_point_2d.x > 0.5*math.pi):
-                    end = start + volmdlr.Point2D(-math.pi, 0)
-                elif start.x > 0 and (middle_point_2d.x < -0.5*math.pi or middle_point_2d.x > 0.5*math.pi):
-                    end = start + volmdlr.Point2D(math.pi, 0)
-
-                diff = end.x - start.x
-                print('###################################################################')
-                # start3d = self.frame.new_coordinates(arc3d.start)
-                # end3d = self.frame.new_coordinates(arc3d.end)
-                # print('Points in 3D')
-                # print(f'Start : {start3d} End : {end3d}')
-                # print(f'{self.frame.new_coordinates(arc3d.interior)}')
-                # print(f'Middle point : {self.frame.new_coordinates(arc3d.middle_point())}')
-                # print(f'Frame : {arc3d.frame}')
-                # print(f'Arc points : {arc3d.points}')
-                # print(arc3d.reverse().points)
-                # print(arc3d.clockwise_and_trigowise_paths)
-                print(f'Get arc direction :{arc3d.get_arc_direction()}')
-                # print(f'Get normal : {arc3d.get_normal()}')
-                # print(f'Normal : {arc3d.normal}')
-                # print(diff)
-                # print(start, end)
-                print('###################################################################')
-                # if diff <= 0:
-                #     end = start + volmdlr.Point2D(math.pi, 0)
-                #     print(f'Diff < 0 : {start, end}')
-                # else:
-                #     end = start + volmdlr.Point2D(-math.pi, 0)
-                #     print(f'Else : {start, end}')
-
-
-        #     if start.x > 0 and end.x < 0:
-        #         temp = start
-        #         start = end
-        #         end = temp
-        #     print('**************************************************')
-        #     print(f'Interior2d : {interior} - Interior3d : {arc3d.interior}')
-        #     print('**************************************************')
-        # if arc3d.is_trigo:
-        #     end = start + volmdlr.Point2D(arc3d.angle, 0)
-        # else:
-        #     end = start + volmdlr.Point2D(-arc3d.angle, 0)
-        # interior = self.point3d_to_2d(arc3d.interior)
-        # if start.x < interior.x:
-        #     end = start + volmdlr.Point2D(arc3d.angle, 0)
-        # else:
-        #     end = start - volmdlr.Point2D(arc3d.angle, 0)
-        # print('**************************************************')
-        # print(f'Right angle: {angle3d} - got : {angle2d}')
+        print(True)
+        # middle = arc3d.middle_point()
+        # angle2d = abs(start.x - end.x)
+        # angle3d = arc3d.angle
+        # middle_point_2d = self.point3d_to_2d(middle)
+        # start3d = self.frame.new_coordinates(arc3d.start)
+        # end3d = self.frame.new_coordinates(arc3d.end)
+        # interior3d = self.frame.new_coordinates(arc3d.interior)
+        # # arc3d.plot()
+        # arc3d.plot2d()
+        # # Angle pour start
+        # u1, u2 = start3d.x / self.radius, start3d.y / self.radius
+        # angle1 = volmdlr.core.sin_cos_angle(u1, u2)
+        # # Angle pour end
+        # u3, u4 = end3d.x / self.radius, end3d.y / self.radius
+        # angle2 = volmdlr.core.sin_cos_angle(u3, u4)
+        # # Angle pour interior
+        # u5, u6 = interior3d.x / self.radius, interior3d.y / self.radius
+        # anglei = volmdlr.core.sin_cos_angle(u5, u6)
+        # print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         # print(start, end)
-        # print('**************************************************')
+        # print(angle1, anglei, angle2)
+        # # print(start, end)
+        # # Verify if start or end point should be -pi
+        # middle_point_x, middle_point_y, _ = self.frame.new_coordinates(middle)
+        # if start.x == math.pi and middle_point_y < 0:
+        #     start = volmdlr.Point2D(-math.pi, start.y)
+        #     angle2d = abs(start.x - end.x)
+        # elif end.x == math.pi and middle_point_y < 0:
+        #     end = volmdlr.Point2D(-math.pi, end.y)
+        #     angle2d = abs(start.x - end.x)
+        #     print(start, end)
+        # # Verify if right side of Cylindrical Surface for angle3d != math.pi
+        # if not math.isclose(angle2d, angle3d, abs_tol=1E-5):
+        #     diff = end.x - start.x
+        #     if diff < 0:
+        #         end = start + volmdlr.Point2D(arc3d.angle, 0)
+        #     elif diff > 0:
+        #         end = start + volmdlr.Point2D(-arc3d.angle, 0)
+        # # Verify if right side of Cylindrical Surface for angle3d == math.pi
+        # if math.isclose(angle3d, math.pi, abs_tol=1E-5) and not (start.x == 0 or abs(start.x) == math.pi):
+        #     if start.x < 0 and (middle_point_2d.x < -0.5*math.pi or middle_point_2d.x > 0.5*math.pi):
+        #         end = start + volmdlr.Point2D(-math.pi, 0)
+        #     elif start.x > 0 and (middle_point_2d.x < -0.5*math.pi or middle_point_2d.x > 0.5*math.pi):
+        #         end = start + volmdlr.Point2D(math.pi, 0)
+        # print(start, end)
+        # print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         return [vme.LineSegment2D(start, end)]
 
     def linesegment3d_to_2d(self, linesegment3d):
@@ -1439,24 +1367,15 @@ class CylindricalSurface3D(Surface3D):
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         # TODO: enhance this, this is a non exact method!
         l = bspline_curve3d.length()
-        # ax = bspline_curve3d.plot()
-        # print(l)
-        # for i in range(11):
-        #     p = bspline_curve3d.point_at_abscissa(i / 10 * l)
-        #     p.plot(ax)
         points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * l))
                   for i in range(11)]
-        # points = list(set(points))
-        # ax1 = points[0].plot()
-        # for p in points:
-        #     p.plot(ax1, 'r')
-        # print("_____________________________________")
-        # print(points)
+
         list_primitives = []
         last_p1x = points[0].x
         for p1, p2 in zip(points[:-1], points[1:]):
             if p1 == p2:
                 continue
+            # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
             if math.isclose(p1.x, math.pi, abs_tol=1E-5) and (p1.x - p2.x) > math.pi:
                 p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
             elif math.isclose(p1.x, -math.pi, abs_tol=1E-5) and (p1.x - p2.x) < -math.pi:
@@ -1465,28 +1384,41 @@ class CylindricalSurface3D(Surface3D):
                 p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
             elif math.isclose(p2.x, -math.pi, abs_tol=1E-5) and (p1.x - last_p1x) > 0:
                 p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
-            # if math.isclose(p1.x, volmdlr.TWO_PI, abs_tol=1E-5) and (p1.x - p2.x) < 0:
-            #     p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
-            # elif math.isclose(p1.x, 0, abs_tol=1E-5) and (p1.x - p2.x) > 0:
-            #     p1 = p1 + volmdlr.TWO_PI * volmdlr.X2D
-            # if math.isclose(p2.x, volmdlr.TWO_PI, abs_tol=1E-5) and (p1.x - last_p1x) < 0:
-            #     p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
-            # elif math.isclose(p2.x, 0, abs_tol=1E-5) and (p1.x - last_p1x) > 0:
-            #     p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
-            print(p1, p2)
+
             list_primitives.append(vme.LineSegment2D(p1, p2))
             last_p1x = p1.x
         return list_primitives
-        # return [vme.LineSegment2D(p1, p2)
-        #         for p1, p2 in zip(points[:-1], points[1:])]
-        # list_primitives =[]
-        # last_p1x = points[0].x
-        # for p1, p2 in zip(points[:-1], points[1:]):
-        #     if p2.x == 0 and last_p1x < p1.x:
-        #             p2 = p2 + math.pi * volmdlr.X2D
-        #     list_primitives.append(vme.LineSegment2D(p1, p2))
-        #     last_p1x = p1.x
-        # return list_primitives
+
+    def arcellipse3d_to_2d(self, arcellipse3d):
+        """
+        TODO: THIS IS AN APPROXIMATION
+        """
+        points = arcellipse3d.discretization_points(number_points=15)
+        points2d = [self.point3d_to_2d(p) for p in points]
+        # start = self.point3d_to_2d(arcellipse3d.start)
+        # interior = self.point3d_to_2d(arcellipse3d.interior)
+        # end = self.point3d_to_2d(arcellipse3d.end)
+        # center = self.point3d_to_2d(arcellipse3d.center)
+        # major_dir = self.point3d_to_2d(arcellipse3d.major_dir)
+        # return [vme.ArcEllipse2D(start, interior, end, center, major_dir)]
+        list_primitives = []
+        last_p1x = points2d[0].x
+        for p1, p2 in zip(points2d[:-1], points2d[1:]):
+            if p1 == p2:
+                continue
+            # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
+            if math.isclose(p1.x, math.pi, abs_tol=1E-5) and (p1.x - p2.x) > math.pi:
+                p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
+            elif math.isclose(p1.x, -math.pi, abs_tol=1E-5) and (p1.x - p2.x) < -math.pi:
+                p1 = p1 + volmdlr.TWO_PI * volmdlr.X2D
+            if math.isclose(p2.x, math.pi, abs_tol=1E-5) and (p1.x - last_p1x) < 0:
+                p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
+            elif math.isclose(p2.x, -math.pi, abs_tol=1E-5) and (p1.x - last_p1x) > 0:
+                p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
+
+            list_primitives.append(vme.LineSegment2D(p1, p2))
+            last_p1x = p1.x
+        return list_primitives
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -1646,10 +1578,17 @@ class ToroidalSurface3D(Surface3D):
 
         zr = z / self.r
         phi = math.asin(zr)
+        print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+        print(phi)
 
         u = self.R + math.sqrt((self.r ** 2) - (z ** 2))
         u1, u2 = round(x / u, 5), round(y / u, 5)
-        theta = volmdlr.core.sin_cos_angle(u1, u2)
+        # theta = volmdlr.core.sin_cos_angle(u1, u2)
+        theta = math.atan2(u2, u1)
+        u3, u4 = (x/math.cos(theta) - self.R), z
+        phi = math.atan2(u4, u3)
+        print(phi)
+        print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
 
         return volmdlr.Point2D(theta, phi)
 
@@ -1760,20 +1699,77 @@ class ToroidalSurface3D(Surface3D):
         return []
 
     def arc3d_to_2d(self, arc3d):
-        # TODO: enhance this, this is a non exact method!
-        number_points = math.ceil(arc3d.angle * 10) + 1  # 10 points per radian
-        l = arc3d.length()
-        points = [self.point3d_to_2d(arc3d.point_at_abscissa(
-            i * l / (number_points - 1))) for i in range(number_points)]
-        # points = list(set(points))
+        start = self.point3d_to_2d(arc3d.start)
+        end = self.point3d_to_2d(arc3d.end)
+        middle = arc3d.middle_point()
+        angle2d = abs(start.x - end.x)
+        angle3d = arc3d.angle
+        middle_point_2d = self.point3d_to_2d(middle)
+        # Verify if start or end point should be -pi
+        middle_point_x, middle_point_y, _ = self.frame.new_coordinates(middle)
+        if start.x == math.pi and middle_point_y < 0:
+            start = volmdlr.Point2D(-math.pi, start.y)
+        elif end.x == math.pi and middle_point_y < 0:
+            end = volmdlr.Point2D(-math.pi, end.y)
+        # Verify if right side of Cylindrical Surface for angle3d != math.pi
+        if not math.isclose(angle2d, angle3d, abs_tol=1E-5):
+            diff = end.x - start.x
+            if diff < 0:
+                end = start + volmdlr.Point2D(arc3d.angle, 0)
+            elif diff > 0:
+                end = start + volmdlr.Point2D(-arc3d.angle, 0)
+
+        if math.isclose(angle3d, math.pi, abs_tol=1E-5) and not (start.x == 0 or abs(start.x) == math.pi):
+            if start.x < 0 and (middle_point_2d.x < -0.5 * math.pi or middle_point_2d.x > 0.5 * math.pi):
+                end = start + volmdlr.Point2D(-math.pi, 0)
+            elif start.x > 0 and (middle_point_2d.x < -0.5 * math.pi or middle_point_2d.x > 0.5 * math.pi):
+                end = start + volmdlr.Point2D(math.pi, 0)
+
+        return [vme.LineSegment2D(start, end)]
+        # number_points = math.ceil(arc3d.angle * 10) + 1  # 10 points per radian
+        # l = arc3d.length()
+        # points = [self.point3d_to_2d(arc3d.point_at_abscissa(
+        #     i * l / (number_points - 1))) for i in range(number_points)]
+        # # points = list(set(points))
+        # # return [vme.LineSegment2D(p1, p2)
+        # #         for p1, p2 in zip(points[:-1], points[1:])]
+        # # if number_points < 10:
+        # #     degree = number_points
+        # # else:
+        # #     degree = 3 #avoid over fitting
         # return [vme.LineSegment2D(p1, p2)
         #         for p1, p2 in zip(points[:-1], points[1:])]
-        # if number_points < 10:
-        #     degree = number_points
-        # else:
-        #     degree = 3 #avoid over fitting
-        return [vme.LineSegment2D(p1, p2)
-                for p1, p2 in zip(points[:-1], points[1:])]
+
+    def arcellipse3d_to_2d(self, arcellipse3d):
+        """
+        TODO: THIS IS AN APPROXIMATION
+        """
+        points = arcellipse3d.discretization_points(number_points=15)
+        points2d = [self.point3d_to_2d(p) for p in points]
+        # start = self.point3d_to_2d(arcellipse3d.start)
+        # interior = self.point3d_to_2d(arcellipse3d.interior)
+        # end = self.point3d_to_2d(arcellipse3d.end)
+        # center = self.point3d_to_2d(arcellipse3d.center)
+        # major_dir = self.point3d_to_2d(arcellipse3d.major_dir)
+        # return [vme.ArcEllipse2D(start, interior, end, center, major_dir)]
+        list_primitives = []
+        last_p1x = points2d[0].x
+        for p1, p2 in zip(points2d[:-1], points2d[1:]):
+            if p1 == p2:
+                continue
+            # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
+            if math.isclose(p1.x, math.pi, abs_tol=1E-5) and (p1.x - p2.x) > math.pi:
+                p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
+            elif math.isclose(p1.x, -math.pi, abs_tol=1E-5) and (p1.x - p2.x) < -math.pi:
+                p1 = p1 + volmdlr.TWO_PI * volmdlr.X2D
+            if math.isclose(p2.x, math.pi, abs_tol=1E-5) and (p1.x - last_p1x) < 0:
+                p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
+            elif math.isclose(p2.x, -math.pi, abs_tol=1E-5) and (p1.x - last_p1x) > 0:
+                p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
+
+            list_primitives.append(vme.LineSegment2D(p1, p2))
+            last_p1x = p1.x
+        return list_primitives
 
     def triangulation(self):
         face = self.rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)

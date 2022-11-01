@@ -905,7 +905,7 @@ class Contour(Wire):
                 finished = True
             counter1 += 1
             if counter1 >= 100 * length_list_points:
-                self.plot()
+                ax = self.plot()
                 raise NotImplementedError
             if len(list_point_pairs) == 1:
                 counter += 1
