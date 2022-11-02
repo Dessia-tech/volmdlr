@@ -2688,9 +2688,9 @@ class BSplineSurface3D(Surface3D):
 
         content += "#{} = B_SPLINE_SURFACE_WITH_KNOTS('{}',{},{},{},.UNSPECIFIED.,{},{},.F.,{},{},{},{},.UNSPECIFIED.);\
             \n".format(current_id, self.name, self.degree_u, self.degree_v,
-                        point_matrix_ids, u_close, v_close,
-                        tuple(self.u_multiplicities), tuple(self.v_multiplicities),
-                        tuple(self.u_knots), tuple(self.v_knots))
+                       point_matrix_ids, u_close, v_close,
+                       tuple(self.u_multiplicities), tuple(self.v_multiplicities),
+                       tuple(self.u_knots), tuple(self.v_knots))
         return content, [current_id]
 
     def grid3d(self, grid2d: volmdlr.grid.Grid2D):
@@ -7702,10 +7702,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                 primitive_linesegments = volmdlr.edges.LineSegment3D(
                                     discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
-                                                                                  start_point_tag=start_point_tag \
-                                                                                      + point_account,
-                                                                                  end_point_tag=end_point_tag \
-                                                                                      + point_account))
+                                                                                  start_point_tag=start_point_tag
+                                                                                  + point_account,
+                                                                                  end_point_tag=end_point_tag
+                                                                                  + point_account))
 
                             if isinstance(primitive, volmdlr.edges.LineSegment):
                                 start_point_tag = points.index(primitive.start) + 1
@@ -7741,7 +7741,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
             line_surface = []
 
-        lines.append('Surface Loop(' + str(1 + update_data['surface_loop_account']) + ') = {' \
+        lines.append('Surface Loop(' + str(1 + update_data['surface_loop_account']) + ') = {'
                      + str(list(range(update_data['surface_account'] + 1,
                                       update_data['surface_account'] +
                                       len(self.faces) + 1)))[1:-1] + '};')
