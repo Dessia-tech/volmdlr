@@ -243,7 +243,6 @@ class LineSegment(Edge):
         if point.point_distance(self.start) < tol:
             return 0
         if point.point_distance(self.end) < tol:
-            print('abscissa:', point.point_distance(self.end))
             return self.length()
 
         u = self.end - self.start
