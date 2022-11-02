@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
-*
+* Block: faces_center (calculate directly point in the middle of the faces)
 
 
 ### Fixed
@@ -18,14 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BsplineCurve: abscissa (use different start point between 0 and length)
 
 
+
 ### Performance improvements
 
-*
 
 
 ### Refactorings
 
-*
 
 
 ### Unittests
@@ -33,10 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BsplineCurve: abscissa
 
 
+
 ## v0.6.0 [Unrealeased]
 
 ### New Features
-
 
 * Stl:load_from_file, to_volume_model
 * Surface2D: copy (specific method)
