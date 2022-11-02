@@ -11,6 +11,7 @@ import volmdlr.step
 for step_file in [
     #CylindricalSurfaces
     # 'cylinder-test.step',
+    # 'read_test2.step',
     # 'read_test3.step',
     # 'read_test4.step',
     # 'read_test8.step',
@@ -20,7 +21,6 @@ for step_file in [
     # 'bracket3.step',
     # 'Video_Version.step'
     #ToroidalSurface
-    # 'read_test5.step',
     # 'read_test9.step',
     # 'read_test11.step',
     # 'tore1.step',
@@ -31,7 +31,8 @@ for step_file in [
     # 'Hollow_Loft.step'
     # # 'block.step',
     # # 'read_test6.step',
-
+    # 'dimond.step'
+    # 'bottle.step' # not implemented OFFSET_SURFACE
 
     # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
 ]:

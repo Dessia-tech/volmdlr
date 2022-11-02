@@ -1270,22 +1270,6 @@ class CylindricalSurface3D(Surface3D):
         angle2d = abs(start.x - end.x)
         angle3d = arc3d.angle
         middle_point_2d = self.point3d_to_2d(middle)
-        # start3d = self.frame.new_coordinates(arc3d.start)
-        # end3d = self.frame.new_coordinates(arc3d.end)
-        # interior3d = self.frame.new_coordinates(arc3d.interior)
-        # # Angle pour start
-        # u1, u2 = start3d.x / self.radius, start3d.y / self.radius
-        # angle1 = volmdlr.core.sin_cos_angle(u1, u2)
-        # # Angle pour end
-        # u3, u4 = end3d.x / self.radius, end3d.y / self.radius
-        # angle2 = volmdlr.core.sin_cos_angle(u3, u4)
-        # # Angle pour interior
-        # u5, u6 = interior3d.x / self.radius, interior3d.y / self.radius
-        # anglei = volmdlr.core.sin_cos_angle(u5, u6)
-        # print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-        # print(start, end)
-        # print(angle1, anglei, angle2)
-        # print(start, end)
         # Verify if start or end point should be -pi
         middle_point_x, middle_point_y, _ = self.frame.new_coordinates(middle)
         if start.x == math.pi and middle_point_y < 0:
@@ -1325,6 +1309,8 @@ class CylindricalSurface3D(Surface3D):
     def linesegment2d_to_3d(self, linesegment2d):
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
+        start = linesegment2d.start
+        end = linesegment2d.end
         if math.isclose(theta1, theta2, abs_tol=1e-3):
             return [vme.LineSegment3D(
                 self.point2d_to_3d(linesegment2d.start),
@@ -1336,12 +1322,17 @@ class CylindricalSurface3D(Surface3D):
                                       start_end=self.point2d_to_3d(linesegment2d.start),
                                       normal=self.frame.w)]
             else:
-                interior = self.point2d_to_3d(linesegment2d.point_at_abscissa(linesegment2d.length() * 0.5))
+                # angle = linesegment2d.length()
+                # if theta1 < 0 and theta2 > 0:
+                #     interior = self.point2d_to_3d(volmdlr.Point2D(theta1 - (angle * 0.5), z1))
+                #     end = volmdlr.Point2D(theta1 - angle, z1)
+                # else:
+                #     interior = self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1))
+                interior = self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1))
                 return [vme.Arc3D(
                     self.point2d_to_3d(linesegment2d.start),
-                    self.point2d_to_3d(
-                        volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
-                    self.point2d_to_3d(linesegment2d.end),
+                    interior,
+                    self.point2d_to_3d(end),
                 )]
         else:
             # TODO: this is a non exact method!
