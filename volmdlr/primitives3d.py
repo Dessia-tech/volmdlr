@@ -1155,7 +1155,7 @@ class Cylinder(RevolvedProfile):
         )
 
         # sampling point in cartesian local coordinates
-        sampler = qmc.LatinHypercube(3)
+        sampler = qmc.LatinHypercube(d=3, seed=0)
         sample = qmc.scale(
             sampler.random(n=n_points),
             [0, 0, -self.length / 2],
@@ -1194,7 +1194,7 @@ class Cylinder(RevolvedProfile):
         )
 
     def interference_volume_with_other_cylinder(
-            self, other_cylinder: "Cylinder", n_points: int = 1000
+            self, other_cylinder: "Cylinder", n_points: int = 2000
     ) -> float:
         """
         Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method)

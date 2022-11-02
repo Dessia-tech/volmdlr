@@ -43,7 +43,7 @@ start = time()
 
 volumes = []
 n_draws = 100
-n_points = 1000
+n_points = 2000
 
 for _ in range(n_draws):
     volumes.append(cylinders[1].interference_volume_with_other_cylinder(cylinders[0], n_points=n_points))
@@ -54,7 +54,7 @@ for _ in range(n_draws):
 end = time()
 print(f"\n{n_draws} draws, {n_points} points")
 print(f"Total interference computation time: {end - start}s")
-print(f"Time per computation: {(end - start)/100}s")
+print(f"Time per computation: {(end - start)/n_draws}s")
 print(f"Mean interference volume : {sum(volumes) / n_draws} m³")
 print(f'Standard deviation : {numpy.std(volumes)}')
 print(f'Variation coefficient : {(numpy.std(volumes) / (sum(volumes) / n_draws))*100} %')
