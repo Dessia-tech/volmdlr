@@ -406,7 +406,7 @@ class BSplineCurve(Edge):
 
     def abscissa(self, point, tol=1e-4):
         length = self.length()
-        for x0 in [0, length*0.25, length*0.5, length*0.75, length]:
+        for x0 in [0, length * 0.25, length * 0.5, length * 0.75, length]:
             res = scp.optimize.least_squares(
                 lambda u: (point - self.point_at_abscissa(u)).norm(),
                 x0=x0,
