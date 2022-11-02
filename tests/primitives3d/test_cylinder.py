@@ -58,6 +58,11 @@ class TestCylinder(unittest.TestCase):
         self.assertTrue(intersecting_1_2)
         self.assertFalse(intersecting_1_3)
 
+    def test_lhs_points_inside(self):
+        points = self.cylinder1.lhs_points_inside(n_points=100)
+        for point in points:
+            self.assertTrue(self.cylinder1.point_belongs(point))
+
 
 if __name__ == "__main__":
     unittest.main()
