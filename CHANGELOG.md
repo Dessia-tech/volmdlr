@@ -10,6 +10,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+* Create .geo and .msh files (Mesh geometries with GMSH)
+
+
+### Fixed
+
+*
+
+
+### Performance improvements
+
+*
+
+
+### Refactorings
+
+*
+
+
+### Unittests
+
+*
+
+
+## v0.6.0 [Unrealeased]
+
+### New Features
+
 * Stl:load_from_file, to_volume_model
 * Surface2D: copy (specific method)
 * GmshParser: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
@@ -18,7 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ElementsGroup: nodes, elements_per_node
 * Mesh: bounding_rectangle, delete_duplicated_nodes
 * PlaneFace3D: cut_by_coincident_face
-* Create .geo and .msh files (Mesh geometries with GMSH)
 
 
 ### Fixed
@@ -33,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment: abcissa (consider point2d == arc2d.start/end)
 * Contour2D: cut_by_wire
 * Contour2D: point_belongs (bug when contour has only one primitive, like FullArc2D)
+* Contour: contours_from_edges
+* PlaneFace3D: face_intersections
 
 
 ### Performance improvements

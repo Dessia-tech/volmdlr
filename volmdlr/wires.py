@@ -11,6 +11,8 @@ import math
 from collections import deque
 from statistics import mean
 from typing import List
+
+import networkx as nx
 import numpy as npy
 from scipy.spatial import Delaunay, ConvexHull
 
@@ -925,103 +927,6 @@ class Contour(Wire):
 
         return points
 
-    def identify_primitives_groups(self):
-        """
-        For a contour with invalid primitives (for example: three
-        primitives meeting at one point), it identifies each branch and separates
-        the fisrt primitive of each branch in a diferent list
-        :param contour_primitives:
-        :return: A list of all lists representing a branch of the contour
-        """
-        points = [p for prim in self.primitives for p in prim]
-        list_groups_primitives = []
-        for primitive in self.primitives:
-            for primitive_point in [primitive.start, primitive.end]:
-                if points.count(primitive_point) == 3:
-                    if [primitive] not in list_groups_primitives:
-                        list_groups_primitives.append([primitive])
-        return list_groups_primitives
-
-    def regroup_primitives(self, list_groups_primitives):
-        """
-        Having the list of primitives_groups, This method is responsable
-        for realocating all the remaining primitives
-        in these diferent primitives_groups
-        :param contour_primitives:
-        :param list_groups_primitives:
-        :return: list of groups primitives complete
-        """
-        groups_primitives =\
-            [group_prim[0] for group_prim in list_groups_primitives]
-        contour_primitives =\
-            [prim for prim in self.primitives if
-             prim not in groups_primitives]
-        finished = False
-        while not finished:
-            for primitive in contour_primitives:
-                for group in list_groups_primitives:
-                    group_points = [p for prim in group for p in prim]
-                    if primitive.start in group_points or \
-                            primitive.end in group_points:
-                        group.append(primitive)
-                        contour_primitives.remove(primitive)
-                        break
-                if not contour_primitives:
-                    finished = True
-        return list_groups_primitives
-
-    @staticmethod
-    def delete_smallest_primitives_groups(list_groups_primitives):
-        """
-        Deletes the smallest branch in the list of the groups_primitives,
-        leaving only the groups of primitives that could make a valid contour
-        :param list_groups_primitives:
-        :return: valid groups_primitives
-        """
-        dict_groups_lengths = {}
-        for group in list_groups_primitives:
-            length = 0
-            for prim in group:
-                length += prim.length()
-            dict_groups_lengths[length] = group
-        dict_groups_lengths = dict(sorted(dict_groups_lengths.items(),
-                                          key=lambda item: item[0]))
-        longest = list(dict_groups_lengths.keys())[-1]
-        new_groups_primitives = []
-        for key, value in dict_groups_lengths.items():
-            if key / longest > 0.003:
-                new_groups_primitives.append(value)
-        return new_groups_primitives
-
-    def validate_contour_primitives(self):
-        """
-        Verifies if the contour\'s are valid, that is, if there are not three
-        primitives meeting at the same point. If not valid, it treats it deletes
-        not valid primitives
-        :param contour_primitives:
-        :return:
-        """
-        list_groups_primitives = self.identify_primitives_groups()
-        if not list_groups_primitives:
-            return
-
-        contour_primitives = self.primitives[:]
-        if len(contour_primitives) == len(list_groups_primitives):
-            list_lengths = [prim.length() for prim in contour_primitives]
-            index = list_lengths.index(min(list_lengths))
-            contour_primitives.remove(contour_primitives[index])
-            self.primitives = contour_primitives
-            return
-
-        list_groups_primitives = self.regroup_primitives(list_groups_primitives)
-        new_primitives_groups = Contour.delete_smallest_primitives_groups(
-            list_groups_primitives)
-        new_primitives_contour = []
-        for group in new_primitives_groups:
-            new_primitives_contour.extend(group)
-
-        self.primitives = new_primitives_contour
-
     @staticmethod
     def touching_edges_pairs(edges):  # TO DO: move this to edges?
         touching_primitives = []
@@ -1121,6 +1026,26 @@ class Contour(Wire):
                 break
         return edges, contour_primitives, contours_list
 
+    @staticmethod
+    def get_edges_bifurcations(contour_primitives, edges, finished_loop):
+        graph = nx.Graph()
+        for prim in contour_primitives[:]:
+            graph.add_edge(prim.start, prim.end)
+        for node in graph.nodes:
+            degree = graph.degree(node)
+            if degree <= 2:
+                continue
+            for i, neihgbor in enumerate(graph.neighbors(node)):
+                if graph.degree(neihgbor) == 1:
+                    i_edge = volmdlr.edges.LineSegment2D(node, neihgbor)
+                    if i_edge in contour_primitives:
+                        contour_primitives.remove(i_edge)
+                        edges.append(volmdlr.edges.LineSegment2D(node, neihgbor))
+                        finished_loop = False
+                        if i + 1 == degree - 2:
+                            break
+        return contour_primitives, edges, finished_loop
+
     @classmethod
     def contours_from_edges(cls, edges, tol=1e-7):
         if not edges:
@@ -1153,10 +1078,11 @@ class Contour(Wire):
                 valid = True
                 finished = True
             if valid:
-                contour_n = cls(contour_primitives[:])
-                contour_n.validate_contour_primitives()
-                contour_n.order_contour()
-                if len(contour_n.primitives) != 0:
+                contour_primitives, edges, finished = cls.get_edges_bifurcations(contour_primitives,
+                                                                                 edges, finished)
+                if len(contour_primitives[:]) != 0:
+                    contour_n = cls(contour_primitives[:])
+                    contour_n.order_contour()
                     list_contours.append(contour_n)
                 contour_primitives = []
         list_contours = list_contours + [cls(primitives).order_contour() for primitives in contours_primitives_lists]
@@ -2041,16 +1967,16 @@ class Contour2D(Contour, Wire2D):
                 # if base_contour.is_inside(contours[0]):
                 #     contours.remove(cutting_contour)
                 #     continue
-                #     # list_valid_contours.append(base_contour)
-                #     # finished = True
-                # contours = contours[::-1]
-                # if counter > 100 * len(list_contour) + len(contours):
-                print('new_base_contours:', len(new_base_contours))
-                print('len(contours):', len(contours))
-                ax = contours[0].plot()
-                base_contour.plot(ax=ax, color='b')
-                warnings.warn('There probably exists an open contour (two wires that could not be connected)')
-                finished = True
+                # list_valid_contours.append(base_contour)
+                # finished = True
+                contours = contours[::-1]
+                if counter > 100 * len(list_contour) + len(contours):
+                    print('new_base_contours:', len(new_base_contours))
+                    print('len(contours):', len(contours))
+                    ax = contours[0].plot()
+                    base_contour.plot(ax=ax, color='b')
+                    warnings.warn('There probably exists an open contour (two wires that could not be connected)')
+                    finished = True
 
         return list_valid_contours
 
