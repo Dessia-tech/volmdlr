@@ -7,6 +7,7 @@ from time import time
 from volmdlr.primitives3d import Cylinder
 import volmdlr.core
 import volmdlr as vm
+import numpy
 
 
 cylinders = [
@@ -27,7 +28,7 @@ cylinders = [
 ]
 
 volume_model = vm.core.VolumeModel(cylinders)
-volume_model.babylonjs()
+# volume_model.babylonjs()
 
 print(
     f"""
@@ -40,12 +41,18 @@ collision: {cylinders[0].is_intersecting_other_cylinder(cylinders[0])}"""
 print("Interpenetration")
 start = time()
 
-for _ in range(100):
-    print(
-        f"interpenetration volume: {cylinders[1].interference_volume_with_other_cylinder(cylinders[0], n_points=1000)}"
-    )
+volumes = []
+n = 100
 
+for _ in range(n):
+    volumes.append(cylinders[1].interference_volume_with_other_cylinder(cylinders[0], n_points=300))
+    print(
+        f"interpenetration volume: {volumes[-1]}"
+    )
 
 end = time()
 print(f"\nTotal interpenetration computation time: {end - start}s")
 print(f"Time per calculus: {(end - start)/100}s")
+print(f"Mean volume : {sum(volumes) / n} m³")
+print(f'Standard deviation : {numpy.std(volumes)}')
+print(f'Variation coefficient : {(numpy.std(volumes) / (sum(volumes) / n))*100} %')

@@ -9,6 +9,7 @@ import math
 from typing import Tuple, List, Dict
 from random import uniform
 from scipy.optimize import minimize, NonlinearConstraint
+from scipy.stats import qmc
 
 import numpy as npy
 import matplotlib.pyplot as plt
@@ -1144,6 +1145,33 @@ class Cylinder(RevolvedProfile):
 
         return local_frame.old_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
 
+    def lhs_points_inside(self, n_points: int) -> List[volmdlr.Point3D]:
+        """
+        :param n_points: number of points
+        :return: Latin hypercube sampling points inside the cylinder
+        """
+        local_frame = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+
+        # sampling point in cartesian local coordinates
+        sampler = qmc.LatinHypercube(3)
+        sample = qmc.scale(sampler.random(n=n_points), [0, 0, -self.length/2], [1, 2 * math.pi, self.length/2])
+
+        # converting sampled point in global coordinates volmdlr.Point3D points
+        points = []
+        for p in sample:
+            radius = math.sqrt(p[0]) * self.radius
+            theta = p[1]
+
+            x_local = radius * math.cos(theta)
+            y_local = radius * math.sin(theta)
+            z_local = p[2]
+
+            points.append(local_frame.old_coordinates(volmdlr.Point3D(x_local, y_local, z_local)))
+
+        return points
+
     def point_belongs(self, point: volmdlr.Point3D, **kwargs) -> bool:
         """
         :param point: volmdlr Point3D
@@ -1160,10 +1188,10 @@ class Cylinder(RevolvedProfile):
         )
 
     def interference_volume_with_other_cylinder(
-            self, other_cylinder: "Cylinder", n_points: int = 2000
+            self, other_cylinder: "Cylinder", n_points: int = 500
     ) -> float:
         """
-        Estimation of the interpenetration volume using Monte-Carlo method
+        Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method)
 
         :param other_cylinder: volmdlr Cylinder
         :param n_points: optional parameter used for the number of random point used to discretize the cylinder
@@ -1181,7 +1209,8 @@ class Cylinder(RevolvedProfile):
                 len(
                     [
                         point
-                        for point in (smallest_cylinder.random_point_inside() for _ in range(n_points))
+                        # for point in (smallest_cylinder.random_point_inside() for _ in range(n_points))
+                        for point in smallest_cylinder.lhs_points_inside(n_points)
                         if other_cylinder.point_belongs(point)
                     ]
                 )
