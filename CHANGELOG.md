@@ -10,15 +10,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+* Block: faces_center (calculate directly point in the middle of the faces)
+
+
+### Fixed
+
+*
+
+
+### Performance improvements
+
+*
+
+
+### Refactorings
+
+*
+
+
+### Unittests
+
+*
+
+
+## v0.6.0 [Unrealeased]
+
+### New Features
+
 * Stl:load_from_file, to_volume_model
 * Surface2D: copy (specific method)
 * GmshParser: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
 * Circle2D: primitives (defined with 2 Arc2D)
-* New method in primitives3d.Block to calculate directly point in the middle of the faces
 * Node2D/3D, TriangularElement, QuadrilateralElement2D, TriangularElement3D
 * ElementsGroup: nodes, elements_per_node
 * Mesh: bounding_rectangle, delete_duplicated_nodes
 * PlaneFace3D: cut_by_coincident_face
+
 
 ### Fixed
 
