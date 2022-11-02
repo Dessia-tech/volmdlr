@@ -13,13 +13,11 @@ for step_file in [
     # 'cylinder-test.step',
     # 'read_test3.step',
     # 'read_test4.step',
-    # 'read_test6.step',
-    # 'read_test7.step',
     # 'read_test8.step',
-    'read_test10.step',
-    # 'pipe.step',
-    # 'bracket2.step',
+    # 'read_test10.step',
     # 'angle_bar.step'
+    # 'pipe.step',
+    'bracket2.step',
     # 'Video_Version.step'
     #ToroidalSurface
     # 'read_test5.step',

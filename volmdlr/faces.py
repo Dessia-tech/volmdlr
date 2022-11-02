@@ -623,9 +623,9 @@ class Surface3D(DessiaObject):
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
             outer_contour3d = self.contour2d_to_3d(outer_contour2d)
-            if isinstance(self, CylindricalSurface3D):
-                contours3d[0].plot()
-                outer_contour3d.plot()
+            # if isinstance(self, CylindricalSurface3D):
+            #     contours3d[0].plot()
+            #     outer_contour3d.plot()
             inner_contours2d = []
         elif lc3d > 1:
             area = -1
@@ -1266,16 +1266,13 @@ class CylindricalSurface3D(Surface3D):
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        print(True)
-        # middle = arc3d.middle_point()
-        # angle2d = abs(start.x - end.x)
-        # angle3d = arc3d.angle
-        # middle_point_2d = self.point3d_to_2d(middle)
+        middle = arc3d.middle_point()
+        angle2d = abs(start.x - end.x)
+        angle3d = arc3d.angle
+        middle_point_2d = self.point3d_to_2d(middle)
         # start3d = self.frame.new_coordinates(arc3d.start)
         # end3d = self.frame.new_coordinates(arc3d.end)
         # interior3d = self.frame.new_coordinates(arc3d.interior)
-        # # arc3d.plot()
-        # arc3d.plot2d()
         # # Angle pour start
         # u1, u2 = start3d.x / self.radius, start3d.y / self.radius
         # angle1 = volmdlr.core.sin_cos_angle(u1, u2)
@@ -1288,29 +1285,29 @@ class CylindricalSurface3D(Surface3D):
         # print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         # print(start, end)
         # print(angle1, anglei, angle2)
-        # # print(start, end)
-        # # Verify if start or end point should be -pi
-        # middle_point_x, middle_point_y, _ = self.frame.new_coordinates(middle)
-        # if start.x == math.pi and middle_point_y < 0:
-        #     start = volmdlr.Point2D(-math.pi, start.y)
-        #     angle2d = abs(start.x - end.x)
-        # elif end.x == math.pi and middle_point_y < 0:
-        #     end = volmdlr.Point2D(-math.pi, end.y)
-        #     angle2d = abs(start.x - end.x)
-        #     print(start, end)
-        # # Verify if right side of Cylindrical Surface for angle3d != math.pi
-        # if not math.isclose(angle2d, angle3d, abs_tol=1E-5):
-        #     diff = end.x - start.x
-        #     if diff < 0:
-        #         end = start + volmdlr.Point2D(arc3d.angle, 0)
-        #     elif diff > 0:
-        #         end = start + volmdlr.Point2D(-arc3d.angle, 0)
-        # # Verify if right side of Cylindrical Surface for angle3d == math.pi
-        # if math.isclose(angle3d, math.pi, abs_tol=1E-5) and not (start.x == 0 or abs(start.x) == math.pi):
-        #     if start.x < 0 and (middle_point_2d.x < -0.5*math.pi or middle_point_2d.x > 0.5*math.pi):
-        #         end = start + volmdlr.Point2D(-math.pi, 0)
-        #     elif start.x > 0 and (middle_point_2d.x < -0.5*math.pi or middle_point_2d.x > 0.5*math.pi):
-        #         end = start + volmdlr.Point2D(math.pi, 0)
+        # print(start, end)
+        # Verify if start or end point should be -pi
+        middle_point_x, middle_point_y, _ = self.frame.new_coordinates(middle)
+        if start.x == math.pi and middle_point_y < 0:
+            start = volmdlr.Point2D(-math.pi, start.y)
+            angle2d = abs(start.x - end.x)
+        elif end.x == math.pi and middle_point_y < 0:
+            end = volmdlr.Point2D(-math.pi, end.y)
+            angle2d = abs(start.x - end.x)
+            print(start, end)
+        # Verify if right side of Cylindrical Surface for angle3d != math.pi
+        if not math.isclose(angle2d, angle3d, abs_tol=1E-5):
+            diff = end.x - start.x
+            if diff < 0:
+                end = start + volmdlr.Point2D(arc3d.angle, 0)
+            elif diff > 0:
+                end = start + volmdlr.Point2D(-arc3d.angle, 0)
+        # Verify if right side of Cylindrical Surface for angle3d == math.pi
+        if math.isclose(angle3d, math.pi, abs_tol=1E-5) and not (start.x == 0 or abs(start.x) == math.pi):
+            if start.x < 0 and (middle_point_2d.x < -0.5*math.pi or middle_point_2d.x > 0.5*math.pi):
+                end = start + volmdlr.Point2D(-math.pi, 0)
+            elif start.x > 0 and (middle_point_2d.x < -0.5*math.pi or middle_point_2d.x > 0.5*math.pi):
+                end = start + volmdlr.Point2D(math.pi, 0)
         # print(start, end)
         # print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         return [vme.LineSegment2D(start, end)]
@@ -2598,11 +2595,14 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                points = [self.point3d_to_2d(
-                    bspline_curve3d.point_at_abscissa(i / 10 * lth)
+                points = []
+                for i in range(11):
+                    point = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth))
+                    if point not in points:
+                        points.append(point)
                     # max_bound_x=self.x_periodicity,
                     # max_bound_y=self.y_periodicity
-                ) for i in range(11)]
+                # ) for i in range(11)]
                 # linesegments = [vme.LineSegment2D(p1, p2)
                 #                 for p1, p2 in zip(points[:-1], points[1:])]
                 linesegments = [vme.BSplineCurve2D.from_points_interpolation(
@@ -2630,10 +2630,10 @@ class BSplineSurface3D(Surface3D):
         l = arc3d.length()
         points = [self.point3d_to_2d(arc3d.point_at_abscissa(
             i * l / (number_points - 1))) for i in range(number_points)]
-        # return [vme.LineSegment2D(p1, p2)
-        #         for p1, p2 in zip(points[:-1], points[1:])]
-        return [vme.BSplineCurve2D.from_points_interpolation(
-            points, max(self.degree_u, self.degree_v))]
+        return [vme.LineSegment2D(p1, p2)
+                for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
+        # return [vme.BSplineCurve2D.from_points_interpolation(
+        #     points, max(self.degree_u, self.degree_v))]
 
     def arc2d_to_3d(self, arc2d):
         number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
