@@ -1187,7 +1187,7 @@ class Cylinder(RevolvedProfile):
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
         )
 
-        local_point = local_frame.new_coordinates(p)
+        local_point = local_frame.new_coordinates(point3d)
 
         return (math.sqrt(local_point.x ** 2 + local_point.y ** 2) <= self.radius) and (
                 -self.length / 2 <= local_point.z <= self.length / 2
