@@ -10,6 +10,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+*
+
+
+### Fixed
+
+* Arc3D: plot
+
+
+### Performance improvements
+
+*
+
+
+### Refactorings
+
+*
+
+
+### Unittests
+
+*
+
+
+## v0.6.0 [Unrealeased]
+
+### New Features
+
 * Stl:load_from_file, to_volume_model
 * Surface2D: copy (specific method)
 * GmshParser: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
