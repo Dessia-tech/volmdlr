@@ -111,11 +111,11 @@ def shell_base_surface_model(arguments, object_dict):
 
 def item_defined_transformation(arguments, object_dict):
     # Frame3D
-    volmdlr_object1 = object_dict[arguments[2]]
+    # volmdlr_object1 = object_dict[arguments[2]]
     volmdlr_object2 = object_dict[arguments[3]]
     # TODO : how to frame map properly from these two Frame3D ?
     # return volmdlr_object2 - volmdlr_object1
-    return [volmdlr_object1, volmdlr_object2]
+    return volmdlr_object2
 #
 
 
@@ -147,7 +147,7 @@ def shape_representation(arguments, object_dict):
         return shells
     else:
         shells = []
-        frames = []
+        # frames = []
         for arg in arguments[1]:
             if int(arg[1:]) in object_dict and \
                     isinstance(object_dict[int(arg[1:])], list) and \
@@ -161,7 +161,7 @@ def shape_representation(arguments, object_dict):
                     isinstance(object_dict[int(arg[1:])],
                                volmdlr.Frame3D):
                 # TODO: Is there something to read here ?
-                frames.append(object_dict[int(arg[1:])])
+                pass
             elif int(arg[1:]) in object_dict and \
                     isinstance(object_dict[int(arg[1:])],
                                volmdlr.edges.Arc3D):
@@ -172,10 +172,6 @@ def shape_representation(arguments, object_dict):
                 shells.append(object_dict[int(arg[1:])])
             else:
                 pass
-        if not shells and frames:
-            return frames
-        elif shells and frames:
-            raise NotImplementedError
         return shells
 
 
@@ -187,40 +183,27 @@ def advanced_brep_shape_representation(arguments, object_dict):
             shells.append(object_dict[int(arg[1:])])
     return shells
 
-
-def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representation_frames):
-    for shell3d in closed_shells:
-        for f3d in item_defined_frames:  # item_defined_transformation
-            for frame3d in shape_representation_frames:  # shape_representation
-                if f3d.origin != volmdlr.O3D != frame3d.origin and frame3d != f3d:
-                    break
-            else:
-                continue
-            break
-        else:
-            continue
-        new_faces = [face.frame_mapping(frame3d, 'new') for face in shell3d.faces]
-        shell3d.faces = new_faces
-
-
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
     if arguments[2] in object_dict:
-        if isinstance(object_dict[arguments[2]], list):  # arguments = {, , [], [], item_....}
-            if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
-                          and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                frame_map_closed_shell(object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]])
+        if isinstance(object_dict[arguments[2]], list):
 
-            elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
-                    not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                frame_map_closed_shell(object_dict[arguments[3]], object_dict[arguments[4]], object_dict[arguments[2]])
+            for shell3d in object_dict[arguments[2]]:
+
+                frame3d = object_dict[arguments[4]]
+                shell3d.frame_mapping_inplace(frame3d, 'old')
+                # return shell3d
             return None
-        shell3d = object_dict[arguments[2]]
-        frame3d = object_dict[arguments[4]]
-        # shell3d.frame_mapping_inplace(frame3d, 'old')
-        # return shell3d
+
+        else:
+            shell3d = object_dict[arguments[2]]
+
+            frame3d = object_dict[arguments[4]]
+            shell3d.frame_mapping_inplace(frame3d, 'old')
+            # return shell3d
+            return None
+    else:
         return None
-    return None
 
 
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
@@ -616,8 +599,7 @@ class Step(dc.DessiaObject):
                     break
         shell_nodes_copy = shell_nodes.copy()
         remove_nodes = list(set(frame_mapped_shell_node + not_shell_nodes))
-        for node in remove_nodes:
-            shell_nodes.remove(node)
+        [shell_nodes.remove(node) for node in remove_nodes]
 
         for node in shell_nodes + frame_mapping_nodes:
             self.graph.add_edge('#0', node)
