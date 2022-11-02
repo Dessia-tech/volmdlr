@@ -1706,8 +1706,10 @@ class ToroidalSurface3D(Surface3D):
         middle_point_x, middle_point_y, _ = self.frame.new_coordinates(middle)
         if start.x == math.pi and middle_point_y < 0:
             start = volmdlr.Point2D(-math.pi, start.y)
+            angle2d = abs(start.x - end.x)
         elif end.x == math.pi and middle_point_y < 0:
             end = volmdlr.Point2D(-math.pi, end.y)
+            angle2d = abs(start.x - end.x)
         # Verify if right side of Cylindrical Surface for angle3d != math.pi
         if not math.isclose(angle2d, angle3d, abs_tol=1E-5):
             diff = end.x - start.x

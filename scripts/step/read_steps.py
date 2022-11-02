@@ -17,7 +17,7 @@ for step_file in [
     # 'read_test10.step',
     # 'angle_bar.step'
     # 'pipe.step',
-    'bracket2.step',
+    # 'bracket3.step',
     # 'Video_Version.step'
     #ToroidalSurface
     # 'read_test5.step',
