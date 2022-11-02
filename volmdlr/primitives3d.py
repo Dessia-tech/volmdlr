@@ -12,6 +12,7 @@ from scipy.optimize import minimize, NonlinearConstraint
 import numpy as npy
 import matplotlib.pyplot as plt
 
+import dessia_common as dc
 import volmdlr
 import volmdlr.core
 import volmdlr.primitives
@@ -180,6 +181,17 @@ class Block(volmdlr.faces.ClosedShell3D):
 
     # def __hash__(self):
     #     return hash(self.frame)
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+        Custom to_dict for performance
+        """
+        dict_ = dc.DessiaObject.base_dict(self)
+        dict_.update({'color': self.color,
+                      'alpha': self.alpha,
+                      'frame': self.frame.to_dict()})
+
+        return dict_
 
     def volume(self):
         return self.size[0] * self.size[1] * self.size[2]
@@ -371,8 +383,8 @@ class Block(volmdlr.faces.ClosedShell3D):
             new_w = basis.old_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         else:
-            raise ValueError(f'side value not valid, please specify'
-                             f'a correct value: \'old\' or \'new\'')
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
         return new_frame
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -427,7 +439,7 @@ class Block(volmdlr.faces.ClosedShell3D):
 
 class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     """
-
+    TODO: In the future change to a frame and a surface2D and an extrusion vector
     """
     _non_serializable_attributes = ['faces', 'inner_contours3d',
                                     'outer_contour3d']
@@ -465,6 +477,23 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+
+        """
+        dict_ = dc.DessiaObject.base_dict(self)
+        dict_.update({'color': self.color,
+                      'alpha': self.alpha,
+                      'plane_origin': self.plane_origin.to_dict(),
+                      'outer_contour2d': self.outer_contour2d.to_dict(),
+                      'inner_contours2d': [c.to_dict() for c in self.inner_contours2d],
+                      'extrusion_vector': self.extrusion_vector.to_dict(),
+                      'x': self.x.to_dict(),
+                      'y': self.y.to_dict(),
+                      })
+
+        return dict_
 
     def copy(self, deep=True, memo=None):
         return self.__class__(plane_origin=self.plane_origin.copy(),
@@ -509,8 +538,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         name = 'primitive' + str(ip)
         s = 'Wo = []\n'
         s += 'Eo = []\n'
-        for ip, primitive in enumerate(self.outer_contour3d.primitives):
-            s += primitive.FreeCADExport('L{}'.format(ip))
+        for prim_index, primitive in enumerate(self.outer_contour3d.primitives):
+            s += primitive.FreeCADExport('L{}'.format(prim_index))
             s += 'Eo.append(Part.Edge(L{}))\n'.format(ip)
         s += 'Wo.append(Part.Wire(Eo[:]))\n'
         s += 'Fo = Part.Face(Wo)\n'
@@ -519,9 +548,9 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         s += 'W = []\n'
         for ic, contour in enumerate(self.inner_contours3d):
             s += 'E = []\n'
-            for ip, primitive in enumerate(contour.primitives):
-                s += primitive.FreeCADExport('L{}_{}'.format(ic, ip))
-                s += 'E.append(Part.Edge(L{}_{}))\n'.format(ic, ip)
+            for primitive_index, primitive in enumerate(contour.primitives):
+                s += primitive.FreeCADExport('L{}_{}'.format(ic, primitive_index))
+                s += 'E.append(Part.Edge(L{}_{}))\n'.format(ic, primitive_index)
             s += 'Wi = Part.Wire(E[:])\n'
             s += 'Fi.append(Part.Face(Wi))\n'
 
@@ -665,6 +694,23 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         faces = self.shell_faces()
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+        Custom to dict for perf
+        """
+        dict_ = dc.DessiaObject.base_dict(self)
+        dict_.update({'color': self.color,
+                      'alpha': self.alpha,
+                      'plane_origin': self.plane_origin.to_dict(),
+                      'contour2d': self.contour2d.to_dict(),
+                      'axis_point': self.axis_point.to_dict(),
+                      'x': self.x.to_dict(),
+                      'y': self.y.to_dict(),
+                      'angle': self.angle
+                      })
+
+        return dict_
 
     def copy(self, deep=True, memo=None):
         return self.__class__(plane_origin=self.plane_origin.copy(),
@@ -1423,6 +1469,19 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         faces = self.shell_faces()
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+        Custom to dict for perf
+        """
+        dict_ = dc.DessiaObject.base_dict(self)
+        dict_.update({'color': self.color,
+                      'alpha': self.alpha,
+                      'wire3d': self.wire3d.to_dict(),
+                      'contour2d': self.contour2d.to_dict()
+                      })
+
+        return dict_
 
     def shell_faces(self):
         """
