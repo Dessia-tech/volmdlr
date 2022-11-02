@@ -1492,11 +1492,11 @@ class Contour2D(Contour, Wire2D):
     def _get_edge_polygon(self):
         points = []
         for edge in self.primitives:
-            if points:
+            if isinstance(edge, volmdlr.edges.Arc):
+                arc_points = edge.discretization_points(number_points=100)
+                points.extend(arc_points[:-1])
+            elif points:
                 if edge.start != points[-1]:
-                    if isinstance(edge, volmdlr.edges.Arc):
-                        arc_points = self.primitives[0].discretization_points(number_points=100)
-                        points.extend(arc_points[:-1])
                     points.append(edge.start)
             else:
                 points.append(edge.start)
