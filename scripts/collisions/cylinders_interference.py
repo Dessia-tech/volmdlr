@@ -20,15 +20,15 @@ cylinders = [
     ),
     Cylinder(
         position=vm.Point3D(0.05, 0, 0),
-        axis=vm.Vector3D(0, 1, 0),
-        radius=0.005,
+        axis=vm.Vector3D(1, 1, 0),
+        radius=0.03,
         length=0.01,
         color=(1, 0, 1),
     ),
 ]
 
 volume_model = vm.core.VolumeModel(cylinders)
-# volume_model.babylonjs()
+volume_model.babylonjs()
 
 print(
     f"""
@@ -42,17 +42,19 @@ print("Interpenetration")
 start = time()
 
 volumes = []
-n = 100
+n_draws = 100
+n_points = 1000
 
-for _ in range(n):
-    volumes.append(cylinders[1].interference_volume_with_other_cylinder(cylinders[0], n_points=300))
+for _ in range(n_draws):
+    volumes.append(cylinders[1].interference_volume_with_other_cylinder(cylinders[0], n_points=n_points))
     print(
         f"interpenetration volume: {volumes[-1]}"
     )
 
 end = time()
-print(f"\nTotal interpenetration computation time: {end - start}s")
-print(f"Time per calculus: {(end - start)/100}s")
-print(f"Mean volume : {sum(volumes) / n} m³")
+print(f"\n{n_draws} draws, {n_points} points")
+print(f"Total interference computation time: {end - start}s")
+print(f"Time per computation: {(end - start)/100}s")
+print(f"Mean interference volume : {sum(volumes) / n_draws} m³")
 print(f'Standard deviation : {numpy.std(volumes)}')
-print(f'Variation coefficient : {(numpy.std(volumes) / (sum(volumes) / n))*100} %')
+print(f'Variation coefficient : {(numpy.std(volumes) / (sum(volumes) / n_draws))*100} %')

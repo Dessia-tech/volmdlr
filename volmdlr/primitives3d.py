@@ -1194,7 +1194,7 @@ class Cylinder(RevolvedProfile):
         )
 
     def interference_volume_with_other_cylinder(
-            self, other_cylinder: "Cylinder", n_points: int = 500
+            self, other_cylinder: "Cylinder", n_points: int = 1000
     ) -> float:
         """
         Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method)
