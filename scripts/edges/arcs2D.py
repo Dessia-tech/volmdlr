@@ -19,9 +19,9 @@ s = volmdlr.Point2D.random(-1,1,-1,1)
 a = volmdlr.edges.Arc2D(s, i, e)
 ax = a.plot()
 
-for p in a.polygon_points(10):
+for p in a.discretization_points(number_points=10):
     p.plot(ax=ax)
-    
+
 s.plot(ax=ax, color='r')
 e.plot(ax=ax, color='g')
 i.plot(ax=ax, color='b')

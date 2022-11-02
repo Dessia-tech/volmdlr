@@ -1492,10 +1492,7 @@ class Contour2D(Contour, Wire2D):
     def _get_edge_polygon(self):
         points = []
         for edge in self.primitives:
-            if isinstance(edge, volmdlr.edges.Arc):
-                arc_points = edge.discretization_points(number_points=100)
-                points.extend(arc_points[:-1])
-            elif points:
+            if points:
                 if edge.start != points[-1]:
                     points.append(edge.start)
             else:
@@ -1513,10 +1510,13 @@ class Contour2D(Contour, Wire2D):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
             return False
-
         if self.edge_polygon.point_belongs(point):
             return True
-        # TODO: This is incomplete!!!
+        for edge in self.primitives:
+            if hasattr(edge, 'straight_line_point_belongs'):
+                if edge.straight_line_point_belongs(point):
+                    return True
+            warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
         return False
 
     # def point_over_contour(self, point, abs_tol=1e-6):
@@ -1667,6 +1667,7 @@ class Contour2D(Contour, Wire2D):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
             if self.point_belongs(p):
                 return p
+        raise ValueError('point inside not found')
 
     def order_contour(self):
         if self.is_ordered() or len(self.primitives) < 2:
