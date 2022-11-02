@@ -1493,6 +1493,10 @@ class Contour2D(Contour, Wire2D):
         return self._edge_polygon
 
     def _get_edge_polygon(self):
+
+        if len(self.primitives) == 1 and self.primitives[0].start == self.primitives[0].end:
+            return ClosedPolygon2D(self.primitives[0].discretization_points(number_points=200))
+
         points = []
         for edge in self.primitives:
 
@@ -2258,6 +2262,7 @@ class Contour2D(Contour, Wire2D):
                 f'{len(intersections)} intersections not supported yet')
 
         points_intersections = [point for point, prim in intersections]
+
         sorted_points = wire.sort_points_along_wire(points_intersections)
         list_contours = []
         contour_to_cut = self
@@ -2268,6 +2273,12 @@ class Contour2D(Contour, Wire2D):
             point2 = sorted_points[cutting_points_counter + 1]
 
             closing_wire = wire.extract_without_primitives(point1, point2, True)
+
+            for point in points_intersections:
+                if point not in [point1, point2] and Wire2D(closing_wire).point_over_wire(point):
+                    closing_wire = wire.extract_without_primitives(point1, point2, False)
+                    break
+
             closing_wire_prim = []
             for closing_w in closing_wire:
                 if closing_w:
@@ -2277,6 +2288,7 @@ class Contour2D(Contour, Wire2D):
                                                                      point2,
                                                                      closing_contour,
                                                                      True)
+
             if sorted_points.index(point1) + 2 < len(sorted_points) - 1:
                 if contour1.point_over_contour(
                         sorted_points[sorted_points.index(point1) + 2]):
