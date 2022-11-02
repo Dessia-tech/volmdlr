@@ -15,22 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-*
 
 
 ### Performance improvements
 
-*
 
 
 ### Refactorings
 
-*
 
 
 ### Unittests
 
-*
+* PlaneFace3D: line_intersections
+
 
 
 ## v0.6.0 [Unrealeased]
@@ -81,7 +79,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 
 * Wire: extract_primitives, extract_without_primitives
-* PlaneFace3D: line_intersections
 
 
 ## v0.5.0
