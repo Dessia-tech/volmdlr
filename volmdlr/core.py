@@ -872,13 +872,7 @@ class VolumeModel(dc.PhysicalObject):
         self.primitives = primitives
         self.name = name
         self.shells = []
-        # if self.primitives:
-        #     self.shells = self._extract_shells()
-        # if self.shells:
-
-        self.bounding_box = self._bounding_box()
-        # else:
-        #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
+        self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
@@ -900,6 +894,50 @@ class VolumeModel(dc.PhysicalObject):
         for p1, p2 in zip(self.primitives, other.primitives):
             equ = equ and p1 == p2
         return equ
+
+    @property
+    def bounding_box(self):
+        """
+        Returns the boundary box
+        """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model
+        """
+        bboxes = []
+        points = []
+        for primitive in self.primitives:
+            if hasattr(primitive, 'bounding_box'):
+                bboxes.append(primitive.bounding_box)
+            else:
+                if primitive.__class__.__name__ == 'volmdlr.Point3D':
+                    points.append(primitive)
+        if bboxes:
+            xmin = min(box.xmin for box in bboxes)
+            xmax = max(box.xmax for box in bboxes)
+            ymin = min(box.ymin for box in bboxes)
+            ymax = max(box.ymax for box in bboxes)
+            zmin = min(box.zmin for box in bboxes)
+            zmax = max(box.zmax for box in bboxes)
+        elif points:
+            xmin = min(p[0] for p in points)
+            xmax = max(p[0] for p in points)
+            ymin = min(p[1] for p in points)
+            ymax = max(p[1] for p in points)
+            zmin = min(p[2] for p in points)
+            zmax = max(p[2] for p in points)
+        else:
+            # raise ValueError('Bounding box cant be determined')
+            return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def volume(self) -> float:
         """
@@ -980,37 +1018,6 @@ class VolumeModel(dc.PhysicalObject):
         new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def _bounding_box(self) -> BoundingBox:
-        """
-        Computes the bounding box of the model
-        """
-        bboxes = []
-        points = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'bounding_box'):
-                bboxes.append(primitive.bounding_box)
-            else:
-                if primitive.__class__.__name__ == 'volmdlr.Point3D':
-                    points.append(primitive)
-        if bboxes:
-            xmin = min(box.xmin for box in bboxes)
-            xmax = max(box.xmax for box in bboxes)
-            ymin = min(box.ymin for box in bboxes)
-            ymax = max(box.ymax for box in bboxes)
-            zmin = min(box.zmin for box in bboxes)
-            zmax = max(box.zmax for box in bboxes)
-        elif points:
-            xmin = min(p[0] for p in points)
-            xmax = max(p[0] for p in points)
-            ymin = min(p[1] for p in points)
-            ymax = max(p[1] for p in points)
-            zmin = min(p[2] for p in points)
-            zmax = max(p[2] for p in points)
-        else:
-            # raise ValueError('Bounding box cant be determined')
-            return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
-
     def plot2d(self, ax=None, color=None):
         fig = plt.figure()
         if ax is None:
@@ -1058,18 +1065,16 @@ class VolumeModel(dc.PhysicalObject):
         s += "import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
         for ip, primitive in enumerate(self.primitives):
             if primitive.name == '':
-                primitive_name = 'Primitive_{}'.format(ip)
+                primitive_name = f'Primitive_{ip}'
             else:
-                primitive_name = 'Primitive_{}_{}'.format(ip, primitive.name)
-            s += "part = doc.addObject('App::Part','{}')\n".format(
-                primitive_name)
+                primitive_name = f'Primitive_{ip}_{primitive.name}'
+            s += f"part = doc.addObject('App::Part','{primitive_name}')\n"
             if hasattr(primitive, 'FreeCADExport'):
                 sp = primitive.FreeCADExport(ip)
                 if sp != '':
                     #                        s += (sp+'\n')
                     s += (sp)
-                    s += 'shapeobj = doc.addObject("Part::Feature","{}")\n'.format(
-                        primitive_name)
+                    s += f'shapeobj = doc.addObject("Part::Feature","{primitive_name}")\n'
                     # if isinstance(primitive, BSplineCurve3D) \
                     #         or isinstance(primitive, BSplineSurface3D) \
                     #         or isinstance(primitive, Circle3D) \
@@ -1081,7 +1086,7 @@ class VolumeModel(dc.PhysicalObject):
                     #     s += 'shapeobj.Shape = primitive{}.toShape()\n'.format(
                     #         ip)
                     # else:
-                    s += "shapeobj.Shape = primitive{}\n".format(ip)
+                    s += f"shapeobj.Shape = primitive{ip}\n"
                     s += 'part.addObject(shapeobj)\n\n'
             # --------------------DEBUG-------------------
         #                else:
@@ -1092,10 +1097,9 @@ class VolumeModel(dc.PhysicalObject):
         if 'fcstd' in export_types:
             s += "doc.saveAs('" + fcstd_filepath + ".fcstd')\n\n"
         if 'stl' in export_types:
-            s += "import Mesh\nMesh.export(doc.Objects,'{}.stl', tolerance={})\n".format(
-                fcstd_filepath, tolerance)
+            s += f"import Mesh\nMesh.export(doc.Objects,'{fcstd_filepath}.stl', tolerance={tolerance})\n"
         if 'step' in export_types:
-            s += "Part.export(doc.Objects,'{}.step')\n".format(fcstd_filepath)
+            s += f"Part.export(doc.Objects,'{fcstd_filepath}.step')\n"
 
         if save_to != '':
             with open(os.path.abspath(save_to), 'w') as file:
@@ -1284,89 +1288,72 @@ class VolumeModel(dc.PhysicalObject):
             step_content += primitive_content
 
             product_definition_context_id = primitive_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n"\
-                .format(product_definition_context_id)
+            step_content += f"#{product_definition_context_id} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n"
 
             product_context_id = product_definition_context_id + 1
-            step_content += "#{} = PRODUCT_CONTEXT('',#2,'mechanical');\n".format(product_context_id)
+            step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
             product_id = product_context_id + 1
-            step_content += "#{} = PRODUCT('{}','{}','',(#{}));\n".format(product_id,
-                                                                          primitive.name,
-                                                                          primitive.name,
-                                                                          product_context_id)
+            step_content += f"#{product_id} = PRODUCT('{primitive.name}'," \
+                            f"'{primitive.name}','',(#{product_context_id}));\n"
             product_definition_formation_id = product_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_FORMATION('','',#{});\n".format(
-                product_definition_formation_id, product_id)
+            step_content += f"#{product_definition_formation_id} = PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
             product_definition_id = product_definition_formation_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION('design','',#{},#{});\n".format(product_definition_id,
-                                                                                      product_definition_formation_id,
-                                                                                      product_definition_context_id)
+            step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
+                            f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
             product_definition_shape_id = product_definition_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_SHAPE('','',#{});\n".format(
-                product_definition_shape_id, product_definition_id)
+            step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
+                            f"'',#{product_definition_id});\n"
             shape_definition_repr_id = product_definition_shape_id + 1
             step_content += "#{} = SHAPE_DEFINITION_REPRESENTATION(#{},#{});\n".format(shape_definition_repr_id,
                                                                                        product_definition_shape_id,
                                                                                        primitive_id
                                                                                        )
             product_related_category = shape_definition_repr_id + 1
-            step_content += "#{} = PRODUCT_RELATED_PRODUCT_CATEGORY('part',$,(#{}));\n".format(
-                product_related_category,
-                product_id
-            )
+            step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
+                            f"'part',$,(#{product_id}));\n"
             draughting_id = product_related_category + 1
-            step_content += "#{} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n".format(
-                draughting_id)
+            step_content += f"#{draughting_id} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n"
             color_id = draughting_id + 1
             primitive_color = (1, 1, 1)
             if hasattr(primitive, 'color') and primitive.color is not None:
                 primitive_color = primitive.color
-            step_content += "#{} = COLOUR_RGB('',{}, {}, {});\n".format(
-                color_id,
-                round(float(primitive_color[0]), 4),
-                round(float(primitive_color[1]), 4),
-                round(float(primitive_color[2]), 4)
-            )
+            step_content += f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)}," \
+                            f"{round(float(primitive_color[1]), 4)}, {round(float(primitive_color[2]), 4)});\n"
 
             curve_style_id = color_id + 1
-            step_content += "#{} = CURVE_STYLE('',#{},POSITIVE_LENGTH_MEASURE(0.1),#{});\n".format(
-                    curve_style_id, draughting_id, color_id)
+            step_content += f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," \
+                            f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
 
             fill_area_color_id = curve_style_id + 1
-            step_content += "#{} = FILL_AREA_STYLE_COLOUR('',#{});\n".format(
-                    fill_area_color_id, color_id)
+            step_content += f"#{fill_area_color_id} = FILL_AREA_STYLE_COLOUR('',#{color_id});\n"
 
             fill_area_id = fill_area_color_id + 1
-            step_content += "#{} = FILL_AREA_STYLE('',#{});\n".format(
-                    fill_area_id, fill_area_color_id)
+            step_content += f"#{fill_area_id} = FILL_AREA_STYLE('',#{fill_area_color_id});\n"
 
             suface_fill_area_id = fill_area_id + 1
-            step_content += "#{} = SURFACE_STYLE_FILL_AREA(#{});\n".format(
-                    suface_fill_area_id, fill_area_id)
+            step_content += f"#{suface_fill_area_id} = SURFACE_STYLE_FILL_AREA(#{fill_area_id});\n"
 
             suface_side_style_id = suface_fill_area_id + 1
-            step_content += "#{} = SURFACE_SIDE_STYLE('',(#{}));\n".format(
-                    suface_side_style_id, suface_fill_area_id)
+            step_content += f"#{suface_side_style_id} = SURFACE_SIDE_STYLE('',(#{suface_fill_area_id}));\n"
 
             suface_style_usage_id = suface_side_style_id + 1
-            step_content += "#{} = SURFACE_STYLE_USAGE(.BOTH.,#{});\n".format(
-                    suface_style_usage_id, suface_side_style_id)
+            step_content += f"#{suface_style_usage_id} = SURFACE_STYLE_USAGE(.BOTH.,#{suface_side_style_id});\n"
 
             presentation_style_id = suface_style_usage_id + 1
 
-            step_content += "#{} = PRESENTATION_STYLE_ASSIGNMENT((#{},#{}));\n".format(
-                    presentation_style_id, suface_style_usage_id, curve_style_id)
+            step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
+                            "#{curve_style_id}));\n"
 
             styled_item_id = presentation_style_id + 1
             if primitive.__class__.__name__ == 'OpenShell3D':
                 for face_id in face_ids:
-                    step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
-                        styled_item_id, presentation_style_id, face_id)
+                    step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                                    f"#{face_id});\n"
                     styled_item_id += 1
                 styled_item_id -= 1
             else:
-                step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
-                        styled_item_id, presentation_style_id, primitive_id)
+                step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                                f"#{primitive_id});\n"
 
             current_id = styled_item_id + 1
 
