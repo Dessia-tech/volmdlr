@@ -1156,32 +1156,38 @@ class Cylinder(RevolvedProfile):
 
         # sampling point in cartesian local coordinates
         sampler = qmc.LatinHypercube(3)
-        sample = qmc.scale(sampler.random(n=n_points), [0, 0, -self.length/2], [1, 2 * math.pi, self.length/2])
+        sample = qmc.scale(
+            sampler.random(n=n_points),
+            [0, 0, -self.length / 2],
+            [1, 2 * math.pi, self.length / 2],
+        )
 
         # converting sampled point in global coordinates volmdlr.Point3D points
         points = []
-        for p in sample:
-            radius = math.sqrt(p[0]) * self.radius
-            theta = p[1]
+        for point in sample:
+            radius = math.sqrt(point[0]) * self.radius
+            theta = point[1]
 
             x_local = radius * math.cos(theta)
             y_local = radius * math.sin(theta)
-            z_local = p[2]
+            z_local = point[2]
 
-            points.append(local_frame.old_coordinates(volmdlr.Point3D(x_local, y_local, z_local)))
+            points.append(
+                local_frame.old_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
+            )
 
         return points
 
-    def point_belongs(self, point: volmdlr.Point3D, **kwargs) -> bool:
+    def point_belongs(self, point3d: volmdlr.Point3D, **kwargs) -> bool:
         """
-        :param point: volmdlr Point3D
+        :param point3d: volmdlr Point3D
         :return: True if the given point is inside the cylinder, False otherwise
         """
         local_frame = volmdlr.Frame3D.from_point_and_vector(
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
         )
 
-        local_point = local_frame.new_coordinates(point)
+        local_point = local_frame.new_coordinates(p)
 
         return (math.sqrt(local_point.x ** 2 + local_point.y ** 2) <= self.radius) and (
                 -self.length / 2 <= local_point.z <= self.length / 2
