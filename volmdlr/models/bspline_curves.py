@@ -511,4 +511,3 @@ dic_bspline = {
      {'$ref': '#/end'}]}
 
 bspline_curve2d_1 = volmdlr.edges.BSplineCurve2D.dict_to_object(dic_bspline)
-
