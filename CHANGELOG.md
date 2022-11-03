@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 * Block: faces_center (calculate directly point in the middle of the faces)
+* Cirle2D: split_by_line
 
 
 ### Fixed
