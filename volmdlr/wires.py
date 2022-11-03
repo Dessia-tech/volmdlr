@@ -4196,9 +4196,10 @@ class Contour3D(ContourMixin, Wire3D):
             length = prim.length()
             points_ = [prim.point_at_abscissa(i / n * length)
                        for i in range(n)]
-            for point in points_:
-                if point not in points:
-                    points.append(point)
+            [points.append(point) for point in points_ if point not in points]
+            # for point in points_:
+            #     if point not in points:
+            #         points.append(point)
         return volmdlr.core.BoundingBox.from_points(points)
 
     @property
