@@ -5030,8 +5030,8 @@ class PlaneFace3D(Face3D):
 
         if self.face_inside(face):
             return self.divide_face([face.surface2d.outer_contour], True)
-        if face.is_inside(self):
-            return face.divide_face([self.surface2d.outer_contour], True)
+        # if face.is_inside(self):
+        #     return face.divide_face([self.surface2d.outer_contour], True)
 
         outer_contour_1 = self.surface2d.outer_contour
         outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
@@ -7350,36 +7350,33 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         used_faces, list_faces = {}, []
         initial_faces = self.faces[:]
 
-        for face1 in initial_faces:
-            for face2 in shell.faces:
+        for i, face1 in enumerate(initial_faces):
+            for j, face2 in enumerate(shell.faces):
 
                 if face1.surface3d.is_coincident(face2.surface3d):
+                    print('i: ', i)
+                    print('j: ', j)
+
                     try:
-                        faces_combinaton = (used_faces[face1], face2)
+                        face1_1, face2_2 = (used_faces[face1], face2)
                     except KeyError:
-                        faces_combinaton = (face1, face2)
+                        face1_1, face2_2 = (face1, face2)
 
-                    face1_1 = faces_combinaton[0]
-                    face2_2 = faces_combinaton[1]
+                    # face2_2 = face2_2.to_planeface3d(face1_1.surface3d)
+                    plane3d = face1_1.surface3d
+                    s2d = Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
+                                    inner_contours=[plane3d.contour3d_to_2d(contour) for contour in face2_2.inner_contours3d])
+                    face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
 
-                    if face1.face_inside(face2):
-                        divided_faces = face1_1.divide_face([face2_2.surface2d.outer_contour], True)
-                        for d_face in divided_faces:
-                            if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
-                                to_be_divided = d_face
-                            else:
-                                used_faces[face1] = d_face
-
-                        if face2_2.surface2d.inner_contours:
-                            list_faces.extend(to_be_divided.divide_face(
-                                face2_2.surface2d.inner_contours, True))
+                    divided_faces = face1_1.cut_by_coincident_face(face2_2)
+                    for d_face in divided_faces:
+                        if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
+                            list_faces.append(d_face)
                         else:
-                            list_faces.append(to_be_divided)
-
-                    else:
-                        divided_faces = face1_1.cut_by_face(face2_2)
-                        # list_faces.extend(face1_1.cut_by_face(face2_2))
-                        used_faces[face1] = divided_faces
+                            if face1 in used_faces:
+                                used_faces[face1] += [d_face]
+                            else:
+                                used_faces[face1] = [d_face]
 
         for face in initial_faces:
             try:
