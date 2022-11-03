@@ -654,14 +654,14 @@ class Surface2D(volmdlr.core.Primitive2D):
                 if isinstance(contour, volmdlr.wires.Circle2D):
                     primitives.append(contour)
                     primitives.append(contour)
-                    primitives_length(contour.length() / 2)
-                    primitives_length(contour.length() / 2)
+                    primitives_length.append(contour.length() / 2)
+                    primitives_length.append(contour.length() / 2)
                 else:
                     for p, primitive in enumerate(contour.primitives):
                         if ((primitive not in primitives)
                                 and (primitive.reverse() not in primitives)):
                             primitives.append(primitive)
-                            primitives_length(primitive.length())
+                            primitives_length.append(primitive.length())
 
             for i, length in enumerate(primitives_length):
                 if length < min_points * size:
