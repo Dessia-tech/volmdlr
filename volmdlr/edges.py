@@ -1234,7 +1234,7 @@ class LineSegment2D(LineSegment):
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
              plot_points=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         p1, p2 = self.start, self.end
         if arrow:
@@ -1352,14 +1352,14 @@ class LineSegment2D(LineSegment):
                                        [self.end.x, self.end.y],
                                        edge_style=edge_style)
 
-    def CreateTangentCircle(self, point, other_line):
-        circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
+    def create_tangent_circle(self, point, other_line):
+        circle1, circle2 = Line2D.create_tangent_circle(other_line, point, self)
         if circle1 is not None:
-            point_J1, curv_abs1 = Line2D.point_projection(self, circle1.center)
+            _, curv_abs1 = Line2D.point_projection(self, circle1.center)
             if curv_abs1 < 0. or curv_abs1 > self.length():
                 circle1 = None
         if circle2 is not None:
-            point_J2, curv_abs2 = Line2D.point_projection(self, circle2.center)
+            _, curv_abs2 = Line2D.point_projection(self, circle2.center)
             if curv_abs2 < 0. or curv_abs2 > self.length():
                 circle2 = None
         return circle1, circle2
@@ -1883,11 +1883,11 @@ class Arc2D(Arc):
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if plot_points:
-            for p in [self.center, self.start, self.interior, self.end]:
-                p.plot(ax=ax, color=color, alpha=alpha)
+            for point in [self.center, self.start, self.interior, self.end]:
+                point.plot(ax=ax, color=color, alpha=alpha)
 
         ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y), 2 * self.radius,
                                             2 * self.radius, angle=0,
@@ -2169,7 +2169,7 @@ class FullArc2D(Arc2D):
     def plot(self, ax=None, color='k', alpha=1, plot_points=False,
              linestyle='-', linewidth=1):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if self.radius > 0:
             ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y),
@@ -2486,9 +2486,9 @@ class Line3D(Line):
         return self.direction_vector().is_colinear_to(point3d - self.point1)
 
     def point_distance(self, point):
-        vector1 = point - self.start
+        vector1 = point - self.point1
         vector1.to_vector()
-        vector2 = self.end - self.start
+        vector2 = self.point2 - self.point1
         vector2.to_vector()
         return vector1.cross(vector2).norm() / vector2.norm()
 
@@ -2497,10 +2497,8 @@ class Line3D(Line):
             ax = Axes3D(plt.figure())
 
         # Line segment
-        x = [self.point1.x, self.point2.x]
-        y = [self.point1.y, self.point2.y]
-        z = [self.point1.z, self.point2.z]
-        ax.plot(x, y, z, color=color, alpha=alpha)
+        ax.plot([self.point1.x, self.point2.x], [self.point1.y, self.point2.y],
+                [self.point1.z, self.point2.z], color=color, alpha=alpha)
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
@@ -2516,7 +2514,7 @@ class Line3D(Line):
         return ax
 
     def plane_projection2d(self, center, x, y):
-        return Line2D(self.points[0].plane_projection2d(center, x, y),
+        return Line2D(self.point1.plane_projection2d(center, x, y),
                       self.point2.plane_projection2d(center, x, y))
 
     def minimum_distance_points(self, other_line):
@@ -2616,7 +2614,7 @@ class Line3D(Line):
         return Line3D(point1, point2)
 
     def copy(self, *args, **kwargs):
-        return Line3D(*[p.copy() for p in self.points])
+        return Line3D(*[p.copy() for p in [self.point1, self.point2]])
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3119,7 +3117,7 @@ class LineSegment3D(LineSegment):
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
         plane1 = volmdlr.faces.Plane3D.from_3_points(pt_a, pt_b, pt_c)
-        v = vector.cross(plane1.normal)  # distance vector
+        v = vector.cross(plane1.frame.w)  # distance vector
         # pt_a = k*u + c*v + pt_c
         res = (pt_a - pt_c).vector
         x, y, z = res[0], res[1], res[2]
@@ -3414,7 +3412,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         lut = self.look_up_table(resolution=resolution)
         if 0 < abscissa < self.length():
             last_param = 0
-            for i, (t, dist) in enumerate(lut):
+            for (t, dist) in lut:
                 if abscissa < dist:
                     t1 = last_param
                     t2 = t
@@ -3426,7 +3424,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                              ' or negative')
 
     def normal(self, position: float = 0.0):
-        point, normal = operations.normal(self.curve, position, normalize=True)
+        _, normal = operations.normal(self.curve, position, normalize=True)
         normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
         return normal
 
@@ -3920,7 +3918,7 @@ class Arc3D(Arc):
             u2.normalize()
         except ZeroDivisionError:
             raise ValueError(
-                'Start, end and interior points of an arc must be distincts')
+                'Start, end and interior points of an arc must be distincts') from ZeroDivisionError
 
         normal = u2.cross(u1)
         normal.normalize()
@@ -3955,7 +3953,7 @@ class Arc3D(Arc):
             center, _ = l1.minimum_distance_points(l2)
         except ZeroDivisionError:
             raise ValueError(
-                'Start, end and interior points  of an arc must be distincts')
+                'Start, end and interior points  of an arc must be distincts') from ZeroDivisionError
 
         return center
 
@@ -4223,7 +4221,7 @@ class Arc3D(Arc):
         self.start, self.interior, self.end = new_start, new_interior, new_end
 
     def abscissa(self, point3d: volmdlr.Point3D):
-        x, y, z = self.frame.new_coordinates(point3d)
+        x, y,  = self.frame.new_coordinates(point3d)
         u1 = x / self.radius
         u2 = y / self.radius
         theta = volmdlr.core.sin_cos_angle(u1, u2)
@@ -4615,8 +4613,7 @@ class FullArc3D(Arc3D):
     def plot(self, ax=None, color='k', alpha=1., edge_ends=False,
              edge_direction=False):
         if ax is None:
-            fig = plt.figure()
-            ax = Axes3D(fig)
+            ax = Axes3D(plt.figure())
 
         x = []
         y = []
