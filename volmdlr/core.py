@@ -833,29 +833,29 @@ class BoundingBox(dc.DessiaObject):
         height = self.ymax - self.ymin
         width = self.xmax - self.xmin
         depth = self.zmax - self.zmin
-        s = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(
+        script = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(
             height, width, depth)
-        s += 'box.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(
+        script += 'box.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(
             self.center[0], self.center[1], self.center[2])
-        s += 'var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);\n'
-        s += 'bboxmat.alpha = 0.4;\n'
-        s += 'var DTWidth = {};\n'.format(width * 60)
-        s += 'var DTHeight = {};\n'.format(height * 60)
-        s += 'var font_type = "Arial";\n'
-        s += 'var text = "{}";\n'.format(self.name)
-        s += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, \
+        script += 'var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);\n'
+        script += 'bboxmat.alpha = 0.4;\n'
+        script += 'var DTWidth = {};\n'.format(width * 60)
+        script += 'var DTHeight = {};\n'.format(height * 60)
+        script += 'var font_type = "Arial";\n'
+        script += 'var text = "{}";\n'.format(self.name)
+        script += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, \
             scene);\n'
-        s += 'var ctx = dynamicTexture.getContext();\n'
-        s += 'var size = 0.8;\n'
-        s += 'ctx.font = size + "px " + font_type;\n'
-        s += 'var textWidth = ctx.measureText(text).width;\n'
-        s += 'var ratio = textWidth/size;\n'
-        s += 'var font_size = Math.floor(DTWidth / ratio);\n'
-        s += 'var font = font_size + "px " + font_type;\n'
-        s += 'dynamicTexture.drawText(text, null, null, font, "#000000", "#ffffff", false);\n'
-        s += 'bboxmat.diffuseTexture = dynamicTexture;\n'
-        s += 'box.material = bboxmat;\n'
-        return s
+        script += 'var ctx = dynamicTexture.getContext();\n'
+        script += 'var size = 0.8;\n'
+        script += 'ctx.font = size + "px " + font_type;\n'
+        script += 'var textWidth = ctx.measureText(text).width;\n'
+        script += 'var ratio = textWidth/size;\n'
+        script += 'var font_size = Math.floor(DTWidth / ratio);\n'
+        script += 'var font = font_size + "px " + font_type;\n'
+        script += 'dynamicTexture.drawText(text, null, null, font, "#000000", "#ffffff", false);\n'
+        script += 'bboxmat.diffuseTexture = dynamicTexture;\n'
+        script += 'box.material = bboxmat;\n'
+        return script
 
 
 class VolumeModel(dc.PhysicalObject):
