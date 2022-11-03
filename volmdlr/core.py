@@ -1707,6 +1707,20 @@ class VolumeModel(dc.PhysicalObject):
                     min_points=kwargs['min_points'],
                     initial_mesh_size=kwargs['initial_mesh_size'])
 
+        self.generate_msh_file(file_name, mesh_dimension)
+
+        # gmsh.initialize()
+        # gmsh.open(file_name + ".geo")
+
+        # gmsh.model.geo.synchronize()
+        # gmsh.model.mesh.generate(mesh_dimension)
+
+        # gmsh.write(file_name + ".msh")
+
+        # gmsh.finalize()
+
+    @staticmethod
+    def generate_msh_file(file_name, mesh_dimension):
         gmsh.initialize()
         gmsh.open(file_name + ".geo")
 

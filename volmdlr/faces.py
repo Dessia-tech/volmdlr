@@ -729,15 +729,17 @@ class Surface2D(volmdlr.core.Primitive2D):
                     min_points,
                     initial_mesh_size)
 
-        gmsh.initialize()
-        gmsh.open(file_name + ".geo")
+        volmdlr.core.VolumeModel.generate_msh_file(file_name, mesh_dimension)
 
-        gmsh.model.geo.synchronize()
-        gmsh.model.mesh.generate(mesh_dimension)
+        # gmsh.initialize()
+        # gmsh.open(file_name + ".geo")
 
-        gmsh.write(file_name + ".msh")
+        # gmsh.model.geo.synchronize()
+        # gmsh.model.mesh.generate(mesh_dimension)
 
-        gmsh.finalize()
+        # gmsh.write(file_name + ".msh")
+
+        # gmsh.finalize()
 
 
 class Surface3D(DessiaObject):
