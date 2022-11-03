@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-
+* BsplineCurve: abscissa (use different start point between 0 and length)
 
 ### Performance improvements
 
@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 
 * PlaneFace3D: line_intersections
-
+* BsplineCurve: abscissa
 
 
 ## v0.6.0 [Unrealeased]
