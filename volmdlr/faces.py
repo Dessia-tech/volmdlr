@@ -7641,7 +7641,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         gets the lines that define an OpenShell3D geometry in a .geo file
 
         :param update_data: Data used for VolumeModel defined with different shells
-        defaults to {'point_account':0,'line_account':0,'line_loop_account':0, 'surface_account':0'surface_loop_account':0}
+        defaults to:
+        {'point_account':0,'line_account':0,'line_loop_account':0, 'surface_account':0'surface_loop_account':0}
         :type update_data: dict, optional
         :param point_mesh_size: The mesh size at a specific point, defaults to None
         :type point_mesh_size: float, optional
@@ -7653,14 +7654,14 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         primitives = []
         points = set()
         for face in self.faces:
-            for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
                 if isinstance(contour, volmdlr.wires.Circle2D):
                     points.add(volmdlr.Point3D(contour.radius, contour.center.y, 0))
                     points.add(volmdlr.Point3D(contour.center.x, contour.center.y, 0))
                     points.add(volmdlr.Point3D(-contour.radius, contour.center.y, 0))
 
                 else:
-                    for p, primitive in enumerate(contour.primitives):
+                    for _, primitive in enumerate(contour.primitives):
                         if isinstance(primitive, volmdlr.edges.LineSegment):
                             points.add(primitive.start)
                             points.add(primitive.end)
@@ -7687,18 +7688,18 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         lines, line_surface, lines_tags = [], [], []
 
         points = list(points)
-        for p, point in enumerate(points):
-            lines.append(point.get_geo_lines(tag=p + point_account + 1,
+        for p_index, point in enumerate(points):
+            lines.append(point.get_geo_lines(tag=p_index + point_account + 1,
                                              point_mesh_size=point_mesh_size))
 
-        for f, face in enumerate(self.faces):
+        for f_index, face in enumerate(self.faces):
             line_surface = []
-            for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
                 lines_tags = []
                 if isinstance(contour, volmdlr.wires.Circle2D):
                     pass
                 else:
-                    for p, primitive in enumerate(contour.primitives):
+                    for _, primitive in enumerate(contour.primitives):
 
                         try:
                             # line_account += 1
@@ -7745,7 +7746,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     line_loop_account += 1
                     lines_tags = []
 
-            lines.append(face.get_geo_lines((f + 1 + update_data['surface_account']),
+            lines.append(face.get_geo_lines((f_index + 1 + update_data['surface_account']),
                                             line_surface))
 
             line_surface = []
@@ -7866,8 +7867,8 @@ class ClosedShell3D(OpenShell3D):
         """
         Verifies if a face lies on the shell's surface
         """
-        for fc in self.faces:
-            if fc.face_inside(face):
+        for face_c in self.faces:
+            if face_c.face_inside(face):
                 return True
         return False
 
