@@ -4222,7 +4222,7 @@ class Arc3D(Arc):
         self.start, self.interior, self.end = new_start, new_interior, new_end
 
     def abscissa(self, point3d: volmdlr.Point3D):
-        x, y,  = self.frame.new_coordinates(point3d)
+        x, y, = self.frame.new_coordinates(point3d)
         u1 = x / self.radius
         u2 = y / self.radius
         theta = volmdlr.core.sin_cos_angle(u1, u2)
