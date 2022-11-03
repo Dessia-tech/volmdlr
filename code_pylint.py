@@ -30,7 +30,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-statements': 21,
                      'super-init-not-called': 19,
                      'no-name-in-module': 22,
-                     'abstract-method': 24,
+                     'abstract-method': 33,
                      'empty-docstring': 18,
                      'duplicate-code': 11,
                      'no-self-use': 16,
