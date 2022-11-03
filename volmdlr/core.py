@@ -1541,22 +1541,28 @@ class VolumeModel(dc.PhysicalObject):
         :rtype: .txt
         """
 
-        try:
-            curvature_mesh_size = kwargs['curvature_mesh_size']
-        except KeyError:
-            curvature_mesh_size = 0
-        try:
-            min_points = kwargs['min_points']
-        except KeyError:
-            min_points = None
-        try:
-            initial_mesh_size = kwargs['initial_mesh_size']
-        except KeyError:
-            initial_mesh_size = 5
+        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+            if element[0] not in kwargs:
+                kwargs[element[0]] = element[1]
+
+        # try:
+        #     curvature_mesh_size = kwargs['curvature_mesh_size']
+        # except KeyError:
+        #     curvature_mesh_size = 0
+        # try:
+        #     min_points = kwargs['min_points']
+        # except KeyError:
+        #     min_points = None
+        # try:
+        #     initial_mesh_size = kwargs['initial_mesh_size']
+        # except KeyError:
+        #     initial_mesh_size = 5
 
         lines = self.get_geo_lines()
-        lines.extend(self.get_mesh_lines(factor, curvature_mesh_size=curvature_mesh_size,
-                                         min_points=min_points, initial_mesh_size=initial_mesh_size))
+        lines.extend(self.get_mesh_lines(factor,
+                                         curvature_mesh_size=kwargs['curvature_mesh_size'],
+                                         min_points=kwargs['min_points'],
+                                         initial_mesh_size=kwargs['initial_mesh_size']))
         with open(file_name + '.geo', 'w', encoding="utf-8") as f:
             for line in lines:
                 f.write(line)
