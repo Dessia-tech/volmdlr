@@ -10,47 +10,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
-<<<<<<< HEAD
-* Create .geo and .msh files (Mesh geometries with GMSH)
-=======
 * Block: faces_center (calculate directly point in the middle of the faces)
->>>>>>> dev
+* Create .geo and .msh files (Mesh geometries with GMSH)
 
 
 ### Fixed
 
-<<<<<<< HEAD
-*
-=======
 * BsplineCurve: abscissa (use different start point between 0 and length)
-
->>>>>>> dev
 
 
 ### Performance improvements
 
-<<<<<<< HEAD
-*
-=======
->>>>>>> dev
 
 
 ### Refactorings
 
-<<<<<<< HEAD
-*
-=======
->>>>>>> dev
 
 
 ### Unittests
 
-<<<<<<< HEAD
-*
-=======
 * BsplineCurve: abscissa
 
->>>>>>> dev
 
 
 ## v0.6.0 [Unrealeased]
