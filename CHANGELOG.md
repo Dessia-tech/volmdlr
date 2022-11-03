@@ -10,6 +10,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+* Block: faces_center (calculate directly point in the middle of the faces)
+* OpenShell3D: project_coincident_faces_of
+
+
+### Fixed
+
+* BsplineCurve: abscissa (use different start point between 0 and length)
+* Arc3D: plot
+
+
+### Performance improvements
+
+
+
+### Refactorings
+
+
+
+### Unittests
+
+* PlaneFace3D: line_intersections
+* BsplineCurve: abscissa
+
+
+## v0.6.0 [Unrealeased]
+
+### New Features
+
 * Stl:load_from_file, to_volume_model
 * Surface2D: copy (specific method)
 * GmshParser: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
@@ -17,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Node2D/3D, TriangularElement, QuadrilateralElement2D, TriangularElement3D
 * ElementsGroup: nodes, elements_per_node
 * Mesh: bounding_rectangle, delete_duplicated_nodes
-* OpenShell3D: project_coincident_faces_of
+* PlaneFace3D: cut_by_coincident_face
 
 
 ### Fixed
@@ -30,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc2D: split (how to choose the interior point)
 * Wire: extract_primitives (consider point1 and point2 belong to the same primitive, REMOVE Contour.extract_primitives)
 * LineSegment: abcissa (consider point2d == arc2d.start/end)
+* Contour2D: cut_by_wire
+* Contour2D: point_belongs (bug when contour has only one primitive, like FullArc2D)
+* Contour: contours_from_edges
+* PlaneFace3D: face_intersections
 
 
 ### Performance improvements
@@ -50,7 +82,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 
 * Wire: extract_primitives, extract_without_primitives
-
 
 
 ## v0.5.0
