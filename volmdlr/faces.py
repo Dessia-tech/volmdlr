@@ -7631,19 +7631,13 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return ax
 
-    def get_geo_lines(self, update_data={'point_account': 0,
-                                         'line_account': 0,
-                                         'line_loop_account': 0,
-                                         'surface_account': 0,
-                                         'surface_loop_account': 0},
+    def get_geo_lines(self, update_data,
                       point_mesh_size: float = None):
         """
         gets the lines that define an OpenShell3D geometry in a .geo file
 
         :param update_data: Data used for VolumeModel defined with different shells
-        defaults to:
-        {'point_account':0,'line_account':0,'line_loop_account':0, 'surface_account':0'surface_loop_account':0}
-        :type update_data: dict, optional
+        :type update_data: dict
         :param point_mesh_size: The mesh size at a specific point, defaults to None
         :type point_mesh_size: float, optional
 
