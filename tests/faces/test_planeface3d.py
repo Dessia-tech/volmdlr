@@ -5,6 +5,7 @@ import unittest
 
 import dessia_common
 import volmdlr
+from volmdlr import edges
 
 
 class TestPlaneFace3D(unittest.TestCase):
@@ -23,6 +24,12 @@ class TestPlaneFace3D(unittest.TestCase):
     def test_face_intersections_with_holes(self):
         face_intersections = self.face.face_intersections(self.face_with_3holes)
         self.assertEqual(len(face_intersections), 4)
+
+    def test_line_intersections(self):
+        line_inside_hole = edges.Line3D(volmdlr.Point3D(0.1, 0.0, -.3), volmdlr.Point3D(-0.1, 0.0, 0.3))
+        line_inside_face = edges.Line3D(volmdlr.Point3D(-0.05, 0.0, -.3), volmdlr.Point3D(-0.1, 0.0, 0.3))
+        self.assertEqual([], self.face_with_3holes.line_intersections(line_inside_hole))
+        self.assertEqual(1, len(self.face_with_3holes.line_intersections(line_inside_face)))
 
     def test_divide_face(self):
         face_intersections = self.face.face_intersections(self.face_with_3holes)
