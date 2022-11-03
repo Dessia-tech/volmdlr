@@ -10,27 +10,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
-*
+* Block: faces_center (calculate directly point in the middle of the faces)
 
 
 ### Fixed
 
+* BsplineCurve: abscissa (use different start point between 0 and length)
 * Arc3D: plot
 
 
 ### Performance improvements
 
-*
 
 
 ### Refactorings
 
-*
 
 
 ### Unittests
 
-*
+* BsplineCurve: abscissa
+
 
 
 ## v0.6.0 [Unrealeased]
