@@ -1563,11 +1563,11 @@ class VolumeModel(dc.PhysicalObject):
                                          curvature_mesh_size=kwargs['curvature_mesh_size'],
                                          min_points=kwargs['min_points'],
                                          initial_mesh_size=kwargs['initial_mesh_size']))
-        with open(file_name + '.geo', 'w', encoding="utf-8") as f:
+        with open(file_name + '.geo', 'w', encoding="utf-8") as file:
             for line in lines:
-                f.write(line)
-                f.write('\n')
-        f.close()
+                file.write(line)
+                file.write('\n')
+        file.close()
 
     def to_geo_with_stl(self, file_name: str,
                         factor: float, **kwargs):
@@ -1649,11 +1649,11 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def update_surfaces_list(face_contours, surfaces, contours, i):
-        for k, face_c in enumerate(face_contours):
-            for l, contour_l in enumerate(contours):
-                for c, contour in enumerate(contour_l):
+        for k_, face_c in enumerate(face_contours):
+            for l_, contour_l in enumerate(contours):
+                for c_, contour in enumerate(contour_l):
                     if face_c.is_superposing(contour):
-                        surfaces[i][k] = surfaces[l][c]
+                        surfaces[i][k_] = surfaces[l_][c_]
                         continue
         return surfaces
 
@@ -1785,10 +1785,10 @@ class MovingVolumeModel(VolumeModel):
     def babylon_data(self):
         meshes = []
         primitives_to_meshes = []
-        for ip, primitive in enumerate(self.primitives):
+        for i_prim, primitive in enumerate(self.primitives):
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
-                primitives_to_meshes.append(ip)
+                primitives_to_meshes.append(i_prim)
 
         bbox = self._bounding_box()
         center = bbox.center
