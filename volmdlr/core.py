@@ -1464,8 +1464,8 @@ class VolumeModel(dc.PhysicalObject):
 
                 if kwargs['min_points']:
 
-                    lines.extend(primitive.get_mesh_lines_with_transfinite_curves(min_points = kwargs['min_points'],
-                                                                                  size = size))
+                    lines.extend(primitive.get_mesh_lines_with_transfinite_curves(min_points=kwargs['min_points'],
+                                                                                  size=size))
 
                     # primitives, primitives_length = [], []
                     # for face in primitive.faces:
