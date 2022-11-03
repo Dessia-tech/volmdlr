@@ -732,9 +732,9 @@ class Surface2D(volmdlr.core.Primitive2D):
             if element[0] not in kwargs:
                 kwargs[element[0]] = element[1]
 
-        self.to_geo(file_name, factor,
-                    kwargs['curvature_mesh_size'],
-                    kwargs['min_points'], kwargs['initial_mesh_size'])
+        self.to_geo(file_name=file_name, mesh_dimension=mesh_dimension,
+                    factor=factor, curvature_mesh_size=kwargs['curvature_mesh_size'],
+                    min_points=kwargs['min_points'], initial_mesh_size=kwargs['initial_mesh_size'])
 
         volmdlr.core.VolumeModel.generate_msh_file(file_name, mesh_dimension)
 
