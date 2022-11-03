@@ -12,7 +12,7 @@ import webbrowser
 from datetime import datetime
 # import volmdlr.stl as vmstl
 from typing import List
-from itertools import chain
+# from itertools import chain
 
 import matplotlib.pyplot as plt
 import numpy as npy
