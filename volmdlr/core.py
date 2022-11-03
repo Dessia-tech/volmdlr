@@ -377,7 +377,7 @@ class Primitive2D(CompositePrimitive):
     def __init__(self, name=''):
         self.name = name
 
-        dc.DessiaObject.__init__(self, name=name)
+        CompositePrimitive.__init__(self, name=name)
 
 
 class CompositePrimitive2D(Primitive2D):
@@ -788,7 +788,8 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-        self.name = name
+
+        dc.DessiaObject.__init__(self, name=name)
 
         self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
 
@@ -1029,7 +1030,7 @@ class VolumeModel(dc.PhysicalObject):
         self.bounding_box = self._bounding_box()
         # else:
         #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
-        dc.DessiaObject.__init__(self, name=name)
+        dc.PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
         return sum(hash(point) for point in self.primitives)

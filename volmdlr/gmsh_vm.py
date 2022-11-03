@@ -33,17 +33,17 @@ class GmshParser(DessiaObject):
                  name: str = ''):
 
         self.mesh_format = mesh_format
-        self.physical_names = physical_names,
-        self.entities = entities,
-        self.nodes = nodes,
-        self.elements = elements,
-        self.partitioned_entities = partitioned_entities,
-        self.periodic = periodic,
+        self.physical_names = physical_names
+        self.entities = entities
+        self.nodes = nodes
+        self.elements = elements
+        self.partitioned_entities = partitioned_entities
+        self.periodic = periodic
         # self.ghost_elements = ghost_elements,
-        self.parametrizations = parametrizations,
-        self.node_data = node_data,
-        self.element_data = element_data,
-        self.element_node_data = element_node_data,
+        self.parametrizations = parametrizations
+        self.node_data = node_data
+        self.element_data = element_data
+        self.element_node_data = element_node_data
         # self.interpolation_scheme = interpolation_scheme,
         self.name = name
 
@@ -576,11 +576,11 @@ class GmshParser(DessiaObject):
         defines a volmdlr mesh with TetrahedronElement from a .msh file
         """
 
-        nodes = self.nodes[0]
-        points = nodes['all_nodes']
-        elements = self.elements[0]
+        # nodes = self.nodes[0]
+        points = self.nodes['all_nodes']
+        # elements = self.elements[0]
 
-        tetrahedron_elements = elements['elements_type_4']
+        tetrahedron_elements = self.elements['elements_type_4']
         element_groups = []
         for tetrahedrons in tetrahedron_elements:
             tetrahedrons_mesh = []
@@ -603,11 +603,11 @@ class GmshParser(DessiaObject):
         defines a volmdlr mesh with TriangularElement from a .msh file
         """
 
-        nodes = self.nodes[0]
-        points = nodes['all_nodes']
-        elements = self.elements[0]
+        # nodes = self.nodes[0]
+        points = self.nodes['all_nodes']
+        # elements = self.elements[0]
 
-        triangles_elements = elements['elements_type_2']
+        triangles_elements = self.elements['elements_type_2']
         element_groups = []
         for triangles in triangles_elements:
             triangles_mesh = []
