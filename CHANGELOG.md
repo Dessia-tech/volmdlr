@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * BsplineCurve: abscissa (use different start point between 0 and length)
-
+* Arc3D: plot
 
 
 ### Performance improvements
@@ -30,8 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 
+* PlaneFace3D: line_intersections
 * BsplineCurve: abscissa
-
 
 
 ## v0.6.0 [Unrealeased]
@@ -82,7 +82,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 
 * Wire: extract_primitives, extract_without_primitives
-
 
 
 ## v0.5.0
