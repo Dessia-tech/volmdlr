@@ -7359,26 +7359,26 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     except KeyError:
                         faces_combinaton = (face1, face2)
 
-                    f1 = faces_combinaton[0]
-                    f2 = faces_combinaton[1]
+                    face1_1 = faces_combinaton[0]
+                    face2_2 = faces_combinaton[1]
 
                     if face1.face_inside(face2):
-                        divided_faces = f1.divide_face([f2.surface2d.outer_contour], True)
-                        for f in divided_faces:
-                            if f.outer_contour3d.is_superposing(f2.outer_contour3d):
-                                to_be_divided = f
+                        divided_faces = face1_1.divide_face([face2_2.surface2d.outer_contour], True)
+                        for d_face in divided_faces:
+                            if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
+                                to_be_divided = d_face
                             else:
-                                used_faces[face1] = f
+                                used_faces[face1] = d_face
 
-                        if f2.surface2d.inner_contours:
+                        if face2_2.surface2d.inner_contours:
                             list_faces.extend(to_be_divided.divide_face(
-                                f2.surface2d.inner_contours, True))
+                                face2_2.surface2d.inner_contours, True))
                         else:
                             list_faces.append(to_be_divided)
 
                     else:
-                        divided_faces = f1.cut_by_face(f2)
-                        # list_faces.extend(f1.cut_by_face(f2))
+                        divided_faces = face1_1.cut_by_face(face2_2)
+                        # list_faces.extend(face1_1.cut_by_face(face2_2))
                         used_faces[face1] = divided_faces
 
         for face in initial_faces:
