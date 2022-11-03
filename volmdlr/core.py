@@ -1595,52 +1595,67 @@ class VolumeModel(dc.PhysicalObject):
         :rtype: .txt
         """
 
-        try:
-            curvature_mesh_size = kwargs['curvature_mesh_size']
-        except KeyError:
-            curvature_mesh_size = 0
-        try:
-            min_points = kwargs['min_points']
-        except KeyError:
-            min_points = None
-        try:
-            initial_mesh_size = kwargs['initial_mesh_size']
-        except KeyError:
-            initial_mesh_size = 5
+        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+            if element[0] not in kwargs:
+                kwargs[element[0]] = element[1]
+
+        # try:
+        #     curvature_mesh_size = kwargs['curvature_mesh_size']
+        # except KeyError:
+        #     curvature_mesh_size = 0
+        # try:
+        #     min_points = kwargs['min_points']
+        # except KeyError:
+        #     min_points = None
+        # try:
+        #     initial_mesh_size = kwargs['initial_mesh_size']
+        # except KeyError:
+        #     initial_mesh_size = 5
 
         lines = self.get_geo_lines()
-        lines.extend(self.get_mesh_lines(factor, curvature_mesh_size=curvature_mesh_size,
-                                         min_points=min_points, initial_mesh_size=initial_mesh_size))
+        lines.extend(self.get_mesh_lines(factor,
+                                         curvature_mesh_size=kwargs['curvature_mesh_size'],
+                                         min_points=kwargs['min_points'],
+                                         initial_mesh_size=kwargs['initial_mesh_size']))
 
         contours, faces_account = [], 0
         surfaces = []
         for i, primitive in enumerate(self.primitives):
-            if isinstance(primitive, volmdlr.faces.ClosedShell3D):
-                if i == 0:
-                    surfaces.append(list(range(1, 1 + len(primitive.faces))))
-                    face_contours = [face.outer_contour3d for face in primitive.faces]
-                    contours.append(face_contours)
-                    lines.append('Mesh 2;')
-                    lines.append('Physical Surface(' + str(i + 1) + ') = {' + str(surfaces[i])[1:-1] + '};')
-                    lines.append('Save "' + file_name + '.stl" ;')
-                    faces_account += len(primitive.faces) + 1
-                else:
-                    surfaces.append(list(range(faces_account, faces_account + len(primitive.faces))))
-                    face_contours = [face.outer_contour3d for face in primitive.faces]
-                    for k, face_c in enumerate(face_contours):
-                        for l, contour_l in enumerate(contours):
-                            for c, contour in enumerate(contour_l):
-                                if face_c.is_superposing(contour):
-                                    surfaces[i][k] = surfaces[l][c]
-                                    continue
-
-                    lines.append('Mesh 2;')
-                    lines.append('Physical Surface(' + str(i + 1) + ') = {' + str(surfaces[i])[1:-1] + '};')
-                    lines.append('Save "' + file_name + '.stl" ;')
-                    faces_account += len(primitive.faces) + 1
-                    contours.append(face_contours)
+            if i == 0:
+                surfaces.append(list(range(1, 1 + len(primitive.faces))))
+                face_contours = [face.outer_contour3d for face in primitive.faces]
+                contours.append(face_contours)
+                lines.append('Mesh 2;')
+                lines.append('Physical Surface(' + str(i + 1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                lines.append('Save "' + file_name + '.stl" ;')
+                faces_account += len(primitive.faces) + 1
+            else:
+                surfaces.append(list(range(faces_account, faces_account + len(primitive.faces))))
+                face_contours = [face.outer_contour3d for face in primitive.faces]
+                surfaces = self.update_surfaces_list(face_contours, surfaces, contours, i)
+                # for k, face_c in enumerate(face_contours):
+                #     for l, contour_l in enumerate(contours):
+                #         for c, contour in enumerate(contour_l):
+                #             if face_c.is_superposing(contour):
+                #                 surfaces[i][k] = surfaces[l][c]
+                #                 continue
+                lines.append('Mesh 2;')
+                lines.append('Physical Surface(' + str(i + 1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                lines.append('Save "' + file_name + '.stl" ;')
+                faces_account += len(primitive.faces) + 1
+                contours.append(face_contours)
 
         return lines
+
+    @staticmethod
+    def update_surfaces_list(face_contours, surfaces, contours, i):
+        for k, face_c in enumerate(face_contours):
+            for l, contour_l in enumerate(contours):
+                for c, contour in enumerate(contour_l):
+                    if face_c.is_superposing(contour):
+                        surfaces[i][k] = surfaces[l][c]
+                        continue
+        return surfaces
 
     def to_msh(self, file_name: str, mesh_dimension: int,
                factor: float, **kwargs):
