@@ -183,6 +183,7 @@ def advanced_brep_shape_representation(arguments, object_dict):
             shells.append(object_dict[int(arg[1:])])
     return shells
 
+
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
     if arguments[2] in object_dict:

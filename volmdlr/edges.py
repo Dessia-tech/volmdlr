@@ -1151,7 +1151,7 @@ class LineSegment2D(LineSegment):
         """
         Computes the distance of a point to segment of line
         """
-        distance, point = volmdlr.core_compiled.LineSegment2DPointDistance(
+        distance, point = volmdlr.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)],
             (point.x, point.y))
         if return_other_point:
@@ -2160,8 +2160,8 @@ class FullArc2D(Arc2D):
                            [self._center, self.start]])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
-        [p.frame_mapping_inplace(frame, side) for p in
-         [self._center, self.start, self.end, self.interior]]
+        for p in [self._center, self.start, self.end, self.interior]:
+            p.frame_mapping_inplace(frame, side)
 
     def polygonization(self):
         return volmdlr.wires.ClosedPolygon2D(self.discretization_points(angle_resolution=15))
@@ -2788,7 +2788,7 @@ class LineSegment3D(LineSegment):
     #     return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
-        distance, point = volmdlr.core_compiled.LineSegment3DPointDistance(
+        distance, point = volmdlr.LineSegment3DPointDistance(
             [(self.start.x, self.start.y, self.start.z),
              (self.end.x, self.end.y, self.end.z)],
             (point.x, point.y, point.z))
@@ -4093,7 +4093,8 @@ class Arc3D(Arc):
         self.end.rotation_inplace(center, axis, angle)
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
-        [p.rotation_inplace(center, axis, angle) for p in self.primitives]
+        for p in self.primitives:
+            p.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -4117,7 +4118,8 @@ class Arc3D(Arc):
         self.end.translation_inplace(offset)
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
-        [p.translation_inplace(offset) for p in self.primitives]
+        for p in self.primitives:
+            p.translation_inplace(offset)
 
     def plot(self, ax=None, color='k', alpha=1,
              edge_ends=False, edge_direction=False):
@@ -4436,7 +4438,6 @@ class Arc3D(Arc):
             arc2d = self.to_2d(tore_center, u, axis)
             return [surface.rectangular_cut(0, angle,
                                             arc2d.angle1, arc2d.angle2)]
-
 
     def to_step(self, current_id, **kwargs):
         if self.angle >= math.pi:

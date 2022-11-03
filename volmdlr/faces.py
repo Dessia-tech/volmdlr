@@ -4158,9 +4158,9 @@ class Face3D(volmdlr.core.Primitive3D):
             ax = plt.figure().add_subplot(111, projection='3d')
         self.outer_contour3d.plot(ax=ax, color=color, alpha=alpha,
                                   edge_details=edge_details)
-        [contour3d.plot(ax=ax, color=color, alpha=alpha,
-                        edge_details=edge_details)
-         for contour3d in self.inner_contours3d]
+        for contour3d in self.inner_contours3d:
+            contour3d.plot(ax=ax, color=color, alpha=alpha,
+                           edge_details=edge_details)
         return ax
 
     def random_point_inside(self):
@@ -5661,9 +5661,8 @@ class CylindricalFace3D(Face3D):
             # Find the closest one
             points_contours1 = self.contours2d[0].tessel_points
 
-            poly1 = volmdlr.ClosedPolygon2D(points_contours1)
-            d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d,
-                                                       return_other_point=True)
+            poly1 = volmdlr.wires.ClosedPolygon2D(points_contours1)
+            d1, new_pt1_2d = poly1.point_border_distance(pt1_2d, return_other_point=True)
             pt1 = volmdlr.Point3D((r1 * math.cos(new_pt1_2d.vector[0]),
                                    r1 * math.sin(new_pt1_2d.vector[0]),
                                    new_pt1_2d.vector[1]))
@@ -5673,9 +5672,8 @@ class CylindricalFace3D(Face3D):
             # Find the closest one
             points_contours2 = other_cyl.contours2d[0].tessel_points
 
-            poly2 = volmdlr.ClosedPolygon2D(points_contours2)
-            d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d,
-                                                       return_other_point=True)
+            poly2 = volmdlr.wires.ClosedPolygon2D(points_contours2)
+            d2, new_pt2_2d = poly2.point_border_distance(pt2_2d, return_other_point=True)
             pt2 = volmdlr.Point3D((r2 * math.cos(new_pt2_2d.vector[0]),
                                    r2 * math.sin(new_pt2_2d.vector[0]),
                                    new_pt2_2d.vector[1]))
@@ -5763,9 +5761,8 @@ class CylindricalFace3D(Face3D):
             # Find the closest one
             points_contours1 = self.contours2d[0].tessel_points
 
-            poly1 = volmdlr.ClosedPolygon2D(points_contours1)
-            d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d,
-                                                       return_other_point=True)
+            poly1 = volmdlr.wires.ClosedPolygon2D(points_contours1)
+            _, new_pt1_2d = poly1.point_border_distance(pt1_2d, return_other_point=True)
             pt1 = volmdlr.Point3D((r * math.cos(new_pt1_2d.vector[0]),
                                    r * math.sin(new_pt1_2d.vector[0]),
                                    new_pt1_2d.vector[1]))
@@ -5773,8 +5770,7 @@ class CylindricalFace3D(Face3D):
 
         if not planeface.contours[0].point_belongs(pt2_2d):
             # Find the closest one
-            d2, new_pt2_2d = planeface.polygon2D.PointBorderDistance(pt2_2d,
-                                                                     return_other_point=True)
+            _, new_pt2_2d = planeface.polygon2D.point_border_distance(pt2_2d, return_other_point=True)
 
             p2 = new_pt2_2d.to_3d(pf1, u, v)
 
@@ -5785,25 +5781,21 @@ class CylindricalFace3D(Face3D):
             p1, p2 = self.minimum_distance_points_cyl(other_face)
             if return_points:
                 return p1.point_distance(p2), p1, p2
-            else:
-                return p1.point_distance(p2)
+            return p1.point_distance(p2)
 
         if other_face.__class__ is PlaneFace3D:
             p1, p2 = self.minimum_distance_points_plane(other_face)
             if return_points:
                 return p1.point_distance(p2), p1, p2
-            else:
-                return p1.point_distance(p2)
+            return p1.point_distance(p2)
 
         if other_face.__class__ is ToroidalFace3D:
             p1, p2 = other_face.minimum_distance_points_cyl(self)
             if return_points:
                 return p1.point_distance(p2), p1, p2
-            else:
-                return p1.point_distance(p2)
+            return p1.point_distance(p2)
 
-        else:
-            return NotImplementedError
+        return NotImplementedError
 
     def adjacent_direction(self, other_face3d):
         '''
@@ -7036,7 +7028,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         step_content = ''
         face_ids = []
         for face in self.faces:
-            if isinstance(face, Face3D):
+            if isinstance(face, Face3D) or isinstance(face, Surface3D):
                 face_content, face_sub_ids = face.to_step(current_id)
             else:
                 face_content, face_sub_ids = face.to_step(current_id)
