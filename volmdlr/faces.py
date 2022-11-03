@@ -7354,29 +7354,47 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             for j, face2 in enumerate(shell.faces):
 
                 if face1.surface3d.is_coincident(face2.surface3d):
-                    print('i: ', i)
-                    print('j: ', j)
+                    # try:
+                    #     face1_1, face2_2 = (used_faces[face1], face2)
+                    # except KeyError:
+                    #     face1_1, face2_2 = (face1, face2)
 
-                    try:
-                        face1_1, face2_2 = (used_faces[face1], face2)
-                    except KeyError:
-                        face1_1, face2_2 = (face1, face2)
+                    if face1 in used_faces:
+                        faces_1, face2_2 = used_faces[face1][:], face2
+                    else:
+                        faces_1, face2_2 = [face1], face2
 
-                    # face2_2 = face2_2.to_planeface3d(face1_1.surface3d)
-                    plane3d = face1_1.surface3d
-                    s2d = Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
-                                    inner_contours=[plane3d.contour3d_to_2d(contour) for contour in face2_2.inner_contours3d])
-                    face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
+                    used = []
+                    for face1_1 in faces_1:
+                        plane3d = face1_1.surface3d
+                        s2d = Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
+                                        inner_contours=[plane3d.contour3d_to_2d(contour) for contour in face2_2.inner_contours3d])
+                        face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
 
-                    divided_faces = face1_1.cut_by_coincident_face(face2_2)
-                    for d_face in divided_faces:
-                        if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
-                            list_faces.append(d_face)
-                        else:
-                            if face1 in used_faces:
-                                used_faces[face1] += [d_face]
+                        divided_faces = face1_1.cut_by_coincident_face(face2_2)
+                        for d_face in divided_faces:
+                            if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
+                                if face2_2.surface2d.inner_contours:
+                                    for inner in face2_2.inner_contours3d:
+
+                                        # if True in [inner_d.is_superposing(d_face.surface3d.contour3d_to_2d(inner)) \
+                                        #             for inner_d in d_face.surface2d.inner_contours]:
+                                        if True in [(abs(inner_d.area() - d_face.surface3d.contour3d_to_2d(inner).area()) < 1e-6) \
+                                                for inner_d in d_face.surface2d.inner_contours]:
+                                            list_faces.append(d_face)
+                                        else:
+                                            list_faces.extend(d_face.divide_face(
+                                                [d_face.surface3d.contour3d_to_2d(inner)], True))
+                                else:
+                                    list_faces.append(d_face)
                             else:
-                                used_faces[face1] = [d_face]
+                                # if face1 in used_faces:
+                                #     used_faces[face1] += [d_face]
+                                # else:
+                                #     used_faces[face1] = [d_face]
+                                used.append(d_face)
+
+                    used_faces[face1] = used
 
         for face in initial_faces:
             try:
