@@ -7763,6 +7763,29 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return lines, update_data
 
+    def get_mesh_lines_with_transfinite_curves(self, min_points, size):
+
+        lines, primitives, primitives_length = [], [], []
+        for face in self.faces:
+            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                if isinstance(contour, volmdlr.wires.Circle2D):
+                    primitives.append(contour)
+                    primitives.append(contour)
+                    primitives_length.append(contour.length() / 2)
+                    primitives_length.append(contour.length() / 2)
+                else:
+                    for _, primitive_c in enumerate(contour.primitives):
+                        if ((primitive_c not in primitives)
+                                and (primitive_c.reverse() not in primitives)):
+                            primitives.append(primitive_c)
+                            primitives_length.append(primitive_c.length())
+
+        for i, length in enumerate(primitives_length):
+            if length < min_points * size:
+                lines.append('Transfinite Curve {' + str(i) + '} = ' +
+                             str(min_points) + ' Using Progression 1;')
+        return lines
+
 
 class ClosedShell3D(OpenShell3D):
     STEP_FUNCTION = 'CLOSED_SHELL'
