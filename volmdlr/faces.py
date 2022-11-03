@@ -7460,18 +7460,18 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             [f1.surface3d.contour3d_to_2d(f2.outer_contour3d)], True)
                         for f in divided_faces:
                             if f.outer_contour3d.is_superposing(f2.outer_contour3d):
-                                # to_be_divided = f
+                                to_be_divided = f
                                 list_faces.append(f)
                             else:
                                 used_faces[face1] = f
-                        """
+
                         if f2.surface2d.inner_contours:
                             list_faces.extend(to_be_divided.divide_face(
                                 [to_be_divided.surface3d.contour3d_to_2d(inner) \
                                  for inner in f2.inner_contours3d], True))
                         else:
                             list_faces.append(to_be_divided)
-                        """
+
                         # areas = [face.area() for face in divided_faces]
                         # used_faces[face1] = divided_faces[areas.index(max(areas))]
 
