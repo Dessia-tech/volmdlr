@@ -157,6 +157,16 @@ class Edge(dc.DessiaObject):
         raise NotImplementedError('the unit_direction_vector method must be'
                                   'overloaded by subclassing class')
 
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge with a
+        line between its start and end points
+        :param point: Point to be verified
+        :return: Return True if the point belongs to this surface, or False otherwise
+        """
+        raise NotImplementedError(f'the unit_direction_vector method must be'
+                                  f' overloaded by {self.__class__.__name__}')
+
 
 class Line(dc.DessiaObject):
     """
@@ -913,7 +923,6 @@ class BSplineCurve2D(BSplineCurve):
             cog += point
         cog = cog / len(polygon_points)
         return cog
-
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
