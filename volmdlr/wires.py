@@ -1126,6 +1126,9 @@ class Contour(Wire):
         if not intersecting_points:
             intersecting_points = self.contour_intersections(contour2)
 
+        if not intersecting_points:
+            return False
+
         vec1_2 = volmdlr.edges.LineSegment2D(intersecting_points[0],
                                              intersecting_points[1])
         middle_point = vec1_2.middle_point()
