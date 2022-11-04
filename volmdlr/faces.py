@@ -7393,7 +7393,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                                 for inner_d in d_face.surface2d.inner_contours]:
 
                                             # list_faces.append(d_face)
-                                            # divided_faces_d_face = ['', d_face]
+                                            divided_faces_d_face = ['', d_face]
                                             continue
                                         else:
                                             divided_faces_d_face = d_face.divide_face([inner], True)
