@@ -4172,11 +4172,9 @@ class Contour3D(Contour, Wire3D):
         return ax
 
     def to_2d(self, plane_origin, x, y):
-        z = x.cross(y)
-        plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         primitives2d = []
         for primitive in self.primitives:
-            primitive2d = plane3d.point3d_to_2d(primitive)
+            primitive2d = primitive.to_2d(plane_origin, x, y)
             if primitive2d is not None:
                 primitives2d.append(primitive2d)
         return Contour2D(primitives=primitives2d)

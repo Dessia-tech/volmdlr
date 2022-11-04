@@ -11,12 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 * Block: faces_center (calculate directly point in the middle of the faces)
-
+* BoundingRectangle: New volmdlr.core class (Creates a bounding rectangle object from 2D primitives bounds)
 
 ### Fixed
 
 * BsplineCurve: abscissa (use different start point between 0 and length)
-
+* BsplineCurve2D: new discretization points method (polygon_points deprecated)
 
 
 ### Performance improvements
