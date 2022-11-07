@@ -854,7 +854,13 @@ class Plane3D(Surface3D):
                                 frame3d.v, frame3d.w, frame3d.u)
         return cls(frame, arguments[0][1:-1])
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, **kwargs):
+        """
+        Export object to a STEP file
+        :param current_id: Object id
+        :param kwargs: keyword arguments that may possibly be passed to to_step
+        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
+        """
         frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
@@ -1230,7 +1236,13 @@ class CylindricalSurface3D(Surface3D):
         radius = float(arguments[2]) / 1000
         return cls(frame_direct, radius, arguments[0][1:-1])
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, **kwargs):
+        """
+        Export object to a STEP file
+        :param current_id: Object id
+        :param kwargs: keyword arguments that may possibly be passed to to_step
+        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
+        """
         frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
@@ -1396,9 +1408,14 @@ class ToroidalSurface3D(Surface3D):
         rcircle = float(arguments[3]) / 1000
         return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
 
-    def to_step(self, current_id):
-        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                self.frame.v)
+    def to_step(self, current_id, **kwargs):
+        """
+        Export object to a STEP file
+        :param current_id: Object id
+        :param kwargs: keyword arguments that may possibly be passed to to_step
+        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
+        """
+        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u, self.frame.v)
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
         content += "#{} = TOROIDAL_SURFACE('{}',#{},{},{});\n" \
@@ -1561,7 +1578,13 @@ class ConicalSurface3D(Surface3D):
         frame_direct = volmdlr.Frame3D(origin, U, V, W)
         return cls(frame_direct, semi_angle, arguments[0][1:-1])
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, **kwargs):
+        """
+        Export object to a STEP file
+        :param current_id: Object id
+        :param kwargs: keyword arguments that may possibly be passed to to_step
+        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
+        """
         frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
@@ -2478,7 +2501,13 @@ class BSplineSurface3D(Surface3D):
         #     bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
         return bsplinesurface
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, **kwargs):
+        """
+        Export object to a STEP file
+        :param current_id: Object id
+        :param kwargs: keyword arguments that may possibly be passed to to_step
+        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
+        """
         content = ''
         point_matrix_ids = '('
         for points in self.control_points_table:
@@ -3893,7 +3922,13 @@ class Face3D(volmdlr.core.Primitive3D):
     #     raise NotImplementedError(
     #         f'area method must be overloaded by {self.__class__.__name__}')
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, **kwargs):
+        """
+        Export object to a STEP file
+        :param current_id: Object id
+        :param kwargs: keyword arguments that may possibly be passed to to_step
+        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
+        """
         xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle()
         subsurfaces2d = [self.surface2d]
         line_x = None
@@ -3931,8 +3966,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 content += face_content
                 current_id = face_id[0] + 1
             return content, face_ids
-        else:
-            return self.to_step_without_splitting(current_id)
+        return self.to_step_without_splitting(current_id)
 
     def to_step_without_splitting(self, current_id):
         content, surface3d_ids = self.surface3d.to_step(current_id)
@@ -3940,6 +3974,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
         outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(
             current_id)
+        outer_contour_id = outer_contour_id[0]
         # surface_id=surface3d_id)
         content += outer_contour_content
         content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(
@@ -6971,15 +7006,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             faces.append(object_dict[int(face[1:])])
         return cls(faces, name=arguments[0][1:-1])
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, **kwargs):
+        """
+        Export object to a STEP file
+        :param current_id: Object id
+        :param kwargs: keyword arguments that may possibly be passed to to_step
+        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
+        """
         step_content = ''
         face_ids = []
         for face in self.faces:
-            if isinstance(face, Face3D):
-                face_content, face_sub_ids = face.to_step(current_id)
-            else:
-                face_content, face_sub_ids = face.to_step(current_id)
-                face_sub_ids = [face_sub_ids]
+            face_content, face_sub_ids = face.to_step(current_id)
             step_content += face_content
             face_ids.extend(face_sub_ids)
             current_id = max(face_sub_ids) + 1
@@ -7002,7 +7039,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
             brep_id, frame_id, manifold_id)
 
-        return step_content, brep_id
+        return step_content, [brep_id]
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):

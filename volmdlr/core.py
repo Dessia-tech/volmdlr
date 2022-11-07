@@ -1276,8 +1276,8 @@ class VolumeModel(dc.PhysicalObject):
         current_id = 8
 
         for primitive in self.primitives:
-            primitive_content, primitive_id = primitive.to_step(current_id)
-
+            primitive_content, primitives_id = primitive.to_step(current_id)
+            primitive_id = primitives_id[0]
             step_content += primitive_content
 
             product_definition_context_id = primitive_id + 1
