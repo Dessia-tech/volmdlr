@@ -652,7 +652,7 @@ class Surface3D(DessiaObject):
                       name=name)
 
     def repair_primitives_periodicity(self, primitives, last_primitive):
-        # print('repair_primitives_periodicity')
+        print('repair_primitives_periodicity')
         delta_x1 = abs(primitives[0].start.x
                        - last_primitive.end.x)
         delta_x2 = abs(primitives[-1].end.x
@@ -661,7 +661,8 @@ class Surface3D(DessiaObject):
                        - last_primitive.end.y)
         delta_y2 = abs(primitives[-1].end.y
                        - last_primitive.end.y)
-
+        print(delta_x1, delta_y1)
+        new_primitives = primitives
         if self.x_periodicity \
                 and not (math.isclose(delta_x1, 0,
                                       abs_tol=5e-5)
@@ -680,10 +681,19 @@ class Surface3D(DessiaObject):
                 delta_x2 = 0.
 
             delta = last_primitive.end - primitives[0].start
+            new_primitives = []
             for prim in primitives:
-                temp = prim.translation(delta)
-                prim.start.x = temp.start.x
-                prim.end.x = temp.end.x
+                new_primitives.append(prim.translation(delta))
+                # if isinstance(prim, volmdlr.edges.BSplineCurve3D):
+                #     temp = prim.translation(delta)
+                #     prim.start.x = temp.start.x
+                #     prim.end.x = temp.end.x
+                #     prim.control_points = [p.translation(delta) for p in prim.control_points]
+                # else:
+                #     temp = prim.translation(delta)
+                #     prim.start.x = temp.start.x
+                #     prim.end.x = temp.end.x
+                # print(prim.start, prim.end)
 
         if self.y_periodicity \
                 and not (math.isclose(delta_y1, 0,
@@ -699,10 +709,12 @@ class Surface3D(DessiaObject):
                             abs_tol=1e-4):
                 delta_y2 = 0.
             delta = last_primitive.end - primitives[0].start
+            new_primitives = []
             for prim in primitives:
-                temp = prim.translation(delta)
-                prim.start.y = temp.start.y
-                prim.end.y = temp.end.y
+                new_primitives.append(prim.translation(delta))
+                # temp = prim.translation(delta)
+                # prim.start.y = temp.start.y
+                # prim.end.y = temp.end.y
 
             # for prim in primitives:
             #     prim.start.y = abs(self.y_periodicity
@@ -710,12 +722,12 @@ class Surface3D(DessiaObject):
             #     prim.end.y = abs(self.y_periodicity
             #                      - prim.end.y)
 
-        return primitives, delta_x1, delta_x2, delta_y1, delta_y2
+        return new_primitives, delta_x1, delta_x2, delta_y1, delta_y2
 
     def contour3d_to_2d(self, contour3d):
-        # print('___________________________________________________________')
-        # print(self)
-        # print(f'contour3d_to_2d: {contour3d}')
+        print('___________________________________________________________')
+        print(self)
+        print(f'contour3d_to_2d: {contour3d}')
         primitives2d = []
         last_primitive = None
 
@@ -1285,8 +1297,12 @@ class CylindricalSurface3D(Surface3D):
         """
         start = self.point3d_to_2d(linesegment3d.start)
         end = self.point3d_to_2d(linesegment3d.end)
-        if start.x != end.x:
-            end = volmdlr.Point2D(start.x, end.y)
+        # if start.x == -math.pi and end.x == math.pi:
+        #     end = volmdlr.Point2D(start.x, end.y)
+        # elif end.x == -math.pi and start.x == math.pi:
+        #     start = volmdlr.Point2D(end.x, start.y)
+        # if start.x != end.x:
+        #     end = volmdlr.Point2D(start.x, end.y)
         return [vme.LineSegment2D(start, end)]
 
     def linesegment2d_to_3d(self, linesegment2d):
@@ -1672,8 +1688,10 @@ class ToroidalSurface3D(Surface3D):
         return []
 
     def arc3d_to_2d(self, arc3d):
+        print(arc3d)
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
+        print(start, end)
 
         theta1, phi1 = start
         theta2, phi2 = end
@@ -1738,7 +1756,59 @@ class ToroidalSurface3D(Surface3D):
                 elif phi1 > 0 and abs(phi3) < 0.5 * math.pi:
                     phi2 = phi1 + math.pi
                     end = volmdlr.Point2D(theta2, phi2)
+        print(start, end)
         return [vme.LineSegment2D(start, end)]
+
+    def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """
+        Returns a BspilineCurve2D in the surface coordinate system (theta, phi)
+        """
+        print(bspline_curve3d)
+        theta1, phi1 = self.point3d_to_2d(bspline_curve3d.start)
+        theta2, phi2 = self.point3d_to_2d(bspline_curve3d.end)
+        length = bspline_curve3d.length()
+        theta3, phi3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001*length))
+        theta4, phi4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
+        print(f'Interior: {theta3}, {phi3}')
+        control_points = [self.point3d_to_2d(p)
+                          for p in bspline_curve3d.control_points]
+
+        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+        if theta1 == math.pi and theta3 < 0:
+            theta1 = -math.pi
+            control_points[0] = volmdlr.Point2D(theta1, phi1)
+
+        elif theta2 == math.pi and theta4 < 0:
+            theta2 = -math.pi
+            control_points[-1] = volmdlr.Point2D(theta2, phi2)
+
+            # Verify if phi1 or phi2 point should be -pi because phi -> ]-pi, pi]
+            if phi1 == math.pi and phi3 < 0:
+                phi1 = -math.pi
+                control_points[0] = volmdlr.Point2D(theta1, phi1)
+
+            elif phi2 == math.pi and phi4 < 0:
+                phi2 = -math.pi
+                control_points[-1] = volmdlr.Point2D(theta2, phi2)
+
+        if theta3 < theta1 < 0 and theta2 > 0:
+            control_points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in control_points]
+        elif theta3 > theta1 > 0 and theta2 < 0:
+            control_points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in control_points]
+
+        if phi3 < phi1 < 0 and phi2 > 0:
+            control_points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y > 0 else p for p in control_points]
+        elif phi3 > phi1 > 0 and phi2 < 0:
+            control_points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in control_points]
+        print(control_points[0], control_points[-1])
+
+        return [vme.BSplineCurve2D(
+            bspline_curve3d.degree,
+            control_points=control_points,
+            knot_multiplicities=bspline_curve3d.knot_multiplicities,
+            knots=bspline_curve3d.knots,
+            weights=bspline_curve3d.weights,
+            periodic=bspline_curve3d.periodic)]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
         """
@@ -1888,6 +1958,8 @@ class ConicalSurface3D(Surface3D):
         x, y, z = self.frame.new_coordinates(point3d)
         # x, y = point3d.plane_projection2d(self.frame.origin, self.frame.u,
         #                                   self.frame.v)
+        if y == -0.0:
+            y = 0.0
         theta = math.atan2(y, x)
         return volmdlr.Point2D(theta, z)
 
@@ -1914,6 +1986,7 @@ class ConicalSurface3D(Surface3D):
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
+        print(f'Is trigo: {arc3d.is_trigo}')
         # angle = abs(start.x-end.x)
         # if arc3d.is_trigo:
         # end = start + volmdlr.Point2D(arc3d.angle, 0)
@@ -1924,6 +1997,42 @@ class ConicalSurface3D(Surface3D):
         #     end = start + volmdlr.Point2D(arc3d.angle, 0)
         # else:
         #     end = start - volmdlr.Point2D(arc3d.angle, 0)
+
+        theta1, z1 = start
+        theta2, z2 = end
+
+        middle = arc3d.middle_point()
+        theta3 = self.point3d_to_2d(middle).x
+
+        angle2d = abs(theta2 - theta1)
+        angle3d = arc3d.angle
+
+        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+        if theta1 == math.pi and theta3 < 0:
+            theta1 = -math.pi
+            start = volmdlr.Point2D(theta1, z1)
+            angle2d = abs(theta2 - theta1)
+        elif theta2 == math.pi and theta3 < 0:
+            theta2 = -math.pi
+            end = volmdlr.Point2D(theta2, z2)
+            angle2d = abs(theta2 - theta1)
+        # Verify sense on 2D coordinates system for angle3d != math.pi
+        if not math.isclose(angle2d, angle3d, abs_tol=1e-4):
+            sense = theta1 - theta2
+            if sense > 0:
+                theta2 = theta1 + angle3d
+                end =  volmdlr.Point2D(theta2, z2)
+            else:
+                theta2 = theta1 - angle3d
+                end = volmdlr.Point2D(theta2, z2)
+        # Verify sense on 2D coordinates system for angle3d == math.pi
+        if math.isclose(angle3d, math.pi, abs_tol=1e-5) and abs(theta1) != math.pi:
+            if theta1 < 0 and abs(theta3) > 0.5*math.pi:
+                theta2 = theta1 - math.pi
+                end = volmdlr.Point2D(theta2, z2)
+            elif theta1 > 0 and abs(theta3) > 0.5*math.pi:
+                theta2 = theta1 + math.pi
+                end = volmdlr.Point2D(theta2, z2)
         return [vme.LineSegment2D(start, end)]
 
 
@@ -2047,21 +2156,27 @@ class SphericalSurface3D(Surface3D):
         return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
-        x, y, z = point3d
+        x, y, z = self.frame.new_coordinates(point3d)
         if z < -self.radius:
             z = -self.radius
         elif z > self.radius:
             z = self.radius
+        r = math.sqrt(x**2 + y**2)
 
-        zr = z / self.radius
-        phi = math.asin(zr)
+        if z == -0.0:
+            z = 0.0
+        # zr = z / self.radius
+        # phi = math.asin(zr)
+        phi = math.atan2(z, r)
 
         u = math.sqrt((self.radius ** 2) - (z ** 2))
         if u == 0:
             u1, u2 = x, y
         else:
             u1, u2 = round(x / u, 5), round(y / u, 5)
-        theta = volmdlr.core.sin_cos_angle(u1, u2)
+            if u2 == -0.0:
+                u2 = 0.0
+        theta = math.atan2(u2, u1)
         return volmdlr.Point2D(theta, phi)
 
     def linesegment2d_to_3d(self, linesegment2d):
@@ -2080,12 +2195,13 @@ class SphericalSurface3D(Surface3D):
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        start_x = arc3d.radius * math.cos(start[1]) * math.cos(start[0])
-        start_y = arc3d.radius * math.cos(start[1]) * math.sin(start[0])
-        end_x = arc3d.radius * math.cos(end[1]) * math.cos(end[0])
-        end_y = arc3d.radius * math.cos(end[1]) * math.sin(end[0])
-        start = volmdlr.Point2D(start_x, start_y)
-        end = volmdlr.Point2D(end_x, end_y)
+
+        # start_x = arc3d.radius * math.cos(start[1]) * math.cos(start[0])
+        # start_y = arc3d.radius * math.cos(start[1]) * math.sin(start[0])
+        # end_x = arc3d.radius * math.cos(end[1]) * math.cos(end[0])
+        # end_y = arc3d.radius * math.cos(end[1]) * math.sin(end[0])
+        # start = volmdlr.Point2D(start_x, start_y)
+        # end = volmdlr.Point2D(end_x, end_y)
 
         # angle = abs(start.x-end.x)
         # if arc3d.is_trigo:
