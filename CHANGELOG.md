@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unrealeased
 
+## v0.6.0 [11/7/2022]
+
 ### New Features
 
 * Stl:load_from_file, to_volume_model
