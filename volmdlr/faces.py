@@ -7350,8 +7350,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         used_faces, list_faces = {}, []
         initial_faces = self.faces[:]
 
-        for i, face1 in enumerate(initial_faces):
-            for j, face2 in enumerate(shell.faces):
+        for _, face1 in enumerate(initial_faces):
+            for _, face2 in enumerate(shell.faces):
                 contour1 = face1.surface2d.outer_contour
                 contour2 = face1.surface3d.contour3d_to_2d(face2.outer_contour3d)
 
@@ -7368,7 +7368,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     for face1_1 in faces_1:
                         plane3d = face1_1.surface3d
                         s2d = Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
-                                        inner_contours=[plane3d.contour3d_to_2d(contour) for contour in face2_2.inner_contours3d])
+                                        inner_contours=[
+                                            plane3d.contour3d_to_2d(contour) for contour in face2_2.inner_contours3d])
                         face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
 
                         divided_faces = face1_1.cut_by_coincident_face(face2_2)
@@ -7380,30 +7381,38 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                     # for inner in face2_2.inner_contours3d:
                                     for inner in face2_2.surface2d.inner_contours:
 
-                                        # # if True in [(inner_d.is_superposing(d_face.surface3d.contour3d_to_2d(inner))
-                                        # #              or inner_d.is_inside(d_face.surface3d.contour3d_to_2d(inner))) \
+                                        # # if True in [(inner_d.is_superposing(
+                                        # #         d_face.surface3d.contour3d_to_2d(inner))
+                                        # #               or inner_d.is_inside(
+                                        # #                   d_face.surface3d.contour3d_to_2d(inner))) \
                                         # #             for inner_d in d_face.surface2d.inner_contours]:
 
-                                        # if True in [((abs(inner_d.area() - d_face.surface3d.contour3d_to_2d(inner).area()) < 1e-6)
+                                        # if True in [((
+                                        #         abs(inner_d.area() - d_face.surface3d.contour3d_to_2d(inner).area()) \
+                                        #             < 1e-6)
                                         #               or inner_d.is_inside(d_face.surface3d.contour3d_to_2d(inner))) \
                                         #         for inner_d in d_face.surface2d.inner_contours]:
 
-                                        if True in [(((abs(inner_d.area() - inner.area()) < 1e-6) and inner.center_of_mass().is_close(inner_d.center_of_mass()))
+                                        if True in [(((abs(inner_d.area() - inner.area()) < 1e-6)
+                                                      and inner.center_of_mass().is_close(inner_d.center_of_mass()))
                                                       or inner_d.is_inside(inner)) \
                                                 for inner_d in d_face.surface2d.inner_contours]:
 
                                             # list_faces.append(d_face)
                                             divided_faces_d_face = ['', d_face]
                                             continue
-                                        else:
-                                            divided_faces_d_face = d_face.divide_face([inner], True)
-                                            # divided_faces_d_face = d_face.divide_face([d_face.surface3d.contour3d_to_2d(inner)], True)
-                                            # # areas = [d_f.area() for d_f in divided_faces_d_face]
-                                            # # areas.sort()
-                                            divided_faces_d_face.sort(key=lambda x: x.area())
 
-                                            list_faces.append(divided_faces_d_face[0])
-                                            d_face = divided_faces_d_face[1]
+                                        # else:
+                                        divided_faces_d_face = d_face.divide_face([inner], True)
+                                        # divided_faces_d_face = d_face.divide_face(
+                                        #     [d_face.surface3d.contour3d_to_2d(inner)], True)
+                                        # # areas = [d_f.area() for d_f in divided_faces_d_face]
+                                        # # areas.sort()
+                                        divided_faces_d_face.sort(key=lambda x: x.area())
+
+                                        list_faces.append(divided_faces_d_face[0])
+                                        d_face = divided_faces_d_face[1]
+
                                     if divided_faces_d_face:
                                         list_faces.append(divided_faces_d_face[1])
 
@@ -7428,31 +7437,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 list_faces.append(face)
 
         return self.__class__(list_faces)
-
-                            # if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
-                            #     if face2_2.surface2d.inner_contours:
-                            #         for inner in face2_2.inner_contours3d:
-
-                            #             # if True in [(inner_d.is_superposing(d_face.surface3d.contour3d_to_2d(inner))
-                            #             #              or inner_d.is_inside(d_face.surface3d.contour3d_to_2d(inner))) \
-                            #             #             for inner_d in d_face.surface2d.inner_contours]:
-
-                            #             if True in [((abs(inner_d.area() - d_face.surface3d.contour3d_to_2d(inner).area()) < 1e-6)
-                            #                          or inner_d.is_inside(d_face.surface3d.contour3d_to_2d(inner))) \
-                            #                     for inner_d in d_face.surface2d.inner_contours]:
-
-                            #                 list_faces.append(d_face)
-                            #             else:
-                            #                 list_faces.extend(d_face.divide_face(
-                            #                     [d_face.surface3d.contour3d_to_2d(inner)], True))
-                            #     else:
-                            #         list_faces.append(d_face)
-                            # else:
-                            #     # if face1 in used_faces:
-                            #     #     used_faces[face1] += [d_face]
-                            #     # else:
-                            #     #     used_faces[face1] = [d_face]
-                            #     used.append(d_face)
 
 
 class ClosedShell3D(OpenShell3D):
