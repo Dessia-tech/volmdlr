@@ -23,7 +23,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-locals': 75,
                      'line-too-long': 32,
                      'unused-argument': 48,
-                     'too-many-arguments': 64,
+                     'too-many-arguments': 65,
                      'line-too-long errors': 32,
                      'consider-using-enumerate': 22,
                      'too-many-branches': 27,
