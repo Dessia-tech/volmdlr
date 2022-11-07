@@ -3971,18 +3971,13 @@ class Contour3D(Contour, Wire3D):
             edges.append(last_edge)
         return cls(edges, name=name)
 
-    def to_step(self, current_id, **kwargs):
-        """
-        Export object to a STEP file
-        :param current_id: Object id
-        :param kwargs: keyword arguments that may possibly be passed to to_step, like a surface_id
-        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
-        """
+    def to_step(self, current_id, surface_id=None):
+
         content = ''
         edge_ids = []
         for primitive in self.primitives:
-            if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
-                continue
+            # if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
+            #     continue
             primitive_content, primitive_ids = primitive.to_step(current_id)
             content += primitive_content
             current_id = primitive_ids[-1] + 1
@@ -3997,7 +3992,7 @@ class Contour3D(Contour, Wire3D):
 
         content += "#{} = EDGE_LOOP('{}',({}));\n".format(
             current_id, self.name, volmdlr.core.step_ids_to_str(edge_ids))
-        return content, [current_id]
+        return content, current_id
 
     def average_center_point(self):
         nb = len(self.edge_polygon.points)
@@ -4378,13 +4373,7 @@ class Circle3D(Contour3D):
         return cls.from_center_normal(center, normal, radius,
                                       arguments[0][1:-1])
 
-    def to_step(self, current_id, **kwargs):
-        """
-        Export object to a STEP file
-        :param current_id: Object id
-        :param kwargs: keyword arguments that may possibly be passed to to_step, like a surface_id
-        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
-        """
+    def to_step(self, current_id, surface_id=None):
         circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u,
                                        self.frame.v)
         content, frame_id = circle_frame.to_step(current_id)
@@ -4392,9 +4381,9 @@ class Circle3D(Contour3D):
         content += "#{} = CIRCLE('{}',#{},{});\n".format(
             curve_id, self.name, frame_id, round(self.radius * 1000, 3))
 
-        if 'surface_id' in kwargs:
+        if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                curve_id + 1, curve_id, kwargs['surface_id'])
+                curve_id + 1, curve_id, surface_id)
             curve_id += 1
 
         p1 = self.frame.origin + self.frame.u * self.radius
@@ -4426,7 +4415,7 @@ class Circle3D(Contour3D):
         content += "#{} = EDGE_LOOP('{}',(#{},#{}));\n".format(
             current_id, self.name, oriented_edge1_id, oriented_edge2_id)
 
-        return content, [current_id]
+        return content, current_id
 
     def _bounding_box(self):
         """

@@ -2684,13 +2684,7 @@ class Line3D(Line):
 
         return None
 
-    def to_step(self, current_id, **kwargs):
-        """
-        Export object to a STEP file
-        :param current_id: Object id
-        :param kwargs: keyword arguments that may possibly be passed to to_step like a surface_id
-        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
-        """
+    def to_step(self, current_id):
         p1_content, p1_id = self.point1.to_step(current_id)
         # p2_content, p2_id = self.point2.to_step(current_id+1)
         current_id = p1_id + 1
@@ -2701,7 +2695,7 @@ class Line3D(Line):
         current_id = u_id + 1
         content = p1_content + u_content
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
-        return content, [current_id]
+        return content, current_id
 
 
 class LineSegment3D(LineSegment):
@@ -3284,19 +3278,13 @@ class LineSegment3D(LineSegment):
                                             0,
                                             (self.end - self.start).dot(axis))]
 
-    def to_step(self, current_id, **kwargs):
-        """
-        Export object to a STEP file
-        :param current_id: Object id
-        :param kwargs: keyword arguments that may possibly be passed to to_step, like a surface_id
-        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
-        """
+    def to_step(self, current_id, surface_id=None):
         line = self.to_line()
         content, line_id = line.to_step(current_id)
-        line_id = line_id[0]
-        if 'surface_id' in kwargs:
+
+        if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                line_id + 1, line_id, kwargs['surface_id'])
+                line_id + 1, line_id, surface_id)
             line_id += 1
 
         current_id = line_id + 1
@@ -3494,13 +3482,8 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         return cls(degree, points, knot_multiplicities, knots, weight_data,
                    closed_curve, name)
 
-    def to_step(self, current_id, **kwargs):
-        """
-        Export object to a STEP file
-        :param current_id: Object id
-        :param kwargs: keyword arguments that may possibly be passed to to_step, like a surface_id
-        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
-        """
+    def to_step(self, current_id, surface_id=None):
+
         points_ids = []
         content = ''
         for point in self.points:
@@ -3522,9 +3505,9 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                                                          tuple(self.knots)
                                                          )
 
-        if 'surface_id' in kwargs:
+        if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                curve_id + 1, curve_id, kwargs['surface_id'])
+                curve_id + 1, curve_id, surface_id)
             curve_id += 1
 
         current_id = curve_id + 1
@@ -4393,13 +4376,7 @@ class Arc3D(Arc):
             return [surface.rectangular_cut(0, angle,
                                             arc2d.angle1, arc2d.angle2)]
 
-    def to_step(self, current_id, **kwargs):
-        """
-        Export object to a STEP file
-        :param current_id: Object id
-        :param kwargs: keyword arguments that may possibly be passed to to_step like a surface_id
-        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
-        """
+    def to_step(self, current_id):
         if self.angle >= math.pi:
             l = self.length()
             arc1, arc2 = self.split(self.point_at_abscissa(0.33 * l))
@@ -4513,13 +4490,7 @@ class FullArc3D(Arc3D):
         start_end = self.start.to_2d(plane_origin, x1, x2)
         return FullArc2D(center, start_end)
 
-    def to_step(self, current_id, **kwargs):
-        """
-        Export object to a STEP file
-        :param current_id: Object id
-        :param kwargs: keyword arguments that may possibly be passed to to_step, like a surface_id
-        :return: A string containing a line of the STEP file content, and a list containing the current objects ids
-        """
+    def to_step(self, current_id, surface_id=None):
         # Not calling Circle3D.to_step because of circular imports
         u = self.start - self.center
         u.normalize()
@@ -4534,9 +4505,9 @@ class FullArc3D(Arc3D):
                                                              self.radius * 1000,
                                                              )
 
-        if 'surface_id' in kwargs:
+        if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                curve_id + 1, curve_id, kwargs['surface_id'])
+                curve_id + 1, curve_id, surface_id)
             curve_id += 1
 
         p1 = (self.center + u * self.radius).to_point()
