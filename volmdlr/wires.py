@@ -4737,10 +4737,10 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         self_poly2d.translation_inplace(-self_center2d)
         other_poly2d.translation_inplace(-other_center2d)
 
-        bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle(), \
-            other_poly2d.bounding_rectangle()
-        position = [abs(value) for value in bbox_self2d.items()] \
-            + [abs(value) for value in bbox_other2d.items()]
+        bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle().bounds(), \
+            other_poly2d.bounding_rectangle().bounds()
+        position = [abs(value) for value in bbox_self2d] \
+            + [abs(value) for value in bbox_other2d]
         max_scale = 2 * max(position)
 
         lines = [volmdlr.edges.LineSegment2D(volmdlr.O2D, max_scale * (
