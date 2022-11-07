@@ -3922,7 +3922,7 @@ class Contour3D(Contour, Wire3D):
         for primitive in self.primitives:
             # if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
             #     continue
-            primitive_content, primitive_ids = primitive.to_step(current_id)
+            primitive_content, primitive_ids = primitive.to_step(current_id, surface_id=surface_id)
             content += primitive_content
             current_id = primitive_ids[-1] + 1
             for primitive_id in primitive_ids:
