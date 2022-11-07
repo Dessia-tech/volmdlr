@@ -243,7 +243,6 @@ class LineSegment(Edge):
         if point.point_distance(self.start) < tol:
             return 0
         if point.point_distance(self.end) < tol:
-            print('abscissa:', point.point_distance(self.end))
             return self.length()
 
         u = self.end - self.start
@@ -407,24 +406,25 @@ class BSplineCurve(Edge):
 
     def abscissa(self, point, tol=1e-4):
         length = self.length()
-        res = scp.optimize.least_squares(
-            lambda u: (point - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(length / 2),
-            bounds=([0], [length]),
-            # ftol=tol / 10,
-            # xtol=tol / 10,
-            # loss='soft_l1'
-        )
+        for x0 in [0, length * 0.25, length * 0.5, length * 0.75, length]:
+            res = scp.optimize.least_squares(
+                lambda u: (point - self.point_at_abscissa(u)).norm(),
+                x0=x0,
+                bounds=([0], [length]),
+                # ftol=tol / 10,
+                # xtol=tol / 10,
+                # loss='soft_l1'
+            )
+            if res.fun < tol:
+                return res.x[0]
 
-        if res.fun > tol:
-            print('distance =', res.cost)
-            print('res.fun:', res.fun)
-            # ax = self.plot()
-            # point.plot(ax=ax)
-            # best_point = self.point_at_abscissa(res.x)
-            # best_point.plot(ax=ax, color='r')
-            raise ValueError('abscissa not found')
-        return res.x[0]
+        print('distance =', res.cost)
+        print('res.fun:', res.fun)
+        # ax = self.plot()
+        # point.plot(ax=ax)
+        # best_point = self.point_at_abscissa(res.x)
+        # best_point.plot(ax=ax, color='r')
+        raise ValueError('abscissa not found')
 
     def split(self, point, tol=1e-5):
         if point.point_distance(self.start) < tol:
@@ -4075,10 +4075,10 @@ class Arc3D(Arc):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points():
-            x.append(px)
-            y.append(py)
-            z.append(pz)
+        for pointx, pointy, pointz in self.discretization_points(number_points=25):
+            x.append(pointx)
+            y.append(pointy)
+            z.append(pointz)
 
         ax.plot(x, y, z, color=color, alpha=alpha)
         if edge_ends:
