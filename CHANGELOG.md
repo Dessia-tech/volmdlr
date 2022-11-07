@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * Arc3D: plot
+* Contour: is_overlapping (consider intersecting_points is empty)
 
 
 ### Performance improvements
