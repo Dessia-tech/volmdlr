@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Block: faces_center (calculate directly point in the middle of the faces)
 * Circle2D: split_by_line
+* BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
 * Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside
 
 
@@ -35,8 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PlaneFace3D: line_intersections
 * BsplineCurve: abscissa
 * Circle2D: split_by_line
+* BoundingRectangle: area, center, intersection, is_inside, point_belongs, intersection_area, distance_to_point, distance_to_b_rectangle
 * Cylinder: point_belongs, random_point_inside, interference_volume_with_other_cylinder, min_distance_to_other_cylinder, is_intersecting_other_cylinder, lhs_points_inside
-
 
 
 ## v0.6.0 [Unrealeased]
