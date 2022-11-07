@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 * Block: faces_center (calculate directly point in the middle of the faces)
+* Circle2D: split_by_line
 
 
 ### Fixed
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * PlaneFace3D: line_intersections
 * BsplineCurve: abscissa
+* Circle2D: split_by_line
 
 
 ## v0.6.0 [Unrealeased]
