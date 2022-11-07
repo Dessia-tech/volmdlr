@@ -380,7 +380,7 @@ class Primitive2D(CompositePrimitive):
     def __init__(self, name=''):
         self.name = name
 
-        dc.DessiaObject.__init__(self, name=name)
+        CompositePrimitive.__init__(self, name=name)
 
 
 class CompositePrimitive2D(Primitive2D):
@@ -431,8 +431,10 @@ class CompositePrimitive2D(Primitive2D):
         :param center: rotation center
         :param angle: rotation angle
         """
-        for point in self.primitives:
-            point.rotation_inplace(center, angle)
+        primitives = []
+        for primitive in self.primitives:
+            primitives.append(primitive.rotation(center, angle))
+        self.primitives = primitives
         self.update_basis_primitives()
 
     def translation(self, offset: volmdlr.Vector2D):
@@ -441,16 +443,18 @@ class CompositePrimitive2D(Primitive2D):
         :param offset: translation vector
         :return: A new translated CompositePrimitive2D
         """
-        return self.__class__([point.translation(offset)
-                               for point in self.primitives])
+        return self.__class__([primitive.translation(offset)
+                               for primitive in self.primitives])
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
         CompositePrimitive2D translation. Object is updated inplace
         :param offset: translation vector
         """
-        for point in self.primitives:
-            point.translation_inplace(offset)
+        primitives = []
+        for primitive in self.primitives:
+            primitives.append(primitive.translation(offset))
+        self.primitives = primitives
         self.update_basis_primitives()
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
@@ -466,15 +470,17 @@ class CompositePrimitive2D(Primitive2D):
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
+        primitives = []
         for primitive in self.primitives:
-            primitive.frame_mapping_inplace(frame, side)
+            primitives.append(primitive.frame_mapping(frame, side))
+        self.primitives = primitives
         self.update_basis_primitives()
 
     def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, equal_aspect=True):
 
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if equal_aspect:
             ax.set_aspect('equal')
@@ -631,7 +637,8 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-        self.name = name
+
+        dc.DessiaObject.__init__(self, name=name)
 
         self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
 
@@ -872,7 +879,7 @@ class VolumeModel(dc.PhysicalObject):
         self.bounding_box = self._bounding_box()
         # else:
         #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
-        dc.DessiaObject.__init__(self, name=name)
+        dc.PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
         return sum(hash(point) for point in self.primitives)
