@@ -4433,7 +4433,7 @@ class Circle3D(Contour3D):
         return cls.from_center_normal(center, normal, radius,
                                       arguments[0][1:-1])
 
-    def to_step(self, current_id, **kwargs):
+    def to_step(self, current_id, surface_id=None, surface3d=None):
         circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u,
                                        self.frame.v)
         content, frame_id = circle_frame.to_step(current_id)
@@ -4441,9 +4441,9 @@ class Circle3D(Contour3D):
         content += "#{} = CIRCLE('{}',#{},{});\n".format(
             curve_id, self.name, frame_id, round(self.radius * 1000, 3))
 
-        if 'surface_id' in kwargs:
+        if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                curve_id + 1, curve_id, kwargs['surface_id'])
+                curve_id + 1, curve_id, surface_id)
             curve_id += 1
 
         p1 = self.frame.origin + self.frame.u * self.radius
