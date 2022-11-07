@@ -11,12 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 * Block: faces_center (calculate directly point in the middle of the faces)
+* Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside
 
 
 ### Fixed
 
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * Arc3D: plot
+* Cylinder: point_belongs
 
 
 ### Performance improvements
@@ -31,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * PlaneFace3D: line_intersections
 * BsplineCurve: abscissa
+* Cylinder: point_belongs, random_point_inside, interference_volume_with_other_cylinder, min_distance_to_other_cylinder, is_intersecting_other_cylinder, lhs_points_inside
+
 
 
 ## v0.6.0 [Unrealeased]
@@ -45,7 +49,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ElementsGroup: nodes, elements_per_node
 * Mesh: bounding_rectangle, delete_duplicated_nodes
 * PlaneFace3D: cut_by_coincident_face
-* Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside 
 
 
 ### Fixed
@@ -58,7 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc2D: split (how to choose the interior point)
 * Wire: extract_primitives (consider point1 and point2 belong to the same primitive, REMOVE Contour.extract_primitives)
 * LineSegment: abcissa (consider point2d == arc2d.start/end)
-* Cylinder: point_belongs
 * Contour2D: cut_by_wire
 * Contour2D: point_belongs (bug when contour has only one primitive, like FullArc2D)
 * Contour: contours_from_edges
