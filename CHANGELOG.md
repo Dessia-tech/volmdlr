@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 * Block: faces_center (calculate directly point in the middle of the faces)
+* Circle2D: split_by_line
 * Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside
 
 
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * PlaneFace3D: line_intersections
 * BsplineCurve: abscissa
+* Circle2D: split_by_line
 * Cylinder: point_belongs, random_point_inside, interference_volume_with_other_cylinder, min_distance_to_other_cylinder, is_intersecting_other_cylinder, lhs_points_inside
 
 
