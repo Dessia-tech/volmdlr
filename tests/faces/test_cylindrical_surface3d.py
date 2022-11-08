@@ -7,7 +7,7 @@ from volmdlr import faces, edges
 class TestCylindricalSurface3D(unittest.TestCase):
     cylindrical_surface = faces.CylindricalSurface3D(volmdlr.OXYZ, 0.32)
 
-    def test_linesegment_intersections(self):
+    def test_line_intersections(self):
         line3d = edges.Line3D(volmdlr.O3D, volmdlr.Point3D(0.3, 0.3, .3))
         line_inters = self.cylindrical_surface.line_intersections(line3d)
         self.assertEqual(len(line_inters), 2)
