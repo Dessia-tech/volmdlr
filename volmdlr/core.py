@@ -21,10 +21,7 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 
-# from mpl_toolkits.mplot3d import Axes3D
-
 npy.seterr(divide='raise')
-
 
 # TODO: put voldmlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
@@ -625,6 +622,160 @@ class CompositePrimitive3D(Primitive3D):
         return ax
 
 
+class BoundingRectangle(dc.DessiaObject):
+    """
+    Bounding rectangle.
+    :param xmin: minimal x coordinate
+    :type xmin: float
+    :param xmax: maximal x coordinate
+    :type xmax: float
+    :param ymin: minimal y coordinate
+    :type ymin: float
+    :param ymax: maximal y coordinate
+    :type ymax: float
+    """
+
+    def __init__(self, xmin: float, xmax: float, ymin: float, ymax: float, name: str = ''):
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        dc.DessiaObject.__init__(self, name=name)
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self.xmin
+        if key == 1:
+            return self.xmax
+        if key == 2:
+            return self.ymin
+        if key == 3:
+            return self.ymax
+        raise IndexError
+
+    def bounds(self):
+        """
+        Return the bounds of the BoundingRectangle.
+        """
+        return self.xmin, self.xmax, self.ymin, self.ymax
+
+    def plot(self, ax=None, color='k', linestyle='dotted'):
+        """
+        Plot of the bounding rectangle and its vertex.
+        """
+
+        if not ax:
+            _, ax = plt.subplots()
+        x = [self.xmin, self.xmax, self.xmax, self.xmin, self.xmin]
+        y = [self.ymin, self.ymin, self.ymax, self.ymax, self.ymin]
+
+        ax.plot(x, y, color=color, linestyle=linestyle)
+        ax.scatter(x, y, color=color)
+        return ax
+
+    def area(self):
+        """
+        Calculate the area of the bounding rectangle.
+        """
+        return (self.xmax - self.xmin) * (self.ymax - self.ymin)
+
+    def center(self):
+        """
+        Calculate the bounding rectangle center.
+        """
+        return volmdlr.Point2D(0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax))
+
+    def b_rectangle_intersection(self, b_rectangle2):
+        """
+        Return True if there is an intersection with another specified bounding rectangle or False otherwise.
+        :param b_rectangle2: bounding rectangle to verify intersection
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
+            and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+
+    def is_inside_b_rectangle(self, b_rectangle2):
+        """
+        Return True if the bounding rectangle is totally inside another specified bounding rectangle and False otherwise.
+        :param b_rectangle2: A bounding rectangle
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        return (self.xmin >= b_rectangle2.xmin - 1e-6) and (self.xmax <= b_rectangle2.xmax + 1e-6) \
+            and (self.ymin >= b_rectangle2.ymin - 1e-6) and (self.ymax <= b_rectangle2.ymax + 1e-6)
+
+    def point_belongs(self, point: volmdlr.Point2D):
+        """
+        Return True if a specified point is inside the bounding rectangle and False otherwise.
+        :param point: A 2 dimensional point
+        :type point: :class:`volmdlr.Point2D`
+        """
+        return self.xmin < point.x < self.xmax and self.ymin < point.y < self.ymax
+
+    def intersection_area(self, b_rectangle2):
+        """
+        Calculate the intersection area between two bounding rectangle.
+        :param b_rectangle2: A bounding rectangle
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        if not self.b_rectangle_intersection(b_rectangle2):
+            return 0
+        if self.is_inside_b_rectangle(b_rectangle2) or b_rectangle2.is_inside_b_rectangle(self):
+            return min(self.area(), b_rectangle2.area())
+
+        lx = min(self.xmax, b_rectangle2.xmax) - max(self.xmin, b_rectangle2.xmin)
+        ly = min(self.ymax, b_rectangle2.ymax) - max(self.ymin, b_rectangle2.ymin)
+
+        return lx * ly
+
+    def distance_to_b_rectangle(self, b_rectangle2):
+        """
+        Calculate the minimal distance between two bounding rectangles.
+        :param b_rectangle2: A bounding rectangle
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        if self.b_rectangle_intersection(b_rectangle2):
+            return 0
+
+        permute_b_rec1 = self
+        permute_b_rec2 = b_rectangle2
+
+        if permute_b_rec2.xmin < permute_b_rec1.xmin:
+            permute_b_rec1, permute_b_rec2 = permute_b_rec2, permute_b_rec1
+        dx = max(permute_b_rec2.xmin - permute_b_rec1.xmax, 0)
+
+        if permute_b_rec2.ymin < permute_b_rec1.ymin:
+            permute_b_rec1, permute_b_rec2 = permute_b_rec2, permute_b_rec1
+        dy = max(permute_b_rec2.ymin - permute_b_rec1.ymax, 0)
+
+        return (dx ** 2 + dy ** 2) ** 0.5
+
+    def distance_to_point(self, point: volmdlr.Point2D):
+        """
+        Calculate the minimal distance between the bounding rectangle and a specified point.
+        :param point: A 2 dimensional point
+        :type point: :class:`volmdlr.Point2D`
+        """
+        if self.point_belongs(point):
+            return min([self.xmax - point.x, point.y - self.xmin,
+                        self.ymax - point.y, point.y - self.ymin])
+
+        if point.x < self.xmin:
+            dx = self.xmin - point.x
+        elif self.xmax < point.x:
+            dx = point.x - self.xmax
+        else:
+            dx = 0
+
+        if point.y < self.ymin:
+            dy = self.ymin - point.y
+        elif self.ymax < point.y:
+            dy = point.y - self.ymax
+        else:
+            dy = 0
+
+        return (dx ** 2 + dy ** 2) ** 0.5
+
+
 class BoundingBox(dc.DessiaObject):
     """
     An axis aligned boundary box
@@ -728,17 +879,17 @@ class BoundingBox(dc.DessiaObject):
 
     def volume(self):
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
-                    self.zmax - self.zmin)
+                self.zmax - self.zmin)
 
     def bbox_intersection(self, bbox2):
         return self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
-                and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin
+               and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+               and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin
 
     def is_inside_bbox(self, bbox2):
-        return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6)\
-                and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
-                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
+        return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6) \
+               and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
+               and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
 
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
@@ -795,36 +946,36 @@ class BoundingBox(dc.DessiaObject):
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
     def point_belongs(self, point):
-        return self.xmin < point[0] and point[0] < self.xmax \
-               and self.ymin < point[1] and point[1] < self.ymax \
-               and self.zmin < point[2] and point[2] < self.zmax
+        return self.xmin < point[0] < self.xmax \
+               and self.ymin < point[1] < self.ymax \
+               and self.zmin < point[2] < self.zmax
 
     def distance_to_point(self, point):
         if self.point_belongs(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
                         self.ymax - point[1], point[1] - self.ymin,
                         self.zmax - point[2], point[2] - self.zmin])
+
+        if point[0] < self.xmin:
+            dx = self.xmin - point[0]
+        elif self.xmax < point[0]:
+            dx = point[0] - self.xmax
         else:
-            if point[0] < self.xmin:
-                dx = self.xmin - point[0]
-            elif self.xmax < point[0]:
-                dx = point[0] - self.xmax
-            else:
-                dx = 0
+            dx = 0
 
-            if point[1] < self.ymin:
-                dy = self.ymin - point[1]
-            elif self.ymax < point[1]:
-                dy = point[1] - self.ymax
-            else:
-                dy = 0
+        if point[1] < self.ymin:
+            dy = self.ymin - point[1]
+        elif self.ymax < point[1]:
+            dy = point[1] - self.ymax
+        else:
+            dy = 0
 
-            if point[2] < self.zmin:
-                dz = self.zmin - point[2]
-            elif self.zmax < point[2]:
-                dz = point[2] - self.zmax
-            else:
-                dz = 0
+        if point[2] < self.zmin:
+            dz = self.zmin - point[2]
+        elif self.zmax < point[2]:
+            dz = point[2] - self.zmax
+        else:
+            dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
     def babylon_script(self):
@@ -1181,7 +1332,8 @@ class VolumeModel(dc.PhysicalObject):
                 meshes.extend(primitive.babylon_meshes())
             if hasattr(primitive, 'babylon_curves'):
                 lines.append(primitive.babylon_curves())
-        bbox = self._bounding_box()
+
+        bbox = self.bounding_box
         center = bbox.center
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
@@ -1281,7 +1433,7 @@ class VolumeModel(dc.PhysicalObject):
             step_content += primitive_content
 
             product_definition_context_id = primitive_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n"\
+            step_content += "#{} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n" \
                 .format(product_definition_context_id)
 
             product_context_id = product_definition_context_id + 1
@@ -1327,36 +1479,36 @@ class VolumeModel(dc.PhysicalObject):
 
             curve_style_id = color_id + 1
             step_content += "#{} = CURVE_STYLE('',#{},POSITIVE_LENGTH_MEASURE(0.1),#{});\n".format(
-                    curve_style_id, draughting_id, color_id)
+                curve_style_id, draughting_id, color_id)
 
             fill_area_color_id = curve_style_id + 1
             step_content += "#{} = FILL_AREA_STYLE_COLOUR('',#{});\n".format(
-                    fill_area_color_id, color_id)
+                fill_area_color_id, color_id)
 
             fill_area_id = fill_area_color_id + 1
             step_content += "#{} = FILL_AREA_STYLE('',#{});\n".format(
-                    fill_area_id, fill_area_color_id)
+                fill_area_id, fill_area_color_id)
 
             suface_fill_area_id = fill_area_id + 1
             step_content += "#{} = SURFACE_STYLE_FILL_AREA(#{});\n".format(
-                    suface_fill_area_id, fill_area_id)
+                suface_fill_area_id, fill_area_id)
 
             suface_side_style_id = suface_fill_area_id + 1
             step_content += "#{} = SURFACE_SIDE_STYLE('',(#{}));\n".format(
-                    suface_side_style_id, suface_fill_area_id)
+                suface_side_style_id, suface_fill_area_id)
 
             suface_style_usage_id = suface_side_style_id + 1
             step_content += "#{} = SURFACE_STYLE_USAGE(.BOTH.,#{});\n".format(
-                    suface_style_usage_id, suface_side_style_id)
+                suface_style_usage_id, suface_side_style_id)
 
             presentation_style_id = suface_style_usage_id + 1
 
             step_content += "#{} = PRESENTATION_STYLE_ASSIGNMENT((#{},#{}));\n".format(
-                    presentation_style_id, suface_style_usage_id, curve_style_id)
+                presentation_style_id, suface_style_usage_id, curve_style_id)
 
             styled_item_id = presentation_style_id + 1
             step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
-                    styled_item_id, presentation_style_id, primitive_id)
+                styled_item_id, presentation_style_id, primitive_id)
 
             current_id = styled_item_id + 1
 

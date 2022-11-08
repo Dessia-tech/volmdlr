@@ -406,24 +406,25 @@ class BSplineCurve(Edge):
 
     def abscissa(self, point, tol=1e-4):
         length = self.length()
-        res = scp.optimize.least_squares(
-            lambda u: (point - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(length / 2),
-            bounds=([0], [length]),
-            # ftol=tol / 10,
-            # xtol=tol / 10,
-            # loss='soft_l1'
-        )
+        for x0 in [0, length * 0.25, length * 0.5, length * 0.75, length]:
+            res = scp.optimize.least_squares(
+                lambda u: (point - self.point_at_abscissa(u)).norm(),
+                x0=x0,
+                bounds=([0], [length]),
+                # ftol=tol / 10,
+                # xtol=tol / 10,
+                # loss='soft_l1'
+            )
+            if res.fun < tol:
+                return res.x[0]
 
-        if res.fun > tol:
-            print('distance =', res.cost)
-            print('res.fun:', res.fun)
-            # ax = self.plot()
-            # point.plot(ax=ax)
-            # best_point = self.point_at_abscissa(res.x)
-            # best_point.plot(ax=ax, color='r')
-            raise ValueError('abscissa not found')
-        return res.x[0]
+        print('distance =', res.cost)
+        print('res.fun:', res.fun)
+        # ax = self.plot()
+        # point.plot(ax=ax)
+        # best_point = self.point_at_abscissa(res.x)
+        # best_point.plot(ax=ax, color='r')
+        raise ValueError('abscissa not found')
 
     def split(self, point, tol=1e-5):
         if point.point_distance(self.start) < tol:
@@ -851,8 +852,8 @@ class BSplineCurve2D(BSplineCurve):
         points_x = [p.x for p in points]
         points_y = [p.y for p in points]
 
-        return (min(points_x), max(points_x),
-                min(points_y), max(points_y))
+        return volmdlr.core.BoundingRectangle(min(points_x), max(points_x),
+                                              min(points_y), max(points_y))
 
     def length(self):
         return length_curve(self.curve)
@@ -1118,8 +1119,8 @@ class LineSegment2D(LineSegment):
         return False
 
     def bounding_rectangle(self):
-        return (min(self.start.x, self.end.x), max(self.start.x, self.end.x),
-                min(self.start.y, self.end.y), max(self.start.y, self.end.y))
+        return volmdlr.core.BoundingRectangle(min(self.start.x, self.end.x), max(self.start.x, self.end.x),
+                                              min(self.start.y, self.end.y), max(self.start.y, self.end.y))
 
     def straight_line_area(self):
         return 0.
@@ -1757,8 +1758,8 @@ class Arc2D(Arc):
 
     def bounding_rectangle(self):
         # TODO: Enhance this!!!
-        return (self.center.x - self.radius, self.center.x + self.radius,
-                self.center.y - self.radius, self.center.y + self.radius)
+        return volmdlr.core.BoundingRectangle(self.center.x - self.radius, self.center.x + self.radius,
+                                              self.center.y - self.radius, self.center.y + self.radius)
 
     def straight_line_area(self):
         if self.angle >= math.pi:
@@ -4074,10 +4075,10 @@ class Arc3D(Arc):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points():
-            x.append(px)
-            y.append(py)
-            z.append(pz)
+        for pointx, pointy, pointz in self.discretization_points(number_points=25):
+            x.append(pointx)
+            y.append(pointy)
+            z.append(pointz)
 
         ax.plot(x, y, z, color=color, alpha=alpha)
         if edge_ends:
