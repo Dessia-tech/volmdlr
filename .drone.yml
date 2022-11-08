@@ -21,7 +21,6 @@ steps:
 - name: install, build doc run scripts
   image: dessia/python-gmsh
   commands:
-  - git fetch --tags
   - pip install Cython sphinx sphinx_rtd_theme coverage
   - python setup.py install
   - cd doc
