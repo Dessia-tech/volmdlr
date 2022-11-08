@@ -2697,6 +2697,12 @@ class Line3D(Line):
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
         return content, current_id
 
+    def to_2d(self, plane_origin, x1, x2):
+        p2d = [p.to_2d(plane_origin, x1, x2) for p in (self.point1, self.point2)]
+        if p2d[0] == p2d[1]:
+            return None
+        return Line2D(*p2d, name=self.name)
+
 
 class LineSegment3D(LineSegment):
     """
