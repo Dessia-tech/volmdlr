@@ -825,6 +825,16 @@ class Line2D(Line):
         list_points.extend(list(distances_to_reference_point.keys()))
         return list_points
 
+    def point_distance(self, point2d):
+        """
+        Calculates the distance of a line2d to a point2d
+        :param point2d: point to calculate distance
+        :return: distance to point
+        """
+        vector_r = self.point1 - point2d
+        vector_v = self.normal_vector()
+        return abs(vector_v.dot(vector_r)) / vector_v.norm()
+
 
 class BSplineCurve2D(BSplineCurve):
     _non_serializable_attributes = ['curve']
@@ -2695,6 +2705,12 @@ class Line3D(Line):
         content = p1_content + u_content
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
         return content, current_id
+
+    def to_2d(self, plane_origin, x1, x2):
+        p2d = [p.to_2d(plane_origin, x1, x2) for p in (self.point1, self.point2)]
+        if p2d[0] == p2d[1]:
+            return None
+        return Line2D(*p2d, name=self.name)
 
 
 class LineSegment3D(LineSegment):
