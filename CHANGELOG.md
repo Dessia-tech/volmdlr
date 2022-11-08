@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance improvements
 
+* Avoid unneeded bbox computation
 
 
 ### Refactorings
@@ -40,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BoundingRectangle: area, center, intersection, is_inside, point_belongs, intersection_area, distance_to_point, distance_to_b_rectangle
 
 
-## v0.6.0 [Unrealeased]
+## v0.6.0 [11/7/2022]
 
 ### New Features
 
