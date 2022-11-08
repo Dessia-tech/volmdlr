@@ -1327,6 +1327,22 @@ class CylindricalSurface3D(Surface3D):
 
         return points_3d
 
+    def linesegment_intersections(self, linesegment: vme.LineSegment3D):
+        linesegment_2d = linesegment.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        origin2d = self.frame.origin.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        distance_lineseg2d_to_origin = linesegment_2d.point_distance(origin2d)
+        if distance_lineseg2d_to_origin > self.radius:
+            return []
+        a_prime = linesegment_2d.start
+        b_prime = linesegment_2d.end
+        a_prime_minus_b_prime = a_prime - b_prime
+        t_param = a_prime.dot(a_prime_minus_b_prime) / a_prime_minus_b_prime.dot(a_prime_minus_b_prime)
+        k_param = math.sqrt(
+            (self.radius ** 2 - distance_lineseg2d_to_origin ** 2) / a_prime_minus_b_prime.dot(a_prime_minus_b_prime))
+        intersection1 = linesegment.start + (t_param + k_param) * (linesegment.direction_vector())
+        intersection2 = linesegment.start + (t_param - k_param) * (linesegment.direction_vector())
+        return [intersection1, intersection2]
+
     def perpendicular_plane_intersection(self, plane3d):
         """
         Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis
@@ -1407,6 +1423,7 @@ class CylindricalSurface3D(Surface3D):
         elif math.isclose(plane3d.frame.w.dot(self.frame.w), 1, abs_tol=1e-6):
             return self.parallel_plane_intersection(plane3d)
         return self.concurent_plane_intersection(plane3d)
+
 
 class ToroidalSurface3D(Surface3D):
     face_class = 'ToroidalFace3D'
