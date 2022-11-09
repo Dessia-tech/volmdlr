@@ -39,7 +39,7 @@ MAX_ERROR_BY_TYPE = {
                      'expression-not-assigned': 12,
                      'non-parent-init-called': 7,
                      'too-few-public-methods': 10,
-                     'too-many-public-methods': 8,
+                     'too-many-public-methods': 9,
                      'use-implicit-booleaness-not-comparison': 8,
                      'too-many-instance-attributes': 12,
                      'protected-access': 8,
