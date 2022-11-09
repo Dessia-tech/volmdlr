@@ -3942,7 +3942,7 @@ class Face3D(volmdlr.core.Primitive3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
-        contours = [object_dict[int(arguments[1][0][1:])]]
+        contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
         surface = object_dict[int(arguments[2])]
         if hasattr(surface, 'face_from_contours3d'):
             if (len(contours) == 1) and isinstance(contours[0],

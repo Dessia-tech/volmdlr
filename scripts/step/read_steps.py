@@ -21,6 +21,8 @@ for step_file in [
     model = step.to_volume_model()
     assert len(model.primitives) > 0.
     model.to_step(step_file+'_reexport')
+    model.primitives[0].alpha = 0.6
+    model.primitives[0].color = (1, 0.1, 0.1)
     model.babylonjs()
 
     file_io = io.FileIO(step_file, 'r')
