@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * Arc3D: plot
+* fix Some to_step methods from edges.py and faces.py
 
 
 ### Performance improvements
