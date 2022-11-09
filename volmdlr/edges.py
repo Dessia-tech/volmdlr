@@ -3311,11 +3311,6 @@ class LineSegment3D(LineSegment):
         line = self.to_line()
         content, line_id = line.to_step(current_id)
 
-        # if surface_id:
-        #     print()
-        #     content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-        #         line_id + 1, line_id, surface_id)
-        #     line_id += 1
 
         current_id = line_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
