@@ -8,8 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unrealeased
 
-## v0.6.0 [11/7/2022]
-
 ### New Features
 
 * Block: faces_center (calculate directly point in the middle of the faces)
@@ -22,11 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * Arc3D: plot
+* Fix some to_step methods from edges.py and faces.py
 * Cylinder: point_belongs
 
 
 ### Performance improvements
 
+* Avoid unneeded bbox computation
 
 
 ### Refactorings
@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: point_belongs, random_point_inside, interference_volume_with_other_cylinder, min_distance_to_other_cylinder, is_intersecting_other_cylinder, lhs_points_inside
 
 
-## v0.6.0 [Unrealeased]
+## v0.6.0 [11/7/2022]
 
 ### New Features
 
