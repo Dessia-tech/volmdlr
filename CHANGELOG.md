@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unrealeased
 
+## v0.6.0 [11/7/2022]
+
 ### New Features
 
 * Block: faces_center (calculate directly point in the middle of the faces)
