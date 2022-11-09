@@ -1332,7 +1332,8 @@ class VolumeModel(dc.PhysicalObject):
                 meshes.extend(primitive.babylon_meshes())
             if hasattr(primitive, 'babylon_curves'):
                 lines.append(primitive.babylon_curves())
-        bbox = self._bounding_box()
+
+        bbox = self.bounding_box
         center = bbox.center
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
