@@ -512,8 +512,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         else:
             raise NotImplementedError(
-                '{} intersections not supported yet'.format(
-                    len(intersections)))
+                f'{len(intersections)} intersections not supported yet')
 
         return all_contours
 
@@ -615,6 +614,9 @@ class Surface3D(DessiaObject):
                              contours3d: List[volmdlr.wires.Contour3D],
                              name: str = ''):
         """
+        Returns a face from a 3D contour.
+        :param contours3d: Contour list
+        :type contours3d: List[volmdlr.wires.Contour3D]
         """
 
         lc3d = len(contours3d)
@@ -721,8 +723,7 @@ class Surface3D(DessiaObject):
 
         for primitive3d in contour3d.primitives:
             # print(primitive3d)
-            method_name = '{}_to_2d'.format(
-                primitive3d.__class__.__name__.lower())
+            method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
 
@@ -780,17 +781,14 @@ class Surface3D(DessiaObject):
                     primitives2d.extend(primitives)
             else:
                 raise NotImplementedError(
-                    'Class {} does not implement {}'.format(
-                        self.__class__.__name__,
-                        method_name))
+                    f'Class {self.__class__.__name__} does not implement {method_name}')
 
         return volmdlr.wires.Contour2D(primitives2d)
 
     def contour2d_to_3d(self, contour2d):
         primitives3d = []
         for primitive2d in contour2d.primitives:
-            method_name = '{}_to_3d'.format(
-                primitive2d.__class__.__name__.lower())
+            method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
             if hasattr(self, method_name):
                 try:
                     primitives3d.extend(getattr(self, method_name)(primitive2d))
@@ -798,9 +796,7 @@ class Surface3D(DessiaObject):
                     print('Error NotImplementedError')
             else:
                 raise NotImplementedError(
-                    'Class {} does not implement {}'.format(
-                        self.__class__.__name__,
-                        method_name))
+                    f'Class {self.__class__.__name__} does not implement {method_name}')
 
         return volmdlr.wires.Contour3D(primitives3d)
 
@@ -932,8 +928,7 @@ class Plane3D(Surface3D):
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
         plane_id = frame_id + 1
-        content += "#{} = PLANE('{}',#{});\n".format(plane_id, self.name,
-                                                     frame_id)
+        content += f"#{plane_id} = PLANE('{self.name}',#{frame_id});\n"
         return content, [plane_id]
 
     @classmethod
@@ -1282,6 +1277,7 @@ class CylindricalSurface3D(Surface3D):
 
     def linesegment3d_to_2d(self, linesegment3d):
         """
+        Changes the linesegment coordinates to Cylindrical coordinates (theta, z)
         """
         start = self.point3d_to_2d(linesegment3d.start)
         end = self.point3d_to_2d(linesegment3d.end)
@@ -1405,9 +1401,7 @@ class CylindricalSurface3D(Surface3D):
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
-        content += "#{} = CYLINDRICAL_SURFACE('{}',#{},{});\n" \
-            .format(current_id, self.name, frame_id,
-                    round(1000 * self.radius, 3))
+        content += f"#{current_id} = CYLINDRICAL_SURFACE('{self.name}',#{frame_id},{round(1000 * self.radius, 3)});\n"
         return content, [current_id]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -1582,10 +1576,8 @@ class ToroidalSurface3D(Surface3D):
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
-        content += "#{} = TOROIDAL_SURFACE('{}',#{},{},{});\n" \
-            .format(current_id, self.name, frame_id,
-                    round(1000 * self.R, 3),
-                    round(1000 * self.r, 3))
+        content += f"#{current_id} = TOROIDAL_SURFACE('{self.name}',#{frame_id}," \
+                   f"{round(1000 * self.R, 3)},{round(1000 * self.r, 3)});\n"
         return content, [current_id]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -2654,19 +2646,19 @@ class BSplineSurface3D(Surface3D):
         return BSplineFace3D(self, surface, name)  # PlaneFace3D
 
     def FreeCADExport(self, ip, ndigits=3):
-        name = 'primitive{}'.format(ip)
+        name = f'primitive{ip}'
         script = ""
         points = '['
         for i, pts_row in enumerate(self.control_points_table):
             pts = '['
             for j, pt in enumerate(pts_row):
-                point = 'fc.Vector({},{},{}),'.format(pt[0], pt[1], pt[2])
+                point = f'fc.Vector({pt[0]},{pt[1]},{pt[2]}),'
                 pts += point
             pts = pts[:-1] + '],'
             points += pts
         points = points[:-1] + ']'
 
-        script += '{} = Part.BSplineSurface()\n'.format(name)
+        script += f'{name} = Part.BSplineSurface()\n'
         if self.weights is None:
             script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={})\n'.format(
                 name, points, self.u_multiplicities, self.v_multiplicities,
@@ -2828,7 +2820,7 @@ class BSplineSurface3D(Surface3D):
             for point in points:
                 point_content, point_id = point.to_step(current_id)
                 content += point_content
-                point_ids += '#{},'.format(point_id)
+                point_ids += f'#{point_id},'
                 current_id = point_id + 1
             point_ids = point_ids[:-1]
             point_ids += '),'
@@ -4226,7 +4218,7 @@ class Face3D(volmdlr.core.Primitive3D):
             return surface.face_from_contours3d(contours, name)
         else:
             raise NotImplementedError(
-                'Not implemented :face_from_contours3d in {}'.format(surface))
+                f'Not implemented :face_from_contours3d in {surface}')
 
     # def area(self):
     #     """
@@ -4296,8 +4288,7 @@ class Face3D(volmdlr.core.Primitive3D):
             # surface_id=surface3d_id)
             content += inner_contour_content
             face_bound_id = inner_contour_id + 1
-            content += "#{} = FACE_BOUND('',#{},.T.);\n".format(
-                face_bound_id, inner_contour_id)
+            content += f"#{face_bound_id} = FACE_BOUND('',#{inner_contour_id},.T.);\n"
             contours_ids.append(face_bound_id)
             current_id = face_bound_id + 1
 
@@ -7338,24 +7329,18 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             current_id = max(face_sub_ids) + 1
 
         shell_id = current_id
-        step_content += "#{} = {}('{}',({}));\n".format(current_id,
-                                                        self.STEP_FUNCTION,
-                                                        self.name,
-                                                        volmdlr.core.step_ids_to_str(
-                                                            face_ids))
+        step_content += f"#{current_id} = {self.STEP_FUNCTION}('{self.name}',({volmdlr.core.step_ids_to_str(face_ids)}));\n"
         manifold_id = shell_id + 1
         # step_content += "#{} = MANIFOLD_SOLID_BREP('{}',#{});\n".format(
         #     manifold_id, self.name, shell_id)
-        step_content += "#{} = SHELL_BASED_SURFACE_MODEL('{}',(#{}));\n".format(
-            manifold_id, self.name, shell_id)
+        step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
 
         frame_content, frame_id = volmdlr.OXYZ.to_step(manifold_id + 1)
         step_content += frame_content
         brep_id = frame_id + 1
         # step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
         #     brep_id, frame_id, manifold_id)
-        step_content += "#{} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
-            brep_id, frame_id, manifold_id)
+        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id}),#7);\n"
 
         return step_content, brep_id
 
@@ -7385,9 +7370,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         brep_id = frame_id + 1
         # step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
         #     brep_id, frame_id, manifold_id)
-        step_content += "#{} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
-            brep_id, frame_id, manifold_id)
-
+        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id}),#7);\n"
         return step_content, brep_id, face_ids
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -7697,21 +7680,20 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         s += 'vertexData.positions = positions;\n'
         s += 'vertexData.indices = indices;\n'
         s += 'vertexData.normals = normals;\n'
-        s += 'vertexData.applyToMesh({});\n'.format(name)
-        s += '{}.enableEdgesRendering(0.9);\n'.format(name)
-        s += '{}.edgesWidth = 0.1;\n'.format(name)
-        s += '{}.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);\n'.format(name)
+        s += f'vertexData.applyToMesh({name});\n'
+        s += f'{name}.enableEdgesRendering(0.9);\n'
+        s += f'{name}.edgesWidth = 0.1;\n'
+        s += f'{name}.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);\n'
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
         #        s += 'mat.diffuseColor = BABYLON.Color3.Green();\n'
         #        s += 'mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);\n'
         #        s += 'mat.emissiveColor = new BABYLON.Color3(1, 1, 1);\n'
         #        s += 'mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);\n'
         s += 'mat.backFaceCulling = false;\n'
-        s += 'mat.alpha = {};\n'.format(self.alpha)
-        s += '{}.material = mat;\n'.format(name)
+        s += f'mat.alpha = {self.alpha};\n'
+        s += f'{name}.material = mat;\n'
         if self.color is not None:
-            s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(
-                *self.color)
+            s += f'mat.diffuseColor = new BABYLON.Color3({self.color}, {self.color}, {self.color});\n'
         return s
 
     def plot(self, ax=None, color: str = 'k', alpha: float = 1):
