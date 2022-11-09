@@ -938,7 +938,7 @@ class Plane3D(Surface3D):
         """
         coefficient_a, coefficient_b, coefficient_c, coefficient_d = self.equation_coefficients()
         return abs(self.frame.w.dot(point3d) + coefficient_d) / math.sqrt(coefficient_a**2 +
-                                                                        coefficient_b**2 + coefficient_c**2)
+                                                                          coefficient_b**2 + coefficient_c**2)
 
     def line_intersections(self, line):
         u = line.point2 - line.point1
@@ -1392,7 +1392,7 @@ class CylindricalSurface3D(Surface3D):
         :param plane3d: intersecting plane
         :return: list of intersecting curves
         """
-        #Ellipse vector equation : < rcos(t), rsin(t), -(1 / c)*(d + arcos(t) + brsint(t)); d = - (ax_0 + by_0 + cz_0)
+        # Ellipse vector equation : < rcos(t), rsin(t), -(1 / c)*(d + arcos(t) + brsint(t)); d = - (ax_0 + by_0 + cz_0)
         center2d = volmdlr.Point2D(self.frame.origin.x, self.frame.origin.y)
         center3d_plane = plane3d.point2d_to_3d(center2d)
         plane_coefficient_a, plane_coefficient_b, plane_coefficient_c, plane_coefficient_d =\
@@ -1400,14 +1400,14 @@ class CylindricalSurface3D(Surface3D):
         ellipse_0 = volmdlr.Point3D(
             self.radius * math.cos(0),
             self.radius * math.sin(0),
-            - (1 / plane_coefficient_c)*(plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(0) +
-                                         plane_coefficient_b * self.radius * math.sin(0)))
+            - (1 / plane_coefficient_c) * (plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(0) +
+                                           plane_coefficient_b * self.radius * math.sin(0)))
         ellipse_pi_by_4 = volmdlr.Point3D(
-            self.radius * math.cos(math.pi/2),
-            self.radius * math.sin(math.pi/2),
-            - (1 / plane_coefficient_c)*(
-                    plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(math.pi/2)
-                    + plane_coefficient_b * self.radius * math.sin(math.pi/2)))
+            self.radius * math.cos(math.pi / 2),
+            self.radius * math.sin(math.pi / 2),
+            - (1 / plane_coefficient_c) * (
+                    plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(math.pi / 2)
+                    + plane_coefficient_b * self.radius * math.sin(math.pi / 2)))
         axis_1 = center3d_plane.point_distance(ellipse_0)
         axis_2 = center3d_plane.point_distance(ellipse_pi_by_4)
         if axis_1 > axis_2:

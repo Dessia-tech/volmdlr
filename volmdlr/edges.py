@@ -541,8 +541,8 @@ class BSplineCurve(Edge):
         return cls.from_geomdl_curve(curve)
 
     def tangent(self, position: float = 0.0):
-        point, tangent = operations.tangent(self.curve, position,
-                                            normalize=True)
+        _, tangent = operations.tangent(self.curve, position,
+                                        normalize=True)
 
         dimension = f'Vector{self.__class__.__name__[-2::]}'
         tangent = getattr(volmdlr, dimension)(*tangent)
@@ -613,7 +613,7 @@ class Line2D(Line):
 
     def plot(self, ax=None, color='k', dashed=True):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if version.parse(_mpl_version) >= version.parse('3.3.2'):
             if dashed:
@@ -973,8 +973,8 @@ class BSplineCurve2D(BSplineCurve):
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
-        for point1, point2 in zip(polygon_points[:-1], polygon_points[1:]):
-            linesegment = LineSegment2D(point1, point2)
+        for points in zip(polygon_points[:-1], polygon_points[1:]):
+            linesegment = LineSegment2D(points[0], points[1])
             intersections = linesegment.line_intersections(line2d)
             initial_abscissa += linesegment.length()
             if intersections:
@@ -1228,7 +1228,7 @@ class LineSegment2D(LineSegment):
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
              plot_points=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         p1, p2 = self.start, self.end
         if arrow:
@@ -1346,14 +1346,14 @@ class LineSegment2D(LineSegment):
                                        [self.end.x, self.end.y],
                                        edge_style=edge_style)
 
-    def CreateTangentCircle(self, point, other_line):
-        circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
+    def create_tanget_circle(self, point, other_line):
+        circle1, circle2 = Line2D.create_tanget_circle(other_line, point, self)
         if circle1 is not None:
-            point_J1, curv_abs1 = Line2D.point_projection(self, circle1.center)
+            _, curv_abs1 = Line2D.point_projection(self, circle1.center)
             if curv_abs1 < 0. or curv_abs1 > self.length():
                 circle1 = None
         if circle2 is not None:
-            point_J2, curv_abs2 = Line2D.point_projection(self, circle2.center)
+            _, curv_abs2 = Line2D.point_projection(self, circle2.center)
             if curv_abs2 < 0. or curv_abs2 > self.length():
                 circle2 = None
         return circle1, circle2
@@ -1877,7 +1877,7 @@ class Arc2D(Arc):
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if plot_points:
             for p in [self.center, self.start, self.interior, self.end]:
@@ -2154,8 +2154,8 @@ class FullArc2D(Arc2D):
                            [self._center, self.start]])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
-        [p.frame_mapping_inplace(frame, side) for p in
-         [self._center, self.start, self.end, self.interior]]
+        for p in [self._center, self.start, self.end, self.interior]:
+            p.frame_mapping_inplace(frame, side)
 
     def polygonization(self):
         return volmdlr.wires.ClosedPolygon2D(self.discretization_points(angle_resolution=15))
@@ -2163,7 +2163,7 @@ class FullArc2D(Arc2D):
     def plot(self, ax=None, color='k', alpha=1, plot_points=False,
              linestyle='-', linewidth=1):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if self.radius > 0:
             ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y),
@@ -3399,7 +3399,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         lut = self.look_up_table(resolution=resolution)
         if 0 < abscissa < self.length():
             last_param = 0
-            for i, (t, dist) in enumerate(lut):
+            for t, dist in lut:
                 if abscissa < dist:
                     t1 = last_param
                     t2 = t
@@ -3411,7 +3411,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                              ' or negative')
 
     def normal(self, position: float = 0.0):
-        point, normal = operations.normal(self.curve, position, normalize=True)
+        _, normal = operations.normal(self.curve, position, normalize=True)
         normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
         return normal
 
@@ -4048,7 +4048,8 @@ class Arc3D(Arc):
         self.end.rotation_inplace(center, axis, angle)
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
-        [p.rotation_inplace(center, axis, angle) for p in self.primitives]
+        for prim in self.primitives:
+            prim.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -4072,7 +4073,8 @@ class Arc3D(Arc):
         self.end.translation_inplace(offset)
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
-        [p.translation_inplace(offset) for p in self.primitives]
+        for prim in self.primitives:
+            prim.translation_inplace(offset)
 
     def plot(self, ax=None, color='k', alpha=1,
              edge_ends=False, edge_direction=False):
@@ -4176,7 +4178,7 @@ class Arc3D(Arc):
         self.start, self.interior, self.end = new_start, new_interior, new_end
 
     def abscissa(self, point3d: volmdlr.Point3D):
-        x, y, z = self.frame.new_coordinates(point3d)
+        x, y, _ = self.frame.new_coordinates(point3d)
         u1 = x / self.radius
         u2 = y / self.radius
         theta = volmdlr.core.sin_cos_angle(u1, u2)
