@@ -1167,6 +1167,8 @@ class CylindricalSurface3D(Surface3D):
         u2 = y / self.radius
         # theta = volmdlr.core.sin_cos_angle(u1, u2)
         theta = math.atan2(u2, u1)
+        if u2 < 0:
+            theta = theta + volmdlr.TWO_PI
         return volmdlr.Point2D(theta, z)
 
     def arc3d_to_2d(self, arc3d):
@@ -1327,23 +1329,31 @@ class CylindricalSurface3D(Surface3D):
 
         return points_3d
 
-    def linesegment_intersections(self, linesegment: vme.LineSegment3D):
-        linesegment_2d = linesegment.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+    def line_intersections(self, line: vme.Line3D):
+        line_2d = line.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         origin2d = self.frame.origin.to_2d(self.frame.origin, self.frame.u, self.frame.v)
-        distance_lineseg2d_to_origin = linesegment_2d.point_distance(origin2d)
-        if distance_lineseg2d_to_origin > self.radius:
+        distance_line2d_to_origin = line_2d.point_distance(origin2d)
+        if distance_line2d_to_origin > self.radius:
             return []
-        a_prime = linesegment_2d.start
-        b_prime = linesegment_2d.end
+        a_prime = line_2d.point1
+        b_prime = line_2d.point2
         a_prime_minus_b_prime = a_prime - b_prime
         t_param = a_prime.dot(a_prime_minus_b_prime) / a_prime_minus_b_prime.dot(a_prime_minus_b_prime)
         k_param = math.sqrt(
-            (self.radius ** 2 - distance_lineseg2d_to_origin ** 2) / a_prime_minus_b_prime.dot(a_prime_minus_b_prime))
-        intersection1 = linesegment.start + (t_param + k_param) * (linesegment.direction_vector())
-        intersection2 = linesegment.start + (t_param - k_param) * (linesegment.direction_vector())
+            (self.radius ** 2 - distance_line2d_to_origin ** 2) / a_prime_minus_b_prime.dot(a_prime_minus_b_prime))
+        intersection1 = line.point1 + (t_param + k_param) * (line.direction_vector())
+        intersection2 = line.point1 + (t_param - k_param) * (line.direction_vector())
+        if intersection1 == intersection2:
+            return [intersection1]
         return [intersection1, intersection2]
 
-    def perpendicular_plane_intersection(self, plane3d):
+    def linesegment_intersections(self, linesegment: vme.LineSegment3D):
+        line = linesegment.to_line()
+        line_intersections = self.line_intersections(line)
+        linesegment_intersections = [inters for inters in line_intersections if linesegment.point_belongs(inters)]
+        return linesegment_intersections
+
+    def parallel_plane_intersection(self, plane3d):
         """
         Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis
         :param plane3d: intersecting plane
@@ -1358,15 +1368,13 @@ class CylindricalSurface3D(Surface3D):
             line = volmdlr.edges.Line3D(plane3d.frame.origin, plane3d.frame.origin + plane3d.frame.u)
         else:
             line = volmdlr.edges.Line3D(plane3d.frame.origin, plane3d.frame.origin + plane3d.frame.v)
-        line2d = line.to_2d(self.frame.origin, self.frame.u, self.frame.v)
-        circle_line_intersections = cylinder_circle2d.line_intersections(line2d)
+        line_intersections = self.line_intersections(line)
         lines = []
-        for intersection in circle_line_intersections:
-            intersections3d = self.point2d_to_3d(intersection)
-            lines.append(volmdlr.edges.Line3D(intersections3d, intersections3d + self.frame.w))
+        for intersection in line_intersections:
+            lines.append(volmdlr.edges.Line3D(intersection, intersection + self.frame.w))
         return lines
 
-    def parallel_plane_intersection(self, plane3d):
+    def perpendicular_plane_intersection(self, plane3d):
         """
         Cylinder plane intersections when plane's normal is parallel with the cylinder axis
         :param plane3d: intersecting plane
@@ -1397,8 +1405,9 @@ class CylindricalSurface3D(Surface3D):
         ellipse_pi_by_4 = volmdlr.Point3D(
             self.radius * math.cos(math.pi/2),
             self.radius * math.sin(math.pi/2),
-            - (1 / plane_coefficient_c)*(plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(math.pi/2)
-                                         + plane_coefficient_b * self.radius * math.sin(math.pi/2)))
+            - (1 / plane_coefficient_c)*(
+                    plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(math.pi/2)
+                    + plane_coefficient_b * self.radius * math.sin(math.pi/2)))
         axis_1 = center3d_plane.point_distance(ellipse_0)
         axis_2 = center3d_plane.point_distance(ellipse_pi_by_4)
         if axis_1 > axis_2:
@@ -1419,9 +1428,9 @@ class CylindricalSurface3D(Surface3D):
         :return: list of intersecting curves
         """
         if abs(plane3d.frame.w.dot(self.frame.w)) == 0:
-            return self.perpendicular_plane_intersection(plane3d)
-        elif math.isclose(plane3d.frame.w.dot(self.frame.w), 1, abs_tol=1e-6):
             return self.parallel_plane_intersection(plane3d)
+        elif math.isclose(plane3d.frame.w.dot(self.frame.w), 1, abs_tol=1e-6):
+            return self.perpendicular_plane_intersection(plane3d)
         return self.concurent_plane_intersection(plane3d)
 
 

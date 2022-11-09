@@ -826,6 +826,16 @@ class Line2D(Line):
         list_points.extend(list(distances_to_reference_point.keys()))
         return list_points
 
+    def point_distance(self, point2d):
+        """
+        Calculates the distance of a line2d to a point2d
+        :param point2d: point to calculate distance
+        :return: distance to point
+        """
+        vector_r = self.point1 - point2d
+        vector_v = self.normal_vector()
+        return abs(vector_v.dot(vector_r)) / vector_v.norm()
+
 
 class BSplineCurve2D(BSplineCurve):
     _non_serializable_attributes = ['curve']
@@ -4565,7 +4575,7 @@ class FullArc3D(Arc3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points():
+        for px, py, pz in self.discretization_points(number_points=20):
             x.append(px)
             y.append(py)
             z.append(pz)
