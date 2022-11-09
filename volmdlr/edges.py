@@ -949,9 +949,15 @@ class BSplineCurve2D(BSplineCurve):
                         tuple(self.knots))
         return content, point_id + 1
 
-    def polygon_points(self, n=15):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         length = self.length()
-        return [self.point_at_abscissa(i * length / n) for i in range(n + 1)]
+        return [self.point_at_abscissa(i * length / number_points) for i in range(number_points + 1)]
+
+    def polygon_points(self, n: int = 15):
+        warnings.warn('polygon_points is deprecated,\
+        please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(number_points=n)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -3310,7 +3316,6 @@ class LineSegment3D(LineSegment):
     def to_step(self, current_id, surface_id=None):
         line = self.to_line()
         content, line_id = line.to_step(current_id)
-
 
         current_id = line_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
