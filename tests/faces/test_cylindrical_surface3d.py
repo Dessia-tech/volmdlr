@@ -3,7 +3,6 @@ import unittest
 
 import volmdlr
 from volmdlr import faces, edges, wires
-from volmdlr.models.plane_faces import face as plane_face
 
 
 class TestCylindricalSurface3D(unittest.TestCase):
