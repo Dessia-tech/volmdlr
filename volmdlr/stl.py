@@ -304,11 +304,11 @@ class Stl(dc.DessiaObject):
         for triangle in self.triangles:
             normal = triangle.normal()
             for point in triangle.points:
-                try :
+                try:
                     points_normals[point].append(normal)
                 except KeyError:
                     points_normals[point] = [normal]
-                
+
         for key, value in points_normals.items():
             point_normal = vm.O3D
             for point in value:
@@ -323,7 +323,7 @@ class Stl(dc.DessiaObject):
             normals.append(point_normal)
         self.normals = normals
         return points_normals
-    
+
     def clean_flat_triangles(self) -> 'Stl':
         invalid_triangles = []
         for it, triangles in enumerate(self.triangles):
