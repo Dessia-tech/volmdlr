@@ -3884,7 +3884,7 @@ class BSplineSurface3D(Surface3D):
         resolution = 8
 
         for contour in contours:
-            u_min, u_max, v_min, v_max = contour.bounding_rectangle()
+            u_min, u_max, v_min, v_max = contour.bounding_rectangle().bounds()
             if du > dv:
                 delta_u = u_max - u_min
                 nlines_x = int(delta_u * resolution)
@@ -4237,7 +4237,7 @@ class Face3D(volmdlr.core.Primitive3D):
     #         f'area method must be overloaded by {self.__class__.__name__}')
 
     def to_step(self, current_id):
-        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
         subsurfaces2d = [self.surface2d]
         line_x = None
         if self.surface3d.x_periodicity and (xmax - xmin) >= 0.45 * self.surface3d.x_periodicity:
@@ -5756,7 +5756,7 @@ class CylindricalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
-        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
+        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle().bounds()
 
         lower_center = self.surface3d.frame.origin + zmin * self.surface3d.frame.w
         upper_center = self.surface3d.frame.origin + zmax * self.surface3d.frame.w
@@ -5792,7 +5792,7 @@ class CylindricalFace3D(Face3D):
         return volmdlr.core.BoundingBox.from_points(points)
 
     def triangulation_lines(self, angle_resolution=5):
-        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle()
+        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         nlines = math.ceil(delta_theta * angle_resolution)
         lines = []
@@ -6147,7 +6147,7 @@ class ToroidalFace3D(Face3D):
         self.center = surface3d.frame.origin
         self.normal = surface3d.frame.w
 
-        theta_min, theta_max, phi_min, phi_max = surface2d.outer_contour.bounding_rectangle()
+        theta_min, theta_max, phi_min, phi_max = surface2d.outer_contour.bounding_rectangle().bounds()
 
         self.theta_min = theta_min
         self.theta_max = theta_max
@@ -6199,7 +6199,7 @@ class ToroidalFace3D(Face3D):
         return self.surface3d._bounding_box()
 
     def triangulation_lines(self, angle_resolution=5):
-        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle()
+        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
         nlines_x = int(delta_theta * angle_resolution)
@@ -6707,7 +6707,7 @@ class ConicalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
-        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
+        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle().bounds()
 
         xp = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
               + volmdlr.X3D.dot(
@@ -6755,7 +6755,7 @@ class ConicalFace3D(Face3D):
         return volmdlr.core.BoundingBox.from_points(points)
 
     def triangulation_lines(self, angle_resolution=5):
-        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle()
+        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         nlines = int(delta_theta * angle_resolution)
         lines_x = []
@@ -6852,7 +6852,7 @@ class SphericalFace3D(Face3D):
         return self.surface3d._bounding_box()
 
     def triangulation_lines(self, angle_resolution=7):
-        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle()
+        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
         nlines_x = int(delta_theta * angle_resolution)
@@ -6910,7 +6910,7 @@ class RuledFace3D(Face3D):
         return volmdlr.core.BoundingBox.from_points(points)
 
     def triangulation_lines(self, angle_resolution=10):
-        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
         nlines = int(delta_x * angle_resolution)
         lines = []
@@ -6945,7 +6945,7 @@ class BSplineFace3D(Face3D):
         return self.surface3d._bounding_box()
 
     def triangulation_lines(self, resolution=25):
-        u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle()
+        u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_u = u_max - u_min
         nlines_x = int(delta_u * resolution)
@@ -7328,7 +7328,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         step_content = ''
         face_ids = []
         for face in self.faces:
-            face_content, face_sub_ids = face.to_step(current_id)
+            if isinstance(face, Face3D) or isinstance(face, Surface3D):
+                face_content, face_sub_ids = face.to_step(current_id)
+            else:
+                face_content, face_sub_ids = face.to_step(current_id)
+                face_sub_ids = [face_sub_ids]
             step_content += face_content
             face_ids.extend(face_sub_ids)
             current_id = max(face_sub_ids) + 1

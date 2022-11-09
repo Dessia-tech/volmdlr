@@ -8,15 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unrealeased
 
+## v0.6.0 [11/7/2022]
+
 ### New Features
 
 * Block: faces_center (calculate directly point in the middle of the faces)
-* BoundingRectangle: New volmdlr.core class (Creates a bounding rectangle object from 2D primitives bounds)
+* Circle2D: split_by_line
+* BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
+
 
 ### Fixed
 
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * BsplineCurve2D: new discretization points method (polygon_points deprecated)
+* Arc3D: plot
+* fix Some to_step methods from edges.py and faces.py
+
 
 
 ### Performance improvements
@@ -29,8 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 
+* PlaneFace3D: line_intersections
 * BsplineCurve: abscissa
-
+* Circle2D: split_by_line
+* BoundingRectangle: area, center, intersection, is_inside, point_belongs, intersection_area, distance_to_point, distance_to_b_rectangle
 
 
 ## v0.6.0 [Unrealeased]
@@ -81,7 +90,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 
 * Wire: extract_primitives, extract_without_primitives
-
 
 
 ## v0.5.0
