@@ -3513,7 +3513,17 @@ class Circle2D(Contour2D):
     def from_arc(cls, arc: volmdlr.edges.Arc2D):
         return cls(arc.center, arc.radius, arc.name + ' to circle')
 
-    def tessellation_points(self, resolution=40):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 40):
+        """
+        discretize a Contour to have "n" points
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+            to mesh an arc
+        :return: a list of sampled points
+        """
+        if number_points:
+            angle_resolution = 360 / number_points
         return [(self.center
                  + self.radius * math.cos(teta) * volmdlr.X2D
                  + self.radius * math.sin(teta) * volmdlr.Y2D)
@@ -4217,17 +4227,26 @@ class Circle3D(Contour3D):
                and math.isclose(self.radius,
                                 other_circle.radius, abs_tol=1e-06)
 
-    def tessellation_points(self, resolution=20):
-
-        tessellation_points_3d = [
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
+        """
+        discretize a Contour to have "n" points
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+            to mesh an arc
+        :return: a list of sampled points
+        """
+        if number_points:
+            angle_resolution = 360 / number_points
+        discretization_points_3d = [
                                      self.center + self.radius * math.cos(
                                          teta) * self.frame.u
                                      + self.radius * math.sin(
                                          teta) * self.frame.v
                                      for teta in
                                      npy.linspace(0, volmdlr.TWO_PI,
-                                                  resolution + 1)][:-1]
-        return tessellation_points_3d
+                                                  angle_resolution + 1)][:-1]
+        return discretization_points_3d
 
     def length(self):
         return volmdlr.TWO_PI * self.radius
@@ -4506,17 +4525,37 @@ class Ellipse3D(Contour3D):
         self.major_dir = major_dir
         Contour3D.__init__(self, [self], name=name)
 
-    def tessellation_points(self, resolution=20):
+    def length(self):
+        """
+        Ramanujan's approximation for the perimeter of the ellipse
+        P = π (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
+        :return:
+        """
+        perimeter_formular_h = (self.major_axis - self.minor_axis)**2 / (self.major_axis + self.minor_axis)**2
+        return math.pi * (self.major_axis + self.minor_axis) *\
+               (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
+        """
+        discretize a Contour to have "n" points
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+            to mesh an arc
+        :return: a list of sampled points
+        """
         # plane = Plane3D.from_normal(self.center, self.normal)
-        tessellation_points_3d = [
+        if number_points:
+            angle_resolution = int(math.ceil(360 / number_points))
+        triangulation_points_3d = [
                                      self.center + self.major_axis * math.cos(
                                          teta) * self.major_dir
                                      + self.minor_axis * math.sin(
                                          teta) * self.major_dir.cross(
                                          self.normal) for teta in
                                      npy.linspace(0, volmdlr.TWO_PI,
-                                                  resolution + 1)][:-1]
-        return tessellation_points_3d
+                                                  angle_resolution + 1)][:-1]
+        return triangulation_points_3d
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         # minor_dir = self.normal.cross(self.major_dir)

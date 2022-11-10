@@ -2387,7 +2387,6 @@ class ArcEllipse2D(Edge):
                 number_points = 2
             else:
                 number_points = math.ceil(angle_resolution * abs(0.5 * self.angle / math.pi))
-
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step)
                 for i in range(number_points)]
