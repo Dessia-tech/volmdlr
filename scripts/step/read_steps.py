@@ -25,7 +25,6 @@ for step_file in [
     # 'angle_bar.step',
     # 'tore1.step',
     # 'block.step',
-    'Video_Version.step'
     # 'Hollow_Loft.step'
 
 ]:
