@@ -908,6 +908,7 @@ class Contour(Wire):
             counter1 += 1
             if counter1 >= 100 * length_list_points:
                 ax = self.plot()
+                ax.set_aspect('auto')
                 raise NotImplementedError
             if len(list_point_pairs) == 1:
                 counter += 1
@@ -1595,7 +1596,7 @@ class Contour2D(Contour, Wire2D):
                 return p
         raise ValueError('Could not find a point inside')
 
-    def order_contour(self):
+    def order_contour(self, tol=1e-6):
         if self.is_ordered() or len(self.primitives) < 2:
             return self
 
@@ -1604,7 +1605,7 @@ class Contour2D(Contour, Wire2D):
             initial_points.append((primitive.start, primitive.end))
 
         new_primitives = []
-        points = self.ordering_contour()
+        points = self.ordering_contour(tol)
         for point1, point2 in points:
             try:
                 index = initial_points.index((point1, point2))
@@ -1756,8 +1757,8 @@ class Contour2D(Contour, Wire2D):
             ax = self.plot()
             line.plot(ax=ax)
             [i[0].plot(ax=ax) for i in intersections]
-            self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step')
-            line.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step')
+            self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\intersection_contour.json')
+            line.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\intersection_line.json')
             raise NotImplementedError(
                 '{} intersections not supported yet'.format(
                     len(intersections)))
@@ -1975,9 +1976,9 @@ class Contour2D(Contour, Wire2D):
             primitives2 = closing_contour.primitives + \
                           extracted_innerpoints_contour1.primitives
         contour1 = volmdlr.wires.Contour2D(primitives1)
-        contour1.order_contour()
+        contour1.order_contour(tol=1e-5)
         contour2 = volmdlr.wires.Contour2D(primitives2)
-        contour2.order_contour()
+        contour2.order_contour(tol=1e-5)
         return contour1, contour2
 
     def divide(self, contours, inside):

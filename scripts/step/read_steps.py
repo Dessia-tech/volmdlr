@@ -14,17 +14,17 @@ for step_file in [
     # 'cylinder-test.step',
     # 'read_test1.step',
     # 'read_test2.step',
-    'spherical_surface_body.step'
+    # 'spherical_surface_body.step',
     # 'read_test3.step',
     # 'read_test4.step',
     # 'read_test8.step',
     # 'read_test10.step',
     # 'angle_bar.step',
     # 'pipe.step',
-    # 'sphere3.step'
+    # 'sphere.step'
     # 'bracket2_cut3.step',
     # 'bracket2_cut4.step',
-    # 'bracket1.step',
+    'bracket2.step',
     # 'sphere_revolution0_5.step'
     # 'Video_Version.step'
     #ToroidalSurface
@@ -33,14 +33,14 @@ for step_file in [
     # 'tore1.step',
     # 'iter8finaldesign.stp',
     # 'car_test.step',
-    # 'cone2.step',
+    # 'cone1.step',
     #bspline
     # 'Hollow_Loft.step'
     # # 'block.step',
     # # 'read_test6.step',
     # 'dimond.step'
     # 'bottle.step' # not implemented OFFSET_SURFACE
-
+    # 'tormach_wrench.step'
     # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
 ]:
     print('Reading step file: ', step_file)
@@ -48,24 +48,24 @@ for step_file in [
     step = volmdlr.step.Step.from_file(filepath=step_file)
 
     model = step.to_volume_model()
-    # faces = []
-    # closedshell = model.primitives[0]
-    # error = {}
-    # contours = {}
-    # for i, face in enumerate(closedshell.faces):
-    #     try:
-    #         face.triangulation()
-    #     except Exception:
-    #         error[i] = face
-    #         contours[i] = face.surface2d.outer_contour
-    #     else:
-    #         faces.append(face)
+    faces = []
+    closedshell = model.primitives[0]
+    error = {}
+    contours = {}
+    for i, face in enumerate(closedshell.faces):
+        try:
+            face.triangulation()
+        except Exception:
+            error[i] = face
+            contours[i] = face.surface2d.outer_contour
+        else:
+            faces.append(face)
     # for primitive in model.primitives:
     #     # primitive.color = (1, 0.2, 0.1)
     #     primitive.alpha = 0.98
-    # model2 = volmdlr.core.VolumeModel(vmf.ClosedShell3D(faces))
+    # model2 = volmdlr.core.VolumeModel(faces)
     # model2.babylonjs()
-    model.babylonjs()
+    # model.babylonjs()
     # assert len(model.primitives) > 0.
     # model.to_step(step_file + '_reexport')
     # model.babylonjs()
