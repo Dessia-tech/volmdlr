@@ -9,6 +9,7 @@ from itertools import product, combinations
 
 import triangle
 import numpy as npy
+import sympy
 
 import scipy as scp
 import scipy.optimize as opt
@@ -960,6 +961,23 @@ class Plane3D(Surface3D):
             return []
         return [linesegment.start + intersection_abscissea * u]
 
+    def fullarc_intersections(self, fullarc: vme.FullArc3D):
+        # fullarc_points = [fullarc.center, fullarc.start, fullarc.point_at_abscissa(0.25), ]
+        fullarc_plane = Plane3D(fullarc.frame)
+        contour = volmdlr.wires.ClosedPolygon2D([volmdlr.Point2D(-1, -1), volmdlr.Point2D(1, -1),
+                                                 volmdlr.Point2D(1, 1), volmdlr.Point2D(-1, 1)])
+        face1 = PlaneFace3D(self, Surface2D(contour, []))
+        face2 = PlaneFace3D(fullarc_plane, Surface2D(contour, []))
+        plane_intersections = self.plane_intersection(fullarc_plane)
+        fullarc2d = fullarc.to_2d(fullarc.center, fullarc_plane.frame.u, fullarc_plane.frame.v)
+        line2d = plane_intersections[0].to_2d(fullarc.center, fullarc_plane.frame.u, fullarc_plane.frame.v)
+        fullarc2d_inters_line2d = fullarc2d.line_intersections(line2d)
+        intersections = []
+        for inter in fullarc2d_inters_line2d:
+            intersections.append(inter.to_3d(fullarc.center, fullarc_plane.frame.u, fullarc_plane.frame.v))
+        return intersections
+
+
     def equation_coefficients(self):
         """
         returns the a,b,c,d coefficient from equation ax+by+cz+d = 0
@@ -969,6 +987,8 @@ class Plane3D(Surface3D):
         return (a, b, c, d)
 
     def plane_intersection(self, other_plane):
+        if self.is_parallel(other_plane):
+            return []
         line_direction = self.frame.w.cross(other_plane.frame.w)
 
         if line_direction.norm() < 1e-6:
@@ -976,27 +996,46 @@ class Plane3D(Surface3D):
 
         a1, b1, c1, d1 = self.equation_coefficients()
         a2, b2, c2, d2 = other_plane.equation_coefficients()
-
-        if a1 * b2 - a2 * b1 != 0.:
-            x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
-            y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
-            point1 = volmdlr.Point3D((x0, y0, 0))
-        else:
-            y0 = (b2 * d2 - c2 * d1) / (b1 * c2 - c1 * b2)
-            z0 = (c1 * d1 - b1 * d2) / (b1 * c2 - c1 * b2)
-            point1 = volmdlr.Point3D((0, y0, z0))
+        matrix = sympy.Matrix([[a1, b1, c1, -d1],
+                               [a2, b2, c2, -d2]])
+        reduced_row_echelon_form_matrix = matrix.rref()[0]
+        dict_solution = {'x':0, 'x':0, 'x':0}
+        for solution_row in [list(reduced_row_echelon_form_matrix.row(0)),
+                             list(reduced_row_echelon_form_matrix.row(1))]:
+            for i, row_value in zip(['x', 'y', 'z'], solution_row):
+                if row_value == 1:
+                    dict_solution[i] = solution_row[-1]
+        if all(i == 0 for i in dict_solution.values()) and all(j != 1 for j in solution_row[:-1]):
+            raise NotImplementedError
+        point1 = volmdlr.Point3D(*dict_solution.values())
+        # if a1 * b2 - a2 * b1 != 0.:
+        #     x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
+        #     y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
+        #     point1 = volmdlr.Point3D(x0, y0, 0)
+        # else:
+        #     y0 = (b2 * d2 - c2 * d1) / (b1 * c2 - c1 * b2)
+        #     z0 = (c1 * d1 - b1 * d2) / (b1 * c2 - c1 * b2)
+        #     point1 = volmdlr.Point3D(0, y0, z0)
 
         # point2 = point1 + line_direction
         # return volmdlr.Line3D(point1, point2)
-        return volmdlr.Line3D(point1, point1 + line_direction)
+        return [volmdlr.edges.Line3D(point1, point1 + line_direction)]
 
     def is_coincident(self, plane2):
         """
         Verifies if two planes are parallel and coincident
         """
-        if self.frame.w.is_colinear_to(plane2.frame.w):
+        if self.is_parallel(plane2):
             if plane2.point_on_plane(self.frame.origin):
                 return True
+        return False
+
+    def is_parallel(self, plane2):
+        """
+        Verifies if two planes are parallel
+        """
+        if self.frame.w.is_colinear_to(plane2.frame.w):
+            return True
         return False
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -4205,6 +4244,13 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return intersections
 
+    def fullarc_intersections(self, fullarc: vme.FullArc3D) -> List[volmdlr.Point3D]:
+        intersections = []
+        for intersection in self.surface3d.fullarc_intersections(fullarc):
+            if self.point_belongs(intersection):
+                intersections.append(intersection)
+        return intersections
+
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if not ax:
             ax = plt.figure().add_subplot(111, projection='3d')
@@ -4234,7 +4280,9 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def edge3d_inside(self, linesegement3d: volmdlr.edges.LineSegment3D):
         points = linesegement3d.discretization_points(number_points=200)
-        for point in points:
+        # length = linesegement3d.length()
+        # points = [linesegement3d.point_at_abscissa(length * n / 200) for n in range(1, 199)]
+        for point in points[1:-1]:
             if not self.point_belongs(point):
                 return False
         return True
@@ -4454,19 +4502,18 @@ class PlaneFace3D(Face3D):
 
     def edge_intersections(self, edge):
         intersections = []
-        # method_name = f'{edge.__class__.__name__.lower()[:-2]}_intersections'
-        # if hasattr(self, method_name):
-        #     intersections = getattr(self, method_name)(edge)
-        linesegment = vme.LineSegment3D(edge.start, edge.end)
-        for surface3d_inter in self.surface3d.linesegment_intersections(linesegment):
-            point2d = self.surface3d.point3d_to_2d(surface3d_inter)
-            if self.surface2d.point_belongs(point2d):
-                if surface3d_inter not in intersections:
-                    intersections.append(surface3d_inter)
+        method_name = f'{edge.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(self, method_name):
+            intersections = getattr(self, method_name)(edge)
+        # linesegment = vme.LineSegment3D(edge.start, edge.end)
+        # for surface3d_inter in self.surface3d.linesegment_intersections(linesegment):
+        #     point2d = self.surface3d.point3d_to_2d(surface3d_inter)
+        #     if self.surface2d.point_belongs(point2d):
+        #         if surface3d_inter not in intersections:
+        #             intersections.append(surface3d_inter)
         if not intersections:
             for point in [edge.start, edge.end]:
                 if self.point_belongs(point):
-
                     if point not in intersections:
                         intersections.append(point)
             for prim in self.outer_contour3d.primitives:
@@ -4477,15 +4524,15 @@ class PlaneFace3D(Face3D):
         return intersections
 
     def face_intersections_outer_contour(self, face2):
-        intersections = []
+        intersections_points = []
         for edge1 in self.outer_contour3d.primitives:
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
                 for point in intersection_points:
                     if point not in intersections:
-                        intersections.append(point)
+                        intersections_points.append(point)
 
-        return intersections
+        return intersections_points, []
 
     def face_intersections_inner_contours(self, face2):
         intersections = []
@@ -4514,36 +4561,45 @@ class PlaneFace3D(Face3D):
         return intersection_primitives
 
     def get_face_intersections(self, face2):
-        intersections = []
+        intersections_points = []
         if face2.surface2d.inner_contours:
             intersections.extend(self.face_intersections_inner_contours(face2))
         if self.surface2d.inner_contours:
             intersections.extend(face2.face_intersections_inner_contours(self))
-        face2_intersections = face2.face_intersections_outer_contour(self)
-        self_face_intersections = self.face_intersections_outer_contour(face2)
-        for point in self_face_intersections + face2_intersections:
+        face2_intersections_points, face2_intersections_curves = face2.face_intersections_outer_contour(self)
+        self_intersections_points, self_intersections_curves = self.face_intersections_outer_contour(face2)
+        for point in self_intersections_points + face2_intersections_points:
             if point not in intersections:
-                intersections.append(point)
-        return intersections
+                intersections_points.append(point)
+        return intersections_points, self_intersections_curves + face2_intersections_curves
 
-    def validate_face_intersections(self, face2, intersections: List[volmdlr.Point3D]):
-        if len(intersections) > 1:
-            if intersections[0] == intersections[1]:
+    def validate_face_intersections(self, face2, intersections_points: List[volmdlr.Point3D], intersections_curves):
+        if intersections_curves and not intersections_points:
+            return intersections_curves
+        if intersections_curves and intersections_points:
+            if len(intersections_curves) > 1:
+                raise NotImplementedError
+            if all(intersections_curves[0].pont_belongs(point) for point in intersections_points):
+                pass
+        elif len(intersections_points) > 1:
+            if intersections_points[0] == intersections_points[1]:
                 return []
             if self.surface2d.inner_contours:
-                intersection_primitives = self.validate_inner_contour_intersections(intersections, face2)
+                intersection_primitives = self.validate_inner_contour_intersections(intersections_points, face2)
             elif face2.surface2d.inner_contours:
-                intersection_primitives = face2.validate_inner_contour_intersections(intersections, self)
+                intersection_primitives = face2.validate_inner_contour_intersections(intersections_points, self)
             elif len(intersections) > 2:
-                intersection_primitives = self.validate_inner_contour_intersections(intersections, face2)
+                intersection_primitives = self.validate_inner_contour_intersections(intersections_points, face2)
                 if not intersections:
                     raise NotImplementedError
             else:
                 intersection_primitives = [volmdlr.edges.LineSegment3D(
-                    intersections[0], intersections[1])]
+                    intersections_points[0], intersections_points[1])]
             intersection_wires = [volmdlr.wires.Wire3D([primitive])
                                   for primitive in intersection_primitives]
             return intersection_wires
+        # elif not isinstance(intersections[0], volmdlr.Point3D):
+        #     return intersections
         return []
 
     def face_intersections(self, face2, tol=1e-6) -> List[volmdlr.wires.Wire3D]:
@@ -4558,7 +4614,7 @@ class PlaneFace3D(Face3D):
             return []
         if self.face_inside(face2) or face2.face_inside(self):
             return []
-        intersections = self.get_face_intersections(face2)
+        intersections_points, intersections_curves = self.get_face_intersections(face2)
         valid_intersections = self.validate_face_intersections(face2, intersections)
         return valid_intersections
 
@@ -5906,21 +5962,24 @@ class CylindricalFace3D(Face3D):
         return False
 
     def face_intersections_outer_contour(self, face2):
-        intersections = []
-        surface_intersectons = self.surface3d.plane_intersection(face2.surface3d)
-        if all(self.edge3d_inside(intersection) for intersection in surface_intersectons):
-            return surface_intersectons
+        intersections_points = []
+        intersection_curves = self.surface3d.plane_intersection(face2.surface3d)
+        if all(self.edge3d_inside(intersection) for intersection in intersection_curves):
+            return [], intersection_curves
         for edge1 in self.outer_contour3d.primitives:
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
                 for point in intersection_points:
-                    if point not in intersections:
-                        intersections.append(point)
-        return intersections
+                    if point not in intersections_points:
+                        intersections_points.append(point)
+        return intersections_points, intersection_curves
 
-    # def edge_intersections(self, edge):
-    #     method_name = f'{edge.__class__.__name__.lower()}_intersections'
-    #     if hasattr(self, method_name):
+    def edge_intersections(self, edge):
+        intersections = []
+        method_name = f'{edge.__class__.__name__.lower()}_intersections'
+        if hasattr(self, method_name):
+            intersections = getattr(self, method_name)(edge)
+        return intersections
 
 
 class ToroidalFace3D(Face3D):

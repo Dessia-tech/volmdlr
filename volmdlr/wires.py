@@ -4302,7 +4302,7 @@ class Circle3D(Contour3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.tessellation_points():
+        for px, py, pz in self.discretization_points():
             x.append(px)
             y.append(py)
             z.append(pz)
@@ -4546,7 +4546,7 @@ class Ellipse3D(Contour3D):
         """
         # plane = Plane3D.from_normal(self.center, self.normal)
         if number_points:
-            angle_resolution = int(math.ceil(360 / number_points))
+            angle_resolution = number_points
         triangulation_points_3d = [
                                      self.center + self.major_axis * math.cos(
                                          teta) * self.major_dir
@@ -4659,7 +4659,7 @@ class Ellipse3D(Contour3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.tessellation_points():
+        for px, py, pz in self.discretization_points():
             x.append(px)
             y.append(py)
             z.append(pz)
