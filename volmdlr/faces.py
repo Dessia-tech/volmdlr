@@ -4078,6 +4078,12 @@ class Face3D(volmdlr.core.Primitive3D):
         for intersection in self.surface3d.line_intersections(line):
             if self.point_belongs(intersection):
                 intersections.append(intersection)
+        if not intersections:
+            for prim in self.outer_contour3d.primitives:
+                intersection = prim.line_intersections(line)
+                if intersection:
+                    if intersection not in intersections:
+                        intersections.append(intersection)
 
         return intersections
 
@@ -4089,7 +4095,12 @@ class Face3D(volmdlr.core.Primitive3D):
                 linesegment):
             if self.point_belongs(intersection):
                 intersections.append(intersection)
-
+        if not intersections:
+            for prim in self.outer_contour3d.primitives:
+                intersection = prim.linesegment_intersection(linesegment)
+                if intersection is not None:
+                    if intersection not in intersections:
+                        intersections.append(intersection)
         return intersections
 
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
@@ -4354,11 +4365,11 @@ class PlaneFace3D(Face3D):
 
                     if point not in intersections:
                         intersections.append(point)
-            for prim in self.outer_contour3d.primitives:
-                intersection = prim.linesegment_intersection(edge)
-                if intersection is not None:
-                    if intersection not in intersections:
-                        intersections.append(intersection)
+            # for prim in self.outer_contour3d.primitives:
+            #     intersection = prim.linesegment_intersection(edge)
+            #     if intersection is not None:
+            #         if intersection not in intersections:
+            #             intersections.append(intersection)
         return intersections
 
     def face_intersections_outer_contour(self, face2):
