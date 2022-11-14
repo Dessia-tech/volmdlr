@@ -2883,11 +2883,6 @@ class LineSegment3D(LineSegment):
         point_distance = self.point_distance(point)
         if math.isclose(point_distance, 0, abs_tol=abs_tol):
             return True
-        # if point in self.points:
-        #     return True
-        # distance = self.start.point_distance(point) + self.end.point_distance(point)
-        # if math.isclose(distance, self.length(), abs_tol=abs_tol):
-        #     return True
         return False
 
     def normal_vector(self, abscissa=0.):
