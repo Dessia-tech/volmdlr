@@ -47,6 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: point_belongs, random_point_inside, interference_volume_with_other_cylinder, min_distance_to_other_cylinder, is_intersecting_other_cylinder, lhs_points_inside
 * CylindricalFace3D: linesegment_intersections
 * CylindricalSurface3D: line_intersections
+* Line3D: line_distance
+* Line3D: skew_to
+* Line3D: intersections
+* LineSegment3D: line_intersections
+* LineSegment3D: linesegment_intersections
 
 
 ## v0.6.0 [11/7/2022]

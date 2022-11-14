@@ -2499,6 +2499,11 @@ class Line3D(Line):
         return vector1.cross(vector2).norm() / vector2.norm()
 
     def line_distance(self, line2):
+        """
+        Calculates the distance between two Line3D
+        :param line2: other Line3D
+        :return: The distance between the two lines
+        """
         direction_vector1 = self.direction_vector()
         direction_vector2 = line2.direction_vector()
         if direction_vector1.is_colinear_to(direction_vector2):
@@ -2509,6 +2514,11 @@ class Line3D(Line):
         return line_distance
 
     def skew_to(self, line):
+        """
+        Verifies if two Line3D are skew to each other, that is, they are not parallel and never intersect
+        :param line: othe line
+        :return: True if they are skew, False otherwise
+        """
         if self.direction_vector().is_colinear_to(line.direction_vector()):
             return False
         if math.isclose(self.line_distance(line), 0, abs_tol=1e-6):
@@ -2724,6 +2734,11 @@ class Line3D(Line):
     #     return None
 
     def intersection(self, line):
+        """
+        Calculates the intersection between to Line3D, if there is an intersection
+        :param line: other Line3D
+        :return: None if there is no intersection between Lines. A volmdlr.Point3D if there existes an intersection
+        """
         direction_vector1 = self.direction_vector()
         direction_vector2 = line.direction_vector()
         distance_to_line = self.line_distance(line)
@@ -2749,7 +2764,27 @@ class Line3D(Line):
         # elif c == p == 0 and z2 != z1:
         #     return None
         # if a == b == 0 and (x2 - x1) * n == (y2 - y1) * m:
-        if a == b == 0 and n != 0 != m:
+        if a == m == 0:
+            if x2 == x1 and c * n != b * p:
+                if b != 0:
+                    coefficient_t = ((z2 -z1) * b - c * (y2 - y1)) / (c * n - b * p)
+                    coefficient_s = ((y2 - y1) + n * coefficient_t) / b
+                elif n != 0 and c != 0:
+                    coefficient_t = (y2 - y1) / -n
+                    coefficient_s = (z2 - z1 + p * coefficient_t) / c
+            else:
+                raise NotImplementedError
+        elif b == n == 0:
+            if y2 == y1 and c * m != a * p:
+                if a != 0:
+                    coefficient_t = ((z2 -z1) * a - c * (x2 - x1)) / (c * m - a * p)
+                    coefficient_s = ((x2 - x1) + m * coefficient_t) / a
+                elif m != 0 and c != 0:
+                    coefficient_t = (x2 - x1) / -m
+                    coefficient_s = (z2 - z1 + p * coefficient_t) / c
+            else:
+                raise NotImplementedError
+        elif a == b == 0 and n != 0 != m:
             coefficient_t = (x2 - x1) / m
             coefficient_s = ((z2 - z1) + p * coefficient_t) / c
         elif a == 0 and m != 0 and  b != 0:
@@ -2766,8 +2801,9 @@ class Line3D(Line):
             )
             coefficient_s = ((x2 - x1 ) + m * coefficient_t) / a
         else:
+            print(True)
             raise NotImplementedError
-        if c * coefficient_s - p * coefficient_t == z2 - z1:
+        if math.isclose(c * coefficient_s - p * coefficient_t, z2 - z1, abs_tol=1e-6):
             return volmdlr.Point3D(x1 + coefficient_s * a,
                                     y1 + coefficient_s * b,
                                     z1 + coefficient_s * c)
