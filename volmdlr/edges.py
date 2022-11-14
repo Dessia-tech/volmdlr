@@ -14,7 +14,6 @@ from packaging import version
 import numpy as npy
 import scipy as scp
 import scipy.optimize
-import sympy
 
 from geomdl import utilities, BSpline, fitting, operations
 from geomdl.operations import length_curve, split_curve
@@ -66,6 +65,7 @@ class Edge(dc.DessiaObject):
         self.start = start
         self.end = end
         self._length = None
+        self._direction_vector = None
         dc.DessiaObject.__init__(self, name=name)
 
     def __getitem__(self, key):
@@ -169,6 +169,7 @@ class Line(dc.DessiaObject):
     def __init__(self, point1, point2, name=''):
         self.point1 = point1
         self.point2 = point2
+        self._direction_vector = None
         dc.DessiaObject.__init__(self, name=name)
 
     def __getitem__(self, key):
@@ -185,7 +186,9 @@ class Line(dc.DessiaObject):
         return u
 
     def direction_vector(self, *args, **kwargs):
-        return self.point2 - self.point1
+        if not self._direction_vector:
+            self._direction_vector = self.point2 - self.point1
+        return self._direction_vector
 
     def normal_vector(self, *args, **kwargs):
         return self.direction_vector().normal_vector()
@@ -272,7 +275,9 @@ class LineSegment(Edge):
         direction vector is to be calculated
         :return: The direction vector of the LineSegement
         """
-        return self.end - self.start
+        if not self._direction_vector:
+            self._direction_vector = self.end - self.start
+        return self._direction_vector
 
     def normal_vector(self, abscissa=0.):
         """
@@ -1114,11 +1119,14 @@ class LineSegment2D(LineSegment):
     #     return self.start + self.unit_direction_vector() * abscissa
 
     def point_belongs(self, point, abs_tol=1e-6):
-        distance = self.start.point_distance(point) + self.end.point_distance(
-            point)
-        if math.isclose(distance, self.length(), abs_tol=abs_tol) and\
-                math.isclose(self.point_distance(point), 0.0, abs_tol=abs_tol):
+        point_distance = self.point_distance(point)
+        if math.isclose(point_distance, 0, abs_tol=abs_tol):
             return True
+        # distance = self.start.point_distance(point) + self.end.point_distance(
+        #     point)
+        # if math.isclose(distance, self.length(), abs_tol=abs_tol) and\
+        #         math.isclose(self.point_distance(point), 0.0, abs_tol=abs_tol):
+        #     return True
         return False
 
     def bounding_rectangle(self):
@@ -2444,7 +2452,13 @@ class Line3D(Line):
                  name: str = ''):
         Line.__init__(self, point1, point2, name=name)
         self.points = [point1, point2]
-        self.bounding_box = self._bounding_box()
+        self._bbox = None
+
+    @property
+    def bouding_box(self):
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
 
     def _bounding_box(self):
         # points = [self.point1, self.point2]
@@ -2484,9 +2498,7 @@ class Line3D(Line):
         direction_vector1 = self.direction_vector()
         direction_vector2 = line2.direction_vector()
         if direction_vector1.is_colinear_to(direction_vector2):
-            return abs(direction_vector1.cross(line2.points[0] - self.points[0])) / direction_vector1.norm()
-        direction_vector1 = self.direction_vector()
-        direction_vector2 = line2.direction_vector()
+            return direction_vector1.cross(line2.points[0] - self.points[0]).norm() / direction_vector1.norm()
         vector = line2.points[0] - self.points[0]
         line_distance = abs(vector.dot(direction_vector1.cross(direction_vector2))) / direction_vector1.cross(
             direction_vector2).norm()
@@ -2632,79 +2644,129 @@ class Line3D(Line):
         point2 = point1 + direction
         return cls(point1, point2, arguments[0][1:-1])
 
-    def intersection(self, line2):
+    # def intersection(self, line2):
+    #
+    #     x1 = self.point1.x
+    #     y1 = self.point1.y
+    #     z1 = self.point1.z
+    #     x2 = self.point2.x
+    #     y2 = self.point2.y
+    #     z2 = self.point2.z
+    #     x3 = line2.point1.x
+    #     y3 = line2.point1.y
+    #     z3 = line2.point1.z
+    #     x4 = line2.point2.x
+    #     y4 = line2.point2.y
+    #     z4 = line2.point2.z
+    #
+    #     if x3 == 0 and x4 == 0 and y4 - y3 == 0:
+    #         x5, y5, z5 = x3, y3, z3
+    #         x6, y6, z6 = x4, y4, z4
+    #         x3, y3, z3 = x1, y1, z1
+    #         x4, y4, z4 = x2, y2, z2
+    #         x1, y1, z1 = x5, y5, z5
+    #         x2, y2, z2 = x6, y6, z6
+    #
+    #     elif y3 == 0 and y4 == 0 and x4 - x3 == 0:
+    #         x5, y5, z5 = x3, y3, z3
+    #         x6, y6, z6 = x4, y4, z4
+    #         x3, y3, z3 = x1, y1, z1
+    #         x4, y4, z4 = x2, y2, z2
+    #         x1, y1, z1 = x5, y5, z5
+    #         x2, y2, z2 = x6, y6, z6
+    #
+    #     res, list_t1 = [], []
+    #
+    #     # 2 unknown 3eq with t1 et t2 unknown
+    #
+    #     if (x2 - x1 + y1 - y2) != 0 and (y4 - y3) != 0:
+    #         t1 = (x3 - x1 + (x4 - x3) * (y1 - y3) / (y4 - y3)) / (
+    #             x2 - x1 + y1 - y2)
+    #         t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
+    #         res1 = z1 + (z2 - z1) * t1
+    #         res2 = z3 + (z4 - z3) * t2
+    #         list_t1.append(t1)
+    #         res.append([res1, res2])
+    #
+    #     if (z2 - z1 + y1 - y2) != 0 and (y4 - y3) != 0:
+    #         t1 = (z3 - z1 + (z4 - z3) * (y1 - y3) / (y4 - y3)) / (
+    #             z2 - z1 + y1 - y2)
+    #         t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
+    #         res1 = x1 + (x2 - x1) * t1
+    #         res2 = x3 + (x4 - x3) * t2
+    #         list_t1.append(t1)
+    #         res.append([res1, res2])
+    #
+    #     if (z2 - z1 + x1 - x2) != 0 and (x4 - x3) != 0:
+    #         t1 = (z3 - z1 + (z4 - z3) * (x1 - x3) / (x4 - x3)) / (
+    #             z2 - z1 + x1 - x2)
+    #         t2 = (x1 - x3 + (x2 - x1) * t1) / (x4 - x3)
+    #         res1 = y1 + (y2 - y1) * t1
+    #         res2 = y3 + (y4 - y3) * t2
+    #         list_t1.append(t1)
+    #         res.append([res1, res2])
+    #
+    #     if len(res) == 0:
+    #         return None
+    #
+    #     for pair, t1 in zip(res, list_t1):
+    #         res1, res2 = pair[0], pair[1]
+    #         if math.isclose(res1, res2,
+    #                         abs_tol=1e-7):  # if there is an intersection point
+    #             return volmdlr.Point3D(x1 + (x2 - x1) * t1,
+    #                                    y1 + (y2 - y1) * t1,
+    #                                    z1 + (z2 - z1) * t1)
+    #
+    #     return None
 
-        x1 = self.point1.x
-        y1 = self.point1.y
-        z1 = self.point1.z
-        x2 = self.point2.x
-        y2 = self.point2.y
-        z2 = self.point2.z
-        x3 = line2.point1.x
-        y3 = line2.point1.y
-        z3 = line2.point1.z
-        x4 = line2.point2.x
-        y4 = line2.point2.y
-        z4 = line2.point2.z
-
-        if x3 == 0 and x4 == 0 and y4 - y3 == 0:
-            x5, y5, z5 = x3, y3, z3
-            x6, y6, z6 = x4, y4, z4
-            x3, y3, z3 = x1, y1, z1
-            x4, y4, z4 = x2, y2, z2
-            x1, y1, z1 = x5, y5, z5
-            x2, y2, z2 = x6, y6, z6
-
-        elif y3 == 0 and y4 == 0 and x4 - x3 == 0:
-            x5, y5, z5 = x3, y3, z3
-            x6, y6, z6 = x4, y4, z4
-            x3, y3, z3 = x1, y1, z1
-            x4, y4, z4 = x2, y2, z2
-            x1, y1, z1 = x5, y5, z5
-            x2, y2, z2 = x6, y6, z6
-
-        res, list_t1 = [], []
-
-        # 2 unknown 3eq with t1 et t2 unknown
-
-        if (x2 - x1 + y1 - y2) != 0 and (y4 - y3) != 0:
-            t1 = (x3 - x1 + (x4 - x3) * (y1 - y3) / (y4 - y3)) / (
-                x2 - x1 + y1 - y2)
-            t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
-            res1 = z1 + (z2 - z1) * t1
-            res2 = z3 + (z4 - z3) * t2
-            list_t1.append(t1)
-            res.append([res1, res2])
-
-        if (z2 - z1 + y1 - y2) != 0 and (y4 - y3) != 0:
-            t1 = (z3 - z1 + (z4 - z3) * (y1 - y3) / (y4 - y3)) / (
-                z2 - z1 + y1 - y2)
-            t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
-            res1 = x1 + (x2 - x1) * t1
-            res2 = x3 + (x4 - x3) * t2
-            list_t1.append(t1)
-            res.append([res1, res2])
-
-        if (z2 - z1 + x1 - x2) != 0 and (x4 - x3) != 0:
-            t1 = (z3 - z1 + (z4 - z3) * (x1 - x3) / (x4 - x3)) / (
-                z2 - z1 + x1 - x2)
-            t2 = (x1 - x3 + (x2 - x1) * t1) / (x4 - x3)
-            res1 = y1 + (y2 - y1) * t1
-            res2 = y3 + (y4 - y3) * t2
-            list_t1.append(t1)
-            res.append([res1, res2])
-
-        if len(res) == 0:
+    def intersection(self, line):
+        direction_vector1 = self.direction_vector()
+        direction_vector2 = line.direction_vector()
+        distance_to_line = self.line_distance(line)
+        if direction_vector1.is_colinear_to(direction_vector2) or\
+                not math.isclose(distance_to_line, 0, abs_tol=1e-6):
             return None
-
-        for pair, t1 in zip(res, list_t1):
-            res1, res2 = pair[0], pair[1]
-            if math.isclose(res1, res2,
-                            abs_tol=1e-7):  # if there is an intersection point
-                return volmdlr.Point3D(x1 + (x2 - x1) * t1,
-                                       y1 + (y2 - y1) * t1,
-                                       z1 + (z2 - z1) * t1)
-
+        if math.isclose(distance_to_line, 0, abs_tol=1e-6):
+            if math.isclose(direction_vector1.dot(direction_vector2), 0, abs_tol=1e-6):
+                projected_point, _ = self.point_projection(line.points[0])
+                return projected_point
+        x1, y1, z1 = self.points[0].x, self.points[0].y, self.points[0].z
+        x2, y2, z2 = line.points[0].x, line.points[0].y, line.points[0].z
+        a, b, c = direction_vector1.x, direction_vector1.y, direction_vector1.z
+        m, n, p = direction_vector2.x, direction_vector2.y, direction_vector2.z
+        # if a == m == 0 and x2 != x1:
+        #     return None
+        # if b == n == 0 and y2 != y1:
+        #     if a == p == 0 and c != 0 != m:
+        #         coefficient_t = (x2 - x1) / -m
+        #         coefficient_s = (z2 - z1) / c
+        #     else:
+        #         return None
+        # elif c == p == 0 and z2 != z1:
+        #     return None
+        # if a == b == 0 and (x2 - x1) * n == (y2 - y1) * m:
+        if a == b == 0 and n != 0 != m:
+            coefficient_t = (x2 - x1) / m
+            coefficient_s = ((z2 - z1) + p * coefficient_t) / c
+        elif a == 0 and m != 0 and  b != 0:
+            coefficient_t = - (x2 - x1) / m
+            coefficient_s = ((y2 - y1) + n * coefficient_t) / b
+        elif m == 0 and a != 0 and n != 0:
+            coefficient_s = - (x2 - x1) / a
+            coefficient_t = ((y2 - y1) - b * coefficient_s) / -n
+        elif a != 0 and n != 0 and n * a != b * m:
+            coefficient_t = (
+                b * (x2 - x1) / n * a - (y2 - y1) / n
+            ) * (
+                n * a / (n * a - b * m)
+            )
+            coefficient_s = ((x2 - x1 ) + m * coefficient_t) / a
+        else:
+            raise NotImplementedError
+        if c * coefficient_s - p * coefficient_t == z2 - z1:
+            return volmdlr.Point3D(x1 + coefficient_s * a,
+                                    y1 + coefficient_s * b,
+                                    z1 + coefficient_s * c)
         return None
 
     def to_step(self, current_id):
@@ -2776,12 +2838,14 @@ class LineSegment3D(LineSegment):
     #         self.end - self.start) / self.length()
 
     def point_belongs(self, point, abs_tol=1e-7):
-        if point in self.points:
+        point_distance = self.point_distance(point)
+        if math.isclose(point_distance, 0, abs_tol=1e-6):
             return True
-        distance = self.start.point_distance(point) + self.end.point_distance(
-            point)
-        if math.isclose(distance, self.length(), abs_tol=abs_tol):
-            return True
+        # if point in self.points:
+        #     return True
+        # distance = self.start.point_distance(point) + self.end.point_distance(point)
+        # if math.isclose(distance, self.length(), abs_tol=abs_tol):
+        #     return True
         return False
 
     def normal_vector(self, abscissa=0.):
@@ -2821,60 +2885,6 @@ class LineSegment3D(LineSegment):
     def plane_projection2d(self, center, x, y):
         return LineSegment2D(self.start.plane_projection2d(center, x, y),
                              self.end.plane_projection2d(center, x, y))
-
-    def intersection(self, line):
-        direction_vector1 = self.direction_vector()
-        direction_vector2 = line.direction_vector()
-        if direction_vector1.is_colinear_to(direction_vector2) and\
-                math.isclose(line.point_distance(self.start), 0, abs_tol=1e-6):
-            return None
-        x1, y1, z1 = self.points[0].x, self.points[0].y, self.points[0].z
-        x2, y2, z2 = line.points[0].x, line.points[0].y, line.points[0].z
-        a, b, c = direction_vector1.x, direction_vector1.y, direction_vector1.z
-        m, n, p = direction_vector2.x, direction_vector2.y, direction_vector2.z
-        if a == m == 0 and x2 != x1:
-            return None
-        if b == n == 0 and y2 != y1:
-            return None
-        if c == p == 0 and z2 != z1:
-            return None
-        if a == b == 0 and (x2 - x1) * n == (y2 - y1) * m:
-            coefficient_t = (x2 - x1) / m
-            coefficient_s = ((z2 - z1) + p * coefficient_t) / c
-        elif a == 0 and m != 0 and  b != 0:
-            coefficient_t = - (x2 - x1) / m
-            coefficient_s = ((y2 - y1) + n * coefficient_t) / b
-        elif m == 0 and a != 0 and n != 0:
-            coefficient_s = - (x2 - x1) / a
-            coefficient_t = ((y2 - y1) - b * coefficient_s) / -n
-        elif a != 0 and n != 0 and n * a != b * m:
-            coefficient_t = (
-                b * (x2 - x1) / n * a - (y2 - y1) / n
-            ) * (
-                n * a / (n * a - b * m)
-            )
-            coefficient_s = ((x2 - x1 ) + m * coefficient_t) / a
-        else:
-            raise NotImplementedError
-        # A = np.array([[a, -m],
-        #               [b, -n]])
-
-        # b = np.array([x2 - x1, y2 - z1])
-        # # matrix = sympy.Matrix([[a, -m, x2 - x1],
-        # #                        [b, -n, y2 - y1],
-        # #                        [c, -p, z2 - z1]])
-        # # reduced_row_echelon_form_matrix = matrix.rref()[0]
-        # dict_solution = {}
-        # for solution_row in [list(reduced_row_echelon_form_matrix.row(0)),
-        #                      list(reduced_row_echelon_form_matrix.row(1))]:
-        #     for i, row_value in zip(['s', 't'], solution_row):
-        #         if row_value == 1:
-        #             dict_solution[i] = solution_row[-1]
-        if c * coefficient_s - p * coefficient_t == z2 - z1:
-            return volmdlr.Point3D(x1 + coefficient_s * a,
-                                    y1 + coefficient_s * b,
-                                    z1 + coefficient_s * c)
-        return None
 
     # def intersection(self, segment2):
     #     x1 = self.start.x
@@ -2951,17 +2961,18 @@ class LineSegment3D(LineSegment):
     #     return None
 
     def line_intersections(self, line):
-        if self.to_line().skew_to(line):
+        line_self = self.to_line()
+        if line_self.skew_to(line):
             return None
-        intersection = self.intersection(line)
+        intersection = line_self.intersection(line)
         if intersection and self.point_belongs(intersection):
             return intersection
         return None
 
     def linesegment_intersection(self, linesegment):
-        if self.to_line().skew_to(linesegment.to_line()):
-            return None
-        intersection = self.intersection(linesegment)
+        line1 = self.to_line()
+        line2 = linesegment.to_line()
+        intersection = line1.intersection(line2)
         if intersection and self.point_belongs(intersection) and linesegment.point_belongs(intersection):
             return intersection
         return None
