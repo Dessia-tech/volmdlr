@@ -4390,11 +4390,6 @@ class PlaneFace3D(Face3D):
 
                     if point not in intersections:
                         intersections.append(point)
-            # for prim in self.outer_contour3d.primitives:
-            #     intersection = prim.linesegment_intersection(edge)
-            #     if intersection is not None:
-            #         if intersection not in intersections:
-            #             intersections.append(intersection)
         return intersections
 
     def face_intersections_outer_contour(self, face2):
