@@ -1167,8 +1167,6 @@ class CylindricalSurface3D(Surface3D):
         u2 = y / self.radius
         # theta = volmdlr.core.sin_cos_angle(u1, u2)
         theta = math.atan2(u2, u1)
-        if u2 < 0:
-            theta = theta + volmdlr.TWO_PI
         return volmdlr.Point2D(theta, z)
 
     def arc3d_to_2d(self, arc3d):
@@ -3941,11 +3939,13 @@ class Face3D(volmdlr.core.Primitive3D):
         Tells you if a point is on the 3D face and inside its contour
         """
         point2d = self.surface3d.point3d_to_2d(point3d)
+        point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
+        point2d_minus_2pi = point2d.translation(volmdlr.Point2D(-volmdlr.TWO_PI, 0))
         check_point3d = self.surface3d.point2d_to_3d(point2d)
         if check_point3d.point_distance(point3d) > 1e-6:
             return False
 
-        return self.surface2d.point_belongs(point2d)
+        return any(self.surface2d.point_belongs(pt2d) for pt2d in [point2d, point2d_plus_2pi, point2d_minus_2pi])
 
     @property
     def outer_contour3d(self):
@@ -4201,8 +4201,7 @@ class Face3D(volmdlr.core.Primitive3D):
                                   linesegment: vme.LineSegment3D,
                                   ) -> List[volmdlr.Point3D]:
         intersections = []
-        for intersection in self.surface3d.linesegment_intersections(
-                linesegment):
+        for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 intersections.append(intersection)
 
