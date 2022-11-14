@@ -4,28 +4,24 @@
 
 """
 
-from typing import List, Dict, Any
 import math
-
 import warnings
+from typing import List, Dict, Any
 
-import numpy as np
-from packaging import version
+import matplotlib.patches
+import matplotlib.pyplot as plt
 import numpy as npy
 import scipy as scp
 import scipy.optimize
-
+import volmdlr.core_compiled
 from geomdl import utilities, BSpline, fitting, operations
 from geomdl.operations import length_curve, split_curve
-
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
-import matplotlib.pyplot as plt
-import matplotlib.patches
+from mpl_toolkits.mplot3d import Axes3D
+from packaging import version
 
-import plot_data.core as plot_data
 import dessia_common as dc
-import volmdlr.core_compiled
+import plot_data.core as plot_data
 import volmdlr.core
 import volmdlr.geometry
 
@@ -549,7 +545,7 @@ class BSplineCurve(Edge):
         return cls.from_geomdl_curve(curve)
 
     def tangent(self, position: float = 0.0):
-        point, tangent = operations.tangent(self.curve, position,
+        _, tangent = operations.tangent(self.curve, position,
                                             normalize=True)
 
         dimension = f'Vector{self.__class__.__name__[-2::]}'
@@ -621,7 +617,7 @@ class Line2D(Line):
 
     def plot(self, ax=None, color='k', dashed=True):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if version.parse(_mpl_version) >= version.parse('3.3.2'):
             if dashed:
@@ -1239,7 +1235,7 @@ class LineSegment2D(LineSegment):
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
              plot_points=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         p1, p2 = self.start, self.end
         if arrow:
@@ -1360,22 +1356,20 @@ class LineSegment2D(LineSegment):
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
         if circle1 is not None:
-            point_J1, curv_abs1 = Line2D.point_projection(self, circle1.center)
+            _, curv_abs1 = Line2D.point_projection(self, circle1.center)
             if curv_abs1 < 0. or curv_abs1 > self.length():
                 circle1 = None
         if circle2 is not None:
-            point_J2, curv_abs2 = Line2D.point_projection(self, circle2.center)
+            _, curv_abs2 = Line2D.point_projection(self, circle2.center)
             if curv_abs2 < 0. or curv_abs2 > self.length():
                 circle2 = None
         return circle1, circle2
 
     def infinite_primitive(self, offset):
         n = self.normal_vector()
-        offset_point_1 = self.start + offset * \
-            n
+        offset_point_1 = self.start + offset * n
 
-        offset_point_2 = self.end + offset * \
-            n
+        offset_point_2 = self.end + offset * n
 
         return Line2D(offset_point_1, offset_point_2)
 
@@ -1888,7 +1882,7 @@ class Arc2D(Arc):
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if plot_points:
             for p in [self.center, self.start, self.interior, self.end]:
@@ -2174,7 +2168,7 @@ class FullArc2D(Arc2D):
     def plot(self, ax=None, color='k', alpha=1, plot_points=False,
              linestyle='-', linewidth=1):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if self.radius > 0:
             ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y),
@@ -2855,7 +2849,7 @@ class LineSegment3D(LineSegment):
 
     def point_belongs(self, point, abs_tol=1e-7):
         point_distance = self.point_distance(point)
-        if math.isclose(point_distance, 0, abs_tol=1e-6):
+        if math.isclose(point_distance, 0, abs_tol=abs_tol):
             return True
         # if point in self.points:
         #     return True
@@ -2879,24 +2873,6 @@ class LineSegment3D(LineSegment):
              (self.end.x, self.end.y, self.end.z)],
             (point.x, point.y, point.z))
         return distance
-
-    # def skew_to(self, line):
-    #     direction_vector1 = self.direction_vector()
-    #     direction_vector2 = line.direction_vector()
-    #     vector = line.points[0] - self.start
-    #     distance = abs(vector.dot(direction_vector1.cross(direction_vector2))) / direction_vector1.cross(
-    #         direction_vector2).norm()
-    #     # x1, y1, z1 = self.points[0].x, self.points[0].y, self.points[0].z
-    #     # x2, y2, z2 = line.points[0].x, line.points[0].y, line.points[0].z
-    #     # a, b, c = direction_vector1.x, direction_vector1.y, direction_vector1.z
-    #     # m, n, p = direction_vector2.x, direction_vector2.y, direction_vector2.z
-    #     # matrix = np.array([[x2 - x1, y2 - y1, z2 - z1],
-    #     #                    [a, b, c], [m, n, p]])
-    #     # distance = np.linalg.det(matrix) / (math.sqrt(
-    #     #     (b*p - n*c)**2 + (c*m - m)
-    #     # ))
-    #
-    #     return distance
 
     def plane_projection2d(self, center, x, y):
         return LineSegment2D(self.start.plane_projection2d(center, x, y),
@@ -3513,7 +3489,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         lut = self.look_up_table(resolution=resolution)
         if 0 < abscissa < self.length():
             last_param = 0
-            for i, (t, dist) in enumerate(lut):
+            for t, dist in lut:
                 if abscissa < dist:
                     t1 = last_param
                     t2 = t
@@ -3525,7 +3501,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                              ' or negative')
 
     def normal(self, position: float = 0.0):
-        point, normal = operations.normal(self.curve, position, normalize=True)
+        _, normal = operations.normal(self.curve, position, normalize=True)
         normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
         return normal
 
