@@ -547,7 +547,7 @@ class BSplineCurve(Edge):
 
     def tangent(self, position: float = 0.0):
         _, tangent = operations.tangent(self.curve, position,
-                                            normalize=True)
+                                        normalize=True)
 
         dimension = f'Vector{self.__class__.__name__[-2::]}'
         tangent = getattr(volmdlr, dimension)(*tangent)
@@ -2768,7 +2768,7 @@ class Line3D(Line):
         if a == m == 0:
             if x2 == x1 and c * n != b * p:
                 if b != 0:
-                    coefficient_t = ((z2 -z1) * b - c * (y2 - y1)) / (c * n - b * p)
+                    coefficient_t = ((z2 - z1) * b - c * (y2 - y1)) / (c * n - b * p)
                     coefficient_s = ((y2 - y1) + n * coefficient_t) / b
                 elif n != 0 and c != 0:
                     coefficient_t = (y2 - y1) / -n
@@ -2778,7 +2778,7 @@ class Line3D(Line):
         elif b == n == 0:
             if y2 == y1 and c * m != a * p:
                 if a != 0:
-                    coefficient_t = ((z2 -z1) * a - c * (x2 - x1)) / (c * m - a * p)
+                    coefficient_t = ((z2 - z1) * a - c * (x2 - x1)) / (c * m - a * p)
                     coefficient_s = ((x2 - x1) + m * coefficient_t) / a
                 elif m != 0 and c != 0:
                     coefficient_t = (x2 - x1) / -m
@@ -2788,7 +2788,7 @@ class Line3D(Line):
         elif a == b == 0 and n != 0 != m:
             coefficient_t = (x2 - x1) / m
             coefficient_s = ((z2 - z1) + p * coefficient_t) / c
-        elif a == 0 and m != 0 and  b != 0:
+        elif a == 0 and m != 0 and b != 0:
             coefficient_t = - (x2 - x1) / m
             coefficient_s = ((y2 - y1) + n * coefficient_t) / b
         elif m == 0 and a != 0 and n != 0:
@@ -2800,14 +2800,14 @@ class Line3D(Line):
             ) * (
                 n * a / (n * a - b * m)
             )
-            coefficient_s = ((x2 - x1 ) + m * coefficient_t) / a
+            coefficient_s = ((x2 - x1) + m * coefficient_t) / a
         else:
             print(True)
             raise NotImplementedError
         if math.isclose(c * coefficient_s - p * coefficient_t, z2 - z1, abs_tol=1e-6):
             return volmdlr.Point3D(x1 + coefficient_s * a,
-                                    y1 + coefficient_s * b,
-                                    z1 + coefficient_s * c)
+                                   y1 + coefficient_s * b,
+                                   z1 + coefficient_s * c)
         return None
 
     def to_step(self, current_id):
