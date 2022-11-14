@@ -1129,11 +1129,6 @@ class LineSegment2D(LineSegment):
         point_distance = self.point_distance(point)
         if math.isclose(point_distance, 0, abs_tol=abs_tol):
             return True
-        # distance = self.start.point_distance(point) + self.end.point_distance(
-        #     point)
-        # if math.isclose(distance, self.length(), abs_tol=abs_tol) and\
-        #         math.isclose(self.point_distance(point), 0.0, abs_tol=abs_tol):
-        #     return True
         return False
 
     def bounding_rectangle(self):
