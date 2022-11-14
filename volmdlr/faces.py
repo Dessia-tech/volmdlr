@@ -1206,8 +1206,6 @@ class CylindricalSurface3D(Surface3D):
         u2 = y / self.radius
         # theta = volmdlr.core.sin_cos_angle(u1, u2)
         theta = math.atan2(u2, u1)
-        if u2 < 0:
-            theta = theta + volmdlr.TWO_PI
         return volmdlr.Point2D(theta, z)
 
     def arc3d_to_2d(self, arc3d):
@@ -1384,6 +1382,7 @@ class CylindricalSurface3D(Surface3D):
         intersection2 = line.point1 + (t_param - k_param) * (line.direction_vector())
         if intersection1 == intersection2:
             return [intersection1]
+
         return [intersection1, intersection2]
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D):
@@ -1402,7 +1401,6 @@ class CylindricalSurface3D(Surface3D):
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis > self.radius:
             return []
-        cylinder_circle2d = volmdlr.wires.Circle2D(origin2d, self.radius)
         if math.isclose(self.frame.w.dot(plane3d.frame.u), 0, abs_tol=1e-6):
             line = volmdlr.edges.Line3D(plane3d.frame.origin, plane3d.frame.origin + plane3d.frame.u)
         else:
@@ -3980,11 +3978,13 @@ class Face3D(volmdlr.core.Primitive3D):
         Tells you if a point is on the 3D face and inside its contour
         """
         point2d = self.surface3d.point3d_to_2d(point3d)
+        point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
+        point2d_minus_2pi = point2d.translation(volmdlr.Point2D(-volmdlr.TWO_PI, 0))
         check_point3d = self.surface3d.point2d_to_3d(point2d)
         if check_point3d.point_distance(point3d) > 1e-6:
             return False
 
-        return self.surface2d.point_belongs(point2d)
+        return any(self.surface2d.point_belongs(pt2d) for pt2d in [point2d, point2d_plus_2pi, point2d_minus_2pi])
 
     @property
     def outer_contour3d(self):
@@ -7698,11 +7698,12 @@ class ClosedShell3D(OpenShell3D):
             return None
         return 1
 
-    def point_belongs(self, point3d: volmdlr.Point3D, nb_rays: int = 1):
+    def point_belongs(self, point3d: volmdlr.Point3D, **kwargs):
         """
         Ray Casting algorithm
         Returns True if the point is inside the Shell, False otherwise
         """
+        nb_rays = kwargs.get("nb_rays", 1)  # TODO: remove nb_rays argument in the future as it shouldn't be necessary
 
         bbox = self.bounding_box
         if not bbox.point_belongs(point3d):
