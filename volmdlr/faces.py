@@ -1345,6 +1345,7 @@ class CylindricalSurface3D(Surface3D):
         intersection2 = line.point1 + (t_param - k_param) * (line.direction_vector())
         if intersection1 == intersection2:
             return [intersection1]
+
         return [intersection1, intersection2]
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D):
