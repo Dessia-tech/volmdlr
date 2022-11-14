@@ -2466,7 +2466,19 @@ class ArcEllipse2D(Edge):
     def unit_direction_vector(self, abscissa):
         raise NotImplementedError
 
+    def straight_line_area(self):
+        if self.angle >= math.pi:
+            angle = volmdlr.TWO_PI - self.angle
+            area = math.pi * self.Gradius * self.Sradius - 0.5 * self.Gradius * self.Sradius * (
+                angle - math.sin(angle))
+        else:
+            angle = self.angle
+            area = 0.5 * self.Gradius * self.Sradius * (angle - math.sin(angle))
 
+        if self.is_trigo:
+            return area
+        else:
+            return -area
 class Line3D(Line):
     _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
 
