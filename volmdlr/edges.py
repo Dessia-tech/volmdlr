@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as npy
 import scipy as scp
 import scipy.optimize
-import volmdlr.core_compiled
+
 from geomdl import utilities, BSpline, fitting, operations
 from geomdl.operations import length_curve, split_curve
 from matplotlib import __version__ as _mpl_version
@@ -22,6 +22,7 @@ from packaging import version
 
 import dessia_common as dc
 import plot_data.core as plot_data
+import volmdlr.core_compiled
 import volmdlr.core
 import volmdlr.geometry
 
