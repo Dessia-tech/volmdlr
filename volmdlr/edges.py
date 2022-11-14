@@ -2480,7 +2480,7 @@ class ArcEllipse2D(Edge):
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
             area = math.pi * self.Gradius * self.Sradius - 0.5 * self.Gradius * self.Sradius * (
-                angle - math.sin(angle))
+                    angle - math.sin(angle))
         else:
             angle = self.angle
             area = 0.5 * self.Gradius * self.Sradius * (angle - math.sin(angle))
