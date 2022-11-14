@@ -624,13 +624,6 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
-            if isinstance(self, SphericalSurface3D):
-                first_start = outer_contour2d.primitives[0].start
-                last_end = outer_contour2d.primitives[-1].end
-                if first_start != last_end:
-                    primitives = outer_contour2d.primitives
-                    primitives.append(vme.LineSegment2D(last_end, first_start))
-                    outer_contour2d = volmdlr.wires.Contour2D(primitives)
             inner_contours2d = []
         elif lc3d > 1:
             area = -1
@@ -654,6 +647,9 @@ class Surface3D(DessiaObject):
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
+
+    # def repair_singularity(self, primitives, last_primitives):
+
 
     def repair_primitives_periodicity(self, primitives, last_primitive):
         delta_x1 = abs(primitives[0].start.x
@@ -688,32 +684,27 @@ class Surface3D(DessiaObject):
             new_primitives = []
             for prim in primitives:
                 if isinstance(self, SphericalSurface3D):
-                    if (prim.start.x == math.pi and prim.start.x == prim.end.x) \
-                            and (last_primitive.start.x == last_primitive.end.x or last_primitive.end.x == -math.pi):
-                        theta1 = -math.pi
-                        theta2 = theta1
-                        start = volmdlr.Point2D(theta1, prim.start.y)
-                        end = volmdlr.Point2D(theta2, prim.end.y)
-                        prim = vme.LineSegment2D(start, end)
-                        if last_primitive.end.x == -math.pi:
+                    v1 = prim.unit_direction_vector()
+                    v2 = last_primitive.unit_direction_vector()
+                    dot = v1.dot(volmdlr.X2D)
+                    cross = v1.cross(v2)
+                    if math.isclose(abs(last_primitive.end.y), 0.5*math.pi, abs_tol=1e-6) \
+                        and cross == 0 and dot == 0:
+                        if prim.start.x == math.pi:
+                            prim = prim.translation(volmdlr.Vector2D(-2*math.pi, 0))
+                            new = vme.LineSegment2D(last_primitive.end, prim.start)
+                            new_primitives.append(new)
                             new_primitives.append(prim)
-                    if math.isclose(abs(prim.start.y), 0.5 * math.pi, abs_tol=1e-6) and \
-                            math.isclose(last_primitive.end.y, prim.start.y, abs_tol=1e-6) and \
-                            prim.start.x != last_primitive.end.x:
-                        new = vme.LineSegment2D(last_primitive.end, prim.start)
-                        new_primitives.append(new)
-                        last_primitive = new
-                        new_primitives.append(prim)
-                    elif math.isclose(abs(prim.end.y), 0.5 * math.pi, abs_tol=1e-6) and \
-                            math.isclose(last_primitive.end.y, prim.end.y, abs_tol=1e-6)and \
-                            prim.start.x != last_primitive.end.x:
-                        new = vme.LineSegment2D(last_primitive.end, prim.end)
-                        new_primitives.append(new)
-                        last_primitive = new
-                        new_primitives.append(prim)
-
-                    delta = last_primitive.end - prim.start
-                    if delta.x and delta.y:
+                        elif prim.start.x == -math.pi:
+                            prim = prim.translation(volmdlr.Vector2D(2 * math.pi, 0))
+                            new = vme.LineSegment2D(last_primitive.end, prim.start)
+                            new_primitives.append(new)
+                            new_primitives.append(prim)
+                        else:
+                            new = vme.LineSegment2D(last_primitive.end, prim.start)
+                            new_primitives.append(new)
+                            new_primitives.append(prim)
+                    else:
                         new_primitives.append(prim.translation(delta))
 
                 else:
@@ -810,10 +801,14 @@ class Surface3D(DessiaObject):
                     last_primitive = primitives[-1]
                     last_primitive3d = primitive3d
                     primitives2d.extend(primitives)
+
             else:
                 raise NotImplementedError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
-
+        first_start = primitives2d[0].start
+        last_end = primitives2d[-1].end
+        if isinstance(self, SphericalSurface3D) and last_end != first_start:
+            primitives2d.append(vme.LineSegment2D(last_end, first_start))
         return volmdlr.wires.Contour2D(primitives2d)
 
     def contour2d_to_3d(self, contour2d):
@@ -2236,7 +2231,7 @@ class SphericalSurface3D(Surface3D):
 
         if abs(phi) < 1e-10:
             phi = 0
-        phi3 = phi
+
         if x == 0.0 and y == 0.0:
             phi2 = 0.5 * math.pi
         else:
@@ -2250,7 +2245,7 @@ class SphericalSurface3D(Surface3D):
             phi = math.pi - phi
         elif phi < 0 and phi2 > 0.5 * math.pi:
             phi = -math.pi - phi
-        # print(True)
+
         if math.isclose(phi, (0.5 * math.pi), abs_tol=1e-6):
             phi = 0.5 * math.pi
         elif math.isclose(phi, (-0.5 * math.pi), abs_tol=1e-6):
@@ -2296,115 +2291,100 @@ class SphericalSurface3D(Surface3D):
         theta1, phi1 = start
         theta2, phi2 = end
 
-        x_start, y_start, _ = self.frame.new_coordinates(arc3d.start)
-        x_end, y_end, _ = self.frame.new_coordinates(arc3d.end)
-        start_singularity = False
-        end_singularity = False
-
         length = arc3d.length()
+        angle3d = arc3d.angle
         theta3, phi3 = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
         theta4, phi4 = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
 
-        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-        if theta1 == math.pi and theta3 < 0:
-            theta1 = -math.pi
-            start = volmdlr.Point2D(theta1, phi1)
-
-        elif theta2 == math.pi and theta4 < 0:
-            theta2 = -math.pi
-            end = volmdlr.Point2D(theta2, phi2)
-
-        # Verify if phi1 or phi2 point should be -pi because phi -> ]-pi, pi]
-        if phi1 == math.pi and phi3 < 0:
-            phi1 = -math.pi
-            start = volmdlr.Point2D(theta1, phi1)
-
-        elif phi2 == math.pi and phi4 < 0:
-            phi2 = -math.pi
-            end = volmdlr.Point2D(theta2, phi2)
-
+        # Fix sphere singularity point
         if (abs(phi1) == 0.5 * math.pi or abs(phi2) == 0.5 * math.pi) and (theta1 == 0 or theta2 == 0):
             theta_interior = interior.x
             if math.isclose(theta3, theta_interior, abs_tol=1e-6) and \
                     math.isclose(theta4, theta_interior, abs_tol=1e-6):
                 theta1 = theta_interior
                 theta2 = theta_interior
-                start = volmdlr.Point2D(theta1, phi1)
-                end = volmdlr.Point2D(theta2, phi2)
-        if theta1 != theta2:
-            if theta3 < theta1 < 0 and theta2 > 0:
-                theta2 = theta1 - 2 * math.pi
-                end = volmdlr.Point2D(theta2, phi2)
-                # interior = volmdlr.Point2D(0.5*(theta1+theta2), interior.y)
-                interior = volmdlr.Point2D((interior.x - 2 * math.pi), interior.y)
 
-            elif theta3 > theta1 > 0 and theta2 < 0:
-                theta2 = theta1 + 2 * math.pi
-                end = volmdlr.Point2D(theta2, phi2)
-                # interior = volmdlr.Point2D(0.5 * (theta1 + theta2), interior.y)
-                interior = volmdlr.Point2D((interior.x + 2 * math.pi), interior.y)
-        if phi1 != phi2:
-            if phi3 < phi1 < 0 and phi2 > 0:
-                phi2 = phi1 - 2 * math.pi
-                end = volmdlr.Point2D(theta2, phi2)
-                # interior = volmdlr.Point2D(interior.x, 0.5 * (phi1 + phi2))
-                interior = volmdlr.Point2D(interior.x, interior.y - 2 * math.pi)
+        # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
+        if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
+            theta1 = -math.pi
+        elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
+            theta1 = math.pi
 
-            elif phi3 > phi1 > 0 and phi2 < 0:
-                phi2 = phi1 + 2 * math.pi
-                end = volmdlr.Point2D(theta2, phi2)
-                # interior = volmdlr.Point2D(interior.x, 0.5 * (phi1 + phi2))
-                interior = volmdlr.Point2D(interior.x, interior.y + 2 * math.pi)
+        if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
+            theta2 = -math.pi
+        elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
+            theta2 = math.pi
 
-        # if x_start == 0 and y_start == 0:
-        #     theta1 = theta2
-        #     start = volmdlr.Point2D(theta1, phi1)
-        #     start_singularity = True
-        #
-        # if x_end == 0 and y_end == 0:
-        #     theta2 = theta1
-        #     end = volmdlr.Point2D(theta2, phi2)
-        #     end_singularity = True
+        # Verify if phi1 or phi2 point should be -pi or pi because phi -> ]-pi, pi]
+        if math.isclose(phi1, math.pi, abs_tol=1e-6) and phi3 < 0:
+            phi1 = -math.pi
+        elif math.isclose(phi1, -math.pi, abs_tol=1e-6) and phi3 > 0:
+            phi1 = math.pi
+
+        if math.isclose(phi2, math.pi, abs_tol=1e-6) and phi4 < 0:
+            phi2 = -math.pi
+        elif math.isclose(phi2, -math.pi, abs_tol=1e-6) and phi4 < 0:
+            phi2 = math.pi
+
+        if math.isclose(phi1, phi2, abs_tol=1e-4):
+            theta5 = theta1 - angle3d
+            theta6 = theta1 + angle3d
+            # theta3 < theta1 --> clockwise
+            if theta3 < theta1 and theta5 < -math.pi:
+                theta2 = theta5
+            # theta3 > theta1 --> trigo
+            elif theta3 > theta1 and theta6 > math.pi:
+                theta2 = theta6
+
+            if theta1 > 0 and theta3 < 0:
+                theta1 -= 2 * math.pi
+            elif theta1 < 0 and theta3 > 0:
+                theta1 += 2 * math.pi
+
+        if math.isclose(theta1, theta2, abs_tol=1e-4):
+            phi5 = phi1 - angle3d
+            phi6 = phi1 + angle3d
+            # phi3 < phi1 --> clockwise
+            if phi3 < phi1 and phi5 < -math.pi:
+                phi2 = phi5
+            # phi3 > phi1 --> trigo
+            elif phi3 > phi1 and phi6 > math.pi:
+                phi2 = phi6
+
+            if phi1 > 0 and phi3 < 0:
+                phi1 -= 2 * math.pi
+            elif phi1 < 0 and phi3 > 0:
+                phi1 += 2 * math.pi
+
+        start = volmdlr.Point2D(theta1, phi1)
+        end = volmdlr.Point2D(theta2, phi2)
 
         if start == end:
             # return self.fullarc3d_to_2d(arc3d)
             return [vme.LineSegment2D(start, start + volmdlr.TWO_PI * volmdlr.X2D)]
-        if math.isclose(theta1, theta2, abs_tol=1e-6) or math.isclose(phi1, phi2, abs_tol=1e-6):
-
+        if math.isclose(theta1, theta2, abs_tol=1e-4) or math.isclose(phi1, phi2, abs_tol=1e-4):
             return [vme.LineSegment2D(start, end)]
 
-        else:
-            # TODO: enhance this, this is a non exact method!
-            l = arc3d.length()
-            points = [self.point3d_to_2d(arc3d.point_at_abscissa(i / 10 * l))
-                      for i in range(11)]
-            points[0] = start
-            points[-1] = end
-            if theta3 < theta1 < 0 and theta2 > 0:
-                points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
-            elif theta3 > theta1 > 0 and theta2 < 0:
-                points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+        # TODO: enhance this, this is a non exact method!
+        l = arc3d.length()
+        points = [self.point3d_to_2d(arc3d.point_at_abscissa(i / 20 * l))
+                  for i in range(21)]
+        points[0] = start #to take into account all the previous verification
+        points[-1] = end #to take into account all the previous verification
 
-            if phi3 < phi1 < 0 and phi2 > 0:
-                points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y > 0 else p for p in points]
-            elif phi3 > phi1 > 0 and phi2 < 0:
-                points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in points]
-            primitives = [vme.LineSegment2D(p1, p2) for p1, p2 in zip(points[:-1], points[1:])]
-        # if abs(phi1) == (0.5*math.pi) or abs(phi2) == (0.5*math.pi):
-        #     if start_singularity:
-        #         point_closing = volmdlr.Point2D(theta2, phi1)
-        #     elif theta2 == 0.0:
-        #         point_at_theta  = volmdlr.Point2D(theta1, phi2)
-        #     print(f'Final with singularity: {start}, {point_closing} {end}')
-        #     return [vme.LineSegment2D(start, point_at_theta), vme.LineSegment2D(point_at_theta, end)]
+        if theta3 < theta1 < theta2:
+            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+        elif theta3 > theta1 > theta2:
+            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
 
-        # if abs(theta1) == (0.5*math.pi) or abs(theta2) == (0.5*math.pi):
-        #     if phi1 == 0.0:
-        #         interior = volmdlr.Point2D(start.x, end.y)
-        #     elif phi2 == 0.0:
-        #         interior = volmdlr.Point2D(end.x, start.y)
-        #     print(start, end)
+        if phi3 < phi1 < phi2:
+            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y > 0 else p for p in points]
+        elif phi3 > phi1 > phi2:
+            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in points]
+        primitives = [vme.LineSegment2D(p1, p2) for p1, p2 in zip(points[:-1], points[1:])]
+
         return primitives
+
         # return [vme.BSplineCurve2D.from_points_interpolation([start, interior, end], 2)]
 
         # start_x = arc3d.radius * math.cos(start[1]) * math.cos(start[0])
@@ -7210,7 +7190,6 @@ class SphericalFace3D(Face3D):
             phi = phi_min + (i + 1) / (nlines_y + 1) * delta_phi
             lines_y.append(vme.Line2D(volmdlr.Point2D(theta_min, phi),
                                       volmdlr.Point2D(theta_max, phi)))
-        print(lines_x, lines_y)
         return lines_x, lines_y
 
 
