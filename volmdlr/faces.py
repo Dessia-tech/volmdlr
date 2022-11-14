@@ -2366,9 +2366,10 @@ class SphericalSurface3D(Surface3D):
             return [vme.LineSegment2D(start, end)]
 
         # TODO: enhance this, this is a non exact method!
-        l = arc3d.length()
-        points = [self.point3d_to_2d(arc3d.point_at_abscissa(i / 20 * l))
-                  for i in range(21)]
+        number_points = math.ceil(angle3d * 10) + 1  # 10 points per radian
+        points = [self.point3d_to_2d(arc3d.point_at_abscissa(
+            i * length / (number_points - 1))) for i in range(number_points)]
+
         points[0] = start #to take into account all the previous verification
         points[-1] = end #to take into account all the previous verification
 
