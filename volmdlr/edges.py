@@ -2746,10 +2746,10 @@ class Line3D(Line):
         if direction_vector1.is_colinear_to(direction_vector2) or\
                 not math.isclose(distance_to_line, 0, abs_tol=1e-6):
             return None
-        if math.isclose(distance_to_line, 0, abs_tol=1e-6):
-            if math.isclose(direction_vector1.dot(direction_vector2), 0, abs_tol=1e-6):
-                projected_point, _ = self.point_projection(line.points[0])
-                return projected_point
+        if math.isclose(distance_to_line, 0, abs_tol=1e-6) and\
+                math.isclose(direction_vector1.dot(direction_vector2), 0, abs_tol=1e-6):
+            projected_point, _ = self.point_projection(line.points[0])
+            return projected_point
         x1, y1, z1 = self.points[0].x, self.points[0].y, self.points[0].z
         x2, y2, z2 = line.points[0].x, line.points[0].y, line.points[0].z
         a, b, c = direction_vector1.x, direction_vector1.y, direction_vector1.z
