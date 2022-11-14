@@ -4378,6 +4378,7 @@ class PlaneFace3D(Face3D):
     def edge_intersections(self, edge):
         # intersections = []
         linesegment = vme.LineSegment3D(edge.start, edge.end)
+        intersections = self.linesegment_intersections(linesegment)
         if not intersections:
             for point in [edge.start, edge.end]:
                 if self.point_belongs(point):
