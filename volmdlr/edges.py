@@ -2435,6 +2435,10 @@ class ArcEllipse2D(Edge):
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
 
+    def length(self):
+        return self.angle * math.sqrt(
+            (self.Gradius ** 2 + self.Sradius ** 2) / 2)
+
     def to_3d(self, plane_origin, x, y):
         ps = self.start.to_3d(plane_origin, x, y)
         pi = self.interior.to_3d(plane_origin, x, y)
