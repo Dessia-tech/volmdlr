@@ -1363,7 +1363,6 @@ class CylindricalSurface3D(Surface3D):
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis > self.radius:
             return []
-        cylinder_circle2d = volmdlr.wires.Circle2D(origin2d, self.radius)
         if math.isclose(self.frame.w.dot(plane3d.frame.u), 0, abs_tol=1e-6):
             line = volmdlr.edges.Line3D(plane3d.frame.origin, plane3d.frame.origin + plane3d.frame.u)
         else:
