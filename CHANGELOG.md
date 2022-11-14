@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc3D: plot
 * Fix some to_step methods from edges.py and faces.py
 * Cylinder: point_belongs
+* LineSegment2D: to_wire (use discretization_points instead of discretise)
 
 
 ### Performance improvements
