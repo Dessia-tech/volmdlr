@@ -3771,6 +3771,33 @@ class Circle2D(Contour2D):
         return self.discretization_points(discretization_resolution)
 
 
+class Ellipse2D(Contour2D):
+    def __init__(self, major_axis, minor_axis, center, major_dir, name=''):
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
+        self.center = center
+        self.major_dir = major_dir
+        Contour2D.__init__(self, [self], name=name)
+
+    def to_3d(self, origin, x, y):
+        pass
+
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
+        if number_points:
+            angle_resolution = number_points
+        discretization_points = [volmdlr.Point2D(self.major_axis * math.cos(theta), self.minor_axis * math.sin(theta))
+                                 for theta in npy.linspace(0, volmdlr.TWO_PI, angle_resolution + 1)]
+    def plot(self, ax = None, linestyle='-', color='k', linewidth=1, alpha=1.0,):
+        if ax is None:
+            _, ax = plt.subplots()
+        angle = volmdlr.core.clockwise_angle(volmdlr.X2D, self.major_dir) * 180 / math.pi
+        ax.add_patch(matplotlib.patches.Ellipse((self.center.x, self.center.y), 2 * self.major_axis,
+                                                2 * self.minor_axis, angle, color=color, alpha=alpha,
+                                                linestyle=linestyle, linewidth=linewidth, fill=False))
+
+        return ax
+
+
 class Contour3D(Contour, Wire3D):
     _non_serializable_attributes = ['points']
     _non_eq_attributes = ['name']
@@ -4556,6 +4583,27 @@ class Ellipse3D(Contour3D):
                                      npy.linspace(0, volmdlr.TWO_PI,
                                                   angle_resolution + 1)][:-1]
         return triangulation_points_3d
+
+    def to_2d(self, origin, x, y):
+        center = self.center.to_2d(origin, x, y)
+        major_dir_d2 = self.major_dir.to_2d(origin, x, y)
+        return Ellipse2D(self.major_axis, self.minor_axis, center, major_dir_d2)
+
+    def abscissa(self, point: volmdlr.Point3D):
+        # center_to_point = point - self.center
+        # angle_abscissa = volmdlr.core.vectors3d_angle(center_to_point, self.major_dir)
+        distance_point_center = point.point_distance(self.center)
+        # if self.minor_axis > distance_point_center or distance_point_center > self.major_axis:
+        vector_2 = self.normal.cross(self.major_dir)
+        center_2d = self.center.to_2d(self.center, self.major_dir, vector_2)
+        major_dir_2d = self.major_dir.to_2d(self.center, self.major_dir, vector_2)
+        point2d = point.to_2d(self.center, self.major_dir, vector_2)
+        center2d_point2d = point2d - center_2d
+        angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, major_dir_2d)
+        def arc_length(theta):
+            return math.sqrt((self.major_axis**2) * math.sin(theta) ** 2 + (self.minor_axis**2) * math.cos(theta)**2)
+        res, err = integrate.quad(f, 0, 2 * math.pi)
+        print(True)
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         # minor_dir = self.normal.cross(self.major_dir)
