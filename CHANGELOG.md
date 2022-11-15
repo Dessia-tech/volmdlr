@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix some to_step methods from edges.py and faces.py
 * Cylinder: point_belongs
 * FullArc3D: plot (use discretization_points instead of discretise)
+* STL: from stream (use BinaryFile and StringFile instead of io.BinaryIO and FileIO)
+* step: from stream (use BinaryFile instead of io.BinaryIO)
 
 ### Performance improvements
 
