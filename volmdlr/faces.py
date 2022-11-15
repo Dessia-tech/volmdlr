@@ -1157,6 +1157,8 @@ class CylindricalSurface3D(Surface3D):
         u2 = y / self.radius
         # theta = volmdlr.core.sin_cos_angle(u1, u2)
         theta = math.atan2(u2, u1)
+        if u2 < 0:
+            theta = theta + volmdlr.TWO_PI
         return volmdlr.Point2D(theta, z)
 
     def arc3d_to_2d(self, arc3d):
@@ -1316,6 +1318,28 @@ class CylindricalSurface3D(Surface3D):
         points_3d = [self.point2d_to_3d(point2d) for point2d in points_2d]
 
         return points_3d
+
+    def line_intersections(self, line: vme.Line3D):
+        line_2d = line.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        origin2d = self.frame.origin.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        distance_line2d_to_origin = line_2d.point_distance(origin2d)
+        if distance_line2d_to_origin > self.radius:
+            return []
+        a_prime = line_2d.point1
+        b_prime = line_2d.point2
+        a_prime_minus_b_prime = a_prime - b_prime
+        t_param = a_prime.dot(a_prime_minus_b_prime) / a_prime_minus_b_prime.dot(a_prime_minus_b_prime)
+        k_param = math.sqrt(
+            (self.radius ** 2 - distance_line2d_to_origin ** 2) / a_prime_minus_b_prime.dot(a_prime_minus_b_prime))
+        intersection1 = line.point1 + (t_param + k_param) * (line.direction_vector())
+        intersection2 = line.point1 + (t_param - k_param) * (line.direction_vector())
+        return [intersection1, intersection2]
+
+    def linesegment_intersections(self, linesegment: vme.LineSegment3D):
+        line = linesegment.to_line()
+        line_intersections = self.line_intersections(line)
+        linesegment_intersections = [inters for inters in line_intersections if linesegment.point_belongs(inters)]
+        return linesegment_intersections
 
 
 class ToroidalSurface3D(Surface3D):
