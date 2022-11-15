@@ -83,7 +83,7 @@ class Edge(dc.DessiaObject):
         """
         Calcultes the point at given abscissa
         """
-        raise NotImplementedError(f'point_at_absciss method not implememented by {self.__class__.__name__}')
+        raise NotImplementedError(f'point_at_abscissa method not implememented by {self.__class__.__name__}')
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
@@ -2424,7 +2424,8 @@ class ArcEllipse2D(Edge):
                 number_points = 2
             else:
                 number_points = math.ceil(angle_resolution * abs(0.5 * self.angle / math.pi))
-
+            if number_points == 1 :
+                number_points = 3
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step)
                 for i in range(number_points)]

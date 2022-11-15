@@ -1755,7 +1755,8 @@ class Contour2D(Contour, Wire2D):
         if len(intersections) % 2 != 0:
             ax = self.plot()
             line.plot(ax=ax)
-            [i[0].plot(ax=ax) for i in intersections]
+            ax.set_aspect('auto')
+            [i[0].plot(ax=ax, color='r') for i in intersections]
             self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\intersection_contour.json')
             line.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\intersection_line.json')
             raise NotImplementedError(

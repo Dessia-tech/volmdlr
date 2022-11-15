@@ -29,7 +29,12 @@ for step_file in [
     # 'spherical_surface_body.step',
     # 'bracket2_cut3.step',
     # 'demi_sphere.step',
-    'Video_Version.step'
+    # 'Video_Version.step',
+    'bracket3-cut1.step'
+    # 'quart_cone.step',
+    # 'demi_cone.step',
+    # 'cone1.step',
+    # 'cone2.step'
 
 ]:
     print('Reading step file: ', step_file)
@@ -38,6 +43,20 @@ for step_file in [
 
     model = step.to_volume_model()
     model.babylonjs()
+    # faces = []
+    # error = {}
+    # contours = {}
+    # closedshell = model.primitives[0]
+    # for i, face in enumerate(closedshell.faces):
+    #     try:
+    #         face.babylonjs()
+    #     except Exception:
+    #         error[i] = face
+    #         contours[i] = face.surface2d
+    #     else:
+    #         faces.append(face)
+    # model2 = volmdlr.core.VolumeModel(faces)
+    # model2.babylonjs()
     # assert len(model.primitives) > 0.
     # model.to_step(step_file + '_reexport')
     # model.babylonjs()
