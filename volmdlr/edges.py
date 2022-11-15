@@ -240,7 +240,6 @@ class LineSegment(Edge):
         if point.point_distance(self.start) < tol:
             return 0
         if point.point_distance(self.end) < tol:
-            print('abscissa:', point.point_distance(self.end))
             return self.length()
 
         vector = self.end - self.start
@@ -403,24 +402,25 @@ class BSplineCurve(Edge):
 
     def abscissa(self, point, tol=1e-4):
         length = self.length()
-        res = scp.optimize.least_squares(
-            lambda u: (point - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(length / 2),
-            bounds=([0], [length]),
-            # ftol=tol / 10,
-            # xtol=tol / 10,
-            # loss='soft_l1'
-        )
+        for x0 in [0, length * 0.25, length * 0.5, length * 0.75, length]:
+            res = scp.optimize.least_squares(
+                lambda u: (point - self.point_at_abscissa(u)).norm(),
+                x0=x0,
+                bounds=([0], [length]),
+                # ftol=tol / 10,
+                # xtol=tol / 10,
+                # loss='soft_l1'
+            )
+            if res.fun < tol:
+                return res.x[0]
 
-        if res.fun > tol:
-            print('distance =', res.cost)
-            print('res.fun:', res.fun)
-            # ax = self.plot()
-            # point.plot(ax=ax)
-            # best_point = self.point_at_abscissa(res.x)
-            # best_point.plot(ax=ax, color='r')
-            raise ValueError('abscissa not found')
-        return res.x[0]
+        print('distance =', res.cost)
+        print('res.fun:', res.fun)
+        # ax = self.plot()
+        # point.plot(ax=ax)
+        # best_point = self.point_at_abscissa(res.x)
+        # best_point.plot(ax=ax, color='r')
+        raise ValueError('abscissa not found')
 
     def split(self, point, tol=1e-5):
         if point.point_distance(self.start) < tol:
@@ -819,6 +819,16 @@ class Line2D(Line):
         list_points.extend(list(distances_to_reference_point.keys()))
         return list_points
 
+    def point_distance(self, point2d):
+        """
+        Calculates the distance of a line2d to a point2d
+        :param point2d: point to calculate distance
+        :return: distance to point
+        """
+        vector_r = self.point1 - point2d
+        vector_v = self.normal_vector()
+        return abs(vector_v.dot(vector_r)) / vector_v.norm()
+
 
 class BSplineCurve2D(BSplineCurve):
     _non_serializable_attributes = ['curve']
@@ -845,8 +855,8 @@ class BSplineCurve2D(BSplineCurve):
         points_x = [p.x for p in points]
         points_y = [p.y for p in points]
 
-        return (min(points_x), max(points_x),
-                min(points_y), max(points_y))
+        return volmdlr.core.BoundingRectangle(min(points_x), max(points_x),
+                                              min(points_y), max(points_y))
 
     def length(self):
         return length_curve(self.curve)
@@ -1136,8 +1146,8 @@ class LineSegment2D(LineSegment):
         return False
 
     def bounding_rectangle(self):
-        return (min(self.start.x, self.end.x), max(self.start.x, self.end.x),
-                min(self.start.y, self.end.y), max(self.start.y, self.end.y))
+        return volmdlr.core.BoundingRectangle(min(self.start.x, self.end.x), max(self.start.x, self.end.x),
+                                              min(self.start.y, self.end.y), max(self.start.y, self.end.y))
 
     def straight_line_area(self):
         return 0.
@@ -1775,8 +1785,8 @@ class Arc2D(Arc):
 
     def bounding_rectangle(self):
         # TODO: Enhance this!!!
-        return (self.center.x - self.radius, self.center.x + self.radius,
-                self.center.y - self.radius, self.center.y + self.radius)
+        return volmdlr.core.BoundingRectangle(self.center.x - self.radius, self.center.x + self.radius,
+                                              self.center.y - self.radius, self.center.y + self.radius)
 
     def straight_line_area(self):
         if self.angle >= math.pi:
@@ -2713,6 +2723,12 @@ class Line3D(Line):
         content = p1_content + u_content
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
         return content, current_id
+
+    def to_2d(self, plane_origin, x1, x2):
+        p2d = [p.to_2d(plane_origin, x1, x2) for p in (self.point1, self.point2)]
+        if p2d[0] == p2d[1]:
+            return None
+        return Line2D(*p2d, name=self.name)
 
 
 class LineSegment3D(LineSegment):
@@ -4137,10 +4153,10 @@ class Arc3D(Arc):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points():
-            x.append(px)
-            y.append(py)
-            z.append(pz)
+        for pointx, pointy, pointz in self.discretization_points(number_points=25):
+            x.append(pointx)
+            y.append(pointy)
+            z.append(pointz)
 
         ax.plot(x, y, z, color=color, alpha=alpha)
         if edge_ends:
@@ -4450,8 +4466,7 @@ class Arc3D(Arc):
                 arcs2_id[0] + 1)
             content += arc2_content + arc3_content
             return content, [arcs1_id[0], arcs2_id[0], arcs3_id[0]]
-        else:
-            return self.to_step_without_splitting(current_id)
+        return self.to_step_without_splitting(current_id)
 
     def to_step_without_splitting(self, current_id, surface_id=None):
         u = self.start - self.center
@@ -4621,7 +4636,7 @@ class FullArc3D(Arc3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points():
+        for px, py, pz in self.discretization_points(number_points=20):
             x.append(px)
             y.append(py)
             z.append(pz)

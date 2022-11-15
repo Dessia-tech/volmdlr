@@ -205,8 +205,9 @@ def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representat
 
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
+    raise NotImplementedError("We are still not able to read assemblies in step files")
     if arguments[2] in object_dict:
-        if isinstance(object_dict[arguments[2]], list):  # arguments = {, , [], [], item_....}
+        if isinstance(object_dict[arguments[2]], list): # arguments = {, , [], [], item_....}
             if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
                           and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
                 frame_map_closed_shell(object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]])

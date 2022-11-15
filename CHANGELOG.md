@@ -10,6 +10,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+* Block: faces_center (calculate directly point in the middle of the faces)
+* Circle2D: split_by_line
+* BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
+* Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside
+* CylindricalSurface3D: line_intersections, linesegment_intersections
+* Line2D: point_distance
+
+### Fixed
+
+* BsplineCurve: abscissa (use different start point between 0 and length)
+* Arc3D: plot
+* Fix some to_step methods from edges.py and faces.py
+* Cylinder: point_belongs
+* FullArc3D: plot (use discretization_points instead of discretise)
+
+### Performance improvements
+
+* Avoid unneeded bbox computation
+
+
+### Refactorings
+
+
+
+### Unittests
+
+* PlaneFace3D: line_intersections
+* BsplineCurve: abscissa
+* Circle2D: split_by_line
+* BoundingRectangle: area, center, intersection, is_inside, point_belongs, intersection_area, distance_to_point, distance_to_b_rectangle
+* Cylinder: point_belongs, random_point_inside, interference_volume_with_other_cylinder, min_distance_to_other_cylinder, is_intersecting_other_cylinder, lhs_points_inside
+* CylindricalFace3D: linesegment_intersections
+* CylindricalSurface3D: line_intersections
+
+
+## v0.6.0 [11/7/2022]
+
+### New Features
+
 * Stl:load_from_file, to_volume_model
 * Surface2D: copy (specific method)
 * GmshParser: read_file (.msh) and related methods, define_triangular_element_mesh, define_tetrahedron_element_mesh
@@ -30,6 +69,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc2D: split (how to choose the interior point)
 * Wire: extract_primitives (consider point1 and point2 belong to the same primitive, REMOVE Contour.extract_primitives)
 * LineSegment: abcissa (consider point2d == arc2d.start/end)
+* Contour2D: cut_by_wire
+* Contour2D: point_belongs (bug when contour has only one primitive, like FullArc2D)
+* Contour: contours_from_edges
+* PlaneFace3D: face_intersections
 
 
 ### Performance improvements
@@ -50,7 +93,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 
 * Wire: extract_primitives, extract_without_primitives
-
 
 
 ## v0.5.0

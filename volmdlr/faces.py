@@ -1209,6 +1209,8 @@ class CylindricalSurface3D(Surface3D):
         u2 = y / self.radius
         # theta = volmdlr.core.sin_cos_angle(u1, u2)
         theta = math.atan2(u2, u1)
+        if u2 < 0:
+            theta = theta + volmdlr.TWO_PI
         return volmdlr.Point2D(theta, z)
 
     def arc3d_to_2d(self, arc3d):
@@ -1368,6 +1370,28 @@ class CylindricalSurface3D(Surface3D):
         points_3d = [self.point2d_to_3d(point2d) for point2d in points_2d]
 
         return points_3d
+
+    def line_intersections(self, line: vme.Line3D):
+        line_2d = line.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        origin2d = self.frame.origin.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        distance_line2d_to_origin = line_2d.point_distance(origin2d)
+        if distance_line2d_to_origin > self.radius:
+            return []
+        a_prime = line_2d.point1
+        b_prime = line_2d.point2
+        a_prime_minus_b_prime = a_prime - b_prime
+        t_param = a_prime.dot(a_prime_minus_b_prime) / a_prime_minus_b_prime.dot(a_prime_minus_b_prime)
+        k_param = math.sqrt(
+            (self.radius ** 2 - distance_line2d_to_origin ** 2) / a_prime_minus_b_prime.dot(a_prime_minus_b_prime))
+        intersection1 = line.point1 + (t_param + k_param) * (line.direction_vector())
+        intersection2 = line.point1 + (t_param - k_param) * (line.direction_vector())
+        return [intersection1, intersection2]
+
+    def linesegment_intersections(self, linesegment: vme.LineSegment3D):
+        line = linesegment.to_line()
+        line_intersections = self.line_intersections(line)
+        linesegment_intersections = [inters for inters in line_intersections if linesegment.point_belongs(inters)]
+        return linesegment_intersections
 
 
 class ToroidalSurface3D(Surface3D):
@@ -3614,7 +3638,7 @@ class BSplineSurface3D(Surface3D):
         resolution = 8
 
         for contour in contours:
-            u_min, u_max, v_min, v_max = contour.bounding_rectangle()
+            u_min, u_max, v_min, v_max = contour.bounding_rectangle().bounds()
             if du > dv:
                 delta_u = u_max - u_min
                 nlines_x = int(delta_u * resolution)
@@ -3954,7 +3978,7 @@ class Face3D(volmdlr.core.Primitive3D):
             'Not implemented :face_from_contours3d in {}'.format(surface))
 
     def to_step(self, current_id):
-        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
         subsurfaces2d = [self.surface2d]
         line_x = None
         if self.surface3d.x_periodicity and (xmax - xmin) >= 0.45 * self.surface3d.x_periodicity:
@@ -4871,6 +4895,7 @@ class PlaneFace3D(Face3D):
                 if not new_face.surface2d.inner_contours:
                     new_face.surface2d.inner_contours = [new_contour]
                     break
+                new_contour_not_sharing_primitives = True
                 for i, inner_contour in enumerate(new_face.surface2d.inner_contours):
                     if new_contour.is_inside(inner_contour):
                         if any(inner_contour.primitive_over_contour(prim)
@@ -4881,9 +4906,15 @@ class PlaneFace3D(Face3D):
                     elif not any(inner_contour.primitive_over_contour(prim) for prim in
                                  new_contour.primitives):
                         inner_contours1.append(inner_contour)
+                    else:
+                        new_contour_not_sharing_primitives = False
                 else:
                     surf3d = new_face.surface3d
                     if inner_contours1:
+                        if new_contour_not_sharing_primitives:
+                            inner_contours1.append(new_contour)
+                            new_face.surface2d.inner_contours = inner_contours1
+                            break
                         surf2d = Surface2D(new_face.surface2d.outer_contour, inner_contours1)
                         new_plane = PlaneFace3D(surf3d, surf2d)
                         new_list_faces.append(new_plane)
@@ -4944,7 +4975,7 @@ class PlaneFace3D(Face3D):
             list_faces.append(new_plane)
         return list_faces
 
-    def divide_face(self, list_cutting_contours, inside):
+    def divide_face(self, list_cutting_contours: List[volmdlr.wires.Contour2D], inside):
         """
         :param list_cutting_contours: list of contours cutting the face
         :param inside: when extracting a contour from another contour. It defines the extracted
@@ -4991,12 +5022,14 @@ class PlaneFace3D(Face3D):
                 (self, face2) not in list_coincident_faces:
 
             edge_intersections = []
-            for prim1 in self.outer_contour3d.primitives:
+            for prim1 in self.outer_contour3d.primitives + [prim for inner_contour in self.inner_contours3d
+                                                            for prim in inner_contour.primitives]:
                 edge_intersections = face2.edge_intersections(prim1)
                 if edge_intersections:
                     return True
             if not edge_intersections:
-                for prim2 in face2.outer_contour3d.primitives:
+                for prim2 in face2.outer_contour3d.primitives + [prim for inner_contour in face2.inner_contours3d
+                                                                 for prim in inner_contour.primitives]:
                     edge_intersections = self.edge_intersections(prim2)
                     if edge_intersections:
                         return True
@@ -5464,7 +5497,7 @@ class CylindricalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
-        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
+        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle().bounds()
 
         lower_center = self.surface3d.frame.origin + zmin * self.surface3d.frame.w
         upper_center = self.surface3d.frame.origin + zmax * self.surface3d.frame.w
@@ -5500,7 +5533,7 @@ class CylindricalFace3D(Face3D):
         return volmdlr.core.BoundingBox.from_points(points)
 
     def triangulation_lines(self, angle_resolution=5):
-        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle()
+        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         nlines = math.ceil(delta_theta * angle_resolution)
         lines = []
@@ -5855,7 +5888,7 @@ class ToroidalFace3D(Face3D):
         self.center = surface3d.frame.origin
         self.normal = surface3d.frame.w
 
-        theta_min, theta_max, phi_min, phi_max = surface2d.outer_contour.bounding_rectangle()
+        theta_min, theta_max, phi_min, phi_max = surface2d.outer_contour.bounding_rectangle().bounds()
 
         self.theta_min = theta_min
         self.theta_max = theta_max
@@ -5907,7 +5940,7 @@ class ToroidalFace3D(Face3D):
         return self.surface3d._bounding_box()
 
     def triangulation_lines(self, angle_resolution=5):
-        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle()
+        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
         nlines_x = int(delta_theta * angle_resolution)
@@ -6415,7 +6448,7 @@ class ConicalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
-        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
+        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle().bounds()
 
         xp = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
               + volmdlr.X3D.dot(
@@ -6463,7 +6496,7 @@ class ConicalFace3D(Face3D):
         return volmdlr.core.BoundingBox.from_points(points)
 
     def triangulation_lines(self, angle_resolution=5):
-        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle()
+        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         nlines = int(delta_theta * angle_resolution)
         lines_x = []
@@ -6560,7 +6593,7 @@ class SphericalFace3D(Face3D):
         return self.surface3d._bounding_box()
 
     def triangulation_lines(self, angle_resolution=7):
-        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle()
+        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
         nlines_x = int(delta_theta * angle_resolution)
@@ -6618,7 +6651,7 @@ class RuledFace3D(Face3D):
         return volmdlr.core.BoundingBox.from_points(points)
 
     def triangulation_lines(self, angle_resolution=10):
-        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
         nlines = int(delta_x * angle_resolution)
         lines = []
@@ -6653,7 +6686,7 @@ class BSplineFace3D(Face3D):
         return self.surface3d._bounding_box()
 
     def triangulation_lines(self, resolution=25):
-        u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle()
+        u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_u = u_max - u_min
         nlines_x = int(delta_u * resolution)
@@ -7036,7 +7069,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         step_content = ''
         face_ids = []
         for face in self.faces:
-            face_content, face_sub_ids = face.to_step(current_id)
+            if isinstance(face, Face3D) or isinstance(face, Surface3D):
+                face_content, face_sub_ids = face.to_step(current_id)
+            else:
+                face_content, face_sub_ids = face.to_step(current_id)
+                face_sub_ids = [face_sub_ids]
             step_content += face_content
             face_ids.extend(face_sub_ids)
             current_id = max(face_sub_ids) + 1
@@ -7573,11 +7610,12 @@ class ClosedShell3D(OpenShell3D):
             return None
         return 1
 
-    def point_belongs(self, point3d: volmdlr.Point3D, nb_rays: int = 1):
+    def point_belongs(self, point3d: volmdlr.Point3D, **kwargs):
         """
         Ray Casting algorithm
         Returns True if the point is inside the Shell, False otherwise
         """
+        nb_rays = kwargs.get("nb_rays", 1)  # TODO: remove nb_rays argument in the future as it shouldn't be necessary
 
         bbox = self.bounding_box
         if not bbox.point_belongs(point3d):
@@ -8099,29 +8137,17 @@ class ClosedShell3D(OpenShell3D):
             shell2, tol)
         if validate_set_operation:
             return validate_set_operation
-
         list_coincident_faces = self.get_coincident_faces(shell2)
-        face_combinations = self.intersecting_faces_combinations(
-            shell2, list_coincident_faces, tol)
-
-        intersecting_combinations = self.dict_intersecting_combinations(
-            face_combinations, tol)
+        face_combinations = self.intersecting_faces_combinations(shell2, list_coincident_faces, tol)
+        intersecting_combinations = self.dict_intersecting_combinations(face_combinations, tol)
 
         if len(intersecting_combinations) == 0:
             return [self, shell2]
 
-        intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(
-            intersecting_combinations)
+        intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
-        faces = self.intersection_faces(shell2, intersecting_faces,
-                                        intersecting_combinations,
-                                        # list_coincident_faces
-                                        )
-        faces += self.get_non_intersecting_faces(shell2,
-                                                 intersecting_faces,
-                                                 intersection_method=True) + shell2.get_non_intersecting_faces(self,
-                                                                                                               intersecting_faces,
-                                                                                                               intersection_method=True)
-
+        faces = self.intersection_faces(shell2, intersecting_faces, intersecting_combinations)
+        faces += self.get_non_intersecting_faces(shell2, intersecting_faces, intersection_method=True) +\
+            shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
         new_shell = ClosedShell3D(faces)
         return [new_shell]

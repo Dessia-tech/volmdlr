@@ -7,7 +7,9 @@ Common primitives 3D
 import math
 
 from typing import Tuple, List, Dict
+from random import uniform
 from scipy.optimize import minimize, NonlinearConstraint
+from scipy.stats import qmc
 
 import numpy as npy
 import matplotlib.pyplot as plt
@@ -287,6 +289,18 @@ class Block(volmdlr.faces.ClosedShell3D):
             .rectangular_cut(-hlx, hlx, -hly, hly)
 
         return [xm_face, xp_face, ym_face, yp_face, zm_face, zp_face]
+
+    def faces_center(self):
+        vertices = self.vertices()
+        c0_x = (vertices[0] + vertices[1] + vertices[4] + vertices[5]) / 4
+        c1_x = (vertices[2] + vertices[3] + vertices[6] + vertices[7]) / 4
+
+        c0_y = (vertices[0] + vertices[3] + vertices[4] + vertices[7]) / 4
+        c1_y = (vertices[1] + vertices[2] + vertices[5] + vertices[6]) / 4
+
+        c0_z = (vertices[0] + vertices[1] + vertices[2] + vertices[3]) / 4
+        c1_z = (vertices[4] + vertices[5] + vertices[6] + vertices[7]) / 4
+        return c0_x, c1_x, c0_y, c1_y, c0_z, c1_z
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
@@ -1060,7 +1074,7 @@ class Cylinder(RevolvedProfile):
         return Cylinder(new_position, new_axis, self.radius, self.length,
                         color=self.color, alpha=self.alpha, name=self.name)
 
-    def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder'):
+    def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder') -> float:
         """
         Compute the minimal distance between two volmdlr cylinders
 
@@ -1117,7 +1131,7 @@ class Cylinder(RevolvedProfile):
 
         return minimize(fun=dist_points, x0=x0, constraints=constraints).fun
 
-    def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder'):
+    def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder') -> bool:
         """
         :param other_cylinder: volmdlr Cylinder
         :return: boolean, True if cylinders are intersecting, False otherwise
@@ -1125,6 +1139,101 @@ class Cylinder(RevolvedProfile):
         dist = self.min_distance_to_other_cylinder(other_cylinder)
 
         return dist < 1e-5
+
+    def random_point_inside(self) -> volmdlr.Point3D:
+        """
+        :return: a random point inside the Cylinder
+        """
+        theta = uniform(0, 2 * math.pi)
+        radius = math.sqrt(uniform(0, 1)) * self.radius
+
+        x_local = radius * math.cos(theta)
+        y_local = radius * math.sin(theta)
+        z_local = uniform(-self.length / 2, self.length / 2)
+
+        local_frame = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+
+        return local_frame.old_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
+
+    def lhs_points_inside(self, n_points: int) -> List[volmdlr.Point3D]:
+        """
+        :param n_points: number of points
+        :return: Latin hypercube sampling points inside the cylinder
+        """
+        local_frame = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+
+        # sampling point in cartesian local coordinates
+        sampler = qmc.LatinHypercube(d=3, seed=0)
+        sample = qmc.scale(
+            sampler.random(n=n_points),
+            [0, 0, -self.length / 2],
+            [1, 2 * math.pi, self.length / 2],
+        )
+
+        # converting sampled point in global coordinates volmdlr.Point3D points
+        points = []
+        for point in sample:
+            radius = math.sqrt(point[0]) * self.radius
+            theta = point[1]
+
+            x_local = radius * math.cos(theta)
+            y_local = radius * math.sin(theta)
+            z_local = point[2]
+
+            points.append(
+                local_frame.old_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
+            )
+
+        return points
+
+    def point_belongs(self, point3d: volmdlr.Point3D, **kwargs) -> bool:
+        """
+        :param point3d: volmdlr Point3D
+        :return: True if the given point is inside the cylinder, False otherwise
+        """
+        local_frame = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+
+        local_point = local_frame.new_coordinates(point3d)
+
+        return (math.sqrt(local_point.x ** 2 + local_point.y ** 2) <= self.radius) and (
+                -self.length / 2 <= local_point.z <= self.length / 2
+        )
+
+    def interference_volume_with_other_cylinder(
+            self, other_cylinder: "Cylinder", n_points: int = 2000
+    ) -> float:
+        """
+        Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method)
+
+        :param other_cylinder: volmdlr Cylinder
+        :param n_points: optional parameter used for the number of random point used to discretize the cylinder
+        :return: an estimation of the interference volume
+        """
+
+        # doing the discretization on the smallest cylinder to have better precision
+        if self.volume() < other_cylinder.volume():
+            smallest_cylinder = self
+        else:
+            smallest_cylinder = other_cylinder
+            other_cylinder = self
+
+        return (
+                len(
+                    [
+                        point
+                        # for point in (smallest_cylinder.random_point_inside() for _ in range(n_points))
+                        for point in smallest_cylinder.lhs_points_inside(n_points)
+                        if other_cylinder.point_belongs(point)
+                    ]
+                )
+                / n_points
+        ) * smallest_cylinder.volume()
 
 
 class Cone(RevolvedProfile):
