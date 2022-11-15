@@ -4590,14 +4590,38 @@ class Ellipse3D(Contour3D):
         return Ellipse2D(self.major_axis, self.minor_axis, center, major_dir_d2)
 
     def abscissa(self, point: volmdlr.Point3D):
+
         # center_to_point = point - self.center
         # angle_abscissa = volmdlr.core.vectors3d_angle(center_to_point, self.major_dir)
-        distance_point_center = point.point_distance(self.center)
+        # distance_point_center = point.point_distance(self.center)
         # if self.minor_axis > distance_point_center or distance_point_center > self.major_axis:
         vector_2 = self.normal.cross(self.major_dir)
+        ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
         center_2d = self.center.to_2d(self.center, self.major_dir, vector_2)
         major_dir_2d = self.major_dir.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
+        center2d_point2d = point2d - center_2d
+        angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, major_dir_2d)
+
+        if point2d.x == center_2d.x:
+            x1 = point2d.x
+            x2 = x1
+            y1 = self.minor_axis * math.sqrt((1 - point2d.x ** 2 / self.major_axis**2))
+            y2 = -y1
+
+        else:
+            m = (point2d.y - center_2d.y) / (point2d.x - center_2d.x)
+            if self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2 > 0:
+                x1 = 2 * self.major_axis * math.sqrt(self.major_axis**2 * m**2 * self.minor_axis**2 +
+                                                     self.minor_axis**2) / (2 * (self.major_axis**2 * m**2 +
+                                                                                 self.minor_axis**2))
+                x2 = - x1
+                y1 = m * x1
+                y2 = m * x2
+        point1 = volmdlr.Point2D(x1, y1)
+        point2 = volmdlr.Point2D(x2, y2)
+
+
         center2d_point2d = point2d - center_2d
         angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, major_dir_2d)
         def arc_length(theta):
