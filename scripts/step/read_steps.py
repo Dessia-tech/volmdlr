@@ -12,7 +12,7 @@ for step_file in [
     'cone2.step',
     'cylinder.step',
     'block.step',
-    'usecase_inner_contour.STEP'
+    'strange_gasket.step'
     # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
   ]:
     print('Reading step file: ', step_file)
