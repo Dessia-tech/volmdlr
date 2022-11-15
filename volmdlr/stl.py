@@ -4,7 +4,6 @@
 
 """
 # from binaryornot.check import is_binary
-import io
 import struct
 import warnings
 # from typing import BinaryIO
