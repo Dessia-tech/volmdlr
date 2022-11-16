@@ -4187,7 +4187,7 @@ class Contour3D(Contour, Wire3D):
         intersections = []
         for primitive in self.primitives:
             prim_line_intersections = primitive.line_intersections(line)
-            if prim_line_intersection:
+            if prim_line_intersections:
                 for inters in prim_line_intersections:
                     if inters not in intersections:
                         intersections.append(inters)

@@ -4569,11 +4569,12 @@ class PlaneFace3D(Face3D):
     def planeface_intersections(self, planeface):
         face2_plane_interections = planeface.surface3d.plane_intersection(self.surface3d)
         points_intersections = []
-        for intersection in self.outer_contour3d.line_intersections(face2_plane_interections):
+
+        for intersection in self.outer_contour3d.line_intersections(face2_plane_interections[0]):
             if intersection not in points_intersections:
                 points_intersections.append(intersection)
         for inner_contour in self.inner_contours3d:
-            for intersection in inner_contour.line_intersections(face2_plane_interections):
+            for intersection in inner_contour.line_intersections(face2_plane_interections[0]):
                 if intersection not in points_intersections:
                     points_intersections.append(intersection)
 
