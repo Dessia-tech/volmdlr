@@ -999,7 +999,7 @@ class Plane3D(Surface3D):
         matrix = sympy.Matrix([[a1, b1, c1, -d1],
                                [a2, b2, c2, -d2]])
         reduced_row_echelon_form_matrix = matrix.rref()[0]
-        dict_solution = {'x':0, 'x':0, 'x':0}
+        dict_solution = {'x':0, 'y':0, 'z':0}
         for solution_row in [list(reduced_row_echelon_form_matrix.row(0)),
                              list(reduced_row_echelon_form_matrix.row(1))]:
             for i, row_value in zip(['x', 'y', 'z'], solution_row):
@@ -1439,14 +1439,14 @@ class CylindricalSurface3D(Surface3D):
             self.radius * math.sin(0),
             - (1 / plane_coefficient_c) * (plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(0) +
                                            plane_coefficient_b * self.radius * math.sin(0)))
-        ellipse_pi_by_4 = volmdlr.Point3D(
+        ellipse_pi_by_2 = volmdlr.Point3D(
             self.radius * math.cos(math.pi / 2),
             self.radius * math.sin(math.pi / 2),
             - (1 / plane_coefficient_c) * (
                     plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(math.pi / 2)
                     + plane_coefficient_b * self.radius * math.sin(math.pi / 2)))
         axis_1 = center3d_plane.point_distance(ellipse_0)
-        axis_2 = center3d_plane.point_distance(ellipse_pi_by_4)
+        axis_2 = center3d_plane.point_distance(ellipse_pi_by_2)
         if axis_1 > axis_2:
             major_axis = axis_1
             minor_axis = axis_2
@@ -1454,7 +1454,7 @@ class CylindricalSurface3D(Surface3D):
         else:
             major_axis = axis_2
             minor_axis = axis_1
-            major_dir = ellipse_pi_by_4 - center3d_plane
+            major_dir = ellipse_pi_by_2 - center3d_plane
         ellipse = volmdlr.wires.Ellipse3D(major_axis, minor_axis, center3d_plane, plane3d.frame.w, major_dir)
         return [ellipse]
 
@@ -4529,7 +4529,7 @@ class PlaneFace3D(Face3D):
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
                 for point in intersection_points:
-                    if point not in intersections:
+                    if point not in intersections_points:
                         intersections_points.append(point)
 
         return intersections_points, []
@@ -4560,16 +4560,32 @@ class PlaneFace3D(Face3D):
                         intersection_primitives.append(line_segment3d)
         return intersection_primitives
 
+    def planeface_intersections(self, planeface):
+        face2_plane_interections = planeface.surface3d.plane_intersection(self.surface3d)
+        points_intersections = []
+        for intersection in self.outer_contour3d.line_intersections(face2_plane_interections):
+            if intersection not in points_intersections:
+                points_intersections.append(intersection)
+        for inner_contour in self.inner_contours3d:
+            for intersection in inner_contour.line_intersections(face2_plane_interections):
+                if intersection not in points_intersections:
+                    points_intersections.append(intersection)
+
+        return points_intersections
+
+    # def get_face_intersections2(self, face2):
+    #     self.
     def get_face_intersections(self, face2):
+        planeface_intersections = self.planeface_intersections(face2)
         intersections_points = []
         if face2.surface2d.inner_contours:
-            intersections.extend(self.face_intersections_inner_contours(face2))
+            intersections_points.extend(self.face_intersections_inner_contours(face2))
         if self.surface2d.inner_contours:
-            intersections.extend(face2.face_intersections_inner_contours(self))
+            intersections_points.extend(face2.face_intersections_inner_contours(self))
         face2_intersections_points, face2_intersections_curves = face2.face_intersections_outer_contour(self)
         self_intersections_points, self_intersections_curves = self.face_intersections_outer_contour(face2)
         for point in self_intersections_points + face2_intersections_points:
-            if point not in intersections:
+            if point not in intersections_points:
                 intersections_points.append(point)
         return intersections_points, self_intersections_curves + face2_intersections_curves
 
@@ -4614,8 +4630,9 @@ class PlaneFace3D(Face3D):
             return []
         if self.face_inside(face2) or face2.face_inside(self):
             return []
+        # plane_intersections = self.surface3d.plane_intersection(face2.surface3d)
         intersections_points, intersections_curves = self.get_face_intersections(face2)
-        valid_intersections = self.validate_face_intersections(face2, intersections)
+        valid_intersections = self.validate_face_intersections(face2, intersections_points, intersections_curves)
         return valid_intersections
 
     def minimum_distance(self, other_face, return_points=False):

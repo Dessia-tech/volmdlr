@@ -3782,6 +3782,47 @@ class Ellipse2D(Contour2D):
     def to_3d(self, origin, x, y):
         pass
 
+    def point_belongs(self, point):
+        return math.isclose((point.x - self.center.x)**2 / self.major_axis**2 +
+                            (point.y - self.center.y)**2 / self.minor_axis**2, 1, abs_tol=1e-6)
+
+    def line_intersections(self, line: 'volmdlr.edges.Line2D'):
+        if line.points[1].x == line.points[0].x:
+            x1 = line.points[0].x
+            x2 = x1
+            y1 = self.minor_axis * math.sqrt((1 - x1 ** 2 / self.major_axis**2))
+            y2 = -y1
+            c = self.center.y + line.points[0].y
+        else:
+            m = (line.points[1].y - line.points[0].y) / (line.points[1].x - line.points[0].x)
+            c = - m * (line.points[0].x + self.center.x) + line.points[0].y + self.center.y
+            if self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2 > c ** 2:
+                x1 = - (2 * (self.major_axis ** 2) * m * c + math.sqrt(
+                    (2 * (self.major_axis**2) * m * c )**2 - 4 * (self.major_axis** 2 * m**2 + self.minor_axis**2) *
+                    self.major_axis**2 * (c ** 2- self.minor_axis**2))) / (2 * (self.major_axis ** 2 * (m ** 2) +
+                                                                                self.minor_axis ** 2))
+
+                x2 = - (2 * (self.major_axis ** 2) * m * c - math.sqrt(
+                    (2 * (self.major_axis**2) * m * c )**2 - 4 * (self.major_axis** 2 * m**2 + self.minor_axis**2) *
+                    self.major_axis**2 * (c ** 2- self.minor_axis**2))) / (2 * (self.major_axis ** 2 * (m ** 2) +
+                                                                                self.minor_axis ** 2))
+                y1 = m * x1 + c
+                y2 = m * x2 + c
+        point1 = volmdlr.Point2D(x1, y1)
+        point2 = volmdlr.Point2D(x2, y2)
+        if point1 == point2:
+            return [point1]
+        return [point1, point2]
+
+    def linesegment_intersections(self,
+                                  linesegment: 'volmdlr.edges.LineSegment2D'):
+        line_intersections = self.line_intersections(linesegment)
+        intersections = []
+        for intersection in line_intersections:
+            if linesegment.point_belongs(intersection):
+                intersections.append(intersection)
+        return intersections
+
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         if number_points:
             angle_resolution = number_points
@@ -4141,6 +4182,26 @@ class Contour3D(Contour, Wire3D):
         new_primitives = contour.extract_with_points(point1, point2, inside)
         contours = [cls(new_primitives)]
         return contours
+
+    def line_intersections(self, line: volmdlr.edges.Line3D):
+        intersections = []
+        for primitive in self.primitives:
+            prim_line_intersections = primitive.line_intersections(line)
+            if prim_line_intersection:
+                for inters in prim_line_intersections:
+                    if inters not in intersections:
+                        intersections.append(inters)
+        return intersections
+
+    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment3D):
+        intersections = []
+        for primitive in self.primitives:
+            prim_line_intersections = primitive.linesegment_intersection(linesegment)
+            if prim_line_intersection:
+                for inters in prim_line_intersections:
+                    if inters not in intersections:
+                        intersections.append(inters)
+        return intersections
 
     def contour_intersection(self, contour3d):
         dict_intersecting_points = {}
@@ -4600,34 +4661,20 @@ class Ellipse3D(Contour3D):
         center_2d = self.center.to_2d(self.center, self.major_dir, vector_2)
         major_dir_2d = self.major_dir.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
-        center2d_point2d = point2d - center_2d
-        angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, major_dir_2d)
-
-        if point2d.x == center_2d.x:
-            x1 = point2d.x
-            x2 = x1
-            y1 = self.minor_axis * math.sqrt((1 - point2d.x ** 2 / self.major_axis**2))
-            y2 = -y1
-
-        else:
-            m = (point2d.y - center_2d.y) / (point2d.x - center_2d.x)
-            if self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2 > 0:
-                x1 = 2 * self.major_axis * math.sqrt(self.major_axis**2 * m**2 * self.minor_axis**2 +
-                                                     self.minor_axis**2) / (2 * (self.major_axis**2 * m**2 +
-                                                                                 self.minor_axis**2))
-                x2 = - x1
-                y1 = m * x1
-                y2 = m * x2
-        point1 = volmdlr.Point2D(x1, y1)
-        point2 = volmdlr.Point2D(x2, y2)
+        if ellipse_2d.point_belongs(point2d):
+            center2d_point2d = point2d - center_2d
+            angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, major_dir_2d)
+        # formula_point = volmdlr.Point2D(ellipse_2d.center.x + ellipse_2d.major_axis*math.cos(angle_abscissa),
+        #                                 ellipse_2d.center.y + ellipse_2d.minor_axis*math.sin(angle_abscissa))
 
 
-        center2d_point2d = point2d - center_2d
-        angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, major_dir_2d)
-        def arc_length(theta):
-            return math.sqrt((self.major_axis**2) * math.sin(theta) ** 2 + (self.minor_axis**2) * math.cos(theta)**2)
-        res, err = integrate.quad(f, 0, 2 * math.pi)
-        print(True)
+            center2d_point2d = point2d - center_2d
+            angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, major_dir_2d)
+            def arc_length(theta):
+                return math.sqrt((self.major_axis**2) * math.sin(theta) ** 2 + (self.minor_axis**2) * math.cos(theta)**2)
+            res, err = integrate.quad(f, 0, 2 * math.pi)
+            return res
+        raise ValueError(f'point {point} is does not belong to ellipse')
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         # minor_dir = self.normal.cross(self.major_dir)
