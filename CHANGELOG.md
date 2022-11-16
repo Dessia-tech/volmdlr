@@ -17,8 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CylindricalSurface3D: line_intersections, linesegment_intersections, plane_intersection
 * Line2D: point_distance
 * Line3D: to_2d
-
-
+* Line3D: skew_to: Verifies if two Line3D are skew
+* LineSegment3D.line_interserctions
 
 ### Fixed
 
@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix some to_step methods from edges.py and faces.py
 * Cylinder: point_belongs
 * FullArc3D: plot (use discretization_points instead of discretise)
+* Face3D.line_intersections: consider borders
+
 
 
 ### Performance improvements
@@ -35,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Refactorings
-
+* LineSegment3D.intersections
 
 
 
@@ -48,6 +50,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: point_belongs, random_point_inside, interference_volume_with_other_cylinder, min_distance_to_other_cylinder, is_intersecting_other_cylinder, lhs_points_inside
 * CylindricalFace3D: linesegment_intersections
 * CylindricalSurface3D: line_intersections
+* Line3D: line_distance
+* Line3D: skew_to
+* Line3D: intersections
+* LineSegment3D: line_intersections
+* LineSegment3D: linesegment_intersections
 
 
 

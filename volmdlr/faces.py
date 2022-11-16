@@ -4233,6 +4233,12 @@ class Face3D(volmdlr.core.Primitive3D):
         for intersection in self.surface3d.line_intersections(line):
             if self.point_belongs(intersection):
                 intersections.append(intersection)
+        if not intersections:
+            for prim in self.outer_contour3d.primitives:
+                intersection = prim.line_intersections(line)
+                if intersection:
+                    if intersection not in intersections:
+                        intersections.append(intersection)
 
         return intersections
 
@@ -4241,7 +4247,12 @@ class Face3D(volmdlr.core.Primitive3D):
         for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 intersections.append(intersection)
-
+        if not intersections:
+            for prim in self.outer_contour3d.primitives:
+                intersection = prim.linesegment_intersection(linesegment)
+                if intersection is not None:
+                    if intersection not in intersections:
+                        intersections.append(intersection)
         return intersections
 
     def fullarc_intersections(self, fullarc: vme.FullArc3D) -> List[volmdlr.Point3D]:
@@ -4516,11 +4527,6 @@ class PlaneFace3D(Face3D):
                 if self.point_belongs(point):
                     if point not in intersections:
                         intersections.append(point)
-            for prim in self.outer_contour3d.primitives:
-                intersection = prim.linesegment_intersection(edge)
-                if intersection is not None:
-                    if intersection not in intersections:
-                        intersections.append(intersection)
         return intersections
 
     def face_intersections_outer_contour(self, face2):
