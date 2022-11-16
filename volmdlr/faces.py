@@ -2514,6 +2514,10 @@ class BSplineSurface3D(Surface3D):
         return ax
 
     def simplify_surface(self):
+        """
+        Verifies if BSplineSurface3D could be a Plane3D
+        :return: simplified surface if possible, otherwis, returns self
+        """
         points = [self.control_points[0], self.control_points[math.ceil(len(self.control_points) / 2)],
                   self.control_points[-1]]
         plane3d = Plane3D.from_3_points(*points)
