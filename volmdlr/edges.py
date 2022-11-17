@@ -208,6 +208,10 @@ class Line(dc.DessiaObject):
         t = (point - self.point1).dot(u) / norm_u
         return t
 
+    def sort_points_along_line(self, points):
+
+        return sorted(points, key=lambda point: self.abscissa(point))
+
     def split(self, split_point):
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
@@ -2532,9 +2536,9 @@ class Line3D(Line):
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
-        v1 = (self.point1 - 3 * u)
+        v1 = (self.point1 - 3/3 * u)
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = (self.point2 - 3 * u)
+        v2 = (self.point2 - 3/3 * u)
         x2, y2, z2 = v2.x, v2.y, v2.z
         if dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
@@ -2748,6 +2752,9 @@ class Line3D(Line):
         x2, y2, z2 = line.points[0].x, line.points[0].y, line.points[0].z
         a, b, c = direction_vector1.x, direction_vector1.y, direction_vector1.z
         m, n, p = direction_vector2.x, direction_vector2.y, direction_vector2.z
+        # if a * n != m * b:
+        #     coeficient_t_ = (a * (y2 - y1) - b * (x2 - x1)) / (- a * n + m * b)
+        #     coeficient_s_ = (-n * (y2 - y1) + m * (x2 - x1)) / (- a * n + m * b)
         # if a == m == 0 and x2 != x1:
         #     return None
         # if b == n == 0 and y2 != y1:

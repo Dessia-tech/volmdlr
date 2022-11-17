@@ -1008,14 +1008,22 @@ class Plane3D(Surface3D):
         if all(i == 0 for i in dict_solution.values()) and all(j != 1 for j in solution_row[:-1]):
             raise NotImplementedError
         point1 = volmdlr.Point3D(*dict_solution.values())
-        # if a1 * b2 - a2 * b1 != 0.:
-        #     x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
-        #     y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
-        #     point1 = volmdlr.Point3D(x0, y0, 0)
+        if a1 * b2 - a2 * b1 != 0.:
+            x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
+            y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
+            point1_ = volmdlr.Point3D(x0, y0, 0)
+        elif c1 * b2 != b1 * c2:
+            y0 = (c2 * d1 - c1 * d2) / (b1 * c2 - c1 * b2)
+            z0 = (b1 * d2 - b2 * d1) / (b1 * c2 - c1 * b2)
+            point1_ = volmdlr.Point3D(0, y0, z0)
+        elif a2 * c1 != a1 * c2:
+            x0 = (c2 * d1 - c1 * d2) / (a2 * c1 - a1 * c2)
+            z0 = (a1 * d2 - a2 * d1) / (a2 * c1 - a1 * c2)
+            point1_ = volmdlr.Point3D(x0, 0, z0)
         # else:
         #     y0 = (b2 * d2 - c2 * d1) / (b1 * c2 - c1 * b2)
         #     z0 = (c1 * d1 - b1 * d2) / (b1 * c2 - c1 * b2)
-        #     point1 = volmdlr.Point3D(0, y0, z0)
+        #     point1_ = volmdlr.Point3D(0, y0, z0)
 
         # point2 = point1 + line_direction
         # return volmdlr.Line3D(point1, point2)
@@ -4569,32 +4577,50 @@ class PlaneFace3D(Face3D):
     def planeface_intersections(self, planeface):
         face2_plane_interections = planeface.surface3d.plane_intersection(self.surface3d)
         points_intersections = []
-
-        for intersection in self.outer_contour3d.line_intersections(face2_plane_interections[0]):
-            if intersection not in points_intersections:
-                points_intersections.append(intersection)
-        for inner_contour in self.inner_contours3d:
-            for intersection in inner_contour.line_intersections(face2_plane_interections[0]):
+        for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d +\
+                             planeface.inner_contours3d:
+            for intersection in contour.line_intersections(face2_plane_interections[0]):
                 if intersection not in points_intersections:
                     points_intersections.append(intersection)
+        points_intersections = face2_plane_interections[0].sort_points_along_line(points_intersections)
+        planeface_intersections = []
+        for point1, point2 in zip(points_intersections[:-1], points_intersections[1:]):
+            linesegment3d = volmdlr.edges.LineSegment3D(point1, point2)
+            over_self_outer_contour = self.outer_contour3d.primitive_over_contour(linesegment3d)
+            over_planeface_outer_contour = planeface.outer_contour3d.primitive_over_contour(linesegment3d)
+            if over_self_outer_contour and over_planeface_outer_contour:
+                continue
+            if self.edge3d_inside(linesegment3d) or over_self_outer_contour:
+                if planeface.edge3d_inside(linesegment3d):
+                    planeface_intersections.append(volmdlr.wires.Wire3D([linesegment3d]))
+                elif over_planeface_outer_contour:
+                    planeface_intersections.append(volmdlr.wires.Wire3D([linesegment3d]))
+        return planeface_intersections
 
-        return points_intersections
+    def triangle_intersections(self, triangleface):
+        return self.planeface_intersections(triangleface)
 
-    # def get_face_intersections2(self, face2):
-    #     self.
+    def cylindricalface_intersections(self, cyclindricalface):
+        raise NotImplementedError
+
     def get_face_intersections(self, face2):
-        planeface_intersections = self.planeface_intersections(face2)
-        intersections_points = []
-        if face2.surface2d.inner_contours:
-            intersections_points.extend(self.face_intersections_inner_contours(face2))
-        if self.surface2d.inner_contours:
-            intersections_points.extend(face2.face_intersections_inner_contours(self))
-        face2_intersections_points, face2_intersections_curves = face2.face_intersections_outer_contour(self)
-        self_intersections_points, self_intersections_curves = self.face_intersections_outer_contour(face2)
-        for point in self_intersections_points + face2_intersections_points:
-            if point not in intersections_points:
-                intersections_points.append(point)
-        return intersections_points, self_intersections_curves + face2_intersections_curves
+        intersections = []
+        method_name = f'{face2.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(self, method_name):
+            intersections = getattr(self, method_name)(face2)
+        return intersections
+        # planeface_intersections = self.planeface_intersections(face2)
+        # intersections_points = []
+        # if face2.surface2d.inner_contours:
+        #     intersections_points.extend(self.face_intersections_inner_contours(face2))
+        # if self.surface2d.inner_contours:
+        #     intersections_points.extend(face2.face_intersections_inner_contours(self))
+        # face2_intersections_points, face2_intersections_curves = face2.face_intersections_outer_contour(self)
+        # self_intersections_points, self_intersections_curves = self.face_intersections_outer_contour(face2)
+        # for point in self_intersections_points + face2_intersections_points:
+        #     if point not in intersections_points:
+        #         intersections_points.append(point)
+        # return intersections_points, self_intersections_curves + face2_intersections_curves
 
     def validate_face_intersections(self, face2, intersections_points: List[volmdlr.Point3D], intersections_curves):
         if intersections_curves and not intersections_points:
@@ -4638,9 +4664,9 @@ class PlaneFace3D(Face3D):
         if self.face_inside(face2) or face2.face_inside(self):
             return []
         # plane_intersections = self.surface3d.plane_intersection(face2.surface3d)
-        intersections_points, intersections_curves = self.get_face_intersections(face2)
-        valid_intersections = self.validate_face_intersections(face2, intersections_points, intersections_curves)
-        return valid_intersections
+        face_intersections = self.get_face_intersections(face2)
+        # valid_intersections = self.validate_face_intersections(face2, intersections_points, intersections_curves)
+        return face_intersections
 
     def minimum_distance(self, other_face, return_points=False):
         if other_face.__class__ is CylindricalFace3D:

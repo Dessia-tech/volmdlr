@@ -4187,10 +4187,10 @@ class Contour3D(Contour, Wire3D):
         intersections = []
         for primitive in self.primitives:
             prim_line_intersections = primitive.line_intersections(line)
-            if prim_line_intersections:
-                for inters in prim_line_intersections:
-                    if inters not in intersections:
-                        intersections.append(inters)
+            if prim_line_intersections is not None:
+                # for inters in prim_line_intersections:
+                if prim_line_intersections not in intersections:
+                    intersections.append(prim_line_intersections)
         return intersections
 
     def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment3D):
