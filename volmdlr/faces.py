@@ -7022,7 +7022,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                  alpha: float = 1., name: str = ''):
         self.faces = faces
         if not color:
-            self.color = (0.8, 0.8, 0.8)
+            self.color = volmdlr.core.DEFAULT_COLOR
         else:
             self.color = color
         self.alpha = alpha
@@ -8151,3 +8151,17 @@ class ClosedShell3D(OpenShell3D):
             shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
         new_shell = ClosedShell3D(faces)
         return [new_shell]
+
+
+class OpenTriangleShell3D(OpenShell3D):
+    def __init__(self, faces: List[Triangle3D],
+                 color: Tuple[float, float, float] = None,
+                 alpha: float = 1., name: str = ''):
+        OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
+
+
+class ClosedTriangleShell3D(ClosedShell3D):
+    def __init__(self, faces: List[Triangle3D],
+                 color: Tuple[float, float, float] = None,
+                 alpha: float = 1., name: str = ''):
+        OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
