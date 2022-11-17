@@ -50,7 +50,7 @@ for step_file in [
     # closedshell = model.primitives[0]
     # for i, face in enumerate(closedshell.faces):
     #     try:
-    #         face.babylonjs()
+    #         face.triangulation()
     #     except Exception:
     #         error[i] = face
     #         contours[i] = face.surface2d

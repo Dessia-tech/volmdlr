@@ -307,7 +307,7 @@ def clockwise_interior_from_circle3d(start, end, circle):
     if theta1 > theta2:
         theta3 = (theta1 + theta2) / 2
     elif theta2 > theta1:
-        theta3 = (theta1 + theta2) / 2 + volmdlr.TWO_PI / 2
+        theta3 = (theta1 + theta2) / 2 + math.pi
     else:
         raise NotImplementedError
 
@@ -479,7 +479,7 @@ class CompositePrimitive2D(Primitive2D):
         self.update_basis_primitives()
 
     def plot(self, ax=None, color='k', alpha=1,
-             plot_points=False, equal_aspect=True):
+             plot_points=False, equal_aspect=False):
 
         if ax is None:
             _, ax = plt.subplots()

@@ -557,7 +557,8 @@ class Step(dc.DessiaObject):
                 STEP_TO_VOLMDLR[name], "from_step"):
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                 arguments, object_dict)
-
+            # if name == 'AXIS2_PLACEMENT_3D':
+            #     print(True)
         else:
             raise NotImplementedError(
                 'Dont know how to interpret {} with args {}'.format(name,
