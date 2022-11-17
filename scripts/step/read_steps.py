@@ -30,11 +30,12 @@ for step_file in [
     # 'bracket2_cut3.step',
     # 'demi_sphere.step',
     # 'Video_Version.step',
-    'bracket3-cut1.step'
+    # 'bracket3-cut1.step'
     # 'quart_cone.step',
     # 'demi_cone.step',
     # 'cone1.step',
-    # 'cone2.step'
+    # 'cone2.step',
+    'HRG_BOT.stp'
 
 ]:
     print('Reading step file: ', step_file)
