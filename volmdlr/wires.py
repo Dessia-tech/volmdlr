@@ -55,7 +55,7 @@ def bounding_rectangle_adjacent_contours(contours: List):
     return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
 
 
-class Wire:
+class WireMixin:
     _non_data_hash_attributes = ['basis_primitives']
     _non_serializable_attributes = ['primitive_to_index',
                                     'basis_primitives']
@@ -316,7 +316,7 @@ class Wire:
         return False
 
 
-class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
+class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     """
     A collection of simple primitives, following each other making a wire
     """
@@ -769,7 +769,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         return intersections_points
 
 
-class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
+class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     """
     A collection of simple primitives, following each other making a wire
     """
@@ -862,15 +862,15 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
 
-class Contour(Wire):
+class ContourMixin(WireMixin):
 
     # def __init__(self):
     #     Wire.__init__(self)
 
-    def is_ordered(self):
+    def is_ordered(self, tol=1e-6):
         for prim1, prim2 in zip(
                 self.primitives, self.primitives[1:] + [self.primitives[0]]):
-            if prim1.end != prim2.start:
+            if not prim1.end.is_close(prim2.start, tol):
                 return False
         return True
 
@@ -1012,7 +1012,7 @@ class Contour(Wire):
     def find_connected_edges(edges, contours_list, contour_primitives, tol):
         for line in edges:
             if contours_list:
-                contours_list, remove = Contour.connected_to_splited_primitives(line, contours_list)
+                contours_list, remove = ContourMixin.connected_to_splited_primitives(line, contours_list)
                 if remove:
                     edges.remove(line)
                     break
@@ -1020,7 +1020,7 @@ class Contour(Wire):
                 contour_primitives.append(line)
                 edges.remove(line)
                 break
-            edge_connected = Contour.is_edge_connected(contour_primitives, line, tol)
+            edge_connected = ContourMixin.is_edge_connected(contour_primitives, line, tol)
             if edge_connected is not None:
                 contour_primitives.append(edge_connected)
                 edges.remove(edge_connected)
@@ -1355,7 +1355,7 @@ class Contour(Wire):
         return self.point_over_wire(point, abs_tol)
 
 
-class Contour2D(Contour, Wire2D):
+class Contour2D(ContourMixin, Wire2D):
     """
     A collection of 2D primitives forming a closed wire2D
     TODO : center_of_mass and second_moment_area should be changed accordingly
@@ -1758,9 +1758,8 @@ class Contour2D(Contour, Wire2D):
             [i[0].plot(ax=ax) for i in intersections]
             self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\intersection_contour.json')
             line.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\intersection_line.json')
-            raise NotImplementedError(
-                '{} intersections not supported yet'.format(
-                    len(intersections)))
+
+            raise NotImplementedError(f'{len(intersections)} intersections not supported yet')
 
         points_intersections = [point for point, prim in intersections]
         sorted_points = line.sort_points_along_line(points_intersections)
@@ -1875,10 +1874,10 @@ class Contour2D(Contour, Wire2D):
         triangles = []
         for xi in x:
             for yi in y:
-                p = volmdlr.Point2D(xi, yi)
-                if self.point_belongs(p):
-                    point_index[p] = point_index
-                    points.append(p)
+                point = volmdlr.Point2D(xi, yi)
+                if self.point_belongs(point):
+                    point_index[point] = number_points
+                    points.append(point)
                     number_points += 1
 
         for i in range(n):
@@ -1974,6 +1973,7 @@ class Contour2D(Contour, Wire2D):
                 0].start == closing_contour.primitives[-1].end:
             primitives2 = closing_contour.primitives + \
                           extracted_innerpoints_contour1.primitives
+
         contour1 = volmdlr.wires.Contour2D(primitives1)
         contour1.order_contour(tol=1e-5)
         contour2 = volmdlr.wires.Contour2D(primitives2)
@@ -2055,7 +2055,7 @@ class Contour2D(Contour, Wire2D):
         """
         discretize each contour's primitive and return a new contour with teses discretized primitives
         """
-        contour = volmdlr.wires.Contour2D((self.discretized_primitives(n)))
+        contour = Contour2D((self.discretized_primitives(n)))
 
         return contour.order_contour()
 
@@ -2072,7 +2072,7 @@ class Contour2D(Contour, Wire2D):
 
         edges = [edge0, edge1, edge2, edge3]
 
-        return volmdlr.wires.Contour2D(edges)
+        return Contour2D(edges)
 
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
@@ -2129,8 +2129,7 @@ class Contour2D(Contour, Wire2D):
             return [contour2d]
 
         merged_primitives = self.merge_primitives_with(contour2d)
-        contours = volmdlr.wires.Contour2D.contours_from_edges(
-            merged_primitives)
+        contours = Contour2D.contours_from_edges(merged_primitives)
         contours = sorted(contours, key=lambda contour: contour.area(),
                           reverse=True)
         return contours
@@ -3655,23 +3654,23 @@ class Circle2D(Contour2D):
     def circle_intersections(self, circle: 'volmdlr.wires.Circle2D'):
         x0, y0 = self.center
         x1, y1 = circle.center
-        r0 = self.radius
-        r1 = circle.radius
+        # r0 = self.radius
+        # r1 = circle.radius
 
         d = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
 
         # non intersecting
-        if d > r0 + r1:
+        if d > self.radius + circle.radius:
             return []
         # One circle within other
-        if d < abs(r0 - r1):
+        if d < abs(self.radius - circle.radius):
             return []
         # coincident circles
-        if d == 0 and r0 == r1:
+        if d == 0 and self.radius == circle.radius:
             return []
         else:
-            a = (r0 ** 2 - r1 ** 2 + d ** 2) / (2 * d)
-            h = math.sqrt(r0 ** 2 - a ** 2)
+            a = (self.radius ** 2 - circle.radius ** 2 + d ** 2) / (2 * d)
+            h = math.sqrt(self.radius ** 2 - a ** 2)
             x2 = x0 + a * (x1 - x0) / d
             y2 = y0 + a * (y1 - y0) / d
             x3 = x2 + h * (y1 - y0) / d
@@ -3864,7 +3863,7 @@ class Circle2D(Contour2D):
         return self.discretization_points(discretization_resolution)
 
 
-class Contour3D(Contour, Wire3D):
+class Contour3D(ContourMixin, Wire3D):
     _non_serializable_attributes = ['points']
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['points', 'name']
@@ -3950,7 +3949,8 @@ class Contour3D(Contour, Wire3D):
             # Red color : can't be connected to green edge
             raw_edges[1].plot(ax=ax, color='r')
             # Black color : to be placed
-            [re.plot(ax=ax) for re in raw_edges[2:]]
+            for re in raw_edges[2:]:
+                re.plot(ax=ax)
             # deltax1 = abs(raw_edges[0].start.x - raw_edges[1].end.x)
             # deltax2 = abs(raw_edges[0].end.x - raw_edges[1].end.x)
             # deltay1 = abs(raw_edges[0].start.y - raw_edges[1].end.y)
@@ -3988,16 +3988,18 @@ class Contour3D(Contour, Wire3D):
             if min(distances) > 6e-4:
                 # Green color : well-placed and well-read
                 ax = last_edge.plot(color='g')
-                [re.plot(ax=ax, color='g') for re in raw_edges[:2 + i]]
-                [re.start.plot(ax=ax, color='g') for re in raw_edges[:2 + i]]
-                [re.start.plot(ax=ax, color='g') for re in raw_edges[:2 + i]]
+                for re in raw_edges[:2 + i]:
+                    re.plot(ax=ax, color='g')
+                    re.start.plot(ax=ax, color='g')
+                    re.end.plot(ax=ax, color='g')
                 last_edge.end.plot(ax=ax, color='r')
                 # Red color : can't be connected to red dot
                 raw_edge.plot(ax=ax, color='r')
                 # Black color : to be placed
-                [re.plot(ax=ax) for re in raw_edges[2 + i + 1:]]
-                [re.start.plot(ax=ax) for re in raw_edges[2 + i + 1:]]
-                [re.end.plot(ax=ax) for re in raw_edges[2 + i + 1:]]
+                for re in raw_edges[2 + i + 1:]:
+                    re.plot(ax=ax)
+                    re.start.plot(ax=ax)
+                    re.end.plot(ax=ax)
                 # deltax1 = abs(raw_edge.start.x - last_edge.end.x)
                 # deltax2 = abs(raw_edge.end.x - last_edge.end.x)
                 # deltay1 = abs(raw_edge.start.y - last_edge.end.y)
@@ -4026,16 +4028,15 @@ class Contour3D(Contour, Wire3D):
         content = ''
         edge_ids = []
         for primitive in self.primitives:
-
             if primitive.__class__.__name__ == 'BSplineCurve3D':
                 method_name = f'{primitive.__class__.__name__.lower()}_to_2d'
                 curve2d = getattr(surface3d, method_name)(primitive)[0]
                 if curve2d.__class__.__name__ == 'LineSegment3D':
                     curve2d = curve2d.to_bspline_curve()
                 primitive_content, primitive_ids = primitive.to_step(
-                    current_id, surface_id, curve2d)
+                    current_id, surface_id=surface_id, curve2d=curve2d)
             else:
-                primitive_content, primitive_ids = primitive.to_step(current_id, surface_id)
+                primitive_content, primitive_ids = primitive.to_step(current_id, surface_id=surface_id)
 
             content += primitive_content
             current_id = primitive_ids[-1] + 1
@@ -4267,7 +4268,7 @@ class Contour3D(Contour, Wire3D):
         """
 
         merged_primitives = self.merge_primitives_with(contour3d)
-        contours = volmdlr.wires.Contour3D.contours_from_edges(merged_primitives, tol=3e-4)
+        contours = Contour3D.contours_from_edges(merged_primitives, tol=3e-4)
         # contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
 
         return contours
@@ -4429,7 +4430,7 @@ class Circle3D(Contour3D):
         return cls.from_center_normal(center, normal, radius,
                                       arguments[0][1:-1])
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, surface_id=None, surface3d=None):
         circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u,
                                        self.frame.v)
         content, frame_id = circle_frame.to_step(current_id)
