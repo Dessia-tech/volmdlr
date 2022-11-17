@@ -7354,10 +7354,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             for j, face2 in enumerate(shell.faces):
                 contour1 = face1.surface2d.outer_contour
                 contour2 = face1.surface3d.contour3d_to_2d(face2.outer_contour3d)
+                c_inners_1 = face1.surface2d.inner_contours
+                c_inners_2 = [face1.surface3d.contour3d_to_2d(inner) for inner in face2.inner_contours3d]
+                inside = set()
+                for c1 in c_inners_1:
+                    for c2 in c_inners_2:
+                        inside.add(c2.is_inside(c1))
 
                 if (face1.surface3d.is_coincident(face2.surface3d)
                     and (contour1.is_overlapping(contour2)
-                         or contour1.is_inside(contour2))):
+                         or (contour1.is_inside(contour2) or True in inside))):
                     print('i: ', i)
                     print('j: ', j)
                     if face1 in used_faces:
