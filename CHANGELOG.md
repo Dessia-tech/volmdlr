@@ -60,7 +60,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ElementsGroup: nodes, elements_per_node
 * Mesh: bounding_rectangle, delete_duplicated_nodes
 * PlaneFace3D: cut_by_coincident_face
-
+* Vector2D: to_step
+* BSplineCurve2D: to_step
+* LineSegment3D: to_bspline_curve
+* BSplineCurve3D: from_geomdl_curve
+* Surface2D: line_crossings
+* Surface2D: from_contour
+* BSplineSurface3D: simpifly_surface - verifies if BSplineSurface3D could be a Plane3D
+* OpenShell3D: to_step_face_ids
+* Contour2D: repair_cut_contour
+* Circle2D: cut_by_line
 
 ### Fixed
 
@@ -76,6 +85,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D: point_belongs (bug when contour has only one primitive, like FullArc2D)
 * Contour: contours_from_edges
 * PlaneFace3D: face_intersections
+* Edge: insert_knots_and_mutiplicity
+* BSplineCurve3D: from_step
+* Surface2D: cut_by_line
+* Circle3D: to_step
 
 
 ### Performance improvements
