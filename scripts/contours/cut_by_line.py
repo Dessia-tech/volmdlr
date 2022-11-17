@@ -46,7 +46,7 @@ assert len(cut_contour_by_line1) == 2
 
 
 cut_contour_by_line2 = contour2.cut_by_line(infinit_line2)
-assert len(cut_contour_by_line2) == 2
+assert len(cut_contour_by_line2) == 3
 
 cut_contour_by_line3 = contour2.cut_by_line(infinit_line3)
 assert len(cut_contour_by_line3) == 2
