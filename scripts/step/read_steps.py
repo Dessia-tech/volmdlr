@@ -26,9 +26,10 @@ for step_file in [
     # 'tore1.step',
     # 'block.step',
     # 'Hollow_Loft.step',
-    'spherical_surface_body.step',
-    'bracket2_cut3.step',
-    'demi_sphere.step'
+    # 'spherical_surface_body.step',
+    # 'bracket2_cut3.step',
+    # 'demi_sphere.step',
+    'HRG_BOT.stp'
 
 ]:
     print('Reading step file: ', step_file)

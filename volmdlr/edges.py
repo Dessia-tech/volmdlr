@@ -109,6 +109,9 @@ class Edge(dc.DessiaObject):
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
+        orientation = arguments[4]
+        if orientation == '.F.':
+            p1, p2 = p2, p1
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
