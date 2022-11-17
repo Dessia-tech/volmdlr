@@ -14,8 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle2D: split_by_line
 * BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
 * Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside
-* CylindricalSurface3D: line_intersections, linesegment_intersections
+* CylindricalSurface3D: line_intersections, linesegment_intersections, plane_intersection
 * Line2D: point_distance
+* Line3D: to_2d
+
+
 
 ### Fixed
 
@@ -26,11 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * FullArc3D: plot (use discretization_points instead of discretise)
 * LineSegment2D: to_wire (use discretization_points instead of discretise)
 
+
 ### Performance improvements
 
 * Avoid unneeded bbox computation
 
 ### Refactorings
+
 
 
 ### Unittests
@@ -43,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CylindricalFace3D: linesegment_intersections
 * CylindricalSurface3D: line_intersections
 * LineSegment2D: to_wire
+
 
 
 ## v0.6.0 [11/7/2022]
