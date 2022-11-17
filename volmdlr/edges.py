@@ -2781,7 +2781,10 @@ class Line3D(Line):
         # elif c == p == 0 and z2 != z1:
         #     return None
         # if a == b == 0 and (x2 - x1) * n == (y2 - y1) * m:
-        if a == m == 0:
+        if n * a != b * m:
+            coefficient_t = (b * (x2 - x1) - a * (y2 - y1)) / (n * a - b * m)
+            coefficient_s = (n * (x2 - x1) - m * (y2 - y1)) / (n * a - b * m)
+        elif a == m == 0:
             if x2 == x1 and c * n != b * p:
                 if b != 0:
                     coefficient_t = ((z2 - z1) * b - c * (y2 - y1)) / (c * n - b * p)
@@ -2810,13 +2813,6 @@ class Line3D(Line):
         elif m == 0 and a != 0 and n != 0:
             coefficient_s = - (x2 - x1) / a
             coefficient_t = ((y2 - y1) - b * coefficient_s) / -n
-        elif a != 0 and n != 0 and n * a != b * m:
-            coefficient_t = (
-                b * (x2 - x1) / n * a - (y2 - y1) / n
-            ) * (
-                n * a / (n * a - b * m)
-            )
-            coefficient_s = ((x2 - x1) + m * coefficient_t) / a
         else:
             print(True)
             raise NotImplementedError
