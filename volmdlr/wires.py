@@ -1128,6 +1128,9 @@ class ContourMixin(WireMixin):
         if not intersecting_points:
             intersecting_points = self.contour_intersections(contour2)
 
+        if len(intersecting_points) < 2:
+            return False
+
         vec1_2 = volmdlr.edges.LineSegment2D(intersecting_points[0],
                                              intersecting_points[1])
         middle_point = vec1_2.middle_point()
