@@ -2478,6 +2478,8 @@ class ArcEllipse2D(Edge):
             return area
         else:
             return -area
+
+
 class Line3D(Line):
     _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
 
