@@ -1402,7 +1402,7 @@ class LineSegment2D(LineSegment):
         convert a linesegment2d to a wire2d defined with 'n' line_segments
         '''
 
-        points = self.discretise(n)
+        points = self.discretization_points(number_points=n + 1)
         return volmdlr.wires.Wire2D.from_points(points)
 
     def nearest_point_to(self, point):

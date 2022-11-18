@@ -30,15 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * STL: from stream (use BinaryFile and StringFile instead of io.BinaryIO and FileIO)
 * Step: from stream (use BinaryFile instead of io.BinaryIO)
 * Contour: is_overlapping (consider intersecting_points is empty)
+* LineSegment2D: to_wire (use discretization_points instead of discretise)
 
 
 ### Performance improvements
 
 * Avoid unneeded bbox computation
 
-
 ### Refactorings
-
 
 
 
@@ -52,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CylindricalFace3D: linesegment_intersections
 * CylindricalSurface3D: line_intersections
 * Contour: is_overlapping
-
+* LineSegment2D: to_wire
 
 
 ## v0.6.0 [11/7/2022]
