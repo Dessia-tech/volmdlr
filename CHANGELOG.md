@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+* Open/Closed TriangleShells: ability to implement specific algorithm to triangles
 * Block: faces_center (calculate directly point in the middle of the faces)
 * Circle2D: split_by_line
 * BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
@@ -31,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Refactorings
-
+* cleanup of ClosedShell (double methods with Openshells)
 
 
 ### Unittests

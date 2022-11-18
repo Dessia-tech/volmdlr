@@ -2,6 +2,7 @@
 Surfaces & faces
 """
 
+import warnings
 from typing import List, Tuple, Dict, Any
 import math
 
@@ -7134,7 +7135,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        OpenShell3D rotation
+        OpenShell3D / ClosedShell3D rotation
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -7142,13 +7143,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         """
         new_faces = [face.rotation(center, axis, angle) for face
                      in self.faces]
-        return OpenShell3D(new_faces, color=self.color, alpha=self.alpha,
-                           name=self.name)
+        return self.__class__(new_faces, color=self.color, alpha=self.alpha, name=self.name)
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        OpenShell3D rotation. Object is updated inplace
+        Shell3D rotation. Object is updated inplace
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -7160,13 +7160,13 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        OpenShell3D translation
+        Shell3D translation
         :param offset: translation vector
         :return: A new translated OpenShell3D
         """
         new_faces = [face.translation(offset) for face in
                      self.faces]
-        return OpenShell3D(new_faces, color=self.color, alpha=self.alpha,
+        return self.__class__(new_faces, color=self.color, alpha=self.alpha,
                            name=self.name)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
@@ -7409,9 +7409,22 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             intersections_points + shell1_points_outside_shell2)
         return bbox.volume()
 
-    def primitive_inside_bbox(self, bounding_box: volmdlr.core.BoundingBox):
-        for primitive in self.primitives:
-            bbox = primitive.bounding_box
+    def face_on_shell(self, face):
+        """
+        Verifies if a face lies on the shell's surface
+        """
+        for fc in self.faces:
+            if fc.face_inside(face):
+                return True
+        return False
+
+    def point_on_shell(self, point: volmdlr.Point3D):
+        raise NotImplementedError('This method was considering only triangles, which is not generic. '
+                                  f'Transform your shell of class {self.__class__.__name__} to a triangle one')
+
+    def point_in_shell_face(self, point: volmdlr.Point3D):
+        warnings.warn('point_in_shell_face is deprecated, please use discretization_points instead',
+                      DeprecationWarning)
 
     def triangulation(self):
         # mesh = vmd.DisplayMesh3D([], [])
@@ -7468,86 +7481,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 class ClosedShell3D(OpenShell3D):
     STEP_FUNCTION = 'CLOSED_SHELL'
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
-        """
-        ClosedShell3D rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated ClosedShell3D
-        """
-        new_faces = [face.rotation(center, axis, angle) for face
-                     in self.faces]
-        return ClosedShell3D(new_faces, color=self.color,
-                             alpha=self.alpha, name=self.name)
-
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        ClosedShell3D rotation. Object is updated inplace
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        for face in self.faces:
-            face.rotation_inplace(center, axis, angle)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
-    def translation(self, offset: volmdlr.Vector3D):
-        """
-        ClosedShell3D translation
-        :param offset: translation vector
-        :return: A new translated ClosedShell3D
-        """
-        new_faces = [face.translation(offset) for face in
-                     self.faces]
-        return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha,
-                             name=self.name)
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        ClosedShell3D translation. Object is updated inplace
-        :param offset: translation vector
-        """
-        for face in self.faces:
-            face.translation_inplace(offset)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and return a new ClosedShell3D
-        side = 'old' or 'new'
-        """
-        new_faces = [face.frame_mapping(frame, side) for face in
-                     self.faces]
-        return ClosedShell3D(new_faces, name=self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
-        """
-        for face in self.faces:
-            face.frame_mapping_inplace(frame, side)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
-    def copy(self, deep=True, memo=None):
-        new_faces = [face.copy() for face in self.faces]
-        return self.__class__(new_faces, color=self.color, alpha=self.alpha,
-                              name=self.name)
-
-    def face_on_shell(self, face):
-        """
-        Verifies if a face lies on the shell's surface
-        """
-        for fc in self.faces:
-            if fc.face_inside(face):
-                return True
-        return False
 
     def is_face_inside(self, face: Face3D):
         for point in face.outer_contour3d.discretization_points(0.01):
@@ -7657,13 +7590,6 @@ class ClosedShell3D(OpenShell3D):
                 raise ValueError
         return tests[0]
 
-    def point_in_shell_face(self, point: volmdlr.Point3D):
-
-        for face in self.faces:
-            if (face.surface3d.point_on_plane(point) and face.point_belongs(point)) or \
-                    face.outer_contour3d.point_over_contour(point, abs_tol=1e-7):
-                return True
-        return False
 
     def is_inside_shell(self, shell2, resolution: float):
         """
@@ -8159,9 +8085,48 @@ class OpenTriangleShell3D(OpenShell3D):
                  alpha: float = 1., name: str = ''):
         OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
+    def point_on_shell(self, point: volmdlr.Point3D):
+        for face in self.faces:
+            if (face.surface3d.point_on_plane(point) and face.point_belongs(point)) or \
+                    face.outer_contour3d.point_over_contour(point, abs_tol=1e-7):
+                return True
+        return False
 
-class ClosedTriangleShell3D(ClosedShell3D):
+
+    def to_mesh_data(self):
+        positions = npy.array(3*len(self.faces), 3)
+        faces = npy.array(len(self.faces), 3)
+        for i, triangle in enumerate(self.faces):
+            i1 = 3*i
+            i2 = i1 + 1
+            i3 = i1 + 2
+            positions[i1, 0] = triangle.points[0].x
+            positions[i1, 1] = triangle.points[0].y
+            positions[i1, 2] = triangle.points[0].z
+            positions[i2, 0] = triangle.points[1].x
+            positions[i2, 1] = triangle.points[1].y
+            positions[i2, 2] = triangle.points[1].z
+            positions[i3, 0] = triangle.points[2].x
+            positions[i3, 1] = triangle.points[2].y
+            positions[i3, 2] = triangle.points[2].z
+
+            faces[i, 0] = i1
+            faces[i, 1] = i2
+            faces[i, 2] = i3
+
+        return positions, faces
+
+    @classmethod
+    def from_mesh_data(cls, positions, faces):
+        triangles = []
+        points = [volmdlr.core.Point3D(px, py, pz) for px, py, pz in positions]
+        for i1, i2, i3 in faces:
+            triangles.append(Triangle3D(points[i1], points[i2], points[i3]))
+        return cls(triangles)
+
+
+class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
     def __init__(self, faces: List[Triangle3D],
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
-        OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
+        OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
