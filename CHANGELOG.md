@@ -15,8 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle2D: split_by_line
 * BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
 * Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside
-* CylindricalSurface3D: line_intersections, linesegment_intersections
+* CylindricalSurface3D: line_intersections, linesegment_intersections, plane_intersection
 * Line2D: point_distance
+* Line3D: to_2d
+
+
 
 ### Fixed
 
@@ -25,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix some to_step methods from edges.py and faces.py
 * Cylinder: point_belongs
 * FullArc3D: plot (use discretization_points instead of discretise)
+* STL: from stream (use BinaryFile and StringFile instead of io.BinaryIO and FileIO)
+* step: from stream (use BinaryFile instead of io.BinaryIO)
+
 
 ### Performance improvements
 
@@ -33,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactorings
 * cleanup of ClosedShell (double methods with Openshells)
+
 
 
 ### Unittests
@@ -44,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: point_belongs, random_point_inside, interference_volume_with_other_cylinder, min_distance_to_other_cylinder, is_intersecting_other_cylinder, lhs_points_inside
 * CylindricalFace3D: linesegment_intersections
 * CylindricalSurface3D: line_intersections
+
 
 
 ## v0.6.0 [11/7/2022]

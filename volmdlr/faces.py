@@ -983,6 +983,16 @@ class Plane3D(Surface3D):
             return True
         return False
 
+    def point_distance(self, point3d):
+        """
+        Calculates the distance of a point to plane
+        :param point3d: point to verify distance
+        :return: a float, point distance to plane
+        """
+        coefficient_a, coefficient_b, coefficient_c, coefficient_d = self.equation_coefficients()
+        return abs(self.frame.w.dot(point3d) + coefficient_d) / math.sqrt(coefficient_a**2 +
+                                                                          coefficient_b**2 + coefficient_c**2)
+
     def line_intersections(self, line):
         u = line.point2 - line.point1
         w = line.point1 - self.frame.origin
@@ -1210,8 +1220,6 @@ class CylindricalSurface3D(Surface3D):
         u2 = y / self.radius
         # theta = volmdlr.core.sin_cos_angle(u1, u2)
         theta = math.atan2(u2, u1)
-        if u2 < 0:
-            theta = theta + volmdlr.TWO_PI
         return volmdlr.Point2D(theta, z)
 
     def arc3d_to_2d(self, arc3d):
@@ -1386,6 +1394,9 @@ class CylindricalSurface3D(Surface3D):
             (self.radius ** 2 - distance_line2d_to_origin ** 2) / a_prime_minus_b_prime.dot(a_prime_minus_b_prime))
         intersection1 = line.point1 + (t_param + k_param) * (line.direction_vector())
         intersection2 = line.point1 + (t_param - k_param) * (line.direction_vector())
+        if intersection1 == intersection2:
+            return [intersection1]
+
         return [intersection1, intersection2]
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D):
@@ -1393,6 +1404,85 @@ class CylindricalSurface3D(Surface3D):
         line_intersections = self.line_intersections(line)
         linesegment_intersections = [inters for inters in line_intersections if linesegment.point_belongs(inters)]
         return linesegment_intersections
+
+    def parallel_plane_intersection(self, plane3d):
+        """
+        Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis
+        :param plane3d: intersecting plane
+        :return: list of intersecting curves
+        """
+        origin2d = self.frame.origin.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
+        if distance_plane_cylinder_axis > self.radius:
+            return []
+        if math.isclose(self.frame.w.dot(plane3d.frame.u), 0, abs_tol=1e-6):
+            line = volmdlr.edges.Line3D(plane3d.frame.origin, plane3d.frame.origin + plane3d.frame.u)
+        else:
+            line = volmdlr.edges.Line3D(plane3d.frame.origin, plane3d.frame.origin + plane3d.frame.v)
+        line_intersections = self.line_intersections(line)
+        lines = []
+        for intersection in line_intersections:
+            lines.append(volmdlr.edges.Line3D(intersection, intersection + self.frame.w))
+        return lines
+
+    def perpendicular_plane_intersection(self, plane3d):
+        """
+        Cylinder plane intersections when plane's normal is parallel with the cylinder axis
+        :param plane3d: intersecting plane
+        :return: list of intersecting curves
+        """
+        center2d = volmdlr.Point2D(self.frame.origin.x, self.frame.origin.y)
+        center3d_plane = plane3d.point2d_to_3d(center2d)
+        circle3d = volmdlr.wires.Circle3D(volmdlr.Frame3D(center3d_plane, plane3d.frame.u,
+                                                          plane3d.frame.v, plane3d.frame.w), self.radius)
+        return [circle3d]
+
+    def concurent_plane_intersection(self, plane3d):
+        """
+        Cylinder plane intersections when plane's normal is concurent with the cylinder axis, but not orthogonal
+        :param plane3d: intersecting plane
+        :return: list of intersecting curves
+        """
+        # Ellipse vector equation : < rcos(t), rsin(t), -(1 / c)*(d + arcos(t) + brsint(t)); d = - (ax_0 + by_0 + cz_0)
+        center2d = volmdlr.Point2D(self.frame.origin.x, self.frame.origin.y)
+        center3d_plane = plane3d.point2d_to_3d(center2d)
+        plane_coefficient_a, plane_coefficient_b, plane_coefficient_c, plane_coefficient_d =\
+            plane3d.equation_coefficients()
+        ellipse_0 = volmdlr.Point3D(
+            self.radius * math.cos(0),
+            self.radius * math.sin(0),
+            - (1 / plane_coefficient_c) * (plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(0) +
+                                           plane_coefficient_b * self.radius * math.sin(0)))
+        ellipse_pi_by_4 = volmdlr.Point3D(
+            self.radius * math.cos(math.pi / 2),
+            self.radius * math.sin(math.pi / 2),
+            - (1 / plane_coefficient_c) * (
+                    plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(math.pi / 2)
+                    + plane_coefficient_b * self.radius * math.sin(math.pi / 2)))
+        axis_1 = center3d_plane.point_distance(ellipse_0)
+        axis_2 = center3d_plane.point_distance(ellipse_pi_by_4)
+        if axis_1 > axis_2:
+            major_axis = axis_1
+            minor_axis = axis_2
+            major_dir = ellipse_0 - center3d_plane
+        else:
+            major_axis = axis_2
+            minor_axis = axis_1
+            major_dir = ellipse_pi_by_4 - center3d_plane
+        ellipse = volmdlr.wires.Ellipse3D(major_axis, minor_axis, center3d_plane, plane3d.frame.w, major_dir)
+        return [ellipse]
+
+    def plane_intersection(self, plane3d):
+        """
+        Cylinder intersections with a plane
+        :param plane3d: intersecting plane
+        :return: list of intersecting curves
+        """
+        if abs(plane3d.frame.w.dot(self.frame.w)) == 0:
+            return self.parallel_plane_intersection(plane3d)
+        elif math.isclose(plane3d.frame.w.dot(self.frame.w), 1, abs_tol=1e-6):
+            return self.perpendicular_plane_intersection(plane3d)
+        return self.concurent_plane_intersection(plane3d)
 
 
 class ToroidalSurface3D(Surface3D):
@@ -3926,11 +4016,13 @@ class Face3D(volmdlr.core.Primitive3D):
         Tells you if a point is on the 3D face and inside its contour
         """
         point2d = self.surface3d.point3d_to_2d(point3d)
+        point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
+        point2d_minus_2pi = point2d.translation(volmdlr.Point2D(-volmdlr.TWO_PI, 0))
         check_point3d = self.surface3d.point2d_to_3d(point2d)
         if check_point3d.point_distance(point3d) > 1e-6:
             return False
 
-        return self.surface2d.point_belongs(point2d)
+        return any(self.surface2d.point_belongs(pt2d) for pt2d in [point2d, point2d_plus_2pi, point2d_minus_2pi])
 
     @property
     def outer_contour3d(self):
@@ -4175,8 +4267,7 @@ class Face3D(volmdlr.core.Primitive3D):
                                   linesegment: vme.LineSegment3D,
                                   ) -> List[volmdlr.Point3D]:
         intersections = []
-        for intersection in self.surface3d.linesegment_intersections(
-                linesegment):
+        for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 intersections.append(intersection)
 
