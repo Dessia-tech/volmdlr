@@ -31,7 +31,6 @@ import volmdlr.wires
 import volmdlr.display as vmd
 import volmdlr.geometry
 import volmdlr.grid
-import os
 
 
 def knots_vector_inv(knots_vector):
@@ -2358,10 +2357,8 @@ class SphericalSurface3D(Surface3D):
             u1, u2 = x, y
         else:
             u1, u2 = round(x / u, 6), round(y / u, 6)
-            if u2 == -0.0:
-                u2 = 0.0
         theta = math.atan2(u2, u1)
-        if abs(theta) < 1e-10:
+        if abs(theta) < 1e-12:
             theta = 0
         # elif math.isclose(theta, 0.5*math.pi, abs_tol=1e-6):
         #     theta = 0.5*math.pi
@@ -2820,7 +2817,7 @@ class BSplineSurface3D(Surface3D):
 
             results.append((z.x, z.fun))
             results.append((res.x, res.fun))
-        return (volmdlr.Point2D(*min(results, key=lambda r: r[1])[0]))
+        return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
