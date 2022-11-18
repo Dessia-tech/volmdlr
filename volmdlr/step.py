@@ -5,7 +5,8 @@
 """
 
 import time
-from typing import BinaryIO, List
+from typing import List
+from dessia_common.files import BinaryFile
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -280,7 +281,7 @@ class Step(dc.DessiaObject):
         return self._graph
 
     @classmethod
-    def from_stream(cls, stream: BinaryIO = None):
+    def from_stream(cls, stream: BinaryFile = None):
         stream.seek(0)
         lines = []
         for line in stream:
