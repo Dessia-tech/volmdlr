@@ -11,9 +11,9 @@ import volmdlr.faces as vmf
 
 for step_file in [
     # 'cylinder-test.step',
-    # 'bracket2.step',
+    'bracket2.step',
     # 'read_test1.step',
-    'read_test2.step',
+    # 'read_test2.step',
     # 'read_test3.step',
     # 'read_test4.step',
     # 'read_test6.step',
@@ -23,15 +23,15 @@ for step_file in [
     # 'tormach_wrench.step',
     # 'water_tank.step',
     # 'angle_bar.step',
-    'tore1.step',
-    'block.step',
+    # 'tore1.step',
+    # 'block.step',
     # 'Hollow_Loft.step',
-    'spherical_surface_body.step',
+    # 'spherical_surface_body.step',
     # 'bracket2_cut3.step',
-    'demi_sphere.step',
-    'strange_gasket.step',
-    'cone1.step',
-    'cone2.step',
+    # 'demi_sphere.step',
+    # 'strange_gasket.step',
+    # 'cone1.step',
+    # 'cone2.step',
     # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
   ]:
 

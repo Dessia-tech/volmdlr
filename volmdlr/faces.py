@@ -1428,10 +1428,10 @@ class CylindricalSurface3D(Surface3D):
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         # TODO: enhance this, this is a non exact method!
         length = bspline_curve3d.length()
-        points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
-                  for i in range(11)]
-        # points = [self.point3d_to_2d(p)
-        #                   for p in bspline_curve3d.control_points]
+        # points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
+        #           for i in range(11)]
+        points = [self.point3d_to_2d(p)
+                          for p in bspline_curve3d.control_points]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -1448,27 +1448,29 @@ class CylindricalSurface3D(Surface3D):
             theta2 = -math.pi
             points[-1] = volmdlr.Point2D(theta2, z2)
 
-        if theta3 < theta1 < 0 and theta2 > 0:
+        if theta3 < theta1 < theta2:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
-        elif theta3 > theta1 > 0 and theta2 < 0:
+        elif theta3 > theta1 > theta2:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
 
-        list_primitives = []
+        new_points = [p1 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
+        new_points.append(points[-1])
+        # list_primitives = []
         # new_points = []
-        last_p1x = points[0].x
-        for p1, p2 in zip(points[:-1], points[1:]):
-            if p1 == p2:
-                continue
+        # last_p1x = points[0].x
+        # for p1, p2 in zip(points[:-1], points[1:]):
+        #     if p1 == p2:
+        #         continue
             # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
-            if math.isclose(p1.x, math.pi, abs_tol=1e-6) and (p1.x - p2.x) > math.pi:
-                p1 = volmdlr.Point2D(-math.pi, p1.y)
-            elif math.isclose(p1.x, -math.pi, abs_tol=1e-6) and (p1.x - p2.x) < -math.pi:
-                p1 = volmdlr.Point2D(math.pi, p1.y)
+            # if math.isclose(p1.x, math.pi, abs_tol=1e-6) and (p1.x - p2.x) > math.pi:
+            #     p1 = volmdlr.Point2D(-math.pi, p1.y)
+            # elif math.isclose(p1.x, -math.pi, abs_tol=1e-6) and (p1.x - p2.x) < -math.pi:
+            #     p1 = volmdlr.Point2D(math.pi, p1.y)
             #     new_points.append(p1)
             #
             # new_points.append(points[-1])
-            # return [vme.BSplineCurve2D.from_points_interpolation(new_points, bspline_curve3d.degree,
-            #                                                      bspline_curve3d.periodic)]
+        return [vme.BSplineCurve2D.from_points_interpolation(new_points, bspline_curve3d.degree,
+                                                                 bspline_curve3d.periodic)]
             # return [vme.BSplineCurve2D(
             #     bspline_curve3d.degree,
             #     control_points=new_points,
@@ -1476,13 +1478,13 @@ class CylindricalSurface3D(Surface3D):
             #     knots=bspline_curve3d.knots,
             #     weights=bspline_curve3d.weights,
             #     periodic=bspline_curve3d.periodic)]
-            if math.isclose(p2.x, math.pi, abs_tol=1e-6) and (p1.x - last_p1x) < 0:
-                p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
-            elif math.isclose(p2.x, -math.pi, abs_tol=1e-6) and (p1.x - last_p1x) > 0:
-                p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
-            list_primitives.append(vme.LineSegment2D(p1, p2))
-            last_p1x = p1.x
-        return list_primitives
+        #     if math.isclose(p2.x, math.pi, abs_tol=1e-6) and (p1.x - last_p1x) < 0:
+        #         p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
+        #     elif math.isclose(p2.x, -math.pi, abs_tol=1e-6) and (p1.x - last_p1x) > 0:
+        #         p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
+        #     list_primitives.append(vme.LineSegment2D(p1, p2))
+        #     last_p1x = p1.x
+        # return list_primitives
 
     def arcellipse3d_to_2d(self, arcellipse3d):
         """
@@ -1953,37 +1955,39 @@ class ToroidalSurface3D(Surface3D):
         elif phi3 > phi1 > phi2:
             control_points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in control_points]
 
-        list_primitives = []
-        last_p1x = control_points[0].x
-        last_p1y = control_points[0].y
-        for p1, p2 in zip(control_points[:-1], control_points[1:]):
-            if p1 == p2:
-                continue
-            # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
-            if math.isclose(p1.x, math.pi, abs_tol=1e-6) and (p1.x - p2.x) > math.pi:
-                p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
-            elif math.isclose(p1.x, -math.pi, abs_tol=1e-6) and (p1.x - p2.x) < -math.pi:
-                p1 = p1 + volmdlr.TWO_PI * volmdlr.X2D
-            if math.isclose(p2.x, math.pi, abs_tol=1e-6) and (p1.x - last_p1x) < 0:
-                p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
-            elif math.isclose(p2.x, -math.pi, abs_tol=1e-6) and (p1.x - last_p1x) > 0:
-                p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
-
-            if math.isclose(p1.y, math.pi, abs_tol=1e-6) and (p1.y - p2.y) > math.pi:
-                p1 = p1 - volmdlr.TWO_PI * volmdlr.Y2D
-            elif math.isclose(p1.y, -math.pi, abs_tol=1e-6) and (p1.y - p2.y) < -math.pi:
-                p1 = p1 + volmdlr.TWO_PI * volmdlr.Y2D
-            if math.isclose(p2.y, math.pi, abs_tol=1e-6) and (p1.y - last_p1y) < 0:
-                p2 = p2 - volmdlr.TWO_PI * volmdlr.Y2D
-            elif math.isclose(p2.y, -math.pi, abs_tol=1e-6) and (p1.y - last_p1y) > 0:
-                p2 = p2 + volmdlr.TWO_PI * volmdlr.Y2D
-            # list_primitives.append(vme.LineSegment2D(p1, p2))
-            list_primitives.append(p1)
-            last_p1x = p1.x
-            last_p1y = p1.y
-        list_primitives.append(control_points[-1])
+        new_points = [p1 for p1, p2 in zip(control_points[:-1], control_points[1:]) if p1 != p2]
+        new_points.append(control_points[-1])
+        # list_primitives = []
+        # last_p1x = control_points[0].x
+        # last_p1y = control_points[0].y
+        # for p1, p2 in zip(control_points[:-1], control_points[1:]):
+        #     if p1 == p2:
+        #         continue
+        #     # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
+        #     if math.isclose(p1.x, math.pi, abs_tol=1e-6) and (p1.x - p2.x) > math.pi:
+        #         p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
+        #     elif math.isclose(p1.x, -math.pi, abs_tol=1e-6) and (p1.x - p2.x) < -math.pi:
+        #         p1 = p1 + volmdlr.TWO_PI * volmdlr.X2D
+        #     if math.isclose(p2.x, math.pi, abs_tol=1e-6) and (p1.x - last_p1x) < 0:
+        #         p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
+        #     elif math.isclose(p2.x, -math.pi, abs_tol=1e-6) and (p1.x - last_p1x) > 0:
+        #         p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
+        #
+        #     if math.isclose(p1.y, math.pi, abs_tol=1e-6) and (p1.y - p2.y) > math.pi:
+        #         p1 = p1 - volmdlr.TWO_PI * volmdlr.Y2D
+        #     elif math.isclose(p1.y, -math.pi, abs_tol=1e-6) and (p1.y - p2.y) < -math.pi:
+        #         p1 = p1 + volmdlr.TWO_PI * volmdlr.Y2D
+        #     if math.isclose(p2.y, math.pi, abs_tol=1e-6) and (p1.y - last_p1y) < 0:
+        #         p2 = p2 - volmdlr.TWO_PI * volmdlr.Y2D
+        #     elif math.isclose(p2.y, -math.pi, abs_tol=1e-6) and (p1.y - last_p1y) > 0:
+        #         p2 = p2 + volmdlr.TWO_PI * volmdlr.Y2D
+        #     # list_primitives.append(vme.LineSegment2D(p1, p2))
+        #     list_primitives.append(p1)
+        #     last_p1x = p1.x
+        #     last_p1y = p1.y
+        # list_primitives.append(control_points[-1])
         # return list_primitives
-        return [vme.BSplineCurve2D.from_points_interpolation(list_primitives, bspline_curve3d.degree,
+        return [vme.BSplineCurve2D.from_points_interpolation(new_points, bspline_curve3d.degree,
                                                              periodic=bspline_curve3d.periodic)]
         # return [vme.BSplineCurve2D(
         #     bspline_curve3d.degree,
@@ -2324,12 +2328,10 @@ class SphericalSurface3D(Surface3D):
         elif z > self.radius:
             z = self.radius
 
-        if z == -0.0:
-            z = 0.0
         zr = round((z / self.radius), 6)
         phi = math.asin(zr)
 
-        if abs(phi) < 1e-10:
+        if abs(phi) < 1e-12:
             phi = 0
 
         if x == 0.0 and y == 0.0:

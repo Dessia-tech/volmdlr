@@ -175,7 +175,13 @@ class WireMixin:
             if len(indices[1]) == 2:
                 ind.append(indices[1][1])
             else:
-                ind.append(indices[1][0])
+                try:
+                    ind.append(indices[1][0])
+                except Exception:
+                    ax = self.plot()
+                    ax.set_aspect('auto')
+                    point1.plot(ax, 'r')
+                    point2.plot(ax, 'r')
         else:
             for indice in indices:
                 if len(indice) == 1:
@@ -1755,10 +1761,11 @@ class Contour2D(ContourMixin, Wire2D):
         if len(intersections) % 2 != 0:
             ax = self.plot()
             line.plot(ax=ax)
+            ax.set_aspect('auto')
             for i in intersections:
                 i[0].plot(ax=ax)
-            self.save_to_file('/home/axel/Bureau/contour2d')
-            line.save_to_file('/home/axel/Bureau/line2d')
+            self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\contour2d')
+            line.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\line2d')
             raise NotImplementedError(f'{len(intersections)} intersections not supported yet')
 
         points_intersections = [point for point, prim in intersections]
