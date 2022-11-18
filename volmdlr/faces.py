@@ -1036,7 +1036,7 @@ class Plane3D(Surface3D):
         """
         a, b, c = self.frame.w
         d = -self.frame.origin.dot(self.frame.w)
-        return (a, b, c, d)
+        return (round(a, 12), round(b, 12), round(c, 12), round(d, 12))
 
     def plane_intersection(self, other_plane):
         if self.is_parallel(other_plane):
@@ -1063,16 +1063,17 @@ class Plane3D(Surface3D):
         if a1 * b2 - a2 * b1 != 0.:
             x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
             y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
-            point1_ = volmdlr.Point3D(x0, y0, 0)
-        elif c1 * b2 != b1 * c2:
-            y0 = (c2 * d1 - c1 * d2) / (b1 * c2 - c1 * b2)
-            z0 = (b1 * d2 - b2 * d1) / (b1 * c2 - c1 * b2)
-            point1_ = volmdlr.Point3D(0, y0, z0)
+            point1 = volmdlr.Point3D(x0, y0, 0)
         elif a2 * c1 != a1 * c2:
             x0 = (c2 * d1 - c1 * d2) / (a2 * c1 - a1 * c2)
             z0 = (a1 * d2 - a2 * d1) / (a2 * c1 - a1 * c2)
-            point1_ = volmdlr.Point3D(x0, 0, z0)
-        # else:
+            point1 = volmdlr.Point3D(x0, 0, z0)
+        elif c1 * b2 != b1 * c2:
+            y0 = (- c2 * d1 + c1 * d2) / (b1 * c2 - c1 * b2)
+            z0 = (- b1 * d2 + b2 * d1) / (b1 * c2 - c1 * b2)
+            point1 = volmdlr.Point3D(0, y0, z0)
+        else:
+            raise NotImplementedError
         #     y0 = (b2 * d2 - c2 * d1) / (b1 * c2 - c1 * b2)
         #     z0 = (c1 * d1 - b1 * d2) / (b1 * c2 - c1 * b2)
         #     point1_ = volmdlr.Point3D(0, y0, z0)
@@ -4362,8 +4363,8 @@ class Face3D(volmdlr.core.Primitive3D):
             return True
         return False
 
-    def edge3d_inside(self, linesegement3d: volmdlr.edges.LineSegment3D):
-        points = linesegement3d.discretization_points(number_points=200)
+    def edge3d_inside(self, edge3d):
+        points = edge3d.discretization_points(number_points=200)
         # length = linesegement3d.length()
         # points = [linesegement3d.point_at_abscissa(length * n / 200) for n in range(1, 199)]
         for point in points[1:-1]:
@@ -4666,6 +4667,21 @@ class PlaneFace3D(Face3D):
         return self.planeface_intersections(triangleface)
 
     def cylindricalface_intersections(self, cyclindricalface):
+        intersections_points = []
+        cylindricalsurfaceface_intersections = cyclindricalface.surface3d.plane_intersection(self.surface3d)
+        if all(self.edge3d_inside(intersection) for intersection in cylindricalsurfaceface_intersections):
+            return cylindricalsurfaceface_intersections
+        for edge1 in cyclindricalface.outer_contour3d.primitives:
+            intersection_points = self.edge_intersections(edge1)
+            if intersection_points:
+                for point in intersection_points:
+                    if point not in intersections_points:
+                        intersections_points.append(point)
+        if len(cylindricalsurfaceface_intersections) == 1:
+            intersections_points = cylindricalsurfaceface_intersections[0].sort_points_along_wire(intersections_points)
+        else:
+            raise NotImplementedError
+
         raise NotImplementedError
 
     def get_face_intersections(self, face2):

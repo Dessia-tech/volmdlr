@@ -2557,9 +2557,9 @@ class Line3D(Line):
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
-        v1 = (self.point1 - 3/3 * u)
+        v1 = (self.point1 - 3/6 * u)
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = (self.point2 - 3/3 * u)
+        v2 = (self.point2 - 3/6 * u)
         x2, y2, z2 = v2.x, v2.y, v2.z
         if dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
@@ -2791,7 +2791,7 @@ class Line3D(Line):
             coefficient_t = (b * (x2 - x1) - a * (y2 - y1)) / (n * a - b * m)
             coefficient_s = (n * (x2 - x1) - m * (y2 - y1)) / (n * a - b * m)
         elif a == m == 0:
-            if x2 == x1 and c * n != b * p:
+            if math.isclose(x2, x1, abs_tol=1e-6) and c * n != b * p:
                 if b != 0:
                     coefficient_t = ((z2 - z1) * b - c * (y2 - y1)) / (c * n - b * p)
                     coefficient_s = ((y2 - y1) + n * coefficient_t) / b
@@ -2801,7 +2801,7 @@ class Line3D(Line):
             else:
                 raise NotImplementedError
         elif b == n == 0:
-            if y2 == y1 and c * m != a * p:
+            if math.isclose(y2, y1, abs_tol=1e-6) and c * m != a * p:
                 if a != 0:
                     coefficient_t = ((z2 - z1) * a - c * (x2 - x1)) / (c * m - a * p)
                     coefficient_s = ((x2 - x1) + m * coefficient_t) / a
