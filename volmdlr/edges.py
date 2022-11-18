@@ -819,13 +819,13 @@ class Line2D(Line):
         list_points.extend(list(distances_to_reference_point.keys()))
         return list_points
 
-    def point_belongs(self, point2d, abs_tol:float=1e-6):
+    def point_belongs(self, point2d, abs_tol: float = 1e-6):
         """
         Verifies if the point2d belongs to the line
         :param point2d: point to be verified
         :return: True if point belongs to line, False otherwise
         """
-        return math.isclose(self.point_distance(point2d), 0, abs_tol = abs_tol)
+        return math.isclose(self.point_distance(point2d), 0, abs_tol=abs_tol)
 
     def point_distance(self, point2d):
         """
