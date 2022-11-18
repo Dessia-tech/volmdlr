@@ -28,16 +28,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: point_belongs
 * FullArc3D: plot (use discretization_points instead of discretise)
 * STL: from stream (use BinaryFile and StringFile instead of io.BinaryIO and FileIO)
-* step: from stream (use BinaryFile instead of io.BinaryIO)
+* Step: from stream (use BinaryFile instead of io.BinaryIO)
+* Contour: is_overlapping (consider intersecting_points is empty)
+* LineSegment2D: to_wire (use discretization_points instead of discretise)
 
 
 ### Performance improvements
 
 * Avoid unneeded bbox computation
 
-
 ### Refactorings
-
 
 
 
@@ -50,7 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: point_belongs, random_point_inside, interference_volume_with_other_cylinder, min_distance_to_other_cylinder, is_intersecting_other_cylinder, lhs_points_inside
 * CylindricalFace3D: linesegment_intersections
 * CylindricalSurface3D: line_intersections
-
+* Contour: is_overlapping
+* LineSegment2D: to_wire
 
 
 ## v0.6.0 [11/7/2022]
