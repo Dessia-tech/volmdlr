@@ -650,7 +650,7 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
-            # if isinstance(self, ConicalSurface3D):
+            # if isinstance(self, BSplineSurface3D):
             #
             #     onlyfiles = next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_contours'))[2]  # directory is your directory path as string
             #     l = len(onlyfiles)
@@ -667,11 +667,11 @@ class Surface3D(DessiaObject):
             # if isinstance(self, ConicalSurface3D):
             # self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_surface\surface.json')
             # contours3d[0].save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_contours\contour.json')
-            # contours3d[0].plot()
-            # ax = outer_contour2d.plot()
-            # ax.set_aspect('auto')
-            # outer_contour3d = self.contour2d_to_3d(outer_contour2d)
-            # outer_contour3d.plot()
+            #     contours3d[0].plot()
+            #     ax = outer_contour2d.plot()
+            #     ax.set_aspect('auto')
+            #     outer_contour3d = self.contour2d_to_3d(outer_contour2d)
+            #     outer_contour3d.plot()
             inner_contours2d = []
         elif lc3d > 1:
             area = -1

@@ -11,7 +11,7 @@ import volmdlr.faces as vmf
 
 for step_file in [
     # 'cylinder-test.step',
-    # 'bracket2.step',
+    'bracket2.step',
     # 'read_test1.step',
     # 'read_test2.step',
     # 'read_test3.step',
@@ -35,7 +35,8 @@ for step_file in [
     # 'demi_cone.step',
     # 'cone1.step',
     # 'cone2.step',
-    'HRG_BOT.stp'
+    # 'HRG_BOT.stp',
+    # 'bracket3.step'
 
 ]:
     print('Reading step file: ', step_file)
