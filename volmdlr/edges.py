@@ -1001,8 +1001,8 @@ class BSplineCurve2D(BSplineCurve):
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
-        for point1, point2 in zip(polygon_points[:-1], polygon_points[1:]):
-            linesegment = LineSegment2D(point1, point2)
+        for points in zip(polygon_points[:-1], polygon_points[1:]):
+            linesegment = LineSegment2D(points[0], points[1])
             intersections = linesegment.line_intersections(line2d)
             initial_abscissa += linesegment.length()
             if intersections:
@@ -4218,8 +4218,8 @@ class Arc3D(Arc):
         self.end.rotation_inplace(center, axis, angle)
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
-        for p in self.primitives:
-            p.rotation_inplace(center, axis, angle)
+        for prim in self.primitives:
+            prim.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -4243,8 +4243,8 @@ class Arc3D(Arc):
         self.end.translation_inplace(offset)
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
-        for p in self.primitives:
-            p.translation_inplace(offset)
+        for prim in self.primitives:
+            prim.translation_inplace(offset)
 
     def plot(self, ax=None, color='k', alpha=1,
              edge_ends=False, edge_direction=False):
