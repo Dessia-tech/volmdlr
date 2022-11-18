@@ -7157,7 +7157,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         step_content = ''
         face_ids = []
         for face in self.faces:
-            if isinstance(face, Face3D) or isinstance(face, Surface3D):
+            if isinstance(face, (Face3D, Surface3D)):
                 face_content, face_sub_ids = face.to_step(current_id)
             else:
                 face_content, face_sub_ids = face.to_step(current_id)
@@ -7516,6 +7516,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def point_in_shell_face(self, point: volmdlr.Point3D):
         warnings.warn('point_in_shell_face is deprecated, please use discretization_points instead',
                       DeprecationWarning)
+        return self.point_on_shell(point)
 
     def triangulation(self):
         # mesh = vmd.DisplayMesh3D([], [])
@@ -7572,11 +7573,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 class ClosedShell3D(OpenShell3D):
     STEP_FUNCTION = 'CLOSED_SHELL'
 
-
     def is_face_inside(self, face: Face3D):
         for point in face.outer_contour3d.discretization_points(0.01):
             point_inside_shell = self.point_belongs(point)
-            point_in_shells_faces = self.point_in_shell_face(point)
+            point_in_shells_faces = self.point_on_shell(point)
             if (not point_inside_shell) and (not point_in_shells_faces):
                 return False
         return True
@@ -8183,23 +8183,22 @@ class OpenTriangleShell3D(OpenShell3D):
                 return True
         return False
 
-
     def to_mesh_data(self):
         positions = npy.array(3*len(self.faces), 3)
         faces = npy.array(len(self.faces), 3)
-        for i, triangle in enumerate(self.faces):
+        for i, triangle_face in enumerate(self.faces):
             i1 = 3*i
             i2 = i1 + 1
             i3 = i1 + 2
-            positions[i1, 0] = triangle.points[0].x
-            positions[i1, 1] = triangle.points[0].y
-            positions[i1, 2] = triangle.points[0].z
-            positions[i2, 0] = triangle.points[1].x
-            positions[i2, 1] = triangle.points[1].y
-            positions[i2, 2] = triangle.points[1].z
-            positions[i3, 0] = triangle.points[2].x
-            positions[i3, 1] = triangle.points[2].y
-            positions[i3, 2] = triangle.points[2].z
+            positions[i1, 0] = triangle_face.points[0].x
+            positions[i1, 1] = triangle_face.points[0].y
+            positions[i1, 2] = triangle_face.points[0].z
+            positions[i2, 0] = triangle_face.points[1].x
+            positions[i2, 1] = triangle_face.points[1].y
+            positions[i2, 2] = triangle_face.points[1].z
+            positions[i3, 0] = triangle_face.points[2].x
+            positions[i3, 1] = triangle_face.points[2].y
+            positions[i3, 2] = triangle_face.points[2].z
 
             faces[i, 0] = i1
             faces[i, 1] = i2
