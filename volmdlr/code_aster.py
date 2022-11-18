@@ -153,19 +153,19 @@ class Mesh:
     def GenereMesh(self):
         a = open(self.name + '.geo', 'w')
 
-        a.write('Merge "{}"; \n'.format(self.file_name_CAD))
+        a.write(f'Merge "{self.file_name_CAD}"; \n')
         a.write('bb() = BoundingBox Volume {1}; \n')
         a.write('BoundingBox {bb(0), bb(3), bb(1), bb(4), bb(2), bb(5)}; \n')
         a.write('Mesh.CharacteristicLengthFactor = 0.1; \n')
         a.write('Mesh.ScalingFactor=0.001; \n')
         a.write('Characteristic Length {:} = 0.15; \n')
-        a.write('Save "{}"; \n'.format(self.file_name_mesh))
+        a.write(f'Save "{self.file_name_mesh}"; \n')
 
         a.close()
 
-        arg = '{} -3 -o {} -order 2'.format(self.name + '.geo', self.file_name_mesh)
+        arg = f'{self.name}.geo -3 -o {self.file_name_mesh} -order 2'
 #        output=subprocess.call([self.gmsh_path, arg])
-        os.system('{} {}'.format(self.gmsh_path, arg))
+        os.system(f'{self.gmsh_path} {arg}')
 
 
 class Material:

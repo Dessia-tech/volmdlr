@@ -5,7 +5,8 @@
 """
 
 import time
-from typing import BinaryIO, List
+from typing import List
+from dessia_common.files import BinaryFile
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -116,6 +117,7 @@ def item_defined_transformation(arguments, object_dict):
     # TODO : how to frame map properly from these two Frame3D ?
     # return volmdlr_object2 - volmdlr_object1
     return volmdlr_object2
+#
 
 
 def manifold_surface_shape_representation(arguments, object_dict):
@@ -187,13 +189,17 @@ def representation_relationship_representation_relationship_with_transformation_
         arguments, object_dict):
     if arguments[2] in object_dict:
         if isinstance(object_dict[arguments[2]], list):
+
             for shell3d in object_dict[arguments[2]]:
+
                 frame3d = object_dict[arguments[4]]
                 shell3d.frame_mapping_inplace(frame3d, 'old')
                 # return shell3d
             return None
+
         else:
             shell3d = object_dict[arguments[2]]
+
             frame3d = object_dict[arguments[4]]
             shell3d.frame_mapping_inplace(frame3d, 'old')
             # return shell3d
@@ -277,7 +283,7 @@ class Step(dc.DessiaObject):
         return self._graph
 
     @classmethod
-    def from_stream(cls, stream: BinaryIO = None):
+    def from_stream(cls, stream: BinaryFile = None):
         stream.seek(0)
         lines = []
         for line in stream:
@@ -590,7 +596,6 @@ class Step(dc.DessiaObject):
             if node != '#0' and self.functions[node].name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(node)
                 not_shell_nodes.append(int(self.functions[node].arg[1][1:]))
-
         frame_mapped_shell_node = []
         for s_node in shell_nodes:
             for fm_node in frame_mapping_nodes:
@@ -610,8 +615,7 @@ class Step(dc.DessiaObject):
         i = 1
         new_nodes = True
         while new_nodes:
-            new_nodes = list(nx.descendants_at_distance(
-                self.graph, '#0', i))[::-1]
+            new_nodes = list(nx.descendants_at_distance(self.graph, '#0', i))[::-1]
             nodes.extend(new_nodes)
             i += 1
 
@@ -627,9 +631,7 @@ class Step(dc.DessiaObject):
                     for instanciate_id in instanciate_ids[::-1]:
                         t = time.time()
                         volmdlr_object = self.instanciate(
-                            self.functions[instanciate_id].name,
-                            self.functions[instanciate_id].arg[:],
-                            object_dict)
+                            self.functions[instanciate_id].name, self.functions[instanciate_id].arg[:], object_dict)
                         t = time.time() - t
                         object_dict[instanciate_id] = volmdlr_object
                         if show_times:
@@ -656,8 +658,10 @@ class Step(dc.DessiaObject):
                 shells.extend(object_dict[node])
             else:
                 shells.append(object_dict[node])
-
-        return volmdlr.core.VolumeModel(shells)
+        volume_model = volmdlr.core.VolumeModel(shells)
+        # bounding_box = volume_model.bounding_box
+        # volume_model = volume_model.translation(-bounding_box.center)
+        return volume_model
 
     def to_points(self):
         object_dict = {}

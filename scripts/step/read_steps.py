@@ -10,6 +10,7 @@ import volmdlr.faces as vmf
 
 
 for step_file in [
+<<<<<<< HEAD
     # 'cylinder-test.step',
     'bracket2.step',
     # 'read_test1.step',
@@ -39,11 +40,28 @@ for step_file in [
     # 'bracket3.step'
 
 ]:
+=======
+    'tore1.step',
+    'cone1.step',
+    'cone2.step',
+    'cylinder.step',
+    'block.step',
+    'strange_gasket.step'
+    # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
+  ]:
+>>>>>>> origin/fix_BSplineCurve2D_line_intersections
     print('Reading step file: ', step_file)
     # filepath = os.path.join('step', step_file)
     step = volmdlr.step.Step.from_file(filepath=step_file)
 
     model = step.to_volume_model()
+<<<<<<< HEAD
+=======
+    assert len(model.primitives) > 0.
+    model.to_step(step_file+'_reexport')
+    model.primitives[0].alpha = 0.6
+    model.primitives[0].color = (1, 0.1, 0.1)
+>>>>>>> origin/fix_BSplineCurve2D_line_intersections
     model.babylonjs()
     # faces = []
     # error = {}
