@@ -33,6 +33,7 @@ import volmdlr.geometry
 import volmdlr.grid
 import os
 
+
 def knots_vector_inv(knots_vector):
     '''
     compute knot elements and multiplicities based on the global knot vector
@@ -43,9 +44,101 @@ def knots_vector_inv(knots_vector):
     for knot in knots:
         multiplicities.append(knots_vector.count(knot))
 
-    return (knots, multiplicities)
+    return knots, multiplicities
 
 
+def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
+    theta1, z1 = start
+    theta2, z2 = end
+    # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+    if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
+        theta1 = -math.pi
+    elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
+        theta1 = math.pi
+    if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
+        theta2 = -math.pi
+    elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
+        theta2 = math.pi
+
+    theta5 = theta1 - angle3d
+    theta6 = theta1 + angle3d
+
+    # theta3 < theta1 --> clockwise
+    if theta3 < theta1 and theta5 < -math.pi:
+        theta2 = theta5
+    # theta3 > theta1 --> trigo
+    elif theta3 > theta1 and theta6 > math.pi:
+        theta2 = theta6
+
+    if theta1 > 0 and theta3 < 0:
+        theta1 -= 2 * math.pi
+    elif theta1 < 0 and theta3 > 0:
+        theta1 += 2 * math.pi
+
+    start = volmdlr.Point2D(theta1, z1)
+    end = volmdlr.Point2D(theta2, z2)
+    return [start, end]
+
+def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, point_before_end):
+    theta1, phi1 = start
+    theta2, phi2 = end
+    theta3, phi3 = point_after_start
+    theta4, phi4 = point_before_end
+    # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
+    if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
+        theta1 = -math.pi
+    elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
+        theta1 = math.pi
+
+    if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
+        theta2 = -math.pi
+    elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
+        theta2 = math.pi
+
+    # Verify if phi1 or phi2 point should be -pi or pi because phi -> ]-pi, pi]
+    if math.isclose(phi1, math.pi, abs_tol=1e-6) and phi3 < 0:
+        phi1 = -math.pi
+    elif math.isclose(phi1, -math.pi, abs_tol=1e-6) and phi3 > 0:
+        phi1 = math.pi
+
+    if math.isclose(phi2, math.pi, abs_tol=1e-6) and phi4 < 0:
+        phi2 = -math.pi
+    elif math.isclose(phi2, -math.pi, abs_tol=1e-6) and phi4 < 0:
+        phi2 = math.pi
+
+    if math.isclose(phi1, phi2, abs_tol=1e-4):
+        theta5 = theta1 - angle3d
+        theta6 = theta1 + angle3d
+        # theta3 < theta1 --> clockwise
+        if theta3 < theta1 and theta5 < -math.pi:
+            theta2 = theta5
+        # theta3 > theta1 --> trigo
+        elif theta3 > theta1 and theta6 > math.pi:
+            theta2 = theta6
+
+        if theta1 > 0 and theta3 < 0:
+            theta1 -= 2 * math.pi
+        elif theta1 < 0 and theta3 > 0:
+            theta1 += 2 * math.pi
+    if math.isclose(theta1, theta2, abs_tol=1e-4):
+        phi5 = phi1 - angle3d
+        phi6 = phi1 + angle3d
+        # phi3 < phi1 --> clockwise
+        if phi3 < phi1 and phi5 < -math.pi:
+            phi2 = phi5
+        # phi3 > phi1 --> trigo
+        elif phi3 > phi1 and phi6 > math.pi:
+            phi2 = phi6
+
+        if phi1 > 0 and phi3 < 0:
+            phi1 -= 2 * math.pi
+        elif phi1 < 0 and phi3 > 0:
+            phi1 += 2 * math.pi
+
+    start = volmdlr.Point2D(theta1, phi1)
+    end = volmdlr.Point2D(theta2, phi2)
+
+    return start, end
 class Surface2D(volmdlr.core.Primitive2D):
     """
     A surface bounded by an outer contour
@@ -650,7 +743,6 @@ class Surface3D(DessiaObject):
 
     # def repair_singularity(self, primitives, last_primitives):
 
-
     def repair_primitives_periodicity(self, primitives, last_primitive):
         delta_x1 = abs(primitives[0].start.x
                        - last_primitive.end.x)
@@ -688,10 +780,10 @@ class Surface3D(DessiaObject):
                     v2 = last_primitive.unit_direction_vector()
                     dot = v1.dot(volmdlr.X2D)
                     cross = v1.cross(v2)
-                    if math.isclose(abs(last_primitive.end.y), 0.5*math.pi, abs_tol=1e-6) \
-                        and cross == 0 and dot == 0:
+                    if math.isclose(abs(last_primitive.end.y), 0.5 * math.pi, abs_tol=1e-6) \
+                            and cross == 0 and dot == 0:
                         if prim.start.x == math.pi:
-                            prim = prim.translation(volmdlr.Vector2D(-2*math.pi, 0))
+                            prim = prim.translation(volmdlr.Vector2D(-2 * math.pi, 0))
                             new = vme.LineSegment2D(last_primitive.end, prim.start)
                             new_primitives.append(new)
                             new_primitives.append(prim)
@@ -1031,8 +1123,8 @@ class Plane3D(Surface3D):
         :return: a float, point distance to plane
         """
         coefficient_a, coefficient_b, coefficient_c, coefficient_d = self.equation_coefficients()
-        return abs(self.frame.w.dot(point3d) + coefficient_d) / math.sqrt(coefficient_a**2 +
-                                                                          coefficient_b**2 + coefficient_c**2)
+        return abs(self.frame.w.dot(point3d) + coefficient_d) / math.sqrt(coefficient_a ** 2 +
+                                                                          coefficient_b ** 2 + coefficient_c ** 2)
 
     def line_intersections(self, line):
         u = line.point2 - line.point1
@@ -1275,8 +1367,6 @@ class CylindricalSurface3D(Surface3D):
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        theta1, z1 = start
-        theta2, z2 = end
 
         angle3d = arc3d.angle
 
@@ -1284,33 +1374,7 @@ class CylindricalSurface3D(Surface3D):
         theta3, _ = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
         theta4, _ = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
 
-        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-        if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
-            theta1 = -math.pi
-        elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
-            theta1 = math.pi
-        if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
-            theta2 = -math.pi
-        elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
-            theta2 = math.pi
-
-        theta5 = theta1 - angle3d
-        theta6 = theta1 + angle3d
-
-        #theta3 < theta1 --> clockwise
-        if theta3 < theta1 and theta5 < -math.pi:
-            theta2 = theta5
-        # theta3 > theta1 --> trigo
-        elif theta3 > theta1 and theta6 > math.pi:
-            theta2 = theta6
-
-        if theta1 > 0 and theta3 < 0:
-            theta1 -= 2 * math.pi
-        elif theta1 < 0 and theta3 > 0:
-            theta1 += 2 * math.pi
-
-        start = volmdlr.Point2D(theta1, z1)
-        end = volmdlr.Point2D(theta2, z2)
+        start, end = arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4)
 
         return [vme.LineSegment2D(start, end)]
 
@@ -1400,18 +1464,18 @@ class CylindricalSurface3D(Surface3D):
                 p1 = volmdlr.Point2D(-math.pi, p1.y)
             elif math.isclose(p1.x, -math.pi, abs_tol=1e-6) and (p1.x - p2.x) < -math.pi:
                 p1 = volmdlr.Point2D(math.pi, p1.y)
-        #     new_points.append(p1)
-        #
-        # new_points.append(points[-1])
-        # return [vme.BSplineCurve2D.from_points_interpolation(new_points, bspline_curve3d.degree,
-        #                                                      bspline_curve3d.periodic)]
-        # return [vme.BSplineCurve2D(
-        #     bspline_curve3d.degree,
-        #     control_points=new_points,
-        #     knot_multiplicities=bspline_curve3d.knot_multiplicities,
-        #     knots=bspline_curve3d.knots,
-        #     weights=bspline_curve3d.weights,
-        #     periodic=bspline_curve3d.periodic)]
+            #     new_points.append(p1)
+            #
+            # new_points.append(points[-1])
+            # return [vme.BSplineCurve2D.from_points_interpolation(new_points, bspline_curve3d.degree,
+            #                                                      bspline_curve3d.periodic)]
+            # return [vme.BSplineCurve2D(
+            #     bspline_curve3d.degree,
+            #     control_points=new_points,
+            #     knot_multiplicities=bspline_curve3d.knot_multiplicities,
+            #     knots=bspline_curve3d.knots,
+            #     weights=bspline_curve3d.weights,
+            #     periodic=bspline_curve3d.periodic)]
             if math.isclose(p2.x, math.pi, abs_tol=1e-6) and (p1.x - last_p1x) < 0:
                 p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
             elif math.isclose(p2.x, -math.pi, abs_tol=1e-6) and (p1.x - last_p1x) > 0:
@@ -1613,7 +1677,7 @@ class CylindricalSurface3D(Surface3D):
         # Ellipse vector equation : < rcos(t), rsin(t), -(1 / c)*(d + arcos(t) + brsint(t)); d = - (ax_0 + by_0 + cz_0)
         center2d = volmdlr.Point2D(self.frame.origin.x, self.frame.origin.y)
         center3d_plane = plane3d.point2d_to_3d(center2d)
-        plane_coefficient_a, plane_coefficient_b, plane_coefficient_c, plane_coefficient_d =\
+        plane_coefficient_a, plane_coefficient_b, plane_coefficient_c, plane_coefficient_d = \
             plane3d.equation_coefficients()
         ellipse_0 = volmdlr.Point3D(
             self.radius * math.cos(0),
@@ -1841,67 +1905,13 @@ class ToroidalSurface3D(Surface3D):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
 
-        theta1, phi1 = start
-        theta2, phi2 = end
-
         length = arc3d.length()
         angle3d = arc3d.angle
-        theta3, phi3 = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
-        theta4, phi4 = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
+        point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
+        point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
 
-        # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
-        if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
-            theta1 = -math.pi
-        elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
-            theta1 = math.pi
-
-        if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
-            theta2 = -math.pi
-        elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
-            theta2 = math.pi
-
-        # Verify if phi1 or phi2 point should be -pi or pi because phi -> ]-pi, pi]
-        if math.isclose(phi1, math.pi, abs_tol=1e-6) and phi3 < 0:
-            phi1 = -math.pi
-        elif math.isclose(phi1, -math.pi, abs_tol=1e-6) and phi3 > 0:
-            phi1 = math.pi
-
-        if math.isclose(phi2, math.pi, abs_tol=1e-6) and phi4 < 0:
-            phi2 = -math.pi
-        elif math.isclose(phi2, -math.pi, abs_tol=1e-6) and phi4 < 0:
-            phi2 = math.pi
-
-        if math.isclose(phi1, phi2, abs_tol=1e-4):
-            theta5 = theta1 - angle3d
-            theta6 = theta1 + angle3d
-            #theta3 < theta1 --> clockwise
-            if theta3 < theta1 and theta5 < -math.pi:
-                theta2 = theta5
-            # theta3 > theta1 --> trigo
-            elif theta3 > theta1 and theta6 > math.pi:
-                theta2 = theta6
-
-            if theta1 > 0 and theta3 < 0:
-                theta1 -= 2 * math.pi
-            elif theta1 < 0 and theta3 > 0:
-                theta1 += 2 * math.pi
-        if math.isclose(theta1, theta2, abs_tol=1e-4):
-            phi5 = phi1 - angle3d
-            phi6 = phi1 + angle3d
-            # phi3 < phi1 --> clockwise
-            if phi3 < phi1 and phi5 < -math.pi:
-                phi2 = phi5
-            # phi3 > phi1 --> trigo
-            elif phi3 > phi1 and phi6 > math.pi:
-                phi2 = phi6
-
-            if phi1 > 0 and phi3 < 0:
-                phi1 -= 2 * math.pi
-            elif phi1 < 0 and phi3 > 0:
-                phi1 += 2 * math.pi
-
-        start = volmdlr.Point2D(theta1, phi1)
-        end = volmdlr.Point2D(theta2, phi2)
+        start, end = arc3d_to_spherical_verification(start, end, angle3d, point_after_start,
+                                                     point_before_end)
 
         return [vme.LineSegment2D(start, end)]
 
@@ -1917,7 +1927,7 @@ class ToroidalSurface3D(Surface3D):
         # control_points = [self.point3d_to_2d(p)
         #                   for p in bspline_curve3d.control_points]
         control_points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
-                  for i in range(11)]
+                          for i in range(11)]
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         if theta1 == math.pi and theta3 < 0:
             theta1 = -math.pi
@@ -2174,7 +2184,7 @@ class ConicalSurface3D(Surface3D):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
         theta1, z1 = start
-        theta2, z2 = end
+        # theta2, z2 = end
 
         angle3d = arc3d.angle
 
@@ -2182,33 +2192,8 @@ class ConicalSurface3D(Surface3D):
         theta3, _ = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
         theta4, _ = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
 
-        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-        if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
-            theta1 = -math.pi
-        elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
-            theta1 = math.pi
-        if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
-            theta2 = -math.pi
-        elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
-            theta2 = math.pi
+        start, end = arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4)
 
-        theta5 = theta1 - angle3d
-        theta6 = theta1 + angle3d
-
-        #theta3 < theta1 --> clockwise
-        if theta3 < theta1 and theta5 < -math.pi:
-            theta2 = theta5
-        # theta3 > theta1 --> trigo
-        elif theta3 > theta1 and theta6 > math.pi:
-            theta2 = theta6
-
-        if theta1 > 0 and theta3 < 0:
-            theta1 -= 2 * math.pi
-        elif theta1 < 0 and theta3 > 0:
-            theta1 += 2 * math.pi
-
-        start = volmdlr.Point2D(theta1, z1)
-        end = volmdlr.Point2D(theta2, z2)
         return [vme.LineSegment2D(start, end)]
 
     def circle3d_to_2d(self, circle3d):
@@ -2408,8 +2393,10 @@ class SphericalSurface3D(Surface3D):
 
         length = arc3d.length()
         angle3d = arc3d.angle
-        theta3, phi3 = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
-        theta4, phi4 = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
+        point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
+        point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
+        theta3, phi3 = point_after_start
+        theta4, phi4 = point_before_end
 
         # Fix sphere singularity point
         if (abs(phi1) == 0.5 * math.pi or abs(phi2) == 0.5 * math.pi) and (theta1 == 0 or theta2 == 0):
@@ -2418,64 +2405,12 @@ class SphericalSurface3D(Surface3D):
                     math.isclose(theta4, theta_interior, abs_tol=1e-6):
                 theta1 = theta_interior
                 theta2 = theta_interior
+                start = volmdlr.Point2D(theta1, phi1)
+                end = volmdlr.Point2D(theta2, phi2)
 
-        # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
-        if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
-            theta1 = -math.pi
-        elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
-            theta1 = math.pi
-
-        if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
-            theta2 = -math.pi
-        elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
-            theta2 = math.pi
-
-        # Verify if phi1 or phi2 point should be -pi or pi because phi -> ]-pi, pi]
-        if math.isclose(phi1, math.pi, abs_tol=1e-6) and phi3 < 0:
-            phi1 = -math.pi
-        elif math.isclose(phi1, -math.pi, abs_tol=1e-6) and phi3 > 0:
-            phi1 = math.pi
-
-        if math.isclose(phi2, math.pi, abs_tol=1e-6) and phi4 < 0:
-            phi2 = -math.pi
-        elif math.isclose(phi2, -math.pi, abs_tol=1e-6) and phi4 < 0:
-            phi2 = math.pi
-
-        if math.isclose(phi1, phi2, abs_tol=1e-4):
-            theta5 = theta1 - angle3d
-            theta6 = theta1 + angle3d
-            # theta3 < theta1 --> clockwise
-            if theta3 < theta1 and theta5 < -math.pi:
-                theta2 = theta5
-            # theta3 > theta1 --> trigo
-            elif theta3 > theta1 and theta6 > math.pi:
-                theta2 = theta6
-
-            if theta1 > 0 and theta3 < 0:
-                theta1 -= 2 * math.pi
-            elif theta1 < 0 and theta3 > 0:
-                theta1 += 2 * math.pi
-
-        if math.isclose(theta1, theta2, abs_tol=1e-4):
-            phi5 = phi1 - angle3d
-            phi6 = phi1 + angle3d
-            # phi3 < phi1 --> clockwise
-            if phi3 < phi1 and phi5 < -math.pi:
-                phi2 = phi5
-            # phi3 > phi1 --> trigo
-            elif phi3 > phi1 and phi6 > math.pi:
-                phi2 = phi6
-
-            if phi1 > 0 and phi3 < 0:
-                phi1 -= 2 * math.pi
-            elif phi1 < 0 and phi3 > 0:
-                phi1 += 2 * math.pi
-
-        start = volmdlr.Point2D(theta1, phi1)
-        end = volmdlr.Point2D(theta2, phi2)
-
+        start, end = arc3d_to_spherical_verification(start, end, angle3d, point_after_start,
+                                                     point_before_end)
         if start == end:
-            # return self.fullarc3d_to_2d(arc3d)
             return [vme.LineSegment2D(start, start + volmdlr.TWO_PI * volmdlr.X2D)]
         if math.isclose(theta1, theta2, abs_tol=1e-4) or math.isclose(phi1, phi2, abs_tol=1e-4):
             return [vme.LineSegment2D(start, end)]
@@ -2485,8 +2420,8 @@ class SphericalSurface3D(Surface3D):
         points = [self.point3d_to_2d(arc3d.point_at_abscissa(
             i * length / (number_points - 1))) for i in range(number_points)]
 
-        points[0] = start #to take into account all the previous verification
-        points[-1] = end #to take into account all the previous verification
+        points[0] = start  # to take into account all the previous verification
+        points[-1] = end  # to take into account all the previous verification
 
         if theta3 < theta1 < theta2:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]

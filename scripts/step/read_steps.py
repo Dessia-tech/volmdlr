@@ -12,8 +12,8 @@ import volmdlr.faces as vmf
 for step_file in [
     # 'cylinder-test.step',
     # 'bracket2.step',
-    'read_test1.step',
-    # 'read_test2.step',
+    # 'read_test1.step',
+    'read_test2.step',
     # 'read_test3.step',
     # 'read_test4.step',
     # 'read_test6.step',
@@ -27,7 +27,7 @@ for step_file in [
     'block.step',
     # 'Hollow_Loft.step',
     'spherical_surface_body.step',
-    'bracket2_cut3.step',
+    # 'bracket2_cut3.step',
     'demi_sphere.step',
     'strange_gasket.step',
     'cone1.step',
@@ -42,7 +42,7 @@ for step_file in [
     model = step.to_volume_model()
 
     assert len(model.primitives) > 0.
-    model.to_step(step_file+'_reexport')
+    # model.to_step(step_file+'_reexport')
     model.primitives[0].alpha = 0.6
     model.primitives[0].color = (1, 0.1, 0.1)
 
