@@ -7260,7 +7260,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         new_faces = [face.translation(offset) for face in
                      self.faces]
         return self.__class__(new_faces, color=self.color, alpha=self.alpha,
-                           name=self.name)
+                              name=self.name)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
@@ -7682,7 +7682,6 @@ class ClosedShell3D(OpenShell3D):
             if test1 != test2:
                 raise ValueError
         return tests[0]
-
 
     def is_inside_shell(self, shell2, resolution: float):
         """
@@ -8186,10 +8185,10 @@ class OpenTriangleShell3D(OpenShell3D):
         return False
 
     def to_mesh_data(self):
-        positions = npy.array(3*len(self.faces), 3)
+        positions = npy.array(3 * len(self.faces), 3)
         faces = npy.array(len(self.faces), 3)
         for i, triangle_face in enumerate(self.faces):
-            i1 = 3*i
+            i1 = 3 * i
             i2 = i1 + 1
             i3 = i1 + 2
             positions[i1, 0] = triangle_face.points[0].x
