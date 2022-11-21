@@ -7363,13 +7363,24 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 inside = set()
                 for c1 in c_inners_1:
                     for c2 in c_inners_2:
-                        inside.add(c2.is_inside(c1))
+                        if c1.is_superposing(c2):
+                            inside.add(False)
+                        else:
+                            inside.add(c2.is_inside(c1))
+                            if c2.is_inside(c1):
+                                ax=c1.plot()
+                                c2.plot(ax, "r")
+                        # inside.add(c2.is_inside(c1))
 
                 if (face1.surface3d.is_coincident(face2.surface3d)
                     and (contour1.is_overlapping(contour2)
                          or (contour1.is_inside(contour2) or True in inside))):
                     print('i: ', i)
                     print('j: ', j)
+
+                    # ax=face2.plot(color='k')
+                    # face1.plot(ax, 'r')
+
                     if face1 in used_faces:
                         faces_1, face2_2 = used_faces[face1][:], face2
                     else:
