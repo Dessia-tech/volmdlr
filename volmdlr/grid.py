@@ -82,7 +82,7 @@ class Grid2D(DessiaObject):
 
     @classmethod
     def from_properties(cls, x_limits, y_limits, points_nbr,
-                        direction=['+x', '+y']):
+                        direction=None):
         """
         Define Grid2d based on the given properties
 
@@ -102,6 +102,8 @@ class Grid2D(DessiaObject):
         Grid2d
 
         """
+        if direction is None:
+            direction = ['+x', '+y']
 
         xmin, xmax = x_limits
         ymin, ymax = y_limits
@@ -224,10 +226,10 @@ class Grid2D(DessiaObject):
         for i in range(0, length_1 - 1):
             for j in range(0, length_2 - 1):
                 quadrilateral_polygons.append(volmdlr.wires.ClosedPolygon2D(
-                    (self.lists_points[i][j],
+                    [self.lists_points[i][j],
                      self.lists_points[i + 1][j],
                      self.lists_points[i + 1][j + 1],
-                     self.lists_points[i][j + 1])))
+                     self.lists_points[i][j + 1]]))
 
         return quadrilateral_polygons
 
