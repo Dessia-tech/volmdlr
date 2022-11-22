@@ -6,7 +6,7 @@
 
 import math
 import warnings
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 
 import matplotlib.patches
 import matplotlib.pyplot as plt
@@ -315,16 +315,38 @@ class LineSegment(Edge):
 
 class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
+    """
+    An abstract class for B-spline curves. The following rule must be 
+    respected : `number of knots = number of control points + degree + 1`
+    
+    :param degree: The degree of the B-spline curve
+    :type degree: int
+    :param control_points: A list of 2 or 3 dimensional points
+    :type control_points: Union[List[:class:`volmdlr.Point2D`],
+        List[:class:`volmdlr.Point3D`]]
+    :param knot_multiplicities: The vector of multiplicities for each knot
+    :type knot_multiplicities: List[int]
+    :param knots: The knot vector composed of values between 0 and 1
+    :type knots: List[float]
+    :param weights: The weight vector applied to the knot vector. Default 
+        value is None
+    :type weights: List[float], optional
+    :param periodic: If `True` the B-spline curve is periodic. Default value 
+        is False 
+    :type periodic: bool, optional
+    :param name: The name of the B-spline curve. Default value is ''
+    :type name: str, optional
+    """
 
     def __init__(self,
                  degree: int,
-                 control_points,
+                 control_points: Union[List[volmdlr.Point2D],
+                                       List[volmdlr.Point3D]],
                  knot_multiplicities: List[int],
                  knots: List[float],
                  weights: List[float] = None,
                  periodic: bool = False,
                  name: str = ''):
-
         self.control_points = control_points
         self.degree = degree
         knots = standardize_knot_vector(knots)
@@ -340,7 +362,8 @@ class BSplineCurve(Edge):
             points = [[*point] for point in control_points]
             curve.ctrlpts = points
         else:
-            points_w = [[*point * weights[i], weights[i]] for i, point in enumerate(control_points)]
+            points_w = [[*point * weights[i], weights[i]] for i, point
+                        in enumerate(control_points)]
             curve.ctrlptsw = points_w
 
         knot_vector = []
@@ -362,50 +385,89 @@ class BSplineCurve(Edge):
         Edge.__init__(self, start, end, name=name)
 
     def reverse(self):
-        '''
-        reverse the bspline's direction by reversing its start and end points
-        '''
+        """
+        Reverses the B-spline's direction by reversing its control points.
 
-        return self.__class__(degree=self.degree,
-                              control_points=self.control_points[::-1],
-                              knot_multiplicities=self.knot_multiplicities[::-1],
-                              knots=self.knots[::-1],
-                              weights=self.weights,
-                              periodic=self.periodic)
+        :return: A reversed B-spline curve
+        :rtype: :class:`volmdlr.edges.BSplineCurve`
+        """
+        return self.__class__(
+            degree=self.degree,
+            control_points=self.control_points[::-1],
+            knot_multiplicities=self.knot_multiplicities[::-1],
+            knots=self.knots[::-1],
+            weights=self.weights,
+            periodic=self.periodic)
 
     @classmethod
     def from_geomdl_curve(cls, curve):
+        """
+        # TODO: to be completed
 
+        :param curve:
+        :type curve:
+        :return: A reversed B-spline curve
+        :rtype: :class:`volmdlr.edges.BSplineCurve`
+        """
         point_dimension = f'Point{cls.__name__[-2::]}'
 
         knots = list(sorted(set(curve.knotvector)))
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
 
         return cls(degree=curve.degree,
-                   control_points=[getattr(volmdlr, point_dimension)(*p) for p in curve.ctrlpts],
+                   control_points=[getattr(volmdlr, point_dimension)(*p)
+                                   for p in curve.ctrlpts],
                    knots=knots,
                    knot_multiplicities=knot_multiplicities)
 
     def length(self):
+        """
+        Returns the length of the B-spline curve
+
+        :return: The length of the B-spline curve
+        :rtype: float
+        """
         if not self._length:
             self._length = length_curve(self.curve)
         return self._length
 
     def unit_direction_vector(self, abscissa: float):
         """
-        :param abscissa: defines where in the BSplineCurve the
-        unit direction vector is to be calculated
-        :return: The unit direction vector of the BSplineCurve
-        """
+        Computes the 2D or 3D unit direction vector of B-spline curve at
+        a given abscissa.
 
+        :param abscissa: The abscissa on the B-spline curve where the unit
+            direction vector will be computed
+        :type abscissa: float
+        :return: The unit direction vector of the B-spline curve
+        :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
+        """
         direction_vector = self.direction_vector(abscissa)
         direction_vector.normalize()
         return direction_vector
 
     def middle_point(self):
+        """
+        Computes the 2D or 3D middle point of the B-spline curve.
+
+        :return: The middle point
+        :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        """
         return self.point_at_abscissa(self.length() * 0.5)
 
-    def abscissa(self, point, tol=1e-4):
+    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
+                 tol: float = 1e-4):
+        """
+        Computes the abscissa of a 2D or 3D point using the least square
+        method.
+
+        :param point: The point located on the B-spline curve
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param tol: The precision in terms of distance. Default value is 1e-4
+        :type tol: float, optional
+        :return: The abscissa of the point
+        :rtype: float
+        """
         length = self.length()
         for x0 in [0, length * 0.25, length * 0.5, length * 0.75, length]:
             res = scp.optimize.least_squares(
@@ -427,7 +489,19 @@ class BSplineCurve(Edge):
         # best_point.plot(ax=ax, color='r')
         raise ValueError('abscissa not found')
 
-    def split(self, point, tol=1e-5):
+    def split(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
+              tol: float = 1e-5):
+        """
+        Splits of B-spline curve in two pieces using a 2D or 3D point.
+
+        :param point: The point where the B-spline curve is split
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param tol: The precision in terms of distance. Default value is 1e-4
+        :type tol: float, optional
+        :return: A list containing the first and second split of the B-spline
+            curve
+        :rtype: List[:class:`volmdlr.edges.BSplineCurve`]
+        """
         if point.point_distance(self.start) < tol:
             return [None, self.copy()]
         elif point.point_distance(self.end) < tol:
@@ -438,11 +512,15 @@ class BSplineCurve(Edge):
         return [self.__class__.from_geomdl_curve(curve1),
                 self.__class__.from_geomdl_curve(curve2)]
 
-    def translation(self, offset):
+    def translation(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
         """
-        BSplineCurve translation
-        :param offset: translation vector (volmdlr.Vector2D/ volmdlr.Vector3D)
+        Translates the B-spline curve.
+
+        :param offset: The translation vector
+        :type offset: Union[:class:`volmdlr.Vector2D`,
+            :class:`volmdlr.Vector3D`]
         :return: A new translated BSplineCurve
+        :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
         control_points = [point.translation(offset)
                           for point in self.control_points]
@@ -450,19 +528,35 @@ class BSplineCurve(Edge):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
-    def translation_inplace(self, offset):
+    def translation_inplace(self, offset: Union[volmdlr.Vector2D,
+                                                volmdlr.Vector3D]):
         """
-        BSplineCurve translation. Object is updated inplace
-        :param offset: translation vector (volmdlr.Vector2D/ volmdlr.Vector3D)
+        Translates the B-spline curve and its parameters are modified inplace.
+
+        :param offset: The translation vector
+        :type offset: Union[:class:`volmdlr.Vector2D`,
+            :class:`volmdlr.Vector3D`]
+        :return: None
+        :rtype: None
         """
         for point in self.control_points:
             point.translation_inplace(offset)
 
-    def point_belongs(self, point, abs_tol=1e-10):
-        '''
-        check if a point belongs to the bspline_curve or not
-        '''
+    def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
+                      abs_tol: float = 1e-10):
+        """
+        Checks if a 2D or 3D point belongs to the B-spline curve or not. It
+        uses the least square method.
 
+        :param point: The point to be checked
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param abs_tol: The precision in terms of distance.
+            Default value is 1e-4
+        :type abs_tol: float, optional
+        :return: `True` if the point belongs to the B-spline curve, `False`
+            otherwise
+        :rtype: bool
+        """
         point_dimension = f'Point{self.__class__.__name__[-2::]}'
 
         def f(x):
@@ -479,11 +573,15 @@ class BSplineCurve(Edge):
                 return True
         return False
 
-    def merge_with(self, bspline_curve):
-        '''
-        merge successives bspline_curves to define a new one
-        '''
+    def merge_with(self, bspline_curve: 'BSplineCurve'):
+        """
+        Merges consecutive B-spline curves to define a new merged one.
 
+        :param bspline_curve: Another B-spline curve
+        :type bspline_curve: :class:`volmdlr.edges.BSplineCurve`
+        :return: A merged B-spline curve
+        :rtype: :class:`volmdlr.edges.BSplineCurve`
+        """
         point_dimension = f'Wire{self.__class__.__name__[-2::]}'
         wire = getattr(volmdlr.wires, point_dimension)(bspline_curve)
         ordered_wire = wire.order_wire()
@@ -493,13 +591,23 @@ class BSplineCurve(Edge):
             points.extend(primitive.polygon_points(n))
         points.pop(n + 1)
 
-        return self.__class__.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
+        return self.__class__.from_points_interpolation(
+            points, min(self.degree, bspline_curve.degree))
 
     @classmethod
-    def from_bsplines(cls, bsplines, discretization_points=10):
-        '''
-        define a bspline_curve using a list of bsplines
-        '''
+    def from_bsplines(cls, bsplines: List['BSplineCurve'],
+                      discretization_points: int = 10):
+        """
+        Creates a B-spline curve from a list of B-spline curves.
+
+        :param bsplines: A list of B-spline curve
+        :type bsplines: List[:class:`volmdlr.edges.BSplineCurve`]
+        :param discretization_points: The number of points for the
+            discretization. Default value is 10
+        :type discretization_points: int, optional
+        :return: A merged B-spline curve
+        :rtype: :class:`volmdlr.edges.BSplineCurve`
+        """
         point_dimension = f'Wire{cls.__name__[-2::]}'
         wire = getattr(volmdlr.wires, point_dimension)(bsplines)
         ordered_wire = wire.order_wire()
@@ -510,37 +618,48 @@ class BSplineCurve(Edge):
             if i == 0:
                 points.extend(primitive.polygon_points(discretization_points))
             else:
-                points.extend(primitive.polygon_points(discretization_points)[1::])
+                points.extend(
+                    primitive.polygon_points(discretization_points)[1::])
 
         return cls.from_points_interpolation(points, min(degree))
 
     @classmethod
-    def from_points_approximation(cls, points, degree, **kwargs):
-        '''
-        Bspline Curve approximation through points using least squares method
-        It is better to specify the number of control points
+    def from_points_approximation(cls, points: Union[List[volmdlr.Point2D],
+                                                     List[volmdlr.Point3D]],
+                                  degree: int, **kwargs):
+        """
+        Creates a B-spline curve approximation using least squares method with
+        fixed number of control points. It is recommanded to specify the
+        number of control points.
+        Please refer to The NURBS Book (2nd Edition), pp.410-413 for details.
 
-        Parameters
-        ----------
-        points : volmdlr.Point
-            data points
-        degree: int
-            degree of the output parametric curve
-
-        Keyword Arguments:
-            * ``centripetal``: activates centripetal parametrization method. *Default: False*
-            * ``ctrlpts_size``: number of control points. *Default: len(points) - 1*
-
-        Returns
-        -------
-        BSplineCurve
-
-        '''
-
-        curve = fitting.approximate_curve([[*point] for point in points], degree, **kwargs)
+        :param points: The data points
+        :type points: Union[List[:class:`volmdlr.Point2D`],
+            List[:class:`volmdlr.Point3D`]]
+        :param degree: The degree of the output parametric curve
+        :type degree: int
+        :param kwargs: See below
+        :return: A B-spline curve from points approximation
+        :rtype: :class:`volmdlr.edges.BSplineCurve`
+        :keyword centripetal: Activates centripetal parametrization method.
+            Default value is False
+        :keyword ctrlpts_size: Number of control points. Default value is
+            len(points) - 1
+        """
+        curve = fitting.approximate_curve([[*point] for point in points],
+                                          degree, **kwargs)
         return cls.from_geomdl_curve(curve)
 
     def tangent(self, position: float = 0.0):
+        """
+        Evaluates the tangent vector of the B-spline curve at the input
+        parameter value.
+
+        :param position: Value of the parameter, between 0 and 1
+        :type position: float
+        :return: The tangent vector
+        :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        """
         _, tangent = operations.tangent(self.curve, position,
                                         normalize=True)
 
@@ -550,8 +669,25 @@ class BSplineCurve(Edge):
         return tangent
 
     @classmethod
-    def from_points_interpolation(cls, points, degree, periodic=False):
+    def from_points_interpolation(cls, points: Union[List[volmdlr.Point2D],
+                                                     List[volmdlr.Point3D]],
+                                  degree: int, periodic: bool = False):
+        """
+        Creates a B-spline curve interpolation through the data points.
+        Please refer to Algorithm A9.1 on The NURBS Book (2nd Edition),
+        pp.369-370 for details.
 
+        :param points: The data points
+        :type points: Union[List[:class:`volmdlr.Point2D`],
+            List[:class:`volmdlr.Point3D`]]
+        :param degree: The degree of the output parametric curve
+        :type degree: int
+        :param periodic: `True` if the curve should be periodic. Default value
+            is `False`
+        :type periodic: bool, optional
+        :return: A B-spline curve from points interpolation
+        :rtype: :class:`volmdlr.edges.BSplineCurve`
+        """
         curve = fitting.interpolate_curve([[*point] for point in points], degree)
 
         bsplinecurve = cls.from_geomdl_curve(curve)

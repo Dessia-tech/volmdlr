@@ -1616,7 +1616,7 @@ class Vector3D(Vector):
         :type x: :class:`volmdlr.Vector3D`
         :param y: The 3D Y axis of the 2D plane
         :type y: :class:`volmdlr.Vector3D`
-        :return: The trasnformed Point2D
+        :return: The transformed Point2D
         :rtype: :class:`volmdlr.Point2D`
         """
         x2d = self.dot(x) - plane_origin.dot(x)
