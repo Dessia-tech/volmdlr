@@ -4,6 +4,7 @@ import time
 scripts = [
             # Core.py
             'core/points.py',
+            'core/frames.py',
             'core/grid2d_with_direction.py',
             'core/points_axial_symmetry.py',
             # geometry
