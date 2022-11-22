@@ -652,18 +652,18 @@ class Surface3D(DessiaObject):
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
             # if isinstance(self, BSplineSurface3D):
             #
-            #     onlyfiles = next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_contours'))[2]  # directory is your directory path as string
+            #     onlyfiles = next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours'))[2]  # directory is your directory path as string
             #     l = len(onlyfiles)
-            #     contours3d[0].plot()
-            #     outer_contour3d = self.contour2d_to_3d(outer_contour2d)
-            #     outer_contour3d.plot()
-            #     contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_contours\contour3d_{l}.json')
-            #     # outer_contour2d.plot()
+            # #     contours3d[0].plot()
+            # #     outer_contour3d = self.contour2d_to_3d(outer_contour2d)
+            # #     outer_contour3d.plot()
+            #     contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours\contour3d_{l}.json')
+            # #     # outer_contour2d.plot()
             #     onlyfiles = \
-            #     next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_surface'))[
+            #     next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surface'))[
             #         2]  # directory is your directory path as string
             #     l = len(onlyfiles)
-            #     self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_surface\surface3d_{l}.json')
+            #     self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surface\surface3d_{l}.json')
             # if isinstance(self, ConicalSurface3D):
             # self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_surface\surface.json')
             # contours3d[0].save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_contours\contour.json')
@@ -3095,11 +3095,14 @@ class BSplineSurface3D(Surface3D):
             linesegment2d.point_at_abscissa(i * lth / 10.)) for i in range(11)]
 
         linesegment = vme.LineSegment3D(points[0], points[-1])
+        arc = vme.Arc3D(points[0], points[5], points[-1])
         flag = True
+        flag_arc = True
         for pt in points:
-            if not linesegment.point_belongs(pt):
+            if not linesegment.point_belongs(pt, abs_tol=1e-4):
                 flag = False
-                break
+            if not arc.point_belongs(pt, abs_tol=1e-4):
+                flag_arc = False
 
         periodic = False
         if self.x_periodicity is not None and \
@@ -3113,9 +3116,11 @@ class BSplineSurface3D(Surface3D):
                              abs_tol=1e-6):
             periodic = True
 
-        if flag:
+        if flag and not flag_arc:
             # All the points are on the same LineSegment3D
             linesegments = [linesegment]
+        elif flag_arc:
+            linesegments = [arc]
         else:
             linesegments = [vme.BSplineCurve3D.from_points_interpolation(
                 points, max(self.degree_u, self.degree_v), periodic=periodic)]
@@ -3265,17 +3270,20 @@ class BSplineSurface3D(Surface3D):
         return linesegments
 
     def arc3d_to_2d(self, arc3d):
-        number_points = math.ceil(arc3d.angle * 10) + 1  # 10 points per radian
-        l = arc3d.length()
-        points = [self.point3d_to_2d(arc3d.point_at_abscissa(
-            i * l / (number_points - 1))) for i in range(number_points)]
-        return [vme.LineSegment2D(p1, p2)
-                for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
+        start = self.point3d_to_2d(arc3d.start)
+        end = self.point3d_to_2d(arc3d.end)
+        return [vme.LineSegment2D(start, end)]
+        # number_points = math.ceil(arc3d.angle * 5) + 1  # 4 points per radian
+        # l = arc3d.length()
+        # points = [self.point3d_to_2d(arc3d.point_at_abscissa(
+        #     i * l / (number_points - 1))) for i in range(number_points)]
+        # # return [vme.LineSegment2D(p1, p2)
+        # #         for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
         # return [vme.BSplineCurve2D.from_points_interpolation(
         #     points, max(self.degree_u, self.degree_v))]
 
     def arc2d_to_3d(self, arc2d):
-        number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
+        number_points = math.ceil(arc2d.angle * 5) + 1  # 7 points per radian
         l = arc2d.length()
         points = [self.point2d_to_3d(arc2d.point_at_abscissa(
             i * l / (number_points - 1))) for i in range(number_points)]
@@ -7589,7 +7597,7 @@ class BSplineFace3D(Face3D):
     def get_bounding_box(self):
         return self.surface3d._bounding_box()
 
-    def triangulation_lines(self, resolution=25):
+    def triangulation_lines(self, resolution=10):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_u = u_max - u_min

@@ -36,11 +36,11 @@ for step_file in [
     # 'cone1.step',
     # 'cone2.step',
     # 'HRG_BOT.stp',
-    # 'bracket3.step',
+    # 'bracket3_cut2.step',
     # 'strange_gasket.,
     # '2_bspline_faces.stp',
-    'bracket1.step'
-
+    # 'bracket1.step',
+    'cylinder_ellipse.step'
 ]:
 
     print('Reading step file: ', step_file)

@@ -83,15 +83,8 @@ class DisplayMesh(dc.DessiaObject):
                     ip += 1
                     points.append(point)
 
-        triangles = []
-        for mesh in meshes:
-            for i1, i2, i3 in mesh.triangles:
-                p1 = mesh.points[i1]
-                p2 = mesh.points[i2]
-                p3 = mesh.points[i3]
-                triangles.append((point_index[p1],
-                                  point_index[p2],
-                                  point_index[p3]))
+        triangles = [(point_index[mesh.points[i1]], point_index[mesh.points[i2]], point_index[mesh.points[i3]])
+                     for mesh in meshes for i1, i2, i3 in mesh.triangles]
         return cls(points, triangles)
 
     def merge_mesh(self, other_mesh):
