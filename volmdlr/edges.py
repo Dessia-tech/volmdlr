@@ -856,7 +856,7 @@ class BSplineCurve2D(BSplineCurve):
                               name)
 
     def bounding_rectangle(self):
-        points = self.discretization_points()
+        points = self.discretization_points(number_points=5)
         points_x = [p.x for p in points]
         points_y = [p.y for p in points]
 
