@@ -2298,11 +2298,29 @@ class FullArc2D(Arc2D):
 
 class ArcEllipse2D(Edge):
     """
+    An 2 dimensional elliptical arc.
 
+    :param start: The starting point of the elliptical arc
+    :type start: :class:`volmdlr.Point2D`
+    :param interior: An interior point of the elliptical arc
+    :type interior: :class:`volmdlr.Point2D`
+    :param end: The end point of the elliptical arc
+    :type end: :class:`volmdlr.Point2D`
+    :param center: The center of the ellipse
+    :type center: :class:`volmdlr.Point2D`
+    :param major_dir: The major direction of the ellipse
+    :type major_dir: :class:`volmdlr.Vector2D`
+    :param name: The name of the elliptical arc. Default value is ''
+    :type name: str, optional
+    :param extra: An extra interior point if start is equal to end. Default
+        value is None
+    :type extra: :class:`volmdlr.Point2D`, optional
     """
 
-    def __init__(self, start, interior, end, center, major_dir, name='',
-                 extra=None):
+    def __init__(self, start: volmdlr.Point2D, interior: volmdlr.Point2D,
+                 end: volmdlr.Point2D, center: volmdlr.Point2D,
+                 major_dir: volmdlr.Vector2D, name: str = '',
+                 extra: volmdlr.Point2D = None):
         Edge.__init__(self, start, end, name)
         self.interior = interior
         self.center = center
