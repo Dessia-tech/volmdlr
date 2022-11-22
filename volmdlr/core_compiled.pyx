@@ -1983,6 +1983,7 @@ class Point3D(Vector3D):
 
     def babylon_script(self):
         """
+        # TODO: to be deleted ?
         Returns the babylonjs script for 3D display in browser.
 
         :return: A babylonjs script
@@ -1996,6 +1997,14 @@ class Point3D(Vector3D):
         return s
 
     def nearest_point(self, points: List['Point3D']):
+        """
+        Returns the nearest 3 dimensional point out of the list.
+
+        :param points: A list of 3 dimensional points
+        :type points: List[:class:`volmdlr.Point3D`]
+        :return: The closest point
+        :rtype: :class:`volmdlr.Point3D`
+        """
         min_distance, closest_point = math.inf, None
         for point in points:
             distance = self.point_distance(point)
@@ -3407,6 +3416,7 @@ class Frame3D(Basis3D):
 
     def babylonjs(self, size=0.1, parent=None):
         """
+        # TODO: to be deleted ?
         Returns the babylonjs script for 3D display in browser.
 
         :param size: The adjustable size of the 3 dimensional frame. Default
