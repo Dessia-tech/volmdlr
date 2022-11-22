@@ -1621,7 +1621,7 @@ class Vector3D(Vector):
         """
         x2d = self.dot(x) - plane_origin.dot(x)
         y2d = self.dot(y) - plane_origin.dot(y)
-        return self.__class__(x2d, y2d)
+        return Point2D(x2d, y2d)
 
     def random_unit_normal_vector(self):
         """
