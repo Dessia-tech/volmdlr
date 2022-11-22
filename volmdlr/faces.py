@@ -33,7 +33,7 @@ import volmdlr.display as vmd
 import volmdlr.geometry
 import volmdlr.grid
 import os
-
+import time
 
 def knots_vector_inv(knots_vector):
     '''
@@ -587,7 +587,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         outer_contour = self.outer_contour.axial_symmetry(line)
         inner_contours = []
-        if self.inner_contours != []:
+        if self.inner_contours:
             inner_contours = [contour.axial_symmetry(line) for contour in self.inner_contours]
 
         return self.__class__(outer_contour=outer_contour,
@@ -596,7 +596,7 @@ class Surface2D(volmdlr.core.Primitive2D):
     def rotation(self, center, angle):
 
         outer_contour = self.outer_contour.rotation(center, angle)
-        if self.inner_contours != []:
+        if self.inner_contours:
             inner_contours = [contour.rotation(center, angle) for contour in self.inner_contours]
         else:
             inner_contours = []
@@ -2273,10 +2273,10 @@ class ConicalSurface3D(Surface3D):
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         # TODO: enhance this, this is a non exact method!
         length = bspline_curve3d.length()
-        points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
-                  for i in range(11)]
-        # points = [self.point3d_to_2d(p)
-        #                   for p in bspline_curve3d.control_points]
+        # points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
+        #           for i in range(11)]
+        points = [self.point3d_to_2d(p)
+                          for p in bspline_curve3d.control_points]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -2297,19 +2297,19 @@ class ConicalSurface3D(Surface3D):
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
         elif theta3 > theta1 > theta2:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
-
-        list_primitives = []
-        new_points = []
-        last_p1x = points[0].x
-        for p1, p2 in zip(points[:-1], points[1:]):
-            if p1 == p2:
-                continue
-            # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
-            if math.isclose(p1.x, math.pi, abs_tol=1e-6) and (p1.x - p2.x) > math.pi:
-                p1 = volmdlr.Point2D(-math.pi, p1.y)
-            elif math.isclose(p1.x, -math.pi, abs_tol=1e-6) and (p1.x - p2.x) < -math.pi:
-                p1 = volmdlr.Point2D(math.pi, p1.y)
-            new_points.append(p1)
+        new_points = [p1 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
+        # list_primitives = []
+        # new_points = []
+        # last_p1x = points[0].x
+        # for p1, p2 in zip(points[:-1], points[1:]):
+        #     if p1 == p2:
+        #         continue
+        #     # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
+        #     if math.isclose(p1.x, math.pi, abs_tol=1e-6) and (p1.x - p2.x) > math.pi:
+        #         p1 = volmdlr.Point2D(-math.pi, p1.y)
+        #     elif math.isclose(p1.x, -math.pi, abs_tol=1e-6) and (p1.x - p2.x) < -math.pi:
+        #         p1 = volmdlr.Point2D(math.pi, p1.y)
+        #     new_points.append(p1)
 
         new_points.append(points[-1])
         return [vme.BSplineCurve2D.from_points_interpolation(new_points, bspline_curve3d.degree,
@@ -3036,30 +3036,56 @@ class BSplineSurface3D(Surface3D):
                (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
                (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
                (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
+        min_dist = math.inf
+        x0 = []
+        for xi in x0s:
+            dist = f(xi)
+            if dist < min_dist:
+                x0 = xi
+                min_dist = dist
 
-        for x0 in x0s:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
-                                                              min_bound_y],
-                                                             [max_bound_x,
-                                                              max_bound_y]),
-                                           ftol=tol / 10,
-                                           xtol=tol / 10,
-                                           # loss='soft_l1'
-                                           )
-            # z.cost represent the value of the cost function at the solution
-            if z.fun < tol:
-                return volmdlr.Point2D(*z.x)
+        # for i, x0 in enumerate(x0s):
+        #     # start = time.time()
+        #     z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
+        #                                                       min_bound_y],
+        #                                                      [max_bound_x,
+        #                                                       max_bound_y]),
+        #                                    ftol=tol / 10,
+        #                                    xtol=tol / 10,
+        #                                    # loss='soft_l1'
+        #                                    )
+        #     # z.cost represent the value of the cost function at the solution
+        #     if z.fun < tol:
+        #         # end = time.time()
+        #         # print("Iteration : ", i)
+        #         # print("Time :", (end - start) * 10 ** 3, "ms")
+        #         return volmdlr.Point2D(*z.x)
+        #     x0 = z.x
+        res = scp.optimize.minimize(f, x0=x0,
+                                    bounds=[(min_bound_x, max_bound_x),
+                                            (min_bound_y, max_bound_y)],
+                                    tol=tol)
+        # res.fun represent the value of the objective function
+        if res.fun < tol:
+            return volmdlr.Point2D(*res.x)
+        x0 = res.x
+        z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
+                                                          min_bound_y],
+                                                         [max_bound_x,
+                                                          max_bound_y]),
+                                       ftol=tol / 10,
+                                       xtol=tol / 10,
+                                       # loss='soft_l1'
+                                       )
+        # z.cost represent the value of the cost function at the solution
+        if z.fun < tol:
+            return volmdlr.Point2D(*z.x)
 
-            res = scp.optimize.minimize(f, x0=npy.array(x0),
-                                        bounds=[(min_bound_x, max_bound_x),
-                                                (min_bound_y, max_bound_y)],
-                                        tol=tol)
-            # res.fun represent the value of the objective function
-            if res.fun < tol:
-                return volmdlr.Point2D(*res.x)
-
-            results.append((z.x, z.fun))
-            results.append((res.x, res.fun))
+        results.append((z.x, z.fun))
+        results.append((res.x, res.fun))
+        # end = time.time()
+        # print("Iteration : ", i)
+        # print("Time :", (end - start) * 10 ** 3, "ms")
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
     def linesegment2d_to_3d(self, linesegment2d):
