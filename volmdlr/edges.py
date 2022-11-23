@@ -322,15 +322,6 @@ class LineSegment(Edge):
     def point_at_abscissa(self, abscissa):
         return self.start + self.unit_direction_vector() * abscissa
 
-    def straight_line_point_belongs(self, point):
-        """
-        Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points
-        :param point2d: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
-        """
-        raise NotImplementedError
-
 
 class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
@@ -578,15 +569,6 @@ class BSplineCurve(Edge):
             return bsplinecurve
         bsplinecurve.periodic = True
         return bsplinecurve
-
-    def straight_line_point_belongs(self, point):
-        """
-        Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points
-        :param point2d: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
-        """
-        raise NotImplementedError
 
 
 class Line2D(Line):
@@ -1584,15 +1566,6 @@ class Arc(Edge):
                       DeprecationWarning)
         return self.discretization_points(number_points=discretization_resolution)
 
-    def straight_line_point_belongs(self, point):
-        """
-        Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points
-        :param point2d: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
-        """
-        raise NotImplementedError
-
 
 class Arc2D(Arc):
     """
@@ -2539,15 +2512,6 @@ class ArcEllipse2D(Edge):
         raise NotImplementedError
 
     def unit_direction_vector(self, abscissa):
-        raise NotImplementedError
-
-    def straight_line_point_belongs(self, point):
-        """
-        Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points
-        :param point2d: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
-        """
         raise NotImplementedError
 
 
@@ -5102,12 +5066,3 @@ class ArcEllipse3D(Edge):
 
     def triangulation(self):
         return None
-
-    def straight_line_point_belongs(self, point):
-        """
-        Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points
-        :param point2d: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
-        """
-        raise NotImplementedError
