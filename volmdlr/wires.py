@@ -1487,7 +1487,7 @@ class Contour2D(ContourMixin, Wire2D):
         points = self.edge_polygon.points[:]
         for primitive in self.primitives:
             if hasattr(primitive, 'discretization_points'):
-                points.extend(primitive.discretization_points())
+                points.extend(primitive.discretization_points(number_points=10))
         xmin = min(p[0] for p in points)
         xmax = max(p[0] for p in points)
         ymin = min(p[1] for p in points)
