@@ -15,6 +15,7 @@ from typing import List
 import networkx as nx
 import numpy as npy
 from scipy.spatial import Delaunay, ConvexHull
+from scipy import integrate as scipy_integrate
 
 import matplotlib.pyplot as plt
 import matplotlib.patches
@@ -296,23 +297,24 @@ class WireMixin:
         return belongs
 
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
-
+        if isinstance(primitive, Contour2D):
+            print(True)
         for prim in self.primitives:
-            if not hasattr(prim, 'unit_direction_vector') and \
-                    hasattr(prim, 'tangent'):
-                vector1 = prim.tangent(0.5)
-            else:
-                vector1 = prim.unit_direction_vector(0.5)
-
-            if not hasattr(primitive, 'unit_direction_vector') and \
-                    hasattr(primitive, 'tangent'):
-                vector2 = primitive.tangent(0.5)
-            else:
-                vector2 = primitive.unit_direction_vector(0.5)
-            if vector1.is_colinear_to(vector2):
-                points = primitive.discretization_points(number_points=10)
-                if all(self.point_over_contour(point, tol) for point in points):
-                    return True
+            # if not hasattr(prim, 'unit_direction_vector') and \
+            #         hasattr(prim, 'tangent'):
+            #     vector1 = prim.tangent(0.5)
+            # else:
+            #     vector1 = prim.unit_direction_vector(0.5)
+            #
+            # if not hasattr(primitive, 'unit_direction_vector') and \
+            #         hasattr(primitive, 'tangent'):
+            #     vector2 = primitive.tangent(0.5)
+            # else:
+            #     vector2 = primitive.unit_direction_vector(0.5)
+            # if vector1.is_colinear_to(vector2):
+            points = primitive.discretization_points(number_points=10)
+            if all(self.point_over_contour(point, tol) for point in points):
+                return True
         return False
 
 
@@ -858,6 +860,16 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def triangulation(self):
         return None
+
+    def to_2d(self, plane_origin, x, y):
+        z = x.cross(y)
+        plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
+        primitives2d = []
+        for primitive in self.primitives:
+            primitive2d = plane3d.point3d_to_2d(primitive)
+            if primitive2d is not None:
+                primitives2d.append(primitive2d)
+        return self.__class__(primitives=primitives2d)
 
 
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
@@ -1472,6 +1484,9 @@ class Contour2D(ContourMixin, Wire2D):
     #                 return True
     #     return False
 
+    def middle_point(self):
+        return self.point_at_abscissa(cutting_contour.length() / 2)
+
     def point_distance(self, point):
         min_distance = self.primitives[0].point_distance(point)
         for primitive in self.primitives[1:]:
@@ -1998,8 +2013,13 @@ class Contour2D(ContourMixin, Wire2D):
                 cutting_points = []
                 point1, point2 = [cutting_contour.primitives[0].start,
                                   cutting_contour.primitives[-1].end]
-                middle_point = cutting_contour.point_at_abscissa(cutting_contour.length() / 2)
-                if not base_contour.point_belongs(middle_point):
+                # middle_point = cutting_contour.point_at_abscissa(cutting_contour.length() / 2)
+                if not any(base_contour.point_belongs(prim.middle_point()) for prim in cutting_contour.primitives):
+                # for prim in cutting_contour.primitives:
+                #     middle_point = prim.middle_point()
+                #     if not base_contour.point_belongs(middle_point):
+                #         break
+                # else:
                     continue
                 if base_contour.point_over_contour(point1) and base_contour.point_over_contour(point2):
                     cutting_points = [point1, point2]
@@ -2014,7 +2034,8 @@ class Contour2D(ContourMixin, Wire2D):
                     for cntr in [contour1, contour2]:
                         all_divided_contour = True
                         for cut_contour in list_cutting_contours:
-                            points_at_abs = cut_contour.discretization_points(cut_contour.length() / 5)
+                            # points_at_abs = cut_contour.discretization_points(cut_contour.length() / 5)
+                            points_at_abs = [prim.middle_point() for prim in cut_contour.primitives]
                             for point_at_abs in points_at_abs[1:-1]:
                                 if cntr.point_belongs(point_at_abs) and \
                                         (not cntr.point_over_contour(point_at_abs) and
@@ -3881,10 +3902,11 @@ class Ellipse2D(Contour2D):
         self.minor_axis = minor_axis
         self.center = center
         self.major_dir = major_dir
+        self.theta = volmdlr.core.clockwise_angle(self.major_dir, volmdlr.X2D)
         Contour2D.__init__(self, [self], name=name)
 
     def to_3d(self, origin, x, y):
-        pass
+        raise NotImplementedError
 
     def point_belongs(self, point):
         return math.isclose((point.x - self.center.x)**2 / self.major_axis**2 +
@@ -3930,16 +3952,38 @@ class Ellipse2D(Contour2D):
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         if number_points:
             angle_resolution = number_points
-        discretization_points = [volmdlr.Point2D(self.major_axis * math.cos(theta), self.minor_axis * math.sin(theta))
+        discretization_points = [self.center + volmdlr.Point2D(self.major_axis * math.cos(theta + self.theta),
+                                                 self.minor_axis * math.sin(theta + self.theta))
                                  for theta in npy.linspace(0, volmdlr.TWO_PI, angle_resolution + 1)]
+        return discretization_points
+
+    def abscissa(self, point: volmdlr.Point2D):
+        if self.point_belongs(point):
+            angle_abscissa = self.point_angle_with_major_dir(point)
+            def arc_length(theta):
+                return math.sqrt((self.major_axis**2) * math.sin(theta) ** 2 +
+                                 (self.minor_axis**2) * math.cos(theta)**2)
+            res, err = scipy_integrate.quad(arc_length, 0, angle_abscissa)
+            return res
+        raise ValueError(f'point {point} does not belong to ellipse')
+
+    def point_angle_with_major_dir(self, point2d):
+        center2d_point2d = point2d - self.center
+        angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, self.major_dir)
+        return angle_abscissa
+
+    def area(self):
+        return math.pi * self.major_axis * self.minor_axis
+
     def plot(self, ax = None, linestyle='-', color='k', linewidth=1, alpha=1.0,):
         if ax is None:
             _, ax = plt.subplots()
-        angle = volmdlr.core.clockwise_angle(volmdlr.X2D, self.major_dir) * 180 / math.pi
-        ax.add_patch(matplotlib.patches.Ellipse((self.center.x, self.center.y), 2 * self.major_axis,
-                                                2 * self.minor_axis, angle, color=color, alpha=alpha,
-                                                linestyle=linestyle, linewidth=linewidth, fill=False))
-
+        x = []
+        y = []
+        for px, py in self.discretization_points(number_points=50):
+            x.append(px)
+            y.append(py)
+        plt.plot(x, y, color=color, alpha=alpha)
         return ax
 
 
@@ -4260,16 +4304,6 @@ class Contour3D(ContourMixin, Wire3D):
 
         return ax
 
-    def to_2d(self, plane_origin, x, y):
-        z = x.cross(y)
-        plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
-        primitives2d = []
-        for primitive in self.primitives:
-            primitive2d = plane3d.point3d_to_2d(primitive)
-            if primitive2d is not None:
-                primitives2d.append(primitive2d)
-        return Contour2D(primitives=primitives2d)
-
     def _bounding_box(self):
         """
         Flawed method, to be enforced by overloading
@@ -4314,7 +4348,7 @@ class Contour3D(ContourMixin, Wire3D):
         intersections = []
         for primitive in self.primitives:
             prim_line_intersections = primitive.linesegment_intersection(linesegment)
-            if prim_line_intersection:
+            if prim_line_intersections:
                 for inters in prim_line_intersections:
                     if inters not in intersections:
                         intersections.append(inters)
@@ -4442,7 +4476,7 @@ class Circle3D(Contour3D):
         :return: a list of sampled points
         """
         if number_points:
-            angle_resolution = 360 / number_points
+            angle_resolution = number_points
         discretization_points_3d = [
                                      self.center + self.radius * math.cos(
                                          teta) * self.frame.u
@@ -4452,6 +4486,14 @@ class Circle3D(Contour3D):
                                      npy.linspace(0, volmdlr.TWO_PI,
                                                   angle_resolution + 1)][:-1]
         return discretization_points_3d
+
+    def abscissa(self, point3d: volmdlr.Point3D):
+        x, y, _ = self.frame.new_coordinates(point3d)
+        u1 = x / self.radius
+        u2 = y / self.radius
+        theta = volmdlr.core.sin_cos_angle(u1, u2)
+
+        return self.radius * abs(theta)
 
     def length(self):
         return volmdlr.TWO_PI * self.radius
@@ -4524,6 +4566,32 @@ class Circle3D(Contour3D):
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
+
+    def linesegment_intersection(self, linesegment: volmdlr.edges.LineSegment3D):
+        distance_center_lineseg = linesegment.point_distance(self.frame.origin)
+        if distance_center_lineseg > self.radius:
+            return []
+        direction_vector = linesegment.direction_vector()
+        if linesegment.start.z == linesegment.end.z == self.frame.origin.z:
+            quadratic_equation_a = (1 + (direction_vector.y ** 2 / direction_vector.x**2))
+            quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x**2) * linesegment.start.x +
+                     2 * (direction_vector.y / direction_vector.x) * linesegment.start.y)
+            quadratic_equation_c = ((linesegment.start.y - (direction_vector.y / direction_vector.x) *
+                                     linesegment.start.x)**2 - self.radius**2)
+            delta = (quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c)
+            x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
+            x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)
+            y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment.start.x) + linesegment.start.y
+            y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment.start.x) + linesegment.start.y
+            return [volmdlr.Point3D(x1, y1, self.frame.origin.z), volmdlr.Point3D(x2, y2, self.frame.origin.z)]
+        z_constant = self.frame.origin.z
+        constant = (z_constant - linesegment.start.z) / direction_vector.z
+        x_coordinate = constant * direction_vector.x + linesegment.start.x
+        y_coordinate = constant * direction_vector.y + linesegment.start.y
+        if math.isclose((x_coordinate - self.frame.origin.x) ** 2 + (y_coordinate - self.frame.origin.y) ** 2,
+                        self.radius**2, abs_tol=1e-6):
+            return [volmdlr.Point3D(x_coordinate, y_coordinate, z_constant)]
+        return []
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -4679,18 +4747,18 @@ class Circle3D(Contour3D):
             R, self.radius)
         return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
 
-    def point_on_circle(self, point: volmdlr.Point3D):
+    def point_belongs(self, point: volmdlr.Point3D, abs_tol:float=1e-6):
         distance = point.point_distance(self.center)
         vec = volmdlr.Vector3D(*point - self.center)
         dot = self.normal.dot(vec)
-        if math.isclose(distance, self.radius, abs_tol=1e-6)\
-                and math.isclose(dot, 0, abs_tol=5e-6):
+        if math.isclose(distance, self.radius, abs_tol=abs_tol)\
+                and math.isclose(dot, 0, abs_tol=abs_tol):
             return True
         return False
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        if not self.point_on_circle(point1)\
-                or not self.point_on_circle(point2):
+        if not self.point_belongs(point1)\
+                or not self.point_belongs(point2):
             ax = self.plot()
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')
@@ -4728,7 +4796,20 @@ class Ellipse3D(Contour3D):
         self.normal = normal
         major_dir.normalize()
         self.major_dir = major_dir
+        self._frame = None
         Contour3D.__init__(self, [self], name=name)
+
+    @property
+    def frame(self):
+        if not self._frame:
+            self._frame = volmdlr.Frame3D(self.center, self.major_dir, self.normal.cross(self.major_dir), self.normal)
+        return self._frame
+
+    def point_belongs(self, point):
+        new_point = self.frame.new_coordinates(point)
+        new_center = self.frame.new_coordinates(self.center)
+        return math.isclose((new_point.x - new_center.x) ** 2 / self.major_axis ** 2 +
+                            (new_point.y - new_center.y) ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
 
     def length(self):
         """
@@ -4739,6 +4820,7 @@ class Ellipse3D(Contour3D):
         perimeter_formular_h = (self.major_axis - self.minor_axis)**2 / (self.major_axis + self.minor_axis)**2
         return math.pi * (self.major_axis + self.minor_axis) *\
                (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
@@ -4768,30 +4850,17 @@ class Ellipse3D(Contour3D):
         return Ellipse2D(self.major_axis, self.minor_axis, center, major_dir_d2)
 
     def abscissa(self, point: volmdlr.Point3D):
-
-        # center_to_point = point - self.center
-        # angle_abscissa = volmdlr.core.vectors3d_angle(center_to_point, self.major_dir)
-        # distance_point_center = point.point_distance(self.center)
-        # if self.minor_axis > distance_point_center or distance_point_center > self.major_axis:
         vector_2 = self.normal.cross(self.major_dir)
         ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
-        center_2d = self.center.to_2d(self.center, self.major_dir, vector_2)
-        major_dir_2d = self.major_dir.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
-        if ellipse_2d.point_belongs(point2d):
-            center2d_point2d = point2d - center_2d
-            angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, major_dir_2d)
-        # formula_point = volmdlr.Point2D(ellipse_2d.center.x + ellipse_2d.major_axis*math.cos(angle_abscissa),
-        #                                 ellipse_2d.center.y + ellipse_2d.minor_axis*math.sin(angle_abscissa))
-
-
-            center2d_point2d = point2d - center_2d
-            angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, major_dir_2d)
-            def arc_length(theta):
-                return math.sqrt((self.major_axis**2) * math.sin(theta) ** 2 + (self.minor_axis**2) * math.cos(theta)**2)
-            res, err = integrate.quad(f, 0, 2 * math.pi)
-            return res
-        raise ValueError(f'point {point} is does not belong to ellipse')
+        return ellipse_2d.abscissa(point2d)
+        # if ellipse_2d.point_belongs(point2d):
+        #     angle_abscissa = ellipse_2d.point_angle_with_major_dir(point2d)
+        #     def arc_length(theta):
+        #         return math.sqrt((self.major_axis**2) * math.sin(theta) ** 2 + (self.minor_axis**2) * math.cos(theta)**2)
+        #     res, err = scipy_integrate.quad(arc_length, 0, angle_abscissa)
+        #     return res
+        # raise ValueError(f'point {point} does not belong to ellipse')
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         # minor_dir = self.normal.cross(self.major_dir)
