@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 
+* Contour2D: point_belongs
 * PlaneFace3D: line_intersections
 * BsplineCurve: abscissa
 * Circle2D: split_by_line
