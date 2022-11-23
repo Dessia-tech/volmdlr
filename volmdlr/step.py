@@ -568,7 +568,7 @@ class Step(dc.DessiaObject):
                                                                     arguments))
         return volmdlr_object
 
-    def to_volume_model(self, show_times: bool= False):
+    def to_volume_model(self, show_times: bool = False):
         """
         show_times=True displays the numer of times a given class has been
         instanciated and the totatl time of all the instanciations of this
