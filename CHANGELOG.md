@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* Contour2D: point_belongs (quick fix: use discretized_contour instead of edge_polygon)
 * Contour2D: bounding_rectangle (specify number_points for discretization_points)
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
 * BsplineCurve: abscissa (use different start point between 0 and length)
