@@ -681,6 +681,61 @@ class Step(dc.DessiaObject):
         # remove first point because it refers to origin
         return points3d[1:]
 
+    @property
+    def uncertainty(self):
+        #TODO:This is an incomplete method, need to take into account all the shape representaion
+        #entities
+        uncertainty = []
+        shape_representation_entities = ['ADVANCED_BREP_SHAPE_REPRESENTATION',
+                                         'FACETED_BREP_SHAPE_REPRESENTATION',
+                                         'MANIFOLD_SURFACE_SHAPE_REPRESENTATION',
+                                         'GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION',
+                                         'GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION',
+                                         'TESSELLATED_SHAPE_REPRESENTATION'
+                                         ]
+        SI_PREFIX = {'.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9, '.MEGA.': 1e6,
+                     '.KILO.': 1e3, '.HECTO.': 1e2, '.DECA.':1e1, '$':1e0, '.DECI.': 1e-1,
+                     '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6, '.NANO.': 1e-9,
+                     '.PICO.': 1e-12, '.FEMTO.':1e-15, '.ATTO.': 1e-18
+                    }
+        #SHAPE_REPRESENTATION(name, items, context_of_items)
+        uncertanties = []
+        for stepfunction in self.functions.values():
+            if stepfunction.name in shape_representation_entities:
+                arguments = self.functions[stepfunction.id].arg[:]
+                self.parse_arguments(arguments)
+                context_of_items = self.functions[arguments[2]]
+                #TODO: Take into account context_of_items while reading step lines
+
+            #QUICK FIX: BY PASS SHAPE_REPRESENTATION_ENTITES
+            #UNCERTAINTY_MEASURE_WITH_UNIT(value, unit, name, description)
+            if stepfunction.name == 'UNCERTAINTY_MEASURE_WITH_UNIT':
+                arguments = self.functions[stepfunction.id].arg[:]
+                self.parse_arguments(arguments)
+                value_component = arguments[0]
+
+                uncertainty = float(value_component[value_component.find('(')+1:value_component.find(')')])
+                #TODO: FIX SUBFUCTION READING
+                unit_component = self.functions[arguments[1]]
+                if unit_component.name.startswith('CONVERSION_BASED_UNIT'):
+                    arg = unit_component.arg
+                    self.parse_arguments(arg)
+                    convertion_function = self.functions[arg[1]]
+                    arg_convertion = convertion_function.arg
+                    self.parse_arguments(arg_convertion)
+                    convertion = arg_convertion[0]
+                    factor = float(convertion[convertion.find('(')+1:convertion.find(')')])
+                    uncertainty = factor*uncertainty
+                    unit_component = self.functions[arg_convertion[1]]
+
+                try:
+                    si_pref = SI_PREFIX[unit_component.arg[1]]
+                except Exception:
+                    si_pref = 1
+                uncertainty = si_pref*uncertainty
+                uncertanties.append(uncertainty)
+        return max(uncertanties)
+
     def plot_data(self):
         graph = self.graph.copy()
 
