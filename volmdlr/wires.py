@@ -1444,11 +1444,11 @@ class Contour2D(ContourMixin, Wire2D):
             return False
         if self.edge_polygon.point_belongs(point):
             return True
-        for edge in self.primitives:
-            if hasattr(edge, 'straight_line_point_belongs'):
-                if edge.straight_line_point_belongs(point):
-                    return True
-            warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
+        # for edge in self.primitives:
+        #     if hasattr(edge, 'straight_line_point_belongs'):
+        #         if edge.straight_line_point_belongs(point):
+        #             return True
+        #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
         if self.to_polygon(50).point_belongs(point):
             return True
         return False
