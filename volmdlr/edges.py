@@ -167,7 +167,7 @@ class Edge(dc.DessiaObject):
         :param point: Point to be verified
         :return: Return True if the point belongs to this surface, or False otherwise
         """
-        raise NotImplementedError(f'the unit_direction_vector method must be'
+        raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
 
 
