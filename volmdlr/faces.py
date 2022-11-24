@@ -39,9 +39,7 @@ def knots_vector_inv(knots_vector):
     '''
 
     knots = sorted(set(knots_vector))
-    multiplicities = []
-    for knot in knots:
-        multiplicities.append(knots_vector.count(knot))
+    multiplicities = [knots_vector.count(knot) for knot in knots]
 
     return knots, multiplicities
 
@@ -69,9 +67,9 @@ def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
     elif theta3 > theta1 and theta6 > math.pi:
         theta2 = theta6
 
-    if theta1 > 0 and theta3 < 0:
+    if theta3 < 0 < theta1:
         theta1 -= 2 * math.pi
-    elif theta1 < 0 and theta3 > 0:
+    elif theta1 < 0 < theta3:
         theta1 += 2 * math.pi
 
     start = volmdlr.Point2D(theta1, z1)
@@ -115,9 +113,9 @@ def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, poin
         elif theta3 > theta1 and theta6 > math.pi:
             theta2 = theta6
 
-        if theta1 > 0 and theta3 < 0:
+        if theta1 > 0 > theta3:
             theta1 -= 2 * math.pi
-        elif theta1 < 0 and theta3 > 0:
+        elif theta1 < 0 < theta3:
             theta1 += 2 * math.pi
     if math.isclose(theta1, theta2, abs_tol=1e-4):
         phi5 = phi1 - angle3d
@@ -129,9 +127,9 @@ def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, poin
         elif phi3 > phi1 and phi6 > math.pi:
             phi2 = phi6
 
-        if phi1 > 0 and phi3 < 0:
+        if phi3 < 0 < phi1:
             phi1 -= 2 * math.pi
-        elif phi1 < 0 and phi3 > 0:
+        elif phi1 < 0 < phi3:
             phi1 += 2 * math.pi
 
     start = volmdlr.Point2D(theta1, phi1)
@@ -2408,7 +2406,7 @@ class SphericalSurface3D(Surface3D):
         # print(start, end)
         # return [vme.LineSegment2D(start, end)]
 
-    def bsplinecurve2d_to_3d(self, bsplinecurve2d):
+    def bsplinecurve2d_to_3d(self, bspline_curve2d):
         start = self.point2d_to_3d(bsplinecurve2d.control_points[0])
         interior = self.point2d_to_3d(bsplinecurve2d.control_points[1])
         end = self.point2d_to_3d(bsplinecurve2d.control_points[2])

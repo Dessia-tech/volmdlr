@@ -4681,9 +4681,9 @@ class FullArc3D(Arc3D):
     def copy(self, *args, **kwargs):
         return FullArc3D(self._center.copy(), self.end.copy(), self._normal.copy())
 
-    def to_2d(self, plane_origin, x1, x2):
-        center = self.center.to_2d(plane_origin, x1, x2)
-        start_end = self.start.to_2d(plane_origin, x1, x2)
+    def to_2d(self, plane_origin, x, y):
+        center = self.center.to_2d(plane_origin, x, y)
+        start_end = self.start.to_2d(plane_origin, x, y)
         return FullArc2D(center, start_end)
 
     def to_step(self, current_id, surface_id=None):
