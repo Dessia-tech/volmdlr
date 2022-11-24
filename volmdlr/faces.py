@@ -708,21 +708,16 @@ class Surface3D(DessiaObject):
         else:
             class_ = self.face_class
 
-        surface2d = Surface2D(outer_contour=outer_contour2d,
-                              inner_contours=inner_contours2d)
+        surface2d = Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
 
     # def repair_singularity(self, primitives, last_primitives):
 
     def repair_primitives_periodicity(self, primitives, last_primitive):
-        delta_x1 = abs(primitives[0].start.x
-                       - last_primitive.end.x)
-        delta_x2 = abs(primitives[-1].end.x
-                       - last_primitive.end.x)
-        delta_y1 = abs(primitives[0].start.y
-                       - last_primitive.end.y)
-        delta_y2 = abs(primitives[-1].end.y
-                       - last_primitive.end.y)
+        delta_x1 = abs(primitives[0].start.x - last_primitive.end.x)
+        delta_x2 = abs(primitives[-1].end.x - last_primitive.end.x)
+        delta_y1 = abs(primitives[0].start.y - last_primitive.end.y)
+        delta_y2 = abs(primitives[-1].end.y - last_primitive.end.y)
 
         new_primitives = primitives
 
@@ -3323,9 +3318,7 @@ class BSplineSurface3D(Surface3D):
             x_init.append(points_2d[i][1])
         z = opt.least_squares(non_linear_equations, x_init)
 
-        points_2d_deformed = []  # deformed 2d grid points
-        for i in range(0, len(z.x), 2):
-            points_2d_deformed.append(volmdlr.Point2D(z.x[i], z.x[i + 1]))
+        points_2d_deformed = [volmdlr.Point2D(z.x[i], z.x[i + 1]) for i in range(0, len(z.x), 2)]  # deformed 2d grid points
 
         grid2d_deformed = volmdlr.grid.Grid2D.from_points(points=points_2d_deformed,
                                                           points_dim_1=points_x,
