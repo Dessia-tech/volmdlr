@@ -1207,6 +1207,7 @@ class CylindricalSurface3D(Surface3D):
         self.radius = radius
         self.name = name
 
+        self.uncertainty = 1e-6
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         p = volmdlr.Point3D(self.radius * math.cos(point2d.x),
                             self.radius * math.sin(point2d.x),
@@ -1282,7 +1283,7 @@ class CylindricalSurface3D(Surface3D):
                 for p1, p2 in zip(points[:-1], points[1:])]
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, uncertainty: float = 1e-6):
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, -frame3d.u
         U.normalize()
@@ -1290,7 +1291,9 @@ class CylindricalSurface3D(Surface3D):
         V = W.cross(U)
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
         radius = float(arguments[2]) / 1000
-        return cls(frame_direct, radius, arguments[0][1:-1])
+        cylindrical_surface = cls(frame_direct, radius, arguments[0][1:-1])
+        cylindrical_surface.uncertainty = uncertainty
+        return cylindrical_surface
 
     def to_step(self, current_id):
         frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
@@ -1488,6 +1491,7 @@ class ToroidalSurface3D(Surface3D):
     face_class = 'ToroidalFace3D'
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = volmdlr.TWO_PI
+    uncertainty = 1e-6
     """
     The local plane is defined by (theta, phi)
     theta is the angle around the big (R) circle and phi around the small(r)
@@ -1551,7 +1555,7 @@ class ToroidalSurface3D(Surface3D):
         return volmdlr.Point2D(theta, phi)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, uncertainty: float =1e-6):
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, -frame3d.u
         U.normalize()
@@ -1560,7 +1564,9 @@ class ToroidalSurface3D(Surface3D):
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
         rcenter = float(arguments[2]) / 1000
         rcircle = float(arguments[3]) / 1000
-        return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
+        toroidal_surface = cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
+        toroidal_surface.uncertainty = uncertainty
+        return toroidal_surface
 
     def to_step(self, current_id):
         frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,

@@ -560,7 +560,7 @@ class Step(dc.DessiaObject):
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
-                arguments, object_dict)
+                arguments, object_dict, self.uncertainty)
 
         else:
             raise NotImplementedError(
