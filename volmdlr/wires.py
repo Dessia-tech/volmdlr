@@ -893,26 +893,39 @@ class ContourMixin(WireMixin):
         list_point_pairs = [(prim.start, prim.end) for prim in self.primitives]
         length_list_points = len(list_point_pairs)
         points = [list_point_pairs[0]]
+        primitives = self.primitives[:]
+        new_primitives = [primitives[0]]
+        primitives.remove(primitives[0])
         list_point_pairs.remove(
             (list_point_pairs[0][0], list_point_pairs[0][1]))
         finished = False
         counter = 0
         counter1 = 0
+
         while not finished:
-            for p1, p2 in list_point_pairs:
+            for i, (p1, p2) in enumerate(list_point_pairs):
                 if p1.point_distance(p2) < tol:
                     list_point_pairs.remove((p1, p2))
+                    primitives.remove(primitives[i])
                 elif p1.point_distance(points[-1][-1]) < tol:
                     points.append((p1, p2))
+                    new_primitives.append(primitives[i])
+                    primitives.remove(primitives[i])
                     list_point_pairs.remove((p1, p2))
                 elif p2.point_distance(points[-1][-1]) < tol:
                     points.append((p2, p1))
+                    new_primitives.append(primitives[i].reverse())
+                    primitives.remove(primitives[i])
                     list_point_pairs.remove((p1, p2))
                 elif p1.point_distance(points[0][0]) < tol:
                     points = [(p2, p1)] + points
+                    new_primitives = [primitives[i].reverse()] + new_primitives
+                    primitives.remove(primitives[i])
                     list_point_pairs.remove((p1, p2))
                 elif p2.point_distance(points[0][0]) < tol:
                     points = [(p1, p2)] + points
+                    new_primitives = [primitives[i]] + new_primitives
+                    primitives.remove(primitives[i])
                     list_point_pairs.remove((p1, p2))
             if len(list_point_pairs) == 0:
                 finished = True
@@ -936,8 +949,7 @@ class ContourMixin(WireMixin):
                     #     point_pair[0].plot(ax=ax, color='r')
                     #     point_pair[1].plot(ax=ax, color='r')
                     # raise NotImplementedError
-
-        return points
+        return new_primitives
 
     @staticmethod
     def touching_edges_pairs(edges):  # TO DO: move this to edges?
@@ -1595,28 +1607,28 @@ class Contour2D(ContourMixin, Wire2D):
     def order_contour(self):
         if self.is_ordered() or len(self.primitives) < 2:
             return self
-
-        initial_points = []
-        for primitive in self.primitives:
-            initial_points.append((primitive.start, primitive.end))
-
-        new_primitives = []
-        points = self.ordering_contour()
-        for point1, point2 in points:
-            try:
-                index = initial_points.index((point1, point2))
-            except ValueError:
-                index = initial_points.index((point2, point1))
-
-            if isinstance(self.primitives[index], volmdlr.edges.LineSegment2D):
-                new_primitives.append(volmdlr.edges.LineSegment2D(point1, point2))
-            elif isinstance(self.primitives[index], volmdlr.edges.Arc2D):
-                new_primitives.append(volmdlr.edges.Arc2D(point1, self.primitives[index].interior, point2))
-            elif isinstance(self.primitives[index], volmdlr.edges.BSplineCurve2D):
-                if (point1, point2) == (self.primitives[index].start, self.primitives[index].end):
-                    new_primitives.append(self.primitives[index])
-                else:
-                    new_primitives.append(self.primitives[index].reverse())
+        new_primitives = self.ordering_contour()
+        # initial_points = []
+        # for primitive in self.primitives:
+        #     initial_points.append((primitive.start, primitive.end))
+        #
+        # new_primitives = []
+        # points = self.ordering_contour()
+        # for point1, point2 in points:
+        #     try:
+        #         index = initial_points.index((point1, point2))
+        #     except ValueError:
+        #         index = initial_points.index((point2, point1))
+        #
+        #     if isinstance(self.primitives[index], volmdlr.edges.LineSegment2D):
+        #         new_primitives.append(volmdlr.edges.LineSegment2D(point1, point2))
+        #     elif isinstance(self.primitives[index], volmdlr.edges.Arc2D):
+        #         new_primitives.append(volmdlr.edges.Arc2D(point1, self.primitives[index].interior, point2))
+        #     elif isinstance(self.primitives[index], volmdlr.edges.BSplineCurve2D):
+        #         if (point1, point2) == (self.primitives[index].start, self.primitives[index].end):
+        #             new_primitives.append(self.primitives[index])
+        #         else:
+        #             new_primitives.append(self.primitives[index].reverse())
 
         self.primitives = new_primitives
 

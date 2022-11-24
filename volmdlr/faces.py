@@ -4542,6 +4542,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 new_faces_contours)
         for contour, inner_contours in zip(new_faces_contours, new_inner_contours):
             new_face = self.__class__(self.surface3d, Surface2D(contour, inner_contours))
+            new_face.outer_contour3d
             list_faces.append(new_face)
         return list_faces
 

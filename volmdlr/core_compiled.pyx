@@ -1795,6 +1795,13 @@ class Frame2D(Basis2D):
                        Vector2D(M[:, 0]),
                        Vector2D(M[:, 1]))
 
+    def __hash__(self):
+        """
+        hash returns 0 because points are difficult to hash if they are meant
+        to be equalized at a given tolerance
+        """
+        return 0
+
     def to_dict(self, *args, **kwargs):
         return {'object_class': 'volmdlr.Frame2D',
                 'name': self.name,

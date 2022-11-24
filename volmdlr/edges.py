@@ -2131,6 +2131,8 @@ class Arc2D(Arc):
                               interior=points_symmetry[1],
                               end=points_symmetry[2])
 
+    def reverse(self):
+        return self.__class__(self.end, self.interior, self.start, self.name)
 
 class FullArc2D(Arc2D):
     """
@@ -2430,7 +2432,7 @@ class ArcEllipse2D(Edge):
         # Angle pour interior
         u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
         anglei = volmdlr.core.sin_cos_angle(u5, u6)
-
+        self.angle_interior = anglei
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
             trigowise_path = (anglei + volmdlr.TWO_PI) - angle1
@@ -2539,12 +2541,18 @@ class ArcEllipse2D(Edge):
                 number_points = math.ceil(angle_resolution * abs(0.5 * self.angle / math.pi))
 
         if self.angle_start > self.angle_end:
-            angle_end = self.angle_end + volmdlr.TWO_PI
+            if self.angle_start >= self.angle_interior >= self.angle_end:
+                angle_start = self.angle_end
+                angle_end = self.angle_start
+            else:
+                angle_end = self.angle_end + volmdlr.TWO_PI
+                angle_start = self.angle_start
         else:
             angle_end = self.angle_end
+            angle_start = self.angle_start
         discretization_points = [
             self.center + volmdlr.Point2D(self.Gradius * math.cos(theta), self.Sradius * math.sin(theta))
-            for theta in npy.linspace(self.angle_start + self.theta, angle_end + self.theta, number_points + 1)]
+            for theta in npy.linspace(angle_start + self.theta, angle_end + self.theta, number_points + 1)]
         return discretization_points
 
     def polygon_points(self, discretization_resolution: int):
@@ -2593,6 +2601,9 @@ class ArcEllipse2D(Edge):
 
     def unit_direction_vector(self, abscissa):
         raise NotImplementedError
+
+    def reverse(self):
+        return self.__class__(self.end, self.interior, self.start, self.center, self.major_dir, self.name)
 
 
 class Line3D(Line):
@@ -5161,7 +5172,7 @@ class ArcEllipse3D(Edge):
                               self.major_dir.copy(),
                               self.name)
 
-    def plot(self, ax=None, color:str='k', alpha=1.0):
+    def plot(self, ax=None, color:str='k', alpha=1.0, edge_ends=False, edge_direction=False):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -5183,6 +5194,9 @@ class ArcEllipse3D(Edge):
             z.append(pz)
 
         ax.plot(x, y, z, color, alpha=alpha)
+        if edge_ends:
+            self.start.plot(ax)
+            self.end.plot(ax)
         return ax
 
     def plot2d(self, x3d: volmdlr.Vector3D = volmdlr.X3D, y3d: volmdlr.Vector3D = volmdlr.Y3D,
