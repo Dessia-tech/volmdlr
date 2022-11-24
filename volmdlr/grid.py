@@ -82,7 +82,7 @@ class Grid2D(DessiaObject):
 
     @classmethod
     def from_properties(cls, x_limits, y_limits, points_nbr,
-                        direction=['+x', '+y']):
+                        direction=None):
         """
         Define Grid2d based on the given properties
 
@@ -102,6 +102,8 @@ class Grid2D(DessiaObject):
         Grid2d
 
         """
+        if direction is None:
+            direction = ['+x', '+y']
 
         xmin, xmax = x_limits
         ymin, ymax = y_limits

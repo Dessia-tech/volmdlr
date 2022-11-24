@@ -23,7 +23,7 @@ from geomdl.fitting import interpolate_surface, approximate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 
 # import dessia_common
-import dessia_common as dc
+from dessia_common.core import DessiaObject
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.edges as vme
@@ -605,7 +605,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         self.inner_contours = new_contour.inner_contours
 
 
-class Surface3D(dc.DessiaObject):
+class Surface3D(DessiaObject):
     x_periodicity = None
     y_periodicity = None
     """
@@ -866,8 +866,8 @@ class Surface3D(dc.DessiaObject):
             new_w = basis.old_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         else:
-            raise ValueError(f'side value not valid, please specify'
-                             f'a correct value: \'old\' or \'new\'')
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
         return new_frame
 
 
@@ -1964,7 +1964,7 @@ class BSplineSurface3D(Surface3D):
 
         self.surface = surface
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
-        volmdlr.core.Primitive3D.__init__(self, name=name)
+        Surface3D.__init__(self, name=name)
 
         # Hidden Attributes
         self._displacements = None
@@ -5091,6 +5091,47 @@ class PlaneFace3D(Face3D):
             return [self_copy]
         return self_copy.divide_face(list_cutting_contours, contour_extract_inside)
 
+    def cut_by_coincident_face(self, face):
+        """
+        Cuts face1 with another coincident face2
+
+        :param face: a face3d
+        :type face: Face3D
+        :return: a list of faces3d
+        :rtype: List[Face3D]
+        """
+
+        if not self.surface3d.is_coincident(face.surface3d):
+            raise ValueError('The faces are not coincident')
+
+        if self.face_inside(face):
+            return self.divide_face([face.surface2d.outer_contour], True)
+        # if face.is_inside(self):
+        #     return face.divide_face([self.surface2d.outer_contour], True)
+
+        outer_contour_1 = self.surface2d.outer_contour
+        outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
+
+        if (face.face_inside(self)
+            and not outer_contour_1.contour_intersections(outer_contour_2)):
+            return self.divide_face(face.surface2d.inner_contours, True)
+
+        inner_contours = self.surface2d.inner_contours
+        inner_contours.extend([self.surface3d.contour3d_to_2d(
+            contour) for contour in face.inner_contours3d])
+
+        contours = outer_contour_1.cut_by_wire(outer_contour_2)
+
+        surfaces = []
+        for contour in contours:
+            inners = []
+            for inner_c in inner_contours:
+                if contour.is_inside(inner_c):
+                    inners.append(inner_c)
+            surfaces.append(Surface2D(contour, inners))
+
+        return [self.__class__(self.surface3d, surface2d) for surface2d in surfaces]
+
 
 class Triangle3D(PlaneFace3D):
     """
@@ -5124,7 +5165,7 @@ class Triangle3D(PlaneFace3D):
         self._bbox = None
         # self.bounding_box = self._bounding_box()
 
-        dc.DessiaObject.__init__(self, name=name)
+        DessiaObject.__init__(self, name=name)
 
         # Don't use inheritence for performance: class method fakes face3D behavior
         # Face3D.__init__(self,
@@ -5186,7 +5227,7 @@ class Triangle3D(PlaneFace3D):
         return self._surface2d
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
-        dict_ = dc.DessiaObject.base_dict(self)
+        dict_ = DessiaObject.base_dict(self)
         dict_['point1'] = self.point1.to_dict()
         dict_['point2'] = self.point2.to_dict()
         dict_['point3'] = self.point3.to_dict()
@@ -5812,8 +5853,7 @@ class CylindricalFace3D(Face3D):
 
         if coord.index(max(coord)) == 0:
             return 'x'
-        else:
-            return 'y'
+        return 'y'
 
 
 class ToroidalFace3D(Face3D):
@@ -6998,7 +7038,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             self.color = color
         self.alpha = alpha
         self._bbox = None
-        # self.bounding_box = self._bounding_box()
         volmdlr.core.CompositePrimitive3D.__init__(self,
                                                    primitives=faces, color=color, alpha=alpha,
                                                    name=name)
@@ -7014,6 +7053,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 return False
 
         return True
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+        This method does not use pointers for faces as it has no sense to have duplicate faces
+        """
+        dict_ = DessiaObject.base_dict(self)
+        dict_.update({'color': self.color,
+                      'alpha': self.alpha,
+                      'faces': [f.to_dict(use_pointers=False) for f in self.faces]})
+
+        return dict_
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -7416,6 +7466,120 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             face.plot(ax=ax, color=color, alpha=alpha)
 
         return ax
+
+    def project_coincident_faces_of(self, shell):
+        """
+        Divides self's faces based on coincident shell's faces
+        """
+
+        used_faces, list_faces = {}, []
+        initial_faces = self.faces[:]
+
+        for i, face1 in enumerate(initial_faces):
+            for j, face2 in enumerate(shell.faces):
+                contour1 = face1.surface2d.outer_contour
+                contour2 = face1.surface3d.contour3d_to_2d(face2.outer_contour3d)
+                c_inners_1 = face1.surface2d.inner_contours
+                c_inners_2 = [face1.surface3d.contour3d_to_2d(inner) for inner in face2.inner_contours3d]
+                inside = set()
+                for c1 in c_inners_1:
+                    for c2 in c_inners_2:
+                        # inside.add(c2.is_inside(c1))
+                        if c1.is_superposing(c2):
+                            inside.add(False)
+                        else:
+                            inside.add(c2.is_inside(c1))
+                            # if c2.is_inside(c1):
+                            #     ax=c1.plot()
+                            #     c2.plot(ax, "r")
+
+                if (face1.surface3d.is_coincident(face2.surface3d)
+                    and (contour1.is_overlapping(contour2)
+                         or (contour1.is_inside(contour2) or True in inside))):
+                    print('i: ', i)
+                    print('j: ', j)
+
+                    # ax=face2.plot(color='k')
+                    # face1.plot(ax, 'r')
+
+                    if face1 in used_faces:
+                        faces_1, face2_2 = used_faces[face1][:], face2
+                    else:
+                        faces_1, face2_2 = [face1], face2
+
+                    used = []
+                    for face1_1 in faces_1:
+                        plane3d = face1_1.surface3d
+                        s2d = Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
+                                        inner_contours=[
+                                            plane3d.contour3d_to_2d(contour) for contour in face2_2.inner_contours3d])
+                        face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
+
+                        divided_faces = face1_1.cut_by_coincident_face(face2_2)
+                        for d_face in divided_faces:
+
+                            if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
+                                if face2_2.surface2d.inner_contours:
+                                    divided_faces_d_face = []
+                                    # for inner in face2_2.inner_contours3d:
+                                    for inner in face2_2.surface2d.inner_contours:
+
+                                        # # if True in [(inner_d.is_superposing(
+                                        # #         d_face.surface3d.contour3d_to_2d(inner))
+                                        # #               or inner_d.is_inside(
+                                        # #                   d_face.surface3d.contour3d_to_2d(inner))) \
+                                        # #             for inner_d in d_face.surface2d.inner_contours]:
+
+                                        # if True in [((
+                                        #         abs(inner_d.area() - d_face.surface3d.contour3d_to_2d(inner).area()) \
+                                        #             < 1e-6)
+                                        #               or inner_d.is_inside(d_face.surface3d.contour3d_to_2d(inner))) \
+                                        #         for inner_d in d_face.surface2d.inner_contours]:
+
+                                        if True in [(((abs(inner_d.area() - inner.area()) < 1e-6)
+                                                      and inner.center_of_mass().is_close(inner_d.center_of_mass()))
+                                                      or inner_d.is_inside(inner)) \
+                                                for inner_d in d_face.surface2d.inner_contours]:
+
+                                            # list_faces.append(d_face)
+                                            divided_faces_d_face = ['', d_face]
+                                            continue
+
+                                        # else:
+                                        divided_faces_d_face = d_face.divide_face([inner], True)
+                                        # divided_faces_d_face = d_face.divide_face(
+                                        #     [d_face.surface3d.contour3d_to_2d(inner)], True)
+                                        # # areas = [d_f.area() for d_f in divided_faces_d_face]
+                                        # # areas.sort()
+                                        divided_faces_d_face.sort(key=lambda x: x.area())
+
+                                        list_faces.append(divided_faces_d_face[0])
+                                        d_face = divided_faces_d_face[1]
+
+                                    if divided_faces_d_face:
+                                        list_faces.append(divided_faces_d_face[1])
+
+                                else:
+                                    list_faces.append(d_face)
+                            else:
+                                # if face1 in used_faces:
+                                #     used_faces[face1] += [d_face]
+                                # else:
+                                #     used_faces[face1] = [d_face]
+                                used.append(d_face)
+
+                    used_faces[face1] = used
+
+        for face in initial_faces:
+            try:
+                if isinstance(used_faces[face], list):
+                    list_faces.extend(used_faces[face])
+                else:
+                    list_faces.append(used_faces[face])
+            except KeyError:
+                list_faces.append(face)
+
+        return self.__class__(list_faces)
 
 
 class ClosedShell3D(OpenShell3D):

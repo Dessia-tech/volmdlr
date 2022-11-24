@@ -48,7 +48,7 @@ class DisplayMesh(dc.DessiaObject):
 
         self.points = points
         self.triangles = triangles
-        self.name = name
+        dc.DessiaObject.__init__(self, name=name)
         self._utd_point_index = False
 
     def check(self):
