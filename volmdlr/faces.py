@@ -541,7 +541,7 @@ class Surface2D(volmdlr.core.Primitive2D):
     def plot(self, ax=None, color='k', alpha=1, equal_aspect=False):
 
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
         self.outer_contour.plot(ax=ax, color=color, alpha=alpha,
                                 equal_aspect=equal_aspect)
         for inner_contour in self.inner_contours:
