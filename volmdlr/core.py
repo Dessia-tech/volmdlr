@@ -1521,7 +1521,7 @@ class VolumeModel(dc.PhysicalObject):
         stream.write(step_content)
 
     def volmdlr_volume_model(self):
-        return [self]
+        return self
 
 
 class MovingVolumeModel(VolumeModel):
