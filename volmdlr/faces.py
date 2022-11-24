@@ -43,19 +43,23 @@ def knots_vector_inv(knots_vector):
 
     return knots, multiplicities
 
+def repair_arc3d_angle_periodicity(angle_start, angle_end, ref_start, ref_end):
+    # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+    if math.isclose(angle_start, math.pi, abs_tol=1e-6) and ref_start < 0:
+        theta1 = -math.pi
+    elif math.isclose(angle_start, -math.pi, abs_tol=1e-6) and ref_start > 0:
+        theta1 = math.pi
+    if math.isclose(angle_end, math.pi, abs_tol=1e-6) and ref_end < 0:
+        theta2 = -math.pi
+    elif math.isclose(angle_end, -math.pi, abs_tol=1e-6) and ref_end > 0:
+        theta2 = math.pi
+    return angle_start, angle_end
 
 def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
     theta1, z1 = start
     theta2, z2 = end
-    # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-    if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
-        theta1 = -math.pi
-    elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
-        theta1 = math.pi
-    if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
-        theta2 = -math.pi
-    elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
-        theta2 = math.pi
+
+    theta1, theta2 = repair_arc3d_angle_periodicity(theta1, theta2, theta3, theta4)
 
     theta5 = theta1 - angle3d
     theta6 = theta1 + angle3d
@@ -76,32 +80,17 @@ def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
     end = volmdlr.Point2D(theta2, z2)
     return [start, end]
 
+
 def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, point_before_end):
     theta1, phi1 = start
     theta2, phi2 = end
     theta3, phi3 = point_after_start
     theta4, phi4 = point_before_end
     # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
-    if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
-        theta1 = -math.pi
-    elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
-        theta1 = math.pi
-
-    if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
-        theta2 = -math.pi
-    elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
-        theta2 = math.pi
+    theta1, theta2 = repair_arc3d_angle_periodicity(theta1, theta2, theta3, theta4)
 
     # Verify if phi1 or phi2 point should be -pi or pi because phi -> ]-pi, pi]
-    if math.isclose(phi1, math.pi, abs_tol=1e-6) and phi3 < 0:
-        phi1 = -math.pi
-    elif math.isclose(phi1, -math.pi, abs_tol=1e-6) and phi3 > 0:
-        phi1 = math.pi
-
-    if math.isclose(phi2, math.pi, abs_tol=1e-6) and phi4 < 0:
-        phi2 = -math.pi
-    elif math.isclose(phi2, -math.pi, abs_tol=1e-6) and phi4 < 0:
-        phi2 = math.pi
+    phi1, phi2 = repair_arc3d_angle_periodicity(phi1, phi2, phi3, phi4)
 
     if math.isclose(phi1, phi2, abs_tol=1e-4):
         theta5 = theta1 - angle3d
@@ -136,6 +125,8 @@ def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, poin
     end = volmdlr.Point2D(theta2, phi2)
 
     return start, end
+
+
 class Surface2D(volmdlr.core.Primitive2D):
     """
     A surface bounded by an outer contour
@@ -1374,9 +1365,9 @@ class CylindricalSurface3D(Surface3D):
                                       normal=self.frame.w)]
 
             return [vme.Arc3D(
-                    self.point2d_to_3d(linesegment2d.start),
-                    self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
-                    self.point2d_to_3d(linesegment2d.end)
+                self.point2d_to_3d(linesegment2d.start),
+                self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
+                self.point2d_to_3d(linesegment2d.end)
             )]
         else:
             # TODO: this is a non exact method!
@@ -1401,7 +1392,7 @@ class CylindricalSurface3D(Surface3D):
         # points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
         #           for i in range(11)]
         points = [self.point3d_to_2d(p)
-                          for p in bspline_curve3d.control_points]
+                  for p in bspline_curve3d.control_points]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -1431,14 +1422,14 @@ class CylindricalSurface3D(Surface3D):
         new_points.append(points[-1])
 
         return [vme.BSplineCurve2D.from_points_interpolation(new_points, bspline_curve3d.degree,
-                                                                 bspline_curve3d.periodic)]
-            # return [vme.BSplineCurve2D(
-            #     bspline_curve3d.degree,
-            #     control_points=new_points,
-            #     knot_multiplicities=bspline_curve3d.knot_multiplicities,
-            #     knots=bspline_curve3d.knots,
-            #     weights=bspline_curve3d.weights,
-            #     periodic=bspline_curve3d.periodic)]
+                                                             bspline_curve3d.periodic)]
+        # return [vme.BSplineCurve2D(
+        #     bspline_curve3d.degree,
+        #     control_points=new_points,
+        #     knot_multiplicities=bspline_curve3d.knot_multiplicities,
+        #     knots=bspline_curve3d.knots,
+        #     weights=bspline_curve3d.weights,
+        #     periodic=bspline_curve3d.periodic)]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
         """
