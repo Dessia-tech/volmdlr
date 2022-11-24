@@ -2258,8 +2258,7 @@ class FullArc2D(Arc2D):
 
         return []
 
-    def linesegment_intersections(self, linesegment2d: LineSegment2D,
-                                  tol=1e-9):
+    def linesegment_intersections(self, linesegment2d: LineSegment2D, tol=1e-9):
         try:
             if linesegment2d.start == self.center:
                 pt1 = linesegment2d.end
@@ -3193,7 +3192,7 @@ class LineSegment3D(LineSegment):
             raise NotImplementedError
 
         if parent is not None:
-            s += '{}.parent = {};\n'.format(name, parent)
+            s += f'{name}.parent = {parent};\n'
 
         return s
 
