@@ -2476,8 +2476,7 @@ class ArcEllipse2D(Edge):
 
         if self.is_trigo:
             return area
-        else:
-            return -area
+        return -area
 
 
 class Line3D(Line):
