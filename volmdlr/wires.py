@@ -1896,10 +1896,7 @@ class Contour2D(ContourMixin, Wire2D):
                 p2 = volmdlr.Point2D(x[i + 1], y[j])
                 p3 = volmdlr.Point2D(x[i + 1], y[j + 1])
                 p4 = volmdlr.Point2D(x[i], y[j + 1])
-                points_in = []
-                for p in [p1, p2, p3, p4]:
-                    if p in point_index:
-                        points_in.append(p)
+                points_in = [p for p in [p1, p2, p3, p4] if p in point_index]
                 if len(points_in) == 4:
                     triangles.append(
                         [point_index[p1], point_index[p2], point_index[p3]])

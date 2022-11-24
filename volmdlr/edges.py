@@ -3314,10 +3314,8 @@ class LineSegment3D(LineSegment):
 
         elif element.__class__ is BSplineCurve3D:
             points = element.points
-            lines = []
             dist_min = math.inf
-            for p1, p2 in zip(points[0:-1], points[1:]):
-                lines.append(LineSegment3D(p1, p2))
+            lines = [LineSegment3D(p1, p2) for p1, p2 in zip(points[0:-1], points[1:])]
             for line in lines:
                 p1, p2 = self.Matrix_distance(line)
                 dist = p1.point_distance(p2)
