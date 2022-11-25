@@ -652,19 +652,19 @@ class Surface3D(DessiaObject):
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
             if isinstance(self, BSplineSurface3D):
             #
-            #     onlyfiles = next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours'))[2]  # directory is your directory path as string
-            #     l = len(onlyfiles)
+                onlyfiles = next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours'))[2]  # directory is your directory path as string
+                l = len(onlyfiles)
                 contours3d[0].plot()
                 outer_contour2d.plot()
                 outer_contour3d = self.contour2d_to_3d(outer_contour2d)
-                outer_contour3d.plot()
-            #     contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours\contour3d_{l}.json')
-            # #     # outer_contour2d.plot()
-            #     onlyfiles = \
-            #     next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surface'))[
-            #         2]  # directory is your directory path as string
-            #     l = len(onlyfiles)
-            #     self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surface\surface3d_{l}.json')
+                # outer_contour3d.plot()
+                contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours\contour3d_{l}.json')
+            #     # outer_contour2d.plot()
+                onlyfiles = \
+                next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surface'))[
+                    2]  # directory is your directory path as string
+                l = len(onlyfiles)
+                self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surface\surface3d_{l}.json')
             # if isinstance(self, ConicalSurface3D):
             # self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_surface\surface.json')
             # contours3d[0].save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_contours\contour.json')
@@ -3240,6 +3240,11 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
+                # points3d = [volmdlr.Point3D(p[0], p[1], p[2]) for p in bspline_curve3d.points]
+                # fig = plt.figure()
+                # ax = fig.add_subplot(111, projection='3d')
+                # for p in points3d:
+                #     p.plot(ax, 'r')
                 points = []
                 for i in range(11):
                     point = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth))
