@@ -12,19 +12,18 @@ import webbrowser
 from datetime import datetime
 # import volmdlr.stl as vmstl
 from typing import List
+# from itertools import chain
 
 import matplotlib.pyplot as plt
 import numpy as npy
+import gmsh
 
 import dessia_common as dc
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 
-# from mpl_toolkits.mplot3d import Axes3D
-
 npy.seterr(divide='raise')
-
 
 # TODO: put voldmlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
@@ -625,6 +624,160 @@ class CompositePrimitive3D(Primitive3D):
         return ax
 
 
+class BoundingRectangle(dc.DessiaObject):
+    """
+    Bounding rectangle.
+    :param xmin: minimal x coordinate
+    :type xmin: float
+    :param xmax: maximal x coordinate
+    :type xmax: float
+    :param ymin: minimal y coordinate
+    :type ymin: float
+    :param ymax: maximal y coordinate
+    :type ymax: float
+    """
+
+    def __init__(self, xmin: float, xmax: float, ymin: float, ymax: float, name: str = ''):
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        dc.DessiaObject.__init__(self, name=name)
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self.xmin
+        if key == 1:
+            return self.xmax
+        if key == 2:
+            return self.ymin
+        if key == 3:
+            return self.ymax
+        raise IndexError
+
+    def bounds(self):
+        """
+        Return the bounds of the BoundingRectangle.
+        """
+        return self.xmin, self.xmax, self.ymin, self.ymax
+
+    def plot(self, ax=None, color='k', linestyle='dotted'):
+        """
+        Plot of the bounding rectangle and its vertex.
+        """
+
+        if not ax:
+            _, ax = plt.subplots()
+        x = [self.xmin, self.xmax, self.xmax, self.xmin, self.xmin]
+        y = [self.ymin, self.ymin, self.ymax, self.ymax, self.ymin]
+
+        ax.plot(x, y, color=color, linestyle=linestyle)
+        ax.scatter(x, y, color=color)
+        return ax
+
+    def area(self):
+        """
+        Calculate the area of the bounding rectangle.
+        """
+        return (self.xmax - self.xmin) * (self.ymax - self.ymin)
+
+    def center(self):
+        """
+        Calculate the bounding rectangle center.
+        """
+        return volmdlr.Point2D(0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax))
+
+    def b_rectangle_intersection(self, b_rectangle2):
+        """
+        Return True if there is an intersection with another specified bounding rectangle or False otherwise.
+        :param b_rectangle2: bounding rectangle to verify intersection
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
+            and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+
+    def is_inside_b_rectangle(self, b_rectangle2):
+        """
+        Return True if the bounding rectangle is totally inside another specified bounding rectangle and False otherwise.
+        :param b_rectangle2: A bounding rectangle
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        return (self.xmin >= b_rectangle2.xmin - 1e-6) and (self.xmax <= b_rectangle2.xmax + 1e-6) \
+            and (self.ymin >= b_rectangle2.ymin - 1e-6) and (self.ymax <= b_rectangle2.ymax + 1e-6)
+
+    def point_belongs(self, point: volmdlr.Point2D):
+        """
+        Return True if a specified point is inside the bounding rectangle and False otherwise.
+        :param point: A 2 dimensional point
+        :type point: :class:`volmdlr.Point2D`
+        """
+        return self.xmin < point.x < self.xmax and self.ymin < point.y < self.ymax
+
+    def intersection_area(self, b_rectangle2):
+        """
+        Calculate the intersection area between two bounding rectangle.
+        :param b_rectangle2: A bounding rectangle
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        if not self.b_rectangle_intersection(b_rectangle2):
+            return 0
+        if self.is_inside_b_rectangle(b_rectangle2) or b_rectangle2.is_inside_b_rectangle(self):
+            return min(self.area(), b_rectangle2.area())
+
+        lx = min(self.xmax, b_rectangle2.xmax) - max(self.xmin, b_rectangle2.xmin)
+        ly = min(self.ymax, b_rectangle2.ymax) - max(self.ymin, b_rectangle2.ymin)
+
+        return lx * ly
+
+    def distance_to_b_rectangle(self, b_rectangle2):
+        """
+        Calculate the minimal distance between two bounding rectangles.
+        :param b_rectangle2: A bounding rectangle
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        if self.b_rectangle_intersection(b_rectangle2):
+            return 0
+
+        permute_b_rec1 = self
+        permute_b_rec2 = b_rectangle2
+
+        if permute_b_rec2.xmin < permute_b_rec1.xmin:
+            permute_b_rec1, permute_b_rec2 = permute_b_rec2, permute_b_rec1
+        dx = max(permute_b_rec2.xmin - permute_b_rec1.xmax, 0)
+
+        if permute_b_rec2.ymin < permute_b_rec1.ymin:
+            permute_b_rec1, permute_b_rec2 = permute_b_rec2, permute_b_rec1
+        dy = max(permute_b_rec2.ymin - permute_b_rec1.ymax, 0)
+
+        return (dx ** 2 + dy ** 2) ** 0.5
+
+    def distance_to_point(self, point: volmdlr.Point2D):
+        """
+        Calculate the minimal distance between the bounding rectangle and a specified point.
+        :param point: A 2 dimensional point
+        :type point: :class:`volmdlr.Point2D`
+        """
+        if self.point_belongs(point):
+            return min([self.xmax - point.x, point.y - self.xmin,
+                        self.ymax - point.y, point.y - self.ymin])
+
+        if point.x < self.xmin:
+            dx = self.xmin - point.x
+        elif self.xmax < point.x:
+            dx = point.x - self.xmax
+        else:
+            dx = 0
+
+        if point.y < self.ymin:
+            dy = self.ymin - point.y
+        elif self.ymax < point.y:
+            dy = point.y - self.ymax
+        else:
+            dy = 0
+
+        return (dx ** 2 + dy ** 2) ** 0.5
+
+
 class BoundingBox(dc.DessiaObject):
     """
     An axis aligned boundary box
@@ -728,17 +881,17 @@ class BoundingBox(dc.DessiaObject):
 
     def volume(self):
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
-                    self.zmax - self.zmin)
+                self.zmax - self.zmin)
 
     def bbox_intersection(self, bbox2):
         return self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
-                and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin
+               and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+               and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin
 
     def is_inside_bbox(self, bbox2):
-        return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6)\
-                and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
-                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
+        return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6) \
+               and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
+               and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
 
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
@@ -795,64 +948,65 @@ class BoundingBox(dc.DessiaObject):
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
     def point_belongs(self, point):
-        return self.xmin < point[0] and point[0] < self.xmax \
-               and self.ymin < point[1] and point[1] < self.ymax \
-               and self.zmin < point[2] and point[2] < self.zmax
+        return self.xmin < point[0] < self.xmax \
+               and self.ymin < point[1] < self.ymax \
+               and self.zmin < point[2] < self.zmax
 
     def distance_to_point(self, point):
         if self.point_belongs(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
                         self.ymax - point[1], point[1] - self.ymin,
                         self.zmax - point[2], point[2] - self.zmin])
+
+        if point[0] < self.xmin:
+            dx = self.xmin - point[0]
+        elif self.xmax < point[0]:
+            dx = point[0] - self.xmax
         else:
-            if point[0] < self.xmin:
-                dx = self.xmin - point[0]
-            elif self.xmax < point[0]:
-                dx = point[0] - self.xmax
-            else:
-                dx = 0
+            dx = 0
 
-            if point[1] < self.ymin:
-                dy = self.ymin - point[1]
-            elif self.ymax < point[1]:
-                dy = point[1] - self.ymax
-            else:
-                dy = 0
+        if point[1] < self.ymin:
+            dy = self.ymin - point[1]
+        elif self.ymax < point[1]:
+            dy = point[1] - self.ymax
+        else:
+            dy = 0
 
-            if point[2] < self.zmin:
-                dz = self.zmin - point[2]
-            elif self.zmax < point[2]:
-                dz = point[2] - self.zmax
-            else:
-                dz = 0
+        if point[2] < self.zmin:
+            dz = self.zmin - point[2]
+        elif self.zmax < point[2]:
+            dz = point[2] - self.zmax
+        else:
+            dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
     def babylon_script(self):
         height = self.ymax - self.ymin
         width = self.xmax - self.xmin
         depth = self.zmax - self.zmin
-        s = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(
+        script = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(
             height, width, depth)
-        s += 'box.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(
+        script += 'box.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(
             self.center[0], self.center[1], self.center[2])
-        s += 'var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);\n'
-        s += 'bboxmat.alpha = 0.4;\n'
-        s += 'var DTWidth = {};\n'.format(width * 60)
-        s += 'var DTHeight = {};\n'.format(height * 60)
-        s += 'var font_type = "Arial";\n'
-        s += 'var text = "{}";\n'.format(self.name)
-        s += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, scene);\n'
-        s += 'var ctx = dynamicTexture.getContext();\n'
-        s += 'var size = 0.8;\n'
-        s += 'ctx.font = size + "px " + font_type;\n'
-        s += 'var textWidth = ctx.measureText(text).width;\n'
-        s += 'var ratio = textWidth/size;\n'
-        s += 'var font_size = Math.floor(DTWidth / ratio);\n'
-        s += 'var font = font_size + "px " + font_type;\n'
-        s += 'dynamicTexture.drawText(text, null, null, font, "#000000", "#ffffff", false);\n'
-        s += 'bboxmat.diffuseTexture = dynamicTexture;\n'
-        s += 'box.material = bboxmat;\n'
-        return s
+        script += 'var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);\n'
+        script += 'bboxmat.alpha = 0.4;\n'
+        script += 'var DTWidth = {};\n'.format(width * 60)
+        script += 'var DTHeight = {};\n'.format(height * 60)
+        script += 'var font_type = "Arial";\n'
+        script += 'var text = "{}";\n'.format(self.name)
+        script += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, \
+            scene);\n'
+        script += 'var ctx = dynamicTexture.getContext();\n'
+        script += 'var size = 0.8;\n'
+        script += 'ctx.font = size + "px " + font_type;\n'
+        script += 'var textWidth = ctx.measureText(text).width;\n'
+        script += 'var ratio = textWidth/size;\n'
+        script += 'var font_size = Math.floor(DTWidth / ratio);\n'
+        script += 'var font = font_size + "px " + font_type;\n'
+        script += 'dynamicTexture.drawText(text, null, null, font, "#000000", "#ffffff", false);\n'
+        script += 'bboxmat.diffuseTexture = dynamicTexture;\n'
+        script += 'box.material = bboxmat;\n'
+        return script
 
 
 class VolumeModel(dc.PhysicalObject):
@@ -1181,7 +1335,8 @@ class VolumeModel(dc.PhysicalObject):
                 meshes.extend(primitive.babylon_meshes())
             if hasattr(primitive, 'babylon_curves'):
                 lines.append(primitive.babylon_curves())
-        bbox = self._bounding_box()
+
+        bbox = self.bounding_box
         center = bbox.center
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
@@ -1284,7 +1439,7 @@ class VolumeModel(dc.PhysicalObject):
             step_content += primitive_content
 
             product_definition_context_id = primitive_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n"\
+            step_content += "#{} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n" \
                 .format(product_definition_context_id)
 
             product_context_id = product_definition_context_id + 1
@@ -1330,43 +1485,48 @@ class VolumeModel(dc.PhysicalObject):
 
             curve_style_id = color_id + 1
             step_content += "#{} = CURVE_STYLE('',#{},POSITIVE_LENGTH_MEASURE(0.1),#{});\n".format(
-                    curve_style_id, draughting_id, color_id)
+                curve_style_id, draughting_id, color_id)
 
             fill_area_color_id = curve_style_id + 1
             step_content += "#{} = FILL_AREA_STYLE_COLOUR('',#{});\n".format(
-                    fill_area_color_id, color_id)
+                fill_area_color_id, color_id)
 
             fill_area_id = fill_area_color_id + 1
             step_content += "#{} = FILL_AREA_STYLE('',#{});\n".format(
-                    fill_area_id, fill_area_color_id)
+                fill_area_id, fill_area_color_id)
 
             suface_fill_area_id = fill_area_id + 1
             step_content += "#{} = SURFACE_STYLE_FILL_AREA(#{});\n".format(
-                    suface_fill_area_id, fill_area_id)
+                suface_fill_area_id, fill_area_id)
 
             suface_side_style_id = suface_fill_area_id + 1
             step_content += "#{} = SURFACE_SIDE_STYLE('',(#{}));\n".format(
-                    suface_side_style_id, suface_fill_area_id)
+                suface_side_style_id, suface_fill_area_id)
 
             suface_style_usage_id = suface_side_style_id + 1
             step_content += "#{} = SURFACE_STYLE_USAGE(.BOTH.,#{});\n".format(
-                    suface_style_usage_id, suface_side_style_id)
+                suface_style_usage_id, suface_side_style_id)
 
             presentation_style_id = suface_style_usage_id + 1
 
             step_content += "#{} = PRESENTATION_STYLE_ASSIGNMENT((#{},#{}));\n".format(
-                    presentation_style_id, suface_style_usage_id, curve_style_id)
+                presentation_style_id, suface_style_usage_id, curve_style_id)
 
             styled_item_id = presentation_style_id + 1
-            if primitive.__class__.__name__ == 'OpenShell3D':
-                for face_id in face_ids:
-                    step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
-                        styled_item_id, presentation_style_id, face_id)
-                    styled_item_id += 1
-                styled_item_id -= 1
-            else:
-                step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
-                        styled_item_id, presentation_style_id, primitive_id)
+# <<<<<<< HEAD
+#             if primitive.__class__.__name__ == 'OpenShell3D':
+#                 for face_id in face_ids:
+#                     step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
+#                         styled_item_id, presentation_style_id, face_id)
+#                     styled_item_id += 1
+#                 styled_item_id -= 1
+#             else:
+#                 step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
+#                         styled_item_id, presentation_style_id, primitive_id)
+# =======
+            step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
+                styled_item_id, presentation_style_id, primitive_id)
+# >>>>>>> to_geo_msh
 
             current_id = styled_item_id + 1
 
@@ -1376,6 +1536,368 @@ class VolumeModel(dc.PhysicalObject):
 
     def volmdlr_volume_model(self):
         return [self]
+
+    def get_geo_lines(self):
+        """
+        gets the lines that define a VolumeModel geometry in a .geo file
+
+        :return: A list of lines that describe the geomery
+        :rtype: List[str]
+        """
+
+        update_data = {'point_account': 0,
+                       'line_account': 0,
+                       'line_loop_account': 0,
+                       'surface_account': 0,
+                       'surface_loop_account': 0}
+
+        lines = []
+        volume = 0
+        for primitive in self.primitives:
+            if isinstance(primitive, volmdlr.faces.ClosedShell3D):
+                volume += 1
+                lines_primitives, update_data = primitive.get_geo_lines(update_data)
+                lines.extend(lines_primitives)
+                surface_loop = ((lines[-1].split('('))[1].split(')')[0])
+                lines.append('Volume(' + str(volume) + ') = {' + surface_loop + '};')
+            elif isinstance(primitive, volmdlr.faces.OpenShell3D):
+                lines_primitives, update_data = primitive.get_geo_lines(update_data)
+                lines.extend(lines_primitives)
+
+        return lines
+
+    def get_mesh_lines(self,
+                       factor: float, **kwargs):
+        # curvature_mesh_size: int = 0,
+        # min_points: int = None,
+        # initial_mesh_size: float = 5):
+        """
+        gets the lines that define mesh parameters for a VolumeModel, to be added to a .geo file
+
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A list of lines that describe mesh parameters
+        :rtype: List[str]
+        """
+
+        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+            if element[0] not in kwargs:
+                kwargs[element[0]] = element[1]
+
+        # try:
+        #     curvature_mesh_size = kwargs['curvature_mesh_size']
+        # except KeyError:
+        #     curvature_mesh_size = 0
+        # try:
+        #     min_points = kwargs['min_points']
+        # except KeyError:
+        #     min_points = None
+        # try:
+        #     initial_mesh_size = kwargs['initial_mesh_size']
+        # except KeyError:
+        #     initial_mesh_size = 5
+
+        # meshsizes_max = []
+        field_num = 1
+        field_nums = []
+        lines = []
+
+        lines.append('Mesh.CharacteristicLengthMin = 0;')
+        lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
+        lines.append('Geometry.Tolerance = 1e-20;')
+        lines.append('Mesh.AngleToleranceFacetOverlap = 0.01;')
+
+        for i, primitive in enumerate(self.primitives):
+            if isinstance(primitive, volmdlr.faces.ClosedShell3D):
+                bbx = primitive.bounding_box
+                dim1, dim2, dim3 = (bbx.xmax - bbx.xmin), (bbx.ymax - bbx.ymin), (bbx.zmax - bbx.zmin)
+                volume = dim1 * dim2 * dim3
+
+                if factor == 0:
+                    factor = 1e-3
+
+                size = ((volume ** (1. / 3.)) / kwargs['initial_mesh_size']) * factor
+
+                # meshsizes_max.append(size)
+
+                if kwargs['min_points']:
+
+                    lines.extend(primitive.get_mesh_lines_with_transfinite_curves(min_points=kwargs['min_points'],
+                                                                                  size=size))
+
+                    # primitives, primitives_length = [], []
+                    # for face in primitive.faces:
+                    #     for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                    #         if isinstance(contour, volmdlr.wires.Circle2D):
+                    #             primitives.append(contour)
+                    #             primitives.append(contour)
+                    #             primitives_length.append(contour.length() / 2)
+                    #             primitives_length.append(contour.length() / 2)
+                    #         else:
+                    #             for _, primitive_c in enumerate(contour.primitives):
+                    #                 if ((primitive_c not in primitives)
+                    #                         and (primitive_c.reverse() not in primitives)):
+                    #                     primitives.append(primitive_c)
+                    #                     primitives_length.append(primitive_c.length())
+
+                    # for i, length in enumerate(primitives_length):
+                    #     if length < kwargs['min_points'] * size:
+                    #         lines.append('Transfinite Curve {' + str(i) + '} = ' +
+                    #                      str(kwargs['min_points']) + ' Using Progression 1;')
+
+                lines.append('Field[' + str(field_num) + '] = MathEval;')
+                lines.append('Field[' + str(field_num) + '].F = "' + str(size) + '";')
+
+                lines.append('Field[' + str(field_num + 1) + '] = Restrict;')
+                lines.append('Field[' + str(field_num + 1) + '].InField = ' + str(field_num) + ';')
+                lines.append('Field[' + str(field_num + 1) + '].VolumesList = {' + str(i + 1) + '};')
+                field_nums.append(field_num + 1)
+                field_num += 2
+
+            elif isinstance(primitive, volmdlr.faces.OpenShell3D):
+                continue
+
+        # meshsize_max = max(meshsizes_max)
+        # meshsize_min = meshsize_max/100
+
+        # lines.append('Mesh.CharacteristicLengthMin = ' + str(meshsize_min) + ';')
+        # lines.append('Mesh.CharacteristicLengthMax = ' + str(meshsize_max) + ';')
+
+        lines.append('Field[' + str(field_num) + '] = MinAniso;')
+        lines.append('Field[' + str(field_num) + '].FieldsList = {' + str(field_nums)[1:-1] + '};')
+        lines.append('Background Field = ' + str(field_num) + ';')
+
+        lines.append('Mesh.MeshSizeFromCurvature = ' + str(kwargs['curvature_mesh_size']) + ';')
+
+        lines.append('Coherence;')
+
+        return lines
+
+    def to_geo(self, file_name: str,
+               factor: float, **kwargs):
+        # curvature_mesh_size: int = 0,
+        # min_points: int = None,
+        # initial_mesh_size: float = 5):
+        """
+        gets the .geo file for the VolumeModel
+
+        :param file_name: The geo. file name
+        :type file_name: str
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+            if element[0] not in kwargs:
+                kwargs[element[0]] = element[1]
+
+        # try:
+        #     curvature_mesh_size = kwargs['curvature_mesh_size']
+        # except KeyError:
+        #     curvature_mesh_size = 0
+        # try:
+        #     min_points = kwargs['min_points']
+        # except KeyError:
+        #     min_points = None
+        # try:
+        #     initial_mesh_size = kwargs['initial_mesh_size']
+        # except KeyError:
+        #     initial_mesh_size = 5
+
+        lines = self.get_geo_lines()
+        lines.extend(self.get_mesh_lines(factor,
+                                         curvature_mesh_size=kwargs['curvature_mesh_size'],
+                                         min_points=kwargs['min_points'],
+                                         initial_mesh_size=kwargs['initial_mesh_size']))
+        with open(file_name + '.geo', 'w', encoding="utf-8") as file:
+            for line in lines:
+                file.write(line)
+                file.write('\n')
+        file.close()
+
+    def to_geo_with_stl(self, file_name: str,
+                        factor: float, **kwargs):
+        # curvature_mesh_size: int = 0,
+        # min_points: int = None,
+        # initial_mesh_size: float = 5):
+        """
+        gets the .geo file for the VolumeModel, with saving each closed shell in a stl file
+
+        :param file_name: The geo. file name
+        :type file_name: str
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+            if element[0] not in kwargs:
+                kwargs[element[0]] = element[1]
+
+        # try:
+        #     curvature_mesh_size = kwargs['curvature_mesh_size']
+        # except KeyError:
+        #     curvature_mesh_size = 0
+        # try:
+        #     min_points = kwargs['min_points']
+        # except KeyError:
+        #     min_points = None
+        # try:
+        #     initial_mesh_size = kwargs['initial_mesh_size']
+        # except KeyError:
+        #     initial_mesh_size = 5
+
+        lines = self.get_geo_lines()
+        lines.extend(self.get_mesh_lines(factor,
+                                         curvature_mesh_size=kwargs['curvature_mesh_size'],
+                                         min_points=kwargs['min_points'],
+                                         initial_mesh_size=kwargs['initial_mesh_size']))
+
+        contours, faces_account = [], 0
+        surfaces = []
+        for i, primitive in enumerate(self.primitives):
+            if i == 0:
+                surfaces.append(list(range(1, 1 + len(primitive.faces))))
+                face_contours = [face.outer_contour3d for face in primitive.faces]
+                contours.append(face_contours)
+                lines.append('Mesh 2;')
+                lines.append('Physical Surface(' + str(i + 1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                lines.append('Save "' + file_name + '.stl" ;')
+                faces_account += len(primitive.faces) + 1
+            else:
+                surfaces.append(list(range(faces_account, faces_account + len(primitive.faces))))
+                face_contours = [face.outer_contour3d for face in primitive.faces]
+                surfaces = self.update_surfaces_list(face_contours, surfaces, contours, i)
+                # for k, face_c in enumerate(face_contours):
+                #     for l, contour_l in enumerate(contours):
+                #         for c, contour in enumerate(contour_l):
+                #             if face_c.is_superposing(contour):
+                #                 surfaces[i][k] = surfaces[l][c]
+                #                 continue
+                lines.append('Mesh 2;')
+                lines.append('Physical Surface(' + str(i + 1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                lines.append('Save "' + file_name + '.stl" ;')
+                faces_account += len(primitive.faces) + 1
+                contours.append(face_contours)
+
+        return lines
+
+    @staticmethod
+    def update_surfaces_list(face_contours, surfaces, contours, i):
+        for k_, face_c in enumerate(face_contours):
+            for l_, contour_l in enumerate(contours):
+                for c_, contour in enumerate(contour_l):
+                    if face_c.is_superposing(contour):
+                        surfaces[i][k_] = surfaces[l_][c_]
+                        continue
+        return surfaces
+
+    def to_msh(self, file_name: str, mesh_dimension: int,
+               factor: float, **kwargs):
+        # curvature_mesh_size: int = 0,
+        # min_points: int = None,
+        # initial_mesh_size: float = 5):
+        """
+        gets .msh file for the VolumeModel generated by gmsh
+
+        :param file_name: The msh. file name
+        :type file_name: str
+        :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+        :type mesh_dimension: int
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+            if element[0] not in kwargs:
+                kwargs[element[0]] = element[1]
+
+        # try:
+        #     curvature_mesh_size = kwargs['curvature_mesh_size']
+        # except KeyError:
+        #     curvature_mesh_size = 0
+        # try:
+        #     min_points = kwargs['min_points']
+        # except KeyError:
+        #     min_points = None
+        # try:
+        #     initial_mesh_size = kwargs['initial_mesh_size']
+        # except KeyError:
+        #     initial_mesh_size = 5
+
+        self.to_geo(file_name, factor,
+                    curvature_mesh_size=kwargs['curvature_mesh_size'],
+                    min_points=kwargs['min_points'],
+                    initial_mesh_size=kwargs['initial_mesh_size'])
+
+        self.generate_msh_file(file_name, mesh_dimension)
+
+        # gmsh.initialize()
+        # gmsh.open(file_name + ".geo")
+
+        # gmsh.model.geo.synchronize()
+        # gmsh.model.mesh.generate(mesh_dimension)
+
+        # gmsh.write(file_name + ".msh")
+
+        # gmsh.finalize()
+
+    @staticmethod
+    def generate_msh_file(file_name, mesh_dimension):
+        gmsh.initialize()
+        gmsh.open(file_name + ".geo")
+
+        gmsh.model.geo.synchronize()
+        gmsh.model.mesh.generate(mesh_dimension)
+
+        gmsh.write(file_name + ".msh")
+
+        gmsh.finalize()
 
 
 class MovingVolumeModel(VolumeModel):
@@ -1445,10 +1967,10 @@ class MovingVolumeModel(VolumeModel):
     def babylon_data(self):
         meshes = []
         primitives_to_meshes = []
-        for ip, primitive in enumerate(self.primitives):
+        for i_prim, primitive in enumerate(self.primitives):
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
-                primitives_to_meshes.append(ip)
+                primitives_to_meshes.append(i_prim)
 
         bbox = self._bounding_box()
         center = bbox.center

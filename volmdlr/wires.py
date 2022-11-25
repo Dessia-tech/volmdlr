@@ -44,16 +44,16 @@ def bounding_rectangle_adjacent_contours(contours: List):
     ymax : float
 
     '''
-    xmin, xmax, ymin, ymax = contours[0].bounding_rectangle()
+    xmin, xmax, ymin, ymax = contours[0].bounding_rectangle().bounds()
 
     for i in range(1, len(contours)):
-        xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle()
+        xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle().bounds()
         xmin = min(xmin, xmin_contour)
         xmax = max(xmax, xmax_contour)
         ymin = min(ymin, ymin_contour)
         ymax = max(ymax, ymax_contour)
 
-    return xmin, xmax, ymin, ymax
+    return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
 
 
 class Wire:
@@ -1364,6 +1364,21 @@ class Contour(Wire):
     def point_over_contour(self, point, abs_tol=1e-6):
         return self.point_over_wire(point, abs_tol)
 
+    def get_geo_lines(self, tag: int, primitives_tags: List[int]):
+        """
+        gets the lines that define a Contour in a .geo file
+
+        :param tag: The contour index
+        :type tag: int
+        :param primitives_tags: The contour' primitives index
+        :type primitives_tags: List[int]
+
+        :return: A line
+        :rtype: str
+        """
+
+        return 'Line Loop(' + str(tag) + ') = {' + str(primitives_tags)[1:-1] + '};'
+
 
 class Contour2D(Contour, Wire2D):
     """
@@ -1583,15 +1598,15 @@ class Contour2D(Contour, Wire2D):
         return self._bounding_rectangle
 
     def get_bouding_rectangle(self):
-        xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle().bounds()
         for edge in self.primitives[1:]:
             xmin_edge, xmax_edge, ymin_edge, ymax_edge = \
-                edge.bounding_rectangle()
+                edge.bounding_rectangle().bounds()
             xmin = min(xmin, xmin_edge)
             xmax = max(xmax, xmax_edge)
             ymin = min(ymin, ymin_edge)
             ymax = max(ymax, ymax_edge)
-        return xmin, xmax, ymin, ymax
+        return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
 
     def inverted_primitives(self):
         new_primitives = []
@@ -1607,7 +1622,7 @@ class Contour2D(Contour, Wire2D):
         self.primitives = self.inverted_primitives()
 
     def random_point_inside(self):
-        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
         for _ in range(2000):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
             if self.point_belongs(p):
@@ -1826,7 +1841,7 @@ class Contour2D(Contour, Wire2D):
         """
         Split in n slices
         """
-        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
         cutted_contours = []
         iteration_contours = [self]
         for i in range(n - 1):
@@ -2558,7 +2573,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return delaunay_triangles
 
     def offset(self, offset):
-        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
 
         max_offset_len = min(xmax - xmin, ymax - ymin) / 2
         if offset <= -max_offset_len:
@@ -3638,7 +3653,7 @@ class Circle2D(Contour2D):
         xmax = self.center.x + self.radius
         ymin = self.center.y - self.radius
         ymax = self.center.y + self.radius
-        return xmin, xmax, ymin, ymax
+        return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
 
     def line_intersections(self, line2d: volmdlr.edges.Line2D, tol=1e-9):
         full_arc_2d = volmdlr.edges.FullArc2D(
@@ -3837,6 +3852,12 @@ class Circle2D(Contour2D):
     #     points = [self.point_at_abscissa(l * i / n) for i in range(n)]
     #     points.append(self.center)
     #     triangles = [(i, i + 1, n) for i in range(n - 1)] + [(n - 1, 0, n)]
+    def split_by_line(self, line: volmdlr.edges.Line2D):
+        """
+        Split the Circle with a line into two Arc2D.
+        """
+        split_points = self.line_intersections(line)
+        return self.split(split_points[0], split_points[1])
 
     def split(self, split_start, split_end):
         x1, y1 = split_start - self.center
@@ -4857,8 +4878,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         self_poly2d.translation_inplace(-self_center2d)
         other_poly2d.translation_inplace(-other_center2d)
 
-        bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle(), \
-            other_poly2d.bounding_rectangle()
+        bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle().bounds(), \
+            other_poly2d.bounding_rectangle().bounds()
         position = [abs(value) for value in bbox_self2d] \
             + [abs(value) for value in bbox_other2d]
         max_scale = 2 * max(position)

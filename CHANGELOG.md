@@ -8,17 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unrealeased
 
+## v0.6.0 [11/7/2022]
+
 ### New Features
 
 * Block: faces_center (calculate directly point in the middle of the faces)
 * OpenShell3D: project_coincident_faces_of
+* Create .geo and .msh files (Mesh geometries with GMSH)
+* Circle2D: split_by_line
+* BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
+
 
 
 ### Fixed
 
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * Arc3D: plot
-
 
 ### Performance improvements
 
@@ -32,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * PlaneFace3D: line_intersections
 * BsplineCurve: abscissa
+* Circle2D: split_by_line
+* BoundingRectangle: area, center, intersection, is_inside, point_belongs, intersection_area, distance_to_point, distance_to_b_rectangle
 
 
 ## v0.6.0 [Unrealeased]

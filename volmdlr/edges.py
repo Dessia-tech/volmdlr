@@ -311,6 +311,23 @@ class LineSegment(Edge):
     def point_at_abscissa(self, abscissa):
         return self.start + self.unit_direction_vector() * abscissa
 
+    def get_geo_lines(self, tag: int, start_point_tag: int, end_point_tag: int):
+        """
+        gets the lines that define a LineSegment in a .geo file
+
+        :param tag: The linesegment index
+        :type tag: int
+        :param start_point_tag: The linesegment' start point index
+        :type start_point_tag: int
+        :param end_point_tag: The linesegment' end point index
+        :type end_point_tag: int
+
+        :return: A line
+        :rtype: str
+        """
+
+        return 'Line(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + str(end_point_tag) + '};'
+
 
 class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
@@ -541,8 +558,8 @@ class BSplineCurve(Edge):
         return cls.from_geomdl_curve(curve)
 
     def tangent(self, position: float = 0.0):
-        point, tangent = operations.tangent(self.curve, position,
-                                            normalize=True)
+        _, tangent = operations.tangent(self.curve, position,
+                                        normalize=True)
 
         dimension = f'Vector{self.__class__.__name__[-2::]}'
         tangent = getattr(volmdlr, dimension)(*tangent)
@@ -560,6 +577,23 @@ class BSplineCurve(Edge):
         else:
             bsplinecurve.periodic = True
             return bsplinecurve
+
+    def get_geo_lines(self, tag: int, control_points_tags: List[int]):
+        """
+        gets the lines that define a BsplineCurve in a .geo file
+
+        :param tag: The BsplineCurve index
+        :type tag: int
+        :param start_point_tag: The linesegment' start point index
+        :type start_point_tag: int
+        :param end_point_tag: The linesegment' end point index
+        :type end_point_tag: int
+
+        :return: A line
+        :rtype: str
+        """
+
+        return 'BSpline(' + str(tag) + ') = {' + str(control_points_tags)[1:-1] + '};'
 
 
 class Line2D(Line):
@@ -613,7 +647,7 @@ class Line2D(Line):
 
     def plot(self, ax=None, color='k', dashed=True):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if version.parse(_mpl_version) >= version.parse('3.3.2'):
             if dashed:
@@ -852,8 +886,8 @@ class BSplineCurve2D(BSplineCurve):
         points_x = [p.x for p in points]
         points_y = [p.y for p in points]
 
-        return (min(points_x), max(points_x),
-                min(points_y), max(points_y))
+        return volmdlr.core.BoundingRectangle(min(points_x), max(points_x),
+                                              min(points_y), max(points_y))
 
     def length(self):
         return length_curve(self.curve)
@@ -1148,8 +1182,8 @@ class LineSegment2D(LineSegment):
         return False
 
     def bounding_rectangle(self):
-        return (min(self.start.x, self.end.x), max(self.start.x, self.end.x),
-                min(self.start.y, self.end.y), max(self.start.y, self.end.y))
+        return volmdlr.core.BoundingRectangle(min(self.start.x, self.end.x), max(self.start.x, self.end.x),
+                                              min(self.start.y, self.end.y), max(self.start.y, self.end.y))
 
     def straight_line_area(self):
         return 0.
@@ -1247,7 +1281,7 @@ class LineSegment2D(LineSegment):
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
              plot_points=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         p1, p2 = self.start, self.end
         if arrow:
@@ -1542,6 +1576,26 @@ class Arc(Edge):
                       DeprecationWarning)
         return self.discretization_points(number_points=discretization_resolution)
 
+    def get_geo_lines(self, tag: int, start_point_tag: int, center_point_tag: int, end_point_tag: int):
+        """
+        gets the lines that define an Arc in a .geo file
+
+        :param tag: The linesegment index
+        :type tag: int
+        :param start_point_tag: The linesegment' start point index
+        :type start_point_tag: int
+        :param center_point_tag: The linesegment' center point index
+        :type center_point_tag: int
+        :param end_point_tag: The linesegment' end point index
+        :type end_point_tag: int
+
+        :return: A line
+        :rtype: str
+        """
+
+        return 'Circle(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + \
+            str(center_point_tag) + ', ' + str(end_point_tag) + '};'
+
 
 class Arc2D(Arc):
     """
@@ -1787,8 +1841,8 @@ class Arc2D(Arc):
 
     def bounding_rectangle(self):
         # TODO: Enhance this!!!
-        return (self.center.x - self.radius, self.center.x + self.radius,
-                self.center.y - self.radius, self.center.y + self.radius)
+        return volmdlr.core.BoundingRectangle(self.center.x - self.radius, self.center.x + self.radius,
+                                              self.center.y - self.radius, self.center.y + self.radius)
 
     def straight_line_area(self):
         if self.angle >= math.pi:
@@ -3046,7 +3100,8 @@ class LineSegment3D(LineSegment):
                 s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(
                     name)
             elif type_ == 'dashed':
-                s += f'var {name} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, scene);'
+                s += f'var {name} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, \
+                    scene);'
             s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(color))
         elif type_ == 'tube':
             radius = 0.03 * self.start.point_distance(self.end)
@@ -4723,8 +4778,8 @@ class ArcEllipse3D(Edge):
 
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
-        def theta_A_B(s, i, e,
-                      c):  # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
+        def theta_A_B(s, i, e, c):
+            # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
             xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
                 1] - c[1], e[0] - c[0], e[1] - c[1]
             A = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],

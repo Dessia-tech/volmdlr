@@ -17,6 +17,7 @@ gmsh_parser = volmdlr.gmsh_vm.GmshParser.from_file(file_path)
 
 mesh = gmsh_parser.define_triangular_element_mesh()
 
+
 mesh.plot()
 
 # %% 3D
@@ -26,5 +27,6 @@ file_path = 'block.msh'
 gmsh_parser = volmdlr.gmsh_vm.GmshParser.from_file(file_path)
 
 mesh = gmsh_parser.define_tetrahedron_element_mesh()
+
 
 # mesh.plot()
