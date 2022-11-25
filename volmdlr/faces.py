@@ -3318,7 +3318,8 @@ class BSplineSurface3D(Surface3D):
             x_init.append(points_2d[i][1])
         z = opt.least_squares(non_linear_equations, x_init)
 
-        points_2d_deformed = [volmdlr.Point2D(z.x[i], z.x[i + 1]) for i in range(0, len(z.x), 2)]  # deformed 2d grid points
+        points_2d_deformed = [volmdlr.Point2D(z.x[i], z.x[i + 1])
+                              for i in range(0, len(z.x), 2)]  # deformed 2d grid points
 
         grid2d_deformed = volmdlr.grid.Grid2D.from_points(points=points_2d_deformed,
                                                           points_dim_1=points_x,
@@ -4395,7 +4396,7 @@ class BSplineSurface3D(Surface3D):
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
             xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-                                     len(bsplines_new), [1] * len(bsplines_new)
+                len(bsplines_new), [1] * len(bsplines_new)
 
             grid2d_direction = (
                 bsplines_new[0].rectangular_cut(
@@ -5183,9 +5184,9 @@ class PlaneFace3D(Face3D):
                 remove_cutting_contour.append(spliting_points_and_cutting_contour[point1])
                 remove_spliting_points.extend([point1, point2])
                 primitives1 = inner_contour.extract_with_points(point1, point2, True) + \
-                              spliting_points_and_cutting_contour[point1].primitives
+                    spliting_points_and_cutting_contour[point1].primitives
                 primitives2 = inner_contour.extract_with_points(point1, point2, False) + \
-                              spliting_points_and_cutting_contour[point1].primitives
+                    spliting_points_and_cutting_contour[point1].primitives
                 contour1 = volmdlr.wires.Contour2D(primitives1).order_contour()
                 contour2 = volmdlr.wires.Contour2D(primitives2).order_contour()
                 if contour1.is_inside(inner_contour):
@@ -6333,7 +6334,7 @@ class CylindricalFace3D(Face3D):
         xmin, ymin = min(pt[0] for pt in pfpoints), min(pt[1] for pt in pfpoints)
         xmax, ymax = max(pt[0] for pt in pfpoints), max(pt[1] for pt in pfpoints)
         origin, vx, vy = planeface.plane.origin, planeface.plane.vectors[0], \
-                         planeface.plane.vectors[1]
+            planeface.plane.vectors[1]
         pf1_2d, pf2_2d = volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D(
             (xmin, ymax))
         pf3_2d, pf4_2d = volmdlr.Point2D((xmax, ymin)), volmdlr.Point2D(
@@ -8597,7 +8598,7 @@ class ClosedShell3D(OpenShell3D):
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces) + \
-                shell2.get_non_intersecting_faces(self, intersecting_faces)
+            shell2.get_non_intersecting_faces(self, intersecting_faces)
         if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces:
             return [self, shell2]
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
@@ -8735,6 +8736,6 @@ class ClosedShell3D(OpenShell3D):
         intersecting_faces = intersecting_faces1 + intersecting_faces2
         faces = self.intersection_faces(shell2, intersecting_faces, intersecting_combinations)
         faces += self.get_non_intersecting_faces(shell2, intersecting_faces, intersection_method=True) + \
-                 shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
+            shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
         new_shell = ClosedShell3D(faces)
         return [new_shell]

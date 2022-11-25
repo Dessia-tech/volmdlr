@@ -967,7 +967,7 @@ class BSplineCurve2D(BSplineCurve):
                         tuple(self.knots))
         return content, point_id + 1
 
-    def polygon_points(self, n: int=15):
+    def polygon_points(self, n: int = 15):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
@@ -1608,6 +1608,7 @@ class Arc2D(Arc):
         return self.__class__(self.end.copy(),
                               self.interior.copy(),
                               self.start.copy())
+
     @property
     def is_trigo(self):
         if not self._is_trigo:
@@ -5041,5 +5042,6 @@ class ArcEllipse3D(Edge):
         else:
             return self.start.rotation(self.center, self.normal,
                                        -abscissa / self.Gradius)
+
     def triangulation(self):
         return None
