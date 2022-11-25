@@ -495,10 +495,9 @@ class Vector2D(Vector):
         self.y = new_vector.y
 
     def to_3d(self, plane_origin, vx, vy):
-        return Vector3D(plane_origin.x + vx.x * self.x + vy.x * self.y,
-                        plane_origin.y + vx.y * self.x + vy.y * self.y,
-                        plane_origin.z + vx.z * self.x + vy.z * self.y,
-                        )
+        return Vector3D(round(plane_origin.x + vx.x * self.x + vy.x * self.y, 12),
+                        round(plane_origin.y + vx.y * self.x + vy.y * self.y, 12),
+                        round(plane_origin.z + vx.z * self.x + vy.z * self.y, 12))
 
     def to_point(self):
         return Point2D(self.x, self.y)
@@ -607,9 +606,9 @@ class Point2D(Vector2D):
                 'name': self.name}
 
     def to_3d(self, plane_origin, vx, vy):
-        return Point3D(plane_origin.x + vx.x * self.x + vy.x * self.y,
-                       plane_origin.y + vx.y * self.x + vy.y * self.y,
-                       plane_origin.z + vx.z * self.x + vy.z * self.y)
+        return Point3D(round(plane_origin.x + vx.x * self.x + vy.x * self.y, 12),
+                       round(plane_origin.y + vx.y * self.x + vy.y * self.y, 12),
+                       round(plane_origin.z + vx.z * self.x + vy.z * self.y, 12))
 
     def to_vector(self):
         return Vector2D(self.x, self.y)
@@ -1310,7 +1309,12 @@ class Matrix33:
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
-
+        if abs(u1) < 1e-9:
+            u1 = 0
+        if abs(u2) < 1e-9:
+            u2 = 0
+        if abs(u3) < 1e-9:
+            u3 = 0
         return vector.__class__(u1, u2, u3)
 
     def determinent(self):

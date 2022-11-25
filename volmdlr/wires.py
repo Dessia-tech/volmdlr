@@ -3895,6 +3895,7 @@ class Ellipse2D(Contour2D):
         self.minor_axis = minor_axis
         self.center = center
         self.major_dir = major_dir
+        self.minor_dir = - self.major_dir.normal_vector()
         self.theta = volmdlr.core.clockwise_angle(self.major_dir, volmdlr.X2D)
         Contour2D.__init__(self, [self], name=name)
 
@@ -3948,6 +3949,9 @@ class Ellipse2D(Contour2D):
         discretization_points = [self.center + volmdlr.Point2D(self.major_axis * math.cos(theta + self.theta),
                                                  self.minor_axis * math.sin(theta + self.theta))
                                  for theta in npy.linspace(0, volmdlr.TWO_PI, angle_resolution + 1)]
+        # discretization_points = [self.center + self.major_axis * math.cos(theta) * self.major_dir +
+        #                          self.minor_axis * math.sin(theta) * self.minor_dir
+        #                  for theta in npy.linspace(0, volmdlr.TWO_PI, angle_resolution + 1)]
         return discretization_points
 
     def abscissa(self, point: volmdlr.Point2D):
@@ -4305,8 +4309,7 @@ class Contour3D(ContourMixin, Wire3D):
         for prim in self.primitives:
             n = 20
             length = prim.length()
-            points_ = [prim.point_at_abscissa(i / n * length)
-                       for i in range(n)]
+            points_ = prim.discretization_points(number_points=n)
             for point in points_:
                 if point not in points:
                     points.append(point)

@@ -2379,7 +2379,7 @@ class ArcEllipse2D(Edge):
         self.extra = extra
         self.major_dir = major_dir
         self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
-
+        self.major_dir_angle_x_axis = volmdlr.core.clockwise_angle(self.major_dir, volmdlr.X2D)
         frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
         self.frame = frame
         start_new, end_new = frame.new_coordinates(self.start), frame.new_coordinates(self.end)
@@ -2400,6 +2400,8 @@ class ArcEllipse2D(Edge):
                              [1],
                              [1]))
             C = npy.dot(invA, One)  # matrice colonne de taille 3
+            # theta = 0.5 * math.atan(2 * C[2] / (C[1] - C[0]))
+            # theta = 0
             theta = volmdlr.core.clockwise_angle(self.major_dir, volmdlr.X2D)
             c1 = C[0] + C[1]
             c2 = (C[1] - C[0]) / math.cos(2 * theta)
@@ -2414,6 +2416,8 @@ class ArcEllipse2D(Edge):
         else:
             theta, A, B = theta_A_B(start_new, interior_new, end_new,
                                     center_new)
+            # theta, A, B = theta_A_B(self.start, self.interior, self.end,
+            #                         self.center)
 
         self.Gradius = A
         self.Sradius = B
@@ -2547,12 +2551,20 @@ class ArcEllipse2D(Edge):
             else:
                 angle_end = self.angle_end + volmdlr.TWO_PI
                 angle_start = self.angle_start
+        elif self.angle_start == self.angle_end:
+            angle_start = 0
+            angle_end = 2 * math.pi
         else:
             angle_end = self.angle_end
             angle_start = self.angle_start
         discretization_points = [
             self.center + volmdlr.Point2D(self.Gradius * math.cos(theta), self.Sradius * math.sin(theta))
-            for theta in npy.linspace(angle_start + self.theta, angle_end + self.theta, number_points + 1)]
+            for theta in npy.linspace(angle_start + self.major_dir_angle_x_axis, angle_end + self.major_dir_angle_x_axis, number_points + 1)]
+        # discretization_points = [
+        #     self.center + volmdlr.Point2D(self.Gradius * math.cos(theta), self.Sradius * math.sin(theta))
+        #     for theta in
+        #     npy.linspace(angle_start + self.major_dir_angle_x_axis, angle_end + self.major_dir_angle_x_axis,
+        #                  number_points + 1)]
         return discretization_points
 
     def polygon_points(self, discretization_resolution: int):
@@ -2569,8 +2581,12 @@ class ArcEllipse2D(Edge):
 
         major_dir = self.major_dir.to_3d(plane_origin, x, y)
         major_dir.normalize()
+        a_max2d = self.center + self.major_dir * self.Gradius
+        a_max3d = a_max2d.to_3d(plane_origin, x, y)
+        new_major_dir = a_max3d - pc
+        new_major_dir.normalize()
 
-        return ArcEllipse3D(ps, pi, pe, pc, major_dir, name=self.name)
+        return ArcEllipse3D(ps, pi, pe, pc, new_major_dir, name=self.name)
 
     def plot(self, ax=None, color='k', alpha=1):
         if ax is None:
@@ -2583,7 +2599,7 @@ class ArcEllipse2D(Edge):
 
         x = []
         y = []
-        for px, py in self.discretization_points(number_points=20):
+        for px, py in self.discretization_points(number_points=100):
             x.append(px)
             y.append(py)
 
@@ -4991,7 +5007,17 @@ class ArcEllipse3D(Edge):
         u2 = (self.interior - self.end)
         u1.normalize()
         u2.normalize()
-
+        # vec1 = self.start - self.center
+        # normal = self.major_dir.cross(vec1)
+        # if normal == volmdlr.O3D:
+        #     if u1 == u2:
+        #         vec1 = self.extra - self.center
+        #         normal = self.major_dir.cross(vec1)
+        #     else:
+        #         vec1 = self.end - self.center
+        #         normal = self.major_dir.cross(vec1)
+        # normal.normalize()
+        # self.normal = normal
         if u1 == u2:
             u2 = (self.interior - self.extra)
             u2.normalize()
@@ -5007,8 +5033,8 @@ class ArcEllipse3D(Edge):
 
         self.minor_dir = self.normal.cross(self.major_dir)
 
-        frame = volmdlr.Frame3D(self.center, self.major_dir, self.minor_dir,
-                                self.normal)
+        frame = volmdlr.Frame3D(self.center, self.major_dir, self.minor_dir, self.normal)
+        self.frame = frame
         start_new, end_new = frame.new_coordinates(
             self.start), frame.new_coordinates(self.end)
         interior_new, center_new = frame.new_coordinates(
@@ -5029,6 +5055,7 @@ class ArcEllipse3D(Edge):
                              [1],
                              [1]))
             C = npy.dot(invA, One)  # matrice colonne de taille 3
+            # theta = 0.5 * math.atan(2 * C[2] / (C[1] - C[0])) + math.pi / 2
             theta = 0.5 * math.atan(2 * C[2] / (C[1] - C[0]))
             c1 = C[0] + C[1]
             c2 = (C[1] - C[0]) / math.cos(2 * theta)
@@ -5068,7 +5095,7 @@ class ArcEllipse3D(Edge):
         # anglei = volmdlr.core.clockwise_angle(interior_2d - center2d, major_dir2d)
         u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
         anglei = volmdlr.core.sin_cos_angle(u5, u6)
-
+        self.angle_interior = anglei
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
             trigowise_path = (anglei + volmdlr.TWO_PI) - angle1
@@ -5115,17 +5142,46 @@ class ArcEllipse3D(Edge):
         :return: a list of sampled points
         """
         # plane = Plane3D.from_normal(self.center, self.normal)
+        start_new, end_new = self.frame.new_coordinates(
+            self.start), self.frame.new_coordinates(self.end)
+        interior_new, center_new = self.frame.new_coordinates(
+            self.interior), self.frame.new_coordinates(self.center)
+        vec1 = start_new - center_new
+        vec2 = end_new - center_new
+        angle = volmdlr.core.vectors3d_angle(vec1, vec2)
+        self.angle_start = volmdlr.core.vectors3d_angle(volmdlr.X3D, start_new - center_new)
+        self.angle_end = volmdlr.core.vectors3d_angle(volmdlr.X3D, end_new - center_new)
+        self.angle_interior = volmdlr.core.vectors3d_angle(volmdlr.X3D, interior_new - center_new)
+
         if number_points:
             angle_resolution = number_points
         if self.angle_start > self.angle_end:
-            angle_end = self.angle_end + volmdlr.TWO_PI
+            if self.angle_start >= self.angle_interior >= self.angle_end:
+                angle_start = self.angle_end
+                angle_end = self.angle_start
+            else:
+                angle_end = self.angle_end + volmdlr.TWO_PI
+                angle_start = self.angle_start
+        elif self.angle_start == self.angle_end:
+            angle_start = 0
+            angle_end = 2 * math.pi
         else:
             angle_end = self.angle_end
-        triangulation_points_3d = [self.center + self.Gradius * math.cos(teta) * self.major_dir
-                                   + self.Sradius * math.sin(teta) * self.normal.cross(self.major_dir)
-                                   for teta in npy.linspace(self.angle_start, angle_end,
-                                                            angle_resolution + 1)]
-        return triangulation_points_3d
+            angle_start = self.angle_start
+
+
+
+        # angle_start = volmdlr.core.vectors3d_angle(volmdlr.X3D, self.start - volmdlr.O3D)
+        # angle_end = volmdlr.core.vectors3d_angle(volmdlr.X3D, self.end - volmdlr.O3D)
+        discretization_points = [volmdlr.Point3D(self.Gradius * math.cos(teta), self.Sradius * math.sin(teta), 0)
+                                   #    self.Gradius * math.cos(teta) * self.major_dir
+                                   # + self.Sradius * math.sin(teta) * self.minor_dir
+                                      for teta in npy.linspace(angle_start, angle_end, angle_resolution + 1)]
+        discretization_points = [self.frame.old_coordinates(point) for point in discretization_points_new]
+        # discretization_points = [self.frame.origin + self.Gradius * math.cos(teta) * self.major_dir
+        #                          + self.Sradius * math.sin(teta) * self.minor_dir
+        #                          for teta in npy.linspace(angle_start, angle_end, angle_resolution + 1)]
+        return discretization_points
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\

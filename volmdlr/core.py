@@ -113,7 +113,6 @@ def clockwise_angle(vector1, vector2):
 def vectors3d_angle(vector1, vector2):
     dot = vector1.dot(vector2)
     theta = math.acos(dot / (vector1.norm() * vector2.norm()))
-
     return theta
 
 
