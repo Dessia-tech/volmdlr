@@ -30,7 +30,7 @@ for step_file in [
     # 'bracket2_cut3.step',
     # 'demi_sphere.step',
     # 'Video_Version.step',
-    # 'bracket3-cut1.step',
+    'bracket3-cut1.step',
     # 'quart_cone.step',
     # 'demi_cone.step',
     # 'cone1.step',
@@ -40,7 +40,7 @@ for step_file in [
     # 'strange_gasket.,
     # '2_bspline_faces.stp',
     # 'bracket1.step',
-    'cylinder_ellipse.step'
+    # 'cylinder_ellipse.step'
 ]:
 
     print('Reading step file: ', step_file)
@@ -55,7 +55,7 @@ for step_file in [
     model.primitives[0].alpha = 1
     model.primitives[0].color = (1, 0.1, 0.1)
 
-    model.babylonjs()
+    # model.babylonjs()
     # faces = []
     # error = {}
     # contours = {}

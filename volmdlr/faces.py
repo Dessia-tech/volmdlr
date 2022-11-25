@@ -45,7 +45,7 @@ def knots_vector_inv(knots_vector):
     for knot in knots:
         multiplicities.append(knots_vector.count(knot))
 
-    return (knots, multiplicities)
+    return knots, multiplicities
 
 
 def repair_singularity(primitive, last_primitive):
@@ -650,13 +650,14 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
-            # if isinstance(self, BSplineSurface3D):
+            if isinstance(self, BSplineSurface3D):
             #
             #     onlyfiles = next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours'))[2]  # directory is your directory path as string
             #     l = len(onlyfiles)
-            # #     contours3d[0].plot()
-            # #     outer_contour3d = self.contour2d_to_3d(outer_contour2d)
-            # #     outer_contour3d.plot()
+                contours3d[0].plot()
+                outer_contour2d.plot()
+                outer_contour3d = self.contour2d_to_3d(outer_contour2d)
+                outer_contour3d.plot()
             #     contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours\contour3d_{l}.json')
             # #     # outer_contour2d.plot()
             #     onlyfiles = \
