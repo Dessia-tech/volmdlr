@@ -71,7 +71,21 @@ def repair_singularity(primitive, last_primitive):
         new_primitives.append(primitive.translation(delta))
     return new_primitives
 
+def repair_bsplinecurve_to_parametric(point, previous):
+    x, y = point
+    xp, yp = previous
 
+    x_verify = 1 - xp
+    y_verify = 1 - yp
+
+    x2 = xp - x
+    y2 = yp - y
+
+    if math.isclose(x, x_verify, abs_tol=1e-4) or math.isclose(x2, 1, abs_tol=1e-4):
+        x = 1 + x
+    if math.isclose(y, y_verify, abs_tol=1e-4) or math.isclose(y2, 1, abs_tol=1e-4):
+        y = 1 + y
+    return x, y
 class Surface2D(volmdlr.core.Primitive2D):
     """
     A surface bounded by an outer contour
@@ -3023,7 +3037,7 @@ class BSplineSurface3D(Surface3D):
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
                       max_bound_x: float = 1., min_bound_y: float = 0.,
-                      max_bound_y: float = 1., tol=1e-7):
+                      max_bound_y: float = 1., tol=1e-12):
         def f(x):
             p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
             return point3d.point_distance(p3d)
@@ -3252,6 +3266,7 @@ class BSplineSurface3D(Surface3D):
                         points.append(point)
                     # max_bound_x=self.x_periodicity,
                     # max_bound_y=self.y_periodicity
+                print(points)
                 # ) for i in range(11)]
                 # linesegments = [vme.LineSegment2D(p1, p2)
                 #                 for p1, p2 in zip(points[:-1], points[1:])]
@@ -3272,7 +3287,7 @@ class BSplineSurface3D(Surface3D):
 
         # print(bspline_curve3d.start, bspline_curve3d.end)
         # print([(l.start, l.end) for l in linesegments])
-        # print()
+        print(True)
         return linesegments
 
     def arc3d_to_2d(self, arc3d):
