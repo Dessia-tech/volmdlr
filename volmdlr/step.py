@@ -190,6 +190,7 @@ def advanced_brep_shape_representation(arguments, object_dict):
 
 def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representation_frames):
     for shell3d in closed_shells:
+        # frame3d = item_defined_frames[1]
         for f3d in item_defined_frames:  # item_defined_transformation
             for frame3d in shape_representation_frames:  # shape_representation
                 if f3d.origin != volmdlr.O3D != frame3d.origin and frame3d != f3d:
@@ -205,7 +206,8 @@ def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representat
 
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
-    raise NotImplementedError("We are still not able to read assemblies in step files")
+    # raise NotImplementedError("We are still not able to read assemblies in step files")
+    # return None
     if arguments[2] in object_dict:
         if isinstance(object_dict[arguments[2]], list): # arguments = {, , [], [], item_....}
             if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
