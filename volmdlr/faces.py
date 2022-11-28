@@ -71,21 +71,7 @@ def repair_singularity(primitive, last_primitive):
         new_primitives.append(primitive.translation(delta))
     return new_primitives
 
-def repair_bsplinecurve_to_parametric(point, previous):
-    x, y = point
-    xp, yp = previous
 
-    x_verify = 1 - xp
-    y_verify = 1 - yp
-
-    x2 = xp - x
-    y2 = yp - y
-
-    if math.isclose(x, x_verify, abs_tol=1e-4) or math.isclose(x2, 1, abs_tol=1e-4):
-        x = 1 + x
-    if math.isclose(y, y_verify, abs_tol=1e-4) or math.isclose(y2, 1, abs_tol=1e-4):
-        y = 1 + y
-    return x, y
 class Surface2D(volmdlr.core.Primitive2D):
     """
     A surface bounded by an outer contour
@@ -2835,7 +2821,9 @@ class BSplineSurface3D(Surface3D):
     def x_periodicity(self):
         p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
         p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
-        if self.point2d_to_3d(p2d_x0) == p3d_x1 and \
+        dist = p3d_x1.point_distance(self.point2d_to_3d(p2d_x0))
+        # if self.point2d_to_3d(p2d_x0) == p3d_x1 and \
+        if math.isclose(dist, 0, abs_tol=1e-4) and \
                 not math.isclose(p2d_x0.x, 1, abs_tol=1e-3):
             return 1 - p2d_x0.x
         else:
@@ -3156,6 +3144,20 @@ class BSplineSurface3D(Surface3D):
                                                      max_bound_x=x_perio,
                                                      max_bound_y=y_perio))]
 
+    def repair_bsplinecurve_to_parametric(self, point, previous):
+        x, y = point
+        xp, yp = previous
+
+        if self.x_periodicity:
+            x_verify = abs(x - xp)
+            if math.isclose(self.x_periodicity, x_verify, abs_tol=1e-2):
+                x = xp
+        if self.y_periodicity:
+            y_verify = abs(y - yp)
+            if math.isclose(self.y_periodicity, y_verify, abs_tol=1e-2):
+                y = yp
+        return x, y
+
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         # TODO: enhance this, it is a non exact method!
         # TODO: bsplinecurve can be periodic but not around the bsplinesurface
@@ -3259,13 +3261,20 @@ class BSplineSurface3D(Surface3D):
                 # ax = fig.add_subplot(111, projection='3d')
                 # for p in points3d:
                 #     p.plot(ax, 'r')
+                previous = [0, 0]
                 points = []
                 for i in range(11):
                     point = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth))
                     if point not in points:
+                        if self.x_periodicity or self.y_periodicity:
+                            point = self.repair_bsplinecurve_to_parametric(point, previous)
                         points.append(point)
+                        previous = point
                     # max_bound_x=self.x_periodicity,
                     # max_bound_y=self.y_periodicity
+                res = []
+                x = [res.append(p) for p in points if p not in res]
+                points = res
                 print(points)
                 # ) for i in range(11)]
                 # linesegments = [vme.LineSegment2D(p1, p2)
