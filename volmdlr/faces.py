@@ -650,21 +650,21 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
-            if isinstance(self, BSplineSurface3D):
-            #
-                onlyfiles = next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours'))[2]  # directory is your directory path as string
-                l = len(onlyfiles)
-                contours3d[0].plot()
-                outer_contour2d.plot()
-                outer_contour3d = self.contour2d_to_3d(outer_contour2d)
-                # outer_contour3d.plot()
-                contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours\contour3d_{l}.json')
-            #     # outer_contour2d.plot()
-                onlyfiles = \
-                next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surface'))[
-                    2]  # directory is your directory path as string
-                l = len(onlyfiles)
-                self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surface\surface3d_{l}.json')
+            # if isinstance(self, BSplineSurface3D):
+            # #
+            #     onlyfiles = next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours'))[2]  # directory is your directory path as string
+            #     l = len(onlyfiles)
+            #     contours3d[0].plot()
+            #     outer_contour2d.plot()
+            #     outer_contour3d = self.contour2d_to_3d(outer_contour2d)
+            #     # outer_contour3d.plot()
+            #     contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours\contour3d_{l}.json')
+            # #     # outer_contour2d.plot()
+            #     onlyfiles = \
+            #     next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surface'))[
+            #         2]  # directory is your directory path as string
+            #     l = len(onlyfiles)
+            #     self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surface\surface3d_{l}.json')
             # if isinstance(self, ConicalSurface3D):
             # self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_surface\surface.json')
             # contours3d[0].save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_contours\contour.json')
@@ -2825,17 +2825,20 @@ class BSplineSurface3D(Surface3D):
         # if self.point2d_to_3d(p2d_x0) == p3d_x1 and \
         if math.isclose(dist, 0, abs_tol=1e-4) and \
                 not math.isclose(p2d_x0.x, 1, abs_tol=1e-3):
-            return 1 - p2d_x0.x
-        else:
-            return None
+            # return 1 - p2d_x0.x
+            return self.surface.range[0]
+        return None
 
     @property
     def y_periodicity(self):
         p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
         p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
-        if self.point2d_to_3d(p2d_y0) == p3d_y1 and \
+        dist = p3d_y1.point_distance(self.point2d_to_3d(p2d_y0))
+        # if self.point2d_to_3d(p2d_y0) == p3d_y1 and \
+        if math.isclose(dist, 0, abs_tol=1e-4) and \
                 not math.isclose(p2d_y0.y, 1, abs_tol=1e-3):
-            return 1 - p2d_y0.y
+            # return 1 - p2d_y0.y
+            return self.surface.range[1]
         else:
             return None
 
@@ -3150,11 +3153,11 @@ class BSplineSurface3D(Surface3D):
 
         if self.x_periodicity:
             x_verify = abs(x - xp)
-            if math.isclose(self.x_periodicity, x_verify, abs_tol=1e-2):
+            if math.isclose(self.x_periodicity, x_verify, abs_tol=1e-4):
                 x = xp
         if self.y_periodicity:
             y_verify = abs(y - yp)
-            if math.isclose(self.y_periodicity, y_verify, abs_tol=1e-2):
+            if math.isclose(self.y_periodicity, y_verify, abs_tol=1e-4):
                 y = yp
         return x, y
 
@@ -3274,11 +3277,8 @@ class BSplineSurface3D(Surface3D):
                 u3, v3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.01 * lth))
                 u4, v4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * lth))
 
-                min_bound_x = 1 - x_perio
-                min_bound_y = 1 - y_perio
-
-                max_bound_x = 1 - min_bound_x
-                max_bound_y = 1 - min_bound_y
+                min_bound_x, max_bound_x = self.surface.domain[0]
+                min_bound_y, max_bound_y = self.surface.domain[1]
                 # Verify if u1 and u2
                 if math.isclose(u1, min_bound_x, abs_tol=1e-2) and u3 > u4:
                     u1 = max_bound_x
@@ -3293,16 +3293,37 @@ class BSplineSurface3D(Surface3D):
                 points[0] = (u1, v1)
                 points[-1] = (u2, v2)
 
-                previous = [0,0]
-                for i, p in enumerate(points):
-                    points[i] = self.repair_bsplinecurve_to_parametric(p, previous)
-                    previous = p
+                if self.x_periodicity:
+                    boundary = [(math.isclose(p[0], max_bound_x, abs_tol=1e-4) or math.isclose(p[0], min_bound_x, abs_tol=1e-4)) for p in points]
+                    linesegment = vme.LineSegment2D(volmdlr.Point2D(u1, v1), volmdlr.Point2D(u2, v2))
+                    flag_line = True
+                    vertical_line = False
+                    horizontal_line = False
+                    for pt in points:
+                        if not linesegment.point_belongs(volmdlr.Point2D(pt[0], pt[1]), abs_tol=1e-4):
+                            flag_line = False
+                            break
+                    if flag_line:
+                        vertical_line = math.isclose(u1, u2, abs_tol=1e-4)
+                        horizontal_line = math.isclose(v1, v2, abs_tol=1e-4)
+                    if all(boundary):
+                        u = max_bound_x if math.isclose(points[0][0], max_bound_x, abs_tol=1e-4) else min_bound_x
+                        points = [(u, p[1]) for p in points]
+                    elif u3 < u1 < u2 and not vertical_line:
+                        points = [(p[0] - x_perio, 0) if p[0] > u1 else p for p in points]
+                    elif u3 > u1 > u2 and not vertical_line:
+                        points = [(p[0] + x_perio, 0) if p[0] < u1 else p for p in points]
+                # previous = [0,0]
+                # for i, p in enumerate(points):
+                #     points[i] = self.repair_bsplinecurve_to_parametric(p, previous)
+                #     previous = p
                     # max_bound_x=self.x_periodicity,
                     # max_bound_y=self.y_periodicity
                 res = []
                 x = [res.append(p) for p in points if p not in res]
                 points = res
-                print(points)
+                # print(points)
+                # print('\n')
                 # ) for i in range(11)]
                 # linesegments = [vme.LineSegment2D(p1, p2)
                 #                 for p1, p2 in zip(points[:-1], points[1:])]
@@ -3323,7 +3344,6 @@ class BSplineSurface3D(Surface3D):
 
         # print(bspline_curve3d.start, bspline_curve3d.end)
         # print([(l.start, l.end) for l in linesegments])
-        print(True)
         return linesegments
 
     def arc3d_to_2d(self, arc3d):

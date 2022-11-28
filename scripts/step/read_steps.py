@@ -19,7 +19,7 @@ for step_file in [
     # 'read_test6.step',
     # 'read_test7.step',
     # 'iso4162M16x55.step',
-    # 'spanners.step',
+    'spanners.step',
     # 'tormach_wrench.step',
     # 'water_tank.step',
     # 'angle_bar.step',
@@ -30,7 +30,7 @@ for step_file in [
     # 'bracket2_cut3.step',
     # 'demi_sphere.step',
     # 'Video_Version.step',
-    'bracket3-cut1.step',
+    # 'bracket3-cut1.step',
     # 'quart_cone.step',
     # 'demi_cone.step',
     # 'cone1.step',
@@ -55,7 +55,7 @@ for step_file in [
     model.primitives[0].alpha = 1
     model.primitives[0].color = (1, 0.1, 0.1)
 
-    # model.babylonjs()
+    model.babylonjs()
     # faces = []
     # error = {}
     # contours = {}
