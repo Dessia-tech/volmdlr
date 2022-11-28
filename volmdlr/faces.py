@@ -7578,23 +7578,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 inside = set()
                 for c1 in c_inners_1:
                     for c2 in c_inners_2:
-                        # inside.add(c2.is_inside(c1))
                         if c1.is_superposing(c2):
                             inside.add(False)
                         else:
                             inside.add(c2.is_inside(c1))
-                            # if c2.is_inside(c1):
-                            #     ax=c1.plot()
-                            #     c2.plot(ax, "r")
 
                 if (face1.surface3d.is_coincident(face2.surface3d)
                     and (contour1.is_overlapping(contour2)
                          or (contour1.is_inside(contour2) or True in inside))):
                     print('i: ', i)
                     print('j: ', j)
-
-                    # ax=face2.plot(color='k')
-                    # face1.plot(ax, 'r')
 
                     if face1 in used_faces:
                         faces_1, face2_2 = used_faces[face1][:], face2
@@ -7615,36 +7608,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
                                 if face2_2.surface2d.inner_contours:
                                     divided_faces_d_face = []
-                                    # for inner in face2_2.inner_contours3d:
                                     for inner in face2_2.surface2d.inner_contours:
-
-                                        # # if True in [(inner_d.is_superposing(
-                                        # #         d_face.surface3d.contour3d_to_2d(inner))
-                                        # #               or inner_d.is_inside(
-                                        # #                   d_face.surface3d.contour3d_to_2d(inner))) \
-                                        # #             for inner_d in d_face.surface2d.inner_contours]:
-
-                                        # if True in [((
-                                        #         abs(inner_d.area() - d_face.surface3d.contour3d_to_2d(inner).area()) \
-                                        #             < 1e-6)
-                                        #               or inner_d.is_inside(d_face.surface3d.contour3d_to_2d(inner))) \
-                                        #         for inner_d in d_face.surface2d.inner_contours]:
 
                                         if True in [(((abs(inner_d.area() - inner.area()) < 1e-6)
                                                       and inner.center_of_mass().is_close(inner_d.center_of_mass()))
                                                       or inner_d.is_inside(inner)) \
                                                 for inner_d in d_face.surface2d.inner_contours]:
 
-                                            # list_faces.append(d_face)
                                             divided_faces_d_face = ['', d_face]
                                             continue
 
-                                        # else:
                                         divided_faces_d_face = d_face.divide_face([inner], True)
-                                        # divided_faces_d_face = d_face.divide_face(
-                                        #     [d_face.surface3d.contour3d_to_2d(inner)], True)
-                                        # # areas = [d_f.area() for d_f in divided_faces_d_face]
-                                        # # areas.sort()
                                         divided_faces_d_face.sort(key=lambda x: x.area())
 
                                         list_faces.append(divided_faces_d_face[0])
@@ -7656,10 +7630,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                 else:
                                     list_faces.append(d_face)
                             else:
-                                # if face1 in used_faces:
-                                #     used_faces[face1] += [d_face]
-                                # else:
-                                #     used_faces[face1] = [d_face]
                                 used.append(d_face)
 
                     used_faces[face1] = used
