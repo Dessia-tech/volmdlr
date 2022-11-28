@@ -7765,7 +7765,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return ax
 
-# <<<<<<< HEAD
     def project_coincident_faces_of(self, shell):
         """
         Divides self's faces based on coincident shell's faces
@@ -7879,7 +7878,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 list_faces.append(face)
 
         return self.__class__(list_faces)
-# =======
+
     def get_geo_lines(self, update_data,
                       point_mesh_size: float = None):
         """
@@ -8029,7 +8028,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 lines.append('Transfinite Curve {' + str(i) + '} = ' +
                              str(min_points) + ' Using Progression 1;')
         return lines
-# >>>>>>> to_geo_msh
 
 
 class ClosedShell3D(OpenShell3D):
