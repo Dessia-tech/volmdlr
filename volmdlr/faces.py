@@ -3254,6 +3254,10 @@ class BSplineSurface3D(Surface3D):
                 linesegments = [vme.LineSegment2D(p1, p2)]
             # How to check if end of surface overlaps start or the opposite ?
         else:
+            x_perio = self.x_periodicity if self.x_periodicity is not None \
+                else 1.
+            y_perio = self.y_periodicity if self.y_periodicity is not None \
+                else 1.
             lth = bspline_curve3d.length()
             if lth > 1e-5:
                 # points3d = [volmdlr.Point3D(p[0], p[1], p[2]) for p in bspline_curve3d.points]
@@ -3261,15 +3265,38 @@ class BSplineSurface3D(Surface3D):
                 # ax = fig.add_subplot(111, projection='3d')
                 # for p in points3d:
                 #     p.plot(ax, 'r')
-                previous = [0, 0]
-                points = []
-                for i in range(11):
-                    point = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth))
-                    if point not in points:
-                        if self.x_periodicity or self.y_periodicity:
-                            point = self.repair_bsplinecurve_to_parametric(point, previous)
-                        points.append(point)
-                        previous = point
+                # previous = [0, 0]
+                points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth)) for i in range(11)]
+
+                u1, v1 = self.point3d_to_2d(bspline_curve3d.start)
+                u2, v2 = self.point3d_to_2d(bspline_curve3d.end)
+
+                u3, v3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.01 * lth))
+                u4, v4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * lth))
+
+                min_bound_x = 1 - x_perio
+                min_bound_y = 1 - y_perio
+
+                max_bound_x = 1 - min_bound_x
+                max_bound_y = 1 - min_bound_y
+                # Verify if u1 and u2
+                if math.isclose(u1, min_bound_x, abs_tol=1e-2) and u3 > u4:
+                    u1 = max_bound_x
+                elif math.isclose(u1, max_bound_x, abs_tol=1e-2) and u3 < u4:
+                    u1 = min_bound_x
+
+                if math.isclose(u2, min_bound_x, abs_tol=1e-2) and u4 > u3:
+                    u2 = max_bound_x
+                elif math.isclose(u2, max_bound_x, abs_tol=1e-2) and u4 < u3:
+                    u2 = min_bound_x
+
+                points[0] = (u1, v1)
+                points[-1] = (u2, v2)
+
+                previous = [0,0]
+                for i, p in enumerate(points):
+                    points[i] = self.repair_bsplinecurve_to_parametric(p, previous)
+                    previous = p
                     # max_bound_x=self.x_periodicity,
                     # max_bound_y=self.y_periodicity
                 res = []
