@@ -84,6 +84,8 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def point_belongs(self, point2d: volmdlr.Point2D):
         if not self.outer_contour.point_belongs(point2d):
+            if self.outer_contour.point_over_contour(point2d):
+                return True
             return False
 
         for inner_contour in self.inner_contours:
@@ -5116,7 +5118,7 @@ class PlaneFace3D(Face3D):
             list_coincident_faces = []
         if (self.bounding_box.bbox_intersection(face2.bounding_box) or
             self.bounding_box.distance_to_bbox(face2.bounding_box) <= tol) and \
-                (self, face2) not in list_coincident_faces:
+                (self, face2) not in list_coincident_faces and (face2, self) not in list_coincident_faces:
 
             edge_intersections = []
             for prim1 in self.outer_contour3d.primitives + [prim for inner_contour in self.inner_contours3d
@@ -7815,9 +7817,23 @@ class ClosedShell3D(OpenShell3D):
         intersecting_combinations = {}
         for combination in intersecting_faces_combinations:
             face_intersections = combination[0].face_intersections(combination[1], tol)
-            if face_intersections:
-                intersecting_combinations[combination] = face_intersections
-
+            combination_face_intersections = []
+            for face_intersection in face_intersections:
+                for contour1 in [combination[0].outer_contour3d] + combination[0].inner_contours3d:
+                    if contour1.is_superposing(face_intersection):
+                        for contour2 in [combination[1].outer_contour3d] + combination[1].inner_contours3d:
+                            if contour2.is_superposing(face_intersection):
+                                break
+                        else:
+                            continue
+                        break
+                    else:
+                        continue
+                    break
+                else:
+                    combination_face_intersections.append(face_intersection)
+            if combination_face_intersections:
+                intersecting_combinations[combination] = combination_face_intersections
         return intersecting_combinations
 
     @staticmethod
@@ -8018,9 +8034,10 @@ class ClosedShell3D(OpenShell3D):
                 valid_faces.append(fc1)
         return valid_faces
 
-    @staticmethod
-    def set_operations_interior_face(new_face, faces, inside_reference_shell):
+    def set_operations_interior_face(self, new_face, faces, inside_reference_shell):
         if inside_reference_shell and new_face not in faces:
+            return True
+        if self.face_on_shell(new_face):
             return True
         return False
 
