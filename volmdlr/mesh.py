@@ -798,6 +798,7 @@ class Mesh(DessiaObject):
         self.elements_groups = elements_groups
         self.nodes = self._set_nodes_number()
         self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
+        self._nodes_correction = None
         
         DessiaObject.__init__(self, name='')
 
@@ -912,6 +913,73 @@ class Mesh(DessiaObject):
 
     #     return mesh
 
+    def nodes_correction(self, reference_index, tol=1e-4):
+        if not self._nodes_correction:
+            nodes_reference = self.elements_groups[reference_index].nodes
+            groups = self.elements_groups[:]
+            groups.pop(reference_index)
+            # groups = [group for i, group in enumerate(self.elements_groups) if i != reference_index]
+            nodes_correction = {}
+
+            for group in groups:
+                for node in group.nodes:
+                    for node_ref in nodes_reference:
+                        d = node.point_distance(node_ref)
+                        if 1e-8 < d < 1e-4:
+                            nodes_correction[node] = node_ref
+
+            self._nodes_correction = nodes_correction
+
+        return self._nodes_correction
+
+    def delete_duplicated_nodes(self, reference_index, tol=1e-4):
+
+        # nodes_reference = self.elements_groups[reference_index].nodes
+        groups = self.elements_groups[:]
+        groups.pop(reference_index)
+        # # groups = [group for i, group in enumerate(self.elements_groups) if i != reference_index]
+        # nodes_correction = {}
+
+        # for group in groups:
+        #     for node in group.nodes:
+        #         for node_ref in nodes_reference:
+        #             d = node.point_distance(node_ref)
+        #             if 1e-8 < d < 1e-4:
+        #                 nodes_correction[node] = node_ref
+
+        nodes_correction = self.nodes_correction(reference_index, tol)
+
+        count = 0
+        old_elements, new_elements = set(), set()
+        for g, group in enumerate(groups):
+            elements = []
+            for element in group.elements:
+                new = False
+                points = []
+                for point in element.points:
+                    try:
+                        points.append(nodes_correction[point])
+                        # element.plot(ax)
+                        count += 1
+                        old_elements.add(element)
+                        new = True
+
+                    except KeyError:
+                        points.append(point)
+
+                elements.append(element.__class__(points))
+                if new:
+                    new_elements.add(element.__class__(points))
+
+            groups[g] = group.__class__(elements)
+
+        groups.insert(reference_index, self.elements_groups[reference_index])
+
+        mesh = self.__class__(groups)
+
+        return mesh
+
+    '''
     def delete_duplicated_nodes(self, tol=1e-4):
         mesh = self.__class__(self.elements_groups[:])
         nodes_list = list(mesh.nodes[:])
@@ -964,6 +1032,7 @@ class Mesh(DessiaObject):
             # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
 
         return mesh
+    '''
 
 #     def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
 #         plot_datas = []
