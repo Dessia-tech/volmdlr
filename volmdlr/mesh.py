@@ -775,6 +775,7 @@ class Mesh(DessiaObject):
         self.nodes = self._set_nodes_number()
         self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
         self._nodes_correction = {}
+        self._gmsh = None
         DessiaObject.__init__(self, name='')
 
     # def __add__(self, other_mesh):
