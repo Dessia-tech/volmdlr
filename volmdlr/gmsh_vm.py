@@ -639,3 +639,78 @@ class GmshParser(DessiaObject):
     def to_2d(list_nodes):
         return [volmdlr.mesh.Node2D(node[0], node[1]) for
                 node in list_nodes]
+
+    def to_vtk(self, output_file_name):
+        lines = []
+        lines.append('# vtk DataFile Version 2.0')
+        lines.append(output_file_name + ', Created by Volmdlr')
+        lines.append('ASCII')
+        lines.append('DATASET UNSTRUCTURED_GRID')
+        lines.append('POINTS ' + str(len(self.nodes[0]['all_nodes'])) + ' double')
+
+        for node in self.nodes[0]['all_nodes']:
+            lines.append(str([*node])[1:-1].replace(',',''))
+
+        lines.append(' ')
+        lines.append('CELLS') #13664=1103+1915+4044+6602 / 57137=1103*2+1915*3+4044*4+6602*5
+
+        cells, cells_0, cells_1 = 0, 0, 0
+        for i in range(0,len(self.elements[0]['elements_type_15'])):
+            lines.append('1 ' + str(i))
+            cells += 1
+        cells_1 += cells*2
+        cells_0 += cells
+        cells = 0
+
+        for elements in self.elements[0]['elements_type_1']:
+            for element in map(str, elements):
+                lines.append('2 ' + element[1:-1].replace(',',''))
+                cells += 1
+        cells_1 += cells*3
+        cells_0 += cells
+        cells = 0
+
+        for elements in self.elements[0]['elements_type_2']:
+            for element in map(str, elements):
+                lines.append('3 ' + element[1:-1].replace(',',''))
+                cells += 1
+        cells_1 += cells*4
+        cells_0 += cells
+        cells = 0
+
+        for elements in self.elements[0]['elements_type_4']:
+            for element in map(str, elements):
+                lines.append('4 ' + element[1:-1].replace(',',''))
+                cells += 1
+        cells_1 += cells*5
+        cells_0 += cells
+
+        lines[lines.index('CELLS')] = 'CELLS ' + str(cells_0) + ' ' + str(cells_1)
+
+        lines.append(' ')
+        lines.append('CELL_TYPES ' + str(cells_0)) #13664
+
+        lines.extend(['1']*len(self.elements[0]['elements_type_15']))
+
+        count_lines = 0
+        for elements in self.elements[0]['elements_type_1']:
+            count_lines += len(elements)
+
+        lines.extend(['3']*count_lines)
+
+        count_triangles = 0
+        for elements in self.elements[0]['elements_type_2']:
+            count_triangles += len(elements)
+
+        lines.extend(['5']*count_triangles)
+
+        count_tetra = 0
+        for elements in self.elements[0]['elements_type_4']:
+            count_tetra += len(elements)
+
+        lines.extend(['10']*count_tetra)
+
+
+        with open(output_file_name, "w") as f_out:
+            f_out.write('\n'.join(lines))
+        f_out.close()
