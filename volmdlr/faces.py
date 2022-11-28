@@ -7115,7 +7115,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                  alpha: float = 1.,
                  name: str = '',
                  bounding_box: volmdlr.core.BoundingBox = None):
-        
+
         self.faces = faces
         if not color:
             self.color = (0.8, 0.8, 0.8)
