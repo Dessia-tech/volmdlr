@@ -7827,9 +7827,6 @@ class ClosedShell3D(OpenShell3D):
                         else:
                             continue
                         break
-                    else:
-                        continue
-                    break
                 else:
                     combination_face_intersections.append(face_intersection)
             if combination_face_intersections:
