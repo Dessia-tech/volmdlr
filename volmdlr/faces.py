@@ -8021,7 +8021,7 @@ class ClosedShell3D(OpenShell3D):
             faces.extend(valid_faces)
 
         valid_faces = []
-        finished =  False
+        finished = False
         while not finished:
             face_is_valid = True
             for face in valid_faces:
