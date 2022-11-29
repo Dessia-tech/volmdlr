@@ -641,75 +641,68 @@ class GmshParser(DessiaObject):
                 node in list_nodes]
 
     def to_vtk(self, output_file_name):
+        if output_file_name[-3::] != 'vtk':
+            output_file_name += '.vtk'
+
         lines = []
         lines.append('# vtk DataFile Version 2.0')
         lines.append(output_file_name + ', Created by Volmdlr')
         lines.append('ASCII')
         lines.append('DATASET UNSTRUCTURED_GRID')
-        lines.append('POINTS ' + str(len(self.nodes[0]['all_nodes'])) + ' double')
+        lines.append('POINTS ' + str(len(self.nodes['all_nodes'])) + ' double')
 
-        for node in self.nodes[0]['all_nodes']:
-            lines.append(str([*node])[1:-1].replace(',',''))
+        if self.nodes['all_nodes'][0].__class__.__name__[-2] == '2':
+            for node in self.nodes['all_nodes']:
+                lines.append(str([*node])[1:-1].replace(',','') + ' 0.0')
+        else:
+            for node in self.nodes['all_nodes']:
+                lines.append(str([*node])[1:-1].replace(',',''))
 
         lines.append(' ')
         lines.append('CELLS') #13664=1103+1915+4044+6602 / 57137=1103*2+1915*3+4044*4+6602*5
 
         cells, cells_0, cells_1 = 0, 0, 0
-        for i in range(0,len(self.elements[0]['elements_type_15'])):
+        for i in range(0,len(self.nodes['nodes_dim_0'])):
             lines.append('1 ' + str(i))
             cells += 1
         cells_1 += cells*2
         cells_0 += cells
-        cells = 0
 
-        for elements in self.elements[0]['elements_type_1']:
-            for element in map(str, elements):
-                lines.append('2 ' + element[1:-1].replace(',',''))
-                cells += 1
-        cells_1 += cells*3
-        cells_0 += cells
-        cells = 0
+        cells_str_int = {'elements_type_1': ('2 ', 3),
+                         'elements_type_2': ('3 ', 4),
+                         'elements_type_4': ('4 ', 5)}
 
-        for elements in self.elements[0]['elements_type_2']:
-            for element in map(str, elements):
-                lines.append('3 ' + element[1:-1].replace(',',''))
-                cells += 1
-        cells_1 += cells*4
-        cells_0 += cells
-        cells = 0
-
-        for elements in self.elements[0]['elements_type_4']:
-            for element in map(str, elements):
-                lines.append('4 ' + element[1:-1].replace(',',''))
-                cells += 1
-        cells_1 += cells*5
-        cells_0 += cells
+        for key, value in cells_str_int.items():
+            cells = 0
+            try:
+                for elements in self.elements[key]:
+                    for element in map(str, elements):
+                        lines.append(value[0] + element[1:-1].replace(',',''))
+                        cells += 1
+                cells_1 += cells*value[1]
+                cells_0 += cells
+            except KeyError:
+                pass
 
         lines[lines.index('CELLS')] = 'CELLS ' + str(cells_0) + ' ' + str(cells_1)
 
         lines.append(' ')
         lines.append('CELL_TYPES ' + str(cells_0)) #13664
 
-        lines.extend(['1']*len(self.elements[0]['elements_type_15']))
+        lines.extend(['1']*len(self.nodes['nodes_dim_0']))
 
-        count_lines = 0
-        for elements in self.elements[0]['elements_type_1']:
-            count_lines += len(elements)
+        cells_str_int = {'elements_type_1': '3',
+                         'elements_type_2': '5',
+                         'elements_type_4': '10'}
 
-        lines.extend(['3']*count_lines)
-
-        count_triangles = 0
-        for elements in self.elements[0]['elements_type_2']:
-            count_triangles += len(elements)
-
-        lines.extend(['5']*count_triangles)
-
-        count_tetra = 0
-        for elements in self.elements[0]['elements_type_4']:
-            count_tetra += len(elements)
-
-        lines.extend(['10']*count_tetra)
-
+        for key, value in cells_str_int.items():
+            try:
+                count = 0
+                for elements in self.elements[key]:
+                    count += len(elements)
+                lines.extend([value]*count)
+            except KeyError:
+                pass
 
         with open(output_file_name, "w") as f_out:
             f_out.write('\n'.join(lines))
