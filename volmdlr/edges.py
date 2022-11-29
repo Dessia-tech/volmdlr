@@ -319,9 +319,9 @@ class LineSegment(Edge):
 class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
     """
-    An abstract class for B-spline curves. The following rule must be 
+    An abstract class for B-spline curves. The following rule must be
     respected : `number of knots = number of control points + degree + 1`
-    
+
     :param degree: The degree of the B-spline curve
     :type degree: int
     :param control_points: A list of 2 or 3 dimensional points
@@ -331,11 +331,11 @@ class BSplineCurve(Edge):
     :type knot_multiplicities: List[int]
     :param knots: The knot vector composed of values between 0 and 1
     :type knots: List[float]
-    :param weights: The weight vector applied to the knot vector. Default 
+    :param weights: The weight vector applied to the knot vector. Default
         value is None
     :type weights: List[float], optional
-    :param periodic: If `True` the B-spline curve is periodic. Default value 
-        is False 
+    :param periodic: If `True` the B-spline curve is periodic. Default value
+        is False
     :type periodic: bool, optional
     :param name: The name of the B-spline curve. Default value is ''
     :type name: str, optional
