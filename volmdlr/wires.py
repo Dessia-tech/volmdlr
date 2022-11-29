@@ -1096,21 +1096,21 @@ class ContourMixin(WireMixin):
         """
         edges = []
         for primitive in self.primitives:
-<<<<<<< HEAD
-            if hasattr(primitive, 'discretise'):
-                points = primitive.discretise(n)
-                warnings.warn('Use discretisation_points method instead of discretise')
-            elif hasattr(primitive, 'polygon_points'):
-                points = primitive.polygon_points(n)
-                warnings.warn('Use discretisation_points method instead of polygon_points')
-            elif hasattr(primitive, 'discretisation_points'):
-                points = primitive.discretisation_points(n)
-            else:
-                raise NotImplementedError(f'Class {primitive} is missing a discretisation_points method')
-=======
+# <<<<<<< HEAD
+#             if hasattr(primitive, 'discretise'):
+#                 points = primitive.discretise(n)
+#                 warnings.warn('Use discretisation_points method instead of discretise')
+#             elif hasattr(primitive, 'polygon_points'):
+#                 points = primitive.polygon_points(n)
+#                 warnings.warn('Use discretisation_points method instead of polygon_points')
+#             elif hasattr(primitive, 'discretisation_points'):
+#                 points = primitive.discretisation_points(n)
+#             else:
+#                 raise NotImplementedError(f'Class {primitive} is missing a discretisation_points method')
+# =======
             auto_nb_pts = min(number_points, max(2, int(primitive.length() / 1e-6)))
             points = primitive.discretization_points(number_points=auto_nb_pts)
->>>>>>> fix_bool_ops
+# >>>>>>> fix_bool_ops
             for p1, p2 in zip(points[:-1], points[1:]):
                 edges.append(volmdlr.edges.LineSegment2D(p1, p2))
         return edges
@@ -1140,12 +1140,7 @@ class ContourMixin(WireMixin):
 
         if not intersecting_points:
             intersecting_points = self.contour_intersections(contour2)
-
-<<<<<<< HEAD
-        if len(intersecting_points)<2:
-=======
         if len(intersecting_points) < 2:
->>>>>>> fix_bool_ops
             return False
 
         vec1_2 = volmdlr.edges.LineSegment2D(intersecting_points[0],
@@ -1479,22 +1474,22 @@ class Contour2D(ContourMixin, Wire2D):
         return Contour3D(p3d)
 
     def point_belongs(self, point):
-<<<<<<< HEAD
-        xmin, xmax, ymin, ymax = self.bounding_rectangle()
-        if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
-            return False
-
-        if self.edge_polygon.point_belongs(point):
-            return True
-        # TODO: This is incomplete!!!
-        return False
-=======
+# <<<<<<< HEAD
+#         xmin, xmax, ymin, ymax = self.bounding_rectangle()
+#         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
+#             return False
+#
+#         if self.edge_polygon.point_belongs(point):
+#             return True
+#         # TODO: This is incomplete!!!
+#         return False
+# =======
         # TODO: This is incomplete!!!
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
             return False
         return self.edge_polygon.point_belongs(point)
->>>>>>> fix_bool_ops
+# >>>>>>> fix_bool_ops
 
     # def point_over_contour(self, point, abs_tol=1e-6):
     #     belongs = False
@@ -2168,18 +2163,12 @@ class Contour2D(ContourMixin, Wire2D):
         return Contour2D(new_primitives)
 
     def merge_with(self, contour2d):
-<<<<<<< HEAD
-        '''
-        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
-        '''
-=======
         """
         merge two adjacent contours, sharing primitives, and returns one outer
         contour and inner contours (if there are any)
         :param contour2d: contour to merge with
         :return: merged contours
         """
->>>>>>> fix_bool_ops
         is_sharing_primitive = self.is_sharing_primitives_with(contour2d)
         if self.is_inside(contour2d) and not is_sharing_primitive:
             return [self]
