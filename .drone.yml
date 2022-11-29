@@ -4,6 +4,29 @@ type: docker
 name: default
 
 steps:
+- name: merge master on testing
+  image: alpine/git
+  when:
+    event: push 
+    branch: master
+  commands:
+  - git fetch origin testing
+  - git checkout testing
+  - git merge master
+  - git push
+
+- name: merge testing on dev
+  image: alpine/git
+  when:
+    event: push 
+    branch: testing
+  commands:
+  - git fetch origin dev
+  - git checkout dev
+  - git merge testing
+  - git push
+
+
 - name: check code complexity
   image: python:3.9
   commands:
