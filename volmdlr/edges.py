@@ -967,17 +967,19 @@ class BSplineCurve2D(BSplineCurve):
                         tuple(self.knots))
         return content, point_id + 1
 
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
+        length = self.length()
+        if angle_resolution:
+            number_points = angle_resolution
+        if not number_points:
+            number_points = len(self.points)
+        return [self.point_at_abscissa(i * length / number_points) for i in range(number_points + 1)]
+
     def polygon_points(self, n: int = 15):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(n)
-
-    def discretization_points(self, *, number_points: int = 15, angle_resolution: int = 15):
-        length = self.length()
-        if angle_resolution:
-            number_points = angle_resolution
-        return [self.point_at_abscissa(i * length / number_points) for i in range(number_points + 1)]
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
