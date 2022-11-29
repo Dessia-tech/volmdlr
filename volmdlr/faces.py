@@ -732,28 +732,6 @@ class Surface3D(DessiaObject):
                 if isinstance(self, SphericalSurface3D) \
                         and math.isclose(abs(last_primitive.end.y), 0.5 * math.pi, abs_tol=1e-6):
                     new_primitives += repair_singularity(prim, last_primitive)
-                    # v1 = prim.unit_direction_vector()
-                    # v2 = last_primitive.unit_direction_vector()
-                    # dot = v1.dot(volmdlr.X2D)
-                    # cross = v1.cross(v2)
-                    # if math.isclose(abs(last_primitive.end.y), 0.5*math.pi, abs_tol=1e-6) \
-                    #     and cross == 0 and dot == 0:
-                    #     if prim.start.x == math.pi:
-                    #         prim = prim.translation(volmdlr.Vector2D(-2*math.pi, 0))
-                    #         new = vme.LineSegment2D(last_primitive.end, prim.start)
-                    #         new_primitives.append(new)
-                    #         new_primitives.append(prim)
-                    #     elif prim.start.x == -math.pi:
-                    #         prim = prim.translation(volmdlr.Vector2D(2 * math.pi, 0))
-                    #         new = vme.LineSegment2D(last_primitive.end, prim.start)
-                    #         new_primitives.append(new)
-                    #         new_primitives.append(prim)
-                    #     else:
-                    #         new = vme.LineSegment2D(last_primitive.end, prim.start)
-                    #         new_primitives.append(new)
-                    #         new_primitives.append(prim)
-                    # else:
-                    #     new_primitives.append(prim.translation(delta))
                 elif isinstance(self, ConicalSurface3D) and \
                         math.isclose(abs(last_primitive.end.y), 0.0, abs_tol=1e-6):
                     new_primitives += repair_singularity(prim, last_primitive)
