@@ -1494,7 +1494,7 @@ class VolumeModel(dc.PhysicalObject):
             presentation_style_id = suface_style_usage_id + 1
 
             step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
-                            "#{curve_style_id}));\n"
+                            f"#{curve_style_id}));\n"
 
             styled_item_id = presentation_style_id + 1
             if primitive.__class__.__name__ == 'OpenShell3D':
