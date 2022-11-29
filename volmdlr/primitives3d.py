@@ -1262,6 +1262,12 @@ class HollowCylinder(RevolvedProfile):
         RevolvedProfile.__init__(self, position, axis, y, contour, position,
                                  axis, color=color, alpha=alpha, name=name)
 
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+        Custom to dict for perf
+        """
+        return dc.DessiaObject.to_dict(self, use_pointers, memo, path)
+
     def _bounding_box(self):
 
         radius = self.outer_radius
