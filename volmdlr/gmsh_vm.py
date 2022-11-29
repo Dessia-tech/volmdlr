@@ -653,19 +653,19 @@ class GmshParser(DessiaObject):
 
         if self.nodes['all_nodes'][0].__class__.__name__[-2] == '2':
             for node in self.nodes['all_nodes']:
-                lines.append(str([*node])[1:-1].replace(',','') + ' 0.0')
+                lines.append(str([*node])[1:-1].replace(',', '') + ' 0.0')
         else:
             for node in self.nodes['all_nodes']:
-                lines.append(str([*node])[1:-1].replace(',',''))
+                lines.append(str([*node])[1:-1].replace(',', ''))
 
         lines.append(' ')
-        lines.append('CELLS') #13664=1103+1915+4044+6602 / 57137=1103*2+1915*3+4044*4+6602*5
+        lines.append('CELLS')  # 13664=1103+1915+4044+6602 / 57137=1103*2+1915*3+4044*4+6602*5
 
         cells, cells_0, cells_1 = 0, 0, 0
-        for i in range(0,len(self.nodes['nodes_dim_0'])):
+        for i in range(0, len(self.nodes['nodes_dim_0'])):
             lines.append('1 ' + str(i))
             cells += 1
-        cells_1 += cells*2
+        cells_1 += cells * 2
         cells_0 += cells
 
         cells_str_int = {'elements_type_1': ('2 ', 3),
@@ -677,9 +677,9 @@ class GmshParser(DessiaObject):
             try:
                 for elements in self.elements[key]:
                     for element in map(str, elements):
-                        lines.append(value[0] + element[1:-1].replace(',',''))
+                        lines.append(value[0] + element[1:-1].replace(',', ''))
                         cells += 1
-                cells_1 += cells*value[1]
+                cells_1 += cells * value[1]
                 cells_0 += cells
             except KeyError:
                 pass
@@ -687,9 +687,9 @@ class GmshParser(DessiaObject):
         lines[lines.index('CELLS')] = 'CELLS ' + str(cells_0) + ' ' + str(cells_1)
 
         lines.append(' ')
-        lines.append('CELL_TYPES ' + str(cells_0)) #13664
+        lines.append('CELL_TYPES ' + str(cells_0))  # 13664
 
-        lines.extend(['1']*len(self.nodes['nodes_dim_0']))
+        lines.extend(['1'] * len(self.nodes['nodes_dim_0']))
 
         cells_str_int = {'elements_type_1': '3',
                          'elements_type_2': '5',
@@ -700,7 +700,7 @@ class GmshParser(DessiaObject):
                 count = 0
                 for elements in self.elements[key]:
                     count += len(elements)
-                lines.extend([value]*count)
+                lines.extend([value] * count)
             except KeyError:
                 pass
 
