@@ -16,7 +16,7 @@ from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as npy
-import gmsh
+# import gmsh
 
 import dessia_common as dc
 import dessia_common.files as dcf
