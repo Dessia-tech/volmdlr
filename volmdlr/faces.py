@@ -43,6 +43,7 @@ def knots_vector_inv(knots_vector):
 
     return knots, multiplicities
 
+
 def repair_singularity(primitive, last_primitive):
     v1 = primitive.unit_direction_vector()
     v2 = last_primitive.unit_direction_vector()
@@ -65,6 +66,7 @@ def repair_singularity(primitive, last_primitive):
         delta = last_primitive.end - primitive.start
         new_primitives.append(primitive.translation(delta))
     return new_primitives
+
 
 def repair_start_end_angle_periodicity(angle_start, angle_end, ref_start, ref_end):
     """
@@ -778,9 +780,9 @@ class Surface3D(DessiaObject):
                 delta_y2 = 0.
             delta = last_primitive.end - primitives[0].start
             new_primitives = [prim.translation(delta) for prim in primitives]
-                # temp = prim.translation(delta)
-                # prim.start.y = temp.start.y
-                # prim.end.y = temp.end.y
+            # temp = prim.translation(delta)
+            # prim.start.y = temp.start.y
+            # prim.end.y = temp.end.y
 
             # for prim in primitives:
             #     prim.start.y = abs(self.y_periodicity
@@ -2541,6 +2543,8 @@ class SphericalSurface3D(Surface3D):
             new_primitives = [prim.translation(delta) for prim in primitives]
 
         return new_primitives, delta_x1, delta_x2, delta_y1, delta_y2
+
+
 class RuledSurface3D(Surface3D):
     face_class = 'RuledFace3D'
     """
