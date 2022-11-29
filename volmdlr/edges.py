@@ -4686,6 +4686,7 @@ class FullArc3D(Arc3D):
                  name: str = ''):
         self.__center = center
         self.__normal = normal
+        self.start_end = start_end
         interior = start_end.rotation(center, normal, math.pi)
         Arc3D.__init__(self, start=start_end, end=start_end,
                        interior=interior, name=name)  # !!! this is dangerous
