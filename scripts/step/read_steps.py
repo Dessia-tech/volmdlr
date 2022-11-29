@@ -13,7 +13,7 @@ for step_file in [
     # 'cylinder-test.step',
     # 'bracket2.step',
     # 'read_test1.step',
-    'read_test2.step',
+    # 'read_test2.step',
     # 'read_test3.step',
     # 'read_test4.step',
     # 'read_test6.step',
@@ -37,9 +37,9 @@ for step_file in [
     # 'cone2.step',
     # 'HRG_BOT.stp',
     # 'bracket3_cut2.step',
-    # 'strange_gasket.,
+    # 'strange_gasket.step',
     # '2_bspline_faces.stp',
-    # 'bracket1.step',
+    'bracket3.step',
     # 'cylinder_ellipse.step'
 ]:
 
@@ -52,24 +52,24 @@ for step_file in [
 
     # assert len(model.primitives) > 0.
     # model.to_step(step_file+'_reexport')
-    model.primitives[0].alpha = 1
-    model.primitives[0].color = (1, 0.1, 0.1)
-
-    model.babylonjs()
-    # faces = []
-    # error = {}
-    # contours = {}
-    # for closedshell in model.primitives:
-    #     for i, face in enumerate(closedshell.faces):
-    #         try:
-    #             face.triangulation()
-    #         except Exception:
-    #             error[i] = face
-    #             contours[i] = face.surface2d
-    #         else:
-    #             faces.append(face)
-    # model2 = volmdlr.core.VolumeModel(faces)
-    # model2.babylonjs()
+    # model.primitives[0].alpha = 1
+    # model.primitives[0].color = (1, 0.1, 0.1)
+    #
+    # model.babylonjs()
+    faces = []
+    error = {}
+    contours = {}
+    for closedshell in model.primitives:
+        for i, face in enumerate(closedshell.faces):
+            try:
+                face.triangulation()
+            except Exception:
+                error[i] = face
+                contours[i] = face.surface2d
+            else:
+                faces.append(face)
+    model2 = volmdlr.core.VolumeModel(faces)
+    model2.babylonjs()
     # assert len(model.primitives) > 0.
     # model.to_step(step_file + '_reexport')
     # model.babylonjs()

@@ -3300,7 +3300,10 @@ class BSplineSurface3D(Surface3D):
                 # for p in points3d:
                 #     p.plot(ax, 'r')
                 # previous = [0, 0]
-                points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth)) for i in range(11)]
+                min_bound_x, max_bound_x = self.surface.domain[0]
+                min_bound_y, max_bound_y = self.surface.domain[1]
+                points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth),
+                                             min_bound_x, max_bound_x, min_bound_y, max_bound_y) for i in range(11)]
 
                 u1, v1 = self.point3d_to_2d(bspline_curve3d.start)
                 u2, v2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -3308,9 +3311,8 @@ class BSplineSurface3D(Surface3D):
                 u3, v3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.01 * lth))
                 u4, v4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * lth))
 
-                min_bound_x, max_bound_x = self.surface.domain[0]
-                min_bound_y, max_bound_y = self.surface.domain[1]
-
+                # points = bspline_curve3d.simplify(0.025*lth, 0.5*lth, 5)
+                # points = [self.point3d_to_2d(p, min_bound_x, max_bound_x, min_bound_y, max_bound_y) for p in points]
                 if self.x_periodicity:
                     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
                 if self.y_periodicity:
@@ -3332,19 +3334,19 @@ class BSplineSurface3D(Surface3D):
                     # if all(boundary):
                     #     u = max_bound_x if math.isclose(points[0].x, max_bound_x, abs_tol=1e-4) else min_bound_x
                     #     points = [volmdlr.Point2D(u, p.y) for p in points]
-
-                linesegment = vme.LineSegment2D(points[0], points[-1])
-                flag_line = True
-                # vertical_line = False
-                # horizontal_line = False
-                for pt in points:
-                    if not linesegment.point_belongs(pt, abs_tol=1e-4):
-                        flag_line = False
-                        break
-                if flag_line:
-                    # vertical_line = math.isclose(u1, u2, abs_tol=1e-4)
-                    # horizontal_line = math.isclose(v1, v2, abs_tol=1e-4)
-                    return [linesegment]
+                if points[0] != points[-1]:
+                    linesegment = vme.LineSegment2D(points[0], points[-1])
+                    flag_line = True
+                    # vertical_line = False
+                    # horizontal_line = False
+                    for pt in points:
+                        if not linesegment.point_belongs(pt, abs_tol=1e-4):
+                            flag_line = False
+                            break
+                    if flag_line:
+                        # vertical_line = math.isclose(u1, u2, abs_tol=1e-4)
+                        # horizontal_line = math.isclose(v1, v2, abs_tol=1e-4)
+                        return [linesegment]
                 if self.x_periodicity:
                     if u3 < u1 < u2:
                         points = [volmdlr.Point2D(p.x - x_perio, p.y) if p.x > u1 else p for p in points]

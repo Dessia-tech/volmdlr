@@ -345,7 +345,7 @@ class BSplineCurve(Edge):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
         curve.knotvector = knot_vector
-        curve.delta = 0.025
+        curve.delta = 0.04
         curve_points = curve.evalpts
         self.curve = curve
 
@@ -614,6 +614,52 @@ class BSplineCurve(Edge):
         bsplinecurve.periodic = True
         return bsplinecurve
 
+    def simplify(self, min_distance: float = 0.01,
+                             max_distance: float = 0.05, angle: float = 5):
+        points = self.points
+        degree = self.degree
+        previous_point = None
+        for i, point in enumerate(self.points[1:]):
+            distance = point.point_distance(points[-1])
+            if distance > min_distance:
+                if distance > max_distance:
+                    number_segmnts = round(distance / max_distance) + 2
+                    for n in range(number_segmnts):
+                        new_point = points[-1] + (point - points[-1]) * (
+                                n + 1) / number_segmnts
+                        distance1 = new_point.point_distance(points[-1])
+                        if distance1 > max_distance:
+                            points.append(new_point)
+                else:
+                    if point not in points:
+                        points.append(point)
+            if len(points) > 1:
+                vector1 = points[-1] - points[-2]
+                vector2 = point - points[-2]
+                cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
+                cos = math.degrees(math.acos(round(cos, 6)))
+                if abs(cos) > angle:
+                    if previous_point not in points:
+                        points.append(previous_point)
+                    if point not in points:
+                        points.append(point)
+            if len(points) > 2:
+                distance2 = points[-3].point_distance(points[-2])
+                vector1 = points[-2] - points[-3]
+                vector2 = points[-1] - points[-3]
+                cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
+                cos = math.degrees(math.acos(round(cos, 6)))
+                if distance2 < min_distance and cos < angle:
+                    points = points[:-2] + [points[-1]]
+            previous_point = point
+        # distance = points[0].point_distance(points[-1])
+        # if distance < min_distance:
+        #     points.remove(points[-1])
+
+        # if volmdlr.wires.ClosedPolygon2D(points).area() == 0.0:
+        #     return self
+
+        return self.from_points_interpolation(points, degree)
 
 class Line2D(Line):
     """
