@@ -16,10 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside
 * CylindricalSurface3D: line_intersections, linesegment_intersections, plane_intersection
 * Line2D: point_distance
+
+* Line3D: to_2d
+* ArcEllipse2D: straight_line_area
 * Line3D: skew_to: Verifies if two Line3D are skew
 * LineSegment3D.line_interserctions
 
-* Line3D: to_2d
 
 
 ### Fixed

@@ -109,6 +109,9 @@ class Edge(dc.DessiaObject):
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
+        orientation = arguments[4]
+        if orientation == '.F.':
+            p1, p2 = p2, p1
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
@@ -2391,8 +2394,7 @@ class FullArc2D(Arc2D):
 
         return []
 
-    def linesegment_intersections(self, linesegment2d: LineSegment2D,
-                                  tol=1e-9):
+    def linesegment_intersections(self, linesegment2d: LineSegment2D, tol=1e-9):
         try:
             if linesegment2d.start == self.center:
                 pt1 = linesegment2d.end
@@ -2616,6 +2618,19 @@ class ArcEllipse2D(Edge):
 
     def unit_direction_vector(self, abscissa):
         raise NotImplementedError
+
+    def straight_line_area(self):
+        if self.angle >= math.pi:
+            angle = volmdlr.TWO_PI - self.angle
+            area = math.pi * self.Gradius * self.Sradius - 0.5 * self.Gradius * self.Sradius * (
+                    angle - math.sin(angle))
+        else:
+            angle = self.angle
+            area = 0.5 * self.Gradius * self.Sradius * (angle - math.sin(angle))
+
+        if self.is_trigo:
+            return area
+        return -area
 
 
 class Line3D(Line):
@@ -3331,7 +3346,7 @@ class LineSegment3D(LineSegment):
             raise NotImplementedError
 
         if parent is not None:
-            s += '{}.parent = {};\n'.format(name, parent)
+            s += f'{name}.parent = {parent};\n'
 
         return s
 
