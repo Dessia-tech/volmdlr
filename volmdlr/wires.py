@@ -1441,7 +1441,7 @@ class Contour2D(ContourMixin, Wire2D):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
             return False
-        return self.discretized_contour(n=50).point_belongs(point)
+        return self.discretized_contour(n=25).point_belongs(point)
 
     # def point_over_contour(self, point, abs_tol=1e-6):
     #     belongs = False

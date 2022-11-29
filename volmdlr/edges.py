@@ -1036,7 +1036,8 @@ class BSplineCurve2D(BSplineCurve):
         length = self.length()
         if angle_resolution:
             number_points = angle_resolution
-        return [self.point_at_abscissa(i * length / number_points) for i in range(number_points + 1)]
+        # return [self.point_at_abscissa(i * length / number_points) for i in range(number_points + 1)]
+        return self.points
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
