@@ -158,6 +158,16 @@ class Edge(dc.DessiaObject):
         raise NotImplementedError('the unit_direction_vector method must be'
                                   'overloaded by subclassing class')
 
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge with a
+        line between its start and end points
+        :param point: Point to be verified
+        :return: Return True if the point belongs to this surface, or False otherwise
+        """
+        raise NotImplementedError(f'the unit_direction_vector method must be'
+                                  f' overloaded by {self.__class__.__name__}')
+
 
 class Line(dc.DessiaObject):
     """
@@ -1105,6 +1115,10 @@ class BSplineCurve2D(BSplineCurve):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         length = self.length()
+        if angle_resolution:
+            number_points = angle_resolution
+        if not number_points:
+            number_points = len(self.points)
         return [self.point_at_abscissa(i * length / number_points) for i in range(number_points + 1)]
 
     def polygon_points(self, n: int = 15):
@@ -1305,6 +1319,15 @@ class LineSegment2D(LineSegment):
 
     def straight_line_center_of_mass(self):
         return 0.5 * (self.start + self.end)
+
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge with a
+        line between its start and end points
+        :param point: Point to be verified
+        :return: Return True if the point belongs to this surface, or False otherwise
+        """
+        return self.point_belongs(point)
 
     def point_distance(self, point, return_other_point=False):
         """
@@ -1945,8 +1968,7 @@ class Arc2D(Arc):
 
         if self.is_trigo:
             return area
-        else:
-            return -area
+        return -area
 
     def straight_line_second_moment_area(self, point: volmdlr.Point2D):
 
@@ -2037,6 +2059,28 @@ class Arc2D(Arc):
         # cog.plot(ax=ax, color='b')
         # ax.set_aspect('equal')
         return cog
+
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge with a
+        line between its start and end points
+        :param point_2d: Point to be verified
+        :return: Return True if the point belongs to this surface, or False otherwise
+        """
+        if self.point_belongs(point_2d):
+            return True
+        if self.start == self.end:
+            if point_2d.point_distance(self.center) <= self.radius:
+                return True
+        center_distance_point = self.center.point_distance(point)
+        straight_line = LineSegment2D(self.start, self.end)
+        for edge in [self, straight_line]:
+            line_passing_trough_point = Line2D(self.center, point)
+            straight_line_intersections = edge.line_intersections(line_passing_trough_point)
+            if straight_line_intersections:
+                if self.center.point_distance(straight_line_intersections[0]) > center_distance_point:
+                    return True
+        return False
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
@@ -2278,6 +2322,17 @@ class FullArc2D(Arc2D):
 
     def straight_line_center_of_mass(self):
         return self.center_of_mass()
+
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge with a
+        line between its start and end points
+        :param point2d: Point to be verified
+        :return: Return True if the point belongs to this surface, or False otherwise
+        """
+        if point.point_distance(self.center) <= self.radius:
+            return True
+        return False
 
     def to_3d(self, plane_origin, x, y):
         center = self.center.to_3d(plane_origin, x, y)
