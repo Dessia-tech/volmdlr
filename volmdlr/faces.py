@@ -2446,8 +2446,10 @@ class SphericalSurface3D(Surface3D):
 
         length = arc3d.length()
         angle3d = arc3d.angle
-        theta3, phi3 = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
-        theta4, phi4 = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
+        point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
+        point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
+        theta3, phi3 = point_after_start
+        theta4, _ = point_before_end
 
         # Fix sphere singularity point
         if (abs(phi1) == 0.5 * math.pi or abs(phi2) == 0.5 * math.pi) and (theta1 == 0 or theta2 == 0):
@@ -2456,67 +2458,16 @@ class SphericalSurface3D(Surface3D):
                     math.isclose(theta4, theta_interior, abs_tol=1e-6):
                 theta1 = theta_interior
                 theta2 = theta_interior
+                start = volmdlr.Point2D(theta1, phi1)
+                end = volmdlr.Point2D(theta2, phi2)
 
-        # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
-        if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
-            theta1 = -math.pi
-        elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
-            theta1 = math.pi
-
-        if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
-            theta2 = -math.pi
-        elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
-            theta2 = math.pi
-
-        # Verify if phi1 or phi2 point should be -pi or pi because phi -> ]-pi, pi]
-        if math.isclose(phi1, math.pi, abs_tol=1e-6) and phi3 < 0:
-            phi1 = -math.pi
-        elif math.isclose(phi1, -math.pi, abs_tol=1e-6) and phi3 > 0:
-            phi1 = math.pi
-
-        if math.isclose(phi2, math.pi, abs_tol=1e-6) and phi4 < 0:
-            phi2 = -math.pi
-        elif math.isclose(phi2, -math.pi, abs_tol=1e-6) and phi4 < 0:
-            phi2 = math.pi
-
-        if math.isclose(phi1, phi2, abs_tol=1e-4):
-            theta5 = theta1 - angle3d
-            theta6 = theta1 + angle3d
-            # theta3 < theta1 --> clockwise
-            if theta3 < theta1 and theta5 < -math.pi:
-                theta2 = theta5
-            # theta3 > theta1 --> trigo
-            elif theta3 > theta1 and theta6 > math.pi:
-                theta2 = theta6
-
-            if theta1 > 0 and theta3 < 0:
-                theta1 -= 2 * math.pi
-            elif theta1 < 0 and theta3 > 0:
-                theta1 += 2 * math.pi
-
-        if math.isclose(theta1, theta2, abs_tol=1e-4):
-            phi5 = phi1 - angle3d
-            phi6 = phi1 + angle3d
-            # phi3 < phi1 --> clockwise
-            if phi3 < phi1 and phi5 < -math.pi:
-                phi2 = phi5
-            # phi3 > phi1 --> trigo
-            elif phi3 > phi1 and phi6 > math.pi:
-                phi2 = phi6
-
-            if phi1 > 0 and phi3 < 0:
-                phi1 -= 2 * math.pi
-            elif phi1 < 0 and phi3 > 0:
-                phi1 += 2 * math.pi
-
-        start = volmdlr.Point2D(theta1, phi1)
-        end = volmdlr.Point2D(theta2, phi2)
-
+        start, end = arc3d_to_spherical_verification(start, end, angle3d, point_after_start,
+                                                     point_before_end)
         if start == end:
-            # return self.fullarc3d_to_2d(arc3d)
             return [vme.LineSegment2D(start, start + volmdlr.TWO_PI * volmdlr.X2D)]
         if math.isclose(theta1, theta2, abs_tol=1e-4) or math.isclose(phi1, phi2, abs_tol=1e-4):
             return [vme.LineSegment2D(start, end)]
+
         # trying to treat when the arc starts at theta1 passes at the singularity at |phi| = 0.5*math.pi
         # and ends at theta2 = theta1 + math.pi
         half_pi = 0.5*math.pi
