@@ -4695,8 +4695,10 @@ class FullArc3D(Arc3D):
         return hash(self.center) + 5 * hash(self.start_end)
 
     def __eq__(self, other_arc):
+        if self.__class__.__name__ != other_arc.__class__.__name__:
+            return False
         return (self.center == other_arc.center) \
-               and (self.start == other_arc.start)
+               and (self.start_end == other_arc.start_end)
 
     @property
     def center(self):
@@ -4717,6 +4719,16 @@ class FullArc3D(Arc3D):
     def copy(self, *args, **kwargs):
         return FullArc3D(self._center.copy(), self.end.copy(), self._normal.copy())
 
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        dict_ = self.base_dict()
+        dict_['center'] = self.center.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/center')
+        dict_['radius'] = self.radius
+        dict_['angle'] = self.angle
+        dict_['is_trigo'] = self.is_trigo
+        dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
+        dict_['normal'] = self.normal.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/normal')
+        dict_['name'] = self.name
+        return dict_
     def to_2d(self, plane_origin, x1, x2):
         center = self.center.to_2d(plane_origin, x1, x2)
         start_end = self.start.to_2d(plane_origin, x1, x2)

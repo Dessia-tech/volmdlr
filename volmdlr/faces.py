@@ -651,19 +651,18 @@ class Surface3D(DessiaObject):
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
             if isinstance(self, SphericalSurface3D):
-            # #
                 onlyfiles = next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\spherical_contours'))[2]  # directory is your directory path as string
                 l = len(onlyfiles)
-            #     contours3d[0].plot()
-            #     outer_contour2d.plot()
-            #     outer_contour3d = self.contour2d_to_3d(outer_contour2d)
-            #     # outer_contour3d.plot()
                 contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\spherical_contours\contour3d_{l}.json')
-            #     # outer_contour2d.plot()
                 onlyfiles = \
                 next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\spherical_surfaces'))[2]
                 l = len(onlyfiles)
                 self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\spherical_surfaces\surface3d_{l}.json')
+            #     contours3d[0].plot()
+            #     outer_contour2d.plot()
+            #     outer_contour3d = self.contour2d_to_3d(outer_contour2d)
+            #     # outer_contour3d.plot()
+            #     # outer_contour2d.plot()
             # if isinstance(self, ConicalSurface3D):
             # self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_surface\surface.json')
             # contours3d[0].save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_contours\contour.json')
@@ -2587,8 +2586,55 @@ class SphericalSurface3D(Surface3D):
             return [vme.LineSegment2D(start, start + volmdlr.TWO_PI * volmdlr.X2D)]
         if math.isclose(theta1, theta2, abs_tol=1e-4) or math.isclose(phi1, phi2, abs_tol=1e-4):
             return [vme.LineSegment2D(start, end)]
+        # trying to treat when the arc starts at theta1 passes at the singularity at |phi| = 0.5*math.pi
+        # and ends at theta2 = theta1 + math.pi
+        half_pi = 0.5*math.pi
+        point_positive_singularity = self.point2d_to_3d(volmdlr.Point2D(theta1, half_pi))
+        point_negative_singularity = self.point2d_to_3d(volmdlr.Point2D(theta1, -half_pi))
+        positive_singularity = arc3d.point_belongs(point_positive_singularity, 1e-4)
+        negative_singularity = arc3d.point_belongs(point_negative_singularity, 1e-4)
 
-        # TODO: enhance this, this is a non exact method!
+        if positive_singularity and not negative_singularity and\
+            math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
+            primitives = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
+                          vme.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta2, half_pi)),
+                          vme.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
+                          ]
+            return primitives
+
+        if negative_singularity and not positive_singularity and \
+            math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
+            half_pi = -0.5 * math.pi
+            primitives = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, -half_pi)),
+                          vme.LineSegment2D(volmdlr.Point2D(theta1, -half_pi), volmdlr.Point2D(theta2, -half_pi)),
+                          vme.LineSegment2D(volmdlr.Point2D(theta2, -half_pi), volmdlr.Point2D(theta2, phi2))
+                          ]
+            return primitives
+        if positive_singularity and negative_singularity:
+            thetai = interior.x
+            is_trigo = phi1 < phi3
+            primitives1 = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, -half_pi)),
+                          vme.LineSegment2D(volmdlr.Point2D(theta1, -half_pi), volmdlr.Point2D(thetai, -half_pi)),
+                          vme.LineSegment2D(volmdlr.Point2D(thetai, -half_pi), volmdlr.Point2D(thetai, half_pi)),
+                          vme.LineSegment2D(volmdlr.Point2D(thetai, half_pi), volmdlr.Point2D(theta2, half_pi)),
+                          vme.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
+                          ]
+            primitives2 = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
+                           vme.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(thetai, half_pi)),
+                           vme.LineSegment2D(volmdlr.Point2D(thetai, half_pi), volmdlr.Point2D(thetai, -half_pi)),
+                           vme.LineSegment2D(volmdlr.Point2D(thetai, -half_pi), volmdlr.Point2D(theta2, -half_pi)),
+                           vme.LineSegment2D(volmdlr.Point2D(theta2, -half_pi), volmdlr.Point2D(theta2, phi2))
+                           ]
+            if is_trigo and abs(phi1) > half_pi:
+               return primitives1
+            if is_trigo and abs(phi1) < half_pi:
+                return primitives2
+            if not is_trigo and abs(phi1) > half_pi:
+               return primitives2
+            if is_trigo and abs(phi1) < half_pi:
+                return primitives1
+
+        # maybe this is incomplete
         number_points = math.ceil(angle3d * 10) + 1  # 10 points per radian
         points = [self.point3d_to_2d(arc3d.point_at_abscissa(
             i * length / (number_points - 1))) for i in range(number_points)]
@@ -2605,11 +2651,11 @@ class SphericalSurface3D(Surface3D):
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y > 0 else p for p in points]
         elif phi3 > phi1 > phi2:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in points]
-        primitives = [vme.LineSegment2D(p1, p2) for p1, p2 in zip(points[:-1], points[1:])]
+        # primitives = [vme.LineSegment2D(p1, p2) for p1, p2 in zip(points[:-1], points[1:])]
+        #
+        # return primitives
 
-        return primitives
-
-        # return [vme.BSplineCurve2D.from_points_interpolation([start, interior, end], 2)]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, 2)]
 
         # start_x = arc3d.radius * math.cos(start[1]) * math.cos(start[0])
         # start_y = arc3d.radius * math.cos(start[1]) * math.sin(start[0])
@@ -2635,9 +2681,11 @@ class SphericalSurface3D(Surface3D):
         # return [vme.LineSegment2D(start, end)]
 
     def bsplinecurve2d_to_3d(self, bsplinecurve2d):
-        start = self.point2d_to_3d(bsplinecurve2d.control_points[0])
-        interior = self.point2d_to_3d(bsplinecurve2d.control_points[1])
-        end = self.point2d_to_3d(bsplinecurve2d.control_points[2])
+        # length = len(bsplinecurve2d.points)
+        # i_interior = round
+        start = self.point2d_to_3d(bsplinecurve2d.points[0])
+        interior = self.point2d_to_3d(bsplinecurve2d.points[12])
+        end = self.point2d_to_3d(bsplinecurve2d.points[-1])
         # if start == end or arc2d.angle == 2 * math.pi:
         #     u = start - self.frame.origin
         #     u.normalize()
@@ -3144,15 +3192,16 @@ class BSplineSurface3D(Surface3D):
         else:
             i = 1
         min_bound, max_bound = self.surface.domain[i]
-        if math.isclose(start[i], min_bound, abs_tol=1e-4) and pt_after_start[i] > pt_before_end[i]:
-            start[i] = max_bound
-        elif math.isclose(start[i], max_bound, abs_tol=1e-4) and pt_after_start[i] < pt_before_end[i]:
-            start[i] = min_bound
+        if start[i] != end[i]:
+            if math.isclose(start[i], min_bound, abs_tol=1e-4) and pt_after_start[i] > pt_before_end[i]:
+                start[i] = max_bound
+            elif math.isclose(start[i], max_bound, abs_tol=1e-4) and pt_after_start[i] < pt_before_end[i]:
+                start[i] = min_bound
 
-        if math.isclose(end[i], min_bound, abs_tol=1e-4) and pt_before_end[i] > pt_after_start[i]:
-            end[i] = max_bound
-        elif math.isclose(end[i], max_bound, abs_tol=1e-4) and pt_before_end[i] < pt_after_start[i]:
-            end[i] = min_bound
+            if math.isclose(end[i], min_bound, abs_tol=1e-4) and pt_before_end[i] > pt_after_start[i]:
+                end[i] = max_bound
+            elif math.isclose(end[i], max_bound, abs_tol=1e-4) and pt_before_end[i] < pt_after_start[i]:
+                end[i] = min_bound
 
         points[0] = start
         points[-1] = end
@@ -3371,11 +3420,30 @@ class BSplineSurface3D(Surface3D):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
         points = [start, end]
-        if self.x_periodicity:
+        x_perio = self.x_periodicity
+        y_perio = self.y_periodicity
+        min_bound_x, max_bound_x = self.surface.domain[0]
+        min_bound_y, max_bound_y = self.surface.domain[1]
+        if x_perio:
             points = self._repair_periodic_boundary_points(arc3d, points, 'x')
-        if self.y_periodicity:
+            start = points[0]
+            end = points[1]
+            if start == end:
+                if math.isclose(start.x, min_bound_x, abs_tol=1e-4):
+                    end.x = max_bound_x
+                else:
+                    end.x = min_bound_x
+        if y_perio:
             points = self._repair_periodic_boundary_points(arc3d, points, 'y')
-        return [vme.LineSegment2D(points[0], points[1])]
+            start = points[0]
+            end = points[1]
+            if start == end:
+                if math.isclose(start.y, min_bound_y, abs_tol=1e-4):
+                    end.y = max_bound_y
+                else:
+                    end.y = min_bound_y
+        # print(True)
+        return [vme.LineSegment2D(start, end)]
         # number_points = math.ceil(arc3d.angle * 5) + 1  # 4 points per radian
         # l = arc3d.length()
         # points = [self.point3d_to_2d(arc3d.point_at_abscissa(
@@ -7611,6 +7679,8 @@ class SphericalFace3D(Face3D):
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
+        if delta_theta < 0.5*math.pi:
+            angle_resolution = 3
         nlines_x = int(delta_theta * angle_resolution)
         lines_x = []
         for i in range(nlines_x):
