@@ -19,7 +19,8 @@ untracked_modules = ['volmdlr/templates.py',
                      'models/__init__.py',
                      'workflows/__init__.py',
                      'workflows/core.py',
-                     'models/contours.py'
+                     'models/contours.py',
+                     'models/bspline_curves.py'
                      ]
 
 print('untracked modules:', untracked_modules)
