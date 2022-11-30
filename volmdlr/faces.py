@@ -71,6 +71,93 @@ def repair_singularity(primitive, last_primitive):
         new_primitives.append(primitive.translation(delta))
     return new_primitives
 
+def repair_start_end_angle_periodicity(angle_start, angle_end, ref_start, ref_end):
+    """
+    Repairs start and end angles in parametric coordinates based in ref_start (angle just after start_angle)
+     and ref_end (angle just before angle_end)
+    """
+    # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+    if math.isclose(angle_start, math.pi, abs_tol=1e-6) and ref_start < 0:
+        angle_start = -math.pi
+    elif math.isclose(angle_start, -math.pi, abs_tol=1e-6) and ref_start > 0:
+        angle_start = math.pi
+    if math.isclose(angle_end, math.pi, abs_tol=1e-6) and ref_end < 0:
+        angle_end = -math.pi
+    elif math.isclose(angle_end, -math.pi, abs_tol=1e-6) and ref_end > 0:
+        angle_end = math.pi
+    return angle_start, angle_end
+
+
+def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
+    theta1, z1 = start
+    theta2, z2 = end
+
+    theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
+
+    theta5 = theta1 - angle3d
+    theta6 = theta1 + angle3d
+
+    # theta3 < theta1 --> clockwise
+    if theta3 < theta1 and theta5 < -math.pi:
+        theta2 = theta5
+    # theta3 > theta1 --> trigo
+    elif theta3 > theta1 and theta6 > math.pi:
+        theta2 = theta6
+
+    if theta3 < 0 < theta1:
+        theta1 -= 2 * math.pi
+    elif theta1 < 0 < theta3:
+        theta1 += 2 * math.pi
+
+    start = volmdlr.Point2D(theta1, z1)
+    end = volmdlr.Point2D(theta2, z2)
+    return [start, end]
+
+
+def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, point_before_end):
+    theta1, phi1 = start
+    theta2, phi2 = end
+    theta3, phi3 = point_after_start
+    theta4, phi4 = point_before_end
+    # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
+    theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
+
+    # Verify if phi1 or phi2 point should be -pi or pi because phi -> ]-pi, pi]
+    phi1, phi2 = repair_start_end_angle_periodicity(phi1, phi2, phi3, phi4)
+
+    if math.isclose(phi1, phi2, abs_tol=1e-4):
+        theta5 = theta1 - angle3d
+        theta6 = theta1 + angle3d
+        # theta3 < theta1 --> clockwise
+        if theta3 < theta1 and theta5 < -math.pi:
+            theta2 = theta5
+        # theta3 > theta1 --> trigo
+        elif theta3 > theta1 and theta6 > math.pi:
+            theta2 = theta6
+
+        if theta1 > 0 > theta3:
+            theta1 -= 2 * math.pi
+        elif theta1 < 0 < theta3:
+            theta1 += 2 * math.pi
+    if math.isclose(theta1, theta2, abs_tol=1e-4):
+        phi5 = phi1 - angle3d
+        phi6 = phi1 + angle3d
+        # phi3 < phi1 --> clockwise
+        if phi3 < phi1 and phi5 < -math.pi:
+            phi2 = phi5
+        # phi3 > phi1 --> trigo
+        elif phi3 > phi1 and phi6 > math.pi:
+            phi2 = phi6
+
+        if phi3 < 0 < phi1:
+            phi1 -= 2 * math.pi
+        elif phi1 < 0 < phi3:
+            phi1 += 2 * math.pi
+
+    start = volmdlr.Point2D(theta1, phi1)
+    end = volmdlr.Point2D(theta2, phi2)
+
+    return start, end
 
 class Surface2D(volmdlr.core.Primitive2D):
     """
@@ -1302,8 +1389,6 @@ class CylindricalSurface3D(Surface3D):
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        theta1, z1 = start
-        theta2, z2 = end
 
         angle3d = arc3d.angle
 
@@ -1311,33 +1396,7 @@ class CylindricalSurface3D(Surface3D):
         theta3, _ = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
         theta4, _ = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
 
-        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-        if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
-            theta1 = -math.pi
-        elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
-            theta1 = math.pi
-        if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
-            theta2 = -math.pi
-        elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
-            theta2 = math.pi
-
-        theta5 = theta1 - angle3d
-        theta6 = theta1 + angle3d
-
-        # theta3 < theta1 --> clockwise
-        if theta3 < theta1 and theta5 < -math.pi:
-            theta2 = theta5
-        # theta3 > theta1 --> trigo
-        elif theta3 > theta1 and theta6 > math.pi:
-            theta2 = theta6
-
-        if theta1 > 0 and theta3 < 0:
-            theta1 -= 2 * math.pi
-        elif theta1 < 0 and theta3 > 0:
-            theta1 += 2 * math.pi
-
-        start = volmdlr.Point2D(theta1, z1)
-        end = volmdlr.Point2D(theta2, z2)
+        start, end = arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4)
 
         return [vme.LineSegment2D(start, end)]
 
@@ -1403,13 +1462,10 @@ class CylindricalSurface3D(Surface3D):
         theta4, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-        if theta1 == math.pi and theta3 < 0:
-            theta1 = -math.pi
-            points[0] = volmdlr.Point2D(theta1, z1)
+        theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
 
-        elif theta2 == math.pi and theta4 < 0:
-            theta2 = -math.pi
-            points[-1] = volmdlr.Point2D(theta2, z2)
+        points[0] = volmdlr.Point2D(theta1, z1)
+        points[-1] = volmdlr.Point2D(theta2, z2)
 
         if theta3 < theta1 < theta2:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
@@ -1868,67 +1924,13 @@ class ToroidalSurface3D(Surface3D):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
 
-        theta1, phi1 = start
-        theta2, phi2 = end
-
         length = arc3d.length()
         angle3d = arc3d.angle
-        theta3, phi3 = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
-        theta4, phi4 = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
+        point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
+        point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
 
-        # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
-        if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
-            theta1 = -math.pi
-        elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
-            theta1 = math.pi
-
-        if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
-            theta2 = -math.pi
-        elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
-            theta2 = math.pi
-
-        # Verify if phi1 or phi2 point should be -pi or pi because phi -> ]-pi, pi]
-        if math.isclose(phi1, math.pi, abs_tol=1e-6) and phi3 < 0:
-            phi1 = -math.pi
-        elif math.isclose(phi1, -math.pi, abs_tol=1e-6) and phi3 > 0:
-            phi1 = math.pi
-
-        if math.isclose(phi2, math.pi, abs_tol=1e-6) and phi4 < 0:
-            phi2 = -math.pi
-        elif math.isclose(phi2, -math.pi, abs_tol=1e-6) and phi4 < 0:
-            phi2 = math.pi
-
-        if math.isclose(phi1, phi2, abs_tol=1e-4):
-            theta5 = theta1 - angle3d
-            theta6 = theta1 + angle3d
-            # theta3 < theta1 --> clockwise
-            if theta3 < theta1 and theta5 < -math.pi:
-                theta2 = theta5
-            # theta3 > theta1 --> trigo
-            elif theta3 > theta1 and theta6 > math.pi:
-                theta2 = theta6
-
-            if theta1 > 0 and theta3 < 0:
-                theta1 -= 2 * math.pi
-            elif theta1 < 0 and theta3 > 0:
-                theta1 += 2 * math.pi
-        if math.isclose(theta1, theta2, abs_tol=1e-4):
-            phi5 = phi1 - angle3d
-            phi6 = phi1 + angle3d
-            # phi3 < phi1 --> clockwise
-            if phi3 < phi1 and phi5 < -math.pi:
-                phi2 = phi5
-            # phi3 > phi1 --> trigo
-            elif phi3 > phi1 and phi6 > math.pi:
-                phi2 = phi6
-
-            if phi1 > 0 and phi3 < 0:
-                phi1 -= 2 * math.pi
-            elif phi1 < 0 and phi3 > 0:
-                phi1 += 2 * math.pi
-
-        start = volmdlr.Point2D(theta1, phi1)
-        end = volmdlr.Point2D(theta2, phi2)
+        start, end = arc3d_to_spherical_verification(start, end, angle3d, point_after_start,
+                                                     point_before_end)
 
         return [vme.LineSegment2D(start, end)]
 
@@ -1946,16 +1948,10 @@ class ToroidalSurface3D(Surface3D):
         control_points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
                           for i in range(11)]
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-        if theta1 == math.pi and theta3 < 0:
-            theta1 = -math.pi
-        elif theta2 == math.pi and theta4 < 0:
-            theta2 = -math.pi
+        theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
 
         # Verify if phi1 or phi2 point should be -pi because phi -> ]-pi, pi]
-        if phi1 == math.pi and phi3 < 0:
-            phi1 = -math.pi
-        elif phi2 == math.pi and phi4 < 0:
-            phi2 = -math.pi
+        phi1, phi2 = repair_start_end_angle_periodicity(phi1, phi2, phi3, phi4)
 
         control_points[0] = volmdlr.Point2D(theta1, phi1)
         control_points[-1] = volmdlr.Point2D(theta2, phi2)
@@ -1970,37 +1966,10 @@ class ToroidalSurface3D(Surface3D):
         elif phi3 > phi1 > phi2:
             control_points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in control_points]
 
-        list_primitives = []
-        last_p1x = control_points[0].x
-        last_p1y = control_points[0].y
-        for p1, p2 in zip(control_points[:-1], control_points[1:]):
-            if p1 == p2:
-                continue
-            # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
-            if math.isclose(p1.x, math.pi, abs_tol=1e-6) and (p1.x - p2.x) > math.pi:
-                p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
-            elif math.isclose(p1.x, -math.pi, abs_tol=1e-6) and (p1.x - p2.x) < -math.pi:
-                p1 = p1 + volmdlr.TWO_PI * volmdlr.X2D
-            if math.isclose(p2.x, math.pi, abs_tol=1e-6) and (p1.x - last_p1x) < 0:
-                p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
-            elif math.isclose(p2.x, -math.pi, abs_tol=1e-6) and (p1.x - last_p1x) > 0:
-                p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
+        new_points = [p1 for p1, p2 in zip(control_points[:-1], control_points[1:]) if p1 != p2]
+        new_points.append(control_points[-1])
 
-            if math.isclose(p1.y, math.pi, abs_tol=1e-6) and (p1.y - p2.y) > math.pi:
-                p1 = p1 - volmdlr.TWO_PI * volmdlr.Y2D
-            elif math.isclose(p1.y, -math.pi, abs_tol=1e-6) and (p1.y - p2.y) < -math.pi:
-                p1 = p1 + volmdlr.TWO_PI * volmdlr.Y2D
-            if math.isclose(p2.y, math.pi, abs_tol=1e-6) and (p1.y - last_p1y) < 0:
-                p2 = p2 - volmdlr.TWO_PI * volmdlr.Y2D
-            elif math.isclose(p2.y, -math.pi, abs_tol=1e-6) and (p1.y - last_p1y) > 0:
-                p2 = p2 + volmdlr.TWO_PI * volmdlr.Y2D
-            # list_primitives.append(vme.LineSegment2D(p1, p2))
-            list_primitives.append(p1)
-            last_p1x = p1.x
-            last_p1y = p1.y
-        list_primitives.append(control_points[-1])
-        # return list_primitives
-        return [vme.BSplineCurve2D.from_points_interpolation(list_primitives, bspline_curve3d.degree,
+        return [vme.BSplineCurve2D.from_points_interpolation(new_points, bspline_curve3d.degree,
                                                              periodic=bspline_curve3d.periodic)]
         # return [vme.BSplineCurve2D(
         #     bspline_curve3d.degree,
@@ -2193,21 +2162,8 @@ class ConicalSurface3D(Surface3D):
             raise ValueError('Impossible!')
 
     def arc3d_to_2d(self, arc3d):
-        # angle = abs(start.x-end.x)
-        # if arc3d.is_trigo:
-        # end = start + volmdlr.Point2D(arc3d.angle, 0)
-        # else:
-        #     end = start + volmdlr.Point2D(-arc3d.angle, 0)
-        # interior = self.point3d_to_2d(arc3d.interior)
-        # if start.x < interior.x:
-        #     end = start + volmdlr.Point2D(arc3d.angle, 0)
-        # else:
-        #     end = start - volmdlr.Point2D(arc3d.angle, 0)
-
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        theta1, z1 = start
-        theta2, z2 = end
 
         angle3d = arc3d.angle
 
@@ -2215,33 +2171,8 @@ class ConicalSurface3D(Surface3D):
         theta3, _ = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
         theta4, _ = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
 
-        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-        if math.isclose(theta1, math.pi, abs_tol=1e-6) and theta3 < 0:
-            theta1 = -math.pi
-        elif math.isclose(theta1, -math.pi, abs_tol=1e-6) and theta3 > 0:
-            theta1 = math.pi
-        if math.isclose(theta2, math.pi, abs_tol=1e-6) and theta4 < 0:
-            theta2 = -math.pi
-        elif math.isclose(theta2, -math.pi, abs_tol=1e-6) and theta4 > 0:
-            theta2 = math.pi
+        start, end = arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4)
 
-        theta5 = theta1 - angle3d
-        theta6 = theta1 + angle3d
-
-        # theta3 < theta1 --> clockwise
-        if theta3 < theta1 and theta5 < -math.pi:
-            theta2 = theta5
-        # theta3 > theta1 --> trigo
-        elif theta3 > theta1 and theta6 > math.pi:
-            theta2 = theta6
-
-        if theta1 > 0 and theta3 < 0:
-            theta1 -= 2 * math.pi
-        elif theta1 < 0 and theta3 > 0:
-            theta1 += 2 * math.pi
-
-        start = volmdlr.Point2D(theta1, z1)
-        end = volmdlr.Point2D(theta2, z2)
         return [vme.LineSegment2D(start, end)]
 
     def circle3d_to_2d(self, circle3d):
