@@ -7123,6 +7123,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             self.color = color
         self.alpha = alpha
         self._bbox = None
+        self._faces_graph = None
         volmdlr.core.CompositePrimitive3D.__init__(self,
                                                    primitives=faces, color=color, alpha=alpha,
                                                    name=name)
@@ -7138,6 +7139,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 return False
 
         return True
+
+    @property
+    def faces_graph(self):
+        if not self._faces_graph:
+            faces_graph = nx.Graph()
+            for face in self.faces:
+                for edge in face.outer_contour3d.primitives:
+                    faces_graph.add_edge(edge.start, edge.end, edge=edge)
+            self._faces_graph = faces_graph
+        return self._faces_graph
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         """
@@ -8236,8 +8247,8 @@ class ClosedShell3D(OpenShell3D):
 
         new_valid_faces = self.subtraction_faces(shell2, intersecting_faces, intersecting_combinations)
         faces += new_valid_faces
-        # faces = self.validate_bool_operations_closedshell_faces(faces)
         new_shell = ClosedShell3D(faces)
+        # new_shell.eliminate_not_valid_closedshell_faces()
         return [new_shell]
 
     def intersection(self, shell2, tol=1e-8):
@@ -8261,21 +8272,17 @@ class ClosedShell3D(OpenShell3D):
         faces = self.intersection_faces(shell2, intersecting_faces, intersecting_combinations)
         faces += self.get_non_intersecting_faces(shell2, intersecting_faces, intersection_method=True) +\
             shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
-        faces = self.validate_bool_operations_closedshell_faces(faces)
         new_shell = ClosedShell3D(faces)
+        new_shell.eliminate_not_valid_closedshell_faces()
         return [new_shell]
 
-    def validate_bool_operations_closedshell_faces(self, new_faces):
-        faces_graph = nx.Graph()
-        for face in new_faces:
-            for edge in face.outer_contour3d.primitives:
-                faces_graph.add_edge(edge.start, edge.end, edge=edge)
-        nodes_with_2degrees = [node for node, degree in list(faces_graph.degree()) if degree <= 2]
+    def eliminate_not_valid_closedshell_faces(self):
+        nodes_with_2degrees = [node for node, degree in list(self.faces_graph.degree()) if degree <= 2]
         for node in nodes_with_2degrees:
-            neighbors = nx.neighbors(faces_graph, node)
+            neighbors = nx.neighbors(self.faces_graph, node)
             for neighbor_node in neighbors:
-                for face in new_faces:
-                    if faces_graph.edges[(node, neighbor_node)]['edge'] in face.outer_contour3d.primitives:
-                        new_faces.remove(face)
+                for face in self.faces:
+                    if self.faces_graph.edges[(node, neighbor_node)]['edge'] in face.outer_contour3d.primitives:
+                        self.faces.remove(face)
                         break
-        return new_faces
+        self._faces_graph = None
