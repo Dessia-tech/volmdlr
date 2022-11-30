@@ -2485,13 +2485,15 @@ class ArcEllipse2D(Edge):
         # return self.angle * math.sqrt(
         #     (self.Gradius ** 2 + self.Sradius ** 2) / 2)
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol:float=1e-6):
         if not math.isclose((point.x - self.center.x)**2 / self.Gradius**2 +
-                            (point.y - self.center.y)**2 / self.Sradius**2, 1, abs_tol=1e-6):
+                            (point.y - self.center.y)**2 / self.Sradius**2, 1, abs_tol=1e-6) and not \
+                math.isclose((point.x - self.center.x) ** 2 / self.Sradius ** 2 +
+                             (point.y - self.center.y) ** 2 / self.Gradius ** 2, 1, abs_tol=1e-6):
             return False
         new_point = self.frame.new_coordinates(point)
         u1, u2 = new_point.x / self.Gradius, new_point.y / self.Sradius
-        angle_new_point = volmdlr.core.sin_cos_angle(u1, u1)
+        angle_new_point = volmdlr.core.sin_cos_angle(u1, u2)
         if self.angle_start < self.angle_end and self.angle_end >= angle_new_point >= self.angle_start:
             return True
         if self.angle_start > self.angle_end and self.angle_end <= angle_new_point <= self.angle_start:
@@ -2543,11 +2545,12 @@ class ArcEllipse2D(Edge):
                 number_points = 2
             else:
                 number_points = math.ceil(angle_resolution * abs(0.5 * self.angle / math.pi))
-
+        is_trigo = True
         if self.angle_start > self.angle_end:
             if self.angle_start >= self.angle_interior >= self.angle_end:
                 angle_start = self.angle_end
                 angle_end = self.angle_start
+                is_trigo = False
             else:
                 angle_end = self.angle_end + volmdlr.TWO_PI
                 angle_start = self.angle_start
@@ -2561,7 +2564,8 @@ class ArcEllipse2D(Edge):
         discretization_points = [self.frame.old_coordinates(
             volmdlr.Point2D(self.Gradius * math.cos(angle), self.Sradius * math.sin(angle)))
             for angle in npy.linspace(angle_start, angle_end, number_points + 1)]
-
+        if not is_trigo:
+            discretization_points = discretization_points[::-1]
         # discretization_points = [
         #     self.center + volmdlr.Point2D(self.Gradius * math.cos(theta), self.Sradius * math.sin(theta))
         #     for theta in npy.linspace(angle_start + self.major_dir_angle_x_axis, angle_end + self.major_dir_angle_x_axis, number_points + 1)]
@@ -5205,10 +5209,13 @@ class ArcEllipse3D(Edge):
         pi = self.interior.to_2d(plane_origin, x, y)
         pe = self.end.to_2d(plane_origin, x, y)
         center = self.center.to_2d(plane_origin, x, y)
-
-        maj_dir2d = self.major_dir.to_2d(plane_origin, x, y)
-        maj_dir2d.normalize()
-        return ArcEllipse2D(ps, pi, pe, center, maj_dir2d, name=self.name)
+        point_major_dir = self.center + self.Gradius * self.major_dir
+        point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
+        vector_major_dir_2d = point_major_dir_2d - center
+        vector_major_dir_2d.normalize()
+        # maj_dir2d = self.major_dir.to_2d(plane_origin, x, y)
+        # maj_dir2d.normalize()
+        return ArcEllipse2D(ps, pi, pe, center, vector_major_dir_2d, name=self.name)
 
     def length(self):
         return self.angle * math.sqrt(

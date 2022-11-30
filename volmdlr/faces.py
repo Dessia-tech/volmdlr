@@ -114,7 +114,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         if self.area() == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
 
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=40)
 
         if not self.inner_contours:  # No holes
             return outer_polygon.triangulation()
@@ -4379,6 +4379,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def random_point_inside(self):
         point_inside2d = self.surface2d.random_point_inside()
+        point3d = self.surface3d.point2d_to_3d(point_inside2d)
         return self.surface3d.point2d_to_3d(point_inside2d)
 
     def is_adjacent(self, face2: 'Face3D'):
@@ -4523,6 +4524,8 @@ class Face3D(volmdlr.core.Primitive3D):
         if list_open_cutting_contours:
             list_faces = self.divide_face_with_open_cutting_contours(list_open_cutting_contours, inside)
         list_faces = self.divide_face_with_closed_cutting_contours(list_closed_cutting_contours, list_faces)
+        if not list_faces:
+            print(True)
         return list_faces
 
     def divide_face_with_open_cutting_contours(self, list_open_cutting_contours, inside):
@@ -4544,6 +4547,8 @@ class Face3D(volmdlr.core.Primitive3D):
             new_face = self.__class__(self.surface3d, Surface2D(contour, inner_contours))
             new_face.outer_contour3d
             list_faces.append(new_face)
+        if not list_faces:
+            print(True)
         return list_faces
 
     def divide_face_with_closed_cutting_contours(self, list_closed_cutting_contours, list_faces):

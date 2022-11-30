@@ -861,7 +861,14 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     def triangulation(self):
         return None
 
-    def to_2d(self, plane_origin, x, y):
+    def get_primitives_2d(self, plane_origin, x, y):
+        """
+        Pass primitives to 2d
+        :param plane_origin: plane origin
+        :param x: vector u
+        :param y: vector v
+        :return: list of 2d primitives
+        """
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         primitives2d = []
@@ -869,7 +876,11 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
             primitive2d = plane3d.point3d_to_2d(primitive)
             if primitive2d is not None:
                 primitives2d.append(primitive2d)
-        return self.__class__(primitives=primitives2d)
+        return primitives2d
+
+    def to_2d(self, plane_origin, x, y):
+        primitives2d = self.get_primitives_2d(plane_origin, x, y)
+        return Wire2D(primitives=primitives2d)
 
 
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
@@ -1461,19 +1472,19 @@ class Contour2D(ContourMixin, Wire2D):
 
         return Contour3D(p3d)
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol:float=1e-6):
         # TODO: This is incomplete!!!
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
             return False
-        if self.edge_polygon.point_belongs(point):
-            return True
+        # if self.edge_polygon.point_belongs(point):
+        #     return True
         # for edge in self.primitives:
         #     if hasattr(edge, 'straight_line_point_belongs'):
         #         if edge.straight_line_point_belongs(point):
         #             return True
         #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
-        if self.to_polygon(50).point_belongs(point):
+        if self.to_polygon(100).point_belongs(point):
             return True
         return False
 
@@ -1586,8 +1597,7 @@ class Contour2D(ContourMixin, Wire2D):
     def inverted_primitives(self):
         new_primitives = []
         for prim in self.primitives[::-1]:
-            new_primitives.append(
-                volmdlr.edges.LineSegment2D(prim.end, prim.start))
+            new_primitives.append(prim.reverse())
         return new_primitives
 
     def invert(self):
@@ -1852,7 +1862,11 @@ class Contour2D(ContourMixin, Wire2D):
         # print([(line.start, line.end) for line in self.primitives])
 
         for primitive in self.primitives:
-            polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
+            discretized_points = primitive.discretization_points(angle_resolution=angle_resolution)
+            for point in discretized_points:
+                if point not in polygon_points:
+                    polygon_points.append(point)
+        # polygon_points = self.sort_points_along_wire(polygon_points)
         return ClosedPolygon2D(polygon_points)
 
     def grid_triangulation(self, x_density: float = None,
@@ -2029,7 +2043,8 @@ class Contour2D(ContourMixin, Wire2D):
                         for cut_contour in list_cutting_contours:
                             # points_at_abs = cut_contour.discretization_points(cut_contour.length() / 5)
                             points_at_abs = [prim.middle_point() for prim in cut_contour.primitives]
-                            for point_at_abs in points_at_abs[1:-1]:
+                            for point_at_abs in points_at_abs:
+                                n = cut_contour.point_over_contour(point_at_abs)
                                 if cntr.point_belongs(point_at_abs) and \
                                         (not cntr.point_over_contour(point_at_abs) and
                                          True not in [cntr.primitive_over_contour(prim)
@@ -2047,8 +2062,10 @@ class Contour2D(ContourMixin, Wire2D):
                     break
             if len(contours) == 0:
                 finished = True
+                continue
             if len(contours) == 1 and not new_base_contours:
                 finished = True
+                continue
             counter += 1
             if counter >= 100 * len(list_contour):
                 # if base_contour.is_inside(contours[0]):
@@ -4181,6 +4198,10 @@ class Contour3D(ContourMixin, Wire3D):
         z = sum(point[2] for point in self.edge_polygon.points) / nb
 
         return volmdlr.Point3D(x, y, z)
+
+    def to_2d(self, plane_origin, x, y):
+        primitives2d = self.get_primitives_2d(plane_origin, x, y)
+        return Contour2D(primitives=primitives2d)
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
