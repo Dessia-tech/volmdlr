@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D: straight_line_area
 * Line3D: skew_to: Verifies if two Line3D are skew
 * LineSegment3D.line_interserctions
+* Line2D: point_belongs
 
 
 
@@ -36,7 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Step: from stream (use BinaryFile instead of io.BinaryIO)
 * Contour: is_overlapping (consider intersecting_points is empty)
 * LineSegment2D: to_wire (use discretization_points instead of discretise)
-
+* Line2D: line_intersections
+* BSplineCurve2D: line_intersections
 
 
 ### Performance improvements
@@ -63,6 +65,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment3D: linesegment_intersections
 * Contour: is_overlapping
 * LineSegment2D: to_wire
+* Line2D: point_belongs
+* BSplineCurve2D: line_intersections
+* LineSegment2D: line_intersections
 
 
 ## v0.6.0 [11/7/2022]
