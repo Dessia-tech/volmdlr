@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D: straight_line_area
 * Line3D: skew_to: Verifies if two Line3D are skew
 * LineSegment3D.line_interserctions
+* Line: sort_points_along_line
 
 
 ### Fixed
@@ -43,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactorings
 * LineSegment3D.intersections
+* Line2D: sort_points_along_line
 
 
 ### Unittests
@@ -61,6 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment3D: linesegment_intersections
 * Contour: is_overlapping
 * LineSegment2D: to_wire
+* Line2D: sort_points_along_line
+* Line3D: sort_points_along_line
 
 
 ## v0.6.0 [11/7/2022]
