@@ -8,11 +8,6 @@ file_list = filter(lambda z: not z.endswith("__init__.py"),
                     for y in glob(os.path.join(x[0], '*.py'))])
 
 UNWATCHED_ERRORS = [
-    # To be removed from unwatched errors
-    'D106',
-    'D201', 'D205',
-    'D404', 'D405', 'D406', 'D410', 'D411', 'D413', 'D414', 'D416',
-    
     # Do not watch these errors
     'D100', 'D104', 'D105', 'D107',
     'D200', 'D202', 'D203', 'D204', 'D206', 'D210', 'D212',
@@ -73,6 +68,14 @@ MAX_ERROR_BY_TYPE = {
     'D418': 1,
 }
 
+error_detected = False
+error_over_ratchet_limit = False
+ratchet_limit = 9
+effective_date = date(2022, 11, 28)
+today = date.today()
+weekly_decrease = 5
+
+
 code_to_errors = {}
 for error in pydocstyle.check(file_list, ignore=UNWATCHED_ERRORS):
     code_to_errors.setdefault(error.code, [])
@@ -82,7 +85,7 @@ code_to_number = {code: len(errors) for code, errors in code_to_errors.items()}
 
 for error_code, number_errors in code_to_number.items():
     if error_code not in UNWATCHED_ERRORS:
-        max_errors = MAX_ERROR_BY_TYPE.get(error_code, 0)
+        max_errors = max(MAX_ERROR_BY_TYPE.get(error_code, 0) - (today - effective_date).days//7 * weekly_decrease, 0)
 
         if number_errors > max_errors:
             error_detected = True
@@ -93,5 +96,14 @@ for error_code, number_errors in code_to_number.items():
                                     key=lambda m: (m.filename, m.line))
             for error in errors_to_show:
                 print(f'{error.filename} line {error.line}: {error.message}')
-        elif number_errors < max_errors:
+        elif max_errors - ratchet_limit <= number_errors < max_errors:
             print(f'\nYou can lower number of {error_code} to {number_errors} (actual {max_errors})')
+        elif number_errors < max_errors - ratchet_limit:
+            error_over_ratchet_limit = True
+            print(f'\nYou must lower number of {error_code} to {number_errors} (actual {max_errors})')
+
+if error_detected:
+    raise RuntimeError('Too many errors\nRun pylint dessia_common to get the errors')
+
+if error_over_ratchet_limit:
+    raise RuntimeError('Please lower the error limits in code_pylint.py MAX_ERROR_BY_TYPE according to warnings above')
