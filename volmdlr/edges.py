@@ -2611,24 +2611,24 @@ class ArcEllipse2D(Edge):
     points = property(_get_points)
 
     def length(self):
-        angle_start = self.angle_start
-        angle_end = self.angle_end
-        if self.angle_start > self.angle_end:
-            angle_start = self.angle_end
-            angle_end = self.angle_start
-
-        def arc_length(theta):
-            return math.sqrt((self.Gradius ** 2) * math.sin(theta) ** 2 +
-                             (self.Sradius ** 2) * math.cos(theta) ** 2)
-
-        res, _ = scipy_integrate.quad(arc_length, angle_start, angle_end)
-        return res
+        """
+        Calculates the length of the arcellipse2d
+        :return: arcellipse2d's length
+        """
+        length = self.abscissa(self.end)
+        return length
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
+        """
+        Verifies if a point belongs to the arcellipse2d
+        :param point: point to be verified
+        :param abs_tol: tolerance applied during calculations
+        :return: True if the point belongs, False otherwise
+        """
         if not math.isclose((point.x - self.center.x) ** 2 / self.Gradius ** 2 +
-                            (point.y - self.center.y) ** 2 / self.Sradius ** 2, 1, abs_tol=1e-6) and not \
+                            (point.y - self.center.y) ** 2 / self.Sradius ** 2, 1, abs_tol=abs_tol) and not \
                 math.isclose((point.x - self.center.x) ** 2 / self.Sradius ** 2 +
-                             (point.y - self.center.y) ** 2 / self.Gradius ** 2, 1, abs_tol=1e-6):
+                             (point.y - self.center.y) ** 2 / self.Gradius ** 2, 1, abs_tol=abs_tol):
             return False
         new_point = self.frame.new_coordinates(point)
         u1, u2 = new_point.x / self.Gradius, new_point.y / self.Sradius
@@ -2640,6 +2640,11 @@ class ArcEllipse2D(Edge):
         return False
 
     def abscissa(self, point: volmdlr.Point2D):
+        """
+        Calculates the abscissa of a given point
+        :param point: point for calculating abscissa
+        :return: a float, between 0 and the arcellise2d's lenght
+        """
         if self.point_belongs(point):
             angle_abscissa = volmdlr.core.clockwise_angle(point - self.center, self.major_dir)
             angle_start = self.angle_start
@@ -2656,6 +2661,10 @@ class ArcEllipse2D(Edge):
         raise ValueError(f'point {point} does not belong to ellipse')
 
     def bounding_rectangle(self):
+        """
+        Calculates the bounding rectangle for the arcellipse2d
+        :return: volmdlr.core.BoudingRectangle object
+        """
         min_a, max_a = self.center - self.Gradius * self.major_dir, self.center + self.Gradius * self.major_dir
         min_b, max_b = self.center - self.Sradius * self.minor_dir, self.center + self.Sradius * self.minor_dir
         x_values = [point.x for point in [min_a, max_a, min_b, max_b]]
@@ -2663,6 +2672,10 @@ class ArcEllipse2D(Edge):
         return volmdlr.core.BoundingRectangle(min(x_values), max(x_values), min(y_values), max(y_values))
 
     def straight_line_area(self):
+        """
+        Calculates the area of the elliptic arc, with line drwan from start to end
+        :return: straight_line_area
+        """
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
             area = math.pi * self.Gradius * self.Sradius - 0.5 * self.Gradius * self.Sradius * (
