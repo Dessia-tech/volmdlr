@@ -2652,6 +2652,7 @@ class ArcEllipse2D(Edge):
             if self.angle_start > angle_abscissa > self.angle_end:
                 angle_start = angle_abscissa
                 angle_end = self.angle_start
+
             def arc_length(theta):
                 return math.sqrt((self.Gradius ** 2) * math.sin(theta) ** 2 +
                                  (self.Sradius ** 2) * math.cos(theta) ** 2)
