@@ -977,5 +977,7 @@ class Mesh(DessiaObject):
         groups.insert(reference_index, self.elements_groups[reference_index])
 
         mesh = self.__class__(groups)
+        mesh._gmsh = self._gmsh
+        mesh._nodes_correction = self._nodes_correction
 
         return mesh
