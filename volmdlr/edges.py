@@ -224,7 +224,7 @@ class Line(dc.DessiaObject):
         :param points: list of points to be sorted
         :return: sorted points
         """
-        return sorted(points, key=lambda point: self.abscissa(point))
+        return sorted(points, key=self.abscissa)
 
     def split(self, split_point):
         return [self.__class__(self.point1, split_point),
