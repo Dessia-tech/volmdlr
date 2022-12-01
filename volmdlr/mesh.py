@@ -972,7 +972,7 @@ class Mesh(DessiaObject):
                 if new:
                     new_elements.add(element.__class__(points))
 
-            groups[g] = group.__class__(elements)
+            groups[g] = group.__class__(elements, name='')
 
         groups.insert(reference_index, self.elements_groups[reference_index])
 
