@@ -21,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Line3D: skew_to: Verifies if two Line3D are skew
 * LineSegment3D.line_interserctions
 * Line: sort_points_along_line
+* ArcEllipse2D.length()
+* ArcEllipse2D.point_belongs()
+* ArcEllipse2D.abscissa()
+* ArcEllipse2D.bounding_rectangle()
+* ArcEllipse2D.straight_line_area()
+* ArcEllipse2D.discretization_points()
+* ArcEllipse2D.reverse()
 
 
 ### Fixed
@@ -35,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Step: from stream (use BinaryFile instead of io.BinaryIO)
 * Contour: is_overlapping (consider intersecting_points is empty)
 * LineSegment2D: to_wire (use discretization_points instead of discretise)
-
+* ArcEllipse2D.to_3d()
 
 
 ### Performance improvements
@@ -65,6 +72,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment2D: to_wire
 * Line2D: sort_points_along_line
 * Line3D: sort_points_along_line
+* ArcEllipse2D.length()
+* ArcEllipse2D.point_belongs()
+* ArcEllipse2D.abscissa()
+* ArcEllipse2D.bounding_rectangle()
+* ArcEllipse2D.straight_line_area()
+* ArcEllipse2D.discretization_points()
+* ArcEllipse2D.reverse()
 
 
 ## v0.6.0 [11/7/2022]

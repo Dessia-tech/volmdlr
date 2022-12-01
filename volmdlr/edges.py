@@ -2057,13 +2057,13 @@ class Arc2D(Arc):
         """
         Verifies if a point belongs to the surface created by closing the edge with a
         line between its start and end points
-        :param point_2d: Point to be verified
+        :param point: Point to be verified
         :return: Return True if the point belongs to this surface, or False otherwise
         """
-        if self.point_belongs(point_2d):
+        if self.point_belongs(point):
             return True
         if self.start == self.end:
-            if point_2d.point_distance(self.center) <= self.radius:
+            if point.point_distance(self.center) <= self.radius:
                 return True
         center_distance_point = self.center.point_distance(point)
         straight_line = LineSegment2D(self.start, self.end)
@@ -2515,7 +2515,6 @@ class ArcEllipse2D(Edge):
         self.extra = extra
         self.major_dir = major_dir
         self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
-        self.major_dir_angle_x_axis = volmdlr.core.clockwise_angle(self.major_dir, volmdlr.X2D)
         frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
         self.frame = frame
         start_new, end_new = frame.new_coordinates(self.start), frame.new_coordinates(self.end)
@@ -2537,8 +2536,6 @@ class ArcEllipse2D(Edge):
                              [1]))
             C = npy.dot(invA, One)  # matrice colonne de taille 3
             theta = 0.5 * math.atan(2 * C[2] / (C[1] - C[0]))
-            # theta = 0
-            # theta = volmdlr.core.clockwise_angle(self.major_dir, volmdlr.X2D)
             c1 = C[0] + C[1]
             c2 = (C[1] - C[0]) / math.cos(2 * theta)
             gdaxe = math.sqrt((2 / (c1 - c2)))
@@ -2562,12 +2559,10 @@ class ArcEllipse2D(Edge):
         # Angle pour start
         u1, u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
         angle1 = volmdlr.core.sin_cos_angle(u1, u2)
-        # angle1_ = volmdlr.core.clockwise_angle(self.start - self.center, self.major_dir)
         self.angle_start = angle1
         # Angle pour end
         u3, u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
         angle2 = volmdlr.core.sin_cos_angle(u3, u4)
-        # angle2_ = volmdlr.core.clockwise_angle(self.end - self.center, self.major_dir)
         self.angle_end = angle2
         # Angle pour interior
         u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
@@ -2611,21 +2606,24 @@ class ArcEllipse2D(Edge):
     points = property(_get_points)
 
     def length(self):
-        def arc_length(theta):
-            return math.sqrt((self.Gradius ** 2) * math.sin(theta) ** 2 +
-                             (self.Sradius ** 2) * math.cos(theta) ** 2)
+        """
+        Calculates the length of the arcellipse2d
+        :return: arcellipse2d's length
+        """
+        length = self.abscissa(self.end)
+        return length
 
-        res, err = scipy_integrate.quad(arc_length, self.theta + self.angle_start,
-                                        self.theta + self.angle_end)
-        return res
-        # return self.angle * math.sqrt(
-        #     (self.Gradius ** 2 + self.Sradius ** 2) / 2)
-
-    def point_belongs(self, point, abs_tol:float=1e-6):
-        if not math.isclose((point.x - self.center.x)**2 / self.Gradius**2 +
-                            (point.y - self.center.y)**2 / self.Sradius**2, 1, abs_tol=1e-6) and not \
+    def point_belongs(self, point, abs_tol: float = 1e-6):
+        """
+        Verifies if a point belongs to the arcellipse2d
+        :param point: point to be verified
+        :param abs_tol: tolerance applied during calculations
+        :return: True if the point belongs, False otherwise
+        """
+        if not math.isclose((point.x - self.center.x) ** 2 / self.Gradius ** 2 +
+                            (point.y - self.center.y) ** 2 / self.Sradius ** 2, 1, abs_tol=abs_tol) and not \
                 math.isclose((point.x - self.center.x) ** 2 / self.Sradius ** 2 +
-                             (point.y - self.center.y) ** 2 / self.Gradius ** 2, 1, abs_tol=1e-6):
+                             (point.y - self.center.y) ** 2 / self.Gradius ** 2, 1, abs_tol=abs_tol):
             return False
         new_point = self.frame.new_coordinates(point)
         u1, u2 = new_point.x / self.Gradius, new_point.y / self.Sradius
@@ -2637,17 +2635,32 @@ class ArcEllipse2D(Edge):
         return False
 
     def abscissa(self, point: volmdlr.Point2D):
+        """
+        Calculates the abscissa of a given point
+        :param point: point for calculating abscissa
+        :return: a float, between 0 and the arcellise2d's lenght
+        """
         if self.point_belongs(point):
             angle_abscissa = volmdlr.core.clockwise_angle(point - self.center, self.major_dir)
+            angle_start = self.angle_start
+            angle_end = angle_abscissa
+            if self.angle_start > angle_abscissa > self.angle_end:
+                angle_start = angle_abscissa
+                angle_end = self.angle_start
+
             def arc_length(theta):
-                return math.sqrt((self.Gradius**2) * math.sin(theta) ** 2 +
-                                 (self.Sradius**2) * math.cos(theta)**2)
-            res, err = scipy_integrate.quad(arc_length, self.theta + self.angle_start,
-                                            self.theta + angle_abscissa)
+                return math.sqrt((self.Gradius ** 2) * math.sin(theta) ** 2 +
+                                 (self.Sradius ** 2) * math.cos(theta) ** 2)
+
+            res, _ = scipy_integrate.quad(arc_length, angle_start, angle_end)
             return res
         raise ValueError(f'point {point} does not belong to ellipse')
 
     def bounding_rectangle(self):
+        """
+        Calculates the bounding rectangle for the arcellipse2d
+        :return: volmdlr.core.BoudingRectangle object
+        """
         min_a, max_a = self.center - self.Gradius * self.major_dir, self.center + self.Gradius * self.major_dir
         min_b, max_b = self.center - self.Sradius * self.minor_dir, self.center + self.Sradius * self.minor_dir
         x_values = [point.x for point in [min_a, max_a, min_b, max_b]]
@@ -2655,10 +2668,14 @@ class ArcEllipse2D(Edge):
         return volmdlr.core.BoundingRectangle(min(x_values), max(x_values), min(y_values), max(y_values))
 
     def straight_line_area(self):
+        """
+        Calculates the area of the elliptic arc, with line drwan from start to end
+        :return: straight_line_area
+        """
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
             area = math.pi * self.Gradius * self.Sradius - 0.5 * self.Gradius * self.Sradius * (
-                angle - math.sin(angle))
+                    angle - math.sin(angle))
         else:
             angle = self.angle
             area = 0.5 * self.Gradius * self.Sradius * (angle - math.sin(angle))
@@ -2669,7 +2686,7 @@ class ArcEllipse2D(Edge):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
-        discretize a Edge to have "n" points
+        discretize an Edge to have "n" points
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
@@ -2699,39 +2716,29 @@ class ArcEllipse2D(Edge):
 
         discretization_points = [self.frame.old_coordinates(
             volmdlr.Point2D(self.Gradius * math.cos(angle), self.Sradius * math.sin(angle)))
-            for angle in npy.linspace(angle_start, angle_end, number_points + 1)]
+            for angle in npy.linspace(angle_start, angle_end, number_points)]
         if not is_trigo:
             discretization_points = discretization_points[::-1]
-        # discretization_points = [
-        #     self.center + volmdlr.Point2D(self.Gradius * math.cos(theta), self.Sradius * math.sin(theta))
-        #     for theta in npy.linspace(angle_start + self.major_dir_angle_x_axis, angle_end + self.major_dir_angle_x_axis, number_points + 1)]
-        # discretization_points = [
-        #     self.center + volmdlr.Point2D(self.Gradius * math.cos(theta), self.Sradius * math.sin(theta))
-        #     for theta in
-        #     npy.linspace(angle_start + self.major_dir_angle_x_axis, angle_end + self.major_dir_angle_x_axis,
-        #                  number_points + 1)]
         return discretization_points
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
                 please use discretization_points instead',
                       DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
+        return self.discretization_points(angle_resolution=discretization_resolution)
 
     def to_3d(self, plane_origin, x, y):
-        ps = self.start.to_3d(plane_origin, x, y)
-        pi = self.interior.to_3d(plane_origin, x, y)
-        pe = self.end.to_3d(plane_origin, x, y)
-        pc = self.center.to_3d(plane_origin, x, y)
+        point_start2d = self.start.to_3d(plane_origin, x, y)
+        point_interior2d = self.interior.to_3d(plane_origin, x, y)
+        point_end2d = self.end.to_3d(plane_origin, x, y)
+        point_center2d = self.center.to_3d(plane_origin, x, y)
 
-        major_dir = self.major_dir.to_3d(plane_origin, x, y)
-        major_dir.normalize()
         a_max2d = self.center + self.major_dir * self.Gradius
         a_max3d = a_max2d.to_3d(plane_origin, x, y)
-        new_major_dir = a_max3d - pc
+        new_major_dir = a_max3d - point_center2d
         new_major_dir.normalize()
-
-        return ArcEllipse3D(ps, pi, pe, pc, new_major_dir, name=self.name)
+        return ArcEllipse3D(point_start2d, point_interior2d, point_end2d,
+                            point_center2d, new_major_dir, name=self.name)
 
     def plot(self, ax=None, color='k', alpha=1):
         if ax is None:
@@ -2764,20 +2771,8 @@ class ArcEllipse2D(Edge):
         raise NotImplementedError
 
     def reverse(self):
-        return self.__class__(self.end, self.interior, self.start, self.center, self.major_dir, self.name)
-
-    def straight_line_area(self):
-        if self.angle >= math.pi:
-            angle = volmdlr.TWO_PI - self.angle
-            area = math.pi * self.Gradius * self.Sradius - 0.5 * self.Gradius * self.Sradius * (
-                    angle - math.sin(angle))
-        else:
-            angle = self.angle
-            area = 0.5 * self.Gradius * self.Sradius * (angle - math.sin(angle))
-
-        if self.is_trigo:
-            return area
-        return -area
+        return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(),
+                              self.center.copy(), self.major_dir.copy(), self.name)
 
 
 class Line3D(Line):
