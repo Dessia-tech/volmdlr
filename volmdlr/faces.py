@@ -2522,7 +2522,6 @@ class SphericalSurface3D(Surface3D):
             for prim in primitives:
                 if math.isclose(abs(last_primitive.end.y), 0.5 * math.pi, abs_tol=1e-6):
                     new_primitives += repair_singularity(prim, last_primitive)
-                    new_primitives += repair_singularity(prim, last_primitive)
                 else:
                     new_primitives.append(prim.translation(delta))
 
