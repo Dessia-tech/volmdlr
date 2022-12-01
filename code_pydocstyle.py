@@ -2,6 +2,7 @@ import pydocstyle
 import os
 from glob import glob
 import random
+from datetime import date
 
 file_list = filter(lambda z: not z.endswith("__init__.py"),
                    [y for x in os.walk('./volmdlr')
@@ -103,7 +104,7 @@ for error_code, number_errors in code_to_number.items():
             print(f'\nYou must lower number of {error_code} to {number_errors} (actual {max_errors})')
 
 if error_detected:
-    raise RuntimeError('Too many errors\nRun pylint dessia_common to get the errors')
+    raise RuntimeError('Too many errors\nRun pydocstyle volmdlr to get the errors')
 
 if error_over_ratchet_limit:
-    raise RuntimeError('Please lower the error limits in code_pylint.py MAX_ERROR_BY_TYPE according to warnings above')
+    raise RuntimeError('Please lower the error limits in code_pydocstyle.py MAX_ERROR_BY_TYPE according to warnings above')
