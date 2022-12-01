@@ -981,3 +981,10 @@ class Mesh(DessiaObject):
         mesh._nodes_correction = self._nodes_correction
 
         return mesh
+
+    def copy(self):
+        m = self.__class__(elements_groups=self.elements_groups[:])
+        m._nodes_correction = self._nodes_correction
+        m._gmsh = self._gmsh
+
+        return m
