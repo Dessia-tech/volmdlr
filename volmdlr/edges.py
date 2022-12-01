@@ -219,7 +219,11 @@ class Line(dc.DessiaObject):
         return t
 
     def sort_points_along_line(self, points):
-
+        """
+        Sort point along a line
+        :param points: list of points to be sorted
+        :return: sorted points
+        """
         return sorted(points, key=lambda point: self.abscissa(point))
 
     def split(self, split_point):
