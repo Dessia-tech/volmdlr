@@ -812,16 +812,7 @@ class Surface3D(DessiaObject):
                 delta_x2 = 0.
 
             delta = last_primitive.end - primitives[0].start
-            new_primitives = []
-            for prim in primitives:
-                if isinstance(self, SphericalSurface3D) \
-                        and math.isclose(abs(last_primitive.end.y), 0.5 * math.pi, abs_tol=1e-6):
-                    new_primitives += repair_singularity(prim, last_primitive)
-                elif isinstance(self, ConicalSurface3D) and \
-                        math.isclose(abs(last_primitive.end.y), 0.0, abs_tol=1e-6):
-                    new_primitives += repair_singularity(prim, last_primitive)
-                else:
-                    new_primitives.append(prim.translation(delta))
+            new_primitives = [prim.translation(delta) for prim in primitives]
             primitives = new_primitives
         if self.y_periodicity \
                 and not (math.isclose(delta_y1, 0,
@@ -837,9 +828,7 @@ class Surface3D(DessiaObject):
                             abs_tol=1e-4):
                 delta_y2 = 0.
             delta = last_primitive.end - primitives[0].start
-            new_primitives = []
-            for prim in primitives:
-                new_primitives.append(prim.translation(delta))
+            new_primitives = [prim.translation(delta) for prim in primitives]
                 # temp = prim.translation(delta)
                 # prim.start.y = temp.start.y
                 # prim.end.y = temp.end.y
@@ -2317,6 +2306,57 @@ class ConicalSurface3D(Surface3D):
         """
         self.frame.rotation_inplace(center, axis, angle)
 
+    def repair_primitives_periodicity(self, primitives, last_primitive):
+        delta_x1 = abs(primitives[0].start.x - last_primitive.end.x)
+        delta_x2 = abs(primitives[-1].end.x - last_primitive.end.x)
+        delta_y1 = abs(primitives[0].start.y - last_primitive.end.y)
+        delta_y2 = abs(primitives[-1].end.y - last_primitive.end.y)
+
+        new_primitives = primitives
+
+        if self.x_periodicity \
+                and not (math.isclose(delta_x1, 0,
+                                      abs_tol=5e-5)
+                         or math.isclose(delta_x2, 0,
+                                         abs_tol=5e-5)):
+
+            delta_x1 = delta_x1 % self.x_periodicity
+            delta_x2 = delta_x2 % self.x_periodicity
+
+            if math.isclose(delta_x1, self.x_periodicity,
+                            abs_tol=1e-4):
+                delta_x1 = 0.
+
+            if math.isclose(delta_x2, self.x_periodicity,
+                            abs_tol=1e-4):
+                delta_x2 = 0.
+
+            delta = last_primitive.end - primitives[0].start
+            new_primitives = []
+            for prim in primitives:
+                if math.isclose(abs(last_primitive.end.y), 0.0, abs_tol=1e-6):
+                    new_primitives += repair_singularity(prim, last_primitive)
+                else:
+                    new_primitives.append(prim.translation(delta))
+
+        if self.y_periodicity \
+                and not (math.isclose(delta_y1, 0,
+                                      abs_tol=5e-5)
+                         or math.isclose(delta_y2, 0,
+                                         abs_tol=5e-5)):
+            delta_y1 = delta_y1 % self.y_periodicity
+            delta_y2 = delta_y2 % self.y_periodicity
+            if math.isclose(delta_y1, self.y_periodicity,
+                            abs_tol=1e-4):
+                delta_y1 = 0.
+            if math.isclose(delta_y2, self.y_periodicity,
+                            abs_tol=1e-4):
+                delta_y2 = 0.
+            delta = last_primitive.end - primitives[0].start
+            new_primitives = [prim.translation(delta) for prim in primitives]
+
+        return new_primitives, delta_x1, delta_x2, delta_y1, delta_y2
+
 
 class SphericalSurface3D(Surface3D):
     face_class = 'SphericalFace3D'
@@ -2627,6 +2667,58 @@ class SphericalSurface3D(Surface3D):
         return SphericalFace3D(self,
                                Surface2D(outer_contour, []),
                                name=name)
+
+
+    def repair_primitives_periodicity(self, primitives, last_primitive):
+        delta_x1 = abs(primitives[0].start.x - last_primitive.end.x)
+        delta_x2 = abs(primitives[-1].end.x - last_primitive.end.x)
+        delta_y1 = abs(primitives[0].start.y - last_primitive.end.y)
+        delta_y2 = abs(primitives[-1].end.y - last_primitive.end.y)
+
+        new_primitives = primitives
+
+        if self.x_periodicity \
+                and not (math.isclose(delta_x1, 0,
+                                      abs_tol=5e-5)
+                         or math.isclose(delta_x2, 0,
+                                         abs_tol=5e-5)):
+
+            delta_x1 = delta_x1 % self.x_periodicity
+            delta_x2 = delta_x2 % self.x_periodicity
+
+            if math.isclose(delta_x1, self.x_periodicity,
+                            abs_tol=1e-4):
+                delta_x1 = 0.
+
+            if math.isclose(delta_x2, self.x_periodicity,
+                            abs_tol=1e-4):
+                delta_x2 = 0.
+
+            delta = last_primitive.end - primitives[0].start
+            new_primitives = []
+            for prim in primitives:
+                if math.isclose(abs(last_primitive.end.y), 0.5 * math.pi, abs_tol=1e-6):
+                    new_primitives += repair_singularity(prim, last_primitive)
+                else:
+                    new_primitives.append(prim.translation(delta))
+
+        if self.y_periodicity \
+                and not (math.isclose(delta_y1, 0,
+                                      abs_tol=5e-5)
+                         or math.isclose(delta_y2, 0,
+                                         abs_tol=5e-5)):
+            delta_y1 = delta_y1 % self.y_periodicity
+            delta_y2 = delta_y2 % self.y_periodicity
+            if math.isclose(delta_y1, self.y_periodicity,
+                            abs_tol=1e-4):
+                delta_y1 = 0.
+            if math.isclose(delta_y2, self.y_periodicity,
+                            abs_tol=1e-4):
+                delta_y2 = 0.
+            delta = last_primitive.end - primitives[0].start
+            new_primitives = [prim.translation(delta) for prim in primitives]
+
+        return new_primitives, delta_x1, delta_x2, delta_y1, delta_y2
 
 
 class RuledSurface3D(Surface3D):
