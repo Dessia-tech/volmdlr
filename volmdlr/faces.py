@@ -2475,9 +2475,13 @@ class SphericalSurface3D(Surface3D):
         point_negative_singularity = self.point2d_to_3d(volmdlr.Point2D(theta1, -half_pi))
         positive_singularity = arc3d.point_belongs(point_positive_singularity, 1e-4)
         negative_singularity = arc3d.point_belongs(point_negative_singularity, 1e-4)
-
+        thetai = interior.x
         if positive_singularity and not negative_singularity and\
             math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
+            if abs(theta1) == math.pi:
+                return [vme.LineSegment2D(volmdlr.Point2D(thetai, half_pi), volmdlr.Point2D(thetai, phi2))]
+            if abs(theta2) == math.pi:
+                return [vme.LineSegment2D(volmdlr.Point2D(thetai, phi1), volmdlr.Point2D(thetai, half_pi))]
             primitives = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
                           vme.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta2, half_pi)),
                           vme.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
@@ -2486,7 +2490,14 @@ class SphericalSurface3D(Surface3D):
 
         if negative_singularity and not positive_singularity and \
             math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
-            half_pi = -0.5 * math.pi
+            if abs(theta1) == math.pi:
+                if abs(thetai) == math.pi:
+                    return [vme.LineSegment2D(volmdlr.Point2D(thetai, phi1), volmdlr.Point2D(thetai, -half_pi))]
+                return [vme.LineSegment2D(volmdlr.Point2D(thetai, -half_pi), volmdlr.Point2D(thetai, phi2))]
+            if abs(theta2) == math.pi:
+                if abs(thetai) == math.pi:
+                    return [vme.LineSegment2D(volmdlr.Point2D(thetai, -half_pi), volmdlr.Point2D(thetai, phi2))]
+                return [vme.LineSegment2D(volmdlr.Point2D(thetai, phi1), volmdlr.Point2D(thetai, -half_pi))]
             primitives = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, -half_pi)),
                           vme.LineSegment2D(volmdlr.Point2D(theta1, -half_pi), volmdlr.Point2D(theta2, -half_pi)),
                           vme.LineSegment2D(volmdlr.Point2D(theta2, -half_pi), volmdlr.Point2D(theta2, phi2))
