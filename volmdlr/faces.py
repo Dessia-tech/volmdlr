@@ -2440,8 +2440,8 @@ class SphericalSurface3D(Surface3D):
         # return [vme.LineSegment2D(start, end)]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
-        #TODO: this is incomplete, a bspline_curve2d can be also a bspline_curve3d
-        i = round(0.5*len(bspline_curve2d.points))
+        # TODO: this is incomplete, a bspline_curve2d can be also a bspline_curve3d
+        i = round(0.5 * len(bspline_curve2d.points))
         start = self.point2d_to_3d(bspline_curve2d.points[0])
         interior = self.point2d_to_3d(bspline_curve2d.points[i])
         end = self.point2d_to_3d(bspline_curve2d.points[-1])
