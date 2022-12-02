@@ -15,6 +15,7 @@ from typing import List
 import networkx as nx
 import numpy as npy
 from scipy.spatial import Delaunay, ConvexHull
+import scipy.integrate as scipy_integrate
 
 import matplotlib.pyplot as plt
 import matplotlib.patches
@@ -3844,6 +3845,224 @@ class Circle2D(Contour2D):
         please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
+
+
+class Ellipse2D(Contour2D):
+    """
+    Defines an Ellipse in two-dimenssions.
+
+    Ellipse2D defined by a major axis (A), minor axis (B), a center and a vector
+    representing the direction of the major axis.
+
+    :param major_axis:
+    :type major_axis:
+    #TODO
+    """
+
+    def __init__(self, major_axis, minor_axis, center, major_dir, name=''):
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
+        self.center = center
+        self.major_dir = major_dir
+        self.major_dir.normalize()
+        self.minor_dir = - self.major_dir.normal_vector()
+        self.theta = volmdlr.core.clockwise_angle(self.major_dir, volmdlr.X2D)
+        if self.theta == math.pi * 2:
+            self.theta = 0.0
+        Contour2D.__init__(self, [self], name=name)
+
+    def area(self):
+        """
+        #TODO
+        :return:
+        """
+        return math.pi * self.major_axis * self.minor_axis
+
+    def length(self):
+        """
+        #TODO
+        :return:
+        """
+        mid_point = self.center - self.major_axis * self.major_dir
+        if self.theta != 0.0:
+            mid_point = self.center - volmdlr.Point2D(self.major_axis, 0)
+            mid_point = mid_point.rotation(self.center, self.theta)
+        length = 2 * self.abscissa(mid_point)
+        return length
+
+    def to_3d(self, origin, x, y):
+        raise NotImplementedError
+
+    def point_belongs(self, point):
+        """
+        #TODO
+        :param point:
+        :return:
+        """
+        return math.isclose(
+            ((point.x - self.center.x) * math.cos(self.theta) +
+             (point.y - self.center.y) * math.sin(self.theta)) ** 2 / self.major_axis ** 2 +
+            ((point.x - self.center.x) * math.sin(self.theta) -
+             (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
+
+    def line_intersections(self, line: 'volmdlr.edges.Line2D'):
+        """
+        #TODO
+        :param line:
+        :return:
+        """
+        if self.theta != 0:
+            frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
+            frame_mapped_ellipse = self.frame_mapping(frame, 'new')
+            frame_mapped_line = line.frame_mapping(frame, 'new')
+            line_inters = frame_mapped_ellipse.line_intersections(frame_mapped_line)
+            line_intersections = [frame.old_coordinates(point) for point in line_inters]
+            return line_intersections
+
+        if line.points[1].x == line.points[0].x:
+            x1 = line.points[0].x
+            x2 = x1
+            y1 = self.minor_axis * math.sqrt((1 - x1 ** 2 / self.major_axis ** 2))
+            y2 = -y1
+            c = self.center.y + line.points[0].y
+        else:
+            m = (line.points[1].y - line.points[0].y) / (line.points[1].x - line.points[0].x)
+            c = - m * (line.points[0].x + self.center.x) + line.points[0].y + self.center.y
+            if self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2 > c ** 2:
+                x1 = - (2 * (self.major_axis ** 2) * m * c + math.sqrt(
+                    (2 * (self.major_axis ** 2) * m * c) ** 2 - 4 * (
+                                self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2) *
+                    self.major_axis ** 2 * (c ** 2 - self.minor_axis ** 2))) / (
+                                 2 * (self.major_axis ** 2 * (m ** 2) +
+                                      self.minor_axis ** 2))
+
+                x2 = - (2 * (self.major_axis ** 2) * m * c - math.sqrt(
+                    (2 * (self.major_axis ** 2) * m * c) ** 2 - 4 * (
+                                self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2) *
+                    self.major_axis ** 2 * (c ** 2 - self.minor_axis ** 2))) / (
+                                 2 * (self.major_axis ** 2 * (m ** 2) +
+                                      self.minor_axis ** 2))
+                y1 = m * x1 + c
+                y2 = m * x2 + c
+        point1 = volmdlr.Point2D(x1, y1)
+        point2 = volmdlr.Point2D(x2, y2)
+        if point1 == point2:
+            return [point1]
+        return [point1, point2]
+
+    def linesegment_intersections(self,
+                                  linesegment: 'volmdlr.edges.LineSegment2D'):
+        """
+        #TODO
+        :param linesegment:
+        :return:
+        """
+        line_intersections = self.line_intersections(linesegment)
+        intersections = []
+        for intersection in line_intersections:
+            if linesegment.point_belongs(intersection):
+                intersections.append(intersection)
+        return intersections
+
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
+        """
+        #TODO
+        :param number_points:
+        :param angle_resolution:
+        :return:
+        """
+        if number_points:
+            angle_resolution = number_points
+        discretization_points = [self.center + volmdlr.Point2D(self.major_axis * math.cos(theta),
+                                                               self.minor_axis * math.sin(theta))
+                                 for theta in npy.linspace(0, volmdlr.TWO_PI, angle_resolution + 1)]
+        discretization_points = [point.rotation(self.center, self.theta) for point in discretization_points]
+        return discretization_points
+
+    def abscissa(self, point: volmdlr.Point2D):
+        """
+        #TODO
+        :param point:
+        :return:
+        """
+        if self.point_belongs(point):
+            angle_abscissa = self.point_angle_with_major_dir(point)
+
+            def arc_length(theta):
+                return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
+                                 (self.minor_axis ** 2) * math.cos(theta) ** 2)
+
+            res, _ = scipy_integrate.quad(arc_length, 0, angle_abscissa)
+            return res
+        raise ValueError(f'point {point} does not belong to ellipse')
+
+    def point_angle_with_major_dir(self, point2d):
+        """
+        #TODO
+        :param point2d:
+        :return:
+        """
+        center2d_point2d = point2d - self.center
+        angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, self.major_dir)
+        return angle_abscissa
+
+    def plot(self, ax=None, linestyle='-', color='k', linewidth=1, alpha=1.0):
+        """
+
+        :param ax:
+        :param linestyle:
+        :param color:
+        :param linewidth:
+        :param alpha:
+        :return:
+        """
+        if ax is None:
+            _, ax = plt.subplots()
+        x = []
+        y = []
+        for px, py in self.discretization_points(number_points=50):
+            x.append(px)
+            y.append(py)
+        plt.plot(x, y, color=color, alpha=alpha)
+        return ax
+
+    def rotation(self, center: volmdlr.Point2D, angle: float):
+        """
+        #TODO
+        :param center:
+        :param angle:
+        :return:
+        """
+        rotationed_center = self.center.rotation(center, angle)
+        point_major_dir = self.center + self.major_dir * self.major_axis
+        rotationed_major_dir_point = point_major_dir.rotation(center, angle)
+        major_dir = rotationed_major_dir_point - rotationed_center
+        return Ellipse2D(self.major_axis, self.minor_axis, rotationed_center,
+                         major_dir)
+
+    def translation(self, offset: volmdlr.Vector2D):
+        """
+        #TODO
+        :param offset:
+        :return:
+        """
+        return Ellipse2D(self.major_axis, self.minor_axis, self.center.translation(offset), self.major_dir)
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and return a new Ellipse2D
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            return Ellipse2D(self.major_axis, self.minor_axis, frame.old_coordinates(self.center),
+                             self.major_dir)
+        elif side == 'new':
+            point_major_dir = self.center + self.major_dir * self.major_axis
+            major_dir = frame.new_coordinates(point_major_dir) - self.center
+            return Ellipse2D(self.major_axis, self.minor_axis, frame.new_coordinates(self.center),
+                             major_dir)
+        else:
+            raise ValueError('Side should be \'new\' \'old\'')
 
 
 class Contour3D(ContourMixin, Wire3D):

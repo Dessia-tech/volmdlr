@@ -759,6 +759,9 @@ class Line2D(Line):
         for point in self.points:
             point.translation_inplace(offset)
 
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        return Line2D(*[point.frame_mapping(frame, side) for point in self.points])
+
     def plot(self, ax=None, color='k', dashed=True):
         if ax is None:
             _, ax = plt.subplots()
@@ -1270,6 +1273,7 @@ class LineSegment2D(LineSegment):
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
         if start == end:
             raise NotImplementedError
+        self.points = [start, end]
         LineSegment.__init__(self, start, end, name=name)
 
     def __hash__(self):
