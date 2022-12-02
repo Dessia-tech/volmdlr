@@ -844,6 +844,7 @@ class Surface3D(DessiaObject):
     def contour3d_to_2d(self, contour3d):
         primitives2d = []
         last_primitive = None
+        last_primitive3d = None
 
         for primitive3d in contour3d.primitives:
             method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
@@ -907,11 +908,30 @@ class Surface3D(DessiaObject):
             else:
                 raise NotImplementedError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
-        first_start = primitives2d[0].start
-        last_end = primitives2d[-1].end
-        if (isinstance(self, SphericalSurface3D) or isinstance(self, ConicalSurface3D)) \
-                and last_end != first_start:
-            primitives2d.append(vme.LineSegment2D(last_end, first_start))
+        # first_start = primitives2d[0].start
+        # last_end = primitives2d[-1].end
+        # if (isinstance(self, SphericalSurface3D) or isinstance(self, ConicalSurface3D)) \
+        #         and last_end != first_start:
+        #     primitives2d.append(vme.LineSegment2D(last_end, first_start))
+        if isinstance(self, SphericalSurface3D):
+            first = primitives2d[0]
+            theta1_first = first.start.x
+            theta2_first = first.end.x
+            first_type = first.__class__.__name__
+            last = primitives2d[-1]
+            theta1_last = last.start.x
+            theta2_last = last.end.x
+            ref_validation = theta1_last!= theta2_last
+            if (theta1_first == math.pi or theta1_first == -math.pi) and theta1_first == theta2_first and ref_validation:
+                delta = theta2_last - theta1_first
+                if delta:
+                    primitives2d[0] = first.translation(volmdlr.Vector2D(delta, 0))
+            first_start = primitives2d[0].start
+            last_end = primitives2d[-1].end
+            if last_end != first_start:
+                primitives2d.append(vme.LineSegment2D(last_end, first_start))
+        #     next_primitives = primitives2d[1:] + [primitives2d[0]]
+        #     for primitive, in zip(primitives2d, next)
         return volmdlr.wires.Contour2D(primitives2d)
 
     def contour2d_to_3d(self, contour2d):
@@ -2401,6 +2421,70 @@ class SphericalSurface3D(Surface3D):
         radius = float(arguments[2]) / 1000
         return cls(frame_direct, radius, arguments[0][1:-1])
 
+    # def contour3d_to_2d(self, contour3d):
+    #     primitives2d = []
+    #
+    #     last_primitive3d = None
+    #     for primitive3d in contour3d.primitives:
+    #         method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
+    #
+    #         if hasattr(self, method_name):
+    #             primitives = getattr(self, method_name)(primitive3d)
+    #
+    #             if primitives is None:
+    #                 print('primitives is None')
+    #                 continue
+    #             primitives2d.append(primitives)
+    #     first = primitives2d[0][0]
+    #     theta1_first = first.start.x
+    #     theta2_first = first.end.x
+    #     first_type = first.__class__.__name__
+    #     second = primitives2d[-1][-1]
+    #     theta1_second = second.start.x
+    #     theta2_second = second.end.x
+    #     ref_validation = theta1_second != theta2_second
+    #     if (theta1_first == math.pi or theta1_first == -math.pi) and theta1_first == theta2_first and ref_validation:
+    #         delta = theta2_second - theta1_first
+    #         if delta:
+    #             primitives2d[0][0] = first.translation(volmdlr.Vector2D(delta, 0))
+    #
+    #     new_primitives2d = []
+    #     last_primitive = None
+    #
+    #     for primitive, primitive3d in zip(primitives2d, contour3d.primitives):
+    #         if last_primitive:
+    #             # print(f'Primitive to repair: {last_primitive}')
+    #
+    #             primitives, delta_x1, delta_x2, delta_y1, delta_y2 = \
+    #                 self.repair_primitives_periodicity(primitive,
+    #                                                    last_primitive)
+    #
+    #             dist1 = primitive3d.start.point_distance(
+    #                 last_primitive3d.end)
+    #             dist2 = primitive3d.end.point_distance(
+    #                 last_primitive3d.end)
+    #             if (math.isclose(delta_x1, 0., abs_tol=1e-3)
+    #                     and math.isclose(delta_y1, 0., abs_tol=1e-3)
+    #                     and math.isclose(dist1, 0, abs_tol=5e-5)):
+    #                 pass
+    #             elif (math.isclose(delta_x2, 0., abs_tol=1e-3)
+    #                   and math.isclose(delta_y2, 0., abs_tol=1e-3)
+    #                   and math.isclose(dist2, 0, abs_tol=5e-5)):
+    #                 primitives = [p.reverse() for p in primitives[::-1]]
+    #         if primitives:
+    #             last_primitive = primitives[-1]
+    #             last_primitive3d = primitive3d
+    #             new_primitives2d.extend(primitives)
+    #
+    #     first_start = new_primitives2d[0].start
+    #     last_end = new_primitives2d[-1].end
+    #     if last_end != first_start:
+    #         new_primitives2d.append(vme.LineSegment2D(last_end, first_start))
+    #     # if isinstance(self, SphericalSurface3D):
+    #     #     next_primitives = primitives2d[1:] + [primitives2d[0]]
+    #     #     for primitive, in zip(primitives2d, next)
+    #     return volmdlr.wires.Contour2D(new_primitives2d)
+
     def point2d_to_3d(self, point2d):
         # source mathcurve.com/surfaces/sphere
         # -pi<theta<pi, -pi/2<phi<pi/2
@@ -2419,30 +2503,6 @@ class SphericalSurface3D(Surface3D):
 
         if z == -0.0:
             z = 0.0
-        zr = round((z / self.radius), 6)
-        phi = math.asin(zr)
-
-        if abs(phi) < 1e-10:
-            phi = 0
-
-        if x == 0.0 and y == 0.0:
-            phi2 = 0.5 * math.pi
-        else:
-            r_vector = volmdlr.Vector3D(x, y, 0)
-            rho_vector = volmdlr.Vector3D(x, y, z)
-            phi2 = volmdlr.core.vectors3d_angle(rho_vector, r_vector)
-            if math.isclose(phi2, 0.5 * math.pi, abs_tol=1e-6):
-                phi2 = 0.5 * math.pi
-
-        if phi >= 0 and phi2 > 0.5 * math.pi:
-            phi = math.pi - phi
-        elif phi < 0 and phi2 > 0.5 * math.pi:
-            phi = -math.pi - phi
-
-        if math.isclose(phi, (0.5 * math.pi), abs_tol=1e-6):
-            phi = 0.5 * math.pi
-        elif math.isclose(phi, (-0.5 * math.pi), abs_tol=1e-6):
-            phi = -0.5 * math.pi
 
         u = math.sqrt((self.radius ** 2) - (z ** 2))
         if u == 0:
@@ -2454,6 +2514,39 @@ class SphericalSurface3D(Surface3D):
         theta = math.atan2(u2, u1)
         if abs(theta) < 1e-10:
             theta = 0
+
+        zr = round((z / self.radius), 6)
+        phi = math.asin(zr)
+        phi3 = math.acos(zr)
+        if abs(phi) < 1e-10:
+            phi = 0
+
+        # if x == 0.0 and y == 0.0:
+        #     phi2 = 0.5 * math.pi
+        # else:
+        #     if y < 0:
+        #         r_vector = volmdlr.Vector3D(-x, -y, 0)
+        #     elif y == 0:
+        #         r_vector = volmdlr.Vector3D(abs(x), 0, 0)
+        #     else:
+        #         r_vector = volmdlr.Vector3D(x, y, 0)
+        #     rho_vector = volmdlr.Vector3D(x, y, z)
+        #     phi2 = volmdlr.core.vectors3d_angle(rho_vector, r_vector)
+        #     if math.isclose(phi2, 0.5 * math.pi, abs_tol=1e-6):
+        #         phi2 = 0.5 * math.pi
+        #
+        # if phi >= 0 and phi2 > 0.5 * math.pi:
+        #     # phi = math.pi - phi
+        #     phi = phi2
+        # elif phi < 0 and phi2 > 0.5 * math.pi:
+        #     # phi = -math.pi - phi
+        #     phi = -phi2
+        #
+        # if math.isclose(phi, (0.5 * math.pi), abs_tol=1e-6):
+        #     phi = 0.5 * math.pi
+        # elif math.isclose(phi, (-0.5 * math.pi), abs_tol=1e-6):
+        #     phi = -0.5 * math.pi
+
         # elif math.isclose(theta, 0.5*math.pi, abs_tol=1e-6):
         #     theta = 0.5*math.pi
         # elif math.isclose(theta, -0.5*math.pi, abs_tol=1e-6):
@@ -2519,7 +2612,8 @@ class SphericalSurface3D(Surface3D):
         if positive_singularity and not negative_singularity and\
             math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
             if abs(theta1) == math.pi:
-                return [vme.LineSegment2D(volmdlr.Point2D(thetai, half_pi), volmdlr.Point2D(thetai, phi2))]
+                return [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
+                        vme.LineSegment2D(volmdlr.Point2D(thetai, half_pi), volmdlr.Point2D(thetai, phi2))]
             if abs(theta2) == math.pi:
                 return [vme.LineSegment2D(volmdlr.Point2D(thetai, phi1), volmdlr.Point2D(thetai, half_pi))]
             primitives = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
@@ -2532,7 +2626,7 @@ class SphericalSurface3D(Surface3D):
             math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
             if abs(theta1) == math.pi:
                 if abs(thetai) == math.pi:
-                    return [vme.LineSegment2D(volmdlr.Point2D(thetai, phi1), volmdlr.Point2D(thetai, -half_pi))]
+                    return [vme.LineSegment2D(volmdlr.Point2D(thetai, phi1), volmdlr.Point2D(thetai, -half_pi)), ]
                 return [vme.LineSegment2D(volmdlr.Point2D(thetai, -half_pi), volmdlr.Point2D(thetai, phi2))]
             if abs(theta2) == math.pi:
                 if abs(thetai) == math.pi:
@@ -2676,6 +2770,13 @@ class SphericalSurface3D(Surface3D):
         delta_y2 = abs(primitives[-1].end.y - last_primitive.end.y)
 
         new_primitives = primitives
+        for n, next_prim in enumerate(primitives[1:]):
+            if primitives[n-1].end == next_prim.start:
+                continue
+            else:
+                new_primitives.insert(n-1, vme.LineSegment2D(primitives[n-1].end, next_prim.start))
+
+
 
         if self.x_periodicity \
                 and not (math.isclose(delta_x1, 0,
@@ -2694,14 +2795,14 @@ class SphericalSurface3D(Surface3D):
                             abs_tol=1e-4):
                 delta_x2 = 0.
 
-            delta = last_primitive.end - primitives[0].start
-            new_primitives = []
-            for prim in primitives:
+            delta = last_primitive.end - new_primitives[0].start
+            new_primitives_x = []
+            for prim in new_primitives:
                 if math.isclose(abs(last_primitive.end.y), 0.5 * math.pi, abs_tol=1e-6):
-                    new_primitives += repair_singularity(prim, last_primitive)
+                    new_primitives_x += repair_singularity(prim, last_primitive)
                 else:
-                    new_primitives.append(prim.translation(delta))
-
+                    new_primitives_x.append(prim.translation(delta))
+        new_primitives =  new_primitives_x
         if self.y_periodicity \
                 and not (math.isclose(delta_y1, 0,
                                       abs_tol=5e-5)
@@ -2715,8 +2816,8 @@ class SphericalSurface3D(Surface3D):
             if math.isclose(delta_y2, self.y_periodicity,
                             abs_tol=1e-4):
                 delta_y2 = 0.
-            delta = last_primitive.end - primitives[0].start
-            new_primitives = [prim.translation(delta) for prim in primitives]
+            delta = last_primitive.end - new_primitives[0].start
+            new_primitives = [prim.translation(delta) for prim in new_primitives]
 
         return new_primitives, delta_x1, delta_x2, delta_y1, delta_y2
 
