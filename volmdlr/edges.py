@@ -5303,20 +5303,12 @@ class ArcEllipse3D(Edge):
             to mesh an arc
         :return: a list of sampled points
         """
-        # plane = Plane3D.from_normal(self.center, self.normal)
-        # start_new, end_new = self.frame.new_coordinates(
-        #     self.start), self.frame.new_coordinates(self.end)
-        # interior_new, center_new = self.frame.new_coordinates(
-        #     self.interior), self.frame.new_coordinates(self.center)
-        # vec1 = start_new - center_new
-        # vec2 = end_new - center_new
-        # angle = volmdlr.core.vectors3d_angle(vec1, vec2)
-        # self.angle_start = volmdlr.core.vectors3d_angle(volmdlr.X3D, start_new - center_new)
-        # self.angle_end = volmdlr.core.vectors3d_angle(volmdlr.X3D, end_new - center_new)
-        # self.angle_interior = volmdlr.core.vectors3d_angle(volmdlr.X3D, interior_new - center_new)
 
-        if number_points:
-            angle_resolution = number_points
+        if not number_points:
+            if not angle_resolution:
+                number_points = 2
+            else:
+                number_points = math.ceil(angle_resolution * abs(0.5 * self.angle / math.pi)) + 1
         if self.angle_start > self.angle_end:
             if self.angle_start >= self.angle_interior >= self.angle_end:
                 angle_start = self.angle_end
@@ -5330,45 +5322,31 @@ class ArcEllipse3D(Edge):
         else:
             angle_end = self.angle_end
             angle_start = self.angle_start
-
-
-        discretization_points= [self.frame.old_coordinates(
+        discretization_points = [self.frame.old_coordinates(
             volmdlr.Point3D(self.Gradius * math.cos(angle), self.Sradius * math.sin(angle), 0))
-            for angle in npy.linspace(angle_start, angle_end, angle_resolution + 1)]
-        # angle_start = volmdlr.core.vectors3d_angle(volmdlr.X3D, self.start - volmdlr.O3D)
-        # angle_end = volmdlr.core.vectors3d_angle(volmdlr.X3D, self.end - volmdlr.O3D)
-        # discretization_points_new = [volmdlr.Point3D(self.Gradius * math.cos(teta), self.Sradius * math.sin(teta), 0)
-        #                            #    self.Gradius * math.cos(teta) * self.major_dir
-        #                            # + self.Sradius * math.sin(teta) * self.minor_dir
-        #                               for teta in npy.linspace(angle_start, angle_end, angle_resolution + 1)]
-        # discretization_points = [self.frame.old_coordinates(point) for point in discretization_points_new]
-        # discretization_points = [self.frame.origin + self.Gradius * math.cos(teta) * self.major_dir
-        #                          + self.Sradius * math.sin(teta) * self.minor_dir
-        #                          for teta in npy.linspace(angle_start, angle_end, angle_resolution + 1)]
+            for angle in npy.linspace(angle_start, angle_end, number_points)]
         return discretization_points
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
+        return self.discretization_points(angle_resolution=discretization_resolution)
 
     def _get_points(self):
         return self.discretization_points()
     points = property(_get_points)
 
     def to_2d(self, plane_origin, x, y):
-        ps = self.start.to_2d(plane_origin, x, y)
-        pi = self.interior.to_2d(plane_origin, x, y)
-        pe = self.end.to_2d(plane_origin, x, y)
+        point_start2d = self.start.to_2d(plane_origin, x, y)
+        point_interior2d = self.interior.to_2d(plane_origin, x, y)
+        point_end2d = self.end.to_2d(plane_origin, x, y)
         center = self.center.to_2d(plane_origin, x, y)
         point_major_dir = self.center + self.Gradius * self.major_dir
         point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
         vector_major_dir_2d = point_major_dir_2d - center
         vector_major_dir_2d.normalize()
-        # maj_dir2d = self.major_dir.to_2d(plane_origin, x, y)
-        # maj_dir2d.normalize()
-        return ArcEllipse2D(ps, pi, pe, center, vector_major_dir_2d, name=self.name)
+        return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, name=self.name)
 
     def length(self):
         return self.angle * math.sqrt(
@@ -5394,7 +5372,7 @@ class ArcEllipse3D(Edge):
                               self.major_dir.copy(),
                               self.name)
 
-    def plot(self, ax=None, color:str='k', alpha=1.0, edge_ends=False, edge_direction=False):
+    def plot(self, ax=None, color: str = 'k', alpha=1.0, edge_ends=False, edge_direction=False):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -5415,6 +5393,7 @@ class ArcEllipse3D(Edge):
             y.append(py)
             z.append(pz)
 
+        ax.plot(x, y, z, 'k')
         ax.plot(x, y, z, color, alpha=alpha)
         if edge_ends:
             self.start.plot(ax)
