@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D: straight_line_area
 * Line3D: skew_to: Verifies if two Line3D are skew
 * LineSegment3D.line_interserctions
+* ArcEllipse3D.discretization_points()
 
 
 
@@ -64,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment3D: linesegment_intersections
 * Contour: is_overlapping
 * LineSegment2D: to_wire
+* ArcEllipse3D.discretization_points()
 
 
 ## v0.6.0 [11/7/2022]
@@ -107,6 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve3D: from_step
 * Surface2D: cut_by_line
 * Circle3D: to_step
+* ArcEllipse3D.to_2d()
 
 
 ### Performance improvements
