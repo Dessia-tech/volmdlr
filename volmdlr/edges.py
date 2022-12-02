@@ -3051,7 +3051,7 @@ class Line3D(Line):
         else:
             print(True)
             raise NotImplementedError
-        if math.isclose(c * coefficient_s - p * coefficient_t, z2 - z1, abs_tol=1e-6):
+        if math.isclose(c * coefficient_s - p * coefficient_t, z2 - z1, abs_tol=1e-5):
             return volmdlr.Point3D(x1 + coefficient_s * a,
                                    y1 + coefficient_s * b,
                                    z1 + coefficient_s * c)
