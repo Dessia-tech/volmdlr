@@ -1424,10 +1424,7 @@ class Contour2D(ContourMixin, Wire2D):
     def _get_edge_polygon(self):
         points = []
         for edge in self.primitives:
-            if isinstance(edge, volmdlr.edges.Arc):
-                arc_points = edge.discretization_points(number_points=100)
-                points.extend(arc_points[:-1])
-            elif points:
+            if points:
                 if edge.start != points[-1]:
                     points.append(edge.start)
             else:
@@ -1446,33 +1443,16 @@ class Contour2D(ContourMixin, Wire2D):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
             return False
-        return self.edge_polygon.point_belongs(point)
-
-    # def point_over_contour(self, point, abs_tol=1e-6):
-    #     belongs = False
-    #     for primitive in self.primitives:
-    #         if primitive.point_belongs(point, abs_tol):
-    #             belongs = True
-    #     return belongs
-
-    # def primitive_over_contour(self, primitive, tol: float = 1e-6):
-    #     for prim in self.primitives:
-    #         if not hasattr(prim, 'unit_direction_vector') and \
-    #                 hasattr(prim, 'tangent'):
-    #             vector1 = prim.tangent(0.5)
-    #         else:
-    #             vector1 = prim.unit_direction_vector(0.5)
-
-    #         if not hasattr(primitive, 'unit_direction_vector') and \
-    #                 hasattr(primitive, 'tangent'):
-    #             vector2 = primitive.tangent(0.5)
-    #         else:
-    #             vector2 = primitive.unit_direction_vector(0.5)
-    #         if vector1.is_colinear_to(vector2):
-    #             mid_point = primitive.middle_point()
-    #             if self.point_over_contour(mid_point, tol):
-    #                 return True
-    #     return False
+        if self.edge_polygon.point_belongs(point):
+            return True
+        # for edge in self.primitives:
+        #     if hasattr(edge, 'straight_line_point_belongs'):
+        #         if edge.straight_line_point_belongs(point):
+        #             return True
+        #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
+        if self.to_polygon(50).point_belongs(point):
+            return True
+        return False
 
     def point_distance(self, point):
         min_distance = self.primitives[0].point_distance(point)
