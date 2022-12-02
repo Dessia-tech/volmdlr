@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D.straight_line_area()
 * ArcEllipse2D.discretization_points()
 * ArcEllipse2D.reverse()
+* FullArc3D.linesegment_intersections()
 
 
 ### Fixed
@@ -79,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D.straight_line_area()
 * ArcEllipse2D.discretization_points()
 * ArcEllipse2D.reverse()
+* FullArc3D.linesegment_intersections()
 
 
 ## v0.6.0 [11/7/2022]
