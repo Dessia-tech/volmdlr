@@ -7716,7 +7716,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         initial_faces = self.faces[:]
 
         for i, face1 in enumerate(initial_faces):
-             list_faces.extend(face1.project_faces(shell.faces))
+            list_faces.extend(face1.project_faces(shell.faces))
 
         return self.__class__(list_faces)
 
