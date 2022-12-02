@@ -5241,6 +5241,138 @@ class PlaneFace3D(Face3D):
 
         return [self.__class__(self.surface3d, surface2d) for surface2d in surfaces]
 
+    def check_inner_contours(self, face):
+        c_inners_1 = self.surface2d.inner_contours
+        c_inners_2 = [self.surface3d.contour3d_to_2d(inner) for inner in face.inner_contours3d]
+        inside = set()
+        for c1 in c_inners_1:
+            for c2 in c_inners_2:
+                if c1.is_superposing(c2):
+                    inside.add(False)
+                else:
+                    inside.add(c2.is_inside(c1))
+        return inside
+
+    @staticmethod
+    def update_faces_with_divided_faces(divided_faces, face2_2, used, list_faces):
+        for d_face in divided_faces:
+
+            if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
+                if face2_2.surface2d.inner_contours:
+                    divided_faces_d_face = []
+                    for inner in face2_2.surface2d.inner_contours:
+
+                        if True in [(((abs(inner_d.area() - inner.area()) < 1e-6)
+                                      and inner.center_of_mass().is_close(inner_d.center_of_mass()))
+                                     or inner_d.is_inside(inner))
+                                    for inner_d in d_face.surface2d.inner_contours]:
+
+                            divided_faces_d_face = ['', d_face]
+                            continue
+
+                        divided_faces_d_face = d_face.divide_face([inner], True)
+                        divided_faces_d_face.sort(key=lambda x: x.area())
+
+                        list_faces.append(divided_faces_d_face[0])
+                        d_face = divided_faces_d_face[1]
+
+                    if divided_faces_d_face:
+                        list_faces.append(divided_faces_d_face[1])
+
+                else:
+                    list_faces.append(d_face)
+            else:
+                used.append(d_face)
+
+        return used, list_faces
+
+    def project_faces(self, faces):
+        """
+        Divide self based on faces's outer, and inner contours
+
+        :param faces: DESCRIPTION
+        :type faces: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+        """
+
+        used_faces, list_faces = {}, []
+
+        for j, face2 in enumerate(faces):
+            contour1 = self.surface2d.outer_contour
+            contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)
+            # c_inners_1 = face1.surface2d.inner_contours
+            # c_inners_2 = [face1.surface3d.contour3d_to_2d(inner) for inner in face2.inner_contours3d]
+            # inside = set()
+            # for c1 in c_inners_1:
+            #     for c2 in c_inners_2:
+            #         if c1.is_superposing(c2):
+            #             inside.add(False)
+            #         else:
+            #             inside.add(c2.is_inside(c1))
+
+            inside = self.check_inner_contours(face2)
+            if (self.surface3d.is_coincident(face2.surface3d)
+                and (contour1.is_overlapping(contour2)
+                     or (contour1.is_inside(contour2) or True in inside))):
+
+                if self in used_faces:
+                    faces_1, face2_2 = used_faces[self][:], face2
+                else:
+                    faces_1, face2_2 = [self], face2
+
+                used = []
+                for face1_1 in faces_1:
+                    plane3d = face1_1.surface3d
+                    s2d = Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
+                                    inner_contours=[
+                                        plane3d.contour3d_to_2d(contour) for contour in face2_2.inner_contours3d])
+                    face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
+
+                    divided_faces = face1_1.cut_by_coincident_face(face2_2)
+                    # for d_face in divided_faces:
+
+                    #     if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
+                    #         if face2_2.surface2d.inner_contours:
+                    #             divided_faces_d_face = []
+                    #             for inner in face2_2.surface2d.inner_contours:
+
+                    #                 if True in [(((abs(inner_d.area() - inner.area()) < 1e-6)
+                    #                               and inner.center_of_mass().is_close(inner_d.center_of_mass()))
+                    #                               or inner_d.is_inside(inner)) \
+                    #                         for inner_d in d_face.surface2d.inner_contours]:
+
+                    #                     divided_faces_d_face = ['', d_face]
+                    #                     continue
+
+                    #                 divided_faces_d_face = d_face.divide_face([inner], True)
+                    #                 divided_faces_d_face.sort(key=lambda x: x.area())
+
+                    #                 list_faces.append(divided_faces_d_face[0])
+                    #                 d_face = divided_faces_d_face[1]
+
+                    #             if divided_faces_d_face:
+                    #                 list_faces.append(divided_faces_d_face[1])
+
+                    #         else:
+                    #             list_faces.append(d_face)
+                    #     else:
+                    #         used.append(d_face)
+
+                    used, list_faces = self.update_faces_with_divided_faces(
+                        divided_faces, face2_2, used, list_faces)
+                used_faces[self] = used
+
+        try:
+            if isinstance(used_faces[self], list):
+                list_faces.extend(used_faces[self])
+            else:
+                list_faces.append(used_faces[self])
+        except KeyError:
+            list_faces.append(self)
+
+        return list_faces
+
 
 class Triangle3D(PlaneFace3D):
     """
@@ -7580,6 +7712,20 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         Divides self's faces based on coincident shell's faces
         """
 
+        list_faces = []
+        initial_faces = self.faces[:]
+
+        for i, face1 in enumerate(initial_faces):
+             list_faces.extend(face1.project_faces(shell.faces))
+
+        return self.__class__(list_faces)
+
+    '''
+    def project_coincident_faces_of(self, shell):
+        """
+        Divides self's faces based on coincident shell's faces
+        """
+
         used_faces, list_faces = {}, []
         initial_faces = self.faces[:]
 
@@ -7706,6 +7852,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 else:
                     inside.add(c2.is_inside(c1))
         return inside
+    '''
 
 
 class ClosedShell3D(OpenShell3D):
