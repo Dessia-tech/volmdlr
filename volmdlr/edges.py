@@ -2976,6 +2976,11 @@ class Line3D(Line):
         x2, y2, z2 = line.points[0].x, line.points[0].y, line.points[0].z
         a, b, c = direction_vector1.x, direction_vector1.y, direction_vector1.z
         m, n, p = direction_vector2.x, direction_vector2.y, direction_vector2.z
+        vector_components = [a, b, c, m, n, p]
+        for i, component in enumerate(vector_components):
+            if abs(component) <= 1e-6:
+                vector_components[i] = 0.0
+        a, b, c, m, n, p = vector_components
         # if a == m == 0 and x2 != x1:
         #     return None
         # if b == n == 0 and y2 != y1:
@@ -2991,7 +2996,7 @@ class Line3D(Line):
             coefficient_t = (b * (x2 - x1) - a * (y2 - y1)) / (n * a - b * m)
             coefficient_s = (n * (x2 - x1) - m * (y2 - y1)) / (n * a - b * m)
         elif a == m == 0:
-            if x2 == x1 and c * n != b * p:
+            if math.isclose(x2, x1, abs_tol=1e-6) and c * n != b * p:
                 if b != 0:
                     coefficient_t = ((z2 - z1) * b - c * (y2 - y1)) / (c * n - b * p)
                     coefficient_s = ((y2 - y1) + n * coefficient_t) / b
@@ -3000,9 +3005,9 @@ class Line3D(Line):
                     coefficient_s = (z2 - z1 + p * coefficient_t) / c
             else:
                 raise NotImplementedError
-        elif b == n == 0:
-            if y2 == y1 and c * m != a * p:
-                if a != 0:
+        elif b == n == 0.:
+            if math.isclose(y2, y1, abs_tol=1e-6) and c * m != a * p:
+                if a != 0.:
                     coefficient_t = ((z2 - z1) * a - c * (x2 - x1)) / (c * m - a * p)
                     coefficient_s = ((x2 - x1) + m * coefficient_t) / a
                 elif m != 0 and c != 0:
@@ -3022,7 +3027,7 @@ class Line3D(Line):
         else:
             print(True)
             raise NotImplementedError
-        if math.isclose(c * coefficient_s - p * coefficient_t, z2 - z1, abs_tol=1e-6):
+        if math.isclose(c * coefficient_s - p * coefficient_t, z2 - z1, abs_tol=1e-5):
             return volmdlr.Point3D(x1 + coefficient_s * a,
                                    y1 + coefficient_s * b,
                                    z1 + coefficient_s * c)
@@ -5000,6 +5005,42 @@ class FullArc3D(Arc3D):
         self._center.translation(offset, False)
         self.interior.translation(offset, False)
 
+    def linesegment_intersections(self, linesegment: LineSegment3D):
+        """
+        Calculates the intersections between a fullarc3d and a linesegment3d
+        :param linesegment: linesegment3d to verifie intersections
+        :return: list of points3d, if there are any intersections, an empty list if otherwise
+        """
+        distance_center_lineseg = linesegment.point_distance(self.frame.origin)
+        if distance_center_lineseg > self.radius:
+            return []
+        direction_vector = linesegment.direction_vector()
+        if math.isclose(self.frame.w.dot(direction_vector), 0, abs_tol=1e-6) and \
+                not math.isclose(linesegment.start.z - self.frame.origin.z, 0, abs_tol=1e-6):
+            return []
+
+        if linesegment.start.z == linesegment.end.z == self.frame.origin.z:
+            quadratic_equation_a = (1 + (direction_vector.y ** 2 / direction_vector.x ** 2))
+            quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x +
+                                    2 * (direction_vector.y / direction_vector.x) * linesegment.start.y)
+            quadratic_equation_c = ((linesegment.start.y - (direction_vector.y / direction_vector.x) *
+                                     linesegment.start.x) ** 2 - self.radius ** 2)
+            delta = (quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c)
+            x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
+            x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)
+            y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment.start.x) + linesegment.start.y
+            y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment.start.x) + linesegment.start.y
+            return [volmdlr.Point3D(x1, y1, self.frame.origin.z), volmdlr.Point3D(x2, y2, self.frame.origin.z)]
+        if math.isclose(direction_vector.z, 0, abs_tol=1e-6):
+            print(True)
+        constant = (self.frame.origin.z - linesegment.start.z) / direction_vector.z
+        x_coordinate = constant * direction_vector.x + linesegment.start.x
+        y_coordinate = constant * direction_vector.y + linesegment.start.y
+        if math.isclose((x_coordinate - self.frame.origin.x) ** 2 + (y_coordinate - self.frame.origin.y) ** 2,
+                        self.radius ** 2, abs_tol=1e-6):
+            return [volmdlr.Point3D(x_coordinate, y_coordinate, self.frame.origin.z)]
+        return []
+
 
 class ArcEllipse3D(Edge):
     """
@@ -5036,8 +5077,8 @@ class ArcEllipse3D(Edge):
 
         self.minor_dir = self.normal.cross(self.major_dir)
 
-        frame = volmdlr.Frame3D(self.center, self.major_dir, self.minor_dir,
-                                self.normal)
+        frame = volmdlr.Frame3D(self.center, self.major_dir, self.minor_dir, self.normal)
+        self.frame = frame
         start_new, end_new = frame.new_coordinates(
             self.start), frame.new_coordinates(self.end)
         interior_new, center_new = frame.new_coordinates(
@@ -5080,12 +5121,15 @@ class ArcEllipse3D(Edge):
         # Angle pour start
         u1, u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
         angle1 = volmdlr.core.sin_cos_angle(u1, u2)
+        self.angle_start = angle1
         # Angle pour end
         u3, u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
         angle2 = volmdlr.core.sin_cos_angle(u3, u4)
+        self.angle_end = angle2
         # Angle pour interior
         u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
         anglei = volmdlr.core.sin_cos_angle(u5, u6)
+        self.angle_interior = anglei
 
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
@@ -5123,11 +5167,45 @@ class ArcEllipse3D(Edge):
                                                    primitives=self.discretization_points(),
                                                    name=name)
 
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
+        """
+        discretize a Contour to have "n" points
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+            to mesh an arc
+        :return: a list of sampled points
+        """
+
+        if not number_points:
+            if not angle_resolution:
+                number_points = 2
+            else:
+                number_points = math.ceil(angle_resolution * abs(0.5 * self.angle / math.pi)) + 1
+        if self.angle_start > self.angle_end:
+            if self.angle_start >= self.angle_interior >= self.angle_end:
+                angle_start = self.angle_end
+                angle_end = self.angle_start
+            else:
+                angle_end = self.angle_end + volmdlr.TWO_PI
+                angle_start = self.angle_start
+        elif self.angle_start == self.angle_end:
+            angle_start = 0
+            angle_end = 2 * math.pi
+        else:
+            angle_end = self.angle_end
+            angle_start = self.angle_start
+
+        discretization_points = [self.frame.old_coordinates(
+            volmdlr.Point3D(self.Gradius * math.cos(angle), self.Sradius * math.sin(angle), 0))
+            for angle in npy.linspace(angle_start, angle_end, number_points)]
+        return discretization_points
+
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
+        return self.discretization_points(angle_resolution=discretization_resolution)
 
     def _get_points(self):
         return self.discretization_points()
@@ -5135,14 +5213,15 @@ class ArcEllipse3D(Edge):
     points = property(_get_points)
 
     def to_2d(self, plane_origin, x, y):
-        ps = self.start.to_2d(plane_origin, x, y)
-        pi = self.interior.to_2d(plane_origin, x, y)
-        pe = self.end.to_2d(plane_origin, x, y)
+        point_start2d = self.start.to_2d(plane_origin, x, y)
+        point_interior2d = self.interior.to_2d(plane_origin, x, y)
+        point_end2d = self.end.to_2d(plane_origin, x, y)
         center = self.center.to_2d(plane_origin, x, y)
-
-        maj_dir2d = self.major_dir.to_2d(plane_origin, x, y)
-        maj_dir2d.normalize()
-        return ArcEllipse2D(ps, pi, pe, center, maj_dir2d, name=self.name)
+        point_major_dir = self.center + self.Gradius * self.major_dir
+        point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
+        vector_major_dir_2d = point_major_dir_2d - center
+        vector_major_dir_2d.normalize()
+        return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, name=self.name)
 
     def length(self):
         return self.angle * math.sqrt(
@@ -5168,7 +5247,7 @@ class ArcEllipse3D(Edge):
                               self.major_dir.copy(),
                               self.name)
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, color: str = 'k', alpha=1.0, edge_ends=False, edge_direction=False):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -5184,12 +5263,16 @@ class ArcEllipse3D(Edge):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points():
+        for px, py, pz in self.discretization_points(number_points=20):
             x.append(px)
             y.append(py)
             z.append(pz)
 
         ax.plot(x, y, z, 'k')
+        ax.plot(x, y, z, color, alpha=alpha)
+        if edge_ends:
+            self.start.plot(ax)
+            self.end.plot(ax)
         return ax
 
     def plot2d(self, x3d: volmdlr.Vector3D = volmdlr.X3D, y3d: volmdlr.Vector3D = volmdlr.Y3D,
