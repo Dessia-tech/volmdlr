@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside
 * CylindricalSurface3D: line_intersections, linesegment_intersections, plane_intersection
 * Line2D: point_distance
-
 * Line3D: to_2d
 * ArcEllipse2D: straight_line_area
 * Line3D: skew_to: Verifies if two Line3D are skew
@@ -27,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* Contour2D: point_belongs (quick fix: use discretized_contour instead of edge_polygon)
+* Contour2D: point_belongs
 * Contour2D: bounding_rectangle (specify number_points for discretization_points)
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
 * BsplineCurve: abscissa (use different start point between 0 and length)
