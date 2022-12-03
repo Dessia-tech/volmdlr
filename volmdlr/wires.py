@@ -188,16 +188,6 @@ class WireMixin:
         return self.extract_primitives(point1, primitives[ind[0]], point2,
                                        primitives[ind[1]], inside)
 
-    def point_belongs(self, point, abs_tol=1e-7):  # TOdo diplicate with point_over_contour?
-        """
-        find out if a point is on the wire or not. If it belongs, we return the primitive's index
-        """
-
-        for primitive in self.primitives:
-            if primitive.point_belongs(point, abs_tol):
-                return True
-        return False
-
     def abscissa(self, point):
         """
         compute the curvilinear abscisse of a point on a wire
