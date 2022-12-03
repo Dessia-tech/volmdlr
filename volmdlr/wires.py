@@ -3911,7 +3911,7 @@ class Ellipse2D(Contour2D):
             ((point.x - self.center.x) * math.cos(self.theta) +
              (point.y - self.center.y) * math.sin(self.theta)) ** 2 / self.major_axis ** 2 +
             ((point.x - self.center.x) * math.sin(self.theta) -
-             (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
+             (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 1, abs_tol=abs_tol)
 
     def point_over_contour(self, point, abs_tol=1e-6):
         return self.point_over_ellipse(point, abs_tol)
@@ -4015,7 +4015,7 @@ class Ellipse2D(Contour2D):
         angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, self.major_dir)
         return angle_abscissa
 
-    def plot(self, ax=None, color='k', alpha=1, plot_points=False, linewidth=1):
+    def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         """
         matplotlib plot for an ellipse
         """
