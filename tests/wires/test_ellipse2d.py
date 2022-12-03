@@ -39,9 +39,9 @@ class TestEllipse2D(unittest.TestCase):
         self.assertEqual(self.discretized_points[5], volmdlr.Point2D(-2.8284271247461903, -2.82842712474619))
         self.assertEqual(self.discretized_points[-2], volmdlr.Point2D(3.119499486825644, 1.4569917357158295))
 
-    def test_point_belongs(self):
-        self.assertTrue(self.ellipse2d.point_belongs(self.discretized_points[3]))
-        self.assertFalse(self.ellipse2d.point_belongs(volmdlr.Point2D(2, 2)))
+    def test_point_over_ellipse(self):
+        self.assertTrue(self.ellipse2d.point_over_ellipse(self.discretized_points[3]))
+        self.assertFalse(self.ellipse2d.point_over_ellipse(volmdlr.Point2D(2, 2)))
 
     def test_abscissa(self):
         self.assertEqual(self.ellipse2d.abscissa(self.discretized_points[5]), 9.688448220547677)

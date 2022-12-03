@@ -3606,18 +3606,18 @@ class Circle2D(Contour2D):
         ymax = self.center.y + self.radius
         return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
 
-    def line_intersections(self, line2d: volmdlr.edges.Line2D, tol=1e-9):
+    def line_intersections(self, line: volmdlr.edges.Line2D, tol=1e-9):
         full_arc_2d = volmdlr.edges.FullArc2D(
             center=self.center, start_end=self.point_at_abscissa(0),
             name=self.name)
-        return full_arc_2d.line_intersections(line2d, tol)
+        return full_arc_2d.line_intersections(line, tol)
 
-    def linesegment_intersections(self, lineseg2d: volmdlr.edges.LineSegment2D,
+    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment2D,
                                   tol=1e-9):
         full_arc_2d = volmdlr.edges.FullArc2D(
             center=self.center, start_end=self.point_at_abscissa(0),
             name=self.name)
-        return full_arc_2d.linesegment_intersections(lineseg2d, tol)
+        return full_arc_2d.linesegment_intersections(linesegment, tol)
 
     def cut_by_line(self, line: volmdlr.edges.Line2D):
         intersection_points = self.line_intersections(line)
@@ -3680,8 +3680,8 @@ class Circle2D(Contour2D):
     def length(self):
         return volmdlr.TWO_PI * self.radius
 
-    def plot(self, ax=None, linestyle='-', color='k', linewidth=1, alpha=1.,
-             equal_aspect=True):
+    def plot(self, ax=None, color='k', alpha=1,
+             plot_points=False, equal_aspect=True, linestyle='-', linewidth=1):
         if ax is None:
             fig, ax = plt.subplots()
         # else:
@@ -3854,9 +3854,17 @@ class Ellipse2D(Contour2D):
     Ellipse2D defined by a major axis (A), minor axis (B), a center and a vector
     representing the direction of the major axis.
 
-    :param major_axis:
-    :type major_axis:
-    #TODO
+    :param major_axis: ellipse's major axis (A)
+    :type major_axis: float
+    :param minor_axis: ellipse's minor axis (B)
+    :type minor_axis: float
+    :param center: ellipse's center
+    :type center: volmdlr.Point3D
+    :param major_dir: direction vector for major axis
+    :type major_dir: volmdlr.Vector3D
+
+    :Example:
+    >>> ellipse2d = wires.Ellipse2D(4, 2, volmdlr.O2D, volmdlr.Vector2D(1, 1))
     """
 
     def __init__(self, major_axis, minor_axis, center, major_dir, name=''):
@@ -3873,15 +3881,15 @@ class Ellipse2D(Contour2D):
 
     def area(self):
         """
-        #TODO
-        :return:
+        Calculates the ellipe's area
+        :return: ellipe's area, float
         """
         return math.pi * self.major_axis * self.minor_axis
 
     def length(self):
         """
-        #TODO
-        :return:
+        Calculates the ellipse's length
+        :return: ellipe's length
         """
         mid_point = self.center - self.major_axis * self.major_dir
         if self.theta != 0.0:
@@ -3890,14 +3898,14 @@ class Ellipse2D(Contour2D):
         length = 2 * self.abscissa(mid_point)
         return length
 
-    def to_3d(self, origin, x, y):
+    def to_3d(self, plane_origin, x, y):
         raise NotImplementedError
 
-    def point_belongs(self, point):
+    def point_over_ellipse(self, point, abs_tol=1e-6):
         """
-        #TODO
-        :param point:
-        :return:
+        Verifies if a point is on the ellipse
+        :param point: point to be verified
+        :return: True or False
         """
         return math.isclose(
             ((point.x - self.center.x) * math.cos(self.theta) +
@@ -3905,11 +3913,14 @@ class Ellipse2D(Contour2D):
             ((point.x - self.center.x) * math.sin(self.theta) -
              (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
 
+    def point_over_contour(self, point, abs_tol=1e-6):
+        return self.point_over_ellipse(point, abs_tol)
+
     def line_intersections(self, line: 'volmdlr.edges.Line2D'):
         """
-        #TODO
-        :param line:
-        :return:
+        Calculates the intersections between a line and an ellipse
+        :param line: line to calculate intersections
+        :return: list of points intersections, if there are any
         """
         if self.theta != 0:
             frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
@@ -3953,9 +3964,9 @@ class Ellipse2D(Contour2D):
     def linesegment_intersections(self,
                                   linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        #TODO
-        :param linesegment:
-        :return:
+        Calculates the intersections between a linesegment and an ellipse
+        :param linesegment: linesegment to calculate intersections
+        :return: list of points intersections, if there are any
         """
         line_intersections = self.line_intersections(linesegment)
         intersections = []
@@ -3966,10 +3977,10 @@ class Ellipse2D(Contour2D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        #TODO
-        :param number_points:
-        :param angle_resolution:
-        :return:
+        Calculates the discretized points for the ellipse
+        :param number_points: number of point to have in the discretized points
+        :param angle_resolution: the angle resolution to be used to discretise points
+        :return: discretized points
         """
         if number_points:
             angle_resolution = number_points
@@ -3981,11 +3992,11 @@ class Ellipse2D(Contour2D):
 
     def abscissa(self, point: volmdlr.Point2D):
         """
-        #TODO
-        :param point:
-        :return:
+        Calculates the abscissa for a given point
+        :param point: point to calculate the abcissa
+        :return: the correspoding abscissa, 0 < abscissa < ellipse's length
         """
-        if self.point_belongs(point):
+        if self.point_over_ellipse(point):
             angle_abscissa = self.point_angle_with_major_dir(point)
 
             def arc_length(theta):
@@ -3998,40 +4009,32 @@ class Ellipse2D(Contour2D):
 
     def point_angle_with_major_dir(self, point2d):
         """
-        #TODO
-        :param point2d:
-        :return:
+        given a point in the ellipse, calculates it angle with the major direction vector
         """
         center2d_point2d = point2d - self.center
         angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, self.major_dir)
         return angle_abscissa
 
-    def plot(self, ax=None, linestyle='-', color='k', linewidth=1, alpha=1.0):
+    def plot(self, ax=None, color='k', alpha=1, plot_points=False, linewidth=1):
         """
-
-        :param ax:
-        :param linestyle:
-        :param color:
-        :param linewidth:
-        :param alpha:
-        :return:
+        matplotlib plot for an ellipse
         """
         if ax is None:
             _, ax = plt.subplots()
         x = []
         y = []
-        for px, py in self.discretization_points(number_points=50):
-            x.append(px)
-            y.append(py)
+        for point_x, point_y in self.discretization_points(number_points=50):
+            x.append(point_x)
+            y.append(point_y)
         plt.plot(x, y, color=color, alpha=alpha)
         return ax
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        #TODO
-        :param center:
-        :param angle:
-        :return:
+        Rotation of ellipse around a center and an angle
+        :param center: center of the rotation
+        :param angle: angle to rotated of
+        :return: a rotationed new ellipse
         """
         rotationed_center = self.center.rotation(center, angle)
         point_major_dir = self.center + self.major_dir * self.major_axis
@@ -4042,9 +4045,9 @@ class Ellipse2D(Contour2D):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        #TODO
-        :param offset:
-        :return:
+        Translation of ellipse from an offset vector
+        :param offset: corresponding translation vector
+        :return: translated new ellipse2d
         """
         return Ellipse2D(self.major_axis, self.minor_axis, self.center.translation(offset), self.major_dir)
 
