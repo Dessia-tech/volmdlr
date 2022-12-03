@@ -2728,17 +2728,17 @@ class ArcEllipse2D(Edge):
         return self.discretization_points(angle_resolution=discretization_resolution)
 
     def to_3d(self, plane_origin, x, y):
-        point_start2d = self.start.to_3d(plane_origin, x, y)
-        point_interior2d = self.interior.to_3d(plane_origin, x, y)
-        point_end2d = self.end.to_3d(plane_origin, x, y)
-        point_center2d = self.center.to_3d(plane_origin, x, y)
+        point_start3d = self.start.to_3d(plane_origin, x, y)
+        point_interior3d = self.interior.to_3d(plane_origin, x, y)
+        point_end3d = self.end.to_3d(plane_origin, x, y)
+        point_center3d = self.center.to_3d(plane_origin, x, y)
 
         a_max2d = self.center + self.major_dir * self.Gradius
         a_max3d = a_max2d.to_3d(plane_origin, x, y)
-        new_major_dir = a_max3d - point_center2d
+        new_major_dir = a_max3d - point_center3d
         new_major_dir.normalize()
-        return ArcEllipse3D(point_start2d, point_interior2d, point_end2d,
-                            point_center2d, new_major_dir, name=self.name)
+        return ArcEllipse3D(point_start3d, point_interior3d, point_end3d,
+                            point_center3d, new_major_dir, name=self.name)
 
     def plot(self, ax=None, color='k', alpha=1):
         if ax is None:
@@ -3135,7 +3135,7 @@ class Line3D(Line):
         else:
             print(True)
             raise NotImplementedError
-        if math.isclose(c * coefficient_s - p * coefficient_t, z2 - z1, abs_tol=1e-6):
+        if math.isclose(c * coefficient_s - p * coefficient_t, z2 - z1, abs_tol=1e-5):
             return volmdlr.Point3D(x1 + coefficient_s * a,
                                    y1 + coefficient_s * b,
                                    z1 + coefficient_s * c)
@@ -5303,7 +5303,6 @@ class ArcEllipse3D(Edge):
             to mesh an arc
         :return: a list of sampled points
         """
-
         if not number_points:
             if not angle_resolution:
                 number_points = 2
@@ -5393,7 +5392,6 @@ class ArcEllipse3D(Edge):
             y.append(py)
             z.append(pz)
 
-        ax.plot(x, y, z, 'k')
         ax.plot(x, y, z, color, alpha=alpha)
         if edge_ends:
             self.start.plot(ax)

@@ -49,6 +49,16 @@ class TestLine3D(unittest.TestCase):
         for point, expected_point in zip(sorted_points_along_line3d, expected_sorted_points3d):
             self.assertEqual(point, expected_point)
 
+    def test_sort_points_along_line(self):
+        line3d = edges.Line3D(volmdlr.O3D, volmdlr.Point3D(1, 2, 3))
+        list_points_3d = [volmdlr.Point3D(0, 0, 0), volmdlr.Point3D(5, 10, 15),
+                          volmdlr.Point3D(-1, -2, -3), volmdlr.Point3D(2, 4, 6)]
+        sorted_points_along_line3d = line3d.sort_points_along_line(list_points_3d)
+        expected_sorted_points3d = [volmdlr.Point3D(-1, -2, -3), volmdlr.Point3D(0, 0, 0),
+                                    volmdlr.Point3D(2, 4, 6), volmdlr.Point3D(5, 10, 15)]
+        for point, expected_point in zip(sorted_points_along_line3d, expected_sorted_points3d):
+            self.assertEqual(point, expected_point)
+
 
 if __name__ == '__main__':
     unittest.main()

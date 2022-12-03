@@ -5038,7 +5038,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         for line_segment in self.line_segments:
             ax = line_segment.plot(ax=ax, color=color, alpha=alpha,
-                                   edge_ends=True, edge_direction=True)
+                                   edge_ends=True, edge_direction=edge_details)
         return ax
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
