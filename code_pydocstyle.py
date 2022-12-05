@@ -97,11 +97,11 @@ for error_code, number_errors in code_to_number.items():
                                     key=lambda m: (m.filename, m.line))
             for error in errors_to_show:
                 print(f'{error.filename} line {error.line}: {error.message}')
-        elif max_errors - ratchet_limit <= number_errors < max_errors:
-            print(f'\nYou can lower number of {error_code} to {number_errors} (actual {max_errors})')
-        elif number_errors < max_errors - ratchet_limit:
-            error_over_ratchet_limit = True
-            print(f'\nYou must lower number of {error_code} to {number_errors} (actual {max_errors})')
+        # elif max_errors - ratchet_limit <= number_errors < max_errors:
+        #     print(f'\nYou can lower number of {error_code} to {number_errors} (actual {max_errors})')
+        # elif number_errors < max_errors - ratchet_limit:
+        #     error_over_ratchet_limit = True
+        #     print(f'\nYou must lower number of {error_code} to {number_errors} (actual {max_errors})')
 
 if error_detected:
     raise RuntimeError('Too many errors\nRun pydocstyle volmdlr to get the errors')
