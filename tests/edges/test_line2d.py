@@ -18,6 +18,16 @@ class TestLine2D(unittest.TestCase):
         self.assertTrue(line.point_belongs(point1))
         self.assertFalse(line.point_belongs(point2))
 
+    def test_sort_points_along_line(self):
+        line2d = edges.Line2D(volmdlr.O2D, volmdlr.Point2D(1, 2))
+        list_points2d = [volmdlr.Point2D(2, 4), volmdlr.Point2D(1.5, 3),
+                         volmdlr.Point2D(4, 8), volmdlr.Point2D(2.5, 5)]
+        sorted_points_along_line2d = line2d.sort_points_along_line(list_points2d)
+        expected_sorted_points2d = [volmdlr.Point2D(1.5, 3), volmdlr.Point2D(2, 4),
+                                    volmdlr.Point2D(2.5, 5), volmdlr.Point2D(4, 8)]
+        for point, expected_point in zip(sorted_points_along_line2d, expected_sorted_points2d):
+            self.assertEqual(point, expected_point)
+
 
 if __name__ == '__main__':
     unittest.main()
