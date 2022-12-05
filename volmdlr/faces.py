@@ -4386,7 +4386,6 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def random_point_inside(self):
         point_inside2d = self.surface2d.random_point_inside()
-        point3d = self.surface3d.point2d_to_3d(point_inside2d)
         return self.surface3d.point2d_to_3d(point_inside2d)
 
     def is_adjacent(self, face2: 'Face3D'):
