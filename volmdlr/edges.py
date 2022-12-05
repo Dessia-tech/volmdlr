@@ -772,6 +772,9 @@ class Line2D(Line):
         for point in self.points:
             point.translation_inplace(offset)
 
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        return Line2D(*[point.frame_mapping(frame, side) for point in self.points])
+
     def plot(self, ax=None, color='k', dashed=True):
         if ax is None:
             _, ax = plt.subplots()
@@ -990,14 +993,18 @@ class BSplineCurve2D(BSplineCurve):
                               weights,
                               periodic,
                               name)
+        self._bounding_rectangle = None
 
+    @property
     def bounding_rectangle(self):
-        points = self.discretization_points(number_points=50)
-        points_x = [p.x for p in points]
-        points_y = [p.y for p in points]
-
-        return volmdlr.core.BoundingRectangle(min(points_x), max(points_x),
+        if not self._bounding_rectangle:
+            points = self.discretization_points(number_points=50)
+            points_x = [p.x for p in points]
+            points_y = [p.y for p in points]
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(min(points_x), max(points_x),
                                               min(points_y), max(points_y))
+
+        return self._bounding_rectangle
 
     def length(self):
         return length_curve(self.curve)
@@ -1213,11 +1220,13 @@ class BSplineCurve2D(BSplineCurve):
         points = self.polygon_points(500)
         return point.nearest_point(points)
 
-    def linesegment_intersections(self, linesegment):
-        results = self.line_intersections(linesegment.to_line())
+    def linesegment_intersections(self, linesegment2d):
+        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
+        results = self.line_intersections(linesegment2d.to_line())
         intersections_points = []
         for result in results:
-            if linesegment.point_belongs(result, 1e-6):
+            if linesegment2d.point_belongs(result, 1e-6):
                 intersections_points.append(result)
         return intersections_points
 
@@ -1257,6 +1266,8 @@ class LineSegment2D(LineSegment):
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
         if start == end:
             raise NotImplementedError
+        self.points = [start, end]
+        self._bounding_rectangle = None
         LineSegment.__init__(self, start, end, name=name)
 
     def __hash__(self):
@@ -1300,9 +1311,12 @@ class LineSegment2D(LineSegment):
             return True
         return False
 
+    @property
     def bounding_rectangle(self):
-        return volmdlr.core.BoundingRectangle(min(self.start.x, self.end.x), max(self.start.x, self.end.x),
+        if not self._bounding_rectangle:
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(min(self.start.x, self.end.x), max(self.start.x, self.end.x),
                                               min(self.start.y, self.end.y), max(self.start.y, self.end.y))
+        return self._bounding_rectangle
 
     def straight_line_area(self):
         return 0.
@@ -1371,18 +1385,20 @@ class LineSegment2D(LineSegment):
                 return [self.end]
         return []
 
-    def linesegment_intersections(self, linesegment: 'LineSegment2D'):
+    def linesegment_intersections(self, linesegment2d: 'LineSegment2D'):
         """
         touching linesegments does not intersect
         """
-        point = volmdlr.Point2D.line_intersection(self, linesegment)
+        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
+        point = volmdlr.Point2D.line_intersection(self, linesegment2d)
         # TODO: May be these commented conditions should be used for linesegment_crossings
         if point:  # and (point != self.start) and (point != self.end):
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
                 return []
 
-            point_projection2, _ = linesegment.point_projection(point)
+            point_projection2, _ = linesegment2d.point_projection(point)
             if point_projection2 is None:
                 return []
 
@@ -1716,6 +1732,7 @@ class Arc2D(Arc):
         self._center = None
         self._is_trigo = None
         self._angle = None
+        self._bounding_rectangle = None
         Arc.__init__(self, start=start, end=end, interior=interior, name=name)
         start_to_center = start - self.center
         end_to_center = end - self.center
@@ -1858,6 +1875,8 @@ class Arc2D(Arc):
         return intersection_points
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D):
+        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
         full_arc_2d = self.to_full_arc_2d()
         fa2d_intersection_points = full_arc_2d.linesegment_intersections(
             linesegment2d)
@@ -1945,10 +1964,17 @@ class Arc2D(Arc):
         return self.center + 4 / (3 * self.angle) * self.radius * math.sin(
             self.angle * 0.5) * u
 
+    @property
     def bounding_rectangle(self):
-        # TODO: Enhance this!!!
-        return volmdlr.core.BoundingRectangle(self.center.x - self.radius, self.center.x + self.radius,
-                                              self.center.y - self.radius, self.center.y + self.radius)
+        if not self._bounding_rectangle:
+            discretization_points = self.discretization_points(number_points=20)
+            x_values, y_values = [], []
+            for point in discretization_points:
+                x_values.append(point.x)
+                y_values.append(point.y)
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(min(x_values), max(x_values),
+                                                                      min(y_values), max(y_values))
+        return self._bounding_rectangle
 
     def straight_line_area(self):
         if self.angle >= math.pi:
@@ -2308,6 +2334,13 @@ class FullArc2D(Arc2D):
         return (self.center == other_arc.center) \
             and (self.start_end == other_arc.start_end)
 
+    @property
+    def bounding_rectangle(self):
+        if not self._bounding_rectangle:
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(self.center.x - self.radius, self.center.x + self.radius,
+                                              self.center.y - self.radius, self.center.y + self.radius)
+        return self._bounding_rectangle
+
     def straight_line_area(self):
         area = self.area()
         return area
@@ -2445,6 +2478,8 @@ class FullArc2D(Arc2D):
         return []
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D, tol=1e-9):
+        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
         try:
             if linesegment2d.start == self.center:
                 pt1 = linesegment2d.end
@@ -2519,7 +2554,7 @@ class ArcEllipse2D(Edge):
         self.frame = frame
         start_new, end_new = frame.new_coordinates(self.start), frame.new_coordinates(self.end)
         interior_new, center_new = frame.new_coordinates(self.interior), frame.new_coordinates(self.center)
-
+        self._bounding_rectangle = None
         def theta_A_B(s, i, e, c):
             """
             from : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
@@ -2656,16 +2691,21 @@ class ArcEllipse2D(Edge):
             return res
         raise ValueError(f'point {point} does not belong to ellipse')
 
+    @property
     def bounding_rectangle(self):
         """
         Calculates the bounding rectangle for the arcellipse2d
         :return: volmdlr.core.BoudingRectangle object
         """
-        min_a, max_a = self.center - self.Gradius * self.major_dir, self.center + self.Gradius * self.major_dir
-        min_b, max_b = self.center - self.Sradius * self.minor_dir, self.center + self.Sradius * self.minor_dir
-        x_values = [point.x for point in [min_a, max_a, min_b, max_b]]
-        y_values = [point.y for point in [min_a, max_a, min_b, max_b]]
-        return volmdlr.core.BoundingRectangle(min(x_values), max(x_values), min(y_values), max(y_values))
+        if not self._bounding_rectangle:
+            discretization_points = self.discretization_points(number_points=20)
+            x_values, y_values = [], []
+            for point in discretization_points:
+                x_values.append(point.x)
+                y_values.append(point.y)
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(min(x_values), max(x_values),
+                                                                      min(y_values), max(y_values))
+        return self._bounding_rectangle
 
     def straight_line_area(self):
         """
@@ -2774,6 +2814,20 @@ class ArcEllipse2D(Edge):
         return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(),
                               self.center.copy(), self.major_dir.copy(), self.name)
 
+    def to_ellipse2d(self):
+        from volmdlr.wires import Ellipse2D
+        return Ellipse2D(self.Gradius, self.Sradius, self.center, self.major_dir)
+
+    def linesegment_intersections(self, linesegment2d: LineSegment2D):
+        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
+        ellipse2d = self.to_ellipse2d()
+        ellipse2d_linesegment_intersections = ellipse2d.linesegment_intersections(linesegment2d)
+        linesegment_intersections = []
+        for inter in ellipse2d_linesegment_intersections:
+            if self.point_belongs(inter):
+                linesegment_intersections.append(inter)
+        return linesegment_intersections
 
 class Line3D(Line):
     _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
