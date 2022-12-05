@@ -23,6 +23,7 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 
+
 npy.seterr(divide='raise')
 
 # TODO: put voldmlr metadata in this freecad header
