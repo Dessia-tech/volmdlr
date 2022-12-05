@@ -4530,8 +4530,6 @@ class Face3D(volmdlr.core.Primitive3D):
         if list_open_cutting_contours:
             list_faces = self.divide_face_with_open_cutting_contours(list_open_cutting_contours, inside)
         list_faces = self.divide_face_with_closed_cutting_contours(list_closed_cutting_contours, list_faces)
-        if not list_faces:
-            print(True)
         return list_faces
 
     def divide_face_with_open_cutting_contours(self, list_open_cutting_contours, inside):
