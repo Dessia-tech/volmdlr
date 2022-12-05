@@ -963,6 +963,40 @@ class Line2D(Line):
     def cut_between_two_points(self, point1, point2):
         return LineSegment2D(point1, point2)
 
+    def sort_points_along_line(self, points: List[volmdlr.Point2D]) -> List[
+            volmdlr.Point2D]:
+        most_distant_point = None
+        farthest_distance = 0
+        for i, point1 in enumerate(points):
+            distances = []
+            points_to_search = points[:i - 1] + points[i:]
+            for point2 in points_to_search:
+                distances.append(point1.point_distance(point2))
+            max_point_distance = max(distances)
+            farthest_point = points_to_search[
+                distances.index(max_point_distance)]
+            if max_point_distance > farthest_distance:
+                most_distant_point = farthest_point
+        list_points = [most_distant_point]
+        points.remove(most_distant_point)
+        distances_to_reference_point = {}
+        for point in points:
+            distances_to_reference_point[point] = \
+                most_distant_point.point_distance(point)
+        distances_to_reference_point = dict(
+            sorted(distances_to_reference_point.items(),
+                   key=lambda item: item[1]))
+        list_points.extend(list(distances_to_reference_point.keys()))
+        return list_points
+
+    def point_belongs(self, point2d, abs_tol: float = 1e-6):
+        """
+        Verifies if the point2d belongs to the line
+        :param point2d: point to be verified
+        :return: True if point belongs to line, False otherwise
+        """
+        return math.isclose(self.point_distance(point2d), 0, abs_tol=abs_tol)
+
     def point_distance(self, point2d):
         """
         Calculates the distance of a line2d to a point2d
@@ -1144,29 +1178,31 @@ class BSplineCurve2D(BSplineCurve):
             point.rotation_inplace(center, angle)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.discretization_points(number_points=201)
+        polygon_points = self.discretization_points(number_points=50)
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
         for points in zip(polygon_points[:-1], polygon_points[1:]):
             linesegment = LineSegment2D(points[0], points[1])
             intersections = linesegment.line_intersections(line2d)
-            initial_abscissa += linesegment.length()
-            if intersections:
+
+            if intersections and intersections[0] not in list_intersections:
+                abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
                 if initial_abscissa < length * 0.1:
-                    list_abcissas = [initial_abscissa * n for n in
+                    list_abcissas = [abscissa * n for n in
                                      npy.linspace(0, 1, 100)]
                 else:
-                    list_abcissas = [initial_abscissa * n for n in
+                    list_abcissas = [abscissa * n for n in
                                      npy.linspace(0.9, 1, 100)]
                 distance = npy.inf
-                for abscissa in list_abcissas:
-                    point_in_curve = self.point_at_abscissa(abscissa)
+                for i_abscissa in list_abcissas:
+                    point_in_curve = self.point_at_abscissa(i_abscissa)
                     dist = point_in_curve.point_distance(intersections[0])
                     if dist < distance:
                         distance = dist
                         intersection = point_in_curve
                 list_intersections.append(intersection)
+            initial_abscissa += linesegment.length()
         return list_intersections
 
     def line_crossings(self, line2d: Line2D):
@@ -1374,15 +1410,10 @@ class LineSegment2D(LineSegment):
                     return []
 
             return [point_projection1]
-        else:
-            vector1 = self.start - line.point1
-            vector2 = self.start - line.point2
-            vector3 = self.end - line.point1
-            vector4 = self.end - line.point2
-            if math.isclose(vector1.cross(vector2), 0, abs_tol=1e-6):
-                return [self.start]
-            if math.isclose(vector3.cross(vector4), 0, abs_tol=1e-6):
-                return [self.end]
+        if line.point_belongs(self.start):
+            return [self.start]
+        if line.point_belongs(self.end):
+            return [self.end]
         return []
 
     def linesegment_intersections(self, linesegment2d: 'LineSegment2D'):
