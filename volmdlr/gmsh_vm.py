@@ -595,6 +595,7 @@ class GmshParser(DessiaObject):
         mesh = volmdlr.mesh.Mesh(element_groups)
         # mesh.nodes = points #gmsh points are duplicated > not needed
         # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+        mesh._gmsh = self
 
         return mesh
 
@@ -625,6 +626,7 @@ class GmshParser(DessiaObject):
         mesh = volmdlr.mesh.Mesh(element_groups)
         # mesh.nodes = points #gmsh points are duplicated > not needed
         # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+        mesh._gmsh = self
 
         return mesh
 

@@ -774,7 +774,8 @@ class Mesh(DessiaObject):
         self.elements_groups = elements_groups
         self.nodes = self._set_nodes_number()
         self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
-
+        self._nodes_correction = {}
+        self._gmsh = None
         DessiaObject.__init__(self, name='')
 
     # def __add__(self, other_mesh):
@@ -899,28 +900,91 @@ class Mesh(DessiaObject):
         z = [n.z for n in nodes]
         return min(x), max(x), min(y), max(y), min(z), max(z)
 
-    def delete_duplicated_nodes(self, tol=1e-4):
-        mesh = self.__class__(self.elements_groups[:])
-        nodes_list = list(mesh.nodes[:])
-        nodes_index = []
+    # def delete_duplicated_nodes(self, tol=1e-4):
+    #     mesh = self.__class__(self.elements_groups[:])
+    #     nodes_list = list(mesh.nodes[:])
+    #     nodes_index = []
 
-        for i, node in enumerate(nodes_list):
-            for j in range(i + 1, len(nodes_list)):
-                dist = node.point_distance(nodes_list[j])
-                if dist < tol:
-                    nodes_index.append((j, i))
+    #     for i, node in enumerate(nodes_list):
+    #         for j in range(i + 1, len(nodes_list)):
+    #             dist = node.point_distance(nodes_list[j])
+    #             if dist < tol:
+    #                 nodes_index.append((j, i))
 
-        if nodes_index:
-            nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
-            for _, index in enumerate(nodes_index):
-                nodes_list.pop(index[0])
-                for group in mesh.elements_groups:
-                    if mesh.nodes[index[0]] in group.nodes:
-                        dict_node_element = group.elements_per_node
-                        for element in dict_node_element[mesh.nodes[index[0]]]:
-                            element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
+    #     if nodes_index:
+    #         nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
+    #         for _, index in enumerate(nodes_index):
+    #             nodes_list.pop(index[0])
+    #             for group in mesh.elements_groups:
+    #                 if mesh.nodes[index[0]] in group.nodes:
+    #                     dict_node_element = group.elements_per_node
+    #                     for element in dict_node_element[mesh.nodes[index[0]]]:
+    #                         element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
 
-            mesh.nodes = nodes_list
-            mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+    #         mesh.nodes = nodes_list
+    #         mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+
+    #     return mesh
+
+    def nodes_correction(self, reference_index, tol=1e-4):
+        if not self._nodes_correction:
+            nodes_reference = self.elements_groups[reference_index].nodes
+            groups = self.elements_groups[:]
+            groups.pop(reference_index)
+            nodes_correction = {}
+
+            for group in groups:
+                for node in group.nodes:
+                    for node_ref in nodes_reference:
+                        d = node.point_distance(node_ref)
+                        if 1e-8 < d < 1e-4:
+                            nodes_correction[node] = node_ref
+
+            self._nodes_correction = nodes_correction
+
+        return self._nodes_correction
+
+    def delete_duplicated_nodes(self, reference_index, tol=1e-4):
+
+        groups = self.elements_groups[:]
+        groups.pop(reference_index)
+
+        nodes_correction = self.nodes_correction(reference_index, tol)
+
+        count = 0
+        old_elements, new_elements = set(), set()
+        for g, group in enumerate(groups):
+            elements = []
+            for element in group.elements:
+                new = False
+                points = []
+                for point in element.points:
+                    try:
+                        points.append(nodes_correction[point])
+                        count += 1
+                        old_elements.add(element)
+                        new = True
+
+                    except KeyError:
+                        points.append(point)
+
+                elements.append(element.__class__(points))
+                if new:
+                    new_elements.add(element.__class__(points))
+
+            groups[g] = group.__class__(elements, name='')
+
+        groups.insert(reference_index, self.elements_groups[reference_index])
+
+        mesh = self.__class__(groups)
+        mesh._gmsh = self._gmsh
+        mesh._nodes_correction = self._nodes_correction
 
         return mesh
+
+    def copy(self):
+        m = self.__class__(elements_groups=self.elements_groups[:])
+        m._nodes_correction = self._nodes_correction
+        m._gmsh = self._gmsh
+
+        return m
