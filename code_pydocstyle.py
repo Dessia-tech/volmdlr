@@ -48,7 +48,7 @@ MAX_ERROR_BY_TYPE = {
     'D301': 1,
     'D302': 1,
 
-    'D400': 563,
+    'D400': 562,
     'D401': 1,
     'D402': 1,
     'D403': 184,
@@ -71,7 +71,7 @@ MAX_ERROR_BY_TYPE = {
 
 error_detected = False
 error_over_ratchet_limit = False
-ratchet_limit = 9
+ratchet_limit = 10000
 effective_date = date(2022, 11, 28)
 today = date.today()
 weekly_decrease = 5
