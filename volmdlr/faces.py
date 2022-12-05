@@ -5521,6 +5521,8 @@ class Triangle3D(PlaneFace3D):
         self._utd_surface3d = False
         self._utd_surface2d = False
         self._bbox = None
+        self._outer_contour3d = None
+        self._inner_contours3d = None
         # self.bounding_box = self._bounding_box()
 
         DessiaObject.__init__(self, name=name)

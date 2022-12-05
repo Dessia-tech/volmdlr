@@ -4932,15 +4932,15 @@ class Arc3D(Arc):
         line3d = Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.center)
         if math.isclose(tore_center.point_distance(self.center), 0.,
-                        abs_tol=1e-9):
+                        abs_tol=1e-6):
             # Sphere
             start_p, _ = line3d.point_projection(self.start)
             u = self.start - start_p
 
-            if math.isclose(u.norm(), 0, abs_tol=1e-9):
+            if math.isclose(u.norm(), 0, abs_tol=1e-6):
                 end_p, _ = line3d.point_projection(self.end)
                 u = self.end - end_p
-                if math.isclose(u.norm(), 0, abs_tol=1e-9):
+                if math.isclose(u.norm(), 0, abs_tol=1e-6):
                     interior_p, _ = line3d.point_projection(self.interior)
                     u = self.interior - interior_p
 
@@ -4959,7 +4959,7 @@ class Arc3D(Arc):
             u = self.center - tore_center
             u.normalize()
             v = axis.cross(u)
-            if not math.isclose(self.normal.dot(u), 0., abs_tol=1e-9):
+            if not math.isclose(self.normal.dot(u), 0., abs_tol=1e-6):
                 raise NotImplementedError(
                     'Outside of plane revolution not supported')
 
