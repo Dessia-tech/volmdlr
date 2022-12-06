@@ -30,18 +30,12 @@ import volmdlr.display as vmd
 
 def bounding_rectangle_adjacent_contours(contours: List):
     """
-    compute the bounding_box of a list of adjacent contours2d
+    Compute the bounding box of a list of adjacent contours2d.
 
-    Parameters
-    ----------
-    contours : List[volmdlr.wires.Contour2D]
-
-    Returns
-    -------
-    xmin : float
-    xmax : float
-    ymin : float
-    ymax : float
+    :param contours: A list of adjacent contours
+    :type contours: List[:class:`volmdlr.wires.Contour2D`]
+    :return: The bounding box
+    :rtype: :class:`volmdlr.core.BoundingRectangle`
     """
     xmin, xmax, ymin, ymax = contours[0].bounding_rectangle().bounds()
 
@@ -416,9 +410,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         return offset_intersections
 
     def offset(self, offset):
-        """"
-        generates an offset of a Wire2D
-
+        """
+        Generates an offset of a Wire2D.
         """
         offset_primitives = []
         infinite_primitives = []
@@ -1421,13 +1414,8 @@ class Contour2D(ContourMixin, Wire2D):
         return self._edge_polygon
 
     def _get_edge_polygon(self):
-
-        if len(self.primitives) == 1 and self.primitives[0].start == self.primitives[0].end:
-            return ClosedPolygon2D(self.primitives[0].discretization_points(number_points=200))
-
         points = []
         for edge in self.primitives:
-
             if points:
                 if edge.start != points[-1]:
                     points.append(edge.start)
@@ -1447,33 +1435,16 @@ class Contour2D(ContourMixin, Wire2D):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
             return False
-        return self.edge_polygon.point_belongs(point)
-
-    # def point_over_contour(self, point, abs_tol=1e-6):
-    #     belongs = False
-    #     for primitive in self.primitives:
-    #         if primitive.point_belongs(point, abs_tol):
-    #             belongs = True
-    #     return belongs
-
-    # def primitive_over_contour(self, primitive, tol: float = 1e-6):
-    #     for prim in self.primitives:
-    #         if not hasattr(prim, 'unit_direction_vector') and \
-    #                 hasattr(prim, 'tangent'):
-    #             vector1 = prim.tangent(0.5)
-    #         else:
-    #             vector1 = prim.unit_direction_vector(0.5)
-
-    #         if not hasattr(primitive, 'unit_direction_vector') and \
-    #                 hasattr(primitive, 'tangent'):
-    #             vector2 = primitive.tangent(0.5)
-    #         else:
-    #             vector2 = primitive.unit_direction_vector(0.5)
-    #         if vector1.is_colinear_to(vector2):
-    #             mid_point = primitive.middle_point()
-    #             if self.point_over_contour(mid_point, tol):
-    #                 return True
-    #     return False
+        if self.edge_polygon.point_belongs(point):
+            return True
+        # for edge in self.primitives:
+        #     if hasattr(edge, 'straight_line_point_belongs'):
+        #         if edge.straight_line_point_belongs(point):
+        #             return True
+        #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
+        if self.to_polygon(50).point_belongs(point):
+            return True
+        return False
 
     def point_distance(self, point):
         min_distance = self.primitives[0].point_distance(point)
@@ -1986,9 +1957,7 @@ class Contour2D(ContourMixin, Wire2D):
         return contour1, contour2
 
     def divide(self, contours, inside):
-        """
-        This method has a modified-iterating-list pylint error to be fixed
-        """
+        # TODO: This method has a modified-iterating-list pylint error to be fixed
         new_base_contours = [self]
         finished = False
         counter = 0
