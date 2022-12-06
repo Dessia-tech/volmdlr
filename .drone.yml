@@ -58,14 +58,12 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
-- name: install, build doc run scripts
+- name: install and run scripts
   image: dessia/python-gmsh:3.9
   commands:
-  - pip install Cython sphinx sphinx_rtd_theme coverage
+  - pip install Cython coverage
   - python setup.py install --user
-  - cd doc
-  - make html
-  - cd ../tests
+  - cd tests
   - coverage run --source volmdlr -m unittest discover
   - cd ../scripts
   - coverage run --source volmdlr ci_scripts.py
@@ -74,6 +72,19 @@ steps:
   - coverage json
   - coverage report
   - python coverage_script.py
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+- name: build doc
+  image: python:3.9
+  commands:
+  - pip install Cython sphinx sphinx_rtd_theme coverage
+  - python setup.py install --user
+  - cd doc
+  - make html
 
   volumes:
     # Mount pip cache from host
