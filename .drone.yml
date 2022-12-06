@@ -60,7 +60,7 @@ steps:
   commands:
   - git fetch --tags
   - pip install Cython sphinx sphinx_rtd_theme coverage
-  - python setup.py install
+  - python setup.py install --user
   - cd doc
   - make html
   - cd ../tests
