@@ -53,8 +53,6 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
-
-
 - name: install, build doc run scripts
   image: dessia/python-gmsh:3.9
   commands:
