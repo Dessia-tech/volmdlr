@@ -392,7 +392,7 @@ class BSplineCurve(Edge):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
         curve.knotvector = knot_vector
-        curve.delta = 0.02
+        curve.delta = 0.01
         curve_points = curve.evalpts
         self.curve = curve
 
@@ -775,7 +775,7 @@ class BSplineCurve(Edge):
         return bsplinecurve
 
     def simplify(self, min_distance: float = 0.01,
-                             max_distance: float = 0.05, angle: float = 5):
+                 max_distance: float = 0.05, angle: float = 5):
         points = self.points
         degree = self.degree
         previous_point = None
@@ -820,6 +820,7 @@ class BSplineCurve(Edge):
         #     return self
 
         return self.from_points_interpolation(points, degree)
+
 
 class Line2D(Line):
     """
@@ -1203,29 +1204,28 @@ class BSplineCurve2D(BSplineCurve):
         content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
                    ".UNSPECIFIED.,.F.,.F.,{},{}," \
                    ".UNSPECIFIED.);\n".format(
-            point_id, self.name, self.degree,
-            volmdlr.core.step_ids_to_str(points_ids),
-            tuple(self.knot_multiplicities),
-            tuple(self.knots))
+                       point_id, self.name, self.degree,
+                       volmdlr.core.step_ids_to_str(points_ids),
+                       tuple(self.knot_multiplicities),
+                       tuple(self.knots))
         return content, point_id + 1
 
-    def polygon_points(self, n: int = 15):
-        warnings.warn('polygon_points is deprecated,\
-        please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(n)
-
-    def discretization_points(self, *, number_points: int = 15, angle_resolution: int = None):
+    def discretization_points(self, *, number_points: int = 20, angle_resolution: int = None):
         if angle_resolution:
             number_points = angle_resolution
         if len(self.points) == number_points:
             return self.points
         curve = self.curve
-        curve.delta = 1/number_points
+        curve.delta = 1 / number_points
         curve_points = curve.evalpts
         self.curve = curve
-        points = [volmdlr.Point2D(*p) for p in curve_points]
-        return points
+        return [volmdlr.Point2D(*p) for p in curve_points]
+
+    def polygon_points(self, n: int = 20):
+        warnings.warn('polygon_points is deprecated,\
+        please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(number_points=n)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -1645,7 +1645,6 @@ class LineSegment2D(LineSegment):
 
     def infinite_primitive(self, offset):
         n = self.normal_vector()
-
         offset_point_1 = self.start + offset * n
 
         offset_point_2 = self.end + offset * n
@@ -2170,10 +2169,10 @@ class Arc2D(Arc):
         :param point_2d: Point to be verified
         :return: Return True if the point belongs to this surface, or False otherwise
         """
-        if self.point_belongs(point_2d):
+        if self.point_belongs(point):
             return True
         if self.start == self.end:
-            if point_2d.point_distance(self.center) <= self.radius:
+            if point.point_distance(self.center) <= self.radius:
                 return True
         center_distance_point = self.center.point_distance(point)
         straight_line = LineSegment2D(self.start, self.end)
@@ -2415,7 +2414,7 @@ class FullArc2D(Arc2D):
         if self.__class__.__name__ != other_arc.__class__.__name__:
             return False
         return (self.center == other_arc.center) \
-               and (self.start_end == other_arc.start_end)
+            and (self.start_end == other_arc.start_end)
 
     def straight_line_area(self):
         area = self.area()
@@ -3173,7 +3172,6 @@ class Line3D(Line):
     #                                    z1 + (z2 - z1) * t1)
     #
     #     return None
-
 
     def intersection(self, line):
         """
@@ -4010,11 +4008,9 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         (between 0 and 1) that would return the given point when the
         BSplineCurve3D is evaluated at the t value.
         """
-
         def f(param):
             p3d = volmdlr.Point3D(*self.curve.evaluate_single(param))
             return point.point_distance(p3d)
-
         res = scipy.optimize.minimize(fun=f, x0=(0.5), bounds=[(0, 1)],
                                       tol=1e-9)
         return res.x[0]
@@ -4046,7 +4042,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
         lines = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:]) if pt1 != pt2]
-        if lines: #quick fix. Real problem: Tolerance too low (0.001mm)
+        if lines:  # quick fix. Real problem: Tolerance too low (0.001mm)
             dir_vector = lines[0].unit_direction_vector()
             if all(line.unit_direction_vector() == dir_vector for line in lines):
                 return LineSegment3D(points[0], points[-1])
@@ -4091,10 +4087,10 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
                    ".UNSPECIFIED.,.F.,.F.,{},{}," \
                    ".UNSPECIFIED.);\n".format(
-            curve_id, self.name, self.degree,
-            volmdlr.core.step_ids_to_str(points_ids),
-            tuple(self.knot_multiplicities),
-            tuple(self.knots))
+                       curve_id, self.name, self.degree,
+                       volmdlr.core.step_ids_to_str(points_ids),
+                       tuple(self.knot_multiplicities),
+                       tuple(self.knots))
 
         if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
@@ -4217,7 +4213,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         print('Use BSplineCurve3D.trim instead of trim_between_evaluation')
         parameter1, parameter2 = min([parameter1, parameter2]), \
-                                 max([parameter1, parameter2])
+            max([parameter1, parameter2])
 
         if math.isclose(parameter1, 0, abs_tol=1e-7) \
                 and math.isclose(parameter2, 1, abs_tol=1e-7):
@@ -4696,7 +4692,6 @@ class Arc3D(Arc):
         x = []
         y = []
         z = []
-
         for pointx, pointy, pointz in self.discretization_points(number_points=25):
             x.append(pointx)
             y.append(pointy)
@@ -5045,10 +5040,8 @@ class Arc3D(Arc):
         '''
         check if a point3d belongs to the arc_3d or not
         '''
-
         def f(x):
             return (point3d - self.point_at_abscissa(x)).norm()
-
         length_ = self.length()
         x = npy.linspace(0, length_, 5)
         x_init = []
@@ -5091,7 +5084,7 @@ class FullArc3D(Arc3D):
         if self.__class__.__name__ != other_arc.__class__.__name__:
             return False
         return (self.center == other_arc.center) \
-               and (self.start_end == other_arc.start_end)
+            and (self.start_end == other_arc.start_end)
 
     @property
     def center(self):
@@ -5122,6 +5115,7 @@ class FullArc3D(Arc3D):
         dict_['normal'] = self.normal.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/normal')
         dict_['name'] = self.name
         return dict_
+
     def to_2d(self, plane_origin, x1, x2):
         center = self.center.to_2d(plane_origin, x1, x2)
         start_end = self.start.to_2d(plane_origin, x1, x2)

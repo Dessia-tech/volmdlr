@@ -28,6 +28,7 @@ import volmdlr.edges
 import volmdlr.display as vmd
 import os
 
+
 def bounding_rectangle_adjacent_contours(contours: List):
     """
     compute the bounding_box of a list of adjacent contours2d
@@ -4576,23 +4577,23 @@ class Circle3D(Contour3D):
         # print('\n')
         # arc3d = volmdlr.edges.Arc3D(point1, interior, point2)
         # if arc3d.radius > 0.016:
-            # onlyfiles = next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\inner_contour'))[2]
-            # l = len(onlyfiles)
-            # point1.save_to_file(
-            #     fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\points\point1_{l}.json')
-            # point2.save_to_file(
-            #     fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\points\point2_{l}.json')
-            # self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\inner_contour\circle_{l}.json')
-            # print(point1.to_dict())
-            # print(point2.to_dict())
-            # print('\n')
-            # print(self.__dict__)
-            # circle.to_dict()
-            # ax = arc3d.plot()
-            # print(arc3d.start)
-            # print(arc3d.interior)
-            # print(arc3d.end)
-            # print(arc3d.is_trigo)
+        # onlyfiles = next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\inner_contour'))[2]
+        # l = len(onlyfiles)
+        # point1.save_to_file(
+        #     fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\points\point1_{l}.json')
+        # point2.save_to_file(
+        #     fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\points\point2_{l}.json')
+        # self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\inner_contour\circle_{l}.json')
+        # print(point1.to_dict())
+        # print(point2.to_dict())
+        # print('\n')
+        # print(self.__dict__)
+        # circle.to_dict()
+        # ax = arc3d.plot()
+        # print(arc3d.start)
+        # print(arc3d.interior)
+        # print(arc3d.end)
+        # print(arc3d.is_trigo)
         return volmdlr.edges.Arc3D(point1, interior, point2)
 
 
