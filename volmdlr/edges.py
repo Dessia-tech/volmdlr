@@ -3654,9 +3654,10 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
         lines = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:]) if pt1 != pt2]
-        dir_vector = lines[0].unit_direction_vector()
-        if all(line.unit_direction_vector() == dir_vector for line in lines):
-            return LineSegment3D(points[0], points[-1])
+        if lines: #quick fix. Real problem: Tolerance too low (0.001mm)
+            dir_vector = lines[0].unit_direction_vector()
+            if all(line.unit_direction_vector() == dir_vector for line in lines):
+                return LineSegment3D(points[0], points[-1])
         # curve_form = arguments[3]
         if arguments[4] == '.F.':
             closed_curve = False
