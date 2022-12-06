@@ -1788,8 +1788,8 @@ class VolumeModel(dc.PhysicalObject):
 
         stream.write(content)
 
-    def to_geo(self, file_name: str,
-               factor: float, **kwargs):
+    def to_geo(self, file_name: str = '',
+               factor: float = 0.5, **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
         # initial_mesh_size: float = 5):
