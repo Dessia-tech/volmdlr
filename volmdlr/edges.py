@@ -2996,7 +2996,7 @@ class Line3D(Line):
         m, n, p = direction_vector2.x, direction_vector2.y, direction_vector2.z
         vector_components = [a, b, c, m, n, p]
         for i, component in enumerate(vector_components):
-            if abs(component) <= 1e-6:
+            if abs(component) <= 1e-5:
                 vector_components[i] = 0.0
         a, b, c, m, n, p = vector_components
         # if a == m == 0 and x2 != x1:
@@ -3014,7 +3014,7 @@ class Line3D(Line):
             coefficient_t = (b * (x2 - x1) - a * (y2 - y1)) / (n * a - b * m)
             coefficient_s = (n * (x2 - x1) - m * (y2 - y1)) / (n * a - b * m)
         elif a == m == 0:
-            if math.isclose(x2, x1, abs_tol=1e-6) and c * n != b * p:
+            if math.isclose(x2, x1, abs_tol=1e-5) and c * n != b * p:
                 if b != 0:
                     coefficient_t = ((z2 - z1) * b - c * (y2 - y1)) / (c * n - b * p)
                     coefficient_s = ((y2 - y1) + n * coefficient_t) / b
@@ -3024,7 +3024,7 @@ class Line3D(Line):
             else:
                 raise NotImplementedError
         elif b == n == 0.:
-            if math.isclose(y2, y1, abs_tol=1e-6) and c * m != a * p:
+            if math.isclose(y2, y1, abs_tol=1e-5) and c * m != a * p:
                 if a != 0.:
                     coefficient_t = ((z2 - z1) * a - c * (x2 - x1)) / (c * m - a * p)
                     coefficient_s = ((x2 - x1) + m * coefficient_t) / a
