@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as npy
 import scipy as scp
 import scipy.optimize
+import scipy.integrate as scipy_integrate
 
 from geomdl import utilities, BSpline, fitting, operations
 from geomdl.operations import length_curve, split_curve
@@ -217,6 +218,14 @@ class Line(dc.DessiaObject):
         norm_u = vector.norm()
         t = (point - self.point1).dot(vector) / norm_u
         return t
+
+    def sort_points_along_line(self, points):
+        """
+        Sort point along a line
+        :param points: list of points to be sorted
+        :return: sorted points
+        """
+        return sorted(points, key=self.abscissa)
 
     def split(self, split_point):
         return [self.__class__(self.point1, split_point),
@@ -947,31 +956,13 @@ class Line2D(Line):
     def cut_between_two_points(self, point1, point2):
         return LineSegment2D(point1, point2)
 
-    def sort_points_along_line(self, points: List[volmdlr.Point2D]) -> List[
-            volmdlr.Point2D]:
-        most_distant_point = None
-        farthest_distance = 0
-        for i, point1 in enumerate(points):
-            distances = []
-            points_to_search = points[:i - 1] + points[i:]
-            for point2 in points_to_search:
-                distances.append(point1.point_distance(point2))
-            max_point_distance = max(distances)
-            farthest_point = points_to_search[
-                distances.index(max_point_distance)]
-            if max_point_distance > farthest_distance:
-                most_distant_point = farthest_point
-        list_points = [most_distant_point]
-        points.remove(most_distant_point)
-        distances_to_reference_point = {}
-        for point in points:
-            distances_to_reference_point[point] = \
-                most_distant_point.point_distance(point)
-        distances_to_reference_point = dict(
-            sorted(distances_to_reference_point.items(),
-                   key=lambda item: item[1]))
-        list_points.extend(list(distances_to_reference_point.keys()))
-        return list_points
+    def point_belongs(self, point2d, abs_tol: float = 1e-6):
+        """
+        Verifies if the point2d belongs to the line
+        :param point2d: point to be verified
+        :return: True if point belongs to line, False otherwise
+        """
+        return math.isclose(self.point_distance(point2d), 0, abs_tol=abs_tol)
 
     def point_distance(self, point2d):
         """
@@ -1077,13 +1068,16 @@ class BSplineCurve2D(BSplineCurve):
 
         # self.curve.delta = 0.01
         # points = [volmdlr.Point2D(px, py) for (px, py) in self.curve.evalpts]
-        length = self.length()
-        points = [self.point_at_abscissa(length * i / 50) for i in range(51)]
+        # length = self.length()
+        # points = [self.point_at_abscissa(length * i / 50) for i in range(51)]
+        points = self.discretization_points(number_points=50)
 
         x_points = [p.x for p in points]
         y_points = [p.y for p in points]
         ax.plot(x_points, y_points, color=color, alpha=alpha)
-
+        if plot_points:
+            for point in points:
+                point.plot(ax, color=color)
         return ax
 
     def to_3d(self, plane_origin, x1, x2):
@@ -1113,13 +1107,17 @@ class BSplineCurve2D(BSplineCurve):
                         tuple(self.knots))
         return content, point_id + 1
 
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
-        length = self.length()
+    def discretization_points(self, *, number_points: int = 20, angle_resolution: int = None):
         if angle_resolution:
             number_points = angle_resolution
-        if not number_points:
-            number_points = len(self.points)
-        return [self.point_at_abscissa(i * length / number_points) for i in range(number_points + 1)]
+        if len(self.points) == number_points:
+            return self.points
+        curve = self.curve
+        curve.delta = 1 / number_points
+        curve_points = curve.evalpts
+        self.curve = curve
+        points = [volmdlr.Point2D(*p) for p in curve_points]
+        return points
 
     def polygon_points(self, n: int = 15):
         warnings.warn('polygon_points is deprecated,\
@@ -1150,29 +1148,32 @@ class BSplineCurve2D(BSplineCurve):
             point.rotation_inplace(center, angle)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.discretization_points(number_points=201)
+        polygon_points = self.discretization_points(number_points=500)
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
         for points in zip(polygon_points[:-1], polygon_points[1:]):
             linesegment = LineSegment2D(points[0], points[1])
             intersections = linesegment.line_intersections(line2d)
+
+            if intersections and intersections[0] not in list_intersections:
+                # initial_abscissa += linesegment.length()
+                # if intersections:
+                #     if initial_abscissa < length * 0.1:
+                #         list_abcissas = [initial_abscissa * n for n in
+                #                          npy.linspace(0, 1, 100)]
+                #     else:
+                #         list_abcissas = [initial_abscissa * n for n in
+                #                          npy.linspace(0.9, 1, 100)]
+                #     distance = npy.inf
+                #     for abscissa in list_abcissas:
+                #         point_in_curve = self.point_at_abscissa(abscissa)
+                #         dist = point_in_curve.point_distance(intersections[0])
+                #         if dist < distance:
+                #             distance = dist
+                #             intersection = point_in_curve
+                list_intersections.append(intersections[0])
             initial_abscissa += linesegment.length()
-            if intersections:
-                if initial_abscissa < length * 0.1:
-                    list_abcissas = [initial_abscissa * n for n in
-                                     npy.linspace(0, 1, 100)]
-                else:
-                    list_abcissas = [initial_abscissa * n for n in
-                                     npy.linspace(0.9, 1, 100)]
-                distance = npy.inf
-                for abscissa in list_abcissas:
-                    point_in_curve = self.point_at_abscissa(abscissa)
-                    dist = point_in_curve.point_distance(intersections[0])
-                    if dist < distance:
-                        distance = dist
-                        intersection = point_in_curve
-                list_intersections.append(intersection)
         return list_intersections
 
     def line_crossings(self, line2d: Line2D):
@@ -1367,15 +1368,10 @@ class LineSegment2D(LineSegment):
                     return []
 
             return [point_projection1]
-        else:
-            vector1 = self.start - line.point1
-            vector2 = self.start - line.point2
-            vector3 = self.end - line.point1
-            vector4 = self.end - line.point2
-            if math.isclose(vector1.cross(vector2), 0, abs_tol=1e-6):
-                return [self.start]
-            if math.isclose(vector3.cross(vector4), 0, abs_tol=1e-6):
-                return [self.end]
+        if line.point_belongs(self.start):
+            return [self.start]
+        if line.point_belongs(self.end):
+            return [self.end]
         return []
 
     def linesegment_intersections(self, linesegment: 'LineSegment2D'):
@@ -2661,7 +2657,7 @@ class ArcEllipse2D(Edge):
 
         x = []
         y = []
-        for px, py in self.discretization_points():
+        for px, py in self.discretization_points(number_points=100):
             x.append(px)
             y.append(py)
 
@@ -4496,7 +4492,6 @@ class Arc3D(Arc):
         x = []
         y = []
         z = []
-
         for pointx, pointy, pointz in self.discretization_points(number_points=25):
             x.append(pointx)
             y.append(pointy)
