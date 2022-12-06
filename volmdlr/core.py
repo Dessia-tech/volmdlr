@@ -510,6 +510,10 @@ class CompositePrimitive2D(Primitive2D):
 
 
 class Primitive3D(dc.PhysicalObject, CompositePrimitive):
+    """
+
+    """
+
     def __init__(self, color=None, alpha=1, name=''):
         self.color = color
         self.alpha = alpha
@@ -1021,7 +1025,12 @@ class VolumeModel(dc.PhysicalObject):
                                  'faces']
     _dessia_methods = ['to_stl_model']
     """
+    A class containing one or several :class:`volmdlr.core.Primitive3D`.
 
+    :param primitives: The vector's abscissa
+    :type primitives: List[:class:`volmdlr.core.Primitive3D`]
+    :param name: The VolumeModel's name
+    :type name: str
     """
 
     def __init__(self, primitives: List[Primitive3D], name: str = ''):
@@ -1499,7 +1508,7 @@ class VolumeModel(dc.PhysicalObject):
             presentation_style_id = suface_style_usage_id + 1
 
             step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
-                            "#{curve_style_id}));\n"
+                            f"#{curve_style_id}));\n"
 
             styled_item_id = presentation_style_id + 1
 
@@ -1520,7 +1529,7 @@ class VolumeModel(dc.PhysicalObject):
         stream.write(step_content)
 
     def volmdlr_volume_model(self):
-        return [self]
+        return self
 
 
 class MovingVolumeModel(VolumeModel):
