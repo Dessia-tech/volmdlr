@@ -351,6 +351,9 @@ class LineSegment(Edge):
 
         return 'Line(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + str(end_point_tag) + '};'
 
+    def get_geo_points(self):
+        return [self.start, self.end]
+
 
 class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
@@ -751,6 +754,9 @@ class BSplineCurve(Edge):
         """
 
         return 'BSpline(' + str(tag) + ') = {' + str(control_points_tags)[1:-1] + '};'
+
+    def get_geo_points(self):
+        return [point for point in self.discretization_points()]
 
 
 class Line2D(Line):
@@ -1745,6 +1751,9 @@ class Arc(Edge):
 
         return 'Circle(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + \
             str(center_point_tag) + ', ' + str(end_point_tag) + '};'
+
+    def get_geo_points(self):
+        return [self.start, self.center, self.end]
 
 
 class Arc2D(Arc):

@@ -1371,6 +1371,12 @@ class ContourMixin(WireMixin):
 
         return 'Line Loop(' + str(tag) + ') = {' + str(primitives_tags)[1:-1] + '};'
 
+    def get_geo_points(self):
+        points = set()
+        for primitive in self.primitives:
+            points.update(primitive.get_geo_points())
+        return points
+
 
 class Contour2D(ContourMixin, Wire2D):
     """
@@ -3859,6 +3865,11 @@ class Circle2D(Contour2D):
         please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
+
+    def get_geo_points(self):
+        return [volmdlr.Point3D(self.radius, self.center.y, 0),
+                volmdlr.Point3D(self.center.x, self.center.y, 0),
+                volmdlr.Point3D(-self.radius, self.center.y, 0)]
 
 
 class Contour3D(ContourMixin, Wire3D):

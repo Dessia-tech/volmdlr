@@ -7887,31 +7887,40 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         points = set()
         for face in self.faces:
             for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                points.update(contour.get_geo_points())
                 if isinstance(contour, volmdlr.wires.Circle2D):
-                    points.add(volmdlr.Point3D(contour.radius, contour.center.y, 0))
-                    points.add(volmdlr.Point3D(contour.center.x, contour.center.y, 0))
-                    points.add(volmdlr.Point3D(-contour.radius, contour.center.y, 0))
-
+                    pass
                 else:
                     for _, primitive in enumerate(contour.primitives):
-                        if isinstance(primitive, volmdlr.edges.LineSegment):
-                            points.add(primitive.start)
-                            points.add(primitive.end)
-
-                        if isinstance(primitive, volmdlr.edges.Arc):
-                            points.add(primitive.start)
-                            points.add(primitive.center)
-                            points.add(primitive.end)
-
-                        if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
-                            # for point in primitive.control_points:
-                            # points.add(point)
-                            for point in primitive.discretization_points():
-                                points.add(point)
-
                         if ((primitive not in primitives)
                                 and (primitive.reverse() not in primitives)):
                             primitives.append(primitive)
+
+                # if isinstance(contour, volmdlr.wires.Circle2D):
+                #     points.add(volmdlr.Point3D(contour.radius, contour.center.y, 0))
+                #     points.add(volmdlr.Point3D(contour.center.x, contour.center.y, 0))
+                #     points.add(volmdlr.Point3D(-contour.radius, contour.center.y, 0))
+
+                # else:
+                #     for _, primitive in enumerate(contour.primitives):
+                #         if isinstance(primitive, volmdlr.edges.LineSegment):
+                #             points.add(primitive.start)
+                #             points.add(primitive.end)
+
+                #         if isinstance(primitive, volmdlr.edges.Arc):
+                #             points.add(primitive.start)
+                #             points.add(primitive.center)
+                #             points.add(primitive.end)
+
+                #         if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
+                #             # for point in primitive.control_points:
+                #             # points.add(point)
+                #             for point in primitive.discretization_points():
+                #                 points.add(point)
+
+                #         if ((primitive not in primitives)
+                #                 and (primitive.reverse() not in primitives)):
+                #             primitives.append(primitive)
 
         indices_check = len(primitives) * [None]
 
