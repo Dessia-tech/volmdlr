@@ -4,7 +4,6 @@
 
 """
 # from binaryornot.check import is_binary
-import io
 import struct
 import warnings
 # from typing import BinaryIO
@@ -15,6 +14,7 @@ from binaryornot.check import is_binary
 from kaitaistruct import KaitaiStream
 
 import dessia_common as dc
+from dessia_common.files import BinaryFile, StringFile
 import volmdlr as vm
 import volmdlr.core as vmc
 import volmdlr.faces as vmf
@@ -24,8 +24,9 @@ import volmdlr.faces as vmf
 
 
 class Stl(dc.DessiaObject):
-    """STL files are used to represent simple 3D models, defined using
-    triangular 3D faces.
+    """
+    STL files are used to represent simple 3D models,
+    defined using triangular 3D faces.
 
     Initially it was introduced as native format for 3D Systems
     Stereolithography CAD system, but due to its extreme simplicity, it
@@ -82,7 +83,7 @@ class Stl(dc.DessiaObject):
         return all_points
 
     @classmethod
-    def from_binary_stream(cls, stream: io.BytesIO, distance_multiplier: float = 0.001):
+    def from_binary_stream(cls, stream: BinaryFile, distance_multiplier: float = 0.001):
         stream.seek(0)
 
         stream = KaitaiStream(stream)
@@ -127,7 +128,7 @@ class Stl(dc.DessiaObject):
         return cls(triangles, name=name)
 
     @classmethod
-    def from_text_stream(cls, stream: io.StringIO,
+    def from_text_stream(cls, stream: StringFile,
                          distance_multiplier: float = 0.001):
         stream.seek(0)
 

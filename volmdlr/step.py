@@ -5,7 +5,8 @@
 """
 
 import time
-from typing import BinaryIO, List
+from typing import List
+from dessia_common.files import BinaryFile
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -116,7 +117,6 @@ def item_defined_transformation(arguments, object_dict):
     # TODO : how to frame map properly from these two Frame3D ?
     # return volmdlr_object2 - volmdlr_object1
     return [volmdlr_object1, volmdlr_object2]
-#
 
 
 def manifold_surface_shape_representation(arguments, object_dict):
@@ -297,7 +297,7 @@ class Step(dc.DessiaObject):
         return self._graph
 
     @classmethod
-    def from_stream(cls, stream: BinaryIO = None):
+    def from_stream(cls, stream: BinaryFile = None):
         stream.seek(0)
         lines = []
         for line in stream:
