@@ -16,13 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside
 * CylindricalSurface3D: line_intersections, linesegment_intersections, plane_intersection
 * Line2D: point_distance
-
 * Line3D: to_2d
-* ArcEllipse2D: straight_line_area
-* Line3D: skew_to: Verifies if two Line3D are skew
-* LineSegment3D.line_interserctions
-* ArcEllipse3D.discretization_points()
-
+* Line3D: skew_to (verifies if two Line3D are skew)
+* LineSegment3D: line_interserctions
+* ArcEllipse3D: discretization_points
+* FullArc3D: linesegment_intersections
+* Line: sort_points_along_line
+* ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
 
 
 ### Fixed
@@ -30,23 +30,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * BsplineCurve2D: new discretization points method (polygon_points deprecated)
 * Arc3D: plot
-* Fix some to_step methods from edges.py and faces.py
 * Cylinder: point_belongs
 * FullArc3D: plot (use discretization_points instead of discretise)
-* Face3D.line_intersections: consider borders
+* Face3D: line_intersections: consider borders
 * STL: from stream (use BinaryFile and StringFile instead of io.BinaryIO and FileIO)
 * Step: from stream (use BinaryFile instead of io.BinaryIO)
 * Contour: is_overlapping (consider intersecting_points is empty)
 * LineSegment2D: to_wire (use discretization_points instead of discretise)
+* ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
+* Fix some to_step methods from edges.py and faces.py
 
 
 ### Performance improvements
 
 * Avoid unneeded bbox computation
 
+
 ### Refactorings
-* LineSegment3D.intersections
+* LineSegment3D: intersections
+* Line2D: sort_points_along_line
 
 
 ### Unittests
@@ -65,7 +68,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment3D: linesegment_intersections
 * Contour: is_overlapping
 * LineSegment2D: to_wire
-* ArcEllipse3D.discretization_points()
+* ArcEllipse3D: discretization_points
+* FullArc3D: linesegment_intersections
+* Line2D: sort_points_along_line
+* Line3D: sort_points_along_line
+* ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
 
 
 ## v0.6.0 [11/7/2022]
