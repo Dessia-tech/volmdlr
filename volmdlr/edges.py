@@ -484,8 +484,7 @@ class BSplineCurve(Edge):
 
     def unit_direction_vector(self, abscissa: float):
         """
-        Computes the 2D or 3D unit direction vector of B-spline curve at
-        a given abscissa.
+        Computes the 2D or 3D unit direction vector of B-spline curve at a given abscissa.
 
         :param abscissa: The abscissa on the B-spline curve where the unit
             direction vector will be computed
@@ -509,8 +508,7 @@ class BSplineCurve(Edge):
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
                  tol: float = 1e-4):
         """
-        Computes the abscissa of a 2D or 3D point using the least square
-        method.
+        Computes the abscissa of a 2D or 3D point using the least square method.
 
         :param point: The point located on the B-spline curve
         :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
@@ -1464,7 +1462,7 @@ class LineSegment2D(LineSegment):
 
     def linesegment_intersections(self, linesegment: 'LineSegment2D'):
         """
-        touching linesegments does not intersect
+        Touching linesegments does not intersect.
         """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
         # TODO: May be these commented conditions should be used for linesegment_crossings
@@ -1503,7 +1501,7 @@ class LineSegment2D(LineSegment):
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
              plot_points=False):
         """
-        Plots the edge.
+        Plots the Linesegment2D.
         """
         if ax is None:
             _, ax = plt.subplots()
