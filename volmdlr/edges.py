@@ -74,14 +74,13 @@ class Edge(dc.DessiaObject):
 
     def length(self):
         """
-        Calculates the edge length
-        :return: edges\' length
+        Calculates the edge's length.
         """
         raise NotImplementedError(f'length method not implememented by {self.__class__.__name__}')
 
     def point_at_abscissa(self, abscissa):
         """
-        Calcultes the point at given abscissa
+        Calcultes the point at given abscissa.
         """
         raise NotImplementedError(f'point_at_abscissa method not implememented by {self.__class__.__name__}')
 
@@ -91,11 +90,12 @@ class Edge(dc.DessiaObject):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
-        discretize a Edge to have "n" points
-        :param number_points: the number of points (including start and end points)
-             if unset, only start and end will be returned
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
-            to mesh an arc
+        Discretizes an Edge to have "n" points.
+
+        :param number_points: the number of points (including start and end
+            points) if unset, only start and end will be returned
+        :param angle_resolution: if set, the sampling will be adapted to have
+            a controlled angular distance. Usefull to mesh an arc
         :return: a list of sampled points
         """
         if number_points is None:
@@ -130,7 +130,8 @@ class Edge(dc.DessiaObject):
 
     def normal_vector(self, abscissa):
         """
-        Calculates the normal vector the edge at given abscissa
+        Calculates the normal vector the edge at given abscissa.
+
         :return: the normal vector
         """
         raise NotImplementedError('the normal_vector method must be'
@@ -138,7 +139,8 @@ class Edge(dc.DessiaObject):
 
     def unit_normal_vector(self, abscissa):
         """
-        Calculates the unit normal vector the edge at given abscissa
+        Calculates the unit normal vector the edge at given abscissa.
+
         :param abscissa: edge abscissa
         :return: unit normal vector
         """
@@ -147,7 +149,8 @@ class Edge(dc.DessiaObject):
 
     def direction_vector(self, abscissa):
         """
-        Calculates the direction vector the edge at given abscissa
+        Calculates the direction vector the edge at given abscissa.
+
         :param abscissa: edge abscissa
         :return: direction vector
         """
@@ -156,7 +159,8 @@ class Edge(dc.DessiaObject):
 
     def unit_direction_vector(self, abscissa):
         """
-        Calculates the unit direction vector the edge at given abscissa
+        Calculates the unit direction vector the edge at given abscissa.
+
         :param abscissa: edge abscissa
         :return: unit direction vector
         """
@@ -165,10 +169,12 @@ class Edge(dc.DessiaObject):
 
     def straight_line_point_belongs(self, point):
         """
-        Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points
+        Verifies if a point belongs to the surface created by closing the edge
+        with a line between its start and end points.
+
         :param point: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
+        :return: Return True if the point belongs to this surface,
+            or False otherwise
         """
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
@@ -225,7 +231,8 @@ class Line(dc.DessiaObject):
 
     def sort_points_along_line(self, points):
         """
-        Sort point along a line
+        Sort point along a line.
+
         :param points: list of points to be sorted
         :return: sorted points
         """
@@ -238,7 +245,8 @@ class Line(dc.DessiaObject):
     def is_between_points(self, point1: volmdlr.Point2D,
                           point2: volmdlr.Point2D):
         """
-        Verifies if a line is between two points
+        Verifies if a line is between two points.
+
         :param point1: first point
         :type point1: volmdlr.Point2D
         :param point2: second point
@@ -280,9 +288,10 @@ class LineSegment(Edge):
 
     def unit_direction_vector(self, abscissa=0.):
         """
+        Computes a unit direction vector for the line segment.
 
-        :param abscissa: defines where in the line_segement the unit
-         direction vector is to be calculated
+        :param abscissa: defines where in the line segement the unit
+            direction vector is to be calculated
         :return: The unit direction vector of the LineSegement
         """
         direction_vector = self.direction_vector()
@@ -291,8 +300,8 @@ class LineSegment(Edge):
 
     def direction_vector(self, abscissa=0.):
         """
-        :param abscissa: defines where in the line_segement
-        direction vector is to be calculated
+        :param abscissa: defines where in the line segement
+            direction vector is to be calculated
         :return: The direction vector of the LineSegement
         """
         if not self._direction_vector:
@@ -963,32 +972,6 @@ class Line2D(Line):
     def cut_between_two_points(self, point1, point2):
         return LineSegment2D(point1, point2)
 
-    def sort_points_along_line(self, points: List[volmdlr.Point2D]) -> List[
-            volmdlr.Point2D]:
-        most_distant_point = None
-        farthest_distance = 0
-        for i, point1 in enumerate(points):
-            distances = []
-            points_to_search = points[:i - 1] + points[i:]
-            for point2 in points_to_search:
-                distances.append(point1.point_distance(point2))
-            max_point_distance = max(distances)
-            farthest_point = points_to_search[
-                distances.index(max_point_distance)]
-            if max_point_distance > farthest_distance:
-                most_distant_point = farthest_point
-        list_points = [most_distant_point]
-        points.remove(most_distant_point)
-        distances_to_reference_point = {}
-        for point in points:
-            distances_to_reference_point[point] = \
-                most_distant_point.point_distance(point)
-        distances_to_reference_point = dict(
-            sorted(distances_to_reference_point.items(),
-                   key=lambda item: item[1]))
-        list_points.extend(list(distances_to_reference_point.keys()))
-        return list_points
-
     def point_belongs(self, point2d, abs_tol: float = 1e-6):
         """
         Verifies if the point2d belongs to the line
@@ -1009,6 +992,28 @@ class Line2D(Line):
 
 
 class BSplineCurve2D(BSplineCurve):
+    """
+    A class for 2 dimensional B-spline curves. The following rule must be
+    respected : `number of knots = number of control points + degree + 1`
+
+    :param degree: The degree of the 2 dimensional B-spline curve
+    :type degree: int
+    :param control_points: A list of 2 dimensional points
+    :type control_points: List[:class:`volmdlr.Point2D`]
+    :param knot_multiplicities: The vector of multiplicities for each knot
+    :type knot_multiplicities: List[int]
+    :param knots: The knot vector composed of values between 0 and 1
+    :type knots: List[float]
+    :param weights: The weight vector applied to the knot vector. Default
+        value is None
+    :type weights: List[float], optional
+    :param periodic: If `True` the B-spline curve is periodic. Default value
+        is False
+    :type periodic: bool, optional
+    :param name: The name of the B-spline curve. Default value is ''
+    :type name: str, optional
+    """
+
     _non_serializable_attributes = ['curve']
 
     def __init__(self,
@@ -1032,6 +1037,12 @@ class BSplineCurve2D(BSplineCurve):
 
     @property
     def bounding_rectangle(self):
+        """
+        Computes the bounding rectangle of the 2 dimensional B-spline curve.
+
+        :return: The bounding rectangle
+        :rtype: :class:`volmdlr.core.BoundingRectangle`
+        """
         if not self._bounding_rectangle:
             points = self.discretization_points(number_points=50)
             points_x = [p.x for p in points]
@@ -1042,11 +1053,25 @@ class BSplineCurve2D(BSplineCurve):
         return self._bounding_rectangle
 
     def length(self):
+        """
+        Computes the length of the 2 dimensional B-spline curve.
+
+        :return: The length of the 2 dimensional B-spline curve
+        :rtype: float
+        """
         if not self._length:
             self._length = length_curve(self.curve)
         return self._length
 
     def tangent(self, position: float = 0.0):
+        """
+        Computes the tangent at a given parameter between 0 and 1.
+
+        :param position: The parameter at which the tangent is computed.
+        :type position: float
+        :return: A 2 dimensional point representing the tangent
+        :rtype: :class:`volmdlr.Point2D`
+        """
         _, tangent = operations.tangent(self.curve, position,
                                         normalize=True)
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
@@ -1217,9 +1242,9 @@ class BSplineCurve2D(BSplineCurve):
         return crossings
 
     def to_wire(self, n: int):
-        '''
+        """
         convert a bspline curve to a wire2d defined with 'n' line_segments
-        '''
+        """
 
         u = npy.linspace(0, 1, num=n + 1).tolist()
         points = []
@@ -1230,9 +1255,9 @@ class BSplineCurve2D(BSplineCurve):
         return volmdlr.wires.Wire2D.from_points(points)
 
     def reverse(self):
-        '''
+        """
         reverse the bspline's direction by reversing its start and end points
-        '''
+        """
 
         return self.__class__(degree=self.degree,
                               control_points=self.control_points[::-1],
@@ -1252,9 +1277,9 @@ class BSplineCurve2D(BSplineCurve):
         return distance
 
     def nearest_point_to(self, point):
-        '''
+        """
         find out the nearest point on the linesegment to point
-        '''
+        """
 
         points = self.polygon_points(500)
         return point.nearest_point(points)
@@ -1270,9 +1295,9 @@ class BSplineCurve2D(BSplineCurve):
         return intersections_points
 
     def axial_symmetry(self, line):
-        '''
+        """
         finds out the symmetric bsplinecurve2d according to a line
-        '''
+        """
 
         points_symmetry = [point.axial_symmetry(line) for point in self.control_points]
 
@@ -1285,6 +1310,16 @@ class BSplineCurve2D(BSplineCurve):
 
 
 class BezierCurve2D(BSplineCurve2D):
+    """
+    A class for 2 dimensional Bezier curves.
+
+    :param degree: The degree of the Bezier curve
+    :type degree: int
+    :param control_points: A list of 2 dimensional points
+    :type control_points: List[:class:`volmdlr.Point2D`]
+    :param name: The name of the B-spline curve. Default value is ''
+    :type name: str, optional
+    """
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point2D],
                  name: str = ''):
@@ -1604,25 +1639,25 @@ class LineSegment2D(LineSegment):
         return self.discretization_points(number_points=discretization_resolution)
 
     def to_wire(self, n: int):
-        '''
+        """
         convert a linesegment2d to a wire2d defined with 'n' line_segments
-        '''
+        """
 
         points = self.discretization_points(number_points=n + 1)
         return volmdlr.wires.Wire2D.from_points(points)
 
     def nearest_point_to(self, point):
-        '''
+        """
         find out the nearest point on the linesegment to point
-        '''
+        """
 
         points = self.discretization_points(number_points=500)
         return point.nearest_point(points)
 
     def axial_symmetry(self, line):
-        '''
+        """
         finds out the symmetric linesegment2d according to a line
-        '''
+        """
 
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.end]]
 
@@ -2293,16 +2328,16 @@ class Arc2D(Arc):
         return Arc2D(self.start, interior, self.end)
 
     def to_wire(self, angle_resolution: float = 10.):
-        '''
+        """
         convert an arc to a wire2d defined with line_segments
-        '''
+        """
 
         return volmdlr.wires.Wire2D.from_points(self.polygon_points(angle_resolution))
 
     def axial_symmetry(self, line):
-        '''
+        """
         finds out the symmetric arc2d according to a line
-        '''
+        """
 
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
 
@@ -3863,6 +3898,27 @@ class LineSegment3D(LineSegment):
 
 
 class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
+    """
+    A class for 3 dimensional B-spline curves. The following rule must be
+    respected : `number of knots = number of control points + degree + 1`
+
+    :param degree: The degree of the 3 dimensional B-spline curve
+    :type degree: int
+    :param control_points: A list of 3 dimensional points
+    :type control_points: List[:class:`volmdlr.Point3D`]
+    :param knot_multiplicities: The vector of multiplicities for each knot
+    :type knot_multiplicities: List[int]
+    :param knots: The knot vector composed of values between 0 and 1
+    :type knots: List[float]
+    :param weights: The weight vector applied to the knot vector. Default
+        value is None
+    :type weights: List[float], optional
+    :param periodic: If `True` the B-spline curve is periodic. Default value
+        is False
+    :type periodic: bool, optional
+    :param name: The name of the B-spline curve. Default value is ''
+    :type name: str, optional
+    """
     _non_serializable_attributes = ['curve']
 
     def __init__(self,
@@ -4362,6 +4418,16 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
 
 
 class BezierCurve3D(BSplineCurve3D):
+    """
+    A class for 3 dimensional Bezier curves.
+
+    :param degree: The degree of the Bezier curve
+    :type degree: int
+    :param control_points: A list of 3 dimensional points
+    :type control_points: List[:class:`volmdlr.Point3D`]
+    :param name: The name of the B-spline curve. Default value is ''
+    :type name: str, optional
+    """
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
                  name: str = ''):
@@ -4377,13 +4443,9 @@ class BezierCurve3D(BSplineCurve3D):
 class Arc3D(Arc):
     """
     An arc is defined by a starting point, an end point and an interior point
-
     """
 
     def __init__(self, start, interior, end, name=''):
-        """
-
-        """
         self._utd_normal = False
         self._utd_center = False
         self._utd_frame = False
@@ -5015,9 +5077,9 @@ class Arc3D(Arc):
         return content, [current_id]
 
     def point_belongs(self, point3d, abs_tol=1e-10):
-        '''
+        """
         check if a point3d belongs to the arc_3d or not
-        '''
+        """
         def f(x):
             return (point3d - self.point_at_abscissa(x)).norm()
         length_ = self.length()
