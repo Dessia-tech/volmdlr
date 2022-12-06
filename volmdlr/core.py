@@ -1942,8 +1942,8 @@ class VolumeModel(dc.PhysicalObject):
                         continue
         return surfaces
 
-    def to_msh(self, file_name: str, mesh_dimension: int,
-               factor: float, **kwargs):
+    def to_msh(self, mesh_dimension: int,
+               factor: float, file_name: str = '', **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
         # initial_mesh_size: float = 5):
@@ -1987,7 +1987,12 @@ class VolumeModel(dc.PhysicalObject):
         # except KeyError:
         #     initial_mesh_size = 5
 
-        self.to_geo(file_name, factor,
+        if file_name == '':
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                file_name = f.name
+
+        self.to_geo(file_name=file_name,
+                    factor=factor,
                     curvature_mesh_size=kwargs['curvature_mesh_size'],
                     min_points=kwargs['min_points'],
                     initial_mesh_size=kwargs['initial_mesh_size'])
