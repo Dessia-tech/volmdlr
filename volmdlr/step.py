@@ -145,38 +145,37 @@ def shape_representation(arguments, object_dict):
     if len(arguments) == 4:
         shells = object_dict[int(arguments[3])]
         return shells
-    else:
-        shells = []
-        frames = []
-        for arg in arguments[1]:
-            if int(arg[1:]) in object_dict and \
-                    isinstance(object_dict[int(arg[1:])], list) and \
-                    len(object_dict[int(arg[1:])]) == 1:
-                shells.append(*object_dict[int(arg[1:])])
-            elif int(arg[1:]) in object_dict and \
-                    isinstance(object_dict[int(arg[1:])],
-                               volmdlr.faces.OpenShell3D):
-                shells.append(object_dict[int(arg[1:])])
-            elif int(arg[1:]) in object_dict and \
-                    isinstance(object_dict[int(arg[1:])],
-                               volmdlr.Frame3D):
-                # TODO: Is there something to read here ?
-                frames.append(object_dict[int(arg[1:])])
-            elif int(arg[1:]) in object_dict and \
-                    isinstance(object_dict[int(arg[1:])],
-                               volmdlr.edges.Arc3D):
-                shells.append(object_dict[int(arg[1:])])
-            elif int(arg[1:]) in object_dict and \
-                    isinstance(object_dict[int(arg[1:])],
-                               volmdlr.edges.BSplineCurve3D):
-                shells.append(object_dict[int(arg[1:])])
-            else:
-                pass
-        if not shells and frames:
-            return frames
-        elif shells and frames:
-            raise NotImplementedError
-        return shells
+    shells = []
+    frames = []
+    for arg in arguments[1]:
+        if int(arg[1:]) in object_dict and \
+                isinstance(object_dict[int(arg[1:])], list) and \
+                len(object_dict[int(arg[1:])]) == 1:
+            shells.append(*object_dict[int(arg[1:])])
+        elif int(arg[1:]) in object_dict and \
+                isinstance(object_dict[int(arg[1:])],
+                           volmdlr.faces.OpenShell3D):
+            shells.append(object_dict[int(arg[1:])])
+        elif int(arg[1:]) in object_dict and \
+                isinstance(object_dict[int(arg[1:])],
+                           volmdlr.Frame3D):
+            # TODO: Is there something to read here ?
+            frames.append(object_dict[int(arg[1:])])
+        elif int(arg[1:]) in object_dict and \
+                isinstance(object_dict[int(arg[1:])],
+                           volmdlr.edges.Arc3D):
+            shells.append(object_dict[int(arg[1:])])
+        elif int(arg[1:]) in object_dict and \
+                isinstance(object_dict[int(arg[1:])],
+                           volmdlr.edges.BSplineCurve3D):
+            shells.append(object_dict[int(arg[1:])])
+        else:
+            pass
+    if not shells and frames:
+        return frames
+    if shells and frames:
+        raise NotImplementedError
+    return shells
 
 
 def advanced_brep_shape_representation(arguments, object_dict):
@@ -206,24 +205,24 @@ def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representat
 
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
-    # raise NotImplementedError("We are still not able to read assemblies in step files")
+    raise NotImplementedError("We are still not able to read assemblies in step files")
     # return None
-    if arguments[2] in object_dict:
-        if isinstance(object_dict[arguments[2]], list): # arguments = {, , [], [], item_....}
-            if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
-                          and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                frame_map_closed_shell(object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]])
-
-            elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
-                    not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                frame_map_closed_shell(object_dict[arguments[3]], object_dict[arguments[4]], object_dict[arguments[2]])
-            return None
-        shell3d = object_dict[arguments[2]]
-        frame3d = object_dict[arguments[4]]
-        # shell3d.frame_mapping_inplace(frame3d, 'old')
-        # return shell3d
-        return None
-    return None
+    # if arguments[2] in object_dict:
+    #     if isinstance(object_dict[arguments[2]], list): # arguments = {, , [], [], item_....}
+    #         if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
+    #                       and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
+    #             frame_map_closed_shell(object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]])
+    #
+    #         elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
+    #                 not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
+    #             frame_map_closed_shell(object_dict[arguments[3]], object_dict[arguments[4]], object_dict[arguments[2]])
+    #         return None
+    #     # shell3d = object_dict[arguments[2]]
+    #     # frame3d = object_dict[arguments[4]]
+    #     # shell3d.frame_mapping_inplace(frame3d, 'old')
+    #     # return shell3d
+    #     return None
+    # return None
 
 
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
