@@ -596,8 +596,8 @@ class BSplineCurve(Edge):
     def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
                       abs_tol: float = 1e-10):
         """
-        Checks if a 2D or 3D point belongs to the B-spline curve or not. It
-        uses the least square method.
+        Checks if a 2D or 3D point belongs to the B-spline curve or not.
+        It uses the least square method.
 
         :param point: The point to be checked
         :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
@@ -1719,7 +1719,7 @@ class Arc(Edge):
 
     def length(self):
         """
-        Calculates the length of the Arc, with its radius and it arc angle
+        Calculates the length of the Arc, with its radius and it arc angle.
         :return: the length fo the Arc
         """
         return self.radius * abs(self.angle)
@@ -2017,8 +2017,7 @@ class Arc2D(Arc):
 
     def unit_direction_vector(self, abscissa: float):
         """
-        :param abscissa: defines where in the Arc2D the
-        unit direction vector is to be calculated
+        :param abscissa: defines where in the Arc2D the unit direction vector is to be calculated.
         :return: The unit direction vector of the Arc2D
         """
         direction_vector = self.direction_vector(abscissa)
