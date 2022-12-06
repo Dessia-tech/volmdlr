@@ -765,7 +765,7 @@ class BSplineCurve(Edge):
         return 'BSpline(' + str(tag) + ') = {' + str(control_points_tags)[1:-1] + '};'
 
     def get_geo_points(self):
-        return [point for point in self.discretization_points()]
+        return list(self.discretization_points())
 
 
 class Line2D(Line):
