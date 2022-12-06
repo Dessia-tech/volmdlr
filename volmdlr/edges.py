@@ -1491,6 +1491,9 @@ class LineSegment2D(LineSegment):
             return line_intersection
 
     def linesegment_crossings(self, linesegment: 'LineSegment2D'):
+        """
+        Gives the crossings with a linesegment.
+        """
         if self.direction_vector().is_colinear_to(
                 linesegment.direction_vector()):
             return []
@@ -1499,6 +1502,9 @@ class LineSegment2D(LineSegment):
 
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
              plot_points=False):
+        """
+        Plots the edge.
+        """
         if ax is None:
             _, ax = plt.subplots()
 
@@ -1870,6 +1876,9 @@ class Arc2D(Arc):
 
     @property
     def is_trigo(self):
+        """
+        Gives if the edge goes in the trigo direction.
+        """
         if not self._is_trigo:
             self._is_trigo = self.get_arc_direction()
         return self._is_trigo
@@ -1896,6 +1905,9 @@ class Arc2D(Arc):
 
     @property
     def angle(self):
+        """
+        Returns the angle in radians of the arc.
+        """
         if not self._angle:
             self._angle = self.get_angle()
         return self._angle
@@ -1913,6 +1925,9 @@ class Arc2D(Arc):
     points = property(_get_points)
 
     def point_distance(self, point):
+        """
+        Returns the distance between a point and the edge.
+        """
         vector_start = self.start - self.center
         vector_point = point - self.center
         vector_end = self.end - self.center
@@ -1956,6 +1971,9 @@ class Arc2D(Arc):
     #     return volmdlr.wires.Circle2D(self.center, self.radius)
 
     def to_full_arc_2d(self):
+        """
+        Convert to a full arc2d
+        """
         return FullArc2D(center=self.center,
                          start_end=self.point_at_abscissa(0),
                          name=self.name)
@@ -1982,6 +2000,9 @@ class Arc2D(Arc):
         return intersection_points
 
     def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
+        """
+        Returns the abscissa of a given point2d.
+        """
         if point2d.point_distance(self.start) < tol:
             return 0
         if point2d.point_distance(self.end) < tol:
