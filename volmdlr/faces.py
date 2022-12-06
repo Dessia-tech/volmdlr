@@ -7932,7 +7932,7 @@ class BSplineFace3D(Face3D):
     def get_bounding_box(self):
         return self.surface3d._bounding_box()
 
-    def triangulation_lines(self, resolution=10):
+    def triangulation_lines(self, resolution=25):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_u = u_max - u_min

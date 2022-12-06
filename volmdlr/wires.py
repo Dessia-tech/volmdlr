@@ -1200,7 +1200,6 @@ class ContourMixin(WireMixin):
                             edges1.add(edge2)
 
         if len(list_p) < 2:
-            print()
             warnings.warn('The contours are not adjacent')
             return []
 

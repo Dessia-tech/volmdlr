@@ -515,11 +515,11 @@ class BSplineCurve(Edge):
                 x0 = xi
                 pos = i
                 min_dist = dist
-        z = scp.optimize.least_squares(f, x0=x0, bounds=([bounds[pos][0]], [bounds[pos][1]]))
+        z = scp.optimize.least_squares(lambda u: (point - self.point_at_abscissa(u)).norm(), x0=x0, bounds=([bounds[pos][0]], [bounds[pos][1]]))
         if z.fun < tol:
             return z.x[0]
         x0 = z.x[0]
-        res = scp.optimize.minimize(f, x0=npy.array([x0]), bounds=[bounds[pos]], tol=tol)
+        res = scp.optimize.minimize(lambda u: (point - self.point_at_abscissa(u)).norm(), x0=npy.array([x0]), bounds=[bounds[pos]], tol=tol)
         if res.fun < tol:
             return res.x[0]
         # for x0 in [0, length * 0.25, length * 0.5, length * 0.75, length]:
