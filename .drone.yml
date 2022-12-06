@@ -3,7 +3,17 @@ kind: pipeline
 type: docker
 name: default
 
+clone:
+  disable: true
+
 steps:
+- name: custom clone
+  image: alpine/git
+  user: gmsh
+  commands:
+  - git clone $DRONE_REPO_LINK .
+  - git checkout $DRONE_COMMIT
+
 - name: merge master on testing
   image: alpine/git
   when:
