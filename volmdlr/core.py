@@ -1340,7 +1340,7 @@ class VolumeModel(dc.PhysicalObject):
             s += f"Part.export(doc.Objects,'{fcstd_filepath}.step')\n"
 
         if save_to != '':
-            with open(os.path.abspath(save_to), 'w') as file:
+            with open(os.path.abspath(save_to), 'w', encoding='utf-8') as file:
                 file.write(s)
         return s
 
@@ -1461,7 +1461,7 @@ class VolumeModel(dc.PhysicalObject):
         else:
             if not page_name.endswith('.html'):
                 page_name += '.html'
-            with open(page_name, 'w') as file:
+            with open(page_name, 'w', encoding='utf-8') as file:
                 file.write(script)
 
         webbrowser.open('file://' + os.path.realpath(page_name))
@@ -1482,7 +1482,7 @@ class VolumeModel(dc.PhysicalObject):
         if not filename.endswith('.html'):
             filename += '.html'
 
-            with open(filename, 'w') as file:
+            with open(filename, 'w', encoding='utf-8') as file:
                 file.write(script)
             return filename
 
@@ -1507,7 +1507,7 @@ class VolumeModel(dc.PhysicalObject):
     def to_step(self, filepath: str):
         if not (filepath.endswith('.step') or filepath.endswith('.stp')):
             filepath += '.step'
-        with open(filepath, 'w') as file:
+        with open(filepath, 'w', encoding='utf-8') as file:
             self.to_step_stream(file)
 
     def to_step_stream(self, stream: dcf.StringFile):
@@ -1820,7 +1820,7 @@ class VolumeModel(dc.PhysicalObject):
 
         if not (file_name.endswith('.geo') or file_name.endswith('.geo')):
             file_name += '.geo'
-        with open(file_name, 'w') as file:
+        with open(file_name, 'w', encoding='utf-8') as file:
             self.to_geo_stream(file, factor,
                                curvature_mesh_size=kwargs['curvature_mesh_size'],
                                min_points=kwargs['min_points'],
