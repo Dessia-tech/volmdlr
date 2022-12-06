@@ -36,7 +36,7 @@ for step_file in [
     # 'bracket3_cut2.step',
     # 'strange_gasket.step',
     # '2_bspline_faces.stp',
-    'bracket3.step',
+    'bracket1.step',
     # 'bracket1.step',
     # 'porte_dessia_simple.step',
     # 'cylinder_ellipse.step',
@@ -69,7 +69,7 @@ for step_file in [
             else:
                 faces.append(face)
     model2 = volmdlr.core.VolumeModel(faces)
-    # model2.babylonjs()
+    model2.babylonjs()
     # assert len(model.primitives) > 0.
     # model.to_step(step_file + '_reexport')
     # model.babylonjs()

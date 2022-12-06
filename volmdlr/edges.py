@@ -345,7 +345,7 @@ class BSplineCurve(Edge):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
         curve.knotvector = knot_vector
-        curve.delta = 0.04
+        curve.delta = 0.02
         curve_points = curve.evalpts
         self.curve = curve
 
@@ -1078,12 +1078,17 @@ class BSplineCurve2D(BSplineCurve):
                       DeprecationWarning)
         return self.discretization_points(n)
 
-    def discretization_points(self, *, number_points: int = 15, angle_resolution: int = 15):
-        length = self.length()
+    def discretization_points(self, *, number_points: int = 15, angle_resolution=None):
         if angle_resolution:
             number_points = angle_resolution
-        # return [self.point_at_abscissa(i * length / number_points) for i in range(number_points + 1)]
-        return self.points
+        if len(self.points) == number_points:
+            return self.points
+        curve = self.curve
+        curve.delta = 1/number_points
+        curve_points = curve.evalpts
+        self.curve = curve
+        points = [volmdlr.Point2D(*p) for p in curve_points]
+        return points
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
