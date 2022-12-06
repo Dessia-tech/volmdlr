@@ -1749,6 +1749,45 @@ class VolumeModel(dc.PhysicalObject):
 
         return lines
 
+    def to_geo_stream(self, stream: dcf.StringFile,
+                      factor: float, **kwargs):
+        """
+        gets the .geo file for the VolumeModel
+
+        :param file_name: The geo. file name
+        :type file_name: str
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+            if element[0] not in kwargs:
+                kwargs[element[0]] = element[1]
+
+        lines = self.get_geo_lines()
+        lines.extend(self.get_mesh_lines(factor,
+                                         curvature_mesh_size=kwargs['curvature_mesh_size'],
+                                         min_points=kwargs['min_points'],
+                                         initial_mesh_size=kwargs['initial_mesh_size']))
+
+        content = ''
+        for line in lines:
+            content += line+'\n'
+
+        stream.write(content)
+
     def to_geo(self, file_name: str,
                factor: float, **kwargs):
         # curvature_mesh_size: int = 0,
@@ -1779,29 +1818,41 @@ class VolumeModel(dc.PhysicalObject):
             if element[0] not in kwargs:
                 kwargs[element[0]] = element[1]
 
-        # try:
-        #     curvature_mesh_size = kwargs['curvature_mesh_size']
-        # except KeyError:
-        #     curvature_mesh_size = 0
-        # try:
-        #     min_points = kwargs['min_points']
-        # except KeyError:
-        #     min_points = None
-        # try:
-        #     initial_mesh_size = kwargs['initial_mesh_size']
-        # except KeyError:
-        #     initial_mesh_size = 5
+        if not (file_name.endswith('.geo') or file_name.endswith('.geo')):
+            file_name += '.geo'
+        with open(file_name, 'w') as file:
+            self.to_geo_stream(file, factor,
+                               curvature_mesh_size=kwargs['curvature_mesh_size'],
+                               min_points=kwargs['min_points'],
+                               initial_mesh_size=kwargs['initial_mesh_size'])
 
-        lines = self.get_geo_lines()
-        lines.extend(self.get_mesh_lines(factor,
-                                         curvature_mesh_size=kwargs['curvature_mesh_size'],
-                                         min_points=kwargs['min_points'],
-                                         initial_mesh_size=kwargs['initial_mesh_size']))
-        with open(file_name + '.geo', 'w', encoding="utf-8") as file:
-            for line in lines:
-                file.write(line)
-                file.write('\n')
-        file.close()
+        # for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+        #     if element[0] not in kwargs:
+        #         kwargs[element[0]] = element[1]
+
+        # # try:
+        # #     curvature_mesh_size = kwargs['curvature_mesh_size']
+        # # except KeyError:
+        # #     curvature_mesh_size = 0
+        # # try:
+        # #     min_points = kwargs['min_points']
+        # # except KeyError:
+        # #     min_points = None
+        # # try:
+        # #     initial_mesh_size = kwargs['initial_mesh_size']
+        # # except KeyError:
+        # #     initial_mesh_size = 5
+
+        # lines = self.get_geo_lines()
+        # lines.extend(self.get_mesh_lines(factor,
+        #                                   curvature_mesh_size=kwargs['curvature_mesh_size'],
+        #                                   min_points=kwargs['min_points'],
+        #                                   initial_mesh_size=kwargs['initial_mesh_size']))
+        # with open(file_name + '.geo', 'w', encoding="utf-8") as file:
+        #     for line in lines:
+        #         file.write(line)
+        #         file.write('\n')
+        # file.close()
 
     def to_geo_with_stl(self, file_name: str,
                         factor: float, **kwargs):
