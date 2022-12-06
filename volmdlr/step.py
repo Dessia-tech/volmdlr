@@ -398,7 +398,10 @@ class Step(dc.DessiaObject):
         return list(set(not_implemented))
 
     def create_graph(self):
-
+        """
+        Step functions graph
+        :return:
+        """
         G = nx.Graph()
         F = nx.DiGraph()
         labels = {}
