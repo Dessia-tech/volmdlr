@@ -1164,7 +1164,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        BSplineCurve2D rotation
+        BSplineCurve2D rotation.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotated Line2D
@@ -1177,7 +1178,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        BSplineCurve2D rotation. Object is updated inplace
+        BSplineCurve2D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
@@ -1220,7 +1222,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def to_wire(self, n: int):
         """
-        convert a bspline curve to a wire2d defined with 'n' line_segments
+        Convert a bspline curve to a wire2d defined with 'n' line_segments.
+
         """
 
         u = npy.linspace(0, 1, num=n + 1).tolist()
@@ -1233,7 +1236,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def reverse(self):
         """
-        reverse the bspline's direction by reversing its start and end points
+        Reverse the bspline's direction by reversing its start and end points.
+
         """
 
         return self.__class__(degree=self.degree,
@@ -1255,7 +1259,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def nearest_point_to(self, point):
         """
-        find out the nearest point on the linesegment to point
+        Find out the nearest point on the linesegment to point.
+
         """
 
         points = self.polygon_points(500)
@@ -1271,7 +1276,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric bsplinecurve2d according to a line
+        Finds out the symmetric bsplinecurve2d according to a line.
+
         """
 
         points_symmetry = [point.axial_symmetry(line) for point in self.control_points]
@@ -1309,7 +1315,8 @@ class BezierCurve2D(BSplineCurve2D):
 
 class LineSegment2D(LineSegment):
     """
-    Define a line segment limited by two points
+    Define a line segment limited by two points.
+
     """
 
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
@@ -1368,7 +1375,8 @@ class LineSegment2D(LineSegment):
     def straight_line_point_belongs(self, point):
         """
         Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points
+        line between its start and end points.
+
         :param point: Point to be verified
         :return: Return True if the point belongs to this surface, or False otherwise
         """
@@ -1376,7 +1384,7 @@ class LineSegment2D(LineSegment):
 
     def point_distance(self, point, return_other_point=False):
         """
-        Computes the distance of a point to segment of line
+        Computes the distance of a point to segment of line.
         """
         distance, point = volmdlr.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)],
@@ -1425,7 +1433,8 @@ class LineSegment2D(LineSegment):
 
     def linesegment_intersections(self, linesegment: 'LineSegment2D'):
         """
-        touching linesegments does not intersect
+        Touching linesegments does not intersect.
+
         """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
         # TODO: May be these commented conditions should be used for linesegment_crossings
@@ -1560,7 +1569,7 @@ class LineSegment2D(LineSegment):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
-        Changes vector frame_mapping and the object is updated inplace
+        Changes vector frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -1607,7 +1616,8 @@ class LineSegment2D(LineSegment):
 
     def to_wire(self, n: int):
         """
-        convert a linesegment2d to a wire2d defined with 'n' line_segments
+        Convert a linesegment2d to a wire2d defined with 'n' line_segments.
+
         """
 
         points = self.discretization_points(number_points=n + 1)
@@ -1615,7 +1625,7 @@ class LineSegment2D(LineSegment):
 
     def nearest_point_to(self, point):
         """
-        find out the nearest point on the linesegment to point
+        Find out the nearest point on the linesegment to point
         """
 
         points = self.discretization_points(number_points=500)
@@ -1623,7 +1633,7 @@ class LineSegment2D(LineSegment):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric linesegment2d according to a line
+        Finds out the symmetric linesegment2d according to a line.
         """
 
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.end]]
@@ -1645,7 +1655,8 @@ class Arc(Edge):
     @property
     def center(self):
         """
-        Gets the arc's center
+        Gets the arc's center.
+        
         :return: The center of the arc
         """
         raise NotImplementedError(
@@ -1655,7 +1666,8 @@ class Arc(Edge):
     @property
     def angle(self):
         """
-        Gets the angle of the arc
+        Gets the angle of the arc.
+        
         :return: The angle of the arc
         """
         return NotImplementedError(
@@ -1665,7 +1677,8 @@ class Arc(Edge):
     @property
     def is_trigo(self):
         """
-        Verifies if arc is trigowise or clockwise
+        Verifies if arc is trigowise or clockwise.
+        
         :return: True if trigowise or False otherwise
         """
         return NotImplementedError(
@@ -1680,7 +1693,8 @@ class Arc(Edge):
 
     def length(self):
         """
-        Calculates the length of the Arc, with its radius and it arc angle
+        Calculates the length of the Arc, with its radius and it arc angle.
+
         :return: the length fo the Arc
         """
         return self.radius * abs(self.angle)
@@ -2293,7 +2307,7 @@ class Arc2D(Arc):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric arc2d according to a line
+        Finds out the symmetric arc2d according to a line
         """
 
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
