@@ -1283,8 +1283,8 @@ class BSplineCurve2D(BSplineCurve):
 
         # To be removed
         for pt in intersection_points:
-            if not line2d.point_belongs(pt, abs_tol=1e-6) \
-                    or self.point_belongs(pt, abs_tol=1e-6):
+            if not line2d.point_belongs(pt, abs_tol=tol) \
+                    or self.point_belongs(pt, abs_tol=tol):
                 ax = pt.plot()
                 line2d.plot(ax=ax)
                 self.plot(ax=ax)
