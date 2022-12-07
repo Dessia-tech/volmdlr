@@ -2874,7 +2874,7 @@ class Line3D(Line):
 
     """
     Define an infinite line passing through the 2 points.
-    
+
     """
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
