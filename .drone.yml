@@ -58,7 +58,7 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
-- name: install and run scripts
+- name: test gmsh
   image: dessia/python-gmsh:3.9
   commands:
   - pip Cython wheel
