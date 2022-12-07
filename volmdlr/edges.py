@@ -3199,8 +3199,8 @@ class Line3D(Line):
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
         return content, current_id
 
-    def to_2d(self, plane_origin, x1, x2):
-        p2d = [p.to_2d(plane_origin, x1, x2) for p in (self.point1, self.point2)]
+    def to_2d(self, plane_origin, x, y):
+        p2d = [p.to_2d(plane_origin, x, y) for p in (self.point1, self.point2)]
         if p2d[0] == p2d[1]:
             return None
         return Line2D(*p2d, name=self.name)
@@ -3545,8 +3545,8 @@ class LineSegment3D(LineSegment):
 
         return s
 
-    def to_2d(self, plane_origin, x1, x2):
-        p2d = [p.to_2d(plane_origin, x1, x2) for p in (self.start, self.end)]
+    def to_2d(self, plane_origin, x, y):
+        p2d = [p.to_2d(plane_origin, x, y) for p in (self.start, self.end)]
         if p2d[0] == p2d[1]:
             return None
         return LineSegment2D(*p2d, name=self.name)
@@ -4252,8 +4252,8 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
             ax.plot(x, y, z, 'o', color=color, alpha=alpha)
         return ax
 
-    def to_2d(self, plane_origin, x1, x2):
-        control_points2d = [p.to_2d(plane_origin, x1, x2) for p in
+    def to_2d(self, plane_origin, x, y):
+        control_points2d = [p.to_2d(plane_origin, x, y) for p in
                             self.control_points]
         return BSplineCurve2D(self.degree, control_points2d,
                               self.knot_multiplicities, self.knots,
@@ -5109,9 +5109,9 @@ class FullArc3D(Arc3D):
     def copy(self, *args, **kwargs):
         return FullArc3D(self._center.copy(), self.end.copy(), self._normal.copy())
 
-    def to_2d(self, plane_origin, x1, x2):
-        center = self.center.to_2d(plane_origin, x1, x2)
-        start_end = self.start.to_2d(plane_origin, x1, x2)
+    def to_2d(self, plane_origin, x, y):
+        center = self.center.to_2d(plane_origin, x, y)
+        start_end = self.start.to_2d(plane_origin, x, y)
         return FullArc2D(center, start_end)
 
     def to_step(self, current_id, surface_id=None):
