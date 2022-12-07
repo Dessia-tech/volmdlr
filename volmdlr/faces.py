@@ -7933,9 +7933,19 @@ class BSplineFace3D(Face3D):
     def get_bounding_box(self):
         return self.surface3d._bounding_box()
 
-    def triangulation_lines(self, resolution=24):
+    def triangulation_lines(self, resolution=10):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
-
+        outer_contour = self.surface2d.outer_contour.primitives
+        length = 0
+        for prim in outer_contour:
+            if isinstance(prim, vme.BSplineCurve2D):
+                lth = prim.lenght()
+                if lth > length:
+                    length = lth
+        delta_max = 0.03
+        delta = length/resolution
+        if delta > delta_max:
+            resolution = int(length/delta_max)
         delta_u = u_max - u_min
         nlines_x = int(delta_u * resolution)
         lines_x = []

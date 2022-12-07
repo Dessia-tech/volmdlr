@@ -1265,31 +1265,29 @@ class BSplineCurve2D(BSplineCurve):
             point.rotation_inplace(center, angle)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.discretization_points(number_points=500)
+        polygon_points = self.discretization_points(number_points=100)
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
         for points in zip(polygon_points[:-1], polygon_points[1:]):
             linesegment = LineSegment2D(points[0], points[1])
             intersections = linesegment.line_intersections(line2d)
-
-            if intersections and intersections[0] not in list_intersections:
-                # abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
-                # if initial_abscissa < length * 0.1:
-                #     list_abcissas = [abscissa * n for n in
-                #                      npy.linspace(0, 1, 100)]
-                # else:
-                #     list_abcissas = [new_abscissa for new_abscissa in
-                #                      npy.linspace(initial_abscissa, abscissa, 100)]
-                # distance = npy.inf
-                # for i_abscissa in list_abcissas:
-                #     point_in_curve = self.point_at_abscissa(i_abscissa)
-                #     dist = point_in_curve.point_distance(intersections[0])
-                #     if dist < distance:
-                #         distance = dist
-                #         intersection = point_in_curve
-                list_intersections.append(intersections[0])
             initial_abscissa += linesegment.length()
+            if intersections:
+                if initial_abscissa < length * 0.1:
+                    list_abcissas = [initial_abscissa * n for n in
+                                     npy.linspace(0, 1, 100)]
+                else:
+                    list_abcissas = [initial_abscissa * n for n in
+                                     npy.linspace(0.9, 1, 100)]
+                distance = npy.inf
+                for abscissa in list_abcissas:
+                    point_in_curve = self.point_at_abscissa(abscissa)
+                    dist = point_in_curve.point_distance(intersections[0])
+                    if dist < distance:
+                        distance = dist
+                        intersection = point_in_curve
+                list_intersections.append(intersection)
         return list_intersections
 
     def line_crossings(self, line2d: Line2D):
@@ -1484,10 +1482,15 @@ class LineSegment2D(LineSegment):
                     return []
 
             return [point_projection1]
-        if line.point_belongs(self.start):
-            return [self.start]
-        if line.point_belongs(self.end):
-            return [self.end]
+        else:
+            vector1 = self.start - line.point1
+            vector2 = self.start - line.point2
+            vector3 = self.end - line.point1
+            vector4 = self.end - line.point2
+            if math.isclose(vector1.cross(vector2), 0, abs_tol=1e-6):
+                return [self.start]
+            if math.isclose(vector3.cross(vector4), 0, abs_tol=1e-6):
+                return [self.end]
         return []
 
     def linesegment_intersections(self, linesegment: 'LineSegment2D'):
