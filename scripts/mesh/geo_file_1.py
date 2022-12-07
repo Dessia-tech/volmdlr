@@ -44,7 +44,7 @@ model.to_geo(file_name = 'model_1_geo',
 
 # %% DIRECT: gmsh file generation
 
-model.to_msh(file_name = 'model_1',
+model.to_msh(file_name = '',
              mesh_dimension = 2,
              factor = 1,
              curvature_mesh_size = 0,

@@ -4,10 +4,15 @@ type: docker
 name: default
 
 steps:
+- name: chmod repo
+  image: alpine/git
+  commands:
+  - chmod 777 -R . 
+
 - name: merge master on testing
   image: alpine/git
   when:
-    event: push 
+    event: push
     branch: master
   commands:
   - git fetch origin testing
@@ -18,7 +23,7 @@ steps:
 - name: merge testing on dev
   image: alpine/git
   when:
-    event: push 
+    event: push
     branch: testing
   commands:
   - git fetch origin dev
@@ -30,9 +35,16 @@ steps:
 - name: check code complexity
   image: python:3.9
   commands:
-  - pip install radon pylint
+  - pip install radon pylint pydocstyle
   - ./code_quality.sh
   - python code_pylint.py
+  - python code_pydocstyle.py
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
 
 - name: check pep8 formatting
   image: python:3.9
@@ -41,15 +53,17 @@ steps:
     - pip3 install -U pip autopep8
     - bash code_pep8.sh
 
-- name: install, build doc run scripts
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+- name: install and run scripts
   image: dessia/python-gmsh:3.9
   commands:
-  - git fetch --tags
-  - pip install Cython sphinx sphinx_rtd_theme coverage
-  - python setup.py install
-  - cd doc
-  - make html
-  - cd ../tests
+  - pip install Cython coverage
+  - python setup.py install --user
+  - cd tests
   - coverage run --source volmdlr -m unittest discover
   - cd ../scripts
   - coverage run --source volmdlr ci_scripts.py
@@ -59,12 +73,41 @@ steps:
   - coverage report
   - python coverage_script.py
 
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+- name: build doc
+  image: python:3.9
+  when:
+    branch: master
+  commands:
+  - pip install Cython sphinx sphinx_rtd_theme coverage
+  - python setup.py install
+  - cd doc
+  - make html
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+
 - name: generate sdist
   image: python:3.8
+  when:
+    branch: master
   commands:
   - git fetch --tags
   - pip install Cython
   - python setup.py sdist
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
 
 - name: upload to pypi
   image: plugins/pypi
@@ -91,14 +134,7 @@ steps:
       from_secret: ssh_drone_password
 
 
-- name: notify by email
-  when:
-    status:
-    - failure
-  image: drillster/drone-email
-  settings:
-    host: mail.dessia.tech
-    username: technical@dessia.tech
-    password:
-      from_secret: email_password
-    from: technical@dessia.tech
+volumes:
+  - name: pip_cache
+    host:
+      path: /tmp/cache/drone/pip

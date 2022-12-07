@@ -23,6 +23,7 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 
+
 npy.seterr(divide='raise')
 
 # TODO: put voldmlr metadata in this freecad header
@@ -73,6 +74,15 @@ def set_to_list(step_set):
 
 
 def delete_node_and_predecessors(graph, node):
+    """
+    A recursive method for deleting a node and its predecessors in a networkx
+    graph.
+
+    :param graph: A networkx graph
+    :type graph: :class:`networkx.Graph`
+    :param node: A node of the graph
+    :type node: Any
+    """
     predecessors = list(graph.predecessors(node))
     graph.remove_node(node)
     for predecessor in predecessors:
@@ -80,6 +90,15 @@ def delete_node_and_predecessors(graph, node):
 
 
 def delete_node_and_successors(graph, node):
+    """
+    A recursive method for deleting a node and its successors in a networkx
+    graph.
+
+    :param graph: A networkx graph
+    :type graph: :class:`networkx.Graph`
+    :param node: A node of the graph
+    :type node: Any
+    """
     successors = list(graph.successors(node))
     graph.remove_node(node)
     for successor in successors:
@@ -113,6 +132,16 @@ def clockwise_angle(vector1, vector2):
 
 
 def vectors3d_angle(vector1, vector2):
+    """
+    Computes the angle between two 3 dimensional vectors.
+
+    :param vector1: The fist 3 dimensional vector
+    :type vector1: :class:`volmdlr.Vector3D`
+    :param vector2: The second 3 dimensional vectors
+    :type vector2: :class:`volmdlr.Vector3D`
+    :return: The angle between the two vectors
+    :rtype: flaot
+    """
     dot = vector1.dot(vector2)
     theta = math.acos(dot / (vector1.norm() * vector2.norm()))
 
@@ -121,8 +150,14 @@ def vectors3d_angle(vector1, vector2):
 
 def sin_cos_angle(u1, u2):
     """
-    cos(theta)=u1, sin(theta)=u2
-    returns an angle between 0 and 2pi
+    Returns an angle between 0 and 2*PI verifying cos(theta)=u1, sin(theta)=u2.
+
+    :param u1: The value of the cosinus of the returned angle
+    :type u1: float
+    :param u2: The value of the sinus of the returned angle
+    :type u2: flaot
+    :return: The angle verifying the two equations
+    :rtype: float
     """
     if u1 < -1:
         u1 = -1
@@ -195,6 +230,17 @@ def determinant(vec1, vec2, vec3):
 
 
 def delete_double_point(list_point):
+    """
+    Delete duplicate points from a list of points.
+
+    :param list_point: The initial list of points
+    :type list_point: Union[List[:class:`volmdlr.Point2D`],
+        List[:class:`volmdlr.Point3D`]]
+    :return: The final list of points containing no duplicates
+    :rtype: Union[List[:class:`volmdlr.Point2D`],
+        List[:class:`volmdlr.Point3D`]]
+    """
+    # TODO : this method would be faster using sets
     points = []
     for pt in list_point:
         if pt not in points:
@@ -287,7 +333,7 @@ def posangle_arc(start, end, radius, frame=None):
 
 def clockwise_interior_from_circle3d(start, end, circle):
     """
-    Returns the clockwise interior point between start and end on the circle
+    Returns the clockwise interior point between start and end on the circle.
     """
     start2d = start.to_2d(plane_origin=circle.frame.origin,
                           x=circle.frame.u, y=circle.frame.v)
@@ -332,7 +378,7 @@ def offset_angle(trigo, angle_start, angle_end):
 
 def angle_principal_measure(angle, min_angle=-math.pi):
     """
-    returns angle between O and 2 pi
+    Returns angle between O and 2 pi.
     """
     max_angle = min_angle + volmdlr.TWO_PI
     angle = angle % (volmdlr.TWO_PI)
@@ -346,6 +392,15 @@ def angle_principal_measure(angle, min_angle=-math.pi):
 
 
 def step_ids_to_str(ids):
+    """
+    Returns a string with a '#' in front of each ID and a comma separating
+    eachone.
+
+    :param ids: A list of step primitives IDs
+    :type ids: List[int]
+    :return: A string containing all the IDs
+    :rtype: str
+    """
     return ','.join(['#{}'.format(i) for i in ids])
 
 
@@ -416,7 +471,8 @@ class CompositePrimitive2D(Primitive2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        CompositePrimitive2D rotation
+        Rotates the CompositePrimitive2D.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotated CompositePrimitive2D
@@ -426,7 +482,8 @@ class CompositePrimitive2D(Primitive2D):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        CompositePrimitive2D rotation. Object is updated inplace
+        Rotates the CompositePrimitive2D. Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
@@ -438,7 +495,8 @@ class CompositePrimitive2D(Primitive2D):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        CompositePrimitive2D translation
+        Translates the CompositePrimitive2D.
+
         :param offset: translation vector
         :return: A new translated CompositePrimitive2D
         """
@@ -447,7 +505,8 @@ class CompositePrimitive2D(Primitive2D):
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        CompositePrimitive2D translation. Object is updated inplace
+        Translates the CompositePrimitive2D. Object is updated inplace.
+
         :param offset: translation vector
         """
         primitives = []
@@ -507,6 +566,10 @@ class CompositePrimitive2D(Primitive2D):
 
 
 class Primitive3D(dc.PhysicalObject, CompositePrimitive):
+    """
+
+    """
+
     def __init__(self, color=None, alpha=1, name=''):
         self.color = color
         self.alpha = alpha
@@ -627,6 +690,7 @@ class CompositePrimitive3D(Primitive3D):
 class BoundingRectangle(dc.DessiaObject):
     """
     Bounding rectangle.
+
     :param xmin: minimal x coordinate
     :type xmin: float
     :param xmax: maximal x coordinate
@@ -677,19 +741,21 @@ class BoundingRectangle(dc.DessiaObject):
 
     def area(self):
         """
-        Calculate the area of the bounding rectangle.
+        Calculates the area of the bounding rectangle.
         """
         return (self.xmax - self.xmin) * (self.ymax - self.ymin)
 
     def center(self):
         """
-        Calculate the bounding rectangle center.
+        Calculates the bounding rectangle center.
         """
         return volmdlr.Point2D(0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax))
 
     def b_rectangle_intersection(self, b_rectangle2):
         """
-        Return True if there is an intersection with another specified bounding rectangle or False otherwise.
+        Returns True if there is an intersection with another specified
+        bounding rectangle or False otherwise.
+
         :param b_rectangle2: bounding rectangle to verify intersection
         :type b_rectangle2: :class:`BoundingRectangle`
         """
@@ -698,7 +764,9 @@ class BoundingRectangle(dc.DessiaObject):
 
     def is_inside_b_rectangle(self, b_rectangle2):
         """
-        Return True if the bounding rectangle is totally inside another specified bounding rectangle and False otherwise.
+        Returns True if the bounding rectangle is totally inside another
+        specified bounding rectangle and False otherwise.
+
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
         """
@@ -707,7 +775,9 @@ class BoundingRectangle(dc.DessiaObject):
 
     def point_belongs(self, point: volmdlr.Point2D):
         """
-        Return True if a specified point is inside the bounding rectangle and False otherwise.
+        Returns True if a specified point is inside the bounding rectangle
+        and False otherwise.
+
         :param point: A 2 dimensional point
         :type point: :class:`volmdlr.Point2D`
         """
@@ -715,7 +785,8 @@ class BoundingRectangle(dc.DessiaObject):
 
     def intersection_area(self, b_rectangle2):
         """
-        Calculate the intersection area between two bounding rectangle.
+        Calculates the intersection area between two bounding rectangle.
+
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
         """
@@ -731,7 +802,8 @@ class BoundingRectangle(dc.DessiaObject):
 
     def distance_to_b_rectangle(self, b_rectangle2):
         """
-        Calculate the minimal distance between two bounding rectangles.
+        Calculates the minimal distance between two bounding rectangles.
+
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
         """
@@ -753,7 +825,9 @@ class BoundingRectangle(dc.DessiaObject):
 
     def distance_to_point(self, point: volmdlr.Point2D):
         """
-        Calculate the minimal distance between the bounding rectangle and a specified point.
+        Calculate the minimal distance between the bounding rectangle and
+        a specified point.
+
         :param point: A 2 dimensional point
         :type point: :class:`volmdlr.Point2D`
         """
@@ -1019,7 +1093,12 @@ class VolumeModel(dc.PhysicalObject):
                                  'faces']
     _dessia_methods = ['to_stl_model']
     """
+    A class containing one or several :class:`volmdlr.core.Primitive3D`.
 
+    :param primitives: The vector's abscissa
+    :type primitives: List[:class:`volmdlr.core.Primitive3D`]
+    :param name: The VolumeModel's name
+    :type name: str
     """
 
     def __init__(self, primitives: List[Primitive3D], name: str = ''):
@@ -1105,7 +1184,8 @@ class VolumeModel(dc.PhysicalObject):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        VolumeModel rotation
+        Rotates the VolumeModel.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -1119,7 +1199,8 @@ class VolumeModel(dc.PhysicalObject):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        VolumeModel rotation. Object is updated inplace
+        Rotates the VolumeModel. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -1130,7 +1211,8 @@ class VolumeModel(dc.PhysicalObject):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        VolumeModel translation
+        Translates the VolumeModel.
+
         :param offset: translation vector
         :return: A new translated VolumeModel
         """
@@ -1140,7 +1222,8 @@ class VolumeModel(dc.PhysicalObject):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        VolumeModel translation. Object is updated inplace
+        Translates the VolumeModel. Object is updated inplace.
+
         :param offset: translation vector
         """
         for primitives in self.primitives:
@@ -1204,7 +1287,8 @@ class VolumeModel(dc.PhysicalObject):
                        save_to='',
                        tolerance=0.0001):
         """
-        Generate python a FreeCAD definition of model
+        Generates python a FreeCAD definition of model.
+
         :param fcstd_filename: a filename without extension to give the name at the fcstd part written in python code
         :type fcstd_filename:str
         """
@@ -1256,7 +1340,7 @@ class VolumeModel(dc.PhysicalObject):
             s += f"Part.export(doc.Objects,'{fcstd_filepath}.step')\n"
 
         if save_to != '':
-            with open(os.path.abspath(save_to), 'w') as file:
+            with open(os.path.abspath(save_to), 'w', encoding='utf-8') as file:
                 file.write(s)
         return s
 
@@ -1377,7 +1461,7 @@ class VolumeModel(dc.PhysicalObject):
         else:
             if not page_name.endswith('.html'):
                 page_name += '.html'
-            with open(page_name, 'w') as file:
+            with open(page_name, 'w', encoding='utf-8') as file:
                 file.write(script)
 
         webbrowser.open('file://' + os.path.realpath(page_name))
@@ -1398,7 +1482,7 @@ class VolumeModel(dc.PhysicalObject):
         if not filename.endswith('.html'):
             filename += '.html'
 
-            with open(filename, 'w') as file:
+            with open(filename, 'w', encoding='utf-8') as file:
                 file.write(script)
             return filename
 
@@ -1423,7 +1507,7 @@ class VolumeModel(dc.PhysicalObject):
     def to_step(self, filepath: str):
         if not (filepath.endswith('.step') or filepath.endswith('.stp')):
             filepath += '.step'
-        with open(filepath, 'w') as file:
+        with open(filepath, 'w', encoding='utf-8') as file:
             self.to_step_stream(file)
 
     def to_step_stream(self, stream: dcf.StringFile):
@@ -1497,7 +1581,7 @@ class VolumeModel(dc.PhysicalObject):
             presentation_style_id = suface_style_usage_id + 1
 
             step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
-                            "#{curve_style_id}));\n"
+                            f"#{curve_style_id}));\n"
 
             styled_item_id = presentation_style_id + 1
             if primitive.__class__.__name__ == 'OpenShell3D':
@@ -1597,6 +1681,7 @@ class VolumeModel(dc.PhysicalObject):
         lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
         lines.append('Geometry.Tolerance = 1e-20;')
         lines.append('Mesh.AngleToleranceFacetOverlap = 0.01;')
+        lines.append('General.Verbosity = 0;')
 
         for i, primitive in enumerate(self.primitives):
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
@@ -1664,8 +1749,47 @@ class VolumeModel(dc.PhysicalObject):
 
         return lines
 
-    def to_geo(self, file_name: str,
-               factor: float, **kwargs):
+    def to_geo_stream(self, stream: dcf.StringFile,
+                      factor: float, **kwargs):
+        """
+        gets the .geo file for the VolumeModel
+
+        :param file_name: The geo. file name
+        :type file_name: str
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+            if element[0] not in kwargs:
+                kwargs[element[0]] = element[1]
+
+        lines = self.get_geo_lines()
+        lines.extend(self.get_mesh_lines(factor,
+                                         curvature_mesh_size=kwargs['curvature_mesh_size'],
+                                         min_points=kwargs['min_points'],
+                                         initial_mesh_size=kwargs['initial_mesh_size']))
+
+        content = ''
+        for line in lines:
+            content += line+'\n'
+
+        stream.write(content)
+
+    def to_geo(self, file_name: str = '',
+               factor: float = 0.5, **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
         # initial_mesh_size: float = 5):
@@ -1694,29 +1818,41 @@ class VolumeModel(dc.PhysicalObject):
             if element[0] not in kwargs:
                 kwargs[element[0]] = element[1]
 
-        # try:
-        #     curvature_mesh_size = kwargs['curvature_mesh_size']
-        # except KeyError:
-        #     curvature_mesh_size = 0
-        # try:
-        #     min_points = kwargs['min_points']
-        # except KeyError:
-        #     min_points = None
-        # try:
-        #     initial_mesh_size = kwargs['initial_mesh_size']
-        # except KeyError:
-        #     initial_mesh_size = 5
+        if not (file_name.endswith('.geo') or file_name.endswith('.geo')):
+            file_name += '.geo'
+        with open(file_name, 'w', encoding='utf-8') as file:
+            self.to_geo_stream(file, factor,
+                               curvature_mesh_size=kwargs['curvature_mesh_size'],
+                               min_points=kwargs['min_points'],
+                               initial_mesh_size=kwargs['initial_mesh_size'])
 
-        lines = self.get_geo_lines()
-        lines.extend(self.get_mesh_lines(factor,
-                                         curvature_mesh_size=kwargs['curvature_mesh_size'],
-                                         min_points=kwargs['min_points'],
-                                         initial_mesh_size=kwargs['initial_mesh_size']))
-        with open(file_name + '.geo', 'w', encoding="utf-8") as file:
-            for line in lines:
-                file.write(line)
-                file.write('\n')
-        file.close()
+        # for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+        #     if element[0] not in kwargs:
+        #         kwargs[element[0]] = element[1]
+
+        # # try:
+        # #     curvature_mesh_size = kwargs['curvature_mesh_size']
+        # # except KeyError:
+        # #     curvature_mesh_size = 0
+        # # try:
+        # #     min_points = kwargs['min_points']
+        # # except KeyError:
+        # #     min_points = None
+        # # try:
+        # #     initial_mesh_size = kwargs['initial_mesh_size']
+        # # except KeyError:
+        # #     initial_mesh_size = 5
+
+        # lines = self.get_geo_lines()
+        # lines.extend(self.get_mesh_lines(factor,
+        #                                   curvature_mesh_size=kwargs['curvature_mesh_size'],
+        #                                   min_points=kwargs['min_points'],
+        #                                   initial_mesh_size=kwargs['initial_mesh_size']))
+        # with open(file_name + '.geo', 'w', encoding="utf-8") as file:
+        #     for line in lines:
+        #         file.write(line)
+        #         file.write('\n')
+        # file.close()
 
     def to_geo_with_stl(self, file_name: str,
                         factor: float, **kwargs):
@@ -1806,8 +1942,8 @@ class VolumeModel(dc.PhysicalObject):
                         continue
         return surfaces
 
-    def to_msh(self, file_name: str, mesh_dimension: int,
-               factor: float, **kwargs):
+    def to_msh(self, mesh_dimension: int,
+               factor: float, file_name: str = '', **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
         # initial_mesh_size: float = 5):
@@ -1851,7 +1987,12 @@ class VolumeModel(dc.PhysicalObject):
         # except KeyError:
         #     initial_mesh_size = 5
 
-        self.to_geo(file_name, factor,
+        if file_name == '':
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                file_name = f.name
+
+        self.to_geo(file_name=file_name,
+                    factor=factor,
                     curvature_mesh_size=kwargs['curvature_mesh_size'],
                     min_points=kwargs['min_points'],
                     initial_mesh_size=kwargs['initial_mesh_size'])

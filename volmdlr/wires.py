@@ -30,18 +30,12 @@ import volmdlr.display as vmd
 
 def bounding_rectangle_adjacent_contours(contours: List):
     """
-    compute the bounding_box of a list of adjacent contours2d
+    Compute the bounding box of a list of adjacent contours2d.
 
-    Parameters
-    ----------
-    contours : List[volmdlr.wires.Contour2D]
-
-    Returns
-    -------
-    xmin : float
-    xmax : float
-    ymin : float
-    ymax : float
+    :param contours: A list of adjacent contours
+    :type contours: List[:class:`volmdlr.wires.Contour2D`]
+    :return: The bounding box
+    :rtype: :class:`volmdlr.core.BoundingRectangle`
     """
     xmin, xmax, ymin, ymax = contours[0].bounding_rectangle().bounds()
 
@@ -416,9 +410,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         return offset_intersections
 
     def offset(self, offset):
-        """"
-        generates an offset of a Wire2D
-
+        """
+        Generates an offset of a Wire2D.
         """
         offset_primitives = []
         infinite_primitives = []
@@ -1383,6 +1376,12 @@ class ContourMixin(WireMixin):
 
         return 'Line Loop(' + str(tag) + ') = {' + str(primitives_tags)[1:-1] + '};'
 
+    def get_geo_points(self):
+        points = set()
+        for primitive in self.primitives:
+            points.update(primitive.get_geo_points())
+        return points
+
 
 class Contour2D(ContourMixin, Wire2D):
     """
@@ -1452,13 +1451,8 @@ class Contour2D(ContourMixin, Wire2D):
         return self._edge_polygon
 
     def _get_edge_polygon(self):
-
-        if len(self.primitives) == 1 and self.primitives[0].start == self.primitives[0].end:
-            return ClosedPolygon2D(self.primitives[0].discretization_points(number_points=200))
-
         points = []
         for edge in self.primitives:
-
             if points:
                 if edge.start != points[-1]:
                     points.append(edge.start)
@@ -2028,9 +2022,7 @@ class Contour2D(ContourMixin, Wire2D):
         return contour1, contour2
 
     def divide(self, contours, inside):
-        """
-        This method has a modified-iterating-list pylint error to be fixed
-        """
+        # TODO: This method has a modified-iterating-list pylint error to be fixed
         new_base_contours = [self]
         finished = False
         counter = 0
@@ -3908,6 +3900,11 @@ class Circle2D(Contour2D):
         please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
+
+    def get_geo_points(self):
+        return [volmdlr.Point3D(self.radius, self.center.y, 0),
+                volmdlr.Point3D(self.center.x, self.center.y, 0),
+                volmdlr.Point3D(-self.radius, self.center.y, 0)]
 
 
 class Contour3D(ContourMixin, Wire3D):
