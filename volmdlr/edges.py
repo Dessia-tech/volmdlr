@@ -4998,7 +4998,7 @@ class Arc3D(Arc):
             start_id, end_id, curve_id)
         return content, [current_id]
 
-    def point_belongs(self, point3d, abs_tol:float=1e-6):
+    def point_belongs(self, point3d, abs_tol: float = 1e-6):
         """
         Check if a point3d belongs to the arc_3d or not.
 
@@ -5066,6 +5066,7 @@ class Arc3D(Arc):
             if self.point_belongs(intersection, 1e-6):
                 linesegment_intersections.append(intersection)
         return linesegment_intersections
+
 
 class FullArc3D(Arc3D):
     """
