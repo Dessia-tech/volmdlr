@@ -46,6 +46,10 @@ def knots_vector_inv(knots_vector):
 
 
 def repair_singularity(primitive, last_primitive):
+    """
+    Repairs the Contour2D after the transformation from spatial to parametric coordinates when the surface
+    contains a sigularity (SphericalSurface3D and ConicalSurface3D).
+    """
     v1 = primitive.unit_direction_vector()
     v2 = last_primitive.unit_direction_vector()
     dot = v1.dot(volmdlr.X2D)
@@ -72,7 +76,7 @@ def repair_singularity(primitive, last_primitive):
 def repair_start_end_angle_periodicity(angle_start, angle_end, ref_start, ref_end):
     """
     Repairs start and end angles in parametric coordinates based in ref_start (angle just after start_angle)
-     and ref_end (angle just before angle_end)
+     and ref_end (angle just before angle_end).
     """
     # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
     if math.isclose(angle_start, math.pi, abs_tol=1e-6) and ref_start < 0:
@@ -87,6 +91,9 @@ def repair_start_end_angle_periodicity(angle_start, angle_end, ref_start, ref_en
 
 
 def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
+    """
+    Verifies theta from start and end of an arc3d after transformation from spatial to parametric coordinates.
+    """
     theta1, z1 = start
     theta2, z2 = end
 
@@ -113,6 +120,9 @@ def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
 
 
 def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, point_before_end):
+    """
+    Verifies theta and phi from start and end of an arc3d after transformation from spatial to parametric coordinates.
+    """
     theta1, phi1 = start
     theta2, phi2 = end
     theta3, phi3 = point_after_start
@@ -1327,6 +1337,9 @@ class CylindricalSurface3D(Surface3D):
         return volmdlr.Point2D(theta, z)
 
     def arc3d_to_2d(self, arc3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
 
@@ -1341,8 +1354,8 @@ class CylindricalSurface3D(Surface3D):
         return [vme.LineSegment2D(start, end)]
 
     def linesegment3d_to_2d(self, linesegment3d):
-        """
-        Changes the linesegment coordinates to Cylindrical coordinates (theta, z)
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         start = self.point3d_to_2d(linesegment3d.start)
         end = self.point3d_to_2d(linesegment3d.end)
@@ -1375,6 +1388,9 @@ class CylindricalSurface3D(Surface3D):
             # raise NotImplementedError('Ellipse? delta_theta={} delta_z={}'.format(abs(theta2-theta1), abs(z1-z2)))
 
     def fullarc3d_to_2d(self, fullarc3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             p1 = self.point3d_to_2d(fullarc3d.start)
             p2 = p1 + volmdlr.TWO_PI * volmdlr.X2D
@@ -1384,9 +1400,15 @@ class CylindricalSurface3D(Surface3D):
             raise ValueError('Impossible!')
 
     def circle3d_to_2d(self, circle3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         return []
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         length = bspline_curve3d.length()
         # points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
         #           for i in range(11)]
@@ -1425,6 +1447,7 @@ class CylindricalSurface3D(Surface3D):
 
     def arcellipse3d_to_2d(self, arcellipse3d):
         """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         TODO: THIS IS AN APPROXIMATION
         """
         points = arcellipse3d.discretization_points(number_points=15)
@@ -1827,6 +1850,9 @@ class ToroidalSurface3D(Surface3D):
             raise NotImplementedError('Ellipse?')
 
     def fullarc3d_to_2d(self, fullarc3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             p1 = self.point3d_to_2d(fullarc3d.start)
             return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.X2D)]
@@ -1837,9 +1863,15 @@ class ToroidalSurface3D(Surface3D):
             raise ValueError('Impossible!')
 
     def circle3d_to_2d(self, circle3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         return []
 
     def arc3d_to_2d(self, arc3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
 
@@ -1854,8 +1886,8 @@ class ToroidalSurface3D(Surface3D):
         return [vme.LineSegment2D(start, end)]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
-        """
-        Returns a BspilineCurve2D in the surface coordinate system (theta, phi)
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         theta1, phi1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, phi2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -2074,6 +2106,9 @@ class ConicalSurface3D(Surface3D):
             raise ValueError('Impossible!')
 
     def arc3d_to_2d(self, arc3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         # angle = abs(start.x-end.x)
         # if arc3d.is_trigo:
         # end = start + volmdlr.Point2D(arc3d.angle, 0)
@@ -2099,6 +2134,9 @@ class ConicalSurface3D(Surface3D):
         return [vme.LineSegment2D(start, end)]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         length = bspline_curve3d.length()
         # points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
         #           for i in range(11)]
@@ -2136,6 +2174,9 @@ class ConicalSurface3D(Surface3D):
         #     periodic=bspline_curve3d.periodic)]
 
     def circle3d_to_2d(self, circle3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         return []
 
     def linesegment2d_to_3d(self, linesegment2d):
@@ -2204,6 +2245,14 @@ class ConicalSurface3D(Surface3D):
         self.frame.rotation_inplace(center, axis, angle)
 
     def repair_primitives_periodicity(self, primitives, last_primitive):
+        """
+        Take into account the periodic behavior of the surface when doing transformation from spatial to parametric
+        coordinates.
+        :param primitives: primitive to rapair
+        :type primitives: List[volmdlr.edges]
+        :param last_primitive: primitive of reference
+        :type last_primitive: `volmdlr.edges`
+        """
         delta_x1 = abs(primitives[0].start.x - last_primitive.end.x)
         delta_x2 = abs(primitives[-1].end.x - last_primitive.end.x)
         delta_y1 = abs(primitives[0].start.y - last_primitive.end.y)
@@ -2365,6 +2414,9 @@ class SphericalSurface3D(Surface3D):
         return [vme.Arc3D(start, interior, end)]
 
     def arc3d_to_2d(self, arc3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
         interior = self.point3d_to_2d(arc3d.interior)
@@ -2458,6 +2510,9 @@ class SphericalSurface3D(Surface3D):
         return [vme.Arc3D(start, interior, end)]
 
     def fullarc3d_to_2d(self, fullarc3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         # if self.frame.w.is_colinear_to(fullarc3d.normal):
         #     p1 = self.point3d_to_2d(fullarc3d.start)
         #     return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.X2D)]
@@ -2498,6 +2553,14 @@ class SphericalSurface3D(Surface3D):
                                name=name)
 
     def repair_primitives_periodicity(self, primitives, last_primitive):
+        """
+        Take into account the periodic behavior of the surface when doing transformation from spatial to parametric
+        coordinates.
+        :param primitives: primitive to rapair
+        :type primitives: List[volmdlr.edges]
+        :param last_primitive: primitive of reference
+        :type last_primitive: `volmdlr.edges`
+        """
         delta_x1 = abs(primitives[0].start.x - last_primitive.end.x)
         delta_x2 = abs(primitives[-1].end.x - last_primitive.end.x)
         delta_y1 = abs(primitives[0].start.y - last_primitive.end.y)
@@ -2890,8 +2953,8 @@ class BSplineSurface3D(Surface3D):
         return linesegments
 
     def linesegment3d_to_2d(self, linesegment3d):
-        """
-        a line segment on a BSplineSurface3D will be in any case a line in 2D?
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         x_perio = self.x_periodicity if self.x_periodicity is not None else 1.
         y_perio = self.y_periodicity if self.y_periodicity is not None else 1.
@@ -2903,6 +2966,9 @@ class BSplineSurface3D(Surface3D):
                                                      max_bound_y=y_perio))]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """"
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         # TODO: enhance this, it is a non exact method!
         # TODO: bsplinecurve can be periodic but not around the bsplinesurface
         bsc_linesegment = vme.LineSegment3D(bspline_curve3d.points[0],
