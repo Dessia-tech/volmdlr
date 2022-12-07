@@ -1493,6 +1493,9 @@ class CylindricalSurface3D(Surface3D):
         return cls(frame_direct, radius, arguments[0][1:-1])
 
     def to_step(self, current_id):
+        """
+        Translate volmdlr primitive to step syntax.
+        """
         frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
