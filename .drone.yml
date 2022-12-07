@@ -62,7 +62,7 @@ steps:
   image: dessia/python-gmsh:3.9
   commands:
   - pip install Cython wheel
-  - python setup install --user
+  - python setup.py install --user
   - cd scripts/mesh
   - python read_msh_file.py
   - python mesh/geo_file_1.py
