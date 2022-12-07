@@ -36,9 +36,9 @@ for step_file in [
     # 'bracket3_cut2.step',
     # 'strange_gasket.step',
     # '2_bspline_faces.stp',
-    # 'bracket3.step',
+    'bracket3.step',
     # 'bracket1.step',
-    'porte_dessia_simple.step',
+    # 'porte_dessia_simple.step',
     # 'cylinder_ellipse.step',
     # 'car_test.step'
 ]:
@@ -48,7 +48,7 @@ for step_file in [
     step = volmdlr.step.Step.from_file(filepath=step_file)
 
     model = step.to_volume_model()
-    model.primitives[0].primitives[0].babylonjs()
+    # model.babylonjs()
     # model.primitives[0].primitives[0].babylonjs()
     # assert len(model.primitives) > 0.
     # model.to_step(step_file+'_reexport')
@@ -56,20 +56,20 @@ for step_file in [
     # model.primitives[0].color = (1, 0.1, 0.1)
     #
 
-    # faces = []
-    # error = {}
-    # surface2d = {}
-    # for closedshell in model.primitives:
-    #     for i, face in enumerate(closedshell.faces):
-    #         try:
-    #             face.triangulation()
-    #         except Exception:
-    #             error[i] = face
-    #             surface2d[i] = face.surface2d
-    #         else:
-    #             faces.append(face)
-    # model2 = volmdlr.core.VolumeModel(faces)
-    # model2.babylonjs()
+    faces = []
+    error = {}
+    surface2d = {}
+    for closedshell in model.primitives:
+        for i, face in enumerate(closedshell.faces):
+            try:
+                face.triangulation()
+            except Exception:
+                error[i] = face
+                surface2d[i] = face.surface2d
+            else:
+                faces.append(face)
+    model2 = volmdlr.core.VolumeModel(faces)
+    model2.babylonjs()
     # assert len(model.primitives) > 0.
     # model.to_step(step_file + '_reexport')
     # model.babylonjs()

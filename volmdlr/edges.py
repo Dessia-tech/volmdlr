@@ -640,14 +640,16 @@ class BSplineCurve(Edge):
                 pos = i
                 min_dist = dist
         # for x0 in x_init:
-        # z = scp.optimize.least_squares(f, x0=x0, bounds=([bounds[pos][0]], [bounds[pos][1]]))
-        # if z.fun < abs_tol:
-        #     # print(False)
-        #     return True
-        # x0 = z.x
+
+
         res = scp.optimize.minimize(f, x0=npy.array(x0), bounds=[tuple(bounds[pos])], tol=abs_tol)
         if res.fun < abs_tol:
             # print(True)
+            return True
+        x0 = res.x[0]
+        z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
+        if z.fun < abs_tol:
+            # print(False)
             return True
         return False
 
