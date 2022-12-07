@@ -80,6 +80,8 @@ steps:
 
 - name: build doc
   image: python:3.9
+  when:
+    branch: master
   commands:
   - pip install Cython sphinx sphinx_rtd_theme coverage
   - python setup.py install
@@ -94,6 +96,8 @@ steps:
 
 - name: generate sdist
   image: python:3.8
+  when:
+    branch: master
   commands:
   - git fetch --tags
   - pip install Cython
@@ -129,18 +133,6 @@ steps:
     password:
       from_secret: ssh_drone_password
 
-
-- name: notify by email
-  when:
-    status:
-    - failure
-  image: drillster/drone-email
-  settings:
-    host: mail.dessia.tech
-    username: technical@dessia.tech
-    password:
-      from_secret: email_password
-    from: technical@dessia.tech
 
 volumes:
   - name: pip_cache
