@@ -4999,6 +4999,12 @@ class Arc3D(Arc):
         return content, [current_id]
 
     def point_belongs(self, point3d, abs_tol:float=1e-6):
+        """
+        Check if a point3d belongs to the arc_3d or not.
+
+        :param point3d: point to be verified is on arc
+        :return: True if point is on Arc, False otherwise.
+        """
         if not math.isclose(point3d.point_distance(self.center), self.radius, abs_tol=abs_tol):
             return False
         vector1 = self.start - self.center
@@ -5038,10 +5044,21 @@ class Arc3D(Arc):
         return self.point_at_abscissa(self.length() / 2)
 
     def to_circle3d(self):
+        """
+        Create a Circle3D from an Arc3D.
+
+        :return: wires.Cricle3D
+        """
         from volmdlr.wires import Circle3D
         return Circle3D(self.frame, self.radius, self.name)
 
     def linesegment_intersections(self, linesegment3d: LineSegment3D):
+        """
+        Calculates intersections between an Arc3D and a LineSegment3D.
+
+        :param linesegment3d: linesegment to verify intersections.
+        :return: list with intersections points between linesegment and Arc3D.
+        """
         circle3d = self.to_circle3d()
         circle3d_lineseg_inters = circle3d.linesegment_intersections(linesegment3d)
         linesegment_intersections = []

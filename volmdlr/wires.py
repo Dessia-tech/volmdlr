@@ -4195,6 +4195,12 @@ class Contour3D(ContourMixin, Wire3D):
         return contours
 
     def line_intersections(self, line: volmdlr.edges.Line3D):
+        """
+        Calculates intersections between a contour3d and Line3d.
+
+        :param line: Line3D to verify intersections.
+        :return: list with the contour intersections with line
+        """
         intersections = []
         for primitive in self.primitives:
             prim_line_intersections = primitive.line_intersections(line)
@@ -4205,6 +4211,12 @@ class Contour3D(ContourMixin, Wire3D):
         return intersections
 
     def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment3D):
+        """
+        Calculates intersections between a contour3d and LineSegment3d.
+
+        :param linesegment: LineSegment3D to verify intersections.
+        :return: list with the contour intersections with line
+        """
         intersections = []
         for primitive in self.primitives:
             prim_line_intersections = primitive.linesegment_intersections(linesegment)
@@ -4329,6 +4341,11 @@ class Circle3D(Contour3D):
                                 other_circle.radius, abs_tol=1e-06)
 
     def get_primitives(self):
+        """
+        Calculates primitives to compose Circle: 2 Arc3D.
+
+        :return: list containing two Arc3D
+        """
         if not self._primitives:
             points = [self.center + self.frame.u * self.radius,
                       self.center - self.frame.v * self.radius,
@@ -4361,6 +4378,12 @@ class Circle3D(Contour3D):
         return discretization_points_3d
 
     def abscissa(self, point3d: volmdlr.Point3D):
+        """
+        Calculates the abscissa a given point.
+
+        :param point3d: point to calculate abscissa.
+        :return: abscissa
+        """
         x, y, _ = self.frame.new_coordinates(point3d)
         u1 = x / self.radius
         u2 = y / self.radius
