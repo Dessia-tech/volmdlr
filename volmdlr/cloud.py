@@ -21,7 +21,7 @@ import volmdlr.primitives3d as p3d
 class PointCloud3D(dc.DessiaObject):
     def __init__(self, points, name: str = ''):
         self.points = points
-        self.name = name
+        dc.DessiaObject.__init__(self, name=name)
 
     @classmethod
     def from_stl(cls, file_path):
@@ -225,8 +225,8 @@ class PointCloud3D(dc.DessiaObject):
     def extended_cloud(self, distance_extended: float):
         # it works if distance_extended >= 0
         spheres, extended_points = [], []
-        for pt in self.points:
-            extended_zone = p3d.Sphere(pt, distance_extended)
+        for point in self.points:
+            extended_zone = p3d.Sphere(point, distance_extended)
             sphere_primitive = extended_zone.shell_faces[0]
 
             spheres.append(vmf.ClosedShell3D([sphere_primitive]))
@@ -244,12 +244,12 @@ class PointCloud3D(dc.DessiaObject):
 
     @staticmethod
     def offset_to_shell(positions_plane: List[vmf.Plane3D],
-                        polygons2D: List[vmw.ClosedPolygon2D], offset: float):
+                        polygons2d: List[vmw.ClosedPolygon2D], offset: float):
 
         origin_f, origin_l = positions_plane[0], positions_plane[-1]
 
         new_position_plane = [origin_f - offset] + positions_plane[1:-1] + [origin_l + offset]
-        polyconvexe = [vmw.ClosedPolygon2D.points_convex_hull(poly.points) for poly in polygons2D]
+        polyconvexe = [vmw.ClosedPolygon2D.points_convex_hull(poly.points) for poly in polygons2d]
         new_poly = [poly.offset(offset) for poly in polyconvexe]
 
         return new_position_plane, new_poly
@@ -258,13 +258,13 @@ class PointCloud3D(dc.DessiaObject):
 class PointCloud2D(dc.DessiaObject):
     def __init__(self, points, name: str = ''):
         self.points = points
-        self.name = name
+        dc.DessiaObject.__init__(self, name=name)
 
     def plot(self, ax=None, color='k'):
         if ax is None:
             _, ax = plt.subplots()
-        for pt in self.points:
-            pt.plot(ax=ax, color=color)
+        for point in self.points:
+            point.plot(ax=ax, color=color)
         return ax
 
     def to_polygon(self, convexe=False):
@@ -283,7 +283,7 @@ class PointCloud2D(dc.DessiaObject):
             return polygon
 
     def bounding_rectangle(self):
-        x_list, y_list = [pt.x for pt in self.points], [pt.y for pt in self.points]
+        x_list, y_list = [p.x for p in self.points], [p.y for p in self.points]
         return min(x_list), max(x_list), min(y_list), max(y_list)
 
     def simplify(self, resolution=5):
@@ -299,10 +299,10 @@ class PointCloud2D(dc.DessiaObject):
         for x1, x2 in zip(x_slide, x_slide[1:] + [x_slide[0]]):
             for y1, y2 in zip(y_slide, y_slide[1:] + [y_slide[0]]):
                 box_points = []
-                for pt in self.points:
-                    if pt.x >= x1 and pt.x <= x2:
-                        if pt.y >= y1 and pt.y <= y2:
-                            box_points.append(pt)
+                for point in self.points:
+                    if point.x >= x1 and point.x <= x2:
+                        if point.y >= y1 and point.y <= y2:
+                            box_points.append(point)
                 points.append(box_points)
 
         polys = [vmw.ClosedPolygon2D.points_convex_hull(pts) for pts in points]

@@ -5,7 +5,8 @@
 """
 
 import time
-from typing import BinaryIO, List
+from typing import List
+from dessia_common.files import BinaryFile
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -116,6 +117,7 @@ def item_defined_transformation(arguments, object_dict):
     # TODO : how to frame map properly from these two Frame3D ?
     # return volmdlr_object2 - volmdlr_object1
     return volmdlr_object2
+#
 
 
 def manifold_surface_shape_representation(arguments, object_dict):
@@ -187,13 +189,17 @@ def representation_relationship_representation_relationship_with_transformation_
         arguments, object_dict):
     if arguments[2] in object_dict:
         if isinstance(object_dict[arguments[2]], list):
+
             for shell3d in object_dict[arguments[2]]:
+
                 frame3d = object_dict[arguments[4]]
                 shell3d.frame_mapping_inplace(frame3d, 'old')
                 # return shell3d
             return None
+
         else:
             shell3d = object_dict[arguments[2]]
+
             frame3d = object_dict[arguments[4]]
             shell3d.frame_mapping_inplace(frame3d, 'old')
             # return shell3d
@@ -207,7 +213,12 @@ def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_repre
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
-    return STEP_TO_VOLMDLR[name].from_step(
+    return STEP_TO_VOLMDLR['BOUNDED_CURVE, '
+                           'B_SPLINE_CURVE, '
+                           'B_SPLINE_CURVE_WITH_KNOTS, '
+                           'CURVE, GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_CURVE, '
+                           'REPRESENTATION_ITEM'].from_step(
         modified_arguments, object_dict)
 
 
@@ -216,7 +227,11 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
-    return STEP_TO_VOLMDLR[name].from_step(
+    return STEP_TO_VOLMDLR['BOUNDED_SURFACE, B_SPLINE_SURFACE, '
+                           'B_SPLINE_SURFACE_WITH_KNOTS, '
+                           'GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_SURFACE, '
+                           'REPRESENTATION_ITEM, SURFACE'].from_step(
         modified_arguments, object_dict)
 
 
@@ -256,7 +271,7 @@ class Step(dc.DessiaObject):
         self.functions, self.all_connections = self.read_lines()
         self._utd_graph = False
         self._graph = None
-        self.name = name
+        dc.DessiaObject.__init__(self, name=name)
 
     @property
     def graph(self):
@@ -266,7 +281,7 @@ class Step(dc.DessiaObject):
         return self._graph
 
     @classmethod
-    def from_stream(cls, stream: BinaryIO = None):
+    def from_stream(cls, stream: BinaryFile = None):
         stream.seek(0)
         lines = []
         for line in stream:
@@ -555,8 +570,6 @@ class Step(dc.DessiaObject):
 
     def to_volume_model(self, show_times=False):
         """
-        no_bug_mode=True loops on instanciate method's KeyErrors until all
-        the KeyErrors can be instanciated.
         show_times=True displays the numer of times a given class has been
         instanciated and the totatl time of all the instanciations of this
         given class.
@@ -580,7 +593,6 @@ class Step(dc.DessiaObject):
             if node != '#0' and self.functions[node].name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(node)
                 not_shell_nodes.append(int(self.functions[node].arg[1][1:]))
-
         frame_mapped_shell_node = []
         for s_node in shell_nodes:
             for fm_node in frame_mapping_nodes:
@@ -594,14 +606,13 @@ class Step(dc.DessiaObject):
         for node in shell_nodes + frame_mapping_nodes:
             self.graph.add_edge('#0', node)
 
-        # self.draw_graph(self.graph, reduced=True, save=True)
+        # self.draw_graph(self.graph, reduced=True)
 
         nodes = []
         i = 1
         new_nodes = True
         while new_nodes:
-            new_nodes = list(nx.descendants_at_distance(
-                self.graph, '#0', i))[::-1]
+            new_nodes = list(nx.descendants_at_distance(self.graph, '#0', i))[::-1]
             nodes.extend(new_nodes)
             i += 1
 
@@ -617,9 +628,7 @@ class Step(dc.DessiaObject):
                     for instanciate_id in instanciate_ids[::-1]:
                         t = time.time()
                         volmdlr_object = self.instanciate(
-                            self.functions[instanciate_id].name,
-                            self.functions[instanciate_id].arg[:],
-                            object_dict)
+                            self.functions[instanciate_id].name, self.functions[instanciate_id].arg[:], object_dict)
                         t = time.time() - t
                         object_dict[instanciate_id] = volmdlr_object
                         if show_times:
@@ -646,8 +655,10 @@ class Step(dc.DessiaObject):
                 shells.extend(object_dict[node])
             else:
                 shells.append(object_dict[node])
-
-        return volmdlr.core.VolumeModel(shells)
+        volume_model = volmdlr.core.VolumeModel(shells)
+        # bounding_box = volume_model.bounding_box
+        # volume_model = volume_model.translation(-bounding_box.center)
+        return volume_model
 
     def to_points(self):
         object_dict = {}
@@ -733,7 +744,7 @@ STEP_TO_VOLMDLR = {
     'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
     'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
 
-    # added on 12/08/2021 by Mack in order to read BsplinePipe
+    # Bsplines
     'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
 
     # TOPOLOGICAL ENTITIES

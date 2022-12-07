@@ -3,7 +3,7 @@
 """
 
 """
-
+import math
 import volmdlr as vm
 import volmdlr.wires as vmw
 
@@ -117,12 +117,16 @@ turned_model = model.rotation(0.3*vm.X3D, vm.Z3D, 0.4)
 
 # model.primitives.extend(translated_model.primitives+turned_model.primitives)
 model.babylonjs()
-translated_model.babylonjs()
-turned_model.babylonjs()
+# translated_model.babylonjs()
+# turned_model.babylonjs()
 model.to_step('revolved_profile.step')
 
-# ax = None
-# for primitive in turned_model.primitives:
-#     for face in primitive.faces:
-#         if hasattr(face.surface3d, 'frame'):
-#             ax = face.surface3d.frame.plot(ax=ax)
+# Checking face triangulation
+planar_face = profile1.faces[1]
+
+planar_face_triangulation = planar_face.surface2d.triangulation
+assert math.isclose(planar_face_triangulation().area(), planar_face.surface2d.area(), abs_tol=1e-4)
+
+model_copy = model.copy()
+assert model_copy == model
+

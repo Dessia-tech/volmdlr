@@ -21,10 +21,7 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 
-# from mpl_toolkits.mplot3d import Axes3D
-
 npy.seterr(divide='raise')
-
 
 # TODO: put voldmlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
@@ -74,6 +71,15 @@ def set_to_list(step_set):
 
 
 def delete_node_and_predecessors(graph, node):
+    """
+    A recursive method for deleting a node and its predecessors in a networkx
+    graph.
+
+    :param graph: A networkx graph
+    :type graph: :class:`networkx.Graph`
+    :param node: A node of the graph
+    :type node: Any
+    """
     predecessors = list(graph.predecessors(node))
     graph.remove_node(node)
     for predecessor in predecessors:
@@ -81,6 +87,15 @@ def delete_node_and_predecessors(graph, node):
 
 
 def delete_node_and_successors(graph, node):
+    """
+    A recursive method for deleting a node and its successors in a networkx
+    graph.
+
+    :param graph: A networkx graph
+    :type graph: :class:`networkx.Graph`
+    :param node: A node of the graph
+    :type node: Any
+    """
     successors = list(graph.successors(node))
     graph.remove_node(node)
     for successor in successors:
@@ -114,6 +129,16 @@ def clockwise_angle(vector1, vector2):
 
 
 def vectors3d_angle(vector1, vector2):
+    """
+    Computes the angle between two 3 dimensional vectors.
+
+    :param vector1: The fist 3 dimensional vector
+    :type vector1: :class:`volmdlr.Vector3D`
+    :param vector2: The second 3 dimensional vectors
+    :type vector2: :class:`volmdlr.Vector3D`
+    :return: The angle between the two vectors
+    :rtype: flaot
+    """
     dot = vector1.dot(vector2)
     theta = math.acos(dot / (vector1.norm() * vector2.norm()))
 
@@ -122,8 +147,14 @@ def vectors3d_angle(vector1, vector2):
 
 def sin_cos_angle(u1, u2):
     """
-    cos(theta)=u1, sin(theta)=u2
-    returns an angle between 0 and 2pi
+    Returns an angle between 0 and 2*PI verifying cos(theta)=u1, sin(theta)=u2.
+
+    :param u1: The value of the cosinus of the returned angle
+    :type u1: float
+    :param u2: The value of the sinus of the returned angle
+    :type u2: flaot
+    :return: The angle verifying the two equations
+    :rtype: float
     """
     if u1 < -1:
         u1 = -1
@@ -196,6 +227,17 @@ def determinant(vec1, vec2, vec3):
 
 
 def delete_double_point(list_point):
+    """
+    Delete duplicate points from a list of points.
+
+    :param list_point: The initial list of points
+    :type list_point: Union[List[:class:`volmdlr.Point2D`],
+        List[:class:`volmdlr.Point3D`]]
+    :return: The final list of points containing no duplicates
+    :rtype: Union[List[:class:`volmdlr.Point2D`],
+        List[:class:`volmdlr.Point3D`]]
+    """
+    # TODO : this method would be faster using sets
     points = []
     for pt in list_point:
         if pt not in points:
@@ -288,7 +330,7 @@ def posangle_arc(start, end, radius, frame=None):
 
 def clockwise_interior_from_circle3d(start, end, circle):
     """
-    Returns the clockwise interior point between start and end on the circle
+    Returns the clockwise interior point between start and end on the circle.
     """
     start2d = start.to_2d(plane_origin=circle.frame.origin,
                           x=circle.frame.u, y=circle.frame.v)
@@ -333,7 +375,7 @@ def offset_angle(trigo, angle_start, angle_end):
 
 def angle_principal_measure(angle, min_angle=-math.pi):
     """
-    returns angle between O and 2 pi
+    Returns angle between O and 2 pi.
     """
     max_angle = min_angle + volmdlr.TWO_PI
     angle = angle % (volmdlr.TWO_PI)
@@ -347,6 +389,15 @@ def angle_principal_measure(angle, min_angle=-math.pi):
 
 
 def step_ids_to_str(ids):
+    """
+    Returns a string with a '#' in front of each ID and a comma separating
+    eachone.
+
+    :param ids: A list of step primitives IDs
+    :type ids: List[int]
+    :return: A string containing all the IDs
+    :rtype: str
+    """
     return ','.join(['#{}'.format(i) for i in ids])
 
 
@@ -380,7 +431,7 @@ class Primitive2D(CompositePrimitive):
     def __init__(self, name=''):
         self.name = name
 
-        dc.DessiaObject.__init__(self, name=name)
+        CompositePrimitive.__init__(self, name=name)
 
 
 class CompositePrimitive2D(Primitive2D):
@@ -417,7 +468,8 @@ class CompositePrimitive2D(Primitive2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        CompositePrimitive2D rotation
+        Rotates the CompositePrimitive2D.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotated CompositePrimitive2D
@@ -427,30 +479,37 @@ class CompositePrimitive2D(Primitive2D):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        CompositePrimitive2D rotation. Object is updated inplace
+        Rotates the CompositePrimitive2D. Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
-        for point in self.primitives:
-            point.rotation_inplace(center, angle)
+        primitives = []
+        for primitive in self.primitives:
+            primitives.append(primitive.rotation(center, angle))
+        self.primitives = primitives
         self.update_basis_primitives()
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        CompositePrimitive2D translation
+        Translates the CompositePrimitive2D.
+
         :param offset: translation vector
         :return: A new translated CompositePrimitive2D
         """
-        return self.__class__([point.translation(offset)
-                               for point in self.primitives])
+        return self.__class__([primitive.translation(offset)
+                               for primitive in self.primitives])
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        CompositePrimitive2D translation. Object is updated inplace
+        Translates the CompositePrimitive2D. Object is updated inplace.
+
         :param offset: translation vector
         """
-        for point in self.primitives:
-            point.translation_inplace(offset)
+        primitives = []
+        for primitive in self.primitives:
+            primitives.append(primitive.translation(offset))
+        self.primitives = primitives
         self.update_basis_primitives()
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
@@ -466,15 +525,17 @@ class CompositePrimitive2D(Primitive2D):
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
+        primitives = []
         for primitive in self.primitives:
-            primitive.frame_mapping_inplace(frame, side)
+            primitives.append(primitive.frame_mapping(frame, side))
+        self.primitives = primitives
         self.update_basis_primitives()
 
     def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, equal_aspect=True):
 
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
 
         if equal_aspect:
             ax.set_aspect('equal')
@@ -502,6 +563,10 @@ class CompositePrimitive2D(Primitive2D):
 
 
 class Primitive3D(dc.PhysicalObject, CompositePrimitive):
+    """
+
+    """
+
     def __init__(self, color=None, alpha=1, name=''):
         self.color = color
         self.alpha = alpha
@@ -619,6 +684,171 @@ class CompositePrimitive3D(Primitive3D):
         return ax
 
 
+class BoundingRectangle(dc.DessiaObject):
+    """
+    Bounding rectangle.
+
+    :param xmin: minimal x coordinate
+    :type xmin: float
+    :param xmax: maximal x coordinate
+    :type xmax: float
+    :param ymin: minimal y coordinate
+    :type ymin: float
+    :param ymax: maximal y coordinate
+    :type ymax: float
+    """
+
+    def __init__(self, xmin: float, xmax: float, ymin: float, ymax: float, name: str = ''):
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        dc.DessiaObject.__init__(self, name=name)
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self.xmin
+        if key == 1:
+            return self.xmax
+        if key == 2:
+            return self.ymin
+        if key == 3:
+            return self.ymax
+        raise IndexError
+
+    def bounds(self):
+        """
+        Return the bounds of the BoundingRectangle.
+        """
+        return self.xmin, self.xmax, self.ymin, self.ymax
+
+    def plot(self, ax=None, color='k', linestyle='dotted'):
+        """
+        Plot of the bounding rectangle and its vertex.
+        """
+
+        if not ax:
+            _, ax = plt.subplots()
+        x = [self.xmin, self.xmax, self.xmax, self.xmin, self.xmin]
+        y = [self.ymin, self.ymin, self.ymax, self.ymax, self.ymin]
+
+        ax.plot(x, y, color=color, linestyle=linestyle)
+        ax.scatter(x, y, color=color)
+        return ax
+
+    def area(self):
+        """
+        Calculates the area of the bounding rectangle.
+        """
+        return (self.xmax - self.xmin) * (self.ymax - self.ymin)
+
+    def center(self):
+        """
+        Calculates the bounding rectangle center.
+        """
+        return volmdlr.Point2D(0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax))
+
+    def b_rectangle_intersection(self, b_rectangle2):
+        """
+        Returns True if there is an intersection with another specified
+        bounding rectangle or False otherwise.
+
+        :param b_rectangle2: bounding rectangle to verify intersection
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
+            and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+
+    def is_inside_b_rectangle(self, b_rectangle2):
+        """
+        Returns True if the bounding rectangle is totally inside another
+        specified bounding rectangle and False otherwise.
+
+        :param b_rectangle2: A bounding rectangle
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        return (self.xmin >= b_rectangle2.xmin - 1e-6) and (self.xmax <= b_rectangle2.xmax + 1e-6) \
+            and (self.ymin >= b_rectangle2.ymin - 1e-6) and (self.ymax <= b_rectangle2.ymax + 1e-6)
+
+    def point_belongs(self, point: volmdlr.Point2D):
+        """
+        Returns True if a specified point is inside the bounding rectangle
+        and False otherwise.
+
+        :param point: A 2 dimensional point
+        :type point: :class:`volmdlr.Point2D`
+        """
+        return self.xmin < point.x < self.xmax and self.ymin < point.y < self.ymax
+
+    def intersection_area(self, b_rectangle2):
+        """
+        Calculates the intersection area between two bounding rectangle.
+
+        :param b_rectangle2: A bounding rectangle
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        if not self.b_rectangle_intersection(b_rectangle2):
+            return 0
+        if self.is_inside_b_rectangle(b_rectangle2) or b_rectangle2.is_inside_b_rectangle(self):
+            return min(self.area(), b_rectangle2.area())
+
+        lx = min(self.xmax, b_rectangle2.xmax) - max(self.xmin, b_rectangle2.xmin)
+        ly = min(self.ymax, b_rectangle2.ymax) - max(self.ymin, b_rectangle2.ymin)
+
+        return lx * ly
+
+    def distance_to_b_rectangle(self, b_rectangle2):
+        """
+        Calculates the minimal distance between two bounding rectangles.
+
+        :param b_rectangle2: A bounding rectangle
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        if self.b_rectangle_intersection(b_rectangle2):
+            return 0
+
+        permute_b_rec1 = self
+        permute_b_rec2 = b_rectangle2
+
+        if permute_b_rec2.xmin < permute_b_rec1.xmin:
+            permute_b_rec1, permute_b_rec2 = permute_b_rec2, permute_b_rec1
+        dx = max(permute_b_rec2.xmin - permute_b_rec1.xmax, 0)
+
+        if permute_b_rec2.ymin < permute_b_rec1.ymin:
+            permute_b_rec1, permute_b_rec2 = permute_b_rec2, permute_b_rec1
+        dy = max(permute_b_rec2.ymin - permute_b_rec1.ymax, 0)
+
+        return (dx ** 2 + dy ** 2) ** 0.5
+
+    def distance_to_point(self, point: volmdlr.Point2D):
+        """
+        Calculate the minimal distance between the bounding rectangle and
+        a specified point.
+
+        :param point: A 2 dimensional point
+        :type point: :class:`volmdlr.Point2D`
+        """
+        if self.point_belongs(point):
+            return min([self.xmax - point.x, point.y - self.xmin,
+                        self.ymax - point.y, point.y - self.ymin])
+
+        if point.x < self.xmin:
+            dx = self.xmin - point.x
+        elif self.xmax < point.x:
+            dx = point.x - self.xmax
+        else:
+            dx = 0
+
+        if point.y < self.ymin:
+            dy = self.ymin - point.y
+        elif self.ymax < point.y:
+            dy = point.y - self.ymax
+        else:
+            dy = 0
+
+        return (dx ** 2 + dy ** 2) ** 0.5
+
+
 class BoundingBox(dc.DessiaObject):
     """
     An axis aligned boundary box
@@ -631,7 +861,8 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-        self.name = name
+
+        dc.DessiaObject.__init__(self, name=name)
 
         self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
 
@@ -721,17 +952,17 @@ class BoundingBox(dc.DessiaObject):
 
     def volume(self):
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
-                    self.zmax - self.zmin)
+                self.zmax - self.zmin)
 
     def bbox_intersection(self, bbox2):
         return self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
-                and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin
+               and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+               and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin
 
     def is_inside_bbox(self, bbox2):
-        return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6)\
-                and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
-                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
+        return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6) \
+               and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
+               and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
 
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
@@ -788,36 +1019,36 @@ class BoundingBox(dc.DessiaObject):
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
     def point_belongs(self, point):
-        return self.xmin < point[0] and point[0] < self.xmax \
-               and self.ymin < point[1] and point[1] < self.ymax \
-               and self.zmin < point[2] and point[2] < self.zmax
+        return self.xmin < point[0] < self.xmax \
+               and self.ymin < point[1] < self.ymax \
+               and self.zmin < point[2] < self.zmax
 
     def distance_to_point(self, point):
         if self.point_belongs(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
                         self.ymax - point[1], point[1] - self.ymin,
                         self.zmax - point[2], point[2] - self.zmin])
+
+        if point[0] < self.xmin:
+            dx = self.xmin - point[0]
+        elif self.xmax < point[0]:
+            dx = point[0] - self.xmax
         else:
-            if point[0] < self.xmin:
-                dx = self.xmin - point[0]
-            elif self.xmax < point[0]:
-                dx = point[0] - self.xmax
-            else:
-                dx = 0
+            dx = 0
 
-            if point[1] < self.ymin:
-                dy = self.ymin - point[1]
-            elif self.ymax < point[1]:
-                dy = point[1] - self.ymax
-            else:
-                dy = 0
+        if point[1] < self.ymin:
+            dy = self.ymin - point[1]
+        elif self.ymax < point[1]:
+            dy = point[1] - self.ymax
+        else:
+            dy = 0
 
-            if point[2] < self.zmin:
-                dz = self.zmin - point[2]
-            elif self.zmax < point[2]:
-                dz = point[2] - self.zmax
-            else:
-                dz = 0
+        if point[2] < self.zmin:
+            dz = self.zmin - point[2]
+        elif self.zmax < point[2]:
+            dz = point[2] - self.zmax
+        else:
+            dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
     def babylon_script(self):
@@ -858,21 +1089,20 @@ class VolumeModel(dc.PhysicalObject):
                                  'faces']
     _dessia_methods = ['to_stl_model']
     """
+    A class containing one or several :class:`volmdlr.core.Primitive3D`.
 
+    :param primitives: The vector's abscissa
+    :type primitives: List[:class:`volmdlr.core.Primitive3D`]
+    :param name: The VolumeModel's name
+    :type name: str
     """
 
     def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives
         self.name = name
         self.shells = []
-        # if self.primitives:
-        #     self.shells = self._extract_shells()
-        # if self.shells:
-
-        self.bounding_box = self._bounding_box()
-        # else:
-        #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
-        dc.DessiaObject.__init__(self, name=name)
+        self._bbox = None
+        dc.PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
         return sum(hash(point) for point in self.primitives)
@@ -894,84 +1124,18 @@ class VolumeModel(dc.PhysicalObject):
             equ = equ and p1 == p2
         return equ
 
-    def volume(self) -> float:
+    @property
+    def bounding_box(self):
         """
-        Return the sum of volumes of the primitives
+        Returns the boundary box
         """
-        volume = 0
-        for primitive in self.primitives:
-            volume += primitive.volume()
-        return volume
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
-        """
-        VolumeModel rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated VolumeModel
-        """
-        new_primitives = [
-            primitive.rotation(center, axis, angle) for
-            primitive in self.primitives]
-        return VolumeModel(new_primitives, self.name)
-
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        VolumeModel rotation. Object is updated inplace
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        for primitive in self.primitives:
-            primitive.rotation_inplace(center, axis, angle)
-        self.bounding_box = self._bounding_box()
-
-    def translation(self, offset: volmdlr.Vector3D):
-        """
-        VolumeModel translation
-        :param offset: translation vector
-        :return: A new translated VolumeModel
-        """
-        new_primitives = [primitive.translation(offset) for
-                          primitive in self.primitives]
-        return VolumeModel(new_primitives, self.name)
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        VolumeModel translation. Object is updated inplace
-        :param offset: translation vector
-        """
-        for primitives in self.primitives:
-            primitives.translation_inplace(offset)
-        self.bounding_box = self._bounding_box()
-
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and return a new VolumeModel
-        side = 'old' or 'new'
-        """
-        new_primitives = [primitive.frame_mapping(frame, side)
-                          for primitive in self.primitives]
-        return VolumeModel(new_primitives, self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
-        """
-        for primitives in self.primitives:
-            primitives.frame_mapping_inplace(frame, side)
-        self.bounding_box = self._bounding_box()
-
-    def copy(self, deep=True, memo=None):
-        """
-        Specific copy
-        """
-        new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
-        return VolumeModel(new_primitives, self.name)
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
 
     def _bounding_box(self) -> BoundingBox:
         """
@@ -1004,6 +1168,89 @@ class VolumeModel(dc.PhysicalObject):
             return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
+    def volume(self) -> float:
+        """
+        Return the sum of volumes of the primitives
+        """
+        volume = 0
+        for primitive in self.primitives:
+            volume += primitive.volume()
+        return volume
+
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                 angle: float):
+        """
+        Rotates the VolumeModel.
+
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated VolumeModel
+        """
+        new_primitives = [
+            primitive.rotation(center, axis, angle) for
+            primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                         angle: float):
+        """
+        Rotates the VolumeModel. Object is updated inplace.
+
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: rotation angle
+        """
+        for primitive in self.primitives:
+            primitive.rotation_inplace(center, axis, angle)
+        self.bounding_box = self._bounding_box()
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        Translates the VolumeModel.
+
+        :param offset: translation vector
+        :return: A new translated VolumeModel
+        """
+        new_primitives = [primitive.translation(offset) for
+                          primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        Translates the VolumeModel. Object is updated inplace.
+
+        :param offset: translation vector
+        """
+        for primitives in self.primitives:
+            primitives.translation_inplace(offset)
+        self.bounding_box = self._bounding_box()
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new VolumeModel
+        side = 'old' or 'new'
+        """
+        new_primitives = [primitive.frame_mapping(frame, side)
+                          for primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        for primitives in self.primitives:
+            primitives.frame_mapping_inplace(frame, side)
+        self.bounding_box = self._bounding_box()
+
+    def copy(self, deep=True, memo=None):
+        """
+        Specific copy
+        """
+        new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+
     def plot2d(self, ax=None, color=None):
         fig = plt.figure()
         if ax is None:
@@ -1025,8 +1272,8 @@ class VolumeModel(dc.PhysicalObject):
         for primitive in self.primitives:
             primitive.plot(ax)
         if equal_aspect:
-            ax.set_aspect('equal')
-
+            # ax.set_aspect('equal')
+            ax.set_aspect('auto')
         ax.margins(0.1)
         return ax
 
@@ -1036,7 +1283,8 @@ class VolumeModel(dc.PhysicalObject):
                        save_to='',
                        tolerance=0.0001):
         """
-        Generate python a FreeCAD definition of model
+        Generates python a FreeCAD definition of model.
+
         :param fcstd_filename: a filename without extension to give the name at the fcstd part written in python code
         :type fcstd_filename:str
         """
@@ -1051,18 +1299,16 @@ class VolumeModel(dc.PhysicalObject):
         s += "import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
         for ip, primitive in enumerate(self.primitives):
             if primitive.name == '':
-                primitive_name = 'Primitive_{}'.format(ip)
+                primitive_name = f'Primitive_{ip}'
             else:
-                primitive_name = 'Primitive_{}_{}'.format(ip, primitive.name)
-            s += "part = doc.addObject('App::Part','{}')\n".format(
-                primitive_name)
+                primitive_name = f'Primitive_{ip}_{primitive.name}'
+            s += f"part = doc.addObject('App::Part','{primitive_name}')\n"
             if hasattr(primitive, 'FreeCADExport'):
                 sp = primitive.FreeCADExport(ip)
                 if sp != '':
                     #                        s += (sp+'\n')
                     s += (sp)
-                    s += 'shapeobj = doc.addObject("Part::Feature","{}")\n'.format(
-                        primitive_name)
+                    s += f'shapeobj = doc.addObject("Part::Feature","{primitive_name}")\n'
                     # if isinstance(primitive, BSplineCurve3D) \
                     #         or isinstance(primitive, BSplineSurface3D) \
                     #         or isinstance(primitive, Circle3D) \
@@ -1074,7 +1320,7 @@ class VolumeModel(dc.PhysicalObject):
                     #     s += 'shapeobj.Shape = primitive{}.toShape()\n'.format(
                     #         ip)
                     # else:
-                    s += "shapeobj.Shape = primitive{}\n".format(ip)
+                    s += f"shapeobj.Shape = primitive{ip}\n"
                     s += 'part.addObject(shapeobj)\n\n'
             # --------------------DEBUG-------------------
         #                else:
@@ -1085,10 +1331,9 @@ class VolumeModel(dc.PhysicalObject):
         if 'fcstd' in export_types:
             s += "doc.saveAs('" + fcstd_filepath + ".fcstd')\n\n"
         if 'stl' in export_types:
-            s += "import Mesh\nMesh.export(doc.Objects,'{}.stl', tolerance={})\n".format(
-                fcstd_filepath, tolerance)
+            s += f"import Mesh\nMesh.export(doc.Objects,'{fcstd_filepath}.stl', tolerance={tolerance})\n"
         if 'step' in export_types:
-            s += "Part.export(doc.Objects,'{}.step')\n".format(fcstd_filepath)
+            s += f"Part.export(doc.Objects,'{fcstd_filepath}.step')\n"
 
         if save_to != '':
             with open(os.path.abspath(save_to), 'w') as file:
@@ -1174,7 +1419,8 @@ class VolumeModel(dc.PhysicalObject):
                 meshes.extend(primitive.babylon_meshes())
             if hasattr(primitive, 'babylon_curves'):
                 lines.append(primitive.babylon_curves())
-        bbox = self._bounding_box()
+
+        bbox = self.bounding_box
         center = bbox.center
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
@@ -1269,87 +1515,80 @@ class VolumeModel(dc.PhysicalObject):
         current_id = 8
 
         for primitive in self.primitives:
-            primitive_content, primitive_id = primitive.to_step(current_id)
+            if primitive.__class__.__name__ == 'OpenShell3D':
+                primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
+            else:
+                primitive_content, primitive_id = primitive.to_step(current_id)
 
             step_content += primitive_content
 
             product_definition_context_id = primitive_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n"\
-                .format(product_definition_context_id)
+            step_content += f"#{product_definition_context_id} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n"
 
             product_context_id = product_definition_context_id + 1
-            step_content += "#{} = PRODUCT_CONTEXT('',#2,'mechanical');\n".format(product_context_id)
+            step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
             product_id = product_context_id + 1
-            step_content += "#{} = PRODUCT('{}','{}','',(#{}));\n".format(product_id,
-                                                                          primitive.name,
-                                                                          primitive.name,
-                                                                          product_context_id)
+            step_content += f"#{product_id} = PRODUCT('{primitive.name}'," \
+                            f"'{primitive.name}','',(#{product_context_id}));\n"
             product_definition_formation_id = product_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_FORMATION('','',#{});\n".format(
-                product_definition_formation_id, product_id)
+            step_content += f"#{product_definition_formation_id} = PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
             product_definition_id = product_definition_formation_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION('design','',#{},#{});\n".format(product_definition_id,
-                                                                                      product_definition_formation_id,
-                                                                                      product_definition_context_id)
+            step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
+                            f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
             product_definition_shape_id = product_definition_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_SHAPE('','',#{});\n".format(
-                product_definition_shape_id, product_definition_id)
+            step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
+                            f"'',#{product_definition_id});\n"
             shape_definition_repr_id = product_definition_shape_id + 1
             step_content += "#{} = SHAPE_DEFINITION_REPRESENTATION(#{},#{});\n".format(shape_definition_repr_id,
                                                                                        product_definition_shape_id,
                                                                                        primitive_id
                                                                                        )
             product_related_category = shape_definition_repr_id + 1
-            step_content += "#{} = PRODUCT_RELATED_PRODUCT_CATEGORY('part',$,(#{}));\n".format(
-                product_related_category,
-                product_id
-            )
+            step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
+                            f"'part',$,(#{product_id}));\n"
             draughting_id = product_related_category + 1
-            step_content += "#{} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n".format(
-                draughting_id)
+            step_content += f"#{draughting_id} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n"
             color_id = draughting_id + 1
             primitive_color = (1, 1, 1)
             if hasattr(primitive, 'color') and primitive.color is not None:
                 primitive_color = primitive.color
-            step_content += "#{} = COLOUR_RGB('',{}, {}, {});\n".format(
-                color_id,
-                round(float(primitive_color[0]), 4),
-                round(float(primitive_color[1]), 4),
-                round(float(primitive_color[2]), 4)
-            )
+            step_content += f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)}," \
+                            f"{round(float(primitive_color[1]), 4)}, {round(float(primitive_color[2]), 4)});\n"
 
             curve_style_id = color_id + 1
-            step_content += "#{} = CURVE_STYLE('',#{},POSITIVE_LENGTH_MEASURE(0.1),#{});\n".format(
-                    curve_style_id, draughting_id, color_id)
+            step_content += f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," \
+                            f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
 
             fill_area_color_id = curve_style_id + 1
-            step_content += "#{} = FILL_AREA_STYLE_COLOUR('',#{});\n".format(
-                    fill_area_color_id, color_id)
+            step_content += f"#{fill_area_color_id} = FILL_AREA_STYLE_COLOUR('',#{color_id});\n"
 
             fill_area_id = fill_area_color_id + 1
-            step_content += "#{} = FILL_AREA_STYLE('',#{});\n".format(
-                    fill_area_id, fill_area_color_id)
+            step_content += f"#{fill_area_id} = FILL_AREA_STYLE('',#{fill_area_color_id});\n"
 
             suface_fill_area_id = fill_area_id + 1
-            step_content += "#{} = SURFACE_STYLE_FILL_AREA(#{});\n".format(
-                    suface_fill_area_id, fill_area_id)
+            step_content += f"#{suface_fill_area_id} = SURFACE_STYLE_FILL_AREA(#{fill_area_id});\n"
 
             suface_side_style_id = suface_fill_area_id + 1
-            step_content += "#{} = SURFACE_SIDE_STYLE('',(#{}));\n".format(
-                    suface_side_style_id, suface_fill_area_id)
+            step_content += f"#{suface_side_style_id} = SURFACE_SIDE_STYLE('',(#{suface_fill_area_id}));\n"
 
             suface_style_usage_id = suface_side_style_id + 1
-            step_content += "#{} = SURFACE_STYLE_USAGE(.BOTH.,#{});\n".format(
-                    suface_style_usage_id, suface_side_style_id)
+            step_content += f"#{suface_style_usage_id} = SURFACE_STYLE_USAGE(.BOTH.,#{suface_side_style_id});\n"
 
             presentation_style_id = suface_style_usage_id + 1
 
-            step_content += "#{} = PRESENTATION_STYLE_ASSIGNMENT((#{},#{}));\n".format(
-                    presentation_style_id, suface_style_usage_id, curve_style_id)
+            step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
+                            f"#{curve_style_id}));\n"
 
             styled_item_id = presentation_style_id + 1
-            step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
-                    styled_item_id, presentation_style_id, primitive_id)
+            if primitive.__class__.__name__ == 'OpenShell3D':
+                for face_id in face_ids:
+                    step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                                    f"#{face_id});\n"
+                    styled_item_id += 1
+                styled_item_id -= 1
+            else:
+                step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                                f"#{primitive_id});\n"
 
             current_id = styled_item_id + 1
 
@@ -1358,7 +1597,7 @@ class VolumeModel(dc.PhysicalObject):
         stream.write(step_content)
 
     def volmdlr_volume_model(self):
-        return [self]
+        return self
 
 
 class MovingVolumeModel(VolumeModel):
