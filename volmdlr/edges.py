@@ -4998,23 +4998,38 @@ class Arc3D(Arc):
             start_id, end_id, curve_id)
         return content, [current_id]
 
-    def point_belongs(self, point3d, abs_tol=1e-10):
-        """
-        check if a point3d belongs to the arc_3d or not
-        """
-        def f(x):
-            return (point3d - self.point_at_abscissa(x)).norm()
-        length_ = self.length()
-        x = npy.linspace(0, length_, 5)
-        x_init = []
-        for xi in x:
-            x_init.append(xi)
-
-        for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, length_]))
-            if z.fun < abs_tol:
-                return True
+    def point_belongs(self, point3d, abs_tol:float=1e-6):
+        if not math.isclose(point3d.point_distance(self.center), self.radius, abs_tol=abs_tol):
+            return False
+        vector1 = self.start - self.center
+        vector2 = self.interior - self.center
+        vector3 = point3d - self.center
+        if not math.isclose(vector1.dot(vector2.cross(vector3)), 0.0, abs_tol=abs_tol):
+            return False
+        point_abscissa = self.abscissa(point3d)
+        abscissa_start = self.abscissa(self.start)
+        abscissa_end = self.abscissa(self.end)
+        if abscissa_start <= point_abscissa <= abscissa_end:
+            return True
         return False
+
+    # def point_belongs(self, point3d, abs_tol=1e-10):
+    #     """
+    #     check if a point3d belongs to the arc_3d or not
+    #     """
+    #     def f(x):
+    #         return (point3d - self.point_at_abscissa(x)).norm()
+    #     length_ = self.length()
+    #     x = npy.linspace(0, length_, 5)
+    #     x_init = []
+    #     for xi in x:
+    #         x_init.append(xi)
+    #
+    #     for x0 in x_init:
+    #         z = scp.optimize.least_squares(f, x0=x0, bounds=([0, length_]))
+    #         if z.fun < abs_tol:
+    #             return True
+    #     return False
 
     def triangulation(self):
         return None
@@ -5022,6 +5037,18 @@ class Arc3D(Arc):
     def middle_point(self):
         return self.point_at_abscissa(self.length() / 2)
 
+    def to_circle3d(self):
+        from volmdlr.wires import Circle3D
+        return Circle3D(self.frame, self.radius, self.name)
+
+    def linesegment_intersections(self, linesegment3d: LineSegment3D):
+        circle3d = self.to_circle3d()
+        circle3d_lineseg_inters = circle3d.linesegment_intersections(linesegment3d)
+        linesegment_intersections = []
+        for intersection in circle3d_lineseg_inters:
+            if self.point_belongs(intersection, 1e-6):
+                linesegment_intersections.append(intersection)
+        return linesegment_intersections
 
 class FullArc3D(Arc3D):
     """

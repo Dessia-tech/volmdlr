@@ -4194,6 +4194,26 @@ class Contour3D(ContourMixin, Wire3D):
         contours = [cls(new_primitives)]
         return contours
 
+    def line_intersections(self, line: volmdlr.edges.Line3D):
+        intersections = []
+        for primitive in self.primitives:
+            prim_line_intersections = primitive.line_intersections(line)
+            if prim_line_intersections is not None:
+                # for inters in prim_line_intersections:
+                if prim_line_intersections not in intersections:
+                    intersections.append(prim_line_intersections)
+        return intersections
+
+    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment3D):
+        intersections = []
+        for primitive in self.primitives:
+            prim_line_intersections = primitive.linesegment_intersections(linesegment)
+            if prim_line_intersections:
+                for inters in prim_line_intersections:
+                    if inters not in intersections:
+                        intersections.append(inters)
+        return intersections
+
     def contour_intersection(self, contour3d):
         dict_intersecting_points = {}
         for primitive in self.primitives:
@@ -4287,7 +4307,9 @@ class Circle3D(Contour3D):
         self.radius = radius
         self.frame = frame
         self.angle = volmdlr.TWO_PI
-        Contour3D.__init__(self, [self], name=name)
+        self._primitives = None
+        self.primitives = self.get_primitives()
+        Contour3D.__init__(self, self.primitives, name=name)
 
     @property
     def center(self):
@@ -4306,17 +4328,45 @@ class Circle3D(Contour3D):
                and math.isclose(self.radius,
                                 other_circle.radius, abs_tol=1e-06)
 
-    def tessellation_points(self, resolution=20):
+    def get_primitives(self):
+        if not self._primitives:
+            points = [self.center + self.frame.u * self.radius,
+                      self.center - self.frame.v * self.radius,
+                      self.center - self.frame.u * self.radius,
+                      self.center + self.frame.v * self.radius]
+            self._primitives = [volmdlr.edges.Arc3D(points[0], points[1], points[2]),
+                                volmdlr.edges.Arc3D(points[2], points[3], points[0])]
 
-        tessellation_points_3d = [
-                                     self.center + self.radius * math.cos(
-                                         teta) * self.frame.u
-                                     + self.radius * math.sin(
-                                         teta) * self.frame.v
-                                     for teta in
-                                     npy.linspace(0, volmdlr.TWO_PI,
-                                                  resolution + 1)][:-1]
-        return tessellation_points_3d
+        return self._primitives
+
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
+        """
+        discretize a Circle to have "n" points
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+            to mesh an arc
+        :return: a list of sampled points
+        """
+        if number_points:
+            angle_resolution = number_points
+        discretization_points_3d = [
+                                       self.center + self.radius * math.cos(
+                                           teta) * self.frame.u
+                                       + self.radius * math.sin(
+                                           teta) * self.frame.v
+                                       for teta in
+                                       npy.linspace(0, volmdlr.TWO_PI,
+                                                    angle_resolution + 1)][:-1]
+        return discretization_points_3d
+
+    def abscissa(self, point3d: volmdlr.Point3D):
+        x, y, _ = self.frame.new_coordinates(point3d)
+        u1 = x / self.radius
+        u2 = y / self.radius
+        theta = volmdlr.core.sin_cos_angle(u1, u2)
+
+        return self.radius * abs(theta)
 
     def length(self):
         return volmdlr.TWO_PI * self.radius
@@ -4365,17 +4415,17 @@ class Circle3D(Contour3D):
     def plot(self, ax=None, color='k', alpha=1., edge_details=False):
         if ax is None:
             fig = plt.figure()
-            ax = Axes3D(fig)
+            ax = fig.add_subplot(111, projection='3d')
         else:
             fig = None
 
         x = []
         y = []
         z = []
-        for px, py, pz in self.tessellation_points():
-            x.append(px)
-            y.append(py)
-            z.append(pz)
+        for point_x, point_y, point_z in self.discretization_points():
+            x.append(point_x)
+            y.append(point_y)
+            z.append(point_z)
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])
@@ -4389,6 +4439,46 @@ class Circle3D(Contour3D):
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
+
+    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment3D):
+        """
+        Calculates the intersections between the Circle3D and a LineSegment3D.
+
+        :param linesegment: LineSegment3D to verify intersections
+        :return: list of points intersecting Circle
+        """
+        if not math.isclose(abs(self.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=1e-6):
+            frame_mapped_circle = self.frame_mapping(self.frame, 'new')
+            frame_mapped_lineseg = linesegment.frame_mapping(self.frame, 'new')
+            circle_linseg_intersections = frame_mapped_circle.linesegment_intersections(frame_mapped_lineseg)
+            intersections = []
+            for inter in circle_linseg_intersections:
+                intersections.append(self.frame.old_coordinates(inter))
+            return intersections
+        distance_center_lineseg = linesegment.point_distance(self.frame.origin)
+        if distance_center_lineseg > self.radius:
+            return []
+        direction_vector = linesegment.direction_vector()
+        if linesegment.start.z == linesegment.end.z == self.frame.origin.z:
+            quadratic_equation_a = (1 + (direction_vector.y ** 2 / direction_vector.x ** 2))
+            quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x +
+                                    2 * (direction_vector.y / direction_vector.x) * linesegment.start.y)
+            quadratic_equation_c = ((linesegment.start.y - (direction_vector.y / direction_vector.x) *
+                                     linesegment.start.x) ** 2 - self.radius ** 2)
+            delta = (quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c)
+            x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
+            x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)
+            y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment.start.x) + linesegment.start.y
+            y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment.start.x) + linesegment.start.y
+            return [volmdlr.Point3D(x1, y1, self.frame.origin.z), volmdlr.Point3D(x2, y2, self.frame.origin.z)]
+        z_constant = self.frame.origin.z
+        constant = (z_constant - linesegment.start.z) / direction_vector.z
+        x_coordinate = constant * direction_vector.x + linesegment.start.x
+        y_coordinate = constant * direction_vector.y + linesegment.start.y
+        if math.isclose((x_coordinate - self.frame.origin.x) ** 2 + (y_coordinate - self.frame.origin.y) ** 2,
+                        self.radius ** 2, abs_tol=1e-6):
+            return [volmdlr.Point3D(x_coordinate, y_coordinate, z_constant)]
+        return []
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -4544,18 +4634,18 @@ class Circle3D(Contour3D):
             R, self.radius)
         return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
 
-    def point_on_circle(self, point: volmdlr.Point3D):
+    def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
         distance = point.point_distance(self.center)
         vec = volmdlr.Vector3D(*point - self.center)
         dot = self.normal.dot(vec)
-        if math.isclose(distance, self.radius, abs_tol=1e-6)\
-                and math.isclose(dot, 0, abs_tol=5e-6):
+        if math.isclose(distance, self.radius, abs_tol=abs_tol) \
+                and math.isclose(dot, 0, abs_tol=abs_tol):
             return True
         return False
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        if not self.point_on_circle(point1)\
-                or not self.point_on_circle(point2):
+        if not self.point_belongs(point1) \
+                or not self.point_belongs(point2):
             ax = self.plot()
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')
