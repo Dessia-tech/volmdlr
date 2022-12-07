@@ -23,6 +23,7 @@ from packaging import version
 
 import dessia_common as dc
 import plot_data.core as plot_data
+import volmdlr.utils.intersections as vm_utils_intersections
 import volmdlr.core_compiled
 import volmdlr.core
 import volmdlr.geometry
@@ -5043,15 +5044,6 @@ class Arc3D(Arc):
     def middle_point(self):
         return self.point_at_abscissa(self.length() / 2)
 
-    def to_circle3d(self):
-        """
-        Create a Circle3D from an Arc3D.
-
-        :return: wires.Cricle3D
-        """
-        from volmdlr.wires import Circle3D
-        return Circle3D(self.frame, self.radius, self.name)
-
     def linesegment_intersections(self, linesegment3d: LineSegment3D):
         """
         Calculates intersections between an Arc3D and a LineSegment3D.
@@ -5059,8 +5051,7 @@ class Arc3D(Arc):
         :param linesegment3d: linesegment to verify intersections.
         :return: list with intersections points between linesegment and Arc3D.
         """
-        circle3d = self.to_circle3d()
-        circle3d_lineseg_inters = circle3d.linesegment_intersections(linesegment3d)
+        circle3d_lineseg_inters = vm_utils_intersections.circle_3d_linesegment_intersections(self, linesegment3d)
         linesegment_intersections = []
         for intersection in circle3d_lineseg_inters:
             if self.point_belongs(intersection, 1e-6):

@@ -33,6 +33,12 @@ class TestArc3D(unittest.TestCase):
         self.assertFalse(inters2)
         self.assertEqual(len(inters3), 1)
         self.assertEqual(inters3[0], expected_point)
+        new_arc3d = edges.Arc3D(volmdlr.Point3D(-0.2672612419124244, -0.5345224838248488, -0.8017837257372732),
+                                volmdlr.Point3D(0.9636241116594316, -0.14824986333222026, -0.22237479499833038),
+                                volmdlr.Point3D(0.2672612419124244, 0.5345224838248488, 0.8017837257372732))
+        lineseg = edges.LineSegment3D(volmdlr.Point3D(-1, 0, -2), volmdlr.Point3D(2, 0, 1))
+        arc3d_lineseg_inters = new_arc3d.linesegment_intersections(lineseg)
+        self.assertEqual(arc3d_lineseg_inters[0], volmdlr.Point3D(1.0, 0.0, 0.0))
 
 
 if __name__ == '__main__':
