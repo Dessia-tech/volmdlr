@@ -23,6 +23,7 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 
+gmsh.initialize()
 
 npy.seterr(divide='raise')
 

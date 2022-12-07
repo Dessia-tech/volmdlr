@@ -61,7 +61,7 @@ steps:
 - name: test gmsh
   image: dessia/python-gmsh:3.9
   commands:
-  - pip Cython wheel
+  - pip install Cython wheel
   - python setup install --user
   - cd scripts/mesh
   - python read_msh_file.py
