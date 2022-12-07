@@ -1208,33 +1208,89 @@ class BSplineCurve2D(BSplineCurve):
         for point in self.control_points:
             point.rotation_inplace(center, angle)
 
-    def line_intersections(self, line2d: Line2D):
-        polygon_points = self.discretization_points(number_points=500)
-        list_intersections = []
-        length = self.length()
-        initial_abscissa = 0
-        for points in zip(polygon_points[:-1], polygon_points[1:]):
-            linesegment = LineSegment2D(points[0], points[1])
-            intersections = linesegment.line_intersections(line2d)
+    # def line_intersections(self, line2d: Line2D):
+    #     polygon_points = self.discretization_points(number_points=500)
+    #     list_intersections = []
+    #     length = self.length()
+    #     initial_abscissa = 0
+    #     for points in zip(polygon_points[:-1], polygon_points[1:]):
+    #         linesegment = LineSegment2D(points[0], points[1])
+    #         intersections = linesegment.line_intersections(line2d)
+    #
+    #         if intersections and intersections[0] not in list_intersections:
+    #             # abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
+    #             # if initial_abscissa < length * 0.1:
+    #             #     list_abcissas = [abscissa * n for n in
+    #             #                      npy.linspace(0, 1, 100)]
+    #             # else:
+    #             #     list_abcissas = [new_abscissa for new_abscissa in
+    #             #                      npy.linspace(initial_abscissa, abscissa, 100)]
+    #             # distance = npy.inf
+    #             # for i_abscissa in list_abcissas:
+    #             #     point_in_curve = self.point_at_abscissa(i_abscissa)
+    #             #     dist = point_in_curve.point_distance(intersections[0])
+    #             #     if dist < distance:
+    #             #         distance = dist
+    #             #         intersection = point_in_curve
+    #             list_intersections.append(intersections[0])
+    #         initial_abscissa += linesegment.length()
+    #     return list_intersections
 
-            if intersections and intersections[0] not in list_intersections:
-                # abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
-                # if initial_abscissa < length * 0.1:
-                #     list_abcissas = [abscissa * n for n in
-                #                      npy.linspace(0, 1, 100)]
-                # else:
-                #     list_abcissas = [new_abscissa for new_abscissa in
-                #                      npy.linspace(initial_abscissa, abscissa, 100)]
-                # distance = npy.inf
-                # for i_abscissa in list_abcissas:
-                #     point_in_curve = self.point_at_abscissa(i_abscissa)
-                #     dist = point_in_curve.point_distance(intersections[0])
-                #     if dist < distance:
-                #         distance = dist
-                #         intersection = point_in_curve
-                list_intersections.append(intersections[0])
-            initial_abscissa += linesegment.length()
-        return list_intersections
+    def line_intersections(self, line2d: Line2D, tol: float = 1e-5):
+        # Descretization of the BSplineCurve2D
+        resolution = 5e-5
+        nb_pts = max(2, int(self.length() / resolution))
+        print('number of points:', nb_pts)
+        polygon_points = self.discretization_points(number_points=nb_pts)
+
+        # Get the segments intersecting the line
+        intersecting_segments = []
+        for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
+            line_segment = LineSegment2D(p1, p2)
+            intersections = line_segment.line_intersections(line2d)
+            if intersections:
+                intersecting_segments.append(line_segment)
+
+        # Compute the two abscissa of each segments
+        segment_abscissa = []
+        for segment in intersecting_segments:
+            segment_abscissa.append((self.abscissa(segment.start),
+                                     self.abscissa(segment.end)))
+
+        # Use least square to find the abscissa that minimizes the distance
+        # between the points at this abscissa and the line2d
+        intersection_points = []
+        for abscissa1, abscissa2 in segment_abscissa:
+
+            res = scp.optimize.least_squares(
+                lambda u: line2d.point_distance(self.point_at_abscissa(u)),
+                # lambda u: (point - self.point_at_abscissa(u)).norm(),
+                x0=(abscissa1+abscissa2)/2,
+                bounds=([abscissa1], [abscissa2]),
+                # ftol=tol / 10,
+                # xtol=tol / 10,
+                # loss='soft_l1'
+            )
+            if res.fun < tol:
+                intersection_points.append(self.point_at_abscissa(res.x))
+            else:
+                print(res.fun)
+                ax = self.plot()
+                self.point_at_abscissa(abscissa1).plot(ax=ax)
+                self.point_at_abscissa(abscissa2).plot(ax=ax)
+                line2d.plot(ax=ax)
+                raise NotImplementedError
+
+        # To be removed
+        for pt in intersection_points:
+            if not line2d.point_belongs(pt, abs_tol=1e-6) \
+                    or self.point_belongs(pt, abs_tol=1e-6):
+                ax = pt.plot()
+                line2d.plot(ax=ax)
+                self.plot(ax=ax)
+                raise NotImplementedError
+
+        return intersection_points
 
     def line_crossings(self, line2d: Line2D):
         polygon_points = self.discretization_points(number_points=50)
