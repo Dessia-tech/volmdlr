@@ -1536,7 +1536,8 @@ class CylindricalSurface3D(Surface3D):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        CylindricalFace3D rotation
+        CylindricalFace3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -1674,7 +1675,8 @@ class CylindricalSurface3D(Surface3D):
 
     def plane_intersection(self, plane3d):
         """
-        Cylinder intersections with a plane
+        Cylinder intersections with a plane.
+
         :param plane3d: intersecting plane
         :return: list of intersecting curves
         """
@@ -2141,7 +2143,7 @@ class ConicalSurface3D(Surface3D):
         return [vme.LineSegment2D(start, end)]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
@@ -2961,7 +2963,7 @@ class BSplineSurface3D(Surface3D):
         return linesegments
 
     def linesegment3d_to_2d(self, linesegment3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         x_perio = self.x_periodicity if self.x_periodicity is not None else 1.
@@ -2974,7 +2976,7 @@ class BSplineSurface3D(Surface3D):
                                                      max_bound_y=y_perio))]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         # TODO: enhance this, it is a non exact method!
@@ -3697,7 +3699,7 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_with_dimension_to_3d(self, point2d, grid2d: volmdlr.grid.Grid2D):
         """
-        compute the point3d, on a Bspline surface, of a point2d define in the dimensioned frame
+        Computes the point3d, on a Bspline surface, of a point2d define in the dimensioned frame.
         """
 
         point2d_01 = self.point2d_with_dimension_to_parametric_frame(point2d, grid2d)
@@ -4266,7 +4268,7 @@ class BSplineSurface3D(Surface3D):
 
     def edge3d_to_2d_with_dimension(self, edge3d, grid2d: volmdlr.grid.Grid2D):
         """
-        compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame
+        Computes the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame.
         """
 
         # method_name = '{}_to_2d_with_dimension'.format(edge3d.__class__.__name__.lower())
@@ -4558,7 +4560,7 @@ class BSplineSurface3D(Surface3D):
 
     def xy_limits(self, other_bspline_surface3d):
         """
-        compute x, y limits to define grid2d
+        Compute x, y limits to define grid2d.
         """
 
         grid2d_direction = (
@@ -5330,7 +5332,8 @@ class PlaneFace3D(Face3D):
     @staticmethod
     def get_connecting_contour(lists_primitives, inner_primitives):
         """
-        Find which contour from resulting inner contour spliting is connected to saved cutting_contours
+        Find which contour from resulting inner contour spliting is connected to saved cutting_contours.
+
         :param lists_primitives: saved cutting contours
         :param inner_primitives: splited inner contour
         :return: updated saved cutting contours
@@ -5586,8 +5589,8 @@ class PlaneFace3D(Face3D):
 
     def get_open_contour_divided_faces_inner_contours(self, new_faces_contours):
         """
-        If there is any inner contour, verifies which ones belong to the new divided faces from
-        an open cutting contour
+        Verifies which ones belong to the new divided faces from an open cutting contour if any inner contour.
+
         :param new_faces_contours: new faces outer contour
         :return: valid_new_faces_contours, valid_new_faces_contours
         """
@@ -5738,7 +5741,8 @@ class PlaneFace3D(Face3D):
 
     def is_intersecting(self, face2, list_coincident_faces=None, tol: float = 1e-6):
         """
-        Verifies if two face are intersecting
+        Verifies if two face are intersecting.
+
         :param face2: face 2
         :param list_coincident_faces: list of coincident faces, if existent
         :param tol: tolerance for calculations
@@ -6037,7 +6041,8 @@ class Triangle3D(PlaneFace3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Plane3D translation
+        Plane3D translation.
+
         :param offset: translation vector
         :return: A new translated Plane3D
         """
@@ -6590,6 +6595,8 @@ class CylindricalFace3D(Face3D):
 
 class ToroidalFace3D(Face3D):
     """
+    Toroidal face object.
+
     :param contours2d: The Tore's contour2D
     :type contours2d: volmdlr.Contour2D
     :param toroidalsurface3d: Information about the Tore
@@ -7723,7 +7730,8 @@ class BSplineFace3D(Face3D):
 
     def merge_with(self, other_bspline_face3d):
         """
-        merge two adjacent faces
+        Merge two adjacent faces.
+
         Parameters
         ----------
         other_bspline_face3d : volmdlr.faces.BSplineFace3D
@@ -7893,7 +7901,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        OpenShell3D rotation. Object is updated inplace
+        OpenShell3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -7905,7 +7914,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        OpenShell3D translation
+        OpenShell3D translation.
+
         :param offset: translation vector
         :return: A new translated OpenShell3D
         """
@@ -7916,7 +7926,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        OpenShell3D translation. Object is updated inplace
+        OpenShell3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         for face in self.faces:
@@ -7926,7 +7937,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new OpenShell3D
+        Changes frame_mapping and return a new OpenShell3D.
+
         side = 'old' or 'new'
         """
         new_faces = [face.frame_mapping(frame, side) for face in
@@ -7935,7 +7947,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         for face in self.faces:
@@ -7956,7 +7969,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def volume(self):
         """
-        Does not consider holes
+        Does not consider holes.
         """
         volume = 0
         for face in self.faces:
