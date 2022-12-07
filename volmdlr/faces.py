@@ -7731,13 +7731,10 @@ class BSplineFace3D(Face3D):
     def merge_with(self, other_bspline_face3d):
         """
         Merge two adjacent faces.
+        Returns merged_face : volmdlr.faces.BSplineFace3D
 
-        Parameters
-        ----------
-        other_bspline_face3d : volmdlr.faces.BSplineFace3D
-        Returns
-        -------
-        merged_face : volmdlr.faces.BSplineFace3D
+        :param other_bspline_face3d: BSpline face to merge with selected face
+        :type other_bspline_face3d: volmdlr.faces.BSplineFace3D
         """
 
         merged_surface = self.surface3d.merge_with(other_bspline_face3d.surface3d)
