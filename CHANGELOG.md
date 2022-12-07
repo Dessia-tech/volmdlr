@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unrealeased
+
+### New Features
+
+
+### Fixed
+
+* Contour2D: bounding_rectangle (specify number_points for discretization_points)
+* BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
+
+
+### Performance improvements
+
+
+### Refactorings
+
+
+### Unittests
+
+* Contour2D: point_belongs
+
+
 
 ## Unrealeased
 
@@ -28,8 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * Contour2D: point_belongs
-* Contour2D: bounding_rectangle (specify number_points for discretization_points)
-* BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * Arc3D: plot
 * Cylinder: point_belongs
@@ -56,7 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 
-* Contour2D: point_belongs
 * PlaneFace3D: line_intersections
 * BsplineCurve: abscissa
 * Circle2D: split_by_line
