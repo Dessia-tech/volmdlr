@@ -1222,7 +1222,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def to_wire(self, n: int):
         """
-        convert a bspline curve to a wire2d defined with 'n' line_segments
+        Convert a bspline curve to a wire2d defined with 'n' line_segments
         """
 
         u = npy.linspace(0, 1, num=n + 1).tolist()
@@ -1235,7 +1235,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def reverse(self):
         """
-        reverse the bspline's direction by reversing its start and end points
+        Reverse the bspline's direction by reversing its start and end points
         """
 
         return self.__class__(degree=self.degree,
@@ -1257,7 +1257,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def nearest_point_to(self, point):
         """
-        find out the nearest point on the linesegment to point
+        Find out the nearest point on the linesegment to point
         """
 
         points = self.polygon_points(500)
@@ -1279,7 +1279,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric bsplinecurve2d according to a line.
+        Finds out the symmetric bsplinecurve2d according to a line.
         """
 
         points_symmetry = [point.axial_symmetry(line) for point in self.control_points]
@@ -1438,7 +1438,7 @@ class LineSegment2D(LineSegment):
 
     def linesegment_intersections(self, linesegment: 'LineSegment2D'):
         """
-        touching linesegments does not intersect.
+        Touching linesegments does not intersect.
         """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
         # TODO: May be these commented conditions should be used for linesegment_crossings
@@ -1627,7 +1627,7 @@ class LineSegment2D(LineSegment):
 
     def to_wire(self, n: int):
         """
-        convert a linesegment2d to a wire2d defined with 'n' line_segments.
+        Convert a linesegment2d to a wire2d defined with 'n' line_segments.
 
         """
 
@@ -1636,7 +1636,7 @@ class LineSegment2D(LineSegment):
 
     def nearest_point_to(self, point):
         """
-        find out the nearest point on the linesegment to point.
+        Find out the nearest point on the linesegment to point.
         """
 
         points = self.discretization_points(number_points=500)
@@ -1644,7 +1644,7 @@ class LineSegment2D(LineSegment):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric linesegment2d according to a line.
+        Finds out the symmetric linesegment2d according to a line.
         """
 
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.end]]
@@ -1757,7 +1757,7 @@ class Arc(Edge):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
-        discretize a Edge to have "n" points.
+        Discretize a Edge to have "n" points.
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
@@ -1894,7 +1894,7 @@ class Arc2D(Arc):
 
     def point_belongs(self, point2d, abs_tol=1e-10):
         """
-        check if a Point2D belongs to the Arc2D.
+        Check if a Point2D belongs to the Arc2D.
 
         """
         vector_start = self.start - self.center
@@ -2329,7 +2329,7 @@ class Arc2D(Arc):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric arc2d according to a line.
+        Finds out the symmetric arc2d according to a line.
 
         """
 
