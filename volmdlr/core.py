@@ -1682,6 +1682,7 @@ class VolumeModel(dc.PhysicalObject):
         lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
         lines.append('Geometry.Tolerance = 1e-20;')
         lines.append('Mesh.AngleToleranceFacetOverlap = 0.01;')
+        lines.append('General.Verbosity = 0;')
 
         for i, primitive in enumerate(self.primitives):
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
