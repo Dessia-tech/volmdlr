@@ -3489,9 +3489,10 @@ class BSplineSurface3D(Surface3D):
                 # previous = [0, 0]
                 min_bound_x, max_bound_x = self.surface.domain[0]
                 min_bound_y, max_bound_y = self.surface.domain[1]
-                points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth),
-                                             min_bound_x, max_bound_x, min_bound_y, max_bound_y) for i in range(11)]
-
+                # points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth),
+                #                              min_bound_x, max_bound_x, min_bound_y, max_bound_y) for i in range(11)]
+                discretization_points = bspline_curve3d.discretization_points(number_points=10)
+                points = [self.point3d_to_2d(p) for p in discretization_points]
                 u1, v1 = self.point3d_to_2d(bspline_curve3d.start)
                 u2, v2 = self.point3d_to_2d(bspline_curve3d.end)
 
@@ -3527,7 +3528,7 @@ class BSplineSurface3D(Surface3D):
                     # vertical_line = False
                     # horizontal_line = False
                     for pt in points:
-                        if not linesegment.point_belongs(pt, abs_tol=1e-4):
+                        if not linesegment.point_belongs(pt, abs_tol=5e-5):
                             flag_line = False
                             break
                     if flag_line:
@@ -7932,7 +7933,7 @@ class BSplineFace3D(Face3D):
     def get_bounding_box(self):
         return self.surface3d._bounding_box()
 
-    def triangulation_lines(self, resolution=25):
+    def triangulation_lines(self, resolution=24):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_u = u_max - u_min
