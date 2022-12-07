@@ -1,3 +1,6 @@
+"""
+volmdlr utils for calculating curves intersetions
+"""
 import math
 
 import volmdlr
