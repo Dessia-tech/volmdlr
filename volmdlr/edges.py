@@ -1656,7 +1656,7 @@ class Arc(Edge):
     def center(self):
         """
         Gets the arc's center.
-        
+
         :return: The center of the arc
         """
         raise NotImplementedError(
@@ -1667,7 +1667,7 @@ class Arc(Edge):
     def angle(self):
         """
         Gets the angle of the arc.
-        
+
         :return: The angle of the arc
         """
         return NotImplementedError(
@@ -1678,7 +1678,7 @@ class Arc(Edge):
     def is_trigo(self):
         """
         Verifies if arc is trigowise or clockwise.
-        
+
         :return: True if trigowise or False otherwise
         """
         return NotImplementedError(
