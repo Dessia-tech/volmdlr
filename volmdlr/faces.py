@@ -47,8 +47,8 @@ def knots_vector_inv(knots_vector):
 
 def repair_singularity(primitive, last_primitive):
     """
-    Repairs the Contour2D after the transformation from spatial to parametric coordinates when the surface
-    contains a sigularity (SphericalSurface3D and ConicalSurface3D).
+    Repairs the Contour2D of SphericalSurface3D and ConicalSurface3D parametric face representations.
+    Used when transforming from spatial to parametric coordinates when the surface contains a sigularity
     """
     v1 = primitive.unit_direction_vector()
     v2 = last_primitive.unit_direction_vector()
@@ -340,8 +340,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def line_crossings(self, line: 'volmdlr.edges.Line2D'):
         """
-        Returns a list of crossings with in the form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line
+        Returns a list of tuple (point, primitive) of the line intersection with the wire.
         """
         intersection_points = []
         for primitive in self.outer_contour.primitives:
@@ -1192,22 +1191,27 @@ class Plane3D(Surface3D):
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
         Plane3D translation. Object is updated inplace
+
         :param offset: translation vector
         """
         self.frame.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Frame3D
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new Frame3D.
+
+        :param frame: Frame of reference
+        :type frame: `volmdlr.Frame3D`
+        :param side: 'old' or 'new'
         """
         new_frame = self.frame_mapping_parameters(frame, side)
         return Plane3D(new_frame, self.name)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        :param side: 'old' or 'new'
         """
         new_frame = self.frame_mapping_parameters(frame, side)
         self.frame.origin = new_frame.origin
@@ -1337,7 +1341,7 @@ class CylindricalSurface3D(Surface3D):
         return volmdlr.Point2D(theta, z)
 
     def arc3d_to_2d(self, arc3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         start = self.point3d_to_2d(arc3d.start)
@@ -1354,7 +1358,7 @@ class CylindricalSurface3D(Surface3D):
         return [vme.LineSegment2D(start, end)]
 
     def linesegment3d_to_2d(self, linesegment3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         start = self.point3d_to_2d(linesegment3d.start)
@@ -1388,7 +1392,7 @@ class CylindricalSurface3D(Surface3D):
             # raise NotImplementedError('Ellipse? delta_theta={} delta_z={}'.format(abs(theta2-theta1), abs(z1-z2)))
 
     def fullarc3d_to_2d(self, fullarc3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         if self.frame.w.is_colinear_to(fullarc3d.normal):
@@ -1400,13 +1404,13 @@ class CylindricalSurface3D(Surface3D):
             raise ValueError('Impossible!')
 
     def circle3d_to_2d(self, circle3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         return []
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
@@ -1850,7 +1854,7 @@ class ToroidalSurface3D(Surface3D):
             raise NotImplementedError('Ellipse?')
 
     def fullarc3d_to_2d(self, fullarc3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         if self.frame.w.is_colinear_to(fullarc3d.normal):
@@ -1863,13 +1867,13 @@ class ToroidalSurface3D(Surface3D):
             raise ValueError('Impossible!')
 
     def circle3d_to_2d(self, circle3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         return []
 
     def arc3d_to_2d(self, arc3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         start = self.point3d_to_2d(arc3d.start)
@@ -1886,7 +1890,7 @@ class ToroidalSurface3D(Surface3D):
         return [vme.LineSegment2D(start, end)]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         theta1, phi1 = self.point3d_to_2d(bspline_curve3d.start)
@@ -2106,7 +2110,7 @@ class ConicalSurface3D(Surface3D):
             raise ValueError('Impossible!')
 
     def arc3d_to_2d(self, arc3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         # angle = abs(start.x-end.x)
@@ -2174,7 +2178,7 @@ class ConicalSurface3D(Surface3D):
         #     periodic=bspline_curve3d.periodic)]
 
     def circle3d_to_2d(self, circle3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         return []
@@ -2237,7 +2241,8 @@ class ConicalSurface3D(Surface3D):
     def rotation_inplace(self, center: volmdlr.Point3D,
                          axis: volmdlr.Vector3D, angle: float):
         """
-        ConicalSurface3D rotation. Object is updated inplace
+        ConicalSurface3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -2246,8 +2251,8 @@ class ConicalSurface3D(Surface3D):
 
     def repair_primitives_periodicity(self, primitives, last_primitive):
         """
-        Take into account the periodic behavior of the surface when doing transformation from spatial to parametric
-        coordinates.
+        Repairs periodic behavior of the surface when doing transformation from spatial to parametric coordinates.
+
         :param primitives: primitive to rapair
         :type primitives: List[volmdlr.edges]
         :param last_primitive: primitive of reference
@@ -2414,7 +2419,7 @@ class SphericalSurface3D(Surface3D):
         return [vme.Arc3D(start, interior, end)]
 
     def arc3d_to_2d(self, arc3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         start = self.point3d_to_2d(arc3d.start)
@@ -2510,7 +2515,7 @@ class SphericalSurface3D(Surface3D):
         return [vme.Arc3D(start, interior, end)]
 
     def fullarc3d_to_2d(self, fullarc3d):
-        """"
+        """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         # if self.frame.w.is_colinear_to(fullarc3d.normal):
