@@ -1625,7 +1625,7 @@ class LineSegment2D(LineSegment):
         return circle1, circle2
 
     def infinite_primitive(self, offset):
-        n = self.normal_vector()
+        n = -self.unit_normal_vector()
         offset_point_1 = self.start + offset * n
 
         offset_point_2 = self.end + offset * n
@@ -1903,25 +1903,34 @@ class Arc2D(Arc):
         """
         check if a Point2D belongs to the Arc2D
         """
-        vector_start = self.start - self.center
-        vector_end = self.end - self.center
-        vector_point = point2d - self.center
-        r1 = vector_start.norm()
-        cp = vector_point.norm()
-        if math.isclose(cp, r1, abs_tol=abs_tol):
-            if self.get_arc_direction():
-                arc_angle = - volmdlr.core.clockwise_angle(vector_start,
-                                                           vector_end)
-                point_angle = - volmdlr.core.clockwise_angle(vector_start,
-                                                             vector_point)
-
-            else:
-                arc_angle = volmdlr.core.clockwise_angle(vector_start,
-                                                         vector_end)
-                point_angle = volmdlr.core.clockwise_angle(vector_start,
-                                                           vector_point)
-            if point_angle <= arc_angle:
-                return True
+        distance_point_to_center = point2d.point_distance(self.center)
+        if not math.isclose(distance_point_to_center, self.radius, abs_tol=abs_tol):
+            return False
+        try:
+            point_abscissa = self.abscissa(point2d)
+        except ValueError:
+            return False
+        if self.length() >= point_abscissa >= 0:
+            return True
+        # vector_start = self.start - self.center
+        # vector_end = self.end - self.center
+        # vector_point = point2d - self.center
+        # r1 = vector_start.norm()
+        # cp = vector_point.norm()
+        # if math.isclose(cp, r1, abs_tol=abs_tol):
+        #     if self.get_arc_direction():
+        #         arc_angle = - volmdlr.core.clockwise_angle(vector_start,
+        #                                                    vector_end)
+        #         point_angle = - volmdlr.core.clockwise_angle(vector_start,
+        #                                                      vector_point)
+        #
+        #     else:
+        #         arc_angle = volmdlr.core.clockwise_angle(vector_start,
+        #                                                  vector_end)
+        #         point_angle = volmdlr.core.clockwise_angle(vector_start,
+        #                                                    vector_point)
+        #     if point_angle <= arc_angle:
+        #         return True
         return False
 
     # def to_circle(self):
@@ -1947,8 +1956,7 @@ class Arc2D(Arc):
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
         full_arc_2d = self.to_full_arc_2d()
-        fa2d_intersection_points = full_arc_2d.linesegment_intersections(
-            linesegment2d)
+        fa2d_intersection_points = full_arc_2d.linesegment_intersections(linesegment2d)
         intersection_points = []
         for pt in fa2d_intersection_points:
             if self.point_belongs(pt):
@@ -2312,15 +2320,38 @@ class Arc2D(Arc):
                       self.end)
                 ]
 
-    def infinite_primitive(self, offset):
+    def cut_between_two_points(self, point1, point2):
+        if (point1 == self.start and point2 == self.end) or\
+                (point2 == self.start and point1 == self.end):
+            return self
+        raise NotImplementedError
 
-        if not self.is_trigo:
+    def infinite_primitive(self, offset):
+        vector_start_center = self.start - self.center
+        vector_start_center.normalize()
+        vector_end_center = self.end - self.center
+        vector_end_center.normalize()
+        vector_interior_center = self.interior - self.center
+        vector_interior_center.normalize()
+        if self.is_trigo:
             radius = self.radius + offset
+            center = self.center
+
         else:
             radius = self.radius - offset
-
-        return FullArc2D(self.center,
-                         self.center + radius * volmdlr.Point2D(1, 0.))
+            if radius < 0:
+                return None
+            center = self.center
+            # mid_point = self.middle_point()
+            # vec1 = self.center - mid_point
+            # vec1.normalize()
+            # vec1 = 2 * offset * math.sqrt(2) * vec1
+            # center = self.center.translation(vec1)
+        start = center + radius * vector_start_center
+        end = center + radius * vector_end_center
+        interior = center + radius * vector_interior_center
+        return Arc2D(start, interior, end)
+        # return FullArc2D(center, center + radius * volmdlr.Point2D(1, 0.))
 
     def complementary(self):
 
