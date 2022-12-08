@@ -7527,7 +7527,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                   f'Transform your shell of class {self.__class__.__name__} to a triangle one')
 
     def point_in_shell_face(self, point: volmdlr.Point3D):
-        warnings.warn('point_in_shell_face is deprecated, please use discretization_points instead',
+        warnings.warn('point_in_shell_face is deprecated, please use point_on_shell instead',
                       DeprecationWarning)
         return self.point_on_shell(point)
 
