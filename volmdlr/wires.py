@@ -1900,6 +1900,42 @@ class Contour2D(ContourMixin, Wire2D):
     #         split_primitives.append(prim_opt)
     #     print(len(split_primitives))
     #     return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1])
+    def grid_triangulation_points(self, x_density: float = None,
+                           y_density: float = None,
+                           min_points_x: int = 20,
+                           min_points_y: int = 20,
+                           number_points_x: int = None,
+                           number_points_y: int = None):
+        """
+        Use a n by m grid to triangulize the contour
+        """
+        bounding_rectangle = self.bounding_rectangle()
+        # xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        dx = bounding_rectangle[1] - bounding_rectangle[0]  # xmax - xmin
+        dy = bounding_rectangle[3] - bounding_rectangle[2]  # ymax - ymin
+        if number_points_x is None:
+            n = max(math.ceil(x_density * dx), min_points_x)
+        else:
+            n = number_points_x
+        if number_points_y is None:
+            m = max(math.ceil(y_density * dy), min_points_y)
+        else:
+            m = number_points_y
+        x = [bounding_rectangle[0] + i * dx / n for i in range(n + 1)]
+        y = [bounding_rectangle[2] + i * dy / m for i in range(m + 1)]
+
+        point_index = {}
+        number_points = 0
+        points = []
+        triangles = []
+        for xi in x:
+            for yi in y:
+                point = volmdlr.Point2D(xi, yi)
+                if self.point_belongs(point):
+                    point_index[point] = number_points
+                    points.append(point)
+                    number_points += 1
+        return points
 
     def contour_intersections(self, contour2d):
         intersecting_points = []
