@@ -1332,8 +1332,6 @@ class CylindricalSurface3D(Surface3D):
         """
         x, y, z = self.frame.new_coordinates(point3d)
 
-        # u1 = x / self.radius
-        # u2 = y / self.radius
         theta = math.atan2(y, x)
         if abs(theta) < 1e-12:
             theta = 0.0
@@ -1414,10 +1412,8 @@ class CylindricalSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
-        # points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
-        #           for i in range(11)]
         points = [self.point3d_to_2d(p)
-                  for p in bspline_curve3d.control_points]
+                  for p in bspline_curve3d.discretization_points(11)]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -1441,45 +1437,34 @@ class CylindricalSurface3D(Surface3D):
 
         return [vme.BSplineCurve2D.from_points_interpolation(new_points, bspline_curve3d.degree,
                                                              bspline_curve3d.periodic)]
-        # return [vme.BSplineCurve2D(
-        #     bspline_curve3d.degree,
-        #     control_points=new_points,
-        #     knot_multiplicities=bspline_curve3d.knot_multiplicities,
-        #     knots=bspline_curve3d.knots,
-        #     weights=bspline_curve3d.weights,
-        #     periodic=bspline_curve3d.periodic)]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
-        TODO: THIS IS AN APPROXIMATION
         """
-        points = arcellipse3d.discretization_points(number_points=15)
-        points2d = [self.point3d_to_2d(p) for p in points]
-        # start = self.point3d_to_2d(arcellipse3d.start)
-        # interior = self.point3d_to_2d(arcellipse3d.interior)
-        # end = self.point3d_to_2d(arcellipse3d.end)
-        # center = self.point3d_to_2d(arcellipse3d.center)
-        # major_dir = self.point3d_to_2d(arcellipse3d.major_dir)
-        # return [vme.ArcEllipse2D(start, interior, end, center, major_dir)]
-        list_primitives = []
-        last_p1x = points2d[0].x
-        for p1, p2 in zip(points2d[:-1], points2d[1:]):
-            if p1 == p2:
-                continue
-            # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
-            if math.isclose(p1.x, math.pi, abs_tol=1E-5) and (p1.x - p2.x) > math.pi:
-                p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
-            elif math.isclose(p1.x, -math.pi, abs_tol=1E-5) and (p1.x - p2.x) < -math.pi:
-                p1 = p1 + volmdlr.TWO_PI * volmdlr.X2D
-            if math.isclose(p2.x, math.pi, abs_tol=1E-5) and (p1.x - last_p1x) < 0:
-                p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
-            elif math.isclose(p2.x, -math.pi, abs_tol=1E-5) and (p1.x - last_p1x) > 0:
-                p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
+        points = [self.point3d_to_2d(p) for p in arcellipse3d.discretization_points(number_points=15)]
+        theta1, z1 = self.point3d_to_2d(arcellipse3d.start)
+        theta2, z2 = self.point3d_to_2d(arcellipse3d.end)
+        # TODO: create a method point_at_abscissa abssissa for ArcEllipse3D and enhance this code
 
-            list_primitives.append(vme.LineSegment2D(p1, p2))
-            last_p1x = p1.x
-        return list_primitives
+        theta3, _ = points[1]
+        theta4, _ = points[-2]
+
+        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+        theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
+
+        points[0] = volmdlr.Point2D(theta1, z1)
+        points[-1] = volmdlr.Point2D(theta2, z2)
+
+        if theta3 < theta1 < theta2:
+            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+        elif theta3 > theta1 > theta2:
+            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+
+        new_points = [p1 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
+        new_points.append(points[-1])
+
+        return [vme.BSplineCurve2D.from_points_interpolation(points=new_points, degree=3, periodic=True)]
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -1903,72 +1888,60 @@ class ToroidalSurface3D(Surface3D):
         length = bspline_curve3d.length()
         theta3, phi3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
         theta4, phi4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
-        # control_points = [self.point3d_to_2d(p)
-        #                   for p in bspline_curve3d.control_points]
-        control_points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
-                          for i in range(11)]
+        points = [self.point3d_to_2d(p)for p in bspline_curve3d.discretization_points(11)]
+
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
 
         # Verify if phi1 or phi2 point should be -pi because phi -> ]-pi, pi]
         phi1, phi2 = repair_start_end_angle_periodicity(phi1, phi2, phi3, phi4)
 
-        control_points[0] = volmdlr.Point2D(theta1, phi1)
-        control_points[-1] = volmdlr.Point2D(theta2, phi2)
+        points[0] = volmdlr.Point2D(theta1, phi1)
+        points[-1] = volmdlr.Point2D(theta2, phi2)
 
         if theta3 < theta1 < theta2:
-            control_points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in control_points]
+            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
         elif theta3 > theta1 > theta2:
-            control_points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in control_points]
+            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
 
         if phi3 < phi1 < phi2:
-            control_points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y > 0 else p for p in control_points]
+            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y > 0 else p for p in points]
         elif phi3 > phi1 > phi2:
-            control_points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in control_points]
+            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in points]
 
-        new_points = [p1 for p1, p2 in zip(control_points[:-1], control_points[1:]) if p1 != p2]
-        new_points.append(control_points[-1])
+        new_points = [p1 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
+        new_points.append(points[-1])
 
-        return [vme.BSplineCurve2D.from_points_interpolation(new_points, bspline_curve3d.degree,
+        return [vme.BSplineCurve2D.from_points_interpolation(new_points, degree=bspline_curve3d.degree,
                                                              periodic=bspline_curve3d.periodic)]
-        # return [vme.BSplineCurve2D(
-        #     bspline_curve3d.degree,
-        #     control_points=control_points,
-        #     knot_multiplicities=bspline_curve3d.knot_multiplicities,
-        #     knots=bspline_curve3d.knots,
-        #     weights=bspline_curve3d.weights,
-        #     periodic=bspline_curve3d.periodic)]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
         """
-        TODO: THIS IS AN APPROXIMATION
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        points = arcellipse3d.discretization_points(number_points=15)
-        points2d = [self.point3d_to_2d(p) for p in points]
-        # start = self.point3d_to_2d(arcellipse3d.start)
-        # interior = self.point3d_to_2d(arcellipse3d.interior)
-        # end = self.point3d_to_2d(arcellipse3d.end)
-        # center = self.point3d_to_2d(arcellipse3d.center)
-        # major_dir = self.point3d_to_2d(arcellipse3d.major_dir)
-        # return [vme.ArcEllipse2D(start, interior, end, center, major_dir)]
-        list_primitives = []
-        last_p1x = points2d[0].x
-        for p1, p2 in zip(points2d[:-1], points2d[1:]):
-            if p1 == p2:
-                continue
-            # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
-            if math.isclose(p1.x, math.pi, abs_tol=1E-5) and (p1.x - p2.x) > math.pi:
-                p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
-            elif math.isclose(p1.x, -math.pi, abs_tol=1E-5) and (p1.x - p2.x) < -math.pi:
-                p1 = p1 + volmdlr.TWO_PI * volmdlr.X2D
-            if math.isclose(p2.x, math.pi, abs_tol=1E-5) and (p1.x - last_p1x) < 0:
-                p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
-            elif math.isclose(p2.x, -math.pi, abs_tol=1E-5) and (p1.x - last_p1x) > 0:
-                p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
+        points = [self.point3d_to_2d(p) for p in arcellipse3d.discretization_points(number_points=15)]
+        theta1, z1 = self.point3d_to_2d(arcellipse3d.start)
+        theta2, z2 = self.point3d_to_2d(arcellipse3d.end)
+        # TODO: create a method point_at_abscissa abssissa for ArcEllipse3D and enhance this code
 
-            list_primitives.append(vme.LineSegment2D(p1, p2))
-            last_p1x = p1.x
-        return list_primitives
+        theta3, _ = points[1]
+        theta4, _ = points[-2]
+
+        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+        theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
+
+        points[0] = volmdlr.Point2D(theta1, z1)
+        points[-1] = volmdlr.Point2D(theta2, z2)
+
+        if theta3 < theta1 < theta2:
+            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+        elif theta3 > theta1 > theta2:
+            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+
+        new_points = [p1 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
+        new_points.append(points[-1])
+
+        return [vme.BSplineCurve2D.from_points_interpolation(points=new_points, degree=3, periodic=True)]
 
     def triangulation(self):
         face = self.rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
@@ -2089,7 +2062,7 @@ class ConicalSurface3D(Surface3D):
         if y == -0.0:
             y = 0.0
         theta = math.atan2(y, x)
-        if abs(theta) < 1e-7:
+        if abs(theta) < 1e-9:
             theta = 0.0
         return volmdlr.Point2D(theta, z)
 
@@ -2118,16 +2091,6 @@ class ConicalSurface3D(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        # angle = abs(start.x-end.x)
-        # if arc3d.is_trigo:
-        # end = start + volmdlr.Point2D(arc3d.angle, 0)
-        # else:
-        #     end = start + volmdlr.Point2D(-arc3d.angle, 0)
-        # interior = self.point3d_to_2d(arc3d.interior)
-        # if start.x < interior.x:
-        #     end = start + volmdlr.Point2D(arc3d.angle, 0)
-        # else:
-        #     end = start - volmdlr.Point2D(arc3d.angle, 0)
 
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
@@ -2147,10 +2110,8 @@ class ConicalSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
-        # points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * length))
-        #           for i in range(11)]
-        points = [self.point3d_to_2d(p)
-                  for p in bspline_curve3d.control_points]
+
+        points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(11)]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -2174,13 +2135,6 @@ class ConicalSurface3D(Surface3D):
 
         return [vme.BSplineCurve2D.from_points_interpolation(new_points, bspline_curve3d.degree,
                                                              bspline_curve3d.periodic)]
-        # return [vme.BSplineCurve2D(
-        #     bspline_curve3d.degree,
-        #     control_points=new_points,
-        #     knot_multiplicities=bspline_curve3d.knot_multiplicities,
-        #     knots=bspline_curve3d.knots,
-        #     weights=bspline_curve3d.weights,
-        #     periodic=bspline_curve3d.periodic)]
 
     def circle3d_to_2d(self, circle3d):
         """
@@ -2479,55 +2433,30 @@ class SphericalSurface3D(Surface3D):
 
         return primitives
 
-        # return [vme.BSplineCurve2D.from_points_interpolation([start, interior, end], 2)]
-
-        # start_x = arc3d.radius * math.cos(start[1]) * math.cos(start[0])
-        # start_y = arc3d.radius * math.cos(start[1]) * math.sin(start[0])
-        # end_x = arc3d.radius * math.cos(end[1]) * math.cos(end[0])
-        # end_y = arc3d.radius * math.cos(end[1]) * math.sin(end[0])
-        # start = volmdlr.Point2D(start_x, start_y)
-        # end = volmdlr.Point2D(end_x, end_y)
-
-        # angle = abs(start.x-end.x)
-        # if arc3d.is_trigo:
-        # end = start + volmdlr.Point2D(arc3d.angle, 0)
-        # else:
-        #     end = start + volmdlr.Point2D(-arc3d.angle, 0)
-        # interior = self.point3d_to_2d(arc3d.interior)
-        # if start.x < interior.x:
-        #     end = start + volmdlr.Point2D(arc3d.angle, 0)
-        # else:
-        #     end = start - volmdlr.Point2D(arc3d.angle, 0)
-        # if start == end:
-        #     # return self.fullarc3d_to_2d(arc3d)
-        #     return [vme.LineSegment2D(start, start + volmdlr.TWO_PI * volmdlr.X2D)]
-        # print(start, end)
-        # return [vme.LineSegment2D(start, end)]
-
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         # TODO: this is incomplete, a bspline_curve2d can be also a bspline_curve3d
         i = round(0.5 * len(bspline_curve2d.points))
         start = self.point2d_to_3d(bspline_curve2d.points[0])
         interior = self.point2d_to_3d(bspline_curve2d.points[i])
         end = self.point2d_to_3d(bspline_curve2d.points[-1])
-        # if start == end or arc2d.angle == 2 * math.pi:
-        #     u = start - self.frame.origin
-        #     u.normalize()
-        #     v = interior - self.frame.origin
-        #     v.normalize()
-        #     normal = u.cross(v)
-        #     return [vme.FullArc3D(self.frame.origin, start, normal)]
-        return [vme.Arc3D(start, interior, end)]
+        arc3d = vme.Arc3D(start, interior, end)
+        flag = True
+        points3d = [self.point2d_to_3d(p) for p in bspline_curve2d.points]
+        for point in points3d:
+            if not arc3d.point_belongs(point):
+                flag = False
+                break
+        if flag:
+            return [arc3d]
+
+        return [vme.BSplineCurve3D.from_points_interpolation(points3d, degree=bspline_curve2d.degree,
+                                                             periodic=bspline_curve2d.periodic)]
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        # if self.frame.w.is_colinear_to(fullarc3d.normal):
-        #     p1 = self.point3d_to_2d(fullarc3d.start)
-        #     return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.X2D)]
-        # else:
-        #     raise ValueError('Impossible!')
+        # TODO: On a spherical surface we can have fullarc3d in any plane
         p1 = self.point3d_to_2d(fullarc3d.start)
         return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.X2D)]
 
@@ -3076,13 +3005,9 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                points = []
-                for i in range(11):
-                    point = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth))
-                    if point not in points:
-                        points.append(point)
-                    # max_bound_x=self.x_periodicity,
-                    # max_bound_y=self.y_periodicity
+                points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(11)]
+                # max_bound_x=self.x_periodicity,
+                # max_bound_y=self.y_periodicity
                 # ) for i in range(11)]
                 # linesegments = [vme.LineSegment2D(p1, p2)
                 #                 for p1, p2 in zip(points[:-1], points[1:])]
@@ -3113,8 +3038,6 @@ class BSplineSurface3D(Surface3D):
             i * l / (number_points - 1))) for i in range(number_points)]
         return [vme.LineSegment2D(p1, p2)
                 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
-        # return [vme.BSplineCurve2D.from_points_interpolation(
-        #     points, max(self.degree_u, self.degree_v))]
 
     def arc2d_to_3d(self, arc2d):
         number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
