@@ -169,13 +169,7 @@ class WireMixin:
             if len(indices[1]) == 2:
                 ind.append(indices[1][1])
             else:
-                try:
-                    ind.append(indices[1][0])
-                except Exception:
-                    ax = self.plot()
-                    ax.set_aspect('auto')
-                    point1.plot(ax, 'r')
-                    point2.plot(ax, 'r')
+                ind.append(indices[1][0])
         else:
             for indice in indices:
                 if len(indice) == 1:
@@ -1421,9 +1415,6 @@ class Contour2D(ContourMixin, Wire2D):
         return self._edge_polygon
 
     def _get_edge_polygon(self):
-
-        if len(self.primitives) == 1 and self.primitives[0].start == self.primitives[0].end:
-            return ClosedPolygon2D(self.primitives[0].discretization_points(number_points=25))
         points = []
         for edge in self.primitives:
             if points:
@@ -1956,9 +1947,9 @@ class Contour2D(ContourMixin, Wire2D):
                 0].start == closing_contour.primitives[-1].end:
             primitives2 = closing_contour.primitives + \
                           extracted_innerpoints_contour1.primitives
-        contour1 = volmdlr.wires.Contour2D(primitives1)
+        contour1 = Contour2D(primitives1)
         contour1.order_contour(tol=1e-5)
-        contour2 = volmdlr.wires.Contour2D(primitives2)
+        contour2 = Contour2D(primitives2)
         contour2.order_contour(tol=1e-5)
         return contour1, contour2
 
