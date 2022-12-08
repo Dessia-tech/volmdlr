@@ -716,6 +716,7 @@ class Surface3D(DessiaObject):
                              name: str = ''):
         """
         Returns a face from a 3D contour.
+
         :param contours3d: Contour list
         :type contours3d: List[volmdlr.wires.Contour3D]
         """
@@ -746,8 +747,6 @@ class Surface3D(DessiaObject):
 
         surface2d = Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
-
-    # def repair_singularity(self, primitives, last_primitives):
 
     def repair_primitives_periodicity(self, primitives, last_primitive):
         delta_x1 = abs(primitives[0].start.x - last_primitive.end.x)
@@ -792,15 +791,6 @@ class Surface3D(DessiaObject):
                 delta_y2 = 0.
             delta = last_primitive.end - primitives[0].start
             new_primitives = [prim.translation(delta) for prim in primitives]
-            # temp = prim.translation(delta)
-            # prim.start.y = temp.start.y
-            # prim.end.y = temp.end.y
-
-            # for prim in primitives:
-            #     prim.start.y = abs(self.y_periodicity
-            #                        - prim.start.y)
-            #     prim.end.y = abs(self.y_periodicity
-            #                      - prim.end.y)
 
         return new_primitives, delta_x1, delta_x2, delta_y1, delta_y2
 
@@ -2333,15 +2323,6 @@ class SphericalSurface3D(Surface3D):
         if abs(phi) < 1e-9:
             phi = 0
 
-        if x == 0.0 and y == 0.0:
-            phi2 = 0.5 * math.pi
-        else:
-            r_vector = volmdlr.Vector3D(x, y, 0)
-            rho_vector = volmdlr.Vector3D(x, y, z)
-            phi2 = volmdlr.core.vectors3d_angle(rho_vector, r_vector)
-            if math.isclose(phi2, 0.5 * math.pi, abs_tol=1e-6):
-                phi2 = 0.5 * math.pi
-
         if math.isclose(phi, (0.5 * math.pi), abs_tol=1e-6):
             phi = 0.5 * math.pi
         elif math.isclose(phi, (-0.5 * math.pi), abs_tol=1e-6):
@@ -2353,15 +2334,9 @@ class SphericalSurface3D(Surface3D):
         else:
             u1, u2 = round(x / u, 6), round(y / u, 6)
         theta = math.atan2(u2, u1)
-        if abs(theta) < 1e-12:
+        if abs(theta) < 1e-9:
             theta = 0
-        # elif math.isclose(theta, 0.5*math.pi, abs_tol=1e-6):
-        #     theta = 0.5*math.pi
-        # elif math.isclose(theta, -0.5*math.pi, abs_tol=1e-6):
-        #     theta = -0.5*math.pi
-        # print('#######################################################')
-        # print (phi3, phi2, phi)
-        # print(f'Point 3d to 2d : {theta}, {phi}')
+
         return volmdlr.Point2D(theta, phi)
 
     def linesegment2d_to_3d(self, linesegment2d):
@@ -2493,8 +2468,8 @@ class SphericalSurface3D(Surface3D):
 
     def repair_primitives_periodicity(self, primitives, last_primitive):
         """
-        Take into account the periodic behavior of the surface when doing transformation from spatial to parametric
-        coordinates.
+        Repairs periodic behavior of the surface when doing transformation from spatial to parametric coordinates.
+
         :param primitives: primitive to rapair
         :type primitives: List[volmdlr.edges]
         :param last_primitive: primitive of reference

@@ -965,14 +965,6 @@ class Line2D(Line):
     def cut_between_two_points(self, point1, point2):
         return LineSegment2D(point1, point2)
 
-    def point_belongs(self, point2d, abs_tol: float = 1e-6):
-        """
-        Verifies if the point2d belongs to the line
-        :param point2d: point to be verified
-        :return: True if point belongs to line, False otherwise
-        """
-        return math.isclose(self.point_distance(point2d), 0, abs_tol=abs_tol)
-
     def point_distance(self, point2d):
         """
         Calculates the distance of a line2d to a point2d
@@ -1174,7 +1166,7 @@ class BSplineCurve2D(BSplineCurve):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
-        return self.discretization_points(n)
+        return self.discretization_points(number_points=n)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -1819,11 +1811,6 @@ class Arc2D(Arc):
                              xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2])
             center = volmdlr.Point2D(*npy.linalg.solve(A, b))
         return center
-
-    def reverse(self):
-        return self.__class__(self.end.copy(),
-                              self.interior.copy(),
-                              self.start.copy())
 
     @property
     def is_trigo(self):
@@ -5500,14 +5487,6 @@ class ArcEllipse3D(Edge):
         xe, ye, ze = round(1000 * self.end, ndigits).vector
         return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(
             name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
-
-    def point_at_abscissa(self, abscissa):
-        if self.is_trigo:
-            return self.start.rotation(self.center, self.normal,
-                                       abscissa / self.Gradius)
-        else:
-            return self.start.rotation(self.center, self.normal,
-                                       -abscissa / self.Gradius)
 
     def triangulation(self):
         return None
