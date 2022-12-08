@@ -1679,7 +1679,7 @@ class VolumeModel(dc.PhysicalObject):
 
         lines.append('Mesh.CharacteristicLengthMin = 0;')
         lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
-        lines.append('Geometry.Tolerance = 1e-20;')
+        lines.append('Geometry.Tolerance = 1e-6;')
         lines.append('Mesh.AngleToleranceFacetOverlap = 0.01;')
         lines.append('General.Verbosity = 0;')
 
