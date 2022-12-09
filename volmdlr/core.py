@@ -1820,7 +1820,7 @@ class VolumeModel(dc.PhysicalObject):
 
         if not (file_name.endswith('.geo') or file_name.endswith('.geo')):
             file_name += '.geo'
-        with open(file_name, 'w') as file:
+        with open(file_name, mode='w', encoding='utf-8') as file:
             self.to_geo_stream(file, factor,
                                curvature_mesh_size=kwargs['curvature_mesh_size'],
                                min_points=kwargs['min_points'],
@@ -2094,7 +2094,7 @@ class VolumeModel(dc.PhysicalObject):
             with tempfile.NamedTemporaryFile(delete=False) as f:
                 file_name = f.name
 
-        with open(file_name, 'w') as file:
+        with open(file_name, mode='w', encoding='utf-8') as file:
             self.to_msh_stream(mesh_dimension,
                                factor, file,
                                curvature_mesh_size=kwargs['curvature_mesh_size'],
