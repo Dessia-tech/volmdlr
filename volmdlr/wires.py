@@ -345,39 +345,36 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         offset_intersections = []
 
         for primitive_1, primitive_2 in zip(infinite_primitives,
-                                            infinite_primitives[1:]):
+                                            infinite_primitives[1:] + [infinite_primitives[0]]):
 
             i = infinite_primitives.index(primitive_1)
             # k = infinite_primitives.index(primitive_2)
 
-            primitive_name = primitive_1.__class__.__name__.lower().replace(
-                '2d', '')
-            intersection_method_name = '{}_intersections'.format(
-                primitive_name)
-            next_primitive_name = primitive_2.__class__.__name__.lower(). \
-                replace('2d', '')
-            next_intersection_method_name = '{}_intersections'.format(
-                next_primitive_name)
+            primitive_name = primitive_1.__class__.__name__.lower().replace('2d', '')
+            intersection_method_name = '{}_intersections'.format(primitive_name)
+            next_primitive_name = primitive_2.__class__.__name__.lower().replace('2d', '')
+            next_intersection_method_name = '{}_intersections'.format(next_primitive_name)
 
             if hasattr(primitive_1, next_intersection_method_name):
-                intersections = getattr(primitive_1,
-                                        next_intersection_method_name)(
+                intersections = getattr(primitive_1, next_intersection_method_name)(
                     primitive_2)
                 end = self.primitives[i].end
+                if not intersections:
+                    continue
 
                 if len(intersections) == 1:
                     offset_intersections.append(intersections[0])
 
                 else:
                     end = self.primitives[i].end
-                    if intersections[0].point_distance(end) > intersections[
-                            1].point_distance(end):
+                    if intersections[0].point_distance(end) > intersections[1].point_distance(end):
                         intersections.reverse()
                     offset_intersections.append(intersections[0])
 
             elif hasattr(primitive_2, intersection_method_name):
-                intersections = getattr(primitive_2, intersection_method_name)(
-                    primitive_1)
+                intersections = getattr(primitive_2, intersection_method_name)(primitive_1)
+                if not intersections:
+                    continue
                 if len(intersections) == 1:
                     offset_intersections.append(intersections[0])
                 else:
@@ -410,31 +407,18 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         # ax = self.plot()
         for primitive in self.primitives:
             infinite_primitive = primitive.infinite_primitive(offset)
-            infinite_primitives.append(infinite_primitive)
-            # infinite_primitive.plot(ax=ax, color='grey')
-
-        offset_intersections += self.infinite_intersections(
-            infinite_primitives)
-
-        # [p.plot(ax=ax, color='r') for p in offset_intersections]
-
-        # offset_primitives.append(
-        #     self.primitives[0].border_primitive(infinite_primitives[0],
-        #                                         offset_intersections[0], 0))
-
-        # offset_primitives.append(
-        #     self.primitives[-1].border_primitive(infinite_primitives[-1],
-        #                                          offset_intersections[-1],
-        #                                          -1))
-
-        for j in range(len(offset_intersections) - 1):
-            p1 = offset_intersections[j]
-            p2 = offset_intersections[j + 1]
-            cutted_primitive = infinite_primitives[
-                j + 1].cut_between_two_points(p1, p2)
+            if infinite_primitive is not None:
+                infinite_primitives.append(infinite_primitive)
+        offset_intersections += self.infinite_intersections(infinite_primitives)
+        for i, (point1, point2) in enumerate(zip(offset_intersections,
+                                                 offset_intersections[1:] + [offset_intersections[0]])):
+            if i + 1 == len(offset_intersections):
+                cutted_primitive = infinite_primitives[0].cut_between_two_points(point1, point2)
+            else:
+                cutted_primitive = infinite_primitives[i + 1].cut_between_two_points(point1, point2)
             offset_primitives.append(cutted_primitive)
 
-        return Wire2D(offset_primitives)
+        return self.__class__(offset_primitives)
 
     def plot_data(self, name: str = '', fill=None, color='black',
                   stroke_width: float = 1, opacity: float = 1):
@@ -761,6 +745,20 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
                  name: str = ''):
         volmdlr.core.CompositePrimitive3D.__init__(self, primitives, name)
+
+    def _bounding_box(self):
+        """
+        Flawed method, to be enforced by overloading
+        """
+        points = []
+        for prim in self.primitives:
+            n = 20
+            length = prim.length()
+            points_ = prim.discretization_points(number_points=n)
+            for point in points_:
+                if point not in points:
+                    points.append(point)
+        return volmdlr.core.BoundingBox.from_points(points)
 
     def extract(self, point1, primitive1, point2, primitive2):
         return Wire3D(self.extract_primitives(self, point1, primitive1, point2,
@@ -4375,21 +4373,6 @@ class Contour3D(ContourMixin, Wire3D):
             if primitive2d is not None:
                 primitives2d.append(primitive2d)
         return Contour2D(primitives=primitives2d)
-
-    def _bounding_box(self):
-        """
-        Flawed method, to be enforced by overloading
-        """
-        points = []
-        for prim in self.primitives:
-            n = 20
-            length = prim.length()
-            points_ = [prim.point_at_abscissa(i / n * length)
-                       for i in range(n)]
-            for point in points_:
-                if point not in points:
-                    points.append(point)
-        return volmdlr.core.BoundingBox.from_points(points)
 
     @property
     def bounding_box(self):
