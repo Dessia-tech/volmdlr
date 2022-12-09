@@ -1784,7 +1784,7 @@ class VolumeModel(dc.PhysicalObject):
 
         content = ''
         for line in lines:
-            content += line+'\n'
+            content += line + '\n'
 
         stream.write(content)
 
@@ -2077,7 +2077,7 @@ class VolumeModel(dc.PhysicalObject):
 
         content = ''
         for line in lines:
-            content += line+'\n'
+            content += line + '\n'
 
         stream.write(content)
 
@@ -2115,7 +2115,7 @@ class VolumeModel(dc.PhysicalObject):
             for tag in nodeTags:
                 lines_nodes.append(str(tag))
             for n in range(0, len(nodeCoords), 3):
-                lines_nodes.append(str(nodeCoords[n:n+3])[1:-1])
+                lines_nodes.append(str(nodeCoords[n:n + 3])[1:-1])
 
         lines_nodes.insert(1, str(len(entities)) + ' ' + str(tag) + ' 1 ' + str(tag))
         lines_nodes.append('$EndNodes')
@@ -2132,11 +2132,12 @@ class VolumeModel(dc.PhysicalObject):
             elemTypes, elemTags, elemNodeTags = gmsh_model.model.mesh.getElements(dim, tag)
 
             lines_elements.append(str(dim) + ' ' + str(tag) + ' ' + str(elemTypes[0]) + ' ' + str(len(elemTags[0])))
-            range_list = int(len(elemNodeTags[0])/len(elemTags[0]))
+            range_list = int(len(elemNodeTags[0]) / len(elemTags[0]))
             for n in range(0, len(elemNodeTags[0]), range_list):
-                lines_elements.append(str(elemTags[0][int(n/range_list)]) + ' ' + str(elemNodeTags[0][n:n+range_list])[1:-1])
+                lines_elements.append(str(elemTags[0][int(n / range_list)]) + ' ' +
+                                      str(elemNodeTags[0][n:n + range_list])[1:-1])
 
-        tag = str(elemTags[0][int(n/range_list)])
+        tag = str(elemTags[0][int(n / range_list)])
         lines_elements.insert(1, str(len(entities)) + ' ' + tag + ' 1 ' + tag)
         lines_elements.append('$EndElements')
 
