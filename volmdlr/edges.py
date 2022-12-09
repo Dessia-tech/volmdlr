@@ -5058,6 +5058,20 @@ class Arc3D(Arc):
     def middle_point(self):
         return self.point_at_abscissa(self.length() / 2)
 
+    def line_intersections(self, line3d: Line3D):
+        """
+        Calculates intersections between an Arc3D and a Line3D.
+
+        :param linesegment3d: linesegment to verify intersections.
+        :return: list with intersections points between line and Arc3D.
+        """
+        circle3d_lineseg_inters = vm_utils_intersections.circle_3d_linesegment_intersections(self, line3d)
+        linesegment_intersections = []
+        for intersection in circle3d_lineseg_inters:
+            if self.point_belongs(intersection, 1e-6):
+                linesegment_intersections.append(intersection)
+        return linesegment_intersections
+
     def linesegment_intersections(self, linesegment3d: LineSegment3D):
         """
         Calculates intersections between an Arc3D and a LineSegment3D.
@@ -5065,10 +5079,10 @@ class Arc3D(Arc):
         :param linesegment3d: linesegment to verify intersections.
         :return: list with intersections points between linesegment and Arc3D.
         """
-        circle3d_lineseg_inters = vm_utils_intersections.circle_3d_linesegment_intersections(self, linesegment3d)
         linesegment_intersections = []
-        for intersection in circle3d_lineseg_inters:
-            if self.point_belongs(intersection, 1e-6):
+        intersections = self.line_intersections(linesegment3d)
+        for intersection in intersections:
+            if linesegment3d.point_belongs(intersection):
                 linesegment_intersections.append(intersection)
         return linesegment_intersections
 

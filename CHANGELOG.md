@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * FullArc3D: linesegment_intersections
 * Line: sort_points_along_line
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
+* Contour3D: linesegment_intersections, line_intersections
+* Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
+* Arc3D: line_intersections, linesegment_intersections
+* new module utils: intersections -> circle_3d_linesegment_intersections
 
 
 ### Fixed
@@ -72,7 +76,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Line2D: sort_points_along_line
 * Line3D: sort_points_along_line
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
-
+* ArcEllipse3D.to_2d()
+* Circle3D: point_belongs
+* Circle3D: discretization_points
+* Arc3D: line_intersections, linesegment_intersections
 
 ## v0.6.0 [11/7/2022]
 
@@ -96,10 +103,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * OpenShell3D: to_step_face_ids
 * Contour2D: repair_cut_contour
 * Circle2D: cut_by_line
-* Contour3D: linesegment_intersections, line_intersections
-* Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
-* Arc3D: to_circle3D, linesegment_intersections
-* 
 
 ### Fixed
 
@@ -119,9 +122,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve3D: from_step
 * Surface2D: cut_by_line
 * Circle3D: to_step
-* ArcEllipse3D.to_2d()
-* Circle3D: point_belongs
-* Circle3D: discretization_points
 
 
 ### Performance improvements
