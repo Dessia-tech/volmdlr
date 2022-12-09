@@ -1981,7 +1981,7 @@ class Contour2D(ContourMixin, Wire2D):
                     for cntr in [contour1, contour2]:
                         all_divided_contour = True
                         for cut_contour in list_cutting_contours:
-                            points_at_abs = cut_contour.discretization_points(cut_contour.length() / 5)
+                            points_at_abs = cut_contour.discretization_points(angle_resolution=cut_contour.length() / 5)
                             for point_at_abs in points_at_abs[1:-1]:
                                 if cntr.point_belongs(point_at_abs) and \
                                         (not cntr.point_over_contour(point_at_abs) and
@@ -4421,10 +4421,10 @@ class Contour3D(ContourMixin, Wire3D):
         intersections = []
         for primitive in self.primitives:
             prim_line_intersections = primitive.line_intersections(line)
-            if prim_line_intersections is not None:
-                # for inters in prim_line_intersections:
-                if prim_line_intersections not in intersections:
-                    intersections.append(prim_line_intersections)
+            if prim_line_intersections:
+                for inters in prim_line_intersections:
+                    if inters not in intersections:
+                        intersections.append(inters)
         return intersections
 
     def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment3D):
