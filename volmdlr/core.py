@@ -2106,6 +2106,7 @@ class VolumeModel(dc.PhysicalObject):
         lines_nodes = []
         lines_nodes.append('$Nodes')
 
+        tag = None
         entities = gmsh_model.model.getEntities()
         for dim, tag in entities:
             nodeTags, nodeCoords, nodeParams = gmsh_model.model.mesh.getNodes(dim, tag)
