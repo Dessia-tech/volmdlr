@@ -191,7 +191,7 @@ class Line(dc.DessiaObject):
     def __getitem__(self, key):
         if key == 0:
             return self.point1
-        elif key == 1:
+        if key == 1:
             return self.point2
         raise IndexError
 
