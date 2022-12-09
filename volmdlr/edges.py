@@ -727,6 +727,19 @@ class BSplineCurve(Edge):
         bsplinecurve.periodic = True
         return bsplinecurve
 
+    def discretization_points(self, *, number_points: int = 20, angle_resolution: int = None):
+        if angle_resolution:
+            number_points = angle_resolution
+        if len(self.points) == number_points:
+            return self.points
+        curve = self.curve
+        curve.delta = 1 / number_points
+        curve_points = curve.evalpts
+        self.curve = curve
+
+        point_dimension = f'Point{self.__class__.__name__[-2::]}'
+        return [getattr(volmdlr, point_dimension)(*p) for p in curve_points]
+
 
 class Line2D(Line):
     """
@@ -1152,18 +1165,6 @@ class BSplineCurve2D(BSplineCurve):
                         tuple(self.knot_multiplicities),
                         tuple(self.knots))
         return content, point_id + 1
-
-    def discretization_points(self, *, number_points: int = 20, angle_resolution: int = None):
-        if angle_resolution:
-            number_points = angle_resolution
-        if len(self.points) == number_points:
-            return self.points
-        curve = self.curve
-        curve.delta = 1 / number_points
-        curve_points = curve.evalpts
-        self.curve = curve
-        points = [volmdlr.Point2D(*p) for p in curve_points]
-        return points
 
     def polygon_points(self, n: int = 15):
         warnings.warn('polygon_points is deprecated,\
