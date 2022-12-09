@@ -1394,6 +1394,7 @@ class Contour2D(ContourMixin, Wire2D):
                  name: str = ''):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
+        self._polygon_point_belongs_100 = None
         self._bounding_rectangle = None
 
     def __hash__(self):
@@ -1466,7 +1467,9 @@ class Contour2D(ContourMixin, Wire2D):
         #         if edge.straight_line_point_belongs(point):
         #             return True
         #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
-        if self.to_polygon(100).point_belongs(point):
+        if not self._polygon_point_belongs_100:
+            self._polygon_point_belongs_100 = self.to_polygon(100)
+        if self._polygon_point_belongs_100.point_belongs(point):
             return True
         return False
 
@@ -1837,6 +1840,7 @@ class Contour2D(ContourMixin, Wire2D):
     def to_polygon(self, angle_resolution):
         """
         Transform the contour to a polygon.
+
         :param angle_resolution: arcs are discretized with respect of an angle resolution in points per radians
         """
 

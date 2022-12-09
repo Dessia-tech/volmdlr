@@ -4386,7 +4386,10 @@ class Face3D(volmdlr.core.Primitive3D):
         return False
 
     def edge3d_inside(self, edge3d):
-        points = edge3d.discretization_points(number_points=200)
+        method_name = f'{edge3d.__class__.__name__.lower()[:-2]}_inside'
+        if hasattr(self, method_name):
+            return getattr(self, method_name)(edge3d)
+        points = edge3d.discretization_points(number_points=10)
         # length = linesegement3d.length()
         # points = [linesegement3d.point_at_abscissa(length * n / 200) for n in range(1, 199)]
         for point in points[1:-1]:
@@ -5111,6 +5114,24 @@ class PlaneFace3D(Face3D):
             return min_distance, p1, p2
         else:
             return min_distance
+
+    def linesegment_inside(self, linesegment: volmdlr.edges.LineSegment3D):
+        direction_vector = linesegment.unit_direction_vector()
+        if not math.isclose(abs(direction_vector.dot(self.surface3d.frame.w)), 0.0, abs_tol=1e-6):
+            return False
+        for point in [linesegment.start, linesegment.end]:
+            if not self.point_belongs(point):
+                return False
+        return True
+
+    def circle_inside(self, circle: volmdlr.wires.Circle3D):
+        if not math.isclose(abs(circle.frame.w.dot(self.surface3d.frame.w)), 1.0, abs_tol=1e-6):
+            return False
+        points = circle.discretization_points(number_points=4)
+        for point in points:
+            if not self.point_belongs(point):
+                return False
+        return True
 
     def edge_intersections(self, edge):
         intersections = []
@@ -6214,7 +6235,7 @@ class CylindricalFace3D(Face3D):
         """
         if not type(self) is type(face2):
             return False
-        if self.surface3d.frame.w == face2d.surface3d.frame.w and self.surface3d.radius == face2.surface3d.radius:
+        if self.surface3d.frame.w == face2.surface3d.frame.w and self.surface3d.radius == face2.surface3d.radius:
             self_contour2d = self.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
             face2_contour2d = face2.outer_contour3d.to_2d(
