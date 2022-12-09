@@ -704,6 +704,6 @@ class GmshParser(DessiaObject):
             except KeyError:
                 pass
 
-        with open(output_file_name, "w") as f_out:
+        with open(output_file_name, mode="w", encoding="utf-8") as f_out:
             f_out.write('\n'.join(lines))
         f_out.close()
