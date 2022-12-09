@@ -1344,7 +1344,7 @@ class ContourMixin(WireMixin):
 
 class Contour2D(ContourMixin, Wire2D):
     """
-    A collection of 2D primitives forming a closed wire2D
+    A collection of 2D primitives forming a closed wire2D.
     TODO : center_of_mass and second_moment_area should be changed accordingly
     to area considering the triangle drawn by the arcs
     """
