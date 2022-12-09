@@ -435,7 +435,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         #     p2 = offset_intersections[j + 1]
 
 
-        return Wire2D(offset_primitives)
+        return self.__class__(offset_primitives)
 
     def plot_data(self, name: str = '', fill=None, color='black',
                   stroke_width: float = 1, opacity: float = 1):
@@ -757,6 +757,20 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
                  name: str = ''):
         volmdlr.core.CompositePrimitive3D.__init__(self, primitives, name)
+
+    def _bounding_box(self):
+        """
+        Flawed method, to be enforced by overloading
+        """
+        points = []
+        for prim in self.primitives:
+            n = 20
+            length = prim.length()
+            points_ = prim.discretization_points(number_points=n)
+            for point in points_:
+                if point not in points:
+                    points.append(point)
+        return volmdlr.core.BoundingBox.from_points(points)
 
     def extract(self, point1, primitive1, point2, primitive2):
         return Wire3D(self.extract_primitives(self, point1, primitive1, point2,
@@ -4413,20 +4427,6 @@ class Contour3D(ContourMixin, Wire3D):
                       edge_ends=edge_details, edge_direction=edge_details)
 
         return ax
-
-    def _bounding_box(self):
-        """
-        Flawed method, to be enforced by overloading
-        """
-        points = []
-        for prim in self.primitives:
-            n = 20
-            length = prim.length()
-            points_ = prim.discretization_points(number_points=n)
-            for point in points_:
-                if point not in points:
-                    points.append(point)
-        return volmdlr.core.BoundingBox.from_points(points)
 
     @property
     def bounding_box(self):

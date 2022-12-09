@@ -5187,8 +5187,11 @@ class PlaneFace3D(Face3D):
                 return cylindricalsurfaceface_intersections
         # else:
         #     raise NotImplementedError
-        intersections_points = self.face_intersections_outer_contour(cylindricalface) +\
-                               cylindricalface.face_intersections_outer_contour(self)
+        intersections_points = self.face_intersections_outer_contour(cylindricalface)
+        for point in cylindricalface.face_intersections_outer_contour(self):
+            if point not in intersections_points:
+                intersections_points.append(point)
+
         # for edge1 in cylindricalface.outer_contour3d.primitives:
         #     intersection_points = self.edge_intersections(edge1)
         #     if intersection_points:
