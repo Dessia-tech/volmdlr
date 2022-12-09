@@ -7,7 +7,7 @@ steps:
 - name: merge master on testing
   image: alpine/git
   when:
-    event: push 
+    event: push
     branch: master
   commands:
   - git fetch origin testing
@@ -18,7 +18,7 @@ steps:
 - name: merge testing on dev
   image: alpine/git
   when:
-    event: push 
+    event: push
     branch: testing
   commands:
   - git fetch origin dev
@@ -30,9 +30,16 @@ steps:
 - name: check code complexity
   image: python:3.9
   commands:
-  - pip install radon pylint
+  - pip install radon pylint pydocstyle
   - ./code_quality.sh
   - python code_pylint.py
+  - python code_pydocstyle.py
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
 
 - name: check pep8 formatting
   image: python:3.9
@@ -40,6 +47,13 @@ steps:
     - git fetch --tags
     - pip3 install -U pip autopep8
     - bash code_pep8.sh
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+
 
 - name: install, build doc run scripts
   image: python:3.8
@@ -59,12 +73,24 @@ steps:
   - coverage report
   - python coverage_script.py
 
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+
 - name: generate sdist
   image: python:3.8
   commands:
   - git fetch --tags
   - pip install Cython
   - python setup.py sdist
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
 
 - name: upload to pypi
   image: plugins/pypi
@@ -102,3 +128,8 @@ steps:
     password:
       from_secret: email_password
     from: technical@dessia.tech
+
+volumes:
+  - name: pip_cache
+    host:
+      path: /tmp/cache/drone/pip
