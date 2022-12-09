@@ -640,17 +640,8 @@ class GmshParser(DessiaObject):
         return [volmdlr.mesh.Node2D(node[0], node[1]) for
                 node in list_nodes]
 
-    def to_vtk(self, output_file_name):
-        if output_file_name[-3::] != 'vtk':
-            output_file_name += '.vtk'
-
-        lines = []
-        lines.append('# vtk DataFile Version 2.0')
-        lines.append(output_file_name + ', Created by Volmdlr')
-        lines.append('ASCII')
-        lines.append('DATASET UNSTRUCTURED_GRID')
-        lines.append('POINTS ' + str(len(self.nodes['all_nodes'])) + ' double')
-
+    def get_lines_nodes(self):
+        lines = []        
         if self.nodes['all_nodes'][0].__class__.__name__[-2] == '2':
             for node in self.nodes['all_nodes']:
                 lines.append(str([*node])[1:-1].replace(',', '') + ' 0.0')
@@ -658,9 +649,10 @@ class GmshParser(DessiaObject):
             for node in self.nodes['all_nodes']:
                 lines.append(str([*node])[1:-1].replace(',', ''))
 
-        lines.append(' ')
-        lines.append('CELLS')  # 13664=1103+1915+4044+6602 / 57137=1103*2+1915*3+4044*4+6602*5
+        return lines
 
+    def get_lines_cells(self):
+        lines = []
         cells, cells_0, cells_1 = 0, 0, 0
         for i in range(0, len(self.nodes['nodes_dim_0'])):
             lines.append('1 ' + str(i))
@@ -684,11 +676,10 @@ class GmshParser(DessiaObject):
             except KeyError:
                 pass
 
-        lines[lines.index('CELLS')] = 'CELLS ' + str(cells_0) + ' ' + str(cells_1)
+        return lines, cells_0, cells_1
 
-        lines.append(' ')
-        lines.append('CELL_TYPES ' + str(cells_0))  # 13664
-
+    def get_lines_cells_type(self):
+        lines = []
         lines.extend(['1'] * len(self.nodes['nodes_dim_0']))
 
         cells_str_int = {'elements_type_1': '3',
@@ -703,6 +694,35 @@ class GmshParser(DessiaObject):
                 lines.extend([value] * count)
             except KeyError:
                 pass
+
+        return lines
+
+    def to_vtk(self, output_file_name):
+        if output_file_name[-3::] != 'vtk':
+            output_file_name += '.vtk'
+
+        lines = []
+        lines.append('# vtk DataFile Version 2.0')
+        lines.append(output_file_name + ', Created by Volmdlr')
+        lines.append('ASCII')
+        lines.append('DATASET UNSTRUCTURED_GRID')
+        lines.append('POINTS ' + str(len(self.nodes['all_nodes'])) + ' double')
+
+        lines.extend(self.get_lines_nodes())
+
+        lines.append(' ')
+        lines.append('CELLS')  # 13664=1103+1915+4044+6602 / 57137=1103*2+1915*3+4044*4+6602*5
+
+        elements_lines, cells_0, cells_1 = self.get_lines_cells()
+
+        lines.extend(elements_lines)
+
+        lines[lines.index('CELLS')] = 'CELLS ' + str(cells_0) + ' ' + str(cells_1)
+
+        lines.append(' ')
+        lines.append('CELL_TYPES ' + str(cells_0))  # 13664
+
+        lines.extend(self.get_lines_cells_type())
 
         with open(output_file_name, mode="w", encoding="utf-8") as f_out:
             f_out.write('\n'.join(lines))
