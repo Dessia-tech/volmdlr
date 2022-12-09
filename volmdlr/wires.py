@@ -65,13 +65,16 @@ class WireMixin:
             length += primitive.length()
         return length
 
-    def discretization_points(self, resolution: float):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
         resolution: distance between two discretized points
         """
+        if number_points:
+            n = number_points - 1
+        elif angle_resolution:
+            length = self.length()
+            n = int(length / angle_resolution) + 1
 
-        length = self.length()
-        n = int(length / resolution) + 1
         return [self.point_at_abscissa(i / n * length) for i in
                 range(n + 1)]
 
@@ -3817,8 +3820,9 @@ class Circle2D(Contour2D):
         return self.__class__(center=self.center.axial_symmetry(line),
                               radius=self.radius)
 
-    def discretization_points(self, angle_resolution: float = 10):
-        number_points = math.ceil(volmdlr.TWO_PI * angle_resolution) + 2
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
+        if not number_points and angle_resolution:
+            number_points = math.ceil(volmdlr.TWO_PI * angle_resolution) + 2
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
