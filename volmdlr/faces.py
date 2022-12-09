@@ -7094,22 +7094,31 @@ class BSplineFace3D(Face3D):
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
-    _non_serializable_attributes = ['bounding_box', 'primitives']
+    _non_serializable_attributes = ['primitives']
     _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box', 'primitives']
     _non_data_hash_attributes = []
     STEP_FUNCTION = 'OPEN_SHELL'
 
     def __init__(self, faces: List[Face3D],
                  color: Tuple[float, float, float] = None,
-                 alpha: float = 1., name: str = ''):
+                 alpha: float = 1.,
+                 name: str = '',
+                 bounding_box: volmdlr.core.BoundingBox = None):
+
         self.faces = faces
         if not color:
             self.color = (0.8, 0.8, 0.8)
         else:
             self.color = color
         self.alpha = alpha
-        self._bbox = None
+
+        if bounding_box:
+            self._bbox = bounding_box
+        else:
+            self._bbox = None
+
         self._faces_graph = None
+
         volmdlr.core.CompositePrimitive3D.__init__(self,
                                                    primitives=faces, color=color, alpha=alpha,
                                                    name=name)
@@ -7155,6 +7164,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         dict_.update({'color': self.color,
                       'alpha': self.alpha,
                       'faces': [f.to_dict(use_pointers=False) for f in self.faces]})
+        if self._bbox:
+            dict_['bounding_box'] = self._bbox.to_dict()
 
         return dict_
 
