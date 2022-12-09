@@ -14,6 +14,7 @@ from dessia_common import DessiaObject
 import volmdlr as vm
 import volmdlr.wires as vmw
 import volmdlr.edges as vme
+import volmdlr.gmsh_vm
 # from volmdlr.core_compiled import Matrix33
 
 # from itertools import combinations
@@ -981,6 +982,15 @@ class Mesh(DessiaObject):
         mesh._nodes_correction = self._nodes_correction
 
         return mesh
+
+    @property
+    def gmsh(self):
+        return self._gmsh
+
+    @gmsh.setter
+    def gmsh(self, gmsh_parser):
+
+        self._gmsh = gmsh_parser
 
     def copy(self):
         m = self.__class__(elements_groups=self.elements_groups[:])
