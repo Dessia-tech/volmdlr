@@ -63,7 +63,7 @@ steps:
   commands:
   - pip install Cython wheel
   - python setup.py install --user
-  - cd scripts/mesh
+  - cd scripts
   - python read_msh_file.py
   - python mesh/geo_file_1.py
   - python mesh/geo_file_2.py
