@@ -778,6 +778,9 @@ class Line2D(Line):
         for point in self.points:
             point.translation_inplace(offset)
 
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        return Line2D(*[point.frame_mapping(frame, side) for point in self.points])
+
     def plot(self, ax=None, color='k', dashed=True):
         if ax is None:
             _, ax = plt.subplots()
@@ -1267,6 +1270,12 @@ class BSplineCurve2D(BSplineCurve):
         return point.nearest_point(points)
 
     def linesegment_intersections(self, linesegment):
+        """
+        Calculates intersections between a BSplineCurve2D and a LineSegment2D.
+
+        :param linesegment: linesegment to verify intersections.
+        :return: list with the intersections points.
+        """
         results = self.line_intersections(linesegment.to_line())
         intersections_points = []
         for result in results:
@@ -1322,6 +1331,7 @@ class LineSegment2D(LineSegment):
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
         if start == end:
             raise NotImplementedError
+        self.points = [start, end]
         LineSegment.__init__(self, start, end, name=name)
 
     def __hash__(self):
@@ -1377,14 +1387,17 @@ class LineSegment2D(LineSegment):
         Verifies if a point belongs to the surface created by closing the edge with a
         line between its start and end points.
 
-        :param point: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
+        :param point: Point to be verified.
+        :return: Return True if the point belongs to this surface, or False otherwise.
         """
         return self.point_belongs(point)
 
     def point_distance(self, point, return_other_point=False):
         """
         Computes the distance of a point to segment of line.
+
+        :param point: point to calculate distance.
+        :param return_other_points: Bool variable to return linesegment's corresponding point or not.
         """
         distance, point = volmdlr.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)],
@@ -1518,7 +1531,8 @@ class LineSegment2D(LineSegment):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        LineSegment2D rotation
+        LineSegment2D rotation.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotated LineSegment2D
@@ -1528,34 +1542,38 @@ class LineSegment2D(LineSegment):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        LineSegment2D rotation. Object is updated inplace
-        :param center: rotation center
-        :param angle: rotation angle
+        LineSegment2D rotation. Object is updated inplace.
+
+        :param center: rotation center.
+        :param angle: rotation angle.
         """
         for point in [self.start, self.end]:
             point.rotation_inplace(center, angle)
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        LineSegment2D translation
-        :param offset: translation vector
-        :return: A new translated LineSegment2D
+        LineSegment2D translation.
+
+        :param offset: translation vector.
+        :return: A new translated LineSegment2D.
         """
         return LineSegment2D(self.start.translation(offset),
                              self.end.translation(offset))
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        LineSegment2D translation. Object is updated inplace
-        :param offset: translation vector
+        LineSegment2D translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         for point in [self.start, self.end]:
             point.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
-        Changes vector frame_mapping and return a new LineSegment2D
-        side = 'old' or 'new'
+        Changes vector frame_mapping and return a new LineSegment2D.
+
+        side = 'old' or 'new'.
         """
         if side == 'old':
             new_start = frame.old_coordinates(self.start)
@@ -1570,7 +1588,9 @@ class LineSegment2D(LineSegment):
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes vector frame_mapping and the object is updated inplace.
-        side = 'old' or 'new'
+
+        :param frame: frame to execute the frame mapping.
+        :param side: 'old' or 'new'.
         """
         if side == 'old':
             new_start = frame.old_coordinates(self.start)
@@ -1625,7 +1645,8 @@ class LineSegment2D(LineSegment):
 
     def nearest_point_to(self, point):
         """
-        Find out the nearest point on the linesegment to point
+        Find out the nearest point on the linesegment to point.
+
         """
 
         points = self.discretization_points(number_points=500)
@@ -1657,7 +1678,7 @@ class Arc(Edge):
         """
         Gets the arc's center.
 
-        :return: The center of the arc
+        :return: The center of the arc.
         """
         raise NotImplementedError(
             'the property method center must be overloaded by subclassing'
@@ -1668,7 +1689,7 @@ class Arc(Edge):
         """
         Gets the angle of the arc.
 
-        :return: The angle of the arc
+        :return: The angle of the arc.
         """
         return NotImplementedError(
             'the property method angle must be overloaded by subclassing'
@@ -1679,7 +1700,7 @@ class Arc(Edge):
         """
         Verifies if arc is trigowise or clockwise.
 
-        :return: True if trigowise or False otherwise
+        :return: True if trigowise or False otherwise.
         """
         return NotImplementedError(
             'the property method is_trigo must be overloaded by subclassing'
@@ -1695,7 +1716,7 @@ class Arc(Edge):
         """
         Calculates the length of the Arc, with its radius and it arc angle.
 
-        :return: the length fo the Arc
+        :return: the length fo the Arc.
         """
         return self.radius * abs(self.angle)
 
@@ -1710,10 +1731,11 @@ class Arc(Edge):
     @staticmethod
     def get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i):
         """
-        :param radius_1: radius from center to start point
-        :param radius_2: radius form center ro end point
-        :param radius_i: radius from center to interior point
-        :return: the clockwise and trigowise paths
+
+        :param radius_1: radius from center to start point.
+        :param radius_2: radius form center ro end point.
+        :param radius_i: radius from center to interior point.
+        :return: the clockwise and trigowise paths.
         """
         angle1 = math.atan2(radius_1.y, radius_1.x)
         anglei = math.atan2(radius_i.y, radius_i.x)
@@ -1745,7 +1767,8 @@ class Arc(Edge):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
-        discretize a Edge to have "n" points
+        Discretize a Edge to have "n" points.
+
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
@@ -1881,7 +1904,8 @@ class Arc2D(Arc):
 
     def point_belongs(self, point2d, abs_tol=1e-10):
         """
-        check if a Point2D belongs to the Arc2D
+        Check if a Point2D belongs to the Arc2D.
+
         """
         vector_start = self.start - self.center
         vector_end = self.end - self.center
@@ -2122,9 +2146,10 @@ class Arc2D(Arc):
     def straight_line_point_belongs(self, point):
         """
         Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points
-        :param point_2d: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
+        line between its start and end points.
+
+        :param point_2d: Point to be verified.
+        :return: Return True if the point belongs to this surface, or False otherwise.
         """
         if self.point_belongs(point_2d):
             return True
@@ -2166,19 +2191,21 @@ class Arc2D(Arc):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        Arc2D rotation
+        Arc2D rotation.
+
         :param center: rotation center
-        :param angle: angle rotation
-        :return: a new rotated Arc2D
+        :param angle: angle rotation.
+        :return: a new rotated Arc2D.
         """
         return Arc2D(*[point.rotation(center, angle,) for point in
                        [self.start, self.interior, self.end]])
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Arc2D rotation. Object is updated inplace
-        :param center: rotation center
-        :param angle: rotation angle
+        Arc2D rotation. Object is updated inplace.
+
+        :param center: rotation center.
+        :param angle: rotation angle.
         """
         self.start.rotation_inplace(center, angle)
         self.interior.rotation_inplace(center, angle)
@@ -2190,17 +2217,19 @@ class Arc2D(Arc):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        Arc2D translation
-        :param offset: translation vector
-        :return: A new translated Arc2D
+        Arc2D translation.
+
+        :param offset: translation vector.
+        :return: A new translated Arc2D.
         """
         return Arc2D(*[point.translation(offset) for point in
                        [self.start, self.interior, self.end]])
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        Arc2D translation. Object is updated inplace
-        :param offset: translation vector
+        Arc2D translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         self.start.translation_inplace(offset)
         self.interior.translation_inplace(offset)
@@ -2212,7 +2241,8 @@ class Arc2D(Arc):
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
-        Changes vector frame_mapping and return a new Arc2D
+        Changes vector frame_mapping and return a new Arc2D.
+
         side = 'old' or 'new'
         """
         return Arc2D(*[point.frame_mapping(frame, side) for point in
@@ -2220,7 +2250,7 @@ class Arc2D(Arc):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
-        Changes vector frame_mapping and the object is updated inplace
+        Changes vector frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         self.__init__(*[point.frame_mapping(frame, side) for point in
@@ -2228,7 +2258,8 @@ class Arc2D(Arc):
 
     def second_moment_area(self, point):
         """
-        Second moment area of part of disk
+        Second moment area of part of disk.
+
         """
         if self.angle2 < self.angle1:
             angle2 = self.angle2 + volmdlr.TWO_PI
@@ -2300,14 +2331,16 @@ class Arc2D(Arc):
 
     def to_wire(self, angle_resolution: float = 10.):
         """
-        convert an arc to a wire2d defined with line_segments
+        convert an arc to a wire2d defined with line_segments.
+
         """
 
         return volmdlr.wires.Wire2D.from_points(self.polygon_points(angle_resolution))
 
     def axial_symmetry(self, line):
         """
-        Finds out the symmetric arc2d according to a line
+        Finds out the symmetric arc2d according to a line.
+
         """
 
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
@@ -2320,7 +2353,8 @@ class Arc2D(Arc):
 class FullArc2D(Arc2D):
     """
     An edge that starts at start_end, ends at the same point after having described
-    a circle
+    a circle.
+
     """
 
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
@@ -2385,7 +2419,8 @@ class FullArc2D(Arc2D):
     def straight_line_point_belongs(self, point):
         """
         Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points
+        line between its start and end points.
+
         :param point2d: Point to be verified
         :return: Return True if the point belongs to this surface, or False otherwise
         """
@@ -2670,7 +2705,8 @@ class ArcEllipse2D(Edge):
 
     def length(self):
         """
-        Calculates the length of the arcellipse2d
+        Calculates the length of the arcellipse2d.
+
         :return: arcellipse2d's length
         """
         length = self.abscissa(self.end)
@@ -2678,7 +2714,8 @@ class ArcEllipse2D(Edge):
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
         """
-        Verifies if a point belongs to the arcellipse2d
+        Verifies if a point belongs to the arcellipse2d.
+
         :param point: point to be verified
         :param abs_tol: tolerance applied during calculations
         :return: True if the point belongs, False otherwise
@@ -2699,7 +2736,8 @@ class ArcEllipse2D(Edge):
 
     def abscissa(self, point: volmdlr.Point2D):
         """
-        Calculates the abscissa of a given point
+        Calculates the abscissa of a given point.
+
         :param point: point for calculating abscissa
         :return: a float, between 0 and the arcellise2d's lenght
         """
@@ -2721,8 +2759,9 @@ class ArcEllipse2D(Edge):
 
     def bounding_rectangle(self):
         """
-        Calculates the bounding rectangle for the arcellipse2d
-        :return: volmdlr.core.BoudingRectangle object
+        Calculates the bounding rectangle for the arcellipse2d.
+
+        :return: volmdlr.core.BoudingRectangle object.
         """
         min_a, max_a = self.center - self.Gradius * self.major_dir, self.center + self.Gradius * self.major_dir
         min_b, max_b = self.center - self.Sradius * self.minor_dir, self.center + self.Sradius * self.minor_dir
@@ -2732,8 +2771,9 @@ class ArcEllipse2D(Edge):
 
     def straight_line_area(self):
         """
-        Calculates the area of the elliptic arc, with line drwan from start to end
-        :return: straight_line_area
+        Calculates the area of the elliptic arc, with line drwan from start to end.
+
+        :return: straight_line_area.
         """
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
@@ -2749,12 +2789,13 @@ class ArcEllipse2D(Edge):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
-        discretize an Edge to have "n" points
+        discretize an Edge to have "n" points.
+
         :param number_points: the number of points (including start and end points)
-             if unset, only start and end will be returned
+             if unset, only start and end will be returned.
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
-            to mesh an arc
-        :return: a list of sampled points
+            to mesh an arc.
+        :return: a list of sampled points.
         """
         if not number_points:
             if not angle_resolution:
@@ -2842,7 +2883,8 @@ class Line3D(Line):
     _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
 
     """
-    Define an infinite line passing through the 2 points
+    Define an infinite line passing through the 2 points.
+
     """
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
@@ -2893,9 +2935,10 @@ class Line3D(Line):
 
     def line_distance(self, line2):
         """
-        Calculates the distance between two Line3D
-        :param line2: other Line3D
-        :return: The distance between the two lines
+        Calculates the distance between two Line3D.
+
+        :param line2: other Line3D.
+        :return: The distance between the two lines.
         """
         direction_vector1 = self.direction_vector()
         direction_vector2 = line2.direction_vector()
@@ -2908,9 +2951,10 @@ class Line3D(Line):
 
     def skew_to(self, line):
         """
-        Verifies if two Line3D are skew to each other, that is, they are not parallel and never intersect
-        :param line: othe line
-        :return: True if they are skew, False otherwise
+        Verifies if two Line3D are skew to each other, that is, they are not parallel and never intersect.
+
+        :param line: othe line.
+        :return: True if they are skew, False otherwise.
         """
         if self.direction_vector().is_colinear_to(line.direction_vector()):
             return False
