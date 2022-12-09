@@ -1498,7 +1498,8 @@ class CylindricalSurface3D(Surface3D):
         :param plane3d: intersecting plane
         :return: list of intersecting curves
         """
-        center3d_plane = volmdlr.Point3D(self.frame.origin.x, self.frame.origin.y, plane3d.frame.origin.z)
+        line = volmdlr.edges.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
+        center3d_plane = plane3d.line_intersections(line)[0]
         circle3d = volmdlr.wires.Circle3D(volmdlr.Frame3D(center3d_plane, plane3d.frame.u,
                                                           plane3d.frame.v, plane3d.frame.w), self.radius)
         return [circle3d]
@@ -1555,7 +1556,10 @@ class CylindricalSurface3D(Surface3D):
     def is_coincident(self, surface3d):
         if not isinstance(self, surface3d.__class__):
             return False
-        raise NotImplementedError
+        if math.isclose(abs(self.frame.w.dot(surface3d.frame.w)), 1.0, abs_tol=1e-6) and\
+                self.radius == surface3d.radius:
+            return True
+        return False
 
     def point_on_surface(self, point3d):
         new_point = self.frame.new_coordinates(point3d)
@@ -5187,8 +5191,10 @@ class PlaneFace3D(Face3D):
                 return cylindricalsurfaceface_intersections
         # else:
         #     raise NotImplementedError
-        intersections_points = self.face_intersections_outer_contour(cylindricalface) +\
-                               cylindricalface.face_intersections_outer_contour(self)
+        intersections_points = self.face_intersections_outer_contour(cylindricalface)
+        for point in cylindricalface.face_intersections_outer_contour(self):
+            if point not in intersections_points:
+                intersections_points.append(point)
         # for edge1 in cylindricalface.outer_contour3d.primitives:
         #     intersection_points = self.edge_intersections(edge1)
         #     if intersection_points:

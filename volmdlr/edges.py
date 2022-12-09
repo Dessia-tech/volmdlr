@@ -1246,12 +1246,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def to_wire(self, n: int):
         """
-<<<<<<< HEAD
-        Convert a bspline curve to a wire2d defined with 'n' line_segments
-=======
         Convert a bspline curve to a wire2d defined with 'n' line_segments.
 
->>>>>>> origin/Circle3D_fixes
         """
 
         u = npy.linspace(0, 1, num=n + 1).tolist()
@@ -1264,12 +1260,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def reverse(self):
         """
-<<<<<<< HEAD
-        Reverse the bspline's direction by reversing its start and end points
-=======
         Reverse the bspline's direction by reversing its start and end points.
 
->>>>>>> origin/Circle3D_fixes
         """
 
         return self.__class__(degree=self.degree,
@@ -1291,12 +1283,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def nearest_point_to(self, point):
         """
-<<<<<<< HEAD
-        Find out the nearest point on the linesegment to point
-=======
         Find out the nearest point on the linesegment to point.
 
->>>>>>> origin/Circle3D_fixes
         """
 
         points = self.polygon_points(500)
@@ -1321,10 +1309,7 @@ class BSplineCurve2D(BSplineCurve):
     def axial_symmetry(self, line):
         """
         Finds out the symmetric bsplinecurve2d according to a line.
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/Circle3D_fixes
         """
 
         points_symmetry = [point.axial_symmetry(line) for point in self.control_points]
@@ -1435,25 +1420,17 @@ class LineSegment2D(LineSegment):
         Verifies if a point belongs to the surface created by closing the edge with a
         line between its start and end points.
 
-<<<<<<< HEAD
         :param point: Point to be verified.
         :return: Return True if the point belongs to this surface, or False otherwise.
-=======
-        :param point: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
->>>>>>> origin/Circle3D_fixes
         """
         return self.point_belongs(point)
 
     def point_distance(self, point, return_other_point=False):
         """
         Computes the distance of a point to segment of line.
-<<<<<<< HEAD
 
         :param point: point to calculate distance.
         :param return_other_points: Bool variable to return linesegment's corresponding point or not.
-=======
->>>>>>> origin/Circle3D_fixes
         """
         distance, point = volmdlr.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)],
@@ -1498,10 +1475,7 @@ class LineSegment2D(LineSegment):
     def linesegment_intersections(self, linesegment2d: 'LineSegment2D'):
         """
         Touching linesegments does not intersect.
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/Circle3D_fixes
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
@@ -1644,13 +1618,9 @@ class LineSegment2D(LineSegment):
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes vector frame_mapping and the object is updated inplace.
-<<<<<<< HEAD
 
         :param frame: frame to execute the frame mapping.
         :param side: 'old' or 'new'.
-=======
-        side = 'old' or 'new'
->>>>>>> origin/Circle3D_fixes
         """
         if side == 'old':
             new_start = frame.old_coordinates(self.start)
@@ -1705,11 +1675,8 @@ class LineSegment2D(LineSegment):
 
     def nearest_point_to(self, point):
         """
-<<<<<<< HEAD
         Find out the nearest point on the linesegment to point.
-=======
-        Find out the nearest point on the linesegment to point
->>>>>>> origin/Circle3D_fixes
+
         """
 
         points = self.discretization_points(number_points=500)
@@ -1741,11 +1708,7 @@ class Arc(Edge):
         """
         Gets the arc's center.
 
-<<<<<<< HEAD
         :return: The center of the arc.
-=======
-        :return: The center of the arc
->>>>>>> origin/Circle3D_fixes
         """
         raise NotImplementedError(
             'the property method center must be overloaded by subclassing'
@@ -1756,11 +1719,7 @@ class Arc(Edge):
         """
         Gets the angle of the arc.
 
-<<<<<<< HEAD
         :return: The angle of the arc.
-=======
-        :return: The angle of the arc
->>>>>>> origin/Circle3D_fixes
         """
         return NotImplementedError(
             'the property method angle must be overloaded by subclassing'
@@ -1771,11 +1730,7 @@ class Arc(Edge):
         """
         Verifies if arc is trigowise or clockwise.
 
-<<<<<<< HEAD
         :return: True if trigowise or False otherwise.
-=======
-        :return: True if trigowise or False otherwise
->>>>>>> origin/Circle3D_fixes
         """
         return NotImplementedError(
             'the property method is_trigo must be overloaded by subclassing'
@@ -1791,11 +1746,7 @@ class Arc(Edge):
         """
         Calculates the length of the Arc, with its radius and it arc angle.
 
-<<<<<<< HEAD
         :return: the length fo the Arc.
-=======
-        :return: the length fo the Arc
->>>>>>> origin/Circle3D_fixes
         """
         return self.radius * abs(self.angle)
 
@@ -2235,16 +2186,10 @@ class Arc2D(Arc):
     def straight_line_point_belongs(self, point):
         """
         Verifies if a point belongs to the surface created by closing the edge with a
-<<<<<<< HEAD
-        line between its start and end points
-        :param point: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
-=======
         line between its start and end points.
 
         :param point_2d: Point to be verified.
         :return: Return True if the point belongs to this surface, or False otherwise.
->>>>>>> origin/ellipse2d
         """
         if self.point_belongs(point):
             return True
@@ -2434,12 +2379,8 @@ class Arc2D(Arc):
 
     def axial_symmetry(self, line):
         """
-<<<<<<< HEAD
         Finds out the symmetric arc2d according to a line.
 
-=======
-        Finds out the symmetric arc2d according to a line
->>>>>>> origin/Circle3D_fixes
         """
 
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
