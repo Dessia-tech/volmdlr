@@ -1403,7 +1403,7 @@ class CylindricalSurface3D(Surface3D):
         """
         length = bspline_curve3d.length()
         points = [self.point3d_to_2d(p)
-                  for p in bspline_curve3d.discretization_points(11)]
+                  for p in bspline_curve3d.discretization_points(number_points=11)]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -1878,7 +1878,7 @@ class ToroidalSurface3D(Surface3D):
         length = bspline_curve3d.length()
         theta3, phi3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
         theta4, phi4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
-        points = [self.point3d_to_2d(p)for p in bspline_curve3d.discretization_points(11)]
+        points = [self.point3d_to_2d(p)for p in bspline_curve3d.discretization_points(number_points=11)]
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
@@ -2101,7 +2101,7 @@ class ConicalSurface3D(Surface3D):
         """
         length = bspline_curve3d.length()
 
-        points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(11)]
+        points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=11)]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -2980,7 +2980,7 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(11)]
+                points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=10)]
                 # max_bound_x=self.x_periodicity,
                 # max_bound_y=self.y_periodicity
                 # ) for i in range(11)]
