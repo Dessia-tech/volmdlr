@@ -2292,6 +2292,10 @@ class Arc2D(Arc):
                 ]
 
     def cut_between_two_points(self, point1, point2):
+        """
+        Cuts Arc between to points, and return the a new arc bwetween these two points.
+
+        """
         if (point1 == self.start and point2 == self.end) or \
                 (point2 == self.start and point1 == self.end):
             return self
