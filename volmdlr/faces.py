@@ -8550,7 +8550,7 @@ class ClosedShell3D(OpenShell3D):
         faces += new_valid_faces
         return [OpenShell3D(faces)]
 
-    def subtract_to_closed_shell(self, shell2, tol=1e-8):
+    def subtract_to_closed_shell(self, shell2: OpenShell3D, tol: float=1e-8):
         """
         Given Two closed shells, it returns a new subtracted ClosedShell3D.
         :param shell2:
