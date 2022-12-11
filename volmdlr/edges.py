@@ -1348,7 +1348,7 @@ class LineSegment2D(LineSegment):
         return circle1, circle2
 
     def infinite_primitive(self, offset):
-        n = self.normal_vector()
+        n = self.unit_normal_vector()
         offset_point_1 = self.start + offset * \
             n
 

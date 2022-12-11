@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D: point_belongs (bug when contour has only one primitive, like FullArc2D)
 * Contour: contours_from_edges
 * PlaneFace3D: face_intersections
-
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
