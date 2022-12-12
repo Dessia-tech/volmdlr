@@ -743,31 +743,6 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
-            # if isinstance(self, SphericalSurface3D):
-            #     onlyfiles = \
-            #         next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\spherical_contours'))[
-            #             2]  # directory is your directory path as string
-            #     l = len(onlyfiles)
-            #     contours3d[0].save_to_file(
-            #         fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\spherical_contours\contour3d_{l}.json')
-            #     onlyfiles = \
-            #         next(os.walk(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\spherical_surfaces'))[2]
-            #     l = len(onlyfiles)
-            #     self.save_to_file(
-            #         fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\spherical_surfaces\surface3d_{l}.json')
-            #     contours3d[0].plot()
-            #     outer_contour2d.plot()
-            #     outer_contour3d = self.contour2d_to_3d(outer_contour2d)
-            #     # outer_contour3d.plot()
-            #     # outer_contour2d.plot()
-            # if isinstance(self, ConicalSurface3D):
-            # self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_surface\surface.json')
-            # contours3d[0].save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\conical_contours\contour.json')
-            #     contours3d[0].plot()
-            #     ax = outer_contour2d.plot()
-            #     ax.set_aspect('auto')
-            #     outer_contour3d = self.contour2d_to_3d(outer_contour2d)
-            #     outer_contour3d.plot()
             inner_contours2d = []
         elif lc3d > 1:
             area = -1
@@ -839,15 +814,6 @@ class Surface3D(DessiaObject):
                 delta_y2 = 0.
             delta = last_primitive.end - primitives[0].start
             new_primitives = [prim.translation(delta) for prim in primitives]
-            # temp = prim.translation(delta)
-            # prim.start.y = temp.start.y
-            # prim.end.y = temp.end.y
-
-            # for prim in primitives:
-            #     prim.start.y = abs(self.y_periodicity
-            #                        - prim.start.y)
-            #     prim.end.y = abs(self.y_periodicity
-            #                      - prim.end.y)
 
         return new_primitives, delta_x1, delta_x2, delta_y1, delta_y2
 
@@ -868,7 +834,6 @@ class Surface3D(DessiaObject):
                     continue
 
                 if last_primitive:
-                    # print(f'Primitive to repair: {last_primitive}')
                     if last_primitive.end != primitives[0].start:
                         primitives, delta_x1, delta_x2, delta_y1, delta_y2 = \
                             self.repair_primitives_periodicity(primitives,
@@ -886,31 +851,6 @@ class Surface3D(DessiaObject):
                           and math.isclose(delta_y2, 0., abs_tol=1e-3)
                           and math.isclose(dist2, 0, abs_tol=5e-5)):
                         primitives = [p.reverse() for p in primitives[::-1]]
-                    else:
-                        # ax2 = contour3d.plot()
-                        # primitive3d.plot(ax=ax2, color='r')
-                        # last_primitive3d.plot(ax=ax2, color='b')
-                        # # self.plot(ax=ax2)
-                        #
-                        # ax = last_primitive.plot(color='b', plot_points=True)
-                        # # primitives[0].plot(ax=ax, color='r', plot_points=True)
-                        # # primitives[-1].plot(ax=ax, color='r', plot_points=True)
-                        # for p in primitives:
-                        #     p.plot(ax=ax, color='r', plot_points=True)
-                        # if self.x_periodicity:
-                        #     vme.Line2D(volmdlr.Point2D(self.x_periodicity, 0),
-                        #                volmdlr.Point2D(self.x_periodicity, 1)) \
-                        #         .plot(ax=ax)
-                        print('Primitives not following each other in contour:')
-                        print('Surface 3D:', self)
-                        print('3D primitive in red:', primitive3d)
-                        print('Previous 3D primitive:', last_primitive3d)
-                        # raise ValueError(
-                        #     'Primitives not following each other in contour:',
-                        #     'delta1={}, {}, {} ; '
-                        #     'delta2={}, {}, {}'.format(
-                        #         delta_x1, delta_y1, dist1,
-                        #         delta_x2, delta_y2, dist2))
 
                 if primitives:
                     last_primitive = primitives[-1]
@@ -920,11 +860,6 @@ class Surface3D(DessiaObject):
             else:
                 raise NotImplementedError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
-        # first_start = primitives2d[0].start
-        # last_end = primitives2d[-1].end
-        # if (isinstance(self, SphericalSurface3D) or isinstance(self, ConicalSurface3D)) \
-        #         and last_end != first_start:
-        #     primitives2d.append(vme.LineSegment2D(last_end, first_start))
         if isinstance(self, SphericalSurface3D):
             for n, prim in enumerate(primitives2d):
                 if prim.start.x == - math.pi and prim.end.x == prim.start.x and isinstance(prim, vme.LineSegment2D):
@@ -3236,6 +3171,27 @@ class BSplineSurface3D(Surface3D):
                 x0 = xi
                 min_dist = dist
 
+        # # if delta_bound_x == 1 and delta_bound_y == 1:
+        # def fun(x):
+        #     S = self.derivatives(x[0], x[1], 1)
+        #     r = S[0][0] - point3d
+        #     # return npy.array([S[1][0].dot(r), S[0][1].dot(r)])
+        #     f = r.dot(r)
+        #     jac = npy.array([[2 * r.dot(S[1][0]), 2 * r.dot(S[0][1])]])
+        #     return f, jac
+        # # def jac(x):
+        # #     S = self.derivatives(x[0], x[1], 1)
+        # #     r = S[0][0] - point3d
+        # #     return npy.array([[2 * r.dot(S[1][0]), 2 * r.dot(S[0][1])],
+        # #                       [2 * r.dot(S[1][0]), 2 * r.dot(S[0][1])]])
+        #
+        # res = scp.optimize.minimize(fun, x0, bounds=[(min_bound_x, max_bound_x),
+        #                                     (min_bound_y, max_bound_y)], jac=True)
+        # # if sol.fun[0] < tol and sol.fun[1] < tol:
+        # if res.fun < tol:
+        #     # print(sol.x)
+        #     return volmdlr.Point2D(*res.x)
+
         # for i, x0 in enumerate(x0s):
         #     # start = time.time()
         #     z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
@@ -3528,9 +3484,16 @@ class BSplineSurface3D(Surface3D):
                     # vertical_line = False
                     # horizontal_line = False
                     for pt in points:
-                        if not linesegment.point_belongs(pt, abs_tol=5e-5):
+                        if not linesegment.point_belongs(pt, abs_tol=1e-4):
                             flag_line = False
                             break
+                    # Another solution
+                    # lines = [vme.LineSegment2D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:]) if pt1 != pt2]
+                    # if lines:
+                    #     dir_vector = lines[0].unit_direction_vector()
+                    #     if all(line.unit_direction_vector() == dir_vector for line in lines):
+                    #         return vme.LineSegment2D(points[0], points[-1])
+                    #
                     if flag_line:
                         # vertical_line = math.isclose(u1, u2, abs_tol=1e-4)
                         # horizontal_line = math.isclose(v1, v2, abs_tol=1e-4)
@@ -5117,6 +5080,13 @@ class BSplineSurface3D(Surface3D):
         ymax.append(1)
 
         return xmin, xmax, ymin, ymax
+
+    def derivatives(self, u, v, order):
+        derivatives = self.surface.derivatives(u, v, order)
+        for i in range(order+1):
+            for j in range(order+1):
+                derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])
+        return derivatives
 
 
 class BezierSurface3D(BSplineSurface3D):
@@ -8006,19 +7976,8 @@ class BSplineFace3D(Face3D):
     def get_bounding_box(self):
         return self.surface3d._bounding_box()
 
-    def triangulation_lines(self, resolution=10):
+    def triangulation_lines(self, resolution=25):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
-        outer_contour = self.surface2d.outer_contour.primitives
-        length = 0
-        for prim in outer_contour:
-            if isinstance(prim, vme.BSplineCurve2D):
-                lth = prim.lenght()
-                if lth > length:
-                    length = lth
-        delta_max = 0.03
-        delta = length/resolution
-        if delta > delta_max:
-            resolution = int(length/delta_max)
         delta_u = u_max - u_min
         nlines_x = int(delta_u * resolution)
         lines_x = []
@@ -8045,6 +8004,11 @@ class BSplineFace3D(Face3D):
         # for subsurface in surfaces[1:]:
         #     # mesh2d += subsurface.triangulation()
         #     mesh2d.merge_mesh(subsurface.triangulation())
+        # periodic = self.surface3d.x_periodicity or self.surface3d.y_periodicity
+        # arc = any([isinstance(primitive, vme.Arc3D) for primitive in self.outer_contour3d.primitives])
+        # if periodic or arc:
+        #     return super(BSplineFace3D, self).triangulation()
+
         if surface2d.area() == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
 

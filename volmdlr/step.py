@@ -561,10 +561,7 @@ class Step(dc.DessiaObject):
 
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
-            try:
-                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict)
-            except Exception:
-                print(name)
+            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict)
         else:
             raise NotImplementedError(
                 'Dont know how to interpret {} with args {}'.format(name,

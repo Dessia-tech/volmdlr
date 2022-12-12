@@ -478,7 +478,7 @@ class BSplineCurve(Edge):
         return self.point_at_abscissa(self.length() * 0.5)
 
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
-                 tol: float = 1e-4):
+                 tol: float = 1e-7):
         """
         Computes the abscissa of a 2D or 3D point using the least square
         method.
@@ -492,10 +492,17 @@ class BSplineCurve(Edge):
         """
         length = self.length()
 
-        def f(x):
+        def d(x):
             return (point - self.point_at_abscissa(x)).norm()
+
+        def f(u):
+            C = self.derivatives(u, 1)
+            return C[1].dot(C[0] - point)
+        def f_prime(u):
+            C = self.derivatives(u, 2)
+            return C[2].dot(C[0] - point) + (C[1].norm()) ** 2
         x = npy.linspace(0, 1, 21)
-        x = x * length
+        # x = x * length
         # bounds = {0: (x[0], x[1]), 1: (x[0], x[2]), 2: (x[1], x[3]), 3: (x[2], x[4]),
         #           4: (x[3], x[5]), 5: (x[4], x[6]), 6: (x[5], x[7]), 7: (x[6], x[8]),
         #           8: (x[7], x[9]), 9: (x[8], x[10]), 10: (x[9], x[10])}
@@ -510,18 +517,21 @@ class BSplineCurve(Edge):
         x0 = 0
         pos = 0
         for i, xi in enumerate(x):
-            dist = f(xi)
+            dist = d(xi)
             if dist < min_dist:
                 x0 = xi
                 pos = i
                 min_dist = dist
-        z = scp.optimize.least_squares(lambda u: (point - self.point_at_abscissa(u)).norm(), x0=x0, bounds=([bounds[pos][0]], [bounds[pos][1]]))
-        if z.fun < tol:
-            return z.x[0]
-        x0 = z.x[0]
-        res = scp.optimize.minimize(lambda u: (point - self.point_at_abscissa(u)).norm(), x0=npy.array([x0]), bounds=[bounds[pos]], tol=tol)
-        if res.fun < tol:
-            return res.x[0]
+        res = scp.optimize.newton(f, x0, fprime=f_prime, tol=tol)
+
+        return res * length
+        # z = scp.optimize.least_squares(lambda u: (point - self.point_at_abscissa(u)).norm(), x0=x0, bounds=([bounds[pos][0]], [bounds[pos][1]]))
+        # if z.fun < tol:
+        #     return z.x[0]
+        # x0 = z.x[0]
+        # res = scp.optimize.minimize(lambda u: (point - self.point_at_abscissa(u)).norm(), x0=npy.array([x0]), bounds=[bounds[pos]], tol=tol)
+        # if res.fun < tol:
+        #     return res.x[0]
         # for x0 in [0, length * 0.25, length * 0.5, length * 0.75, length]:
         #     res = scp.optimize.least_squares(
         #         lambda u: (point - self.point_at_abscissa(u)).norm(),
@@ -788,6 +798,11 @@ class BSplineCurve(Edge):
 
         point_dimension = f'Point{self.__class__.__name__[-2::]}'
         return [getattr(volmdlr, point_dimension)(*p) for p in curve_points]
+
+    def derivatives(self, u, order):
+        list_derivatives = [getattr(volmdlr, f'Vector{self.__class__.__name__[-2::]}')(*p)
+                            for p in self.curve.derivatives(u, order)]
+        return list_derivatives
 
     def simplify(self, min_distance: float = 0.01,
                  max_distance: float = 0.05, angle: float = 5):
@@ -1416,7 +1431,7 @@ class LineSegment2D(LineSegment):
     # def point_at_abscissa(self, abscissa):
     #     return self.start + self.unit_direction_vector() * abscissa
 
-    def point_belongs(self, point, abs_tol=1e-6):
+    def point_belongs(self, point, abs_tol: float=1e-6):
         point_distance = self.point_distance(point)
         if math.isclose(point_distance, 0, abs_tol=abs_tol):
             return True

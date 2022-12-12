@@ -36,11 +36,15 @@ for step_file in [
     # 'bracket3_cut2.step',
     # 'strange_gasket.step',
     # '2_bspline_faces.stp',
-    'bracket3.step',
-    # 'bracket1.step',
+    # 'bracket3.step',
+    'bracket1.step',
     # 'porte_dessia_simple.step',
     # 'cylinder_ellipse.step',
-    # 'car_test.step'
+    # 'car_test.step',
+    # 'porte.step',
+    # 'compressor.step',
+    # 'F-16_OpenVSP3.15.0.stp',
+    # 'aircraft_engine.step'
 ]:
 
     print('Reading step file: ', step_file)
@@ -61,12 +65,13 @@ for step_file in [
     # surface2d = {}
     # for closedshell in model.primitives:
     #     for i, face in enumerate(closedshell.faces):
-    #         try:
-    #             face.triangulation()
-    #         except Exception:
-    #             error[i] = face
-    #             surface2d[i] = face.surface2d
-    #         else:
+    #         # try:
+    #         #     face.triangulation()
+    #         # except Exception:
+    #         #     error[i] = face
+    #         #     surface2d[i] = face.surface2d
+    #         # else:
+    #         if face:
     #             faces.append(face)
     # model2 = volmdlr.core.VolumeModel(faces)
     # model2.babylonjs()
