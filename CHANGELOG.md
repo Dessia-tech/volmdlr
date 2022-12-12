@@ -45,6 +45,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * FullArc3D: linesegment_intersections
 * Line: sort_points_along_line
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
+* ArcEllipse2D: straight_line_area
+* Line3D: skew_to: Verifies if two Line3D are skew
+* LineSegment3D.line_interserctions
+* New Class wires.Ellipse2D
+* Ellipse2D.point_over_ellipse()
+* Ellipse2D.line_intersections()
+* Ellipse2D.linesegment_intersections()
+* Ellipse2D.discretization_points()
+* Ellipse2D.abscissa()
+* Ellipse2D.point_angle_with_major_dir()
+* Ellipse2D.area()
+* Ellipse2D.rotation()
+* Ellipse2D.tranlation()
+* Ellipse2D.frame_mapping()
+* Line2D.frame_mapping()
 
 
 ### Fixed
@@ -95,6 +110,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Line2D: sort_points_along_line
 * Line3D: sort_points_along_line
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
+* Ellipse2D.point_over_ellipse()
+* Ellipse2D.line_intersections()
+* Ellipse2D.linesegment_intersections()
+* Ellipse2D.discretization_points()
+* Ellipse2D.abscissa()
+* Ellipse2D.point_angle_with_major_dir()
+* Ellipse2D.area()
+* Ellipse2D.rotation()
+* Ellipse2D.tranlation()
+* Ellipse2D.frame_mapping()
+* Line2D.frame_mapping()
 
 
 ## v0.6.0 [11/7/2022]
