@@ -329,6 +329,14 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Tranforms a Wire2D into an Wire3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Wire3D.
+        """
         primitives3d = []
         for edge in self.primitives:
             primitives3d.append(edge.to_3d(plane_origin, x, y))
@@ -1459,6 +1467,14 @@ class Contour2D(ContourMixin, Wire2D):
         return ClosedPolygon2D(points)
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Tranforms a Contour2D into an Contour3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Contour3D.
+        """
         p3d = []
         for edge in self.primitives:
             p3d.append(edge.to_3d(plane_origin, x, y))
@@ -1512,6 +1528,11 @@ class Contour2D(ContourMixin, Wire2D):
         return area
 
     def center_of_mass(self):
+        """
+        Calculates the center of mass of the Contour2D.
+
+        :return: Contour's center of mass.
+        """
         center = self.edge_polygon.area() * self.edge_polygon.center_of_mass()
         # ax = self.plot()
         # self.edge_polygon.center_of_mass().plot(ax=ax, color='b')
@@ -2976,6 +2997,14 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return cls(points_hull)
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Tranforms a ClosedPolygon2D into an ClosedPolygon3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: ClosedPolygon3D.
+        """
         points3d = [point.to_3d(plane_origin, x, y) for point in self.points]
         return ClosedPolygon3D(points3d)
 
@@ -3741,6 +3770,14 @@ class Circle2D(Contour2D):
         return ax
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Tranforms a Circle2D into an Circle3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Circle3D.
+        """
         normal = x.cross(y)
         center3d = self.center.to_3d(plane_origin, x, y)
         return Circle3D(volmdlr.Frame3D(center3d, x, y, normal),
@@ -3748,10 +3785,11 @@ class Circle2D(Contour2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        Circle2D rotation
-        :param center: rotation center
-        :param angle: angle rotation
-        :return: a new rotated Circle2D
+        Circle2D rotation.
+
+        :param center: rotation center.
+        :param angle: angle rotation.
+        :return: a new rotated Circle2D.
         """
         return Circle2D(self.center.rotation(center, angle), self.radius)
 
@@ -3921,15 +3959,17 @@ class Ellipse2D(Contour2D):
 
     def area(self):
         """
-        Calculates the ellipe's area
-        :return: ellipe's area, float
+        Calculates the ellipe's area.
+
+        :return: ellipe's area, float.
         """
         return math.pi * self.major_axis * self.minor_axis
 
     def length(self):
         """
-        Calculates the ellipse's length
-        :return: ellipe's length
+        Calculates the ellipse's length.
+
+        :return: ellipe's length.
         """
         mid_point = self.center - self.major_axis * self.major_dir
         if self.theta != 0.0:
@@ -3943,9 +3983,11 @@ class Ellipse2D(Contour2D):
 
     def point_over_ellipse(self, point, abs_tol=1e-6):
         """
-        Verifies if a point is on the ellipse
-        :param point: point to be verified
-        :return: True or False
+        Verifies if a point is on the ellipse.
+
+        :param point: point to be verified.
+         :param abs_tol: tolerance.
+        :return: True or False.
         """
         return math.isclose(
             ((point.x - self.center.x) * math.cos(self.theta) +
@@ -3954,11 +3996,19 @@ class Ellipse2D(Contour2D):
              (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 1, abs_tol=abs_tol)
 
     def point_over_contour(self, point, abs_tol=1e-6):
+        """
+        Verifies if a point is on the ellipse.
+
+        :param point: point to be verified.
+        :param abs_tol: tolerance.
+        :return: True or False.
+        """
         return self.point_over_ellipse(point, abs_tol)
 
     def line_intersections(self, line: 'volmdlr.edges.Line2D'):
         """
-        Calculates the intersections between a line and an ellipse
+        Calculates the intersections between a line and an ellipse.
+
         :param line: line to calculate intersections
         :return: list of points intersections, if there are any
         """
@@ -4004,9 +4054,10 @@ class Ellipse2D(Contour2D):
     def linesegment_intersections(self,
                                   linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Calculates the intersections between a linesegment and an ellipse
-        :param linesegment: linesegment to calculate intersections
-        :return: list of points intersections, if there are any
+        Calculates the intersections between a linesegment and an ellipse.
+
+        :param linesegment: linesegment to calculate intersections.
+        :return: list of points intersections, if there are any.
         """
         line_intersections = self.line_intersections(linesegment)
         intersections = []
@@ -4017,10 +4068,11 @@ class Ellipse2D(Contour2D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        Calculates the discretized points for the ellipse
-        :param number_points: number of point to have in the discretized points
-        :param angle_resolution: the angle resolution to be used to discretise points
-        :return: discretized points
+        Calculates the discretized points for the ellipse.
+
+        :param number_points: number of point to have in the discretized points.
+        :param angle_resolution: the angle resolution to be used to discretise points.
+        :return: discretized points.
         """
         if number_points:
             angle_resolution = number_points
@@ -4032,9 +4084,10 @@ class Ellipse2D(Contour2D):
 
     def abscissa(self, point: volmdlr.Point2D):
         """
-        Calculates the abscissa for a given point
-        :param point: point to calculate the abcissa
-        :return: the correspoding abscissa, 0 < abscissa < ellipse's length
+        Calculates the abscissa for a given point.
+
+        :param point: point to calculate the abcissa.
+        :return: the correspoding abscissa, 0 < abscissa < ellipse's length.
         """
         if self.point_over_ellipse(point):
             angle_abscissa = self.point_angle_with_major_dir(point)
@@ -4049,7 +4102,8 @@ class Ellipse2D(Contour2D):
 
     def point_angle_with_major_dir(self, point2d):
         """
-        given a point in the ellipse, calculates it angle with the major direction vector
+        Given a point in the ellipse, calculates it angle with the major direction vector.
+
         """
         center2d_point2d = point2d - self.center
         angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, self.major_dir)
@@ -4057,7 +4111,8 @@ class Ellipse2D(Contour2D):
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         """
-        matplotlib plot for an ellipse
+        Matplotlib plot for an ellipse.
+
         """
         if ax is None:
             _, ax = plt.subplots()
@@ -4071,10 +4126,11 @@ class Ellipse2D(Contour2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        Rotation of ellipse around a center and an angle
-        :param center: center of the rotation
-        :param angle: angle to rotated of
-        :return: a rotationed new ellipse
+        Rotation of ellipse around a center and an angle.
+
+        :param center: center of the rotation.
+        :param angle: angle to rotated of.
+        :return: a rotationed new ellipse.
         """
         rotationed_center = self.center.rotation(center, angle)
         point_major_dir = self.center + self.major_dir * self.major_axis
@@ -4085,15 +4141,16 @@ class Ellipse2D(Contour2D):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        Translation of ellipse from an offset vector
-        :param offset: corresponding translation vector
-        :return: translated new ellipse2d
+        Translation of ellipse from an offset vector.
+
+        :param offset: corresponding translation vector.
+        :return: translated new ellipse2d.
         """
         return Ellipse2D(self.major_axis, self.minor_axis, self.center.translation(offset), self.major_dir)
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
-        Changes frame_mapping and return a new Ellipse2D
+        Changes frame_mapping and return a new Ellipse2D.
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -4109,13 +4166,14 @@ class Ellipse2D(Contour2D):
 
 
 class Contour3D(ContourMixin, Wire3D):
+    """
+    A collection of 3D primitives forming a closed wire3D.
+
+    """
     _non_serializable_attributes = ['points']
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['points', 'name']
     _generic_eq = True
-    """
-    A collection of 3D primitives forming a closed wire3D
-    """
 
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
                  name: str = ''):
@@ -4270,6 +4328,10 @@ class Contour3D(ContourMixin, Wire3D):
         return cls(edges, name=name)
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
+        """
+        Create a Circle3D step object.
+
+        """
         content = ''
         edge_ids = []
         for primitive in self.primitives:
@@ -4309,11 +4371,12 @@ class Contour3D(ContourMixin, Wire3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Contour3D rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated Contour3D
+        Contour3D rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated Contour3D.
         """
         new_edges = [edge.rotation(center, axis, angle) for edge
                      in self.primitives]
@@ -4322,19 +4385,21 @@ class Contour3D(ContourMixin, Wire3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Contour3D rotation. Object is updated inplace
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
+        Contour3D rotation. Object is updated inplace.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: rotation angle.
         """
         for edge in self.primitives:
             edge.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Contour3D translation
-        :param offset: translation vector
-        :return: A new translated Contour3D
+        Contour3D translation.
+
+        :param offset: translation vector.
+        :return: A new translated Contour3D.
         """
         new_edges = [edge.translation(offset) for edge in
                      self.primitives]
@@ -4342,8 +4407,9 @@ class Contour3D(ContourMixin, Wire3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Contour3D translation. Object is updated inplace
-        :param offset: translation vector
+        Contour3D translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         for edge in self.primitives:
             edge.translation_inplace(offset)
@@ -4401,8 +4467,9 @@ class Contour3D(ContourMixin, Wire3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        :param side: 'old' or 'new'
         """
         for edge in self.primitives:
             edge.frame_mapping_inplace(frame, side)
@@ -4437,7 +4504,8 @@ class Contour3D(ContourMixin, Wire3D):
 
     def _bounding_box(self):
         """
-        Flawed method, to be enforced by overloading
+        Flawed method, to be enforced by overloading.
+
         """
         points = []
         for prim in self.primitives:
@@ -4498,6 +4566,12 @@ class Contour3D(ContourMixin, Wire3D):
         return intersections
 
     def contour_intersection(self, contour3d):
+        """
+        Calculates intersections between two Contour3D.
+
+        :param contour3d: second contour
+        :return: list of points
+        """
         dict_intersecting_points = {}
         for primitive in self.primitives:
             for primitive2 in contour3d.primitives:
@@ -4512,7 +4586,8 @@ class Contour3D(ContourMixin, Wire3D):
     @classmethod
     def from_points(cls, points: List[volmdlr.Point3D]):
         """
-        create a contour3d from points with line_segments3D
+        Create a contour3d from points with line_segments3D.
+
         """
 
         if len(points) < 3:
@@ -4530,7 +4605,8 @@ class Contour3D(ContourMixin, Wire3D):
 
     def clean_primitives(self):
         """
-        delete primitives with start=end, and return a new contour
+        Delete primitives with start=end, and return a new contour.
+
         """
 
         new_primitives = []
@@ -4542,8 +4618,9 @@ class Contour3D(ContourMixin, Wire3D):
 
     def merge_with(self, contour3d):
         """
-        merge two adjacent contours, sharing primitives, and returns one outer contour and inner
-        contours (if there are any)
+        Merge two adjacent contours, sharing primitives, and returns one outer contour and inner
+        contours (if there are any),
+
         """
 
         merged_primitives = self.merge_primitives_with(contour3d)
