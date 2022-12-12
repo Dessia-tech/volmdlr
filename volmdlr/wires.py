@@ -501,7 +501,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def is_crossing_start_end_point(intersections, primitive):
         """
         Returns True if the crossings provided arestart or end of the Wire2D.
-        
+
         :param intersections: intersections results
          for primitive line intersections
         :param primitive: intersecting primitive
@@ -515,7 +515,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def line_crossings(self, line: volmdlr.edges.Line2D):
         """
         Calculates valid crossing intersections of a wire and an infinit line.
-        
+
         :param line: line crossing the wire
         :type line: volmdlr.edges.Line2D
         returns a list of Tuples (point, primitive)
@@ -584,7 +584,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_crossings(self,
                               linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of crossings in ther form of a tuple (point, primitive) 
+        Returns a list of crossings in ther form of a tuple (point, primitive)
         of the wire primitives intersecting with the line
         """
         results = self.line_crossings(linesegment.to_line())
@@ -669,7 +669,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         """
         Search for the nearest primitive for a point.
         """
-        
+
         primitives = self.primitives
         primitives_sorted = sorted(primitives, key=lambda primitive: primitive.point_distance(point))
 
@@ -1494,7 +1494,7 @@ class Contour2D(ContourMixin, Wire2D):
     def is_inside(self, contour2):
         """
         Verifies if a contour is inside another contour perimiter, including the edges.
-        
+
         :returns: True or False
         """
         points_contour2 = []
@@ -1787,7 +1787,7 @@ class Contour2D(ContourMixin, Wire2D):
     def to_polygon(self, angle_resolution):
         """
         Transform the contour to a polygon.
-        
+
         :param angle_resolution: arcs are discretized with respect of an angle resolution in points per radians
         """
 
@@ -2117,7 +2117,7 @@ class Contour2D(ContourMixin, Wire2D):
     def cut_by_wire(self, wire: Wire2D):
         """
         Cut a contour2d with a wire2d and return a list of contours2d.
-    
+
         :param wire: volmdlr.wires.Wire2D
         :rtype: list[volmdlr.wires.Contour2D]
 
