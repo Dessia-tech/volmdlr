@@ -59,6 +59,10 @@ def insert_knots_and_mutiplicity(knots, knot_mutiplicities, knot_to_add, num):
 
 
 class Edge(dc.DessiaObject):
+    """
+    Defines a simple edge Object.
+
+    """
     def __init__(self, start, end, name=''):
         self.start = start
         self.end = end
@@ -179,7 +183,8 @@ class Edge(dc.DessiaObject):
 
 class Line(dc.DessiaObject):
     """
-    Abstract class
+    Abstract class.
+
     """
 
     def __init__(self, point1, point2, name=''):
@@ -230,8 +235,8 @@ class Line(dc.DessiaObject):
         """
         Sort point along a line.
 
-        :param points: list of points to be sorted
-        :return: sorted points
+        :param points: list of points to be sorted.
+        :return: sorted points.
         """
         return sorted(points, key=self.abscissa)
 
@@ -262,7 +267,8 @@ class Line(dc.DessiaObject):
 
 class LineSegment(Edge):
     """
-    Abstract class
+    Abstract class.
+
     """
 
     def length(self):
@@ -288,8 +294,8 @@ class LineSegment(Edge):
         Computes a unit direction vector for the line segment.
 
         :param abscissa: defines where in the line segement the unit
-            direction vector is to be calculated
-        :return: The unit direction vector of the LineSegement
+            direction vector is to be calculated.
+        :return: The unit direction vector of the LineSegement.
         """
         direction_vector = self.direction_vector()
         direction_vector.normalize()
@@ -298,8 +304,8 @@ class LineSegment(Edge):
     def direction_vector(self, abscissa=0.):
         """
         :param abscissa: defines where in the line segement
-            direction vector is to be calculated
-        :return: The direction vector of the LineSegement
+            direction vector is to be calculated.
+        :return: The direction vector of the LineSegement.
         """
         if not self._direction_vector:
             self._direction_vector = self.end - self.start
@@ -315,9 +321,8 @@ class LineSegment(Edge):
 
     def unit_normal_vector(self, abscissa=0.):
         """
-        :param abscissa: defines where in the line_segement
-        unit normal vector is to be calculated
-        :return: The unit normal vector of the LineSegement
+        :param abscissa: defines where in the line_segement unit normal vector is to be calculated.
+        :return: The unit normal vector of the LineSegement.
         """
         return self.unit_direction_vector(abscissa).normal_vector()
 
@@ -349,9 +354,9 @@ class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
     """
     An abstract class for B-spline curves. The following rule must be
-    respected : `number of knots = number of control points + degree + 1`
+    respected : `number of knots = number of control points + degree + 1`.
 
-    :param degree: The degree of the B-spline curve
+    :param degree: The degree of the B-spline curve.
     :type degree: int
     :param control_points: A list of 2 or 3 dimensional points
     :type control_points: Union[List[:class:`volmdlr.Point2D`],
@@ -420,8 +425,8 @@ class BSplineCurve(Edge):
         """
         Reverses the B-spline's direction by reversing its control points.
 
-        :return: A reversed B-spline curve
-        :rtype: :class:`volmdlr.edges.BSplineCurve`
+        :return: A reversed B-spline curve.
+        :rtype: :class:`volmdlr.edges.BSplineCurve`.
         """
         return self.__class__(
             degree=self.degree,
@@ -454,9 +459,9 @@ class BSplineCurve(Edge):
 
     def length(self):
         """
-        Returns the length of the B-spline curve
+        Returns the length of the B-spline curve.
 
-        :return: The length of the B-spline curve
+        :return: The length of the B-spline curve.
         :rtype: float
         """
         if not self._length:
@@ -2880,12 +2885,11 @@ class ArcEllipse2D(Edge):
 
 
 class Line3D(Line):
-    _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
-
     """
     Define an infinite line passing through the 2 points.
 
     """
+    _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  name: str = ''):
@@ -4453,6 +4457,11 @@ class Arc3D(Arc):
         self._bbox = new_bounding_box
 
     def get_bounding_box(self):
+        """
+        Calculates the bounding box of the Arc3D.
+
+        :return: a volmdlr.core.BoundingBox object.
+        """
         # TODO: implement exact calculation
 
         points = self.polygon_points()
@@ -4611,31 +4620,66 @@ class Arc3D(Arc):
         return [self.start, self.interior, self.end]
 
     def reverse(self):
+        """
+        Defines a new Arc3D, odentical to self, but in the oposite direction.
+
+        :return:
+        """
         return self.__class__(self.end.copy(),
                               self.interior.copy(),
                               self.start.copy())
 
     def point_at_abscissa(self, abscissa):
+        """
+        Calculates a point in the Arc2D at a given abscissa.
+
+        :param abscissa: abscissa where in the curve the point should be calculated.
+        :return: Corresponding point.
+        """
         return self.start.rotation(self.center, self.normal,
                                    abscissa / self.radius)
 
     def normal_vector(self, abscissa):
+        """
+        Calculates a normal vector at a given abscissa of the Arc3D.
+
+        :param abscissa: abscissa where in the curve the normal vector should be calculated.
+        :return: Corresponding normal vector.
+        """
         theta = abscissa / self.radius
         n_0 = self.center - self.start
         normal = n_0.rotation(self.center, self.normal, theta)
         return normal
 
     def unit_normal_vector(self, abscissa):
+        """
+        Calculates a unit normal vector at a given abscissa of the Arc3D.
+
+        :param abscissa: abscissa where in the curve the unit normal vector should be calculated.
+        :return: Corresponding unit normal vector.
+        """
         normal_vector = self.normal_vector(abscissa)
         normal_vector.normalize()
         return normal_vector
 
     def direction_vector(self, abscissa):
+        """
+        Calculates a direction vector at a given abscissa of the Arc3D.
+
+        :param abscissa: abscissa where in the curve the direction vector should be calculated.
+        :return: Corresponding direction vector.
+        """
         normal_vector = self.normal_vector(abscissa)
         tangent = normal_vector.cross(self.normal)
         return tangent
 
     def unit_direction_vector(self, abscissa):
+        """
+        Calculates a unit direction vector at a given abscissa of the Arc3D.
+
+        :param abscissa: abscissa where in the curve the unit direction vector should be calculated.
+        :return: Corresponding unit direction vector.
+        """
         direction_vector = self.direction_vector(abscissa)
         direction_vector.normalize()
         return direction_vector
@@ -4643,7 +4687,8 @@ class Arc3D(Arc):
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
         """
-        Arc3D rotation
+        Arc3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -4657,7 +4702,8 @@ class Arc3D(Arc):
     def rotation_inplace(self, center: volmdlr.Point3D,
                          axis: volmdlr.Vector3D, angle: float):
         """
-        Arc3D rotation. Object is updated inplace
+        Arc3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -4673,7 +4719,8 @@ class Arc3D(Arc):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Arc3D translation
+        Arc3D translation.
+
         :param offset: translation vector
         :return: A new translated Arc3D
         """
@@ -4684,8 +4731,9 @@ class Arc3D(Arc):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Arc3D translation. Object is updated inplace
-        :param offset: translation vector
+        Arc3D translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         self.center.translation_inplace(offset)
         self.start.translation_inplace(offset)
@@ -4780,7 +4828,8 @@ class Arc3D(Arc):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes vector frame_mapping and return a new Arc3D
+        Changes vector frame_mapping and return a new Arc3D.
+
         side = 'old' or 'new'
         """
         new_start, new_interior, new_end =\
@@ -4790,7 +4839,8 @@ class Arc3D(Arc):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes vector frame_mapping and the object is updated inplace
+        Changes vector frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         new_start, new_interior, new_end = \
@@ -4798,6 +4848,12 @@ class Arc3D(Arc):
         self.start, self.interior, self.end = new_start, new_interior, new_end
 
     def abscissa(self, point3d: volmdlr.Point3D):
+        """
+        Calculates the abscissa given a point in the Arc3D.
+
+        :param point3d: point to calculate the abscissa.
+        :return: corresponding abscissa.
+        """
         x, y, _ = self.frame.new_coordinates(point3d)
         u1 = x / self.radius
         u2 = y / self.radius

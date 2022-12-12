@@ -52,6 +52,10 @@ def bounding_rectangle_adjacent_contours(contours: List):
 
 
 class WireMixin:
+    """
+    Abstract class for Wire, storing methods and atributs used by many classes in this module.
+
+    """
     _non_data_hash_attributes = ['basis_primitives']
     _non_serializable_attributes = ['primitive_to_index',
                                     'basis_primitives']
@@ -851,10 +855,10 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
 
 class ContourMixin(WireMixin):
+    """
+    Abstract class for Contour, storing methods and attributs used by Contour2D and Contour3D.
 
-    # def __init__(self):
-    #     Wire.__init__(self)
-
+    """
     def is_ordered(self, tol=1e-6):
         for prim1, prim2 in zip(
                 self.primitives, self.primitives[1:] + [self.primitives[0]]):
@@ -1347,7 +1351,8 @@ class ContourMixin(WireMixin):
 
 class Contour2D(ContourMixin, Wire2D):
     """
-    A collection of 2D primitives forming a closed wire2D
+    A collection of 2D primitives forming a closed wire2D.
+
     TODO : center_of_mass and second_moment_area should be changed accordingly
     to area considering the triangle drawn by the arcs
     """
@@ -2198,6 +2203,10 @@ class Contour2D(ContourMixin, Wire2D):
 
 
 class ClosedPolygonMixin:
+    """
+    Abstract class for ClosedPolygon, storing methods used by ClosedPolygon2D and ClosedPolygon3D.
+
+    """
 
     def length(self):
         list_ = []
@@ -2284,6 +2293,9 @@ class ClosedPolygonMixin:
 
 
 class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
+    """
+        A collection of points, connected by linesegments, following each other
+    """
     _non_serializable_attributes = ['line_segments', 'primitives',
                                     'basis_primitives']
 
@@ -3449,6 +3461,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
 
 class Triangle(ClosedPolygonMixin):
+    """
+    Defines a triangle from 3 points. It is a Super Class for Triangle2D and Triangle3D,
+    storing their main attribut and methods.
+
+
+    """
     def __init__(self, point1, point2,
                  point3, name: str = ''):
 
@@ -3522,6 +3540,10 @@ class Triangle2D(Triangle):
 
 
 class Circle2D(Contour2D):
+    """
+    Defines a Circle in two dimensions, with a center and a radius.
+
+    """
     _non_serializable_attributes = ['internal_arcs', 'external_arcs',
                                     'polygon', 'straight_line_contour_polygon',
                                     'primitives', 'basis_primitives']
@@ -4523,6 +4545,10 @@ class Contour3D(ContourMixin, Wire3D):
 
 
 class Circle3D(Contour3D):
+    """
+    Defines a Circle in three dimensions, with a center and a radius.
+
+    """
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
@@ -5031,6 +5057,9 @@ class Ellipse3D(Contour3D):
 
 
 class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
+    """
+        A collection of points, connected by linesegments, following each other
+    """
     _non_serializable_attributes = ['line_segments', 'primitives']
     _non_eq_attributes = ['line_segments', 'primitives']
 
