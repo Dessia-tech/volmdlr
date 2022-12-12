@@ -71,6 +71,15 @@ def set_to_list(step_set):
 
 
 def delete_node_and_predecessors(graph, node):
+    """
+    A recursive method for deleting a node and its predecessors in a networkx
+    graph.
+
+    :param graph: A networkx graph
+    :type graph: :class:`networkx.Graph`
+    :param node: A node of the graph
+    :type node: Any
+    """
     predecessors = list(graph.predecessors(node))
     graph.remove_node(node)
     for predecessor in predecessors:
@@ -78,6 +87,15 @@ def delete_node_and_predecessors(graph, node):
 
 
 def delete_node_and_successors(graph, node):
+    """
+    A recursive method for deleting a node and its successors in a networkx
+    graph.
+
+    :param graph: A networkx graph
+    :type graph: :class:`networkx.Graph`
+    :param node: A node of the graph
+    :type node: Any
+    """
     successors = list(graph.successors(node))
     graph.remove_node(node)
     for successor in successors:
@@ -111,6 +129,16 @@ def clockwise_angle(vector1, vector2):
 
 
 def vectors3d_angle(vector1, vector2):
+    """
+    Computes the angle between two 3 dimensional vectors.
+
+    :param vector1: The fist 3 dimensional vector
+    :type vector1: :class:`volmdlr.Vector3D`
+    :param vector2: The second 3 dimensional vectors
+    :type vector2: :class:`volmdlr.Vector3D`
+    :return: The angle between the two vectors
+    :rtype: flaot
+    """
     dot = vector1.dot(vector2)
     theta = math.acos(dot / (vector1.norm() * vector2.norm()))
 
@@ -119,8 +147,14 @@ def vectors3d_angle(vector1, vector2):
 
 def sin_cos_angle(u1, u2):
     """
-    cos(theta)=u1, sin(theta)=u2
-    returns an angle between 0 and 2pi
+    Returns an angle between 0 and 2*PI verifying cos(theta)=u1, sin(theta)=u2.
+
+    :param u1: The value of the cosinus of the returned angle
+    :type u1: float
+    :param u2: The value of the sinus of the returned angle
+    :type u2: flaot
+    :return: The angle verifying the two equations
+    :rtype: float
     """
     if u1 < -1:
         u1 = -1
@@ -193,6 +227,17 @@ def determinant(vec1, vec2, vec3):
 
 
 def delete_double_point(list_point):
+    """
+    Delete duplicate points from a list of points.
+
+    :param list_point: The initial list of points
+    :type list_point: Union[List[:class:`volmdlr.Point2D`],
+        List[:class:`volmdlr.Point3D`]]
+    :return: The final list of points containing no duplicates
+    :rtype: Union[List[:class:`volmdlr.Point2D`],
+        List[:class:`volmdlr.Point3D`]]
+    """
+    # TODO : this method would be faster using sets
     points = []
     for pt in list_point:
         if pt not in points:
@@ -285,7 +330,7 @@ def posangle_arc(start, end, radius, frame=None):
 
 def clockwise_interior_from_circle3d(start, end, circle):
     """
-    Returns the clockwise interior point between start and end on the circle
+    Returns the clockwise interior point between start and end on the circle.
     """
     start2d = start.to_2d(plane_origin=circle.frame.origin,
                           x=circle.frame.u, y=circle.frame.v)
@@ -330,7 +375,7 @@ def offset_angle(trigo, angle_start, angle_end):
 
 def angle_principal_measure(angle, min_angle=-math.pi):
     """
-    returns angle between O and 2 pi
+    Returns angle between O and 2 pi.
     """
     max_angle = min_angle + volmdlr.TWO_PI
     angle = angle % (volmdlr.TWO_PI)
@@ -344,6 +389,15 @@ def angle_principal_measure(angle, min_angle=-math.pi):
 
 
 def step_ids_to_str(ids):
+    """
+    Returns a string with a '#' in front of each ID and a comma separating
+    eachone.
+
+    :param ids: A list of step primitives IDs
+    :type ids: List[int]
+    :return: A string containing all the IDs
+    :rtype: str
+    """
     return ','.join(['#{}'.format(i) for i in ids])
 
 
@@ -414,7 +468,8 @@ class CompositePrimitive2D(Primitive2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        CompositePrimitive2D rotation
+        Rotates the CompositePrimitive2D.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotated CompositePrimitive2D
@@ -424,7 +479,8 @@ class CompositePrimitive2D(Primitive2D):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        CompositePrimitive2D rotation. Object is updated inplace
+        Rotates the CompositePrimitive2D. Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
@@ -436,7 +492,8 @@ class CompositePrimitive2D(Primitive2D):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        CompositePrimitive2D translation
+        Translates the CompositePrimitive2D.
+
         :param offset: translation vector
         :return: A new translated CompositePrimitive2D
         """
@@ -445,7 +502,8 @@ class CompositePrimitive2D(Primitive2D):
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        CompositePrimitive2D translation. Object is updated inplace
+        Translates the CompositePrimitive2D. Object is updated inplace.
+
         :param offset: translation vector
         """
         primitives = []
@@ -505,6 +563,10 @@ class CompositePrimitive2D(Primitive2D):
 
 
 class Primitive3D(dc.PhysicalObject, CompositePrimitive):
+    """
+
+    """
+
     def __init__(self, color=None, alpha=1, name=''):
         self.color = color
         self.alpha = alpha
@@ -625,6 +687,7 @@ class CompositePrimitive3D(Primitive3D):
 class BoundingRectangle(dc.DessiaObject):
     """
     Bounding rectangle.
+
     :param xmin: minimal x coordinate
     :type xmin: float
     :param xmax: maximal x coordinate
@@ -675,19 +738,21 @@ class BoundingRectangle(dc.DessiaObject):
 
     def area(self):
         """
-        Calculate the area of the bounding rectangle.
+        Calculates the area of the bounding rectangle.
         """
         return (self.xmax - self.xmin) * (self.ymax - self.ymin)
 
     def center(self):
         """
-        Calculate the bounding rectangle center.
+        Calculates the bounding rectangle center.
         """
         return volmdlr.Point2D(0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax))
 
     def b_rectangle_intersection(self, b_rectangle2):
         """
-        Return True if there is an intersection with another specified bounding rectangle or False otherwise.
+        Returns True if there is an intersection with another specified
+        bounding rectangle or False otherwise.
+
         :param b_rectangle2: bounding rectangle to verify intersection
         :type b_rectangle2: :class:`BoundingRectangle`
         """
@@ -696,7 +761,9 @@ class BoundingRectangle(dc.DessiaObject):
 
     def is_inside_b_rectangle(self, b_rectangle2):
         """
-        Return True if the bounding rectangle is totally inside another specified bounding rectangle and False otherwise.
+        Returns True if the bounding rectangle is totally inside another
+        specified bounding rectangle and False otherwise.
+
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
         """
@@ -705,7 +772,9 @@ class BoundingRectangle(dc.DessiaObject):
 
     def point_belongs(self, point: volmdlr.Point2D):
         """
-        Return True if a specified point is inside the bounding rectangle and False otherwise.
+        Returns True if a specified point is inside the bounding rectangle
+        and False otherwise.
+
         :param point: A 2 dimensional point
         :type point: :class:`volmdlr.Point2D`
         """
@@ -713,7 +782,8 @@ class BoundingRectangle(dc.DessiaObject):
 
     def intersection_area(self, b_rectangle2):
         """
-        Calculate the intersection area between two bounding rectangle.
+        Calculates the intersection area between two bounding rectangle.
+
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
         """
@@ -729,7 +799,8 @@ class BoundingRectangle(dc.DessiaObject):
 
     def distance_to_b_rectangle(self, b_rectangle2):
         """
-        Calculate the minimal distance between two bounding rectangles.
+        Calculates the minimal distance between two bounding rectangles.
+
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
         """
@@ -751,7 +822,9 @@ class BoundingRectangle(dc.DessiaObject):
 
     def distance_to_point(self, point: volmdlr.Point2D):
         """
-        Calculate the minimal distance between the bounding rectangle and a specified point.
+        Calculate the minimal distance between the bounding rectangle and
+        a specified point.
+
         :param point: A 2 dimensional point
         :type point: :class:`volmdlr.Point2D`
         """
@@ -1016,7 +1089,12 @@ class VolumeModel(dc.PhysicalObject):
                                  'faces']
     _dessia_methods = ['to_stl_model']
     """
+    A class containing one or several :class:`volmdlr.core.Primitive3D`.
 
+    :param primitives: The vector's abscissa
+    :type primitives: List[:class:`volmdlr.core.Primitive3D`]
+    :param name: The VolumeModel's name
+    :type name: str
     """
 
     def __init__(self, primitives: List[Primitive3D], name: str = ''):
@@ -1102,7 +1180,8 @@ class VolumeModel(dc.PhysicalObject):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        VolumeModel rotation
+        Rotates the VolumeModel.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -1116,7 +1195,8 @@ class VolumeModel(dc.PhysicalObject):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        VolumeModel rotation. Object is updated inplace
+        Rotates the VolumeModel. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -1127,7 +1207,8 @@ class VolumeModel(dc.PhysicalObject):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        VolumeModel translation
+        Translates the VolumeModel.
+
         :param offset: translation vector
         :return: A new translated VolumeModel
         """
@@ -1137,7 +1218,8 @@ class VolumeModel(dc.PhysicalObject):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        VolumeModel translation. Object is updated inplace
+        Translates the VolumeModel. Object is updated inplace.
+
         :param offset: translation vector
         """
         for primitives in self.primitives:
@@ -1201,7 +1283,8 @@ class VolumeModel(dc.PhysicalObject):
                        save_to='',
                        tolerance=0.0001):
         """
-        Generate python a FreeCAD definition of model
+        Generates python a FreeCAD definition of model.
+
         :param fcstd_filename: a filename without extension to give the name at the fcstd part written in python code
         :type fcstd_filename:str
         """
@@ -1494,7 +1577,7 @@ class VolumeModel(dc.PhysicalObject):
             presentation_style_id = suface_style_usage_id + 1
 
             step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
-                            "#{curve_style_id}));\n"
+                            f"#{curve_style_id}));\n"
 
             styled_item_id = presentation_style_id + 1
             if primitive.__class__.__name__ == 'OpenShell3D':
