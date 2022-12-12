@@ -1870,13 +1870,13 @@ class ConicalSurface3D(Surface3D):
 
 
 class SphericalSurface3D(Surface3D):
-    face_class = 'SphericalFace3D'
     """
     :param frame: Sphere's frame to position it
     :type frame: volmdlr.Frame3D
     :param radius: Sphere's radius
     :type radius: float
     """
+    face_class = 'SphericalFace3D'
 
     def __init__(self, frame, radius, name=''):
         self.frame = frame
@@ -1983,13 +1983,13 @@ class SphericalSurface3D(Surface3D):
 
 
 class RuledSurface3D(Surface3D):
-    face_class = 'RuledFace3D'
     """
     :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
     :type frame: volmdlr.Frame3D
     :param radius: Cylinder's radius
     :type radius: float
     """
+    face_class = 'RuledFace3D'
 
     def __init__(self,
                  wire1: volmdlr.wires.Wire3D,

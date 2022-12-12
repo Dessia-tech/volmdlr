@@ -3506,7 +3506,8 @@ class Triangle2D(Triangle):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric triangle2d according to a line
+        Finds out the symmetric triangle2d according to a line.
+
         """
 
         [point1, point2, point3] = [point.axial_symmetry(line)
@@ -3690,7 +3691,8 @@ class Circle2D(Contour2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        Circle2D rotation
+        Circle2D rotation.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotated Circle2D
@@ -3699,7 +3701,8 @@ class Circle2D(Contour2D):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Circle2D rotation. Object is updated inplace
+        Circle2D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
@@ -3707,7 +3710,8 @@ class Circle2D(Contour2D):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        Circle2D translation
+        Circle2D translation.
+
         :param offset: translation vector
         :return: A new translated Circle2D
         """
@@ -3715,7 +3719,8 @@ class Circle2D(Contour2D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Circle2D translation. Object is updated inplace
+        Circle2D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.center.translation_inplace(offset)
