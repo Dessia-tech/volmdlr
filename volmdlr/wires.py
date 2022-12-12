@@ -532,6 +532,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     @staticmethod
     def is_crossing_start_end_point(intersections, primitive):
         """
+        Returns True if the crossings provided arestart or end of the Wire2D.
+
         :param intersections: intersections results
          for primitive line intersections
         :param primitive: intersecting primitive
@@ -577,7 +579,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         :param wire : volmdlr.wires.Wire2D.
         :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
-
         """
 
         intersections, intersections_points = [], []
@@ -629,6 +630,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def wire_crossings(self, wire):
         """
         Compute crossings between two wire 2d.
+
+        :param wire: volmdlr.wires.Wire2D
+        :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
 
         :param wire: volmdlr.wires.Wire2D
         :return crossings : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
@@ -703,15 +707,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         Search for the nearest primitive for a point.
 
         """
-
-        # min_distance = self.primitives[0].middle_point().point_distance(point)
-        # index = 0
-        # for i, primitive in enumerate(self.primitives[1:]):
-        #     distance = primitive.middle_point().point_distance(point)
-        #     if distance < min_distance:
-        #         min_distance = distance
-        #         index = i
-        # return self.primitives[index]
 
         primitives = self.primitives
         primitives_sorted = sorted(primitives, key=lambda primitive: primitive.point_distance(point))
@@ -1574,10 +1569,9 @@ class Contour2D(ContourMixin, Wire2D):
 
     def is_inside(self, contour2):
         """
-        Verifies if a contour is inside another contour perimiter,
-        including the edges.
+        Verifies if a contour is inside another contour perimiter, including the edges.
 
-        :return: True or False.
+        :returns: True or False
         """
         points_contour2 = []
         for prim in contour2.primitives:
@@ -1870,6 +1864,7 @@ class Contour2D(ContourMixin, Wire2D):
     def to_polygon(self, angle_resolution):
         """
         Transform the contour to a polygon.
+
         :param angle_resolution: arcs are discretized with respect of an angle resolution in points per radians
         """
 
@@ -2198,7 +2193,10 @@ class Contour2D(ContourMixin, Wire2D):
 
     def cut_by_wire(self, wire: Wire2D):
         """
-        cut a contour 2d with a wire 2d and return a list of contours 2d
+        Cut a contour2d with a wire2d and return a list of contours 2d.
+
+        :param wire: volmdlr.wires.Wire2D
+        :rtype: list[volmdlr.wires.Contour2D]
 
         :param wire: volmdlr.wires.Wire2D.
         :return: contours2d : list[volmdlr.wires.Contour2D].
