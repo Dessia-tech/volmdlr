@@ -63,6 +63,7 @@ class Edge(dc.DessiaObject):
     Defines a simple edge Object.
 
     """
+
     def __init__(self, start, end, name=''):
         self.start = start
         self.end = end

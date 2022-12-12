@@ -887,6 +887,7 @@ class ContourMixin(WireMixin):
     Abstract class for Contour, storing methods and attributs used by Contour2D and Contour3D.
 
     """
+
     def is_ordered(self, tol=1e-6):
         for prim1, prim2 in zip(
                 self.primitives, self.primitives[1:] + [self.primitives[0]]):
@@ -3528,6 +3529,7 @@ class Triangle(ClosedPolygonMixin):
 
 
     """
+
     def __init__(self, point1, point2,
                  point3, name: str = ''):
 
