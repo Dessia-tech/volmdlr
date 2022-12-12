@@ -21,8 +21,9 @@ MAX_ERROR_BY_TYPE = {
     # http://www.pydocstyle.org/en/stable/error_codes.html
     'D100': 1,
     'D101': 84,
-    'D102': 745,
+    'D102': 740,
     'D103': 44,
+
     'D104': 1,
     'D105': 1,
     'D106': 1,
@@ -76,7 +77,7 @@ ratchet_limit = 9
 effective_date = date(2022, 11, 28)
 today = date.today()
 weekly_decrease = 5
-time_decrease = (today - effective_date).days//7 * weekly_decrease
+time_decrease = int((today - effective_date).days/7. * weekly_decrease)
 
 
 code_to_errors = {}

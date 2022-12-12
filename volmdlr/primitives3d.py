@@ -618,7 +618,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        ExtrudedProfile rotation
+        ExtrudedProfile rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -637,11 +638,13 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        ExtrudedProfile rotation. Object is updated inplace
+        ExtrudedProfile rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
         """
+
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(volmdlr.O3D, axis, angle)
         self.y.rotation_inplace(volmdlr.O3D, axis, angle)
@@ -649,7 +652,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        ExtrudedProfile translation
+        ExtrudedProfile translation.
+
         :param offset: translation vector
         :return: A new translated ExtrudedProfile
         """
@@ -663,7 +667,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        ExtrudedProfile translation. Object is updated inplace
+        ExtrudedProfile translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.plane_origin.translation_inplace(offset)
@@ -671,7 +676,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
 class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     """
-
+    Revolve a 2D profile along an axis around a certain angle.
     """
     _non_serializable_attributes = ['faces', 'contour3D']
 
@@ -698,7 +703,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         """
-        Custom to dict for perf
+        Custom to dict for performance.
         """
         dict_ = dc.DessiaObject.base_dict(self)
         dict_.update({'color': self.color,
@@ -1239,6 +1244,10 @@ class Cylinder(RevolvedProfile):
 
 
 class Cone(RevolvedProfile):
+    """
+    Defines a cone at a given position & axis.
+    """
+
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
@@ -1265,8 +1274,8 @@ class Cone(RevolvedProfile):
 
     def _bounding_box(self):
         """
-        A is the point at the basis
-        B is the top
+        A is the point at the basis.
+        B is the top.
         """
         pointA = self.position - self.length / 2 * self.axis
         pointB = self.position + self.length / 2 * self.axis
@@ -1298,7 +1307,8 @@ class Cone(RevolvedProfile):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Cone translation
+        Cone translation.
+
         :param offset: translation vector
         :return: A new translated Cone
         """
@@ -1311,7 +1321,8 @@ class Cone(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Plane3D translation. Object is updated inplace
+        Plane3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.position.translation_inplace(offset)
@@ -1319,7 +1330,8 @@ class Cone(RevolvedProfile):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Cone rotation
+        Cone rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -1333,7 +1345,8 @@ class Cone(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Cone rotation. Object is updated inplace
+        Cone rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -1342,6 +1355,9 @@ class Cone(RevolvedProfile):
         self.axis.rotation_inplace(center, axis, angle)
 
     def volume(self):
+        """
+        Returns the volume of the cone.
+        """
         return self.length * math.pi * self.radius**2 / 3
 
 
