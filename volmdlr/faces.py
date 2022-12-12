@@ -4501,6 +4501,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def divide_face(self, list_cutting_contours: List[volmdlr.wires.Contour2D], inside):
         """
+        Devides a Face 3D with a list of cutting contours.
+
         :param list_cutting_contours: list of contours cutting the face
         :param inside: when extracting a contour from another contour. It defines the extracted
         contour as being between the two points if True and outside these points if False
@@ -4521,10 +4523,12 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def divide_face_with_open_cutting_contours(self, list_open_cutting_contours, inside):
         """
-        :param list_open_cutting_contours: list containing the open cutting contours
-        :param inside: inside portion
-        :type inside: bool
-        :return: list divided faces
+        Devides a face 3D with a list of closed cutting contour, that is, it will cut holes on the face.
+
+        :param list_open_cutting_contours: list containing the open cutting contours.
+        :param inside: inside portion.
+        :type inside: bool.
+        :return: list divided faces.
         """
         list_faces = []
         if not self.surface2d.outer_contour.edge_polygon.is_trigo():
@@ -4542,6 +4546,9 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def divide_face_with_closed_cutting_contours(self, list_closed_cutting_contours, list_faces):
         """
+        Devides a Face3D with a list of Open cutting contours, that is, Contours going from one side
+        to another of the Face, or from the the outer contour to one inner contour.
+
         :param list_closed_cutting_contours: list containing the closed cutting contours
         :param list_faces: list of already divided faces
         :return: list divided faces
@@ -4575,9 +4582,10 @@ class Face3D(volmdlr.core.Primitive3D):
     def get_open_contour_divided_faces_inner_contours(self, new_faces_contours):
         """
         If there is any inner contour, verifies which ones belong to the new divided faces from
-        an open cutting contour
-        :param new_faces_contours: new faces outer contour
-        :return: valid_new_faces_contours, valid_new_faces_contours
+        an open cutting contour.
+
+        :param new_faces_contours: new faces outer contour.
+        :return: valid_new_faces_contours, valid_new_faces_contours.
         """
         valid_new_faces_contours = []
         valid_inner_contours = []
@@ -4598,10 +4606,11 @@ class Face3D(volmdlr.core.Primitive3D):
     def get_closed_contour_divided_faces_inner_contours(self, list_faces, new_contour):
         """
         If there is any inner contour, verifies which ones belong to the new divided faces from
-        a closed cutting contour
-        :param list_faces: list of new faces
-        :param new_contour: current new face outer contour
-        :return: a list of new faces with its inner contours
+        a closed cutting contour.
+
+        :param list_faces: list of new faces.
+        :param new_contour: current new face outer contour.
+        :return: a list of new faces with its inner contours.
         """
         new_list_faces = []
         for new_face in list_faces:
@@ -4641,7 +4650,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def select_face_intersecting_primitives(self, dict_intersecting_combinations):
         """
-        Select face intersecting primitives from a dictionary containing all intersection combinations
+        Select face intersecting primitives from a dictionary containing all intersection combinations.
+
         :param dict_intersecting_combinations: dictionary containing all intersection combinations
         :return: list of intersecting primitives for current face
         """
@@ -4660,11 +4670,12 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def get_inner_contours_cutting_primitives(self, list_cutting_contours, connectig_to_outer_contour):
         """
-        Gets cutting primitives connected to face inner_contours
-        :param list_cutting_contours: list of contours for resulting from intersection with other faces
+        Gets cutting primitives connected to face inner_contours.
+
+        :param list_cutting_contours: list of contours for resulting from intersection with other faces.
         :param connectig_to_outer_contour: list of contours from list_cutting_contours connected to the outer contour
-        and not to any outer contour
-        :return: lists for final face cutting primitives
+        and not to any outer contour.
+        :return: lists for final face cutting primitives.
         """
         (inner_contours_connected_cutting_contour, dict_inner_contour_intersections,
          dict_cutting_contour_intersections, list_cutting_contours) = self.dictionnaries_cutting_contours(
@@ -4774,9 +4785,10 @@ class Face3D(volmdlr.core.Primitive3D):
     @staticmethod
     def inner_contour_cutting_points(inner_contour_spliting_points, cutting_contour):
         """
-        Searches the inner contour points where it must be cutted
-        :param inner_contour_spliting_points: all points os intersection with this inner contour
-        :param cutting_contour: first cutting contour being used to cut inner contour
+        Searches the inner contour points where it must be cutted.
+
+        :param inner_contour_spliting_points: all points os intersection with this inner contour.
+        :param cutting_contour: first cutting contour being used to cut inner contour.
         :return: point1, point2
         """
         if cutting_contour.primitives[0].start in inner_contour_spliting_points:
@@ -4795,10 +4807,11 @@ class Face3D(volmdlr.core.Primitive3D):
     def is_inside_portion(cutting_contour, inner_contour_spliting_points1, inner_contour_spliting_points2):
         """
         For multiple inner contour intersections with cutting contours, defines if we get the inside or outside portion
-        of the inner contour pair
-        :param cutting_contour: cutting_contour cutting the two inner contours
-        :param inner_contour_spliting_points1: spliting points for contour1
-        :param inner_contour_spliting_points2: spliting points for contour1
+        of the inner contour pair.
+
+        :param cutting_contour: cutting_contour cutting the two inner contours.
+        :param inner_contour_spliting_points1: spliting points for contour1.
+        :param inner_contour_spliting_points2: spliting points for contour1.
         :return:
         """
         if (cutting_contour.primitives[0].start != inner_contour_spliting_points1[-1] and
@@ -4824,10 +4837,11 @@ class Face3D(volmdlr.core.Primitive3D):
     @staticmethod
     def get_connecting_contour(lists_primitives, inner_primitives):
         """
-        Find which contour from resulting inner contour spliting is connected to saved cutting_contours
-        :param lists_primitives: saved cutting contours
-        :param inner_primitives: splited inner contour
-        :return: updated saved cutting contours
+        Find which contour from resulting inner contour spliting is connected to saved cutting_contours.
+
+        :param lists_primitives: saved cutting contours.
+        :param inner_primitives: splited inner contour.
+        :return: updated saved cutting contours.
         """
         if not lists_primitives:
             lists_primitives.extend(inner_primitives)
@@ -4845,13 +4859,14 @@ class Face3D(volmdlr.core.Primitive3D):
                                      connectig_to_outer_contour):
         """
         Verifies if there is a cutting contours from face intersections connected to an inner contour at the two ends,
-        if true this inner contour is updated with this cutting contour
-        :param inner_contour: inner contour
-        :param spliting_points: current inner contour spliting points
+        if true this inner contour is updated with this cutting contour.
+
+        :param inner_contour: inner contour.
+        :param spliting_points: current inner contour spliting points.
         :param spliting_points_and_cutting_contour: dictionnary containing all spliting points and
-        the corresponding cutting contour
-        :param connectig_to_outer_contour: list of the cutting contours connected to the outer contour
-        :return: spliting points to be removed from list of spliting points and current inner contour updated
+        the corresponding cutting contour.
+        :param connectig_to_outer_contour: list of the cutting contours connected to the outer contour.
+        :return: spliting points to be removed from list of spliting points and current inner contour updated.
         """
         j = self.surface2d.inner_contours.index(inner_contour)
         remove_spliting_points = []
@@ -4983,7 +4998,7 @@ class PlaneFace3D(Face3D):
 
     def face_inside(self, face2):
         """
-        verifies if a face is inside another face.
+        Verifies if a planeface is inside another planeface.
         It returns True if face2 is inside or False if the opposite
         """
         if not type(self) is type(face2):
@@ -5138,12 +5153,6 @@ class PlaneFace3D(Face3D):
         method_name = f'{edge.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(self, method_name):
             intersections = getattr(self, method_name)(edge)
-        # linesegment = vme.LineSegment3D(edge.start, edge.end)
-        # for surface3d_inter in self.surface3d.linesegment_intersections(linesegment):
-        #     point2d = self.surface3d.point3d_to_2d(surface3d_inter)
-        #     if self.surface2d.point_belongs(point2d):
-        #         if surface3d_inter not in intersections:
-        #             intersections.append(surface3d_inter)
         if not intersections:
             for point in [edge.start, edge.end]:
                 if self.point_belongs(point):
