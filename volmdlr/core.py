@@ -646,7 +646,6 @@ class CompositePrimitive3D(Primitive3D):
     _non_data_eq_attributes = ['name', 'basis_primitives']
     _non_data_hash_attributes = []
 
-
     def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
         self.primitives = primitives
 
@@ -1097,7 +1096,6 @@ class VolumeModel(dc.PhysicalObject):
     _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
                                  'faces']
     _dessia_methods = ['to_stl_model']
-
 
     def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives

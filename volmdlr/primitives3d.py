@@ -168,7 +168,6 @@ class Block(volmdlr.faces.ClosedShell3D):
                           'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_hash_attributes = []
 
-
     def __init__(self, frame: volmdlr.Frame3D, *,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
