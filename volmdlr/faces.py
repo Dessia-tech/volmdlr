@@ -3066,7 +3066,7 @@ class BSplineSurface3D(Surface3D):
         convert a linesegment2d from the parametric to the dimensioned frame
         """
 
-        points = linesegment2d.discretization_points(20)
+        points = linesegment2d.discretization_points(number_points=20)
         points_dim = [
             self.point2d_parametric_to_dimension(
                 p, grid2d) for p in points]
@@ -7485,8 +7485,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         shell1_points_inside_shell2 = []
         for face in self.faces:
-            for point in face.outer_contour3d.discretization_points(
-                    resolution):
+            for point in face.outer_contour3d.discretization_points(angle_resolution=resolution):
                 if shell2.point_belongs(point):
                     shell1_points_inside_shell2.append(point)
 
@@ -7514,7 +7513,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         shell1_points_outside_shell2 = []
         for face in self.faces:
             for point in face.outer_contour3d.discretization_points(
-                    resolution):
+                    angle_resolution=resolution):
                 if not shell2.point_belongs(point):
                     shell1_points_outside_shell2.append(point)
 
@@ -7695,11 +7694,11 @@ class ClosedShell3D(OpenShell3D):
         points1 = []
         for face in self.faces:
             points1.extend(
-                face.outer_contour3d.discretization_points(resolution))
+                face.outer_contour3d.discretization_points(angle_resolution=resolution))
         points2 = []
         for face in shell2.faces:
             points2.extend(
-                face.outer_contour3d.discretization_points(resolution))
+                face.outer_contour3d.discretization_points(angle_resolution=resolution))
 
         nb_pts1 = len(points1)
         nb_pts2 = len(points2)
