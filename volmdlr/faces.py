@@ -1898,13 +1898,13 @@ class ConicalSurface3D(Surface3D):
 
 
 class SphericalSurface3D(Surface3D):
-    face_class = 'SphericalFace3D'
     """
     :param frame: Sphere's frame to position it
     :type frame: volmdlr.Frame3D
     :param radius: Sphere's radius
     :type radius: float
     """
+    face_class = 'SphericalFace3D'
 
     def __init__(self, frame, radius, name=''):
         self.frame = frame
@@ -2011,13 +2011,13 @@ class SphericalSurface3D(Surface3D):
 
 
 class RuledSurface3D(Surface3D):
-    face_class = 'RuledFace3D'
     """
     :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
     :type frame: volmdlr.Frame3D
     :param radius: Cylinder's radius
     :type radius: float
     """
+    face_class = 'RuledFace3D'
 
     def __init__(self,
                  wire1: volmdlr.wires.Wire3D,
@@ -5101,6 +5101,7 @@ class PlaneFace3D(Face3D):
         if list_open_cutting_contours:
             list_faces = self.divide_face_with_open_cutting_contours(list_open_cutting_contours, inside)
         list_faces = self.divide_face_with_closed_cutting_contours(list_closed_cutting_contours, list_faces)
+        list_faces = [face for face in list_faces if not math.isclose(face.area(), 0.0, abs_tol=1e-6)]
         return list_faces
 
     def is_adjacent(self, face2: Face3D):

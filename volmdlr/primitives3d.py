@@ -156,18 +156,17 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 
 
 class Block(volmdlr.faces.ClosedShell3D):
+    """
+    Creates a block
+    :param frame: a frame 3D. The origin of the frame is the center of the block,
+     the 3 vectors are defining the edges. The frame has not to be orthogonal
+    """
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes = ['size', 'bounding_box', 'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_eq_attributes = ['name', 'color', 'alpha', 'size', 'bounding_box',
                           'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_hash_attributes = []
-
-    """
-    Creates a block
-    :param frame: a frame 3D. The origin of the frame is the center of the block,
-     the 3 vectors are defining the edges. The frame has not to be orthogonal
-    """
 
     def __init__(self, frame: volmdlr.Frame3D, *,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,

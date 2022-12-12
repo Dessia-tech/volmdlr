@@ -13,12 +13,12 @@ UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-fin
 MIN_NOTE = 7.9
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 987,
-                     'no-else-return': 74,
-                     'consider-using-f-string': 155,
-                     'no-member': 56,
+                     'invalid-name': 958,
+                     'no-else-return': 57,
+                     'consider-using-f-string': 132,
+                     'no-member': 15,
                      'inconsistent-return-statements': 18,
-                     'unused-variable': 61,
+                     'unused-variable': 51,
                      'arguments-differ': 11,
                      'too-many-locals': 75,
                      'line-too-long': 32,
@@ -36,7 +36,7 @@ MAX_ERROR_BY_TYPE = {
                      'no-self-use': 16,
                      'arguments-renamed': 11,
                      'too-many-ancestors': 8,
-                     'expression-not-assigned': 12,
+                     'expression-not-assigned': 1,
                      'non-parent-init-called': 7,
                      'too-few-public-methods': 10,
                      'too-many-public-methods': 9,
