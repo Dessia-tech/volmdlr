@@ -5172,24 +5172,6 @@ class Arc3D(Arc):
             return True
         return False
 
-    # def point_belongs(self, point3d, abs_tol=1e-10):
-    #     """
-    #     check if a point3d belongs to the arc_3d or not
-    #     """
-    #     def f(x):
-    #         return (point3d - self.point_at_abscissa(x)).norm()
-    #     length_ = self.length()
-    #     x = npy.linspace(0, length_, 5)
-    #     x_init = []
-    #     for xi in x:
-    #         x_init.append(xi)
-    #
-    #     for x0 in x_init:
-    #         z = scp.optimize.least_squares(f, x0=x0, bounds=([0, length_]))
-    #         if z.fun < abs_tol:
-    #             return True
-    #     return False
-
     def triangulation(self):
         return None
 
