@@ -7827,11 +7827,11 @@ class ClosedShell3D(OpenShell3D):
     @staticmethod
     def dict_intersecting_combinations(intersecting_faces_combinations, tol=1e-8):
         """
-            :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...]) for intersecting faces.
-            :type intersecting_faces_combinations: list of face objects combinaitons
-            returns a dictionary containing as keys the combination of intersecting faces
-            and as the values the resulting primitive from the two intersecting faces.
-            It is done so it is not needed to calculate the same intersecting primitive twice.
+        :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...]) for intersecting faces.
+        :type intersecting_faces_combinations: list of face objects combinaitons
+        returns a dictionary containing as keys the combination of intersecting faces
+        and as the values the resulting primitive from the two intersecting faces.
+        It is done so it is not needed to calculate the same intersecting primitive twice.
         """
         intersecting_combinations = {}
         for combination in intersecting_faces_combinations:
@@ -7855,10 +7855,10 @@ class ClosedShell3D(OpenShell3D):
     @staticmethod
     def get_intersecting_faces(dict_intersecting_combinations):
         """
-            :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
-            and as the values the resulting primitive from the two intersecting faces
+        :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
+        and as the values the resulting primitive from the two intersecting faces
 
-            returns two lists. One for the intersecting faces in shell1 and the other for the shell2
+        returns two lists. One for the intersecting faces in shell1 and the other for the shell2
         """
         intersecting_faces_shell1 = []
         intersecting_faces_shell2 = []

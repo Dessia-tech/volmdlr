@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Module containing wires & contours
+Module containing wires & contours.
 """
 
 import warnings
@@ -71,7 +71,8 @@ class WireMixin:
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        resolution: distance between two discretized points
+
+        :param angle_resolution: distance between two discretized points.
         """
         if number_points:
             n = number_points - 1
@@ -98,8 +99,9 @@ class WireMixin:
     def extract_primitives(self, point1, primitive1, point2, primitive2,
                            inside: bool = True):
         """
-        inside: extracted contour is between the two points if True and outside
-        these points if False
+
+        :param inside: extracted contour is between the two points if True and outside
+        these points if False.
         """
 
         primitives = []
@@ -158,8 +160,9 @@ class WireMixin:
 
     def extract_without_primitives(self, point1, point2, inside: bool = True):
         """
-        inside: extracted contour is between the two points if True and outside
-        these points if False
+
+        :param inside: extracted contour is between the two points if True and outside
+        these points if False.
         """
         primitives = self.primitives
         indices = []
@@ -192,7 +195,8 @@ class WireMixin:
 
     def abscissa(self, point):
         """
-        compute the curvilinear abscisse of a point on a wire
+        Compute the curvilinear abscisse of a point on a wire.
+
         """
         if self.point_over_wire(point, 1e-6):
             length = 0
@@ -211,7 +215,8 @@ class WireMixin:
 
     def is_ordered(self, tol=1e-6):
         """
-        check if the wire's primitives are ordered or not
+        Check if the wire's primitives are ordered or not.
+
         """
 
         for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
@@ -221,7 +226,8 @@ class WireMixin:
 
     def order_wire(self, tol=1e-6):
         """
-        order wire's primitives
+        Order wire's primitives.
+
         """
 
         if self.is_ordered(tol=tol):
@@ -251,7 +257,8 @@ class WireMixin:
     @classmethod
     def from_wires(cls, wires):
         """
-        define a wire from successive wires
+        Define a wire from successive wires.
+
         """
 
         primitives = []
@@ -266,7 +273,8 @@ class WireMixin:
 
     def inverted_primitives(self):
         """
-        invert wire's primitives
+        Invert wire's primitives.
+
         """
 
         new_primitives = []
@@ -276,7 +284,8 @@ class WireMixin:
 
     def is_followed_by(self, wire_2, tol=1e-6):
         """
-        check if the wire is followed by wire_2
+        Check if the wire is followed by wire_2.
+
         """
         return self.primitives[-1].end.point_distance(wire_2.primitives[0].start) < tol
 
@@ -311,7 +320,8 @@ class WireMixin:
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     """
-    A collection of simple primitives, following each other making a wire
+    A collection of simple primitives, following each other making a wire.
+
     """
 
     def __init__(self, primitives: List[volmdlr.core.Primitive2D],
@@ -328,7 +338,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def extract(self, point1, primitive1, point2, primitive2,
                 inside: bool = True):
         """
-        inside: extracted contour is between the two points if True and outside these points if False
+
+        :param inside: extracted contour is between the two points if True and outside these points if False.
         """
         return Wire2D(
             self.extract_primitives(point1, primitive1, point2, primitive2,
@@ -337,7 +348,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def extract_with_points(self, point1: volmdlr.Point2D,
                             point2: volmdlr.Point2D, inside: bool = True):
         """
-        inside: extracted contour is between the two points if True and outside these points if False
+
+        :param inside: extracted contour is between the two points if True and outside these points if False.
         """
         return self.extract_without_primitives(point1, point2, inside)
 
@@ -345,10 +357,11 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def infinite_intersections(self, infinite_primitives):
         """
-        returns a list  that contains:
+        Returns a list  that contains:
         the intersections between a succession of infinite primitives (line,
         circle). There must be a method implemented to intersect the two
         infinite primitives.
+
         """
         offset_intersections = []
 
@@ -411,6 +424,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def offset(self, offset):
         """
         Generates an offset of a Wire2D.
+
         """
         offset_primitives = []
         infinite_primitives = []
@@ -454,7 +468,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def line_intersections(self, line: 'volmdlr.edges.Line2D'):
         """
         Returns a list of intersection in ther form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line
+        primitive) of the wire primitives intersecting with the line.
+
         """
         intersection_points = []
         for primitive in self.primitives:
@@ -466,7 +481,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                                   linesegment: 'volmdlr.edges.LineSegment2D'):
         """
         Returns a list of intersection in ther form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line
+        primitive) of the wire primitives intersecting with the line.
+
         """
         intersection_points = []
         for primitive in self.primitives:
@@ -520,7 +536,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def line_crossings(self, line: volmdlr.edges.Line2D):
         """
-        Calculates valid crossing intersections of a wire and an infinit line
+        Calculates valid crossing intersections of a wire and an infinit line.
+
         :param line: line crossing the wire
         :type line: volmdlr.edges.Line2D
         returns a list of Tuples (point, primitive)
@@ -548,15 +565,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def wire_intersections(self, wire):
         """
-        compute intersections between two wire2d.
+        Compute intersections between two wire 2d.
 
-        Parameters
-        ----------
-        wire : volmdlr.wires.Wire2D
-
-        Returns
-        -------
-        intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
+        :param wire : volmdlr.wires.Wire2D.
+        :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
 
         """
 
@@ -581,7 +593,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
         """
-        define a wire based on points2d with line_segments2d
+        Define a wire based on points2d with line_segments2d.
+
+        :param points: points to define wire 2d.
         """
 
         edges = []
@@ -594,7 +608,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                               linesegment: 'volmdlr.edges.LineSegment2D'):
         """
         Returns a list of crossings in ther form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line
+        primitive) of the wire primitives intersecting with the line.
+
         """
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
@@ -605,16 +620,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def wire_crossings(self, wire):
         """
-        compute crossings between two wire2d
+        Compute crossings between two wire 2d.
 
-        Parameters
-        ----------
-        wire : volmdlr.wires.Wire2D
-
-        Returns
-        -------
-        crossings : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
-
+        :param wire: volmdlr.wires.Wire2D
+        :return crossings : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
         """
 
         crossings, crossings_points = [], []
@@ -637,7 +646,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def to_wire_with_linesegments(self):
         """
-        convert a wire with different primitives to a wire with just linesegments
+        Convert a wire with different primitives to a wire with just linesegments.
+
         """
 
         wires = []
@@ -654,7 +664,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def extend(self, point):
         """
-        extend a wire by adding a linesegment connecting the given point to nearest wire's extremities
+        Extend a wire by adding a linesegment connecting the given point to nearest wire's extremities.
         """
 
         distances = [self.primitives[0].start.point_distance(point), self.primitives[-1].end.point_distance(point)]
@@ -669,7 +679,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def point_distance(self, point):
         """
-        copied from Contour2D
+        Copied from Contour2D.
+
         """
 
         min_distance = self.primitives[0].point_distance(point)
@@ -681,7 +692,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def nearest_primitive_to(self, point):
         """
-        search for the nearest primitive for a point
+        Search for the nearest primitive for a point.
+
         """
 
         # min_distance = self.primitives[0].middle_point().point_distance(point)
@@ -700,7 +712,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric wire2d according to a line
+        Finds out the symmetric wire2d according to a line.
+
         """
 
         primitives_symmetry = []
@@ -720,7 +733,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def is_symmetric(self, wire2d, line):
         """
-        checks if the two wires2d are symmetric or not according to line
+        Checks if the two wires2d are symmetric or not according to line.
+
         """
 
         c_symmetry_0 = self.symmetry(line)
@@ -734,7 +748,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                                bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
         Returns a list of crossings in ther form of a tuple (point,
-        primitive) of the wire primitives crossings with the bsplinecurve
+        primitive) of the wire primitives crossings with the bsplinecurve.
+
         """
 
         linesegments = bsplinecurve.to_wire(25).primitives
@@ -749,7 +764,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                                    bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
         Returns a list of intersections in ther form of a tuple (point,
-        primitive) of the wire primitives intersections with the bsplinecurve
+        primitive) of the wire primitives intersections with the bsplinecurve.
+
         """
 
         linesegments = bsplinecurve.to_wire(25).primitives
@@ -763,7 +779,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     """
-    A collection of simple primitives, following each other making a wire
+    A collection of simple primitives, following each other making a wire.
+
     """
 
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
@@ -793,8 +810,9 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Wire3D
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new Wire3D.
+
+        :param side: 'old' or 'new'
         """
         new_wire = []
         for primitive in self.primitives:
@@ -803,8 +821,9 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        :param side: 'old' or 'new'
         """
         for primitive in self.primitives:
             primitive.frame_mapping_inplace(frame, side)
@@ -834,7 +853,8 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def to_bspline(self, discretization_parameter, degree):
         """
-        convert a wire3d to a bspline curve3d
+        Convert a wire3d to a bspline curve3d.
+
         """
 
         discretized_points = self.discretization_points(discretization_parameter)
@@ -868,7 +888,8 @@ class ContourMixin(WireMixin):
 
     def ordering_contour(self, tol=1e-6):
         """
-        returns the points of the contour ordered
+        Returns the points of the contour ordered.
+
         """
         list_point_pairs = [(prim.start, prim.end) for prim in self.primitives]
         length_list_points = len(list_point_pairs)
@@ -955,10 +976,11 @@ class ContourMixin(WireMixin):
     @staticmethod
     def connected_to_splited_primitives(edge, contours_list):
         """
-        Verifies if edge is connected to one of the primitives inside contours
-        :param edge: edge for verification
-        :param contours_list: contours lists
-        :return: update contours_primitives_lists and a boolean to indicate if the edge should be removed or not
+        Verifies if edge is connected to one of the primitives inside contours.
+
+        :param edge: edge for verification.
+        :param contours_list: contours lists.
+        :return: update contours_primitives_lists and a boolean to indicate if the edge should be removed or not.
         """
         remove = False
         for i, contour in enumerate(contours_list):
@@ -974,11 +996,12 @@ class ContourMixin(WireMixin):
     @staticmethod
     def is_edge_connected(contour_primitives, edge, tol):
         """
-        Verifies if edge is connected to one of the primitives inside contour_primitives
-        :param contour_primitives: list of primitives to create a contour
-        :param edge: edge for verification
-        :param tol: tolerance use in verification
-        :return: returns the edge if true, and None if not connected
+        Verifies if edge is connected to one of the primitives inside contour_primitives.
+
+        :param contour_primitives: list of primitives to create a contour.
+        :param edge: edge for verification.
+        :param tol: tolerance use in verification.
+        :return: returns the edge if true, and None if not connected.
         """
         edge_connected = None
         points = [p for prim in contour_primitives for p in prim]
@@ -1084,7 +1107,8 @@ class ContourMixin(WireMixin):
 
     def discretized_primitives(self, number_points: float):
         """
-        discretize each contour's primitive and return a list of discretized primitives
+        Discretize each contour's primitive and return a list of discretized primitives.
+
         """
         edges = []
         for primitive in self.primitives:
@@ -1095,7 +1119,10 @@ class ContourMixin(WireMixin):
         return edges
 
     def shares_primitives(self, contour):
-        """checks if two contour share primitives"""
+        """
+        Checks if two contour share primitives.
+
+        """
         for prim1 in self.primitives:
             if contour.primitive_over_contour(prim1):
                 return True
@@ -1103,8 +1130,9 @@ class ContourMixin(WireMixin):
 
     def is_superposing(self, contour2):
         """
-        check if the contours are superposing (one on the other without
-        necessarily having an absolute equality)
+        Check if the contours are superposing (one on the other without
+        necessarily having an absolute equality).
+
         """
 
         for primitive_2 in contour2.primitives:
@@ -1114,7 +1142,8 @@ class ContourMixin(WireMixin):
 
     def is_overlapping(self, contour2, intersecting_points=None):
         """
-        check if the contours are overlapping (a part of one is on the other)
+        Check if the contours are overlapping (a part of one is on the other).
+
         """
 
         if not intersecting_points:
@@ -1138,9 +1167,10 @@ class ContourMixin(WireMixin):
 
     def is_sharing_primitives_with(self, contour):
         """
-        check if two contour are sharing primitives
+        Check if two contour are sharing primitives.
+
         "all_points" is by default False. Turn it True if you need to get
-        points and edges used to find out shared primitives
+        points and edges used to find out shared primitives.
         """
 
         list_p = []
@@ -1171,7 +1201,8 @@ class ContourMixin(WireMixin):
 
     def shared_primitives_extremities(self, contour):
         """
-        extract shared primitives extremities between two adjacent contours
+        Extract shared primitives extremities between two adjacent contours.
+
         """
 
         if self.is_superposing(contour):
@@ -1211,7 +1242,8 @@ class ContourMixin(WireMixin):
 
     def shared_primitives_with(self, contour):
         """
-        extract shared primitives between two adjacent contours
+        Extract shared primitives between two adjacent contours.
+
         """
 
         shared_primitives_1 = []
@@ -1245,7 +1277,8 @@ class ContourMixin(WireMixin):
 
     def merge_primitives_with(self, contour):
         """
-        extract not shared primitives between two adjacent contours, to be merged
+        Extract not shared primitives between two adjacent contours, to be merged.
+
         """
 
         points = self.shared_primitives_extremities(contour)
@@ -1283,8 +1316,9 @@ class ContourMixin(WireMixin):
 
     def edges_order_with_adjacent_contour(self, contour):
         """
-        check if the shared edges between two adjacent contours are traversed with two
-        different directions along each contour
+        Check if the shared edges between two adjacent contours are traversed with two
+        different directions along each contour.
+
         """
 
         contour1 = self
@@ -1309,7 +1343,8 @@ class ContourMixin(WireMixin):
 
     def extremities_points(self, list_p):
         """
-        return extremitises points of a list of points on a contour
+        Return extremitises points of a list of points on a contour.
+
         """
         # TODO: rewrite this awfull code!
         points = []
@@ -1517,9 +1552,10 @@ class Contour2D(ContourMixin, Wire2D):
 
     def is_inside(self, contour2):
         """
-        verifies if a contour is inside another contour perimiter,
-        including the edges
-        return True or False
+        Verifies if a contour is inside another contour perimiter,
+        including the edges.
+
+        :return: True or False.
         """
         points_contour2 = []
         for prim in contour2.primitives:
@@ -1781,7 +1817,8 @@ class Contour2D(ContourMixin, Wire2D):
 
     def split_regularly(self, n):
         """
-        Split in n slices
+        Split in n slices.
+
         """
         xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
         cutted_contours = []
@@ -2139,16 +2176,10 @@ class Contour2D(ContourMixin, Wire2D):
 
     def cut_by_wire(self, wire: Wire2D):
         """
-        cut a contour2d with a wire2d and return a list of contours2d
+        cut a contour 2d with a wire 2d and return a list of contours 2d
 
-        Parameters
-        ----------
-        wire : volmdlr.wires.Wire2D
-
-        Returns
-        -------
-        contours2d : list[volmdlr.wires.Contour2D]
-
+        :param wire: volmdlr.wires.Wire2D.
+        :return: contours2d : list[volmdlr.wires.Contour2D].
         """
 
         intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
@@ -2294,7 +2325,8 @@ class ClosedPolygonMixin:
 
 class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     """
-        A collection of points, connected by linesegments, following each other
+    A collection of points, connected by linesegments, following each other.
+
     """
     _non_serializable_attributes = ['line_segments', 'primitives',
                                     'basis_primitives']
@@ -5058,7 +5090,8 @@ class Ellipse3D(Contour3D):
 
 class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     """
-        A collection of points, connected by linesegments, following each other
+    A collection of points, connected by linesegments, following each other.
+
     """
     _non_serializable_attributes = ['line_segments', 'primitives']
     _non_eq_attributes = ['line_segments', 'primitives']
@@ -5101,11 +5134,12 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        ClosedPolygon3D rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated ClosedPolygon3D
+        ClosedPolygon3D rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated ClosedPolygon3D.
         """
         return ClosedPolygon3D(
             [point.rotation(center, axis, angle) for point in
@@ -5114,19 +5148,21 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        ClosedPolygon3D rotation. Object is updated inplace
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
+        ClosedPolygon3D rotation. Object is updated inplace.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: rotation angle.
         """
         for point in self.points:
             point.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        ClosedPolygon3D translation
-        :param offset: translation vector
-        :return: A new translated ClosedPolygon3D
+        ClosedPolygon3D translation.
+
+        :param offset: translation vector.
+        :return: A new translated ClosedPolygon3D.
         """
         new_points = [point.translation(offset) for point in
                       self.points]
@@ -5134,8 +5170,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        ClosedPolygon3D translation. Object is updated inplace
-        :param offset: translation vector
+        ClosedPolygon3D translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         for point in self.points:
             point.translation_inplace(offset)
@@ -5333,7 +5370,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                                               passed_by_zero_index):
         """
         Cleans the dictionnary containing the sewing closing pairs informations
-        in case it needs to be recalculated due to changing closing points
+        in case it needs to be recalculated due to changing closing points.
+
         """
         dict_closing_pairs_values = list(dict_closing_pairs.values())
         dict_closing_pairs_keys = list(dict_closing_pairs.keys())

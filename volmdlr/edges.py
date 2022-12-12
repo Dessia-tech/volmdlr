@@ -3263,6 +3263,14 @@ class Line3D(Line):
         return content, current_id
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a Line3D into an Line2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Line2D.
+        """
         p2d = [p.to_2d(plane_origin, x, y) for p in (self.point1, self.point2)]
         if p2d[0] == p2d[1]:
             return None
@@ -3609,6 +3617,14 @@ class LineSegment3D(LineSegment):
         return s
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a LineSegment3D into an LineSegment2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: LineSegment2D.
+        """
         p2d = [p.to_2d(plane_origin, x, y) for p in (self.start, self.end)]
         if p2d[0] == p2d[1]:
             return None
@@ -4316,6 +4332,14 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         return ax
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a BSplineCurve3D into an BSplineCurve2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: BSplineCurve2D.
+        """
         control_points2d = [p.to_2d(plane_origin, x, y) for p in
                             self.control_points]
         return BSplineCurve2D(self.degree, control_points2d,
@@ -4623,7 +4647,6 @@ class Arc3D(Arc):
         """
         Defines a new Arc3D, odentical to self, but in the oposite direction.
 
-        :return:
         """
         return self.__class__(self.end.copy(),
                               self.interior.copy(),
@@ -4862,6 +4885,12 @@ class Arc3D(Arc):
         return self.radius * abs(theta)
 
     def split(self, split_point: volmdlr.Point3D):
+        """
+        Splits the Arc2D in two at a given point.
+
+        :param split_point: splitting point
+        :return: two Arc2D.
+        """
         abscissa = self.abscissa(split_point)
 
         return [Arc3D(self.start,
@@ -4873,6 +4902,14 @@ class Arc3D(Arc):
                 ]
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a Arc3D into an Arc2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Arc2D.
+        """
         ps = self.start.to_2d(plane_origin, x, y)
         pi = self.interior.to_2d(plane_origin, x, y)
         pe = self.end.to_2d(plane_origin, x, y)
@@ -5229,6 +5266,14 @@ class FullArc3D(Arc3D):
         return FullArc3D(self._center.copy(), self.end.copy(), self._normal.copy())
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a FullArc3D into an FullArc2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: FullArc2D.
+        """
         center = self.center.to_2d(plane_origin, x, y)
         start_end = self.start.to_2d(plane_origin, x, y)
         return FullArc2D(center, start_end)
@@ -5557,6 +5602,14 @@ class ArcEllipse3D(Edge):
     points = property(_get_points)
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a ArcEllipse3D into an ArcEllipse2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: ArcEllipse2D.
+        """
         point_start2d = self.start.to_2d(plane_origin, x, y)
         point_interior2d = self.interior.to_2d(plane_origin, x, y)
         point_end2d = self.end.to_2d(plane_origin, x, y)

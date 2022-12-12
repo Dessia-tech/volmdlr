@@ -204,9 +204,10 @@ class DisplayMesh3D(DisplayMesh):
         return positions, flatten_indices
 
     def to_stl(self):
-        '''
-        Exports to STL
-        '''
+        """
+        Exports to STL.
+
+        """
         # TODO: remove this in the future
         import volmdlr.stl as vmstl
         stl = vmstl.Stl.from_display_mesh(self)
