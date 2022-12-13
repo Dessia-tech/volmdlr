@@ -637,14 +637,14 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
 
 
 class CompositePrimitive3D(Primitive3D):
+    """
+    A collection of simple primitives3D
+    """
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['basis_primitives']
     _non_data_eq_attributes = ['name', 'basis_primitives']
     _non_data_hash_attributes = []
-    """
-    A collection of simple primitives3D
-    """
 
     def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
         self.primitives = primitives
@@ -1080,14 +1080,6 @@ class BoundingBox(dc.DessiaObject):
 
 
 class VolumeModel(dc.PhysicalObject):
-    _standalone_in_db = True
-    _eq_is_data_eq = True
-    _non_serializable_attributes = ['shells', 'bounding_box']
-    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                               'faces']
-    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                                 'faces']
-    _dessia_methods = ['to_stl_model']
     """
     A class containing one or several :class:`volmdlr.core.Primitive3D`.
 
@@ -1096,6 +1088,14 @@ class VolumeModel(dc.PhysicalObject):
     :param name: The VolumeModel's name
     :type name: str
     """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['shells', 'bounding_box']
+    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                               'faces']
+    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                                 'faces']
+    _dessia_methods = ['to_stl_model']
 
     def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives

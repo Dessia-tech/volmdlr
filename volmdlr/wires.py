@@ -203,7 +203,8 @@ class WireMixin:
 
     def is_ordered(self, tol=1e-6):
         """
-        check if the wire's primitives are ordered or not
+        Check if the wire's primitives are ordered or not.
+
         """
 
         for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
@@ -268,7 +269,8 @@ class WireMixin:
 
     def is_followed_by(self, wire_2, tol=1e-6):
         """
-        check if the wire is followed by wire_2
+        Check if the wire is followed by wire_2.
+
         """
         return self.primitives[-1].end.point_distance(wire_2.primitives[0].start) < tol
 
@@ -311,6 +313,14 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Tranforms a Wire2D into an Wire3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Wire3D.
+        """
         primitives3d = []
         for edge in self.primitives:
             primitives3d.append(edge.to_3d(plane_origin, x, y))
@@ -549,6 +559,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         :type wire:  volmdlr.wires.Wire2D
         :type intersections: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
 
+        :return intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
         """
 
         intersections, intersections_points = [], []
@@ -600,7 +611,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         :param wire: volmdlr.wires.Wire2D
         :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
-
         """
 
         crossings, crossings_points = [], []
@@ -678,6 +688,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def axial_symmetry(self, line):
         """
         Finds out the symmetric wire2d according to a line.
+
         """
 
         primitives_symmetry = []
@@ -697,7 +708,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def is_symmetric(self, wire2d, line):
         """
-        checks if the two wires2d are symmetric or not according to line
+        Checks if the two wires2d are symmetric or not according to line.
+
         """
 
         c_symmetry_0 = self.symmetry(line)
@@ -951,7 +963,8 @@ class ContourMixin(WireMixin):
     @staticmethod
     def is_edge_connected(contour_primitives, edge, tol):
         """
-        Verifies if edge is connected to one of the primitives inside contour_primitives
+        Verifies if edge is connected to one of the primitives inside contour_primitives.
+
         :param contour_primitives: list of primitives to create a contour
         :param edge: edge for verification
         :param tol: tolerance use in verification
@@ -1061,7 +1074,7 @@ class ContourMixin(WireMixin):
 
     def discretized_primitives(self, number_points: float):
         """
-        discretize each contour's primitive and return a list of discretized primitives
+        Discretize each contour's primitive and return a list of discretized primitives
         """
         edges = []
         for primitive in self.primitives:
@@ -1072,7 +1085,10 @@ class ContourMixin(WireMixin):
         return edges
 
     def shares_primitives(self, contour):
-        """checks if two contour share primitives"""
+        """
+        Checks if two contour share primitives.
+
+        """
         for prim1 in self.primitives:
             if contour.primitive_over_contour(prim1):
                 return True
@@ -1080,8 +1096,9 @@ class ContourMixin(WireMixin):
 
     def is_superposing(self, contour2):
         """
-        check if the contours are superposing (one on the other without
-        necessarily having an absolute equality)
+        Check if the contours are superposing (one on the other without
+        necessarily having an absolute equality).
+
         """
 
         for primitive_2 in contour2.primitives:
@@ -1091,7 +1108,8 @@ class ContourMixin(WireMixin):
 
     def is_overlapping(self, contour2, intersecting_points=None):
         """
-        check if the contours are overlapping (a part of one is on the other)
+        Check if the contours are overlapping (a part of one is on the other).
+
         """
 
         if not intersecting_points:
@@ -1115,9 +1133,10 @@ class ContourMixin(WireMixin):
 
     def is_sharing_primitives_with(self, contour):
         """
-        check if two contour are sharing primitives
+        Check if two contour are sharing primitives
         "all_points" is by default False. Turn it True if you need to get
-        points and edges used to find out shared primitives
+        points and edges used to find out shared primitives.
+
         """
 
         list_p = []
@@ -1148,7 +1167,8 @@ class ContourMixin(WireMixin):
 
     def shared_primitives_extremities(self, contour):
         """
-        extract shared primitives extremities between two adjacent contours
+        Extract shared primitives extremities between two adjacent contours.
+
         """
 
         if self.is_superposing(contour):
@@ -1188,7 +1208,8 @@ class ContourMixin(WireMixin):
 
     def shared_primitives_with(self, contour):
         """
-        extract shared primitives between two adjacent contours
+        Extract shared primitives between two adjacent contours.
+
         """
 
         shared_primitives_1 = []
@@ -1262,6 +1283,7 @@ class ContourMixin(WireMixin):
         """
         Check if the shared edges between two adjacent contours are traversed with two different directions
         along each contour.
+
         """
 
         contour1 = self
@@ -1400,6 +1422,14 @@ class Contour2D(ContourMixin, Wire2D):
         return ClosedPolygon2D(points)
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Tranforms a Contour2D into an Contour3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Contour3D.
+        """
         p3d = []
         for edge in self.primitives:
             p3d.append(edge.to_3d(plane_origin, x, y))
@@ -2121,6 +2151,7 @@ class Contour2D(ContourMixin, Wire2D):
         :param wire: volmdlr.wires.Wire2D
         :rtype: list[volmdlr.wires.Contour2D]
 
+        :return contours2d : list[volmdlr.wires.Contour2D]
         """
 
         intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
@@ -2909,6 +2940,14 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return cls(points_hull)
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Tranforms a ClosedPolygon2D into an ClosedPolygon3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: ClosedPolygon3D.
+        """
         points3d = [point.to_3d(plane_origin, x, y) for point in self.points]
         return ClosedPolygon3D(points3d)
 
@@ -3041,8 +3080,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def line_intersecting_closing_point(self, crossing_point):
         """
-        finds closing point for the sewing method using intersection of lines
-        drawn from the barycenter
+        Finds closing point for the sewing method using intersection of lines
+        drawn from the barycenter.
+
         returns the closing point
         """
         vec_dir = crossing_point.copy()
@@ -3089,7 +3129,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def point_in_polygon(self):
         """
         In case the barycenter of the polygon is outside, this method
-        finds another point inside the polygon
+        finds another point inside the polygon.
+
         """
         intersetions1 = {}
         linex_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D * 5)
@@ -3417,7 +3458,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric closed_polygon2d according to a line
+        Finds out the symmetric closed_polygon2d according to a line.
+
         """
 
         axial_points = [point.axial_symmetry(line) for point in self.points]
@@ -3487,7 +3529,8 @@ class Triangle2D(Triangle):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric triangle2d according to a line
+        Finds out the symmetric triangle2d according to a line.
+
         """
 
         [point1, point2, point3] = [point.axial_symmetry(line)
@@ -3664,6 +3707,14 @@ class Circle2D(Contour2D):
         return ax
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Tranforms a Circle2D into an Circle3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Circle3D.
+        """
         normal = x.cross(y)
         center3d = self.center.to_3d(plane_origin, x, y)
         return Circle3D(volmdlr.Frame3D(center3d, x, y, normal),
@@ -3671,7 +3722,8 @@ class Circle2D(Contour2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        Circle2D rotation
+        Circle2D rotation.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotated Circle2D
@@ -3680,7 +3732,8 @@ class Circle2D(Contour2D):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Circle2D rotation. Object is updated inplace
+        Circle2D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
@@ -3688,7 +3741,8 @@ class Circle2D(Contour2D):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        Circle2D translation
+        Circle2D translation.
+
         :param offset: translation vector
         :return: A new translated Circle2D
         """
@@ -3696,7 +3750,8 @@ class Circle2D(Contour2D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Circle2D translation. Object is updated inplace
+        Circle2D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.center.translation_inplace(offset)
@@ -3791,7 +3846,8 @@ class Circle2D(Contour2D):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric circle2d according to a line
+        Finds out the symmetric circle2d according to a line.
+
         """
 
         return self.__class__(center=self.center.axial_symmetry(line),
@@ -3861,6 +3917,14 @@ class Ellipse2D(Contour2D):
         return length
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Tranforms a Ellipse2D into an Ellipse3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Ellipse3D.
+        """
         raise NotImplementedError
 
     def point_over_ellipse(self, point, abs_tol=1e-6):
@@ -4348,6 +4412,14 @@ class Contour3D(ContourMixin, Wire3D):
         return ax
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a Ellipse3D into an Contour2D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Contour2D.
+        """
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         primitives2d = []
@@ -4654,6 +4726,14 @@ class Circle3D(Contour3D):
         return volmdlr.core.BoundingBox.from_points(points)
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a Circle3D into an Circle2D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Circle2D.
+        """
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         return Circle2D(plane3d.point3d_to_2d(self.center), self.radius)
@@ -5005,6 +5085,14 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             point.translation_inplace(offset)
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a ClosedPolygon3D into an ClosedPolygon2D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: ClosedPolygon2D.
+        """
         points2d = [point.to_2d(plane_origin, x, y) for point in self.points]
         return ClosedPolygon2D(points2d)
 
