@@ -61,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
 * Arc3D: line_intersections, linesegment_intersections
 * new module utils: intersections -> circle_3d_linesegment_intersections
-
+* Ellipse3D: point_belongs, abscissa, length, to_2d
 
 ### Fixed
 
@@ -79,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
 * infinite primitive offset of linesegment
+* Ellispe3D: discretization_points
 
 ### Performance improvements
 
@@ -126,6 +127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle3D: point_belongs
 * Circle3D: discretization_points
 * Arc3D: line_intersections, linesegment_intersections
+* Ellipse3D: point_belongs, abscissa, length, to_2d, discretization_points
 
 ## v0.6.1 [12/13/2022]
 
