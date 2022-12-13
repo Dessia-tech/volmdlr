@@ -2900,7 +2900,7 @@ class Frame2D(Basis2D):
 
     def __hash__(self):
         """
-        hash returns 0 because points are difficult to hash if they are meant
+        Hash returns 0 because points are difficult to hash if they are meant
         to be equalized at a given tolerance
         """
         return 0

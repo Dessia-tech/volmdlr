@@ -1504,7 +1504,7 @@ class Contour2D(ContourMixin, Wire2D):
 
         return Contour3D(p3d)
 
-    def point_belongs(self, point, abs_tol:float=1e-6):
+    def point_belongs(self, point, abs_tol: float = 1e-6):
         # TODO: This is incomplete!!!
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
@@ -1657,28 +1657,6 @@ class Contour2D(ContourMixin, Wire2D):
         if self.is_ordered() or len(self.primitives) < 2:
             return self
         new_primitives = self.ordering_contour()
-        # initial_points = []
-        # for primitive in self.primitives:
-        #     initial_points.append((primitive.start, primitive.end))
-        #
-        # new_primitives = []
-        # points = self.ordering_contour()
-        # for point1, point2 in points:
-        #     try:
-        #         index = initial_points.index((point1, point2))
-        #     except ValueError:
-        #         index = initial_points.index((point2, point1))
-        #
-        #     if isinstance(self.primitives[index], volmdlr.edges.LineSegment2D):
-        #         new_primitives.append(volmdlr.edges.LineSegment2D(point1, point2))
-        #     elif isinstance(self.primitives[index], volmdlr.edges.Arc2D):
-        #         new_primitives.append(volmdlr.edges.Arc2D(point1, self.primitives[index].interior, point2))
-        #     elif isinstance(self.primitives[index], volmdlr.edges.BSplineCurve2D):
-        #         if (point1, point2) == (self.primitives[index].start, self.primitives[index].end):
-        #             new_primitives.append(self.primitives[index])
-        #         else:
-        #             new_primitives.append(self.primitives[index].reverse())
-
         self.primitives = new_primitives
 
         return self
@@ -2781,7 +2759,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         points_hull = [pt.copy() for pt in points]
 
-        ymax, pos_ymax = volmdlr.core.max_pos([pt.y for pt in points_hull])
+        _, pos_ymax = volmdlr.core.max_pos([pt.y for pt in points_hull])
         point_start = points_hull[pos_ymax]
         hull = [point_start]
 
@@ -3054,7 +3032,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
              plot_points=False, point_numbering=False,
              fill=False, fill_color='w', equal_aspect=True):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
             ax.set_aspect('equal')
 
         if fill:
@@ -3698,13 +3676,8 @@ class Circle2D(Contour2D):
     def from_arc(cls, arc: volmdlr.edges.Arc2D):
         return cls(arc.center, arc.radius, arc.name + ' to circle')
 
-    def point_belongs(self, point, tolerance=1e-9):
-        return point.point_distance(self.center) <= self.radius + tolerance
-
-    # def border_points(self):
-    #     start = self.center - self.radius * volmdlr.Point2D(1, 0)
-    #     end = self.center + self.radius * volmdlr.Point2D(1, 0)
-    #     return [start, end]
+    def point_belongs(self, point, abs_tol=1e-9):
+        return point.point_distance(self.center) <= self.radius + abs_tol
 
     def bounding_rectangle(self):
 
@@ -3791,7 +3764,7 @@ class Circle2D(Contour2D):
     def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, equal_aspect=True, linestyle='-', linewidth=1):
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
         # else:
         #     fig = ax.figure
         if self.radius > 0:
@@ -4168,7 +4141,7 @@ class Ellipse2D(Contour2D):
         angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, self.major_dir)
         return angle_abscissa
 
-    def plot(self, ax=None, color='k', alpha=1, plot_points=False):
+    def plot(self, ax=None, color='k', alpha=1, plot_points=False, equal_aspect=True):
         """
         Matplotlib plot for an ellipse.
 
@@ -4181,6 +4154,8 @@ class Ellipse2D(Contour2D):
             x.append(point_x)
             y.append(point_y)
         plt.plot(x, y, color=color, alpha=alpha)
+        if equal_aspect:
+            ax.set_aspect('equal')
         return ax
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
@@ -4290,7 +4265,7 @@ class Contour3D(ContourMixin, Wire3D):
         name = arguments[0][1:-1]
         raw_edges = []
         # edge_ends = {}
-        for ie, edge_id in enumerate(arguments[1]):
+        for edge_id in arguments[1]:
             raw_edges.append(object_dict[int(edge_id[1:])])
 
         if (len(raw_edges)) == 1:
@@ -4794,14 +4769,14 @@ class Circle3D(Contour3D):
                                     npy.linspace(0, volmdlr.TWO_PI, angle_resolution + 1)][:-1]
         return discretization_points_3d
 
-    def abscissa(self, point3d: volmdlr.Point3D):
+    def abscissa(self, point: volmdlr.Point3D):
         """
         Calculates the abscissa a given point.
 
-        :param point3d: point to calculate abscissa.
+        :param point: point to calculate abscissa.
         :return: abscissa
         """
-        x, y, _ = self.frame.new_coordinates(point3d)
+        x, y, _ = self.frame.new_coordinates(point)
         u1 = x / self.radius
         u2 = y / self.radius
         theta = volmdlr.core.sin_cos_angle(u1, u2)
