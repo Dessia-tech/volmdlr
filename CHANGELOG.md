@@ -73,6 +73,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Line3D: sort_points_along_line
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
 
+### Changes
+
+* Import from dessia_common are now performed from dessia_common.core
 
 ## v0.6.0 [11/7/2022]
 
@@ -111,12 +114,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D: point_belongs (bug when contour has only one primitive, like FullArc2D)
 * Contour: contours_from_edges
 * PlaneFace3D: face_intersections
+<<<<<<< HEAD
 * Edge: insert_knots_and_mutiplicity
 * BSplineCurve3D: from_step
 * Surface2D: cut_by_line
 * Circle3D: to_step
 * ArcEllipse3D.to_2d()
 
+=======
+* infinite primitive offset of linesegment
+>>>>>>> master
 
 ### Performance improvements
 
