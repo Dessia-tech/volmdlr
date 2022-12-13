@@ -13,7 +13,7 @@ from scipy.linalg import norm
 
 def euler_angles_to_transfer_matrix(psi, theta, phi):
     """
-    Give Transition Matrix from euler angles
+    Give Transition Matrix from euler angles.
     Angles in radians
     """
 
@@ -30,6 +30,9 @@ def euler_angles_to_transfer_matrix(psi, theta, phi):
 
 
 def transfer_matrix_to_euler_angles(R):
+    """
+    Returns the euler angle from a transfer matrix.
+    """
     if ((R[2, 2] != 1) and (R[2, 2] != -1)):
         theta = math.acos(R[2, 2])
         psi = math.atan2(R[2, 0] / math.sin(theta), R[2, 1] / math.sin(theta))
@@ -46,6 +49,9 @@ def transfer_matrix_to_euler_angles(R):
 
 
 def direction_to_euler_angles(u, v=random.random(3)):
+    """
+    Returns one possibility of euler angles from a vector indicating a direction.
+    """
     #    u=npy.array([ux,uy,uz])
     u = u / norm(u)
     R = zeros((3, 3))
@@ -61,7 +67,7 @@ def direction_to_euler_angles(u, v=random.random(3)):
 
 def huygens2d(Ix, Iy, Ixy, area, point1, point2):
     """
-    area acts the same way as the mass in 3D
+    Area acts the same way as the mass in 3D.
     """
     a, b = (point1 - point2)
     # I2 = I1+area*array([[b**2,-a*b],[-a*b,a**2]])
@@ -70,6 +76,9 @@ def huygens2d(Ix, Iy, Ixy, area, point1, point2):
 
 
 def cos_image(x1: float, x2: float) -> Tuple[float, float]:
+    """
+    Returns the interval image of cosinus function between two values
+    """
     interval_min = x1 // math.pi
     interval_max = x2 // math.pi
     nb_interval = interval_max - interval_min
@@ -85,6 +94,9 @@ def cos_image(x1: float, x2: float) -> Tuple[float, float]:
 
 
 def sin_image(x1: float, x2: float) -> Tuple[float, float]:
+    """
+    Returns the interval image of sinus function between two values
+    """
     x1 = x1 - 0.5 * math.pi
     x2 = x2 - 0.5 * math.pi
     return cos_image(x1, x2)

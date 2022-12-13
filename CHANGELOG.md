@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unrealeased
+
+### New Features
+
+
+### Fixed
+
+* Contour2D: bounding_rectangle (specify number_points for discretization_points)
+* BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
+
+
+### Performance improvements
+
+
+### Refactorings
+
+
+### Unittests
+
+* Contour2D: point_belongs
+
+
 
 ## Unrealeased
 
@@ -23,10 +45,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * FullArc3D: linesegment_intersections
 * Line: sort_points_along_line
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
+* New Class wires.Ellipse2D
+* Ellipse2D.point_over_ellipse()
+* Ellipse2D.line_intersections()
+* Ellipse2D.linesegment_intersections()
+* Ellipse2D.discretization_points()
+* Ellipse2D.abscissa()
+* Ellipse2D.point_angle_with_major_dir()
+* Ellipse2D.area()
+* Ellipse2D.rotation()
+* Ellipse2D.tranlation()
+* Ellipse2D.frame_mapping()
+* Line2D.frame_mapping()
+* Contour3D: linesegment_intersections, line_intersections
+* Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
+* Arc3D: line_intersections, linesegment_intersections
+* new module utils: intersections -> circle_3d_linesegment_intersections
 
 
 ### Fixed
 
+* Contour2D: point_belongs
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * Arc3D: plot
 * Cylinder: point_belongs
@@ -39,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
-
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
@@ -72,7 +111,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Line2D: sort_points_along_line
 * Line3D: sort_points_along_line
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
+* Ellipse2D.point_over_ellipse()
+* Ellipse2D.line_intersections()
+* Ellipse2D.linesegment_intersections()
+* Ellipse2D.discretization_points()
+* Ellipse2D.abscissa()
+* Ellipse2D.point_angle_with_major_dir()
+* Ellipse2D.area()
+* Ellipse2D.rotation()
+* Ellipse2D.tranlation()
+* Ellipse2D.frame_mapping()
+* Line2D.frame_mapping()
+* ArcEllipse3D.to_2d()
+* Circle3D: point_belongs
+* Circle3D: discretization_points
+* Arc3D: line_intersections, linesegment_intersections
 
+## v0.6.1 [12/13/2022]
+
+### Changes
+
+* Import from dessia_common are now performed from dessia_common.core
+
+### Fixed
+* infinite primitive offset of linesegment
 
 ## v0.6.0 [11/7/2022]
 
@@ -111,12 +173,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D: point_belongs (bug when contour has only one primitive, like FullArc2D)
 * Contour: contours_from_edges
 * PlaneFace3D: face_intersections
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> testing
 * Edge: insert_knots_and_mutiplicity
 * BSplineCurve3D: from_step
 * Surface2D: cut_by_line
 * Circle3D: to_step
+<<<<<<< HEAD
+=======
 * ArcEllipse3D.to_2d()
 
+=======
+* infinite primitive offset of linesegment
+>>>>>>> master
+=======
+>>>>>>> master
+>>>>>>> testing
 
 ### Performance improvements
 
