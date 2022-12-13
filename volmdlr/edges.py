@@ -1037,7 +1037,9 @@ class BSplineCurve2D(BSplineCurve):
         :return: The bounding rectangle.
         :rtype: :class:`volmdlr.core.BoundingRectangle`
         """
-        points = self.discretization_points()
+
+        points = self.discretization_points(number_points=5)
+
         points_x = [p.x for p in points]
         points_y = [p.y for p in points]
 
