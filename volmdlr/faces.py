@@ -1004,7 +1004,7 @@ class Plane3D(Surface3D):
             return cls.from_3_points(origin, vector1 + origin,
                                      vector2_min + origin)
 
-    def point_on_plane(self, point):
+    def point_on_surface(self, point):
         """
         Return if the point belongs to the plane at a tolerance of 1e-6.
         """
@@ -1043,6 +1043,25 @@ class Plane3D(Surface3D):
             return []
         return [linesegment.start + intersection_abscissea * u]
 
+    def fullarc_intersections(self, fullarc: vme.FullArc3D):
+        """
+        Calculates the intersections between a Plane 3D and a FullArc 3D.
+
+        :param fullarc: fullarc to verify intersections.
+        :return: list of intersections: List[volmdlr.Point3D].
+        """
+        fullarc_plane = Plane3D(fullarc.frame)
+        plane_intersections = self.plane_intersection(fullarc_plane)
+        if not plane_intersections:
+            return []
+        fullarc2d = fullarc.to_2d(fullarc.center, fullarc_plane.frame.u, fullarc_plane.frame.v)
+        line2d = plane_intersections[0].to_2d(fullarc.center, fullarc_plane.frame.u, fullarc_plane.frame.v)
+        fullarc2d_inters_line2d = fullarc2d.line_intersections(line2d)
+        intersections = []
+        for inter in fullarc2d_inters_line2d:
+            intersections.append(inter.to_3d(fullarc.center, fullarc_plane.frame.u, fullarc_plane.frame.v))
+        return intersections
+
     def equation_coefficients(self):
         """
         returns the a,b,c,d coefficient from equation ax+by+cz+d = 0
@@ -1052,6 +1071,8 @@ class Plane3D(Surface3D):
         return (a, b, c, d)
 
     def plane_intersection(self, other_plane):
+        if self.is_parallel(other_plane):
+            return []
         line_direction = self.frame.w.cross(other_plane.frame.w)
 
         if line_direction.norm() < 1e-6:
@@ -1063,23 +1084,38 @@ class Plane3D(Surface3D):
         if a1 * b2 - a2 * b1 != 0.:
             x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
             y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
-            point1 = volmdlr.Point3D((x0, y0, 0))
+            point1 = volmdlr.Point3D(x0, y0, 0)
+        elif a2 * c1 != a1 * c2:
+            x0 = (c2 * d1 - c1 * d2) / (a2 * c1 - a1 * c2)
+            z0 = (a1 * d2 - a2 * d1) / (a2 * c1 - a1 * c2)
+            point1 = volmdlr.Point3D(x0, 0, z0)
+        elif c1 * b2 != b1 * c2:
+            y0 = (- c2 * d1 + c1 * d2) / (b1 * c2 - c1 * b2)
+            z0 = (- b1 * d2 + b2 * d1) / (b1 * c2 - c1 * b2)
+            point1 = volmdlr.Point3D(0, y0, z0)
         else:
-            y0 = (b2 * d2 - c2 * d1) / (b1 * c2 - c1 * b2)
-            z0 = (c1 * d1 - b1 * d2) / (b1 * c2 - c1 * b2)
-            point1 = volmdlr.Point3D((0, y0, z0))
-
-        # point2 = point1 + line_direction
-        # return volmdlr.Line3D(point1, point2)
-        return volmdlr.Line3D(point1, point1 + line_direction)
+            raise NotImplementedError
+        return [volmdlr.edges.Line3D(point1, point1 + line_direction)]
 
     def is_coincident(self, plane2):
         """
-        Verifies if two planes are parallel and coincident
+        Verifies if two planes are parallel and coincident.
+
+        """
+        if not isinstance(self, plane2.__class__):
+            False
+        if self.is_parallel(plane2):
+            if plane2.point_on_surface(self.frame.origin):
+                return True
+        return False
+
+    def is_parallel(self, plane2):
+        """
+        Verifies if two planes are parallel.
+
         """
         if self.frame.w.is_colinear_to(plane2.frame.w):
-            if plane2.point_on_plane(self.frame.origin):
-                return True
+            return True
         return False
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -2642,7 +2678,7 @@ class BSplineSurface3D(Surface3D):
         points = [self.control_points[0], self.control_points[math.ceil(len(self.control_points) / 2)],
                   self.control_points[-1]]
         plane3d = Plane3D.from_3_points(*points)
-        if all(plane3d.point_on_plane(point) for point in self.control_points):
+        if all(plane3d.point_on_surface(point) for point in self.control_points):
             return plane3d
         return self
 
@@ -7804,7 +7840,7 @@ class ClosedShell3D(OpenShell3D):
     def point_in_shell_face(self, point: volmdlr.Point3D):
 
         for face in self.faces:
-            if (face.surface3d.point_on_plane(point) and face.point_belongs(point)) or \
+            if (face.surface3d.point_on_surface(point) and face.point_belongs(point)) or \
                     face.outer_contour3d.point_over_contour(point, abs_tol=1e-7):
                 return True
         return False

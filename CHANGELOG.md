@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ellipse2D.tranlation()
 * Ellipse2D.frame_mapping()
 * Line2D.frame_mapping()
+* Plane3D: is_parallel, fullarc_intersections
 
 
 ### Fixed
@@ -77,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
-
+* Plane3D: plane_intersections, is_coindident
 
 ### Performance improvements
 
@@ -121,6 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ellipse2D.tranlation()
 * Ellipse2D.frame_mapping()
 * Line2D.frame_mapping()
+* Plane3D: plane_intersections, fullarc_intersections, is_parallel, is_coincident
 
 
 ## v0.6.0 [11/7/2022]
