@@ -1310,7 +1310,7 @@ class CylindricalSurface3D(Surface3D):
         Transformation of an arcellipse3d to 2d, in a cylindrical surface.
 
         """
-        points3d = arcellipse3d.discretization_points(number_points = 50)
+        points3d = arcellipse3d.discretization_points(number_points=50)
         points2d = [self.point3d_to_2d(point) for point in points3d]
         bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points2d, degree=2)
         return [bsplinecurve2d]
