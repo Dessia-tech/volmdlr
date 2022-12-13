@@ -60,10 +60,16 @@ def step_split_arguments(function_arg):
 
 
 def vertex_point(arguments, object_dict):
+    """
+    Returns the data in case of a VERTEX.
+    """
     return object_dict[arguments[1]]
 
 
 def oriented_edge(arguments, object_dict):
+    """
+    Returns the data in case of an ORIENTED_EDGE.
+    """
     return object_dict[arguments[3]]
 
 
@@ -91,11 +97,16 @@ def trimmed_curve(arguments, object_dict):
 
 
 def vertex_loop(arguments, object_dict):
+    """
+    Returns the data in case of a VERTEX_LOOP.
+    """
     return object_dict[arguments[1]]
 
 
 def pcurve(arguments, object_dict):
-    # Pas besoin de mettre PCURVE ici s'il n'est pas dans STEP_TO_VOLMDLR
+    """
+    Returns the data in case of a PCURVE.
+    """
     return object_dict[arguments[1]]
 
 
