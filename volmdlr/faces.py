@@ -3094,7 +3094,7 @@ class BSplineSurface3D(Surface3D):
         convert a linesegment2d from the parametric to the dimensioned frame
         """
 
-        points = linesegment2d.discretization_points(20)
+        points = linesegment2d.discretization_points(number_points=20)
         points_dim = [
             self.point2d_parametric_to_dimension(
                 p, grid2d) for p in points]
@@ -7514,8 +7514,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         shell1_points_inside_shell2 = []
         for face in self.faces:
-            for point in face.outer_contour3d.discretization_points(
-                    resolution):
+            for point in face.outer_contour3d.discretization_points(angle_resolution=resolution):
                 if shell2.point_belongs(point):
                     shell1_points_inside_shell2.append(point)
 
@@ -7543,7 +7542,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         shell1_points_outside_shell2 = []
         for face in self.faces:
             for point in face.outer_contour3d.discretization_points(
-                    resolution):
+                    angle_resolution=resolution):
                 if not shell2.point_belongs(point):
                     shell1_points_outside_shell2.append(point)
 
@@ -7694,7 +7693,7 @@ class ClosedShell3D(OpenShell3D):
         return False
 
     def is_face_inside(self, face: Face3D):
-        for point in face.outer_contour3d.discretization_points(0.1):
+        for point in face.outer_contour3d.discretization_points(angle_resolution=0.1):
             point_inside_shell = self.point_belongs(point)
             point_in_shells_faces = self.point_in_shell_face(point)
             if (not point_inside_shell) and (not point_in_shells_faces):
@@ -7724,11 +7723,11 @@ class ClosedShell3D(OpenShell3D):
         points1 = []
         for face in self.faces:
             points1.extend(
-                face.outer_contour3d.discretization_points(resolution))
+                face.outer_contour3d.discretization_points(angle_resolution=resolution))
         points2 = []
         for face in shell2.faces:
             points2.extend(
-                face.outer_contour3d.discretization_points(resolution))
+                face.outer_contour3d.discretization_points(angle_resolution=resolution))
 
         nb_pts1 = len(points1)
         nb_pts2 = len(points2)

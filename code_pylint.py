@@ -10,11 +10,11 @@ MIN_NOTE = 9.17
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
 
-MIN_NOTE = 7.9
+MIN_NOTE = 8.3
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 958,
-                     'no-else-return': 57,
+                     'invalid-name': 954,
+                     'no-else-return': 56,
                      'consider-using-f-string': 132,
                      'no-member': 15,
                      'inconsistent-return-statements': 18,
@@ -34,7 +34,7 @@ MAX_ERROR_BY_TYPE = {
                      'empty-docstring': 18,
                      'duplicate-code': 11,
                      'no-self-use': 16,
-                     'arguments-renamed': 11,
+                     'arguments-renamed': 4,
                      'too-many-ancestors': 8,
                      'expression-not-assigned': 1,
                      'non-parent-init-called': 7,
@@ -49,7 +49,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-nested-blocks': 6,
                      'attribute-defined-outside-init': 9,
                      'too-many-return-statements': 4,
-                     'consider-merging-isinstance': 6,
+                     'consider-merging-isinstance': 1,
                      'cyclic-import': 4,
                      'consider-iterating-dictionary': 2,
                      'raise-missing-from': 4,
