@@ -500,14 +500,32 @@ class BSplineCurve(Edge):
         :rtype: float
         """
         length = self.length()
+        a, b = self.curve.domain
+        periodic = self.periodic
+
+        def check_u(u, a, b):
+            if not periodic:
+                if u < a:
+                    u = a
+                elif u > b:
+                    u = b
+            else:
+                if u < a:
+                    u = b - (a-u)
+                elif u > b:
+                    u = a + (u-b)
+            return u
 
         def d(x):
             return (point - self.point_at_abscissa(x)).norm()
 
-        def f(u):
+        def f(u, a, b):
+            u = check_u(u, a, b)
             C = self.derivatives(u, 1)
             return C[1].dot(C[0] - point)
-        def f_prime(u):
+
+        def f_prime(u, a, b):
+            u = check_u(u, a, b)
             C = self.derivatives(u, 2)
             return C[2].dot(C[0] - point) + (C[1].norm()) ** 2
         x = npy.linspace(0, 1, 21)
@@ -531,30 +549,32 @@ class BSplineCurve(Edge):
                 x0 = xi
                 pos = i
                 min_dist = dist
-        res = scp.optimize.newton(f, x0, fprime=f_prime, tol=tol)
+
+        res = scp.optimize.newton(f, x0, fprime=f_prime, args=(a, b), tol=tol)
 
         return res * length
-        # z = scp.optimize.least_squares(lambda u: (point - self.point_at_abscissa(u)).norm(), x0=x0, bounds=([bounds[pos][0]], [bounds[pos][1]]))
-        # if z.fun < tol:
-        #     return z.x[0]
-        # x0 = z.x[0]
-        # res = scp.optimize.minimize(lambda u: (point - self.point_at_abscissa(u)).norm(), x0=npy.array([x0]), bounds=[bounds[pos]], tol=tol)
-        # if res.fun < tol:
-        #     return res.x[0]
-        # for x0 in [0, length * 0.25, length * 0.5, length * 0.75, length]:
-        #     res = scp.optimize.least_squares(
-        #         lambda u: (point - self.point_at_abscissa(u)).norm(),
-        #         x0=x0,
-        #         bounds=([0], [length]),
-        #         # ftol=tol / 10,
-        #         # xtol=tol / 10,
-        #         # loss='soft_l1'
-        #     )
-        #     if res.fun < tol:
-        #         return res.x[0]
 
-        print('distance =', res.cost)
-        print('res.fun:', res.fun)
+        #z = scp.optimize.least_squares(lambda u: (point - self.point_at_abscissa(u)).norm(), x0=x0, bounds=([bounds[pos][0]], [bounds[pos][1]]))
+        #if z.fun < tol:
+        #    return z.x[0]
+        #x0 = z.x[0]
+        #res = scp.optimize.minimize(lambda u: (point - self.point_at_abscissa(u)).norm(), x0=npy.array([x0]), bounds=[bounds[pos]], tol=tol)
+        #if res.fun < tol:
+        #    return res.x[0]
+        #for x0 in [0, length * 0.25, length * 0.5, length * 0.75, length]:
+        #    res = scp.optimize.least_squares(
+        #        lambda u: (point - self.point_at_abscissa(u)).norm(),
+        #        x0=x0,
+        #        bounds=([0], [length]),
+        #        # ftol=tol / 10,
+        #        # xtol=tol / 10,
+        #        # loss='soft_l1'
+        #    )
+        #    if res.fun < tol:
+        #        return res.x[0]
+#
+        #print('distance =', res.cost)
+        #print('res.fun:', res.fun)
         # ax = self.plot()
         # point.plot(ax=ax)
         # best_point = self.point_at_abscissa(res.x)

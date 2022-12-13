@@ -3138,7 +3138,24 @@ class BSplineSurface3D(Surface3D):
                 x0 = xi
                 min_dist = dist
 
-        # # if delta_bound_x == 1 and delta_bound_y == 1:
+        a, b = self.surface.domain[0]
+        c, d = self.surface.domain[1]
+
+        def check_u_v(x, a, b, c, d):
+            u, v = x
+            if u < a:
+                u = a
+            elif u > b:
+                u = b
+
+            if v < c:
+                v = c
+            elif v > d:
+                v = d
+            x[0] = u
+            x[1] = v
+            return x
+
         # def fun(x):
         #     S = self.derivatives(x[0], x[1], 1)
         #     r = S[0][0] - point3d
@@ -3146,18 +3163,20 @@ class BSplineSurface3D(Surface3D):
         #     f = r.dot(r)
         #     jac = npy.array([[2 * r.dot(S[1][0]), 2 * r.dot(S[0][1])]])
         #     return f, jac
-        # # def jac(x):
-        # #     S = self.derivatives(x[0], x[1], 1)
-        # #     r = S[0][0] - point3d
-        # #     return npy.array([[2 * r.dot(S[1][0]), 2 * r.dot(S[0][1])],
-        # #                       [2 * r.dot(S[1][0]), 2 * r.dot(S[0][1])]])
-        #
-        # res = scp.optimize.minimize(fun, x0, bounds=[(min_bound_x, max_bound_x),
-        #                                     (min_bound_y, max_bound_y)], jac=True)
-        # # if sol.fun[0] < tol and sol.fun[1] < tol:
-        # if res.fun < tol:
-        #     # print(sol.x)
-        #     return volmdlr.Point2D(*res.x)
+        def fun(x, a, b, c, d):
+            x = check_u_v(x, a, b, c, d)
+            S = self.derivatives(x[0], x[1], 1)
+            r = S[0][0] - point3d
+            f = npy.array([S[1][0].dot(r), S[0][1].dot(r)])
+            jac = npy.array([[2 * r.dot(S[1][0]), 2 * r.dot(S[0][1])],
+                              [2 * r.dot(S[1][0]), 2 * r.dot(S[0][1])]])
+            return f, jac
+
+
+        res = scp.optimize.root(fun, x0, jac=True, args=(a, b, c, d))
+        if res.fun[0] < tol and res.fun[1] < tol:
+            print(res.x)
+            return volmdlr.Point2D(*res.x)
 
         # for i, x0 in enumerate(x0s):
         #     # start = time.time()
@@ -3182,6 +3201,7 @@ class BSplineSurface3D(Surface3D):
                                     tol=tol)
         # res.fun represent the value of the objective function
         if res.fun < tol:
+            print(2)
             return volmdlr.Point2D(*res.x)
         x0 = res.x
         z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
@@ -3194,6 +3214,7 @@ class BSplineSurface3D(Surface3D):
                                        )
         # z.cost represent the value of the cost function at the solution
         if z.fun < tol:
+            print(3)
             return volmdlr.Point2D(*z.x)
 
         results.append((z.x, z.fun))
@@ -7987,7 +8008,7 @@ class BSplineFace3D(Face3D):
             tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                    'segments': npy.array(segments).reshape((-1, 2)),
                    }
-            t = triangle.triangulate(tri, 'qpa0.001')
+            t = triangle.triangulate(tri, 'qpa0.05')
             triangles = t['triangles'].tolist()
             np = t['vertices'].shape[0]
             points = [vmd.Node2D(*t['vertices'][i, :]) for i in
@@ -8021,7 +8042,7 @@ class BSplineFace3D(Face3D):
                }
         if holes:
             tri['holes'] = npy.array(holes).reshape((-1, 2))
-        t = triangle.triangulate(tri, 'qpa0.001')
+        t = triangle.triangulate(tri, 'qpa0.05')
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in
