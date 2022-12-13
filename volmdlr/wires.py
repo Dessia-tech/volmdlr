@@ -5096,7 +5096,7 @@ class Ellipse3D(Contour3D):
         """
         perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
         return math.pi * (self.major_axis + self.minor_axis) *\
-               (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+            (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
