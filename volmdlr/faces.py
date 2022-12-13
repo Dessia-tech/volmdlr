@@ -834,31 +834,6 @@ class Surface3D(DessiaObject):
                           and math.isclose(delta_y2, 0., abs_tol=1e-3)
                           and math.isclose(dist2, 0, abs_tol=5e-5)):
                         primitives = [p.reverse() for p in primitives[::-1]]
-                    # else:
-                    # ax2 = contour3d.plot()
-                    # primitive3d.plot(ax=ax2, color='r')
-                    # last_primitive3d.plot(ax=ax2, color='b')
-                    # # self.plot(ax=ax2)
-                    #
-                    # ax = last_primitive.plot(color='b', plot_points=True)
-                    # # primitives[0].plot(ax=ax, color='r', plot_points=True)
-                    # # primitives[-1].plot(ax=ax, color='r', plot_points=True)
-                    # for p in primitives:
-                    #     p.plot(ax=ax, color='r', plot_points=True)
-                    # if self.x_periodicity:
-                    #     vme.Line2D(volmdlr.Point2D(self.x_periodicity, 0),
-                    #                volmdlr.Point2D(self.x_periodicity, 1)) \
-                    #         .plot(ax=ax)
-                    # print('Primitives not following each other in contour:')
-                    # print('Surface 3D:', self)
-                    # print('3D primitive in red:', primitive3d)
-                    # print('Previous 3D primitive:', last_primitive3d)
-                    # raise ValueError(
-                    #     'Primitives not following each other in contour:',
-                    #     'delta1={}, {}, {} ; '
-                    #     'delta2={}, {}, {}'.format(
-                    #         delta_x1, delta_y1, dist1,
-                    #         delta_x2, delta_y2, dist2))
 
                 if primitives:
                     last_primitive = primitives[-1]
