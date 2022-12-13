@@ -218,7 +218,8 @@ class DisplayMesh3D(DisplayMesh):
 
     def to_stl(self):
         """
-        Exports to STL
+        Exports to STL.
+
         """
         # TODO: remove this in the future
         import volmdlr.stl as vmstl

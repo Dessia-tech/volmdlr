@@ -1898,13 +1898,13 @@ class ConicalSurface3D(Surface3D):
 
 
 class SphericalSurface3D(Surface3D):
-    face_class = 'SphericalFace3D'
     """
     :param frame: Sphere's frame to position it
     :type frame: volmdlr.Frame3D
     :param radius: Sphere's radius
     :type radius: float
     """
+    face_class = 'SphericalFace3D'
 
     def __init__(self, frame, radius, name=''):
         self.frame = frame
@@ -2011,13 +2011,13 @@ class SphericalSurface3D(Surface3D):
 
 
 class RuledSurface3D(Surface3D):
-    face_class = 'RuledFace3D'
     """
     :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
     :type frame: volmdlr.Frame3D
     :param radius: Cylinder's radius
     :type radius: float
     """
+    face_class = 'RuledFace3D'
 
     def __init__(self,
                  wire1: volmdlr.wires.Wire3D,
@@ -3094,7 +3094,7 @@ class BSplineSurface3D(Surface3D):
         convert a linesegment2d from the parametric to the dimensioned frame
         """
 
-        points = linesegment2d.discretization_points(20)
+        points = linesegment2d.discretization_points(number_points=20)
         points_dim = [
             self.point2d_parametric_to_dimension(
                 p, grid2d) for p in points]
@@ -5101,6 +5101,7 @@ class PlaneFace3D(Face3D):
         if list_open_cutting_contours:
             list_faces = self.divide_face_with_open_cutting_contours(list_open_cutting_contours, inside)
         list_faces = self.divide_face_with_closed_cutting_contours(list_closed_cutting_contours, list_faces)
+        list_faces = [face for face in list_faces if not math.isclose(face.area(), 0.0, abs_tol=1e-6)]
         return list_faces
 
     def is_adjacent(self, face2: Face3D):
@@ -7513,8 +7514,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         shell1_points_inside_shell2 = []
         for face in self.faces:
-            for point in face.outer_contour3d.discretization_points(
-                    resolution):
+            for point in face.outer_contour3d.discretization_points(angle_resolution=resolution):
                 if shell2.point_belongs(point):
                     shell1_points_inside_shell2.append(point)
 
@@ -7542,7 +7542,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         shell1_points_outside_shell2 = []
         for face in self.faces:
             for point in face.outer_contour3d.discretization_points(
-                    resolution):
+                    angle_resolution=resolution):
                 if not shell2.point_belongs(point):
                     shell1_points_outside_shell2.append(point)
 
@@ -7693,7 +7693,7 @@ class ClosedShell3D(OpenShell3D):
         return False
 
     def is_face_inside(self, face: Face3D):
-        for point in face.outer_contour3d.discretization_points(0.1):
+        for point in face.outer_contour3d.discretization_points(angle_resolution=0.1):
             point_inside_shell = self.point_belongs(point)
             point_in_shells_faces = self.point_in_shell_face(point)
             if (not point_inside_shell) and (not point_in_shells_faces):
@@ -7723,11 +7723,11 @@ class ClosedShell3D(OpenShell3D):
         points1 = []
         for face in self.faces:
             points1.extend(
-                face.outer_contour3d.discretization_points(resolution))
+                face.outer_contour3d.discretization_points(angle_resolution=resolution))
         points2 = []
         for face in shell2.faces:
             points2.extend(
-                face.outer_contour3d.discretization_points(resolution))
+                face.outer_contour3d.discretization_points(angle_resolution=resolution))
 
         nb_pts1 = len(points1)
         nb_pts2 = len(points2)
