@@ -1102,8 +1102,6 @@ class Plane3D(Surface3D):
         Verifies if two planes are parallel and coincident.
 
         """
-        if not isinstance(self, plane2.__class__):
-            False
         if self.is_parallel(plane2):
             if plane2.point_on_surface(self.frame.origin):
                 return True
@@ -1333,9 +1331,8 @@ class CylindricalSurface3D(Surface3D):
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             p1 = self.point3d_to_2d(fullarc3d.start)
             return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.X2D)]
-        else:
-            print(fullarc3d.normal, self.frame.w)
-            raise ValueError('Impossible!')
+        print(fullarc3d.normal, self.frame.w)
+        raise ValueError('Impossible!')
 
     def circle3d_to_2d(self, circle3d):
         return []
