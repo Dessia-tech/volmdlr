@@ -23,6 +23,7 @@ from packaging import version
 
 import dessia_common as dc
 import plot_data.core as plot_data
+import volmdlr.utils.intersections as vm_utils_intersections
 import volmdlr.core_compiled
 import volmdlr.core
 import volmdlr.geometry
@@ -58,6 +59,11 @@ def insert_knots_and_mutiplicity(knots, knot_mutiplicities, knot_to_add, num):
 
 
 class Edge(dc.DessiaObject):
+    """
+    Defines a simple edge Object.
+
+    """
+
     def __init__(self, start, end, name=''):
         self.start = start
         self.end = end
@@ -191,7 +197,7 @@ class Line(dc.DessiaObject):
     def __getitem__(self, key):
         if key == 0:
             return self.point1
-        elif key == 1:
+        if key == 1:
             return self.point2
         raise IndexError
 
@@ -316,8 +322,8 @@ class LineSegment(Edge):
 
     def unit_normal_vector(self, abscissa=0.):
         """
-        :param abscissa: defines where in the line_segement
-        unit normal vector is to be calculated.
+
+        :param abscissa: defines where in the line_segement unit normal vector is to be calculated.
         :return: The unit normal vector of the LineSegement.
         """
         return self.unit_direction_vector(abscissa).normal_vector()
@@ -349,9 +355,9 @@ class LineSegment(Edge):
 class BSplineCurve(Edge):
     """
     An abstract class for B-spline curves. The following rule must be
-    respected : `number of knots = number of control points + degree + 1`
+    respected : `number of knots = number of control points + degree + 1`.
 
-    :param degree: The degree of the B-spline curve
+    :param degree: The degree of the B-spline curve.
     :type degree: int
     :param control_points: A list of 2 or 3 dimensional points
     :type control_points: Union[List[:class:`volmdlr.Point2D`],
@@ -422,7 +428,7 @@ class BSplineCurve(Edge):
         Reverses the B-spline's direction by reversing its control points.
 
         :return: A reversed B-spline curve.
-        :rtype: :class:`volmdlr.edges.BSplineCurve.
+        :rtype: :class:`volmdlr.edges.BSplineCurve`.
         """
         return self.__class__(
             degree=self.degree,
@@ -1037,7 +1043,9 @@ class BSplineCurve2D(BSplineCurve):
         :return: The bounding rectangle.
         :rtype: :class:`volmdlr.core.BoundingRectangle`
         """
-        points = self.discretization_points()
+
+        points = self.discretization_points(number_points=5)
+
         points_x = [p.x for p in points]
         points_y = [p.y for p in points]
 
@@ -1247,7 +1255,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def reverse(self):
         """
-        Reverse the bspline's direction by reversing its start and end points
+        Reverse the bspline's direction by reversing its start and end points.
+
         """
 
         return self.__class__(degree=self.degree,
@@ -1269,7 +1278,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def nearest_point_to(self, point):
         """
-        Find out the nearest point on the linesegment to point
+        Find out the nearest point on the linesegment to point.
+
         """
 
         points = self.polygon_points(500)
@@ -1292,6 +1302,7 @@ class BSplineCurve2D(BSplineCurve):
     def axial_symmetry(self, line):
         """
         Finds out the symmetric bsplinecurve2d according to a line.
+
         """
 
         points_symmetry = [point.axial_symmetry(line) for point in self.control_points]
@@ -1452,6 +1463,7 @@ class LineSegment2D(LineSegment):
     def linesegment_intersections(self, linesegment: 'LineSegment2D'):
         """
         Touching linesegments does not intersect.
+
         """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
         # TODO: May be these commented conditions should be used for linesegment_crossings
@@ -1650,6 +1662,7 @@ class LineSegment2D(LineSegment):
     def nearest_point_to(self, point):
         """
         Find out the nearest point on the linesegment to point.
+
         """
 
         points = self.discretization_points(number_points=500)
@@ -2883,12 +2896,11 @@ class ArcEllipse2D(Edge):
 
 
 class Line3D(Line):
-    _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
-
     """
     Define an infinite line passing through the 2 points.
 
     """
+    _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  name: str = ''):
@@ -3261,8 +3273,16 @@ class Line3D(Line):
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
         return content, current_id
 
-    def to_2d(self, plane_origin, x1, x2):
-        p2d = [p.to_2d(plane_origin, x1, x2) for p in (self.point1, self.point2)]
+    def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a Line3D into an Line2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Line2D.
+        """
+        p2d = [p.to_2d(plane_origin, x, y) for p in (self.point1, self.point2)]
         if p2d[0] == p2d[1]:
             return None
         return Line2D(*p2d, name=self.name)
@@ -3609,8 +3629,16 @@ class LineSegment3D(LineSegment):
 
         return s
 
-    def to_2d(self, plane_origin, x1, x2):
-        p2d = [p.to_2d(plane_origin, x1, x2) for p in (self.start, self.end)]
+    def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a LineSegment3D into an LineSegment2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: LineSegment2D.
+        """
+        p2d = [p.to_2d(plane_origin, x, y) for p in (self.start, self.end)]
         if p2d[0] == p2d[1]:
             return None
         return LineSegment2D(*p2d, name=self.name)
@@ -4316,8 +4344,16 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
             ax.plot(x, y, z, 'o', color=color, alpha=alpha)
         return ax
 
-    def to_2d(self, plane_origin, x1, x2):
-        control_points2d = [p.to_2d(plane_origin, x1, x2) for p in
+    def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a BSplineCurve3D into an BSplineCurve2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: BSplineCurve2D.
+        """
+        control_points2d = [p.to_2d(plane_origin, x, y) for p in
                             self.control_points]
         return BSplineCurve2D(self.degree, control_points2d,
                               self.knot_multiplicities, self.knots,
@@ -4458,6 +4494,11 @@ class Arc3D(Arc):
         self._bbox = new_bounding_box
 
     def get_bounding_box(self):
+        """
+        Calculates the bounding box of the Arc3D.
+
+        :return: a volmdlr.core.BoundingBox object.
+        """
         # TODO: implement exact calculation
 
         points = self.polygon_points()
@@ -4616,31 +4657,65 @@ class Arc3D(Arc):
         return [self.start, self.interior, self.end]
 
     def reverse(self):
+        """
+        Defines a new Arc3D, odentical to self, but in the oposite direction.
+
+        """
         return self.__class__(self.end.copy(),
                               self.interior.copy(),
                               self.start.copy())
 
     def point_at_abscissa(self, abscissa):
+        """
+        Calculates a point in the Arc2D at a given abscissa.
+
+        :param abscissa: abscissa where in the curve the point should be calculated.
+        :return: Corresponding point.
+        """
         return self.start.rotation(self.center, self.normal,
                                    abscissa / self.radius)
 
     def normal_vector(self, abscissa):
+        """
+        Calculates a normal vector at a given abscissa of the Arc3D.
+
+        :param abscissa: abscissa where in the curve the normal vector should be calculated.
+        :return: Corresponding normal vector.
+        """
         theta = abscissa / self.radius
         n_0 = self.center - self.start
         normal = n_0.rotation(self.center, self.normal, theta)
         return normal
 
     def unit_normal_vector(self, abscissa):
+        """
+        Calculates a unit normal vector at a given abscissa of the Arc3D.
+
+        :param abscissa: abscissa where in the curve the unit normal vector should be calculated.
+        :return: Corresponding unit normal vector.
+        """
         normal_vector = self.normal_vector(abscissa)
         normal_vector.normalize()
         return normal_vector
 
     def direction_vector(self, abscissa):
+        """
+        Calculates a direction vector at a given abscissa of the Arc3D.
+
+        :param abscissa: abscissa where in the curve the direction vector should be calculated.
+        :return: Corresponding direction vector.
+        """
         normal_vector = self.normal_vector(abscissa)
         tangent = normal_vector.cross(self.normal)
         return tangent
 
     def unit_direction_vector(self, abscissa):
+        """
+        Calculates a unit direction vector at a given abscissa of the Arc3D.
+
+        :param abscissa: abscissa where in the curve the unit direction vector should be calculated.
+        :return: Corresponding unit direction vector.
+        """
         direction_vector = self.direction_vector(abscissa)
         direction_vector.normalize()
         return direction_vector
@@ -4648,7 +4723,8 @@ class Arc3D(Arc):
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
         """
-        Arc3D rotation
+        Arc3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -4662,7 +4738,8 @@ class Arc3D(Arc):
     def rotation_inplace(self, center: volmdlr.Point3D,
                          axis: volmdlr.Vector3D, angle: float):
         """
-        Arc3D rotation. Object is updated inplace
+        Arc3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -4678,7 +4755,8 @@ class Arc3D(Arc):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Arc3D translation
+        Arc3D translation.
+
         :param offset: translation vector
         :return: A new translated Arc3D
         """
@@ -4689,8 +4767,9 @@ class Arc3D(Arc):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Arc3D translation. Object is updated inplace
-        :param offset: translation vector
+        Arc3D translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         self.center.translation_inplace(offset)
         self.start.translation_inplace(offset)
@@ -4785,7 +4864,8 @@ class Arc3D(Arc):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes vector frame_mapping and return a new Arc3D
+        Changes vector frame_mapping and return a new Arc3D.
+
         side = 'old' or 'new'
         """
         new_start, new_interior, new_end =\
@@ -4795,7 +4875,8 @@ class Arc3D(Arc):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes vector frame_mapping and the object is updated inplace
+        Changes vector frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         new_start, new_interior, new_end = \
@@ -4803,6 +4884,12 @@ class Arc3D(Arc):
         self.start, self.interior, self.end = new_start, new_interior, new_end
 
     def abscissa(self, point3d: volmdlr.Point3D):
+        """
+        Calculates the abscissa given a point in the Arc3D.
+
+        :param point3d: point to calculate the abscissa.
+        :return: corresponding abscissa.
+        """
         x, y, _ = self.frame.new_coordinates(point3d)
         u1 = x / self.radius
         u2 = y / self.radius
@@ -4811,6 +4898,12 @@ class Arc3D(Arc):
         return self.radius * abs(theta)
 
     def split(self, split_point: volmdlr.Point3D):
+        """
+        Splits the Arc2D in two at a given point.
+
+        :param split_point: splitting point
+        :return: two Arc2D.
+        """
         abscissa = self.abscissa(split_point)
 
         return [Arc3D(self.start,
@@ -4822,6 +4915,14 @@ class Arc3D(Arc):
                 ]
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a Arc3D into an Arc2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Arc2D.
+        """
         ps = self.start.to_2d(plane_origin, x, y)
         pi = self.interior.to_2d(plane_origin, x, y)
         pe = self.end.to_2d(plane_origin, x, y)
@@ -5062,22 +5163,25 @@ class Arc3D(Arc):
             start_id, end_id, curve_id)
         return content, [current_id]
 
-    def point_belongs(self, point3d, abs_tol=1e-10):
+    def point_belongs(self, point3d, abs_tol: float = 1e-6):
         """
-        check if a point3d belongs to the arc_3d or not
-        """
-        def f(x):
-            return (point3d - self.point_at_abscissa(x)).norm()
-        length_ = self.length()
-        x = npy.linspace(0, length_, 5)
-        x_init = []
-        for xi in x:
-            x_init.append(xi)
+        Check if a point3d belongs to the arc_3d or not.
 
-        for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, length_]))
-            if z.fun < abs_tol:
-                return True
+        :param point3d: point to be verified is on arc
+        :return: True if point is on Arc, False otherwise.
+        """
+        if not math.isclose(point3d.point_distance(self.center), self.radius, abs_tol=abs_tol):
+            return False
+        vector1 = self.start - self.center
+        vector2 = self.interior - self.center
+        vector3 = point3d - self.center
+        if not math.isclose(vector1.dot(vector2.cross(vector3)), 0.0, abs_tol=abs_tol):
+            return False
+        point_abscissa = self.abscissa(point3d)
+        abscissa_start = self.abscissa(self.start)
+        abscissa_end = self.abscissa(self.end)
+        if abscissa_start <= point_abscissa <= abscissa_end:
+            return True
         return False
 
     def triangulation(self):
@@ -5085,6 +5189,34 @@ class Arc3D(Arc):
 
     def middle_point(self):
         return self.point_at_abscissa(self.length() / 2)
+
+    def line_intersections(self, line3d: Line3D):
+        """
+        Calculates intersections between an Arc3D and a Line3D.
+
+        :param linesegment3d: linesegment to verify intersections.
+        :return: list with intersections points between line and Arc3D.
+        """
+        circle3d_lineseg_inters = vm_utils_intersections.circle_3d_linesegment_intersections(self, line3d)
+        linesegment_intersections = []
+        for intersection in circle3d_lineseg_inters:
+            if self.point_belongs(intersection, 1e-6):
+                linesegment_intersections.append(intersection)
+        return linesegment_intersections
+
+    def linesegment_intersections(self, linesegment3d: LineSegment3D):
+        """
+        Calculates intersections between an Arc3D and a LineSegment3D.
+
+        :param linesegment3d: linesegment to verify intersections.
+        :return: list with intersections points between linesegment and Arc3D.
+        """
+        linesegment_intersections = []
+        intersections = self.line_intersections(linesegment3d)
+        for intersection in intersections:
+            if linesegment3d.point_belongs(intersection):
+                linesegment_intersections.append(intersection)
+        return linesegment_intersections
 
 
 class FullArc3D(Arc3D):
@@ -5128,9 +5260,17 @@ class FullArc3D(Arc3D):
     def copy(self, *args, **kwargs):
         return FullArc3D(self._center.copy(), self.end.copy(), self._normal.copy())
 
-    def to_2d(self, plane_origin, x1, x2):
-        center = self.center.to_2d(plane_origin, x1, x2)
-        start_end = self.start.to_2d(plane_origin, x1, x2)
+    def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a FullArc3D into an FullArc2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: FullArc2D.
+        """
+        center = self.center.to_2d(plane_origin, x, y)
+        start_end = self.start.to_2d(plane_origin, x, y)
         return FullArc2D(center, start_end)
 
     def to_step(self, current_id, surface_id=None):
@@ -5457,6 +5597,14 @@ class ArcEllipse3D(Edge):
     points = property(_get_points)
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a ArcEllipse3D into an ArcEllipse2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: ArcEllipse2D.
+        """
         point_start2d = self.start.to_2d(plane_origin, x, y)
         point_interior2d = self.interior.to_2d(plane_origin, x, y)
         point_end2d = self.end.to_2d(plane_origin, x, y)

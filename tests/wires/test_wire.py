@@ -12,16 +12,16 @@ class TestWire(unittest.TestCase):
         point1 = volmdlr.Point2D(-0.007116025403784438, 0.010325317547305484)
         point2 = volmdlr.Point2D(-0.005383974596215561, 0.011325317547305485)
 
-        prim_true = contours.Contour2d_1.extract_primitives(point1,
-                                                            contours.Contour2d_1.primitives[3],
+        prim_true = contours.contour2d_1.extract_primitives(point1,
+                                                            contours.contour2d_1.primitives[3],
                                                             point2,
-                                                            contours.Contour2d_1.primitives[3],
+                                                            contours.contour2d_1.primitives[3],
                                                             inside=True)
 
-        prims_false = contours.Contour2d_1.extract_primitives(point1,
-                                                              contours.Contour2d_1.primitives[3],
+        prims_false = contours.contour2d_1.extract_primitives(point1,
+                                                              contours.contour2d_1.primitives[3],
                                                               point2,
-                                                              contours.Contour2d_1.primitives[3],
+                                                              contours.contour2d_1.primitives[3],
                                                               inside=False)
 
         self.assertAlmostEqual(volmdlr.wires.Wire2D(prim_true).length(),
@@ -35,8 +35,8 @@ class TestWire(unittest.TestCase):
         point1 = volmdlr.Point2D(-0.007116025403784438, 0.010325317547305484)
         point2 = volmdlr.Point2D(-0.005383974596215561, 0.011325317547305485)
 
-        prim_true = contours.Contour2d_1.extract_without_primitives(point1, point2, inside=True)
-        prims_false = contours.Contour2d_1.extract_without_primitives(point1, point2, inside=False)
+        prim_true = contours.contour2d_1.extract_without_primitives(point1, point2, inside=True)
+        prims_false = contours.contour2d_1.extract_without_primitives(point1, point2, inside=False)
 
         self.assertAlmostEqual(volmdlr.wires.Wire2D(prim_true).length(),
                                0.002002125855992895)

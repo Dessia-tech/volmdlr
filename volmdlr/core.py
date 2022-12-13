@@ -222,6 +222,10 @@ def delete_double_pos(points, triangles):
 
 
 def determinant(vec1, vec2, vec3):
+    """
+    Calculates the determinant for a three vector matrix.
+
+    """
     a = npy.array((vec1.vector, vec2.vector, vec3.vector))
     return npy.linalg.det(a)
 
