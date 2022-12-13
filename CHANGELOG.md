@@ -78,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
-
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
@@ -127,6 +127,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle3D: discretization_points
 * Arc3D: line_intersections, linesegment_intersections
 
+### Changes
+
+* Import from dessia_common are now performed from dessia_common.core
+
+
 ## v0.6.0 [11/7/2022]
 
 ### New Features
@@ -168,7 +173,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve3D: from_step
 * Surface2D: cut_by_line
 * Circle3D: to_step
-
 
 ### Performance improvements
 
