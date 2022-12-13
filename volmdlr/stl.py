@@ -14,7 +14,7 @@ from binaryornot.check import is_binary
 # import kaitaistruct
 from kaitaistruct import KaitaiStream
 
-import dessia_common as dc
+import dessia_common.core as dc
 import volmdlr as vm
 import volmdlr.core as vmc
 import volmdlr.faces as vmf

@@ -3,13 +3,13 @@ Tests for places faces
 """
 import unittest
 
-import dessia_common
+import dessia_common.core as dc
 import volmdlr
 
 
 class TestPlaneFace3D(unittest.TestCase):
-    face_with_3holes = dessia_common.DessiaObject.load_from_file('faces/face_with_3holes.json')
-    face = dessia_common.DessiaObject.load_from_file('faces/face_to_cut_the_one_with_3holes.json')
+    face_with_3holes = dc.DessiaObject.load_from_file('faces/face_with_3holes.json')
+    face = dc.DessiaObject.load_from_file('faces/face_to_cut_the_one_with_3holes.json')
 
     def test_area(self):
         self.assertAlmostEqual(self.face_with_3holes.area(), 0.12160000)
