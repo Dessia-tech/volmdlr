@@ -633,9 +633,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         :param wire: volmdlr.wires.Wire2D
         :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
-
-        :param wire: volmdlr.wires.Wire2D
-        :return crossings : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
         """
 
         crossings, crossings_points = [], []
@@ -1505,7 +1502,7 @@ class Contour2D(ContourMixin, Wire2D):
         points = self.edge_polygon.points[:]
         for primitive in self.primitives:
             if hasattr(primitive, 'discretization_points'):
-                points.extend(primitive.discretization_points())
+                points.extend(primitive.discretization_points(number_points=10))
         xmin = min(p[0] for p in points)
         xmax = max(p[0] for p in points)
         ymin = min(p[1] for p in points)
@@ -3136,8 +3133,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def line_intersecting_closing_point(self, crossing_point):
         """
-        finds closing point for the sewing method using intersection of lines
-        drawn from the barycenter
+        Finds closing point for the sewing method using intersection of lines
+        drawn from the barycenter.
+
         returns the closing point
         """
         vec_dir = crossing_point.copy()
@@ -3184,7 +3182,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def point_in_polygon(self):
         """
         In case the barycenter of the polygon is outside, this method
-        finds another point inside the polygon
+        finds another point inside the polygon.
+
         """
         intersetions1 = {}
         linex_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D * 5)
@@ -3512,7 +3511,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric closed_polygon2d according to a line
+        Finds out the symmetric closed_polygon2d according to a line.
+
         """
 
         axial_points = [point.axial_symmetry(line) for point in self.points]
@@ -3589,7 +3589,8 @@ class Triangle2D(Triangle):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric triangle2d according to a line
+        Finds out the symmetric triangle2d according to a line.
+
         """
 
         [point1, point2, point3] = [point.axial_symmetry(line)
@@ -3795,7 +3796,8 @@ class Circle2D(Contour2D):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Circle2D rotation. Object is updated inplace
+        Circle2D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
@@ -3803,7 +3805,8 @@ class Circle2D(Contour2D):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        Circle2D translation
+        Circle2D translation.
+
         :param offset: translation vector
         :return: A new translated Circle2D
         """
@@ -3811,7 +3814,8 @@ class Circle2D(Contour2D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Circle2D translation. Object is updated inplace
+        Circle2D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.center.translation_inplace(offset)
@@ -3906,7 +3910,8 @@ class Circle2D(Contour2D):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric circle2d according to a line
+        Finds out the symmetric circle2d according to a line.
+
         """
 
         return self.__class__(center=self.center.axial_symmetry(line),
@@ -3979,6 +3984,14 @@ class Ellipse2D(Contour2D):
         return length
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Tranforms a Ellipse2D into an Ellipse3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Ellipse3D.
+        """
         raise NotImplementedError
 
     def point_over_ellipse(self, point, abs_tol=1e-6):
@@ -4493,6 +4506,14 @@ class Contour3D(ContourMixin, Wire3D):
         return ax
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a Ellipse3D into an Contour2D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Contour2D.
+        """
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         primitives2d = []
@@ -4896,6 +4917,14 @@ class Circle3D(Contour3D):
         return volmdlr.core.BoundingBox.from_points(points)
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a Circle3D into an Circle2D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Circle2D.
+        """
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         return Circle2D(plane3d.point3d_to_2d(self.center), self.radius)
@@ -5255,6 +5284,14 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             point.translation_inplace(offset)
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a ClosedPolygon3D into an ClosedPolygon2D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: ClosedPolygon2D.
+        """
         points2d = [point.to_2d(plane_origin, x, y) for point in self.points]
         return ClosedPolygon2D(points2d)
 

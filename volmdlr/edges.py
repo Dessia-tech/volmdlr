@@ -250,11 +250,11 @@ class Line(dc.DessiaObject):
         """
         Verifies if a line is between two points.
 
-        :param point1: first point
-        :type point1: volmdlr.Point2D
-        :param point2: second point
-        :type point2: volmdlr.Point2D
-        returns True is line is between the two given points or False if not
+        :param point1: first point.
+        :type point1: volmdlr.Point2D.
+        :param point2: second point.
+        :type point2: volmdlr.Point2D.
+        returns True is line is between the two given points or False if not.
         """
 
         if point1 == point2:
@@ -315,13 +315,14 @@ class LineSegment(Edge):
     def normal_vector(self, abscissa=0.):
         """
         :param abscissa: defines where in the line_segement
-        normal vector is to be calculated
-        :return: The normal vector of the LineSegement
+        normal vector is to be calculated.
+        :return: The normal vector of the LineSegement.
         """
         return self.direction_vector(abscissa).normal_vector()
 
     def unit_normal_vector(self, abscissa=0.):
         """
+
         :param abscissa: defines where in the line_segement unit normal vector is to be calculated.
         :return: The unit normal vector of the LineSegement.
         """
@@ -352,7 +353,6 @@ class LineSegment(Edge):
 
 
 class BSplineCurve(Edge):
-    _non_serializable_attributes = ['curve']
     """
     An abstract class for B-spline curves. The following rule must be
     respected : `number of knots = number of control points + degree + 1`.
@@ -375,6 +375,7 @@ class BSplineCurve(Edge):
     :param name: The name of the B-spline curve. Default value is ''
     :type name: str, optional
     """
+    _non_serializable_attributes = ['curve']
 
     def __init__(self,
                  degree: int,
@@ -499,11 +500,11 @@ class BSplineCurve(Edge):
         Computes the abscissa of a 2D or 3D point using the least square
         method.
 
-        :param point: The point located on the B-spline curve
-        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
-        :param tol: The precision in terms of distance. Default value is 1e-4
-        :type tol: float, optional
-        :return: The abscissa of the point
+        :param point: The point located on the B-spline curve.
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`].
+        :param tol: The precision in terms of distance. Default value is 1e-4.
+        :type tol: float, optional.
+        :return: The abscissa of the point.
         :rtype: float
         """
         length = self.length()
@@ -738,6 +739,7 @@ class BSplineCurve(Edge):
 class Line2D(Line):
     """
     Define an infinite line given by two points.
+
     """
 
     def __init__(self, point1: volmdlr.Point2D,
@@ -751,35 +753,39 @@ class Line2D(Line):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        Line2D rotation
-        :param center: rotation center
-        :param angle: angle rotation
-        :return: a new rotated Line2D
+        Line2D rotation.
+
+        :param center: rotation center.
+        :param angle: angle rotation.
+        :return: a new rotated Line2D.
         """
         return Line2D(*[point.rotation(center, angle)
                         for point in self.points])
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Line2D rotation. Object is updated inplace
-        :param center: rotation center
-        :param angle: rotation angle
+        Line2D rotation. Object is updated inplace.
+
+        :param center: rotation center.
+        :param angle: rotation angle.
         """
         for point in self.points:
             point.rotation_inplace(center, angle)
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        Line2D translation
-        :param offset: translation vector
-        :return: A new translated Line2D
+        Line2D translation.
+
+        :param offset: translation vector.
+        :return: A new translated Line2D.
         """
         return Line2D(*[point.translation(offset) for point in self.points])
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        Line2D translation. Object is updated inplace
-        :param offset: translation vector
+        Line2D translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         for point in self.points:
             point.translation_inplace(offset)
@@ -838,6 +844,7 @@ class Line2D(Line):
         """
         Computes the two circles that are tangent to 2 lines and intersect
         a point located on one of the two lines.
+
         """
 
         # point will be called I(x_I, y_I)
@@ -977,9 +984,10 @@ class Line2D(Line):
 
     def point_distance(self, point2d):
         """
-        Calculates the distance of a line2d to a point2d
-        :param point2d: point to calculate distance
-        :return: distance to point
+        Calculates the distance of a line2d to a point2d.
+
+        :param point2d: point to calculate distance.
+        :return: distance to point.
         """
         vector_r = self.point1 - point2d
         vector_v = self.normal_vector()
@@ -989,7 +997,7 @@ class Line2D(Line):
 class BSplineCurve2D(BSplineCurve):
     """
     A class for 2 dimensional B-spline curves. The following rule must be
-    respected : `number of knots = number of control points + degree + 1`
+    respected : `number of knots = number of control points + degree + 1`.
 
     :param degree: The degree of the 2 dimensional B-spline curve
     :type degree: int
@@ -1032,10 +1040,12 @@ class BSplineCurve2D(BSplineCurve):
         """
         Computes the bounding rectangle of the 2 dimensional B-spline curve.
 
-        :return: The bounding rectangle
+        :return: The bounding rectangle.
         :rtype: :class:`volmdlr.core.BoundingRectangle`
         """
-        points = self.discretization_points()
+
+        points = self.discretization_points(number_points=5)
+
         points_x = [p.x for p in points]
         points_y = [p.y for p in points]
 
@@ -3195,7 +3205,7 @@ class Line3D(Line):
         m, n, p = direction_vector2.x, direction_vector2.y, direction_vector2.z
         vector_components = [a, b, c, m, n, p]
         for i, component in enumerate(vector_components):
-            if abs(component) <= 1e-6:
+            if abs(component) <= 1e-5:
                 vector_components[i] = 0.0
         a, b, c, m, n, p = vector_components
         # if a == m == 0 and x2 != x1:
@@ -3213,7 +3223,7 @@ class Line3D(Line):
             coefficient_t = (b * (x2 - x1) - a * (y2 - y1)) / (n * a - b * m)
             coefficient_s = (n * (x2 - x1) - m * (y2 - y1)) / (n * a - b * m)
         elif a == m == 0:
-            if math.isclose(x2, x1, abs_tol=1e-6) and c * n != b * p:
+            if math.isclose(x2, x1, abs_tol=1e-5) and c * n != b * p:
                 if b != 0:
                     coefficient_t = ((z2 - z1) * b - c * (y2 - y1)) / (c * n - b * p)
                     coefficient_s = ((y2 - y1) + n * coefficient_t) / b
@@ -3223,7 +3233,7 @@ class Line3D(Line):
             else:
                 raise NotImplementedError
         elif b == n == 0.:
-            if math.isclose(y2, y1, abs_tol=1e-6) and c * m != a * p:
+            if math.isclose(y2, y1, abs_tol=1e-5) and c * m != a * p:
                 if a != 0.:
                     coefficient_t = ((z2 - z1) * a - c * (x2 - x1)) / (c * m - a * p)
                     coefficient_s = ((x2 - x1) + m * coefficient_t) / a
