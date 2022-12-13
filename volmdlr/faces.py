@@ -806,8 +806,6 @@ class Surface3D(DessiaObject):
             weights=bspline_curve3d.weights,
             periodic=bspline_curve3d.periodic)]
 
-    # def circle_3d_to_2d(self):
-
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
         Is this right?
@@ -988,9 +986,10 @@ class Plane3D(Surface3D):
 
     def point_distance(self, point3d):
         """
-        Calculates the distance of a point to plane
-        :param point3d: point to verify distance
-        :return: a float, point distance to plane
+        Calculates the distance of a point to plane.
+
+        :param point3d: point to verify distance.
+        :return: a float, point distance to plane.
         """
         coefficient_a, coefficient_b, coefficient_c, coefficient_d = self.equation_coefficients()
         return abs(self.frame.w.dot(point3d) + coefficient_d) / math.sqrt(coefficient_a**2 +
@@ -1017,12 +1016,7 @@ class Plane3D(Surface3D):
         return [linesegment.start + intersection_abscissea * u]
 
     def fullarc_intersections(self, fullarc: vme.FullArc3D):
-        # fullarc_points = [fullarc.center, fullarc.start, fullarc.point_at_abscissa(0.25), ]
         fullarc_plane = Plane3D(fullarc.frame)
-        contour = volmdlr.wires.ClosedPolygon2D([volmdlr.Point2D(-1, -1), volmdlr.Point2D(1, -1),
-                                                 volmdlr.Point2D(1, 1), volmdlr.Point2D(-1, 1)])
-        face1 = PlaneFace3D(self, Surface2D(contour, []))
-        face2 = PlaneFace3D(fullarc_plane, Surface2D(contour, []))
         plane_intersections = self.plane_intersection(fullarc_plane)
         if not plane_intersections:
             return []
@@ -1034,10 +1028,10 @@ class Plane3D(Surface3D):
             intersections.append(inter.to_3d(fullarc.center, fullarc_plane.frame.u, fullarc_plane.frame.v))
         return intersections
 
-
     def equation_coefficients(self):
         """
-        returns the a,b,c,d coefficient from equation ax+by+cz+d = 0
+        Returns the a,b,c,d coefficient from equation ax+by+cz+d = 0.
+
         """
         a, b, c = self.frame.w
         d = -self.frame.origin.dot(self.frame.w)
@@ -1053,18 +1047,6 @@ class Plane3D(Surface3D):
 
         a1, b1, c1, d1 = self.equation_coefficients()
         a2, b2, c2, d2 = other_plane.equation_coefficients()
-        matrix = sympy.Matrix([[a1, b1, c1, -d1],
-                               [a2, b2, c2, -d2]])
-        reduced_row_echelon_form_matrix = matrix.rref()[0]
-        dict_solution = {'x':0, 'y':0, 'z':0}
-        for solution_row in [list(reduced_row_echelon_form_matrix.row(0)),
-                             list(reduced_row_echelon_form_matrix.row(1))]:
-            for i, row_value in zip(['x', 'y', 'z'], solution_row):
-                if row_value == 1:
-                    dict_solution[i] = solution_row[-1]
-        if all(i == 0 for i in dict_solution.values()) and all(j != 1 for j in solution_row[:-1]):
-            raise NotImplementedError
-        point1 = volmdlr.Point3D(*dict_solution.values())
         if a1 * b2 - a2 * b1 != 0.:
             x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
             y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
@@ -1079,17 +1061,12 @@ class Plane3D(Surface3D):
             point1 = volmdlr.Point3D(0, y0, z0)
         else:
             raise NotImplementedError
-        #     y0 = (b2 * d2 - c2 * d1) / (b1 * c2 - c1 * b2)
-        #     z0 = (c1 * d1 - b1 * d2) / (b1 * c2 - c1 * b2)
-        #     point1_ = volmdlr.Point3D(0, y0, z0)
-
-        # point2 = point1 + line_direction
-        # return volmdlr.Line3D(point1, point2)
         return [volmdlr.edges.Line3D(point1, point1 + line_direction)]
 
     def is_coincident(self, plane2):
         """
-        Verifies if two planes are parallel and coincident
+        Verifies if two planes are parallel and coincident.
+
         """
         if not isinstance(self, plane2.__class__):
             False
@@ -1100,7 +1077,8 @@ class Plane3D(Surface3D):
 
     def is_parallel(self, plane2):
         """
-        Verifies if two planes are parallel
+        Verifies if two planes are parallel.
+
         """
         if self.frame.w.is_colinear_to(plane2.frame.w):
             return True
