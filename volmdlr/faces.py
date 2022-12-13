@@ -90,6 +90,29 @@ def repair_start_end_angle_periodicity(angle_start, angle_end, ref_start, ref_en
     return angle_start, angle_end
 
 
+def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, angle3d):
+    """
+    Repairs Arc3D angle continuity on parametric 2D space.
+    """
+    ref_low = angle_start - angle3d
+    ref_up = angle_start + angle3d
+    # angle_after_start < angle_start --> angle coordinate going clockwise
+    # ref_low < -math.pi -> passing lower bound (-math.pi)
+    if angle_after_start < angle_start and ref_low < -math.pi:
+        angle_end = ref_low
+    # angle_after_start > angle_start --> angle coordinate going trigowise
+    #  ref_up > math.pi -> passing upper bound (math.pi)
+    elif angle_after_start > angle_start and ref_up > math.pi:
+        angle_end = ref_up
+
+    if angle_start > 0 > angle_after_start:
+        angle_start -= 2 * math.pi
+    elif angle_start < 0 < angle_after_start:
+        angle_start += 2 * math.pi
+
+    return angle_start, angle_end
+
+
 def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
     """
     Verifies theta from start and end of an arc3d after transformation from spatial to parametric coordinates.
@@ -99,20 +122,7 @@ def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
 
     theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
 
-    theta5 = theta1 - angle3d
-    theta6 = theta1 + angle3d
-
-    # theta3 < theta1 --> clockwise
-    if theta3 < theta1 and theta5 < -math.pi:
-        theta2 = theta5
-    # theta3 > theta1 --> trigo
-    elif theta3 > theta1 and theta6 > math.pi:
-        theta2 = theta6
-
-    if theta3 < 0 < theta1:
-        theta1 -= 2 * math.pi
-    elif theta1 < 0 < theta3:
-        theta1 += 2 * math.pi
+    theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d)
 
     start = volmdlr.Point2D(theta1, z1)
     end = volmdlr.Point2D(theta2, z2)
@@ -134,33 +144,10 @@ def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, poin
     phi1, phi2 = repair_start_end_angle_periodicity(phi1, phi2, phi3, phi4)
 
     if math.isclose(phi1, phi2, abs_tol=1e-4):
-        theta5 = theta1 - angle3d
-        theta6 = theta1 + angle3d
-        # theta3 < theta1 --> clockwise
-        if theta3 < theta1 and theta5 < -math.pi:
-            theta2 = theta5
-        # theta3 > theta1 --> trigo
-        elif theta3 > theta1 and theta6 > math.pi:
-            theta2 = theta6
+        theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d)
 
-        if theta1 > 0 > theta3:
-            theta1 -= 2 * math.pi
-        elif theta1 < 0 < theta3:
-            theta1 += 2 * math.pi
     if math.isclose(theta1, theta2, abs_tol=1e-4):
-        phi5 = phi1 - angle3d
-        phi6 = phi1 + angle3d
-        # phi3 < phi1 --> clockwise
-        if phi3 < phi1 and phi5 < -math.pi:
-            phi2 = phi5
-        # phi3 > phi1 --> trigo
-        elif phi3 > phi1 and phi6 > math.pi:
-            phi2 = phi6
-
-        if phi3 < 0 < phi1:
-            phi1 -= 2 * math.pi
-        elif phi1 < 0 < phi3:
-            phi1 += 2 * math.pi
+        phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2, angle3d)
 
     start = volmdlr.Point2D(theta1, phi1)
     end = volmdlr.Point2D(theta2, phi2)
@@ -827,30 +814,30 @@ class Surface3D(DessiaObject):
                           and math.isclose(dist2, 0, abs_tol=5e-5)):
                         primitives = [p.reverse() for p in primitives[::-1]]
                     # else:
-                        # ax2 = contour3d.plot()
-                        # primitive3d.plot(ax=ax2, color='r')
-                        # last_primitive3d.plot(ax=ax2, color='b')
-                        # # self.plot(ax=ax2)
-                        #
-                        # ax = last_primitive.plot(color='b', plot_points=True)
-                        # # primitives[0].plot(ax=ax, color='r', plot_points=True)
-                        # # primitives[-1].plot(ax=ax, color='r', plot_points=True)
-                        # for p in primitives:
-                        #     p.plot(ax=ax, color='r', plot_points=True)
-                        # if self.x_periodicity:
-                        #     vme.Line2D(volmdlr.Point2D(self.x_periodicity, 0),
-                        #                volmdlr.Point2D(self.x_periodicity, 1)) \
-                        #         .plot(ax=ax)
-                        # print('Primitives not following each other in contour:')
-                        # print('Surface 3D:', self)
-                        # print('3D primitive in red:', primitive3d)
-                        # print('Previous 3D primitive:', last_primitive3d)
-                        # raise ValueError(
-                        #     'Primitives not following each other in contour:',
-                        #     'delta1={}, {}, {} ; '
-                        #     'delta2={}, {}, {}'.format(
-                        #         delta_x1, delta_y1, dist1,
-                        #         delta_x2, delta_y2, dist2))
+                    # ax2 = contour3d.plot()
+                    # primitive3d.plot(ax=ax2, color='r')
+                    # last_primitive3d.plot(ax=ax2, color='b')
+                    # # self.plot(ax=ax2)
+                    #
+                    # ax = last_primitive.plot(color='b', plot_points=True)
+                    # # primitives[0].plot(ax=ax, color='r', plot_points=True)
+                    # # primitives[-1].plot(ax=ax, color='r', plot_points=True)
+                    # for p in primitives:
+                    #     p.plot(ax=ax, color='r', plot_points=True)
+                    # if self.x_periodicity:
+                    #     vme.Line2D(volmdlr.Point2D(self.x_periodicity, 0),
+                    #                volmdlr.Point2D(self.x_periodicity, 1)) \
+                    #         .plot(ax=ax)
+                    # print('Primitives not following each other in contour:')
+                    # print('Surface 3D:', self)
+                    # print('3D primitive in red:', primitive3d)
+                    # print('Previous 3D primitive:', last_primitive3d)
+                    # raise ValueError(
+                    #     'Primitives not following each other in contour:',
+                    #     'delta1={}, {}, {} ; '
+                    #     'delta2={}, {}, {}'.format(
+                    #         delta_x1, delta_y1, dist1,
+                    #         delta_x2, delta_y2, dist2))
 
                 if primitives:
                     last_primitive = primitives[-1]
@@ -1202,6 +1189,7 @@ class Plane3D(Surface3D):
         Changes frame_mapping and the object is updated inplace.
 
         :param side: 'old' or 'new'
+        :type side: str
         """
         new_frame = self.frame_mapping_parameters(frame, side)
         self.frame.origin = new_frame.origin
@@ -1878,7 +1866,7 @@ class ToroidalSurface3D(Surface3D):
         length = bspline_curve3d.length()
         theta3, phi3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
         theta4, phi4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
-        points = [self.point3d_to_2d(p)for p in bspline_curve3d.discretization_points(number_points=11)]
+        points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=11)]
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
@@ -4575,12 +4563,17 @@ class Face3D(volmdlr.core.Primitive3D):
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
-        """Sets the bounding box to a new value"""
+        """
+        Sets the bounding box to a new value.
+        """
         raise NotImplementedError(
             f"bounding_box setter method must be"
             f"overloaded by {self.__class__.__name__}")
 
     def get_bounding_box(self):
+        """
+        Gets bounding box of a 3D volmdlr object.
+        """
         raise NotImplementedError(
             f"self.__class__.__name__"
             f"overloaded by {self.__class__.__name__}")
@@ -8376,11 +8369,11 @@ class ClosedShell3D(OpenShell3D):
     @staticmethod
     def dict_intersecting_combinations(intersecting_faces_combinations, tol=1e-8):
         """
-            :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...]) for intersecting faces.
-            :type intersecting_faces_combinations: list of face objects combinaitons
-            returns a dictionary containing as keys the combination of intersecting faces
-            and as the values the resulting primitive from the two intersecting faces.
-            It is done so it is not needed to calculate the same intersecting primitive twice.
+        :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...]) for intersecting faces.
+        :type intersecting_faces_combinations: list of face objects combinaitons
+        returns a dictionary containing as keys the combination of intersecting faces
+        and as the values the resulting primitive from the two intersecting faces.
+        It is done so it is not needed to calculate the same intersecting primitive twice.
         """
         intersecting_combinations = {}
         for combination in intersecting_faces_combinations:
@@ -8404,10 +8397,10 @@ class ClosedShell3D(OpenShell3D):
     @staticmethod
     def get_intersecting_faces(dict_intersecting_combinations):
         """
-            :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
-            and as the values the resulting primitive from the two intersecting faces
+        :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
+        and as the values the resulting primitive from the two intersecting faces
 
-            returns two lists. One for the intersecting faces in shell1 and the other for the shell2
+        returns two lists. One for the intersecting faces in shell1 and the other for the shell2
         """
         intersecting_faces_shell1 = []
         intersecting_faces_shell2 = []
@@ -8571,7 +8564,7 @@ class ClosedShell3D(OpenShell3D):
         for new_face in new_faces:
             inside_reference_shell = reference_shell.point_belongs(
                 new_face.random_point_inside())
-            if (inside_reference_shell or (self.face_on_shell(new_face) and shell2.face_on_shell(new_face)))\
+            if (inside_reference_shell or (self.face_on_shell(new_face) and shell2.face_on_shell(new_face))) \
                     and new_face not in valid_faces:
                 faces.append(new_face)
 
