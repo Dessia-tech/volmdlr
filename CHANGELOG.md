@@ -79,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
 * contour2d: ordering_primitives, order_primitives
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
@@ -130,6 +131,15 @@ time we have to verify if a point is inside
 * Arc3D: line_intersections, linesegment_intersections
 * Contour2D: ordering_contour, is_ordered, order_contour
 
+## v0.6.1 [12/13/2022]
+
+### Changes
+
+* Import from dessia_common are now performed from dessia_common.core
+
+### Fixed
+* infinite primitive offset of linesegment
+
 ## v0.6.0 [11/7/2022]
 
 ### New Features
@@ -171,7 +181,8 @@ time we have to verify if a point is inside
 * BSplineCurve3D: from_step
 * Surface2D: cut_by_line
 * Circle3D: to_step
-
+* ArcEllipse3D.to_2d()
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
