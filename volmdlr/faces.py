@@ -169,14 +169,23 @@ class Surface2D(volmdlr.core.Primitive2D):
         volmdlr.core.Primitive2D.__init__(self, name=name)
 
     def copy(self):
+        """
+        Copies the surface2d.
+        """
         return self.__class__(outer_contour=self.outer_contour.copy(),
                               inner_contours=[c.copy() for c in self.inner_contours],
                               name=self.name)
 
     def area(self):
+        """
+        Computes the area of the surface.
+        """
         return self.outer_contour.area() - sum(contour.area() for contour in self.inner_contours)
 
     def second_moment_area(self, point: volmdlr.Point2D):
+        """
+        Computes the second moment area of the surface.
+        """
         Ix, Iy, Ixy = self.outer_contour.second_moment_area(point)
         for contour in self.inner_contours:
             Ixc, Iyc, Ixyc = contour.second_moment_area(point)
@@ -186,12 +195,18 @@ class Surface2D(volmdlr.core.Primitive2D):
         return Ix, Iy, Ixy
 
     def center_of_mass(self):
+        """
+        Returns the center of mass of the Surface2d.
+        """
         center = self.outer_contour.area() * self.outer_contour.center_of_mass()
         for contour in self.inner_contours:
             center -= contour.area() * contour.center_of_mass()
         return center / self.area()
 
     def point_belongs(self, point2d: volmdlr.Point2D):
+        """
+        Returns if the given point belongs to the surface2d.
+        """
         if not self.outer_contour.point_belongs(point2d):
             if self.outer_contour.point_over_contour(point2d):
                 return True
@@ -268,6 +283,9 @@ class Surface2D(volmdlr.core.Primitive2D):
         return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
 
     def split_by_lines(self, lines):
+        """
+        Returns a list of cutted surfaces given by the lines provided as argument.
+        """
         cutted_surfaces = []
         iteration_surfaces = self.cut_by_line(lines[0])
 
@@ -290,7 +308,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def split_regularly(self, n):
         """
-        Split in n slices
+        Split in n slices.
         """
         bounding_rectangle = self.outer_contour.bounding_rectangle()
         lines = []
@@ -301,6 +319,9 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.split_by_lines(lines)
 
     def cut_by_line(self, line: vme.Line2D):
+        """
+        Returns a list of cutted Surface2D by the given line.
+        """
         surfaces = []
         splitted_outer_contours = self.outer_contour.cut_by_line(line)
         splitted_inner_contours_table = []
@@ -871,7 +892,7 @@ class Surface3D(DessiaObject):
 
     def linesegment3d_to_2d(self, linesegment3d):
         """
-        a line segment on a surface will be in any case a line in 2D?
+        A line segment on a surface will be in any case a line in 2D?
         """
         return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start),
                                   self.point3d_to_2d(linesegment3d.end))]
@@ -910,7 +931,7 @@ class Surface3D(DessiaObject):
 
     def normal_from_point3d(self, point3d):
         """
-        evaluates the normal vector of the bspline surface at this point3d.
+        Evaluates the normal vector of the bspline surface at this point3d.
         """
 
         return (self.normal_from_point2d(self.point3d_to_2d(point3d)))[1]
@@ -1003,7 +1024,7 @@ class Plane3D(Surface3D):
     @classmethod
     def from_3_points(cls, point1, point2, point3):
         """
-        Point 1 is used as origin of the plane
+        Point 1 is used as origin of the plane.
         """
         vector1 = point2 - point1
         vector2 = point3 - point1
@@ -1030,6 +1051,10 @@ class Plane3D(Surface3D):
 
     @classmethod
     def from_points(cls, points):
+        """
+        Returns the plane3d that goes through the 3 first points on the list.
+        Why for more than 3 points we only do some check and never raise error?
+        """
         if len(points) < 3:
             raise ValueError
         elif len(points) == 3:
@@ -1062,6 +1087,9 @@ class Plane3D(Surface3D):
                                      vector2_min + origin)
 
     def point_on_plane(self, point):
+        """
+        Return if the point belongs to the plane at a tolerance of 1e-6.
+        """
         if math.isclose(self.frame.w.dot(point - self.frame.origin), 0,
                         abs_tol=1e-6):
             return True
@@ -1571,7 +1599,7 @@ class CylindricalSurface3D(Surface3D):
 
     def parallel_plane_intersection(self, plane3d):
         """
-        Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis
+        Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis.
         :param plane3d: intersecting plane
         :return: list of intersecting curves
         """
@@ -1591,7 +1619,7 @@ class CylindricalSurface3D(Surface3D):
 
     def perpendicular_plane_intersection(self, plane3d):
         """
-        Cylinder plane intersections when plane's normal is parallel with the cylinder axis
+        Cylinder plane intersections when plane's normal is parallel with the cylinder axis.
         :param plane3d: intersecting plane
         :return: list of intersecting curves
         """
@@ -1603,7 +1631,7 @@ class CylindricalSurface3D(Surface3D):
 
     def concurent_plane_intersection(self, plane3d):
         """
-        Cylinder plane intersections when plane's normal is concurent with the cylinder axis, but not orthogonal
+        Cylinder plane intersections when plane's normal is concurent with the cylinder axis, but not orthogonal.
         :param plane3d: intersecting plane
         :return: list of intersecting curves
         """
@@ -1655,7 +1683,7 @@ class ToroidalSurface3D(Surface3D):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = volmdlr.TWO_PI
     """
-    The local plane is defined by (theta, phi)
+    The local plane is defined by (theta, phi).
     theta is the angle around the big (R) circle and phi around the small(r)
 
     :param frame: Tore's frame: origin is the center, u is pointing at
@@ -2247,15 +2275,15 @@ class ConicalSurface3D(Surface3D):
 
 
 class SphericalSurface3D(Surface3D):
-    face_class = 'SphericalFace3D'
-    x_periodicity = volmdlr.TWO_PI
-    y_periodicity = volmdlr.TWO_PI
     """
     :param frame: Sphere's frame to position it
     :type frame: volmdlr.Frame3D
     :param radius: Sphere's radius
     :type radius: float
     """
+    face_class = 'SphericalFace3D'
+    x_periodicity = volmdlr.TWO_PI
+    y_periodicity = volmdlr.TWO_PI
 
     def __init__(self, frame, radius, name=''):
         self.frame = frame
@@ -2515,13 +2543,13 @@ class SphericalSurface3D(Surface3D):
 
 
 class RuledSurface3D(Surface3D):
-    face_class = 'RuledFace3D'
     """
     :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
     :type frame: volmdlr.Frame3D
     :param radius: Cylinder's radius
     :type radius: float
     """
+    face_class = 'RuledFace3D'
 
     def __init__(self,
                  wire1: volmdlr.wires.Wire3D,
@@ -3597,7 +3625,7 @@ class BSplineSurface3D(Surface3D):
         convert a linesegment2d from the parametric to the dimensioned frame
         """
 
-        points = linesegment2d.discretization_points(20)
+        points = linesegment2d.discretization_points(number_points=20)
         points_dim = [
             self.point2d_parametric_to_dimension(
                 p, grid2d) for p in points]
@@ -5616,6 +5644,7 @@ class PlaneFace3D(Face3D):
         if list_open_cutting_contours:
             list_faces = self.divide_face_with_open_cutting_contours(list_open_cutting_contours, inside)
         list_faces = self.divide_face_with_closed_cutting_contours(list_closed_cutting_contours, list_faces)
+        list_faces = [face for face in list_faces if not math.isclose(face.area(), 0.0, abs_tol=1e-6)]
         return list_faces
 
     def is_adjacent(self, face2: Face3D):
@@ -8027,8 +8056,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         shell1_points_inside_shell2 = []
         for face in self.faces:
-            for point in face.outer_contour3d.discretization_points(
-                    resolution):
+            for point in face.outer_contour3d.discretization_points(angle_resolution=resolution):
                 if shell2.point_belongs(point):
                     shell1_points_inside_shell2.append(point)
 
@@ -8056,7 +8084,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         shell1_points_outside_shell2 = []
         for face in self.faces:
             for point in face.outer_contour3d.discretization_points(
-                    resolution):
+                    angle_resolution=resolution):
                 if not shell2.point_belongs(point):
                     shell1_points_outside_shell2.append(point)
 
@@ -8206,7 +8234,7 @@ class ClosedShell3D(OpenShell3D):
         return False
 
     def is_face_inside(self, face: Face3D):
-        for point in face.outer_contour3d.discretization_points(0.1):
+        for point in face.outer_contour3d.discretization_points(angle_resolution=0.1):
             point_inside_shell = self.point_belongs(point)
             point_in_shells_faces = self.point_in_shell_face(point)
             if (not point_inside_shell) and (not point_in_shells_faces):
@@ -8236,11 +8264,11 @@ class ClosedShell3D(OpenShell3D):
         points1 = []
         for face in self.faces:
             points1.extend(
-                face.outer_contour3d.discretization_points(resolution))
+                face.outer_contour3d.discretization_points(angle_resolution=resolution))
         points2 = []
         for face in shell2.faces:
             points2.extend(
-                face.outer_contour3d.discretization_points(resolution))
+                face.outer_contour3d.discretization_points(angle_resolution=resolution))
 
         nb_pts1 = len(points1)
         nb_pts2 = len(points2)
