@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
-
+* Fix some bugs while reading step files
 
 ### Performance improvements
 
