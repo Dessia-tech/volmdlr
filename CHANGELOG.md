@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unrealeased
 
+### Changes
+
+* Import from dessia_common are now performed from dessia_common.core
+
 ## v0.6.0 [11/7/2022]
 
 ### New Features
