@@ -60,7 +60,7 @@ def repair_singularity(primitive, last_primitive):
     dot = v1.dot(volmdlr.X2D)
     cross = v1.cross(v2)
     new_primitives = []
-    if math.isclose(cross, 0.0, abs_tol=1e-6) and math.isclose(dot, 0.0, abs_tol=1e-6):
+    if cross == 0.0 and math.isclose(dot, 0.0, abs_tol=1e-6):
         # if primitive.start.x == math.pi:
         #     primitive = primitive.translation(volmdlr.Vector2D(-2 * math.pi, 0))
         #     new = vme.LineSegment2D(last_primitive.end, primitive.start)
@@ -2659,8 +2659,42 @@ class SphericalSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         # TODO: On a spherical surface we can have fullarc3d in any plane
-        p1 = self.point3d_to_2d(fullarc3d.start)
-        return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.X2D)]
+        length = fullarc3d.length()
+
+        theta1, phi1 = self.point3d_to_2d(fullarc3d.start)
+        theta2, phi2 = self.point3d_to_2d(fullarc3d.end)
+
+        theta3, phi3 = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
+        theta4, phi4 = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
+
+        if self.frame.w.is_colinear_to(fullarc3d.normal):
+            p1 = volmdlr.Point2D(theta1, phi1)
+            p2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
+            return [vme.LineSegment2D(p1, p2)]
+
+        if self.frame.w.dot(fullarc3d.normal) == 0:
+            p1 = volmdlr.Point2D(theta1, phi1)
+            p2 = p1 + volmdlr.TWO_PI * volmdlr.Y2D
+            return [vme.LineSegment2D(p1, p2)]
+
+        points = [self.point3d_to_2d(p) for p in fullarc3d.discretization_points(angle_resolution=5)]
+
+        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+        theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
+
+        points[0] = volmdlr.Point2D(theta1, phi1)
+        points[-1] = volmdlr.Point2D(theta2, phi2)
+
+        if theta3 < theta1 < theta2:
+            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+        elif theta3 > theta1 > theta2:
+            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+
+        new_points = [p1 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
+        new_points.append(points[-1])
+
+        return [vme.BSplineCurve2D.from_points_interpolation(new_points, 3,
+                                                            periodic=True)]
 
     def plot(self, ax=None, color='grey', alpha=0.5):
         # points = []
