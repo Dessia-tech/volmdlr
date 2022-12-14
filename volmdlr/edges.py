@@ -3291,7 +3291,7 @@ class Line3D(Line):
         # elif c == p == 0 and z2 != z1:
         #     return None
         # if a == b == 0 and (x2 - x1) * n == (y2 - y1) * m:
-        if n * a != b * m:
+        if not math.isclose(n * a, b * m, abs_tol=1e-6):
             coefficient_t = (b * (x2 - x1) - a * (y2 - y1)) / (n * a - b * m)
             coefficient_s = (n * (x2 - x1) - m * (y2 - y1)) / (n * a - b * m)
         elif a == m == 0:
@@ -3519,11 +3519,11 @@ class LineSegment3D(LineSegment):
     def line_intersections(self, line):
         line_self = self.to_line()
         if line_self.skew_to(line):
-            return None
+            return []
         intersection = line_self.intersection(line)
         if intersection and self.point_belongs(intersection):
-            return intersection
-        return None
+            return [intersection]
+        return []
 
     def linesegment_intersections(self, linesegment):
         line1 = self.to_line()
