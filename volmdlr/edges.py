@@ -3046,6 +3046,33 @@ class Line3D(Line):
             return False
         return True
 
+    def intersection(self, line2):
+        """
+        Calculates the intersection between to Line3D, if there is an intersection.
+
+        :param line: other Line3D
+        :return: None if there is no intersection between Lines. A volmdlr.Point3D if there existes an intersection
+        """
+        direction_vector1 = self.direction_vector()
+        direction_vector2 = line2.direction_vector()
+        distance_to_line = self.line_distance(line2)
+        if direction_vector1.is_colinear_to(direction_vector2) or\
+                not math.isclose(distance_to_line, 0, abs_tol=1e-6):
+            return None
+        if math.isclose(distance_to_line, 0, abs_tol=1e-6) and\
+                math.isclose(direction_vector1.dot(direction_vector2), 0, abs_tol=1e-6):
+            projected_point, _ = self.point_projection(line2.points[0])
+            return projected_point
+        vector = self.points[0] - line2.points[0]
+        t_coefficient = (
+            vector.dot(direction_vector2) * direction_vector2.dot(direction_vector1) -
+            vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
+                    direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
+                    direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
+        u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(direction_vector2)) / direction_vector2.dot(direction_vector2)
+        intersection = self.point1 + t_coefficient * direction_vector1
+        return intersection
+
     def plot(self, ax=None, color='k', alpha=1, dashed=True):
         if ax is None:
             ax = Axes3D(plt.figure())
@@ -3252,85 +3279,86 @@ class Line3D(Line):
     #
     #     return None
 
-    def intersection(self, line):
-        """
-        Calculates the intersection between to Line3D, if there is an intersection
-        :param line: other Line3D
-        :return: None if there is no intersection between Lines. A volmdlr.Point3D if there existes an intersection
-        """
-        direction_vector1 = self.direction_vector()
-        direction_vector2 = line.direction_vector()
-        distance_to_line = self.line_distance(line)
-        if direction_vector1.is_colinear_to(direction_vector2) or\
-                not math.isclose(distance_to_line, 0, abs_tol=1e-6):
-            return None
-        if math.isclose(distance_to_line, 0, abs_tol=1e-6) and\
-                math.isclose(direction_vector1.dot(direction_vector2), 0, abs_tol=1e-6):
-            projected_point, _ = self.point_projection(line.points[0])
-            return projected_point
-        x1, y1, z1 = self.points[0].x, self.points[0].y, self.points[0].z
-        x2, y2, z2 = line.points[0].x, line.points[0].y, line.points[0].z
-        a, b, c = direction_vector1.x, direction_vector1.y, direction_vector1.z
-        m, n, p = direction_vector2.x, direction_vector2.y, direction_vector2.z
-        vector_components = [a, b, c, m, n, p]
-        for i, component in enumerate(vector_components):
-            if abs(component) <= 1e-5:
-                vector_components[i] = 0.0
-        a, b, c, m, n, p = vector_components
-        # if a * n != m * b:
-        #     coeficient_t_ = (a * (y2 - y1) - b * (x2 - x1)) / (- a * n + m * b)
-        #     coeficient_s_ = (-n * (y2 - y1) + m * (x2 - x1)) / (- a * n + m * b)
-        # if a == m == 0 and x2 != x1:
-        #     return None
-        # if b == n == 0 and y2 != y1:
-        #     if a == p == 0 and c != 0 != m:
-        #         coefficient_t = (x2 - x1) / -m
-        #         coefficient_s = (z2 - z1) / c
-        #     else:
-        #         return None
-        # elif c == p == 0 and z2 != z1:
-        #     return None
-        # if a == b == 0 and (x2 - x1) * n == (y2 - y1) * m:
-        if not math.isclose(n * a, b * m, abs_tol=1e-6):
-            coefficient_t = (b * (x2 - x1) - a * (y2 - y1)) / (n * a - b * m)
-            coefficient_s = (n * (x2 - x1) - m * (y2 - y1)) / (n * a - b * m)
-        elif a == m == 0:
-            if math.isclose(x2, x1, abs_tol=1e-5) and c * n != b * p:
-                if b != 0:
-                    coefficient_t = ((z2 - z1) * b - c * (y2 - y1)) / (c * n - b * p)
-                    coefficient_s = ((y2 - y1) + n * coefficient_t) / b
-                elif n != 0 and c != 0:
-                    coefficient_t = (y2 - y1) / -n
-                    coefficient_s = (z2 - z1 + p * coefficient_t) / c
-            else:
-                raise NotImplementedError
-        elif b == n == 0.:
-            if math.isclose(y2, y1, abs_tol=1e-5) and c * m != a * p:
-                if a != 0.:
-                    coefficient_t = ((z2 - z1) * a - c * (x2 - x1)) / (c * m - a * p)
-                    coefficient_s = ((x2 - x1) + m * coefficient_t) / a
-                elif m != 0 and c != 0:
-                    coefficient_t = (x2 - x1) / -m
-                    coefficient_s = (z2 - z1 + p * coefficient_t) / c
-            else:
-                raise NotImplementedError
-        elif a == b == 0 and n != 0 != m:
-            coefficient_t = (x2 - x1) / m
-            coefficient_s = ((z2 - z1) + p * coefficient_t) / c
-        elif a == 0 and m != 0 and b != 0:
-            coefficient_t = - (x2 - x1) / m
-            coefficient_s = ((y2 - y1) + n * coefficient_t) / b
-        elif m == 0 and a != 0 and n != 0:
-            coefficient_s = - (x2 - x1) / a
-            coefficient_t = ((y2 - y1) - b * coefficient_s) / -n
-        else:
-            print(True)
-            raise NotImplementedError
-        if math.isclose(c * coefficient_s - p * coefficient_t, z2 - z1, abs_tol=1e-5):
-            return volmdlr.Point3D(x1 + coefficient_s * a,
-                                   y1 + coefficient_s * b,
-                                   z1 + coefficient_s * c)
-        return None
+    # def intersection(self, line):
+    #     """
+    #     Calculates the intersection between to Line3D, if there is an intersection
+    #     :param line: other Line3D
+    #     :return: None if there is no intersection between Lines. A volmdlr.Point3D if there existes an intersection
+    #     """
+    #     inters = self.line_intersections(line)
+    #     direction_vector1 = self.direction_vector()
+    #     direction_vector2 = line.direction_vector()
+    #     distance_to_line = self.line_distance(line)
+    #     if direction_vector1.is_colinear_to(direction_vector2) or\
+    #             not math.isclose(distance_to_line, 0, abs_tol=1e-6):
+    #         return None
+    #     if math.isclose(distance_to_line, 0, abs_tol=1e-6) and\
+    #             math.isclose(direction_vector1.dot(direction_vector2), 0, abs_tol=1e-6):
+    #         projected_point, _ = self.point_projection(line.points[0])
+    #         return projected_point
+    #     x1, y1, z1 = self.points[0].x, self.points[0].y, self.points[0].z
+    #     x2, y2, z2 = line.points[0].x, line.points[0].y, line.points[0].z
+    #     a, b, c = direction_vector1.x, direction_vector1.y, direction_vector1.z
+    #     m, n, p = direction_vector2.x, direction_vector2.y, direction_vector2.z
+    #     vector_components = [a, b, c, m, n, p]
+    #     for i, component in enumerate(vector_components):
+    #         if abs(component) <= 1e-5:
+    #             vector_components[i] = 0.0
+    #     a, b, c, m, n, p = vector_components
+    #     # if a * n != m * b:
+    #     #     coeficient_t_ = (a * (y2 - y1) - b * (x2 - x1)) / (- a * n + m * b)
+    #     #     coeficient_s_ = (-n * (y2 - y1) + m * (x2 - x1)) / (- a * n + m * b)
+    #     # if a == m == 0 and x2 != x1:
+    #     #     return None
+    #     # if b == n == 0 and y2 != y1:
+    #     #     if a == p == 0 and c != 0 != m:
+    #     #         coefficient_t = (x2 - x1) / -m
+    #     #         coefficient_s = (z2 - z1) / c
+    #     #     else:
+    #     #         return None
+    #     # elif c == p == 0 and z2 != z1:
+    #     #     return None
+    #     # if a == b == 0 and (x2 - x1) * n == (y2 - y1) * m:
+    #     if not math.isclose(n * a, b * m, abs_tol=1e-6):
+    #         coefficient_t = (b * (x2 - x1) - a * (y2 - y1)) / (n * a - b * m)
+    #         coefficient_s = (n * (x2 - x1) - m * (y2 - y1)) / (n * a - b * m)
+    #     elif a == m == 0:
+    #         if math.isclose(x2, x1, abs_tol=1e-5) and c * n != b * p:
+    #             if b != 0:
+    #                 coefficient_t = ((z2 - z1) * b - c * (y2 - y1)) / (c * n - b * p)
+    #                 coefficient_s = ((y2 - y1) + n * coefficient_t) / b
+    #             elif n != 0 and c != 0:
+    #                 coefficient_t = (y2 - y1) / -n
+    #                 coefficient_s = (z2 - z1 + p * coefficient_t) / c
+    #         else:
+    #             raise NotImplementedError
+    #     elif b == n == 0.:
+    #         if math.isclose(y2, y1, abs_tol=1e-5) and c * m != a * p:
+    #             if a != 0.:
+    #                 coefficient_t = ((z2 - z1) * a - c * (x2 - x1)) / (c * m - a * p)
+    #                 coefficient_s = ((x2 - x1) + m * coefficient_t) / a
+    #             elif m != 0 and c != 0:
+    #                 coefficient_t = (x2 - x1) / -m
+    #                 coefficient_s = (z2 - z1 + p * coefficient_t) / c
+    #         else:
+    #             raise NotImplementedError
+    #     elif a == b == 0 and n != 0 != m:
+    #         coefficient_t = (x2 - x1) / m
+    #         coefficient_s = ((z2 - z1) + p * coefficient_t) / c
+    #     elif a == 0 and m != 0 and b != 0:
+    #         coefficient_t = - (x2 - x1) / m
+    #         coefficient_s = ((y2 - y1) + n * coefficient_t) / b
+    #     elif m == 0 and a != 0 and n != 0:
+    #         coefficient_s = - (x2 - x1) / a
+    #         coefficient_t = ((y2 - y1) - b * coefficient_s) / -n
+    #     else:
+    #         print(True)
+    #         raise NotImplementedError
+    #     if math.isclose(c * coefficient_s - p * coefficient_t, z2 - z1, abs_tol=1e-5):
+    #         return volmdlr.Point3D(x1 + coefficient_s * a,
+    #                                y1 + coefficient_s * b,
+    #                                z1 + coefficient_s * c)
+    #     return None
 
     def to_step(self, current_id, surface_id=None):
         p1_content, p1_id = self.point1.to_step(current_id)

@@ -1965,18 +1965,21 @@ class Contour2D(ContourMixin, Wire2D):
         intersecting_points = []
         for primitive1 in self.primitives:
             for primitive2 in contour2d.primitives:
-                line_intersection = primitive1.linesegment_intersections(
-                    primitive2)
+                line_intersection = primitive1.linesegment_intersections(primitive2)
                 if line_intersection:
                     if line_intersection[0] not in intersecting_points:
                         intersecting_points.extend(line_intersection)
                 else:
-                    point1, point2 = contour2d.primitives[0].start, \
-                                     contour2d.primitives[-1].end
-                    if point1 not in intersecting_points and primitive1.point_belongs(point1):
-                        intersecting_points.append(point1)
-                    if point2 not in intersecting_points and primitive1.point_belongs(point2):
-                        intersecting_points.append(point2)
+                    point1, point2 = primitive2.start, primitive2.end
+                    point3, point4 = primitive1.start, primitive1.end
+                    for primitive, points in zip([primitive1, primitive2], [[point1, point2], [point3, point4]]):
+                        for point in points:
+                            if point not in intersecting_points and primitive.point_belongs(point):
+                                intersecting_points.append(point)
+                        # if point1 not in intersecting_points and primitive1.point_belongs(point1):
+                        #     intersecting_points.append(point1)
+                        # if point2 not in intersecting_points and primitive1.point_belongs(point2):
+                        #     intersecting_points.append(point2)
             if len(intersecting_points) == 2:
                 break
         return intersecting_points
