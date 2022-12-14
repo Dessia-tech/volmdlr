@@ -2141,10 +2141,10 @@ class Arc2D(Arc):
         :param point_2d: Point to be verified.
         :return: Return True if the point belongs to this surface, or False otherwise.
         """
-        if self.point_belongs(point_2d):
+        if self.point_belongs(point):
             return True
         if self.start == self.end:
-            if point_2d.point_distance(self.center) <= self.radius:
+            if point.point_distance(self.center) <= self.radius:
                 return True
         center_distance_point = self.center.point_distance(point)
         straight_line = LineSegment2D(self.start, self.end)
@@ -2177,7 +2177,7 @@ class Arc2D(Arc):
         pi = self.interior.to_3d(plane_origin, x, y)
         pe = self.end.to_3d(plane_origin, x, y)
 
-        return volmdlr.edges.Arc3D(ps, pi, pe, name=self.name)
+        return Arc3D(ps, pi, pe, name=self.name)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -4445,7 +4445,7 @@ class Arc3D(Arc):
     def get_bounding_box(self):
         # TODO: implement exact calculation
 
-        points = self.polygon_points()
+        points = self.discretization_points(angle_resolution=10)
         xmin = min(point.x for point in points)
         xmax = max(point.x for point in points)
         ymin = min(point.y for point in points)

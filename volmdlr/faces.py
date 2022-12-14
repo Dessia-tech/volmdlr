@@ -113,6 +113,9 @@ class Surface2D(volmdlr.core.Primitive2D):
         return point_inside_outer_contour
 
     def triangulation(self, min_x_density=None, min_y_density=None):
+        """
+        Triangulates the Surface2D.
+        """
         if self.area() == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
 
@@ -130,33 +133,28 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         for inner_contour in self.inner_contours:
             inner_polygon = inner_contour.to_polygon(angle_resolution=10)
-
-            for point in inner_polygon.points:
+            inner_polygon_nodes = [vmd.Node2D.from_point(p) for p in inner_polygon.points]
+            for point in inner_polygon_nodes:
                 if point not in point_index:
                     points.append(point)
                     vertices.append((point.x, point.y))
                     point_index[point] = n
                     n += 1
-            for point1, point2 in zip(inner_polygon.points[:-1],
-                                      inner_polygon.points[1:]):
-                segments.append((point_index[point1],
-                                 point_index[point2]))
-            segments.append((point_index[inner_polygon.points[-1]],
-                             point_index[inner_polygon.points[0]]))
+            for point1, point2 in zip(inner_polygon_nodes[:-1],
+                                      inner_polygon_nodes[1:]):
+                segments.append((point_index[point1], point_index[point2]))
+            segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
             rpi = inner_contour.random_point_inside()
             holes.append((rpi.x, rpi.y))
 
         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-               'segments': npy.array(segments).reshape((-1, 2)),
-               }
+               'segments': npy.array(segments).reshape((-1, 2))}
         if holes:
             tri['holes'] = npy.array(holes).reshape((-1, 2))
         t = triangle.triangulate(tri, 'p')
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
-        points = [vmd.Node2D(*t['vertices'][i, :]) for i in
-                  range(np)]
-
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
         return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
 
     def split_by_lines(self, lines):
@@ -1270,8 +1268,7 @@ class CylindricalSurface3D(Surface3D):
             p1 = self.point3d_to_2d(fullarc3d.start)
             return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.X2D)]
         else:
-            print(fullarc3d.normal, self.frame.w)
-            raise ValueError('Impossible!')
+            raise ValueError(f'Impossible: fullarc3d.normal: {fullarc3d.normal} self.frame.w: {self.frame.w}')
 
     def circle3d_to_2d(self, circle3d):
         return []
@@ -2433,20 +2430,10 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                points = [self.point3d_to_2d(
-                    bspline_curve3d.point_at_abscissa(i / 10 * lth)
-                    # max_bound_x=self.x_periodicity,
-                    # max_bound_y=self.y_periodicity
-                ) for i in range(11)]
-                # linesegments = [vme.LineSegment2D(p1, p2)
-                #                 for p1, p2 in zip(points[:-1], points[1:])]
+                points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth)) for i in range(11)]
                 linesegments = [vme.BSplineCurve2D.from_points_interpolation(
                     points, min(self.degree_u, self.degree_v))]
-                # bs = vme.BSplineCurve2D.from_points_interpolation(
-                #     points, min(self.degree_u, self.degree_v))
-                # ax = bs.plot()
-                # [p.plot(ax=ax) for p in points]
-                # print(points)
+
             elif 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
                     self.point3d_to_2d(bspline_curve3d.start),
@@ -2455,26 +2442,21 @@ class BSplineSurface3D(Surface3D):
                 print('BSplineCruve3D skipped because it is too small')
                 linesegments = None
 
-        # print(bspline_curve3d.start, bspline_curve3d.end)
-        # print([(l.start, l.end) for l in linesegments])
-        # print()
         return linesegments
 
     def arc3d_to_2d(self, arc3d):
         number_points = math.ceil(arc3d.angle * 10) + 1  # 10 points per radian
-        l = arc3d.length()
-        points = [self.point3d_to_2d(arc3d.point_at_abscissa(
-            i * l / (number_points - 1))) for i in range(number_points)]
-        # return [vme.LineSegment2D(p1, p2)
-        #         for p1, p2 in zip(points[:-1], points[1:])]
+        length = arc3d.length()
+        points = [self.point3d_to_2d(arc3d.point_at_abscissa(i * length / (number_points - 1)))
+                  for i in range(number_points)]
         return [vme.BSplineCurve2D.from_points_interpolation(
             points, max(self.degree_u, self.degree_v))]
 
     def arc2d_to_3d(self, arc2d):
         number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
-        l = arc2d.length()
-        points = [self.point2d_to_3d(arc2d.point_at_abscissa(
-            i * l / (number_points - 1))) for i in range(number_points)]
+        length = arc2d.length()
+        points = [self.point2d_to_3d(arc2d.point_at_abscissa(i * length / (number_points - 1)))
+                  for i in range(number_points)]
         return [vme.BSplineCurve3D.from_points_interpolation(
             points, max(self.degree_u, self.degree_v))]
 
@@ -3559,29 +3541,18 @@ class BSplineSurface3D(Surface3D):
             for yi in x:
                 x_init.append((xi, yi))
 
-        # x_init = volmdlr.Point2D.grid2d(20, 20, 0, 1, 0, 1)
-
         intersection_points = []
-        # solutions = []
-        # u, v =[],  []
+
 
         for x0 in x_init:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
             if z.fun < 1e-20:
-                #     cost.append(z.cost)
-                # # print(z.cost)
-                # if z.cost<1e-20:
+
                 solution = z.x
                 intersection_points.append(volmdlr.Point3D(self.surface.evaluate_single((solution[0], solution[1]))[0],
                                                            self.surface.evaluate_single((solution[0], solution[1]))[1],
                                                            self.surface.evaluate_single((solution[0], solution[1]))[
                                                                2]))
-        # intersection_points.sort()
-        # u.append(solution[0])
-        # v.append(solution[1])
-        # solutions.append(solution)
-
-        # return (u,v)
         return intersection_points
 
     def error_with_point3d(self, point3d):
@@ -4138,26 +4109,14 @@ class Face3D(volmdlr.core.Primitive3D):
             surfaces = []
             for surface in self.surface2d.split_by_lines(lines_x):
                 surfaces.extend(surface.split_by_lines(lines_y))
-                # for surface in surface.split_by_lines(lines_y):
-                #     ax = self.surface2d.plot()
-                #     surface.plot(ax=ax, color='r')
 
         elif lines_x:
-            # try:
             surfaces = self.surface2d.split_by_lines(lines_x)
-            # except:
-            #     self.plot()
-            #     raise NotImplementedError
         elif lines_y:
             surfaces = self.surface2d.split_by_lines(lines_y)
         else:
             surfaces = [self.surface2d]
 
-        # mesh2d = surfaces[0].triangulation()
-        # print('ls', len(surfaces))
-        # for subsurface in surfaces[1:]:
-        #     # mesh2d += subsurface.triangulation()
-        #     mesh2d.merge_mesh(subsurface.triangulation())
         meshes = [s.triangulation() for s in surfaces]
         mesh2d = vmd.DisplayMesh2D.merge_meshes(meshes)
         return vmd.DisplayMesh3D(
@@ -5577,40 +5536,10 @@ class CylindricalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
-        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle().bounds()
-
-        lower_center = self.surface3d.frame.origin + zmin * self.surface3d.frame.w
-        upper_center = self.surface3d.frame.origin + zmax * self.surface3d.frame.w
-
-        xmin, xmax = volmdlr.geometry.cos_image(theta_min, theta_max)
-        ymin, ymax = volmdlr.geometry.sin_image(theta_min, theta_max)
-
-        points = [(lower_center
-                   + xmin * self.surface3d.radius * self.surface3d.frame.u
-                   + ymin * self.surface3d.radius * self.surface3d.frame.v),
-                  (lower_center
-                   + xmax * self.surface3d.radius * self.surface3d.frame.u
-                   + ymin * self.surface3d.radius * self.surface3d.frame.v),
-                  (lower_center
-                   + xmin * self.surface3d.radius * self.surface3d.frame.u
-                   + ymax * self.surface3d.radius * self.surface3d.frame.v),
-                  (lower_center
-                   + xmax * self.surface3d.radius * self.surface3d.frame.u
-                   + ymax * self.surface3d.radius * self.surface3d.frame.v),
-                  (upper_center
-                   + xmin * self.surface3d.radius * self.surface3d.frame.u
-                   + ymin * self.surface3d.radius * self.surface3d.frame.v),
-                  (upper_center
-                   + xmax * self.surface3d.radius * self.surface3d.frame.u
-                   + ymin * self.surface3d.radius * self.surface3d.frame.v),
-                  (upper_center
-                   + xmin * self.surface3d.radius * self.surface3d.frame.u
-                   + ymax * self.surface3d.radius * self.surface3d.frame.v),
-                  (upper_center
-                   + xmax * self.surface3d.radius * self.surface3d.frame.u
-                   + ymax * self.surface3d.radius * self.surface3d.frame.v)]
-
-        return volmdlr.core.BoundingBox.from_points(points)
+        """
+        Computes the bounding box using the contour3d. true in this case of cylindrical face (not general).
+        """
+        return self.outer_contour3d._bounding_box()
 
     def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
@@ -7362,10 +7291,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self._bbox = new_bounding_box
 
     def get_bounding_box(self):
-        bbox = self.faces[0].bounding_box
-        for face in self.faces[1:]:
-            bbox += face.bounding_box
-        return bbox
+        return volmdlr.core.BoundingBox.from_bounding_boxes([p.bounding_box for p in self.faces])
 
     def cut_by_plane(self, plane_3d: Plane3D):
         frame_block = self.bounding_box.to_frame()

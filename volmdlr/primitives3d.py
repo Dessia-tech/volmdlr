@@ -200,11 +200,13 @@ class Block(volmdlr.faces.ClosedShell3D):
 
     @classmethod
     def from_bounding_box(cls, bounding_box):
-        bb = bounding_box
-        xmin, xmax, ymin, ymax, zmin, zmax = bb.xmin, bb.xmax,\
-            bb.ymin, bb.ymax, bb.zmin, bb.zmax
-        origin = bb.center
-        sx, sy, sz = xmax - xmin, ymax - ymin, zmax - zmin
+        """
+        Transform a bounding box into a block.
+        """
+        origin = bounding_box.center
+        sx = bounding_box.xmax - bounding_box.xmin
+        sy = bounding_box.ymax - bounding_box.ymin
+        sz = bounding_box.zmax - bounding_box.zmin
         frame = volmdlr.Frame3D(origin, sx * volmdlr.Vector3D(1, 0, 0),
                                 sy * volmdlr.Vector3D(0, 1, 0),
                                 sz * volmdlr.Vector3D(0, 0, 1))

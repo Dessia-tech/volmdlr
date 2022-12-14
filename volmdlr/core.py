@@ -899,9 +899,9 @@ class BoundingBox(dc.DessiaObject):
                 volmdlr.Point3D(self.xmax, self.ymax, self.zmax),
                 volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
 
-    def plot(self, ax=None, color=''):
-        fig = plt.figure()
+    def plot(self, ax=None, color='gray'):
         if ax is None:
+            fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
         bbox_edges = [[self.points[0], self.points[1]],
@@ -917,20 +917,30 @@ class BoundingBox(dc.DessiaObject):
                       [self.points[6], self.points[7]],
                       [self.points[7], self.points[4]]]
 
-        x = [p[0] for p in self.points]
-        y = [p[1] for p in self.points]
-        z = [p[2] for p in self.points]
-        ax.scatter(x, y, z)
+        # x = [p[0] for p in self.points]
+        # y = [p[1] for p in self.points]
+        # z = [p[2] for p in self.points]
+        # ax.scatter(x, y, z, color)
         for edge in bbox_edges:
             ax.plot3D([edge[0][0], edge[1][0]],
                       [edge[0][1], edge[1][1]],
                       [edge[0][2], edge[1][2]],
-                      'gray')
+                      color=color)
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
-        # plt.show()
         return ax
+
+    @classmethod
+    def from_bounding_boxes(cls, bounding_boxes):
+        xmin = min(bb.xmin for bb in bounding_boxes)
+        xmax = max(bb.xmax for bb in bounding_boxes)
+        ymin = min(bb.ymin for bb in bounding_boxes)
+        ymax = max(bb.ymax for bb in bounding_boxes)
+        zmin = min(bb.zmin for bb in bounding_boxes)
+        zmax = max(bb.zmax for bb in bounding_boxes)
+        return cls(xmin, xmax, ymin, ymax, zmin, zmax)
+
 
     @classmethod
     def from_points(cls, points):
@@ -1127,7 +1137,7 @@ class VolumeModel(dc.PhysicalObject):
     @property
     def bounding_box(self):
         """
-        Returns the boundary box
+        Returns the bounding box.
         """
         if not self._bbox:
             self._bbox = self._bounding_box()
@@ -1139,38 +1149,16 @@ class VolumeModel(dc.PhysicalObject):
 
     def _bounding_box(self) -> BoundingBox:
         """
-        Computes the bounding box of the model
+        Computes the bounding box of the model.
         """
-        bboxes = []
-        points = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'bounding_box'):
-                bboxes.append(primitive.bounding_box)
-            else:
-                if primitive.__class__.__name__ == 'volmdlr.Point3D':
-                    points.append(primitive)
-        if bboxes:
-            xmin = min(box.xmin for box in bboxes)
-            xmax = max(box.xmax for box in bboxes)
-            ymin = min(box.ymin for box in bboxes)
-            ymax = max(box.ymax for box in bboxes)
-            zmin = min(box.zmin for box in bboxes)
-            zmax = max(box.zmax for box in bboxes)
-        elif points:
-            xmin = min(p[0] for p in points)
-            xmax = max(p[0] for p in points)
-            ymin = min(p[1] for p in points)
-            ymax = max(p[1] for p in points)
-            zmin = min(p[2] for p in points)
-            zmax = max(p[2] for p in points)
-        else:
-            # raise ValueError('Bounding box cant be determined')
-            return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+    
 
     def volume(self) -> float:
         """
-        Return the sum of volumes of the primitives
+        Return the sum of volumes of the primitives.
+        
+        It does not make any boolean operation in case of overlaping.
         """
         volume = 0
         for primitive in self.primitives:
