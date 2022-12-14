@@ -18,7 +18,7 @@ from mpl_toolkits.mplot3d import proj3d
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrow, FancyArrowPatch
 
-from dessia_common import DessiaObject
+from dessia_common.core import DessiaObject
 import plot_data
 
 # =============================================================================
