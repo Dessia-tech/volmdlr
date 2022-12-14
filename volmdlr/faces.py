@@ -581,7 +581,8 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric surface2d according to a line
+        Finds out the symmetric surface2d according to a line.
+
         """
 
         outer_contour = self.outer_contour.axial_symmetry(line)
@@ -630,11 +631,12 @@ class Surface2D(volmdlr.core.Primitive2D):
 
 
 class Surface3D(DessiaObject):
+    """
+    Abstract class.
+
+    """
     x_periodicity = None
     y_periodicity = None
-    """
-    Abstract class
-    """
 
     def face_from_contours3d(self,
                              contours3d: List[volmdlr.wires.Contour3D],
