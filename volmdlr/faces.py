@@ -1259,13 +1259,14 @@ PLANE3D_OZX = Plane3D(volmdlr.OZXY)
 
 
 class CylindricalSurface3D(Surface3D):
-    face_class = 'CylindricalFace3D'
-    x_periodicity = volmdlr.TWO_PI
     """
-    The local plane is defined by (theta, z)
+    The local plane is defined by (theta, z).
+
     :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
     :param radius: Cylinder's radius
     """
+    face_class = 'CylindricalFace3D'
+    x_periodicity = volmdlr.TWO_PI
 
     def __init__(self, frame, radius, name=''):
         self.frame = frame
@@ -1337,6 +1338,26 @@ class CylindricalSurface3D(Surface3D):
     def circle3d_to_2d(self, circle3d):
         return []
 
+    def arcellipse3d_to_2d(self, arcellipse3d):
+        """
+        Transformation of an arcellipse3d to 2d, in a cylindrical surface.
+
+        """
+        points3d = arcellipse3d.discretization_points(number_points=50)
+        points2d = [self.point3d_to_2d(point) for point in points3d]
+        bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points2d, degree=2)
+        return [bsplinecurve2d]
+
+    def ellipse3d_to_2d(self, ellipse3d):
+        """
+        Transformation of an ellipse3d to 2d, in a cylindrical surface.
+
+        """
+        # points3d = ellipse3d.discretization_points(number_points = 50)
+        # points2d = [self.point3d_to_2d(point) for point in points3d]
+        # return points2d
+        raise NotImplementedError
+
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         # TODO: enhance this, this is a non exact method!
         l = bspline_curve3d.length()
@@ -1399,11 +1420,12 @@ class CylindricalSurface3D(Surface3D):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        CylindricalFace3D rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated Plane3D
+        CylindricalFace3D rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated Plane3D.
         """
         new_frame = self.frame.rotation(center=center, axis=axis,
                                         angle=angle)
@@ -1411,31 +1433,35 @@ class CylindricalSurface3D(Surface3D):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        CylindricalFace3D rotation. Object is updated inplace
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
+        CylindricalFace3D rotation. Object is updated inplace.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: rotation angle.
         """
         self.frame.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        CylindricalFace3D translation
-        :param offset: translation vector
-        :return: A new translated CylindricalFace3D
+        CylindricalFace3D translation.
+
+        :param offset: translation vector.
+        :return: A new translated CylindricalFace3D.
         """
         return CylindricalFace3D(self.frame.translation(offset), self.radius)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        CylindricalFace3D translation. Object is updated inplace
+        CylindricalFace3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.frame.translation_inplace(offset)
 
     def grid3d(self, grid2d: volmdlr.grid.Grid2D):
         """
-        generate 3d grid points of a Cylindrical surface, based on a Grid2D
+        Generate 3d grid points of a Cylindrical surface, based on a Grid2D.
+
         """
 
         points_2d = grid2d.points
@@ -1445,6 +1471,8 @@ class CylindricalSurface3D(Surface3D):
 
     def line_intersections(self, line: vme.Line3D):
         line_2d = line.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        if line_2d is None:
+            return []
         origin2d = self.frame.origin.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         distance_line2d_to_origin = line_2d.point_distance(origin2d)
         if distance_line2d_to_origin > self.radius:
@@ -1471,10 +1499,10 @@ class CylindricalSurface3D(Surface3D):
     def parallel_plane_intersection(self, plane3d):
         """
         Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis.
+
         :param plane3d: intersecting plane
         :return: list of intersecting curves
         """
-        origin2d = self.frame.origin.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis > self.radius:
             return []
@@ -1491,11 +1519,12 @@ class CylindricalSurface3D(Surface3D):
     def perpendicular_plane_intersection(self, plane3d):
         """
         Cylinder plane intersections when plane's normal is parallel with the cylinder axis.
+
         :param plane3d: intersecting plane
         :return: list of intersecting curves
         """
-        center2d = volmdlr.Point2D(self.frame.origin.x, self.frame.origin.y)
-        center3d_plane = plane3d.point2d_to_3d(center2d)
+        line = vme.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
+        center3d_plane = plane3d.line_intersections(line)[0]
         circle3d = volmdlr.wires.Circle3D(volmdlr.Frame3D(center3d_plane, plane3d.frame.u,
                                                           plane3d.frame.v, plane3d.frame.w), self.radius)
         return [circle3d]
@@ -1503,12 +1532,13 @@ class CylindricalSurface3D(Surface3D):
     def concurent_plane_intersection(self, plane3d):
         """
         Cylinder plane intersections when plane's normal is concurent with the cylinder axis, but not orthogonal.
+
+        # Ellipse vector equation : < rcos(t), rsin(t), -(1 / c)*(d + arcos(t) + brsint(t)); d = - (ax_0 + by_0 + cz_0)
         :param plane3d: intersecting plane
         :return: list of intersecting curves
         """
-        # Ellipse vector equation : < rcos(t), rsin(t), -(1 / c)*(d + arcos(t) + brsint(t)); d = - (ax_0 + by_0 + cz_0)
-        center2d = volmdlr.Point2D(self.frame.origin.x, self.frame.origin.y)
-        center3d_plane = plane3d.point2d_to_3d(center2d)
+        line = vme.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
+        center3d_plane = plane3d.line_intersections(line)[0]
         plane_coefficient_a, plane_coefficient_b, plane_coefficient_c, plane_coefficient_d =\
             plane3d.equation_coefficients()
         ellipse_0 = volmdlr.Point3D(
@@ -1516,14 +1546,14 @@ class CylindricalSurface3D(Surface3D):
             self.radius * math.sin(0),
             - (1 / plane_coefficient_c) * (plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(0) +
                                            plane_coefficient_b * self.radius * math.sin(0)))
-        ellipse_pi_by_4 = volmdlr.Point3D(
+        ellipse_pi_by_2 = volmdlr.Point3D(
             self.radius * math.cos(math.pi / 2),
             self.radius * math.sin(math.pi / 2),
             - (1 / plane_coefficient_c) * (
                     plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(math.pi / 2)
                     + plane_coefficient_b * self.radius * math.sin(math.pi / 2)))
         axis_1 = center3d_plane.point_distance(ellipse_0)
-        axis_2 = center3d_plane.point_distance(ellipse_pi_by_4)
+        axis_2 = center3d_plane.point_distance(ellipse_pi_by_2)
         if axis_1 > axis_2:
             major_axis = axis_1
             minor_axis = axis_2
@@ -1531,21 +1561,47 @@ class CylindricalSurface3D(Surface3D):
         else:
             major_axis = axis_2
             minor_axis = axis_1
-            major_dir = ellipse_pi_by_4 - center3d_plane
-        ellipse = volmdlr.wires.Ellipse3D(major_axis, minor_axis, center3d_plane, plane3d.frame.w, major_dir)
-        return [ellipse]
+            major_dir = ellipse_pi_by_2 - center3d_plane
+        return [volmdlr.wires.Ellipse3D(major_axis, minor_axis, center3d_plane, plane3d.frame.w, major_dir)]
 
     def plane_intersection(self, plane3d):
         """
         Cylinder intersections with a plane.
-        :param plane3d: intersecting plane
-        :return: list of intersecting curves
+
+        :param plane3d: intersecting plane.
+        :return: list of intersecting curves.
         """
-        if abs(plane3d.frame.w.dot(self.frame.w)) == 0:
+        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
             return self.parallel_plane_intersection(plane3d)
-        elif math.isclose(plane3d.frame.w.dot(self.frame.w), 1, abs_tol=1e-6):
+        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
             return self.perpendicular_plane_intersection(plane3d)
         return self.concurent_plane_intersection(plane3d)
+
+    def is_coincident(self, surface3d):
+        """
+        Verifies if two CylindricalSurfaces are coincident.
+
+        :param surface3d: surface to verify.
+        :return: True if they are coincident, False otherwise.
+        """
+        if not isinstance(self, surface3d.__class__):
+            return False
+        if math.isclose(abs(self.frame.w.dot(surface3d.frame.w)), 1.0, abs_tol=1e-6) and\
+                self.radius == surface3d.radius:
+            return True
+        return False
+
+    def point_on_surface(self, point3d):
+        """
+        Verifies if a given point is on the CylindricalSurface3D.
+
+        :param point3d: point to verify.
+        :return: True if point on surface, False otherwise.
+        """
+        new_point = self.frame.new_coordinates(point3d)
+        if math.isclose(new_point.x ** 2 + new_point.y ** 2, self.radius ** 2, abs_tol=1e-6):
+            return True
+        return False
 
 
 class ToroidalSurface3D(Surface3D):
