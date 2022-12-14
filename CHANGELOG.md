@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc3D: line_intersections, linesegment_intersections
 * new module utils: intersections -> circle_3d_linesegment_intersections
 * Ellipse3D: point_belongs, abscissa, length, to_2d
+* CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
 
 ### Fixed
 
@@ -128,6 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle3D: discretization_points
 * Arc3D: line_intersections, linesegment_intersections
 * Ellipse3D: point_belongs, abscissa, length, to_2d, discretization_points
+* CylindricalSurface3D: point_on_surface, is_coincident
 
 ## v0.6.1 [12/13/2022]
 
@@ -175,25 +177,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D: point_belongs (bug when contour has only one primitive, like FullArc2D)
 * Contour: contours_from_edges
 * PlaneFace3D: face_intersections
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> testing
 * Edge: insert_knots_and_mutiplicity
 * BSplineCurve3D: from_step
 * Surface2D: cut_by_line
 * Circle3D: to_step
-<<<<<<< HEAD
-=======
 * ArcEllipse3D.to_2d()
-
-=======
 * infinite primitive offset of linesegment
->>>>>>> master
-=======
->>>>>>> master
->>>>>>> testing
 
 ### Performance improvements
 
