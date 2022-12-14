@@ -49,7 +49,8 @@ def knots_vector_inv(knots_vector):
 
 class Surface2D(volmdlr.core.Primitive2D):
     """
-    A surface bounded by an outer contour
+    A surface bounded by an outer contour.
+
     """
 
     def __init__(self, outer_contour: volmdlr.wires.Contour2D,
@@ -63,6 +64,7 @@ class Surface2D(volmdlr.core.Primitive2D):
     def copy(self):
         """
         Copies the surface2d.
+
         """
         return self.__class__(outer_contour=self.outer_contour.copy(),
                               inner_contours=[c.copy() for c in self.inner_contours],
@@ -630,11 +632,12 @@ class Surface2D(volmdlr.core.Primitive2D):
 
 
 class Surface3D(DessiaObject):
+    """
+    Abstract class.
+
+    """
     x_periodicity = None
     y_periodicity = None
-    """
-    Abstract class
-    """
 
     def face_from_contours3d(self,
                              contours3d: List[volmdlr.wires.Contour3D],
@@ -1015,7 +1018,8 @@ class Plane3D(Surface3D):
 
     def point_distance(self, point3d):
         """
-        Calculates the distance of a point to plane
+        Calculates the distance of a point to plane.
+
         :param point3d: point to verify distance
         :return: a float, point distance to plane
         """
@@ -1045,13 +1049,18 @@ class Plane3D(Surface3D):
 
     def equation_coefficients(self):
         """
-        returns the a,b,c,d coefficient from equation ax+by+cz+d = 0
+        Returns the a,b,c,d coefficient from equation ax+by+cz+d = 0.
+
         """
         a, b, c = self.frame.w
         d = -self.frame.origin.dot(self.frame.w)
         return (a, b, c, d)
 
     def plane_intersection(self, other_plane):
+        """
+        Calculates the intersections between two Plane 3D.
+
+        """
         line_direction = self.frame.w.cross(other_plane.frame.w)
 
         if line_direction.norm() < 1e-6:

@@ -43,6 +43,10 @@ def standardize_knot_vector(knot_vector):
 
 
 def insert_knots_and_mutiplicity(knots, knot_mutiplicities, knot_to_add, num):
+    """
+    Add knot elements and multiplicities based on the global knot vector.
+
+    """
     new_knots = []
     new_knot_mutiplicities = []
     i = 0
