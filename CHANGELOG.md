@@ -54,12 +54,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
-
+* bounding box: fix for cylindrical
 
 ### Performance improvements
 
 * Avoid unneeded bbox computation
-
+* triangulation performance by use of Node2D instead of points (x15 on casing)
 
 ### Refactorings
 * LineSegment3D: intersections
