@@ -16,7 +16,7 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as npy
 
-import dessia_common as dc
+import dessia_common.core as dc
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
@@ -222,6 +222,10 @@ def delete_double_pos(points, triangles):
 
 
 def determinant(vec1, vec2, vec3):
+    """
+    Calculates the determinant for a three vector matrix.
+
+    """
     a = npy.array((vec1.vector, vec2.vector, vec3.vector))
     return npy.linalg.det(a)
 
@@ -637,14 +641,14 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
 
 
 class CompositePrimitive3D(Primitive3D):
+    """
+    A collection of simple primitives3D
+    """
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['basis_primitives']
     _non_data_eq_attributes = ['name', 'basis_primitives']
     _non_data_hash_attributes = []
-    """
-    A collection of simple primitives3D
-    """
 
     def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
         self.primitives = primitives
@@ -1090,14 +1094,6 @@ class BoundingBox(dc.DessiaObject):
 
 
 class VolumeModel(dc.PhysicalObject):
-    _standalone_in_db = True
-    _eq_is_data_eq = True
-    _non_serializable_attributes = ['shells', 'bounding_box']
-    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                               'faces']
-    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                                 'faces']
-    _dessia_methods = ['to_stl_model']
     """
     A class containing one or several :class:`volmdlr.core.Primitive3D`.
 
@@ -1106,6 +1102,14 @@ class VolumeModel(dc.PhysicalObject):
     :param name: The VolumeModel's name
     :type name: str
     """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['shells', 'bounding_box']
+    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                               'faces']
+    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                                 'faces']
+    _dessia_methods = ['to_stl_model']
 
     def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives

@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unrealeased
+
+### New Features
+
+
+### Fixed
+
+* Contour2D: bounding_rectangle (specify number_points for discretization_points)
+* BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
+
+
+### Performance improvements
+
+
+### Refactorings
+
+
+### Unittests
+
+* Contour2D: point_belongs
+
+
 
 ## Unrealeased
 
@@ -23,9 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * FullArc3D: linesegment_intersections
 * Line: sort_points_along_line
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
-* ArcEllipse2D: straight_line_area
-* Line3D: skew_to: Verifies if two Line3D are skew
-* LineSegment3D.line_interserctions
 * New Class wires.Ellipse2D
 * Ellipse2D.point_over_ellipse()
 * Ellipse2D.line_intersections()
@@ -38,10 +57,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ellipse2D.tranlation()
 * Ellipse2D.frame_mapping()
 * Line2D.frame_mapping()
-
+* Contour3D: linesegment_intersections, line_intersections
+* Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
+* Arc3D: line_intersections, linesegment_intersections
+* new module utils: intersections -> circle_3d_linesegment_intersections
+* CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
 
 ### Fixed
 
+* Contour2D: point_belongs
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * Arc3D: plot
 * Cylinder: point_belongs
@@ -55,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
 * bounding box: fix for cylindrical
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
@@ -98,7 +123,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ellipse2D.tranlation()
 * Ellipse2D.frame_mapping()
 * Line2D.frame_mapping()
+* ArcEllipse3D.to_2d()
+* Circle3D: point_belongs
+* Circle3D: discretization_points
+* Arc3D: line_intersections, linesegment_intersections
+* CylindricalSurface3D: point_on_surface, is_coincident
 
+## v0.6.1 [12/13/2022]
+
+### Changes
+
+* Import from dessia_common are now performed from dessia_common.core
+
+### Fixed
+* infinite primitive offset of linesegment
 
 ## v0.6.0 [11/7/2022]
 
@@ -142,7 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Surface2D: cut_by_line
 * Circle3D: to_step
 * ArcEllipse3D.to_2d()
-
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
