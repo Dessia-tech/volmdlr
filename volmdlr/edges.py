@@ -21,8 +21,8 @@ from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
 
-import dessia_common as dc
 import plot_data.core as plot_data
+import dessia_common.core as dc
 import volmdlr.utils.intersections as vm_utils_intersections
 import volmdlr.core_compiled
 import volmdlr.core
@@ -1639,7 +1639,6 @@ class LineSegment2D(LineSegment):
     def infinite_primitive(self, offset):
         n = -self.unit_normal_vector()
         offset_point_1 = self.start + offset * n
-
         offset_point_2 = self.end + offset * n
 
         return Line2D(offset_point_1, offset_point_2)

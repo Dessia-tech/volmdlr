@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
 * Arc3D: line_intersections, linesegment_intersections
 * new module utils: intersections -> circle_3d_linesegment_intersections
-
+* CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
 
 
 ### Fixed
@@ -84,7 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc2D: point_belongs
 * Arc2D: infinite_primitive
 * Wire2D: infinite_intersections
-
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
@@ -133,6 +133,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle3D: point_belongs
 * Circle3D: discretization_points
 * Arc3D: line_intersections, linesegment_intersections
+* CylindricalSurface3D: point_on_surface, is_coincident
+
+## v0.6.1 [12/13/2022]
+
+### Changes
+
+* Import from dessia_common are now performed from dessia_common.core
+
+### Fixed
+* infinite primitive offset of linesegment
 
 ## v0.6.0 [11/7/2022]
 
@@ -175,7 +185,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve3D: from_step
 * Surface2D: cut_by_line
 * Circle3D: to_step
-
+* ArcEllipse3D.to_2d()
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
