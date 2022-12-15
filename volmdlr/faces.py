@@ -2191,6 +2191,7 @@ class BSplineSurface3D(Surface3D):
         self._displacements = None
         self._grids2d = None
         self._grids2d_deformed = None
+        self._bbox = None
 
     @property
     def x_periodicity(self):
@@ -2211,8 +2212,6 @@ class BSplineSurface3D(Surface3D):
             return 1 - p2d_y0.y
         else:
             return None
-
-        self._bbox = None
 
     @property
     def bounding_box(self):
