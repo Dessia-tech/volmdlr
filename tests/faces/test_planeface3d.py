@@ -15,7 +15,7 @@ class TestPlaneFace3D(unittest.TestCase):
     def test_area(self):
         self.assertAlmostEqual(self.face_with_3holes.area(), 0.12160000)
 
-    def test_face_iside(self):
+    def test_face_inside(self):
         face2 = self.face.frame_mapping(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(0.5, 0, 0),
                                         volmdlr.Vector3D(0, 0.5, 0), volmdlr.Vector3D(0, 0, 0.5)), 'old')
         self.assertEqual(self.face.face_inside(face2), True)
@@ -38,6 +38,8 @@ class TestPlaneFace3D(unittest.TestCase):
         new_faces = self.face_with_3holes.divide_face(cutting_contours, False)
         self.assertEqual(len(new_faces), 2)
 
+    def test_cylindricalface_intersections(self):
+        pass
 
 if __name__ == '__main__':
     unittest.main()
