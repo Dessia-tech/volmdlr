@@ -2915,7 +2915,7 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a point2d from the parametric to the dimensioned frame
+        Convert a point2d from the parametric to the dimensioned frame.
         """
 
         # Check if the 0<point2d.x<1 and 0<point2d.y<1
@@ -3022,7 +3022,7 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_with_dimension_to_parametric_frame(self, point2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a point2d from the dimensioned to the parametric frame
+        Convert a point2d from the dimensioned to the parametric frame.
         """
 
         if self._grids2d != grid2d:
@@ -3129,7 +3129,7 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment2d_parametric_to_dimension(self, linesegment2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a linesegment2d from the parametric to the dimensioned frame
+        Convert a linesegment2d from the parametric to the dimensioned frame.
         """
 
         points = linesegment2d.discretization_points(number_points=20)
@@ -3152,7 +3152,7 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment2d_with_dimension_to_parametric_frame(self, linesegment2d):
         """
-        convert a linesegment2d from the dimensioned to the parametric frame
+        Convert a linesegment2d from the dimensioned to the parametric frame.
         """
 
         try:
@@ -3176,7 +3176,7 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve2d_parametric_to_dimension(self, bsplinecurve2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a bsplinecurve2d from the parametric to the dimensioned frame
+        Convert a bsplinecurve2d from the parametric to the dimensioned frame.
         """
 
         # check if bsplinecurve2d is in a list
@@ -3198,7 +3198,7 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve3d_to_2d_with_dimension(self, bsplinecurve3d, grid2d: volmdlr.grid.Grid2D):
         """
-        compute the bsplinecurve2d of a bsplinecurve3d, on a Bspline surface, in the dimensioned frame
+        Compute the bsplinecurve2d of a bsplinecurve3d, on a Bspline surface, in the dimensioned frame.
         """
 
         bsplinecurve2d_01 = self.bsplinecurve3d_to_2d(bsplinecurve3d)
@@ -3209,7 +3209,7 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve2d_with_dimension_to_parametric_frame(self, bsplinecurve2d):
         """
-        convert a bsplinecurve2d from the dimensioned to the parametric frame
+        Convert a bsplinecurve2d from the dimensioned to the parametric frame.
         """
 
         points_dim = bsplinecurve2d.control_points
@@ -3227,7 +3227,7 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve2d_with_dimension_to_3d(self, bsplinecurve2d):
         """
-        compute the bsplinecurve3d, on a Bspline surface, of a bsplinecurve2d defined in the dimensioned frame
+        Compute the bsplinecurve3d, on a Bspline surface, of a bsplinecurve2d defined in the dimensioned frame.
         """
 
         bsplinecurve2d_01 = self.bsplinecurve2d_with_dimension_to_parametric_frame(bsplinecurve2d)
@@ -3237,7 +3237,7 @@ class BSplineSurface3D(Surface3D):
 
     def arc2d_parametric_to_dimension(self, arc2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a arc2d from the parametric to the dimensioned frame
+        Convert a arc2d from the parametric to the dimensioned frame.
         """
 
         number_points = math.ceil(arc2d.angle * 7) + 1
@@ -3260,7 +3260,7 @@ class BSplineSurface3D(Surface3D):
 
     def arc2d_with_dimension_to_parametric_frame(self, arc2d):
         """
-        convert a arc2d from the dimensioned to the parametric frame
+        Convert a arc2d from the dimensioned to the parametric frame.
         """
 
         number_points = math.ceil(arc2d.angle * 7) + 1
@@ -3285,7 +3285,7 @@ class BSplineSurface3D(Surface3D):
     def contour2d_parametric_to_dimension(self, contour2d: volmdlr.wires.Contour2D,
                                           grid2d: volmdlr.grid.Grid2D):
         """
-        convert a contour2d from the parametric to the dimensioned frame
+        Convert a contour2d from the parametric to the dimensioned frame.
         """
 
         primitives2d_dim = []
@@ -3309,7 +3309,7 @@ class BSplineSurface3D(Surface3D):
     def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D,
                                        grid2d: volmdlr.grid.Grid2D):
         """
-        compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame
+        Compute the Contour2d of a Contour3d, on a Bspline surface, in the dimensioned frame.
         """
 
         contour2d_01 = self.contour3d_to_2d(contour3d)
@@ -3318,7 +3318,7 @@ class BSplineSurface3D(Surface3D):
 
     def contour2d_with_dimension_to_parametric_frame(self, contour2d):
         """
-        convert a contour2d from the dimensioned to the parametric frame
+        Convert a contour2d from the dimensioned to the parametric frame.
         """
 
         # TODO: check and avoid primitives with start=end
