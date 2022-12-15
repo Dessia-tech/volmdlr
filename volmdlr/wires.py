@@ -1419,7 +1419,7 @@ class Contour2D(ContourMixin, Wire2D):
                  name: str = ''):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
-        self._polygon_point_belongs_100 = None
+        self._polygon_100_points = None
         self._bounding_rectangle = None
 
     def __hash__(self):
