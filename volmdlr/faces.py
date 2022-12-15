@@ -2213,8 +2213,6 @@ class BSplineSurface3D(Surface3D):
         else:
             return None
 
-        self._bbox = None
-
     @property
     def bounding_box(self):
         if not self._bbox:
