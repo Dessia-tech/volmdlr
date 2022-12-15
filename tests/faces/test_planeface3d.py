@@ -96,6 +96,9 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertEqual(face_intersections[0].primitives[0], edges.LineSegment3D(volmdlr.Point3D(0.0, 0.15, -0.25),
                                                                                   volmdlr.Point3D(0.0, 0.15, 0.25)))
 
+    def test_planeface_intersections(self):
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()
