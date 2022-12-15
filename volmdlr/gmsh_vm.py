@@ -4,7 +4,7 @@
 Gmsh and related objects
 """
 
-from dessia_common import DessiaObject
+from dessia_common.core import DessiaObject
 import volmdlr
 import volmdlr.mesh
 
