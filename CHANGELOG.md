@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ellipse2D.tranlation()
 * Ellipse2D.frame_mapping()
 * Line2D.frame_mapping()
+* Plane3D: is_parallel, fullarc_intersections
 * Arc2D: cut_betweeen_two_points
 * Contour3D: linesegment_intersections, line_intersections
 * Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
@@ -82,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
 * bounding box: fix for cylindrical and BSplineCurve3D
+* Plane3D: plane_intersections, is_coindident
 * Linesegment2D: infinite_primitive
 * Arc2D: point_belongs
 * Arc2D: infinite_primitive
@@ -132,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ellipse2D.tranlation()
 * Ellipse2D.frame_mapping()
 * Line2D.frame_mapping()
+* Plane3D: plane_intersections, fullarc_intersections, is_parallel, is_coincident
 * Contour2D: offset
 * ArcEllipse3D.to_2d()
 * Circle3D: point_belongs

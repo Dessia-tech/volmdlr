@@ -3185,7 +3185,8 @@ class Line3D(Line):
 
 class LineSegment3D(LineSegment):
     """
-    Define a line segment limited by two points
+    Define a line segment limited by two points.
+
     """
 
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
@@ -4369,7 +4370,8 @@ class BezierCurve3D(BSplineCurve3D):
 
 class Arc3D(Arc):
     """
-    An arc is defined by a starting point, an end point and an interior point
+    An arc is defined by a starting point, an end point and an interior point.
+
     """
 
     def __init__(self, start, interior, end, name=''):
@@ -5125,7 +5127,8 @@ class Arc3D(Arc):
 class FullArc3D(Arc3D):
     """
     An edge that starts at start_end, ends at the same point after having described
-    a circle
+    a circle.
+
     """
 
     def __init__(self, center: volmdlr.Point3D, start_end: volmdlr.Point3D,
@@ -5333,7 +5336,8 @@ class FullArc3D(Arc3D):
 
 class ArcEllipse3D(Edge):
     """
-    An arc is defined by a starting point, an end point and an interior point
+    An arc is defined by a starting point, an end point and an interior point.
+
     """
 
     def __init__(self, start, interior, end, center, major_dir,
