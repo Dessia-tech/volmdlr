@@ -641,6 +641,13 @@ class GmshParser(DessiaObject):
                 node in list_nodes]
 
     def get_lines_nodes(self):
+        """
+        Gets lines related to nodes data.
+
+        :return: a list of lines
+        :rtype: List[str]
+        """
+
         lines = []        
         if self.nodes['all_nodes'][0].__class__.__name__[-2] == '2':
             for node in self.nodes['all_nodes']:
@@ -652,6 +659,13 @@ class GmshParser(DessiaObject):
         return lines
 
     def get_lines_cells(self):
+        """
+        Gets lines related to cells data.
+
+        :return: a list of lines
+        :rtype: List[str]
+        """
+
         lines = []
         cells, cells_0, cells_1 = 0, 0, 0
         for i in range(0, len(self.nodes['nodes_dim_0'])):
@@ -679,6 +693,13 @@ class GmshParser(DessiaObject):
         return lines, cells_0, cells_1
 
     def get_lines_cells_type(self):
+        """
+        Gets lines related to cells type data.
+
+        :return: a list of lines
+        :rtype: List[str]
+        """
+
         lines = []
         lines.extend(['1'] * len(self.nodes['nodes_dim_0']))
 
@@ -698,6 +719,15 @@ class GmshParser(DessiaObject):
         return lines
 
     def to_vtk(self, output_file_name):
+        """
+        Create a .vtk file from a GmshParser data.
+
+        :param output_file_name: DESCRIPTION
+        :type output_file_name: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+        """
+
         if output_file_name[-3::] != 'vtk':
             output_file_name += '.vtk'
 
