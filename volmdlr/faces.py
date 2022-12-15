@@ -1587,9 +1587,6 @@ class CylindricalSurface3D(Surface3D):
 
 
 class ToroidalSurface3D(Surface3D):
-    face_class = 'ToroidalFace3D'
-    x_periodicity = volmdlr.TWO_PI
-    y_periodicity = volmdlr.TWO_PI
     """
     The local plane is defined by (theta, phi).
     theta is the angle around the big (R) circle and phi around the small(r)
@@ -1600,6 +1597,9 @@ class ToroidalSurface3D(Surface3D):
     :param r: Circle to revolute radius
     Definitions of R and r according to https://en.wikipedia.org/wiki/Torus
     """
+    face_class = 'ToroidalFace3D'
+    x_periodicity = volmdlr.TWO_PI
+    y_periodicity = volmdlr.TWO_PI
 
     def __init__(self, frame: volmdlr.Frame3D,
                  R: float, r: float, name: str = ''):
@@ -1780,7 +1780,8 @@ class ToroidalSurface3D(Surface3D):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        ToroidalSurface3D rotation
+        ToroidalSurface3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
