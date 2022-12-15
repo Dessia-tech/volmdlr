@@ -648,7 +648,7 @@ class GmshParser(DessiaObject):
         :rtype: List[str]
         """
 
-        lines = []        
+        lines = []
         if self.nodes['all_nodes'][0].__class__.__name__[-2] == '2':
             for node in self.nodes['all_nodes']:
                 lines.append(str([*node])[1:-1].replace(',', '') + ' 0.0')
