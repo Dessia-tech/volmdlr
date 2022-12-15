@@ -2589,8 +2589,6 @@ class BSplineSurface3D(Surface3D):
         return [vme.BSplineCurve3D.from_points_interpolation(
             points, max(self.degree_u, self.degree_v))]
 
-
-
     def rectangular_cut(self, u1: float, u2: float,
                         v1: float, v2: float, name: str = ''):
         p1 = volmdlr.Point2D(u1, v1)

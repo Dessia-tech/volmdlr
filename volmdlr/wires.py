@@ -4741,7 +4741,7 @@ class Circle3D(Contour3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Circle3D rotation.
-        
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -4753,7 +4753,7 @@ class Circle3D(Contour3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Circle3D rotation. Object is updated inplace.
-        
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -4763,7 +4763,7 @@ class Circle3D(Contour3D):
     def translation(self, offset: volmdlr.Vector3D):
         """
         Circle3D translation.
-        
+
         :param offset: translation vector
         :return: A new translated Circle3D
         """
@@ -4772,7 +4772,7 @@ class Circle3D(Contour3D):
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
         Circle3D translation. Object is updated inplace.
-        
+
         :param offset: translation vector
         """
         self.frame.translation_inplace(offset)
@@ -5012,7 +5012,7 @@ class Circle3D(Contour3D):
 class Ellipse3D(Contour3D):
     """
     Defines a 3D ellipse.
-    
+
     :param major_axis: Largest radius of the ellipse
     :type major_axis: float
     :param minor_axis: Smallest radius of the ellipse
