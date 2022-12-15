@@ -1602,10 +1602,12 @@ class ToroidalSurface3D(Surface3D):
         self.r = r
         self.name = name
 
+        self._bbox = None
+
     @property
     def bounding_box(self):
         if not self._bbox:
-            self._bbox = self.get_bounding_box()
+            self._bbox = self._bounding_box()
         return self._bbox
 
     def _bounding_box(self):
@@ -7108,15 +7110,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             bbox = primitive.bounding_box
 
     def triangulation(self):
-        # mesh = vmd.DisplayMesh3D([], [])
         meshes = []
         for i, face in enumerate(self.faces):
-            # try:
             face_mesh = face.triangulation()
             meshes.append(face_mesh)
-            # mesh.merge_mesh(face_mesh)
-            # except NotImplementedError:
-            #     print('Warning: a face has been skipped in rendering')
         return vmd.DisplayMesh3D.merge_meshes(meshes)
 
     def babylon_script(self, name='primitive_mesh'):
