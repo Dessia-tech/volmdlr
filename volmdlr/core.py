@@ -1646,7 +1646,7 @@ class VolumeModel(dc.PhysicalObject):
         # min_points: int = None,
         # initial_mesh_size: float = 5):
         """
-        gets the lines that define mesh parameters for a VolumeModel, to be added to a .geo file
+        Gets the lines that define mesh parameters for a VolumeModel, to be added to a .geo file
 
         :param factor: A float, between 0 and 1, that describes the mesh quality
         (1 for coarse mesh - 0 for fine mesh)
@@ -1761,7 +1761,7 @@ class VolumeModel(dc.PhysicalObject):
     def to_geo_stream(self, stream: dcf.StringFile,
                       factor: float, **kwargs):
         """
-        gets the .geo file for the VolumeModel
+        Gets the .geo file for the VolumeModel
 
         :param file_name: The geo. file name
         :type file_name: str
@@ -1803,7 +1803,7 @@ class VolumeModel(dc.PhysicalObject):
         # min_points: int = None,
         # initial_mesh_size: float = 5):
         """
-        gets the .geo file for the VolumeModel.
+        Gets the .geo file for the VolumeModel.
 
         :param file_name: The geo. file name
         :type file_name: str

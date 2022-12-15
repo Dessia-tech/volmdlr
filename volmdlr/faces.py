@@ -761,7 +761,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         # min_points: int = None,
         # initial_mesh_size: float = 5):
         """
-        gets the .geo file for the Surface2D
+        Gets the .geo file for the Surface2D
         """
 
         for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
@@ -2632,7 +2632,7 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment3d_to_2d(self, linesegment3d):
         """
-        a line segment on a BSplineSurface3D will be in any case a line in 2D?
+        A line segment on a BSplineSurface3D will be in any case a line in 2D?
         """
         x_perio = self.x_periodicity if self.x_periodicity is not None else 1.
         y_perio = self.y_periodicity if self.y_periodicity is not None else 1.
@@ -3364,7 +3364,7 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_with_dimension_to_3d(self, point2d, grid2d: volmdlr.grid.Grid2D):
         """
-        compute the point3d, on a Bspline surface, of a point2d define in the dimensioned frame
+        Compute the point3d, on a Bspline surface, of a point2d define in the dimensioned frame
         """
 
         point2d_01 = self.point2d_with_dimension_to_parametric_frame(point2d, grid2d)
@@ -3373,7 +3373,7 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment2d_parametric_to_dimension(self, linesegment2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a linesegment2d from the parametric to the dimensioned frame
+        Convert a linesegment2d from the parametric to the dimensioned frame
         """
 
         points = linesegment2d.discretization_points(number_points=20)
@@ -3386,7 +3386,7 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment3d_to_2d_with_dimension(self, linesegment3d, grid2d: volmdlr.grid.Grid2D):
         """
-        compute the linesegment2d of a linesegment3d, on a Bspline surface, in the dimensioned frame
+        Compute the linesegment2d of a linesegment3d, on a Bspline surface, in the dimensioned frame
         """
 
         linesegment2d = self.linesegment3d_to_2d(linesegment3d)
@@ -3396,7 +3396,7 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment2d_with_dimension_to_parametric_frame(self, linesegment2d):
         """
-        convert a linesegment2d from the dimensioned to the parametric frame
+        Convert a linesegment2d from the dimensioned to the parametric frame
         """
 
         try:
@@ -3410,7 +3410,7 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment2d_with_dimension_to_3d(self, linesegment2d):
         """
-        compute the linesegment3d, on a Bspline surface, of a linesegment2d defined in the dimensioned frame
+        Compute the linesegment3d, on a Bspline surface, of a linesegment2d defined in the dimensioned frame
         """
 
         linesegment2d_01 = self.linesegment2d_with_dimension_to_parametric_frame(linesegment2d)
@@ -3420,7 +3420,7 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve2d_parametric_to_dimension(self, bsplinecurve2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a bsplinecurve2d from the parametric to the dimensioned frame
+        Convert a bsplinecurve2d from the parametric to the dimensioned frame
         """
 
         # check if bsplinecurve2d is in a list
@@ -3442,7 +3442,7 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve3d_to_2d_with_dimension(self, bsplinecurve3d, grid2d: volmdlr.grid.Grid2D):
         """
-        compute the bsplinecurve2d of a bsplinecurve3d, on a Bspline surface, in the dimensioned frame
+        Compute the bsplinecurve2d of a bsplinecurve3d, on a Bspline surface, in the dimensioned frame
         """
 
         bsplinecurve2d_01 = self.bsplinecurve3d_to_2d(bsplinecurve3d)
@@ -3453,7 +3453,7 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve2d_with_dimension_to_parametric_frame(self, bsplinecurve2d):
         """
-        convert a bsplinecurve2d from the dimensioned to the parametric frame
+        Convert a bsplinecurve2d from the dimensioned to the parametric frame
         """
 
         points_dim = bsplinecurve2d.control_points
@@ -3471,7 +3471,7 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve2d_with_dimension_to_3d(self, bsplinecurve2d):
         """
-        compute the bsplinecurve3d, on a Bspline surface, of a bsplinecurve2d defined in the dimensioned frame
+        Compute the bsplinecurve3d, on a Bspline surface, of a bsplinecurve2d defined in the dimensioned frame
         """
 
         bsplinecurve2d_01 = self.bsplinecurve2d_with_dimension_to_parametric_frame(bsplinecurve2d)
@@ -3481,7 +3481,7 @@ class BSplineSurface3D(Surface3D):
 
     def arc2d_parametric_to_dimension(self, arc2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a arc2d from the parametric to the dimensioned frame
+        Convert a arc2d from the parametric to the dimensioned frame
         """
 
         number_points = math.ceil(arc2d.angle * 7) + 1
@@ -3494,7 +3494,7 @@ class BSplineSurface3D(Surface3D):
 
     def arc3d_to_2d_with_dimension(self, arc3d, grid2d: volmdlr.grid.Grid2D):
         """
-        compute the arc2d of a arc3d, on a Bspline surface, in the dimensioned frame
+        Compute the arc2d of a arc3d, on a Bspline surface, in the dimensioned frame
         """
 
         bsplinecurve2d = self.arc3d_to_2d(arc3d)[0]  # it's a bsplinecurve2d
@@ -3504,7 +3504,7 @@ class BSplineSurface3D(Surface3D):
 
     def arc2d_with_dimension_to_parametric_frame(self, arc2d):
         """
-        convert a arc2d from the dimensioned to the parametric frame
+        Convert a arc2d from the dimensioned to the parametric frame
         """
 
         number_points = math.ceil(arc2d.angle * 7) + 1
@@ -3518,7 +3518,7 @@ class BSplineSurface3D(Surface3D):
 
     def arc2d_with_dimension_to_3d(self, arc2d):
         """
-        compute the  arc3d, on a Bspline surface, of a arc2d in the dimensioned frame
+        Compute the  arc3d, on a Bspline surface, of a arc2d in the dimensioned frame
         """
 
         arc2d_01 = self.arc2d_with_dimension_to_parametric_frame(arc2d)
@@ -3529,7 +3529,7 @@ class BSplineSurface3D(Surface3D):
     def contour2d_parametric_to_dimension(self, contour2d: volmdlr.wires.Contour2D,
                                           grid2d: volmdlr.grid.Grid2D):
         """
-        convert a contour2d from the parametric to the dimensioned frame
+        Convert a contour2d from the parametric to the dimensioned frame
         """
 
         primitives2d_dim = []
@@ -3553,7 +3553,7 @@ class BSplineSurface3D(Surface3D):
     def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D,
                                        grid2d: volmdlr.grid.Grid2D):
         """
-        compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame
+        Compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame
         """
 
         contour2d_01 = self.contour3d_to_2d(contour3d)
@@ -3562,7 +3562,7 @@ class BSplineSurface3D(Surface3D):
 
     def contour2d_with_dimension_to_parametric_frame(self, contour2d):
         """
-        convert a contour2d from the dimensioned to the parametric frame
+        Convert a contour2d from the dimensioned to the parametric frame
         """
 
         # TODO: check and avoid primitives with start=end
@@ -3604,7 +3604,7 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def from_geomdl_surface(cls, surface):
         """
-        create a volmdlr's BSpline_Surface3D from a geomdl's one
+        Create a volmdlr's BSpline_Surface3D from a geomdl's one
         """
 
         control_points = []
@@ -3701,7 +3701,7 @@ class BSplineSurface3D(Surface3D):
     def from_cylindrical_faces(cls, cylindrical_faces, degree_u, degree_v,
                                points_x: int = 10, points_y: int = 10):
         """
-        define a bspline surface from a list of cylindrical faces
+        Define a bspline surface from a list of cylindrical faces
 
         Parameters
         ----------
@@ -3784,7 +3784,7 @@ class BSplineSurface3D(Surface3D):
     def from_cylindrical_face(cls, cylindrical_face, degree_u, degree_v,
                               **kwargs):  # points_x: int = 50, points_y: int = 50
         """
-        define a bspline surface from a cylindrical face
+        Define a bspline surface from a cylindrical face
 
         Parameters
         ----------
@@ -6320,7 +6320,7 @@ class CylindricalFace3D(Face3D):
 
     def adjacent_direction(self, other_face3d):
         """
-        find out in which direction the faces are adjacent
+        Find out in which direction the faces are adjacent
         Parameters
         ----------
         other_face3d : volmdlr.faces.CylindricalFace3D
@@ -6342,7 +6342,7 @@ class CylindricalFace3D(Face3D):
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
         """
-        gets the lines that define a CylindricalFace3D in a .geo file
+        Gets the lines that define a CylindricalFace3D in a .geo file
         """
 
         return 'Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
