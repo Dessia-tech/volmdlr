@@ -443,7 +443,7 @@ class Block(volmdlr.faces.ClosedShell3D):
 class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     """
     Extrude a profile given by outer and inner contours.
-    
+
     TODO: In the future change to a frame and a surface2D and an extrusion vector.
     """
     _non_serializable_attributes = ['faces', 'inner_contours3d',
@@ -604,7 +604,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new ExtrudeProfile
-        
+
         :param side: = 'old' or 'new'
         """
         extrusion_vector, x, y = self.frame_mapping_parameters(frame,
@@ -617,7 +617,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
-        
+
         :param side: = 'old' or 'new'
         """
         self.extrusion_vector, self.x, self.y =\
@@ -1375,6 +1375,7 @@ class HollowCylinder(RevolvedProfile):
     Creates a hollow cylinder with the position, the axis of revolution,
     the inner and outer radius and the length.
     """
+
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  inner_radius: float, outer_radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1,

@@ -305,7 +305,7 @@ class LineSegment(Edge):
     def direction_vector(self, abscissa=0.):
         """
         Returns a direction vector at a given abscissa, it is not normalized.
-        
+
         :param abscissa: defines where in the line segement
             direction vector is to be calculated.
         :return: The direction vector of the LineSegement.
@@ -317,7 +317,7 @@ class LineSegment(Edge):
     def normal_vector(self, abscissa=0.):
         """
         Returns a normal vector at a given abscissa, it is not normalized.
-        
+
         :param abscissa: defines where in the line_segement
         normal vector is to be calculated.
         :return: The normal vector of the LineSegement.
@@ -327,7 +327,7 @@ class LineSegment(Edge):
     def unit_normal_vector(self, abscissa=0.):
         """
         Returns the unit normal vector at a given abscissa.
-        
+
         :param abscissa: defines where in the line_segement unit normal vector is to be calculated.
         :return: The unit normal vector of the LineSegement.
         """

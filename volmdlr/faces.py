@@ -3627,7 +3627,6 @@ class BSplineSurface3D(Surface3D):
 
         intersection_points = []
 
-
         for x0 in x_init:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
             if z.fun < 1e-20:

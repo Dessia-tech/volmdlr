@@ -949,7 +949,6 @@ class BoundingBox(dc.DessiaObject):
         zmax = max(bb.zmax for bb in bounding_boxes)
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
-
     @classmethod
     def from_points(cls, points):
         # if len(points) == 0:
@@ -1160,12 +1159,11 @@ class VolumeModel(dc.PhysicalObject):
         Computes the bounding box of the model.
         """
         return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
-    
 
     def volume(self) -> float:
         """
         Return the sum of volumes of the primitives.
-        
+
         It does not make any boolean operation in case of overlaping.
         """
         volume = 0

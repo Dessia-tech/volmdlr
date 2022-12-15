@@ -109,7 +109,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     def translation(self, offset: volmdlr.Vector2D):
         """
         OpenedRoundedLineSegments2D translation.
-        
+
         :param offset: translation vector
         :return: A new translated OpenedRoundedLineSegments2D
         """
@@ -120,7 +120,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
         OpenedRoundedLineSegments2D translation. Object is updated inplace.
-        
+
         :param offset: translation vector
         """
         for point in self.points:

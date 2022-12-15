@@ -4505,7 +4505,7 @@ class Contour3D(ContourMixin, Wire3D):
     def to_2d(self, plane_origin, x, y):
         """
         Projects in 2D the contour3D to give a Contour2D.
-        
+
         :param plane_origin: plane origin.
         :param x: plane u vector.
         :param y: plane v vector.
