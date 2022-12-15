@@ -95,9 +95,17 @@ class TestPlaneFace3D(unittest.TestCase):
         face_intersections = plane_face_3.face_intersections(face)
         self.assertEqual(face_intersections[0].primitives[0], edges.LineSegment3D(volmdlr.Point3D(0.0, 0.15, -0.25),
                                                                                   volmdlr.Point3D(0.0, 0.15, 0.25)))
+    def test_linesegment_inside(self):
+        lineseg = volmdlr.edges.LineSegment3D(volmdlr.Point3D(0.2, 0, -0.2), volmdlr.Point3D(0.1, 0.0, 0.2))
+        self.assertTrue(self.plane_face_cylindricalface_intersec.linesegment_inside(lineseg))
+        lineseg1 = volmdlr.edges.LineSegment3D(volmdlr.Point3D(0.2, 0, -0.2), volmdlr.Point3D(0.1, 0.1, 0.2))
+        self.assertFalse(self.plane_face_cylindricalface_intersec.linesegment_inside(lineseg1))
 
-    def test_planeface_intersections(self):
-        pass
+    def test_circle_inside(self):
+        circle = volmdlr.wires.Circle3D(volmdlr.OZXY, 0.1)
+        self.assertTrue(self.plane_face_cylindricalface_intersec.circle_inside(circle))
+        circle2 = volmdlr.wires.Circle3D(volmdlr.OYZX, 0.1)
+        self.assertFalse(self.plane_face_cylindricalface_intersec.circle_inside(circle2))
 
 
 if __name__ == '__main__':
