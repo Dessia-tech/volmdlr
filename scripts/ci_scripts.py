@@ -75,8 +75,8 @@ scripts = [
             ]
 
 # Maximum time for a script
-CONTROLED_TIMES = {'showcases/casing.py': 5,
-                   'primitives/sweep.py': 5}
+CONTROLED_TIMES = {'showcases/casing.py': 15,
+                   'primitives/sweep.py': 15}
 
 # Testing if all scripts exists before launching them
 for script_name in scripts:
