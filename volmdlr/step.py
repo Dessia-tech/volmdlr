@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import plot_data.graph
 
-import dessia_common as dc
+import dessia_common.core as dc
 
 import volmdlr
 import volmdlr.core

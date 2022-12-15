@@ -64,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc3D: line_intersections, linesegment_intersections
 * new module utils: intersections -> circle_3d_linesegment_intersections
 * hash for Frame2D
+* CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
 
 ### Fixed
 
@@ -84,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix some to_step methods from edges.py and faces.py
 * Plane3D: plane_intersections, is_coindident
 * contour2d: ordering_primitives, order_primitives
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
@@ -138,6 +140,16 @@ time we have to verify if a point is inside
 * Circle3D: discretization_points
 * Arc3D: line_intersections, linesegment_intersections
 * Contour2D: ordering_contour, is_ordered, order_contour
+* CylindricalSurface3D: point_on_surface, is_coincident
+
+## v0.6.1 [12/13/2022]
+
+### Changes
+
+* Import from dessia_common are now performed from dessia_common.core
+
+### Fixed
+* infinite primitive offset of linesegment
 
 ## v0.6.0 [11/7/2022]
 
@@ -180,7 +192,9 @@ time we have to verify if a point is inside
 * BSplineCurve3D: from_step
 * Surface2D: cut_by_line
 * Circle3D: to_step
+* ArcEllipse3D.to_2d()
 
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
