@@ -1,12 +1,7 @@
-import os
+import os, glob
 import time
 import nbformat
 from nbconvert import PythonExporter
-
-
-tutorials = [
-            'tutorial_casing'
-            ]
 
 
 # Converting .ipynb to .py
@@ -22,13 +17,21 @@ def convert_notebook(notebook_path, module_path):
     with open(module_path, 'w+') as fh:
         for line in lines:
             # Removing the prompt commands from notebook
-            if line[:20] != 'get_ipython().system':
+            if line[:20] != 'get_ipython().system' and '.plot(' not in line:
                 fh.write(line + '\n')
 
 
-# Converting all tutorials
+tutorials = []
+
+# Converting all tutorials automatically
+for tutorial in glob.glob("*.ipynb"):
+    tutorials.append(tutorial[:-6])
+
 for tutorial in tutorials:
     convert_notebook(tutorial + '.ipynb', tutorial + '.py')
+
+for i in range(len(tutorials)):
+    tutorials[i] += '.py'
 
 # Testing if all tutorials exists before launching them
 for tutorial_name in tutorials:
