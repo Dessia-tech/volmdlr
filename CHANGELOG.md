@@ -92,6 +92,7 @@ time we have to verify if a point is inside
 ### Refactorings
 * LineSegment3D: intersections
 * Line2D: sort_points_along_line
+* Line3D: intersections
 
 
 ### Unittests
