@@ -117,7 +117,9 @@ def geometric_curve_set(arguments, object_dict):
 
 
 def shell_base_surface_model(arguments, object_dict):
-    # Shell3D
+    """
+    Returns the data in case of a Shell3D.
+    """
     return object_dict[int(arguments[1][0][1:])]
 
 
@@ -132,7 +134,9 @@ def item_defined_transformation(arguments, object_dict):
 
 
 def manifold_surface_shape_representation(arguments, object_dict):
-    # Shell3D
+    """
+    Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
+    """
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
@@ -143,10 +147,16 @@ def manifold_surface_shape_representation(arguments, object_dict):
 
 
 def manifold_solid_brep(arguments, object_dict):
+    """
+    Returns the data in case of a manifold_solid_brep with voids.
+    """
     return object_dict[arguments[1]]
 
 
 def brep_with_voids(arguments, object_dict):
+    """
+    Returns the data in case of a BREP with voids.
+    """
     return object_dict[arguments[1]]
 
 

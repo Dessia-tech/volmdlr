@@ -604,7 +604,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new ExtrudeProfile
-        side = 'old' or 'new'
+        
+        :param side: = 'old' or 'new'
         """
         extrusion_vector, x, y = self.frame_mapping_parameters(frame,
                                                                side)
@@ -616,7 +617,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        
+        :param side: = 'old' or 'new'
         """
         self.extrusion_vector, self.x, self.y =\
             self.frame_mapping_parameters(frame, side)
@@ -1867,6 +1869,9 @@ class Sphere(RevolvedProfile):
 
 
 class Measure3D(volmdlr.edges.Line3D):
+    """
+    Used to create a measure between two points in 3D.
+    """
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  color: Tuple[float, float, float] = (1., 0, 0)):
