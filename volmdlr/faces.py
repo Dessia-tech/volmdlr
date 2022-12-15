@@ -854,6 +854,7 @@ class Surface3D(DessiaObject):
     def normal_from_point3d(self, point3d):
         """
         Evaluates the normal vector of the bspline surface at this point3d.
+
         """
 
         return (self.normal_from_point2d(self.point3d_to_2d(point3d)))[1]
