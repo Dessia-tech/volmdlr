@@ -2346,7 +2346,7 @@ class Arc2D(Arc):
 
     def to_wire(self, angle_resolution: float = 10.):
         """
-        convert an arc to a wire2d defined with line_segments.
+        Convert an arc to a wire2d defined with line_segments.
 
         """
 
@@ -2804,7 +2804,7 @@ class ArcEllipse2D(Edge):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
-        discretize an Edge to have "n" points.
+        Discretize an Edge to have "n" points.
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned.

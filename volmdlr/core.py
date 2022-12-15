@@ -181,6 +181,10 @@ def sin_cos_angle(u1, u2):
 
 
 def delete_double_pos(points, triangles):
+    """
+    Clean mesh by deleting double points.
+    See if we could move this to display.
+    """
     points_to_indexes = {}
 
     for index, point in enumerate(points):
