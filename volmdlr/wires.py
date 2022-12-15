@@ -3962,6 +3962,9 @@ class Ellipse2D(Contour2D):
             self.theta = 0.0
         Contour2D.__init__(self, [self], name=name)
 
+    def __hash__(self):
+        return int(round(1e6 * (self.center.x + self.center.y + self.major_axis + self.minor_axis)))
+
     def area(self):
         """
         Calculates the ellipe's area.
@@ -5057,19 +5060,89 @@ class Ellipse3D(Contour3D):
         self.normal = normal
         major_dir.normalize()
         self.major_dir = major_dir
+        self._frame = None
         Contour3D.__init__(self, [self], name=name)
 
-    def tessellation_points(self, resolution=20):
-        # plane = Plane3D.from_normal(self.center, self.normal)
-        tessellation_points_3d = [
-                                     self.center + self.major_axis * math.cos(
-                                         teta) * self.major_dir
-                                     + self.minor_axis * math.sin(
-                                         teta) * self.major_dir.cross(
-                                         self.normal) for teta in
-                                     npy.linspace(0, volmdlr.TWO_PI,
-                                                  resolution + 1)][:-1]
-        return tessellation_points_3d
+    @property
+    def frame(self):
+        """
+        Gets the Ellipse's Frame3D.
+
+        :return: Frame3D.
+        """
+        if not self._frame:
+            self._frame = volmdlr.Frame3D(self.center, self.major_dir, self.normal.cross(self.major_dir), self.normal)
+        return self._frame
+
+    def point_belongs(self, point):
+        """
+        Verifies if a given lies on the Ellipse3D.
+
+        :param point: point to be verified.
+        :return: True is point lies on the Ellipse, False otherwise
+        """
+        new_point = self.frame.new_coordinates(point)
+        return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
+                            new_point.y ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
+
+    def length(self):
+        """
+        Calculates the length of the ellipse.
+
+        Ramanujan's approximation for the perimeter of the ellipse.
+        P = π (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
+        :return:
+        """
+        perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
+        return math.pi * (self.major_axis + self.minor_axis) *\
+            (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
+        """
+        Discretize a Contour to have "n" points.
+
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned.
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+            to mesh an arc.
+        :return: a list of sampled points.
+        """
+        if number_points:
+            angle_resolution = number_points
+        discretization_points_3d = [
+                                      self.center + self.major_axis * math.cos(
+                                          teta) * self.major_dir
+                                      + self.minor_axis * math.sin(
+                                          teta) * self.major_dir.cross(
+                                          self.normal) for teta in
+                                      npy.linspace(0, volmdlr.TWO_PI,
+                                                   angle_resolution + 1)][:-1]
+        return discretization_points_3d
+
+    def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a Ellipse3D into an EllipseD, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Ellipse2D.
+        """
+        center = self.center.to_2d(plane_origin, x, y)
+        major_dir_d2 = self.major_dir.to_2d(plane_origin, x, y)
+        return Ellipse2D(self.major_axis, self.minor_axis, center, major_dir_d2)
+
+    def abscissa(self, point: volmdlr.Point3D):
+        """
+        Calculates the abscissa a given point.
+
+        :param point: point to calculate abscissa.
+        :return: abscissa
+        """
+        vector_2 = self.normal.cross(self.major_dir)
+        ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
+        point2d = point.to_2d(self.center, self.major_dir, vector_2)
+        return ellipse_2d.abscissa(point2d)
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         # minor_dir = self.normal.cross(self.major_dir)
@@ -5119,11 +5192,12 @@ class Ellipse3D(Contour3D):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Ellipse3D rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated Ellipse3D
+        Ellipse3D rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated Ellipse3D.
         """
         new_center = self.center.rotation(center, axis, angle)
         new_normal = self.normal.rotation(center, axis, angle)
@@ -5133,7 +5207,8 @@ class Ellipse3D(Contour3D):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Ellipse3D rotation. Object is updated inplace
+        Ellipse3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -5156,7 +5231,8 @@ class Ellipse3D(Contour3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Ellipse3D translation. Object is updated inplace
+        Ellipse3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.center.translation_inplace(offset)
@@ -5173,7 +5249,7 @@ class Ellipse3D(Contour3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.tessellation_points():
+        for px, py, pz in self.discretization_points():
             x.append(px)
             y.append(py)
             z.append(pz)
