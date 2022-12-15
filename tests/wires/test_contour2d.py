@@ -1,5 +1,6 @@
 import unittest
 
+import dessia_common
 import volmdlr
 from volmdlr.models.contours import contour2d_1, contour2d_2
 from volmdlr import wires, edges
@@ -24,6 +25,12 @@ class TestContour2D(unittest.TestCase):
 
     def test_cut_by_wire(self):
         pass
+
+    def test_offset(self):
+        contour_to_offset = dessia_common.DessiaObject.load_from_file('wires/contour_to_offset.json')
+        stringer_contour_offset = contour_to_offset.offset(4)
+        self.assertEqual(len(stringer_contour_offset.primitives), 10)
+        self.assertAlmostEqual(stringer_contour_offset.area(), 546.1486677646163)
 
 
 if __name__ == '__main__':

@@ -57,11 +57,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ellipse2D.tranlation()
 * Ellipse2D.frame_mapping()
 * Line2D.frame_mapping()
+* Arc2D: cut_betweeen_two_points
 * Contour3D: linesegment_intersections, line_intersections
 * Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
 * Arc3D: line_intersections, linesegment_intersections
 * new module utils: intersections -> circle_3d_linesegment_intersections
+* Ellipse3D: point_belongs, abscissa, length, to_2d
 * CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
+
 
 ### Fixed
 
@@ -79,7 +82,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
 * bounding box: fix for cylindrical
+* Linesegment2D: infinite_primitive
+* Arc2D: point_belongs
+* Arc2D: infinite_primitive
+* Wire2D: infinite_intersections
 * infinite primitive offset of linesegment
+* Ellispe3D: discretization_points
 
 ### Performance improvements
 
@@ -89,6 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactorings
 * LineSegment3D: intersections
 * Line2D: sort_points_along_line
+* Line3D: intersections
 
 
 ### Unittests
@@ -123,10 +132,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ellipse2D.tranlation()
 * Ellipse2D.frame_mapping()
 * Line2D.frame_mapping()
+* Contour2D: offset
 * ArcEllipse3D.to_2d()
 * Circle3D: point_belongs
 * Circle3D: discretization_points
 * Arc3D: line_intersections, linesegment_intersections
+* Ellipse3D: point_belongs, abscissa, length, to_2d, discretization_points
 * CylindricalSurface3D: point_on_surface, is_coincident
 
 ## v0.6.1 [12/13/2022]
