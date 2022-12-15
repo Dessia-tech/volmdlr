@@ -1060,7 +1060,7 @@ class Plane3D(Surface3D):
 
     def plane_intersection(self, other_plane):
         """
-        Calculates the intersections between two Plane 3D.
+        Computes intersection points between two Planes 3D.
 
         """
         line_direction = self.frame.w.cross(other_plane.frame.w)
@@ -1773,8 +1773,9 @@ class ToroidalSurface3D(Surface3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        ToroidalSurface3D translation. Object is updated inplace
-        :param offset: translation vector
+        ToroidalSurface3D translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         self.frame.translation_inplace(offset)
 
@@ -1782,10 +1783,10 @@ class ToroidalSurface3D(Surface3D):
         """
         ToroidalSurface3D rotation.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated ToroidalSurface3D
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated ToroidalSurface3D.
         """
         new_frame = self.frame.rotation(center=center, axis=axis,
                                         angle=angle)
@@ -1793,17 +1794,19 @@ class ToroidalSurface3D(Surface3D):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        ToroidalSurface3D rotation. Object is updated inplace
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
+        ToroidalSurface3D rotation. Object is updated inplace.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: rotation angle.
         """
         self.frame.rotation_inplace(center, axis, angle)
 
 
 class ConicalSurface3D(Surface3D):
     """
-    The local plane is defined by (theta, z)
+    The local plane is defined by (theta, z).
+
     :param frame: Cone's frame to position it: frame.w is axis of cone
                     frame.origin is at the angle of the cone
     :param semi_angle: Cone's semi-angle
@@ -1843,16 +1846,18 @@ class ConicalSurface3D(Surface3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new ConicalSurface3D
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new ConicalSurface3D.
+
+        :param side: 'old' or 'new'
         """
         new_frame = self.frame_mapping_parameters(frame, side)
         return ConicalSurface3D(new_frame, self.semi_angle, name=self.name)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        :param side:'old' or 'new'
         """
         new_frame = self.frame_mapping_parameters(frame, side)
         self.frame = new_frame
@@ -1932,24 +1937,27 @@ class ConicalSurface3D(Surface3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        ConicalSurface3D translation
-        :param offset: translation vector
-        :return: A new translated ConicalSurface3D
+        ConicalSurface3D translation.
+
+        :param offset: translation vector.
+        :return: A new translated ConicalSurface3D.
         """
         return self.__class__(self.frame.translation(offset),
                               self.semi_angle)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        ConicalSurface3D translation. Object is updated inplace
-        :param offset: translation vector
+        ConicalSurface3D translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         self.frame.translation_inplace(offset)
 
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
         """
-        ConicalSurface3D rotation
+        ConicalSurface3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -2222,7 +2230,8 @@ class BSplineSurface3D(Surface3D):
     # Knots_vector
     def knots_vector_u(self):
         """
-        Compute the global knot vector (u direction) based on knot elements and multiplicities
+        Compute the global knot vector (u direction) based on knot elements and multiplicities.
+
         """
 
         knots = self.u_knots
