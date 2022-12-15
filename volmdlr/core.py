@@ -365,6 +365,10 @@ def clockwise_interior_from_circle3d(start, end, circle):
 
 
 def offset_angle(trigo, angle_start, angle_end):
+    """
+    Calcultes offset and angle.
+
+    """
     if trigo:
         offset = angle_start
     else:

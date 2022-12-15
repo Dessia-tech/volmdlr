@@ -37,7 +37,7 @@ import volmdlr.grid
 
 def knots_vector_inv(knots_vector):
     """
-    compute knot elements and multiplicities based on the global knot vector
+    Compute knot elements and multiplicities based on the global knot vector.
     """
 
     knots = sorted(set(knots_vector))
@@ -99,6 +99,7 @@ class Surface2D(volmdlr.core.Primitive2D):
     def point_belongs(self, point2d: volmdlr.Point2D):
         """
         Returns if the given point belongs to the surface2d.
+
         """
         if not self.outer_contour.point_belongs(point2d):
             if self.outer_contour.point_over_contour(point2d):
@@ -582,7 +583,8 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric surface2d according to a line
+        Finds out the symmetric surface2d according to a line.
+
         """
 
         outer_contour = self.outer_contour.axial_symmetry(line)
@@ -631,11 +633,12 @@ class Surface2D(volmdlr.core.Primitive2D):
 
 
 class Surface3D(DessiaObject):
+    """
+    Abstract class.
+
+    """
     x_periodicity = None
     y_periodicity = None
-    """
-    Abstract class
-    """
 
     def face_from_contours3d(self,
                              contours3d: List[volmdlr.wires.Contour3D],
@@ -1337,6 +1340,10 @@ class CylindricalSurface3D(Surface3D):
         raise ValueError('Impossible!')
 
     def circle3d_to_2d(self, circle3d):
+        """
+        Transformation of an circle3d to 2d, in a cylindrical surface.
+
+        """
         return []
 
     def arcellipse3d_to_2d(self, arcellipse3d):
@@ -1606,9 +1613,6 @@ class CylindricalSurface3D(Surface3D):
 
 
 class ToroidalSurface3D(Surface3D):
-    face_class = 'ToroidalFace3D'
-    x_periodicity = volmdlr.TWO_PI
-    y_periodicity = volmdlr.TWO_PI
     """
     The local plane is defined by (theta, phi).
     theta is the angle around the big (R) circle and phi around the small(r)
@@ -1619,6 +1623,9 @@ class ToroidalSurface3D(Surface3D):
     :param r: Circle to revolute radius
     Definitions of R and r according to https://en.wikipedia.org/wiki/Torus
     """
+    face_class = 'ToroidalFace3D'
+    x_periodicity = volmdlr.TWO_PI
+    y_periodicity = volmdlr.TWO_PI
 
     def __init__(self, frame: volmdlr.Frame3D,
                  R: float, r: float, name: str = ''):
@@ -1820,14 +1827,14 @@ class ToroidalSurface3D(Surface3D):
 
 
 class ConicalSurface3D(Surface3D):
-    face_class = 'ConicalFace3D'
-    x_periodicity = volmdlr.TWO_PI
     """
     The local plane is defined by (theta, z)
     :param frame: Cone's frame to position it: frame.w is axis of cone
                     frame.origin is at the angle of the cone
     :param semi_angle: Cone's semi-angle
     """
+    face_class = 'ConicalFace3D'
+    x_periodicity = volmdlr.TWO_PI
 
     def __init__(self, frame: volmdlr.Frame3D, semi_angle: float,
                  name: str = ''):
@@ -2240,7 +2247,7 @@ class BSplineSurface3D(Surface3D):
     # Knots_vector
     def knots_vector_u(self):
         """
-        compute the global knot vector (u direction) based on knot elements and multiplicities
+        Compute the global knot vector (u direction) based on knot elements and multiplicities
         """
 
         knots = self.u_knots
@@ -2254,7 +2261,8 @@ class BSplineSurface3D(Surface3D):
 
     def knots_vector_v(self):
         """
-        compute the global knot vector (v direction) based on knot elements and multiplicities
+        Compute the global knot vector (v direction) based on knot elements and multiplicities.
+
         """
 
         knots = self.v_knots
@@ -2268,7 +2276,8 @@ class BSplineSurface3D(Surface3D):
 
     def basis_functions_u(self, u, k, i):
         """
-        compute basis functions Bi in u direction for u=u and degree=k
+        Compute basis functions Bi in u direction for u=u and degree=k.
+
         """
 
         # k = self.degree_u
@@ -2288,7 +2297,8 @@ class BSplineSurface3D(Surface3D):
 
     def basis_functions_v(self, v, k, i):
         """
-        compute basis functions Bi in v direction for v=v and degree=k
+        Compute basis functions Bi in v direction for v=v and degree=k.
+
         """
 
         # k = self.degree_u
@@ -2308,7 +2318,8 @@ class BSplineSurface3D(Surface3D):
 
     def blending_vector_u(self, u):
         """
-        compute a vector of basis_functions in u direction for u=u
+        Compute a vector of basis_functions in u direction for u=u.
+
         """
 
         blending_vect = npy.empty((1, self.nb_u))
@@ -2319,7 +2330,8 @@ class BSplineSurface3D(Surface3D):
 
     def blending_vector_v(self, v):
         """
-        compute a vector of basis_functions in v direction for v=v
+        Compute a vector of basis_functions in v direction for v=v.
+
         """
 
         blending_vect = npy.empty((1, self.nb_v))
