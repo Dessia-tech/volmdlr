@@ -1502,7 +1502,7 @@ class Contour2D(ContourMixin, Wire2D):
         #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
         if not self._polygon_100_points:
             self._polygon_100_points = self.to_polygon(100)
-        if self._polygon_point_belongs_100.point_belongs(point):
+        if self._polygon_100_points.point_belongs(point):
             return True
         return False
 
