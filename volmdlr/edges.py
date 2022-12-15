@@ -357,7 +357,7 @@ class LineSegment(Edge):
 
     def get_geo_lines(self, tag: int, start_point_tag: int, end_point_tag: int):
         """
-        gets the lines that define a LineSegment in a .geo file
+        gets the lines that define a LineSegment in a .geo file.
 
         :param tag: The linesegment index
         :type tag: int
@@ -759,7 +759,7 @@ class BSplineCurve(Edge):
 
     def get_geo_lines(self, tag: int, control_points_tags: List[int]):
         """
-        gets the lines that define a BsplineCurve in a .geo file
+        gets the lines that define a BsplineCurve in a .geo file.
 
         :param tag: The BsplineCurve index
         :type tag: int
@@ -1855,7 +1855,7 @@ class Arc(Edge):
 
     def get_geo_lines(self, tag: int, start_point_tag: int, center_point_tag: int, end_point_tag: int):
         """
-        gets the lines that define an Arc in a .geo file
+        gets the lines that define an Arc in a .geo file.
 
         :param tag: The linesegment index
         :type tag: int
@@ -2014,7 +2014,7 @@ class Arc2D(Arc):
 
     def to_full_arc_2d(self):
         """
-        Convert to a full arc2d
+        Convert to a full arc2d.
         """
         return FullArc2D(center=self.center,
                          start_end=self.point_at_abscissa(0),
@@ -3129,7 +3129,7 @@ class Line3D(Line):
     def minimum_distance_points(self, other_line):
         """
         Returns the points on this line and the other line that are the closest
-        of lines
+        of lines.
         """
         u = self.point2 - self.point1
         v = other_line.point2 - other_line.point1
@@ -3148,7 +3148,7 @@ class Line3D(Line):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Line3D rotation
+        Line3D rotation.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -3160,7 +3160,7 @@ class Line3D(Line):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Line3D rotation. Object is updated inplace
+        Line3D rotation. Object is updated inplace.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -3170,7 +3170,7 @@ class Line3D(Line):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Line3D translation
+        Line3D translation.
         :param offset: translation vector
         :return: A new translated Line3D
         """
@@ -3179,7 +3179,7 @@ class Line3D(Line):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Line3D translation. Object is updated inplace
+        Line3D translation. Object is updated inplace.
         :param offset: translation vector
         """
         for point in [self.point1, self.point2]:
@@ -3187,7 +3187,7 @@ class Line3D(Line):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes vector frame_mapping and return a new Line3D
+        Changes vector frame_mapping and return a new Line3D.
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -3202,7 +3202,7 @@ class Line3D(Line):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes Line3D frame_mapping and the object is updated inplace
+        Changes Line3D frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -3262,7 +3262,7 @@ class Line3D(Line):
 
 class LineSegment3D(LineSegment):
     """
-    Define a line segment limited by two points
+    Define a line segment limited by two points.
     """
 
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
@@ -3436,7 +3436,7 @@ class LineSegment3D(LineSegment):
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
         """
-        LineSegment3D rotation
+        LineSegment3D rotation.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -3448,7 +3448,7 @@ class LineSegment3D(LineSegment):
     def rotation_inplace(self, center: volmdlr.Point3D,
                          axis: volmdlr.Vector3D, angle: float):
         """
-        Line2D rotation. Object is updated inplace
+        Line2D rotation. Object is updated inplace.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -3469,7 +3469,7 @@ class LineSegment3D(LineSegment):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        LineSegment3D translation
+        LineSegment3D translation.
         :param offset: translation vector
         :return: A new translated LineSegment3D
         """
@@ -3478,7 +3478,7 @@ class LineSegment3D(LineSegment):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        LineSegment3D translation. Object is updated inplace
+        LineSegment3D translation. Object is updated inplace.
         :param offset: translation vector
         """
         for point in self.points:
@@ -3487,7 +3487,7 @@ class LineSegment3D(LineSegment):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes LineSegment3D frame_mapping and return a new LineSegment3D
+        Changes LineSegment3D frame_mapping and return a new LineSegment3D.
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -3500,7 +3500,7 @@ class LineSegment3D(LineSegment):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes vector frame_mapping and the object is updated inplace
+        Changes vector frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -3618,7 +3618,7 @@ class LineSegment3D(LineSegment):
 
     def to_bspline_curve(self, resolution=10):
         """
-        Convert a LineSegment3D to a BSplineCurve3D
+        Convert a LineSegment3D to a BSplineCurve3D.
         """
         degree = 1
         points = [self.point_at_abscissa(abscissa / self.length())
@@ -3633,7 +3633,7 @@ class LineSegment3D(LineSegment):
     def minimum_distance_points(self, other_line):
         """
         Returns the points on this line and the other line that are the closest
-        of lines
+        of lines.
         """
         u = self.end - self.start
         v = other_line.end - other_line.start
@@ -4164,7 +4164,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        BSplineCurve3D rotation
+        BSplineCurve3D rotation.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -4180,7 +4180,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        BSplineCurve3D rotation. Object is updated inplace
+        BSplineCurve3D rotation. Object is updated inplace.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -4363,7 +4363,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
 
     def maximum_curvature(self, point_in_curve: bool = False):
         """
-        Returns the maximum curvature of a curve and the point where it is located
+        Returns the maximum curvature of a curve and the point where it is located.
         """
         if point_in_curve:
             maximum_curvarture, point = max(self.global_maximum_curvature(nb_eval=21, point_in_curve=point_in_curve))
@@ -4374,7 +4374,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
 
     def minimum_radius(self, point_in_curve=False):
         """
-        Returns the minimum curvature radius of a curve and the point where it is located
+        Returns the minimum curvature radius of a curve and the point where it is located.
         """
         if point_in_curve:
             maximum_curvarture, point = self.maximum_curvature(point_in_curve)
@@ -4437,7 +4437,7 @@ class BezierCurve3D(BSplineCurve3D):
 
 class Arc3D(Arc):
     """
-    An arc is defined by a starting point, an end point and an interior point
+    An arc is defined by a starting point, an end point and an interior point.
     """
 
     def __init__(self, start, interior, end, name=''):
@@ -4606,7 +4606,7 @@ class Arc3D(Arc):
     @property
     def angle(self):
         """
-        Arc angle property
+        Arc angle property.
         :return: arc angle
         """
         if not self._utd_angle:
@@ -4616,7 +4616,7 @@ class Arc3D(Arc):
 
     def get_angle(self):
         """
-        Gets the arc angle
+        Gets the arc angle.
         :return: arc angle
         """
         clockwise_path, trigowise_path = \
@@ -5195,7 +5195,7 @@ class Arc3D(Arc):
 class FullArc3D(Arc3D):
     """
     An edge that starts at start_end, ends at the same point after having described
-    a circle
+    a circle.
     """
 
     def __init__(self, center: volmdlr.Point3D, start_end: volmdlr.Point3D,
@@ -5364,7 +5364,7 @@ class FullArc3D(Arc3D):
 
     def linesegment_intersections(self, linesegment: LineSegment3D):
         """
-        Calculates the intersections between a fullarc3d and a linesegment3d
+        Calculates the intersections between a fullarc3d and a linesegment3d.
         :param linesegment: linesegment3d to verifie intersections
         :return: list of points3d, if there are any intersections, an empty list if otherwise
         """
@@ -5401,7 +5401,7 @@ class FullArc3D(Arc3D):
 
 class ArcEllipse3D(Edge):
     """
-    An arc is defined by a starting point, an end point and an interior point
+    An arc is defined by a starting point, an end point and an interior point.
     """
 
     def __init__(self, start, interior, end, center, major_dir,
@@ -5525,7 +5525,7 @@ class ArcEllipse3D(Edge):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        discretize a Contour to have "n" points
+        discretize a Contour to have "n" points.
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull

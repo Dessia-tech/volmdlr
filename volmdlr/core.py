@@ -525,7 +525,7 @@ class CompositePrimitive2D(Primitive2D):
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
-        Changes frame_mapping and return a new CompositePrimitive2D
+        Changes frame_mapping and return a new CompositePrimitive2D.
         side = 'old' or 'new'
         """
         return self.__class__([primitive.frame_mapping(frame, side)
@@ -533,7 +533,7 @@ class CompositePrimitive2D(Primitive2D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         primitives = []
@@ -1803,7 +1803,7 @@ class VolumeModel(dc.PhysicalObject):
         # min_points: int = None,
         # initial_mesh_size: float = 5):
         """
-        gets the .geo file for the VolumeModel
+        gets the .geo file for the VolumeModel.
 
         :param file_name: The geo. file name
         :type file_name: str
