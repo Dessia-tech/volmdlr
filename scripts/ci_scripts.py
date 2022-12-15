@@ -74,6 +74,9 @@ scripts = [
             'mesh/read_msh_file.py'
             ]
 
+# Maximum time for a script
+CONTROLED_TIMES = {'showcases/casing.py': 5}
+
 # Testing if all scripts exists before launching them
 for script_name in scripts:
     if not os.path.isfile(script_name):
@@ -102,8 +105,10 @@ for script_name in scripts:
     times[script_name] = t
 
 print('Computation times:')
-for script_name, t in sorted(times.items(), key=lambda x:x[1]):
+for script_name, t in sorted(times.items(), key=lambda x: x[1]):
     print(f'* script {script_name}: {round(t, 3)} seconds ')
-    
+    if script_name in CONTROLED_TIMES and t > CONTROLED_TIMES[script_name]:
+        raise RuntimeError(f'This script {script_name} should take less than {CONTROLED_TIMES[script_name]}')
+
 total_time = time.time() - total_time
 print(f'Total time for CI scripts: {total_time}')
