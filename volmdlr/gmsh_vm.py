@@ -631,6 +631,16 @@ class GmshParser(DessiaObject):
 
     @staticmethod
     def check_2d(list_nodes):
+        """
+        Check if the nodes are defined on 2D or not.
+
+        :param list_nodes: DESCRIPTION
+        :type list_nodes: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         checking = set()
         for node in list_nodes:
             if node[2] == 0:
@@ -644,5 +654,15 @@ class GmshParser(DessiaObject):
 
     @staticmethod
     def to_2d(list_nodes):
+        """
+        Convert a list of Node3D to a list of Node2D.
+
+        :param list_nodes: DESCRIPTION
+        :type list_nodes: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         return [volmdlr.mesh.Node2D(node[0], node[1]) for
                 node in list_nodes]
