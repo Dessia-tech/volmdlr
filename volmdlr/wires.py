@@ -28,6 +28,8 @@ import volmdlr.edges
 import volmdlr.display as vmd
 import os
 
+import triangle
+
 
 def bounding_rectangle_adjacent_contours(contours: List):
     """
@@ -3017,96 +3019,154 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         return ax
 
-    def triangulation(self):
+    # def triangulation(self):
+    #     """
+    #     Note: triangles have been inverted for a better rendering in babylonjs
+    #     """
+    #     # ear clipping
+    #     points = self.points[:]
+    #     initial_point_to_index = {p: i for i, p in enumerate(self.points)}
+    #     triangles = []
+    #
+    #     remaining_points = self.points[:]
+    #     # ax = ClosedPolygon2D(remaining_points).plot()
+    #
+    #     # inital_number_points = len(remaining_points)
+    #     number_remaining_points = len(remaining_points)
+    #     while number_remaining_points > 3:
+    #         current_polygon = ClosedPolygon2D(remaining_points)
+    #
+    #         found_ear = False
+    #         for p1, p2, p3 in zip(remaining_points,
+    #                               remaining_points[1:] + remaining_points[0:1],
+    #                               remaining_points[2:] + remaining_points[
+    #                                                      0:2]):
+    #             if p1 != p3:
+    #                 line_segment = volmdlr.edges.LineSegment2D(p1, p3)
+    #
+    #             # Checking if intersections does not contrain the verticies
+    #             # of line_segment
+    #             intersect = False
+    #             intersections = current_polygon.linesegment_intersections(
+    #                 line_segment)
+    #             if intersections:
+    #                 for inter in intersections:
+    #                     if inter[0] not in [line_segment.start,
+    #                                         line_segment.end]:
+    #                         intersect = True
+    #                         break
+    #
+    #             if not intersect:
+    #                 if current_polygon.point_belongs(
+    #                         line_segment.middle_point()):
+    #                     # Confirmed as an ear
+    #                     # print('ear!')
+    #
+    #                     triangles.append((initial_point_to_index[p1],
+    #                                       initial_point_to_index[p3],
+    #                                       initial_point_to_index[p2]))
+    #                     remaining_points.remove(p2)
+    #                     number_remaining_points -= 1
+    #                     found_ear = True
+    #
+    #                     # Rolling the remaining list
+    #                     if number_remaining_points > 4:
+    #                         deq = deque(remaining_points)
+    #                         # random.randint(1, number_remaining_points-1))
+    #                         deq.rotate(int(0.3 * number_remaining_points))
+    #                         remaining_points = list(deq)
+    #
+    #                     break
+    #
+    #         # Searching for a flat ear
+    #         if not found_ear:
+    #             remaining_polygon = ClosedPolygon2D(remaining_points)
+    #             if remaining_polygon.area() > 0.:
+    #
+    #                 found_flat_ear = False
+    #                 for p1, p2, p3 in zip(remaining_points,
+    #                                       remaining_points[
+    #                                           1:] + remaining_points[0:1],
+    #                                       remaining_points[
+    #                                           2:] + remaining_points[0:2]):
+    #                     triangle = Triangle2D(p1, p2, p3)
+    #                     if triangle.area() == 0:
+    #                         remaining_points.remove(p2)
+    #                         found_flat_ear = True
+    #                         break
+    #
+    #                 if not found_flat_ear:
+    #                     print(
+    #                         'Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
+    #                     return vmd.DisplayMesh2D(points, triangles)
+    #             else:
+    #                 return vmd.DisplayMesh2D(points, triangles)
+    #
+    #     if len(remaining_points) == 3:
+    #         p1, p2, p3 = remaining_points
+    #         triangles.append((initial_point_to_index[p1],
+    #                           initial_point_to_index[p3],
+    #                           initial_point_to_index[p2]))
+    #
+    #     return vmd.DisplayMesh2D(points, triangles)
+
+    def triangulation(self, tri_opt: str = 'p'):
+        points = self.points
+        vertices = [(p.x, p.y) for p in points]
+        n = len(points)
+        segments = [(i, i + 1) for i in range(n - 1)]
+        segments.append((n - 1, 0))
+
+        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+               'segments': npy.array(segments).reshape((-1, 2)),
+               }
+        t = triangle.triangulate(tri, 'p')
+        triangles = t['triangles'].tolist()
+        np = t['vertices'].shape[0]
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in
+                  range(np)]
+        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+
+    def grid_triangulation_points(self, x_density: float = None,
+                           y_density: float = None,
+                           min_points_x: int = 10,
+                           min_points_y: int = 10,
+                           number_points_x: int = None,
+                           number_points_y: int = None):
         """
-        Note: triangles have been inverted for a better rendering in babylonjs
+        Use a n by m grid to triangulize the contour
         """
-        # ear clipping
-        points = self.points[:]
-        initial_point_to_index = {p: i for i, p in enumerate(self.points)}
-        triangles = []
+        # bounding_rectangle = self.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
+        dx = xmax - xmin  # xmax - xmin
+        dy = ymax - ymin  # ymax - ymin
+        if number_points_x is None:
+            n = max(math.ceil(x_density * dx), min_points_x)
+        else:
+            n = number_points_x
+        if number_points_y is None:
+            m = max(math.ceil(y_density * dy), min_points_y)
+        else:
+            m = number_points_y
+        # x = [xmin + i * dx / n for i in range(n + 1)]
+        # y = [ymin + i * dy / m for i in range(m + 1)]
+        x_offset = dx/(n+2)
+        y_offset = dy/(m+2)
+        x = npy.linspace(xmin + x_offset, xmax - x_offset, num=n)
+        y = npy.linspace(ymin + y_offset, ymax - y_offset, num=m)
 
-        remaining_points = self.points[:]
-        # ax = ClosedPolygon2D(remaining_points).plot()
-
-        # inital_number_points = len(remaining_points)
-        number_remaining_points = len(remaining_points)
-        while number_remaining_points > 3:
-            current_polygon = ClosedPolygon2D(remaining_points)
-
-            found_ear = False
-            for p1, p2, p3 in zip(remaining_points,
-                                  remaining_points[1:] + remaining_points[0:1],
-                                  remaining_points[2:] + remaining_points[
-                                                         0:2]):
-                if p1 != p3:
-                    line_segment = volmdlr.edges.LineSegment2D(p1, p3)
-
-                # Checking if intersections does not contrain the verticies
-                # of line_segment
-                intersect = False
-                intersections = current_polygon.linesegment_intersections(
-                    line_segment)
-                if intersections:
-                    for inter in intersections:
-                        if inter[0] not in [line_segment.start,
-                                            line_segment.end]:
-                            intersect = True
-                            break
-
-                if not intersect:
-                    if current_polygon.point_belongs(
-                            line_segment.middle_point()):
-                        # Confirmed as an ear
-                        # print('ear!')
-
-                        triangles.append((initial_point_to_index[p1],
-                                          initial_point_to_index[p3],
-                                          initial_point_to_index[p2]))
-                        remaining_points.remove(p2)
-                        number_remaining_points -= 1
-                        found_ear = True
-
-                        # Rolling the remaining list
-                        if number_remaining_points > 4:
-                            deq = deque(remaining_points)
-                            # random.randint(1, number_remaining_points-1))
-                            deq.rotate(int(0.3 * number_remaining_points))
-                            remaining_points = list(deq)
-
-                        break
-
-            # Searching for a flat ear
-            if not found_ear:
-                remaining_polygon = ClosedPolygon2D(remaining_points)
-                if remaining_polygon.area() > 0.:
-
-                    found_flat_ear = False
-                    for p1, p2, p3 in zip(remaining_points,
-                                          remaining_points[
-                                              1:] + remaining_points[0:1],
-                                          remaining_points[
-                                              2:] + remaining_points[0:2]):
-                        triangle = Triangle2D(p1, p2, p3)
-                        if triangle.area() == 0:
-                            remaining_points.remove(p2)
-                            found_flat_ear = True
-                            break
-
-                    if not found_flat_ear:
-                        print(
-                            'Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
-                        return vmd.DisplayMesh2D(points, triangles)
-                else:
-                    return vmd.DisplayMesh2D(points, triangles)
-
-        if len(remaining_points) == 3:
-            p1, p2, p3 = remaining_points
-            triangles.append((initial_point_to_index[p1],
-                              initial_point_to_index[p3],
-                              initial_point_to_index[p2]))
-
-        return vmd.DisplayMesh2D(points, triangles)
+        grid_point_index = {}
+        # number_points = 0
+        points = []
+        for i, xi in enumerate(x):
+            for j, yi in enumerate(y):
+                point = volmdlr.Point2D(xi, yi)
+                if self.point_belongs(point):
+                    node = vmd.Node2D(*point)
+                    grid_point_index[(i, j)] = node
+                    points.append(node)
+                    # number_points += 1
+        return points, x, y, grid_point_index
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         return ClosedPolygon2D(self.simplify_polygon(min_distance=min_distance,

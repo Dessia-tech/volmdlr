@@ -16,7 +16,7 @@ for step_file in [
     # 'read_test6.step',
     # 'read_test7.step',
     # 'iso4162M16x55.step',
-    'spanners.step',
+    # 'spanners.step',
     # 'tormach_wrench.step',
     # 'water_tank.step',
     # 'angle_bar.step',
@@ -36,7 +36,7 @@ for step_file in [
     # 'bracket3_cut2.step',
     # 'strange_gasket.step',
     # '2_bspline_faces.stp',
-    # 'bracket3.step',
+    'bracket3.step',
     # 'bracket1.step',
     # 'porte_dessia_simple.step',
     # 'cylinder_ellipse.step',
@@ -44,7 +44,7 @@ for step_file in [
     # 'porte.step',
     # 'compressor.step',
     # 'F-16_OpenVSP3.15.0.stp',
-    # 'aircraft_engine.step'
+    # 'aircraft_engine.step',
 ]:
 
     print('Reading step file: ', step_file)
@@ -92,6 +92,7 @@ for step_file in [
     # model._check_platform()
 
     # closedshell = model.primitives[0]
+    # primitives = closedshell.primitives
     # ax0 = closedshell.faces[2].plot()
     # ax = closedshell.faces[2].surface2d.plot()
     # ax1 = closedshell.faces[2].triangulation().plot()
