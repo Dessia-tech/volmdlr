@@ -102,6 +102,7 @@ class Surface2D(volmdlr.core.Primitive2D):
     def point_belongs(self, point2d: volmdlr.Point2D):
         """
         Returns if the given point belongs to the surface2d.
+
         """
         if not self.outer_contour.point_belongs(point2d):
             if self.outer_contour.point_over_contour(point2d):
@@ -585,7 +586,8 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def axial_symmetry(self, line):
         """
-        finds out the symmetric surface2d according to a line
+        Finds out the symmetric surface2d according to a line.
+
         """
 
         outer_contour = self.outer_contour.axial_symmetry(line)
@@ -1024,7 +1026,8 @@ class Plane3D(Surface3D):
 
     def point_distance(self, point3d):
         """
-        Calculates the distance of a point to plane
+        Calculates the distance of a point to plane.
+
         :param point3d: point to verify distance
         :return: a float, point distance to plane
         """
@@ -1345,6 +1348,10 @@ class CylindricalSurface3D(Surface3D):
         raise ValueError('Impossible!')
 
     def circle3d_to_2d(self, circle3d):
+        """
+        Transformation of an circle3d to 2d, in a cylindrical surface.
+
+        """
         return []
 
     def arcellipse3d_to_2d(self, arcellipse3d):
