@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc3D: line_intersections, linesegment_intersections
 * new module utils: intersections -> circle_3d_linesegment_intersections
 * hash for Frame2D
+* Ellipse3D: point_belongs, abscissa, length, to_2d
 * CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
 
 ### Fixed
@@ -81,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix some to_step methods from edges.py and faces.py
 * contour2d: ordering_primitives, order_primitives
 * infinite primitive offset of linesegment
+* Ellispe3D: discretization_points
 
 ### Performance improvements
 
@@ -132,6 +134,7 @@ time we have to verify if a point is inside
 * Circle3D: discretization_points
 * Arc3D: line_intersections, linesegment_intersections
 * Contour2D: ordering_contour, is_ordered, order_contour
+* Ellipse3D: point_belongs, abscissa, length, to_2d, discretization_points
 * CylindricalSurface3D: point_on_surface, is_coincident
 
 ## v0.6.1 [12/13/2022]
