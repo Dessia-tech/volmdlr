@@ -760,9 +760,9 @@ class Surface2D(volmdlr.core.Primitive2D):
         # curvature_mesh_size: int = None,
         # min_points: int = None,
         # initial_mesh_size: float = 5):
-        '''
+        """
         gets the .geo file for the Surface2D
-        '''
+        """
 
         for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
             if element[0] not in kwargs:
@@ -4668,9 +4668,9 @@ class Face3D(volmdlr.core.Primitive3D):
         return lines
 
     def to_geo(self, file_name: str):  # , mesh_size_list=None):
-        '''
+        """
         gets the .geo file for the Face3D
-        '''
+        """
 
         lines = self.geo_lines()
 
@@ -4681,9 +4681,9 @@ class Face3D(volmdlr.core.Primitive3D):
         f.close()
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
-        '''
+        """
         gets the lines that define a PlaneFace3D in a .geo file
-        '''
+        """
 
         return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
@@ -5613,9 +5613,9 @@ class PlaneFace3D(Face3D):
         return [self.__class__(self.surface3d, surface2d) for surface2d in surfaces]
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
-        '''
+        """
         gets the lines that define a PlaneFace3D in a .geo file
-        '''
+        """
 
         return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
@@ -6341,9 +6341,9 @@ class CylindricalFace3D(Face3D):
         return 'y'
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
-        '''
+        """
         gets the lines that define a CylindricalFace3D in a .geo file
-        '''
+        """
 
         return 'Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
