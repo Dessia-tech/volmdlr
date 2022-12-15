@@ -2925,20 +2925,16 @@ class Line3D(Line):
         self._bbox = None
 
     @property
-    def bouding_box(self):
+    def bounding_box(self):
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
 
-    def _bounding_box(self):
-        # points = [self.point1, self.point2]
-        # xmin = min([pt[0] for pt in points])
-        # xmax = max([pt[0] for pt in points])
-        # ymin = min([pt[1] for pt in points])
-        # ymax = max([pt[1] for pt in points])
-        # zmin = min([pt[2] for pt in points])
-        # zmax = max([pt[2] for pt in points])
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
 
+    def _bounding_box(self):
         xmin = min([self.point1[0], self.point2[0]])
         xmax = max([self.point1[0], self.point2[0]])
         ymin = min([self.point1[1], self.point2[1]])
@@ -3087,6 +3083,7 @@ class Line3D(Line):
         """
         for p in [self.point1, self.point2]:
             p.rotation_inplace(center, axis, angle)
+        self._bbox = None
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -3104,6 +3101,7 @@ class Line3D(Line):
         """
         for point in [self.point1, self.point2]:
             point.translation_inplace(offset)
+        self._bbox = None
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -3135,7 +3133,7 @@ class Line3D(Line):
             raise ValueError('Please Enter a valid side: old or new')
         self.point1 = new_start
         self.point2 = new_end
-        self.bounding_box = self._bounding_box()
+        self._bbox = None
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if not self.point_belongs(point1) or not self.point_belongs(point2):
@@ -3375,7 +3373,7 @@ class LineSegment3D(LineSegment):
         """
         for point in self.points:
             point.rotation_inplace(center, axis, angle)
-        self.bounding_box = self._bounding_box()
+        self._bbox = None
 
     def __contains__(self, point):
 
@@ -3403,7 +3401,7 @@ class LineSegment3D(LineSegment):
         """
         for point in self.points:
             point.translation_inplace(offset)
-        self.bounding_box = self._bounding_box()
+        self._bbox = None
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -3433,7 +3431,7 @@ class LineSegment3D(LineSegment):
             raise ValueError('Please Enter a valid side: old or new')
         self.start = new_start
         self.end = new_end
-        self.bounding_box = self._bounding_box()
+        self._bbox = None
 
     def copy(self, *args, **kwargs):
         return LineSegment3D(self.start.copy(), self.end.copy())
@@ -3845,7 +3843,17 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                               name)
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
-        self.bounding_box = self._bounding_box()
+        self._bbox = None
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
 
     def _bounding_box(self):
         bbox = self.curve.bbox
@@ -4110,10 +4118,10 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                                             self.knot_multiplicities,
                                             self.knots, self.weights,
                                             self.periodic, self.name)
-
         self.control_points = new_control_points
         self.curve = new_bsplinecurve3d.curve
         self.points = new_bsplinecurve3d.points
+        self._bbox = None
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if (point1 == self.start and point2 == self.end) \
@@ -4373,7 +4381,6 @@ class Arc3D(Arc):
         # self._utd_clockwise_and_trigowise_paths = False
         Arc.__init__(self, start=start, end=end, interior=interior, name=name)
         self._bbox = None
-        # self.bounding_box = self._bounding_box()
 
     @property
     def bounding_box(self):
@@ -4640,8 +4647,7 @@ class Arc3D(Arc):
         self.start.rotation_inplace(center, axis, angle)
         self.interior.rotation_inplace(center, axis, angle)
         self.end.rotation_inplace(center, axis, angle)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
+        self._bbox = None
         for prim in self.primitives:
             prim.rotation_inplace(center, axis, angle)
 
@@ -4667,8 +4673,7 @@ class Arc3D(Arc):
         self.start.translation_inplace(offset)
         self.interior.translation_inplace(offset)
         self.end.translation_inplace(offset)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
+        self._bbox = None
         for prim in self.primitives:
             prim.translation_inplace(offset)
 
@@ -4774,6 +4779,7 @@ class Arc3D(Arc):
         new_start, new_interior, new_end = \
             self.frame_mapping_parameters(frame, side)
         self.start, self.interior, self.end = new_start, new_interior, new_end
+        self._bbox = None
 
     def abscissa(self, point3d: volmdlr.Point3D):
         """
@@ -5267,6 +5273,7 @@ class FullArc3D(Arc3D):
         self.end.rotation(center, axis, angle, False)
         self._center.rotation(center, axis, angle, False)
         self.interior.rotation(center, axis, angle, False)
+        self._bbox = None
 
     def translation(self, offset: volmdlr.Vector3D):
         new_start_end = self.start.translation(offset, True)
@@ -5280,6 +5287,7 @@ class FullArc3D(Arc3D):
         self.end.translation(offset, False)
         self._center.translation(offset, False)
         self.interior.translation(offset, False)
+        self._bbox = None
 
     def linesegment_intersections(self, linesegment: LineSegment3D):
         """
