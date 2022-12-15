@@ -88,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactorings
 * LineSegment3D: intersections
 * Line2D: sort_points_along_line
+* Line3D: intersections
 
 
 ### Unittests
