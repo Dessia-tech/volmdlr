@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as npy
 import gmsh
 
-import dessia_common as dc
+import dessia_common.core as dc
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
@@ -225,6 +225,10 @@ def delete_double_pos(points, triangles):
 
 
 def determinant(vec1, vec2, vec3):
+    """
+    Calculates the determinant for a three vector matrix.
+
+    """
     a = npy.array((vec1.vector, vec2.vector, vec3.vector))
     return npy.linalg.det(a)
 
@@ -365,6 +369,10 @@ def clockwise_interior_from_circle3d(start, end, circle):
 
 
 def offset_angle(trigo, angle_start, angle_end):
+    """
+    Calcultes offset and angle.
+
+    """
     if trigo:
         offset = angle_start
     else:
@@ -517,7 +525,7 @@ class CompositePrimitive2D(Primitive2D):
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
-        Changes frame_mapping and return a new CompositePrimitive2D
+        Changes frame_mapping and return a new CompositePrimitive2D.
         side = 'old' or 'new'
         """
         return self.__class__([primitive.frame_mapping(frame, side)
@@ -525,7 +533,7 @@ class CompositePrimitive2D(Primitive2D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         primitives = []
@@ -640,14 +648,14 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
 
 
 class CompositePrimitive3D(Primitive3D):
+    """
+    A collection of simple primitives3D
+    """
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['basis_primitives']
     _non_data_eq_attributes = ['name', 'basis_primitives']
     _non_data_hash_attributes = []
-    """
-    A collection of simple primitives3D
-    """
 
     def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
         self.primitives = primitives
@@ -1084,14 +1092,6 @@ class BoundingBox(dc.DessiaObject):
 
 
 class VolumeModel(dc.PhysicalObject):
-    _standalone_in_db = True
-    _eq_is_data_eq = True
-    _non_serializable_attributes = ['shells', 'bounding_box']
-    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                               'faces']
-    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                                 'faces']
-    _dessia_methods = ['to_stl_model']
     """
     A class containing one or several :class:`volmdlr.core.Primitive3D`.
 
@@ -1100,6 +1100,14 @@ class VolumeModel(dc.PhysicalObject):
     :param name: The VolumeModel's name
     :type name: str
     """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['shells', 'bounding_box']
+    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                               'faces']
+    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                                 'faces']
+    _dessia_methods = ['to_stl_model']
 
     def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives
@@ -1340,7 +1348,7 @@ class VolumeModel(dc.PhysicalObject):
             s += f"Part.export(doc.Objects,'{fcstd_filepath}.step')\n"
 
         if save_to != '':
-            with open(os.path.abspath(save_to), 'w') as file:
+            with open(os.path.abspath(save_to), 'w', encoding='utf-8') as file:
                 file.write(s)
         return s
 
@@ -1461,7 +1469,7 @@ class VolumeModel(dc.PhysicalObject):
         else:
             if not page_name.endswith('.html'):
                 page_name += '.html'
-            with open(page_name, 'w') as file:
+            with open(page_name, 'w', encoding='utf-8') as file:
                 file.write(script)
 
         webbrowser.open('file://' + os.path.realpath(page_name))
@@ -1482,7 +1490,7 @@ class VolumeModel(dc.PhysicalObject):
         if not filename.endswith('.html'):
             filename += '.html'
 
-            with open(filename, 'w') as file:
+            with open(filename, 'w', encoding='utf-8') as file:
                 file.write(script)
             return filename
 
@@ -1507,7 +1515,7 @@ class VolumeModel(dc.PhysicalObject):
     def to_step(self, filepath: str):
         if not (filepath.endswith('.step') or filepath.endswith('.stp')):
             filepath += '.step'
-        with open(filepath, 'w') as file:
+        with open(filepath, 'w', encoding='utf-8') as file:
             self.to_step_stream(file)
 
     def to_step_stream(self, stream: dcf.StringFile):
@@ -1638,7 +1646,7 @@ class VolumeModel(dc.PhysicalObject):
         # min_points: int = None,
         # initial_mesh_size: float = 5):
         """
-        gets the lines that define mesh parameters for a VolumeModel, to be added to a .geo file
+        Gets the lines that define mesh parameters for a VolumeModel, to be added to a .geo file
 
         :param factor: A float, between 0 and 1, that describes the mesh quality
         (1 for coarse mesh - 0 for fine mesh)
@@ -1682,6 +1690,7 @@ class VolumeModel(dc.PhysicalObject):
         lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
         lines.append('Geometry.Tolerance = 1e-20;')
         lines.append('Mesh.AngleToleranceFacetOverlap = 0.01;')
+        lines.append('General.Verbosity = 0;')
 
         for i, primitive in enumerate(self.primitives):
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
@@ -1752,7 +1761,7 @@ class VolumeModel(dc.PhysicalObject):
     def to_geo_stream(self, stream: dcf.StringFile,
                       factor: float, **kwargs):
         """
-        gets the .geo file for the VolumeModel
+        Gets the .geo file for the VolumeModel
 
         :param file_name: The geo. file name
         :type file_name: str
@@ -1794,7 +1803,7 @@ class VolumeModel(dc.PhysicalObject):
         # min_points: int = None,
         # initial_mesh_size: float = 5):
         """
-        gets the .geo file for the VolumeModel
+        Gets the .geo file for the VolumeModel.
 
         :param file_name: The geo. file name
         :type file_name: str
@@ -1820,7 +1829,9 @@ class VolumeModel(dc.PhysicalObject):
 
         if not (file_name.endswith('.geo') or file_name.endswith('.geo')):
             file_name += '.geo'
+
         with open(file_name, mode='w', encoding='utf-8') as file:
+
             self.to_geo_stream(file, factor,
                                curvature_mesh_size=kwargs['curvature_mesh_size'],
                                min_points=kwargs['min_points'],
