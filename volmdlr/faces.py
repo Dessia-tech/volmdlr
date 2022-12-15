@@ -2222,6 +2222,8 @@ class BSplineSurface3D(Surface3D):
 
     def _bounding_box(self):
         """
+        Computes the bounding box ot the surface.
+
         This method is not exact!
         """
         return volmdlr.core.BoundingBox.from_points(self.control_points)
