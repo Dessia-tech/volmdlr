@@ -3963,7 +3963,7 @@ class Ellipse2D(Contour2D):
         Contour2D.__init__(self, [self], name=name)
 
     def __hash__(self):
-        return hash(self.center)
+        return int(round(1e6 * (self.center.x + self.center.y + self.major_axis + self.minor_axis)))
 
     def area(self):
         """
@@ -5082,9 +5082,8 @@ class Ellipse3D(Contour3D):
         :return: True is point lies on the Ellipse, False otherwise
         """
         new_point = self.frame.new_coordinates(point)
-        new_center = self.frame.new_coordinates(self.center)
-        return math.isclose((new_point.x - new_center.x) ** 2 / self.major_axis ** 2 +
-                            (new_point.y - new_center.y) ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
+        return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
+                            new_point.y ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
 
     def length(self):
         """
