@@ -86,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
+* contour2d: ordering_primitives, order_primitives
 * Plane3D: plane_intersections, is_coindident
 * contour2d: ordering_primitives, order_primitives
 * Linesegment2D: infinite_primitive

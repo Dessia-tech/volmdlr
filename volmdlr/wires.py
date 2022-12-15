@@ -1433,7 +1433,7 @@ class Contour2D(ContourMixin, Wire2D):
                  name: str = ''):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
-        self._polygon_point_belongs_100 = None
+        self._polygon_100_points = None
         self._bounding_rectangle = None
 
     def __hash__(self):
@@ -1514,9 +1514,9 @@ class Contour2D(ContourMixin, Wire2D):
         #         if edge.straight_line_point_belongs(point):
         #             return True
         #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
-        if not self._polygon_point_belongs_100:
-            self._polygon_point_belongs_100 = self.to_polygon(100)
-        if self._polygon_point_belongs_100.point_belongs(point):
+        if not self._polygon_100_points:
+            self._polygon_100_points = self.to_polygon(100)
+        if self._polygon_100_points.point_belongs(point):
             return True
         return False
 

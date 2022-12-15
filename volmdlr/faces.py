@@ -66,6 +66,7 @@ class Surface2D(volmdlr.core.Primitive2D):
     def copy(self):
         """
         Copies the surface2d.
+
         """
         return self.__class__(outer_contour=self.outer_contour.copy(),
                               inner_contours=[c.copy() for c in self.inner_contours],
@@ -855,6 +856,7 @@ class Surface3D(DessiaObject):
     def normal_from_point3d(self, point3d):
         """
         Evaluates the normal vector of the bspline surface at this point3d.
+
         """
 
         return (self.normal_from_point2d(self.point3d_to_2d(point3d)))[1]
@@ -5116,7 +5118,7 @@ class PlaneFace3D(Face3D):
     #     return cls(plane3d, surface2d, dict_['name'])
 
     def copy(self, deep=True, memo=None):
-        return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(),
+        return PlaneFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                            self.name)
 
     @property
