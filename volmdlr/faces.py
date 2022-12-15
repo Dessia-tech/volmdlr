@@ -2212,6 +2212,20 @@ class BSplineSurface3D(Surface3D):
         else:
             return None
 
+        self._bbox = None
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    def _bounding_box(self):
+        """
+        This method is not exact!
+        """
+        return volmdlr.core.BoundingBox.from_points(self.control_points)
+
     def control_points_matrix(self, coordinates):
         """
         define control points like a matrix, for each coordinate: x:0, y:1, z:2
@@ -2573,8 +2587,7 @@ class BSplineSurface3D(Surface3D):
         return [vme.BSplineCurve3D.from_points_interpolation(
             points, max(self.degree_u, self.degree_v))]
 
-    def _bounding_box(self):
-        return volmdlr.core.BoundingBox.from_points(self.control_points)
+
 
     def rectangular_cut(self, u1: float, u2: float,
                         v1: float, v2: float, name: str = ''):
