@@ -65,6 +65,7 @@ class Surface2D(volmdlr.core.Primitive2D):
     def copy(self):
         """
         Copies the surface2d.
+
         """
         return self.__class__(outer_contour=self.outer_contour.copy(),
                               inner_contours=[c.copy() for c in self.inner_contours],
@@ -856,6 +857,7 @@ class Surface3D(DessiaObject):
     def normal_from_point3d(self, point3d):
         """
         Evaluates the normal vector of the bspline surface at this point3d.
+
         """
 
         return (self.normal_from_point2d(self.point3d_to_2d(point3d)))[1]
@@ -1076,7 +1078,8 @@ class Plane3D(Surface3D):
 
     def equation_coefficients(self):
         """
-        returns the a,b,c,d coefficient from equation ax+by+cz+d = 0
+        Returns the a,b,c,d coefficient from equation ax+by+cz+d = 0.
+
         """
         a, b, c = self.frame.w
         d = -self.frame.origin.dot(self.frame.w)
@@ -1188,7 +1191,7 @@ class Plane3D(Surface3D):
         self.frame.w = new_frame.w
 
     def copy(self, deep=True, memo=None):
-        new_frame = self.frame.copy()
+        new_frame = self.frame.copy(deep, memo)
         return Plane3D(new_frame, self.name)
 
     def plot(self, ax=None):
@@ -4408,7 +4411,7 @@ class Face3D(volmdlr.core.Primitive3D):
         self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
-        return self.__class__(self.surface3d.copy(), self.surface2d.copy(),
+        return self.__class__(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
     def line_intersections(self,
@@ -4531,7 +4534,7 @@ class PlaneFace3D(Face3D):
         return self.surface2d.area()
 
     def copy(self, deep=True, memo=None):
-        return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(),
+        return PlaneFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                            self.name)
 
     @property
@@ -5743,7 +5746,7 @@ class CylindricalFace3D(Face3D):
         self._bbox = None
 
     def copy(self, deep=True, memo=None):
-        return CylindricalFace3D(self.surface3d.copy(), self.surface2d.copy(),
+        return CylindricalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                                  self.name)
 
     @property
@@ -6164,7 +6167,7 @@ class ToroidalFace3D(Face3D):
         self._bbox = None
 
     def copy(self, deep=True, memo=None):
-        return ToroidalFace3D(self.surface3d.copy(), self.surface2d.copy(),
+        return ToroidalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
     def points_resolution(self, line, pos,
