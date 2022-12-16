@@ -752,6 +752,18 @@ class Line2D(Line):
         Line.__init__(self, point1, point2, name=name)
 
     def to_3d(self, plane_origin, x1, x2):
+        """
+        Convert the line to a 3D line.
+
+        :param plane_origin: Origin of the plane in which the line is.
+        :type plane_origin: :class:`volmdlr.Point3D`
+        :param x1: First direction of the plane in which the line is.
+        :type x1: :class:`volmdlr.Vector3D`
+        :param x2: Second direction of the plane in which the line is.
+        :type x2: :class:`volmdlr.Vector3D`
+        :return: The 3D line.
+        :rtype: :class:`volmdlr.edges.Line3D`
+        """
         points_3d = [p.to_3d(plane_origin, x1, x2) for p in self.points]
         return Line3D(*points_3d, self.name)
 
@@ -795,9 +807,33 @@ class Line2D(Line):
             point.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Map the line to a new coordinate frame.
+
+        :param frame: The new coordinate frame.
+        :type frame: :class:`volmdlr.Frame2D`
+        :param side: The side to which the mapping is made. 'old' for the
+            original coordinate frame, 'new' for the new one.
+        :type side: str
+        :return: The mapped line.
+        :rtype: :class:`volmdlr.edges.Line2D`
+        """
         return Line2D(*[point.frame_mapping(frame, side) for point in self.points])
 
     def plot(self, ax=None, color='k', dashed=True):
+        """
+        Plot the line.
+
+        :param ax: Matplotlib axis on which to plot the line. If none,
+            a new figure is created.
+        :type ax: matplotlib.axes._subplots.AxesSubplot, optional
+        :param color: Color of the line.
+        :type color: str, optional
+        :param dashed: Whether the line is dashed or not.
+        :type dashed: bool, optional
+        :return: The matplotlib axis.
+        :rtype: matplotlib.axes._subplots.AxesSubplot
+        """
         if ax is None:
             _, ax = plt.subplots()
 
@@ -824,11 +860,28 @@ class Line2D(Line):
         return ax
 
     def plot_data(self, edge_style=None):
+        """
+        Get plot data for the line.
+
+        :param edge_style: Plotting style for the line.
+        :type edge_style: :class:`plot_data.EdgeStyle`, optional
+        :return: Plot data for the line.
+        :rtype: :class:`plot_data.Line2D`
+        """
         return plot_data.Line2D([self.point1.x, self.point1.y],
                                 [self.point2.x, self.point2.y],
                                 edge_style=edge_style)
 
     def line_intersections(self, line):
+        """
+        Calculate the intersection between the two lines.
+
+        :param line: The line to calculate intersections with.
+        :type line: :class:`volmdlr.Line2D`
+        :return: A list of at most one intersection point between
+            the two lines.
+        :rtype: List[:class:`volmdlr.Point2D`]
+        """
 
         point = volmdlr.Point2D.line_intersection(self, line)
         if point is not None:
@@ -983,15 +1036,28 @@ class Line2D(Line):
 
             return circle1, circle2
 
-    def cut_between_two_points(self, point1, point2):
+    def cut_between_two_points(self, point1: volmdlr.Point2D,
+                               point2: volmdlr.Point2D):
+        """
+        Cut the line between two points to create a linesegment.
+
+        :param point1: The first point defining the linesegment
+        :type point1: :class:`volmdlr.Point2D`
+        :param point2: The second point defining the linesegment
+        :type point2: :class:`volmdlr.Point2D`
+        :return: The created linesegment
+        :rtype: :class:`volmdlr.edges.LineSegment2D`
+        """
         return LineSegment2D(point1, point2)
 
     def point_distance(self, point2d):
         """
-        Calculates the distance of a line2d to a point2d.
+        Calculate the shortest distance between a line and a point.
 
-        :param point2d: point to calculate distance.
-        :return: distance to point.
+        :param point2d: Point to calculate distance
+        :type point2d: :class:`volmdlr.Point2D`
+        :return: Distance to point
+        :rtype: float
         """
         vector_r = self.point1 - point2d
         vector_v = self.normal_vector()
