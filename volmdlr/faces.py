@@ -1070,7 +1070,7 @@ class Plane3D(Surface3D):
             return cls.from_3_points(origin, vector1 + origin,
                                      vector2_min + origin)
 
-    def point_on_plane(self, point):
+    def point_on_surface(self, point):
         """
         Return if the point belongs to the plane at a tolerance of 1e-6.
         """
@@ -1250,7 +1250,7 @@ class Plane3D(Surface3D):
         self.frame.w = new_frame.w
 
     def copy(self, deep=True, memo=None):
-        new_frame = self.frame.copy()
+        new_frame = self.frame.copy(deep, memo)
         return Plane3D(new_frame, self.name)
 
     def plot(self, ax=None):
@@ -1438,6 +1438,26 @@ class CylindricalSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         return []
+
+    def arcellipse3d_to_2d(self, arcellipse3d):
+        """
+        Transformation of an arcellipse3d to 2d, in a cylindrical surface.
+
+        """
+        points3d = arcellipse3d.discretization_points(number_points=50)
+        points2d = [self.point3d_to_2d(point) for point in points3d]
+        bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points2d, degree=2)
+        return [bsplinecurve2d]
+
+    def ellipse3d_to_2d(self, ellipse3d):
+        """
+        Transformation of an ellipse3d to 2d, in a cylindrical surface.
+
+        """
+        # points3d = ellipse3d.discretization_points(number_points = 50)
+        # points2d = [self.point3d_to_2d(point) for point in points3d]
+        # return points2d
+        raise NotImplementedError
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
@@ -3251,7 +3271,7 @@ class BSplineSurface3D(Surface3D):
         points = [self.control_points[0], self.control_points[math.ceil(len(self.control_points) / 2)],
                   self.control_points[-1]]
         plane3d = Plane3D.from_3_points(*points)
-        if all(plane3d.point_on_plane(point) for point in self.control_points):
+        if all(plane3d.point_on_surface(point) for point in self.control_points):
             return plane3d
         return self
 
@@ -3446,9 +3466,9 @@ class BSplineSurface3D(Surface3D):
             # for f in range(1, points_x):
             #     F[i+f] = X[l]*1000
             #     l = l+2
-            ## F[i+3] = X[3]*1000
-            ## F[i+4] = X[5]*1000
-            ## F[i+4] = X[points_x*2]*1000
+            # F[i+3] = X[3]*1000
+            # F[i+4] = X[5]*1000
+            # F[i+4] = X[points_x*2]*1000
 
             return F
 
@@ -4571,6 +4591,7 @@ class BSplineSurface3D(Surface3D):
     def xy_limits(self, other_bspline_surface3d):
         """
         Compute x, y limits to define grid2d.
+
         """
 
         grid2d_direction = (
@@ -4898,7 +4919,7 @@ class Face3D(volmdlr.core.Primitive3D):
         self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
-        return self.__class__(self.surface3d.copy(), self.surface2d.copy(),
+        return self.__class__(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
     def line_intersections(self,
@@ -5021,7 +5042,7 @@ class PlaneFace3D(Face3D):
         return self.surface2d.area()
 
     def copy(self, deep=True, memo=None):
-        return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(),
+        return PlaneFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                            self.name)
 
     @property
@@ -6208,12 +6229,13 @@ class Triangle3D(PlaneFace3D):
 
 class CylindricalFace3D(Face3D):
     """
-    :param contours2d: The cylinder's contour2D
-    :type contours2d: volmdlr.Contour2D
-    :param cylindricalsurface3d: Information about the Cylinder
-    :type cylindricalsurface3d: CylindricalSurface3D
-    :param points: contours2d's point
-    :type points: List of volmdlr.Point2D
+
+    :param contours2d: The cylinder's contour2D.
+    :type contours2d: volmdlr.Contour2D.
+    :param cylindricalsurface3d: Information about the Cylinder.
+    :type cylindricalsurface3d: CylindricalSurface3D.
+    :param points: contours2d's point.
+    :type points: List of volmdlr.Point2D.
 
     :Example:
         >>> contours2d is rectangular and will create a classic cylinder with x= 2*pi*radius, y=h
@@ -6235,7 +6257,7 @@ class CylindricalFace3D(Face3D):
         self._bbox = None
 
     def copy(self, deep=True, memo=None):
-        return CylindricalFace3D(self.surface3d.copy(), self.surface2d.copy(),
+        return CylindricalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                                  self.name)
 
     @property
@@ -6658,7 +6680,7 @@ class ToroidalFace3D(Face3D):
         self._bbox = None
 
     def copy(self, deep=True, memo=None):
-        return ToroidalFace3D(self.surface3d.copy(), self.surface2d.copy(),
+        return ToroidalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
     def points_resolution(self, line, pos,
@@ -8123,7 +8145,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def minimum_distance_point(self,
                                point: volmdlr.Point3D) -> volmdlr.Point3D:
         """
-        Computes the distance of a point to a Shell3D, whether it is inside or outside the Shell3D
+        Computes the distance of a point to a Shell3D, whether it is inside or outside the Shell3D.
+
         """
         distance_min, point1_min = self.faces[0].distance_to_point(point,
                                                                    return_other_point=True)
@@ -8442,7 +8465,7 @@ class ClosedShell3D(OpenShell3D):
     def point_in_shell_face(self, point: volmdlr.Point3D):
 
         for face in self.faces:
-            if (face.surface3d.point_on_plane(point) and face.point_belongs(point)) or \
+            if (face.surface3d.point_on_surface(point) and face.point_belongs(point)) or \
                     face.outer_contour3d.point_over_contour(point, abs_tol=1e-7):
                 return True
         return False
@@ -8768,7 +8791,8 @@ class ClosedShell3D(OpenShell3D):
     def validate_set_operation(self, shell2, tol):
         """
         Verifies if two shells are valid for union or subtractions operations,
-        that is, if they are disjointed or if one is totaly inside the other
+        that is, if they are disjointed or if one is totaly inside the other.
+
         If it returns an empty list, it means the two shells are valid to continue the
         operation.
         """
@@ -8797,6 +8821,7 @@ class ClosedShell3D(OpenShell3D):
     def union(self, shell2: 'ClosedShell3D', tol: float = 1e-8):
         """
         Given Two closed shells, it returns a new united ClosedShell3D object.
+
         """
 
         validate_set_operation = \
@@ -8849,6 +8874,10 @@ class ClosedShell3D(OpenShell3D):
         return list_new_faces
 
     def merge_faces(self):
+        """
+        Merges all shells' adjancents faces into one.
+
+        """
         union_faces = self.faces
         finished = False
         list_new_faces = []
@@ -8872,6 +8901,7 @@ class ClosedShell3D(OpenShell3D):
     def subtract(self, shell2, tol=1e-8):
         """
         Given Two closed shells, it returns a new subtracted OpenShell3D.
+
         """
         validate_set_operation = self.validate_set_operation(shell2, tol)
         if validate_set_operation:
@@ -8901,6 +8931,7 @@ class ClosedShell3D(OpenShell3D):
     def subtract_to_closed_shell(self, shell2, tol=1e-8):
         """
         Given Two closed shells, it returns a new subtracted ClosedShell3D.
+
         :param shell2:
         :param tol:
         :return:
@@ -8938,6 +8969,7 @@ class ClosedShell3D(OpenShell3D):
         """
         Given two ClosedShell3D, it returns the new objet resulting
         from the intersection of the two.
+
         """
         validate_set_operation = self.validate_set_operation(
             shell2, tol)
