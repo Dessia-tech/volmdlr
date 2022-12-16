@@ -6,8 +6,7 @@ Geometry functions.
 
 import math
 from typing import Tuple
-from numpy import dot, cross, array, zeros, random
-from scipy.linalg import norm
+from numpy import array, zeros
 
 import volmdlr as vm
 
@@ -55,7 +54,7 @@ def direction_to_euler_angles(u: vm.Vector3D, v=None):
     """
     if v is None:
         v = vm.Vector3D.random(0, 1, 0, 1, 0, 1)
-    
+
     u = u.copy()
     u.normalize()
     R = zeros((3, 3))
