@@ -1419,10 +1419,6 @@ class Contour2D(ContourMixin, Wire2D):
         return self._edge_polygon
 
     def _get_edge_polygon(self):
-
-        if len(self.primitives) == 1 and self.primitives[0].start == self.primitives[0].end:
-            return ClosedPolygon2D(self.primitives[0].discretization_points(number_points=200))
-
         points = []
         for edge in self.primitives:
             if points:
@@ -1451,7 +1447,8 @@ class Contour2D(ContourMixin, Wire2D):
         #         if edge.straight_line_point_belongs(point):
         #             return True
         #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
-        if self.to_polygon(500).point_belongs(point):
+        # test = self.to_polygon(500)
+        if self.to_polygon(angle_resolution=163).point_belongs(point):
             return True
         return False
 
@@ -1499,6 +1496,18 @@ class Contour2D(ContourMixin, Wire2D):
                       * edge.straight_line_center_of_mass()
 
         return center / self.area()
+
+    def barycenter(self):
+        """
+        calculates the geometric center of the polygon, which is the
+        average position of all the points in it
+
+        returns a Volmdlr.Point2D point
+        """
+        barycenter1_2d = self.primitives[0].start
+        for primitive in self.primitives[1:]:
+            barycenter1_2d += primitive.start
+        return barycenter1_2d / len(self.primitives)
 
     def second_moment_area(self, point):
 
@@ -1577,6 +1586,10 @@ class Contour2D(ContourMixin, Wire2D):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
             if self.point_belongs(p):
                 return p
+        ax = self.plot()
+        for _ in range(2000):
+            p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
+            p.plot(ax, 'r')
         raise ValueError('Could not find a point inside')
 
     def order_contour(self, tol=1e-6):
@@ -1822,12 +1835,33 @@ class Contour2D(ContourMixin, Wire2D):
         Transform the contour to a polygon.
         :param angle_resolution: arcs are discretized with respect of an angle resolution in points per radians
         """
-
         polygon_points = []
         # print([(line.start, line.end) for line in self.primitives])
-
+        center = self.center_of_mass()
         for primitive in self.primitives:
-            polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
+            start = primitive.start
+            end = primitive.end
+            # mean_point = 0.5* (start + end)
+            # fictitious_radius = mean_point.point_distance(center)
+
+            if start == end:
+                angle = volmdlr.TWO_PI
+            # elif fictitious_radius:
+            #     angle = primitive.length() / fictitious_radius
+            else:
+                vector2d_start = start - center
+                vector2d_end = end - center
+
+                angle = volmdlr.core.vectors3d_angle(vector2d_start, vector2d_end)
+
+            number_points = math.ceil(angle*angle_resolution)
+            resolution = primitive.length()/number_points
+            max_error = 1.3/angle_resolution
+            if resolution > max_error:
+                number_points = angle_resolution
+
+            polygon_points.extend(primitive.discretization_points(number_points=number_points)[:-1])
+        # print(True)
         return ClosedPolygon2D(polygon_points)
 
     def grid_triangulation(self, x_density: float = None,
@@ -1902,42 +1936,6 @@ class Contour2D(ContourMixin, Wire2D):
     #         split_primitives.append(prim_opt)
     #     print(len(split_primitives))
     #     return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1])
-    def grid_triangulation_points(self, x_density: float = None,
-                           y_density: float = None,
-                           min_points_x: int = 20,
-                           min_points_y: int = 20,
-                           number_points_x: int = None,
-                           number_points_y: int = None):
-        """
-        Use a n by m grid to triangulize the contour
-        """
-        bounding_rectangle = self.bounding_rectangle()
-        # xmin, xmax, ymin, ymax = self.bounding_rectangle()
-        dx = bounding_rectangle[1] - bounding_rectangle[0]  # xmax - xmin
-        dy = bounding_rectangle[3] - bounding_rectangle[2]  # ymax - ymin
-        if number_points_x is None:
-            n = max(math.ceil(x_density * dx), min_points_x)
-        else:
-            n = number_points_x
-        if number_points_y is None:
-            m = max(math.ceil(y_density * dy), min_points_y)
-        else:
-            m = number_points_y
-        x = [bounding_rectangle[0] + i * dx / n for i in range(n + 1)]
-        y = [bounding_rectangle[2] + i * dy / m for i in range(m + 1)]
-
-        point_index = {}
-        number_points = 0
-        points = []
-        triangles = []
-        for xi in x:
-            for yi in y:
-                point = volmdlr.Point2D(xi, yi)
-                if self.point_belongs(point):
-                    point_index[point] = number_points
-                    points.append(point)
-                    number_points += 1
-        return points
 
     def contour_intersections(self, contour2d):
         intersecting_points = []
@@ -2989,10 +2987,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, point_numbering=False,
-             fill=False, fill_color='w', equal_aspect=True):
+             fill=False, fill_color='w', equal_aspect: bool = False):
         if ax is None:
             fig, ax = plt.subplots()
-            ax.set_aspect('equal')
+            ax.set_aspect('auto')
 
         if fill:
             ax.fill([p[0] for p in self.points], [p[1] for p in self.points],
@@ -3019,103 +3017,21 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         return ax
 
-    # def triangulation(self):
-    #     """
-    #     Note: triangles have been inverted for a better rendering in babylonjs
-    #     """
-    #     # ear clipping
-    #     points = self.points[:]
-    #     initial_point_to_index = {p: i for i, p in enumerate(self.points)}
-    #     triangles = []
-    #
-    #     remaining_points = self.points[:]
-    #     # ax = ClosedPolygon2D(remaining_points).plot()
-    #
-    #     # inital_number_points = len(remaining_points)
-    #     number_remaining_points = len(remaining_points)
-    #     while number_remaining_points > 3:
-    #         current_polygon = ClosedPolygon2D(remaining_points)
-    #
-    #         found_ear = False
-    #         for p1, p2, p3 in zip(remaining_points,
-    #                               remaining_points[1:] + remaining_points[0:1],
-    #                               remaining_points[2:] + remaining_points[
-    #                                                      0:2]):
-    #             if p1 != p3:
-    #                 line_segment = volmdlr.edges.LineSegment2D(p1, p3)
-    #
-    #             # Checking if intersections does not contrain the verticies
-    #             # of line_segment
-    #             intersect = False
-    #             intersections = current_polygon.linesegment_intersections(
-    #                 line_segment)
-    #             if intersections:
-    #                 for inter in intersections:
-    #                     if inter[0] not in [line_segment.start,
-    #                                         line_segment.end]:
-    #                         intersect = True
-    #                         break
-    #
-    #             if not intersect:
-    #                 if current_polygon.point_belongs(
-    #                         line_segment.middle_point()):
-    #                     # Confirmed as an ear
-    #                     # print('ear!')
-    #
-    #                     triangles.append((initial_point_to_index[p1],
-    #                                       initial_point_to_index[p3],
-    #                                       initial_point_to_index[p2]))
-    #                     remaining_points.remove(p2)
-    #                     number_remaining_points -= 1
-    #                     found_ear = True
-    #
-    #                     # Rolling the remaining list
-    #                     if number_remaining_points > 4:
-    #                         deq = deque(remaining_points)
-    #                         # random.randint(1, number_remaining_points-1))
-    #                         deq.rotate(int(0.3 * number_remaining_points))
-    #                         remaining_points = list(deq)
-    #
-    #                     break
-    #
-    #         # Searching for a flat ear
-    #         if not found_ear:
-    #             remaining_polygon = ClosedPolygon2D(remaining_points)
-    #             if remaining_polygon.area() > 0.:
-    #
-    #                 found_flat_ear = False
-    #                 for p1, p2, p3 in zip(remaining_points,
-    #                                       remaining_points[
-    #                                           1:] + remaining_points[0:1],
-    #                                       remaining_points[
-    #                                           2:] + remaining_points[0:2]):
-    #                     triangle = Triangle2D(p1, p2, p3)
-    #                     if triangle.area() == 0:
-    #                         remaining_points.remove(p2)
-    #                         found_flat_ear = True
-    #                         break
-    #
-    #                 if not found_flat_ear:
-    #                     print(
-    #                         'Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
-    #                     return vmd.DisplayMesh2D(points, triangles)
-    #             else:
-    #                 return vmd.DisplayMesh2D(points, triangles)
-    #
-    #     if len(remaining_points) == 3:
-    #         p1, p2, p3 = remaining_points
-    #         triangles.append((initial_point_to_index[p1],
-    #                           initial_point_to_index[p3],
-    #                           initial_point_to_index[p2]))
-    #
-    #     return vmd.DisplayMesh2D(points, triangles)
-
     def triangulation(self, tri_opt: str = 'p'):
-        points = self.points
-        vertices = [(p.x, p.y) for p in points]
-        n = len(points)
-        segments = [(i, i + 1) for i in range(n - 1)]
-        segments.append((n - 1, 0))
+        """
+        Perform triangulation on the polygon.
+
+        To detail documentation, please refer to https://rufat.be/triangle/API.html
+
+        :param tri_opt: (Optional) Triangulation preferences
+        :type tri_opt: str
+        """
+        # Converting to nodes for performance
+        nodes = [vmd.Node2D.from_point(p) for p in self.points]
+        vertices = [(p.x, p.y) for p in nodes]
+        n = len(nodes)
+        segments = [(i, i + 1) for i in range(n-1)]
+        segments.append((n-1, 0))
 
         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                'segments': npy.array(segments).reshape((-1, 2)),
@@ -3140,29 +3056,36 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
         dx = xmax - xmin  # xmax - xmin
         dy = ymax - ymin  # ymax - ymin
-        if number_points_x is None:
-            n = max(math.ceil(x_density * dx), min_points_x)
-        else:
-            n = number_points_x
-        if number_points_y is None:
-            m = max(math.ceil(y_density * dy), min_points_y)
-        else:
-            m = number_points_y
+        n = number_points_x
+        m = number_points_y
+        # if number_points_x is None:
+        #     n = max(math.ceil(x_density * dx), min_points_x)
+        # else:
+        #     n = number_points_x
+        # if number_points_y is None:
+        #     m = max(math.ceil(y_density * dy), min_points_y)
+        # else:
+        #     m = number_points_y
         # x = [xmin + i * dx / n for i in range(n + 1)]
         # y = [ymin + i * dy / m for i in range(m + 1)]
-        x_offset = dx/(n+2)
-        y_offset = dy/(m+2)
+        # x_offset = dx/(n+2)
+        # y_offset = dy/(m+2)
+        x_offset = 0
+        y_offset = 0
         x = npy.linspace(xmin + x_offset, xmax - x_offset, num=n)
         y = npy.linspace(ymin + y_offset, ymax - y_offset, num=m)
 
         grid_point_index = {}
         # number_points = 0
+        polygon_points = self.points
         points = []
         for i, xi in enumerate(x):
             for j, yi in enumerate(y):
                 point = volmdlr.Point2D(xi, yi)
+                if point in polygon_points:
+                    continue
                 if self.point_belongs(point):
-                    node = vmd.Node2D(*point)
+                    node = vmd.Node2D.from_point(point)
                     grid_point_index[(i, j)] = node
                     points.append(node)
                     # number_points += 1

@@ -95,7 +95,7 @@ class Edge(dc.DessiaObject):
             a controlled angular distance. Usefull to mesh an arc
         :return: a list of sampled points
         """
-        if number_points is None:
+        if number_points is None or number_points == 1:
             number_points = 2
         if angle_resolution:
             number_points = angle_resolution
@@ -1918,7 +1918,8 @@ class Arc(Edge):
                 number_points = 2
             else:
                 number_points = math.ceil(self.angle * angle_resolution) + 2
-
+        if number_points <= 1:
+            number_points = 2
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step)
                 for i in range(number_points)]

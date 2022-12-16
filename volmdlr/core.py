@@ -114,12 +114,10 @@ def vectors3d_angle(vector1, vector2):
     dot = vector1.dot(vector2)
     ratio = dot / (vector1.norm() * vector2.norm())
     if ratio < -1:
-        ratio = -1
+        return math.pi
     elif ratio > 1:
-        ratio = 1
-    theta = math.acos(ratio)
-
-    return theta
+        return 0.0
+    return math.acos(ratio)
 
 
 def sin_cos_angle(u1, u2):

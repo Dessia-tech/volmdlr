@@ -224,7 +224,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return point_inside_outer_contour
 
-    def triangulation(self):
+    def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         # area = self.area()
         # tri_opt = f'qpa{0.05 * area}'
         # periodic = self.surface3d.x_periodicity or self.surface3d.y_periodicity
@@ -235,17 +235,20 @@ class Surface2D(volmdlr.core.Primitive2D):
         if self.bounding_rectangle().area() == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
 
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=20)
+
+        if not self.inner_contours and not number_points_x and not number_points_y:
+            return outer_polygon.triangulation()
 
         points = [vmd.Node2D(*p) for p in outer_polygon.points]
         vertices = [(p.x, p.y) for p in points]
         n = len(points)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
-        points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=15,
-                                                                                      number_points_y=15)
+        points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
+                                                                                      number_points_y=number_points_y)
 
-        if not self.inner_contours:  # No holes -> implement this in Contour2D.triangulation()?
+        if not self.inner_contours:  # No holes
             vertices_grid = [(p.x, p.y) for p in points_grid if p not in points]
             vertices.extend(vertices_grid)
             points.extend(points_grid)
@@ -266,13 +269,15 @@ class Surface2D(volmdlr.core.Primitive2D):
             xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
             x_grid_range = npy.where((x >= xmin) & (x <= xmax))[0]
             y_grid_range = npy.where((y >= ymin) & (y <= ymax))[0]
-            for j in y_grid_range:
-                for i in x_grid_range:
+            for i in x_grid_range:
+                for j in y_grid_range:
                     point = grid_point_index.get((i, j))
                     if not point:
                         continue
                     if inner_polygon.point_belongs(point):
+                        # if point in points_grid
                         points_grid.remove(point)
+                        grid_point_index.pop((i, j))
             for point in inner_polygon.points:
                 if point not in point_index:
                     points.append(vmd.Node2D(*point))
@@ -5323,85 +5328,19 @@ class Face3D(volmdlr.core.Primitive3D):
     def triangulation_lines(self):
         return [], []
 
+    def grid_size(self):
+        return [0, 0]
+
     def triangulation(self):
-        mesh2d = self.surface2d.triangulation()
+        number_points_x, number_points_y = self.grid_size()
+        mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
+        if isinstance(self, CylindricalFace3D):
+            print(True)
         return vmd.DisplayMesh3D(
             [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
              mesh2d.points],
             mesh2d.triangles)
 
-    # def triangulation(self):
-    #     surface2d = self.surface2d
-    #     # area = surface2d.area()
-    #     # tri_area = f'qpa{area}'
-    #     # points = surface2d.outer_contour.grid_triangulation_points(25, 25)
-    #     # mesh2d = surfaces[0].triangulation()
-    #     # print('ls', len(surfaces))
-    #     # for subsurface in surfaces[1:]:
-    #     #     # mesh2d += subsurface.triangulation()
-    #     #     mesh2d.merge_mesh(subsurface.triangulation())
-    #     if surface2d.area() == 0.:
-    #         return vmd.DisplayMesh2D([], triangles=[])
-    #
-    #     outer_polygon = surface2d.outer_contour.to_polygon(angle_resolution=10)
-    #
-    #     points = [vmd.Node2D(*p) for p in outer_polygon.points]
-    #     vertices = [(p.x, p.y) for p in points]
-    #     n = len(outer_polygon.points)
-    #     segments = [(i, i + 1) for i in range(n - 1)]
-    #     segments.append((n - 1, 0))
-    #     point_index = {p: i for i, p in enumerate(points)}
-    #     holes = []
-    #
-    #     if not surface2d.inner_contours:  # No holes -> implement this in Contour2D.triangulation()?
-    #         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-    #                'segments': npy.array(segments).reshape((-1, 2)),
-    #                }
-    #         t = triangle.triangulate(tri, 'qpa0.01')
-    #         triangles = t['triangles'].tolist()
-    #         np = t['vertices'].shape[0]
-    #         points = [vmd.Node2D(*t['vertices'][i, :]) for i in
-    #                   range(np)]
-    #         mesh2d = vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
-    #         return vmd.DisplayMesh3D(
-    #             [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
-    #              mesh2d.points],
-    #             mesh2d.triangles)
-    #
-    #     for inner_contour in surface2d.inner_contours:
-    #         inner_polygon = inner_contour.to_polygon(angle_resolution=25)
-    #
-    #         for point in inner_polygon.points:
-    #             if point not in point_index:
-    #                 points.append(vmd.Node2D(*point))
-    #                 vertices.append((point.x, point.y))
-    #                 point_index[point] = n
-    #                 n += 1
-    #         for point1, point2 in zip(inner_polygon.points[:-1],
-    #                                   inner_polygon.points[1:]):
-    #             segments.append((point_index[point1],
-    #                              point_index[point2]))
-    #         segments.append((point_index[inner_polygon.points[-1]],
-    #                          point_index[inner_polygon.points[0]]))
-    #         rpi = inner_contour.random_point_inside()
-    #         holes.append((rpi.x, rpi.y))
-    #
-    #     tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-    #            'segments': npy.array(segments).reshape((-1, 2)),
-    #            }
-    #     if holes:
-    #         tri['holes'] = npy.array(holes).reshape((-1, 2))
-    #     t = triangle.triangulate(tri, 'qpa0.05')
-    #     triangles = t['triangles'].tolist()
-    #     np = t['vertices'].shape[0]
-    #     points = [vmd.Node2D(*t['vertices'][i, :]) for i in
-    #               range(np)]
-    #
-    #     mesh2d = vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
-    #     return vmd.DisplayMesh3D(
-    #         [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
-    #          mesh2d.points],
-    #         mesh2d.triangles)
 
     def plot2d(self, ax=None, color='k', alpha=1):
         if ax is None:
@@ -6863,6 +6802,19 @@ class CylindricalFace3D(Face3D):
                                     volmdlr.Point2D(theta, zmax)))
         return lines, []
 
+    def grid_size(self):
+        """
+        Returns an adapted grid discretization size to each face.
+        """
+        angle_resolution = 5
+        theta_min, theta_max, _, _ = self.surface2d.bounding_rectangle().bounds()
+        delta_theta = theta_max - theta_min
+        number_points_x = int(delta_theta * angle_resolution)
+
+        number_points_y = 2
+
+        return number_points_x, number_points_y
+
     def range_closest(self, list_points):
         """
         Needs a docstring.
@@ -7275,83 +7227,20 @@ class ToroidalFace3D(Face3D):
                                       volmdlr.Point2D(theta_max, phi)))
         return lines_x, lines_y
 
-    # def triangulation(self):
-    #     surface2d = self.surface2d
-    #     area = surface2d.area()
-    #     tri_opt = f'qpa{0.05 * area}'
-    #     # periodic = self.surface3d.x_periodicity or self.surface3d.y_periodicity
-    #     # arc = any([isinstance(primitive, vme.Arc3D) for primitive in self.outer_contour3d.primitives])
-    #     # if periodic or arc:
-    #     #     return super(BSplineFace3D, self).triangulation()
-    #
-    #     if area == 0.:
-    #         return vmd.DisplayMesh2D([], triangles=[])
-    #
-    #     outer_polygon = surface2d.outer_contour.to_polygon(angle_resolution=20)
-    #
-    #     points = outer_polygon.points
-    #     vertices = [(p.x, p.y) for p in points]
-    #     n = len(points)
-    #     segments = [(i, i + 1) for i in range(n - 1)]
-    #     segments.append((n - 1, 0))
-    #     point_index = {p: i for i, p in enumerate(points)}
-    #     holes = []
-    #
-    #     if not surface2d.inner_contours:  # No holes -> implement this in Contour2D.triangulation()?
-    #
-    #         points_grid = outer_polygon.grid_triangulation_points(number_points_x=25, number_points_y=25)
-    #         vertices_grid = [(p.x, p.y) for p in points_grid if p not in points]
-    #         vertices.extend(vertices_grid)
-    #
-    #         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-    #                'segments': npy.array(segments).reshape((-1, 2)),
-    #                }
-    #         t = triangle.triangulate(tri, 'p')
-    #         triangles = t['triangles'].tolist()
-    #         np = t['vertices'].shape[0]
-    #         points = [vmd.Node2D(*t['vertices'][i, :]) for i in
-    #                   range(np)]
-    #         mesh2d = vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
-    #         return vmd.DisplayMesh3D(
-    #             [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
-    #              mesh2d.points],
-    #             mesh2d.triangles)
-    #
-    #     for inner_contour in surface2d.inner_contours:
-    #         inner_polygon = inner_contour.to_polygon(angle_resolution=25)
-    #
-    #         for point in inner_polygon.points:
-    #             if point not in point_index:
-    #                 points.append(vmd.Node2D(*point))
-    #                 vertices.append((point.x, point.y))
-    #                 point_index[point] = n
-    #                 n += 1
-    #         for point1, point2 in zip(inner_polygon.points[:-1],
-    #                                   inner_polygon.points[1:]):
-    #             segments.append((point_index[point1],
-    #                              point_index[point2]))
-    #         segments.append((point_index[inner_polygon.points[-1]],
-    #                          point_index[inner_polygon.points[0]]))
-    #         rpi = inner_contour.random_point_inside()
-    #         holes.append((rpi.x, rpi.y))
-    #
-    #     tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-    #            'segments': npy.array(segments).reshape((-1, 2)),
-    #            }
-    #     if holes:
-    #         tri['holes'] = npy.array(holes).reshape((-1, 2))
-    #     t = triangle.triangulate(tri, tri_opt)
-    #     triangles = t['triangles'].tolist()
-    #     np = t['vertices'].shape[0]
-    #     points = [vmd.Node2D(*t['vertices'][i, :]) for i in
-    #               range(np)]
-    #
-    #     mesh2d = vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
-    #     return vmd.DisplayMesh3D(
-    #         [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
-    #          mesh2d.points],
-    #         mesh2d.triangles)
+    def grid_size(self):
+        """
+        Returns an adapted grid discretization size to each face.
+        """
+        angle_resolution = 5
+        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
+        delta_theta = theta_max - theta_min
+        number_points_x = int(delta_theta * angle_resolution)
+
+        delta_phi = phi_max - phi_min
+        number_points_y = int(delta_phi * angle_resolution)
+
+        return number_points_x, number_points_y
 
 # =============================================================================
 #  This code seems buggy...
@@ -7907,6 +7796,19 @@ class ConicalFace3D(Face3D):
             lines_y = []
         return lines_x, lines_y
 
+    def grid_size(self):
+        """
+        Returns an adapted grid discretization size to each face.
+        """
+        angle_resolution = 5
+        theta_min, theta_max, _, _ = self.surface2d.bounding_rectangle().bounds()
+        delta_theta = theta_max - theta_min
+        number_points_x = math.ceil(delta_theta * angle_resolution)
+
+        number_points_y = 2
+
+        return number_points_x, number_points_y
+
     # def create_triangle(self, all_contours_points, part):
     #     Triangles, ts = [], []
     #     pts, h_list = [], []
@@ -8007,6 +7909,17 @@ class SphericalFace3D(Face3D):
                                       volmdlr.Point2D(theta_max, phi)))
         return lines_x, lines_y
 
+    def grid_size(self):
+        angle_resolution = 5
+        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
+
+        delta_theta = theta_max - theta_min
+        number_points_x = int(delta_theta * angle_resolution)
+
+        delta_phi = phi_max - phi_min
+        number_points_y = int(delta_phi * angle_resolution)
+
+        return number_points_x, number_points_y
 
 class RuledFace3D(Face3D):
     """
@@ -8098,6 +8011,17 @@ class BSplineFace3D(Face3D):
             lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v),
                                       volmdlr.Point2D(v_max, v)))
         return lines_x, lines_y
+
+    def grid_size(self):
+        resolution = 25
+        u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
+        delta_u = u_max - u_min
+        number_points_x = int(delta_u * resolution)
+
+        delta_v = v_max - v_min
+        number_points_y = int(delta_v * resolution)
+
+        return number_points_x, number_points_y
 
     # def triangulation(self):
     #     surface2d = self.surface2d
