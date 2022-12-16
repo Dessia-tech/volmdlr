@@ -18,7 +18,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(contour2d_dim.length(), 16.816547325087043)
 
     def test_periodicity(self):
-        bspline_suface = vmf.BSplineSurface3D.load_from_file('surface3d_8.json')
+        bspline_suface = vmf.BSplineSurface3D.load_from_file('faces/surface3d_8.json')
         self.assertAlmostEqual(bspline_suface.x_periodicity,  0.8888888888888888)
         self.assertFalse(bspline_suface.y_periodicity)
 
