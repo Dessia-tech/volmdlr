@@ -3888,7 +3888,8 @@ class BSplineSurface3D(Surface3D):
     def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D,
                                        grid2d: volmdlr.grid.Grid2D):
         """
-        compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame
+        Compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame.
+
         """
 
         contour2d_01 = self.contour3d_to_2d(contour3d)
@@ -3929,7 +3930,8 @@ class BSplineSurface3D(Surface3D):
 
     def contour2d_with_dimension_to_3d(self, contour2d):
         """
-        compute the contour3d, on a Bspline surface, of a contour2d define in the dimensioned frame
+        Compute the contour3d, on a Bspline surface, of a contour2d define in the dimensioned frame.
+
         """
 
         contour01 = self.contour2d_with_dimension_to_parametric_frame(contour2d)
@@ -4154,7 +4156,8 @@ class BSplineSurface3D(Surface3D):
 
     def intersection_with(self, other_bspline_surface3d):
         """
-        compute intersection points between two Bspline surfaces
+        Compute intersection points between two Bspline surfaces.
+
         return u,v parameters for intersection points for both surfaces
         """
 
@@ -4189,7 +4192,8 @@ class BSplineSurface3D(Surface3D):
 
     def plane_intersection(self, plane3d):
         """
-        compute intersection points between a Bspline surface and a plane3d
+        Compute intersection points between a Bspline surface and a plane3d.
+
         """
 
         def f(X):
@@ -4231,7 +4235,8 @@ class BSplineSurface3D(Surface3D):
 
     def error_with_point3d(self, point3d):
         """
-        compute the error/distance between the Bspline surface and a point3d
+        Compute the error/distance between the Bspline surface and a point3d.
+
         """
 
         def f(x):
@@ -4247,7 +4252,8 @@ class BSplineSurface3D(Surface3D):
 
     def error_with_edge3d(self, edge3d):
         """
-        compute the error/distance between the Bspline surface and an edge3d
+        Compute the error/distance between the Bspline surface and an edge3d.
+
         it's the mean of the start and end points errors'
         """
 
@@ -4255,7 +4261,8 @@ class BSplineSurface3D(Surface3D):
 
     def nearest_edges3d(self, contour3d, threshold: float):
         """
-        compute the nearest edges of a contour3d to a Bspline_surface3d based on a threshold
+        Compute the nearest edges of a contour3d to a Bspline_surface3d based on a threshold.
+
         """
 
         nearest = []
@@ -4268,7 +4275,8 @@ class BSplineSurface3D(Surface3D):
 
     def edge3d_to_2d_with_dimension(self, edge3d, grid2d: volmdlr.grid.Grid2D):
         """
-        Computes the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame.
+        Compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame.
+
         """
 
         # method_name = '{}_to_2d_with_dimension'.format(edge3d.__class__.__name__.lower())
@@ -4288,7 +4296,8 @@ class BSplineSurface3D(Surface3D):
 
     def wire3d_to_2d(self, wire3d):
         """
-        compute the 2d of a wire3d, on a Bspline surface
+        Compute the 2d of a wire3d, on a Bspline surface.
+
         """
 
         contour = self.contour3d_to_2d(wire3d)
@@ -4297,7 +4306,8 @@ class BSplineSurface3D(Surface3D):
 
     def wire3d_to_2d_with_dimension(self, wire3d):
         """
-        compute the 2d of a wire3d, on a Bspline surface, in the dimensioned frame
+        Compute the 2d of a wire3d, on a Bspline surface, in the dimensioned frame.
+
         """
 
         contour = self.contour3d_to_2d_with_dimension(wire3d, self._grids2d)
@@ -4952,10 +4962,11 @@ class Face3D(volmdlr.core.Primitive3D):
 
 class PlaneFace3D(Face3D):
     """
-    :param contours: The face's contour2D
-    :type contours: volmdlr.Contour2D
-    :param plane: Plane used to place your face
-    :type plane: Plane3D
+
+    :param contours: The face's contour2D.
+    :type contours: volmdlr.Contour2D.
+    :param plane: Plane used to place your face.
+    :type plane: Plane3D.
     """
     _standalone_in_db = False
     _generic_eq = True
@@ -5879,12 +5890,13 @@ class PlaneFace3D(Face3D):
 
 class Triangle3D(PlaneFace3D):
     """
-    :param point1: The first point
-    :type point1: volmdlr.Point3D
-    :param point2: The second point
-    :type point2: volmdlr.Point3D
-    :param point3: The third point
-    :type point3: volmdlr.Point3D
+
+    :param point1: The first point.
+    :type point1: volmdlr.Point3D.
+    :param point2: The second point.
+    :type point2: volmdlr.Point3D.
+    :param point3: The third point.
+    :type point3: volmdlr.Point3D.
     """
     _standalone_in_db = False
 
