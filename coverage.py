@@ -40,8 +40,10 @@ for file_name, data in d['files'].items():
     if '/'.join(file_name.split('/')[-2:]) in untracked_modules:
         print(file_name, '-> in untrack list')
     else:
-        print('Testing if {} is above {}'.format(file_name, MIN_FILE_COVERAGE))
-        assert(data['summary']['percent_covered']) > MIN_FILE_COVERAGE
+        #print('Testing if {} is above {}'.format(file_name, MIN_FILE_COVERAGE))
+        file_coverage = data['summary']['percent_covered'] 
+        if file_coverage < MIN_FILE_COVERAGE:
+            raise RuntimeError(f'File {file_name} is not covered enough: {file_coverage} % / {MIN_FILE_COVERAGE} %')
         min_actual_coverage = min(min_actual_coverage, data['summary']['percent_covered'])
 
 print('[Coverage] You can increase MIN_FILE_COVERAGE to maximum {}% (actual:{})%'.format(min_actual_coverage, MIN_FILE_COVERAGE))

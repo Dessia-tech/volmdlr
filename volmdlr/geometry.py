@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
-
+Geometry functions.
 """
 
 import math
 from typing import Tuple
 from numpy import dot, cross, array, zeros, random
 from scipy.linalg import norm
+
+import volmdlr as vm
 
 
 def euler_angles_to_transfer_matrix(psi, theta, phi):
@@ -48,19 +49,30 @@ def transfer_matrix_to_euler_angles(R):
     return psi, theta, phi
 
 
-def direction_to_euler_angles(u, v=random.random(3)):
+def direction_to_euler_angles(u: vm.Vector3D, v=None):
     """
     Returns one possibility of euler angles from a vector indicating a direction.
     """
-    #    u=npy.array([ux,uy,uz])
-    u = u / norm(u)
+    if v is None:
+        v = vm.Vector3D.random(0, 1, 0, 1, 0, 1)
+    
+    u = u.copy()
+    u.normalize()
     R = zeros((3, 3))
-    R[:, 0] = u
-    v = v - dot(u, v) * u
-    v = v / norm(v)
-    w = cross(u, v)
-    R[:, 1] = v
-    R[:, 2] = w
+    R[0, 0] = u.x
+    R[1, 0] = u.y
+    R[2, 0] = u.z
+
+    v = v - u.dot(v) * u
+    v.normalize()
+    w = u.cross(v)
+    R[0, 1] = v.y
+    R[1, 1] = v.y
+    R[2, 1] = v.y
+
+    R[0, 2] = w.z
+    R[1, 2] = w.z
+    R[2, 2] = w.z
     euler = transfer_matrix_to_euler_angles(R)
     return euler
 
