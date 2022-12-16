@@ -22,6 +22,7 @@ from geomdl import BSpline
 from geomdl import utilities
 from geomdl.fitting import interpolate_surface, approximate_surface
 from geomdl.operations import split_surface_u, split_surface_v
+from geomdl import construct
 
 # import dessia_common
 from dessia_common.core import DessiaObject
@@ -2230,6 +2231,7 @@ class BSplineSurface3D(Surface3D):
         # surface_points = surface.evalpts
 
         self.surface = surface
+        self.curves = construct.extract_curves(surface, extract_u=True, extract_v=True)
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
         Surface3D.__init__(self, name=name)
 
@@ -2240,23 +2242,25 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def x_periodicity(self):
-        p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
-        p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
-        if self.point2d_to_3d(p2d_x0) == p3d_x1 and \
-                not math.isclose(p2d_x0.x, 1, abs_tol=1e-3):
-            return 1 - p2d_x0.x
-        else:
-            return None
+        u = self.curves['u']
+        a, b = self.surface.domain[0]
+        u0 = u[0]
+        p_a = u0.evaluate_single(a)
+        p_b = u0.evaluate_single(b)
+        if p_a == p_b:
+            return self.surface.range[0]
+        return None
 
     @property
     def y_periodicity(self):
-        p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
-        p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
-        if self.point2d_to_3d(p2d_y0) == p3d_y1 and \
-                not math.isclose(p2d_y0.y, 1, abs_tol=1e-3):
-            return 1 - p2d_y0.y
-        else:
-            return None
+        v = self.curves['v']
+        c, d = self.surface.domain[1]
+        v0 = v[0]
+        p_c = v0.evaluate_single(c)
+        p_d = v0.evaluate_single(d)
+        if p_c == p_d:
+            return self.surface.range[1]
+        return None
 
     def control_points_matrix(self, coordinates):
         """

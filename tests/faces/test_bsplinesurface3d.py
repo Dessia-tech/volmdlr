@@ -4,6 +4,7 @@ Unit tests for volmdlr.faces.BSplineSurface3D
 import unittest
 from volmdlr.models import bspline_surfaces
 import volmdlr.grid
+import volmdlr.faces as vmf
 
 
 class TestBSplineSurface3D(unittest.TestCase):
@@ -15,6 +16,11 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertEqual(len(contour2d_dim.primitives), 4)
         self.assertAlmostEqual(contour2d_dim.area(), 18.12438798529036, places=5)
         self.assertAlmostEqual(contour2d_dim.length(), 16.816547325087043)
+
+    def test_periodicity(self):
+        bspline_suface = vmf.BSplineSurface3D.load_from_file('surface3d_8.json')
+        self.assertAlmostEqual(bspline_suface.x_periodicity,  0.8888888888888888)
+        self.assertFalse(bspline_suface.y_periodicity)
 
 
 if __name__ == '__main__':
