@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
 * Arc3D: line_intersections, linesegment_intersections
 * new module utils: intersections -> circle_3d_linesegment_intersections
+* hash for Frame2D
 * Ellipse3D: point_belongs, abscissa, length, to_2d
 * CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
 
@@ -83,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
 * bounding box: fix for cylindrical and BSplineCurve3D
+* contour2d: ordering_primitives, order_primitives
 * Plane3D: plane_intersections, is_coindident
 * Linesegment2D: infinite_primitive
 * Arc2D: point_belongs
@@ -95,6 +97,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Avoid unneeded bbox computation
 * triangulation performance by use of Node2D instead of points (x15 on casing)
+* cache variable self._polygon_point_belongs_100, to avoid recalculating each
+time we have to verify if a point is inside
+
 
 ### Refactorings
 * LineSegment3D: intersections
@@ -140,6 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle3D: point_belongs
 * Circle3D: discretization_points
 * Arc3D: line_intersections, linesegment_intersections
+* Contour2D: ordering_contour, is_ordered, order_contour
 * Ellipse3D: point_belongs, abscissa, length, to_2d, discretization_points
 * CylindricalSurface3D: point_on_surface, is_coincident
 
