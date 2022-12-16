@@ -188,8 +188,14 @@ class Edge(dc.DessiaObject):
 
 class Line(dc.DessiaObject):
     """
-    Abstract class.
+    Abstract class representing a line.
 
+    :param point1: The first point defining the line
+    :type point1: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+    :param point2: The second point defining the line
+    :type point2: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+    :param name: Name of the line. Default value is an empty string
+    :type name: str, optional
     """
 
     def __init__(self, point1, point2, name=''):
@@ -199,6 +205,9 @@ class Line(dc.DessiaObject):
         dc.DessiaObject.__init__(self, name=name)
 
     def __getitem__(self, key):
+        """
+        Get a point of the line by its index.
+        """
         if key == 0:
             return self.point1
         if key == 1:
@@ -206,23 +215,59 @@ class Line(dc.DessiaObject):
         raise IndexError
 
     def unit_direction_vector(self, *args, **kwargs):
+        """
+        Get the unit direction vector of the line.
+
+        :return: The unit direction vector of the line
+        :rtype:  Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
+        """
         vector = self.direction_vector()
         vector.normalize()
         return vector
 
     def direction_vector(self, *args, **kwargs):
+        """
+        Get the direction vector of the line.
+
+        :return: The direction vector of the line
+        :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
+        """
         if not self._direction_vector:
             self._direction_vector = self.point2 - self.point1
         return self._direction_vector
 
     def normal_vector(self, *args, **kwargs):
+        """
+        Get the normal vector of the line.
+
+        :return: The normal vector of the line
+        :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
+        """
         return self.direction_vector().normal_vector()
 
     def unit_normal_vector(self, abscissa=0.):
+        """
+        Get the unit normal vector of the line.
+
+        :param abscissa: The abscissa of the point from which to calculate
+            the normal vector
+        :type abscissa: float, optional
+        :return: The unit normal vector of the line
+        :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
+        """
         return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
+        """
+        Calculate the projection of a point onto the line.
 
+        :param point: The point to project
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :return: The projection of the point onto the line and the distance
+            between the point and the projection
+        :rtype: Tuple(Union[:class:`volmdlr.Point2D`,
+            :class:`volmdlr.Point3D`], float)
+        """
         vector = self.point2 - self.point1
         norm_u = vector.norm()
         t = (point - self.point1).dot(vector) / norm_u ** 2
@@ -231,6 +276,14 @@ class Line(dc.DessiaObject):
         return projection, t * norm_u
 
     def abscissa(self, point):
+        """
+        Calculate the abscissa of a point on the line.
+
+        :param point: The point for which to calculate the abscissa
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :return: The abscissa of the point
+        :rtype: float
+        """
         vector = self.point2 - self.point1
         norm_u = vector.norm()
         t = (point - self.point1).dot(vector) / norm_u
@@ -246,19 +299,28 @@ class Line(dc.DessiaObject):
         return sorted(points, key=self.abscissa)
 
     def split(self, split_point):
+        """
+        Split a line into two lines.
+
+        :param split_point: The point where to split the line
+        :type split_point: Union[:class:`volmdlr.Point2D`,
+            :class:`volmdlr.Point3D`]
+        :return: A list containg two lines
+        """
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
 
-    def is_between_points(self, point1: volmdlr.Point2D,
-                          point2: volmdlr.Point2D):
+    def is_between_points(self, point1: Union[volmdlr.Point2D, volmdlr.Point3D],
+                          point2: Union[volmdlr.Point2D, volmdlr.Point3D]):
         """
         Verifies if a line is between two points.
 
-        :param point1: first point.
-        :type point1: volmdlr.Point2D.
-        :param point2: second point.
-        :type point2: volmdlr.Point2D.
-        returns True is line is between the two given points or False if not.
+        :param point1: The first point
+        :type point1: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param point2: The second point
+        :type point2: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :return: True if the line is between the two points, False otherwise
+        :rtype: bool
         """
 
         if point1 == point2:
