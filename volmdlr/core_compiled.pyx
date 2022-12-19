@@ -18,7 +18,7 @@ from mpl_toolkits.mplot3d import proj3d
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrow, FancyArrowPatch
 
-from dessia_common import DessiaObject
+from dessia_common.core import DessiaObject
 import plot_data
 
 # =============================================================================
@@ -2923,6 +2923,13 @@ class Frame2D(Basis2D):
         return Frame2D(new_origin,
                        Vector2D(M[:, 0]),
                        Vector2D(M[:, 1]))
+
+    def __hash__(self):
+        """
+        Hash returns 0 because points are difficult to hash if they are meant
+        to be equalized at a given tolerance
+        """
+        return 0
 
     def to_dict(self, *args, **kwargs):
         """
