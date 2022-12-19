@@ -67,6 +67,16 @@ def find_and_replace(string, find, replace):
 
 
 def set_to_list(step_set):
+    """
+    Sets to list.
+
+    :param step_set: DESCRIPTION
+    :type step_set: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+
     char_list = step_set.split(',')
     char_list[0] = char_list[0][1:]
     char_list[-1] = char_list[-1][:-1]
@@ -184,6 +194,18 @@ def sin_cos_angle(u1, u2):
 
 
 def delete_double_pos(points, triangles):
+    """
+    Deletes double xx.
+
+    :param points: DESCRIPTION
+    :type points: TYPE
+    :param triangles: DESCRIPTION
+    :type triangles: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+
     points_to_indexes = {}
 
     for index, point in enumerate(points):
@@ -267,6 +289,16 @@ def max_pos(list_of_float):
 
 
 def min_pos(list_of_float):
+    """
+    Gets min xx.
+
+    :param list_of_float: DESCRIPTION
+    :type list_of_float: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+
     pos_min, min_float = 0, list_of_float[0]
     for pos, fl in enumerate(list_of_float):
         if pos == 0:
