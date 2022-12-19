@@ -102,24 +102,26 @@ for shell in [new_box,
               subtract_to_closed_shell]:
     shell[0].color = (1, 0.1, 0.1)
     shell[0].alpha = 0.6
-    vm.core.VolumeModel(shell).babylonjs()
+    shell.babylonjs()
 
 
-shell3 = shell2.rotation(vm.O3D, vm.Z3D, math.pi).translation(0.3*vm.Z3D-0.1*vm.Y3D)
-# # new_box = shell1.union(shell3)
-# # for shell in new_box:
-# #     shell.color = (1, 0.1, 0.1)
-# #     shell.alpha = 0.6
-# # vm.core.VolumeModel(new_box).babylonjs()
+# Below was commented to save computation time
 
-new_box = new_box[0].union(shell3)
-subtract_to_closed_shell = subtract_to_closed_shell[0].subtract_to_closed_shell(shell3)
-# new_box = new_box[0].intersection(shell3)
-for shell in [new_box,
-              subtract_to_closed_shell]:
-    shell[0].color = (1, 0.1, 0.1)
-    shell[0].alpha = 0.6
-    vm.core.VolumeModel(shell).babylonjs()
+# shell3 = shell2.rotation(vm.O3D, vm.Z3D, math.pi).translation(0.3*vm.Z3D-0.1*vm.Y3D)
+# # # new_box = shell1.union(shell3)
+# # # for shell in new_box:
+# # #     shell.color = (1, 0.1, 0.1)
+# # #     shell.alpha = 0.6
+# # # vm.core.VolumeModel(new_box).babylonjs()
+
+# new_box = new_box[0].union(shell3)
+# subtract_to_closed_shell = subtract_to_closed_shell[0].subtract_to_closed_shell(shell3)
+# # new_box = new_box[0].intersection(shell3)
+# for shell in [new_box,
+#               subtract_to_closed_shell]:
+#     shell[0].color = (1, 0.1, 0.1)
+#     shell[0].alpha = 0.6
+#     vm.core.VolumeModel(shell).babylonjs()
 
 time_after = time.time()
 

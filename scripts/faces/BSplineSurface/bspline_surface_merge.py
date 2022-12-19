@@ -38,7 +38,7 @@ bspline_faces.append(merged_surface.rectangular_cut(0,1,0,1))
 
 
 # %% Display
-
+<
 random_colors = []
 for i in range(0, 3):
     random_colors.append([list(npy.random.choice(range(255), size=1))[0] / 256, 
