@@ -2936,6 +2936,13 @@ class Frame2D(Basis2D):
                        Vector2D(M[:, 0]),
                        Vector2D(M[:, 1]))
 
+    def __hash__(self):
+        """
+        Hash returns 0 because points are difficult to hash if they are meant
+        to be equalized at a given tolerance
+        """
+        return 0
+
     def to_dict(self, *args, **kwargs):
         """
         Seralizes a 2 dimensional frame into a dictionary.
