@@ -13,7 +13,7 @@ UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-fin
 MIN_NOTE = 8.5
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 902,
+                     'invalid-name': 900,
                      'no-else-return': 52,
                      'consider-using-f-string': 128,
                      'no-member': 9,
@@ -22,7 +22,7 @@ MAX_ERROR_BY_TYPE = {
                      'arguments-differ': 54,
                      'too-many-locals': 70,
                      'line-too-long': 28,
-                     'unused-argument': 30,
+                     'unused-argument': 45,
                      'too-many-arguments': 67,
                      'line-too-long errors': 32,
                      'consider-using-enumerate': 22,
@@ -30,7 +30,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-statements': 19,
                      'super-init-not-called': 17,
                      'no-name-in-module': 24,
-                     'abstract-method': 4,
+                     'abstract-method': 32,
                      'empty-docstring': 18,
                      'duplicate-code': 10,
                      'no-self-use': 16,
@@ -49,9 +49,9 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-nested-blocks': 9,
                      'attribute-defined-outside-init': 9,
                      'too-many-return-statements': 4,
-                     'consider-merging-isinstance': 1,
+                     'consider-merging-isinstance': 0,
                      'cyclic-import': 4,
-                     'consider-iterating-dictionary': 2,
+                     'consider-iterating-dictionary': 0,
                      'raise-missing-from': 2,
                      'no-else-raise': 3,
                      'no-else-continue': 4,

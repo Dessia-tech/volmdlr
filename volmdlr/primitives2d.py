@@ -407,7 +407,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         # CREATE THE NEW POINTS' LIST
         # =============================================================================
         for i in range(len(self.points)):
-            if i in new_points.keys():
+            if i in new_points:
                 new_linesegment2D_points.append(new_points[i])
             else:
                 new_linesegment2D_points.append(self.points[i])
