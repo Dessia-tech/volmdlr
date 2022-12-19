@@ -10,34 +10,34 @@ MIN_NOTE = 9.17
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
 
-MIN_NOTE = 8.3
+MIN_NOTE = 8.5
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 954,
-                     'no-else-return': 56,
-                     'consider-using-f-string': 132,
-                     'no-member': 15,
-                     'inconsistent-return-statements': 18,
-                     'unused-variable': 51,
-                     'arguments-differ': 11,
-                     'too-many-locals': 73,
+                     'invalid-name': 902,
+                     'no-else-return': 52,
+                     'consider-using-f-string': 128,
+                     'no-member': 9,
+                     'inconsistent-return-statements': 17,
+                     'unused-variable': 44,
+                     'arguments-differ': 54,
+                     'too-many-locals': 70,
                      'line-too-long': 28,
-                     'unused-argument': 48,
+                     'unused-argument': 30,
                      'too-many-arguments': 67,
                      'line-too-long errors': 32,
                      'consider-using-enumerate': 22,
-                     'too-many-branches': 27,
+                     'too-many-branches': 25,
                      'too-many-statements': 19,
-                     'super-init-not-called': 19,
-                     'no-name-in-module': 4,
-                     'abstract-method': 32,
+                     'super-init-not-called': 17,
+                     'no-name-in-module': 24,
+                     'abstract-method': 4,
                      'empty-docstring': 18,
-                     'duplicate-code': 11,
+                     'duplicate-code': 10,
                      'no-self-use': 16,
-                     'arguments-renamed': 4,
-                     'too-many-ancestors': 8,
+                     'arguments-renamed': 9,
+                     'too-many-ancestors': 29,
                      'expression-not-assigned': 1,
-                     'non-parent-init-called': 7,
+                     'non-parent-init-called': 6,
                      'too-few-public-methods': 10,
                      'too-many-public-methods': 10,
                      'use-implicit-booleaness-not-comparison': 8,
@@ -46,14 +46,14 @@ MAX_ERROR_BY_TYPE = {
                      'undefined-loop-variable': 5,
                      'unspecified-encoding': 9,
                      'too-many-function-args': 8,
-                     'too-many-nested-blocks': 6,
+                     'too-many-nested-blocks': 9,
                      'attribute-defined-outside-init': 9,
                      'too-many-return-statements': 4,
                      'consider-merging-isinstance': 1,
                      'cyclic-import': 4,
                      'consider-iterating-dictionary': 2,
                      'raise-missing-from': 2,
-                     'no-else-raise': 4,
+                     'no-else-raise': 3,
                      'no-else-continue': 4,
                      'undefined-variable': 2,
                      'no-else-break': 4,
@@ -66,7 +66,7 @@ MAX_ERROR_BY_TYPE = {
                      'redundant-keyword-arg': 3,
                      'no-value-for-parameter': 1,
                      'c-extension-no-member': 2,
-                     'access-member-before-definition': 2,
+                     'access-member-before-definition': 1,
                      'modified-iterating-list': 2,
                      'consider-using-with': 2,
                      'consider-using-get': 2,
@@ -153,7 +153,7 @@ for error_type, number_errors in stats_by_msg.items():
             print(f'\nFix some {error_type} errors: {number_errors}/{max_errors}')
 
             messages = extract_messages_by_type(error_type)
-            messages_to_show = sorted(random.sample(messages, min(30, len(messages))),
+            messages_to_show = sorted(random.sample(messages, min(40, len(messages))),
                                       key=lambda m: (m.path, m.line))
             for message in messages_to_show:
                 print(f'{message.path} line {message.line}: {message.msg}')

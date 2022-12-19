@@ -2952,6 +2952,21 @@ class Frame2D(Basis2D):
         """
         return Basis2D.old_coordinates(self, vector) + self.origin
 
+    def frame_mapping(self, frame: 'Frame2D', side: str):
+        basis = frame.basis()
+        if side == 'new':
+            new_origin = frame.new_coordinates(self.frame.origin)
+            new_u = basis.new_coordinates(self.frame.u)
+            new_v = basis.new_coordinates(self.frame.v)
+        elif side == 'old':
+            new_origin = frame.old_coordinates(self.frame.origin)
+            new_u = basis.old_coordinates(self.frame.u)
+            new_v = basis.old_coordinates(self.frame.v)
+        else:
+            raise ValueError('side value not valid, please specify'
+                              'a correct value: \'old\' or \'new\'')
+        return Frame2D(new_origin, new_u, new_v)
+
     def translation(self, vector):
         """
         Returns a translated 2 dimensional frame.
@@ -3170,6 +3185,25 @@ class Frame3D(Basis3D):
         :rtype: :class:`volmdlr.Matrix33`
         """
         return Basis3D.old_coordinates(self, vector) + self.origin
+
+    def frame_mapping(self, frame: 'Frame3D', side: str):
+        basis = frame.basis()
+        if side == 'new':
+            new_origin = frame.new_coordinates(self.frame.origin)
+            new_u = basis.new_coordinates(self.frame.u)
+            new_v = basis.new_coordinates(self.frame.v)
+            new_w = basis.new_coordinates(self.frame.w)
+
+        elif side == 'old':
+            new_origin = frame.old_coordinates(self.frame.origin)
+            new_u = basis.old_coordinates(self.frame.u)
+            new_v = basis.old_coordinates(self.frame.v)
+            new_w = basis.old_coordinates(self.frame.w)
+        else:
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
+        return Frame3D(new_origin, new_u, new_v, new_w)
+
 
     def rotation(self, center: Point3D, axis: Vector3D, angle: float):
         """

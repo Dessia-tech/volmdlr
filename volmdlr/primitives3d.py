@@ -31,7 +31,6 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
                                 volmdlr.primitives.RoundedLineSegments):
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
-    _generic_eq = True
 
     line_class = volmdlr.edges.LineSegment3D
     arc_class = volmdlr.edges.Arc3D
@@ -44,22 +43,22 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 
         volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
 
-    def arc_features(self, ipoint):
-        radius = self.radius[ipoint]
+    def arc_features(self, point_index: int):
+        radius = self.radius[point_index]
         if self.closed:
-            if ipoint == 0:
+            if point_index == 0:
                 pt1 = self.points[-1]
             else:
-                pt1 = self.points[ipoint - 1]
-            pti = self.points[ipoint]
-            if ipoint < self.npoints - 1:
-                pt2 = self.points[ipoint + 1]
+                pt1 = self.points[point_index - 1]
+            pti = self.points[point_index]
+            if point_index < self.npoints - 1:
+                pt2 = self.points[point_index + 1]
             else:
                 pt2 = self.points[0]
         else:
-            pt1 = self.points[ipoint - 1]
-            pti = self.points[ipoint]
-            pt2 = self.points[ipoint + 1]
+            pt1 = self.points[point_index - 1]
+            pti = self.points[point_index]
+            pt2 = self.points[point_index + 1]
 
         dist1 = (pt1 - pti).norm()
         dist2 = (pt2 - pti).norm()
@@ -144,7 +143,6 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
-    _generic_eq = True
 
     def __init__(self, points, radius, adapt_radius=False, name=''):
         volmdlr.primitives.RoundedLineSegments.__init__(
@@ -162,7 +160,6 @@ class Block(volmdlr.faces.ClosedShell3D):
      the 3 vectors are defining the edges. The frame has not to be orthogonal
     """
     _standalone_in_db = True
-    _generic_eq = True
     _non_serializable_attributes = ['size', 'bounding_box', 'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_eq_attributes = ['name', 'color', 'alpha', 'size', 'bounding_box',
                           'faces', 'contours', 'plane', 'points', 'polygon2D']
@@ -177,11 +174,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                      self.frame.w.norm())
 
         faces = self.shell_faces()
-        volmdlr.faces.OpenShell3D.__init__(self, faces, color=color,
-                                           alpha=alpha, name=name)
-
-    # def __hash__(self):
-    #     return hash(self.frame)
+        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         """
@@ -1366,7 +1359,6 @@ class HollowCylinder(RevolvedProfile):
                  inner_radius: float, outer_radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1,
                  name: str = ''):
-        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.position = position
         axis.normalize()
         self.axis = axis
@@ -1739,7 +1731,6 @@ class Sphere(RevolvedProfile):
     def __init__(self, center, radius,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
-        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.center = center
         self.radius = radius
         self.position = center

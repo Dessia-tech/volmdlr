@@ -98,11 +98,10 @@ shell2 = vmf.ClosedShell3D(faces2)
 new_box = shell1.union(shell2)
 subtract_to_closed_shell = shell1.subtract_to_closed_shell(shell2)
 # new_box = shell1.intersection(shell2)
-for shell in [new_box,
-              subtract_to_closed_shell]:
+for shell in [new_box, subtract_to_closed_shell]:
     shell[0].color = (1, 0.1, 0.1)
     shell[0].alpha = 0.6
-    shell.babylonjs()
+    shell[0].babylonjs()
 
 
 # Below was commented to save computation time

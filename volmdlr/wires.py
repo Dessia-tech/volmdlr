@@ -30,6 +30,36 @@ import volmdlr.edges
 import volmdlr.display as vmd
 
 
+def argmax(list_of_float):
+    """
+    Returns the max value and the argmax.
+    """
+    pos_max, max_float = 0, list_of_float[0]
+    for pos, fl in enumerate(list_of_float):
+        if pos == 0:
+            continue
+        else:
+            if fl > max_float:
+                max_float = fl
+                pos_max = pos
+    return max_float, pos_max
+
+
+def argmin(list_of_float):
+    """
+    Returns the min value and the argmin.
+    """
+    pos_min, min_float = 0, list_of_float[0]
+    for pos, fl in enumerate(list_of_float):
+        if pos == 0:
+            continue
+        else:
+            if fl < min_float:
+                min_float = fl
+                pos_min = pos
+    return min_float, pos_min
+
+
 def bounding_rectangle_adjacent_contours(contours: List):
     """
     Compute the bounding box of a list of adjacent contours2d.
@@ -709,7 +739,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         return self.__class__(primitives=primitives_symmetry)
 
-    def symmetry(self):
+    def symmetry(self, line):
         """
         TODO: code this
         """
@@ -769,16 +799,15 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
                  name: str = ''):
-        volmdlr.core.CompositePrimitive3D.__init__(self, primitives, name)
+        volmdlr.core.CompositePrimitive3D.__init__(self, primitives=primitives, name=name)
 
     def _bounding_box(self):
         """
         Flawed method, to be enforced by overloading
         """
+        n = 20
         points = []
         for prim in self.primitives:
-            n = 20
-            length = prim.length()
             points_ = prim.discretization_points(number_points=n)
             for point in points_:
                 if point not in points:
@@ -792,19 +821,6 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     def extract_with_points(self, point1: volmdlr.Point3D,
                             point2: volmdlr.Point3D, inside):
         return self.extract_without_primitives(point1, point2, inside)
-
-    # TODO: method to check if it is a wire
-
-    # def FreeCADExport(self, ip):
-    #     name = 'primitive' + str(ip)
-
-    #     s = 'E = []\n'
-    #     for ip, primitive in enumerate(self.primitives):
-    #         s += primitive.FreeCADExport('L{}'.format(ip))
-    #         s += 'E.append(Part.Edge(L{}))\n'.format(ip)
-    #     s += '{} = Part.Wire(E[:])\n'.format(name)
-
-    #     return s
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1809,17 +1825,17 @@ class Contour2D(ContourMixin, Wire2D):
             cutting_points_counter += 2
         return list_contours
 
-    def simple_triangulation(self):
-        lpp = len(self.polygon.points)
-        if lpp == 3:
-            return self.polygon.points, [(0, 1, 2)]
-        if lpp == 4:
-            return self.polygon.points, [(0, 1, 2), (0, 2, 3)]
+    # def simple_triangulation(self):
+    #     lpp = len(self.polygon.points)
+    #     if lpp == 3:
+    #         return self.polygon.points, [(0, 1, 2)]
+    #     if lpp == 4:
+    #         return self.polygon.points, [(0, 1, 2), (0, 2, 3)]
 
-        # Use delaunay triangulation
-        tri = Delaunay([p.vector for p in self.polygon.points])
-        # indices = tri.simplices
-        return self.polygon.points, tri.simplices
+    #     # Use delaunay triangulation
+    #     tri = Delaunay([p.vector for p in self.polygon.points])
+    #     # indices = tri.simplices
+    #     return self.polygon.points, tri.simplices
 
     def split_regularly(self, n):
         """
@@ -2100,16 +2116,16 @@ class Contour2D(ContourMixin, Wire2D):
 
         if len(points) < 3:
             raise ValueError('contour is defined at least with three points')
-        else:
-            edges = []
-            for i in range(0, len(points) - 1):
-                edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
 
-            edges.append(volmdlr.edges.LineSegment2D(points[-1], points[0]))
+        edges = []
+        for i in range(0, len(points) - 1):
+            edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
 
-            contour = cls(edges)
+        edges.append(volmdlr.edges.LineSegment2D(points[-1], points[0]))
 
-            return contour
+        contour = cls(edges)
+
+        return contour
 
     def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
         """
@@ -2732,7 +2748,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         points_hull = [pt.copy() for pt in points]
 
-        _, pos_ymax = volmdlr.core.max_pos([pt.y for pt in points_hull])
+        _, pos_ymax = argmax([pt.y for pt in points_hull])
         point_start = points_hull[pos_ymax]
         hull = [point_start]
 
@@ -2748,10 +2764,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         vec1 = point_start - barycenter
         for pt in remaining_points:
             vec2 = pt - point_start
-            theta_i = -volmdlr.core.clockwise_angle(vec1, vec2)
+            theta_i = -volmdlr.geometry.clockwise_angle(vec1, vec2)
             theta.append(theta_i)
 
-        min_theta, posmin_theta = volmdlr.core.min_pos(theta)
+        min_theta, posmin_theta = argmin(theta)
         next_point = remaining_points[posmin_theta]
         hull.append(next_point)
         del remaining_points[posmin_theta]
@@ -2765,10 +2781,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             theta = []
             for pt in remaining_points:
                 vec2 = pt - next_point
-                theta_i = -volmdlr.core.clockwise_angle(vec1, vec2)
+                theta_i = -volmdlr.geometry.clockwise_angle(vec1, vec2)
                 theta.append(theta_i)
 
-            min_theta, posmin_theta = volmdlr.core.min_pos(theta)
+            min_theta, posmin_theta = argmin(theta)
             if math.isclose(min_theta, -2 * math.pi, abs_tol=1e-6) \
                     or math.isclose(min_theta, 0, abs_tol=1e-6):
                 if remaining_points[posmin_theta] == point_start:
@@ -2778,7 +2794,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 next_point = remaining_points[posmin_theta]
 
                 vec_next_point = next_point - barycenter
-                total_angle += (2 * math.pi - volmdlr.core.clockwise_angle(initial_vector, vec_next_point))
+                total_angle += (2 * math.pi - volmdlr.geometry.clockwise_angle(initial_vector, vec_next_point))
 
                 if total_angle > 2 * math.pi:
                     break
@@ -3231,7 +3247,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                     self.point_distance(inters[0][0]),
                     self.point_distance(inters[-1][0])):
                 mid_point = (inters[0][0] + inters[-1][0]) * 0.5
-                self.translation(-mid_point, False)
+                self.translation(-mid_point)
                 way_back = mid_point.to_3d(volmdlr.O3D, x, y)
 
         return self, way_back
@@ -3498,7 +3514,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         for prim1, prim2 in zip(self.line_segments, self.line_segments[1:] + [self.line_segments[0]]):
             vector1 = prim1.direction_vector()
             vector2 = prim2.direction_vector()
-            angle = volmdlr.core.clockwise_angle(vector1, vector2)
+            angle = volmdlr.geometry.clockwise_angle(vector1, vector2)
             if self.is_trigo():
                 if angle < math.pi and angle != 0:
                     return False
@@ -3850,9 +3866,8 @@ class Circle2D(Contour2D):
         """
         Second moment area of part of disk
         """
-        I = math.pi * self.radius ** 4 / 4
-        return volmdlr.geometry.huygens2d(I, I, 0, self.area(), self.center,
-                                          point)
+        sma = math.pi * self.radius ** 4 / 4
+        return volmdlr.geometry.huygens2d(sma, sma, 0, self.area(), self.center, point)
 
     def center_of_mass(self):
         return self.center
@@ -3863,8 +3878,7 @@ class Circle2D(Contour2D):
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   surface_style: plot_data.SurfaceStyle = None):
-        return plot_data.Circle2D(cx=self.center.x,
-                                  cy=self.center.y,
+        return plot_data.Circle2D(cx=self.center.x, cy=self.center.y,
                                   r=self.radius,
                                   edge_style=edge_style,
                                   surface_style=surface_style)
@@ -3954,7 +3968,7 @@ class Ellipse2D(Contour2D):
         self.major_dir = major_dir
         self.major_dir.normalize()
         self.minor_dir = - self.major_dir.normal_vector()
-        self.theta = volmdlr.core.clockwise_angle(self.major_dir, volmdlr.X2D)
+        self.theta = volmdlr.geometry.clockwise_angle(self.major_dir, volmdlr.X2D)
         if self.theta == math.pi * 2:
             self.theta = 0.0
         Contour2D.__init__(self, [self], name=name)
@@ -4119,7 +4133,7 @@ class Ellipse2D(Contour2D):
 
         """
         center2d_point2d = point2d - self.center
-        angle_abscissa = volmdlr.core.clockwise_angle(center2d_point2d, self.major_dir)
+        angle_abscissa = volmdlr.geometry.clockwise_angle(center2d_point2d, self.major_dir)
         return angle_abscissa
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False, equal_aspect=True):
@@ -4491,11 +4505,11 @@ class Contour3D(ContourMixin, Wire3D):
 
     def copy(self, deep=True, memo=None):
         new_edges = [edge.copy(deep=deep, memo=memo) for edge in self.primitives]
-        if self.point_inside_contour is not None:
-            new_point_inside_contour = self.point_inside_contour.copy()
-        else:
-            new_point_inside_contour = None
-        return Contour3D(new_edges, new_point_inside_contour, self.name)
+        # if self.point_inside_contour is not None:
+        #     new_point_inside_contour = self.point_inside_contour.copy()
+        # else:
+        #     new_point_inside_contour = None
+        return Contour3D(new_edges, self.name)
 
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
@@ -4762,7 +4776,7 @@ class Circle3D(Contour3D):
         x, y, _ = self.frame.new_coordinates(point)
         u1 = x / self.radius
         u2 = y / self.radius
-        theta = volmdlr.core.sin_cos_angle(u1, u2)
+        theta = volmdlr.geometry.sin_cos_angle(u1, u2)
 
         return self.radius * abs(theta)
 
@@ -5029,7 +5043,7 @@ class Circle3D(Contour3D):
         if point1 == point2:
             return volmdlr.edges.FullArc3D(self.frame.origin, point1,
                                            self.frame.w)
-        interior = volmdlr.core.clockwise_interior_from_circle3d(
+        interior = volmdlr.geometry.clockwise_interior_from_circle3d(
             point1, point2, self)
         return volmdlr.edges.Arc3D(point1, interior, point2)
 
@@ -5144,34 +5158,20 @@ class Ellipse3D(Contour3D):
         return ellipse_2d.abscissa(point2d)
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        # minor_dir = self.normal.cross(self.major_dir)
-        # frame = volmdlr.Frame3D(self.center, self.major_dir,
-        #                         minor_dir, self.normal)
         frame = volmdlr.Frame3D(self.center, self.major_dir,
                                 self.normal.cross(self.major_dir), self.normal)
 
-        # Positionnement des points dans leur frame
-        p1_new, p2_new = frame.new_coordinates(
-            point1), frame.new_coordinates(point2)
+        p1_new, p2_new = frame.new_coordinates(point1), frame.new_coordinates(point2)
 
-        # Angle pour le p1
-        # u1, u2 = p1_new.x / self.major_axis, p1_new.y / self.minor_axis
-        # theta1 = volmdlr.core.sin_cos_angle(u1, u2)
-        theta1 = volmdlr.core.sin_cos_angle(p1_new.x / self.major_axis, p1_new.y / self.minor_axis)
+        theta1 = volmdlr.geometry.sin_cos_angle(p1_new.x / self.major_axis, p1_new.y / self.minor_axis)
 
-        # Angle pour le p2
-        # u3, u4 = p2_new.x / self.major_axis, p2_new.y / self.minor_axis
-        # theta2 = volmdlr.core.sin_cos_angle(u3, u4)
-        theta2 = volmdlr.core.sin_cos_angle(p2_new.x / self.major_axis, p2_new.y / self.minor_axis)
+        theta2 = volmdlr.geometry.sin_cos_angle(p2_new.x / self.major_axis, p2_new.y / self.minor_axis)
 
         if theta1 > theta2:  # sens trigo
             angle = math.pi + (theta1 + theta2) / 2
         else:
             angle = (theta1 + theta2) / 2
 
-        # p_3 = volmdlr.Point3D(self.major_axis * math.cos(angle),
-        #                       self.minor_axis * math.sin(angle), 0)
-        # p3 = frame.old_coordinates(p_3)
         p3 = frame.old_coordinates(volmdlr.Point3D(self.major_axis * math.cos(angle),
                                                    self.minor_axis * math.sin(angle), 0))
 
