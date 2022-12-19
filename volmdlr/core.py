@@ -50,7 +50,7 @@ END-ISO-10303-21;
 
 def find_and_replace(string, find, replace):
     """
-    Finds a string in a string and replace it
+    Finds a string in a string and replace it.
     """
     index = string.find(find)
     if index != -1:
@@ -479,7 +479,7 @@ class Primitive2D(CompositePrimitive):
 
 class CompositePrimitive2D(Primitive2D):
     """
-    A collection of simple primitives
+    A collection of simple primitives.
     """
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
                                     '_primitives_to_index']
@@ -681,7 +681,7 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
 
 class CompositePrimitive3D(Primitive3D):
     """
-    A collection of simple primitives3D
+    A collection of simple primitives3D.
     """
     _standalone_in_db = True
     _eq_is_data_eq = True
@@ -894,7 +894,7 @@ class BoundingRectangle(dc.DessiaObject):
 
 class BoundingBox(dc.DessiaObject):
     """
-    An axis aligned boundary box
+    An axis aligned boundary box.
     """
 
     def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax, name=''):
@@ -1171,7 +1171,7 @@ class VolumeModel(dc.PhysicalObject):
     @property
     def bounding_box(self):
         """
-        Returns the boundary box
+        Returns the boundary box.
         """
         if not self._bbox:
             self._bbox = self._bounding_box()
@@ -1183,7 +1183,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def _bounding_box(self) -> BoundingBox:
         """
-        Computes the bounding box of the model
+        Computes the bounding box of the model.
         """
         bboxes = []
         points = []
@@ -1214,7 +1214,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def volume(self) -> float:
         """
-        Return the sum of volumes of the primitives
+        Return the sum of volumes of the primitives.
         """
         volume = 0
         for primitive in self.primitives:
@@ -1272,7 +1272,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new VolumeModel
+        Changes frame_mapping and return a new VolumeModel.
         side = 'old' or 'new'
         """
         new_primitives = [primitive.frame_mapping(frame, side)
@@ -1281,7 +1281,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         for primitives in self.primitives:
@@ -1290,7 +1290,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def copy(self, deep=True, memo=None):
         """
-        Specific copy
+        Specific copy.
         """
         new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
@@ -1390,7 +1390,7 @@ class VolumeModel(dc.PhysicalObject):
                        export_types=('fcstd',),
                        tolerance=0.0001):
         """
-        Export model to .fcstd FreeCAD standard
+        Export model to .fcstd FreeCAD standard.
 
         :param python_path: path of python binded to freecad
 
