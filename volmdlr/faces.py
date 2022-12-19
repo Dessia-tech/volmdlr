@@ -3120,7 +3120,7 @@ class BSplineSurface3D(Surface3D):
     def point2d_with_dimension_to_parametric_frame(self, point2d, grid2d: volmdlr.grid.Grid2D):
         """
         Convert a point2d from the dimensioned to the parametric frame.
-        
+
         """
 
         if self._grids2d != grid2d:
@@ -3271,7 +3271,6 @@ class BSplineSurface3D(Surface3D):
         Compute the linesegment3d, on a Bspline surface, of a linesegment2d defined in the dimensioned frame.
 
         """
-
 
         linesegment2d_01 = self.linesegment2d_with_dimension_to_parametric_frame(linesegment2d)
         linesegment3d = self.linesegment2d_to_3d(linesegment2d_01)
