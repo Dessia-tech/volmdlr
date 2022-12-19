@@ -1815,6 +1815,19 @@ class LineSegment2D(LineSegment):
 
 
 class Arc(Edge):
+    """
+    Abstract class representing an arc.
+
+    :param start: The starting point
+    :type start: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+    :param end: The finish point
+    :type end: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+    :param interior: An interior point
+    :type interior: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+    :param name: The name of the arc. Default value is an empty string
+    :type name: str, optional
+    """
+
     def __init__(self, start,
                  end,
                  interior,
@@ -2625,7 +2638,15 @@ class FullArc2D(Arc2D):
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
-        side = 'old' or 'new'
+        Map the 2D full arc to a new frame or its original frame.
+
+        :param frame: The target frame for the mapping.
+        :type frame: :class:`volmdlr.Frame2D`
+        :param side: Specify whether to map the arc to the new frame ('new')
+            or its original frame ('old').
+        :type side: str
+        :return: The full arc in the specified frame.
+        :rtype: :class:`volmdlr.edges.FullArc2D`
         """
         return FullArc2D(*[point.frame_mapping(frame, side) for point in
                            [self._center, self.start]])
@@ -2786,7 +2807,7 @@ class ArcEllipse2D(Edge):
 
         def theta_A_B(s, i, e, c):
             """
-            from : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
+            From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
             theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
             """
             xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
@@ -5590,7 +5611,8 @@ class ArcEllipse3D(Edge):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        discretize a Contour to have "n" points
+        Discretize a Contour to have "n" points.
+        
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull

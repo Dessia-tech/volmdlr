@@ -93,7 +93,10 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def center_of_mass(self):
         """
-        Returns the center of mass of the Surface2d.
+        Compute the center of mass of the 2D surface.
+
+        :return: The center of mass of the surface.
+        :rtype: :class:`volmdlr.Point2D`
         """
         center = self.outer_contour.area() * self.outer_contour.center_of_mass()
         for contour in self.inner_contours:
@@ -102,8 +105,12 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def point_belongs(self, point2d: volmdlr.Point2D):
         """
-        Returns if the given point belongs to the surface2d.
+        Check whether a point belongs to the 2D surface.
 
+        :param point2d: The point to check.
+        :type point2d: :class:`volmdlr.Point2D`
+        :return: True if the point belongs to the surface, False otherwise.
+        :rtype: bool
         """
         if not self.outer_contour.point_belongs(point2d):
             if self.outer_contour.point_over_contour(point2d):
@@ -117,7 +124,11 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def random_point_inside(self):
         """
-        Returns a random point inside surface2d. Considers if it has holes.
+        Generate a random point inside the 2D surface.
+        Taking into account any inner contours (holes) it may have.
+
+        :return: A random point inside the surface.
+        :rtype: :class:`volmdlr.Point2D`
         """
         valid_point = False
         point_inside_outer_contour = None
@@ -135,7 +146,12 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def triangulation(self, min_x_density=None, min_y_density=None):
         """
-        Triangulates the Surface2D.
+        Triangulates the Surface2D using the Triangle library.
+
+        :param min_x_density: unused
+        :param min_y_density: unused
+        :return: The triangulated surface as a display mesh.
+        :rtype: :class:`volmdlr.display.DisplayMesh2D`
         """
         if self.area() == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
@@ -217,6 +233,11 @@ class Surface2D(volmdlr.core.Primitive2D):
     def cut_by_line(self, line: vme.Line2D):
         """
         Returns a list of cutted Surface2D by the given line.
+
+        :param line: The line to cut the Surface2D with.
+        :type line: :class:`volmdlr.edges.Line2D`
+        :return: A list of 2D surfaces resulting from the cut.
+        :rtype: List[:class:`volmdlr.faces.Surface2D`]
         """
         surfaces = []
         splitted_outer_contours = self.outer_contour.cut_by_line(line)
@@ -242,10 +263,18 @@ class Surface2D(volmdlr.core.Primitive2D):
                 surfaces.append(Surface2D(outer_split, []))
         return surfaces
 
-    def line_crossings(self, line: 'volmdlr.edges.Line2D'):
+    def line_crossings(self, line: vme.Line2D):
         """
-        Returns a list of crossings with in the form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line
+        Find intersection points between a line and the 2D surface.
+
+        :param line: The line to intersect with the shape.
+        :type line: :class:`volmdlr.edges.Line2D`
+        :return: A list of intersection points sorted by increasing abscissa
+            along the line. Each intersection point is a tuple
+            (point, primitive) where point is the intersection point and
+            primitive is the intersected primitive.
+        :rtype: List[Tuple[:class:`volmdlr.Point2D`,
+            :class:`volmdlr.core.Primitive2D`]]
         """
         intersection_points = []
         for primitive in self.outer_contour.primitives:
@@ -261,7 +290,8 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def split_at_centers(self):
         """
-        Split in n slices
+        Split in n slices.
+        # TODO: is this used ?
         """
         # xmin, xmax, ymin, ymax = self.outer_contour.bounding_rectangle()
 
@@ -863,7 +893,7 @@ class Surface3D(DessiaObject):
     def geodesic_distance_from_points2d(self, point1_2d: volmdlr.Point2D,
                                         point2_2d: volmdlr.Point2D, number_points: int = 50):
         """
-        Approximation of geodesic distance via linesegments length sum in 3D
+        Approximation of geodesic distance via linesegments length sum in 3D.
         """
         # points = [point1_2d]
         current_point3d = self.point2d_to_3d(point1_2d)
@@ -876,7 +906,7 @@ class Surface3D(DessiaObject):
 
     def geodesic_distance(self, point1_3d: volmdlr.Point3D, point2_3d: volmdlr.Point3D):
         """
-        Approximation of geodesic distance between 2 3D points supposed to be on the surface
+        Approximation of geodesic distance between 2 3D points supposed to be on the surface.
         """
         point1_2d = self.point3d_to_2d(point1_3d)
         point2_2d = self.point3d_to_2d(point2_3d)
@@ -1135,7 +1165,8 @@ class Plane3D(Surface3D):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Plane3D rotation
+        Plane3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -1146,7 +1177,8 @@ class Plane3D(Surface3D):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Plane3D rotation. Object is updated inplace
+        Plane3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -1155,7 +1187,8 @@ class Plane3D(Surface3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Plane3D translation
+        Plane3D translation.
+
         :param offset: translation vector
         :return: A new translated Plane3D
         """
@@ -1164,14 +1197,16 @@ class Plane3D(Surface3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Plane3D translation. Object is updated inplace
+        Plane3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.frame.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Frame3D
+        Changes frame_mapping and return a new Frame3D.
+
         side = 'old' or 'new'
         """
         new_frame = self.frame_mapping_parameters(frame, side)
@@ -1179,7 +1214,8 @@ class Plane3D(Surface3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         new_frame = self.frame_mapping_parameters(frame, side)
@@ -1628,12 +1664,16 @@ class CylindricalSurface3D(Surface3D):
 class ToroidalSurface3D(Surface3D):
     """
     The local plane is defined by (theta, phi).
-    theta is the angle around the big (R) circle and phi around the small(r)
+
+    Theta is the angle around the big (R) circle and phi around the small (r).
 
     :param frame: Tore's frame: origin is the center, u is pointing at
-                    theta=0
+        theta=0
     :param R: Tore's radius
     :param r: Circle to revolute radius
+
+    :See Also:
+
     Definitions of R and r according to https://en.wikipedia.org/wiki/Torus
     """
     face_class = 'ToroidalFace3D'

@@ -64,6 +64,14 @@ def find_and_replace(string, find, replace):
 
 
 def set_to_list(step_set):
+    """
+    Convert a comma-separated string of values enclosed in brakets to a list of strings.
+
+    :param step_set: The input string.
+    :type step_set: str
+    :return: The list of values contained in the input string.
+    :rtype: List[str]
+    """
     char_list = step_set.split(',')
     char_list[0] = char_list[0][1:]
     char_list[-1] = char_list[-1][:-1]
@@ -256,6 +264,14 @@ def delete_double_point(list_point):
 
 
 def max_pos(list_of_float):
+    """
+    Find the maximum value and its position in a list of floats.
+
+    :param list_of_float: The input list.
+    :type list_of_float: List[float]
+    :return: A tuple containing the maximum value and its position in the list.
+    :rtype: Tuple[float, int]
+    """
     pos_max, max_float = 0, list_of_float[0]
     for pos, fl in enumerate(list_of_float):
         if pos == 0:
@@ -268,6 +284,14 @@ def max_pos(list_of_float):
 
 
 def min_pos(list_of_float):
+    """
+    Find the minimum value and its position in a list of floats.
+
+    :param list_of_float: The input list.
+    :type list_of_float: List[float]
+    :return: A tuple containing the minimum value and its position in the list.
+    :rtype: Tuple[float, int]
+    """
     pos_min, min_float = 0, list_of_float[0]
     for pos, fl in enumerate(list_of_float):
         if pos == 0:
@@ -414,6 +438,13 @@ def step_ids_to_str(ids):
 
 
 class CompositePrimitive(dc.DessiaObject):
+    """
+    A collection of simple primitives.
+
+    :param name: The name of the collection of primitives.
+    :type name: str
+    """
+
     def __init__(self, name=''):
         self.name = name
         self._primitives_to_index = None
@@ -440,15 +471,23 @@ class CompositePrimitive(dc.DessiaObject):
 
 
 class Primitive2D(CompositePrimitive):
-    def __init__(self, name=''):
-        self.name = name
+    """
+    Abstract class for 2D primitives.
 
+    :param name: The name of the 2D primitive.
+    :type name: str
+    """
+
+    def __init__(self, name: str = ''):
         CompositePrimitive.__init__(self, name=name)
 
 
 class CompositePrimitive2D(Primitive2D):
     """
-    A collection of simple primitives
+    A collection of simple 2D primitives.
+
+    :param name: The name of the collection of 2D primitives.
+    :type name: str
     """
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
                                     '_primitives_to_index']
