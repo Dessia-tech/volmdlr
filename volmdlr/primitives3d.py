@@ -14,7 +14,7 @@ from scipy.stats import qmc
 import numpy as npy
 import matplotlib.pyplot as plt
 
-import dessia_common as dc
+import dessia_common.core as dc
 import volmdlr
 import volmdlr.core
 import volmdlr.primitives
