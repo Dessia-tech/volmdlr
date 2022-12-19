@@ -58,10 +58,6 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
-<<<<<<< HEAD
-- name: install and run scripts
-  image: dessia/python-gmsh:3.9
-=======
 
 - name: install, build doc run scripts and tutorials
   image: python:3.8
@@ -98,7 +94,7 @@ steps:
     branch:
       exclude:
         - testing
->>>>>>> dev
+
   commands:
   - pip Cython wheel
   - python setup install --user
