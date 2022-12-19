@@ -5380,11 +5380,15 @@ class PlaneFace3D(Face3D):
 
         if self.face_inside(face):
             return self.divide_face([face.surface2d.outer_contour], True)
-        if face.is_inside(self):
-            return face.divide_face([self.surface2d.outer_contour], True)
+        # if face.is_inside(self):
+        #     return face.divide_face([self.surface2d.outer_contour], True)
 
         outer_contour_1 = self.surface2d.outer_contour
         outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
+
+        if (face.face_inside(self)
+                and not outer_contour_1.contour_intersections(outer_contour_2)):
+            return self.divide_face(face.surface2d.inner_contours, True)
 
         inner_contours = self.surface2d.inner_contours
         inner_contours.extend([self.surface3d.contour3d_to_2d(
