@@ -134,6 +134,18 @@ class Surface2D(volmdlr.core.Primitive2D):
         return point_inside_outer_contour
 
     def triangulation(self, min_x_density=None, min_y_density=None):
+        """
+        Triangulations.
+
+        :param min_x_density: DESCRIPTION, defaults to None
+        :type min_x_density: TYPE, optional
+        :param min_y_density: DESCRIPTION, defaults to None
+        :type min_y_density: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         if self.area() == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
 
@@ -285,6 +297,17 @@ class Surface2D(volmdlr.core.Primitive2D):
         return cutted_contours
 
     def cut_by_line2(self, line):
+        """
+        Cuts a Surface2D with line (2).
+
+        :param line: DESCRIPTION
+        :type line: TYPE
+        :raises NotImplementedError: DESCRIPTION
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         all_contours = []
         inner_1 = self.inner_contours[0]
         inner_2 = self.inner_contours[1]
@@ -376,6 +399,17 @@ class Surface2D(volmdlr.core.Primitive2D):
         return all_contours
 
     def cut_by_line3(self, line):
+        """
+        Cuts a Surface2D with line (2).
+
+        :param line: DESCRIPTION
+        :type line: TYPE
+        :raises NotImplementedError: DESCRIPTION
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         # ax=self.outer_contour.plot()
         all_contours = []
         inner = self.inner_contours[0]
@@ -548,6 +582,14 @@ class Surface2D(volmdlr.core.Primitive2D):
         return all_contours
 
     def bounding_rectangle(self):
+        """
+        Returns bounding rectangle.
+
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         return self.outer_contour.bounding_rectangle()
 
     @classmethod
