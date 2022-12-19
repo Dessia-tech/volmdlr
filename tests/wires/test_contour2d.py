@@ -1,6 +1,6 @@
 import unittest
 
-import dessia_common
+import dessia_common.core
 import volmdlr
 from volmdlr.models.contours import contour2d_1, contour2d_2
 from volmdlr import wires, edges
