@@ -3160,12 +3160,12 @@ class BSplineSurface3D(Surface3D):
             p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
             return point3d.point_distance(p3d)
 
-        def g(x):
-            S = self.derivatives(x[0], x[1], 1)
-            r = S[0][0] - point3d
-            f = r.norm()**2
-            jac = npy.array([2*r.dot(S[1][0]), 2*r.dot(S[0][1])])
-            return f, jac
+        # def g(x):
+        #     S = self.derivatives(x[0], x[1], 1)
+        #     r = S[0][0] - point3d
+        #     f = r.norm()**2
+        #     jac = npy.array([2*r.dot(S[1][0]), 2*r.dot(S[0][1])])
+        #     return f, jac
 
         results = []
         min_bound_x, max_bound_x = self.surface.domain[0]
