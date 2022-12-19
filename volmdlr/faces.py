@@ -2238,9 +2238,8 @@ class BSplineSurface3D(Surface3D):
         self._grids2d = None
         self._grids2d_deformed = None
 
-        self._x_periodicity = False # Use False instread of None because None is a possible value of x_periodicity
+        self._x_periodicity = False  # Use False instread of None because None is a possible value of x_periodicity
         self._y_periodicity = False
-
 
     @property
     def x_periodicity(self):

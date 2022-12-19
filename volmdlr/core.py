@@ -10,8 +10,8 @@ import subprocess
 import tempfile
 import webbrowser
 from datetime import datetime
-# import volmdlr.stl as vmstl
 from typing import List
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -64,6 +64,9 @@ def find_and_replace(string, find, replace):
 
 
 def set_to_list(step_set):
+    """
+    Maybe move this function to step.py
+    """
     char_list = step_set.split(',')
     char_list[0] = char_list[0][1:]
     char_list[-1] = char_list[-1][:-1]
@@ -181,6 +184,13 @@ def sin_cos_angle(u1, u2):
 
 
 def delete_double_pos(points, triangles):
+    """
+    Eliminate double points in a mesh.
+    This seems redundant with display.py.
+    """
+    warnings.warn('The function delete_double_pos is deprecated, use classes and methods from volmdlr.display',
+                  DeprecationWarning)
+
     points_to_indexes = {}
 
     for index, point in enumerate(points):
@@ -251,28 +261,28 @@ def delete_double_point(list_point):
     return points
 
 
-def max_pos(list_of_float):
-    pos_max, max_float = 0, list_of_float[0]
-    for pos, fl in enumerate(list_of_float):
-        if pos == 0:
-            continue
-        else:
-            if fl > max_float:
-                max_float = fl
-                pos_max = pos
-    return max_float, pos_max
+# def max_pos(list_of_float):
+#     pos_max, max_float = 0, list_of_float[0]
+#     for pos, fl in enumerate(list_of_float):
+#         if pos == 0:
+#             continue
+#         else:
+#             if fl > max_float:
+#                 max_float = fl
+#                 pos_max = pos
+#     return max_float, pos_max
 
 
-def min_pos(list_of_float):
-    pos_min, min_float = 0, list_of_float[0]
-    for pos, fl in enumerate(list_of_float):
-        if pos == 0:
-            continue
-        else:
-            if fl < min_float:
-                min_float = fl
-                pos_min = pos
-    return min_float, pos_min
+# def min_pos(list_of_float):
+#     pos_min, min_float = 0, list_of_float[0]
+#     for pos, fl in enumerate(list_of_float):
+#         if pos == 0:
+#             continue
+#         else:
+#             if fl < min_float:
+#                 min_float = fl
+#                 pos_min = pos
+#     return min_float, pos_min
 
 
 def check_singularity(all_points):

@@ -1762,7 +1762,8 @@ class Contour2D(ContourMixin, Wire2D):
 
     def cut_by_line(self, line: volmdlr.edges.Line2D) -> List['Contour2D']:
         """
-        :param line: The line used to cut the contour
+        :param line: The line used to cut the contour.
+
         :return: A list of resulting contours
         """
         intersections = self.line_crossings(line)
@@ -1871,7 +1872,7 @@ class Contour2D(ContourMixin, Wire2D):
                            number_points_x: int = None,
                            number_points_y: int = None):
         """
-        Use a n by m grid to triangulize the contour
+        Compute a triangulation using a n-by-m grid to triangulize the contour.
         """
         bounding_rectangle = self.bounding_rectangle()
         # xmin, xmax, ymin, ymax = self.bounding_rectangle()
@@ -2134,8 +2135,9 @@ class Contour2D(ContourMixin, Wire2D):
 
     def merge_with(self, contour2d):
         """
-        merge two adjacent contours, sharing primitives, and returns one outer
-        contour and inner contours (if there are any)
+        Merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours
+        (if there are any).
+
         :param contour2d: contour to merge with
         :return: merged contours
         """
@@ -2406,10 +2408,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def barycenter(self):
         """
-        calculates the geometric center of the polygon, which is the
-        average position of all the points in it
+        Calculates the geometric center of the polygon, which is the average position of all the points in it.
 
-        returns a Volmdlr.Point2D point
+        :rtype: volmdlr.Point2D
         """
         barycenter1_2d = self.points[0]
         for point in self.points[1:]:
@@ -2418,7 +2419,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def point_belongs(self, point):
         """
-        Ray casting algorithm copied from internet...
+        Ray casting algorithm copied from internet.
         """
         return polygon_point_belongs((point.x, point.y),
                                      [(p.x, p.y) for p in self.points])
@@ -2449,7 +2450,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        ClosedPolygon2D rotation
+        ClosedPolygon2D rotation.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotated ClosedPolygon2D
@@ -2459,7 +2461,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Line2D rotation. Object is updated inplace
+        Line2D rotation, Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
@@ -2497,7 +2500,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        ClosedPolygon2D translation
+        ClosedPolygon2D translation.
+
         :param offset: translation vector
         :return: A new translated ClosedPolygon2D
         """
@@ -2506,7 +2510,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        ClosedPolygon2D translation. Object is updated inplace
+        ClosedPolygon2D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         for point in self.points:
@@ -2631,8 +2636,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def point_border_distance(self, point, return_other_point=False):
         """
-        Compute the distance to the border distance of polygon
-        Output is always positive, even if the point belongs to the polygon
+        Compute the distance to the border distance of polygon.
+        Output is always positive, even if the point belongs to the polygon.
         """
         d_min, other_point_min = self.line_segments[0].point_distance(
             point, return_other_point=True)
