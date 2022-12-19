@@ -3131,7 +3131,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         # x_offset = dx/(n+2)
         # y_offset = dy/(m+2)
         x_offset = 0
-        y_offset = 1e-6
+        y_offset = 0
         x = npy.linspace(xmin + x_offset, xmax - x_offset, num=n)
         y = npy.linspace(ymin + y_offset, ymax - y_offset, num=m)
 

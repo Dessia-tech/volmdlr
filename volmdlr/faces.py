@@ -3253,6 +3253,7 @@ class BSplineSurface3D(Surface3D):
             results.append((z.x, z.fun))
             results.append((res.x, res.fun))
         # print("Not found")
+        print(min(results, key=lambda r: r[1]))
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
 

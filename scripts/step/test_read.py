@@ -9,7 +9,7 @@ import volmdlr.faces as vmf
 for step_file in [
     # 'cylinder-test.step',
     # 'bracket2.step',
-    # 'read_test1.step',
+    'read_test1.step',
     # 'read_test2.step',
     # 'read_test3.step',
     # 'read_test4.step',
