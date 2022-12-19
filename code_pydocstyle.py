@@ -21,7 +21,7 @@ MAX_ERROR_BY_TYPE = {
     # http://www.pydocstyle.org/en/stable/error_codes.html
     'D100': 1,
     'D101': 62,
-    'D102': 705,
+    'D102': 704,
     'D103': 30,
     'D104': 1,
     'D105': 1,

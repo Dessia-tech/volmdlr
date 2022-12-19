@@ -188,8 +188,14 @@ class Edge(dc.DessiaObject):
 
 class Line(dc.DessiaObject):
     """
-    Abstract class.
+    Abstract class representing a line.
 
+    :param point1: The first point defining the line
+    :type point1: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+    :param point2: The second point defining the line
+    :type point2: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+    :param name: Name of the line. Default value is an empty string
+    :type name: str, optional
     """
 
     def __init__(self, point1, point2, name=''):
@@ -199,6 +205,9 @@ class Line(dc.DessiaObject):
         dc.DessiaObject.__init__(self, name=name)
 
     def __getitem__(self, key):
+        """
+        Get a point of the line by its index.
+        """
         if key == 0:
             return self.point1
         if key == 1:
@@ -206,23 +215,59 @@ class Line(dc.DessiaObject):
         raise IndexError
 
     def unit_direction_vector(self, *args, **kwargs):
+        """
+        Get the unit direction vector of the line.
+
+        :return: The unit direction vector of the line
+        :rtype:  Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
+        """
         vector = self.direction_vector()
         vector.normalize()
         return vector
 
     def direction_vector(self, *args, **kwargs):
+        """
+        Get the direction vector of the line.
+
+        :return: The direction vector of the line
+        :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
+        """
         if not self._direction_vector:
             self._direction_vector = self.point2 - self.point1
         return self._direction_vector
 
     def normal_vector(self, *args, **kwargs):
+        """
+        Get the normal vector of the line.
+
+        :return: The normal vector of the line
+        :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
+        """
         return self.direction_vector().normal_vector()
 
     def unit_normal_vector(self, abscissa=0.):
+        """
+        Get the unit normal vector of the line.
+
+        :param abscissa: The abscissa of the point from which to calculate
+            the normal vector
+        :type abscissa: float, optional
+        :return: The unit normal vector of the line
+        :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
+        """
         return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
+        """
+        Calculate the projection of a point onto the line.
 
+        :param point: The point to project
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :return: The projection of the point onto the line and the distance
+            between the point and the projection
+        :rtype: Tuple(Union[:class:`volmdlr.Point2D`,
+            :class:`volmdlr.Point3D`], float)
+        """
         vector = self.point2 - self.point1
         norm_u = vector.norm()
         t = (point - self.point1).dot(vector) / norm_u ** 2
@@ -231,6 +276,14 @@ class Line(dc.DessiaObject):
         return projection, t * norm_u
 
     def abscissa(self, point):
+        """
+        Calculate the abscissa of a point on the line.
+
+        :param point: The point for which to calculate the abscissa
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :return: The abscissa of the point
+        :rtype: float
+        """
         vector = self.point2 - self.point1
         norm_u = vector.norm()
         t = (point - self.point1).dot(vector) / norm_u
@@ -246,19 +299,28 @@ class Line(dc.DessiaObject):
         return sorted(points, key=self.abscissa)
 
     def split(self, split_point):
+        """
+        Split a line into two lines.
+
+        :param split_point: The point where to split the line
+        :type split_point: Union[:class:`volmdlr.Point2D`,
+            :class:`volmdlr.Point3D`]
+        :return: A list containg two lines
+        """
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
 
-    def is_between_points(self, point1: volmdlr.Point2D,
-                          point2: volmdlr.Point2D):
+    def is_between_points(self, point1: Union[volmdlr.Point2D, volmdlr.Point3D],
+                          point2: Union[volmdlr.Point2D, volmdlr.Point3D]):
         """
         Verifies if a line is between two points.
 
-        :param point1: first point.
-        :type point1: volmdlr.Point2D.
-        :param point2: second point.
-        :type point2: volmdlr.Point2D.
-        returns True is line is between the two given points or False if not.
+        :param point1: The first point
+        :type point1: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param point2: The second point
+        :type point2: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :return: True if the line is between the two points, False otherwise
+        :rtype: bool
         """
 
         if point1 == point2:
@@ -757,6 +819,18 @@ class Line2D(Line):
         Line.__init__(self, point1, point2, name=name)
 
     def to_3d(self, plane_origin, x1, x2):
+        """
+        Convert the line to a 3D line.
+
+        :param plane_origin: Origin of the plane in which the line is.
+        :type plane_origin: :class:`volmdlr.Point3D`
+        :param x1: First direction of the plane in which the line is.
+        :type x1: :class:`volmdlr.Vector3D`
+        :param x2: Second direction of the plane in which the line is.
+        :type x2: :class:`volmdlr.Vector3D`
+        :return: The 3D line.
+        :rtype: :class:`volmdlr.edges.Line3D`
+        """
         points_3d = [p.to_3d(plane_origin, x1, x2) for p in self.points]
         return Line3D(*points_3d, self.name)
 
@@ -800,9 +874,33 @@ class Line2D(Line):
             point.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Map the line to a new coordinate frame.
+
+        :param frame: The new coordinate frame.
+        :type frame: :class:`volmdlr.Frame2D`
+        :param side: The side to which the mapping is made. 'old' for the
+            original coordinate frame, 'new' for the new one.
+        :type side: str
+        :return: The mapped line.
+        :rtype: :class:`volmdlr.edges.Line2D`
+        """
         return Line2D(*[point.frame_mapping(frame, side) for point in self.points])
 
     def plot(self, ax=None, color='k', dashed=True):
+        """
+        Plot the line.
+
+        :param ax: Matplotlib axis on which to plot the line. If none,
+            a new figure is created.
+        :type ax: matplotlib.axes._subplots.AxesSubplot, optional
+        :param color: Color of the line.
+        :type color: str, optional
+        :param dashed: Whether the line is dashed or not.
+        :type dashed: bool, optional
+        :return: The matplotlib axis.
+        :rtype: matplotlib.axes._subplots.AxesSubplot
+        """
         if ax is None:
             _, ax = plt.subplots()
 
@@ -829,11 +927,28 @@ class Line2D(Line):
         return ax
 
     def plot_data(self, edge_style=None):
+        """
+        Get plot data for the line.
+
+        :param edge_style: Plotting style for the line.
+        :type edge_style: :class:`plot_data.EdgeStyle`, optional
+        :return: Plot data for the line.
+        :rtype: :class:`plot_data.Line2D`
+        """
         return plot_data.Line2D([self.point1.x, self.point1.y],
                                 [self.point2.x, self.point2.y],
                                 edge_style=edge_style)
 
     def line_intersections(self, line):
+        """
+        Calculate the intersection between the two lines.
+
+        :param line: The line to calculate intersections with.
+        :type line: :class:`volmdlr.Line2D`
+        :return: A list of at most one intersection point between
+            the two lines.
+        :rtype: List[:class:`volmdlr.Point2D`]
+        """
 
         point = volmdlr.Point2D.line_intersection(self, line)
         if point is not None:
@@ -988,15 +1103,28 @@ class Line2D(Line):
 
             return circle1, circle2
 
-    def cut_between_two_points(self, point1, point2):
+    def cut_between_two_points(self, point1: volmdlr.Point2D,
+                               point2: volmdlr.Point2D):
+        """
+        Cut the line between two points to create a linesegment.
+
+        :param point1: The first point defining the linesegment
+        :type point1: :class:`volmdlr.Point2D`
+        :param point2: The second point defining the linesegment
+        :type point2: :class:`volmdlr.Point2D`
+        :return: The created linesegment
+        :rtype: :class:`volmdlr.edges.LineSegment2D`
+        """
         return LineSegment2D(point1, point2)
 
     def point_distance(self, point2d):
         """
-        Calculates the distance of a line2d to a point2d.
+        Calculate the shortest distance between a line and a point.
 
-        :param point2d: point to calculate distance.
-        :return: distance to point.
+        :param point2d: Point to calculate distance
+        :type point2d: :class:`volmdlr.Point2D`
+        :return: Distance to point
+        :rtype: float
         """
         vector_r = self.point1 - point2d
         vector_v = self.normal_vector()
