@@ -5,13 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
-## Unrealeased
+## v0.8.0 [Unrealeased]
 
 ### New Features
 
-* OpenShell3D: project_coincident_faces_of
 * PlaneFace3D: project_faces
+* OpenShell3D: project_coincident_faces_of
+
+
+### Fixed
+
+* PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
+* Contour2D: bounding_rectangle (specify number_points for discretization_points)
+* BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
+
+
+### Performance improvements
+
+
+### Refactorings
+
+
+### Unittests
+
+* Contour2D: point_belongs
+
+
+
+## v0.7.0 [Testing]
+
+### New Features
+
 * Block: faces_center (calculate directly point in the middle of the faces)
 * Circle2D: split_by_line
 * BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
@@ -25,9 +49,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * FullArc3D: linesegment_intersections
 * Line: sort_points_along_line
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
+* New Class wires.Ellipse2D
+* Ellipse2D.point_over_ellipse()
+* Ellipse2D.line_intersections()
+* Ellipse2D.linesegment_intersections()
+* Ellipse2D.discretization_points()
+* Ellipse2D.abscissa()
+* Ellipse2D.point_angle_with_major_dir()
+* Ellipse2D.area()
+* Ellipse2D.rotation()
+* Ellipse2D.tranlation()
+* Ellipse2D.frame_mapping()
+* Line2D.frame_mapping()
+* Plane3D: is_parallel, fullarc_intersections
+* Arc2D: cut_betweeen_two_points
+* Contour3D: linesegment_intersections, line_intersections
+* Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
+* Arc3D: line_intersections, linesegment_intersections
+* new module utils: intersections -> circle_3d_linesegment_intersections
+* hash for Frame2D
+* Ellipse3D: point_belongs, abscissa, length, to_2d
+* CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
 
 ### Fixed
 
+* Contour2D: point_belongs
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * Arc3D: plot
 * Cylinder: point_belongs
@@ -37,19 +83,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Step: from stream (use BinaryFile instead of io.BinaryIO)
 * Contour: is_overlapping (consider intersecting_points is empty)
 * LineSegment2D: to_wire (use discretization_points instead of discretise)
+* PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
+* contour2d: ordering_primitives, order_primitives
+* Plane3D: plane_intersections, is_coindident
+* Linesegment2D: infinite_primitive
+* Arc2D: point_belongs
+* Arc2D: infinite_primitive
+* Wire2D: infinite_intersections
+* infinite primitive offset of linesegment
+* Ellispe3D: discretization_points
 
 
 ### Performance improvements
 
 * Avoid unneeded bbox computation
+* cache variable self._polygon_point_belongs_100, to avoid recalculating each
+time we have to verify if a point is inside
 
 
 ### Refactorings
 * LineSegment3D: intersections
 * Line2D: sort_points_along_line
+* Line3D: intersections
 
 
 ### Unittests
@@ -73,7 +131,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Line2D: sort_points_along_line
 * Line3D: sort_points_along_line
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
+* Ellipse2D.point_over_ellipse()
+* Ellipse2D.line_intersections()
+* Ellipse2D.linesegment_intersections()
+* Ellipse2D.discretization_points()
+* Ellipse2D.abscissa()
+* Ellipse2D.point_angle_with_major_dir()
+* Ellipse2D.area()
+* Ellipse2D.rotation()
+* Ellipse2D.tranlation()
+* Ellipse2D.frame_mapping()
+* Line2D.frame_mapping()
+* Plane3D: plane_intersections, fullarc_intersections, is_parallel, is_coincident
+* Contour2D: offset
+* ArcEllipse3D.to_2d()
+* Circle3D: point_belongs
+* Circle3D: discretization_points
+* Arc3D: line_intersections, linesegment_intersections
+* Contour2D: ordering_contour, is_ordered, order_contour
+* Ellipse3D: point_belongs, abscissa, length, to_2d, discretization_points
+* CylindricalSurface3D: point_on_surface, is_coincident
 
+
+## v0.6.1 [12/13/2022]
+
+### Changes
+
+* Import from dessia_common are now performed from dessia_common.core
+
+### Fixed
+* infinite primitive offset of linesegment
 
 ## v0.6.0 [11/7/2022]
 
@@ -117,7 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Surface2D: cut_by_line
 * Circle3D: to_step
 * ArcEllipse3D.to_2d()
-
+* infinite primitive offset of linesegment
 
 ### Performance improvements
 
