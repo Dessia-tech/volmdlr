@@ -929,7 +929,7 @@ class BoundingBox(dc.DessiaObject):
                            max(self.zmax, other_bbox.zmax))
 
     def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
-        return {'object_class': 'volmdlr.edges.BoundingBox',
+        return {'object_class': 'volmdlr.Core.BoundingBox',
                 'name': self.name,
                 'xmin': self.xmin,
                 'xmax': self.xmax,
