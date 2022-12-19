@@ -14,7 +14,7 @@ for step_file in [
     # 'read_test3.step',
     # 'read_test4.step',
     # 'read_test6.step',
-    'read_test7.step',
+    # 'read_test7.step',
     # 'iso4162M16x55.step',
     # 'spanners.step',
     # 'tormach_wrench.step',
@@ -65,13 +65,12 @@ for step_file in [
     # surface2d = {}
     # for closedshell in model.primitives:
     #     for i, face in enumerate(closedshell.faces):
-    #         # try:
-    #         #     face.triangulation()
-    #         # except Exception:
-    #         #     error[i] = face
-    #         #     surface2d[i] = face.surface2d
-    #         # else:
-    #         if face:
+    #         try:
+    #             face.triangulation()
+    #         except Exception:
+    #             error[i] = face
+    #             surface2d[i] = face.surface2d
+    #         else:
     #             faces.append(face)
     # model2 = volmdlr.core.VolumeModel(faces)
     # model2.babylonjs()

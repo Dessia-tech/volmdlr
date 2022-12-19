@@ -1375,6 +1375,7 @@ class Contour2D(ContourMixin, Wire2D):
                  name: str = ''):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
+        self._polygon_100_points = None
         self._bounding_rectangle = None
 
     def __hash__(self):
@@ -1429,13 +1430,21 @@ class Contour2D(ContourMixin, Wire2D):
         return ClosedPolygon2D(points)
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Tranforms a Contour2D into an Contour3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Contour3D.
+        """
         p3d = []
         for edge in self.primitives:
             p3d.append(edge.to_3d(plane_origin, x, y))
 
         return Contour3D(p3d)
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol: float = 1e-6):
         # TODO: This is incomplete!!!
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
@@ -1447,8 +1456,9 @@ class Contour2D(ContourMixin, Wire2D):
         #         if edge.straight_line_point_belongs(point):
         #             return True
         #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
-        # test = self.to_polygon(500)
-        if self.to_polygon(angle_resolution=163).point_belongs(point):
+        if not self._polygon_100_points:
+            self._polygon_100_points = self.to_polygon(100)
+        if self._polygon_100_points.point_belongs(point):
             return True
         return False
 
@@ -1464,7 +1474,7 @@ class Contour2D(ContourMixin, Wire2D):
         points = self.edge_polygon.points[:]
         for primitive in self.primitives:
             if hasattr(primitive, 'discretization_points'):
-                points.extend(primitive.discretization_points())
+                points.extend(primitive.discretization_points(number_points=10))
         xmin = min(p[0] for p in points)
         xmax = max(p[0] for p in points)
         ymin = min(p[1] for p in points)
@@ -1833,35 +1843,85 @@ class Contour2D(ContourMixin, Wire2D):
     def to_polygon(self, angle_resolution):
         """
         Transform the contour to a polygon.
+
         :param angle_resolution: arcs are discretized with respect of an angle resolution in points per radians
         """
+
         polygon_points = []
         # print([(line.start, line.end) for line in self.primitives])
-        center = self.center_of_mass()
+
         for primitive in self.primitives:
-            start = primitive.start
-            end = primitive.end
-            # mean_point = 0.5* (start + end)
-            # fictitious_radius = mean_point.point_distance(center)
+            polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
+        return ClosedPolygon2D(polygon_points)
 
-            if start == end:
-                angle = volmdlr.TWO_PI
-            # elif fictitious_radius:
-            #     angle = primitive.length() / fictitious_radius
+    def linspace_discretization(self, number_points_x: int = 15, number_points_y: int = 0):
+        """
+        Transform the Contour2D into a ClosedPolygon2D with an evenly spaced grid from the Contour bounding rectangle.
+
+        :param number_points_x: Number of points in x.
+        :type number_points_x: int
+        :param number_points_y: Number of points in x
+        :type number_points_y: int
+        """
+        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
+        polygon_points = []
+
+        def discretization_points(n):
+            points = []
+            if n <= 2:
+                points = [start]
             else:
-                vector2d_start = start - center
-                vector2d_end = end - center
+                points.extend(primitive.discretization_points(number_points=n)[:-1])
+            return points
 
-                angle = volmdlr.core.vectors3d_angle(vector2d_start, vector2d_end)
+        if number_points_x and number_points_y:
+            dx = (xmax - xmin)/number_points_x
+            dy = (ymax - ymin)/number_points_y
+            for primitive in self.primitives:
+                start = primitive.start
+                end = primitive.end
+                if start == end:
+                    xmin, xmax, ymin, ymax = primitive.bounding_rectangle().bounds()
+                    delta_x = abs(xmax - xmin)
+                    delta_y = abs(ymax - ymin)
+                else:
+                    delta_x = abs(end.x - start.x)
+                    delta_y = abs(end.y - start.y)
+                n = int(delta_x/dx)
+                m = int(delta_y/dy)
+                number_points = n+m
+                polygon_points.extend(discretization_points(number_points))
 
-            number_points = math.ceil(angle*angle_resolution)
-            resolution = primitive.length()/number_points
-            max_error = 1.3/angle_resolution
-            if resolution > max_error:
-                number_points = angle_resolution
+        elif number_points_x:
+            dx = (xmax - xmin)/number_points_x
 
-            polygon_points.extend(primitive.discretization_points(number_points=number_points)[:-1])
-        # print(True)
+            for primitive in self.primitives:
+                start = primitive.start
+                end = primitive.end
+                if start == end:
+                    xmin, xmax, _, _= primitive.bounding_rectangle().bounds()
+                    delta_x = abs(xmax - xmin)
+                else:
+                    delta_x = abs(end.x - start.x)
+                number_points = int(delta_x/dx)
+                polygon_points.extend(discretization_points(number_points))
+
+        elif number_points_y:
+            dy = (ymax - ymin)/number_points_y
+
+            for primitive in self.primitives:
+                start = primitive.start
+                end = primitive.end
+                if start == end:
+                    _, _, ymin, ymax= primitive.bounding_rectangle().bounds()
+                    delta_y = abs(ymax - ymin)
+                else:
+                    delta_y = abs(end.y - start.y)
+                number_points = int(delta_y/dy)
+                polygon_points.extend(discretization_points(number_points))
+        else:
+            return self.to_polygon(20)
+
         return ClosedPolygon2D(polygon_points)
 
     def grid_triangulation(self, x_density: float = None,
@@ -3054,10 +3114,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         """
         # bounding_rectangle = self.bounding_rectangle()
         xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
-        dx = xmax - xmin  # xmax - xmin
-        dy = ymax - ymin  # ymax - ymin
-        n = number_points_x
-        m = number_points_y
+        # dx = xmax - xmin  # xmax - xmin
+        # dy = ymax - ymin  # ymax - ymin
+        n = number_points_x + 2
+        m = number_points_y + 2
         # if number_points_x is None:
         #     n = max(math.ceil(x_density * dx), min_points_x)
         # else:
@@ -3071,7 +3131,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         # x_offset = dx/(n+2)
         # y_offset = dy/(m+2)
         x_offset = 0
-        y_offset = 0
+        y_offset = 1e-6
         x = npy.linspace(xmin + x_offset, xmax - x_offset, num=n)
         y = npy.linspace(ymin + y_offset, ymax - y_offset, num=m)
 
@@ -3081,13 +3141,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         points = []
         for i, xi in enumerate(x):
             for j, yi in enumerate(y):
-                point = volmdlr.Point2D(xi, yi)
+                point = vmd.Node2D(xi, yi)
                 if point in polygon_points:
                     continue
                 if self.point_belongs(point):
-                    node = vmd.Node2D.from_point(point)
-                    grid_point_index[(i, j)] = node
-                    points.append(node)
+                    # node = vmd.Node2D.from_point(point)
+                    grid_point_index[(i, j)] = point
+                    points.append(point)
                     # number_points += 1
         return points, x, y, grid_point_index
 
