@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unrealeased
+## v0.8.0 [Unrealeased]
 
 ### New Features
 
 
 ### Fixed
 
+* PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
 * Contour2D: bounding_rectangle (specify number_points for discretization_points)
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
 
@@ -28,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-## Unrealeased
+## v0.7.0 [Testing]
 
 ### New Features
 
@@ -80,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Step: from stream (use BinaryFile instead of io.BinaryIO)
 * Contour: is_overlapping (consider intersecting_points is empty)
 * LineSegment2D: to_wire (use discretization_points instead of discretise)
+* PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
@@ -91,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Wire2D: infinite_intersections
 * infinite primitive offset of linesegment
 * Ellispe3D: discretization_points
+
 
 ### Performance improvements
 
@@ -146,6 +149,7 @@ time we have to verify if a point is inside
 * Contour2D: ordering_contour, is_ordered, order_contour
 * Ellipse3D: point_belongs, abscissa, length, to_2d, discretization_points
 * CylindricalSurface3D: point_on_surface, is_coincident
+
 
 ## v0.6.1 [12/13/2022]
 
