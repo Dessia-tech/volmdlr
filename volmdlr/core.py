@@ -1794,7 +1794,7 @@ class VolumeModel(dc.PhysicalObject):
 
         content = ''
         for line in lines:
-            content += line+'\n'
+            content += line + '\n'
 
         stream.write(content)
 
