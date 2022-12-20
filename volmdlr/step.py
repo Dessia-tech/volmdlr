@@ -561,18 +561,9 @@ class Step(dc.DessiaObject):
 
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
-            try:
-                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict)
-            except Exception:
-                class_name = STEP_TO_VOLMDLR[name].__class__.__name__
-                if "Face" in class_name:
-                    print(name)
-                    frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
-                    surface = volmdlr.faces.Plane3D(frame)
-                    outer_contour = volmdlr.wires.Circle2D(volmdlr.O2D, 0.001)
-                    surface2d = volmdlr.faces.Surface2D(outer_contour,[])
-                    return volmdlr.faces.PlaneFace3D(surface, surface2d)
-                return []
+
+            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict)
+
         else:
             raise NotImplementedError(
                 'Dont know how to interpret {} with args {}'.format(name,

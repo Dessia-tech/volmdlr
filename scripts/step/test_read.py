@@ -36,7 +36,7 @@ for step_file in [
     # 'bracket3_cut2.step',
     # 'strange_gasket.step',
     # '2_bspline_faces.stp',
-    # 'bracket3.step',
+    'bracket3.step',
     # 'bracket1.step',
     # 'porte_dessia_simple.step',
     # 'cylinder_ellipse.step',
@@ -45,7 +45,7 @@ for step_file in [
     # 'compressor.step',
     # 'F-16_OpenVSP3.15.0.stp',
     # 'aircraft_engine.step',
-    'Test-IA_simple.step'
+    # 'Test-IA_simple.step'
 ]:
 
     print('Reading step file: ', step_file)
@@ -53,7 +53,7 @@ for step_file in [
     step = volmdlr.step.Step.from_file(filepath=step_file)
 
     model = step.to_volume_model()
-    # model.babylonjs()
+    model.babylonjs()
     # model.primitives[0].primitives[0].babylonjs()
     # assert len(model.primitives) > 0.
     # model.to_step(step_file+'_reexport')
@@ -61,24 +61,24 @@ for step_file in [
     # model.primitives[0].color = (1, 0.1, 0.1)
     #
 
-    faces = []
-    # error = {}
-    # surface2d = {}
-    for j, closedshell in enumerate(model.primitives):
-        for i, face in enumerate(closedshell.primitives):
-            # try:
-            #     face.triangulation()
-            # except Exception:
-            #     error[i] = face
-            #     surface2d[i] = face.surface2d
-            # else:
-            if face:
-                faces.append(face)
-            else:
-                print(j)
-                print(i)
-    model2 = volmdlr.core.VolumeModel(faces)
-    model2.babylonjs()
+    # faces = []
+    # # error = {}
+    # # surface2d = {}
+    # for j, closedshell in enumerate(model.primitives):
+    #     for i, face in enumerate(closedshell.primitives):
+    #         # try:
+    #         #     face.triangulation()
+    #         # except Exception:
+    #         #     error[i] = face
+    #         #     surface2d[i] = face.surface2d
+    #         # else:
+    #         if face:
+    #             faces.append(face)
+    #         else:
+    #             print(j)
+    #             print(i)
+    # model2 = volmdlr.core.VolumeModel(faces)
+    # model2.babylonjs()
     # assert len(model.primitives) > 0.
     # model.to_step(step_file + '_reexport')
     # model.babylonjs()

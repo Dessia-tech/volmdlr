@@ -3208,54 +3208,54 @@ class BSplineSurface3D(Surface3D):
                              [S[1][0].dot(S[0][1]) + r.dot(S[1][1]), S[0][1].norm() ** 2 + r.dot(S[0][2])]])
             return f, jacobian_transposed
 
-        if not x_periodicity and y_periodicity:
-            min_dist = math.inf
-            x0 = []
-            for xi in x0s:
-                dist = f(xi)
-                if dist < min_dist:
-                    x0 = xi
-                    min_dist = dist
+        # if not x_periodicity and y_periodicity:
+        min_dist = math.inf
+        x0 = []
+        for xi in x0s:
+            dist = f(xi)
+            if dist < min_dist:
+                x0 = xi
+                min_dist = dist
 
-            res = scp.optimize.root(fun, x0=x0, jac=True, args=(min_bound_x, max_bound_x, min_bound_y, max_bound_y),
-                                    method='hybr', tol=tol / 10, options={'col_deriv': 1})
+        res = scp.optimize.root(fun, x0=x0, jac=True, args=(min_bound_x, max_bound_x, min_bound_y, max_bound_y),
+                                method='hybr', tol=tol / 10, options={'col_deriv': 1})
 
-            if res.fun[0] < tol and res.fun[1] < tol:
-                return volmdlr.Point2D(*res.x)
-        else:
-            for x0 in x0s:
+        if res.fun[0] < tol and res.fun[1] < tol:
+            return volmdlr.Point2D(*res.x)
+        # else:
+        #     for x0 in x0s:
             # res = scp.optimize.minimize(g, x0=x0, jac=True, bounds=[(min_bound_x, max_bound_x),
             #                                                         (min_bound_y, max_bound_y)], tol=tol/10)
             # if res.fun < tol:
             #     print("Found with minimize")
             #     return volmdlr.Point2D(*res.x)
-                res = scp.optimize.minimize(f, x0=npy.array(x0),
-                                            bounds=[(min_bound_x, max_bound_x),
-                                                    (min_bound_y, max_bound_y)],
-                                            tol=(tol/10))
-                # res.fun represent the value of the objective function
-                if res.fun < tol:
-                    # print("Found with minimize")
-                    return volmdlr.Point2D(*res.x)
+        res = scp.optimize.minimize(f, x0=npy.array(x0),
+                                    bounds=[(min_bound_x, max_bound_x),
+                                            (min_bound_y, max_bound_y)],
+                                    tol=(tol/10))
+        # res.fun represent the value of the objective function
+        if res.fun < tol:
+            # print("Found with minimize")
+            return volmdlr.Point2D(*res.x)
 
-                z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
-                                                                  min_bound_y],
-                                                                 [max_bound_x,
-                                                                  max_bound_y]),
-                                               ftol=tol / 10,
-                                               xtol=tol / 10,
-                                               # loss='soft_l1'
-                                               )
-                # z.cost represent the value of the cost function at the solution
-                if z.fun < tol:
-                    # print("Found with least square")
-                    return volmdlr.Point2D(*z.x)
+        z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
+                                                          min_bound_y],
+                                                         [max_bound_x,
+                                                          max_bound_y]),
+                                       ftol=tol / 10,
+                                       xtol=tol / 10,
+                                       # loss='soft_l1'
+                                       )
+        # z.cost represent the value of the cost function at the solution
+        if z.fun < tol:
+            # print("Found with least square")
+            return volmdlr.Point2D(*z.x)
 
-                results.append((z.x, z.fun))
-                results.append((res.x, res.fun))
-            # print("Not found")
-            # print(min(results, key=lambda r: r[1]))
-            return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
+        results.append((z.x, z.fun))
+        results.append((res.x, res.fun))
+        # print("Not found")
+        # print(min(results, key=lambda r: r[1]))
+        return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
 
     def linesegment2d_to_3d(self, linesegment2d):
