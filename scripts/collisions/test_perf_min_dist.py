@@ -1,4 +1,3 @@
-import random
 import time
 
 from volmdlr.primitives3d import Cylinder
