@@ -1094,7 +1094,7 @@ class Cylinder(RevolvedProfile):
         # Objective function
         def dist_points(x):
             """
-            :param x: coords of a point in cylinder 0 local frame, coords of a point in cylinder 1 local frame
+            :param x: polar coordinates of a point in both cylinder
             :return: distance between the two points
             """
 
