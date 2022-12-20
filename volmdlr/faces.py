@@ -635,7 +635,7 @@ class Surface2D(volmdlr.core.Primitive2D):
     def plot(self, ax=None, color='k', alpha=1, equal_aspect=False):
 
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
         self.outer_contour.plot(ax=ax, color=color, alpha=alpha,
                                 equal_aspect=equal_aspect)
         for inner_contour in self.inner_contours:
@@ -793,7 +793,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         if min_points:
             primitives, primitives_length = [], []
-            for c, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
+            for _, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
                 if isinstance(contour, volmdlr.wires.Circle2D):
                     primitives.append(contour)
                     primitives.append(contour)
