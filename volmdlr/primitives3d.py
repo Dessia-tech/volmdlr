@@ -10,7 +10,7 @@ from typing import Tuple, List, Dict
 from random import uniform
 
 import numpy
-from scipy.optimize import minimize, NonlinearConstraint
+from scipy.optimize import minimize, NonlinearConstraint, Bounds
 from scipy.stats import qmc
 
 import numpy as npy
@@ -1199,6 +1199,57 @@ class Cylinder(RevolvedProfile):
         ]
 
         return minimize(fun=dist_points, x0=x0, constraints=constraints).fun
+
+    def min_distance_to_other_cylinder3(self, other_cylinder: "Cylinder") -> float:
+        """
+        Compute the minimal distance between two volmdlr cylinders
+
+        :param other_cylinder: volmdlr Cylinder
+        :return: minimal distance between two 3D cylinders
+        """
+        # Local frames of cylinders
+        frame0 = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+        frame1 = volmdlr.Frame3D.from_point_and_vector(
+            point=other_cylinder.position, vector=other_cylinder.axis, main_axis=volmdlr.Z3D
+        )
+
+        # Objective function
+        def dist_points(x):
+            """
+            :param x: coords of a point in cylinder 0 local frame, coords of a point in cylinder 1 local frame
+            :return: distance between the two points
+            """
+
+            point0 = frame0.old_coordinates(
+                volmdlr.Point3D(
+                    math.cos(x[0]) * self.radius,
+                    math.sin(x[0]) * self.radius,
+                    x[1],
+                )
+            )
+
+            point1 = frame1.old_coordinates(
+                volmdlr.Point3D(
+                    math.cos(x[2]) * other_cylinder.radius,
+                    math.sin(x[2]) * other_cylinder.radius,
+                    x[3],
+                )
+            )
+
+            return point0.point_distance(point1)
+
+        # Initial vector
+        x0 = numpy.zeros(4)
+
+        # Bounds
+        bounds = Bounds(
+            lb=[0, -self.length / 2, 0, -other_cylinder.length / 2],
+            ub=[math.pi * 2, self.length / 2, math.pi * 2, other_cylinder.length / 2],
+        )
+
+        return minimize(fun=dist_points, x0=x0, bounds=bounds).fun
 
     def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder') -> bool:
         """
