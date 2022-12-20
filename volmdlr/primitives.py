@@ -10,10 +10,14 @@ from numpy import zeros
 from scipy.optimize import linprog
 # import dessia_common as dc
 import volmdlr
+import volmdlr.edges
 
 
 class RoundedLineSegments:
     _non_serializable_attributes = ['line_class', 'arc_class', 'basis_primitives', 'primitives']
+
+    line_class = volmdlr.edges.LineSegment
+    arc_class = volmdlr.edges.Arc
 
     def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
                  closed: bool = False, adapt_radius: bool = False, name: str = ''):
@@ -43,6 +47,9 @@ class RoundedLineSegments:
         for point in self.points:
             point.frame_mapping_inplace(frame, side)
 
+    def arc_features(self, point_index: int):
+        raise NotImplementedError('The method arc_features should be overloaded.')
+
     def _primitives(self):
         alpha = {}
         dist = {}
@@ -66,11 +73,11 @@ class RoundedLineSegments:
                 if i - 1 in self.radius:
                     p1 = self.points[i - 1]
                     p2 = self.points[i]
-                    l = (p2 - p1).norm()
-                    lines_length[i - 1] = l
+                    length = (p2 - p1).norm()
+                    lines_length[i - 1] = length
                     dist1 = dist[i - 1]
 
-                    if dist1 + dist2 <= l:
+                    if dist1 + dist2 <= length:
                         groups.append(group)
                         group = [i]
                     else:
