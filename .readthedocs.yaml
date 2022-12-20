@@ -21,7 +21,7 @@ sphinx:
 
 python:
   install:
-    - method: pip
+    - method: pip install
       extra_requirements:
         - Cython
     - method: setuptools
