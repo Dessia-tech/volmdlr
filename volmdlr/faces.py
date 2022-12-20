@@ -3156,68 +3156,68 @@ class BSplineSurface3D(Surface3D):
     #     return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
 # ## Trying to use numpy for performance
-#     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-7):
-#         x_periodicity = self.x_periodicity
-#         y_periodicity = self.y_periodicity
-#
-#         # converts the point into a numpy array to better performace
-#         point = npy.array([point3d.x, point3d.y, point3d.z])
-#
-#         def f(x):
-#             p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
-#             return point3d.point_distance(p3d)
-#
-#         min_bound_x, max_bound_x = self.surface.domain[0]
-#         min_bound_y, max_bound_y = self.surface.domain[1]
-#
-#         delta_bound_x = max_bound_x - min_bound_x
-#         delta_bound_y = max_bound_y - min_bound_y
-#         x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
-#                (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-#                (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
-#                (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-#                (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
-#
-#         # Define the objective function to minimize
-#         def objective(x):
-#
-#             derivatives = self.surface.derivatives(x[0], x[1], 1)
-#             surface_point = npy.array(derivatives[0][0])
-#             du = npy.array(derivatives[1][0])
-#             dv = npy.array(derivatives[0][1])
-#             r = surface_point - point
-#             f = npy.linalg.norm(surface_point - point) + 1e-18
-#             jac = npy.array([r.dot(du)/f, r.dot(dv)/f])
-#
-#             return f, jac
-#
-#         min_dist = math.inf
-#         x0 = []
-#         for xi in x0s:
-#             dist = f(xi)
-#             if dist < min_dist:
-#                 x0 = xi
-#                 min_dist = dist
-#
-#         # # Define the gradient of the objective function
-#         # def gradient(x):
-#         #     u, v = x
-#         #     if x_periodicity:
-#         #         u = u % x_periodicity
-#         #     if y_periodicity:
-#         #         v = v % y_periodicity
-#         #     derivatives = self.surface.derivatives(u, v, 1)
-#         #     surface_point = npy.array(derivatives[0][0])
-#         #     du = npy.array(derivatives[1][0])
-#         #     dv = npy.array(derivatives[0][1])
-#         #     return npy.array([2*du.dot(point - surface_point), 2*dv.dot(point - surface_point)])
-#
-#         # Find the parametric coordinates of the point using the BFGS algorithm
-#         bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
-#         result = scp.optimize.minimize(objective, x0=npy.array(x0), jac=True, method='L-BFGS-B', bounds=bounds)
-#         point2d = volmdlr.Point2D(*result.x)
-#         # print(point2d)
-#         return point2d
+    def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-7):
+        x_periodicity = self.x_periodicity
+        y_periodicity = self.y_periodicity
+
+        # converts the point into a numpy array to better performace
+        point = npy.array([point3d.x, point3d.y, point3d.z])
+
+        def f(x):
+            p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
+            return point3d.point_distance(p3d)
+
+        min_bound_x, max_bound_x = self.surface.domain[0]
+        min_bound_y, max_bound_y = self.surface.domain[1]
+
+        delta_bound_x = max_bound_x - min_bound_x
+        delta_bound_y = max_bound_y - min_bound_y
+        x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
+               (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
+               (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
+               (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
+               (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
+
+        # Define the objective function to minimize
+        def objective(x):
+
+            derivatives = self.surface.derivatives(x[0], x[1], 1)
+            surface_point = npy.array(derivatives[0][0])
+            du = npy.array(derivatives[1][0])
+            dv = npy.array(derivatives[0][1])
+            r = surface_point - point
+            f = npy.linalg.norm(surface_point - point) + 1e-18
+            jac = npy.array([r.dot(du)/f, r.dot(dv)/f])
+
+            return f, jac
+
+        min_dist = math.inf
+        x0 = []
+        for xi in x0s:
+            dist = f(xi)
+            if dist < min_dist:
+                x0 = xi
+                min_dist = dist
+
+        # # Define the gradient of the objective function
+        # def gradient(x):
+        #     u, v = x
+        #     if x_periodicity:
+        #         u = u % x_periodicity
+        #     if y_periodicity:
+        #         v = v % y_periodicity
+        #     derivatives = self.surface.derivatives(u, v, 1)
+        #     surface_point = npy.array(derivatives[0][0])
+        #     du = npy.array(derivatives[1][0])
+        #     dv = npy.array(derivatives[0][1])
+        #     return npy.array([2*du.dot(point - surface_point), 2*dv.dot(point - surface_point)])
+
+        # Find the parametric coordinates of the point using the BFGS algorithm
+        bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
+        result = scp.optimize.minimize(objective, x0=npy.array(x0), jac=True, method='L-BFGS-B', bounds=bounds)
+        point2d = volmdlr.Point2D(*result.x)
+        # print(point2d)
+        return point2d
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-7):
         x_periodicity = self.x_periodicity
@@ -3683,17 +3683,16 @@ class BSplineSurface3D(Surface3D):
                 # for p in points3d:
                 #     p.plot(ax, 'r')
                 # previous = [0, 0]
-                min_bound_x, max_bound_x = self.surface.domain[0]
-                min_bound_y, max_bound_y = self.surface.domain[1]
                 # points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth),
                 #                              min_bound_x, max_bound_x, min_bound_y, max_bound_y) for i in range(11)]
+
                 discretization_points = bspline_curve3d.discretization_points(number_points=10)
                 points = [self.point3d_to_2d(p) for p in discretization_points]
                 u1, v1 = self.point3d_to_2d(bspline_curve3d.start)
                 u2, v2 = self.point3d_to_2d(bspline_curve3d.end)
 
                 u3, v3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.01 * lth))
-                u4, v4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * lth))
+                # u4, v4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * lth))
 
                 # points = bspline_curve3d.simplify(0.025*lth, 0.5*lth, 5)
                 # points = [self.point3d_to_2d(p, min_bound_x, max_bound_x, min_bound_y, max_bound_y) for p in points]
