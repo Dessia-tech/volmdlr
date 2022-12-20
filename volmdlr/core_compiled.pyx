@@ -2955,13 +2955,13 @@ class Frame2D(Basis2D):
     def frame_mapping(self, frame: 'Frame2D', side: str):
         basis = frame.basis()
         if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_u = basis.new_coordinates(self.frame.u)
-            new_v = basis.new_coordinates(self.frame.v)
+            new_origin = frame.new_coordinates(self.origin)
+            new_u = basis.new_coordinates(self.u)
+            new_v = basis.new_coordinates(self.v)
         elif side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_u = basis.old_coordinates(self.frame.u)
-            new_v = basis.old_coordinates(self.frame.v)
+            new_origin = frame.old_coordinates(self.origin)
+            new_u = basis.old_coordinates(self.u)
+            new_v = basis.old_coordinates(self.v)
         else:
             raise ValueError('side value not valid, please specify'
                               'a correct value: \'old\' or \'new\'')
@@ -3189,16 +3189,16 @@ class Frame3D(Basis3D):
     def frame_mapping(self, frame: 'Frame3D', side: str):
         basis = frame.basis()
         if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_u = basis.new_coordinates(self.frame.u)
-            new_v = basis.new_coordinates(self.frame.v)
-            new_w = basis.new_coordinates(self.frame.w)
+            new_origin = frame.new_coordinates(self.origin)
+            new_u = basis.new_coordinates(self.u)
+            new_v = basis.new_coordinates(self.v)
+            new_w = basis.new_coordinates(self.w)
 
         elif side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_u = basis.old_coordinates(self.frame.u)
-            new_v = basis.old_coordinates(self.frame.v)
-            new_w = basis.old_coordinates(self.frame.w)
+            new_origin = frame.old_coordinates(self.origin)
+            new_u = basis.old_coordinates(self.u)
+            new_v = basis.old_coordinates(self.v)
+            new_w = basis.old_coordinates(self.w)
         else:
             raise ValueError('side value not valid, please specify'
                              'a correct value: \'old\' or \'new\'')
