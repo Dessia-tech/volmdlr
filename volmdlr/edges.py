@@ -655,8 +655,7 @@ class BSplineCurve(Edge):
     def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
                       abs_tol: float = 1e-10):
         """
-        Checks if a 2D or 3D point belongs to the B-spline curve or not. It
-        uses the least square method.
+        Checks if a 2D or 3D point belongs to the B-spline curve or not. It uses the least square method.
 
         :param point: The point to be checked
         :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
@@ -2529,8 +2528,7 @@ class Arc2D(Arc):
 
 class FullArc2D(Arc2D):
     """
-    An edge that starts at start_end, ends at the same point after having described
-    a circle.
+    An edge that starts at start_end, ends at the same point after having described a circle.
 
     """
 
@@ -3218,7 +3216,8 @@ class Line3D(Line):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Line3D rotation
+        Line3D rotation.
+        
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -3230,7 +3229,8 @@ class Line3D(Line):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Line3D rotation. Object is updated inplace
+        Line3D rotation. Object is updated inplace.
+        
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -3241,7 +3241,8 @@ class Line3D(Line):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Line3D translation
+        Line3D translation.
+        
         :param offset: translation vector
         :return: A new translated Line3D
         """
@@ -3250,7 +3251,8 @@ class Line3D(Line):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Line3D translation. Object is updated inplace
+        Line3D translation. Object is updated inplace.
+        
         :param offset: translation vector
         """
         for point in [self.point1, self.point2]:
@@ -3259,7 +3261,8 @@ class Line3D(Line):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes vector frame_mapping and return a new Line3D
+        Changes vector frame_mapping and return a new Line3D.
+        
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -3274,7 +3277,8 @@ class Line3D(Line):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes Line3D frame_mapping and the object is updated inplace
+        Changes Line3D frame_mapping and the object is updated inplace.
+        
         side = 'old' or 'new'
         """
         if side == 'old':

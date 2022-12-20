@@ -6212,11 +6212,8 @@ class CylindricalFace3D(Face3D):
         """
         find out in which direction the faces are adjacent
         Parameters
-        ----------
-        other_face3d : volmdlr.faces.CylindricalFace3D
-        Returns
-        -------
-        adjacent_direction
+        
+        :type other_face3d: volmdlr.faces.CylindricalFace3D
         """
 
         contour1 = self.outer_contour3d
@@ -6233,6 +6230,8 @@ class CylindricalFace3D(Face3D):
 
 class ToroidalFace3D(Face3D):
     """
+    Defines a toroidal face.
+    
     :param contours2d: The Tore's contour2D
     :type contours2d: volmdlr.Contour2D
     :param toroidalsurface3d: Information about the Tore
@@ -6332,6 +6331,8 @@ class ToroidalFace3D(Face3D):
 
 class ConicalFace3D(Face3D):
     """
+    Defines a conical face.
+    
     :param contours2d: The Cone's contour2D
     :type contours2d: volmdlr.Contour2D
     :param conicalsurface3d: Information about the Cone
