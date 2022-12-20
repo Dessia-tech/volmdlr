@@ -4,15 +4,13 @@
 
 """
 
-import math
 import os
 import subprocess
 import tempfile
 import webbrowser
 from datetime import datetime
-# import volmdlr.stl as vmstl
 from typing import List
-# from itertools import chain
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -48,142 +46,14 @@ END-ISO-10303-21;
 '''
 
 
-def find_and_replace(string, find, replace):
-    """
-    Finds a string in a string and replace it
-    """
-    index = string.find(find)
-    if index != -1:
-        try:
-            # verifie si il reste pas des chiffre apres
-            int(string[index + len(find)])
-        except (ValueError, IndexError):
-            # on remplace
-            return string[:index] + replace + string[index + len(find):]
-        else:
-            return string[:index] + find_and_replace(string[index + len(find)],
-                                                     find, replace)
-    return string
-
-
-def set_to_list(step_set):
-    char_list = step_set.split(',')
-    char_list[0] = char_list[0][1:]
-    char_list[-1] = char_list[-1][:-1]
-    return list(char_list)
-
-
-def delete_node_and_predecessors(graph, node):
-    """
-    A recursive method for deleting a node and its predecessors in a networkx
-    graph.
-
-    :param graph: A networkx graph
-    :type graph: :class:`networkx.Graph`
-    :param node: A node of the graph
-    :type node: Any
-    """
-    predecessors = list(graph.predecessors(node))
-    graph.remove_node(node)
-    for predecessor in predecessors:
-        delete_node_and_predecessors(graph, predecessor)
-
-
-def delete_node_and_successors(graph, node):
-    """
-    A recursive method for deleting a node and its successors in a networkx
-    graph.
-
-    :param graph: A networkx graph
-    :type graph: :class:`networkx.Graph`
-    :param node: A node of the graph
-    :type node: Any
-    """
-    successors = list(graph.successors(node))
-    graph.remove_node(node)
-    for successor in successors:
-        delete_node_and_successors(graph, successor)
-
-
-def clockwise_angle(vector1, vector2):
-    """
-    Return the clockwise angle in radians between vector1 and vector2.
-    """
-    vector0 = volmdlr.O2D
-    if vector0 in (vector1, vector2):
-        return 0
-
-    dot = vector1.dot(vector2)
-    norm_vec_1 = vector1.norm()
-    norm_vec_2 = vector2.norm()
-    sol = dot / (norm_vec_1 * norm_vec_2)
-    cross = vector1.cross(vector2)
-    if math.isclose(sol, 1, abs_tol=1e-6):
-        inner_angle = 0
-    elif math.isclose(sol, -1, abs_tol=1e-6):
-        inner_angle = math.pi
-    else:
-        inner_angle = math.acos(sol)
-
-    if cross < 0:
-        return inner_angle
-
-    return volmdlr.TWO_PI - inner_angle
-
-
-def vectors3d_angle(vector1, vector2):
-    """
-    Computes the angle between two 3 dimensional vectors.
-
-    :param vector1: The fist 3 dimensional vector
-    :type vector1: :class:`volmdlr.Vector3D`
-    :param vector2: The second 3 dimensional vectors
-    :type vector2: :class:`volmdlr.Vector3D`
-    :return: The angle between the two vectors
-    :rtype: flaot
-    """
-    dot = vector1.dot(vector2)
-    theta = math.acos(dot / (vector1.norm() * vector2.norm()))
-
-    return theta
-
-
-def sin_cos_angle(u1, u2):
-    """
-    Returns an angle between 0 and 2*PI verifying cos(theta)=u1, sin(theta)=u2.
-
-    :param u1: The value of the cosinus of the returned angle
-    :type u1: float
-    :param u2: The value of the sinus of the returned angle
-    :type u2: flaot
-    :return: The angle verifying the two equations
-    :rtype: float
-    """
-    if u1 < -1:
-        u1 = -1
-    elif u1 > 1:
-        u1 = 1
-    if u2 < -1:
-        u2 = -1
-    elif u2 > 1:
-        u2 = 1
-
-    if u1 > 0:
-        if u2 >= 0:
-            theta = math.acos(u1)
-        else:
-            theta = volmdlr.TWO_PI + math.asin(u2)
-    else:
-        if u2 >= 0:
-            theta = math.acos(u1)
-        else:
-            theta = volmdlr.TWO_PI - math.acos(u1)
-    if math.isclose(theta, volmdlr.TWO_PI, abs_tol=1e-9):
-        return 0.
-    return theta
-
-
 def delete_double_pos(points, triangles):
+    """
+    Eliminate double points in a mesh.
+    This seems unused and redundant with display.py.
+    """
+    warnings.warn('The function delete_double_pos is deprecated, use classes and methods from volmdlr.display',
+                  DeprecationWarning)
+
     points_to_indexes = {}
 
     for index, point in enumerate(points):
@@ -253,150 +123,40 @@ def delete_double_point(list_point):
             continue
     return points
 
+# def check_singularity(all_points):
+#     plus_pi, moins_pi = [], []
+#     for enum, pt in enumerate(all_points):
+#         if pt.vector[0] > math.pi * 1.01:
+#             plus_pi.append(enum)
+#         elif pt.vector[0] < math.pi * 0.99:
+#             moins_pi.append(enum)
 
-def max_pos(list_of_float):
-    pos_max, max_float = 0, list_of_float[0]
-    for pos, fl in enumerate(list_of_float):
-        if pos == 0:
-            continue
-        else:
-            if fl > max_float:
-                max_float = fl
-                pos_max = pos
-    return max_float, pos_max
+#     if len(moins_pi) <= 2 and len(all_points) > 4:
+#         for pos in moins_pi:
+#             new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
+#             if new_pt.vector[0] > volmdlr.TWO_PI:
+#                 new_pt.vector[0] = volmdlr.TWO_PI
+#             all_points[pos] = new_pt
+#     elif len(plus_pi) <= 2 and len(all_points) > 4:
+#         for pos in plus_pi:
+#             new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
+#             if new_pt.vector[0] < 0:
+#                 new_pt.vector[0] = 0
+#             all_points[pos] = new_pt
+#     if 3 * len(moins_pi) <= len(plus_pi) and len(all_points) > 4:
+#         for pos in moins_pi:
+#             new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
+#             if new_pt.vector[0] > volmdlr.TWO_PI:
+#                 new_pt.vector[0] = volmdlr.TWO_PI
+#             all_points[pos] = new_pt
+#     elif 3 * len(plus_pi) <= len(moins_pi) and len(all_points) > 4:
+#         for pos in plus_pi:
+#             new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
+#             if new_pt.vector[0] < 0:
+#                 new_pt.vector[0] = 0
+#             all_points[pos] = new_pt
 
-
-def min_pos(list_of_float):
-    pos_min, min_float = 0, list_of_float[0]
-    for pos, fl in enumerate(list_of_float):
-        if pos == 0:
-            continue
-        else:
-            if fl < min_float:
-                min_float = fl
-                pos_min = pos
-    return min_float, pos_min
-
-
-def check_singularity(all_points):
-    plus_pi, moins_pi = [], []
-    for enum, pt in enumerate(all_points):
-        if pt.vector[0] > math.pi * 1.01:
-            plus_pi.append(enum)
-        elif pt.vector[0] < math.pi * 0.99:
-            moins_pi.append(enum)
-
-    if len(moins_pi) <= 2 and len(all_points) > 4:
-        for pos in moins_pi:
-            new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
-            if new_pt.vector[0] > volmdlr.TWO_PI:
-                new_pt.vector[0] = volmdlr.TWO_PI
-            all_points[pos] = new_pt
-    elif len(plus_pi) <= 2 and len(all_points) > 4:
-        for pos in plus_pi:
-            new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
-            if new_pt.vector[0] < 0:
-                new_pt.vector[0] = 0
-            all_points[pos] = new_pt
-    if 3 * len(moins_pi) <= len(plus_pi) and len(all_points) > 4:
-        for pos in moins_pi:
-            new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
-            if new_pt.vector[0] > volmdlr.TWO_PI:
-                new_pt.vector[0] = volmdlr.TWO_PI
-            all_points[pos] = new_pt
-    elif 3 * len(plus_pi) <= len(moins_pi) and len(all_points) > 4:
-        for pos in plus_pi:
-            new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
-            if new_pt.vector[0] < 0:
-                new_pt.vector[0] = 0
-            all_points[pos] = new_pt
-
-    return all_points
-
-
-def posangle_arc(start, end, radius, frame=None):
-    if frame is None:
-        p1_new, p2_new = start, end
-    else:
-        p1_new, p2_new = frame.new_coordinates(start), frame.new_coordinates(end)
-    # Angle pour le p1
-    u1, u2 = p1_new.x / radius, p1_new.y / radius
-    theta1 = sin_cos_angle(u1, u2)
-    # Angle pour le p2
-    u3, u4 = p2_new.x / radius, p2_new.y / radius
-    theta2 = sin_cos_angle(u3, u4)
-
-    if math.isclose(theta1, theta2, abs_tol=1e-6):
-        if math.isclose(theta2, 0, abs_tol=1e-6):
-            theta2 += volmdlr.TWO_PI
-        elif math.isclose(theta1, volmdlr.TWO_PI, abs_tol=1e-6):
-            theta1 -= volmdlr.TWO_PI
-
-    return theta1, theta2
-
-
-def clockwise_interior_from_circle3d(start, end, circle):
-    """
-    Returns the clockwise interior point between start and end on the circle.
-    """
-    start2d = start.to_2d(plane_origin=circle.frame.origin,
-                          x=circle.frame.u, y=circle.frame.v)
-    end2d = end.to_2d(plane_origin=circle.frame.origin,
-                      x=circle.frame.u, y=circle.frame.v)
-
-    # Angle pour le p1
-    u1, u2 = start2d.x / circle.radius, start2d.y / circle.radius
-    theta1 = sin_cos_angle(u1, u2)
-    # Angle pour le p2
-    u3, u4 = end2d.x / circle.radius, end2d.y / circle.radius
-    theta2 = sin_cos_angle(u3, u4)
-
-    if theta1 > theta2:
-        theta3 = (theta1 + theta2) / 2
-    elif theta2 > theta1:
-        theta3 = (theta1 + theta2) / 2 + volmdlr.TWO_PI / 2
-    else:
-        raise NotImplementedError
-
-    if theta3 > volmdlr.TWO_PI:
-        theta3 -= volmdlr.TWO_PI
-
-    interior2d = volmdlr.Point2D(circle.radius * math.cos(theta3),
-                                 circle.radius * math.sin(theta3))
-    interior3d = interior2d.to_3d(plane_origin=circle.frame.origin,
-                                  vx=circle.frame.u, vy=circle.frame.v)
-    return interior3d
-
-
-def offset_angle(trigo, angle_start, angle_end):
-    """
-    Calculates the offset and angle.
-
-    """
-    if trigo:
-        offset = angle_start
-    else:
-        offset = angle_end
-    if angle_start > angle_end:
-        angle = angle_start - angle_end
-    else:
-        angle = angle_end - angle_start
-    return offset, angle
-
-
-def angle_principal_measure(angle, min_angle=-math.pi):
-    """
-    Returns angle between O and 2 pi.
-    """
-    max_angle = min_angle + volmdlr.TWO_PI
-    angle = angle % (volmdlr.TWO_PI)
-
-    if math.isclose(angle, min_angle, abs_tol=1e-9):
-        return min_angle
-    if math.isclose(angle, max_angle, abs_tol=1e-9):
-        return max_angle
-
-    return angle
+#     return all_points
 
 
 def step_ids_to_str(ids):
@@ -412,14 +172,15 @@ def step_ids_to_str(ids):
     return ','.join(['#{}'.format(i) for i in ids])
 
 
-class CompositePrimitive(dc.DessiaObject):
-    def __init__(self, name=''):
+class CompositePrimitive(dc.PhysicalObject):
+    def __init__(self, primitives, name=''):
+        self.primitives = primitives
         self.name = name
         self._primitives_to_index = None
         self._utd_primitives_to_index = False
         self.basis_primitives = []
 
-        dc.DessiaObject.__init__(self, name=name)
+        dc.PhysicalObject.__init__(self, name=name)
 
     def primitive_to_index(self, primitive):
         if not self._utd_primitives_to_index:
@@ -438,16 +199,16 @@ class CompositePrimitive(dc.DessiaObject):
         self.basis_primitives = basis_primitives
 
 
-class Primitive2D(CompositePrimitive):
+class Primitive2D(dc.PhysicalObject):
     def __init__(self, name=''):
         self.name = name
 
-        CompositePrimitive.__init__(self, name=name)
+        dc.PhysicalObject.__init__(self, name=name)
 
 
-class CompositePrimitive2D(Primitive2D):
+class CompositePrimitive2D(CompositePrimitive):
     """
-    A collection of simple primitives
+    A collection of simple primitives.
     """
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
                                     '_primitives_to_index']
@@ -455,8 +216,8 @@ class CompositePrimitive2D(Primitive2D):
                                  '_primitives_to_index']
 
     def __init__(self, primitives, name=''):
-        Primitive2D.__init__(self, name)
-        self.primitives = primitives
+        CompositePrimitive.__init__(self, primitives, name=name)
+        # self.primitives = primitives
         self.update_basis_primitives()
 
         self._utd_primitives_to_index = False
@@ -573,9 +334,9 @@ class CompositePrimitive2D(Primitive2D):
         return plot_data
 
 
-class Primitive3D(dc.PhysicalObject, CompositePrimitive):
+class Primitive3D(dc.PhysicalObject):
     """
-
+    Defines a Primitive3D.
     """
 
     def __init__(self, color=None, alpha=1, name=''):
@@ -615,6 +376,30 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
         babylon_mesh.update(self.babylon_param())
         return [babylon_mesh]
 
+
+class CompositePrimitive3D(CompositePrimitive, Primitive3D):
+    """
+    A collection of simple primitives3D
+    """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['basis_primitives']
+    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_data_hash_attributes = []
+
+    def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
+        CompositePrimitive.__init__(self, primitives=primitives, name=name)
+        Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
+        self._utd_primitives_to_index = False
+
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        for primitive in self.primitives:
+            primitive.plot(ax=ax, color=color, alpha=alpha)
+        return ax
+
     def babylon_points(self):
         points = []
         if hasattr(self, 'primitives') and \
@@ -645,54 +430,6 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
         points = self.babylon_points()
         babylon_curves = self.babylon_lines(points)[0]
         return babylon_curves
-
-
-class CompositePrimitive3D(Primitive3D):
-    """
-    A collection of simple primitives3D
-    """
-    _standalone_in_db = True
-    _eq_is_data_eq = True
-    _non_serializable_attributes = ['basis_primitives']
-    _non_data_eq_attributes = ['name', 'basis_primitives']
-    _non_data_hash_attributes = []
-
-    def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
-        self.primitives = primitives
-
-        Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
-        self._utd_primitives_to_index = False
-
-    # def primitive_to_index(self, primitive):
-    #     if not self._utd_primitives_to_index:
-    #         self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
-    #         self._utd_primitives_to_index = True
-    #     return self._primitives_to_index[primitive]
-
-    # def update_basis_primitives(self):
-    #     # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
-    #     basis_primitives = []
-    #     for primitive in self.primitives:
-    #         if hasattr(primitive, 'basis_primitives'):
-    #             basis_primitives.extend(primitive.primitives)
-    #         else:
-    #             basis_primitives.append(primitive)
-
-    #     self.basis_primitives = basis_primitives
-
-    # # def to_2d(self, plane_origin, x, y):
-    # #     if name is None:
-    # #         name = '2D of {}'.format(self.name)
-    # #     primitives2d = [p.to_2d(plane_origin, x, y) for p in self.primitives]
-    # #     return CompositePrimitive2D(primitives2d, name)
-
-    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
-        if ax is None:
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-        for primitive in self.primitives:
-            primitive.plot(ax=ax, color=color, alpha=alpha)
-        return ax
 
 
 class BoundingRectangle(dc.DessiaObject):
@@ -862,7 +599,7 @@ class BoundingRectangle(dc.DessiaObject):
 
 class BoundingBox(dc.DessiaObject):
     """
-    An axis aligned boundary box
+    An axis aligned boundary box.
     """
 
     def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax, name=''):
@@ -1139,7 +876,7 @@ class VolumeModel(dc.PhysicalObject):
     @property
     def bounding_box(self):
         """
-        Returns the boundary box
+        Returns the boundary box.
         """
         if not self._bbox:
             self._bbox = self._bounding_box()
@@ -1151,7 +888,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def _bounding_box(self) -> BoundingBox:
         """
-        Computes the bounding box of the model
+        Computes the bounding box of the model.
         """
         bboxes = []
         points = []
@@ -1182,7 +919,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def volume(self) -> float:
         """
-        Return the sum of volumes of the primitives
+        Return the sum of volumes of the primitives.
         """
         volume = 0
         for primitive in self.primitives:
@@ -1240,7 +977,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new VolumeModel
+        Changes frame_mapping and return a new VolumeModel.
         side = 'old' or 'new'
         """
         new_primitives = [primitive.frame_mapping(frame, side)
@@ -1249,7 +986,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         for primitives in self.primitives:
@@ -1258,7 +995,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def copy(self, deep=True, memo=None):
         """
-        Specific copy
+        Specific copy.
         """
         new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
@@ -1358,7 +1095,7 @@ class VolumeModel(dc.PhysicalObject):
                        export_types=('fcstd',),
                        tolerance=0.0001):
         """
-        Export model to .fcstd FreeCAD standard
+        Export model to .fcstd FreeCAD standard.
 
         :param python_path: path of python binded to freecad
 
@@ -1613,10 +1350,11 @@ class VolumeModel(dc.PhysicalObject):
 
     def get_geo_lines(self):
         """
-        gets the lines that define a VolumeModel geometry in a .geo file
+        Gets the lines that define a VolumeModel geometry in a .geo file.
 
         :return: A list of lines that describe the geomery
         :rtype: List[str]
+
         """
 
         update_data = {'point_account': 0,
@@ -1646,7 +1384,7 @@ class VolumeModel(dc.PhysicalObject):
         # min_points: int = None,
         # initial_mesh_size: float = 5):
         """
-        Gets the lines that define mesh parameters for a VolumeModel, to be added to a .geo file
+        Gets the lines that define mesh parameters for a VolumeModel, to be added to a .geo file.
 
         :param factor: A float, between 0 and 1, that describes the mesh quality
         (1 for coarse mesh - 0 for fine mesh)
@@ -1761,7 +1499,7 @@ class VolumeModel(dc.PhysicalObject):
     def to_geo_stream(self, stream: dcf.StringFile,
                       factor: float, **kwargs):
         """
-        Gets the .geo file for the VolumeModel
+        Gets the .geo file for the VolumeModel.
 
         :param file_name: The geo. file name
         :type file_name: str
@@ -1871,7 +1609,7 @@ class VolumeModel(dc.PhysicalObject):
         # min_points: int = None,
         # initial_mesh_size: float = 5):
         """
-        gets the .geo file for the VolumeModel, with saving each closed shell in a stl file
+        Gets the .geo file for the VolumeModel, with saving each closed shell in a stl file.
 
         :param file_name: The geo. file name
         :type file_name: str
@@ -1959,7 +1697,7 @@ class VolumeModel(dc.PhysicalObject):
         # min_points: int = None,
         # initial_mesh_size: float = 5):
         """
-        gets .msh file for the VolumeModel generated by gmsh
+        Gets .msh file for the VolumeModel generated by gmsh.
 
         :param file_name: The msh. file name
         :type file_name: str
@@ -2022,6 +1760,18 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def generate_msh_file(file_name, mesh_dimension):
+        """
+        Generates a mesh written in a .msh file using GMSH library.
+
+        :param file_name: DESCRIPTION
+        :type file_name: TYPE
+        :param mesh_dimension: DESCRIPTION
+        :type mesh_dimension: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         gmsh.initialize()
         gmsh.open(file_name + ".geo")
 

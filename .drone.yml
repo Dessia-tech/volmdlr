@@ -71,7 +71,7 @@ steps:
   - cd doc
   - make html
   - cd ../tests
-  - coverage run --source volmdlr -m unittest discover
+  - coverage run --source volmdlr -m unittest discover -v
   - cd ../scripts
   - coverage run --source volmdlr ci_scripts.py
   - cd ../tutorials
@@ -96,22 +96,13 @@ steps:
         - testing
 
   commands:
-  - pip Cython wheel
-  - python setup install --user
-  - cd scripts/mesh
-  - python read_msh_file.py
-  - python mesh/geo_file_1.py
-  - python mesh/geo_file_2.py
-  - python mesh/geo_file_3.py
- 
-
-- name: install and run scripts
-  image: dessia/python-gmsh:3.9
-  commands:
-  - pip install Cython coverage
-  - python setup.py install --user
-  - cd tests
-  - coverage run --source volmdlr -m unittest discover
+  - git fetch --tags
+  - pip install Cython sphinx sphinx_rtd_theme coverage
+  - python setup.py install
+  - cd doc
+  - make html
+  - cd ../tests
+  - coverage run --source volmdlr -m unittest discover -v
   - cd ../scripts
   - coverage run --source volmdlr ci_scripts.py
   - cd ..
