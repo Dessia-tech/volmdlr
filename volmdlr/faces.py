@@ -22,7 +22,7 @@ from geomdl import BSpline
 from geomdl import utilities
 from geomdl.fitting import interpolate_surface, approximate_surface
 from geomdl.operations import split_surface_u, split_surface_v
-from geomdl import construct
+from geomdl.construct import extract_curves
 
 # import dessia_common
 from dessia_common.core import DessiaObject
