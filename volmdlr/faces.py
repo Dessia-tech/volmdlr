@@ -5877,11 +5877,11 @@ class PlaneFace3D(Face3D):
         return list_faces
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
-    """
-    gets the lines that define a PlaneFace3D in a .geo file
-    """
+        """
+        Gets the lines that define a PlaneFace3D in a .geo file.
+        """
 
-    return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
+        return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
 
 class Triangle3D(PlaneFace3D):
@@ -8272,7 +8272,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def get_geo_lines(self, update_data,
                       point_mesh_size: float = None):
         """
-        gets the lines that define an OpenShell3D geometry in a .geo file
+        Gets the lines that define an OpenShell3D geometry in a .geo file.
 
         :param update_data: Data used for VolumeModel defined with different shells
         :type update_data: dict
