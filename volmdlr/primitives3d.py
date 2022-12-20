@@ -1125,7 +1125,7 @@ class Cylinder(RevolvedProfile):
             ub=[math.pi * 2, self.length / 2, math.pi * 2, other_cylinder.length / 2],
         )
 
-        return minimize(fun=dist_points, x0=x0, bounds=bounds).fun
+        return minimize(fun=dist_points, x0=x0, bounds=bounds, method="Powell").fun
 
     def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder') -> bool:
         """
@@ -1134,7 +1134,7 @@ class Cylinder(RevolvedProfile):
         """
         dist = self.min_distance_to_other_cylinder(other_cylinder)
 
-        return dist < 1e-5
+        return dist < 1e-4
 
     def random_point_inside(self) -> volmdlr.Point3D:
         """
