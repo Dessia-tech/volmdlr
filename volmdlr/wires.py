@@ -709,7 +709,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         return self.__class__(primitives=primitives_symmetry)
 
-    def symmetry(self):
+    def symmetry(self, line):
         """
         TODO: code this
         """
@@ -1765,7 +1765,8 @@ class Contour2D(ContourMixin, Wire2D):
 
     def cut_by_line(self, line: volmdlr.edges.Line2D) -> List['Contour2D']:
         """
-        :param line: The line used to cut the contour
+        :param line: The line used to cut the contour.
+
         :return: A list of resulting contours
         """
         intersections = self.line_crossings(line)
@@ -1873,7 +1874,7 @@ class Contour2D(ContourMixin, Wire2D):
                            number_points_x: int = None,
                            number_points_y: int = None):
         """
-        Use a n by m grid to triangulize the contour
+        Compute a triangulation using a n-by-m grid to triangulize the contour.
         """
         bounding_rectangle = self.bounding_rectangle()
         # xmin, xmax, ymin, ymax = self.bounding_rectangle()
@@ -2133,8 +2134,9 @@ class Contour2D(ContourMixin, Wire2D):
 
     def merge_with(self, contour2d):
         """
-        merge two adjacent contours, sharing primitives, and returns one outer
-        contour and inner contours (if there are any)
+        Merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours
+        (if there are any).
+
         :param contour2d: contour to merge with
         :return: merged contours
         """
@@ -2405,10 +2407,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def barycenter(self):
         """
-        calculates the geometric center of the polygon, which is the
-        average position of all the points in it
+        Calculates the geometric center of the polygon, which is the average position of all the points in it.
 
-        returns a Volmdlr.Point2D point
+        :rtype: volmdlr.Point2D
         """
         barycenter1_2d = self.points[0]
         for point in self.points[1:]:
@@ -2417,7 +2418,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def point_belongs(self, point):
         """
-        Ray casting algorithm copied from internet...
+        Ray casting algorithm copied from internet.
         """
         return polygon_point_belongs((point.x, point.y),
                                      [(p.x, p.y) for p in self.points])
@@ -2448,7 +2449,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        ClosedPolygon2D rotation
+        ClosedPolygon2D rotation.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotated ClosedPolygon2D
@@ -2458,7 +2460,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Line2D rotation. Object is updated inplace
+        Line2D rotation, Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
@@ -2496,7 +2499,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        ClosedPolygon2D translation
+        ClosedPolygon2D translation.
+
         :param offset: translation vector
         :return: A new translated ClosedPolygon2D
         """
@@ -2505,7 +2509,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        ClosedPolygon2D translation. Object is updated inplace
+        ClosedPolygon2D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         for point in self.points:
@@ -2630,8 +2635,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def point_border_distance(self, point, return_other_point=False):
         """
-        Compute the distance to the border distance of polygon
-        Output is always positive, even if the point belongs to the polygon
+        Compute the distance to the border distance of polygon.
+        Output is always positive, even if the point belongs to the polygon.
         """
         d_min, other_point_min = self.line_segments[0].point_distance(
             point, return_other_point=True)
@@ -3029,6 +3034,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def triangulation(self):
         """
+        Computes the triangulation of the polygon using ear clipping algorithm.
         Note: triangles have been inverted for a better rendering in babylonjs
         """
         # ear clipping
@@ -4642,32 +4648,8 @@ class Contour3D(ContourMixin, Wire3D):
 
         merged_primitives = self.merge_primitives_with(contour3d)
         contours = Contour3D.contours_from_edges(merged_primitives, tol=3e-4)
-        # contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
 
         return contours
-
-    # def primitive_over_contour(self, primitive):
-    #     """
-    #     copied from Contour2D
-    #     """
-    #     for prim in self.primitives:
-    #         if not hasattr(prim, 'unit_direction_vector') and \
-    #                 hasattr(prim, 'tangent'):
-    #             vector1 = prim.tangent(0.5)
-    #         else:
-    #             vector1 = prim.unit_direction_vector(abscissa=0.)
-
-    #         if not hasattr(primitive, 'unit_direction_vector') and \
-    #                 hasattr(primitive, 'tangent'):
-    #             vector2 = primitive.tangent(0.5)
-    #         else:
-    #             vector2 = primitive.unit_direction_vector(abscissa=0.)
-
-    #         if vector1.is_colinear_to(vector2):
-    #             mid_point = primitive.middle_point()
-    #             if self.point_over_contour(mid_point):
-    #                 return True
-    #     return False
 
 
 class Circle3D(Contour3D):
@@ -4771,7 +4753,8 @@ class Circle3D(Contour3D):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Circle3D rotation
+        Circle3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -4782,7 +4765,8 @@ class Circle3D(Contour3D):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Circle3D rotation. Object is updated inplace
+        Circle3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -4791,7 +4775,8 @@ class Circle3D(Contour3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Circle3D translation
+        Circle3D translation.
+
         :param offset: translation vector
         :return: A new translated Circle3D
         """
@@ -4799,7 +4784,8 @@ class Circle3D(Contour3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Circle3D translation. Object is updated inplace
+        Circle3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.frame.translation_inplace(offset)
@@ -4972,7 +4958,9 @@ class Circle3D(Contour3D):
                    radius=radius)
 
     def extrusion(self, extrusion_vector):
-
+        """
+        Returns the cylindrical face generated by extrusion of the circle.
+        """
         if self.normal.is_colinear_to(extrusion_vector):
             u = self.normal.deterministic_unit_normal_vector()
             v = self.normal.cross(u)
@@ -4989,6 +4977,9 @@ class Circle3D(Contour3D):
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
                    angle: float):
+        """
+        Return the Toroidal face generated by the revolution of the circle.
+        """
         line3d = volmdlr.edges.Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.center)
         u = self.center - tore_center
@@ -5005,6 +4996,9 @@ class Circle3D(Contour3D):
         return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
+        """
+        Returns if given point belongs to the Circle3D.
+        """
         distance = point.point_distance(self.center)
         vec = volmdlr.Vector3D(*point - self.center)
         dot = self.normal.dot(vec)
@@ -5030,6 +5024,8 @@ class Circle3D(Contour3D):
 
 class Ellipse3D(Contour3D):
     """
+    Defines a 3D ellipse.
+
     :param major_axis: Largest radius of the ellipse
     :type major_axis: float
     :param minor_axis: Smallest radius of the ellipse

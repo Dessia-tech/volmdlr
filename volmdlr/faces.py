@@ -242,6 +242,14 @@ class Surface2D(volmdlr.core.Primitive2D):
         return point_inside_outer_contour
 
     def triangulation(self, min_x_density=None, min_y_density=None):
+        """
+        Triangulates the Surface2D using the Triangle library.
+
+        :param min_x_density: unused
+        :param min_y_density: unused
+        :return: The triangulated surface as a display mesh.
+        :rtype: :class:`volmdlr.display.DisplayMesh2D`
+        """
         if self.area() == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
 
@@ -327,6 +335,11 @@ class Surface2D(volmdlr.core.Primitive2D):
     def cut_by_line(self, line: vme.Line2D):
         """
         Returns a list of cutted Surface2D by the given line.
+
+        :param line: The line to cut the Surface2D with.
+        :type line: :class:`volmdlr.edges.Line2D`
+        :return: A list of 2D surfaces resulting from the cut.
+        :rtype: List[:class:`volmdlr.faces.Surface2D`]
         """
         surfaces = []
         splitted_outer_contours = self.outer_contour.cut_by_line(line)
@@ -352,9 +365,18 @@ class Surface2D(volmdlr.core.Primitive2D):
                 surfaces.append(Surface2D(outer_split, []))
         return surfaces
 
-    def line_crossings(self, line: 'volmdlr.edges.Line2D'):
+    def line_crossings(self, line: vme.Line2D):
         """
-        Returns a list of tuple (point, primitive) of the line intersection with the wire.
+        Find intersection points between a line and the 2D surface.
+
+        :param line: The line to intersect with the shape.
+        :type line: :class:`volmdlr.edges.Line2D`
+        :return: A list of intersection points sorted by increasing abscissa
+            along the line. Each intersection point is a tuple
+            (point, primitive) where point is the intersection point and
+            primitive is the intersected primitive.
+        :rtype: List[Tuple[:class:`volmdlr.Point2D`,
+            :class:`volmdlr.core.Primitive2D`]]
         """
         intersection_points = []
         for primitive in self.outer_contour.primitives:
@@ -370,7 +392,8 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def split_at_centers(self):
         """
-        Split in n slices
+        Split in n slices.
+        # TODO: is this used ?
         """
         # xmin, xmax, ymin, ymax = self.outer_contour.bounding_rectangle()
 
@@ -392,6 +415,17 @@ class Surface2D(volmdlr.core.Primitive2D):
         return cutted_contours
 
     def cut_by_line2(self, line):
+        """
+        Cuts a Surface2D with line (2).
+
+        :param line: DESCRIPTION
+        :type line: TYPE
+        :raises NotImplementedError: DESCRIPTION
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         all_contours = []
         inner_1 = self.inner_contours[0]
         inner_2 = self.inner_contours[1]
@@ -467,6 +501,17 @@ class Surface2D(volmdlr.core.Primitive2D):
         return all_contours
 
     def cut_by_line3(self, line):
+        """
+        Cuts a Surface2D with line (2).
+
+        :param line: DESCRIPTION
+        :type line: TYPE
+        :raises NotImplementedError: DESCRIPTION
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         # ax=self.outer_contour.plot()
         all_contours = []
         inner = self.inner_contours[0]
@@ -631,6 +676,14 @@ class Surface2D(volmdlr.core.Primitive2D):
         return all_contours
 
     def bounding_rectangle(self):
+        """
+        Returns bounding rectangle.
+
+        :return: Returns a python object with useful methods
+        :rtype: `volmdlr.core.BoundingRectangle.
+
+        """
+
         return self.outer_contour.bounding_rectangle()
 
     @classmethod
@@ -1210,7 +1263,8 @@ class Plane3D(Surface3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Plane3D translation
+        Plane3D translation.
+
         :param offset: translation vector
         :return: A new translated Plane3D
         """
@@ -1219,7 +1273,7 @@ class Plane3D(Surface3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Plane3D translation. Object is updated inplace
+        Plane3D translation. Object is updated inplace.
 
         :param offset: translation vector
         """
@@ -2672,6 +2726,11 @@ class RuledSurface3D(Surface3D):
 
 
 class BSplineSurface3D(Surface3D):
+    """
+    The local plane are the knot vectors u and v.
+
+    ADD DESCRIPTION
+    """
     face_class = 'BSplineFace3D'
     _non_serializable_attributes = ['surface']
 
@@ -3356,7 +3415,8 @@ class BSplineSurface3D(Surface3D):
 
     def grid3d(self, grid2d: volmdlr.grid.Grid2D):
         """
-        generate 3d grid points of a Bspline surface, based on a Grid2D
+        Generate 3d grid points of a Bspline surface, based on a Grid2D.
+
         """
 
         if not self._grids2d:
@@ -3369,7 +3429,8 @@ class BSplineSurface3D(Surface3D):
 
     def grid2d_deformed(self, grid2d: volmdlr.grid.Grid2D):
         """
-        dimension and deform a Grid2D points based on a Bspline surface
+        Dimension and deform a Grid2D points based on a Bspline surface.
+
         """
 
         points_2d = grid2d.points
@@ -3506,7 +3567,7 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a point2d from the parametric to the dimensioned frame
+        Convert a point2d from the parametric to the dimensioned frame.
         """
 
         # Check if the 0<point2d.x<1 and 0<point2d.y<1
@@ -3614,7 +3675,7 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_with_dimension_to_parametric_frame(self, point2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a point2d from the dimensioned to the parametric frame
+        Convert a point2d from the dimensioned to the parametric frame.
         """
 
         if self._grids2d != grid2d:
@@ -3722,7 +3783,7 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment2d_parametric_to_dimension(self, linesegment2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a linesegment2d from the parametric to the dimensioned frame
+        Convert a linesegment2d from the parametric to the dimensioned frame.
         """
 
         points = linesegment2d.discretization_points(number_points=20)
@@ -3746,7 +3807,7 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment2d_with_dimension_to_parametric_frame(self, linesegment2d):
         """
-        convert a linesegment2d from the dimensioned to the parametric frame
+        Convert a linesegment2d from the dimensioned to the parametric frame.
         """
 
         try:
@@ -3771,7 +3832,7 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve2d_parametric_to_dimension(self, bsplinecurve2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a bsplinecurve2d from the parametric to the dimensioned frame
+        Convert a bsplinecurve2d from the parametric to the dimensioned frame.
         """
 
         # check if bsplinecurve2d is in a list
@@ -3805,7 +3866,7 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve2d_with_dimension_to_parametric_frame(self, bsplinecurve2d):
         """
-        convert a bsplinecurve2d from the dimensioned to the parametric frame
+        Convert a bsplinecurve2d from the dimensioned to the parametric frame.
         """
 
         points_dim = bsplinecurve2d.control_points
@@ -3834,7 +3895,8 @@ class BSplineSurface3D(Surface3D):
 
     def arc2d_parametric_to_dimension(self, arc2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a arc2d from the parametric to the dimensioned frame
+        Convert a arc2d from the parametric to the dimensioned frame.
+
         """
 
         number_points = math.ceil(arc2d.angle * 7) + 1
@@ -3858,7 +3920,8 @@ class BSplineSurface3D(Surface3D):
 
     def arc2d_with_dimension_to_parametric_frame(self, arc2d):
         """
-        convert a arc2d from the dimensioned to the parametric frame
+        Convert a arc2d from the dimensioned to the parametric frame.
+
         """
 
         number_points = math.ceil(arc2d.angle * 7) + 1
@@ -3884,7 +3947,8 @@ class BSplineSurface3D(Surface3D):
     def contour2d_parametric_to_dimension(self, contour2d: volmdlr.wires.Contour2D,
                                           grid2d: volmdlr.grid.Grid2D):
         """
-        convert a contour2d from the parametric to the dimensioned frame
+        Convert a contour2d from the parametric to the dimensioned frame.
+
         """
 
         primitives2d_dim = []
@@ -3908,7 +3972,7 @@ class BSplineSurface3D(Surface3D):
     def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D,
                                        grid2d: volmdlr.grid.Grid2D):
         """
-        Compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame.
+        Compute the Contour2d of a Contour3d, on a Bspline surface, in the dimensioned frame.
 
         """
 
@@ -3918,7 +3982,8 @@ class BSplineSurface3D(Surface3D):
 
     def contour2d_with_dimension_to_parametric_frame(self, contour2d):
         """
-        convert a contour2d from the dimensioned to the parametric frame
+        Convert a contour2d from the dimensioned to the parametric frame.
+
         """
 
         # TODO: check and avoid primitives with start=end
@@ -3961,7 +4026,8 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def from_geomdl_surface(cls, surface):
         """
-        create a volmdlr's BSpline_Surface3D from a geomdl's one
+        Create a volmdlr's BSpline_Surface3D from a geomdl's one.
+
         """
 
         control_points = []
@@ -4058,7 +4124,7 @@ class BSplineSurface3D(Surface3D):
     def from_cylindrical_faces(cls, cylindrical_faces, degree_u, degree_v,
                                points_x: int = 10, points_y: int = 10):
         """
-        define a bspline surface from a list of cylindrical faces
+        Define a bspline surface from a list of cylindrical faces.
 
         Parameters
         ----------
@@ -4141,7 +4207,7 @@ class BSplineSurface3D(Surface3D):
     def from_cylindrical_face(cls, cylindrical_face, degree_u, degree_v,
                               **kwargs):  # points_x: int = 50, points_y: int = 50
         """
-        define a bspline surface from a cylindrical face
+        Define a bspline surface from a cylindrical face.
 
         Parameters
         ----------
@@ -4452,7 +4518,8 @@ class BSplineSurface3D(Surface3D):
 
     def point_belongs(self, point3d):
         """
-        check if a point3d belongs to the bspline_surface or not
+        Check if a point3d belongs to the bspline_surface or not.
+
         """
 
         def f(x):
@@ -4473,7 +4540,8 @@ class BSplineSurface3D(Surface3D):
 
     def is_intersected_with(self, other_bspline_surface3d):
         """
-        check if the two surfaces are intersected or not
+        Check if the two surfaces are intersected or not.
+
         return True, when there are more 50points on the intersection zone
         """
 
@@ -4648,6 +4716,12 @@ class BezierSurface3D(BSplineSurface3D):
 
 
 class Face3D(volmdlr.core.Primitive3D):
+    """
+    Face3D object.
+
+    ADD DESCRIPTION
+    """
+
     min_x_density = 1
     min_y_density = 1
 
@@ -4983,6 +5057,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
 class PlaneFace3D(Face3D):
     """
+    Defines a PlaneFace based on a plane surface.
 
     :param contours: The face's contour2D.
     :type contours: volmdlr.Contour2D.
@@ -4990,7 +5065,6 @@ class PlaneFace3D(Face3D):
     :type plane: Plane3D.
     """
     _standalone_in_db = False
-    _generic_eq = True
     _non_serializable_attributes = ['bounding_box', 'polygon2D']
     _non_data_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
                                'inner_contours3d']
@@ -5911,6 +5985,7 @@ class PlaneFace3D(Face3D):
 
 class Triangle3D(PlaneFace3D):
     """
+    Triangle face object.
 
     :param point1: The first point.
     :type point1: volmdlr.Point3D.
@@ -6229,6 +6304,7 @@ class Triangle3D(PlaneFace3D):
 
 class CylindricalFace3D(Face3D):
     """
+    Cylindrical face object.
 
     :param contours2d: The cylinder's contour2D.
     :type contours2d: volmdlr.Contour2D.
@@ -8271,6 +8347,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
 
 class ClosedShell3D(OpenShell3D):
+    """
+    Abstract class for a closed shell representation.
+
+    A ClosedShell is defined as a list of faces
+    """
     STEP_FUNCTION = 'CLOSED_SHELL'
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,

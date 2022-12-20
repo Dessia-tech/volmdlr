@@ -21,9 +21,14 @@ import volmdlr.faces
 import volmdlr.primitives3d
 import volmdlr.wires
 
-# import webbrowser
-# from jinja2 import Environment, PackageLoader, select_autoescape
-# import os
+
+def set_to_list(step_set):
+    """
+    """
+    char_list = step_set.split(',')
+    char_list[0] = char_list[0][1:]
+    char_list[-1] = char_list[-1][:-1]
+    return list(char_list)
 
 
 def step_split_arguments(function_arg):
@@ -72,18 +77,62 @@ def oriented_edge(arguments, object_dict):
 
 
 def face_outer_bound(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def face_bound(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def surface_curve(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def seam_curve(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
@@ -117,7 +166,9 @@ def geometric_curve_set(arguments, object_dict):
 
 
 def shell_base_surface_model(arguments, object_dict):
-    # Shell3D
+    """
+    Returns the data in case of a Shell3D.
+    """
     return object_dict[int(arguments[1][0][1:])]
 
 
@@ -132,7 +183,9 @@ def item_defined_transformation(arguments, object_dict):
 
 
 def manifold_surface_shape_representation(arguments, object_dict):
-    # Shell3D
+    """
+    Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
+    """
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
@@ -143,10 +196,16 @@ def manifold_surface_shape_representation(arguments, object_dict):
 
 
 def manifold_solid_brep(arguments, object_dict):
+    """
+    Returns the data in case of a manifold_solid_brep with voids.
+    """
     return object_dict[arguments[1]]
 
 
 def brep_with_voids(arguments, object_dict):
+    """
+    Returns the data in case of a BREP with voids.
+    """
     return object_dict[arguments[1]]
 
 
@@ -222,7 +281,6 @@ def representation_relationship_representation_relationship_with_transformation_
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
         arguments, object_dict):
     modified_arguments = [''] + arguments
-    name = 'B_SPLINE_CURVE'
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
     return STEP_TO_VOLMDLR['BOUNDED_CURVE, '
@@ -236,7 +294,6 @@ def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_repre
 
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
         arguments, object_dict):
-    name = 'B_SPLINE_SURFACE'
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
@@ -249,6 +306,9 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
 
 
 class StepFunction:
+    """
+    A StepFunction is defined by its ID, name and arguments from the step file.
+    """
     def __init__(self, function_id, function_name, function_arg):
         self.id = function_id
         self.name = function_name
@@ -378,7 +438,7 @@ class Step(dc.DessiaObject):
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
-                    arg_list = volmdlr.core.set_to_list(argument)
+                    arg_list = set_to_list(argument)
                     arguments[i] = arg_list
 
             function = StepFunction(function_id, function_name, arguments)
