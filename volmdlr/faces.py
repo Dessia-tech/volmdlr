@@ -134,6 +134,18 @@ class Surface2D(volmdlr.core.Primitive2D):
         return point_inside_outer_contour
 
     def triangulation(self, min_x_density=None, min_y_density=None):
+        """
+        Triangulations.
+
+        :param min_x_density: DESCRIPTION, defaults to None
+        :type min_x_density: TYPE, optional
+        :param min_y_density: DESCRIPTION, defaults to None
+        :type min_y_density: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         if self.area() == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
 
@@ -285,6 +297,17 @@ class Surface2D(volmdlr.core.Primitive2D):
         return cutted_contours
 
     def cut_by_line2(self, line):
+        """
+        Cuts a Surface2D with line (2).
+
+        :param line: DESCRIPTION
+        :type line: TYPE
+        :raises NotImplementedError: DESCRIPTION
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         all_contours = []
         inner_1 = self.inner_contours[0]
         inner_2 = self.inner_contours[1]
@@ -376,6 +399,17 @@ class Surface2D(volmdlr.core.Primitive2D):
         return all_contours
 
     def cut_by_line3(self, line):
+        """
+        Cuts a Surface2D with line (2).
+
+        :param line: DESCRIPTION
+        :type line: TYPE
+        :raises NotImplementedError: DESCRIPTION
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         # ax=self.outer_contour.plot()
         all_contours = []
         inner = self.inner_contours[0]
@@ -548,6 +582,14 @@ class Surface2D(volmdlr.core.Primitive2D):
         return all_contours
 
     def bounding_rectangle(self):
+        """
+        Returns bounding rectangle.
+
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         return self.outer_contour.bounding_rectangle()
 
     @classmethod
@@ -2472,7 +2514,7 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment3d_to_2d(self, linesegment3d):
         """
-        a line segment on a BSplineSurface3D will be in any case a line in 2D?
+        A line segment on a BSplineSurface3D will be in any case a line in 2D?
         """
         x_perio = self.x_periodicity if self.x_periodicity is not None else 1.
         y_perio = self.y_periodicity if self.y_periodicity is not None else 1.
@@ -2847,7 +2889,8 @@ class BSplineSurface3D(Surface3D):
 
     def grid3d(self, grid2d: volmdlr.grid.Grid2D):
         """
-        generate 3d grid points of a Bspline surface, based on a Grid2D
+        Generate 3d grid points of a Bspline surface, based on a Grid2D.
+
         """
 
         if not self._grids2d:
@@ -2860,7 +2903,8 @@ class BSplineSurface3D(Surface3D):
 
     def grid2d_deformed(self, grid2d: volmdlr.grid.Grid2D):
         """
-        dimension and deform a Grid2D points based on a Bspline surface
+        Dimension and deform a Grid2D points based on a Bspline surface.
+
         """
 
         points_2d = grid2d.points
@@ -2998,7 +3042,8 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a point2d from the parametric to the dimensioned frame
+        Convert a point2d from the parametric to the dimensioned frame.
+
         """
 
         # Check if the 0<point2d.x<1 and 0<point2d.y<1
@@ -3095,7 +3140,6 @@ class BSplineSurface3D(Surface3D):
     def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, grid2d: volmdlr.grid.Grid2D):
         """
         Compute the point2d of a point3d, on a Bspline surface, in the dimensioned frame.
-
         """
 
         point2d = self.point3d_to_2d(point3d)
@@ -3106,7 +3150,8 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_with_dimension_to_parametric_frame(self, point2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a point2d from the dimensioned to the parametric frame
+        Convert a point2d from the dimensioned to the parametric frame.
+
         """
 
         if self._grids2d != grid2d:
@@ -3214,7 +3259,8 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment2d_parametric_to_dimension(self, linesegment2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a linesegment2d from the parametric to the dimensioned frame
+        Convert a linesegment2d from the parametric to the dimensioned frame.
+
         """
 
         points = linesegment2d.discretization_points(number_points=20)
@@ -3238,7 +3284,8 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment2d_with_dimension_to_parametric_frame(self, linesegment2d):
         """
-        convert a linesegment2d from the dimensioned to the parametric frame
+        Convert a linesegment2d from the dimensioned to the parametric frame.
+
         """
 
         try:
@@ -3263,7 +3310,8 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve2d_parametric_to_dimension(self, bsplinecurve2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a bsplinecurve2d from the parametric to the dimensioned frame
+        Convert a bsplinecurve2d from the parametric to the dimensioned frame.
+
         """
 
         # check if bsplinecurve2d is in a list
@@ -3297,7 +3345,8 @@ class BSplineSurface3D(Surface3D):
 
     def bsplinecurve2d_with_dimension_to_parametric_frame(self, bsplinecurve2d):
         """
-        convert a bsplinecurve2d from the dimensioned to the parametric frame
+        Convert a bsplinecurve2d from the dimensioned to the parametric frame.
+
         """
 
         points_dim = bsplinecurve2d.control_points
@@ -3326,7 +3375,8 @@ class BSplineSurface3D(Surface3D):
 
     def arc2d_parametric_to_dimension(self, arc2d, grid2d: volmdlr.grid.Grid2D):
         """
-        convert a arc2d from the parametric to the dimensioned frame
+        Convert a arc2d from the parametric to the dimensioned frame.
+
         """
 
         number_points = math.ceil(arc2d.angle * 7) + 1
@@ -3350,7 +3400,8 @@ class BSplineSurface3D(Surface3D):
 
     def arc2d_with_dimension_to_parametric_frame(self, arc2d):
         """
-        convert a arc2d from the dimensioned to the parametric frame
+        Convert a arc2d from the dimensioned to the parametric frame.
+
         """
 
         number_points = math.ceil(arc2d.angle * 7) + 1
@@ -3376,7 +3427,8 @@ class BSplineSurface3D(Surface3D):
     def contour2d_parametric_to_dimension(self, contour2d: volmdlr.wires.Contour2D,
                                           grid2d: volmdlr.grid.Grid2D):
         """
-        convert a contour2d from the parametric to the dimensioned frame
+        Convert a contour2d from the parametric to the dimensioned frame.
+
         """
 
         primitives2d_dim = []
@@ -3410,7 +3462,8 @@ class BSplineSurface3D(Surface3D):
 
     def contour2d_with_dimension_to_parametric_frame(self, contour2d):
         """
-        convert a contour2d from the dimensioned to the parametric frame
+        Convert a contour2d from the dimensioned to the parametric frame.
+
         """
 
         # TODO: check and avoid primitives with start=end
@@ -3453,7 +3506,8 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def from_geomdl_surface(cls, surface):
         """
-        create a volmdlr's BSpline_Surface3D from a geomdl's one
+        Create a volmdlr's BSpline_Surface3D from a geomdl's one.
+
         """
 
         control_points = []
@@ -3550,7 +3604,7 @@ class BSplineSurface3D(Surface3D):
     def from_cylindrical_faces(cls, cylindrical_faces, degree_u, degree_v,
                                points_x: int = 10, points_y: int = 10):
         """
-        define a bspline surface from a list of cylindrical faces
+        Define a bspline surface from a list of cylindrical faces.
 
         Parameters
         ----------
@@ -3633,7 +3687,7 @@ class BSplineSurface3D(Surface3D):
     def from_cylindrical_face(cls, cylindrical_face, degree_u, degree_v,
                               **kwargs):  # points_x: int = 50, points_y: int = 50
         """
-        define a bspline surface from a cylindrical face
+        Define a bspline surface from a cylindrical face.
 
         Parameters
         ----------
@@ -3944,7 +3998,8 @@ class BSplineSurface3D(Surface3D):
 
     def point_belongs(self, point3d):
         """
-        check if a point3d belongs to the bspline_surface or not
+        Check if a point3d belongs to the bspline_surface or not.
+
         """
 
         def f(x):
@@ -3965,7 +4020,8 @@ class BSplineSurface3D(Surface3D):
 
     def is_intersected_with(self, other_bspline_surface3d):
         """
-        check if the two surfaces are intersected or not
+        Check if the two surfaces are intersected or not.
+
         return True, when there are more 50points on the intersection zone
         """
 
@@ -5390,6 +5446,101 @@ class PlaneFace3D(Face3D):
             surfaces.append(Surface2D(contour, inners))
 
         return [self.__class__(self.surface3d, surface2d) for surface2d in surfaces]
+
+    def check_inner_contours(self, face):
+        c_inners_1 = self.surface2d.inner_contours
+        c_inners_2 = [self.surface3d.contour3d_to_2d(inner) for inner in face.inner_contours3d]
+        inside = set()
+        for c1 in c_inners_1:
+            for c2 in c_inners_2:
+                if c1.is_superposing(c2):
+                    inside.add(False)
+                else:
+                    inside.add(c2.is_inside(c1))
+        return inside
+
+    @staticmethod
+    def update_faces_with_divided_faces(divided_faces, face2_2, used, list_faces):
+        for d_face in divided_faces:
+
+            if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
+                if face2_2.surface2d.inner_contours:
+                    divided_faces_d_face = []
+                    for inner in face2_2.surface2d.inner_contours:
+
+                        if True in [(((abs(inner_d.area() - inner.area()) < 1e-6)
+                                      and inner.center_of_mass().is_close(inner_d.center_of_mass()))
+                                     or inner_d.is_inside(inner))
+                                    for inner_d in d_face.surface2d.inner_contours]:
+
+                            divided_faces_d_face = ['', d_face]
+                            continue
+
+                        divided_faces_d_face = d_face.divide_face([inner], True)
+                        divided_faces_d_face.sort(key=lambda x: x.area())
+
+                        list_faces.append(divided_faces_d_face[0])
+                        d_face = divided_faces_d_face[1]
+
+                    if divided_faces_d_face:
+                        list_faces.append(divided_faces_d_face[1])
+
+                else:
+                    list_faces.append(d_face)
+            else:
+                used.append(d_face)
+
+        return used, list_faces
+
+    def project_faces(self, faces):
+        """
+        Divide self based on faces's outer, and inner contours
+
+        :param faces: DESCRIPTION
+        :type faces: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+        """
+
+        used_faces, list_faces = {}, []
+
+        for j, face2 in enumerate(faces):
+            contour1 = self.surface2d.outer_contour
+            contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)
+
+            inside = self.check_inner_contours(face2)
+            if (self.surface3d.is_coincident(face2.surface3d)
+                and (contour1.is_overlapping(contour2)
+                     or (contour1.is_inside(contour2) or True in inside))):
+
+                if self in used_faces:
+                    faces_1, face2_2 = used_faces[self][:], face2
+                else:
+                    faces_1, face2_2 = [self], face2
+
+                used = []
+                for face1_1 in faces_1:
+                    plane3d = face1_1.surface3d
+                    s2d = Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
+                                    inner_contours=[
+                                        plane3d.contour3d_to_2d(contour) for contour in face2_2.inner_contours3d])
+                    face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
+
+                    divided_faces = face1_1.cut_by_coincident_face(face2_2)
+
+                    used, list_faces = self.update_faces_with_divided_faces(
+                        divided_faces, face2_2, used, list_faces)
+                used_faces[self] = used
+
+        try:
+            if isinstance(used_faces[self], list):
+                list_faces.extend(used_faces[self])
+            else:
+                list_faces.append(used_faces[self])
+        except KeyError:
+            list_faces.append(self)
+
+        return list_faces
 
 
 class Triangle3D(PlaneFace3D):
@@ -7756,6 +7907,19 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             face.plot(ax=ax, color=color, alpha=alpha)
 
         return ax
+
+    def project_coincident_faces_of(self, shell):
+        """
+        Divides self's faces based on coincident shell's faces
+        """
+
+        list_faces = []
+        initial_faces = self.faces[:]
+
+        for i, face1 in enumerate(initial_faces):
+            list_faces.extend(face1.project_faces(shell.faces))
+
+        return self.__class__(list_faces)
 
 
 class ClosedShell3D(OpenShell3D):

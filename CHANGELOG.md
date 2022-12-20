@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+* PlaneFace3D: project_faces
+* OpenShell3D: project_coincident_faces_of
+
 
 ### Fixed
 
@@ -67,7 +70,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * hash for Frame2D
 * Ellipse3D: point_belongs, abscissa, length, to_2d
 * CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
-
 
 ### Fixed
 
