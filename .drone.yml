@@ -63,7 +63,7 @@ steps:
   - cd doc
   - make html
   - cd ../tests
-  - coverage run --source volmdlr -m unittest discover
+  - coverage run --source volmdlr -m unittest discover -v
   - cd ../scripts
   - coverage run --source volmdlr ci_scripts.py
   - cd ../tutorials
@@ -78,7 +78,6 @@ steps:
     # Mount pip cache from host
     - name: pip_cache
       path: /root/.cache/pip
-
 
 - name: generate sdist
   image: python:3.8

@@ -6,6 +6,7 @@ Geometry functions.
 
 import math
 from typing import Tuple
+
 from numpy import array, zeros
 
 import volmdlr as vm
@@ -111,3 +112,170 @@ def sin_image(x1: float, x2: float) -> Tuple[float, float]:
     x1 = x1 - 0.5 * math.pi
     x2 = x2 - 0.5 * math.pi
     return cos_image(x1, x2)
+
+
+def vectors3d_angle(vector1, vector2):
+    """
+    Computes the angle between two 3 dimensional vectors.
+
+    :param vector1: The fist 3 dimensional vector
+    :type vector1: :class:`volmdlr.Vector3D`
+    :param vector2: The second 3 dimensional vectors
+    :type vector2: :class:`volmdlr.Vector3D`
+    :return: The angle between the two vectors
+    :rtype: flaot
+    """
+    dot_v1v2 = vector1.dot(vector2)
+    theta = math.acos(dot_v1v2 / (vector1.norm() * vector2.norm()))
+
+    return theta
+
+
+def sin_cos_angle(u1, u2):
+    """
+    Returns an angle between 0 and 2*PI verifying cos(theta)=u1, sin(theta)=u2.
+
+    :param u1: The value of the cosinus of the returned angle
+    :type u1: float
+    :param u2: The value of the sinus of the returned angle
+    :type u2: flaot
+    :return: The angle verifying the two equations
+    :rtype: float
+    """
+    if u1 < -1:
+        u1 = -1
+    elif u1 > 1:
+        u1 = 1
+    if u2 < -1:
+        u2 = -1
+    elif u2 > 1:
+        u2 = 1
+
+    if u1 > 0:
+        if u2 >= 0:
+            theta = math.acos(u1)
+        else:
+            theta = vm.TWO_PI + math.asin(u2)
+    else:
+        if u2 >= 0:
+            theta = math.acos(u1)
+        else:
+            theta = vm.TWO_PI - math.acos(u1)
+    if math.isclose(theta, vm.TWO_PI, abs_tol=1e-9):
+        return 0.
+    return theta
+
+
+def posangle_arc(start, end, radius, frame=None):
+    """
+    Seems unused
+    """
+    if frame is None:
+        p1_new, p2_new = start, end
+    else:
+        p1_new, p2_new = frame.new_coordinates(start), frame.new_coordinates(end)
+    # Angle pour le p1
+    u1, u2 = p1_new.x / radius, p1_new.y / radius
+    theta1 = sin_cos_angle(u1, u2)
+    # Angle pour le p2
+    u3, u4 = p2_new.x / radius, p2_new.y / radius
+    theta2 = sin_cos_angle(u3, u4)
+
+    if math.isclose(theta1, theta2, abs_tol=1e-6):
+        if math.isclose(theta2, 0, abs_tol=1e-6):
+            theta2 += vm.TWO_PI
+        elif math.isclose(theta1, vm.TWO_PI, abs_tol=1e-6):
+            theta1 -= vm.TWO_PI
+
+    return theta1, theta2
+
+
+def clockwise_interior_from_circle3d(start, end, circle):
+    """
+    Returns the clockwise interior point between start and end on the circle.
+    """
+    start2d = start.to_2d(plane_origin=circle.frame.origin,
+                          x=circle.frame.u, y=circle.frame.v)
+    end2d = end.to_2d(plane_origin=circle.frame.origin,
+                      x=circle.frame.u, y=circle.frame.v)
+
+    # Angle pour le p1
+    u1, u2 = start2d.x / circle.radius, start2d.y / circle.radius
+    theta1 = sin_cos_angle(u1, u2)
+    # Angle pour le p2
+    u3, u4 = end2d.x / circle.radius, end2d.y / circle.radius
+    theta2 = sin_cos_angle(u3, u4)
+
+    if theta1 > theta2:
+        theta3 = (theta1 + theta2) / 2
+    elif theta2 > theta1:
+        theta3 = (theta1 + theta2) / 2 + vm.TWO_PI / 2
+    else:
+        raise NotImplementedError
+
+    if theta3 > vm.TWO_PI:
+        theta3 -= vm.TWO_PI
+
+    interior2d = vm.Point2D(circle.radius * math.cos(theta3),
+                            circle.radius * math.sin(theta3))
+    interior3d = interior2d.to_3d(plane_origin=circle.frame.origin,
+                                  vx=circle.frame.u, vy=circle.frame.v)
+    return interior3d
+
+
+def offset_angle(trigo, angle_start, angle_end):
+    """
+    Calculates the offset and angle.
+
+    Seems unused
+    """
+    if trigo:
+        offset = angle_start
+    else:
+        offset = angle_end
+    if angle_start > angle_end:
+        angle = angle_start - angle_end
+    else:
+        angle = angle_end - angle_start
+    return offset, angle
+
+
+def angle_principal_measure(angle, min_angle=-math.pi):
+    """
+    Returns angle between O and 2 pi.
+    """
+    max_angle = min_angle + vm.TWO_PI
+    angle = angle % (vm.TWO_PI)
+
+    if math.isclose(angle, min_angle, abs_tol=1e-9):
+        return min_angle
+    if math.isclose(angle, max_angle, abs_tol=1e-9):
+        return max_angle
+
+    return angle
+
+
+def clockwise_angle(vector1, vector2):
+    """
+    Return the clockwise angle in radians between vector1 and vector2.
+    """
+    vector0 = vm.O2D
+    if vector0 in (vector1, vector2):
+        return 0
+
+    dot_v1v2 = vector1.dot(vector2)
+    norm_vec_1 = vector1.norm()
+    norm_vec_2 = vector2.norm()
+    sol = dot_v1v2 / (norm_vec_1 * norm_vec_2)
+    cross_v1v2 = vector1.cross(vector2)
+    if math.isclose(sol, 1, abs_tol=1e-6):
+        inner_angle = 0
+    elif math.isclose(sol, -1, abs_tol=1e-6):
+        inner_angle = math.pi
+    else:
+        inner_angle = math.acos(sol)
+
+    if cross_v1v2 < 0:
+        return inner_angle
+
+    return vm.TWO_PI - inner_angle

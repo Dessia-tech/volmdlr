@@ -21,9 +21,14 @@ import volmdlr.faces
 import volmdlr.primitives3d
 import volmdlr.wires
 
-# import webbrowser
-# from jinja2 import Environment, PackageLoader, select_autoescape
-# import os
+
+def set_to_list(step_set):
+    """
+    """
+    char_list = step_set.split(',')
+    char_list[0] = char_list[0][1:]
+    char_list[-1] = char_list[-1][:-1]
+    return list(char_list)
 
 
 def step_split_arguments(function_arg):
@@ -72,18 +77,61 @@ def oriented_edge(arguments, object_dict):
 
 
 def face_outer_bound(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def face_bound(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def surface_curve(arguments, object_dict):
+    """
+    Returns xx.
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def seam_curve(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
@@ -386,7 +434,7 @@ class Step(dc.DessiaObject):
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
-                    arg_list = volmdlr.core.set_to_list(argument)
+                    arg_list = set_to_list(argument)
                     arguments[i] = arg_list
 
             function = StepFunction(function_id, function_name, arguments)
