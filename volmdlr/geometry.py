@@ -7,8 +7,7 @@ Geometry functions.
 import math
 from typing import Tuple
 
-from numpy import dot, cross, array, zeros, random
-from scipy.linalg import norm
+from numpy import array, zeros
 
 import volmdlr as vm
 

@@ -44,60 +44,6 @@ END-ISO-10303-21;
 '''
 
 
-
-def delete_double_pos(points, triangles):
-    """
-    Eliminate double points in a mesh.
-    This seems unused and redundant with display.py.
-    """
-    warnings.warn('The function delete_double_pos is deprecated, use classes and methods from volmdlr.display',
-                  DeprecationWarning)
-
-def delete_double_pos(points, triangles):
-    """
-    Clean mesh by deleting double points.
-    See if we could move this to display.
-    """
-    points_to_indexes = {}
-
-    for index, point in enumerate(points):
-        if point not in points_to_indexes:
-            points_to_indexes[point] = [index]
-        else:
-            points_to_indexes[point].append(index)
-
-    new_points = []
-    index_to_modified_index = {}
-    for i, (point, indexes) in enumerate(points_to_indexes.items()):
-        new_points.append(point)
-        index_to_modified_index[indexes[0]] = i
-
-    index_to_new_index = {}
-
-    for indexes in points_to_indexes.values():
-        for index in indexes[1:]:
-            index_to_new_index[index] = indexes[0]
-
-    new_triangles = []
-    for face_triangles in triangles:
-        if face_triangles is None:
-            continue
-        new_face_triangles = []
-        for triangle_ in face_triangles:
-            new_triangle = []
-            for index in triangle_:
-                if index in index_to_new_index:
-                    modified_index = index_to_modified_index[
-                        index_to_new_index[index]]
-                else:
-                    modified_index = index_to_modified_index[index]
-                new_triangle.append(modified_index)
-            new_face_triangles.append(tuple(new_triangle))
-        new_triangles.append(new_face_triangles)
-
-    return new_points, new_triangles
-
-
 def determinant(vec1, vec2, vec3):
     """
     Calculates the determinant for a three vector matrix.

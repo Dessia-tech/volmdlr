@@ -411,7 +411,7 @@ class LineSegment(Edge):
     def split(self, split_point):
         if split_point == self.start:
             return [None, self.copy()]
-        elif split_point == self.end:
+        if split_point == self.end:
             return [self.copy(), None]
         return [self.__class__(self.start, split_point),
                 self.__class__(split_point, self.end)]
@@ -614,7 +614,7 @@ class BSplineCurve(Edge):
         """
         if point.point_distance(self.start) < tol:
             return [None, self.copy()]
-        elif point.point_distance(self.end) < tol:
+        if point.point_distance(self.end) < tol:
             return [self.copy(), None]
         adim_abscissa = self.abscissa(point) / self.length()
         curve1, curve2 = split_curve(self.curve, adim_abscissa)
@@ -1010,7 +1010,7 @@ class Line2D(Line):
             # Segments are on the same line: no solution
             return None, None
 
-        elif math.isclose(self.unit_direction_vector().dot(
+        if math.isclose(self.unit_direction_vector().dot(
                 other_line.unit_normal_vector()), 0, abs_tol=1e-06):
             # Parallel segments: one solution
 
@@ -1023,7 +1023,7 @@ class Line2D(Line):
 
             return circle, None
 
-        elif math.isclose(self.unit_direction_vector().dot(
+        if math.isclose(self.unit_direction_vector().dot(
                 other_line.unit_direction_vector()), 0, abs_tol=1e-06):
             # Perpendicular segments: 2 solution
             line_AB = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
@@ -1044,64 +1044,63 @@ class Line2D(Line):
         # LES SEGMENTS SONT QUELCONQUES
         #   => 2 SOLUTIONS
         # =============================================================================
-        else:
+        
+        line_AB = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
+        line_CD = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
+        new_pt_k = volmdlr.Point2D.line_intersection(line_AB, line_CD)
+        pt_K = volmdlr.Point2D(new_basis.old_coordinates(new_pt_k))
 
-            line_AB = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
-            line_CD = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
-            new_pt_k = volmdlr.Point2D.line_intersection(line_AB, line_CD)
-            pt_K = volmdlr.Point2D(new_basis.old_coordinates(new_pt_k))
+        if pt_K == I:
+            return None, None
 
-            if pt_K == I:
-                return None, None
+        # CHANGEMENT DE REPERE:
+        new_u2 = volmdlr.Vector2D(pt_K - I)
+        new_u2.normalize()
+        new_v2 = new_u2.normalVector(unit=True)
+        new_basis2 = volmdlr.Frame2D(I, new_u2, new_v2)
 
-            # CHANGEMENT DE REPERE:
-            new_u2 = volmdlr.Vector2D(pt_K - I)
-            new_u2.normalize()
-            new_v2 = new_u2.normalVector(unit=True)
-            new_basis2 = volmdlr.Frame2D(I, new_u2, new_v2)
+        new_a = new_basis2.new_coordinates(A)
+        new_b = new_basis2.new_coordinates(B)
+        new_c = new_basis2.new_coordinates(C)
+        new_d = new_basis2.new_coordinates(D)
+        new_pt_k = new_basis2.new_coordinates(pt_K)
 
-            new_a = new_basis2.new_coordinates(A)
-            new_b = new_basis2.new_coordinates(B)
-            new_c = new_basis2.new_coordinates(C)
-            new_d = new_basis2.new_coordinates(D)
-            new_pt_k = new_basis2.new_coordinates(pt_K)
+        teta1 = math.atan2(new_c[1], new_c[0] - new_pt_k[0])
+        teta2 = math.atan2(new_d[1], new_d[0] - new_pt_k[0])
 
-            teta1 = math.atan2(new_c[1], new_c[0] - new_pt_k[0])
-            teta2 = math.atan2(new_d[1], new_d[0] - new_pt_k[0])
+        if teta1 < 0:
+            teta1 += math.pi
+        if teta2 < 0:
+            teta2 += math.pi
 
-            if teta1 < 0:
-                teta1 += math.pi
-            if teta2 < 0:
-                teta2 += math.pi
-
-            if not math.isclose(teta1, teta2, abs_tol=1e-08):
-                if math.isclose(teta1, math.pi, abs_tol=1e-08) or math.isclose(
-                        teta1, 0., abs_tol=1e-08):
-                    teta = teta2
-                elif math.isclose(teta2, math.pi,
-                                  abs_tol=1e-08) or math.isclose(teta2, 0.,
-                                                                 abs_tol=1e-08):
-                    teta = teta1
-            else:
+        if not math.isclose(teta1, teta2, abs_tol=1e-08):
+            if math.isclose(teta1, math.pi, abs_tol=1e-08) or math.isclose(
+                    teta1, 0., abs_tol=1e-08):
+                teta = teta2
+            elif math.isclose(teta2, math.pi,
+                              abs_tol=1e-08) or math.isclose(teta2, 0.,
+                                                             abs_tol=1e-08):
                 teta = teta1
+        else:
+            teta = teta1
 
-            r1 = new_pt_k[0] * math.sin(teta) / (1 + math.cos(teta))
-            r2 = new_pt_k[0] * math.sin(teta) / (1 - math.cos(teta))
+        r1 = new_pt_k[0] * math.sin(teta) / (1 + math.cos(teta))
+        r2 = new_pt_k[0] * math.sin(teta) / (1 - math.cos(teta))
 
-            new_circle_center1 = volmdlr.Point2D(0, -r1)
-            new_circle_center2 = volmdlr.Point2D(0, r2)
+        new_circle_center1 = volmdlr.Point2D(0, -r1)
+        new_circle_center2 = volmdlr.Point2D(0, r2)
 
-            circle_center1 = new_basis2.old_coordinates(new_circle_center1)
-            circle_center2 = new_basis2.old_coordinates(new_circle_center2)
+        circle_center1 = new_basis2.old_coordinates(new_circle_center1)
+        circle_center2 = new_basis2.old_coordinates(new_circle_center2)
 
-            if new_basis.new_coordinates(circle_center1)[1] > 0:
-                circle1 = volmdlr.wires.Circle2D(circle_center1, r1)
-                circle2 = volmdlr.wires.Circle2D(circle_center2, r2)
-            else:
-                circle1 = volmdlr.wires.Circle2D(circle_center2, r2)
-                circle2 = volmdlr.wires.Circle2D(circle_center1, r1)
+        if new_basis.new_coordinates(circle_center1)[1] > 0:
+            circle1 = volmdlr.wires.Circle2D(circle_center1, r1)
+            circle2 = volmdlr.wires.Circle2D(circle_center2, r2)
+        else:
+            circle1 = volmdlr.wires.Circle2D(circle_center2, r2)
+            circle2 = volmdlr.wires.Circle2D(circle_center1, r1)
 
-            return circle1, circle2
+        return circle1, circle2
 
     def cut_between_two_points(self, point1: volmdlr.Point2D,
                                point2: volmdlr.Point2D):
