@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
 * Contour2D: bounding_rectangle (specify number_points for discretization_points)
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
 
@@ -59,11 +60,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ellipse2D.tranlation()
 * Ellipse2D.frame_mapping()
 * Line2D.frame_mapping()
+* Plane3D: is_parallel, fullarc_intersections
 * Arc2D: cut_betweeen_two_points
 * Contour3D: linesegment_intersections, line_intersections
 * Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
 * Arc3D: line_intersections, linesegment_intersections
 * new module utils: intersections -> circle_3d_linesegment_intersections
+* hash for Frame2D
 * Ellipse3D: point_belongs, abscissa, length, to_2d
 * CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
 
@@ -80,9 +83,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Step: from stream (use BinaryFile instead of io.BinaryIO)
 * Contour: is_overlapping (consider intersecting_points is empty)
 * LineSegment2D: to_wire (use discretization_points instead of discretise)
+* PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
+* contour2d: ordering_primitives, order_primitives
+* Plane3D: plane_intersections, is_coindident
 * Linesegment2D: infinite_primitive
 * Arc2D: point_belongs
 * Arc2D: infinite_primitive
@@ -90,9 +96,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * infinite primitive offset of linesegment
 * Ellispe3D: discretization_points
 
+
 ### Performance improvements
 
 * Avoid unneeded bbox computation
+* cache variable self._polygon_point_belongs_100, to avoid recalculating each
+time we have to verify if a point is inside
 
 
 ### Refactorings
@@ -133,13 +142,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ellipse2D.tranlation()
 * Ellipse2D.frame_mapping()
 * Line2D.frame_mapping()
+* Plane3D: plane_intersections, fullarc_intersections, is_parallel, is_coincident
 * Contour2D: offset
 * ArcEllipse3D.to_2d()
 * Circle3D: point_belongs
 * Circle3D: discretization_points
 * Arc3D: line_intersections, linesegment_intersections
+* Contour2D: ordering_contour, is_ordered, order_contour
 * Ellipse3D: point_belongs, abscissa, length, to_2d, discretization_points
 * CylindricalSurface3D: point_on_surface, is_coincident
+
 
 ## v0.6.1 [12/13/2022]
 
