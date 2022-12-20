@@ -112,7 +112,7 @@ class Grid2D(DessiaObject):
             ('-x', '-y'): (xmax, xmin, ymax, ymin),
             ('+y', '-x'): (xmax, xmin, ymin, ymax),
             ('-y', '-x'): (xmax, xmin, ymax, ymin)
-            }
+        }
 
         grid2d = []
         points = []

@@ -158,6 +158,7 @@ def delete_double_point(list_point):
 
 #     return all_points
 
+
 def step_ids_to_str(ids):
     """
     Returns a string with a '#' in front of each ID and a comma separating
