@@ -10,7 +10,6 @@ import tempfile
 import webbrowser
 from datetime import datetime
 from typing import List
-import warnings
 
 import matplotlib.pyplot as plt
 import numpy as npy
