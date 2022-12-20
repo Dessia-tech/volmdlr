@@ -7721,9 +7721,13 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return False
 
     def point_on_shell(self, point: volmdlr.Point3D):
-        raise NotImplementedError('This method was considering only triangles, which is not generic. '
-                                  f'Transform your shell of class {self.__class__.__name__} to a triangle one')
+        for face in self.faces:
+            if face.point_belongs(point) or face.outer_contour3d.point_over_contour(point, abs_tol=1e-7):
+                return True
+        return False
 
+        
+        
     def point_in_shell_face(self, point: volmdlr.Point3D):
         warnings.warn('point_in_shell_face is deprecated, please use point_on_shell instead',
                       DeprecationWarning)
@@ -8441,6 +8445,7 @@ class OpenTriangleShell3D(OpenShell3D):
 
     def point_on_shell(self, point: volmdlr.Point3D):
         for face in self.faces:
+            # TODO: why the first check?
             if (face.surface3d.point_on_plane(point) and face.point_belongs(point)) or \
                     face.outer_contour3d.point_over_contour(point, abs_tol=1e-7):
                 return True
