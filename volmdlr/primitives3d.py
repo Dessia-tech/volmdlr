@@ -8,6 +8,8 @@ import math
 
 from typing import Tuple, List, Dict
 from random import uniform
+
+import numpy
 from scipy.optimize import minimize, NonlinearConstraint
 from scipy.stats import qmc
 
@@ -1126,6 +1128,73 @@ class Cylinder(RevolvedProfile):
             NonlinearConstraint(fun=constraint_radius_0, lb=0, ub=self.radius ** 2),
             NonlinearConstraint(fun=constraint_height_0, lb=-self.length / 2, ub=self.length / 2),
             NonlinearConstraint(fun=constraint_radius_1, lb=0, ub=other_cylinder.radius ** 2),
+            NonlinearConstraint(fun=constraint_height_1, lb=-other_cylinder.length / 2, ub=other_cylinder.length / 2)
+        ]
+
+        return minimize(fun=dist_points, x0=x0, constraints=constraints).fun
+
+    def min_distance_to_other_cylinder2(self, other_cylinder: 'Cylinder') -> float:
+        """
+        Compute the minimal distance between two volmdlr cylinders
+
+        :param other_cylinder: volmdlr Cylinder
+        :return: minimal distance between two 3D cylinders
+        """
+        # Local frames of cylinders
+        frame0 = volmdlr.Frame3D.from_point_and_vector(point=self.position,
+                                                       vector=self.axis,
+                                                       main_axis=volmdlr.Z3D)
+        frame1 = volmdlr.Frame3D.from_point_and_vector(point=other_cylinder.position,
+                                                       vector=other_cylinder.axis,
+                                                       main_axis=volmdlr.Z3D)
+
+        # Objective function
+        def dist_points(x):
+            """
+            :param x: coords of a point in cylinder 0 local frame, coords of a point in cylinder 1 local frame
+            :return: distance between the two points
+            """
+
+            point0 = frame0.old_coordinates(
+                volmdlr.Point3D(math.cos(x[0]) * self.radius,
+                                math.sin(x[0]) * self.radius,
+                                x[1],
+                                )
+            )
+
+            point1 = frame1.old_coordinates(
+                volmdlr.Point3D(math.cos(x[2]) * other_cylinder.radius,
+                                math.sin(x[2]) * other_cylinder.radius,
+                                x[3],
+                                )
+            )
+
+            return point0.point_distance(point1)
+
+        # Initial vector
+        x0 = numpy.zeros(4)
+
+        # Constraints
+        def constraint_radius_0(x):
+            # radius of cylinder 0
+            return x[0]
+
+        def constraint_height_0(x):
+            # height of cylinder 0
+            return x[1]
+
+        def constraint_radius_1(x):
+            # radius of cylinder 1
+            return x[2]
+
+        def constraint_height_1(x):
+            # height of cylinder 1
+            return x[3]
+
+        constraints = [
+            NonlinearConstraint(fun=constraint_radius_0, lb=0, ub=math.pi * 2),
+            NonlinearConstraint(fun=constraint_height_0, lb=-self.length / 2, ub=self.length / 2),
+            NonlinearConstraint(fun=constraint_radius_1, lb=0, ub=math.pi * 2),
             NonlinearConstraint(fun=constraint_height_1, lb=-other_cylinder.length / 2, ub=other_cylinder.length / 2)
         ]
 
