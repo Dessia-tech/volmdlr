@@ -50,7 +50,7 @@ steps:
   image: python:3.9
   commands:
     - git fetch --tags
-    - pip3 install -U pip autopep8
+    - pip3 install -U pip autopep8==2.0.0
     - bash code_pep8.sh
 
   volumes:
@@ -61,9 +61,6 @@ steps:
 
 - name: install, build doc run scripts and tutorials
   image: python:3.8
-  when:
-    branch: testing
-    event: push
   commands:
   - git fetch --tags
   - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
@@ -86,7 +83,6 @@ steps:
     # Mount pip cache from host
     - name: pip_cache
       path: /root/.cache/pip
-
 
 - name: install, build doc run scripts
   image: python:3.8
