@@ -10,7 +10,6 @@ import tempfile
 import webbrowser
 from datetime import datetime
 from typing import List
-import warnings
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -46,54 +45,6 @@ END-ISO-10303-21;
 '''
 
 
-def delete_double_pos(points, triangles):
-    """
-    Eliminate double points in a mesh.
-    This seems unused and redundant with display.py.
-    """
-    warnings.warn('The function delete_double_pos is deprecated, use classes and methods from volmdlr.display',
-                  DeprecationWarning)
-
-    points_to_indexes = {}
-
-    for index, point in enumerate(points):
-        if point not in points_to_indexes:
-            points_to_indexes[point] = [index]
-        else:
-            points_to_indexes[point].append(index)
-
-    new_points = []
-    index_to_modified_index = {}
-    for i, (point, indexes) in enumerate(points_to_indexes.items()):
-        new_points.append(point)
-        index_to_modified_index[indexes[0]] = i
-
-    index_to_new_index = {}
-
-    for indexes in points_to_indexes.values():
-        for index in indexes[1:]:
-            index_to_new_index[index] = indexes[0]
-
-    new_triangles = []
-    for face_triangles in triangles:
-        if face_triangles is None:
-            continue
-        new_face_triangles = []
-        for triangle_ in face_triangles:
-            new_triangle = []
-            for index in triangle_:
-                if index in index_to_new_index:
-                    modified_index = index_to_modified_index[
-                        index_to_new_index[index]]
-                else:
-                    modified_index = index_to_modified_index[index]
-                new_triangle.append(modified_index)
-            new_face_triangles.append(tuple(new_triangle))
-        new_triangles.append(new_face_triangles)
-
-    return new_points, new_triangles
-
-
 def determinant(vec1, vec2, vec3):
     """
     Calculates the determinant for a three vector matrix.
@@ -123,42 +74,6 @@ def delete_double_point(list_point):
             continue
     return points
 
-# def check_singularity(all_points):
-#     plus_pi, moins_pi = [], []
-#     for enum, pt in enumerate(all_points):
-#         if pt.vector[0] > math.pi * 1.01:
-#             plus_pi.append(enum)
-#         elif pt.vector[0] < math.pi * 0.99:
-#             moins_pi.append(enum)
-
-#     if len(moins_pi) <= 2 and len(all_points) > 4:
-#         for pos in moins_pi:
-#             new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
-#             if new_pt.vector[0] > volmdlr.TWO_PI:
-#                 new_pt.vector[0] = volmdlr.TWO_PI
-#             all_points[pos] = new_pt
-#     elif len(plus_pi) <= 2 and len(all_points) > 4:
-#         for pos in plus_pi:
-#             new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
-#             if new_pt.vector[0] < 0:
-#                 new_pt.vector[0] = 0
-#             all_points[pos] = new_pt
-#     if 3 * len(moins_pi) <= len(plus_pi) and len(all_points) > 4:
-#         for pos in moins_pi:
-#             new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
-#             if new_pt.vector[0] > volmdlr.TWO_PI:
-#                 new_pt.vector[0] = volmdlr.TWO_PI
-#             all_points[pos] = new_pt
-#     elif 3 * len(plus_pi) <= len(moins_pi) and len(all_points) > 4:
-#         for pos in plus_pi:
-#             new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
-#             if new_pt.vector[0] < 0:
-#                 new_pt.vector[0] = 0
-#             all_points[pos] = new_pt
-
-#     return all_points
-
-
 def step_ids_to_str(ids):
     """
     Returns a string with a '#' in front of each ID and a comma separating
@@ -173,6 +88,13 @@ def step_ids_to_str(ids):
 
 
 class CompositePrimitive(dc.PhysicalObject):
+    """
+    A collection of simple primitives.
+
+    :param name: The name of the collection of primitives.
+    :type name: str
+    """
+
     def __init__(self, primitives, name=''):
         self.primitives = primitives
         self.name = name
@@ -200,6 +122,13 @@ class CompositePrimitive(dc.PhysicalObject):
 
 
 class Primitive2D(dc.PhysicalObject):
+    """
+    Abstract class for 2D primitives.
+
+    :param name: The name of the 2D primitive.
+    :type name: str
+    """
+
     def __init__(self, name=''):
         self.name = name
 
@@ -208,7 +137,11 @@ class Primitive2D(dc.PhysicalObject):
 
 class CompositePrimitive2D(CompositePrimitive):
     """
-    A collection of simple primitives.
+    A collection of simple 2D primitives.
+
+    :param name: The name of the collection of 2D primitives.
+    :type name: str
+
     """
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
                                     '_primitives_to_index']
@@ -626,7 +559,7 @@ class BoundingBox(dc.DessiaObject):
                            max(self.zmax, other_bbox.zmax))
 
     def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
-        return {'object_class': 'volmdlr.edges.BoundingBox',
+        return {'object_class': 'volmdlr.core.BoundingBox',
                 'name': self.name,
                 'xmin': self.xmin,
                 'xmax': self.xmax,
@@ -647,9 +580,9 @@ class BoundingBox(dc.DessiaObject):
                 volmdlr.Point3D(self.xmax, self.ymax, self.zmax),
                 volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
 
-    def plot(self, ax=None, color=''):
-        fig = plt.figure()
+    def plot(self, ax=None, color='gray'):
         if ax is None:
+            fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
         bbox_edges = [[self.points[0], self.points[1]],
@@ -665,20 +598,29 @@ class BoundingBox(dc.DessiaObject):
                       [self.points[6], self.points[7]],
                       [self.points[7], self.points[4]]]
 
-        x = [p[0] for p in self.points]
-        y = [p[1] for p in self.points]
-        z = [p[2] for p in self.points]
-        ax.scatter(x, y, z)
+        # x = [p[0] for p in self.points]
+        # y = [p[1] for p in self.points]
+        # z = [p[2] for p in self.points]
+        # ax.scatter(x, y, z, color)
         for edge in bbox_edges:
             ax.plot3D([edge[0][0], edge[1][0]],
                       [edge[0][1], edge[1][1]],
                       [edge[0][2], edge[1][2]],
-                      'gray')
+                      color=color)
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
-        # plt.show()
         return ax
+
+    @classmethod
+    def from_bounding_boxes(cls, bounding_boxes):
+        xmin = min(bb.xmin for bb in bounding_boxes)
+        xmax = max(bb.xmax for bb in bounding_boxes)
+        ymin = min(bb.ymin for bb in bounding_boxes)
+        ymax = max(bb.ymax for bb in bounding_boxes)
+        zmin = min(bb.zmin for bb in bounding_boxes)
+        zmax = max(bb.zmax for bb in bounding_boxes)
+        return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
     def from_points(cls, points):
@@ -876,7 +818,8 @@ class VolumeModel(dc.PhysicalObject):
     @property
     def bounding_box(self):
         """
-        Returns the boundary box.
+        Returns the bounding box.
+
         """
         if not self._bbox:
             self._bbox = self._bounding_box()
@@ -890,36 +833,14 @@ class VolumeModel(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        bboxes = []
-        points = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'bounding_box'):
-                bboxes.append(primitive.bounding_box)
-            else:
-                if primitive.__class__.__name__ == 'volmdlr.Point3D':
-                    points.append(primitive)
-        if bboxes:
-            xmin = min(box.xmin for box in bboxes)
-            xmax = max(box.xmax for box in bboxes)
-            ymin = min(box.ymin for box in bboxes)
-            ymax = max(box.ymax for box in bboxes)
-            zmin = min(box.zmin for box in bboxes)
-            zmax = max(box.zmax for box in bboxes)
-        elif points:
-            xmin = min(p[0] for p in points)
-            xmax = max(p[0] for p in points)
-            ymin = min(p[1] for p in points)
-            ymax = max(p[1] for p in points)
-            zmin = min(p[2] for p in points)
-            zmax = max(p[2] for p in points)
-        else:
-            # raise ValueError('Bounding box cant be determined')
-            return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
 
     def volume(self) -> float:
         """
         Return the sum of volumes of the primitives.
+
+        It does not make any boolean operation in case of overlaping.
+
         """
         volume = 0
         for primitive in self.primitives:

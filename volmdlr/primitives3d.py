@@ -192,11 +192,13 @@ class Block(volmdlr.faces.ClosedShell3D):
 
     @classmethod
     def from_bounding_box(cls, bounding_box):
-        bb = bounding_box
-        xmin, xmax, ymin, ymax, zmin, zmax = bb.xmin, bb.xmax,\
-            bb.ymin, bb.ymax, bb.zmin, bb.zmax
-        origin = bb.center
-        sx, sy, sz = xmax - xmin, ymax - ymin, zmax - zmin
+        """
+        Transform a bounding box into a block.
+        """
+        origin = bounding_box.center
+        sx = bounding_box.xmax - bounding_box.xmin
+        sy = bounding_box.ymax - bounding_box.ymin
+        sz = bounding_box.zmax - bounding_box.zmin
         frame = volmdlr.Frame3D(origin, sx * volmdlr.Vector3D(1, 0, 0),
                                 sy * volmdlr.Vector3D(0, 1, 0),
                                 sz * volmdlr.Vector3D(0, 0, 1))
@@ -433,7 +435,9 @@ class Block(volmdlr.faces.ClosedShell3D):
 
 class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     """
-    TODO: In the future change to a frame and a surface2D and an extrusion vector
+    Extrude a profile given by outer and inner contours.
+
+    TODO: In the future change to a frame and a surface2D and an extrusion vector.
     """
     _non_serializable_attributes = ['faces', 'inner_contours3d',
                                     'outer_contour3d']
@@ -501,6 +505,9 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                               name=self.name)
 
     def shell_faces(self):
+        """
+        Computes the shell faces from init data.
+        """
         lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(
             self.plane_origin, self.x, self.y)
         lower_face = volmdlr.faces.PlaneFace3D(
@@ -590,7 +597,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new ExtrudeProfile
-        side = 'old' or 'new'
+
+        :param side: = 'old' or 'new'
         """
         extrusion_vector, x, y = self.frame_mapping_parameters(frame,
                                                                side)
@@ -602,7 +610,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+
+        :param side: = 'old' or 'new'
         """
         self.extrusion_vector, self.x, self.y =\
             self.frame_mapping_parameters(frame, side)
@@ -1355,6 +1364,11 @@ class Cone(RevolvedProfile):
 
 
 class HollowCylinder(RevolvedProfile):
+    """
+    Creates a hollow cylinder with the position, the axis of revolution,
+    the inner and outer radius and the length.
+    """
+
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  inner_radius: float, outer_radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1,
@@ -1562,7 +1576,7 @@ class HollowCylinder(RevolvedProfile):
 
 class Sweep(volmdlr.faces.ClosedShell3D):
     """
-    Sweep a 2D contour along a Wire3D
+    Sweep a 2D contour along a Wire3D.
     """
 
     def __init__(self, contour2d: List[volmdlr.wires.Contour2D],
@@ -1847,6 +1861,9 @@ class Sphere(RevolvedProfile):
 
 
 class Measure3D(volmdlr.edges.Line3D):
+    """
+    Used to create a measure between two points in 3D.
+    """
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  color: Tuple[float, float, float] = (1., 0, 0)):
