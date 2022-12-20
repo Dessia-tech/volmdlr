@@ -2231,7 +2231,7 @@ class BSplineSurface3D(Surface3D):
         # surface_points = surface.evalpts
 
         self.surface = surface
-        self.curves = construct.extract_curves(surface, extract_u=True, extract_v=True)
+        self.curves = extract_curves(surface, extract_u=True, extract_v=True)
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
         Surface3D.__init__(self, name=name)
 
