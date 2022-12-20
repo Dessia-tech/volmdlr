@@ -96,7 +96,7 @@ steps:
         - testing
 
   commands:
-  - pip Cython wheel
+  - pip install Cython wheel
   - python setup install --user
   - cd scripts/mesh
   - python read_msh_file.py
