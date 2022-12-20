@@ -41,7 +41,7 @@ cylinders = [
 ]
 
 volume_model = vm.core.VolumeModel(cylinders)
-# volume_model.babylonjs()
+volume_model.babylonjs()
 
 print("Collision detection methods")
 start = perf_counter()
