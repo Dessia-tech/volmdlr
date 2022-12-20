@@ -1999,7 +1999,7 @@ class Arc(Edge):
 
     def get_geo_lines(self, tag: int, start_point_tag: int, center_point_tag: int, end_point_tag: int):
         """
-        gets the lines that define an Arc in a .geo file.
+        Gets the lines that define an Arc in a .geo file.
 
         :param tag: The linesegment index
         :type tag: int
@@ -2023,7 +2023,7 @@ class Arc(Edge):
 
 class Arc2D(Arc):
     """
-    angle: the angle measure always >= 0
+    Angle: the angle measure always >= 0.
     """
 
     def __init__(self,
