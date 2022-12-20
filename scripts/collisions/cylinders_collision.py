@@ -80,7 +80,7 @@ print(
     f"""\nPurple & blue:
 min distance computed is {cylinders[3].min_distance_to_other_cylinder(cylinders[2])}m, 
 collision: {cylinders[3].is_intersecting_other_cylinder(cylinders[2])}
-interpenetration: {cylinders[3].interpenetration_with_other_cylinder(cylinders[2])}"""
+interpenetration: {cylinders[3].interference_volume_with_other_cylinder(cylinders[2])}"""
 )
 
 end = time()
