@@ -349,6 +349,14 @@ class Primitive3D(dc.PhysicalObject):
         return [self]
 
     def babylon_param(self):
+        """
+        Returns babylonjs parameters.
+
+        :return: babylonjs parameters (alpha, name, color)
+        :rtype: dict
+
+        """
+
         babylon_param = {'alpha': self.alpha,
                          'name': self.name,
                          }
