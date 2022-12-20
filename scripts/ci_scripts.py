@@ -95,11 +95,11 @@ for script_name in scripts:
             script_folder = os.path.join(top_level_dir, script_folder)
             os.chdir(script_folder)
     file_name = script_name.split('/')[-1]
-    t = time.time()
+    time_start_script = time.time()
     with open(file_name, 'r', encoding='utf-8') as script:
         exec(script.read())
-    t = time.time() - t
-    times[script_name] = t
+    time_start_script = time.time() - time_start_script
+    times[script_name] = time_start_script
 
 print('Computation times:')
 for script_name, t in sorted(times.items(), key=lambda x:x[1]):

@@ -1912,8 +1912,8 @@ class Arc2D(Arc):
         vector_end = self.end - self.center
         if self.is_trigo:
             vector_start, vector_end = vector_end, vector_start
-        arc_angle = volmdlr.core.clockwise_angle(vector_start, vector_end)
-        point_angle = volmdlr.core.clockwise_angle(vector_start, vector_point)
+        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
+        point_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         if point_angle <= arc_angle:
             return abs(
                 LineSegment2D(point, self.center).length() - self.radius)
@@ -2157,10 +2157,10 @@ class Arc2D(Arc):
         :param point_2d: Point to be verified.
         :return: Return True if the point belongs to this surface, or False otherwise.
         """
-        if self.point_belongs(point_2d):
+        if self.point_belongs(point):
             return True
         if self.start == self.end:
-            if point_2d.point_distance(self.center) <= self.radius:
+            if point.point_distance(self.center) <= self.radius:
                 return True
         center_distance_point = self.center.point_distance(point)
         straight_line = LineSegment2D(self.start, self.end)
@@ -2392,6 +2392,7 @@ class FullArc2D(Arc2D):
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
                  name: str = ''):
         self.__center = center
+        self.start_end = start_end
         interior = start_end.rotation(center, math.pi)
         Arc2D.__init__(self, start=start_end, interior=interior,
                        end=start_end, name=name)  # !!! this is dangerous
@@ -2687,15 +2688,15 @@ class ArcEllipse2D(Edge):
 
         # Angle pour start
         u1, u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
-        angle1 = volmdlr.core.sin_cos_angle(u1, u2)
+        angle1 = volmdlr.geometry.sin_cos_angle(u1, u2)
         self.angle_start = angle1
         # Angle pour end
         u3, u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
-        angle2 = volmdlr.core.sin_cos_angle(u3, u4)
+        angle2 = volmdlr.geometry.sin_cos_angle(u3, u4)
         self.angle_end = angle2
         # Angle pour interior
         u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
-        anglei = volmdlr.core.sin_cos_angle(u5, u6)
+        anglei = volmdlr.geometry.sin_cos_angle(u5, u6)
         self.angle_interior = anglei
 
         # Going trigo/clock wise from start to interior
@@ -2759,7 +2760,7 @@ class ArcEllipse2D(Edge):
             return False
         new_point = self.frame.new_coordinates(point)
         u1, u2 = new_point.x / self.Gradius, new_point.y / self.Sradius
-        angle_new_point = volmdlr.core.sin_cos_angle(u1, u2)
+        angle_new_point = volmdlr.geometry.sin_cos_angle(u1, u2)
         if self.angle_start < self.angle_end and self.angle_end >= angle_new_point >= self.angle_start:
             return True
         if self.angle_start > self.angle_end and self.angle_end <= angle_new_point <= self.angle_start:
@@ -2774,7 +2775,7 @@ class ArcEllipse2D(Edge):
         :return: a float, between 0 and the arcellise2d's lenght
         """
         if self.point_belongs(point):
-            angle_abscissa = volmdlr.core.clockwise_angle(point - self.center, self.major_dir)
+            angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
             angle_start = self.angle_start
             angle_end = angle_abscissa
             if self.angle_start > angle_abscissa > self.angle_end:
@@ -2821,7 +2822,7 @@ class ArcEllipse2D(Edge):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
-        discretize an Edge to have "n" points.
+        Discretize an Edge to have "n" points.
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned.
@@ -3804,7 +3805,7 @@ class LineSegment3D(LineSegment):
         return content, [current_id]
 
 
-class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
+class BSplineCurve3D(BSplineCurve):
     """
     A class for 3 dimensional B-spline curves. The following rule must be
     respected : `number of knots = number of control points + degree + 1`
@@ -3844,7 +3845,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                               weights,
                               periodic,
                               name)
-        volmdlr.core.Primitive3D.__init__(self, name=name)
 
         self.bounding_box = self._bounding_box()
 
@@ -4644,8 +4644,8 @@ class Arc3D(Arc):
         self.end.rotation_inplace(center, axis, angle)
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
-        for prim in self.primitives:
-            prim.rotation_inplace(center, axis, angle)
+        # for prim in self.primitives:
+        #     prim.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -4671,8 +4671,8 @@ class Arc3D(Arc):
         self.end.translation_inplace(offset)
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
-        for prim in self.primitives:
-            prim.translation_inplace(offset)
+        # for prim in self.primitives:
+        #     prim.translation_inplace(offset)
 
     def plot(self, ax=None, color='k', alpha=1,
              edge_ends=False, edge_direction=False):
@@ -4787,7 +4787,7 @@ class Arc3D(Arc):
         x, y, _ = self.frame.new_coordinates(point3d)
         u1 = x / self.radius
         u2 = y / self.radius
-        theta = volmdlr.core.sin_cos_angle(u1, u2)
+        theta = volmdlr.geometry.sin_cos_angle(u1, u2)
 
         return self.radius * abs(theta)
 
@@ -5125,6 +5125,7 @@ class FullArc3D(Arc3D):
                  name: str = ''):
         self.__center = center
         self.__normal = normal
+        self.start_end = start_end
         interior = start_end.rotation(center, normal, math.pi)
         Arc3D.__init__(self, start=start_end, end=start_end,
                        interior=interior, name=name)  # !!! this is dangerous
@@ -5329,7 +5330,6 @@ class ArcEllipse3D(Edge):
 
     def __init__(self, start, interior, end, center, major_dir,
                  name=''):  # , extra=None):
-        # Extra is an additionnal point if start=end because you need 3 points on the arcellipse to define it
         Edge.__init__(self, start=start, end=end, name=name)
         self.interior = interior
         self.center = center
@@ -5343,17 +5343,12 @@ class ArcEllipse3D(Edge):
         u2.normalize()
 
         if u1 == u2:
-            u2 = (self.interior - self.extra)
+            u2 = (self.interior - self.interior)
             u2.normalize()
 
-        # if normal is None:
         n = u2.cross(u1)
         n.normalize()
         self.normal = n
-        # else:
-        #     n = normal
-        #     n.normalize()
-        #     self.normal = normal
 
         self.minor_dir = self.normal.cross(self.major_dir)
 
@@ -5387,7 +5382,7 @@ class ArcEllipse3D(Edge):
             return theta, gdaxe, ptax
 
         if start == end:
-            extra_new = frame.new_coordinates(self.extra)
+            extra_new = frame.new_coordinates(self.interior)
             theta, A, B = theta_A_B(start_new, extra_new, interior_new,
                                     center_new)
         else:
@@ -5400,15 +5395,15 @@ class ArcEllipse3D(Edge):
 
         # Angle pour start
         u1, u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
-        angle1 = volmdlr.core.sin_cos_angle(u1, u2)
+        angle1 = volmdlr.geometry.sin_cos_angle(u1, u2)
         self.angle_start = angle1
         # Angle pour end
         u3, u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
-        angle2 = volmdlr.core.sin_cos_angle(u3, u4)
+        angle2 = volmdlr.geometry.sin_cos_angle(u3, u4)
         self.angle_end = angle2
         # Angle pour interior
         u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
-        anglei = volmdlr.core.sin_cos_angle(u5, u6)
+        anglei = volmdlr.geometry.sin_cos_angle(u5, u6)
         self.angle_interior = anglei
 
         # Going trigo/clock wise from start to interior
@@ -5449,7 +5444,7 @@ class ArcEllipse3D(Edge):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        discretize a Contour to have "n" points
+        Discretize a Contour to have "n" points
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
