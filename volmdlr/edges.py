@@ -1043,7 +1043,7 @@ class Line2D(Line):
         # LES SEGMENTS SONT QUELCONQUES
         #   => 2 SOLUTIONS
         # =============================================================================
-        
+
         line_AB = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
         line_CD = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
         new_pt_k = volmdlr.Point2D.line_intersection(line_AB, line_CD)
@@ -3217,7 +3217,7 @@ class Line3D(Line):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Line3D rotation.
-        
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -3230,7 +3230,7 @@ class Line3D(Line):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Line3D rotation. Object is updated inplace.
-        
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -3242,7 +3242,7 @@ class Line3D(Line):
     def translation(self, offset: volmdlr.Vector3D):
         """
         Line3D translation.
-        
+
         :param offset: translation vector
         :return: A new translated Line3D
         """
@@ -3252,7 +3252,7 @@ class Line3D(Line):
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
         Line3D translation. Object is updated inplace.
-        
+
         :param offset: translation vector
         """
         for point in [self.point1, self.point2]:
@@ -3262,7 +3262,7 @@ class Line3D(Line):
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes vector frame_mapping and return a new Line3D.
-        
+
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -3278,7 +3278,7 @@ class Line3D(Line):
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes Line3D frame_mapping and the object is updated inplace.
-        
+
         side = 'old' or 'new'
         """
         if side == 'old':

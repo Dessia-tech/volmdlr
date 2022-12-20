@@ -73,7 +73,6 @@ def delete_double_point(list_point):
     return points
 
 
-
 def step_ids_to_str(ids):
     """
     Returns a string with a '#' in front of each ID and a comma separating
@@ -94,6 +93,7 @@ class CompositePrimitive(dc.PhysicalObject):
     :param name: The name of the collection of primitives.
     :type name: str
     """
+
     def __init__(self, primitives, name=''):
         self.primitives = primitives
         self.name = name
@@ -127,6 +127,7 @@ class Primitive2D(dc.PhysicalObject):
     :param name: The name of the 2D primitive.
     :type name: str
     """
+
     def __init__(self, name=''):
         self.name = name
 
