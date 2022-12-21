@@ -947,8 +947,7 @@ class ContourMixin(WireMixin):
                 finished = True
             counter1 += 1
             if counter1 >= 100 * length_list_points:
-                ax = self.plot()
-                ax.set_aspect('auto')
+                self.plot()
                 raise NotImplementedError
             if len(list_point_pairs) == 1:
                 counter += 1
@@ -1650,12 +1649,10 @@ class Contour2D(ContourMixin, Wire2D):
                 return p
         raise ValueError('Could not find a point inside')
 
-    def order_contour(self, tol=1e-6):
+    def order_contour(self):
         if self.is_ordered() or len(self.primitives) < 2:
             return self
-
         new_primitives = self.ordering_contour()
-
         self.primitives = new_primitives
 
         return self
@@ -1791,12 +1788,11 @@ class Contour2D(ContourMixin, Wire2D):
         if len(intersections) % 2 != 0:
             ax = self.plot()
             line.plot(ax=ax)
-            ax.set_aspect('auto')
             for i in intersections:
                 i[0].plot(ax=ax)
-            self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\contour2d')
-            line.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\line2d')
-            raise NotImplementedError(f'{len(intersections)} intersections not supported yet')
+            raise NotImplementedError(
+                '{} intersections not supported yet'.format(
+                    len(intersections)))
 
         points_intersections = [point for point, prim in intersections]
         sorted_points = line.sort_points_along_line(points_intersections)
@@ -1925,7 +1921,10 @@ class Contour2D(ContourMixin, Wire2D):
                 p2 = volmdlr.Point2D(x[i + 1], y[j])
                 p3 = volmdlr.Point2D(x[i + 1], y[j + 1])
                 p4 = volmdlr.Point2D(x[i], y[j + 1])
-                points_in = [p for p in [p1, p2, p3, p4] if p in point_index]
+                points_in = []
+                for p in [p1, p2, p3, p4]:
+                    if p in point_index:
+                        points_in.append(p)
                 if len(points_in) == 4:
                     triangles.append(
                         [point_index[p1], point_index[p2], point_index[p3]])
@@ -2010,9 +2009,9 @@ class Contour2D(ContourMixin, Wire2D):
             primitives2 = closing_contour.primitives + \
                           extracted_innerpoints_contour1.primitives
         contour1 = Contour2D(primitives1)
-        contour1.order_contour(tol=1e-5)
+        contour1.order_contour()
         contour2 = Contour2D(primitives2)
-        contour2.order_contour(tol=1e-5)
+        contour2.order_contour()
         return contour1, contour2
 
     def divide(self, contours, inside):
@@ -4531,7 +4530,7 @@ class Contour3D(ContourMixin, Wire3D):
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         primitives2d = []
         for primitive in self.primitives:
-            primitive2d = primitive.to_2d(plane_origin, x, y)
+            primitive2d = plane3d.point3d_to_2d(primitive)
             if primitive2d is not None:
                 primitives2d.append(primitive2d)
         return Contour2D(primitives=primitives2d)
