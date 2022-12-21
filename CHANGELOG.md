@@ -9,13 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
-<<<<<<< HEAD
-* Write .msh file
-=======
 * PlaneFace3D: project_faces
 * OpenShell3D: project_coincident_faces_of
->>>>>>> to_geo_msh
 * Create .geo and .msh files (Mesh geometries with GMSH)
+* Write .msh file (with stream)
 
 
 ### Fixed
@@ -92,19 +89,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
-* contour2d: ordering_primitives, order_primitives
-* Plane3D: plane_intersections, is_coindident
->>>>>>> dev
-=======
 * bounding box: fix for cylindrical and BSplineCurve3D
 * contour2d: ordering_primitives, order_primitives
 * Plane3D: plane_intersections, is_coindident
->>>>>>> to_geo_msh
 * Linesegment2D: infinite_primitive
 * Arc2D: point_belongs
 * Arc2D: infinite_primitive
