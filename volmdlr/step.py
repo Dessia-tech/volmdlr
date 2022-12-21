@@ -109,7 +109,6 @@ def face_bound(arguments, object_dict):
 def surface_curve(arguments, object_dict):
     """
     Returns xx.
-
     :param arguments: DESCRIPTION
     :type arguments: TYPE
     :param object_dict: DESCRIPTION
@@ -438,7 +437,7 @@ class Step(dc.DessiaObject):
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
-                    arg_list = set_to_list(argument)
+                    arg_list = volmdlr.core.set_to_list(argument)
                     arguments[i] = arg_list
 
             function = StepFunction(function_id, function_name, arguments)

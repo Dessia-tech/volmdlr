@@ -17,7 +17,7 @@ def convert_notebook(notebook_path, module_path):
     with open(module_path, 'w+') as fh:
         for line in lines:
             # Removing the prompt commands from notebook
-            if line[:20] != 'get_ipython().system' and '.plot(' not in line:
+            if line[:20] != 'get_ipython().system' and '.plot(' not in line and line[:1] != '!'  and line[:12] != 'from IPython' and line[:4] != 'HTML':
                 fh.write(line + '\n')
 
 
