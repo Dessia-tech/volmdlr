@@ -4,11 +4,6 @@ type: docker
 name: default
 
 steps:
-- name: chmod repo
-  image: alpine/git
-  commands:
-  - chmod 777 -R . 
-
 - name: merge master on testing
   image: alpine/git
   when:
@@ -84,54 +79,8 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
-- name: install, build doc run scripts
-  image: python:3.8
-  when:
-    branch:
-      exclude:
-        - testing
-
-  commands:
-  - git fetch --tags
-  - pip install Cython sphinx sphinx_rtd_theme coverage
-  - python setup.py install
-  - cd doc
-  - make html
-  - cd ../tests
-  - coverage run --source volmdlr -m unittest discover -v
-  - cd ../scripts
-  - coverage run --source volmdlr ci_scripts.py
-  - cd ..
-  - coverage combine scripts/.coverage tests/.coverage
-  - coverage json
-  - coverage report
-  - python coverage_script.py
-
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
-
-- name: build doc
-  image: python:3.9
-  when:
-    branch: master
-  commands:
-  - pip install Cython sphinx sphinx_rtd_theme coverage
-  - python setup.py install
-  - cd doc
-  - make html
-
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
-
-
 - name: generate sdist
   image: python:3.8
-  when:
-    branch: master
   commands:
   - git fetch --tags
   - pip install Cython
@@ -167,6 +116,18 @@ steps:
     password:
       from_secret: ssh_drone_password
 
+
+- name: notify by email
+  when:
+    status:
+    - failure
+  image: drillster/drone-email
+  settings:
+    host: mail.dessia.tech
+    username: technical@dessia.tech
+    password:
+      from_secret: email_password
+    from: technical@dessia.tech
 
 volumes:
   - name: pip_cache
