@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+<<<<<<< HEAD
 * Write .msh file
+=======
+* PlaneFace3D: project_faces
+* OpenShell3D: project_coincident_faces_of
+>>>>>>> to_geo_msh
 * Create .geo and .msh files (Mesh geometries with GMSH)
 
 
@@ -71,7 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ellipse3D: point_belongs, abscissa, length, to_2d
 * CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
 
-
 ### Fixed
 
 * Contour2D: point_belongs
@@ -90,23 +94,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix some to_step methods from edges.py and faces.py
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
 * contour2d: ordering_primitives, order_primitives
 * Plane3D: plane_intersections, is_coindident
 >>>>>>> dev
+=======
+* bounding box: fix for cylindrical and BSplineCurve3D
+* contour2d: ordering_primitives, order_primitives
+* Plane3D: plane_intersections, is_coindident
+>>>>>>> to_geo_msh
 * Linesegment2D: infinite_primitive
 * Arc2D: point_belongs
 * Arc2D: infinite_primitive
 * Wire2D: infinite_intersections
 * infinite primitive offset of linesegment
 * Ellispe3D: discretization_points
->>>>>>> dev
 
 
 ### Performance improvements
 
 * Avoid unneeded bbox computation
+* triangulation performance by use of Node2D instead of points (x15 on casing)
 * cache variable self._polygon_point_belongs_100, to avoid recalculating each
 time we have to verify if a point is inside
 
@@ -307,7 +317,7 @@ time we have to verify if a point is inside
 
 ### New Features
 
-* union of shells (only with planeface for the moment 
+* union of shells (only with planeface for the moment
 * Sewing of polygon3D
 * Concav hull of PointCloud2D
 
@@ -401,7 +411,7 @@ time we have to verify if a point is inside
 ## v0.2.6
 
 ### Changed
-- debugs on frame 2D 
+- debugs on frame 2D
 
 ### Optimized
 - babylon data generation speed up
@@ -433,11 +443,11 @@ time we have to verify if a point is inside
 - PEP8: method names
 - PointAtCurvilinearAbscissa changed to point_at_abscissa
 - MPLPlot changed to plot()
-- plot now returns only ax instead of fig, ax 
+- plot now returns only ax instead of fig, ax
 
 ## v0.1.11
 
-### Added 
+### Added
 - Calculate the distance between LineSegment3D/LS3D, Arc3D/LS3D, Arc3D/Arc3D and between CylindricalFace3D too.
 - Use PlaneFace3D with contours2D in a classic way and use it with contours3D with a 'from_contours3d' as CylindricalFace3D does.
 - Calculate the distance between CylindricalFace3D and PlaneFace3D.
@@ -464,7 +474,7 @@ time we have to verify if a point is inside
 ### Added
 - color and alpha options for various primitives
 - line segments intersection
- 
+
 ### Debug
 - arcs: is_trigo and angle were sometimes false
 

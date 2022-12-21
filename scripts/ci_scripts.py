@@ -47,10 +47,10 @@ scripts = [
             'faces/BSplineSurface/bspline_surface_definition.py',
             'faces/BSplineSurface/bspline_surfaces_grid3d.py',
             # 'faces/faces_with_inner_contours.py', #TO BE USED WHEN HOLES IS MERGED
-            
+
             # Shells
             'shells/operations.py',
-            
+
             # Cloud
             'cloud/sewing_two_polygons.py',
             'cloud/sewing_stl.py',
@@ -72,12 +72,17 @@ scripts = [
             'showcases/casing.py',
             # Mesh
             'mesh/read_msh_file.py',
-            'mesh/geo_file_1.py',
-            'mesh/geo_file_2.py',
-            'mesh/geo_file_3.py',
+            # 'mesh/geo_file_1.py',
+            # 'mesh/geo_file_2.py',
+            # 'mesh/geo_file_3.py',
+
             # Others
             'grid.py'
             ]
+
+# Maximum time for a script
+CONTROLED_TIMES = {'showcases/casing.py': 15,
+                   'primitives/sweep.py': 15}
 
 # Testing if all scripts exists before launching them
 for script_name in scripts:
@@ -100,15 +105,17 @@ for script_name in scripts:
             script_folder = os.path.join(top_level_dir, script_folder)
             os.chdir(script_folder)
     file_name = script_name.split('/')[-1]
-    t = time.time()
+    time_start_script = time.time()
     with open(file_name, 'r', encoding='utf-8') as script:
         exec(script.read())
-    t = time.time() - t
-    times[script_name] = t
+    time_start_script = time.time() - time_start_script
+    times[script_name] = time_start_script
 
 print('Computation times:')
-for script_name, t in sorted(times.items(), key=lambda x:x[1]):
+for script_name, t in sorted(times.items(), key=lambda x: x[1]):
     print(f'* script {script_name}: {round(t, 3)} seconds ')
-    
+    if script_name in CONTROLED_TIMES and t > CONTROLED_TIMES[script_name]:
+        raise RuntimeError(f'This script {script_name} should take less than {CONTROLED_TIMES[script_name]}')
+
 total_time = time.time() - total_time
 print(f'Total time for CI scripts: {total_time}')

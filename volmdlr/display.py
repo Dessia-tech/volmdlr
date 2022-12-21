@@ -56,6 +56,7 @@ class DisplayMesh(dc.DessiaObject):
     A DisplayMesh is a list of points linked by triangles.
     This is an abstract class for 2D & 3D.
     """
+    _linesegment_class = volmdlr.edges.LineSegment
 
     def __init__(self, points, triangles, name=''):
 
@@ -81,7 +82,7 @@ class DisplayMesh(dc.DessiaObject):
     @classmethod
     def merge_meshes(cls, meshes: List['DisplayMesh']):
         """
-        Merge several meshes into one
+        Merge several meshes into one.
         """
         # Collect points
         ip = 0
@@ -173,6 +174,10 @@ class DisplayMesh(dc.DessiaObject):
 
 
 class DisplayMesh2D(DisplayMesh):
+    """
+    A DisplayMesh2D is a list of points defined in 2D linked by triangles.
+    """
+
     _linesegment_class = volmdlr.edges.LineSegment2D
     _point_class = volmdlr.Point2D
 
@@ -184,7 +189,7 @@ class DisplayMesh2D(DisplayMesh):
 
     def area(self):
         """
-        Return the area as the sum of areas of triangles
+        Return the area as the sum of areas of triangles.
         """
         area = 0.
         for (n1, n2, n3) in self.triangles:
@@ -196,6 +201,10 @@ class DisplayMesh2D(DisplayMesh):
 
 
 class DisplayMesh3D(DisplayMesh):
+    """
+    A DisplayMesh2D is a list of points defined in 3D linked by triangles.
+    """
+
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 
@@ -205,7 +214,8 @@ class DisplayMesh3D(DisplayMesh):
 
     def to_babylon(self):
         """
-        return mesh in babylon format: https://doc.babylonjs.com/how_to/custom
+        Return mesh in babylon format: https://doc.babylonjs.com/how_to/custom.
+
         """
         positions = []
         for p in self.points:
