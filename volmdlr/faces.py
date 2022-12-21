@@ -3677,11 +3677,7 @@ class BSplineSurface3D(Surface3D):
     def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D,
                                        grid2d: volmdlr.grid.Grid2D):
         """
-<<<<<<< HEAD
-        Compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame.
-=======
         Compute the Contour2d of a Contour3d, on a Bspline surface, in the dimensioned frame.
->>>>>>> to_geo_msh
 
         """
 
