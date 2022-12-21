@@ -424,7 +424,7 @@ class LineSegment(Edge):
 
     def get_geo_lines(self, tag: int, start_point_tag: int, end_point_tag: int):
         """
-        gets the lines that define a LineSegment in a .geo file.
+        Gets the lines that define a LineSegment in a .geo file.
 
         :param tag: The linesegment index
         :type tag: int
@@ -825,7 +825,7 @@ class BSplineCurve(Edge):
 
     def get_geo_lines(self, tag: int, control_points_tags: List[int]):
         """
-        gets the lines that define a BsplineCurve in a .geo file.
+        Gets the lines that define a BsplineCurve in a .geo file.
 
         :param tag: The BsplineCurve index
         :type tag: int
