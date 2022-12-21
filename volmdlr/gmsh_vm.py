@@ -52,7 +52,7 @@ class GmshParser(DessiaObject):
     @classmethod
     def from_file(cls, file_path: str):
         """
-        Defines a gmsh object from .msh file
+        Defines a gmsh object from .msh file.
         """
 
         file_data = GmshParser.read_file(file_path)
@@ -88,7 +88,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_elements(lines):
         """
-        Gets elements data from .msh file
+        Gets elements data from .msh file.
         """
 
         if not lines:
@@ -140,7 +140,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_element_data(lines):
         """
-        Gets mesh element_data from .msh file
+        Gets mesh element_data from .msh file.
         """
 
         if not lines:
@@ -164,7 +164,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_element_node_data(lines):
         """
-        Gets mesh element_node_data from .msh file
+        Gets mesh element_node_data from .msh file.
         """
 
         if not lines:
@@ -177,7 +177,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_entities(lines):
         """
-        Gets entities data from .msh file
+        Gets entities data from .msh file.
         """
 
         if not lines:
@@ -277,7 +277,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_ghost_elements(lines):
         """
-        Gets mesh ghost_elements from .msh file
+        Gets mesh ghost_elements from .msh file.
         """
 
         if not lines:
@@ -298,7 +298,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_interpolation_scheme(lines):
         """
-        Gets mesh interpolation_scheme from .msh file
+        Gets mesh interpolation_scheme from .msh file.
         """
 
         if not lines:
@@ -311,7 +311,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_mesh_format(lines):
         """
-        Gets mesh format data from .msh file
+        Gets mesh format data from .msh file.
         """
 
         mesh_format = {}
@@ -327,7 +327,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_nodes(lines):
         """
-        Gets mesh nodes from .msh file
+        Gets mesh nodes from .msh file.
         """
 
         if not lines:
@@ -400,7 +400,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_node_data(lines):
         """
-        Gets mesh node_data from .msh file
+        Gets mesh node_data from .msh file.
         """
 
         if not lines:
@@ -430,7 +430,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_parametrizations(lines):
         """
-        Gets mesh parametrizations from .msh file
+        Gets mesh parametrizations from .msh file.
         """
 
         if not lines:
@@ -478,7 +478,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_partitioned_entities(lines):
         """
-        Gets mesh partitioned_entities from .msh file
+        Gets mesh partitioned_entities from .msh file.
         """
 
         if not lines:
@@ -501,7 +501,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_periodic(lines):
         """
-        Gets mesh periodic from .msh file
+        Gets mesh periodic from .msh file.
         """
 
         if not lines:
@@ -514,7 +514,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_physical_names(lines):
         """
-        Gets mesh physical_names from .msh file
+        Gets mesh physical_names from .msh file.
         """
 
         if not lines:
@@ -536,7 +536,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def read_file(file_path: str):
         """
-        Gets lines from a .msh file
+        Gets lines from a .msh file.
         """
 
         data = {'MeshFormat': [],
@@ -573,7 +573,7 @@ class GmshParser(DessiaObject):
 
     def define_tetrahedron_element_mesh(self):
         """
-        Defines a volmdlr mesh with TetrahedronElement from a .msh file
+        Defines a volmdlr mesh with TetrahedronElement from a .msh file.
         """
 
         # nodes = self.nodes[0]
@@ -600,7 +600,7 @@ class GmshParser(DessiaObject):
 
     def define_triangular_element_mesh(self):
         """
-        Defines a volmdlr mesh with TriangularElement from a .msh file
+        Defines a volmdlr mesh with TriangularElement from a .msh file.
         """
 
         # nodes = self.nodes[0]
