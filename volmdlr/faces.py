@@ -2194,10 +2194,12 @@ class SphericalSurface3D(Surface3D):
 
 class RuledSurface3D(Surface3D):
     """
-    :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
-    :type frame: volmdlr.Frame3D
-    :param radius: Cylinder's radius
-    :type radius: float
+    Defines a ruled surface between two wires.
+
+    :param wire1: Wire
+    :type wire1: :class:`vmw.Wire3D`
+    :param wire2: Wire
+    :type wire2: :class:`volmdlr.wires.Wire3D`
     """
     face_class = 'RuledFace3D'
 
@@ -2234,7 +2236,7 @@ class RuledSurface3D(Surface3D):
 
 
 class BSplineSurface3D(Surface3D):
-    """"
+    """
     Defines a BSplineSurface.
     """
     face_class = 'BSplineFace3D'
