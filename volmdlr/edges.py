@@ -21,7 +21,7 @@ from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
 
-import dessia_common as dc
+import dessia_common.core as dc
 import plot_data.core as plot_data
 import volmdlr.core_compiled
 import volmdlr.core

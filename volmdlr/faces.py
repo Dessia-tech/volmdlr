@@ -3114,7 +3114,7 @@ class BSplineSurface3D(Surface3D):
             p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
             return point3d.point_distance(p3d)
     #
-        def g(x):
+        def fun(x):
             S = self.derivatives(x[0], x[1], 1)
             r = S[0][0] - point3d
             f = r.norm() + 1e-12
@@ -3142,7 +3142,7 @@ class BSplineSurface3D(Surface3D):
 
         # Find the parametric coordinates of the point using the BFGS algorithm
         bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
-        result = scp.optimize.minimize(g, x0=npy.array(x0), method='L-BFGS-B', jac=True, bounds=bounds)
+        result = scp.optimize.minimize(fun, x0=npy.array(x0), method='L-BFGS-B', jac=True, bounds=bounds)
         point2d = volmdlr.Point2D(*result.x)
 
         return point2d
