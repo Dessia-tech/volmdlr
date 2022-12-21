@@ -1099,29 +1099,38 @@ class Cylinder(RevolvedProfile):
 
             point0 = frame0.old_coordinates(
                 volmdlr.Point3D(
-                    math.cos(x[0]) * self.radius,
-                    math.sin(x[0]) * self.radius,
+                    math.cos(x[0]) * x[2],
+                    math.sin(x[0]) * x[2],
                     x[1],
                 )
             )
 
             point1 = frame1.old_coordinates(
                 volmdlr.Point3D(
-                    math.cos(x[2]) * other_cylinder.radius,
-                    math.sin(x[2]) * other_cylinder.radius,
-                    x[3],
+                    math.cos(x[3]) * x[5],
+                    math.sin(x[3]) * x[5],
+                    x[4],
                 )
             )
 
             return point0.point_distance(point1)
 
         # Initial vector
-        x0 = npy.zeros(4)
+        # x = [theta_cyl_1, length_cyl_1, radius_cyl_1, theta_cyl_1, length_cyl_1, radius_cyl_1]
+        # in order to have any point inside the cylinder
+        x0 = npy.zeros(6)
 
         # Bounds
         bounds = Bounds(
-            lb=[0, -self.length / 2, 0, -other_cylinder.length / 2],
-            ub=[math.pi * 2, self.length / 2, math.pi * 2, other_cylinder.length / 2],
+            lb=[0, -self.length / 2, 0, 0, -other_cylinder.length / 2, 0],
+            ub=[
+                math.pi * 2,
+                self.length / 2,
+                self.radius,
+                math.pi * 2,
+                other_cylinder.length / 2,
+                other_cylinder.radius,
+            ],
         )
 
         return minimize(fun=dist_points, x0=x0, bounds=bounds, method="Powell").fun
