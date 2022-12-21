@@ -1790,8 +1790,6 @@ class Contour2D(ContourMixin, Wire2D):
             line.plot(ax=ax)
             for i in intersections:
                 i[0].plot(ax=ax)
-            self.save_to_file('/home/axel/Bureau/contour2d')
-            line.save_to_file('/home/axel/Bureau/line2d')
             raise NotImplementedError(
                 '{} intersections not supported yet'.format(
                     len(intersections)))
