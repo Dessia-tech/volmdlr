@@ -1653,7 +1653,7 @@ class Contour2D(ContourMixin, Wire2D):
     def order_contour(self, tol=1e-6):
         if self.is_ordered() or len(self.primitives) < 2:
             return self
-        
+
         new_primitives = self.ordering_contour()
 
         self.primitives = new_primitives

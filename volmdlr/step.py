@@ -308,6 +308,7 @@ class StepFunction:
     """
     A StepFunction is defined by its ID, name and arguments from the step file.
     """
+
     def __init__(self, function_id, function_name, function_arg):
         self.id = function_id
         self.name = function_name
