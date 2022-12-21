@@ -10,6 +10,10 @@ import volmdlr.mesh
 
 
 class GmshParser(DessiaObject):
+    """
+    A class to read and parse a .msh file to extract mesh data.
+
+    """
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
