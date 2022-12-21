@@ -111,7 +111,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        OpenedRoundedLineSegments2D translation
+        OpenedRoundedLineSegments2D translation.
+
         :param offset: translation vector
         :return: A new translated OpenedRoundedLineSegments2D
         """
@@ -121,7 +122,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        OpenedRoundedLineSegments2D translation. Object is updated inplace
+        OpenedRoundedLineSegments2D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         for point in self.points:
@@ -202,7 +204,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def offset_single_line(self, line_index, offset):
         """
-        line_index = 0 being the 1st line
+        :param line_index: 0 being the 1st line
         """
         new_linesegment2D_points = []
         dont_add_last_point = False
