@@ -712,7 +712,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
                       'axis_point': self.axis_point.to_dict(),
                       'x': self.x.to_dict(),
                       'y': self.y.to_dict(),
-                      'angle': self.angle
+                      'angle': self.angle,
+                      'axis': self.axis.to_dict()
                       })
 
         return dict_
