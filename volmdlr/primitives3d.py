@@ -1101,9 +1101,6 @@ class Cylinder(RevolvedProfile):
             return point0.point_distance(point1)
 
         # Initial vector
-        # p0 = frame0.old_coordinates(volmdlr.O3D)
-        # p1 = frame1.old_coordinates(volmdlr.O3D)
-        # x0 = (p0.x, p0.y, p0.z, p1.x, p1.y, p1.z)
         x0 = npy.zeros(6)
 
         # Constraints
@@ -1111,66 +1108,14 @@ class Cylinder(RevolvedProfile):
             # radius of cylinder 0
             return x[0] ** 2 + x[1] ** 2
 
-        def constraint_height_0(x):
-            # height of cylinder 0
-            return x[2]
-
         def constraint_radius_1(x):
             # radius of cylinder 1
             return x[3] ** 2 + x[4] ** 2
-
-        def constraint_height_1(x):
-            # height of cylinder 1
-            return x[5]
 
         constraints = [
             NonlinearConstraint(fun=constraint_radius_0, lb=0, ub=self.radius ** 2),
-            NonlinearConstraint(fun=constraint_height_0, lb=-self.length / 2, ub=self.length / 2),
             NonlinearConstraint(fun=constraint_radius_1, lb=0, ub=other_cylinder.radius ** 2),
-            NonlinearConstraint(fun=constraint_height_1, lb=-other_cylinder.length / 2, ub=other_cylinder.length / 2)
         ]
-
-        return minimize(fun=dist_points, x0=x0, constraints=constraints).fun
-
-    def min_distance_to_other_cylinder4(self, other_cylinder: 'Cylinder') -> float:
-        """
-        Compute the minimal distance between two volmdlr cylinders
-        :param other_cylinder: volmdlr Cylinder
-        :return: minimal distance between two 3D cylinders
-        """
-        # Local frames of cylinders
-        frame0 = volmdlr.Frame3D.from_point_and_vector(point=self.position,
-                                                       vector=self.axis,
-                                                       main_axis=volmdlr.Z3D)
-        frame1 = volmdlr.Frame3D.from_point_and_vector(point=other_cylinder.position,
-                                                       vector=other_cylinder.axis,
-                                                       main_axis=volmdlr.Z3D)
-
-        # Objective function
-        def dist_points(x):
-            """
-            :param x: coords of a point in cylinder 0 local frame, coords of a point in cylinder 1 local frame
-            :return: distance between the two points
-            """
-            point0 = frame0.old_coordinates(volmdlr.Point3D(x[0], x[1], x[2]))
-            point1 = frame1.old_coordinates(volmdlr.Point3D(x[3], x[4], x[5]))
-
-            return point0.point_distance(point1)
-
-        # Initial vector
-        # p0 = frame0.old_coordinates(volmdlr.O3D)
-        # p1 = frame1.old_coordinates(volmdlr.O3D)
-        # x0 = (p0.x, p0.y, p0.z, p1.x, p1.y, p1.z)
-        x0 = npy.zeros(6)
-
-        # Constraints
-        def constraint_radius_0(x):
-            # radius of cylinder 0
-            return x[0] ** 2 + x[1] ** 2
-
-        def constraint_radius_1(x):
-            # radius of cylinder 1
-            return x[3] ** 2 + x[4] ** 2
 
         # Bounds
         bounds = Bounds(
@@ -1192,122 +1137,7 @@ class Cylinder(RevolvedProfile):
             ],
         )
 
-        constraints = [
-            NonlinearConstraint(fun=constraint_radius_0, lb=0, ub=self.radius ** 2),
-            NonlinearConstraint(fun=constraint_radius_1, lb=0, ub=other_cylinder.radius ** 2),
-        ]
-
         return minimize(fun=dist_points, x0=x0, bounds=bounds, constraints=constraints).fun
-
-    def min_distance_to_other_cylinder2(self, other_cylinder: "Cylinder") -> float:
-        """
-        Compute the minimal distance between two volmdlr cylinders
-
-        :param other_cylinder: volmdlr Cylinder
-        :return: minimal distance between two 3D cylinders
-        """
-        # Local frames of cylinders
-        frame0 = volmdlr.Frame3D.from_point_and_vector(
-            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
-        )
-        frame1 = volmdlr.Frame3D.from_point_and_vector(
-            point=other_cylinder.position, vector=other_cylinder.axis, main_axis=volmdlr.Z3D
-        )
-
-        # Objective function
-        def dist_points(x):
-            """
-            :param x: polar coordinates of a point in both cylinder
-            :return: distance between the two points
-            """
-
-            point0 = frame0.old_coordinates(
-                volmdlr.Point3D(
-                    math.cos(x[0]) * x[2],
-                    math.sin(x[0]) * x[2],
-                    x[1],
-                )
-            )
-
-            point1 = frame1.old_coordinates(
-                volmdlr.Point3D(
-                    math.cos(x[3]) * x[5],
-                    math.sin(x[3]) * x[5],
-                    x[4],
-                )
-            )
-
-            return point0.point_distance(point1)
-
-        # Initial vector
-        # x = [theta_cyl_1, length_cyl_1, radius_cyl_1, theta_cyl_1, length_cyl_1, radius_cyl_1]
-        # in order to have any point inside the cylinder
-        x0 = npy.zeros(6)
-
-        # Bounds
-        bounds = Bounds(
-            lb=[0, -self.length / 2, 0, 0, -other_cylinder.length / 2, 0],
-            ub=[
-                math.pi * 2,
-                self.length / 2,
-                self.radius,
-                math.pi * 2,
-                other_cylinder.length / 2,
-                other_cylinder.radius,
-            ],
-        )
-
-        return minimize(fun=dist_points, x0=x0, bounds=bounds, method="Powell").fun
-
-    def min_distance_to_other_cylinder3(self, other_cylinder: "Cylinder") -> float:
-        """
-        Compute the minimal distance between two volmdlr cylinders
-        :param other_cylinder: volmdlr Cylinder
-        :return: minimal distance between two 3D cylinders
-        """
-        # Local frames of cylinders
-        frame0 = volmdlr.Frame3D.from_point_and_vector(
-            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
-        )
-        frame1 = volmdlr.Frame3D.from_point_and_vector(
-            point=other_cylinder.position, vector=other_cylinder.axis, main_axis=volmdlr.Z3D
-        )
-
-        # Objective function
-        def dist_points(x):
-            """
-            :param x: polar coordinates of a point in both cylinder
-            :return: distance between the two points
-            """
-
-            point0 = frame0.old_coordinates(
-                volmdlr.Point3D(
-                    math.cos(x[0]) * self.radius,
-                    math.sin(x[0]) * self.radius,
-                    x[1],
-                )
-            )
-
-            point1 = frame1.old_coordinates(
-                volmdlr.Point3D(
-                    math.cos(x[2]) * other_cylinder.radius,
-                    math.sin(x[2]) * other_cylinder.radius,
-                    x[3],
-                )
-            )
-
-            return point0.point_distance(point1)
-
-        # Initial vector
-        x0 = npy.zeros(4)
-
-        # Bounds
-        bounds = Bounds(
-            lb=[0, -self.length / 2, 0, -other_cylinder.length / 2],
-            ub=[math.pi * 2, self.length / 2, math.pi * 2, other_cylinder.length / 2],
-        )
-
-        return minimize(fun=dist_points, x0=x0, bounds=bounds, method="Powell").fun
 
     def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder') -> bool:
         """
