@@ -10,6 +10,10 @@ import volmdlr.mesh
 
 
 class GmshParser(DessiaObject):
+    """
+    A class to read and parse a .msh file to extract mesh data.
+
+    """
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -52,7 +56,7 @@ class GmshParser(DessiaObject):
     @classmethod
     def from_file(cls, file_path: str):
         """
-        defines a gmsh object from .msh file
+        Defines a gmsh object from .msh file.
         """
 
         file_data = GmshParser.read_file(file_path)
@@ -88,7 +92,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_elements(lines):
         """
-        gets elements data from .msh file
+        Gets elements data from .msh file.
         """
 
         if not lines:
@@ -140,7 +144,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_element_data(lines):
         """
-        gets mesh element_data from .msh file
+        Gets mesh element_data from .msh file.
         """
 
         if not lines:
@@ -164,7 +168,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_element_node_data(lines):
         """
-        gets mesh element_node_data from .msh file
+        Gets mesh element_node_data from .msh file.
         """
 
         if not lines:
@@ -177,7 +181,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_entities(lines):
         """
-        gets entities data from .msh file
+        Gets entities data from .msh file.
         """
 
         if not lines:
@@ -277,7 +281,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_ghost_elements(lines):
         """
-        gets mesh ghost_elements from .msh file
+        Gets mesh ghost_elements from .msh file.
         """
 
         if not lines:
@@ -298,7 +302,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_interpolation_scheme(lines):
         """
-        gets mesh interpolation_scheme from .msh file
+        Gets mesh interpolation_scheme from .msh file.
         """
 
         if not lines:
@@ -311,7 +315,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_mesh_format(lines):
         """
-        gets mesh format data from .msh file
+        Gets mesh format data from .msh file.
         """
 
         mesh_format = {}
@@ -327,7 +331,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_nodes(lines):
         """
-        gets mesh nodes from .msh file
+        Gets mesh nodes from .msh file.
         """
 
         if not lines:
@@ -400,7 +404,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_node_data(lines):
         """
-        gets mesh node_data from .msh file
+        Gets mesh node_data from .msh file.
         """
 
         if not lines:
@@ -430,7 +434,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_parametrizations(lines):
         """
-        gets mesh parametrizations from .msh file
+        Gets mesh parametrizations from .msh file.
         """
 
         if not lines:
@@ -478,7 +482,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_partitioned_entities(lines):
         """
-        gets mesh partitioned_entities from .msh file
+        Gets mesh partitioned_entities from .msh file.
         """
 
         if not lines:
@@ -501,7 +505,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_periodic(lines):
         """
-        gets mesh periodic from .msh file
+        Gets mesh periodic from .msh file.
         """
 
         if not lines:
@@ -514,7 +518,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_physical_names(lines):
         """
-        gets mesh physical_names from .msh file
+        Gets mesh physical_names from .msh file.
         """
 
         if not lines:
@@ -536,7 +540,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def read_file(file_path: str):
         """
-        gets lines from a .msh file
+        Gets lines from a .msh file.
         """
 
         data = {'MeshFormat': [],
@@ -573,7 +577,7 @@ class GmshParser(DessiaObject):
 
     def define_tetrahedron_element_mesh(self):
         """
-        defines a volmdlr mesh with TetrahedronElement from a .msh file
+        Defines a volmdlr mesh with TetrahedronElement from a .msh file.
         """
 
         # nodes = self.nodes[0]
@@ -601,7 +605,7 @@ class GmshParser(DessiaObject):
 
     def define_triangular_element_mesh(self):
         """
-        defines a volmdlr mesh with TriangularElement from a .msh file
+        Defines a volmdlr mesh with TriangularElement from a .msh file.
         """
 
         # nodes = self.nodes[0]
@@ -641,3 +645,121 @@ class GmshParser(DessiaObject):
     def to_2d(list_nodes):
         return [volmdlr.mesh.Node2D(node[0], node[1]) for
                 node in list_nodes]
+
+    def get_lines_nodes(self):
+        """
+        Gets lines related to nodes data.
+
+        :return: a list of lines
+        :rtype: List[str]
+        """
+
+        lines = []
+        if self.nodes['all_nodes'][0].__class__.__name__[-2] == '2':
+            for node in self.nodes['all_nodes']:
+                lines.append(str([*node])[1:-1].replace(',', '') + ' 0.0')
+        else:
+            for node in self.nodes['all_nodes']:
+                lines.append(str([*node])[1:-1].replace(',', ''))
+
+        return lines
+
+    def get_lines_cells(self):
+        """
+        Gets lines related to cells data.
+
+        :return: a list of lines
+        :rtype: List[str]
+        """
+
+        lines = []
+        cells, cells_0, cells_1 = 0, 0, 0
+        for i in range(0, len(self.nodes['nodes_dim_0'])):
+            lines.append('1 ' + str(i))
+            cells += 1
+        cells_1 += cells * 2
+        cells_0 += cells
+
+        cells_str_int = {'elements_type_1': ('2 ', 3),
+                         'elements_type_2': ('3 ', 4),
+                         'elements_type_4': ('4 ', 5)}
+
+        for key, value in cells_str_int.items():
+            cells = 0
+            try:
+                for elements in self.elements[key]:
+                    for element in map(str, elements):
+                        lines.append(value[0] + element[1:-1].replace(',', ''))
+                        cells += 1
+                cells_1 += cells * value[1]
+                cells_0 += cells
+            except KeyError:
+                pass
+
+        return lines, cells_0, cells_1
+
+    def get_lines_cells_type(self):
+        """
+        Gets lines related to cells type data.
+
+        :return: a list of lines
+        :rtype: List[str]
+        """
+
+        lines = []
+        lines.extend(['1'] * len(self.nodes['nodes_dim_0']))
+
+        cells_str_int = {'elements_type_1': '3',
+                         'elements_type_2': '5',
+                         'elements_type_4': '10'}
+
+        for key, value in cells_str_int.items():
+            try:
+                count = 0
+                for elements in self.elements[key]:
+                    count += len(elements)
+                lines.extend([value] * count)
+            except KeyError:
+                pass
+
+        return lines
+
+    def to_vtk(self, output_file_name):
+        """
+        Create a .vtk file from a GmshParser data.
+
+        :param output_file_name: DESCRIPTION
+        :type output_file_name: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+        """
+
+        if output_file_name[-3::] != 'vtk':
+            output_file_name += '.vtk'
+
+        lines = []
+        lines.append('# vtk DataFile Version 2.0')
+        lines.append(output_file_name + ', Created by Volmdlr')
+        lines.append('ASCII')
+        lines.append('DATASET UNSTRUCTURED_GRID')
+        lines.append('POINTS ' + str(len(self.nodes['all_nodes'])) + ' double')
+
+        lines.extend(self.get_lines_nodes())
+
+        lines.append(' ')
+        lines.append('CELLS')  # 13664=1103+1915+4044+6602 / 57137=1103*2+1915*3+4044*4+6602*5
+
+        elements_lines, cells_0, cells_1 = self.get_lines_cells()
+
+        lines.extend(elements_lines)
+
+        lines[lines.index('CELLS')] = 'CELLS ' + str(cells_0) + ' ' + str(cells_1)
+
+        lines.append(' ')
+        lines.append('CELL_TYPES ' + str(cells_0))  # 13664
+
+        lines.extend(self.get_lines_cells_type())
+
+        with open(output_file_name, mode="w", encoding="utf-8") as f_out:
+            f_out.write('\n'.join(lines))
+        f_out.close()
