@@ -7521,7 +7521,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         step_content = ''
         face_ids = []
         for face in self.faces:
-            if isinstance(face, Face3D) or isinstance(face, Surface3D):
+            if isinstance(face, (Face3D, Surface3D)):
                 face_content, face_sub_ids = face.to_step(current_id)
             else:
                 face_content, face_sub_ids = face.to_step(current_id)
