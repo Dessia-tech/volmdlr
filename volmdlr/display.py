@@ -82,7 +82,7 @@ class DisplayMesh(dc.DessiaObject):
     @classmethod
     def merge_meshes(cls, meshes: List['DisplayMesh']):
         """
-        Merge several meshes into one
+        Merge several meshes into one.
         """
         # Collect points
         ip = 0
@@ -185,7 +185,7 @@ class DisplayMesh2D(DisplayMesh):
 
     def area(self):
         """
-        Return the area as the sum of areas of triangles
+        Return the area as the sum of areas of triangles.
         """
         area = 0.
         for (n1, n2, n3) in self.triangles:
