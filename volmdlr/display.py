@@ -174,6 +174,10 @@ class DisplayMesh(dc.DessiaObject):
 
 
 class DisplayMesh2D(DisplayMesh):
+    """
+    A DisplayMesh2D is a list of points defined in 2D linked by triangles.
+    """
+
     _linesegment_class = volmdlr.edges.LineSegment2D
     _point_class = volmdlr.Point2D
 
@@ -197,6 +201,10 @@ class DisplayMesh2D(DisplayMesh):
 
 
 class DisplayMesh3D(DisplayMesh):
+    """
+    A DisplayMesh2D is a list of points defined in 3D linked by triangles.
+    """
+
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 
