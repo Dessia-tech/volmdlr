@@ -1465,7 +1465,8 @@ class CylindricalSurface3D(Surface3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new CylindricalSurface3D
+        Changes frame_mapping and return a new CylindricalSurface3D.
+
         side = 'old' or 'new'
         """
         new_frame = self.frame.frame_mapping(frame, side)
@@ -2233,6 +2234,9 @@ class RuledSurface3D(Surface3D):
 
 
 class BSplineSurface3D(Surface3D):
+    """"
+    Defines a BSplineSurface.
+    """
     face_class = 'BSplineFace3D'
     _non_serializable_attributes = ['surface', 'curves']
 
@@ -5111,7 +5115,8 @@ class PlaneFace3D(Face3D):
 
     def get_face_cutting_contours(self, dict_intersecting_combinations):
         """
-        get all contours cutting the face, resultig from multiple faces intersections
+        Get all contours cutting the face, resultig from multiple faces intersections.
+
         :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
         and as the values the resulting primitive from the intersection of these two faces
         return a list all contours cutting one particular face
