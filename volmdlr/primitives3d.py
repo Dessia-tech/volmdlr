@@ -9,8 +9,7 @@ import math
 from typing import Tuple, List, Dict
 from random import uniform
 
-import numpy
-from scipy.optimize import minimize, NonlinearConstraint, Bounds
+from scipy.optimize import minimize, Bounds
 from scipy.stats import qmc
 
 import numpy as npy
@@ -1117,7 +1116,7 @@ class Cylinder(RevolvedProfile):
             return point0.point_distance(point1)
 
         # Initial vector
-        x0 = numpy.zeros(4)
+        x0 = npy.zeros(4)
 
         # Bounds
         bounds = Bounds(
