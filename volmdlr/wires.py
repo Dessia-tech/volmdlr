@@ -1794,9 +1794,10 @@ class Contour2D(ContourMixin, Wire2D):
             ax.set_aspect('auto')
             for i in intersections:
                 i[0].plot(ax=ax)
-            self.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\contour2d')
-            line.save_to_file(r'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\line2d')
-            raise NotImplementedError(f'{len(intersections)} intersections not supported yet')
+
+            raise NotImplementedError(
+                '{} intersections not supported yet'.format(
+                    len(intersections)))
 
         points_intersections = [point for point, prim in intersections]
         sorted_points = line.sort_points_along_line(points_intersections)
