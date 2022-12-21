@@ -2238,9 +2238,28 @@ class RuledSurface3D(Surface3D):
 class BSplineSurface3D(Surface3D):
     """
     Defines a BSplineSurface.
+
+    :param degree_u: ADD DESCRIPTION
+    :type degree_u: int
+    :param degree_v: ADD DESCRIPTION
+    :type degree_v: int
+    :param control_points: ADD DESCRIPTION
+    :type control_points: List[`volmdlr.Point3D`]
+    :param nb_u: ADD DESCRIPTION
+    :type nb_u:
+    :param nb_v: ADD DESCRIPTION
+    :type nb_v:
+    :param u_multiplicities: ADD DESCRIPTION
+    :type u_multiplicities:
+    :param v_multiplicities: ADD DESCRIPTION
+    :type v_multiplicities:
+    :param u_knots: ADD DESCRIPTION
+    :type u_knots:
+    :param v_knots: ADD DESCRIPTION
+    :type v_knots:
     """
-    face_class = 'BSplineFace3D'
-    _non_serializable_attributes = ['surface', 'curves']
+    face_class = "BSplineFace3D"
+    _non_serializable_attributes = ["surface", "curves"]
 
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v,
                  u_multiplicities, v_multiplicities, u_knots, v_knots,
