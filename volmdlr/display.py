@@ -5,12 +5,16 @@
 """
 from typing import List, Tuple
 import math
-import dessia_common as dc
+import dessia_common.core as dc
 import volmdlr.edges
 # import volmdlr.faces as vmf
 
 
 class Node2D(volmdlr.Point2D):
+    """
+    A node is a point with some hash capabilities for perfomance.
+    """
+
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
 
@@ -27,6 +31,10 @@ class Node2D(volmdlr.Point2D):
 
 
 class Node3D(volmdlr.Point3D):
+    """
+    A node is a point with some hash capabilities for perfomance.
+    """
+
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))
 
@@ -44,6 +52,12 @@ class Node3D(volmdlr.Point3D):
 
 
 class DisplayMesh(dc.DessiaObject):
+    """
+    A DisplayMesh is a list of points linked by triangles.
+    This is an abstract class for 2D & 3D.
+    """
+    _linesegment_class = volmdlr.edges.LineSegment
+
     def __init__(self, points, triangles, name=''):
 
         self.points = points
@@ -204,9 +218,10 @@ class DisplayMesh3D(DisplayMesh):
         return positions, flatten_indices
 
     def to_stl(self):
-        '''
-        Exports to STL
-        '''
+        """
+        Exports to STL.
+
+        """
         # TODO: remove this in the future
         import volmdlr.stl as vmstl
         stl = vmstl.Stl.from_display_mesh(self)

@@ -7,7 +7,7 @@ Module containing grid and relative objects
 
 from typing import List
 import numpy as npy
-from dessia_common import DessiaObject
+from dessia_common.core import DessiaObject
 import volmdlr
 import volmdlr.wires
 
@@ -207,8 +207,7 @@ class Grid2D(DessiaObject):
 
     def grid_pattern(self):
         """
-        Defines a list of quadrilateral polygons defined based on
-        Grid2d points.
+        Defines a list of quadrilateral polygons defined based on Grid2d points.
 
         :return: The list of quadrilateral polygons
         :rtype: List[volmdlr.wires.ClosedPolygon2D]

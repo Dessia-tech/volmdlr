@@ -18,7 +18,7 @@ from mpl_toolkits.mplot3d import proj3d
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrow, FancyArrowPatch
 
-from dessia_common import DessiaObject
+from dessia_common.core import DessiaObject
 import plot_data
 
 # =============================================================================
@@ -2893,6 +2893,13 @@ class Frame2D(Basis2D):
                        Vector2D(M[:, 0]),
                        Vector2D(M[:, 1]))
 
+    def __hash__(self):
+        """
+        Hash returns 0 because points are difficult to hash if they are meant
+        to be equalized at a given tolerance
+        """
+        return 0
+
     def to_dict(self, *args, **kwargs):
         """
         Seralizes a 2 dimensional frame into a dictionary.
@@ -2944,6 +2951,21 @@ class Frame2D(Basis2D):
         :rtype: :class:`volmdlr.Matrix22`
         """
         return Basis2D.old_coordinates(self, vector) + self.origin
+
+    def frame_mapping(self, frame: 'Frame2D', side: str):
+        basis = frame.basis()
+        if side == 'new':
+            new_origin = frame.new_coordinates(self.origin)
+            new_u = basis.new_coordinates(self.u)
+            new_v = basis.new_coordinates(self.v)
+        elif side == 'old':
+            new_origin = frame.old_coordinates(self.origin)
+            new_u = basis.old_coordinates(self.u)
+            new_v = basis.old_coordinates(self.v)
+        else:
+            raise ValueError('side value not valid, please specify'
+                              'a correct value: \'old\' or \'new\'')
+        return Frame2D(new_origin, new_u, new_v)
 
     def translation(self, vector):
         """
@@ -3163,6 +3185,25 @@ class Frame3D(Basis3D):
         :rtype: :class:`volmdlr.Matrix33`
         """
         return Basis3D.old_coordinates(self, vector) + self.origin
+
+    def frame_mapping(self, frame: 'Frame3D', side: str):
+        basis = frame.basis()
+        if side == 'new':
+            new_origin = frame.new_coordinates(self.origin)
+            new_u = basis.new_coordinates(self.u)
+            new_v = basis.new_coordinates(self.v)
+            new_w = basis.new_coordinates(self.w)
+
+        elif side == 'old':
+            new_origin = frame.old_coordinates(self.origin)
+            new_u = basis.old_coordinates(self.u)
+            new_v = basis.old_coordinates(self.v)
+            new_w = basis.old_coordinates(self.w)
+        else:
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
+        return Frame3D(new_origin, new_u, new_v, new_w)
+
 
     def rotation(self, center: Point3D, axis: Vector3D, angle: float):
         """

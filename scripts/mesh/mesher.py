@@ -12,7 +12,7 @@ from scipy import sparse
 from scipy import linalg
 from finite_elements.core import steel,aluminium
 import time 
-from dessia_common import DessiaObject
+from dessia_common.core import DessiaObject
 from typing import TypeVar, List, Tuple
 from scipy.spatial import Delaunay
 from itertools import product 
