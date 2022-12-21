@@ -2079,6 +2079,8 @@ class ConicalSurface3D(Surface3D):
 
 class SphericalSurface3D(Surface3D):
     """
+    Defines a spherical surface.
+
     :param frame: Sphere's frame to position it
     :type frame: volmdlr.Frame3D
     :param radius: Sphere's radius
@@ -2232,6 +2234,9 @@ class RuledSurface3D(Surface3D):
 
 
 class BSplineSurface3D(Surface3D):
+    """
+    Defines a BSplineSurface.
+    """
     face_class = 'BSplineFace3D'
     _non_serializable_attributes = ['surface']
 
@@ -2921,7 +2926,6 @@ class BSplineSurface3D(Surface3D):
         points_2d = grid2d.points
         points_3d = self.grid3d(grid2d)
 
-        (xmin, xmax), (ymin, ymax) = grid2d.limits_xy
         points_x, points_y = grid2d.points_xy
 
         # Parameters
@@ -5186,7 +5190,8 @@ class PlaneFace3D(Face3D):
     def get_closed_contour_divided_faces_inner_contours(list_faces, new_contour):
         """
         If there is any inner contour, verifies which ones belong to the new divided faces from
-        a closed cutting contour
+        a closed cutting contour.
+
         :param list_faces: list of new faces
         :param new_contour: current new face outer contour
         :return: a list of new faces with its inner contours
@@ -6214,9 +6219,9 @@ class CylindricalFace3D(Face3D):
 
     def adjacent_direction(self, other_face3d):
         """
-        find out in which direction the faces are adjacent
-        Parameters
+        Find out in which direction the faces are adjacent.
 
+        :param other_face3d: The face to evaluation.
         :type other_face3d: volmdlr.faces.CylindricalFace3D
         """
 
