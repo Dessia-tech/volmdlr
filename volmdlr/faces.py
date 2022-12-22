@@ -2261,7 +2261,6 @@ class BSplineSurface3D(Surface3D):
     face_class = "BSplineFace3D"
     _non_serializable_attributes = ["surface", "curves"]
 
-
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v,
                  u_multiplicities, v_multiplicities, u_knots, v_knots,
                  weights=None, name=''):
