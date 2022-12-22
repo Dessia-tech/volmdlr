@@ -559,6 +559,19 @@ class BoundingBox(dc.DessiaObject):
                            max(self.zmax, other_bbox.zmax))
 
     def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+        """
+        Converts the bounding box to a dict.
+
+        :param use_pointers: DESCRIPTION, defaults to True
+        :type use_pointers: bool, optional
+        :param memo: DESCRIPTION, defaults to None
+        :type memo: TYPE, optional
+        :param path: DESCRIPTION, defaults to '#'
+        :type path: str, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
         return {'object_class': 'volmdlr.core.BoundingBox',
                 'name': self.name,
                 'xmin': self.xmin,

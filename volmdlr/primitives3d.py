@@ -285,16 +285,13 @@ class Block(volmdlr.faces.ClosedShell3D):
         return [xm_face, xp_face, ym_face, yp_face, zm_face, zp_face]
 
     def faces_center(self):
-        vertices = self.vertices()
-        c0_x = (vertices[0] + vertices[1] + vertices[4] + vertices[5]) / 4
-        c1_x = (vertices[2] + vertices[3] + vertices[6] + vertices[7]) / 4
-
-        c0_y = (vertices[0] + vertices[3] + vertices[4] + vertices[7]) / 4
-        c1_y = (vertices[1] + vertices[2] + vertices[5] + vertices[6]) / 4
-
-        c0_z = (vertices[0] + vertices[1] + vertices[2] + vertices[3]) / 4
-        c1_z = (vertices[4] + vertices[5] + vertices[6] + vertices[7]) / 4
-        return c0_x, c1_x, c0_y, c1_y, c0_z, c1_z
+        # c0_x, c1_x, c0_y, c1_y, c0_z, c1_z
+        return [self.frame.origin - 0.5 * self.frame.u,
+                self.frame.origin + 0.5 * self.frame.u,
+                self.frame.origin - 0.5 * self.frame.v,
+                self.frame.origin + 0.5 * self.frame.v,
+                self.frame.origin - 0.5 * self.frame.w,
+                self.frame.origin + 0.5 * self.frame.w]
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
@@ -715,7 +712,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
                       'axis_point': self.axis_point.to_dict(),
                       'x': self.x.to_dict(),
                       'y': self.y.to_dict(),
-                      'angle': self.angle
+                      'angle': self.angle,
+                      'axis': self.axis.to_dict()
                       })
 
         return dict_
