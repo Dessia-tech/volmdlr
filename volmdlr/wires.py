@@ -22,6 +22,8 @@ import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
 import plot_data.core as plot_data
 
+from triangle import triangulate
+
 import volmdlr
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core_compiled import polygon_point_belongs
@@ -29,7 +31,6 @@ import volmdlr.core
 import volmdlr.edges
 import volmdlr.display as vmd
 
-import triangle
 
 def argmax(list_of_float):
     """
@@ -3069,7 +3070,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                'segments': npy.array(segments).reshape((-1, 2)),
                }
-        t = triangle.triangulate(tri, tri_opt)
+        t = triangulate(tri, tri_opt)
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in
