@@ -7,12 +7,11 @@ Created on Thu Mar 3 2022
 """
 
 # %% Librairies
+from geomdl import BSpline
 
 import volmdlr as vm
 import volmdlr.faces
 
-
-from geomdl import BSpline
 
 # %% Surface 1
 # %%% Control points
