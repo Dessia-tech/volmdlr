@@ -2533,7 +2533,8 @@ class BSplineSurface3D(Surface3D):
         results = [(res.x, res.fun)]
 
         for x0 in x0s:
-            res = scp.optimize.minimize(fun, x0=npy.array(x0), jac=True, bounds=bounds)
+            res = scp.optimize.minimize(fun, x0=npy.array(x0), jac=True,
+                                        bounds=[(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)])
             # res.fun represent the value of the objective function
             if res.fun <= tol:
                 return volmdlr.Point2D(*res.x)
