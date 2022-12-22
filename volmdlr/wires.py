@@ -3083,10 +3083,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         To detail documentation, please refer to https://rufat.be/triangle/API.html
 
-        :param tri_opt: (Optional) Triangulation preferences
+        :param tri_opt: (Optional) Triangulation preferences.
         :type tri_opt: str
+        :return: A 2D mesh.
+        :rtype: `vmd.DisplayMesh2D`
         """
-        # Converting to nodes for performance
+        # Converting points to nodes for performance
         nodes = [vmd.Node2D.from_point(p) for p in self.points]
         vertices = [(p.x, p.y) for p in nodes]
         n = len(nodes)
@@ -3096,7 +3098,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                'segments': npy.array(segments).reshape((-1, 2)),
                }
-        t = triangle.triangulate(tri, 'p')
+        t = triangle.triangulate(tri, tri_opt)
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in

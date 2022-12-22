@@ -255,7 +255,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         if not self.inner_contours:  # No holes
             vertices_grid = [(p.x, p.y) for p in points_grid if p not in points]
             vertices.extend(vertices_grid)
-            points.extend(points_grid)
             tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                    'segments': npy.array(segments).reshape((-1, 2)),
                    }
@@ -2934,7 +2933,7 @@ class BSplineSurface3D(Surface3D):
             knot_vector_v.extend([v_knot] * v_multiplicities[i])
         surface.knotvector_u = knot_vector_u
         surface.knotvector_v = knot_vector_v
-        surface.delta = 0.04
+        surface.delta = 0.01
         # surface_points = surface.evalpts
 
         self.surface = surface
@@ -3097,18 +3096,12 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
-        if x < 0:
-            x = 0.
-        elif 1 < x:
-            x = 1
-        if y < 0:
-            y = 0
-        elif y > 1:
-            y = 1
+        x = min(max(x, 0), 1)
+        y = min(max(y, 0), 1)
 
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
-    def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-7):
+    def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-5):
 
         def f(x):
             p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
@@ -3117,7 +3110,7 @@ class BSplineSurface3D(Surface3D):
         def fun(x):
             S = self.derivatives(x[0], x[1], 1)
             r = S[0][0] - point3d
-            f = r.norm() + 1e-12
+            f = r.norm() + 1e-32
             jac = npy.array([r.dot(S[1][0])/f, r.dot(S[0][1])/f])
             return f, jac
 
@@ -3142,10 +3135,34 @@ class BSplineSurface3D(Surface3D):
 
         # Find the parametric coordinates of the point using the BFGS algorithm
         bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
-        result = scp.optimize.minimize(fun, x0=npy.array(x0), method='L-BFGS-B', jac=True, bounds=bounds)
+        result = scp.optimize.minimize(fun, x0=npy.array(x0), jac=True, bounds=bounds)
         point2d = volmdlr.Point2D(*result.x)
 
-        return point2d
+        if result.fun <= tol:
+            # print(f"New: {result.fun}")
+            return point2d
+
+        x0s.remove(x0)
+        results = [(result.x, result.fun)]
+
+        for x0 in x0s:
+            # res = scp.optimize.minimize(f, x0=npy.array(x0),
+            #                             bounds=[(min_bound_x, max_bound_x),
+            #                                     (min_bound_y, max_bound_y)])
+            res = scp.optimize.minimize(fun, x0=npy.array(x0), jac=True, bounds=bounds)
+            # res.fun represent the value of the objective function
+            if res.fun <= tol:
+                # print(i)
+                # print(f"New: {result.success}")
+                # print(f"New: {result.fun}")
+                # print(f"Minimize: {res.fun}")
+                return volmdlr.Point2D(*res.x)
+            # print("---------------------------")
+            # print(f"New: {result.fun}")
+            # print(f"diff mini: {result.fun - res.fun}")
+
+            results.append((res.x, res.fun))
+        return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
