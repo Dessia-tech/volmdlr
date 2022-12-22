@@ -2513,33 +2513,20 @@ class BSplineSurface3D(Surface3D):
                (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
                (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
 
-        # Find a good initial condition
-        min_dist = math.inf
-        x0 = []
-        for xi in x0s:
-            dist = f(xi)
-            if dist < min_dist:
-                x0 = xi
-                min_dist = dist
+        # Sort the initial conditions
+        x0s.sort(key=lambda x0: f(x0))
 
         # Find the parametric coordinates of the point
-        res = scp.optimize.minimize(fun, x0=npy.array(x0), jac=True,
-                                    bounds=[(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)])
-
-        if res.fun <= tol:
-            return volmdlr.Point2D(*res.x)
-
-        x0s.remove(x0)
-        results = [(res.x, res.fun)]
-
+        results = []
         for x0 in x0s:
             res = scp.optimize.minimize(fun, x0=npy.array(x0), jac=True,
-                                        bounds=[(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)])
-            # res.fun represent the value of the objective function
+                                        bounds=[(min_bound_x, max_bound_x),
+                                                (min_bound_y, max_bound_y)])
             if res.fun <= tol:
                 return volmdlr.Point2D(*res.x)
 
             results.append((res.x, res.fun))
+
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
     def linesegment2d_to_3d(self, linesegment2d):
