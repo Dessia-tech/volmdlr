@@ -14,7 +14,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         contour2d_dim = bspline_surfaces.bspline_surface_2.contour2d_parametric_to_dimension(contour2d, grid2d)
         self.assertEqual(len(contour2d_dim.primitives), 4)
         self.assertAlmostEqual(contour2d_dim.area(), 18.112582105805615, places=2)
-        self.assertAlmostEqual(contour2d_dim.length(), 16.816547325087043)
+        self.assertAlmostEqual(contour2d_dim.length(), 16.816547325087043, places=2)
 
 
 if __name__ == '__main__':
