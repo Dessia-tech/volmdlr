@@ -33,6 +33,8 @@ import volmdlr.display as vmd
 import volmdlr.geometry
 import volmdlr.grid
 
+import time
+
 
 def knots_vector_inv(knots_vector):
     """
@@ -2481,6 +2483,35 @@ class BSplineSurface3D(Surface3D):
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
                       max_bound_x: float = 1., min_bound_y: float = 0.,
                       max_bound_y: float = 1., tol=1e-9):
+        t = time.time()
+        res1 = self.point3d_to_2d1(point3d, min_bound_x, max_bound_x,
+                              min_bound_y, max_bound_y, tol)
+        t1 = time.time() - t
+
+        t = time.time()
+        res2 = self.point3d_to_2d2(point3d, tol)
+        t2 = time.time() - t
+
+        if t1 < t2 :
+            print('Old method faster by', abs(t1 - t2)/t2*100, '%')
+        else:
+            print('New method faster by', abs(t1 - t2)/t1*100, '%')
+        distance = res1.point_distance(res2)
+        # if distance > 1e-6:
+        #     print('ValueError distance=', distance, 'm')
+        #     ax = self.plot()
+        #     point3d.plot(ax=ax, color='r')
+        #     ax = res1.plot(color='b')
+        #     res2.plot(ax=ax, color='r')
+        #     volmdlr.wires.ClosedPolygon2D([volmdlr.O2D, volmdlr.X2D, volmdlr.X2D+volmdlr.Y2D, volmdlr.Y2D]).plot(ax=ax)
+        #     raise ValueError
+        print('Distance between points', distance, 'm')
+        print('----------------------------------------')
+        return res1
+
+    def point3d_to_2d1(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
+                      max_bound_x: float = 1., min_bound_y: float = 0.,
+                      max_bound_y: float = 1., tol=1e-9):
         def f(x):
             p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
             return point3d.point_distance(p3d)
@@ -2506,6 +2537,7 @@ class BSplineSurface3D(Surface3D):
                                            )
             # z.cost represent the value of the cost function at the solution
             if z.fun < tol:
+                print('tol old', z.fun)
                 return volmdlr.Point2D(*z.x)
 
             res = scp.optimize.minimize(f, x0=npy.array(x0),
@@ -2514,11 +2546,77 @@ class BSplineSurface3D(Surface3D):
                                         tol=tol)
             # res.fun represent the value of the objective function
             if res.fun < tol:
+                print('tol old', res.fun)
                 return volmdlr.Point2D(*res.x)
 
             results.append((z.x, z.fun))
             results.append((res.x, res.fun))
+        print('tol old.', min([result[1] for result in results]))
         return (volmdlr.Point2D(*min(results, key=lambda r: r[1])[0]))
+
+    def point3d_to_2d2(self, point3d: volmdlr.Point3D, tol=1e-9):
+        def f(x):
+            return point3d.point_distance(
+                self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
+
+        def fun(x):
+            S = self.derivatives(x[0], x[1], 1)
+            r = S[0][0] - point3d
+            f = r.norm() + 1e-12
+            jac = npy.array([r.dot(S[1][0]) / f, r.dot(S[0][1]) / f])
+            return f, jac
+
+        min_bound_x, max_bound_x = self.surface.domain[0]
+        min_bound_y, max_bound_y = self.surface.domain[1]
+
+        delta_bound_x = max_bound_x - min_bound_x
+        delta_bound_y = max_bound_y - min_bound_y
+        x0s = [
+            ((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
+            (min_bound_x + delta_bound_x / 10,
+             min_bound_y + delta_bound_y / 10),
+            (min_bound_x + delta_bound_x / 10,
+             max_bound_y - delta_bound_y / 10),
+            (max_bound_x - delta_bound_x / 10,
+             min_bound_y + delta_bound_y / 10),
+            (max_bound_x - delta_bound_x / 10,
+             max_bound_y - delta_bound_y / 10)]
+
+        # Find a good initial condition
+        min_dist = math.inf
+        x0 = []
+        for xi in x0s:
+            dist = f(xi)
+            if dist < min_dist:
+                x0 = xi
+                min_dist = dist
+
+        # Find the parametric coordinates of the point using the L-BFGS-B algorithm
+        result = scp.optimize.minimize(fun, x0=npy.array(x0),
+                                       method='L-BFGS-B', jac=True,
+                                       bounds=[(min_bound_x, max_bound_x),
+                                               (min_bound_y, max_bound_y)])
+        print('tol new', result.fun)
+        return volmdlr.Point2D(*result.x)
+
+    def derivatives(self, u, v, order):
+        """
+        Evaluates n-th order surface derivatives at the given (u, v) parameter pair.
+        :param u: Point's u coordinate.
+        :type u: float
+        :param v: Point's v coordinate.
+        :type v: float
+        :param order: Order of the derivatives.
+        :type order: int
+        :return: A list SKL, where SKL[k][l] is the derivative of the surface S(u,v) with respect
+        to u k times and v l times
+        :rtype: List[`volmdlr.Vector3D`]
+        """
+        derivatives = self.surface.derivatives(u, v, order)
+        for i in range(order + 1):
+            for j in range(order + 1):
+                derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])
+        return derivatives
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
