@@ -218,7 +218,7 @@ class DisplayMesh3D(DisplayMesh):
     def to_babylon(self):
         """
         Returns mesh in babylon format.
-        
+
         https://doc.babylonjs.com/how_to/custom
         """
         positions = []

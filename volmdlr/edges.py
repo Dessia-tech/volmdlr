@@ -3646,7 +3646,6 @@ class LineSegment3D(LineSegment):
     def to_line(self):
         return Line3D(self.start, self.end)
 
-
     def to_2d(self, plane_origin, x, y):
         """
         Tranforms a LineSegment3D into an LineSegment2D, given an plane origin and a u and v plane vector.

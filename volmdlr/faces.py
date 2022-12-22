@@ -4598,7 +4598,7 @@ class PlaneFace3D(Face3D):
     def distance_to_point(self, point, return_other_point=False):
         """
         Only works if the surface is planar.
-        
+
         TODO : this function does not take into account if Face has holes
         """
         projected_pt = point.plane_projection3d(self.surface3d.frame.origin,
@@ -5087,7 +5087,7 @@ class PlaneFace3D(Face3D):
     def get_face_cutting_contours(self, dict_intersecting_combinations):
         """
         Get all contours cutting the face, resultig from multiple faces intersections.
-        
+
         :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
         and as the values the resulting primitive from the intersection of these two faces
         return a list all contours cutting one particular face

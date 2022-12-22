@@ -1023,7 +1023,6 @@ class VolumeModel(dc.PhysicalObject):
         os.remove(f.name)
         return output
 
-
     def babylon_data(self):
         meshes = []
         lines = []
