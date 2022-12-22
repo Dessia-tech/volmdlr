@@ -2365,9 +2365,11 @@ class BSplineSurface3D(Surface3D):
         """
         Computes the bounding box ot the surface.
 
-        This method is not exact!
         """
-        return volmdlr.core.BoundingBox.from_points(self.control_points)
+        min_bounds, max_bounds = self.surface.bbox
+        xmin, ymin, zmin = min_bounds
+        xmax, ymax, zmax = max_bounds
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def control_points_matrix(self, coordinates):
         """
