@@ -3646,37 +3646,6 @@ class LineSegment3D(LineSegment):
     def to_line(self):
         return Line3D(self.start, self.end)
 
-    def babylon_script(self, color=(1, 1, 1), name='line', type_='line',
-                       parent=None):
-        if type_ in ['line', 'dashed']:
-            s = 'var myPoints = [];\n'
-            s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(
-                *self.start)
-            s += 'myPoints.push(point1);\n'
-            s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(
-                *self.end)
-            s += 'myPoints.push(point2);\n'
-            if type_ == 'line':
-                s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(
-                    name)
-            elif type_ == 'dashed':
-                s += f'var {name} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, scene);'
-            s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(color))
-        elif type_ == 'tube':
-            radius = 0.03 * self.start.point_distance(self.end)
-            s = 'var points = [new BABYLON.Vector3({},{},{}), new BABYLON.Vector3({},{},{})];\n'.format(
-                *self.start, *self.end)
-            s += 'var {} = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: points, radius: {}}}, {});'.format(
-                name, radius, parent)
-        #            s += 'line.material = red_material;\n'
-
-        else:
-            raise NotImplementedError
-
-        if parent is not None:
-            s += f'{name}.parent = {parent};\n'
-
-        return s
 
     def to_2d(self, plane_origin, x, y):
         """

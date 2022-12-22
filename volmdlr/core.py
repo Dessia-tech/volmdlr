@@ -752,33 +752,6 @@ class BoundingBox(dc.DessiaObject):
             dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def babylon_script(self):
-        height = self.ymax - self.ymin
-        width = self.xmax - self.xmin
-        depth = self.zmax - self.zmin
-        s = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(
-            height, width, depth)
-        s += 'box.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(
-            self.center[0], self.center[1], self.center[2])
-        s += 'var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);\n'
-        s += 'bboxmat.alpha = 0.4;\n'
-        s += 'var DTWidth = {};\n'.format(width * 60)
-        s += 'var DTHeight = {};\n'.format(height * 60)
-        s += 'var font_type = "Arial";\n'
-        s += 'var text = "{}";\n'.format(self.name)
-        s += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, scene);\n'
-        s += 'var ctx = dynamicTexture.getContext();\n'
-        s += 'var size = 0.8;\n'
-        s += 'ctx.font = size + "px " + font_type;\n'
-        s += 'var textWidth = ctx.measureText(text).width;\n'
-        s += 'var ratio = textWidth/size;\n'
-        s += 'var font_size = Math.floor(DTWidth / ratio);\n'
-        s += 'var font = font_size + "px " + font_type;\n'
-        s += 'dynamicTexture.drawText(text, null, null, font, "#000000", "#ffffff", false);\n'
-        s += 'bboxmat.diffuseTexture = dynamicTexture;\n'
-        s += 'box.material = bboxmat;\n'
-        return s
-
 
 class VolumeModel(dc.PhysicalObject):
     """
@@ -1050,44 +1023,6 @@ class VolumeModel(dc.PhysicalObject):
         os.remove(f.name)
         return output
 
-    # def babylon_script(self, use_cdn=True, debug=False):
-    #     # env = Environment(loader=PackageLoader('volmdlr', 'templates'),
-    #     #                   autoescape=select_autoescape(['html', 'xml']))
-    #     #
-    #     # template = env.get_template('babylon.html')
-    #
-    #     bbox = self._bounding_box()
-    #     center = bbox.center
-    #     max_length = max([bbox.xmax - bbox.xmin,
-    #                       bbox.ymax - bbox.ymin,
-    #                       bbox.zmax - bbox.zmin])
-    #
-    #     primitives_strings = []
-    #     for primitive in self.primitives:
-    #         if hasattr(primitive, 'babylon_script'):
-    #             primitives_strings.append(primitive.babylon_script())
-    #
-    #     return template.render(name=self.name,
-    #                            center=tuple(center),
-    #                            length=2 * max_length,
-    #                            primitives_strings=primitives_strings,
-    #                            use_cdn=use_cdn,
-    #                            debug=debug)
-    #
-    # def babylonjs_from_script(self, page_name=None, use_cdn=True, debug=False):
-    #     script = self.babylon_script(use_cdn=use_cdn, debug=debug)
-    #
-    #     if page_name is None:
-    #         with tempfile.NamedTemporaryFile(suffix=".html",
-    #                                          delete=False) as file:
-    #             file.write(bytes(script, 'utf8'))
-    #         page_name = file.name
-    #     else:
-    #         page_name += '.html'
-    #         with open(page_name, 'w')  as file:
-    #             file.write(script)
-    #
-    #     webbrowser.open('file://' + os.path.realpath(page_name))
 
     def babylon_data(self):
         meshes = []
@@ -1279,6 +1214,11 @@ class VolumeModel(dc.PhysicalObject):
 
 
 class MovingVolumeModel(VolumeModel):
+    """
+    A volume model with possibility to declare time steps at which the primitives are positionned with frames.
+
+    """
+
     def __init__(self, primitives, step_frames, name=''):
         VolumeModel.__init__(self, primitives=primitives, name=name)
         self.step_frames = step_frames
@@ -1299,48 +1239,6 @@ class MovingVolumeModel(VolumeModel):
             primitives.append(
                 primitive.frame_mapping(frame, side='old'))
         return VolumeModel(primitives)
-
-    # def babylon_script(self, use_cdn=True, debug=False):
-    #
-    #     env = Environment(loader=PackageLoader('volmdlr', 'templates'),
-    #                       autoescape=select_autoescape(['html', 'xml']))
-    #
-    #     template = env.get_template('babylon.html')
-    #
-    #     bbox = self._bounding_box()
-    #     center = bbox.center
-    #     max_length = max([bbox.xmax - bbox.xmin,
-    #                       bbox.ymax - bbox.ymin,
-    #                       bbox.zmax - bbox.zmin])
-    #
-    #     primitives_strings = []
-    #     for primitive in self.primitives:
-    #         if hasattr(primitive, 'babylon_script'):
-    #             primitives_strings.append(primitive.babylon_script())
-    #
-    #     positions = []
-    #     orientations = []
-    #     for step in self.step_frames:
-    #         step_positions = []
-    #         step_orientations = []
-    #
-    #         for frame in step:
-    #             step_positions.append(list(frame.origin))
-    #             step_orientations.append([list(frame.u),
-    #                                       list(frame.v),
-    #                                       list(frame.w)])
-    #
-    #         positions.append(step_positions)
-    #         orientations.append(step_orientations)
-    #
-    #     return template.render(name=self.name,
-    #                            center=tuple(center),
-    #                            length=2 * max_length,
-    #                            primitives_strings=primitives_strings,
-    #                            positions=positions,
-    #                            orientations=orientations,
-    #                            use_cdn=use_cdn,
-    #                            debug=debug)
 
     def babylon_data(self):
         meshes = []
