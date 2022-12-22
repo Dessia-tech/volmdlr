@@ -294,10 +294,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         Split in n slices.
         # TODO: is this used ?
         """
-        # xmin, xmax, ymin, ymax = self.outer_contour.bounding_rectangle()
 
         cutted_contours = []
-        iteration_contours = []
         c1 = self.inner_contours[0].center_of_mass()
         c2 = self.inner_contours[1].center_of_mass()
         cut_line = vme.Line2D(c1, c2)
