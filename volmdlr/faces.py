@@ -2414,26 +2414,48 @@ class BSplineSurface3D(Surface3D):
         self._displacements = None
         self._grids2d = None
         self._grids2d_deformed = None
+        self._bbox = None
+
+        self._x_periodicity = False  # Use False instread of None because None is a possible value of x_periodicity
+        self._y_periodicity = False
 
     @property
     def x_periodicity(self):
-        p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
-        p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
-        if self.point2d_to_3d(p2d_x0) == p3d_x1 and \
-                not math.isclose(p2d_x0.x, 1, abs_tol=1e-3):
-            return 1 - p2d_x0.x
-        else:
-            return None
+        if self._x_periodicity is False:
+            p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
+            p2d_x0 = self.point3d_to_2d(p3d_x1)
+            if self.point2d_to_3d(p2d_x0) == p3d_x1 and \
+                    not math.isclose(p2d_x0.x, 1, abs_tol=1e-3):
+                self._x_periodicity = 1 - p2d_x0.x
+            else:
+                self._x_periodicity = None
+        return self._x_periodicity
 
     @property
     def y_periodicity(self):
-        p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
-        p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
-        if self.point2d_to_3d(p2d_y0) == p3d_y1 and \
-                not math.isclose(p2d_y0.y, 1, abs_tol=1e-3):
-            return 1 - p2d_y0.y
-        else:
-            return None
+        if self._y_periodicity is False:
+            p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
+            p2d_y0 = self.point3d_to_2d(p3d_y1)
+            if self.point2d_to_3d(p2d_y0) == p3d_y1 and \
+                    not math.isclose(p2d_y0.y, 1, abs_tol=1e-3):
+                self._y_periodicity = 1 - p2d_y0.y
+            else:
+                self._y_periodicity = None
+        return self._y_periodicity
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    def _bounding_box(self):
+        """
+        Computes the bounding box ot the surface.
+
+        This method is not exact!
+        """
+        return volmdlr.core.BoundingBox.from_points(self.control_points)
 
     def control_points_matrix(self, coordinates):
         """
@@ -4613,6 +4635,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
 class PlaneFace3D(Face3D):
     """
+    Defines a PlaneFace based on a plane surface.
 
     :param contours: The face's contour2D.
     :type contours: volmdlr.Contour2D.
@@ -5520,6 +5543,10 @@ class PlaneFace3D(Face3D):
 
         outer_contour_1 = self.surface2d.outer_contour
         outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
+
+        if (face.face_inside(self)
+                and not outer_contour_1.contour_intersections(outer_contour_2)):
+            return self.divide_face(face.surface2d.inner_contours, True)
 
         inner_contours = self.surface2d.inner_contours
         inner_contours.extend([self.surface3d.contour3d_to_2d(
