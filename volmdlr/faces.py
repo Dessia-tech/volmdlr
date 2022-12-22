@@ -2483,7 +2483,7 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
-    def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-7):
+    def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-5):
         """
         Evaluates the parametric coordinates (u, v) of a 3D point (x, y, z).
 
@@ -2498,8 +2498,8 @@ class BSplineSurface3D(Surface3D):
         def fun(x):
             S = self.derivatives(x[0], x[1], 1)
             r = S[0][0] - point3d
-            f = r.norm() + 1e-12
-            jac = npy.array([r.dot(S[1][0]) / f, r.dot(S[0][1]) / f])
+            f = r.norm() + 1e-32
+            jac = npy.array([r.dot(S[1][0])/f, r.dot(S[0][1])/f])
             return f, jac
 
         min_bound_x, max_bound_x = self.surface.domain[0]
@@ -2522,10 +2522,24 @@ class BSplineSurface3D(Surface3D):
                 x0 = xi
                 min_dist = dist
 
-        # Find the parametric coordinates of the point using the L-BFGS-B algorithm
-        result = scp.optimize.minimize(fun, x0=npy.array(x0), method='L-BFGS-B', jac=True,
-                                       bounds=[(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)])
-        return volmdlr.Point2D(*result.x)
+        # Find the parametric coordinates of the point
+        res = scp.optimize.minimize(fun, x0=npy.array(x0), jac=True,
+                                    bounds=[(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)])
+
+        if res.fun <= tol:
+            return volmdlr.Point2D(*res.x)
+
+        x0s.remove(x0)
+        results = [(res.x, res.fun)]
+
+        for x0 in x0s:
+            res = scp.optimize.minimize(fun, x0=npy.array(x0), jac=True, bounds=bounds)
+            # res.fun represent the value of the objective function
+            if res.fun <= tol:
+                return volmdlr.Point2D(*res.x)
+
+            results.append((res.x, res.fun))
+        return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
