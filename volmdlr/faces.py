@@ -4954,6 +4954,21 @@ class PlaneFace3D(Face3D):
         return valid_intersections
 
     def minimum_distance(self, other_face, return_points=False):
+        """
+        Returns the minimum distance between the current face and the specified other face.
+
+        :param other_face: Face to evaluate the minimum distance.
+        :type other_face: :class:`PlaneFace3D`
+        :param return_points: A boolean value indicating whether to return the minimum distance as
+            well as the two points on each face that are closest to each other. If True, the function
+            returns a tuple of the form (distance, point1, point2). If False, the function only returns
+            the distance.
+        :type return_points: bool
+        :return: If the return_points parameter is set to True, it also returns the two points on each face
+            that are closest to each other. The return type is a float if return_points is False and
+            a tuple (distance, point1, point2) if return_points is True.
+        :rtype: float, Tuple[float, float, float]
+        """
         if other_face.__class__ is CylindricalFace3D:
             p1, p2 = other_face.minimum_distance_points_cyl(self)
             if return_points:
