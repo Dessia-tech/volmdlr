@@ -99,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Wire2D: infinite_intersections
 * infinite primitive offset of linesegment
 * Ellispe3D: discretization_points
+* BSplineSurface: Improved surface periodicity calculation
 
 
 ### Performance improvements

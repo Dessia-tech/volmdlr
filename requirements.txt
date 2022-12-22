@@ -3,3 +3,4 @@ scipy
 matplotlib
 Cython
 triangle
+geomdl
