@@ -22,6 +22,13 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(bspline_suface.x_periodicity,  0.8888888888888888)
         self.assertFalse(bspline_suface.y_periodicity)
 
+    def test_bbox(self):
+        surface = bspline_surfaces.bspline_surface_3
+        bbox = surface.bounding_box
+        volume = bbox.volume()
+
+        # Check if the bounding box volume is correct
+        self.assertEqual(volume, 4.0)
 
 if __name__ == '__main__':
     unittest.main(verbosity=0)

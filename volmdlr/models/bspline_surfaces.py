@@ -11,6 +11,9 @@ Created on Thu Mar 3 2022
 import volmdlr as vm
 import volmdlr.faces
 
+
+from geomdl import BSpline
+
 # %% Surface 1
 # %%% Control points
 
@@ -1287,3 +1290,20 @@ bspline_surface_2 = volmdlr.faces.BSplineSurface3D(degree_u = degree_u,
                                                    v_multiplicities = v_multiplicities, 
                                                    u_knots = u_knots,
                                                    v_knots = v_knots)
+
+#bsplinesurface to check volume
+control_points = [[[0, 0, 0], [1, 0, 0], [2, 0, 0]],
+                  [[0, 1, 0], [1, 1, 1], [2, 1, 0]],
+                  [[0, 2, 0], [1, 2, 0], [2, 2, 0]]]
+knots_u = [0, 0, 0, 1, 1, 1]
+knots_v = [0, 0, 0, 1, 1, 1]
+
+# Create the B-spline surface
+surface = BSpline.Surface()
+surface.degree_u = 2
+surface.degree_v = 2
+surface.ctrlpts2d = control_points
+surface.knotvector_u = knots_u
+surface.knotvector_v = knots_v
+
+bspline_surface_3 = volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface)
