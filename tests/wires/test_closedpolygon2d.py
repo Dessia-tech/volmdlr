@@ -13,7 +13,7 @@ class TestClosedPolygon2D(unittest.TestCase):
         # Call the triangulation method with different options
         mesh1 = polygon.triangulation()
         mesh2 = polygon.triangulation('p')
-        mesh3 = polygon.triangulation('pa0.25')
+        mesh3 = polygon.triangulation('pa0.25')  # No triangles with area greter than 0.25
 
         # Assert that the returned object is a vmd.DisplayMesh2D
         self.assertIsInstance(mesh1, vmd.DisplayMesh2D)
