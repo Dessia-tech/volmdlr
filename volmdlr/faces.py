@@ -1342,7 +1342,7 @@ class Plane3D(Surface3D):
         :type frame: `volmdlr.Frame3D`
         :param side: 'old' or 'new'
         """
-        new_frame = self.frame_mapping_parameters(frame, side)
+        new_frame = self.frame.frame_mapping(frame, side)
         return Plane3D(new_frame, self.name)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
@@ -1863,7 +1863,6 @@ class ToroidalSurface3D(Surface3D):
 
         u = self.R + math.sqrt((self.r ** 2) - (z ** 2))
         u1, u2 = round(x / u, 5), round(y / u, 5)
-
         theta = math.atan2(u2, u1)
 
         return volmdlr.Point2D(theta, phi)
@@ -2066,7 +2065,7 @@ class ConicalSurface3D(Surface3D):
 
         :param side: 'old' or 'new'
         """
-        new_frame = self.frame_mapping_parameters(frame, side)
+        new_frame = self.frame.frame_mapping(frame, side)
         return ConicalSurface3D(new_frame, self.semi_angle, name=self.name)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
@@ -2075,7 +2074,7 @@ class ConicalSurface3D(Surface3D):
 
         :param side:'old' or 'new'
         """
-        new_frame = self.frame_mapping_parameters(frame, side)
+        new_frame = self.frame.frame_mapping(frame, side)
         self.frame = new_frame
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
@@ -2765,18 +2764,10 @@ class BSplineSurface3D(Surface3D):
             lth = bspline_curve3d.length()
             if lth > 1e-5:
                 points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=10)]
-                # max_bound_x=self.x_periodicity,
-                # max_bound_y=self.y_periodicity
-                # ) for i in range(11)]
-                # linesegments = [vme.LineSegment2D(p1, p2)
-                #                 for p1, p2 in zip(points[:-1], points[1:])]
+
                 linesegments = [vme.BSplineCurve2D.from_points_interpolation(
                     points, min(self.degree_u, self.degree_v))]
-                # bs = vme.BSplineCurve2D.from_points_interpolation(
-                #     points, min(self.degree_u, self.degree_v))
-                # ax = bs.plot()
-                # [p.plot(ax=ax) for p in points]
-                # print(points)
+
             elif 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
                     self.point3d_to_2d(bspline_curve3d.start),
@@ -2785,9 +2776,6 @@ class BSplineSurface3D(Surface3D):
                 print('BSplineCruve3D skipped because it is too small')
                 linesegments = None
 
-        # print(bspline_curve3d.start, bspline_curve3d.end)
-        # print([(l.start, l.end) for l in linesegments])
-        # print()
         return linesegments
 
     def arc3d_to_2d(self, arc3d):
@@ -5542,8 +5530,8 @@ class PlaneFace3D(Face3D):
 
         if self.face_inside(face):
             return self.divide_face([face.surface2d.outer_contour], True)
-        if face.is_inside(self):
-            return face.divide_face([self.surface2d.outer_contour], True)
+        # if face.is_inside(self):
+        #     return face.divide_face([self.surface2d.outer_contour], True)
 
         outer_contour_1 = self.surface2d.outer_contour
         outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
@@ -5596,7 +5584,6 @@ class Triangle3D(PlaneFace3D):
         self._utd_surface3d = False
         self._utd_surface2d = False
         self._bbox = None
-        # self.bounding_box = self._bounding_box()
 
         DessiaObject.__init__(self, name=name)
 
@@ -6367,7 +6354,7 @@ class ToroidalFace3D(Face3D):
         self._bbox = new_bounding_box
 
     def get_bounding_box(self):
-        return self.surface3d._bounding_box()
+        return self.surface3d.bounding_box
 
     def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
@@ -6567,7 +6554,7 @@ class SphericalFace3D(Face3D):
 
     def get_bounding_box(self):
         # To be enhanced
-        return self.surface3d._bounding_box()
+        return self.surface3d.bounding_box
 
     def triangulation_lines(self, angle_resolution=7):
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
@@ -6660,7 +6647,7 @@ class BSplineFace3D(Face3D):
         self._bbox = new_bounding_box
 
     def get_bounding_box(self):
-        return self.surface3d._bounding_box()
+        return self.surface3d.bounding_box
 
     def triangulation_lines(self, resolution=25):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
