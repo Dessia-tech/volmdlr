@@ -2489,6 +2489,8 @@ class BSplineSurface3D(Surface3D):
 
         :param point3d: A 3D point to be evaluated.
         :type point3d: :class:`volmdlr.Point3D`
+        :param tol: Tolerance to accept the results.
+        :type tol: float
         :return: The parametric coordinates (u, v) of the point.
         :rtype: :class:`volmdlr.Point2D`
         """
