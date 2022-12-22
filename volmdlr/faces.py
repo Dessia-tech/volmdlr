@@ -2327,25 +2327,45 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def x_periodicity(self):
-        u = self.curves['u']
-        a, b = self.surface.domain[0]
-        u0 = u[0]
-        p_a = u0.evaluate_single(a)
-        p_b = u0.evaluate_single(b)
-        if p_a == p_b:
-            return self.surface.range[0]
-        return None
+        if self._x_periodicity is False:
+            u = self.curves['u']
+            a, b = self.surface.domain[0]
+            u0 = u[0]
+            p_a = u0.evaluate_single(a)
+            p_b = u0.evaluate_single(b)
+            if p_a == p_b:
+                self._x_periodicity = self.surface.range[0]
+            else:
+                self._x_periodicity = None
+        return self._x_periodicity
 
     @property
     def y_periodicity(self):
-        v = self.curves['v']
-        c, d = self.surface.domain[1]
-        v0 = v[0]
-        p_c = v0.evaluate_single(c)
-        p_d = v0.evaluate_single(d)
-        if p_c == p_d:
-            return self.surface.range[1]
-        return None
+        if self._y_periodicity is False:
+            v = self.curves['v']
+            c, d = self.surface.domain[1]
+            v0 = v[0]
+            p_c = v0.evaluate_single(c)
+            p_d = v0.evaluate_single(d)
+            if p_c == p_d:
+                self._y_periodicity = self.surface.range[1]
+            else:
+                self._y_periodicity = None
+        return self._y_periodicity
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    def _bounding_box(self):
+        """
+        Computes the bounding box ot the surface.
+
+        This method is not exact!
+        """
+        return volmdlr.core.BoundingBox.from_points(self.control_points)
 
     def control_points_matrix(self, coordinates):
         """
