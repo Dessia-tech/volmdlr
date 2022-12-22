@@ -2309,7 +2309,7 @@ class BSplineSurface3D(Surface3D):
     def x_periodicity(self):
         if self._x_periodicity is False:
             p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
-            p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
+            p2d_x0 = self.point3d_to_2d(p3d_x1)
             if self.point2d_to_3d(p2d_x0) == p3d_x1 and \
                     not math.isclose(p2d_x0.x, 1, abs_tol=1e-3):
                 self._x_periodicity = 1 - p2d_x0.x
@@ -2321,7 +2321,7 @@ class BSplineSurface3D(Surface3D):
     def y_periodicity(self):
         if self._y_periodicity is False:
             p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
-            p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
+            p2d_y0 = self.point3d_to_2d(p3d_y1)
             if self.point2d_to_3d(p2d_y0) == p3d_y1 and \
                     not math.isclose(p2d_y0.y, 1, abs_tol=1e-3):
                 self._y_periodicity = 1 - p2d_y0.y
