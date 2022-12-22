@@ -2516,7 +2516,7 @@ class BSplineSurface3D(Surface3D):
                (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
 
         # Sort the initial conditions
-        x0s.sort(key=lambda x0: f(x0))
+        x0s.sort(key=f)
 
         # Find the parametric coordinates of the point
         results = []

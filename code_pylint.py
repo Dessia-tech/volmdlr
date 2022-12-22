@@ -71,7 +71,7 @@ MAX_ERROR_BY_TYPE = {
                      'consider-using-with': 2,
                      'consider-using-get': 2,
                      'unnecessary-dunder-call': 2,
-                     'unnecessary-lambda': 3,
+                     'unnecessary-lambda': 2,
                      'eval-used': 2,
                      'chained-comparison': 2,
                      'missing-module-docstring': 2,
