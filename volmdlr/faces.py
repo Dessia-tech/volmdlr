@@ -1257,26 +1257,6 @@ class Plane3D(Surface3D):
         self.frame.v.plot(ax, color='g')
         return ax
 
-    # def babylon_script(self):
-    #     s = 'var myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", {width: 0.5, height: 0.5, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, scene);\n'
-    #     s += 'myPlane.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(
-    #         self.origin[0], self.origin[1], self.origin[2])
-
-    #     s += 'var axis1 = new BABYLON.Vector3({}, {}, {});\n'.format(
-    #         self.vectors[0][0], self.vectors[0][1], self.vectors[0][2])
-    #     s += 'var axis2 = new BABYLON.Vector3({}, {}, {});\n'.format(
-    #         self.vectors[1][0], self.vectors[1][1], self.vectors[1][2])
-    #     s += 'var axis3 = new BABYLON.Vector3({}, {}, {});\n'.format(
-    #         self.normal[0], self.normal[1], self.normal[2])
-    #     s += 'var orientation = BABYLON.Vector3.rotationFromAxis(axis1, axis2, axis3);\n'
-    #     s += 'myPlane.rotation = orientation;\n'
-
-    #     s += 'var planemat = new BABYLON.StandardMaterial("planemat", scene);\n'
-    #     s += 'planemat.alpha = 0.4;\n'
-    #     s += 'myPlane.material = planemat;\n'
-
-    #     return s
-
     def point2d_to_3d(self, point2d):
         return point2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
 
@@ -4656,31 +4636,12 @@ class PlaneFace3D(Face3D):
 
         return True
 
-    # def average_center_point(self):
-    #     """
-    #     excluding holes
-    #     """
-    #     points = self.points
-    #     nb = len(points)
-    #     x = npy.sum([p[0] for p in points]) / nb
-    #     y = npy.sum([p[1] for p in points]) / nb
-    #     z = npy.sum([p[2] for p in points]) / nb
-    #     return volmdlr.Point3D((x, y, z))
-
     def distance_to_point(self, point, return_other_point=False):
-        # """
-        # Only works if the surface is planar
-        # TODO : this function does not take into account if Face has holes
-        # """
-        # On projette le point sur la surface plane
-        # Si le point est à l'intérieur de la face,
-        # on retourne la distance de projection
-        # Si le point est à l'extérieur, on projette le point sur le plan
-        # On calcule en 2D la distance entre la projection
-        # et le polygone contour
-        # On utilise le theroeme de Pythagore pour calculer
-        # la distance minimale entre le point et le contour
+        """
+        Only works if the surface is planar.
 
+        TODO : this function does not take into account if Face has holes
+        """
         projected_pt = point.plane_projection3d(self.surface3d.frame.origin,
                                                 self.surface3d.frame.u,
                                                 self.surface3d.frame.v)
@@ -6946,13 +6907,10 @@ class BSplineFace3D(Face3D):
 
     def adjacent_direction_xy(self, other_face3d):
         """
-        find out in which direction the faces are adjacent
-        Parameters
-        ----------
-        other_face3d : volmdlr.faces.BSplineFace3D
-        Returns
-        -------
-        adjacent_direction
+        Find out in which direction the faces are adjacent.
+
+        :type other_face3d: volmdlr.faces.BSplineFace3D
+        :return: adjacent_direction
         """
 
         contour1 = self.outer_contour3d
@@ -6969,13 +6927,10 @@ class BSplineFace3D(Face3D):
 
     def merge_with(self, other_bspline_face3d):
         """
-        merge two adjacent faces
-        Parameters
-        ----------
-        other_bspline_face3d : volmdlr.faces.BSplineFace3D
-        Returns
-        -------
-        merged_face : volmdlr.faces.BSplineFace3D
+        Merge two adjacent faces.
+
+        :type: other_bspline_face3d : volmdlr.faces.BSplineFace3D
+        :rtype: merged_face : volmdlr.faces.BSplineFace3D
         """
 
         merged_surface = self.surface3d.merge_with(other_bspline_face3d.surface3d)
@@ -7426,36 +7381,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             face_mesh = face.triangulation()
             meshes.append(face_mesh)
         return vmd.DisplayMesh3D.merge_meshes(meshes)
-
-    def babylon_script(self, name='primitive_mesh'):
-        s = f'var {name} = new BABYLON.Mesh("{name}", scene);\n'
-
-        mesh = self.babylon_meshes()[0]
-
-        s += 'var positions = {};\n'.format(mesh['positions'])
-        s += 'var indices = {};\n'.format(mesh['indices'])
-        s += 'var normals = [];\n'
-        s += 'var vertexData = new BABYLON.VertexData();\n'
-        s += 'BABYLON.VertexData.ComputeNormals(positions, indices, normals);\n'
-        s += 'vertexData.positions = positions;\n'
-        s += 'vertexData.indices = indices;\n'
-        s += 'vertexData.normals = normals;\n'
-        s += 'vertexData.applyToMesh({});\n'.format(name)
-        s += '{}.enableEdgesRendering(0.9);\n'.format(name)
-        s += '{}.edgesWidth = 0.1;\n'.format(name)
-        s += '{}.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);\n'.format(name)
-        s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
-        #        s += 'mat.diffuseColor = BABYLON.Color3.Green();\n'
-        #        s += 'mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);\n'
-        #        s += 'mat.emissiveColor = new BABYLON.Color3(1, 1, 1);\n'
-        #        s += 'mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);\n'
-        s += 'mat.backFaceCulling = false;\n'
-        s += 'mat.alpha = {};\n'.format(self.alpha)
-        s += '{}.material = mat;\n'.format(name)
-        if self.color is not None:
-            s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(
-                *self.color)
-        return s
 
     def plot(self, ax=None, color: str = 'k', alpha: float = 1):
         if ax is None:
