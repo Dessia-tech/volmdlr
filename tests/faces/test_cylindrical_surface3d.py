@@ -7,6 +7,12 @@ from volmdlr import faces, edges, wires
 
 class TestCylindricalSurface3D(unittest.TestCase):
     cylindrical_surface = faces.CylindricalSurface3D(volmdlr.OXYZ, 0.32)
+    cylindrical_surface2 = faces.CylindricalSurface3D(volmdlr.OXYZ, 1.0)
+    frame = volmdlr.Frame3D(
+        volmdlr.Point3D(-0.005829, 0.000765110438227, -0.0002349369830163),
+        volmdlr.Vector3D(-0.6607898454031987, 0.562158151695499, -0.4973278523210991),
+        volmdlr.Vector3D(-0.7505709694705869, -0.4949144228333324, 0.43783893597935386), volmdlr.Vector3D(-0.0, 0.6625993710787045, 0.748974013865705))
+    cylindrical_surface3 = faces.CylindricalSurface3D(frame, 0.003)
 
     def test_line_intersections(self):
         line3d = edges.Line3D(volmdlr.O3D, volmdlr.Point3D(0.3, 0.3, .3))
@@ -67,6 +73,42 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
     def test_arcellipse3d_to_2d(self):
         pass
+
+    def test_arc3d_to_2d(self):
+        arc1 = edges.Arc3D(volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(1/math.sqrt(2), 1/math.sqrt(2), 0),
+                           volmdlr.Point3D(0, 1, 0))
+        arc2 = edges.Arc3D(volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(1/math.sqrt(2), -1/math.sqrt(2), 0),
+                           volmdlr.Point3D(0, -1, 0))
+        arc3 = edges.Arc3D(volmdlr.Point3D(-1/math.sqrt(2), 1/math.sqrt(2), 0), volmdlr.Point3D(-1, 0, 0),
+                           volmdlr.Point3D(-1/math.sqrt(2), -1/math.sqrt(2), 0))
+        arc4 = edges.Arc3D(volmdlr.Point3D(0, -1, 0), volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 0),
+                           volmdlr.Point3D(1, 0, 0))
+        test1 = self.cylindrical_surface2.arc3d_to_2d(arc3d=arc1)[0]
+        test2 = self.cylindrical_surface2.arc3d_to_2d(arc3d=arc2)[0]
+        test3 = self.cylindrical_surface2.arc3d_to_2d(arc3d=arc3)[0]
+        test4 = self.cylindrical_surface2.arc3d_to_2d(arc3d=arc4)[0]
+
+        inv_prof = self.cylindrical_surface2.linesegment2d_to_3d(test4)[0]
+
+        # Assert that the returned object is an edges.LineSegment2D
+        self.assertIsInstance(test1, edges.LineSegment2D)
+        self.assertIsInstance(test2, edges.LineSegment2D)
+        self.assertIsInstance(test3, edges.LineSegment2D)
+        self.assertIsInstance(test4, edges.LineSegment2D)
+
+        # Assert that the returned object is right on the parametric domain (take into account periodicity)
+        self.assertEqual(test1.start, volmdlr.Point2D(0, 0))
+        self.assertEqual(test1.end, volmdlr.Point2D(0.5*math.pi, 0))
+        self.assertEqual(test2.start, volmdlr.Point2D(0, 0))
+        self.assertEqual(test2.end, volmdlr.Point2D(-0.5*math.pi, 0))
+        self.assertEqual(test3.start, volmdlr.Point2D(0.75*math.pi, 0))
+        self.assertEqual(test3.end, volmdlr.Point2D(1.25*math.pi, 0))
+        self.assertEqual(test4.start, volmdlr.Point2D(-0.5 * math.pi, 0))
+        self.assertEqual(test4.end, volmdlr.Point2D(-2 * math.pi, 0))
+
+        # Verifies the inversion operation
+        self.assertIsInstance(inv_prof, edges.Arc3D)
+        self.assertEqual(inv_prof, arc4)
 
 
 if __name__ == '__main__':
