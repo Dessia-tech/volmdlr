@@ -2370,7 +2370,7 @@ class Basis2D(Basis):
         """
         return self.transfer_matrix().inverse()
 
-    def new_coordinates(self, vector: Vector2D):
+    def new_coordinates(self, vector: Vector2D) -> Vector2D:
         """
         This method is deprecated. Use global_to_local_coordinates instead.
         Convert the given vector's coordinates from the global landmark to the local landmark of this Basis2D.
@@ -2387,7 +2387,7 @@ class Basis2D(Basis):
         matrix = self.inverse_transfer_matrix()
         return matrix.vector_multiplication(vector)
 
-    def global_to_local_coordinates(self, vector: Vector2D):
+    def global_to_local_coordinates(self, vector: Vector2D) -> Vector2D:
         """
         Convert the given vector's coordinates from the global landmark to the local landmark of this Basis2D.
 
@@ -2399,7 +2399,7 @@ class Basis2D(Basis):
         matrix = self.inverse_transfer_matrix()
         return matrix.vector_multiplication(vector)
 
-    def old_coordinates(self, vector: Vector2D):
+    def old_coordinates(self, vector: Vector2D) -> Vector2D:
         """
         This method is deprecated. Use local_to_global_coordinates instead.
         Convert the given vector's coordinates from the local landmark of this Basis2D to the global landmark.
@@ -2416,7 +2416,7 @@ class Basis2D(Basis):
         matrix = self.transfer_matrix()
         return matrix.vector_multiplication(vector)
 
-    def local_to_global_coordinates(self, vector: Vector2D):
+    def local_to_global_coordinates(self, vector: Vector2D) -> Vector2D:
         """
         Convert the given vector's coordinates from the local landmark of this Basis2D to the global landmark.
 
@@ -2832,7 +2832,7 @@ class Basis3D(Basis):
         """
         return self.transfer_matrix().inverse()
 
-    def new_coordinates(self, vector: Vector3D):
+    def new_coordinates(self, vector: Vector3D) -> Vector3D:
         """
         This method is deprecated. Use global_to_local_coordinates instead.
         Convert the given vector's coordinates from the global landmark to the local landmark of this Basis3D.
@@ -2849,7 +2849,7 @@ class Basis3D(Basis):
         matrix = self.inverse_transfer_matrix()
         return matrix.vector_multiplication(vector)
 
-    def global_to_local_coordinates(self, vector: Vector3D):
+    def global_to_local_coordinates(self, vector: Vector3D) -> Vector3D:
         """
         Convert the given vector's coordinates from the global landmark to the local landmark of this Basis3D.
 
@@ -2861,7 +2861,7 @@ class Basis3D(Basis):
         matrix = self.inverse_transfer_matrix()
         return matrix.vector_multiplication(vector)
 
-    def old_coordinates(self, vector: Vector3D):
+    def old_coordinates(self, vector: Vector3D) -> Vector3D:
         """
         This method is deprecated. Use local_to_global_coordinates instead.
         Convert the given vector's coordinates from the local landmark of this Basis3D to the global landmark.
@@ -2878,7 +2878,7 @@ class Basis3D(Basis):
         matrix = self.transfer_matrix()
         return matrix.vector_multiplication(vector)
 
-    def local_to_global_coordinates(self, vector: Vector3D):
+    def local_to_global_coordinates(self, vector: Vector3D) -> Vector3D:
         """
         Convert the given vector's coordinates from the local landmark of this Basis3D to the global landmark.
 
@@ -2992,7 +2992,7 @@ class Frame2D(Basis2D):
         """
         return Basis2D(self.u, self.v)
 
-    def new_coordinates(self, vector: Vector2D):
+    def new_coordinates(self, vector: Vector2D) -> Vector2D:
         """
         This method is deprecated. Use global_to_local_coordinates instead.
         Convert the given vector's coordinates from the global landmark to the local landmark of this Frame2D.
@@ -3004,7 +3004,7 @@ class Frame2D(Basis2D):
         """
         return Basis2D.new_coordinates(self, vector - self.origin)
 
-    def global_to_local_coordinates(self, vector: Vector2D):
+    def global_to_local_coordinates(self, vector: Vector2D) -> Vector2D:
         """
         Convert the given vector's coordinates from the global landmark to the local landmark of this Frame2D.
 
@@ -3015,7 +3015,7 @@ class Frame2D(Basis2D):
         """
         return Basis2D.global_to_local_coordinates(self, vector - self.origin)
 
-    def old_coordinates(self, vector: Vector2D):
+    def old_coordinates(self, vector: Vector2D) -> Vector2D:
         """
         This method is deprecated. Use local_to_global_coordinates instead.
         Convert the given vector's coordinates from the local landmark of this Frame2D to the global landmark.
@@ -3027,7 +3027,7 @@ class Frame2D(Basis2D):
         """
         return Basis2D.old_coordinates(self, vector) + self.origin
 
-    def local_to_global_coordinates(self, vector: Vector2D):
+    def local_to_global_coordinates(self, vector: Vector2D) -> Vector2D:
         """
         Convert the given vector's coordinates from the local landmark of this Frame2D to the global landmark.
 
@@ -3249,7 +3249,7 @@ class Frame3D(Basis3D):
         """
         return Basis3D(self.u, self.v, self.w)
 
-    def new_coordinates(self, vector: Vector3D):
+    def new_coordinates(self, vector: Vector3D) -> Vector3D:
         """
         This method is deprecated. Use global_to_local_coordinates instead.
         Convert the given vector's coordinates from the global landmark to the local landmark of this Frame3D.
@@ -3261,7 +3261,7 @@ class Frame3D(Basis3D):
         """
         return Basis3D.new_coordinates(self, vector - self.origin)
 
-    def global_to_local_coordinates(self, vector: Vector3D):
+    def global_to_local_coordinates(self, vector: Vector3D) -> Vector3D:
         """
         Convert the given vector's coordinates from the global landmark to the local landmark of this Frame3D.
 
@@ -3272,7 +3272,7 @@ class Frame3D(Basis3D):
         """
         return Basis3D.global_to_local_coordinates(self, vector - self.origin)
 
-    def old_coordinates(self, vector: Vector3D):
+    def old_coordinates(self, vector: Vector3D) -> Vector3D:
         """
         This method is deprecated. Use local_to_global_coordinates instead.
         Convert the given vector's coordinates from the local landmark of this Frame3D to the global landmark.
@@ -3284,7 +3284,7 @@ class Frame3D(Basis3D):
         """
         return Basis3D.old_coordinates(self, vector) + self.origin
 
-    def local_to_global_coordinates(self, vector: Vector3D):
+    def local_to_global_coordinates(self, vector: Vector3D) -> Vector3D:
         """
         Convert the given vector's coordinates from the local landmark of this Frame3D to the global landmark.
 
