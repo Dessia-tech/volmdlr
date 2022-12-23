@@ -22,6 +22,8 @@ import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
 import plot_data.core as plot_data
 
+from triangle import triangulate
+
 import volmdlr
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core_compiled import polygon_point_belongs
@@ -3047,7 +3049,35 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         return ax
 
-    def triangulation(self):
+    def triangulation(self, tri_opt: str = 'p'):
+        """
+        Perform triangulation on the polygon.
+
+        To detail documentation, please refer to https://rufat.be/triangle/API.html
+
+        :param tri_opt: (Optional) Triangulation preferences.
+        :type tri_opt: str
+        :return: A 2D mesh.
+        :rtype: :class:`vmd.DisplayMesh2D`
+        """
+        # Converting points to nodes for performance
+        nodes = [vmd.Node2D.from_point(p) for p in self.points]
+        vertices = [(p.x, p.y) for p in nodes]
+        n = len(nodes)
+        segments = [(i, i + 1) for i in range(n - 1)]
+        segments.append((n - 1, 0))
+
+        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+               'segments': npy.array(segments).reshape((-1, 2)),
+               }
+        t = triangulate(tri, tri_opt)
+        triangles = t['triangles'].tolist()
+        np = t['vertices'].shape[0]
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in
+                  range(np)]
+        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+
+    def ear_clipping_triangulation(self):
         """
         Computes the triangulation of the polygon using ear clipping algorithm.
         Note: triangles have been inverted for a better rendering in babylonjs

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Performance improvements
+* ClosedPolygon2D: triangulation
 
 
 ### Refactorings
@@ -72,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * hash for Frame2D
 * Ellipse3D: point_belongs, abscissa, length, to_2d
 * CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
+* BSplineSurface3D: derivatives
 
 ### Fixed
 
@@ -98,6 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Wire2D: infinite_intersections
 * infinite primitive offset of linesegment
 * Ellispe3D: discretization_points
+* BSplineSurface: Improved surface periodicity calculation
 
 
 ### Performance improvements
@@ -106,6 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * triangulation performance by use of Node2D instead of points (x15 on casing)
 * cache variable self._polygon_point_belongs_100, to avoid recalculating each
 time we have to verify if a point is inside
+* Improvements in BSplineSurface3D.point3d_to_2d performance
 
 
 ### Refactorings

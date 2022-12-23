@@ -431,8 +431,7 @@ class BoundingRectangle(dc.DessiaObject):
 
     def b_rectangle_intersection(self, b_rectangle2):
         """
-        Returns True if there is an intersection with another specified
-        bounding rectangle or False otherwise.
+        Returns True if there is an intersection with another specified bounding rectangle or False otherwise.
 
         :param b_rectangle2: bounding rectangle to verify intersection
         :type b_rectangle2: :class:`BoundingRectangle`
@@ -440,21 +439,21 @@ class BoundingRectangle(dc.DessiaObject):
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
             and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
 
-    def is_inside_b_rectangle(self, b_rectangle2):
+    def is_inside_b_rectangle(self, b_rectangle2, tol: float = 1e-6):
         """
-        Returns True if the bounding rectangle is totally inside another
-        specified bounding rectangle and False otherwise.
+        Returns True if the bounding rectangle is totally inside specified bounding rectangle and False otherwise.
 
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
+        :param tol: A tolerance for considering inside
+        :type tol: float
         """
-        return (self.xmin >= b_rectangle2.xmin - 1e-6) and (self.xmax <= b_rectangle2.xmax + 1e-6) \
-            and (self.ymin >= b_rectangle2.ymin - 1e-6) and (self.ymax <= b_rectangle2.ymax + 1e-6)
+        return (self.xmin >= b_rectangle2.xmin - tol) and (self.xmax <= b_rectangle2.xmax + tol) \
+            and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
 
     def point_belongs(self, point: volmdlr.Point2D):
         """
-        Returns True if a specified point is inside the bounding rectangle
-        and False otherwise.
+        Returns True if a specified point is inside the bounding rectangle and False otherwise.
 
         :param point: A 2 dimensional point
         :type point: :class:`volmdlr.Point2D`
