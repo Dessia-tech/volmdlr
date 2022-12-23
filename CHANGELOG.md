@@ -20,17 +20,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D: bounding_rectangle (specify number_points for discretization_points)
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
 
+### Removed
+
+* babylon script remaining functions
 
 ### Performance improvements
 * ClosedPolygon2D: triangulation
 
 
 ### Refactorings
+* Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated. 
+local_to_global_coordinates and global_to_local_coordinates are the new more explicit ones. 
 
 
 ### Unittests
 
 * Contour2D: point_belongs
+* Basis2D, Basis3D, Frame2D, Frame3D: local_to_global_coordinates and global_to_local_coordinates
 
 
 

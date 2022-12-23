@@ -986,22 +986,6 @@ class Cylinder(RevolvedProfile):
         else:
             return ''
 
-    def babylon_script(self, name='primitive_mesh'):
-        normal_vector1 = self.axis.RandomUnitnormalVector()
-        p1 = volmdlr.Point2D((-0.5 * self.length, self.radius))
-        p2 = volmdlr.Point2D((0.5 * self.length, self.radius))
-        p3 = volmdlr.Point2D((0.5 * self.length, 0.))
-        p4 = volmdlr.Point2D((-0.5 * self.length, 0.))
-        l1 = volmdlr.edges.LineSegment2D(p1, p2)
-        l2 = volmdlr.edges.LineSegment2D(p2, p3)
-        l3 = volmdlr.edges.LineSegment2D(p3, p4)
-        l4 = volmdlr.edges.LineSegment2D(p4, p1)
-        extruded_profile = RevolvedProfile(
-            self.position, self.axis, normal_vector1,
-            volmdlr.wires.Contour2D([l1, l2, l3, l4]),
-            self.position, self.axis, name=self.name)
-        return extruded_profile.babylon_script(name=name)
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
@@ -1477,23 +1461,6 @@ class HollowCylinder(RevolvedProfile):
         else:
             return ''
 
-    def babylon_script(self, name='primitive_mesh'):
-        normal_vector1 = self.axis.RandomUnitnormalVector()
-        p1 = volmdlr.Point2D((-0.5 * self.length, self.outer_radius))
-        p2 = volmdlr.Point2D((0.5 * self.length, self.outer_radius))
-        p3 = volmdlr.Point2D((0.5 * self.length, self.inner_radius))
-        p4 = volmdlr.Point2D((-0.5 * self.length, self.inner_radius))
-        l1 = volmdlr.edges.LineSegment2D(p1, p2)
-        l2 = volmdlr.edges.LineSegment2D(p2, p3)
-        l3 = volmdlr.edges.LineSegment2D(p3, p4)
-        l4 = volmdlr.edges.LineSegment2D(p4, p1)
-        extruded_profile = RevolvedProfile(self.position,
-                                           self.axis, normal_vector1,
-                                           volmdlr.wires.Contour2D([l1, l2, l3, l4]),
-                                           self.position, self.axis,
-                                           name=self.name)
-        return extruded_profile.babylon_script(name=name)
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
@@ -1774,18 +1741,6 @@ class Sphere(RevolvedProfile):
         return '{} = Part.makeSphere({}, fc.Vector({}, {}, {}))\n'.format(
             name, r, x, y, z)
 
-    def babylon_script(self, name='primitive_mesh'):
-        p1 = volmdlr.Point2D((-self.radius, 0))
-        p2 = volmdlr.Point2D((0, self.radius))
-        p3 = volmdlr.Point2D((self.radius, 0))
-        line = volmdlr.edges.LineSegment2D(p1, p3)
-        arc = volmdlr.edges.Arc2D(p1, p2, p3)
-        extruded_profile = RevolvedProfile(
-            self.position, volmdlr.X3D, volmdlr.Y3D,
-            volmdlr.wires.Contour2D([line, arc]), self.position, volmdlr.X3D,
-            name=self.name)
-        return extruded_profile.babylon_script(name=name)
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Sphere
@@ -1873,19 +1828,6 @@ class Measure3D(volmdlr.edges.Line3D):
     # !!! no eq defined!
     def __hash__(self):
         return hash(self.point1) + hash(self.point2)
-
-    def babylon_script(self):
-        s = 'var myPoints = [];\n'
-        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(
-            self.point1.x, self.point1.y, self.point1.z)
-        s += 'myPoints.push(point1);\n'
-        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(
-            self.point2.x, self.point2.y, self.point2.z)
-        s += 'myPoints.push(point2);\n'
-        s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
-        s += 'line.color = new BABYLON.Color3({}, {}, {});\n'.format(
-            self.color[0], self.color[1], self.color[2])
-        return s
 
 
 class BSplineExtrusion(volmdlr.core.Primitive3D):
