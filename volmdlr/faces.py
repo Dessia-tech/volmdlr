@@ -22,6 +22,7 @@ from geomdl import BSpline
 from geomdl import utilities
 from geomdl.fitting import interpolate_surface, approximate_surface
 from geomdl.operations import split_surface_u, split_surface_v
+from geomdl.construct import extract_curves
 
 # import dessia_common
 from dessia_common.core import DessiaObject
@@ -406,10 +407,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         Split in n slices.
         # TODO: is this used ?
         """
-        # xmin, xmax, ymin, ymax = self.outer_contour.bounding_rectangle()
 
         cutted_contours = []
-        iteration_contours = []
         c1 = self.inner_contours[0].center_of_mass()
         c2 = self.inner_contours[1].center_of_mass()
         cut_line = vme.Line2D(c1, c2)
@@ -1580,7 +1579,8 @@ class CylindricalSurface3D(Surface3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new CylindricalSurface3D
+        Changes frame_mapping and return a new CylindricalSurface3D.
+
         side = 'old' or 'new'
         """
         new_frame = self.frame.frame_mapping(frame, side)
@@ -2313,10 +2313,12 @@ class SphericalSurface3D(Surface3D):
 
 class RuledSurface3D(Surface3D):
     """
-    :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
-    :type frame: volmdlr.Frame3D
-    :param radius: Cylinder's radius
-    :type radius: float
+    Defines a ruled surface between two wires.
+
+    :param wire1: Wire
+    :type wire1: :class:`vmw.Wire3D`
+    :param wire2: Wire
+    :type wire2: :class:`volmdlr.wires.Wire3D`
     """
     face_class = 'RuledFace3D'
 
@@ -2355,9 +2357,28 @@ class RuledSurface3D(Surface3D):
 class BSplineSurface3D(Surface3D):
     """
     Defines a BSplineSurface.
+
+    :param degree_u: ADD DESCRIPTION
+    :type degree_u: int
+    :param degree_v: ADD DESCRIPTION
+    :type degree_v: int
+    :param control_points: ADD DESCRIPTION
+    :type control_points: List[`volmdlr.Point3D`]
+    :param nb_u: ADD DESCRIPTION
+    :type nb_u:
+    :param nb_v: ADD DESCRIPTION
+    :type nb_v:
+    :param u_multiplicities: ADD DESCRIPTION
+    :type u_multiplicities:
+    :param v_multiplicities: ADD DESCRIPTION
+    :type v_multiplicities:
+    :param u_knots: ADD DESCRIPTION
+    :type u_knots:
+    :param v_knots: ADD DESCRIPTION
+    :type v_knots:
     """
-    face_class = 'BSplineFace3D'
-    _non_serializable_attributes = ['surface']
+    face_class = "BSplineFace3D"
+    _non_serializable_attributes = ["surface", "curves"]
 
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v,
                  u_multiplicities, v_multiplicities, u_knots, v_knots,
@@ -2412,6 +2433,7 @@ class BSplineSurface3D(Surface3D):
         # surface_points = surface.evalpts
 
         self.surface = surface
+        self.curves = extract_curves(surface, extract_u=True, extract_v=True)
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
         Surface3D.__init__(self, name=name)
 
@@ -2427,11 +2449,13 @@ class BSplineSurface3D(Surface3D):
     @property
     def x_periodicity(self):
         if self._x_periodicity is False:
-            p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
-            p2d_x0 = self.point3d_to_2d(p3d_x1)
-            if self.point2d_to_3d(p2d_x0) == p3d_x1 and \
-                    not math.isclose(p2d_x0.x, 1, abs_tol=1e-3):
-                self._x_periodicity = 1 - p2d_x0.x
+            u = self.curves['u']
+            a, b = self.surface.domain[0]
+            u0 = u[0]
+            p_a = u0.evaluate_single(a)
+            p_b = u0.evaluate_single(b)
+            if p_a == p_b:
+                self._x_periodicity = self.surface.range[0]
             else:
                 self._x_periodicity = None
         return self._x_periodicity
@@ -2439,11 +2463,13 @@ class BSplineSurface3D(Surface3D):
     @property
     def y_periodicity(self):
         if self._y_periodicity is False:
-            p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
-            p2d_y0 = self.point3d_to_2d(p3d_y1)
-            if self.point2d_to_3d(p2d_y0) == p3d_y1 and \
-                    not math.isclose(p2d_y0.y, 1, abs_tol=1e-3):
-                self._y_periodicity = 1 - p2d_y0.y
+            v = self.curves['v']
+            c, d = self.surface.domain[1]
+            v0 = v[0]
+            p_c = v0.evaluate_single(c)
+            p_d = v0.evaluate_single(d)
+            if p_c == p_d:
+                self._y_periodicity = self.surface.range[1]
             else:
                 self._y_periodicity = None
         return self._y_periodicity
@@ -2458,9 +2484,11 @@ class BSplineSurface3D(Surface3D):
         """
         Computes the bounding box ot the surface.
 
-        This method is not exact!
         """
-        return volmdlr.core.BoundingBox.from_points(self.control_points)
+        min_bounds, max_bounds = self.surface.bbox
+        xmin, ymin, zmin = min_bounds
+        xmax, ymax, zmax = max_bounds
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def control_points_matrix(self, coordinates):
         """
@@ -5275,7 +5303,8 @@ class PlaneFace3D(Face3D):
 
     def get_face_cutting_contours(self, dict_intersecting_combinations):
         """
-        get all contours cutting the face, resultig from multiple faces intersections
+        Get all contours cutting the face, resultig from multiple faces intersections.
+
         :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
         and as the values the resulting primitive from the intersection of these two faces
         return a list all contours cutting one particular face

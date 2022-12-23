@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Performance improvements
+* ClosedPolygon2D: triangulation
 
 
 ### Refactorings
@@ -100,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * infinite primitive offset of linesegment
 * Ellispe3D: discretization_points
 * Fix some bugs while reading step files
+* BSplineSurface: Improved surface periodicity calculation
 
 
 
