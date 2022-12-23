@@ -50,6 +50,7 @@ def knots_vector_inv(knots_vector):
 def repair_singularity(primitive, last_primitive):
     """
     Repairs the Contour2D of SphericalSurface3D and ConicalSurface3D parametric face representations.
+
     Used when transforming from spatial to parametric coordinates when the surface contains a sigularity
     """
     v1 = primitive.unit_direction_vector()
@@ -234,6 +235,7 @@ class Surface2D(volmdlr.core.Primitive2D):
     def random_point_inside(self):
         """
         Generate a random point inside the 2D surface.
+
         Taking into account any inner contours (holes) it may have.
 
         :return: A random point inside the surface.
@@ -978,7 +980,7 @@ class Surface3D(DessiaObject):
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
-        Is this right?
+        Is this right?.
         """
         control_points = [self.point3d_to_2d(p)
                           for p in bspline_curve3d.control_points]
@@ -1926,7 +1928,8 @@ class ToroidalSurface3D(Surface3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new ToroidalSurface3D
+        Changes frame_mapping and return a new ToroidalSurface3D.
+
         side = 'old' or 'new'
         """
         new_frame = self.frame.frame_mapping(frame, side)
