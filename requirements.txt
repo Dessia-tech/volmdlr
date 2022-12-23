@@ -4,3 +4,4 @@ matplotlib
 Cython
 triangle
 geomdl
+deprecation
