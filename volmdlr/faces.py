@@ -1916,7 +1916,7 @@ class ToroidalSurface3D(Surface3D):
         point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
 
         start, end = vm_parametric.arc3d_to_spherical_verification(start, end, angle3d, point_after_start,
-                                                     point_before_end)
+                                                                   point_before_end)
 
         return [vme.LineSegment2D(start, end)]
 
