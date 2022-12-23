@@ -2,7 +2,7 @@ import unittest
 import volmdlr
 
 
-class TestBasis2D(unittest.TestCase):
+class TestFrame2D(unittest.TestCase):
     local_frame = volmdlr.Frame2D(volmdlr.Point2D(0.1, 0.3), volmdlr.Y2D, volmdlr.X2D)
 
     def test_global_to_local_coordinates(self):
