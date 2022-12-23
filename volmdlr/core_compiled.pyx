@@ -2372,26 +2372,24 @@ class Basis2D(Basis):
 
     def new_coordinates(self, vector: Vector2D):
         """
-        You have to give coordinates in the global landmark.
-        # TODO: te be completed
+        Convert the given vector's coordinates from the global landmark to the local landmark of this Basis2D.
 
-        :param vector:
+        :param vector: The vector to convert, given in global coordinates.
         :type vector: :class:`volmdlr.Vector2D`
-        :return:
-        :rtype: :class:`volmdlr.Matrix22`
+        :return: The converted vector, in local coordinates.
+        :rtype: :class:`volmdlr.Vector2D`
         """
         matrix = self.inverse_transfer_matrix()
         return matrix.vector_multiplication(vector)
 
     def old_coordinates(self, vector: Vector2D):
         """
-        You have to give coordinates in the global landmark.
-        # TODO: te be completed
+        Convert the given vector's coordinates from the local landmark of this Basis2D to the global landmark.
 
-        :param vector:
+        :param vector: The vector to convert, given in local coordinates.
         :type vector: :class:`volmdlr.Vector2D`
-        :return:
-        :rtype: :class:`volmdlr.Matrix22`
+        :return: The converted vector, in global coordinates.
+        :rtype: :class:`volmdlr.Vector2D`
         """
         matrix = self.transfer_matrix()
         return matrix.vector_multiplication(vector)
