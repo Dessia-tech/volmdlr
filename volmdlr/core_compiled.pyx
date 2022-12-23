@@ -2963,7 +2963,7 @@ class Frame2D(Basis2D):
     def new_coordinates(self, vector):
         """
         This method is deprecated. Use global_to_local_coordinates instead.
-        Convert the given vector's coordinates from the global landmark to the local landmark of this Basis2D.
+        Convert the given vector's coordinates from the global landmark to the local landmark of this Frame2D.
 
         :param vector: The vector to convert, given in global coordinates.
         :type vector: :class:`volmdlr.Vector2D`
@@ -2978,7 +2978,7 @@ class Frame2D(Basis2D):
 
     def global_to_local_coordinates(self, vector: Vector2D):
         """
-        Convert the given vector's coordinates from the global landmark to the local landmark of this Basis2D.
+        Convert the given vector's coordinates from the global landmark to the local landmark of this Frame2D.
 
         :param vector: The vector to convert, given in global coordinates.
         :type vector: :class:`volmdlr.Vector2D`
@@ -2990,7 +2990,7 @@ class Frame2D(Basis2D):
     def old_coordinates(self, vector):
         """
         This method is deprecated. Use local_to_global_coordinates instead.
-        Convert the given vector's coordinates from the local landmark of this Basis2D to the global landmark.
+        Convert the given vector's coordinates from the local landmark of this Frame2D to the global landmark.
 
         :param vector: The vector to convert, given in local coordinates.
         :type vector: :class:`volmdlr.Vector2D`
@@ -3005,7 +3005,7 @@ class Frame2D(Basis2D):
 
     def local_to_global_coordinates(self, vector: Vector2D):
         """
-        Convert the given vector's coordinates from the local landmark of this Basis2D to the global landmark.
+        Convert the given vector's coordinates from the local landmark of this Frame2D to the global landmark.
 
         :param vector: The vector to convert, given in local coordinates.
         :type vector: :class:`volmdlr.Vector2D`
