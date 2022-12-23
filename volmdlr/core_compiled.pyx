@@ -11,7 +11,6 @@ from typing import TypeVar, List, Tuple, Text, Any, Dict, Union
 import math
 import warnings
 import random
-from deprecation import deprecated
 
 import matplotlib.axes
 import numpy as npy
@@ -2371,7 +2370,6 @@ class Basis2D(Basis):
         """
         return self.transfer_matrix().inverse()
 
-    @deprecated(details='Use global_to_local_coordinates instead.')
     def new_coordinates(self, vector: Vector2D):
         """
         This method is deprecated. Use global_to_local_coordinates instead.
@@ -2382,6 +2380,7 @@ class Basis2D(Basis):
         :return: The converted vector, in local coordinates.
         :rtype: :class:`volmdlr.Vector2D`
         """
+        warnings.warn("old_coordinates is deprecated. Use global_to_local_coordinates instead.", DeprecationWarning)
         matrix = self.inverse_transfer_matrix()
         return matrix.vector_multiplication(vector)
 
@@ -2397,7 +2396,6 @@ class Basis2D(Basis):
         matrix = self.inverse_transfer_matrix()
         return matrix.vector_multiplication(vector)
 
-    @deprecated(details='Use local_to_global_coordinates instead.')
     def old_coordinates(self, vector: Vector2D):
         """
         This method is deprecated. Use local_to_global_coordinates instead.
@@ -2408,6 +2406,8 @@ class Basis2D(Basis):
         :return: The converted vector, in global coordinates.
         :rtype: :class:`volmdlr.Vector2D`
         """
+        warnings.warn("old_coordinates is deprecated. Use local_to_global_coordinates instead.",
+                      DeprecationWarning)
         matrix = self.transfer_matrix()
         return matrix.vector_multiplication(vector)
 
