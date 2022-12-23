@@ -2832,15 +2832,31 @@ class Basis3D(Basis):
         """
         return self.transfer_matrix().inverse()
 
-    def new_coordinates(self, vector):
+    def new_coordinates(self, vector: Vector3D):
         """
-        You have to give coordinates in the global landmark.
-        # TODO: te be completed
+        This method is deprecated. Use global_to_local_coordinates instead.
+        Convert the given vector's coordinates from the global landmark to the local landmark of this Basis3D.
 
-        :param vector:
+        :param vector: The vector to convert, given in global coordinates.
         :type vector: :class:`volmdlr.Vector3D`
-        :return:
-        :rtype: :class:`volmdlr.Matrix33`
+        :return: The converted vector, in local coordinates.
+        :rtype: :class:`volmdlr.Vector3D`
+        """
+        warnings.warn(
+            "new_coordinates is deprecated. Use global_to_local_coordinates instead.",
+            DeprecationWarning,
+        )
+        matrix = self.inverse_transfer_matrix()
+        return matrix.vector_multiplication(vector)
+
+    def global_to_local_coordinates(self, vector: Vector3D):
+        """
+        Convert the given vector's coordinates from the global landmark to the local landmark of this Basis3D.
+
+        :param vector: The vector to convert, given in global coordinates.
+        :type vector: :class:`volmdlr.Vector3D`
+        :return: The converted vector, in local coordinates.
+        :rtype: :class:`volmdlr.Vector3D`
         """
         matrix = self.inverse_transfer_matrix()
         return matrix.vector_multiplication(vector)
