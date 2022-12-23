@@ -2371,9 +2371,10 @@ class Basis2D(Basis):
         """
         return self.transfer_matrix().inverse()
 
-    @deprecated(reason='Use global_to_local_coordinates instead.')
+    @deprecated(details='Use global_to_local_coordinates instead.')
     def new_coordinates(self, vector: Vector2D):
         """
+        This method is deprecated. Use global_to_local_coordinates instead.
         Convert the given vector's coordinates from the global landmark to the local landmark of this Basis2D.
 
         :param vector: The vector to convert, given in global coordinates.
@@ -2396,9 +2397,10 @@ class Basis2D(Basis):
         matrix = self.inverse_transfer_matrix()
         return matrix.vector_multiplication(vector)
 
-    @deprecated(reason='Use local_to_global_coordinates instead.')
+    @deprecated(details='Use local_to_global_coordinates instead.')
     def old_coordinates(self, vector: Vector2D):
         """
+        This method is deprecated. Use local_to_global_coordinates instead.
         Convert the given vector's coordinates from the local landmark of this Basis2D to the global landmark.
 
         :param vector: The vector to convert, given in local coordinates.
