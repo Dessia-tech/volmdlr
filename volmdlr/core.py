@@ -4,13 +4,11 @@
 
 """
 
-import math
 import os
 import subprocess
 import tempfile
 import webbrowser
 from datetime import datetime
-# import volmdlr.stl as vmstl
 from typing import List
 
 import matplotlib.pyplot as plt
@@ -45,182 +43,6 @@ END-ISO-10303-21;
 '''
 
 
-def find_and_replace(string, find, replace):
-    """
-    Finds a string in a string and replace it
-    """
-    index = string.find(find)
-    if index != -1:
-        try:
-            # verifie si il reste pas des chiffre apres
-            int(string[index + len(find)])
-        except (ValueError, IndexError):
-            # on remplace
-            return string[:index] + replace + string[index + len(find):]
-        else:
-            return string[:index] + find_and_replace(string[index + len(find)],
-                                                     find, replace)
-    return string
-
-
-def set_to_list(step_set):
-    char_list = step_set.split(',')
-    char_list[0] = char_list[0][1:]
-    char_list[-1] = char_list[-1][:-1]
-    return list(char_list)
-
-
-def delete_node_and_predecessors(graph, node):
-    """
-    A recursive method for deleting a node and its predecessors in a networkx
-    graph.
-
-    :param graph: A networkx graph
-    :type graph: :class:`networkx.Graph`
-    :param node: A node of the graph
-    :type node: Any
-    """
-    predecessors = list(graph.predecessors(node))
-    graph.remove_node(node)
-    for predecessor in predecessors:
-        delete_node_and_predecessors(graph, predecessor)
-
-
-def delete_node_and_successors(graph, node):
-    """
-    A recursive method for deleting a node and its successors in a networkx
-    graph.
-
-    :param graph: A networkx graph
-    :type graph: :class:`networkx.Graph`
-    :param node: A node of the graph
-    :type node: Any
-    """
-    successors = list(graph.successors(node))
-    graph.remove_node(node)
-    for successor in successors:
-        delete_node_and_successors(graph, successor)
-
-
-def clockwise_angle(vector1, vector2):
-    """
-    Return the clockwise angle in radians between vector1 and vector2.
-    """
-    vector0 = volmdlr.O2D
-    if vector0 in (vector1, vector2):
-        return 0
-
-    dot = vector1.dot(vector2)
-    norm_vec_1 = vector1.norm()
-    norm_vec_2 = vector2.norm()
-    sol = dot / (norm_vec_1 * norm_vec_2)
-    cross = vector1.cross(vector2)
-    if math.isclose(sol, 1, abs_tol=1e-6):
-        inner_angle = 0
-    elif math.isclose(sol, -1, abs_tol=1e-6):
-        inner_angle = math.pi
-    else:
-        inner_angle = math.acos(sol)
-
-    if cross < 0:
-        return inner_angle
-
-    return volmdlr.TWO_PI - inner_angle
-
-
-def vectors3d_angle(vector1, vector2):
-    """
-    Computes the angle between two 3 dimensional vectors.
-
-    :param vector1: The fist 3 dimensional vector
-    :type vector1: :class:`volmdlr.Vector3D`
-    :param vector2: The second 3 dimensional vectors
-    :type vector2: :class:`volmdlr.Vector3D`
-    :return: The angle between the two vectors
-    :rtype: flaot
-    """
-    dot = vector1.dot(vector2)
-    theta = math.acos(dot / (vector1.norm() * vector2.norm()))
-
-    return theta
-
-
-def sin_cos_angle(u1, u2):
-    """
-    Returns an angle between 0 and 2*PI verifying cos(theta)=u1, sin(theta)=u2.
-
-    :param u1: The value of the cosinus of the returned angle
-    :type u1: float
-    :param u2: The value of the sinus of the returned angle
-    :type u2: flaot
-    :return: The angle verifying the two equations
-    :rtype: float
-    """
-    if u1 < -1:
-        u1 = -1
-    elif u1 > 1:
-        u1 = 1
-    if u2 < -1:
-        u2 = -1
-    elif u2 > 1:
-        u2 = 1
-
-    if u1 > 0:
-        if u2 >= 0:
-            theta = math.acos(u1)
-        else:
-            theta = volmdlr.TWO_PI + math.asin(u2)
-    else:
-        if u2 >= 0:
-            theta = math.acos(u1)
-        else:
-            theta = volmdlr.TWO_PI - math.acos(u1)
-    if math.isclose(theta, volmdlr.TWO_PI, abs_tol=1e-9):
-        return 0.
-    return theta
-
-
-def delete_double_pos(points, triangles):
-    points_to_indexes = {}
-
-    for index, point in enumerate(points):
-        if point not in points_to_indexes:
-            points_to_indexes[point] = [index]
-        else:
-            points_to_indexes[point].append(index)
-
-    new_points = []
-    index_to_modified_index = {}
-    for i, (point, indexes) in enumerate(points_to_indexes.items()):
-        new_points.append(point)
-        index_to_modified_index[indexes[0]] = i
-
-    index_to_new_index = {}
-
-    for indexes in points_to_indexes.values():
-        for index in indexes[1:]:
-            index_to_new_index[index] = indexes[0]
-
-    new_triangles = []
-    for face_triangles in triangles:
-        if face_triangles is None:
-            continue
-        new_face_triangles = []
-        for triangle_ in face_triangles:
-            new_triangle = []
-            for index in triangle_:
-                if index in index_to_new_index:
-                    modified_index = index_to_modified_index[
-                        index_to_new_index[index]]
-                else:
-                    modified_index = index_to_modified_index[index]
-                new_triangle.append(modified_index)
-            new_face_triangles.append(tuple(new_triangle))
-        new_triangles.append(new_face_triangles)
-
-    return new_points, new_triangles
-
-
 def determinant(vec1, vec2, vec3):
     """
     Calculates the determinant for a three vector matrix.
@@ -251,151 +73,6 @@ def delete_double_point(list_point):
     return points
 
 
-def max_pos(list_of_float):
-    pos_max, max_float = 0, list_of_float[0]
-    for pos, fl in enumerate(list_of_float):
-        if pos == 0:
-            continue
-        else:
-            if fl > max_float:
-                max_float = fl
-                pos_max = pos
-    return max_float, pos_max
-
-
-def min_pos(list_of_float):
-    pos_min, min_float = 0, list_of_float[0]
-    for pos, fl in enumerate(list_of_float):
-        if pos == 0:
-            continue
-        else:
-            if fl < min_float:
-                min_float = fl
-                pos_min = pos
-    return min_float, pos_min
-
-
-def check_singularity(all_points):
-    plus_pi, moins_pi = [], []
-    for enum, pt in enumerate(all_points):
-        if pt.vector[0] > math.pi * 1.01:
-            plus_pi.append(enum)
-        elif pt.vector[0] < math.pi * 0.99:
-            moins_pi.append(enum)
-
-    if len(moins_pi) <= 2 and len(all_points) > 4:
-        for pos in moins_pi:
-            new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
-            if new_pt.vector[0] > volmdlr.TWO_PI:
-                new_pt.vector[0] = volmdlr.TWO_PI
-            all_points[pos] = new_pt
-    elif len(plus_pi) <= 2 and len(all_points) > 4:
-        for pos in plus_pi:
-            new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
-            if new_pt.vector[0] < 0:
-                new_pt.vector[0] = 0
-            all_points[pos] = new_pt
-    if 3 * len(moins_pi) <= len(plus_pi) and len(all_points) > 4:
-        for pos in moins_pi:
-            new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
-            if new_pt.vector[0] > volmdlr.TWO_PI:
-                new_pt.vector[0] = volmdlr.TWO_PI
-            all_points[pos] = new_pt
-    elif 3 * len(plus_pi) <= len(moins_pi) and len(all_points) > 4:
-        for pos in plus_pi:
-            new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
-            if new_pt.vector[0] < 0:
-                new_pt.vector[0] = 0
-            all_points[pos] = new_pt
-
-    return all_points
-
-
-def posangle_arc(start, end, radius, frame=None):
-    if frame is None:
-        p1_new, p2_new = start, end
-    else:
-        p1_new, p2_new = frame.new_coordinates(start), frame.new_coordinates(end)
-    # Angle pour le p1
-    u1, u2 = p1_new.x / radius, p1_new.y / radius
-    theta1 = sin_cos_angle(u1, u2)
-    # Angle pour le p2
-    u3, u4 = p2_new.x / radius, p2_new.y / radius
-    theta2 = sin_cos_angle(u3, u4)
-
-    if math.isclose(theta1, theta2, abs_tol=1e-6):
-        if math.isclose(theta2, 0, abs_tol=1e-6):
-            theta2 += volmdlr.TWO_PI
-        elif math.isclose(theta1, volmdlr.TWO_PI, abs_tol=1e-6):
-            theta1 -= volmdlr.TWO_PI
-
-    return theta1, theta2
-
-
-def clockwise_interior_from_circle3d(start, end, circle):
-    """
-    Returns the clockwise interior point between start and end on the circle.
-    """
-    start2d = start.to_2d(plane_origin=circle.frame.origin,
-                          x=circle.frame.u, y=circle.frame.v)
-    end2d = end.to_2d(plane_origin=circle.frame.origin,
-                      x=circle.frame.u, y=circle.frame.v)
-
-    # Angle pour le p1
-    u1, u2 = start2d.x / circle.radius, start2d.y / circle.radius
-    theta1 = sin_cos_angle(u1, u2)
-    # Angle pour le p2
-    u3, u4 = end2d.x / circle.radius, end2d.y / circle.radius
-    theta2 = sin_cos_angle(u3, u4)
-
-    if theta1 > theta2:
-        theta3 = (theta1 + theta2) / 2
-    elif theta2 > theta1:
-        theta3 = (theta1 + theta2) / 2 + volmdlr.TWO_PI / 2
-    else:
-        raise NotImplementedError
-
-    if theta3 > volmdlr.TWO_PI:
-        theta3 -= volmdlr.TWO_PI
-
-    interior2d = volmdlr.Point2D(circle.radius * math.cos(theta3),
-                                 circle.radius * math.sin(theta3))
-    interior3d = interior2d.to_3d(plane_origin=circle.frame.origin,
-                                  vx=circle.frame.u, vy=circle.frame.v)
-    return interior3d
-
-
-def offset_angle(trigo, angle_start, angle_end):
-    """
-    Calcultes offset and angle.
-
-    """
-    if trigo:
-        offset = angle_start
-    else:
-        offset = angle_end
-    if angle_start > angle_end:
-        angle = angle_start - angle_end
-    else:
-        angle = angle_end - angle_start
-    return offset, angle
-
-
-def angle_principal_measure(angle, min_angle=-math.pi):
-    """
-    Returns angle between O and 2 pi.
-    """
-    max_angle = min_angle + volmdlr.TWO_PI
-    angle = angle % (volmdlr.TWO_PI)
-
-    if math.isclose(angle, min_angle, abs_tol=1e-9):
-        return min_angle
-    if math.isclose(angle, max_angle, abs_tol=1e-9):
-        return max_angle
-
-    return angle
-
-
 def step_ids_to_str(ids):
     """
     Returns a string with a '#' in front of each ID and a comma separating
@@ -409,14 +86,22 @@ def step_ids_to_str(ids):
     return ','.join(['#{}'.format(i) for i in ids])
 
 
-class CompositePrimitive(dc.DessiaObject):
-    def __init__(self, name=''):
+class CompositePrimitive(dc.PhysicalObject):
+    """
+    A collection of simple primitives.
+
+    :param name: The name of the collection of primitives.
+    :type name: str
+    """
+
+    def __init__(self, primitives, name=''):
+        self.primitives = primitives
         self.name = name
         self._primitives_to_index = None
         self._utd_primitives_to_index = False
         self.basis_primitives = []
 
-        dc.DessiaObject.__init__(self, name=name)
+        dc.PhysicalObject.__init__(self, name=name)
 
     def primitive_to_index(self, primitive):
         if not self._utd_primitives_to_index:
@@ -435,16 +120,26 @@ class CompositePrimitive(dc.DessiaObject):
         self.basis_primitives = basis_primitives
 
 
-class Primitive2D(CompositePrimitive):
+class Primitive2D(dc.PhysicalObject):
+    """
+    Abstract class for 2D primitives.
+
+    :param name: The name of the 2D primitive.
+    :type name: str
+    """
+
     def __init__(self, name=''):
         self.name = name
 
-        CompositePrimitive.__init__(self, name=name)
+        dc.PhysicalObject.__init__(self, name=name)
 
 
-class CompositePrimitive2D(Primitive2D):
+class CompositePrimitive2D(CompositePrimitive):
     """
-    A collection of simple primitives
+    A collection of simple 2D primitives.
+
+    :param name: The name of the collection of 2D primitives.
+    :type name: str
     """
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
                                     '_primitives_to_index']
@@ -452,8 +147,8 @@ class CompositePrimitive2D(Primitive2D):
                                  '_primitives_to_index']
 
     def __init__(self, primitives, name=''):
-        Primitive2D.__init__(self, name)
-        self.primitives = primitives
+        CompositePrimitive.__init__(self, primitives, name=name)
+        # self.primitives = primitives
         self.update_basis_primitives()
 
         self._utd_primitives_to_index = False
@@ -570,9 +265,9 @@ class CompositePrimitive2D(Primitive2D):
         return plot_data
 
 
-class Primitive3D(dc.PhysicalObject, CompositePrimitive):
+class Primitive3D(dc.PhysicalObject):
     """
-
+    Defines a Primitive3D.
     """
 
     def __init__(self, color=None, alpha=1, name=''):
@@ -612,6 +307,30 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
         babylon_mesh.update(self.babylon_param())
         return [babylon_mesh]
 
+
+class CompositePrimitive3D(CompositePrimitive, Primitive3D):
+    """
+    A collection of simple primitives3D
+    """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['basis_primitives']
+    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_data_hash_attributes = []
+
+    def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
+        CompositePrimitive.__init__(self, primitives=primitives, name=name)
+        Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
+        self._utd_primitives_to_index = False
+
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        for primitive in self.primitives:
+            primitive.plot(ax=ax, color=color, alpha=alpha)
+        return ax
+
     def babylon_points(self):
         points = []
         if hasattr(self, 'primitives') and \
@@ -642,54 +361,6 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
         points = self.babylon_points()
         babylon_curves = self.babylon_lines(points)[0]
         return babylon_curves
-
-
-class CompositePrimitive3D(Primitive3D):
-    """
-    A collection of simple primitives3D
-    """
-    _standalone_in_db = True
-    _eq_is_data_eq = True
-    _non_serializable_attributes = ['basis_primitives']
-    _non_data_eq_attributes = ['name', 'basis_primitives']
-    _non_data_hash_attributes = []
-
-    def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
-        self.primitives = primitives
-
-        Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
-        self._utd_primitives_to_index = False
-
-    # def primitive_to_index(self, primitive):
-    #     if not self._utd_primitives_to_index:
-    #         self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
-    #         self._utd_primitives_to_index = True
-    #     return self._primitives_to_index[primitive]
-
-    # def update_basis_primitives(self):
-    #     # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
-    #     basis_primitives = []
-    #     for primitive in self.primitives:
-    #         if hasattr(primitive, 'basis_primitives'):
-    #             basis_primitives.extend(primitive.primitives)
-    #         else:
-    #             basis_primitives.append(primitive)
-
-    #     self.basis_primitives = basis_primitives
-
-    # # def to_2d(self, plane_origin, x, y):
-    # #     if name is None:
-    # #         name = '2D of {}'.format(self.name)
-    # #     primitives2d = [p.to_2d(plane_origin, x, y) for p in self.primitives]
-    # #     return CompositePrimitive2D(primitives2d, name)
-
-    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
-        if ax is None:
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-        for primitive in self.primitives:
-            primitive.plot(ax=ax, color=color, alpha=alpha)
-        return ax
 
 
 class BoundingRectangle(dc.DessiaObject):
@@ -758,8 +429,7 @@ class BoundingRectangle(dc.DessiaObject):
 
     def b_rectangle_intersection(self, b_rectangle2):
         """
-        Returns True if there is an intersection with another specified
-        bounding rectangle or False otherwise.
+        Returns True if there is an intersection with another specified bounding rectangle or False otherwise.
 
         :param b_rectangle2: bounding rectangle to verify intersection
         :type b_rectangle2: :class:`BoundingRectangle`
@@ -767,21 +437,21 @@ class BoundingRectangle(dc.DessiaObject):
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
             and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
 
-    def is_inside_b_rectangle(self, b_rectangle2):
+    def is_inside_b_rectangle(self, b_rectangle2, tol: float = 1e-6):
         """
-        Returns True if the bounding rectangle is totally inside another
-        specified bounding rectangle and False otherwise.
+        Returns True if the bounding rectangle is totally inside specified bounding rectangle and False otherwise.
 
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
+        :param tol: A tolerance for considering inside
+        :type tol: float
         """
-        return (self.xmin >= b_rectangle2.xmin - 1e-6) and (self.xmax <= b_rectangle2.xmax + 1e-6) \
-            and (self.ymin >= b_rectangle2.ymin - 1e-6) and (self.ymax <= b_rectangle2.ymax + 1e-6)
+        return (self.xmin >= b_rectangle2.xmin - tol) and (self.xmax <= b_rectangle2.xmax + tol) \
+            and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
 
     def point_belongs(self, point: volmdlr.Point2D):
         """
-        Returns True if a specified point is inside the bounding rectangle
-        and False otherwise.
+        Returns True if a specified point is inside the bounding rectangle and False otherwise.
 
         :param point: A 2 dimensional point
         :type point: :class:`volmdlr.Point2D`
@@ -886,7 +556,20 @@ class BoundingBox(dc.DessiaObject):
                            max(self.zmax, other_bbox.zmax))
 
     def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
-        return {'object_class': 'volmdlr.edges.BoundingBox',
+        """
+        Converts the bounding box to a dict.
+
+        :param use_pointers: DESCRIPTION, defaults to True
+        :type use_pointers: bool, optional
+        :param memo: DESCRIPTION, defaults to None
+        :type memo: TYPE, optional
+        :param path: DESCRIPTION, defaults to '#'
+        :type path: str, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        return {'object_class': 'volmdlr.core.BoundingBox',
                 'name': self.name,
                 'xmin': self.xmin,
                 'xmax': self.xmax,
@@ -907,9 +590,9 @@ class BoundingBox(dc.DessiaObject):
                 volmdlr.Point3D(self.xmax, self.ymax, self.zmax),
                 volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
 
-    def plot(self, ax=None, color=''):
-        fig = plt.figure()
+    def plot(self, ax=None, color='gray'):
         if ax is None:
+            fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
         bbox_edges = [[self.points[0], self.points[1]],
@@ -925,20 +608,29 @@ class BoundingBox(dc.DessiaObject):
                       [self.points[6], self.points[7]],
                       [self.points[7], self.points[4]]]
 
-        x = [p[0] for p in self.points]
-        y = [p[1] for p in self.points]
-        z = [p[2] for p in self.points]
-        ax.scatter(x, y, z)
+        # x = [p[0] for p in self.points]
+        # y = [p[1] for p in self.points]
+        # z = [p[2] for p in self.points]
+        # ax.scatter(x, y, z, color)
         for edge in bbox_edges:
             ax.plot3D([edge[0][0], edge[1][0]],
                       [edge[0][1], edge[1][1]],
                       [edge[0][2], edge[1][2]],
-                      'gray')
+                      color=color)
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
-        # plt.show()
         return ax
+
+    @classmethod
+    def from_bounding_boxes(cls, bounding_boxes):
+        xmin = min(bb.xmin for bb in bounding_boxes)
+        xmax = max(bb.xmax for bb in bounding_boxes)
+        ymin = min(bb.ymin for bb in bounding_boxes)
+        ymax = max(bb.ymax for bb in bounding_boxes)
+        zmin = min(bb.zmin for bb in bounding_boxes)
+        zmax = max(bb.zmax for bb in bounding_boxes)
+        return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
     def from_points(cls, points):
@@ -1059,33 +751,6 @@ class BoundingBox(dc.DessiaObject):
             dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def babylon_script(self):
-        height = self.ymax - self.ymin
-        width = self.xmax - self.xmin
-        depth = self.zmax - self.zmin
-        s = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(
-            height, width, depth)
-        s += 'box.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(
-            self.center[0], self.center[1], self.center[2])
-        s += 'var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);\n'
-        s += 'bboxmat.alpha = 0.4;\n'
-        s += 'var DTWidth = {};\n'.format(width * 60)
-        s += 'var DTHeight = {};\n'.format(height * 60)
-        s += 'var font_type = "Arial";\n'
-        s += 'var text = "{}";\n'.format(self.name)
-        s += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, scene);\n'
-        s += 'var ctx = dynamicTexture.getContext();\n'
-        s += 'var size = 0.8;\n'
-        s += 'ctx.font = size + "px " + font_type;\n'
-        s += 'var textWidth = ctx.measureText(text).width;\n'
-        s += 'var ratio = textWidth/size;\n'
-        s += 'var font_size = Math.floor(DTWidth / ratio);\n'
-        s += 'var font = font_size + "px " + font_type;\n'
-        s += 'dynamicTexture.drawText(text, null, null, font, "#000000", "#ffffff", false);\n'
-        s += 'bboxmat.diffuseTexture = dynamicTexture;\n'
-        s += 'box.material = bboxmat;\n'
-        return s
-
 
 class VolumeModel(dc.PhysicalObject):
     """
@@ -1135,7 +800,7 @@ class VolumeModel(dc.PhysicalObject):
     @property
     def bounding_box(self):
         """
-        Returns the boundary box
+        Returns the bounding box.
         """
         if not self._bbox:
             self._bbox = self._bounding_box()
@@ -1147,38 +812,15 @@ class VolumeModel(dc.PhysicalObject):
 
     def _bounding_box(self) -> BoundingBox:
         """
-        Computes the bounding box of the model
+        Computes the bounding box of the model.
         """
-        bboxes = []
-        points = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'bounding_box'):
-                bboxes.append(primitive.bounding_box)
-            else:
-                if primitive.__class__.__name__ == 'volmdlr.Point3D':
-                    points.append(primitive)
-        if bboxes:
-            xmin = min(box.xmin for box in bboxes)
-            xmax = max(box.xmax for box in bboxes)
-            ymin = min(box.ymin for box in bboxes)
-            ymax = max(box.ymax for box in bboxes)
-            zmin = min(box.zmin for box in bboxes)
-            zmax = max(box.zmax for box in bboxes)
-        elif points:
-            xmin = min(p[0] for p in points)
-            xmax = max(p[0] for p in points)
-            ymin = min(p[1] for p in points)
-            ymax = max(p[1] for p in points)
-            zmin = min(p[2] for p in points)
-            zmax = max(p[2] for p in points)
-        else:
-            # raise ValueError('Bounding box cant be determined')
-            return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
 
     def volume(self) -> float:
         """
-        Return the sum of volumes of the primitives
+        Return the sum of volumes of the primitives.
+
+        It does not make any boolean operation in case of overlaping.
         """
         volume = 0
         for primitive in self.primitives:
@@ -1380,45 +1022,6 @@ class VolumeModel(dc.PhysicalObject):
         os.remove(f.name)
         return output
 
-    # def babylon_script(self, use_cdn=True, debug=False):
-    #     # env = Environment(loader=PackageLoader('volmdlr', 'templates'),
-    #     #                   autoescape=select_autoescape(['html', 'xml']))
-    #     #
-    #     # template = env.get_template('babylon.html')
-    #
-    #     bbox = self._bounding_box()
-    #     center = bbox.center
-    #     max_length = max([bbox.xmax - bbox.xmin,
-    #                       bbox.ymax - bbox.ymin,
-    #                       bbox.zmax - bbox.zmin])
-    #
-    #     primitives_strings = []
-    #     for primitive in self.primitives:
-    #         if hasattr(primitive, 'babylon_script'):
-    #             primitives_strings.append(primitive.babylon_script())
-    #
-    #     return template.render(name=self.name,
-    #                            center=tuple(center),
-    #                            length=2 * max_length,
-    #                            primitives_strings=primitives_strings,
-    #                            use_cdn=use_cdn,
-    #                            debug=debug)
-    #
-    # def babylonjs_from_script(self, page_name=None, use_cdn=True, debug=False):
-    #     script = self.babylon_script(use_cdn=use_cdn, debug=debug)
-    #
-    #     if page_name is None:
-    #         with tempfile.NamedTemporaryFile(suffix=".html",
-    #                                          delete=False) as file:
-    #             file.write(bytes(script, 'utf8'))
-    #         page_name = file.name
-    #     else:
-    #         page_name += '.html'
-    #         with open(page_name, 'w')  as file:
-    #             file.write(script)
-    #
-    #     webbrowser.open('file://' + os.path.realpath(page_name))
-
     def babylon_data(self):
         meshes = []
         lines = []
@@ -1609,6 +1212,11 @@ class VolumeModel(dc.PhysicalObject):
 
 
 class MovingVolumeModel(VolumeModel):
+    """
+    A volume model with possibility to declare time steps at which the primitives are positionned with frames.
+
+    """
+
     def __init__(self, primitives, step_frames, name=''):
         VolumeModel.__init__(self, primitives=primitives, name=name)
         self.step_frames = step_frames
@@ -1629,48 +1237,6 @@ class MovingVolumeModel(VolumeModel):
             primitives.append(
                 primitive.frame_mapping(frame, side='old'))
         return VolumeModel(primitives)
-
-    # def babylon_script(self, use_cdn=True, debug=False):
-    #
-    #     env = Environment(loader=PackageLoader('volmdlr', 'templates'),
-    #                       autoescape=select_autoescape(['html', 'xml']))
-    #
-    #     template = env.get_template('babylon.html')
-    #
-    #     bbox = self._bounding_box()
-    #     center = bbox.center
-    #     max_length = max([bbox.xmax - bbox.xmin,
-    #                       bbox.ymax - bbox.ymin,
-    #                       bbox.zmax - bbox.zmin])
-    #
-    #     primitives_strings = []
-    #     for primitive in self.primitives:
-    #         if hasattr(primitive, 'babylon_script'):
-    #             primitives_strings.append(primitive.babylon_script())
-    #
-    #     positions = []
-    #     orientations = []
-    #     for step in self.step_frames:
-    #         step_positions = []
-    #         step_orientations = []
-    #
-    #         for frame in step:
-    #             step_positions.append(list(frame.origin))
-    #             step_orientations.append([list(frame.u),
-    #                                       list(frame.v),
-    #                                       list(frame.w)])
-    #
-    #         positions.append(step_positions)
-    #         orientations.append(step_orientations)
-    #
-    #     return template.render(name=self.name,
-    #                            center=tuple(center),
-    #                            length=2 * max_length,
-    #                            primitives_strings=primitives_strings,
-    #                            positions=positions,
-    #                            orientations=orientations,
-    #                            use_cdn=use_cdn,
-    #                            debug=debug)
 
     def babylon_data(self):
         meshes = []
