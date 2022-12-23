@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# To install this hook, copy this file to .git/hooks
+
+echo "checking pep8"
+bash code_pep8.sh
+echo "checking pylint"
+python3 code_pylint.py
+echo "checking pydocstyle"
+python3 code_pydocstyle.py
