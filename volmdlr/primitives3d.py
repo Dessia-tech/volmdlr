@@ -1073,26 +1073,69 @@ class Cylinder(RevolvedProfile):
         :return: minimal distance between two 3D cylinders
         """
         # Local frames of cylinders
-        frame0 = volmdlr.Frame3D.from_point_and_vector(point=self.position,
-                                                       vector=self.axis,
-                                                       main_axis=volmdlr.Z3D)
-        frame1 = volmdlr.Frame3D.from_point_and_vector(point=other_cylinder.position,
-                                                       vector=other_cylinder.axis,
-                                                       main_axis=volmdlr.Z3D)
+        frame0 = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+        frame1 = volmdlr.Frame3D.from_point_and_vector(
+            point=other_cylinder.position,
+            vector=other_cylinder.axis,
+            main_axis=volmdlr.Z3D,
+        )
+
+        matrix0 = frame0.transfer_matrix()
+        x0, y0, z0 = frame0.origin.x, frame0.origin.y, frame0.origin.z
+        matrix1 = frame1.transfer_matrix()
+        x1, y1, z1 = frame1.origin.x, frame1.origin.y, frame1.origin.z
+
+        # Euclidian distance
+        def dist(p0, p1):
+            return math.sqrt(
+                (p0[0] - p1[0]) ** 2 + (p0[1] - p1[1]) ** 2 + (p0[2] - p1[2]) ** 2
+            )
+
+        def to_global_point(p, matrix, origin):
+            return [
+                matrix.M11 * p[0] + matrix.M12 * p[1] + matrix.M13 * p[2] + origin[0],
+                matrix.M21 * p[0] + matrix.M22 * p[1] + matrix.M23 * p[2] + origin[1],
+                matrix.M31 * p[0] + matrix.M32 * p[1] + matrix.M33 * p[2] + origin[2],
+            ]
 
         # Objective function
-        def dist_points(x):
-            """
-            :param x: coords of a point in cylinder 0 local frame, coords of a point in cylinder 1 local frame
-            :return: distance between the two points
-            """
-            point0 = frame0.old_coordinates(volmdlr.Point3D(x[0], x[1], x[2]))
-            point1 = frame1.old_coordinates(volmdlr.Point3D(x[3], x[4], x[5]))
+        def objective(x):
+            p0 = to_global_point(x[:3], matrix0, [x0, y0, z0])
+            p1 = to_global_point(x[3:], matrix1, [x1, y1, z1])
 
-            return point0.point_distance(point1)
+            return dist(p0, p1)
+
+        def gradient_objective(x):
+            p0 = to_global_point(x[:3], matrix0, [x0, y0, z0])
+            p1 = to_global_point(x[3:], matrix1, [x1, y1, z1])
+
+            distance = dist(p0, p1)
+
+            return [
+                (p0[0] - p1[0]) / distance * matrix0.M11
+                + (p0[1] - p1[1]) / distance * matrix0.M21
+                + (p0[2] - p1[2]) / distance * matrix0.M31,
+                (p0[0] - p1[0]) / distance * matrix0.M12
+                + (p0[1] - p1[1]) / distance * matrix0.M22
+                + (p0[2] - p1[2]) / distance * matrix0.M32,
+                (p0[0] - p1[0]) / distance * matrix0.M13
+                + (p0[1] - p1[1]) / distance * matrix0.M23
+                + (p0[2] - p1[2]) / distance * matrix0.M33,
+                (p1[0] - p0[0]) / distance * matrix1.M11
+                + (p1[1] - p0[1]) / distance * matrix1.M21
+                + (p1[2] - p0[2]) / distance * matrix1.M31,
+                (p1[0] - p0[0]) / distance * matrix1.M12
+                + (p1[1] - p0[1]) / distance * matrix1.M22
+                + (p1[2] - p0[2]) / distance * matrix1.M32,
+                (p1[0] - p0[0]) / distance * matrix1.M13
+                + (p1[1] - p0[1]) / distance * matrix1.M23
+                + (p1[2] - p0[2]) / distance * matrix1.M33,
+            ]
 
         # Initial vector
-        x0 = npy.zeros(6)
+        initial_guess = npy.zeros(6)
 
         # Constraints
         def constraint_radius_0(x):
@@ -1103,9 +1146,27 @@ class Cylinder(RevolvedProfile):
             # radius of cylinder 1
             return x[3] ** 2 + x[4] ** 2
 
+        def gradient_constraint_radius_0(x):
+            # gradient of constraint_radius_0
+            return [2 * x[0], 2 * x[1], 0, 0, 0, 0]
+
+        def gradient_constraint_radius_1(x):
+            # gradient of constraint_radius_1
+            return [0, 0, 0, 2 * x[3], 2 * x[4], 0]
+
         constraints = [
-            NonlinearConstraint(fun=constraint_radius_0, lb=0, ub=self.radius ** 2),
-            NonlinearConstraint(fun=constraint_radius_1, lb=0, ub=other_cylinder.radius ** 2),
+            NonlinearConstraint(
+                fun=constraint_radius_0,
+                lb=0,
+                ub=self.radius**2,
+                jac=gradient_constraint_radius_0,
+            ),
+            NonlinearConstraint(
+                fun=constraint_radius_1,
+                lb=0,
+                ub=other_cylinder.radius**2,
+                jac=gradient_constraint_radius_1,
+            ),
         ]
 
         # Bounds
@@ -1128,7 +1189,14 @@ class Cylinder(RevolvedProfile):
             ],
         )
 
-        return minimize(fun=dist_points, x0=x0, bounds=bounds, constraints=constraints).fun
+        return minimize(
+            fun=objective,
+            x0=initial_guess,
+            bounds=bounds,
+            tol=1e-6,
+            constraints=constraints,
+            jac=gradient_objective,
+        ).fun
 
     def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder') -> bool:
         """
