@@ -2389,7 +2389,6 @@ class Basis2D(Basis):
 
     def old_coordinates(self, vector: Vector2D) -> Vector2D:
         """
-        This method is deprecated. Use local_to_global_coordinates instead.
         Convert the given vector's coordinates from the local landmark of this Basis2D to the global landmark.
 
         :param vector: The vector to convert, given in local coordinates.
@@ -3004,6 +3003,10 @@ class Frame2D(Basis2D):
 
         .. deprecated:: Use global_to_local_coordinates instead.
         """
+        warnings.warn(
+            "new_coordinates is deprecated. Use global_to_local_coordinates instead.",
+            DeprecationWarning,
+        )
         return self.global_to_local_coordinates(vector)
 
     def old_coordinates(self, vector: Vector2D) -> Vector2D:
@@ -3017,6 +3020,10 @@ class Frame2D(Basis2D):
 
         .. deprecated:: Use local_to_global_coordinates instead.
         """
+        warnings.warn(
+            "old_coordinates is deprecated. Use local_to_global_coordinates instead.",
+            DeprecationWarning,
+        )
         return self.local_to_global_coordinates(vector)
 
     def global_to_local_coordinates(self, vector: Vector2D) -> Vector2D:
@@ -3263,6 +3270,10 @@ class Frame3D(Basis3D):
 
         .. deprecated:: Use global_to_local_coordinates instead.
         """
+        warnings.warn(
+            "new_coordinates is deprecated. Use global_to_local_coordinates instead.",
+            DeprecationWarning,
+        )
         return self.global_to_local_coordinates(vector)
 
     def old_coordinates(self, vector: Vector3D) -> Vector3D:
@@ -3276,6 +3287,10 @@ class Frame3D(Basis3D):
 
         .. deprecated:: Use local_to_global_coordinates instead.
         """
+        warnings.warn(
+            "old_coordinates is deprecated. Use local_to_global_coordinates instead.",
+            DeprecationWarning,
+        )
         return self.local_to_global_coordinates(vector)
 
     def global_to_local_coordinates(self, vector: Vector3D) -> Vector3D:
