@@ -1205,7 +1205,7 @@ class Cylinder(RevolvedProfile):
         """
         dist = self.min_distance_to_other_cylinder(other_cylinder)
 
-        return dist < 1e-4
+        return dist < 1e-5
 
     def random_point_inside(self) -> volmdlr.Point3D:
         """
