@@ -10,7 +10,6 @@ import tempfile
 import webbrowser
 from datetime import datetime
 from typing import List
-import warnings
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -21,6 +20,8 @@ import volmdlr
 import volmdlr.templates
 
 npy.seterr(divide='raise')
+
+DEFAULT_COLOR = (0.8, 0.8, 0.8)
 
 # TODO: put voldmlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
@@ -42,54 +43,6 @@ DATA;
 STEP_FOOTER = '''ENDSEC;
 END-ISO-10303-21;
 '''
-
-
-def delete_double_pos(points, triangles):
-    """
-    Eliminate double points in a mesh.
-    This seems unused and redundant with display.py.
-    """
-    warnings.warn('The function delete_double_pos is deprecated, use classes and methods from volmdlr.display',
-                  DeprecationWarning)
-
-    points_to_indexes = {}
-
-    for index, point in enumerate(points):
-        if point not in points_to_indexes:
-            points_to_indexes[point] = [index]
-        else:
-            points_to_indexes[point].append(index)
-
-    new_points = []
-    index_to_modified_index = {}
-    for i, (point, indexes) in enumerate(points_to_indexes.items()):
-        new_points.append(point)
-        index_to_modified_index[indexes[0]] = i
-
-    index_to_new_index = {}
-
-    for indexes in points_to_indexes.values():
-        for index in indexes[1:]:
-            index_to_new_index[index] = indexes[0]
-
-    new_triangles = []
-    for face_triangles in triangles:
-        if face_triangles is None:
-            continue
-        new_face_triangles = []
-        for triangle_ in face_triangles:
-            new_triangle = []
-            for index in triangle_:
-                if index in index_to_new_index:
-                    modified_index = index_to_modified_index[
-                        index_to_new_index[index]]
-                else:
-                    modified_index = index_to_modified_index[index]
-                new_triangle.append(modified_index)
-            new_face_triangles.append(tuple(new_triangle))
-        new_triangles.append(new_face_triangles)
-
-    return new_points, new_triangles
 
 
 def determinant(vec1, vec2, vec3):
@@ -122,42 +75,6 @@ def delete_double_point(list_point):
     return points
 
 
-# def check_singularity(all_points):
-#     plus_pi, moins_pi = [], []
-#     for enum, pt in enumerate(all_points):
-#         if pt.vector[0] > math.pi * 1.01:
-#             plus_pi.append(enum)
-#         elif pt.vector[0] < math.pi * 0.99:
-#             moins_pi.append(enum)
-
-#     if len(moins_pi) <= 2 and len(all_points) > 4:
-#         for pos in moins_pi:
-#             new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
-#             if new_pt.vector[0] > volmdlr.TWO_PI:
-#                 new_pt.vector[0] = volmdlr.TWO_PI
-#             all_points[pos] = new_pt
-#     elif len(plus_pi) <= 2 and len(all_points) > 4:
-#         for pos in plus_pi:
-#             new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
-#             if new_pt.vector[0] < 0:
-#                 new_pt.vector[0] = 0
-#             all_points[pos] = new_pt
-#     if 3 * len(moins_pi) <= len(plus_pi) and len(all_points) > 4:
-#         for pos in moins_pi:
-#             new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
-#             if new_pt.vector[0] > volmdlr.TWO_PI:
-#                 new_pt.vector[0] = volmdlr.TWO_PI
-#             all_points[pos] = new_pt
-#     elif 3 * len(plus_pi) <= len(moins_pi) and len(all_points) > 4:
-#         for pos in plus_pi:
-#             new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
-#             if new_pt.vector[0] < 0:
-#                 new_pt.vector[0] = 0
-#             all_points[pos] = new_pt
-
-#     return all_points
-
-
 def step_ids_to_str(ids):
     """
     Returns a string with a '#' in front of each ID and a comma separating
@@ -172,6 +89,13 @@ def step_ids_to_str(ids):
 
 
 class CompositePrimitive(dc.PhysicalObject):
+    """
+    A collection of simple primitives.
+
+    :param name: The name of the collection of primitives.
+    :type name: str
+    """
+
     def __init__(self, primitives, name=''):
         self.primitives = primitives
         self.name = name
@@ -199,6 +123,13 @@ class CompositePrimitive(dc.PhysicalObject):
 
 
 class Primitive2D(dc.PhysicalObject):
+    """
+    Abstract class for 2D primitives.
+
+    :param name: The name of the 2D primitive.
+    :type name: str
+    """
+
     def __init__(self, name=''):
         self.name = name
 
@@ -207,7 +138,10 @@ class Primitive2D(dc.PhysicalObject):
 
 class CompositePrimitive2D(CompositePrimitive):
     """
-    A collection of simple primitives
+    A collection of simple 2D primitives.
+
+    :param name: The name of the collection of 2D primitives.
+    :type name: str
     """
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
                                     '_primitives_to_index']
@@ -497,8 +431,7 @@ class BoundingRectangle(dc.DessiaObject):
 
     def b_rectangle_intersection(self, b_rectangle2):
         """
-        Returns True if there is an intersection with another specified
-        bounding rectangle or False otherwise.
+        Returns True if there is an intersection with another specified bounding rectangle or False otherwise.
 
         :param b_rectangle2: bounding rectangle to verify intersection
         :type b_rectangle2: :class:`BoundingRectangle`
@@ -506,21 +439,21 @@ class BoundingRectangle(dc.DessiaObject):
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
             and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
 
-    def is_inside_b_rectangle(self, b_rectangle2):
+    def is_inside_b_rectangle(self, b_rectangle2, tol: float = 1e-6):
         """
-        Returns True if the bounding rectangle is totally inside another
-        specified bounding rectangle and False otherwise.
+        Returns True if the bounding rectangle is totally inside specified bounding rectangle and False otherwise.
 
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
+        :param tol: A tolerance for considering inside
+        :type tol: float
         """
-        return (self.xmin >= b_rectangle2.xmin - 1e-6) and (self.xmax <= b_rectangle2.xmax + 1e-6) \
-            and (self.ymin >= b_rectangle2.ymin - 1e-6) and (self.ymax <= b_rectangle2.ymax + 1e-6)
+        return (self.xmin >= b_rectangle2.xmin - tol) and (self.xmax <= b_rectangle2.xmax + tol) \
+            and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
 
     def point_belongs(self, point: volmdlr.Point2D):
         """
-        Returns True if a specified point is inside the bounding rectangle
-        and False otherwise.
+        Returns True if a specified point is inside the bounding rectangle and False otherwise.
 
         :param point: A 2 dimensional point
         :type point: :class:`volmdlr.Point2D`
@@ -625,7 +558,20 @@ class BoundingBox(dc.DessiaObject):
                            max(self.zmax, other_bbox.zmax))
 
     def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
-        return {'object_class': 'volmdlr.edges.BoundingBox',
+        """
+        Converts the bounding box to a dict.
+
+        :param use_pointers: DESCRIPTION, defaults to True
+        :type use_pointers: bool, optional
+        :param memo: DESCRIPTION, defaults to None
+        :type memo: TYPE, optional
+        :param path: DESCRIPTION, defaults to '#'
+        :type path: str, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        return {'object_class': 'volmdlr.core.BoundingBox',
                 'name': self.name,
                 'xmin': self.xmin,
                 'xmax': self.xmax,
@@ -646,9 +592,9 @@ class BoundingBox(dc.DessiaObject):
                 volmdlr.Point3D(self.xmax, self.ymax, self.zmax),
                 volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
 
-    def plot(self, ax=None, color=''):
-        fig = plt.figure()
+    def plot(self, ax=None, color='gray'):
         if ax is None:
+            fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
         bbox_edges = [[self.points[0], self.points[1]],
@@ -664,20 +610,29 @@ class BoundingBox(dc.DessiaObject):
                       [self.points[6], self.points[7]],
                       [self.points[7], self.points[4]]]
 
-        x = [p[0] for p in self.points]
-        y = [p[1] for p in self.points]
-        z = [p[2] for p in self.points]
-        ax.scatter(x, y, z)
+        # x = [p[0] for p in self.points]
+        # y = [p[1] for p in self.points]
+        # z = [p[2] for p in self.points]
+        # ax.scatter(x, y, z, color)
         for edge in bbox_edges:
             ax.plot3D([edge[0][0], edge[1][0]],
                       [edge[0][1], edge[1][1]],
                       [edge[0][2], edge[1][2]],
-                      'gray')
+                      color=color)
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
-        # plt.show()
         return ax
+
+    @classmethod
+    def from_bounding_boxes(cls, bounding_boxes):
+        xmin = min(bb.xmin for bb in bounding_boxes)
+        xmax = max(bb.xmax for bb in bounding_boxes)
+        ymin = min(bb.ymin for bb in bounding_boxes)
+        ymax = max(bb.ymax for bb in bounding_boxes)
+        zmin = min(bb.zmin for bb in bounding_boxes)
+        zmax = max(bb.zmax for bb in bounding_boxes)
+        return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
     def from_points(cls, points):
@@ -798,33 +753,6 @@ class BoundingBox(dc.DessiaObject):
             dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def babylon_script(self):
-        height = self.ymax - self.ymin
-        width = self.xmax - self.xmin
-        depth = self.zmax - self.zmin
-        s = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(
-            height, width, depth)
-        s += 'box.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(
-            self.center[0], self.center[1], self.center[2])
-        s += 'var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);\n'
-        s += 'bboxmat.alpha = 0.4;\n'
-        s += 'var DTWidth = {};\n'.format(width * 60)
-        s += 'var DTHeight = {};\n'.format(height * 60)
-        s += 'var font_type = "Arial";\n'
-        s += 'var text = "{}";\n'.format(self.name)
-        s += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, scene);\n'
-        s += 'var ctx = dynamicTexture.getContext();\n'
-        s += 'var size = 0.8;\n'
-        s += 'ctx.font = size + "px " + font_type;\n'
-        s += 'var textWidth = ctx.measureText(text).width;\n'
-        s += 'var ratio = textWidth/size;\n'
-        s += 'var font_size = Math.floor(DTWidth / ratio);\n'
-        s += 'var font = font_size + "px " + font_type;\n'
-        s += 'dynamicTexture.drawText(text, null, null, font, "#000000", "#ffffff", false);\n'
-        s += 'bboxmat.diffuseTexture = dynamicTexture;\n'
-        s += 'box.material = bboxmat;\n'
-        return s
-
 
 class VolumeModel(dc.PhysicalObject):
     """
@@ -874,7 +802,7 @@ class VolumeModel(dc.PhysicalObject):
     @property
     def bounding_box(self):
         """
-        Returns the boundary box
+        Returns the bounding box.
         """
         if not self._bbox:
             self._bbox = self._bounding_box()
@@ -886,38 +814,15 @@ class VolumeModel(dc.PhysicalObject):
 
     def _bounding_box(self) -> BoundingBox:
         """
-        Computes the bounding box of the model
+        Computes the bounding box of the model.
         """
-        bboxes = []
-        points = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'bounding_box'):
-                bboxes.append(primitive.bounding_box)
-            else:
-                if primitive.__class__.__name__ == 'volmdlr.Point3D':
-                    points.append(primitive)
-        if bboxes:
-            xmin = min(box.xmin for box in bboxes)
-            xmax = max(box.xmax for box in bboxes)
-            ymin = min(box.ymin for box in bboxes)
-            ymax = max(box.ymax for box in bboxes)
-            zmin = min(box.zmin for box in bboxes)
-            zmax = max(box.zmax for box in bboxes)
-        elif points:
-            xmin = min(p[0] for p in points)
-            xmax = max(p[0] for p in points)
-            ymin = min(p[1] for p in points)
-            ymax = max(p[1] for p in points)
-            zmin = min(p[2] for p in points)
-            zmax = max(p[2] for p in points)
-        else:
-            # raise ValueError('Bounding box cant be determined')
-            return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
 
     def volume(self) -> float:
         """
-        Return the sum of volumes of the primitives
+        Return the sum of volumes of the primitives.
+
+        It does not make any boolean operation in case of overlaping.
         """
         volume = 0
         for primitive in self.primitives:
@@ -1119,45 +1024,6 @@ class VolumeModel(dc.PhysicalObject):
         os.remove(f.name)
         return output
 
-    # def babylon_script(self, use_cdn=True, debug=False):
-    #     # env = Environment(loader=PackageLoader('volmdlr', 'templates'),
-    #     #                   autoescape=select_autoescape(['html', 'xml']))
-    #     #
-    #     # template = env.get_template('babylon.html')
-    #
-    #     bbox = self._bounding_box()
-    #     center = bbox.center
-    #     max_length = max([bbox.xmax - bbox.xmin,
-    #                       bbox.ymax - bbox.ymin,
-    #                       bbox.zmax - bbox.zmin])
-    #
-    #     primitives_strings = []
-    #     for primitive in self.primitives:
-    #         if hasattr(primitive, 'babylon_script'):
-    #             primitives_strings.append(primitive.babylon_script())
-    #
-    #     return template.render(name=self.name,
-    #                            center=tuple(center),
-    #                            length=2 * max_length,
-    #                            primitives_strings=primitives_strings,
-    #                            use_cdn=use_cdn,
-    #                            debug=debug)
-    #
-    # def babylonjs_from_script(self, page_name=None, use_cdn=True, debug=False):
-    #     script = self.babylon_script(use_cdn=use_cdn, debug=debug)
-    #
-    #     if page_name is None:
-    #         with tempfile.NamedTemporaryFile(suffix=".html",
-    #                                          delete=False) as file:
-    #             file.write(bytes(script, 'utf8'))
-    #         page_name = file.name
-    #     else:
-    #         page_name += '.html'
-    #         with open(page_name, 'w')  as file:
-    #             file.write(script)
-    #
-    #     webbrowser.open('file://' + os.path.realpath(page_name))
-
     def babylon_data(self):
         meshes = []
         lines = []
@@ -1348,6 +1214,11 @@ class VolumeModel(dc.PhysicalObject):
 
 
 class MovingVolumeModel(VolumeModel):
+    """
+    A volume model with possibility to declare time steps at which the primitives are positionned with frames.
+
+    """
+
     def __init__(self, primitives, step_frames, name=''):
         VolumeModel.__init__(self, primitives=primitives, name=name)
         self.step_frames = step_frames
@@ -1368,48 +1239,6 @@ class MovingVolumeModel(VolumeModel):
             primitives.append(
                 primitive.frame_mapping(frame, side='old'))
         return VolumeModel(primitives)
-
-    # def babylon_script(self, use_cdn=True, debug=False):
-    #
-    #     env = Environment(loader=PackageLoader('volmdlr', 'templates'),
-    #                       autoescape=select_autoescape(['html', 'xml']))
-    #
-    #     template = env.get_template('babylon.html')
-    #
-    #     bbox = self._bounding_box()
-    #     center = bbox.center
-    #     max_length = max([bbox.xmax - bbox.xmin,
-    #                       bbox.ymax - bbox.ymin,
-    #                       bbox.zmax - bbox.zmin])
-    #
-    #     primitives_strings = []
-    #     for primitive in self.primitives:
-    #         if hasattr(primitive, 'babylon_script'):
-    #             primitives_strings.append(primitive.babylon_script())
-    #
-    #     positions = []
-    #     orientations = []
-    #     for step in self.step_frames:
-    #         step_positions = []
-    #         step_orientations = []
-    #
-    #         for frame in step:
-    #             step_positions.append(list(frame.origin))
-    #             step_orientations.append([list(frame.u),
-    #                                       list(frame.v),
-    #                                       list(frame.w)])
-    #
-    #         positions.append(step_positions)
-    #         orientations.append(step_orientations)
-    #
-    #     return template.render(name=self.name,
-    #                            center=tuple(center),
-    #                            length=2 * max_length,
-    #                            primitives_strings=primitives_strings,
-    #                            positions=positions,
-    #                            orientations=orientations,
-    #                            use_cdn=use_cdn,
-    #                            debug=debug)
 
     def babylon_data(self):
         meshes = []

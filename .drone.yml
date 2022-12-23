@@ -45,7 +45,7 @@ steps:
   image: python:3.9
   commands:
     - git fetch --tags
-    - pip3 install -U pip autopep8
+    - pip3 install -U pip autopep8==2.0.0
     - bash code_pep8.sh
 
   volumes:
@@ -56,9 +56,6 @@ steps:
 
 - name: install, build doc run scripts and tutorials
   image: python:3.8
-  when:
-    branch: testing
-    event: push
   commands:
   - git fetch --tags
   - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
@@ -81,35 +78,6 @@ steps:
     # Mount pip cache from host
     - name: pip_cache
       path: /root/.cache/pip
-
-
-- name: install, build doc run scripts
-  image: python:3.8
-  when:
-    branch:
-      exclude:
-        - testing
-  commands:
-  - git fetch --tags
-  - pip install Cython sphinx sphinx_rtd_theme coverage
-  - python setup.py install
-  - cd doc
-  - make html
-  - cd ../tests
-  - coverage run --source volmdlr -m unittest discover -v
-  - cd ../scripts
-  - coverage run --source volmdlr ci_scripts.py
-  - cd ..
-  - coverage combine scripts/.coverage tests/.coverage
-  - coverage json
-  - coverage report
-  - python coverage_script.py
-
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
-
 
 - name: generate sdist
   image: python:3.8

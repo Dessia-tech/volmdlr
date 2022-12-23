@@ -22,6 +22,8 @@ import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
 import plot_data.core as plot_data
 
+from triangle import triangulate
+
 import volmdlr
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core_compiled import polygon_point_belongs
@@ -1790,8 +1792,6 @@ class Contour2D(ContourMixin, Wire2D):
             line.plot(ax=ax)
             for i in intersections:
                 i[0].plot(ax=ax)
-            self.save_to_file('/home/axel/Bureau/contour2d')
-            line.save_to_file('/home/axel/Bureau/line2d')
             raise NotImplementedError(
                 '{} intersections not supported yet'.format(
                     len(intersections)))
@@ -3049,19 +3049,47 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         return ax
 
-    def triangulation(self):
+    def triangulation(self, tri_opt: str = 'p'):
         """
+        Perform triangulation on the polygon.
+
+        To detail documentation, please refer to https://rufat.be/triangle/API.html
+
+        :param tri_opt: (Optional) Triangulation preferences.
+        :type tri_opt: str
+        :return: A 2D mesh.
+        :rtype: :class:`vmd.DisplayMesh2D`
+        """
+        # Converting points to nodes for performance
+        nodes = [vmd.Node2D.from_point(p) for p in self.points]
+        vertices = [(p.x, p.y) for p in nodes]
+        n = len(nodes)
+        segments = [(i, i + 1) for i in range(n - 1)]
+        segments.append((n - 1, 0))
+
+        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+               'segments': npy.array(segments).reshape((-1, 2)),
+               }
+        t = triangulate(tri, tri_opt)
+        triangles = t['triangles'].tolist()
+        np = t['vertices'].shape[0]
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in
+                  range(np)]
+        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+
+    def ear_clipping_triangulation(self):
+        """
+        Computes the triangulation of the polygon using ear clipping algorithm.
         Note: triangles have been inverted for a better rendering in babylonjs
         """
-        # ear clipping
-        points = self.points[:]
-        initial_point_to_index = {p: i for i, p in enumerate(self.points)}
+        # Converting to nodes for performance
+        nodes = [vmd.Node2D.from_point(p) for p in self.points]
+
+        initial_point_to_index = {p: i for i, p in enumerate(nodes)}
         triangles = []
 
-        remaining_points = self.points[:]
-        # ax = ClosedPolygon2D(remaining_points).plot()
+        remaining_points = nodes[:]
 
-        # inital_number_points = len(remaining_points)
         number_remaining_points = len(remaining_points)
         while number_remaining_points > 3:
             current_polygon = ClosedPolygon2D(remaining_points)
@@ -3069,16 +3097,14 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             found_ear = False
             for p1, p2, p3 in zip(remaining_points,
                                   remaining_points[1:] + remaining_points[0:1],
-                                  remaining_points[2:] + remaining_points[
-                                                         0:2]):
+                                  remaining_points[2:] + remaining_points[0:2]):
                 if p1 != p3:
                     line_segment = volmdlr.edges.LineSegment2D(p1, p3)
 
                 # Checking if intersections does not contrain the verticies
                 # of line_segment
                 intersect = False
-                intersections = current_polygon.linesegment_intersections(
-                    line_segment)
+                intersections = current_polygon.linesegment_intersections(line_segment)
                 if intersections:
                     for inter in intersections:
                         if inter[0] not in [line_segment.start,
@@ -3087,10 +3113,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                             break
 
                 if not intersect:
-                    if current_polygon.point_belongs(
-                            line_segment.middle_point()):
-                        # Confirmed as an ear
-                        # print('ear!')
+                    if current_polygon.point_belongs(line_segment.middle_point()):
 
                         triangles.append((initial_point_to_index[p1],
                                           initial_point_to_index[p3],
@@ -3115,10 +3138,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
                     found_flat_ear = False
                     for p1, p2, p3 in zip(remaining_points,
-                                          remaining_points[
-                                              1:] + remaining_points[0:1],
-                                          remaining_points[
-                                              2:] + remaining_points[0:2]):
+                                          remaining_points[1:] + remaining_points[0:1],
+                                          remaining_points[2:] + remaining_points[0:2]):
                         triangle = Triangle2D(p1, p2, p3)
                         if triangle.area() == 0:
                             remaining_points.remove(p2)
@@ -3126,11 +3147,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                             break
 
                     if not found_flat_ear:
-                        print(
-                            'Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
-                        return vmd.DisplayMesh2D(points, triangles)
+                        print('Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
+                        return vmd.DisplayMesh2D(nodes, triangles)
                 else:
-                    return vmd.DisplayMesh2D(points, triangles)
+                    return vmd.DisplayMesh2D(nodes, triangles)
 
         if len(remaining_points) == 3:
             p1, p2, p3 = remaining_points
@@ -3138,7 +3158,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                               initial_point_to_index[p3],
                               initial_point_to_index[p2]))
 
-        return vmd.DisplayMesh2D(points, triangles)
+        return vmd.DisplayMesh2D(nodes, triangles)
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         return ClosedPolygon2D(self.simplify_polygon(min_distance=min_distance,
@@ -4504,6 +4524,9 @@ class Contour3D(ContourMixin, Wire3D):
             edge.frame_mapping_inplace(frame, side)
 
     def copy(self, deep=True, memo=None):
+        """
+        Copies the Contour3D.
+        """
         new_edges = [edge.copy(deep=deep, memo=memo) for edge in self.primitives]
         # if self.point_inside_contour is not None:
         #     new_point_inside_contour = self.point_inside_contour.copy()
@@ -4513,7 +4536,9 @@ class Contour3D(ContourMixin, Wire3D):
 
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
-            ax = Axes3D(plt.figure())
+            # ax = Axes3D(plt.figure())
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
 
         for edge in self.primitives:
             edge.plot(ax=ax, color=color, alpha=alpha,
@@ -4523,12 +4548,13 @@ class Contour3D(ContourMixin, Wire3D):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a Ellipse3D into an Contour2D, given a plane origin and an u and v plane vector.
+        Projects in 2D the contour3D to give a Contour2D.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
         :param y: plane v vector.
-        :return: Contour2D.
+        :return: the projected Contour2D.
+        :rtype: Contour2D
         """
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
@@ -4541,19 +4567,9 @@ class Contour3D(ContourMixin, Wire3D):
 
     def _bounding_box(self):
         """
-        Flawed method, to be enforced by overloading.
-
+        Computes the bounding box ot the contour3D
         """
-        points = []
-        for prim in self.primitives:
-            n = 20
-            length = prim.length()
-            points_ = [prim.point_at_abscissa(i / n * length)
-                       for i in range(n)]
-            for point in points_:
-                if point not in points:
-                    points.append(point)
-        return volmdlr.core.BoundingBox.from_points(points)
+        return volmdlr.core.BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
 
     @property
     def bounding_box(self):
@@ -4662,32 +4678,8 @@ class Contour3D(ContourMixin, Wire3D):
 
         merged_primitives = self.merge_primitives_with(contour3d)
         contours = Contour3D.contours_from_edges(merged_primitives, tol=3e-4)
-        # contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
 
         return contours
-
-    # def primitive_over_contour(self, primitive):
-    #     """
-    #     copied from Contour2D
-    #     """
-    #     for prim in self.primitives:
-    #         if not hasattr(prim, 'unit_direction_vector') and \
-    #                 hasattr(prim, 'tangent'):
-    #             vector1 = prim.tangent(0.5)
-    #         else:
-    #             vector1 = prim.unit_direction_vector(abscissa=0.)
-
-    #         if not hasattr(primitive, 'unit_direction_vector') and \
-    #                 hasattr(primitive, 'tangent'):
-    #             vector2 = primitive.tangent(0.5)
-    #         else:
-    #             vector2 = primitive.unit_direction_vector(abscissa=0.)
-
-    #         if vector1.is_colinear_to(vector2):
-    #             mid_point = primitive.middle_point()
-    #             if self.point_over_contour(mid_point):
-    #                 return True
-    #     return False
 
 
 class Circle3D(Contour3D):
@@ -4791,7 +4783,8 @@ class Circle3D(Contour3D):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Circle3D rotation
+        Circle3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -4802,7 +4795,8 @@ class Circle3D(Contour3D):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Circle3D rotation. Object is updated inplace
+        Circle3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -4811,7 +4805,8 @@ class Circle3D(Contour3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Circle3D translation
+        Circle3D translation.
+
         :param offset: translation vector
         :return: A new translated Circle3D
         """
@@ -4819,7 +4814,8 @@ class Circle3D(Contour3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Circle3D translation. Object is updated inplace
+        Circle3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.frame.translation_inplace(offset)
@@ -4992,7 +4988,9 @@ class Circle3D(Contour3D):
                    radius=radius)
 
     def extrusion(self, extrusion_vector):
-
+        """
+        Returns the cylindrical face generated by extrusion of the circle.
+        """
         if self.normal.is_colinear_to(extrusion_vector):
             u = self.normal.deterministic_unit_normal_vector()
             v = self.normal.cross(u)
@@ -5009,6 +5007,9 @@ class Circle3D(Contour3D):
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
                    angle: float):
+        """
+        Return the Toroidal face generated by the revolution of the circle.
+        """
         line3d = volmdlr.edges.Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.center)
         u = self.center - tore_center
@@ -5025,6 +5026,9 @@ class Circle3D(Contour3D):
         return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
+        """
+        Returns if given point belongs to the Circle3D.
+        """
         distance = point.point_distance(self.center)
         vec = volmdlr.Vector3D(*point - self.center)
         dot = self.normal.dot(vec)
@@ -5050,6 +5054,8 @@ class Circle3D(Contour3D):
 
 class Ellipse3D(Contour3D):
     """
+    Defines a 3D ellipse.
+
     :param major_axis: Largest radius of the ellipse
     :type major_axis: float
     :param minor_axis: Smallest radius of the ellipse

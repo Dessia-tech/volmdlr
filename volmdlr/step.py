@@ -77,18 +77,61 @@ def oriented_edge(arguments, object_dict):
 
 
 def face_outer_bound(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def face_bound(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def surface_curve(arguments, object_dict):
+    """
+    Returns xx.
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def seam_curve(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
@@ -122,7 +165,9 @@ def geometric_curve_set(arguments, object_dict):
 
 
 def shell_base_surface_model(arguments, object_dict):
-    # Shell3D
+    """
+    Returns the data in case of a Shell3D.
+    """
     return object_dict[int(arguments[1][0][1:])]
 
 
@@ -137,7 +182,9 @@ def item_defined_transformation(arguments, object_dict):
 
 
 def manifold_surface_shape_representation(arguments, object_dict):
-    # Shell3D
+    """
+    Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
+    """
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
@@ -148,10 +195,16 @@ def manifold_surface_shape_representation(arguments, object_dict):
 
 
 def manifold_solid_brep(arguments, object_dict):
+    """
+    Returns the data in case of a manifold_solid_brep with voids.
+    """
     return object_dict[arguments[1]]
 
 
 def brep_with_voids(arguments, object_dict):
+    """
+    Returns the data in case of a BREP with voids.
+    """
     return object_dict[arguments[1]]
 
 
@@ -251,8 +304,9 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
         modified_arguments, object_dict)
 
 
-class StepFunction:
+class StepFunction(dc.DessiaObject):
     def __init__(self, function_id, function_name, function_arg):
+        dc.DessiaObject.__init__(self)
         self.id = function_id
         self.name = function_name
         self.arg = function_arg
@@ -584,7 +638,7 @@ class Step(dc.DessiaObject):
                                                                     arguments))
         return volmdlr_object
 
-    def to_volume_model(self, show_times=False):
+    def to_volume_model(self, show_times: bool = False):
         """
         show_times=True displays the numer of times a given class has been
         instanciated and the totatl time of all the instanciations of this
