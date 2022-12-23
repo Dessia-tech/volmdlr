@@ -2381,7 +2381,7 @@ class Basis2D(Basis):
         :rtype: :class:`volmdlr.Vector2D`
         """
         warnings.warn(
-            "old_coordinates is deprecated. Use global_to_local_coordinates instead.",
+            "new_coordinates is deprecated. Use global_to_local_coordinates instead.",
             DeprecationWarning,
         )
         matrix = self.inverse_transfer_matrix()
@@ -2410,7 +2410,7 @@ class Basis2D(Basis):
         :rtype: :class:`volmdlr.Vector2D`
         """
         warnings.warn(
-            "old_coordinates is deprecated. Use global_to_local_coordinates instead.",
+            "old_coordinates is deprecated. Use local_to_global_coordinates instead.",
             DeprecationWarning,
         )
         matrix = self.transfer_matrix()
@@ -2971,10 +2971,21 @@ class Frame2D(Basis2D):
         :rtype: :class:`volmdlr.Vector2D`
         """
         warnings.warn(
-            "old_coordinates is deprecated. Use global_to_local_coordinates instead.",
+            "new_coordinates is deprecated. Use global_to_local_coordinates instead.",
             DeprecationWarning,
         )
         return Basis2D.new_coordinates(self, vector - self.origin)
+
+    def global_to_local_coordinates(self, vector: Vector2D):
+        """
+        Convert the given vector's coordinates from the global landmark to the local landmark of this Basis2D.
+
+        :param vector: The vector to convert, given in global coordinates.
+        :type vector: :class:`volmdlr.Vector2D`
+        :return: The converted vector, in local coordinates.
+        :rtype: :class:`volmdlr.Vector2D`
+        """
+        return Basis2D.global_to_local_coordinates(self, vector - self.origin)
 
     def old_coordinates(self, vector):
         """
@@ -2987,10 +2998,22 @@ class Frame2D(Basis2D):
         :rtype: :class:`volmdlr.Vector2D`
         """
         warnings.warn(
-            "old_coordinates is deprecated. Use global_to_local_coordinates instead.",
+            "old_coordinates is deprecated. Use local_to_global_coordinates instead.",
             DeprecationWarning,
         )
         return Basis2D.old_coordinates(self, vector) + self.origin
+
+    def local_to_global_coordinates(self, vector: Vector2D):
+        """
+        Convert the given vector's coordinates from the local landmark of this Basis2D to the global landmark.
+
+        :param vector: The vector to convert, given in local coordinates.
+        :type vector: :class:`volmdlr.Vector2D`
+        :return: The converted vector, in global coordinates.
+        :rtype: :class:`volmdlr.Vector2D`
+        """
+        return Basis2D.local_to_global_coordinates(self, vector) + self.origin
+
 
     def frame_mapping(self, frame: 'Frame2D', side: str):
         basis = frame.basis()
