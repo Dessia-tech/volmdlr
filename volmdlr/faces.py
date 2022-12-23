@@ -1502,10 +1502,9 @@ class CylindricalSurface3D(Surface3D):
                 self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
                 self.point2d_to_3d(linesegment2d.end)
             )]
-        else:
-            # TODO: this is a non exact method!
-            return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start), self.point2d_to_3d(linesegment2d.end))]
-            # raise NotImplementedError('Ellipse? delta_theta={} delta_z={}'.format(abs(theta2-theta1), abs(z1-z2)))
+        # TODO: this is a non exact method!
+        return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start), self.point2d_to_3d(linesegment2d.end))]
+        # raise NotImplementedError('Ellipse? delta_theta={} delta_z={}'.format(abs(theta2-theta1), abs(z1-z2)))
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
@@ -1530,8 +1529,32 @@ class CylindricalSurface3D(Surface3D):
 
         """
         points3d = arcellipse3d.discretization_points(number_points=50)
-        points2d = [self.point3d_to_2d(point) for point in points3d]
-        bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points2d, degree=2)
+
+        length = arcellipse3d.length()
+        points = [self.point3d_to_2d(p)
+                  for p in arcellipse3d.discretization_points(number_points=11)]
+
+        theta1, z1 = self.point3d_to_2d(arcellipse3d.start)
+        theta2, z2 = self.point3d_to_2d(arcellipse3d.end)
+
+        theta3, _ = self.point3d_to_2d(arcellipse3d.point_at_abscissa(0.001 * length))
+        theta4, _ = self.point3d_to_2d(arcellipse3d.point_at_abscissa(0.98 * length))
+
+        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+        theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
+
+        points[0] = volmdlr.Point2D(theta1, z1)
+        points[-1] = volmdlr.Point2D(theta2, z2)
+
+        if theta3 < theta1 < theta2:
+            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+        elif theta3 > theta1 > theta2:
+            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+
+        new_points = [p1 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
+        new_points.append(points[-1])
+
+        bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(new_points, degree=2)
         return [bsplinecurve2d]
 
     def ellipse3d_to_2d(self, ellipse3d):
@@ -1574,37 +1597,6 @@ class CylindricalSurface3D(Surface3D):
 
         return [vme.BSplineCurve2D.from_points_interpolation(new_points, degree=bspline_curve3d.degree,
                                                              periodic=bspline_curve3d.periodic)]
-
-    def arcellipse3d_to_2d(self, arcellipse3d):
-        """
-        TODO: THIS IS AN APPROXIMATION
-        """
-        points = arcellipse3d.discretization_points(number_points=15)
-        points2d = [self.point3d_to_2d(p) for p in points]
-        # start = self.point3d_to_2d(arcellipse3d.start)
-        # interior = self.point3d_to_2d(arcellipse3d.interior)
-        # end = self.point3d_to_2d(arcellipse3d.end)
-        # center = self.point3d_to_2d(arcellipse3d.center)
-        # major_dir = self.point3d_to_2d(arcellipse3d.major_dir)
-        # return [vme.ArcEllipse2D(start, interior, end, center, major_dir)]
-        list_primitives = []
-        last_p1x = points2d[0].x
-        for p1, p2 in zip(points2d[:-1], points2d[1:]):
-            if p1 == p2:
-                continue
-            # Verify if LineSegment2D should start or end with -math.pi due to atan2() -> ]-math.pi, math.pi]
-            if math.isclose(p1.x, math.pi, abs_tol=1E-5) and (p1.x - p2.x) > math.pi:
-                p1 = p1 - volmdlr.TWO_PI * volmdlr.X2D
-            elif math.isclose(p1.x, -math.pi, abs_tol=1E-5) and (p1.x - p2.x) < -math.pi:
-                p1 = p1 + volmdlr.TWO_PI * volmdlr.X2D
-            if math.isclose(p2.x, math.pi, abs_tol=1E-5) and (p1.x - last_p1x) < 0:
-                p2 = p2 - volmdlr.TWO_PI * volmdlr.X2D
-            elif math.isclose(p2.x, -math.pi, abs_tol=1E-5) and (p1.x - last_p1x) > 0:
-                p2 = p2 + volmdlr.TWO_PI * volmdlr.X2D
-
-            list_primitives.append(vme.LineSegment2D(p1, p2))
-            last_p1x = p1.x
-        return list_primitives
 
     @classmethod
     def from_step(cls, arguments, object_dict):
