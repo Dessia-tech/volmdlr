@@ -1530,14 +1530,8 @@ class LineSegment2D(LineSegment):
         return circle1, circle2
 
     def infinite_primitive(self, offset):
-<<<<<<< HEAD
-        n = self.normal_vector()
-        offset_point_1 = self.start + offset * n
-=======
         n = self.unit_normal_vector()
-        offset_point_1 = self.start + offset * \
-            n
->>>>>>> master
+        offset_point_1 = self.start + offset * n
 
         offset_point_2 = self.end + offset * n
 
@@ -2056,10 +2050,10 @@ class Arc2D(Arc):
         :param point_2d: Point to be verified
         :return: Return True if the point belongs to this surface, or False otherwise
         """
-        if self.point_belongs(point_2d):
+        if self.point_belongs(point):
             return True
         if self.start == self.end:
-            if point_2d.point_distance(self.center) <= self.radius:
+            if point.point_distance(self.center) <= self.radius:
                 return True
         center_distance_point = self.center.point_distance(point)
         straight_line = LineSegment2D(self.start, self.end)
