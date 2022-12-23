@@ -44,6 +44,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 
 ### New Features
 
+* Open/Closed TriangleShells: ability to implement specific algorithm to triangles
 * Block: faces_center (calculate directly point in the middle of the faces)
 * Circle2D: split_by_line
 * BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
@@ -118,6 +119,8 @@ time we have to verify if a point is inside
 
 
 ### Refactorings
+
+* cleanup of ClosedShell (double methods with Openshells)
 * LineSegment3D: intersections
 * Line2D: sort_points_along_line
 * Line3D: intersections
