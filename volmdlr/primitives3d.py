@@ -1093,6 +1093,7 @@ class Cylinder(RevolvedProfile):
                 (p0[0] - p1[0]) ** 2 + (p0[1] - p1[1]) ** 2 + (p0[2] - p1[2]) ** 2
             )
 
+        # Local coordinates to global coordinates
         def to_global_point(p, matrix, origin):
             return [
                 matrix.M11 * p[0] + matrix.M12 * p[1] + matrix.M13 * p[2] + origin[0],
@@ -1107,6 +1108,7 @@ class Cylinder(RevolvedProfile):
 
             return dist(p0, p1)
 
+        # Gradient of objective function
         def gradient_objective(x):
             p0 = to_global_point(x[:3], matrix0, [x0, y0, z0])
             p1 = to_global_point(x[3:], matrix1, [x1, y1, z1])
