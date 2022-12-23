@@ -3002,10 +3002,6 @@ class Frame2D(Basis2D):
         :return: The converted vector, in local coordinates.
         :rtype: :class:`volmdlr.Vector2D`
         """
-        warnings.warn(
-            "new_coordinates is deprecated. Use global_to_local_coordinates instead.",
-            DeprecationWarning,
-        )
         return Basis2D.new_coordinates(self, vector - self.origin)
 
     def global_to_local_coordinates(self, vector: Vector2D):
@@ -3029,10 +3025,6 @@ class Frame2D(Basis2D):
         :return: The converted vector, in global coordinates.
         :rtype: :class:`volmdlr.Vector2D`
         """
-        warnings.warn(
-            "old_coordinates is deprecated. Use local_to_global_coordinates instead.",
-            DeprecationWarning,
-        )
         return Basis2D.old_coordinates(self, vector) + self.origin
 
     def local_to_global_coordinates(self, vector: Vector2D):
@@ -3267,10 +3259,6 @@ class Frame3D(Basis3D):
         :return: The converted vector, in local coordinates.
         :rtype: :class:`volmdlr.Vector3D`
         """
-        warnings.warn(
-            "new_coordinates is deprecated. Use global_to_local_coordinates instead.",
-            DeprecationWarning,
-        )
         return Basis3D.new_coordinates(self, vector - self.origin)
 
     def global_to_local_coordinates(self, vector):
