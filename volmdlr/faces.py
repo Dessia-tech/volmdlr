@@ -7598,8 +7598,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 return True
         return False
 
-        
-        
     def point_in_shell_face(self, point: volmdlr.Point3D):
         warnings.warn('point_in_shell_face is deprecated, please use point_on_shell instead',
                       DeprecationWarning)
@@ -8274,7 +8272,7 @@ class ClosedShell3D(OpenShell3D):
         new_shell = ClosedShell3D(faces)
         new_shell.eliminate_not_valid_closedshell_faces()
         return [new_shell]
-        
+
     def eliminate_not_valid_closedshell_faces(self):
         nodes_with_2degrees = [node for node, degree in list(self.faces_graph.degree()) if degree <= 2]
         for node in nodes_with_2degrees:
