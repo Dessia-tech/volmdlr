@@ -967,14 +967,15 @@ class Mesh(DessiaObject):
             for element in group.elements:
                 new = False
                 points = []
+
                 for point in element.points:
-                    try:
-                        points.append(nodes_correction[point])
+                    correc_point = nodes_correction.get(point)
+                    if correc_point is not None:
+                        points.append(correc_point)
                         count += 1
                         old_elements.add(element)
                         new = True
-
-                    except KeyError:
+                    else:
                         points.append(point)
 
                 elements.append(element.__class__(points))
