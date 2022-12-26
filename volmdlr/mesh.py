@@ -988,7 +988,7 @@ class Mesh(DessiaObject):
 
     def set_nodes_correction(self, nodes_correction):
         if not isinstance(nodes_correction, dict):
-           raise ValueError("It must be volmdlr.GmshParser class")
+            raise ValueError("It must be volmdlr.GmshParser class")
         self._nodes_correction = nodes_correction
 
     @property
@@ -998,7 +998,7 @@ class Mesh(DessiaObject):
     @gmsh.setter
     def gmsh(self, gmsh_parser):
         if not isinstance(gmsh_parser, volmdlr.gmsh_vm.GmshParser):
-           raise ValueError("It must be volmdlr.GmshParser class")
+            raise ValueError("It must be volmdlr.GmshParser class")
         self._gmsh = gmsh_parser
 
     def copy(self):
