@@ -645,7 +645,7 @@ class GmshParser(DessiaObject):
         :rtype: bool
         """
 
-        checking = set()        
+        checking = set()
         for node in list_nodes:
             if node[2] == 0:
                 checking.add(True)
