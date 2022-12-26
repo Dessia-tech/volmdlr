@@ -936,109 +936,9 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
 
-<<<<<<< HEAD
-class Contour(Wire):
-
-    # def __init__(self):
-    #     Wire.__init__(self)
-
-    def __eq__(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
-            return False
-        if len(self.primitives) != len(other_.primitives):
-            return False
-        for prim1, prim2 in zip(self.primitives, other_.primitives):
-            if prim1 != prim2:
-                return False
-        return True
-
-    def extract_primitives(self, point1, primitive1, point2, primitive2, inside: bool = True):
-        """
-        inside: extracted contour is between the two points if True and outside these points if False
-        """
-        primitives = []
-        ip1 = self.primitive_to_index(primitive1)
-        ip2 = self.primitive_to_index(primitive2)
-        if inside:
-            if ip1 < ip2:
-                pass
-            elif ip1 == ip2:  # primitive1 == primitive2
-                if point1.point_distance(
-                            primitive1.start) < point2.point_distance(
-                        primitive1.start):
-                    pass
-                else:
-                    primitive1, primitive2 = primitive2, primitive1
-                    point1, point2 = point2, point1
-
-            else:
-                primitive1, primitive2 = primitive2, primitive1
-                point1, point2 = point2, point1
-        else:
-            if ip1 > ip2:
-                pass
-            elif ip1 == ip2:  # primitive1 == primitive2
-                if point1.point_distance(
-                            primitive1.start) > point2.point_distance(
-                        primitive1.start):
-                    pass
-                else:
-                    primitive1, primitive2 = primitive2, primitive1
-                    point1, point2 = point2, point1
-            else:
-                primitive1, primitive2 = primitive2, primitive1
-                point1, point2 = point2, point1
-
-        ip1 = self.primitive_to_index(primitive1)
-        ip2 = self.primitive_to_index(primitive2)
-
-        if ip1 < ip2:
-            if primitive1.start.point_distance(point1) < 1e-4:  # primitive1.start == point1:
-                primitives.append(primitive1)
-            elif primitive1.end.point_distance(point1) < 1e-4:  # primitive1.end == point1:
-                pass
-            else:
-                primitives.append(primitive1.split(point1)[1])
-            primitives.extend(self.primitives[ip1 + 1:ip2])
-            if primitive2.start.point_distance(point2) < 1e-4:  # primitive2.start == point2:
-                pass
-            elif primitive2.end.point_distance(point2) < 1e-4:  # primitive2.end == point2:
-                primitives.append(primitive2)
-            else:
-                primitives.append(primitive2.split(point2)[0])
-        elif ip1 > ip2 or (ip1 == ip2 and point1.point_distance(
-                primitive1.start) > point2.point_distance(primitive1.start)):
-            if primitive1.start.point_distance(point1) < 1e-4:  # primitive1.start == point1:
-                primitives.append(primitive1)
-            elif primitive1.end.point_distance(point1) < 1e-4:  # primitive1.end == point1:
-                pass
-            else:
-                primitives.append(primitive1.split(point1)[1])
-            # primitives.append(primitive1.split(point1)[1])
-            primitives.extend(self.primitives[ip1 + 1:])
-            primitives.extend(self.primitives[:ip2])
-            if primitive2.start.point_distance(point2) < 1e-4:  # primitive2.start == point2:
-                pass
-            elif primitive2.end.point_distance(point2) < 1e-4:  # primitive2.end == point2:
-                primitives.append(primitive2)
-            else:
-                primitives.append(primitive2.split(point2)[0])
-        elif (ip1 == ip2 and point1.point_distance(
-                primitive1.start) < point2.point_distance(primitive1.start)):
-            if primitive1.start != point1:
-                primitive = primitive1.split(point1)[1]
-                primitive = primitive.split(point2)[0]
-                primitives.append(primitive)
-            elif primitive1.end != point2:
-                primitive = primitive1.split(point2)[0]
-                primitives.append(primitive)
-            else:
-                primitives.append(primitive2)
-=======
 class ContourMixin(WireMixin):
     """
     Abstract class for Contour, storing methods and attributs used by Contour2D and Contour3D.
->>>>>>> dev
 
     """
 
@@ -1133,9 +1033,6 @@ class ContourMixin(WireMixin):
                             touching_primitives.append([primitive1, primitive2])
         return touching_primitives
 
-<<<<<<< HEAD
-    def identify_primitives_groups(self):
-=======
     @staticmethod
     def contours_primitives_touching_primitives(touching_primitives):
         contours_primitives_lists = []
@@ -1154,7 +1051,6 @@ class ContourMixin(WireMixin):
 
     @staticmethod
     def connected_to_splited_primitives(edge, contours_list):
->>>>>>> dev
         """
         Verifies if edge is connected to one of the primitives inside contours.
 
@@ -1221,9 +1117,6 @@ class ContourMixin(WireMixin):
                 break
         return edges, contour_primitives, contours_list
 
-<<<<<<< HEAD
-        self.primitives = new_primitives_contour
-=======
     @staticmethod
     def get_edges_bifurcations(contour_primitives, edges, finished_loop):
         graph = nx.Graph()
@@ -1243,7 +1136,6 @@ class ContourMixin(WireMixin):
                         if i + 1 == degree - 2:
                             break
         return contour_primitives, edges, finished_loop
->>>>>>> dev
 
     @classmethod
     def contours_from_edges(cls, edges, tol=1e-7):
@@ -1265,40 +1157,11 @@ class ContourMixin(WireMixin):
 
         while not finished:
             len1 = len(edges)
-<<<<<<< HEAD
-            for line in edges:
-                points = [p for prim in contour_primitives for p in prim]
-                if not contour_primitives:
-                    contour_primitives.append(line)
-                    edges.remove(line)
-                    break
-
-                if (line.start in points or line.end in points) and\
-                        line not in contour_primitives:
-                    contour_primitives.append(line)
-                    edges.remove(line)
-                    break
-
-                for point in points:
-                    if point.is_close(line.start, tol=tol) and\
-                            line not in contour_primitives:
-                        line.start = point
-                        contour_primitives.append(line)
-                        edges.remove(line)
-                        break
-                    if point.is_close(line.end, tol=tol) and\
-                            line not in contour_primitives:
-                        line.end = point
-                        contour_primitives.append(line)
-                        edges.remove(line)
-                        break
-=======
             edges, contour_primitives, contours_list = cls.find_connected_edges(
                 edges, contours_list, contour_primitives, tol)
             if not edges:
                 finished = True
             valid = False
->>>>>>> dev
 
             if len(edges) != 0 and len(edges) == len1 and len(contour_primitives) != 0:
                 valid = True
@@ -1320,42 +1183,11 @@ class ContourMixin(WireMixin):
 
     def discretized_primitives(self, number_points: float):
         """
-<<<<<<< HEAD
-        discretize each contour's primitive and return a list of discretized primitives
-        """
-
-        # edges = []
-        # for primitive in self.primitives:
-        #     points = primitive.discretise(n)
-        #     print(primitive.__dict__)
-        #     print(n, points)
-        #     line_segment = primitive
-        #     for p in points[1:-1]:
-        #         r = line_segment.split(p)
-        #         edges.append(r[0])
-        #         line_segment = r[1]
-        #         if p == points[-2]:
-        #             edges.append(r[1])
-=======
         Discretize each contour's primitive and return a list of discretized primitives.
->>>>>>> dev
 
         """
         edges = []
         for primitive in self.primitives:
-<<<<<<< HEAD
-            points = primitive.discretization_points(number_points=number_points)
-            for p1, p2 in zip(points[:-1], points[1:]):
-                edges.append(volmdlr.edges.LineSegment2D(p1, p2))
-
-        return edges
-
-    def is_superposing(self, contour2):
-        '''
-        check if the contours are superposing (one on the other without
-        necessarily having an absolute equality)
-        '''
-=======
             auto_nb_pts = min(number_points, max(2, int(primitive.length() / 1e-6)))
             points = primitive.discretization_points(number_points=auto_nb_pts)
             for p1, p2 in zip(points[:-1], points[1:]):
@@ -1378,7 +1210,6 @@ class ContourMixin(WireMixin):
         necessarily having an absolute equality).
 
         """
->>>>>>> dev
 
         for primitive_2 in contour2.primitives:
             if not self.primitive_over_contour(primitive_2):
@@ -1445,16 +1276,10 @@ class ContourMixin(WireMixin):
         return False
 
     def shared_primitives_extremities(self, contour):
-<<<<<<< HEAD
-        '''
-        extract shared primitives extremities between two adjacent contours
-        '''
-=======
         """
         Extract shared primitives extremities between two adjacent contours.
 
         """
->>>>>>> dev
 
         if self.is_superposing(contour):
             warnings.warn('The contours are superposing')
@@ -1743,13 +1568,6 @@ class Contour2D(ContourMixin, Wire2D):
             return True
         return False
 
-<<<<<<< HEAD
-    def point_over_contour(self, point, abs_tol=1e-6):
-        return self.point_over_wire(point, abs_tol)
-
-    def primitive_over_contour(self, primitive, tol: float = 1e-6):
-        return self.primitive_over_wire(primitive, tol)
-
     # def point_over_contour(self, point, abs_tol=1e-6):
     #     belongs = False
     #     for primitive in self.primitives:
@@ -1776,8 +1594,6 @@ class Contour2D(ContourMixin, Wire2D):
     #                 return True
     #     return False
 
-=======
->>>>>>> dev
     def point_distance(self, point):
         min_distance = self.primitives[0].point_distance(point)
         for primitive in self.primitives[1:]:
@@ -2362,11 +2178,7 @@ class Contour2D(ContourMixin, Wire2D):
 
         edges = [edge0, edge1, edge2, edge3]
 
-<<<<<<< HEAD
-        return volmdlr.wires.Contour2D(edges)
-=======
         return Contour2D(edges)
->>>>>>> dev
 
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
@@ -4531,13 +4343,8 @@ class Contour3D(ContourMixin, Wire3D):
     """
     A collection of 3D primitives forming a closed wire3D.
 
-<<<<<<< HEAD
-class Contour3D(Contour, Wire3D):
-    _non_serializable_attributes = ['points', 'point_inside_contour']
-=======
     """
     _non_serializable_attributes = ['points']
->>>>>>> dev
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['points', 'name']
     _generic_eq = True
@@ -4990,60 +4797,8 @@ class Contour3D(Contour, Wire3D):
     def merge_with(self, contour3d):
         """
         Merge two adjacent contours, sharing primitives, and returns one outer contour and inner
-        contours (if there are any),
+        contours (if there are any).
 
-<<<<<<< HEAD
-        merged_primitives = self.merge_primitives_with(contour3d)
-        if merged_primitives == []:
-            return []
-        contours = volmdlr.wires.Contour3D.contours_from_edges(merged_primitives, tol=3e-4)
-        # contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
-        return contours
-
-    def primitive_over_contour(self, primitive):
-        for prim in self.primitives:
-            if not hasattr(prim, 'unit_direction_vector') and \
-                    hasattr(prim, 'tangent'):
-                vector1 = prim.tangent(0.5)
-            else:
-                vector1 = prim.unit_direction_vector(abscissa=0.)
-
-            if not hasattr(primitive, 'unit_direction_vector') and \
-                    hasattr(primitive, 'tangent'):
-                vector2 = primitive.tangent(0.5)
-            else:
-                vector2 = primitive.unit_direction_vector(abscissa=0.)
-
-            if vector1.is_colinear_to(vector2):
-                mid_point = primitive.middle_point()
-                if self.point_over_contour(mid_point):
-                    return True
-        return False
-
-    # def primitive_over_contour(self, primitive):
-    #     '''
-    #     copied from Contour2D
-    #     '''
-    #     for prim in self.primitives:
-    #         if not hasattr(prim, 'unit_direction_vector') and \
-    #                 hasattr(prim, 'tangent'):
-    #             vector1 = prim.tangent(0.5)
-    #         else:
-    #             vector1 = prim.unit_direction_vector(abscissa=0.)
-
-    #         if not hasattr(primitive, 'unit_direction_vector') and \
-    #                 hasattr(primitive, 'tangent'):
-    #             vector2 = primitive.tangent(0.5)
-    #         else:
-    #             vector2 = primitive.unit_direction_vector(abscissa=0.)
-
-    #         if vector1.is_colinear_to(vector2):
-    #             mid_point = primitive.middle_point()
-    #             if self.point_over_contour(mid_point):
-    #                 return True
-    #     return False
-
-=======
         """
 
         merged_primitives = self.merge_primitives_with(contour3d)
@@ -5051,7 +4806,6 @@ class Contour3D(Contour, Wire3D):
 
         return contours
 
->>>>>>> dev
 
 class Circle3D(Contour3D):
     """
