@@ -8,13 +8,13 @@ import volmdlr.step
 
 for step_file in [
     # 'tore1.step',
-    # 'cone1.step',
+    'cone1.step',
     # 'cone2.step',
     # 'cylinder.step',
     # 'block.step',
     # 'strange_gasket.step',
     # 'spherical_surface_body.step',
-    'sphere3.step',
+    # 'sphere3.step',
     # 'sphere_revolution0_5.step'
     # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
   ]:
