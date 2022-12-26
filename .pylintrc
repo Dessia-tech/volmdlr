@@ -3,14 +3,14 @@
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
 # run arbitrary code.
-extension-pkg-whitelist=
+extension-pkg-whitelist=volmdlr.core_compiled
 
 # Specify a score threshold to be exceeded before program exits with error.
 fail-under=10.0
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
-ignore=build,doc,dist
+ignore=CVS
 
 # Add files or directories matching the regex patterns to the blacklist. The
 # regex matches against base names, not paths.
@@ -42,7 +42,7 @@ suggestion-mode=yes
 
 # Allow loading of arbitrary C extensions. Extensions are imported into the
 # active Python interpreter and may run arbitrary code.
-unsafe-load-any-extension=no
+unsafe-load-any-extension=yes
 
 
 [MESSAGES CONTROL]
@@ -353,7 +353,7 @@ function-naming-style=snake_case
 # Good variable names which should always be accepted, separated by a comma.
 good-names=i,j,k,n,i1,i2,
 	   x,y,z,dx,dy,dz,lx,ly,lz,
-	   x1,y1,z1,x2,y2,z2,xi,yi,
+	   x0,y0,z0,x1,y1,z1,x2,y2,z2,x3,y3,z3,x4,y4,z4,xi,yi,
            p1,p2,pi,pj,u1,u2,v1,v2,
            Ix,Iy,Ixy,
            ax,

@@ -12,6 +12,7 @@ for step_file in [
     'cone2.step',
     'cylinder.step',
     'block.step',
+    'strange_gasket.step',
     # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
   ]:
     print('Reading step file: ', step_file)
@@ -20,6 +21,8 @@ for step_file in [
     model = step.to_volume_model()
     assert len(model.primitives) > 0.
     model.to_step(step_file+'_reexport')
+    model.primitives[0].alpha = 0.6
+    model.primitives[0].color = (1, 0.1, 0.1)
     model.babylonjs()
 
     file_io = io.FileIO(step_file, 'r')
@@ -29,7 +32,7 @@ for step_file in [
     model.to_step(step_file + '_reexport')
 
     model2 = model.copy()
-    
+
     # model2 = model.copy()
     # assert model == model2
 
