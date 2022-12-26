@@ -978,10 +978,18 @@ class Mesh(DessiaObject):
         groups.insert(reference_index, self.elements_groups[reference_index])
 
         mesh = self.__class__(groups)
-        mesh._gmsh = self._gmsh
-        mesh._nodes_correction = self._nodes_correction
+        mesh.gmsh = self.gmsh
+        mesh.set_nodes_correction(self.get_nodes_correction())
 
         return mesh
+
+    def get_nodes_correction(self):
+        return self._nodes_correction
+
+    def set_nodes_correction(self, nodes_correction):
+        if not isinstance(nodes_correction, dict):
+           raise ValueError("It must be volmdlr.GmshParser class")
+        self._nodes_correction = nodes_correction
 
     @property
     def gmsh(self):
@@ -989,12 +997,13 @@ class Mesh(DessiaObject):
 
     @gmsh.setter
     def gmsh(self, gmsh_parser):
-
+        if not isinstance(gmsh_parser, volmdlr.gmsh_vm.GmshParser):
+           raise ValueError("It must be volmdlr.GmshParser class")
         self._gmsh = gmsh_parser
 
     def copy(self):
         m = self.__class__(elements_groups=self.elements_groups[:])
-        m._nodes_correction = self._nodes_correction
-        m._gmsh = self._gmsh
+        m.set_nodes_correction(self.get_nodes_correction())
+        m.gmsh = self.gmsh
 
         return m
