@@ -1828,21 +1828,21 @@ class Contour2D(ContourMixin, Wire2D):
             point2 = sorted_points[cutting_points_counter + 1]
             closing_line = volmdlr.edges.LineSegment2D(point1, point2)
             closing_contour = Contour2D([closing_line])
-            contour1, contour2 = contour_to_cut.get_divided_contours(point1,
-                                                                     point2,
-                                                                     closing_contour,
-                                                                     True)
+            result_contours = contour_to_cut.get_divided_contours(point1,
+                                                                  point2,
+                                                                  closing_contour,
+                                                                  True)
             if sorted_points.index(point1) + 2 < len(sorted_points) - 1:
-                if contour1.point_over_contour(
+                if result_contours[0].point_over_contour(
                         sorted_points[sorted_points.index(point1) + 2]):
-                    contour_to_cut = contour1
-                    list_contours.append(contour2)
-                elif contour2.point_over_contour(
+                    contour_to_cut = result_contours[0]
+                    list_contours.append(result_contours[1])
+                elif result_contours[1].point_over_contour(
                         sorted_points[sorted_points.index(point1) + 2]):
-                    contour_to_cut = contour2
-                    list_contours.append(contour1)
+                    contour_to_cut = result_contours[1]
+                    list_contours.append(result_contours[0])
             else:
-                list_contours.extend([contour1, contour2])
+                list_contours.extend([result_contours[0], result_contours[1]])
             cutting_points_counter += 2
         return list_contours
 
