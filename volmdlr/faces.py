@@ -2090,7 +2090,6 @@ class ConicalSurface3D(Surface3D):
         new_frame = self.frame.frame_mapping(frame, side)
         self.frame = new_frame
 
-
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         theta, z = point2d
         r = math.tan(self.semi_angle) * z
@@ -2292,6 +2291,7 @@ class ConicalSurface3D(Surface3D):
 
         return primitives2d
 
+
 class SphericalSurface3D(Surface3D):
     """
     Defines a spherical surface.
@@ -2411,12 +2411,12 @@ class SphericalSurface3D(Surface3D):
         # Fix sphere singularity point
         if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-5) and theta1 == 0.0\
                 and math.isclose(theta3, thetai, abs_tol=1e-6) and \
-                    math.isclose(theta4, thetai, abs_tol=1e-6):
+        math.isclose(theta4, thetai, abs_tol=1e-6):
             theta1 = thetai
             start = volmdlr.Point2D(theta1, phi1)
         if math.isclose(abs(phi2), 0.5 * math.pi, abs_tol=1e-5) and theta2 == 0.0\
                 and math.isclose(theta3, thetai, abs_tol=1e-6) and \
-                    math.isclose(theta4, thetai, abs_tol=1e-6):
+        math.isclose(theta4, thetai, abs_tol=1e-6):
             theta2 = thetai
             end = volmdlr.Point2D(theta2, phi2)
 
@@ -2513,7 +2513,6 @@ class SphericalSurface3D(Surface3D):
             print("Error while trying to transform Arc3D to parametric Spherical space:")
             print(points)
         return None
-
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         # TODO: this is incomplete, a bspline_curve2d can be also a bspline_curve3d
