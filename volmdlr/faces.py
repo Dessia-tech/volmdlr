@@ -5729,7 +5729,7 @@ class PlaneFace3D(Face3D):
 
         used_faces, list_faces = {}, []
 
-        for j, face2 in enumerate(faces):
+        for _, face2 in enumerate(faces):
             contour1 = self.surface2d.outer_contour
             contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)
 

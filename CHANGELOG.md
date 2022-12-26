@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
 * Contour2D: bounding_rectangle (specify number_points for discretization_points)
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
+* Mesh: delete_duplicated_nodes
+
 
 ### Removed
 
