@@ -22,6 +22,8 @@ import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
 import plot_data.core as plot_data
 
+from triangle import triangulate
+
 import volmdlr
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core_compiled import polygon_point_belongs
@@ -1811,8 +1813,6 @@ class Contour2D(ContourMixin, Wire2D):
             line.plot(ax=ax)
             for i in intersections:
                 i[0].plot(ax=ax)
-            self.save_to_file('/home/axel/Bureau/contour2d')
-            line.save_to_file('/home/axel/Bureau/line2d')
             raise NotImplementedError(
                 '{} intersections not supported yet'.format(
                     len(intersections)))
@@ -1828,21 +1828,21 @@ class Contour2D(ContourMixin, Wire2D):
             point2 = sorted_points[cutting_points_counter + 1]
             closing_line = volmdlr.edges.LineSegment2D(point1, point2)
             closing_contour = Contour2D([closing_line])
-            contour1, contour2 = contour_to_cut.get_divided_contours(point1,
-                                                                     point2,
-                                                                     closing_contour,
-                                                                     True)
+            result_contours = contour_to_cut.get_divided_contours(point1,
+                                                                  point2,
+                                                                  closing_contour,
+                                                                  True)
             if sorted_points.index(point1) + 2 < len(sorted_points) - 1:
-                if contour1.point_over_contour(
+                if result_contours[0].point_over_contour(
                         sorted_points[sorted_points.index(point1) + 2]):
-                    contour_to_cut = contour1
-                    list_contours.append(contour2)
-                elif contour2.point_over_contour(
+                    contour_to_cut = result_contours[0]
+                    list_contours.append(result_contours[1])
+                elif result_contours[1].point_over_contour(
                         sorted_points[sorted_points.index(point1) + 2]):
-                    contour_to_cut = contour2
-                    list_contours.append(contour1)
+                    contour_to_cut = result_contours[1]
+                    list_contours.append(result_contours[0])
             else:
-                list_contours.extend([contour1, contour2])
+                list_contours.extend([result_contours[0], result_contours[1]])
             cutting_points_counter += 2
         return list_contours
 
@@ -3070,7 +3070,35 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         return ax
 
-    def triangulation(self):
+    def triangulation(self, tri_opt: str = 'p'):
+        """
+        Perform triangulation on the polygon.
+
+        To detail documentation, please refer to https://rufat.be/triangle/API.html
+
+        :param tri_opt: (Optional) Triangulation preferences.
+        :type tri_opt: str
+        :return: A 2D mesh.
+        :rtype: :class:`vmd.DisplayMesh2D`
+        """
+        # Converting points to nodes for performance
+        nodes = [vmd.Node2D.from_point(p) for p in self.points]
+        vertices = [(p.x, p.y) for p in nodes]
+        n = len(nodes)
+        segments = [(i, i + 1) for i in range(n - 1)]
+        segments.append((n - 1, 0))
+
+        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+               'segments': npy.array(segments).reshape((-1, 2)),
+               }
+        t = triangulate(tri, tri_opt)
+        triangles = t['triangles'].tolist()
+        np = t['vertices'].shape[0]
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in
+                  range(np)]
+        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+
+    def ear_clipping_triangulation(self):
         """
         Computes the triangulation of the polygon using ear clipping algorithm.
         Note: triangles have been inverted for a better rendering in babylonjs

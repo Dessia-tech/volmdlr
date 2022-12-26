@@ -304,8 +304,9 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
         modified_arguments, object_dict)
 
 
-class StepFunction:
+class StepFunction(dc.DessiaObject):
     def __init__(self, function_id, function_name, function_arg):
+        dc.DessiaObject.__init__(self)
         self.id = function_id
         self.name = function_name
         self.arg = function_arg
@@ -649,7 +650,7 @@ class Step(dc.DessiaObject):
                                                                     arguments))
         return volmdlr_object
 
-    def to_volume_model(self, show_times=False):
+    def to_volume_model(self, show_times: bool = False):
         """
         show_times=True displays the numer of times a given class has been
         instanciated and the totatl time of all the instanciations of this

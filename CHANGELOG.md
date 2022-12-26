@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * PlaneFace3D: project_faces
 * OpenShell3D: project_coincident_faces_of
+* GmshParser: to_vtk
 * Create .geo and .msh files (Mesh geometries with GMSH)
 * Write .msh file (with stream)
 
@@ -20,17 +21,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
 * Contour2D: bounding_rectangle (specify number_points for discretization_points)
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
+* Mesh: delete_duplicated_nodes
 
+
+### Removed
+
+* babylon script remaining functions
 
 ### Performance improvements
+* ClosedPolygon2D: triangulation
+* Cylinder: min_distance_to_other_cylinder
 
 
 ### Refactorings
+* Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated. 
+local_to_global_coordinates and global_to_local_coordinates are the new more explicit ones. 
 
 
 ### Unittests
 
 * Contour2D: point_belongs
+* Basis2D, Basis3D, Frame2D, Frame3D: local_to_global_coordinates and global_to_local_coordinates
 
 
 
@@ -38,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+* Open/Closed TriangleShells: ability to implement specific algorithm to triangles
 * Block: faces_center (calculate directly point in the middle of the faces)
 * Circle2D: split_by_line
 * BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
@@ -72,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * hash for Frame2D
 * Ellipse3D: point_belongs, abscissa, length, to_2d
 * CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
+* BSplineSurface3D: derivatives
 
 ### Fixed
 
@@ -98,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Wire2D: infinite_intersections
 * infinite primitive offset of linesegment
 * Ellispe3D: discretization_points
+* BSplineSurface: Improved surface periodicity calculation
 
 
 ### Performance improvements
@@ -106,9 +120,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * triangulation performance by use of Node2D instead of points (x15 on casing)
 * cache variable self._polygon_point_belongs_100, to avoid recalculating each
 time we have to verify if a point is inside
+* Improvements in BSplineSurface3D.point3d_to_2d performance
 
 
 ### Refactorings
+
+* cleanup of ClosedShell (double methods with Openshells)
 * LineSegment3D: intersections
 * Line2D: sort_points_along_line
 * Line3D: intersections
