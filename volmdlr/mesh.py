@@ -48,6 +48,10 @@ class FlatElementError(Exception):
 
 
 class Node2D(vm.Point2D):
+    """
+    A node is a Point2D with some hash capabilities for perfomance used for Mesh.
+    """
+
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
 
@@ -64,6 +68,10 @@ class Node2D(vm.Point2D):
 
 
 class Node3D(vm.Point3D):
+    """
+    A node is a Point3D with some hash capabilities for perfomance used for Mesh.
+    """
+
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))
 
@@ -984,19 +992,47 @@ class Mesh(DessiaObject):
         return mesh
 
     def get_nodes_correction(self):
+        """
+        A getter method for nodes_correction private variable.
+
+        :return: A dict of nodes_correction
+        :rtype: dict
+        """
+
         return self._nodes_correction
 
     def set_nodes_correction(self, nodes_correction):
+        """
+        A setter method for nodes_correction private variable.
+
+        :param nodes_correction: A dict of nodes_correction
+        :type nodes_correction: dict
+        """
+
         if not isinstance(nodes_correction, dict):
             raise ValueError("It must be volmdlr.GmshParser class")
         self._nodes_correction = nodes_correction
 
     @property
     def gmsh(self):
+        """
+        A property to get gmsh (a private variable).
+
+        :return: A gmsh_parser data
+        :rtype: GmshParser
+        """
+
         return self._gmsh
 
     @gmsh.setter
     def gmsh(self, gmsh_parser):
+        """
+        A setter for gmsh (a private variable).
+
+        :param gmsh_parser: A gmsh_parser data
+        :type gmsh_parser: GmshParser
+        """
+
         if not isinstance(gmsh_parser, volmdlr.gmsh_vm.GmshParser):
             raise ValueError("It must be volmdlr.GmshParser class")
         self._gmsh = gmsh_parser
