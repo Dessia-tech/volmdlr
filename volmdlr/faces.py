@@ -2111,7 +2111,7 @@ class ConicalSurface3D(Surface3D):
         """
         Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a cartesian coordinates point (x, y, z).
 
-        :param point3d: Point at the CylindricalSuface3D
+        :param point3d: Point at the CylindricalSuface3D.
         :type point3d: :class:`volmdlr.`Point3D`
         """
         x, y, z = self.frame.new_coordinates(point3d)
@@ -2433,12 +2433,12 @@ class SphericalSurface3D(Surface3D):
         # Fix sphere singularity point
         if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-5) and theta1 == 0.0\
                 and math.isclose(theta3, thetai, abs_tol=1e-6) and \
-        math.isclose(theta4, thetai, abs_tol=1e-6):
+            math.isclose(theta4, thetai, abs_tol=1e-6):
             theta1 = thetai
             start = volmdlr.Point2D(theta1, phi1)
         if math.isclose(abs(phi2), 0.5 * math.pi, abs_tol=1e-5) and theta2 == 0.0\
                 and math.isclose(theta3, thetai, abs_tol=1e-6) and \
-        math.isclose(theta4, thetai, abs_tol=1e-6):
+            math.isclose(theta4, thetai, abs_tol=1e-6):
             theta2 = thetai
             end = volmdlr.Point2D(theta2, phi2)
 
