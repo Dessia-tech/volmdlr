@@ -53,7 +53,7 @@ def repair_start_end_angle_periodicity(angle, ref_angle):
     if math.isclose(angle, math.pi, abs_tol=1e-6) and ref_angle < 0:
         angle = -math.pi
     elif math.isclose(angle, -math.pi, abs_tol=1e-6) and ref_angle > 0:
-        angle= math.pi
+        angle = math.pi
     return angle
 
 
@@ -110,10 +110,16 @@ def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, poin
     theta3, phi3 = point_after_start
     theta4, phi4 = point_before_end
     # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
-    theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
+    if abs(theta1) == math.pi:
+        theta1 = repair_start_end_angle_periodicity(theta1, theta3)
+    if abs(theta2) == math.pi:
+        theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
     # Verify if phi1 or phi2 point should be -pi or pi because phi -> ]-pi, pi]
-    phi1, phi2 = repair_start_end_angle_periodicity(phi1, phi2, phi3, phi4)
+    if abs(phi1) == math.pi:
+        phi1 = repair_start_end_angle_periodicity(phi1, phi3)
+    if abs(phi2) == math.pi:
+        phi2 = repair_start_end_angle_periodicity(phi2, phi4)
 
     if math.isclose(phi1, phi2, abs_tol=1e-4):
         theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d)
