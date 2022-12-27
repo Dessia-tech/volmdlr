@@ -738,25 +738,30 @@ class Surface3D(DessiaObject):
             for i, primitive in enumerate(primitives2d):
                 start = primitive.start
                 end = primitive.end
-                if ((2 * start.x) % x_periodicity) != 0 and end.x != start.x and i > 0:
-                    primitives2d = primitives2d[i:] + primitives2d[:i]
+                if ((2 * start.x) % x_periodicity) != 0 and end.x != start.x:
+                    pos = i
                     break
+            if pos != 0:
+                primitives2d = primitives2d[pos:] + primitives2d[:pos]
 
         elif not x_periodicity and y_periodicity:
             for i, primitive in enumerate(primitives2d):
                 start = primitive.start
                 end = primitive.end
-                if (start.y % y_periodicity) != 0 and end.y != start.y and i > 0:
-                    primitives2d = primitives2d[i:] + primitives2d[:i]
+                if (start.y % y_periodicity) != 0 and end.y != start.y:
+                    pos = i
                     break
+            if pos != 0:
+                primitives2d = primitives2d[pos:] + primitives2d[:pos]
 
         elif x_periodicity and y_periodicity:
             for i, primitive in enumerate(primitives2d):
                 start = primitive.start
-                if ((2 * start.x) % x_periodicity) != 0 and ((2 * start.y) % y_periodicity) != 0 and i > 0:
-                    primitives2d = primitives2d[i:] + primitives2d[:i]
+                if ((2 * start.x) % x_periodicity) != 0 and ((2 * start.y) % y_periodicity) != 0:
+                    pos = i
                     break
-
+            if pos != 0:
+                primitives2d = primitives2d[pos:] + primitives2d[:pos]
         i = 1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
@@ -2264,8 +2269,6 @@ class ConicalSurface3D(Surface3D):
     def repair_primitives_periodicity(self, primitives2d):
         # Search for a primitive that can be used as reference for reparing periodicity
         pos = 0
-        x_periodicity = self.x_periodicity
-        y_periodicity = self.y_periodicity
         for i, primitive in enumerate(primitives2d):
             start = primitive.start
             end = primitive.end
@@ -2437,14 +2440,9 @@ class SphericalSurface3D(Surface3D):
         if positive_singularity and not negative_singularity and \
                 math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
             if theta1 == math.pi and theta2 != math.pi:
-                return [vme.LineSegment2D(volmdlr.Point2D(-theta1, phi1), volmdlr.Point2D(-theta1, half_pi)),
-                        vme.LineSegment2D(volmdlr.Point2D(-theta1, half_pi), volmdlr.Point2D(theta2, half_pi)),
-                        vme.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))]
-            if theta2 == math.pi and theta1 != math.pi:
-                return [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
-                        vme.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(-theta2, half_pi)),
-                        vme.LineSegment2D(volmdlr.Point2D(-theta2, half_pi), volmdlr.Point2D(-theta2, phi2))]
-
+                theta1 = -theta1
+            elif theta2 == math.pi and theta1 != math.pi:
+                theta2 = -theta2
             primitives = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
                           vme.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta2, half_pi)),
                           vme.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
@@ -2454,19 +2452,15 @@ class SphericalSurface3D(Surface3D):
         if negative_singularity and not positive_singularity and \
                 math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
             if theta1 == math.pi and theta2 != math.pi:
-                return [vme.LineSegment2D(volmdlr.Point2D(-theta1, phi1), volmdlr.Point2D(-theta1, half_pi)),
-                        vme.LineSegment2D(volmdlr.Point2D(-theta1, half_pi), volmdlr.Point2D(theta2, half_pi)),
-                        vme.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))]
-            if theta2 == math.pi and theta1 != math.pi:
-                return [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
-                        vme.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(-theta2, half_pi)),
-                        vme.LineSegment2D(volmdlr.Point2D(-theta2, half_pi), volmdlr.Point2D(-theta2, phi2))]
+                theta1 = -theta1
+            elif theta2 == math.pi and theta1 != math.pi:
+                theta2 = -theta2
 
-            primitives = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, -half_pi)),
+            return [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, -half_pi)),
                           vme.LineSegment2D(volmdlr.Point2D(theta1, -half_pi), volmdlr.Point2D(theta2, -half_pi)),
                           vme.LineSegment2D(volmdlr.Point2D(theta2, -half_pi), volmdlr.Point2D(theta2, phi2))
                           ]
-            return primitives
+
         if positive_singularity and negative_singularity:
             is_trigo = phi1 < phi3
             primitives1 = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, -half_pi)),
