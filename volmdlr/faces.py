@@ -2420,33 +2420,6 @@ class SphericalSurface3D(Surface3D):
         if math.isclose(theta1, theta2, abs_tol=1e-4) or math.isclose(phi1, phi2, abs_tol=1e-4):
             return [vme.LineSegment2D(start, end)]
 
-        # trying to treat when the arc starts at theta1 passes at the singularity at |phi| = 0.5*math.pi
-        # and ends at theta2 = theta1 + math.pi
-        half_pi = 0.5 * math.pi
-        point_positive_singularity = self.point2d_to_3d(volmdlr.Point2D(theta1, half_pi))
-        point_negative_singularity = self.point2d_to_3d(volmdlr.Point2D(theta1, -half_pi))
-        positive_singularity = arc3d.point_belongs(point_positive_singularity, 1e-4)
-        negative_singularity = arc3d.point_belongs(point_negative_singularity, 1e-4)
-        if positive_singularity and not negative_singularity and \
-                math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
-            if theta1 == math.pi and theta2 != math.pi:
-                theta1 = -theta1
-            elif theta2 == math.pi and theta1 != math.pi:
-                theta2 = -theta2
-            primitives = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
-                          vme.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta2, half_pi)),
-                          vme.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
-                          ]
-            return primitives
-
-        if negative_singularity and not positive_singularity and \
-                math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
-            if theta1 == math.pi and theta2 != math.pi:
-                theta1 = -theta1
-            elif theta2 == math.pi and theta1 != math.pi:
-                theta2 = -theta2
-
-        # maybe this is incomplete
         number_points = math.ceil(angle3d * 10) + 1  # 10 points per radian
         points = [self.point3d_to_2d(arc3d.point_at_abscissa(
             i * length / (number_points - 1))) for i in range(number_points)]
