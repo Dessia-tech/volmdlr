@@ -3,6 +3,7 @@ import unittest
 
 import volmdlr
 from volmdlr import faces, edges, wires
+from volmdlr import Point3D, OXYZ, Point2D, X3D, Y3D, Z3D
 
 
 class TestCylindricalSurface3D(unittest.TestCase):
@@ -13,6 +14,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
         volmdlr.Vector3D(-0.6607898454031987, 0.562158151695499, -0.4973278523210991),
         volmdlr.Vector3D(-0.7505709694705869, -0.4949144228333324, 0.43783893597935386), volmdlr.Vector3D(-0.0, 0.6625993710787045, 0.748974013865705))
     cylindrical_surface3 = faces.CylindricalSurface3D(frame, 0.003)
+    cylindrical_surface4 = faces.CylindricalSurface3D(OXYZ, radius=0.03)
 
     def test_line_intersections(self):
         line3d = edges.Line3D(volmdlr.O3D, volmdlr.Point3D(0.3, 0.3, .3))
@@ -109,6 +111,27 @@ class TestCylindricalSurface3D(unittest.TestCase):
         # Verifies the inversion operation
         self.assertIsInstance(inv_prof, edges.Arc3D)
         self.assertEqual(inv_prof, arc4)
+
+    def test_contour3d_to_2d(self):
+        primitives_cylinder = [edges.LineSegment3D(Point3D(0.03, 0, 0.003), Point3D(0.03, 0, 0.013)),
+                               edges.FullArc3D(Point3D(0, 0, 0.013), Point3D(0.03, 0, 0.013), Z3D),
+                               edges.LineSegment3D(Point3D(0.03, 0, 0.013), Point3D(0.03, 0, 0.003)),
+                               edges.FullArc3D(Point3D(0, 0, 0.003), Point3D(0.03, 0, 0.003), Z3D)
+                               ]
+        contour_cylinder = wires.Contour3D(primitives_cylinder)
+
+        contour2d_cylinder = self.cylindrical_surface4.contour3d_to_2d(contour_cylinder)
+
+        area = contour2d_cylinder.area()
+        fullarc2d = contour2d_cylinder.primitives[3]
+        linesegment2d = contour2d_cylinder.primitives[2]
+
+        self.assertEqual(area, 0.02*math.pi)
+        self.assertEqual(fullarc2d.start, Point2D(2*math.pi, 0.003))
+        self.assertEqual(fullarc2d.end, Point2D(0, 0.003))
+        self.assertEqual(linesegment2d.start, Point2D(2*math.pi, 0.013))
+        self.assertEqual(linesegment2d.end, Point2D(2*math.pi, 0.003))
+
 
 
 if __name__ == '__main__':

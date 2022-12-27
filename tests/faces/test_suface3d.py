@@ -4,19 +4,20 @@ import math
 import volmdlr.faces as vmf
 import volmdlr.edges as vme
 import volmdlr.wires as vmw
-from volmdlr import Point3D, OXYZ, Z3D, Point2D
+import volmdlr
+from volmdlr import Point3D, OXYZ, Point2D, X3D, Y3D, Z3D
 
 
 class TestSurface3D(unittest.TestCase):
     cylindrical_surface = vmf.CylindricalSurface3D(OXYZ, radius=0.03)
 
     def test_contour3d_to_2d(self):
-        primitives = [vme.LineSegment3D(Point3D(0.03, 0, 0.003), Point3D(0.03, 0, 0.013)),
+        primitives_cylinder = [vme.LineSegment3D(Point3D(0.03, 0, 0.003), Point3D(0.03, 0, 0.013)),
                         vme.FullArc3D(Point3D(0, 0, 0.013), Point3D(0.03, 0, 0.013), Z3D),
                         vme.LineSegment3D(Point3D(0.03, 0, 0.013), Point3D(0.03, 0, 0.003)),
                         vme.FullArc3D(Point3D(0, 0, 0.003), Point3D(0.03, 0, 0.003), Z3D)
                         ]
-        contour_cylinder = vmw.Contour3D(primitives)
+        contour_cylinder = vmw.Contour3D(primitives_cylinder)
 
         contour2d_cylinder = self.cylindrical_surface.contour3d_to_2d(contour_cylinder)
 

@@ -740,6 +740,7 @@ class Surface3D(DessiaObject):
         :rtype: list
         """
         # Search for a primitive that can be used as reference for reparing periodicity
+        pos = 0
         x_periodicity = self.x_periodicity
         y_periodicity = self.y_periodicity
         if x_periodicity and not y_periodicity:
@@ -819,8 +820,7 @@ class Surface3D(DessiaObject):
     def contour2d_to_3d(self, contour2d):
         primitives3d = []
         for primitive2d in contour2d.primitives:
-            method_name = '{}_to_3d'.format(
-                primitive2d.__class__.__name__.lower())
+            method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
             if hasattr(self, method_name):
                 try:
                     primitives3d.extend(getattr(self, method_name)(primitive2d))
@@ -1297,6 +1297,11 @@ class CylindricalSurface3D(Surface3D):
         :type point3d: `volmdlr.`Point3D`
         """
         x, y, z = self.frame.new_coordinates(point3d)
+        # Do not delte this, mathematical problem when x and y close to zero but not 0
+        if abs(x) < 1e-12:
+            x = 0
+        if abs(y) < 1e-12:
+            y = 0
 
         theta = math.atan2(y, x)
         if abs(theta) < 1e-9:
@@ -1762,10 +1767,14 @@ class ToroidalSurface3D(Surface3D):
 
     def point3d_to_2d(self, point3d):
         x, y, z = self.frame.new_coordinates(point3d)
-        if z < -self.r:
-            z = -self.r
-        elif z > self.r:
-            z = self.r
+        z = min(self.r, max(-self.r, z))
+
+        # Do not delte this, mathematical problem when x and y close to zero (should be zero) but not 0
+        # Genarally this is related to uncertaintity of step files.
+        if abs(x) < 1e-12:
+            x = 0
+        if abs(y) < 1e-12:
+            y = 0
 
         zr = z / self.r
         phi = math.asin(zr)
@@ -2115,6 +2124,12 @@ class ConicalSurface3D(Surface3D):
         :type point3d: :class:`volmdlr.`Point3D`
         """
         x, y, z = self.frame.new_coordinates(point3d)
+        # Do not delte this, mathematical problem when x and y close to zero (should be zero) but not 0
+        # Genarally this is related to uncertaintity of step files.
+        if abs(x) < 1e-12:
+            x = 0
+        if abs(y) < 1e-12:
+            y = 0
         theta = math.atan2(y, x)
         if abs(theta) < 1e-9:
             theta = 0.0
@@ -2141,7 +2156,23 @@ class ConicalSurface3D(Surface3D):
         else:
             raise ValueError('Impossible!')
 
+    def linesegment3d_to_2d(self, linesegment3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        start = self.point3d_to_2d(linesegment3d.start)
+        end = self.point3d_to_2d(linesegment3d.end)
+        if start.x != end.x and start == volmdlr.Point2D(0, 0):
+            start = volmdlr.Point2D(end.x, 0)
+        elif start.x != end.x:
+            end = volmdlr.Point2D(start.x, end.y)
+        return [vme.LineSegment2D(start, end)]
+
     def arc3d_to_2d(self, arc3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
 
@@ -2306,9 +2337,13 @@ class ConicalSurface3D(Surface3D):
                     primitives2d[i] = primitives2d[i].reverse()
                 elif delta.norm() and math.isclose(abs(previous_primitive.end.y), 0, abs_tol=1e-6):
                     primitives2d.insert(i, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start))
+                    i += 1
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
+        if primitives2d[0].start != primitives2d[-1].end \
+                and primitives2d[0].start.y == 0.0 and primitives2d[-1].end.y == 0.0:
+            primitives2d.append(vme.LineSegment2D(primitives2d[-1].end, primitives2d[0].start))
 
         return primitives2d
 
@@ -2373,15 +2408,13 @@ class SphericalSurface3D(Surface3D):
 
     def point3d_to_2d(self, point3d):
         x, y, z = self.frame.new_coordinates(point3d)
-        if z < -self.radius:
-            z = -self.radius
-        elif z > self.radius:
-            z = self.radius
+        z = min(self.r, max(-self.r, z))
 
         if z == -0.0:
             z = 0.0
 
-        # Do not delte this, mathematical problem when x and y close to zero but not 0
+        # Do not delte this, mathematical problem when x and y close to zero (should be zero) but not 0
+        # Genarally this is related to uncertaintity of step files.
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
@@ -2433,12 +2466,12 @@ class SphericalSurface3D(Surface3D):
         # Fix sphere singularity point
         if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-5) and theta1 == 0.0\
                 and math.isclose(theta3, thetai, abs_tol=1e-6) and \
-            math.isclose(theta4, thetai, abs_tol=1e-6):
+        math.isclose(theta4, thetai, abs_tol=1e-6):
             theta1 = thetai
             start = volmdlr.Point2D(theta1, phi1)
         if math.isclose(abs(phi2), 0.5 * math.pi, abs_tol=1e-5) and theta2 == 0.0\
                 and math.isclose(theta3, thetai, abs_tol=1e-6) and \
-            math.isclose(theta4, thetai, abs_tol=1e-6):
+        math.isclose(theta4, thetai, abs_tol=1e-6):
             theta2 = thetai
             end = volmdlr.Point2D(theta2, phi2)
 

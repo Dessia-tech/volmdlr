@@ -8,7 +8,8 @@ import volmdlr.step
 
 for step_file in [
     # 'tore1.step',
-    'cone1.step',
+    # 'cone1.step',
+    'demi_cone.step',
     # 'cone2.step',
     # 'cylinder.step',
     # 'block.step',
