@@ -794,21 +794,10 @@ class Surface3D(DessiaObject):
                 raise NotImplementedError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
 
-        if isinstance(self, ConicalSurface3D):
-            contour2d = volmdlr.wires.Contour2D(primitives2d)
-            ax = contour2d.plot()
-            ax.set_aspect('auto')
-            primitives2d[0].plot(ax, 'r')
-
         # Fix contour
         if self.x_periodicity or self.y_periodicity:
             primitives2d = self.repair_primitives_periodicity(primitives2d)
 
-        if isinstance(self, ConicalSurface3D):
-            contour2d = volmdlr.wires.Contour2D(primitives2d)
-            ax = contour2d.plot()
-            ax.set_aspect('auto')
-            primitives2d[0].plot(ax, 'r')
         return volmdlr.wires.Contour2D(primitives2d)
 
     def contour2d_to_3d(self, contour2d):
@@ -2411,6 +2400,7 @@ class SphericalSurface3D(Surface3D):
         theta3, phi3 = point_after_start
         theta4, _ = point_before_end
         thetai = interior.x
+
         # Fix sphere singularity point
         if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-5) and theta1 == 0.0\
                 and math.isclose(theta3, thetai, abs_tol=1e-6) and \
@@ -2455,34 +2445,6 @@ class SphericalSurface3D(Surface3D):
                 theta1 = -theta1
             elif theta2 == math.pi and theta1 != math.pi:
                 theta2 = -theta2
-
-            return [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, -half_pi)),
-                          vme.LineSegment2D(volmdlr.Point2D(theta1, -half_pi), volmdlr.Point2D(theta2, -half_pi)),
-                          vme.LineSegment2D(volmdlr.Point2D(theta2, -half_pi), volmdlr.Point2D(theta2, phi2))
-                          ]
-
-        if positive_singularity and negative_singularity:
-            is_trigo = phi1 < phi3
-            primitives1 = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, -half_pi)),
-                           vme.LineSegment2D(volmdlr.Point2D(theta1, -half_pi), volmdlr.Point2D(thetai, -half_pi)),
-                           vme.LineSegment2D(volmdlr.Point2D(thetai, -half_pi), volmdlr.Point2D(thetai, half_pi)),
-                           vme.LineSegment2D(volmdlr.Point2D(thetai, half_pi), volmdlr.Point2D(theta2, half_pi)),
-                           vme.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
-                           ]
-            primitives2 = [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
-                           vme.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(thetai, half_pi)),
-                           vme.LineSegment2D(volmdlr.Point2D(thetai, half_pi), volmdlr.Point2D(thetai, -half_pi)),
-                           vme.LineSegment2D(volmdlr.Point2D(thetai, -half_pi), volmdlr.Point2D(theta2, -half_pi)),
-                           vme.LineSegment2D(volmdlr.Point2D(theta2, -half_pi), volmdlr.Point2D(theta2, phi2))
-                           ]
-            if is_trigo and abs(phi1) > half_pi:
-                return primitives1
-            if is_trigo and abs(phi1) < half_pi:
-                return primitives2
-            if not is_trigo and abs(phi1) > half_pi:
-                return primitives2
-            if is_trigo and abs(phi1) < half_pi:
-                return primitives1
 
         # maybe this is incomplete
         number_points = math.ceil(angle3d * 10) + 1  # 10 points per radian
