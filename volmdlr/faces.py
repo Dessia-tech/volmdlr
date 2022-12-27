@@ -731,6 +731,14 @@ class Surface3D(DessiaObject):
         return class_(self, surface2d=surface2d, name=name)
 
     def repair_primitives_periodicity(self, primitives2d):
+        """
+        Repairs the continuity of the 2D contour while using contour3d_to_2d on periodic surfaces.
+
+        :param primitives2d: The primitives in parametric surface domain.
+        :type primitives2d: list
+        :return: A list of primitives.
+        :rtype: list
+        """
         # Search for a primitive that can be used as reference for reparing periodicity
         x_periodicity = self.x_periodicity
         y_periodicity = self.y_periodicity
@@ -779,6 +787,14 @@ class Surface3D(DessiaObject):
         return primitives2d
 
     def contour3d_to_2d(self, contour3d):
+        """
+        Transforms a Contour3D into a Contour2D in the parametric domain of the surface.
+
+        :param contour3d: The contour to be transformed.
+        :type contour3d: :class:`volmdlr.wires.Contour3D`
+        :return: A 2D contour object.
+        :rtype: :class:`volmdlr.wires.Contour2D`
+        """
         primitives2d = []
 
         # Transform the contour's primitives to parametric domain
@@ -1275,8 +1291,7 @@ class CylindricalSurface3D(Surface3D):
 
     def point3d_to_2d(self, point3d):
         """
-        Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a cartesian coordinates point at a
-        CylindricalSurface3D.
+        Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a cartesian coordinates point (x, y, z).
 
         :param point3d: Point at the CylindricalSuface3D
         :type point3d: `volmdlr.`Point3D`
@@ -2093,6 +2108,12 @@ class ConicalSurface3D(Surface3D):
         return self.frame.old_coordinates(new_point)
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
+        """
+        Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a cartesian coordinates point (x, y, z).
+
+        :param point3d: Point at the CylindricalSuface3D
+        :type point3d: :class:`volmdlr.`Point3D`
+        """
         x, y, z = self.frame.new_coordinates(point3d)
         theta = math.atan2(y, x)
         if abs(theta) < 1e-9:
@@ -2256,6 +2277,14 @@ class ConicalSurface3D(Surface3D):
         self.frame.rotation_inplace(center, axis, angle)
 
     def repair_primitives_periodicity(self, primitives2d):
+        """
+        Repairs the continuity of the 2D contour while using contour3d_to_2d on periodic surfaces.
+
+        :param primitives2d: The primitives in parametric surface domain.
+        :type primitives2d: list
+        :return: A list of primitives.
+        :rtype: list
+        """
         # Search for a primitive that can be used as reference for reparing periodicity
         pos = 0
         for i, primitive in enumerate(primitives2d):
@@ -2541,6 +2570,14 @@ class SphericalSurface3D(Surface3D):
         return face.triangulation()
 
     def repair_primitives_periodicity(self, primitives2d):
+        """
+        Repairs the continuity of the 2D contour while using contour3d_to_2d on periodic surfaces.
+
+        :param primitives2d: The primitives in parametric surface domain.
+        :type primitives2d: list
+        :return: A list of primitives.
+        :rtype: list
+        """
         # Search for a primitive that can be used as reference for reparing periodicity
         pos = 0
         x_periodicity = self.x_periodicity
