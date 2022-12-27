@@ -146,7 +146,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return point_inside_outer_contour
 
-    def triangulation(self, min_x_density=None, min_y_density=None):
+    def triangulation(self):
         """
         Triangulates the Surface2D using the Triangle library.
 
