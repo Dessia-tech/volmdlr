@@ -331,19 +331,17 @@ class Surface2D(volmdlr.core.Primitive2D):
         inner_intersections_1 = inner_1.line_intersections(line)
         inner_intersections_2 = inner_2.line_intersections(line)
 
-        Arc1, Arc2 = inner_1.split(inner_intersections_1[1],
+        arc1, arc2 = inner_1.split(inner_intersections_1[1],
                                    inner_intersections_1[0])
-        Arc3, Arc4 = inner_2.split(inner_intersections_2[1],
+        arc3, arc4 = inner_2.split(inner_intersections_2[1],
                                    inner_intersections_2[0])
-        new_inner_1 = volmdlr.wires.Contour2D([Arc1, Arc2])
-        new_inner_2 = volmdlr.wires.Contour2D([Arc3, Arc4])
+        new_inner_1 = volmdlr.wires.Contour2D([arc1, arc2])
+        new_inner_2 = volmdlr.wires.Contour2D([arc3, arc4])
 
-        intersections = []
-        intersections.append((inner_intersections_1[0], Arc1))
-        intersections.append((inner_intersections_1[1], Arc2))
+        intersections = [(inner_intersections_1[0], arc1), (inner_intersections_1[1], arc2)]
         intersections += self.outer_contour.line_intersections(line)
-        intersections.append((inner_intersections_2[0], Arc3))
-        intersections.append((inner_intersections_2[1], Arc4))
+        intersections.append((inner_intersections_2[0], arc3))
+        intersections.append((inner_intersections_2[1], arc4))
         intersections += self.outer_contour.line_intersections(line)
 
         if not intersections:
