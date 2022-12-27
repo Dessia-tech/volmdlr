@@ -3,7 +3,7 @@ import unittest
 
 import volmdlr
 from volmdlr import faces, edges, wires
-from volmdlr import Point3D, OXYZ, Point2D, X3D, Y3D, Z3D
+from volmdlr import Point3D, OXYZ, Point2D, Z3D
 
 
 class TestCylindricalSurface3D(unittest.TestCase):
@@ -131,7 +131,6 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertEqual(fullarc2d.end, Point2D(0, 0.003))
         self.assertEqual(linesegment2d.start, Point2D(2*math.pi, 0.013))
         self.assertEqual(linesegment2d.end, Point2D(2*math.pi, 0.003))
-
 
 
 if __name__ == '__main__':

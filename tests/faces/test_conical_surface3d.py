@@ -15,11 +15,11 @@ class TestConicalSurface3D(unittest.TestCase):
 
     def test_arc3d_to_2d(self):
         arc1 = vme.Arc3D(volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 1 / math.sqrt(3)),
-                           volmdlr.Point3D(-1, 0, 1 / math.sqrt(3)),
-                           volmdlr.Point3D(-1 / math.sqrt(2), -1 / math.sqrt(2), 1 / math.sqrt(3)))
+                         volmdlr.Point3D(-1, 0, 1 / math.sqrt(3)),
+                         volmdlr.Point3D(-1 / math.sqrt(2), -1 / math.sqrt(2), 1 / math.sqrt(3)))
         arc2 = vme.Arc3D(volmdlr.Point3D(0, -1, 1 / math.sqrt(3)),
-                           volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 1 / math.sqrt(3)),
-                           volmdlr.Point3D(1, 0, 1 / math.sqrt(3)))
+                         volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 1 / math.sqrt(3)),
+                         volmdlr.Point3D(1, 0, 1 / math.sqrt(3)))
         test1 = self.conical_surface.arc3d_to_2d(arc3d=arc1)[0]
         test2 = self.conical_surface.arc3d_to_2d(arc3d=arc2)[0]
 
@@ -65,6 +65,7 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertEqual(fullarc2d.length(), 2 * math.pi)
         self.assertEqual(linesegment2d_cone.start, Point2D(2 * math.pi, 0.1))
         self.assertEqual(linesegment2d_cone.end, Point2D(2 * math.pi, 0.0))
+
 
 if __name__ == '__main__':
     unittest.main()
