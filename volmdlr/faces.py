@@ -164,12 +164,13 @@ class Surface2D(volmdlr.core.Primitive2D):
             return vmd.DisplayMesh2D([], triangles=[])
 
         if not self.inner_contours and not number_points_x and not number_points_y:
-            return self.outer_contour.to_polygon(angle_resolution=10).triangulation()
+            outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
+            return outer_polygon.triangulation()
 
         if not number_points_x and not number_points_y:
-            outer_polygon = self.outer_contour.to_polygon(angle_resolution=20)
+            outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
         else:
-            outer_polygon = self.outer_contour.to_polygon(angle_resolution=20, discretize_line=True)
+            outer_polygon = self.outer_contour.to_polygon(angle_resolution=10, discretize_line=True)
         points = [vmd.Node2D(*p) for p in outer_polygon.points]
         vertices = [(p.x, p.y) for p in points]
         n = len(points)
@@ -193,7 +194,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=25)
+            inner_polygon = inner_contour.to_polygon(angle_resolution=10)
+            inner_polygon_nodes = [vmd.Node2D.from_point(p) for p in inner_polygon.points]
             xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
             x_grid_range = npy.where((x >= xmin) & (x <= xmax))[0]
             y_grid_range = npy.where((y >= ymin) & (y <= ymax))[0]
@@ -206,18 +208,16 @@ class Surface2D(volmdlr.core.Primitive2D):
                         # if point in points_grid
                         points_grid.remove(point)
                         grid_point_index.pop((i, j))
-            for point in inner_polygon.points:
+            for point in inner_polygon_nodes:
                 if point not in point_index:
-                    points.append(vmd.Node2D(*point))
+                    points.append(point)
                     vertices.append((point.x, point.y))
                     point_index[point] = n
                     n += 1
-            for point1, point2 in zip(inner_polygon.points[:-1],
-                                      inner_polygon.points[1:]):
-                segments.append((point_index[point1],
-                                 point_index[point2]))
-            segments.append((point_index[inner_polygon.points[-1]],
-                             point_index[inner_polygon.points[0]]))
+            for point1, point2 in zip(inner_polygon_nodes[:-1],
+                                      inner_polygon_nodes[1:]):
+                segments.append((point_index[point1], point_index[point2]))
+            segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
             rpi = inner_contour.random_point_inside()
             holes.append((rpi.x, rpi.y))
 
@@ -4908,7 +4908,8 @@ class Face3D(volmdlr.core.Primitive3D):
     def triangulation(self):
         number_points_x, number_points_y = self.grid_size()
         mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
-
+        # if isinstance(self, PlaneFace3D):
+        #     mesh2d.plot()
         return vmd.DisplayMesh3D(
             [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
              mesh2d.points],
