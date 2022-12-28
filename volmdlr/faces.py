@@ -4721,6 +4721,7 @@ class BezierSurface3D(BSplineSurface3D):
     :param name: (Optional) name for the Bezier surface.
     :type name: str
     """
+
     def __init__(self, degree_u: int, degree_v: int,
                  control_points: List[List[volmdlr.Point3D]],
                  nb_u: int, nb_v: int, name=''):
