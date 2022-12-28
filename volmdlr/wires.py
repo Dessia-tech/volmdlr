@@ -3073,11 +3073,16 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                   range(np)]
         return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
 
-    def grid_triangulation_points(self,
-                                  number_points_x: int = 25,
-                                  number_points_y: int = 25):
+    def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
         """
-        Use a n by m grid to triangulize the contour
+        Use a n by m grid to triangulize the contour.
+
+        :param number_points_x: Number of discretization points in x direction.
+        :type number_points_x: int
+        :param number_points_y: Number of discretization points in y direction.
+        :type number_points_y: int
+        :return: Discretization data.
+        :rtype: list
         """
         xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
 

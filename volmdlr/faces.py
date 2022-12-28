@@ -4882,6 +4882,9 @@ class Face3D(volmdlr.core.Primitive3D):
         return [], []
 
     def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
         return [0, 0]
 
     def triangulation(self):
@@ -6422,7 +6425,7 @@ class CylindricalFace3D(Face3D):
 
     def grid_size(self):
         """
-        Returns an adapted grid discretization size to each face.
+        Specifies an adapted size of the discretization grid used in face triangulation.
         """
         angle_resolution = 5
         theta_min, theta_max, _, _ = self.surface2d.bounding_rectangle().bounds()
@@ -6850,7 +6853,7 @@ class ToroidalFace3D(Face3D):
 
     def grid_size(self):
         """
-        Returns an adapted grid discretization size to each face.
+        Specifies an adapted size of the discretization grid used in face triangulation.
         """
         angle_resolution = 5
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
@@ -6967,7 +6970,7 @@ class ConicalFace3D(Face3D):
 
     def grid_size(self):
         """
-        Returns an adapted grid discretization size to each face.
+        Specifies an adapted size of the discretization grid used in face triangulation.
         """
         angle_resolution = 5
         theta_min, theta_max, _, _ = self.surface2d.bounding_rectangle().bounds()
@@ -7077,6 +7080,9 @@ class SphericalFace3D(Face3D):
         return lines_x, lines_y
 
     def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
         angle_resolution = 9
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
@@ -7139,6 +7145,9 @@ class RuledFace3D(Face3D):
         return lines, []
 
     def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
         angle_resolution = 10
         xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
@@ -7192,6 +7201,9 @@ class BSplineFace3D(Face3D):
         return lines_x, lines_y
 
     def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
         if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
             resolution = 50
         else:
