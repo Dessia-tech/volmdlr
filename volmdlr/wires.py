@@ -1805,8 +1805,7 @@ class Contour2D(ContourMixin, Wire2D):
 
             point1 = sorted_points[cutting_points_counter]
             point2 = sorted_points[cutting_points_counter + 1]
-            closing_line = volmdlr.edges.LineSegment2D(point1, point2)
-            closing_contour = Contour2D([closing_line])
+            closing_contour = Contour2D([volmdlr.edges.LineSegment2D(point1, point2)])
             contour1, contour2 = contour_to_cut.get_divided_contours(point1,
                                                                      point2,
                                                                      closing_contour,
