@@ -3111,11 +3111,6 @@ class BSplineSurface3D(Surface3D):
                 flag = False
                 break
 
-        x_perio = self.x_periodicity if self.x_periodicity is not None \
-            else 1.
-        y_perio = self.y_periodicity if self.y_periodicity is not None \
-            else 1.
-
         if self.x_periodicity and not self.y_periodicity \
                 and bspline_curve3d.periodic:
             p1 = self.point3d_to_2d(bspline_curve3d.points[0])
