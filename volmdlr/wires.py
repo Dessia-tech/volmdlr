@@ -1866,7 +1866,7 @@ class Contour2D(ContourMixin, Wire2D):
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
 
-    def to_polygon(self, angle_resolution):
+    def to_polygon(self, angle_resolution, discretize_line: bool = False):
         """
         Transform the contour to a polygon.
 
@@ -1877,7 +1877,13 @@ class Contour2D(ContourMixin, Wire2D):
         # print([(line.start, line.end) for line in self.primitives])
 
         for primitive in self.primitives:
-            polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
+            if isinstance(primitive, volmdlr.edges.LineSegment2D):
+                if not discretize_line:
+                    polygon_points.append(primitive.start)
+                else:
+                    polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
+            else:
+                polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
         return ClosedPolygon2D(polygon_points)
 
     def grid_triangulation(self, x_density: float = None,
@@ -3069,8 +3075,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         t = triangulate(tri, tri_opt)
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
-        points = [vmd.Node2D(*t['vertices'][i, :]) for i in
-                  range(np)]
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
         return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):

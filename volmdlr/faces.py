@@ -146,7 +146,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return point_inside_outer_contour
 
-    def triangulation(self, number_points_x: int = 25, number_points_y: int = 25):
+    def triangulation(self, number_points_x: int = 0, number_points_y: int = 0):
         """
         Triangulates the Surface2D using the Triangle library.
 
@@ -166,8 +166,10 @@ class Surface2D(volmdlr.core.Primitive2D):
         if not self.inner_contours and not number_points_x and not number_points_y:
             return self.outer_contour.to_polygon(angle_resolution=10).triangulation()
 
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=20)
-
+        if not number_points_x and not number_points_y:
+            outer_polygon = self.outer_contour.to_polygon(angle_resolution=20)
+        else:
+            outer_polygon = self.outer_contour.to_polygon(angle_resolution=20, discretize_line=True)
         points = [vmd.Node2D(*p) for p in outer_polygon.points]
         vertices = [(p.x, p.y) for p in points]
         n = len(points)
