@@ -5,8 +5,6 @@ import volmdlr.step
 
 for step_file in [
     'tore1.step',
-    'sphere1.step',
-    'sphere3.step',
     'cone1.step',
     'cone2.step',
     'cylinder.step',
