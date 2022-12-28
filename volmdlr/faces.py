@@ -4705,7 +4705,22 @@ class BSplineSurface3D(Surface3D):
 
 
 class BezierSurface3D(BSplineSurface3D):
+    """
+    A 3D Bezier surface.
 
+    :param degree_u: The degree of the Bezier surface in the u-direction.
+    :type degree_u: int
+    :param degree_v: The degree of the Bezier surface in the v-direction.
+    :type degree_v: int
+    :param control_points: A list of lists of control points defining the Bezier surface.
+    :type control_points: List[List[`volmdlr.Point3D`]]
+    :param nb_u: The number of control points in the u-direction.
+    :type nb_u: int
+    :param nb_v: The number of control points in the v-direction.
+    :type nb_v: int
+    :param name: (Optional) name for the Bezier surface.
+    :type name: str
+    """
     def __init__(self, degree_u: int, degree_v: int,
                  control_points: List[List[volmdlr.Point3D]],
                  nb_u: int, nb_v: int, name=''):
