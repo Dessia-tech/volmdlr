@@ -1485,8 +1485,8 @@ class LineSegment2D(LineSegment):
     """
 
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
-        # if start == end:
-        #     raise NotImplementedError
+        if start == end:
+            raise NotImplementedError
         self.points = [start, end]
         LineSegment.__init__(self, start, end, name=name)
 
@@ -3349,8 +3349,8 @@ class LineSegment3D(LineSegment):
 
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
                  name: str = ''):
-        # if start == end:
-        #     raise NotImplementedError
+        if start == end:
+            raise NotImplementedError
         self.points = [start, end]
         LineSegment.__init__(self, start=start, end=end, name=name)
         self._bbox = None
