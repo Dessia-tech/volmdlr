@@ -2667,9 +2667,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             return d_min, other_point_min
         return d_min
 
-    def to_polygon(self, angle_resolution=None):
-        return self
-
     def self_intersects(self):
         epsilon = 0
         # BENTLEY-OTTMANN ALGORITHM
@@ -3076,6 +3073,35 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in
                   range(np)]
         return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+
+    def grid_triangulation_points(self,
+                                  number_points_x: int = 25,
+                                  number_points_y: int = 25):
+        """
+        Use a n by m grid to triangulize the contour
+        """
+        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
+
+        n = number_points_x + 2
+        m = number_points_y + 2
+
+        x = npy.linspace(xmin, xmax, num=n)
+        y = npy.linspace(ymin, ymax, num=m)
+
+        grid_point_index = {}
+
+        polygon_points = self.points
+        points = []
+        for i, xi in enumerate(x):
+            for j, yi in enumerate(y):
+                point = vmd.Node2D(xi, yi)
+                if point in polygon_points:
+                    continue
+                if self.point_belongs(point):
+                    grid_point_index[(i, j)] = point
+                    points.append(point)
+
+        return points, x, y, grid_point_index
 
     def ear_clipping_triangulation(self):
         """

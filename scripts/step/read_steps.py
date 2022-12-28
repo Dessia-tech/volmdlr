@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import io
-import os
-# import volmdlr as vm
 import volmdlr.step
-# import volmdlr.cloud as vmcd
 
 for step_file in [
     'tore1.step',
+    'sphere1.step',
+    'sphere3.step',
     'cone1.step',
     'cone2.step',
     'cylinder.step',
     'block.step',
     'strange_gasket.step',
-    # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
+    '2_bspline_faces.stp',
   ]:
     print('Reading step file: ', step_file)
     # filepath = os.path.join('step', step_file)

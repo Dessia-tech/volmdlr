@@ -104,8 +104,10 @@ class Edge(dc.DessiaObject):
             a controlled angular distance. Usefull to mesh an arc
         :return: a list of sampled points
         """
-        if number_points is None:
+        if number_points is None or number_points == 1:
             number_points = 2
+        if angle_resolution:
+            number_points = int(3.1415 * angle_resolution)
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
@@ -1480,8 +1482,8 @@ class LineSegment2D(LineSegment):
     """
 
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
-        if start == end:
-            raise NotImplementedError
+        # if start == end:
+        #     raise NotImplementedError
         self.points = [start, end]
         LineSegment.__init__(self, start, end, name=name)
 
@@ -3344,8 +3346,8 @@ class LineSegment3D(LineSegment):
 
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
                  name: str = ''):
-        if start == end:
-            raise NotImplementedError
+        # if start == end:
+        #     raise NotImplementedError
         self.points = [start, end]
         LineSegment.__init__(self, start=start, end=end, name=name)
         self._bbox = None
