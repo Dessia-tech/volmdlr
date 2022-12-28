@@ -9,7 +9,7 @@ from itertools import combinations
 import math
 import matplotlib.pyplot as plt
 import numpy as npy
-from dessia_common import DessiaObject
+from dessia_common.core import DessiaObject
 # import volmdlr.core_compiled
 import volmdlr as vm
 import volmdlr.wires as vmw
