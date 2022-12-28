@@ -2404,7 +2404,7 @@ class SphericalSurface3D(Surface3D):
 
     def point3d_to_2d(self, point3d):
         x, y, z = self.frame.new_coordinates(point3d)
-        z = min(self.r, max(-self.r, z))
+        z = min(self.radius, max(-self.radius, z))
 
         if z == -0.0:
             z = 0.0
