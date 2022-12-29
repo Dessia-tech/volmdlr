@@ -10,7 +10,8 @@ for step_file in [
     # 'cylinder.step',
     # 'block.step',
     # 'strange_gasket.step',
-    '2_bspline_faces.stp',
+    # '2_bspline_faces.stp',
+   'spanners.step'
   ]:
     print('Reading step file: ', step_file)
     # filepath = os.path.join('step', step_file)
