@@ -1360,7 +1360,7 @@ class BSplineCurve2D(BSplineCurve):
             point.rotation_inplace(center, angle)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.discretization_points(number_points=201)
+        polygon_points = self.discretization_points(number_points=100)
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
