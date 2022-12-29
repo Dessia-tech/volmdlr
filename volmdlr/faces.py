@@ -49,23 +49,6 @@ def knots_vector_inv(knots_vector):
     return knots, multiplicities
 
 
-# def remove_grid_points(inner_contour, inner_polygon, x, y, points_grid, grid_point_index):
-#     # removes with a region search the grid points that are in the inner contour
-#     xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
-#     x_grid_range = npy.where((x >= xmin) & (x <= xmax))[0]
-#     y_grid_range = npy.where((y >= ymin) & (y <= ymax))[0]
-#     for i in x_grid_range:
-#         for j in y_grid_range:
-#             point = grid_point_index.get((i, j))
-#             if not point:
-#                 continue
-#             if inner_polygon.point_belongs(point):
-#                 # if point in points_grid
-#                 points_grid.remove(point)
-#                 grid_point_index.pop((i, j))
-#     return points_grid
-
-
 class Surface2D(volmdlr.core.Primitive2D):
     """
     A surface bounded by an outer contour.
