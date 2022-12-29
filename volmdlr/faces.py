@@ -157,6 +157,22 @@ class Surface2D(volmdlr.core.Primitive2D):
         :return: The triangulated surface as a display mesh.
         :rtype: :class:`volmdlr.display.DisplayMesh2D`
         """
+        def remove_grid_points(inner_contour, inner_polygon, x, y, points_grid, grid_point_index):
+            # removes with a region search the grid points that are in the inner contour
+            xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
+            x_grid_range = npy.where((x >= xmin) & (x <= xmax))[0]
+            y_grid_range = npy.where((y >= ymin) & (y <= ymax))[0]
+            for i in x_grid_range:
+                for j in y_grid_range:
+                    point = grid_point_index.get((i, j))
+                    if not point:
+                        continue
+                    if inner_polygon.point_belongs(point):
+                        # if point in points_grid
+                        points_grid.remove(point)
+                        grid_point_index.pop((i, j))
+            return points_grid
+
         area = self.bounding_rectangle().area()
         # tri_opt = f'pa{0.05 * area}'
         tri_opt = "p"
@@ -196,18 +212,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         for inner_contour in self.inner_contours:
             inner_polygon = inner_contour.to_polygon(angle_resolution=10)
             inner_polygon_nodes = [vmd.Node2D.from_point(p) for p in inner_polygon.points]
-            xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
-            x_grid_range = npy.where((x >= xmin) & (x <= xmax))[0]
-            y_grid_range = npy.where((y >= ymin) & (y <= ymax))[0]
-            for i in x_grid_range:
-                for j in y_grid_range:
-                    point = grid_point_index.get((i, j))
-                    if not point:
-                        continue
-                    if inner_polygon.point_belongs(point):
-                        # if point in points_grid
-                        points_grid.remove(point)
-                        grid_point_index.pop((i, j))
             for point in inner_polygon_nodes:
                 if point not in point_index:
                     points.append(point)
@@ -221,6 +225,8 @@ class Surface2D(volmdlr.core.Primitive2D):
             rpi = inner_contour.random_point_inside()
             holes.append((rpi.x, rpi.y))
 
+            points_grid = remove_grid_points(inner_contour, inner_polygon, x, y, points_grid, grid_point_index)
+
         vertices_grid = [(p.x, p.y) for p in points_grid if p not in points]
         vertices.extend(vertices_grid)
 
@@ -232,8 +238,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         t = triangle.triangulate(tri, tri_opt)
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
-        points = [vmd.Node2D(*t['vertices'][i, :]) for i in
-                  range(np)]
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
 
         return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
 
@@ -1459,8 +1464,7 @@ class CylindricalSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
-        points = [self.point3d_to_2d(p)
-                  for p in bspline_curve3d.discretization_points(number_points=11)]
+        points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=11)]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -3170,7 +3174,7 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth)) for i in range(11)]
+                points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=10)]
                 linesegments = [vme.BSplineCurve2D.from_points_interpolation(
                     points, min(self.degree_u, self.degree_v))]
 
