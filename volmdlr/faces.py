@@ -4420,6 +4420,22 @@ class BSplineSurface3D(Surface3D):
 
 
 class BezierSurface3D(BSplineSurface3D):
+    """
+    A 3D Bezier surface.
+
+    :param degree_u: The degree of the Bezier surface in the u-direction.
+    :type degree_u: int
+    :param degree_v: The degree of the Bezier surface in the v-direction.
+    :type degree_v: int
+    :param control_points: A list of lists of control points defining the Bezier surface.
+    :type control_points: List[List[`volmdlr.Point3D`]]
+    :param nb_u: The number of control points in the u-direction.
+    :type nb_u: int
+    :param nb_v: The number of control points in the v-direction.
+    :type nb_v: int
+    :param name: (Optional) name for the Bezier surface.
+    :type name: str
+    """
 
     def __init__(self, degree_u: int, degree_v: int,
                  control_points: List[List[volmdlr.Point3D]],
@@ -4437,6 +4453,10 @@ class BezierSurface3D(BSplineSurface3D):
 
 
 class Face3D(volmdlr.core.Primitive3D):
+    """
+    Abstract method to define 3D faces.
+    """
+
     min_x_density = 1
     min_y_density = 1
 
@@ -4827,8 +4847,12 @@ class PlaneFace3D(Face3D):
 
     def face_inside(self, face2):
         """
-        verifies if a face is inside another face.
-        It returns True if face2 is inside or False if the opposite
+        Verifies if a face is inside another face.
+
+        :param face2: Face to evaluation.
+        :type face2: `PlaneFace3D`
+        :return: returns True if face2 is inside or False otherwise.
+        :rtype: bool
         """
 
         if self.surface3d.is_coincident(face2.surface3d):

@@ -30,6 +30,9 @@ import volmdlr.geometry
 
 
 def standardize_knot_vector(knot_vector):
+    """
+    Standardize a knot vector to range from 0 to 1.
+    """
     u0 = knot_vector[0]
     u1 = knot_vector[-1]
     standard_u_knots = []
