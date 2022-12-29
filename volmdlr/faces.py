@@ -1438,6 +1438,7 @@ class CylindricalSurface3D(Surface3D):
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
 
         theta3, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
+        theta4, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
         # make sure that the reference angle is not undefined
         if abs(theta3) == math.pi:
             theta3, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.002 * length))
@@ -1446,7 +1447,6 @@ class CylindricalSurface3D(Surface3D):
         if abs(theta1) == math.pi:
             theta1 = vm_parametric.repair_start_end_angle_periodicity(theta1, theta3)
         if abs(theta2) == math.pi:
-            theta4, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
             # make sure that the reference angle is not undefined
             if abs(theta4) == math.pi:
                 theta4, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.97 * length))
@@ -1460,10 +1460,7 @@ class CylindricalSurface3D(Surface3D):
         elif theta3 > theta1 > theta2:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
 
-        new_points = [p1 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
-        new_points.append(points[-1])
-
-        return [vme.BSplineCurve2D.from_points_interpolation(new_points, degree=bspline_curve3d.degree,
+        return [vme.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree,
                                                              periodic=bspline_curve3d.periodic)]
 
     @classmethod
