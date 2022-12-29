@@ -163,7 +163,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return point_inside_outer_contour
 
-    def triangulation(self, number_points_x: int = 0, number_points_y: int = 0):
+    def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
         Triangulates the Surface2D using the Triangle library.
 
@@ -4913,8 +4913,8 @@ class Face3D(volmdlr.core.Primitive3D):
     def triangulation(self):
         number_points_x, number_points_y = self.grid_size()
         mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
-        # if isinstance(self, PlaneFace3D):
-        #     mesh2d.plot()
+        if isinstance(self, BSplineFace3D):
+            mesh2d.plot()
         return vmd.DisplayMesh3D(
             [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
              mesh2d.points],

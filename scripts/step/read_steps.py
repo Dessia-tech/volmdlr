@@ -11,7 +11,8 @@ for step_file in [
     # 'block.step',
     # 'strange_gasket.step',
     # '2_bspline_faces.stp',
-   'spanners.step'
+   # 'spanners.step'
+   'read_test1.step'
   ]:
     print('Reading step file: ', step_file)
     # filepath = os.path.join('step', step_file)
