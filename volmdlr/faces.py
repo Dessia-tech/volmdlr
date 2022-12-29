@@ -4745,6 +4745,10 @@ class BezierSurface3D(BSplineSurface3D):
 
 
 class Face3D(volmdlr.core.Primitive3D):
+    """
+    Abstract method to define 3D faces.
+    """
+
     min_x_density = 1
     min_y_density = 1
 
@@ -5128,8 +5132,12 @@ class PlaneFace3D(Face3D):
 
     def face_inside(self, face2):
         """
-        verifies if a face is inside another face.
-        It returns True if face2 is inside or False if the opposite
+        Verifies if a face is inside another face.
+
+        :param face2: Face to evaluation.
+        :type face2: `PlaneFace3D`
+        :return: returns True if face2 is inside or False otherwise.
+        :rtype: bool
         """
 
         if self.surface3d.is_coincident(face2.surface3d):
