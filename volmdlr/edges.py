@@ -30,6 +30,9 @@ import volmdlr.geometry
 
 
 def standardize_knot_vector(knot_vector):
+    """
+    Standardize a knot vector to range from 0 to 1.
+    """
     u0 = knot_vector[0]
     u1 = knot_vector[-1]
     standard_u_knots = []
@@ -4911,7 +4914,7 @@ class Arc3D(Arc):
         :param point3d: point to calculate the abscissa.
         :return: corresponding abscissa.
         """
-        x, y, _ = self.frame.new_coordinates(point3d)
+        x, y, _ = self.frame.global_to_local_coordinates(point3d)
         u1 = x / self.radius
         u2 = y / self.radius
         theta = volmdlr.geometry.sin_cos_angle(u1, u2)

@@ -3059,6 +3059,9 @@ class BSplineSurface3D(Surface3D):
                                   self.point3d_to_2d(linesegment3d.end))]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         # TODO: enhance this, it is a non exact method!
         # TODO: bsplinecurve can be periodic but not around the bsplinesurface
         bsc_linesegment = vme.LineSegment3D(bspline_curve3d.points[0],
@@ -4681,6 +4684,22 @@ class BSplineSurface3D(Surface3D):
 
 
 class BezierSurface3D(BSplineSurface3D):
+    """
+    A 3D Bezier surface.
+
+    :param degree_u: The degree of the Bezier surface in the u-direction.
+    :type degree_u: int
+    :param degree_v: The degree of the Bezier surface in the v-direction.
+    :type degree_v: int
+    :param control_points: A list of lists of control points defining the Bezier surface.
+    :type control_points: List[List[`volmdlr.Point3D`]]
+    :param nb_u: The number of control points in the u-direction.
+    :type nb_u: int
+    :param nb_v: The number of control points in the v-direction.
+    :type nb_v: int
+    :param name: (Optional) name for the Bezier surface.
+    :type name: str
+    """
 
     def __init__(self, degree_u: int, degree_v: int,
                  control_points: List[List[volmdlr.Point3D]],
@@ -4698,6 +4717,10 @@ class BezierSurface3D(BSplineSurface3D):
 
 
 class Face3D(volmdlr.core.Primitive3D):
+    """
+    Abstract method to define 3D faces.
+    """
+
     min_x_density = 1
     min_y_density = 1
 
@@ -7352,7 +7375,7 @@ class BSplineFace3D(Face3D):
 
     def adjacent_direction(self, other_bspline_face3d):
         """
-        find directions (u or v) between two faces, in the nearest edges between them
+        Find directions (u or v) between two faces, in the nearest edges between them.
         """
 
         start1, end1, start2, end2 = self.extremities(other_bspline_face3d)
