@@ -49,21 +49,21 @@ def knots_vector_inv(knots_vector):
     return knots, multiplicities
 
 
-def remove_grid_points(inner_contour, inner_polygon, x, y, points_grid, grid_point_index):
-    # removes with a region search the grid points that are in the inner contour
-    xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
-    x_grid_range = npy.where((x >= xmin) & (x <= xmax))[0]
-    y_grid_range = npy.where((y >= ymin) & (y <= ymax))[0]
-    for i in x_grid_range:
-        for j in y_grid_range:
-            point = grid_point_index.get((i, j))
-            if not point:
-                continue
-            if inner_polygon.point_belongs(point):
-                # if point in points_grid
-                points_grid.remove(point)
-                grid_point_index.pop((i, j))
-    return points_grid
+# def remove_grid_points(inner_contour, inner_polygon, x, y, points_grid, grid_point_index):
+#     # removes with a region search the grid points that are in the inner contour
+#     xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
+#     x_grid_range = npy.where((x >= xmin) & (x <= xmax))[0]
+#     y_grid_range = npy.where((y >= ymin) & (y <= ymax))[0]
+#     for i in x_grid_range:
+#         for j in y_grid_range:
+#             point = grid_point_index.get((i, j))
+#             if not point:
+#                 continue
+#             if inner_polygon.point_belongs(point):
+#                 # if point in points_grid
+#                 points_grid.remove(point)
+#                 grid_point_index.pop((i, j))
+#     return points_grid
 
 
 class Surface2D(volmdlr.core.Primitive2D):
@@ -186,19 +186,22 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         if not number_points_x and not number_points_y:
             outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
+            points_grid = None
         else:
             outer_polygon = self.outer_contour.to_polygon(angle_resolution=10, discretize_line=True)
+            points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(
+                number_points_x=number_points_x,
+                number_points_y=number_points_y)
         points = [vmd.Node2D(*p) for p in outer_polygon.points]
         vertices = [(p.x, p.y) for p in points]
         n = len(points)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
-        points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
-                                                                                      number_points_y=number_points_y)
 
         if not self.inner_contours:  # No holes
-            vertices_grid = [(p.x, p.y) for p in points_grid if p not in points]
-            vertices.extend(vertices_grid)
+            if points_grid:
+                vertices_grid = [(p.x, p.y) for p in points_grid]
+                vertices.extend(vertices_grid)
             tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                    'segments': npy.array(segments).reshape((-1, 2)),
                    }
@@ -226,10 +229,24 @@ class Surface2D(volmdlr.core.Primitive2D):
             rpi = inner_contour.random_point_inside()
             holes.append((rpi.x, rpi.y))
 
-            points_grid = remove_grid_points(inner_contour, inner_polygon, x, y, points_grid, grid_point_index)
+            if points_grid:
+                # removes with a region search the grid points that are in the inner contour
+                xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
+                x_grid_range = npy.where((x >= xmin) & (x <= xmax))[0]
+                y_grid_range = npy.where((y >= ymin) & (y <= ymax))[0]
+                for i in x_grid_range:
+                    for j in y_grid_range:
+                        point = grid_point_index.get((i, j))
+                        if not point:
+                            continue
+                        if inner_polygon.point_belongs(point):
+                            # if point in points_grid
+                            points_grid.remove(point)
+                            grid_point_index.pop((i, j))
 
-        vertices_grid = [(p.x, p.y) for p in points_grid]
-        vertices.extend(vertices_grid)
+        if points_grid:
+            vertices_grid = [(p.x, p.y) for p in points_grid]
+            vertices.extend(vertices_grid)
 
         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                'segments': npy.array(segments).reshape((-1, 2)),
@@ -4913,8 +4930,6 @@ class Face3D(volmdlr.core.Primitive3D):
     def triangulation(self):
         number_points_x, number_points_y = self.grid_size()
         mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
-        if isinstance(self, BSplineFace3D):
-            mesh2d.plot()
         return vmd.DisplayMesh3D(
             [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
              mesh2d.points],
