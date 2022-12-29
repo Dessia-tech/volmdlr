@@ -163,18 +163,15 @@ class Surface2D(volmdlr.core.Primitive2D):
         if area == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
 
-        if not self.inner_contours and not number_points_x and not number_points_y:
-            outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
+        triangulates_with_grid = number_points_x > 0 and number_points_y > 0
+
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=10, discretize_line=triangulates_with_grid)
+
+        if not self.inner_contours and not triangulates_with_grid:
             return outer_polygon.triangulation()
 
-        if not number_points_x and not number_points_y:
-            outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
-            points_grid = None
-        else:
-            outer_polygon = self.outer_contour.to_polygon(angle_resolution=10, discretize_line=True)
-            points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(
-                number_points_x=number_points_x,
-                number_points_y=number_points_y)
+        points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
+                                                                                      number_points_y=number_points_y)
         points = [vmd.Node2D(*p) for p in outer_polygon.points]
         vertices = [(p.x, p.y) for p in points]
         n = len(points)
@@ -182,9 +179,9 @@ class Surface2D(volmdlr.core.Primitive2D):
         segments.append((n - 1, 0))
 
         if not self.inner_contours:  # No holes
-            if points_grid:
-                vertices_grid = [(p.x, p.y) for p in points_grid]
-                vertices.extend(vertices_grid)
+
+            vertices_grid = [(p.x, p.y) for p in points_grid]
+            vertices.extend(vertices_grid)
             tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                    'segments': npy.array(segments).reshape((-1, 2)),
                    }
@@ -212,7 +209,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             rpi = inner_contour.random_point_inside()
             holes.append((rpi.x, rpi.y))
 
-            if points_grid:
+            if triangulates_with_grid:
                 # removes with a region search the grid points that are in the inner contour
                 xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
                 x_grid_range = npy.where((x >= xmin) & (x <= xmax))[0]
@@ -227,7 +224,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                             points_grid.remove(point)
                             grid_point_index.pop((i, j))
 
-        if points_grid:
+        if triangulates_with_grid:
             vertices_grid = [(p.x, p.y) for p in points_grid]
             vertices.extend(vertices_grid)
 
