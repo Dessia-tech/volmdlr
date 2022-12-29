@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D: bounding_rectangle (specify number_points for discretization_points)
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
 * Mesh: delete_duplicated_nodes
+* BSplineSurface3D: fix arc3d_to_2d method
 
 
 ### Removed

@@ -779,6 +779,14 @@ class Surface3D(DessiaObject):
         return primitives, delta_x1, delta_x2, delta_y1, delta_y2
 
     def contour3d_to_2d(self, contour3d):
+        """
+        Transforms a Contour3D into a Contour2D in the parametric domain of the surface.
+
+        :param contour3d: The contour to be transformed.
+        :type contour3d: :class:`volmdlr.wires.Contour3D`
+        :return: A 2D contour object.
+        :rtype: :class:`volmdlr.wires.Contour2D`
+        """
         primitives2d = []
         last_primitive = None
 
@@ -2106,6 +2114,12 @@ class ConicalSurface3D(Surface3D):
     #     return volmdlr.Point2D(theta, z+0.003)
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
+        """
+        Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a cartesian coordinates point (x, y, z).
+
+        :param point3d: Point at the CylindricalSuface3D.
+        :type point3d: :class:`volmdlr.`Point3D`
+        """
         x, y, z = self.frame.new_coordinates(point3d)
         # x, y = point3d.plane_projection2d(self.frame.origin, self.frame.u,
         #                                   self.frame.v)
@@ -4497,6 +4511,22 @@ class BSplineSurface3D(Surface3D):
 
 
 class BezierSurface3D(BSplineSurface3D):
+    """
+    A 3D Bezier surface.
+
+    :param degree_u: The degree of the Bezier surface in the u-direction.
+    :type degree_u: int
+    :param degree_v: The degree of the Bezier surface in the v-direction.
+    :type degree_v: int
+    :param control_points: A list of lists of control points defining the Bezier surface.
+    :type control_points: List[List[`volmdlr.Point3D`]]
+    :param nb_u: The number of control points in the u-direction.
+    :type nb_u: int
+    :param nb_v: The number of control points in the v-direction.
+    :type nb_v: int
+    :param name: (Optional) name for the Bezier surface.
+    :type name: str
+    """
 
     def __init__(self, degree_u: int, degree_v: int,
                  control_points: List[List[volmdlr.Point3D]],
@@ -4514,6 +4544,10 @@ class BezierSurface3D(BSplineSurface3D):
 
 
 class Face3D(volmdlr.core.Primitive3D):
+    """
+    Abstract method to define 3D faces.
+    """
+
     min_x_density = 1
     min_y_density = 1
 
@@ -7107,7 +7141,7 @@ class BSplineFace3D(Face3D):
 
     def extremities(self, other_bspline_face3d):
         """
-        find points extremities for nearest edges of two faces
+        Find points extremities for nearest edges of two faces.
         """
         contour1 = self.outer_contour3d
         contour2 = other_bspline_face3d.outer_contour3d
