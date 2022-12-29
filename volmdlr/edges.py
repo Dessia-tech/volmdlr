@@ -30,6 +30,9 @@ import volmdlr.geometry
 
 
 def standardize_knot_vector(knot_vector):
+    """
+    Standardize a knot vector to range from 0 to 1.
+    """
     u0 = knot_vector[0]
     u1 = knot_vector[-1]
     standard_u_knots = []
@@ -805,6 +808,30 @@ class BSplineCurve(Edge):
         bsplinecurve.periodic = True
         return bsplinecurve
 
+    def discretization_points(self, *, number_points: int = 20, angle_resolution: int = None):
+        """
+        Linear spaced discretization of the curve.
+
+        :param number_points: The number of points to include in the discretization.
+        :type number_points: int
+        :param angle_resolution: The resolution of the angle to use when calculating the number of points.
+        :type angle_resolution: int
+        :return: A list of discretized points on the B-spline curve.
+        :rtype: List[`volmdlr.Point2D] or List[`volmdlr.Point3D]
+        """
+
+        if angle_resolution:
+            number_points = int(3.1415 * angle_resolution)
+        if len(self.points) == number_points:
+            return self.points
+        curve = self.curve
+        curve.delta = 1 / number_points
+        curve_points = curve.evalpts
+        self.curve = curve
+
+        point_dimension = f'Point{self.__class__.__name__[-2::]}'
+        return [getattr(volmdlr, point_dimension)(*p) for p in curve_points]
+
 
 class Line2D(Line):
     """
@@ -1302,14 +1329,6 @@ class BSplineCurve2D(BSplineCurve):
                         tuple(self.knots))
         return content, point_id + 1
 
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
-        length = self.length()
-        if angle_resolution:
-            number_points = angle_resolution
-        if not number_points:
-            number_points = len(self.points)
-        return [self.point_at_abscissa(i * length / number_points) for i in range(number_points + 1)]
-
     def polygon_points(self, n: int = 15):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
@@ -1341,7 +1360,7 @@ class BSplineCurve2D(BSplineCurve):
             point.rotation_inplace(center, angle)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.discretization_points(number_points=201)
+        polygon_points = self.discretization_points(number_points=100)
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
