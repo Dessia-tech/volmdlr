@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PlaneFace3D: project_faces
 * OpenShell3D: project_coincident_faces_of
 * GmshParser: to_vtk
+* BSplineCurve: derivatives
 * Create .geo and .msh files (Mesh geometries with GMSH)
 
 
@@ -30,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Performance improvements
 * ClosedPolygon2D: triangulation
 * Cylinder: min_distance_to_other_cylinder
+* BSplineCurve: discretization_points
 
 
 ### Refactorings

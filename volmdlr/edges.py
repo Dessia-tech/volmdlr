@@ -30,6 +30,9 @@ import volmdlr.geometry
 
 
 def standardize_knot_vector(knot_vector):
+    """
+    Standardize a knot vector to range from 0 to 1.
+    """
     u0 = knot_vector[0]
     u1 = knot_vector[-1]
     standard_u_knots = []
@@ -823,7 +826,60 @@ class BSplineCurve(Edge):
         bsplinecurve.periodic = True
         return bsplinecurve
 
-    def get_geo_lines(self, tag: int, control_points_tags: List[int]):
+    def discretization_points(self, *, number_points: int = 20, angle_resolution: int = None):
+        """
+        Linear spaced discretization of the curve.
+
+        :param number_points: The number of points to include in the discretization.
+        :type number_points: int
+        :param angle_resolution: The resolution of the angle to use when calculating the number of points.
+        :type angle_resolution: int
+        :return: A list of discretized points on the B-spline curve.
+        :rtype: List[`volmdlr.Point2D] or List[`volmdlr.Point3D]
+        """
+
+        if angle_resolution:
+            number_points = int(3.1415 * angle_resolution)
+        if len(self.points) == number_points:
+            return self.points
+        curve = self.curve
+        curve.delta = 1 / number_points
+        curve_points = curve.evalpts
+        self.curve = curve
+
+        point_dimension = f'Point{self.__class__.__name__[-2::]}'
+        return [getattr(volmdlr, point_dimension)(*p) for p in curve_points]
+
+    def derivatives(self, u, order):
+        """
+        Evaluates n-th order curve derivatives at the given parameter value.
+
+        The output of this method is list of n-th order derivatives. If ``order`` is ``0``, then it will only output
+        the evaluated point. Similarly, if ``order`` is ``2``, then it will output the evaluated point, 1st derivative
+        and the 2nd derivative.
+
+        :Example:
+
+        Assuming a curve self is defined on a parametric domain [0.0, 1.0].
+        Let's take the curve derivative at the parametric position u = 0.35.
+
+        >>> ders = self.derivatives(u=0.35, order=2)
+        >>> ders[0]  # evaluated point, equal to crv.evaluate_single(0.35)
+        >>> ders[1]  # 1st derivative at u = 0.35
+        >>> ders[2]  # 2nd derivative at u = 0.35
+
+        :param u: parameter value
+        :type u: float
+        :param order: derivative order
+        :type order: int
+        :return: a list containing up to {order}-th derivative of the curve
+        :rtype: Union[List[`volmdlr.Vector2D`], List[`volmdlr.Vector3D`]]
+        """
+
+        return [getattr(volmdlr, f'Vector{self.__class__.__name__[-2::]}')(*p)
+                for p in self.curve.derivatives(u, order)]
+
+def get_geo_lines(self, tag: int, control_points_tags: List[int]):
         """
         Gets the lines that define a BsplineCurve in a .geo file.
 
@@ -1340,14 +1396,6 @@ class BSplineCurve2D(BSplineCurve):
                         tuple(self.knots))
         return content, point_id + 1
 
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
-        length = self.length()
-        if angle_resolution:
-            number_points = angle_resolution
-        if not number_points:
-            number_points = len(self.points)
-        return [self.point_at_abscissa(i * length / number_points) for i in range(number_points + 1)]
-
     def polygon_points(self, n: int = 15):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
@@ -1379,7 +1427,7 @@ class BSplineCurve2D(BSplineCurve):
             point.rotation_inplace(center, angle)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.discretization_points(number_points=201)
+        polygon_points = self.discretization_points(number_points=100)
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
@@ -4473,9 +4521,8 @@ class BSplineCurve3D(BSplineCurve):
 
     def curvature(self, u: float, point_in_curve: bool = False):
         # u should be in the interval [0,1]
-        curve = self.curve
-        ders = curve.derivatives(u, 3)  # 3 first derivative
-        c1, c2 = volmdlr.Point3D(*ders[1]), volmdlr.Point3D(*ders[2])
+        ders = self.derivatives(u, 3)  # 3 first derivative
+        c1, c2 = ders[1], ders[2]
         denom = c1.cross(c2)
         if c1 == volmdlr.O3D or c2 == volmdlr.O3D or denom.norm() == 0.0:
             if point_in_curve:

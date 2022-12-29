@@ -24,6 +24,12 @@ import volmdlr.wires
 
 def set_to_list(step_set):
     """
+    Convert a string representation of a set to a list of strings.
+
+    :param step_set: String representation of a set, e.g. "{A,B,C}"
+    :type step_set: str
+    :return: List of strings, e.g. ["A", "B", "C"]
+    :rtype: List[str]
     """
     char_list = step_set.split(',')
     char_list[0] = char_list[0][1:]
@@ -130,12 +136,22 @@ def seam_curve(arguments, object_dict):
     :type object_dict: TYPE
     :return: DESCRIPTION
     :rtype: TYPE
-
     """
     return object_dict[arguments[1]]
 
 
 def trimmed_curve(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+    """
+
     curve = object_dict[arguments[1]]
     point1 = object_dict[int(arguments[2][0][1:])]
     point2 = object_dict[int(arguments[3][0][1:])]
