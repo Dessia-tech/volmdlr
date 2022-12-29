@@ -833,20 +833,22 @@ class BSplineCurve(Edge):
         return [getattr(volmdlr, point_dimension)(*p) for p in curve_points]
 
     def derivatives(self, u, order):
-        """ Evaluates n-th order curve derivatives at the given parameter value.
+        """
+        Evaluates n-th order curve derivatives at the given parameter value.
 
         The output of this method is list of n-th order derivatives. If ``order`` is ``0``, then it will only output
         the evaluated point. Similarly, if ``order`` is ``2``, then it will output the evaluated point, 1st derivative
-        and the 2nd derivative. For instance;
+        and the 2nd derivative.
 
-        Example:
+        :Example:
 
-        Assuming a curve (crv) is defined on a parametric domain [0.0, 1.0]
-        Let's take the curve derivative at the parametric position u = 0.35
-        ders = crv.derivatives(u=0.35, order=2).
-        ders[0]  # evaluated point, equal to crv.evaluate_single(0.35)
-        ders[1]  # 1st derivative at u = 0.35
-        ders[2]  @ 2nd derivative at u = 0.35
+        Assuming a curve self is defined on a parametric domain [0.0, 1.0].
+        Let's take the curve derivative at the parametric position u = 0.35.
+
+        >>> ders = self.derivatives(u=0.35, order=2)
+        >>> ders[0]  # evaluated point, equal to crv.evaluate_single(0.35)
+        >>> ders[1]  # 1st derivative at u = 0.35
+        >>> ders[2]  # 2nd derivative at u = 0.35
 
         :param u: parameter value
         :type u: float
