@@ -1877,11 +1877,8 @@ class Contour2D(ContourMixin, Wire2D):
         # print([(line.start, line.end) for line in self.primitives])
 
         for primitive in self.primitives:
-            if isinstance(primitive, volmdlr.edges.LineSegment2D):
-                if not discretize_line:
-                    polygon_points.append(primitive.start)
-                else:
-                    polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
+            if isinstance(primitive, volmdlr.edges.LineSegment2D) and not discretize_line:
+                polygon_points.append(primitive.start)
             else:
                 polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
         return ClosedPolygon2D(polygon_points)
@@ -3985,7 +3982,7 @@ class Circle2D(Contour2D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         if not number_points and angle_resolution:
-            number_points = math.ceil(volmdlr.TWO_PI * angle_resolution) + 2
+            number_points = math.ceil(3.1415 * angle_resolution) + 2
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 

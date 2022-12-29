@@ -4125,10 +4125,11 @@ class BSplineCurve3D(BSplineCurve):
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
-        lines = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
-        dir_vector = lines[0].unit_direction_vector()
-        if all(line.unit_direction_vector() == dir_vector for line in lines):
-            return LineSegment3D(points[0], points[-1])
+        lines = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:]) if pt1 != pt2]
+        if lines:  # quick fix. Real problem: Tolerance too low (1e-6 m = 0.001mm)
+            dir_vector = lines[0].unit_direction_vector()
+            if all(line.unit_direction_vector() == dir_vector for line in lines):
+                return LineSegment3D(points[0], points[-1])
         # curve_form = arguments[3]
         if arguments[4] == '.F.':
             closed_curve = False
@@ -5291,6 +5292,17 @@ class FullArc3D(Arc3D):
 
     def copy(self, *args, **kwargs):
         return FullArc3D(self._center.copy(), self.end.copy(), self._normal.copy())
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        dict_ = self.base_dict()
+        dict_['center'] = self.center.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/center')
+        dict_['radius'] = self.radius
+        dict_['angle'] = self.angle
+        dict_['is_trigo'] = self.is_trigo
+        dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
+        dict_['normal'] = self.normal.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/normal')
+        dict_['name'] = self.name
+        return dict_
 
     def to_2d(self, plane_origin, x, y):
         """
