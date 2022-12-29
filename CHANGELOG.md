@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PlaneFace3D: project_faces
 * OpenShell3D: project_coincident_faces_of
 * GmshParser: to_vtk
+* BSplineCurve: derivatives
 
 
 ### Fixed
