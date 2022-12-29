@@ -2760,11 +2760,14 @@ class BSplineSurface3D(Surface3D):
             linesegment2d.point_at_abscissa(i * lth / 10.)) for i in range(11)]
 
         linesegment = vme.LineSegment3D(points[0], points[-1])
+        arc = vme.Arc3D(points[0], points[5], points[-1])
         flag = True
+        flag_arc = True
         for pt in points:
-            if not linesegment.point_belongs(pt):
+            if not linesegment.point_belongs(pt, abs_tol=1e-4):
                 flag = False
-                break
+            if not arc.point_belongs(pt, abs_tol=1e-4):
+                flag_arc = False
 
         periodic = False
         if self.x_periodicity is not None and \
@@ -2778,9 +2781,11 @@ class BSplineSurface3D(Surface3D):
                              abs_tol=1e-6):
             periodic = True
 
-        if flag:
+        if flag and not flag_arc:
             # All the points are on the same LineSegment3D
             linesegments = [linesegment]
+        elif flag_arc:
+            linesegments = [arc]
         else:
             linesegments = [vme.BSplineCurve3D.from_points_interpolation(
                 points, max(self.degree_u, self.degree_v), periodic=periodic)]
