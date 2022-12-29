@@ -4439,9 +4439,8 @@ class BSplineCurve3D(BSplineCurve):
 
     def curvature(self, u: float, point_in_curve: bool = False):
         # u should be in the interval [0,1]
-        curve = self.curve
-        ders = curve.derivatives(u, 3)  # 3 first derivative
-        c1, c2 = volmdlr.Point3D(*ders[1]), volmdlr.Point3D(*ders[2])
+        ders = self.derivatives(u, 3)  # 3 first derivative
+        c1, c2 = ders[1], ders[2]
         denom = c1.cross(c2)
         if c1 == volmdlr.O3D or c2 == volmdlr.O3D or denom.norm() == 0.0:
             if point_in_curve:
