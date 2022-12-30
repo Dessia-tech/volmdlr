@@ -599,6 +599,7 @@ class GmshParser(DessiaObject):
         mesh = volmdlr.mesh.Mesh(element_groups)
         # mesh.nodes = points #gmsh points are duplicated > not needed
         # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+        mesh.gmsh = self
 
         return mesh
 
@@ -629,11 +630,21 @@ class GmshParser(DessiaObject):
         mesh = volmdlr.mesh.Mesh(element_groups)
         # mesh.nodes = points #gmsh points are duplicated > not needed
         # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+        mesh.gmsh = self
 
         return mesh
 
     @staticmethod
     def check_2d(list_nodes):
+        """
+        Check if the nodes are defined on 2D or not.
+
+        :param list_nodes: A list of points (nodes)
+        :type list_nodes: List[volmdlr.mesh.Node2D]
+        :return: True or False
+        :rtype: bool
+        """
+
         for node in list_nodes:
             if node[2] != 0:
                 return False
@@ -641,6 +652,15 @@ class GmshParser(DessiaObject):
 
     @staticmethod
     def to_2d(list_nodes):
+        """
+        Convert a list of Node3D to a list of Node2D.
+
+        :param list_nodes: A list of points3d (nodes)
+        :type list_nodes: List[volmdlr.mesh.Node2D]
+        :return: A list of points2d (nodes)
+        :rtype: List[volmdlr.mesh.Node2D]
+        """
+
         return [volmdlr.mesh.Node2D(node[0], node[1]) for
                 node in list_nodes]
 

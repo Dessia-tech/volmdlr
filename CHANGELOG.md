@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PlaneFace3D: project_faces
 * OpenShell3D: project_coincident_faces_of
 * GmshParser: to_vtk
+* BSplineCurve: derivatives
 
 
 ### Fixed
@@ -19,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
 * Contour2D: bounding_rectangle (specify number_points for discretization_points)
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
+* Mesh: delete_duplicated_nodes
+
 
 ### Removed
 
@@ -27,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Performance improvements
 * ClosedPolygon2D: triangulation
 * Cylinder: min_distance_to_other_cylinder
+* BSplineCurve: discretization_points
 
 
 ### Refactorings
