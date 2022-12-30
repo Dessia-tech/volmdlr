@@ -163,7 +163,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         if area == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
 
-        triangulates_with_grid = number_points_x > 0 and number_points_y > 0
+        triangulates_with_grid = number_points_x > 0 or number_points_y > 0
 
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=10, discretize_line=triangulates_with_grid)
 
@@ -854,7 +854,8 @@ class Surface3D(DessiaObject):
                 try:
                     primitives3d.extend(getattr(self, method_name)(primitive2d))
                 except NotImplementedError:
-                    print('Error NotImplementedError')
+                    print(f'Class {self.__class__.__name__} does not implement {method_name}'
+                          f'with {primitive2d.__class__.__name__}')
             else:
                 raise NotImplementedError(
                     'Class {} does not implement {}'.format(

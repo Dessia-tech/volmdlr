@@ -1870,11 +1870,15 @@ class Contour2D(ContourMixin, Wire2D):
         """
         Transform the contour to a polygon.
 
-        :param angle_resolution: arcs are discretized with respect of an angle resolution in points per radians
+        :param angle_resolution: Number of points per radians.
+        :type angle_resolution: float
+        :param discretize_line: Boolean indicating whether the line segments should be discretized or not.
+        :type discretize_line: bool
+        :return: The discretized version of the contour.
+        :rtype: ClosedPolygon2D
         """
 
         polygon_points = []
-        # print([(line.start, line.end) for line in self.primitives])
 
         for primitive in self.primitives:
             if isinstance(primitive, volmdlr.edges.LineSegment2D) and not discretize_line:
@@ -3708,10 +3712,6 @@ class Circle2D(Contour2D):
 
         return [volmdlr.edges.Arc2D(points[0], points[1], points[2]),
                 volmdlr.edges.Arc2D(points[2], points[3], points[0])]
-
-    def to_polygon(self, angle_resolution: float):
-        return ClosedPolygon2D(
-            self.discretization_points(angle_resolution=angle_resolution))
 
     @classmethod
     def from_arc(cls, arc: volmdlr.edges.Arc2D):
