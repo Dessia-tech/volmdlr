@@ -15,7 +15,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         contour2d_dim = bspline_surfaces.bspline_surface_2.contour2d_parametric_to_dimension(contour2d, grid2d)
         self.assertEqual(len(contour2d_dim.primitives), 4)
         self.assertAlmostEqual(contour2d_dim.area(), 18.112581823847673, places=2)
-        self.assertAlmostEqual(contour2d_dim.length(), 16.816547325087043)
+        self.assertAlmostEqual(contour2d_dim.length(), 16.81606170335965, places=2)
 
     def test_periodicity(self):
         bspline_suface = vmf.BSplineSurface3D.load_from_file('faces/surface3d_8.json')
