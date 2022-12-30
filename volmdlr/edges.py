@@ -702,7 +702,7 @@ class BSplineCurve(Edge):
 
         points, n = [], 10
         for primitive in ordered_wire.primitives:
-            points.extend(primitive.polygon_points(n))
+            points.extend(primitive.discretization_points(n))
         points.pop(n + 1)
 
         return self.__class__.from_points_interpolation(
@@ -730,10 +730,10 @@ class BSplineCurve(Edge):
         for i, primitive in enumerate(ordered_wire.primitives):
             degree.append(primitive.degree)
             if i == 0:
-                points.extend(primitive.polygon_points(discretization_points))
+                points.extend(primitive.discretization_points(number_points=discretization_points))
             else:
                 points.extend(
-                    primitive.polygon_points(discretization_points)[1::])
+                    primitive.discretization_points(number_points=discretization_points)[1::])
 
         return cls.from_points_interpolation(points, min(degree))
 
@@ -1467,7 +1467,7 @@ class BSplineCurve2D(BSplineCurve):
 
         """
 
-        points = self.polygon_points(500)
+        points = self.discretization_points(number_points=500)
         return point.nearest_point(points)
 
     def linesegment_intersections(self, linesegment):
@@ -2561,7 +2561,7 @@ class Arc2D(Arc):
 
         """
 
-        return volmdlr.wires.Wire2D.from_points(self.polygon_points(angle_resolution))
+        return volmdlr.wires.Wire2D.from_points(self.discretization_points(angle_resolution=angle_resolution))
 
     def axial_symmetry(self, line):
         """
@@ -4436,11 +4436,11 @@ class BSplineCurve3D(BSplineCurve):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic, self.name)
 
-    def polygon_points(self):
+    def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
-        please use discretization_points instead',
+                please use discretization_points instead',
                       DeprecationWarning)
-        return self.discretization_points()
+        return self.discretization_points(angle_resolution=discretization_resolution)
 
     def curvature(self, u: float, point_in_curve: bool = False):
         # u should be in the interval [0,1]
