@@ -237,7 +237,7 @@ class CompositePrimitive2D(CompositePrimitive):
         self.update_basis_primitives()
 
     def plot(self, ax=None, color='k', alpha=1,
-             plot_points=False, equal_aspect=True):
+             plot_points=False, equal_aspect=False):
 
         if ax is None:
             _, ax = plt.subplots()
