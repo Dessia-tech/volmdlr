@@ -5,6 +5,7 @@ import unittest
 from volmdlr.models import bspline_surfaces
 import volmdlr.grid
 import volmdlr.faces as vmf
+import volmdlr.edges as vme
 
 
 class TestBSplineSurface3D(unittest.TestCase):
@@ -29,6 +30,22 @@ class TestBSplineSurface3D(unittest.TestCase):
 
         # Check if the bounding box volume is correct
         self.assertEqual(volume, 4.0)
+
+    def test_arc3d_to_2d(self):
+        bspline_surface = vmf.BSplineSurface3D.load_from_file('faces/BSplineSurface3D_with_Arc3D.json')
+        arc = vme.Arc3D(volmdlr.Point3D(0.01, 0.018, 0.014),
+                        volmdlr.Point3D(0.00970710678118655, 0.018, 0.014707106781186547),
+                        volmdlr.Point3D(0.009, 0.018, 0.015))
+
+        test = bspline_surface.arc3d_to_2d(arc3d=arc)[0]
+
+        inv_prof = bspline_surface.linesegment2d_to_3d(test)[0]
+
+        # Verifies the inversion operation
+        self.assertIsInstance(inv_prof, vme.Arc3D)
+        self.assertEqual(inv_prof.start, arc.start)
+        self.assertEqual(inv_prof.end, arc.end)
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=0)

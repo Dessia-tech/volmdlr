@@ -3055,11 +3055,14 @@ class BSplineSurface3D(Surface3D):
             linesegment2d.point_at_abscissa(i * lth / 10.)) for i in range(11)]
 
         linesegment = vme.LineSegment3D(points[0], points[-1])
+        arc = vme.Arc3D(points[0], points[5], points[-1])
         flag = True
+        flag_arc = True
         for pt in points:
-            if not linesegment.point_belongs(pt):
+            if not linesegment.point_belongs(pt, abs_tol=1e-4):
                 flag = False
-                break
+            if not arc.point_belongs(pt, abs_tol=1e-4):
+                flag_arc = False
 
         periodic = False
         if self.x_periodicity is not None and \
@@ -3073,9 +3076,11 @@ class BSplineSurface3D(Surface3D):
                              abs_tol=1e-6):
             periodic = True
 
-        if flag:
+        if flag and not flag_arc:
             # All the points are on the same LineSegment3D
             linesegments = [linesegment]
+        elif flag_arc:
+            linesegments = [arc]
         else:
             linesegments = [vme.BSplineCurve3D.from_points_interpolation(
                 points, max(self.degree_u, self.degree_v), periodic=periodic)]
@@ -3092,7 +3097,57 @@ class BSplineSurface3D(Surface3D):
         return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start),
                                   self.point3d_to_2d(linesegment3d.end))]
 
+    def _repair_periodic_boundary_points(self, curve3d, points_2d, direction_periodicity):
+        """
+        Verifies points at boundary on a periodic BSplineSurface3D.
+
+        :param points_2d: List of `volmdlr.Point2D` after transformation from 3D cartesian coordinates
+        :type points_2d: volmdlr.Point2D
+        :param direction_periodicity: should be 'x' if x_periodicity or 'y' if y periodicity
+        :type direction_periodicity: str
+        """
+        lth = curve3d.length()
+        start = self.point3d_to_2d(curve3d.start)
+        end = self.point3d_to_2d(curve3d.end)
+
+        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.01 * lth))
+        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.98 * lth))
+        points = points_2d
+        if direction_periodicity == 'x':
+            i = 0
+        else:
+            i = 1
+        min_bound, max_bound = self.surface.domain[i]
+        if start[i] != end[i]:
+            if math.isclose(start[i], min_bound, abs_tol=1e-4) and pt_after_start[i] > pt_before_end[i]:
+                start[i] = max_bound
+            elif math.isclose(start[i], max_bound, abs_tol=1e-4) and pt_after_start[i] < pt_before_end[i]:
+                start[i] = min_bound
+
+            if math.isclose(end[i], min_bound, abs_tol=1e-4) and pt_before_end[i] > pt_after_start[i]:
+                end[i] = max_bound
+            elif math.isclose(end[i], max_bound, abs_tol=1e-4) and pt_before_end[i] < pt_after_start[i]:
+                end[i] = min_bound
+
+        points[0] = start
+        points[-1] = end
+
+        boundary = [(math.isclose(p[i], max_bound, abs_tol=1e-4) or math.isclose(p[i], min_bound, abs_tol=1e-4)) for
+                    p in points]
+        if all(boundary):
+            # if the line is at the boundary of the surface domain, we take the first point as reference
+            t = max_bound if math.isclose(points[0][i], max_bound, abs_tol=1e-4) else min_bound
+            if direction_periodicity == 'x':
+                points = [volmdlr.Point2D(t, p[1]) for p in points]
+            else:
+                points = [volmdlr.Point2D(p[0], t) for p in points]
+
+        return points
+
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         # TODO: enhance this, it is a non exact method!
         # TODO: bsplinecurve can be periodic but not around the bsplinesurface
         bsc_linesegment = vme.LineSegment3D(bspline_curve3d.points[0],
@@ -3188,12 +3243,34 @@ class BSplineSurface3D(Surface3D):
         return linesegments
 
     def arc3d_to_2d(self, arc3d):
-        number_points = math.ceil(arc3d.angle * 10) + 1  # 10 points per radian
-        length = arc3d.length()
-        points = [self.point3d_to_2d(arc3d.point_at_abscissa(i * length / (number_points - 1)))
-                  for i in range(number_points)]
-        return [vme.BSplineCurve2D.from_points_interpolation(
-            points, max(self.degree_u, self.degree_v))]
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        start = self.point3d_to_2d(arc3d.start)
+        end = self.point3d_to_2d(arc3d.end)
+
+        min_bound_x, max_bound_x = self.surface.domain[0]
+        min_bound_y, max_bound_y = self.surface.domain[1]
+        if self.x_periodicity:
+            points = self._repair_periodic_boundary_points(arc3d, [start, end], 'x')
+            start = points[0]
+            end = points[1]
+            if start == end:
+                if math.isclose(start.x, min_bound_x, abs_tol=1e-4):
+                    end.x = max_bound_x
+                else:
+                    end.x = min_bound_x
+        if self.y_periodicity:
+            points = self._repair_periodic_boundary_points(arc3d, [start, end], 'y')
+            start = points[0]
+            end = points[1]
+            if start == end:
+                if math.isclose(start.y, min_bound_y, abs_tol=1e-4):
+                    end.y = max_bound_y
+                else:
+                    end.y = min_bound_y
+
+        return [vme.LineSegment2D(start, end)]
 
     def arc2d_to_3d(self, arc2d):
         number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
@@ -7423,7 +7500,7 @@ class BSplineFace3D(Face3D):
 
     def extremities(self, other_bspline_face3d):
         """
-        find points extremities for nearest edges of two faces
+        Find points extremities for nearest edges of two faces.
         """
         contour1 = self.outer_contour3d
         contour2 = other_bspline_face3d.outer_contour3d
