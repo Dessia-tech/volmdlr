@@ -4958,7 +4958,7 @@ class Arc3D(Arc):
         :param point3d: point to calculate the abscissa.
         :return: corresponding abscissa.
         """
-        x, y, _ = self.frame.new_coordinates(point3d)
+        x, y, _ = self.frame.global_to_local_coordinates(point3d)
         u1 = x / self.radius
         u2 = y / self.radius
         theta = volmdlr.geometry.sin_cos_angle(u1, u2)

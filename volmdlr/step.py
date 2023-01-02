@@ -173,6 +173,17 @@ def pcurve(arguments, object_dict):
 
 
 def geometric_curve_set(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     sub_objects = []
     for argument in arguments[1]:
         sub_obj = object_dict[int(argument[1:])]
@@ -188,6 +199,17 @@ def shell_base_surface_model(arguments, object_dict):
 
 
 def item_defined_transformation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     # Frame3D
     # volmdlr_object1 = object_dict[arguments[2]]
     volmdlr_object2 = object_dict[arguments[3]]
@@ -225,6 +247,17 @@ def brep_with_voids(arguments, object_dict):
 
 
 def shape_representation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     # does it have the extra argument comming from
     # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
     # them
@@ -262,6 +295,17 @@ def shape_representation(arguments, object_dict):
 
 
 def advanced_brep_shape_representation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
