@@ -3100,16 +3100,15 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         grid_point_index = {}
 
-        polygon_points = self.points
+        polygon_points = set([vmd.Node2D.from_point(p) for p in self.points])
         points = []
         for i, xi in enumerate(x):
             for j, yi in enumerate(y):
                 point = vmd.Node2D(xi, yi)
-                if point in polygon_points:
-                    continue
                 if self.point_belongs(point):
-                    grid_point_index[(i, j)] = point
-                    points.append(point)
+                    if point not in polygon_points:
+                        grid_point_index[(i, j)] = point
+                        points.append(point)
 
         return points, x, y, grid_point_index
 
