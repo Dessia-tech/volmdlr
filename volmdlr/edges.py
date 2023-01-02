@@ -879,7 +879,7 @@ class BSplineCurve(Edge):
         return [getattr(volmdlr, f'Vector{self.__class__.__name__[-2::]}')(*p)
                 for p in self.curve.derivatives(u, order)]
 
-def get_geo_lines(self, tag: int, control_points_tags: List[int]):
+    def get_geo_lines(self, tag: int, control_points_tags: List[int]):
         """
         Gets the lines that define a BsplineCurve in a .geo file.
 
