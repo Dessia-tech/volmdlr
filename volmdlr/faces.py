@@ -1764,6 +1764,9 @@ class ToroidalSurface3D(Surface3D):
         return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
+        """
+        Tansform a 3D spatial point (x, y, z) into a 2D spherical parametric point (theta, phi).
+        """
         x, y, z = self.frame.new_coordinates(point3d)
         z = min(self.r, max(-self.r, z))
 
@@ -2409,6 +2412,9 @@ class SphericalSurface3D(Surface3D):
         return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
+        """
+        Tansform a 3D spatial point (x, y, z) into a 2D spherical parametric point (theta, phi).
+        """
         x, y, z = self.frame.new_coordinates(point3d)
         z = min(self.radius, max(-self.radius, z))
 
@@ -7059,7 +7065,21 @@ class SphericalFace3D(Face3D):
 
 class RuledFace3D(Face3D):
     """
+    A 3D face with a ruled surface.
 
+    This class represents a 3D face with a ruled surface, which is a surface
+    formed by straight lines connecting two input curves. It is a subclass of
+    the `Face3D` class and inherits all of its attributes and methods.
+
+
+    :param surface3d: The 3D ruled surface of the face.
+    :type surface3d: `RuledSurface3D`
+    :param surface2d: The 2D projection of the face onto the parametric domain (u, v).
+    :type surface2d: `Surface2D`
+    :param name: The name of the face.
+    :type name: str
+    :param color: The color of the face.
+    :type color: tuple
     """
     min_x_density = 50
     min_y_density = 1
@@ -7108,6 +7128,21 @@ class RuledFace3D(Face3D):
 
 
 class BSplineFace3D(Face3D):
+    """
+    A 3D face with a B-spline surface.
+
+    This class represents a 3D face with a B-spline surface, which is a smooth
+    surface defined by a set of control points and knots. It is a subclass of
+    the `Face3D` class and inherits all of its attributes and methods.
+
+    :param surface3d: The 3D B-spline surface of the face.
+    :type surface3d: `BSplineSurface3D`
+    :param surface2d: The 2D projection of the face onto the parametric domain (u, v).
+    :type surface2d: `Surface2D`
+    :param name: The name of the face.
+    :type name: str
+    """
+
     def __init__(self, surface3d: BSplineSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
@@ -7327,7 +7362,7 @@ class BSplineFace3D(Face3D):
 
     def extremities(self, other_bspline_face3d):
         """
-        find points extremities for nearest edges of two faces
+        Find points extremities for nearest edges of two faces.
         """
         contour1 = self.outer_contour3d
         contour2 = other_bspline_face3d.outer_contour3d
@@ -7453,6 +7488,25 @@ class BSplineFace3D(Face3D):
 
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
+    """
+    A 3D open shell composed of multiple faces.
+
+    This class represents a 3D open shell, which is a collection of connected
+    faces with no volume. It is a subclass of the `CompositePrimitive3D` class
+    and inherits all of its attributes and methods.
+
+
+    :param faces: The faces of the shell.
+    :type faces: List[`Face3D`]
+    :param color: The color of the shell.
+    :type color: Tuple[float, float, float]
+    :param alpha: The transparency of the shell, should be a value in the interval (0, 1).
+    :type alpha: float
+    :param name: The name of the shell.
+    :type name: str
+    :param bounding_box: The bounding box of the shell.
+    :type bounding_box: :class:`volmdlr.core.BoundingBox`
+    """
     _standalone_in_db = True
     _non_serializable_attributes = ['primitives']
     _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box', 'primitives']
@@ -7828,7 +7882,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def intersection_internal_aabb_volume(self, shell2: 'OpenShell3D',
                                           resolution: float):
         """
-        aabb made of the intersection points and the points of self internal to shell2
+        Aabb made of the intersection points and the points of self internal to shell2.
         """
         intersections_points = []
         for face1 in self.faces:
@@ -7855,7 +7909,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def intersection_external_aabb_volume(self, shell2: 'OpenShell3D',
                                           resolution: float):
         """
-        aabb made of the intersection points and the points of self external to shell2
+        Aabb made of the intersection points and the points of self external to shell2.
         """
         intersections_points = []
         for face1 in self.faces:
