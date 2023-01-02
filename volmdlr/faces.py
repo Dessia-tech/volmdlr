@@ -1793,6 +1793,9 @@ class ToroidalSurface3D(Surface3D):
         return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
+        """
+        Tansform a 3D spatial point (x, y, z) into a 2D spherical parametric point (theta, phi).
+        """
         x, y, z = self.frame.new_coordinates(point3d)
         z = min(self.r, max(-self.r, z))
 
@@ -2434,6 +2437,9 @@ class SphericalSurface3D(Surface3D):
         return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
+        """
+        Tansform a 3D spatial point (x, y, z) into a 2D spherical parametric point (theta, phi).
+        """
         x, y, z = self.frame.new_coordinates(point3d)
         z = min(self.radius, max(-self.radius, z))
 
