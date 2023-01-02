@@ -9,6 +9,7 @@ steps:
   when:
     event: push
     branch: master
+  failure: ignore
   commands:
   - git fetch origin testing
   - git checkout testing
@@ -20,6 +21,7 @@ steps:
   when:
     event: push
     branch: testing
+  failure: ignore
   commands:
   - git fetch origin dev
   - git checkout dev
