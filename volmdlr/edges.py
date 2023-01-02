@@ -15,7 +15,7 @@ import scipy as scp
 import scipy.optimize
 import scipy.integrate as scipy_integrate
 
-from geomdl import utilities, BSpline, fitting, operations
+from geomdl import utilities, BSpline, fitting, operations, NURBS
 from geomdl.operations import length_curve, split_curve
 from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
@@ -471,15 +471,16 @@ class BSplineCurve(Edge):
         self.periodic = periodic
         self.name = name
 
-        curve = BSpline.Curve()
-        curve.degree = degree
+        points = [[*point] for point in control_points]
         if weights is None:
-            points = [[*point] for point in control_points]
+            curve = BSpline.Curve()
+            curve.degree = degree
             curve.ctrlpts = points
         else:
-            points_w = [[*point * weights[i], weights[i]] for i, point
-                        in enumerate(control_points)]
-            curve.ctrlptsw = points_w
+            curve = NURBS.Curve()
+            curve.degree = degree
+            curve.ctrlpts = points
+            curve.weights = weights
 
         knot_vector = []
         for i, knot in enumerate(knots):
