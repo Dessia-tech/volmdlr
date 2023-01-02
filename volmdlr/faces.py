@@ -2809,9 +2809,9 @@ class BSplineSurface3D(Surface3D):
             # for f in range(1, points_x):
             #     F[i+f] = X[l]*1000
             #     l = l+2
-            ## F[i+3] = X[3]*1000
-            ## F[i+4] = X[5]*1000
-            ## F[i+4] = X[points_x*2]*1000
+            # F[i+3] = X[3]*1000
+            # F[i+4] = X[5]*1000
+            # F[i+4] = X[points_x*2]*1000
 
             return F
 
