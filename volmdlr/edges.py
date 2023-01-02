@@ -1235,22 +1235,9 @@ class BSplineCurve2D(BSplineCurve):
         :rtype: :class:`volmdlr.core.BoundingRectangle`
         """
 
-        points = self.discretization_points(number_points=5)
-
-        points_x = [p.x for p in points]
-        points_y = [p.y for p in points]
-
-        return volmdlr.core.BoundingRectangle(min(points_x), max(points_x),
-                                              min(points_y), max(points_y))
-
-    def length(self):
-        """
-        Computes the length of the 2 dimensional B-spline curve.
-
-        :return: The length of the 2 dimensional B-spline curve
-        :rtype: float
-        """
-        return length_curve(self.curve)
+        bbox = self.curve.bbox
+        return volmdlr.core.BoundingRectangle(bbox[0][0], bbox[1][0],
+                                              bbox[0][1], bbox[1][1])
 
     def tangent(self, position: float = 0.0):
         """
