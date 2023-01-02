@@ -3100,7 +3100,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         grid_point_index = {}
 
-        polygon_points = set([vmd.Node2D.from_point(p) for p in self.points])
+        polygon_points = {vmd.Node2D.from_point(p) for p in self.points}
         points = []
         for i, xi in enumerate(x):
             for j, yi in enumerate(y):

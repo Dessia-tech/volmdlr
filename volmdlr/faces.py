@@ -720,10 +720,10 @@ class Surface3D(DessiaObject):
     face_class = None
 
     def point2d_to_3d(self, point2d):
-        raise NotImplementedError('point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
+        raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
 
     def point3d_to_2d(self, point3d):
-        raise NotImplementedError('point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
+        raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
 
     def face_from_contours3d(self, contours3d: List[volmdlr.wires.Contour3D], name: str = ''):
         """
@@ -736,11 +736,11 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
-            # if isinstance(self, CylindricalSurface3D):
-            #     onlyfiles = next(os.walk(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\cylindrical_contours'))[2]  # directory is your directory path as string
-            #     l = len(onlyfiles)
-            #     contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\cylindrical_contours\contour3d_{l}.json')
-            #     self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\cylindrical_surfaces\surface3d_{l}.json')
+            # if isinstance(self, BSplineSurface3D):
+            #     # onlyfiles = next(os.walk(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours'))[2]  # directory is your directory path as string
+            #     # l = len(onlyfiles)
+            #     # contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours\contour3d_{l}.json')
+            #     # self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surfaces\surface3d_{l}.json')
             #     outer_contour2d.plot()
             inner_contours2d = []
         elif lc3d > 1:
@@ -3318,11 +3318,44 @@ class BSplineSurface3D(Surface3D):
                 linesegments = [vme.LineSegment2D(p1, p2)]
             # How to check if end of surface overlaps start or the opposite ?
         else:
-            lth = bspline_curve3d.length()
+            # lth = bspline_curve3d.length()
+            # uses straight line length to improve performance
+            lth = bspline_curve3d.start.point_distance(bspline_curve3d.end)
             if lth > 1e-5:
                 points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=10)]
-                linesegments = [vme.BSplineCurve2D.from_points_interpolation(
-                    points, min(self.degree_u, self.degree_v))]
+                if points[0] != points[-1]:
+                    linesegment = vme.LineSegment2D(points[0], points[-1])
+                    flag_line = True
+                    for pt in points:
+                        if not linesegment.point_belongs(pt, abs_tol=1e-4):
+                            flag_line = False
+                            break
+                    if flag_line:
+                        return [linesegment]
+                u1, v1 = self.point3d_to_2d(bspline_curve3d.start)
+                u2, v2 = self.point3d_to_2d(bspline_curve3d.end)
+
+                u3, v3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.01 * lth))
+                # control_points = [self.point3d_to_2d(p) for p in bspline_curve3d.control_points]
+                if self.x_periodicity:
+                    points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
+                    if u3 < u1 < u2:
+                        points = [volmdlr.Point2D(p.x - self.x_periodicity, p.y)
+                                          if p.x > u1 else p for p in points]
+                    elif u3 > u1 > u2:
+                        points = [volmdlr.Point2D(p.x + self.x_periodicity, p.y)
+                                          if p.x < u1 else p for p in points]
+                if self.y_periodicity:
+                    points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
+                    if v3 < v1 < v2:
+                        points = [volmdlr.Point2D(p.x, p.y - self.y_periodicity)
+                                          if p.y > v1 else p for p in points]
+                    elif v3 > v1 > v2:
+                        points = [volmdlr.Point2D(p.x, p.y + self.y_periodicity)
+                                          if p.y < v1 else p for p in points]
+
+                return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree,
+                                                                     periodic=bspline_curve3d.periodic)]
 
             elif 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
