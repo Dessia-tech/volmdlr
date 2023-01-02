@@ -810,7 +810,7 @@ class BSplineCurve(Edge):
         bsplinecurve.periodic = True
         return bsplinecurve
 
-    def discretization_points(self, *, number_points: int = 20, angle_resolution: int = None):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
         Linear spaced discretization of the curve.
 
@@ -824,7 +824,7 @@ class BSplineCurve(Edge):
 
         if angle_resolution:
             number_points = int(3.1415 * angle_resolution)
-        if len(self.points) == number_points:
+        if len(self.points) == number_points or (number_points is None and angle_resolution is None):
             return self.points
         curve = self.curve
         curve.delta = 1 / number_points
@@ -1237,22 +1237,13 @@ class BSplineCurve2D(BSplineCurve):
         :rtype: :class:`volmdlr.core.BoundingRectangle`
         """
 
-        points = self.discretization_points(number_points=5)
+        points = self.discretization_points()
 
         points_x = [p.x for p in points]
         points_y = [p.y for p in points]
 
         return volmdlr.core.BoundingRectangle(min(points_x), max(points_x),
                                               min(points_y), max(points_y))
-
-    def length(self):
-        """
-        Computes the length of the 2 dimensional B-spline curve.
-
-        :return: The length of the 2 dimensional B-spline curve
-        :rtype: float
-        """
-        return length_curve(self.curve)
 
     def tangent(self, position: float = 0.0):
         """
@@ -5553,7 +5544,7 @@ class ArcEllipse3D(Edge):
             self.start), frame.new_coordinates(self.end)
         interior_new, center_new = frame.new_coordinates(
             self.interior), frame.new_coordinates(self.center)
-
+        self._bbox = None
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
         def theta_A_B(s, i, e, c):
@@ -5783,3 +5774,30 @@ class ArcEllipse3D(Edge):
 
     def triangulation(self):
         return None
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def get_bounding_box(self):
+        """
+        Calculates the bounding box of the Arc3D.
+
+        :return: a volmdlr.core.BoundingBox object.
+        """
+        # TODO: implement exact calculation
+
+        points = self.discretization_points(angle_resolution=10)
+        xmin = min(point.x for point in points)
+        xmax = max(point.x for point in points)
+        ymin = min(point.y for point in points)
+        ymax = max(point.y for point in points)
+        zmin = min(point.z for point in points)
+        zmax = max(point.z for point in points)
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
