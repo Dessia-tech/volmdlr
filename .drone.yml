@@ -73,6 +73,8 @@ steps:
   - coverage combine scripts/.coverage tests/.coverage
   - coverage json
   - coverage report
+  - ls -la
+  - pwd
   - python coverage_script.py
 
   volumes:
