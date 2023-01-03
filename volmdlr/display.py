@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Classes to define mesh for display use. Display mesh do not require good aspect ratios on elements.
 """
+
 from typing import List, Tuple
 import math
 import dessia_common.core as dc
@@ -56,6 +57,7 @@ class DisplayMesh(dc.DessiaObject):
     A DisplayMesh is a list of points linked by triangles.
     This is an abstract class for 2D & 3D.
     """
+    _linesegment_class = volmdlr.edges.LineSegment
 
     def __init__(self, points, triangles, name=''):
 
@@ -81,7 +83,7 @@ class DisplayMesh(dc.DessiaObject):
     @classmethod
     def merge_meshes(cls, meshes: List['DisplayMesh']):
         """
-        Merge several meshes into one
+        Merge several meshes into one.
         """
         # Collect points
         ip = 0
@@ -134,6 +136,9 @@ class DisplayMesh(dc.DessiaObject):
         # self._point_index = new_point_index
 
     def __add__(self, other_mesh):
+        """
+        Defines how to add two meshes.
+        """
         new_points = self.points[:]
         new_point_index = self.point_index.copy()
         ip = len(new_points)
@@ -173,6 +178,10 @@ class DisplayMesh(dc.DessiaObject):
 
 
 class DisplayMesh2D(DisplayMesh):
+    """
+    A mesh for display purposes in 2D.
+
+    """
     _linesegment_class = volmdlr.edges.LineSegment2D
     _point_class = volmdlr.Point2D
 
@@ -196,6 +205,10 @@ class DisplayMesh2D(DisplayMesh):
 
 
 class DisplayMesh3D(DisplayMesh):
+    """
+    A mesh for display purposes in 3D.
+
+    """
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 
@@ -205,7 +218,9 @@ class DisplayMesh3D(DisplayMesh):
 
     def to_babylon(self):
         """
-        return mesh in babylon format: https://doc.babylonjs.com/how_to/custom
+        Returns mesh in babylon format.
+
+        https://doc.babylonjs.com/how_to/custom
         """
         positions = []
         for p in self.points:

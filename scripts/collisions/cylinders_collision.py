@@ -3,7 +3,7 @@ Test code for intersections between cylinders
 Generate random cylinders and create the casing for them
 """
 
-from time import time
+from time import perf_counter
 from volmdlr.primitives3d import Cylinder
 import volmdlr.core
 import volmdlr as vm
@@ -44,7 +44,7 @@ volume_model = vm.core.VolumeModel(cylinders)
 volume_model.babylonjs()
 
 print("Collision detection methods")
-start = time()
+start = perf_counter()
 
 print(
     f"""\nRed & green:
@@ -78,11 +78,11 @@ collision: {cylinders[1].is_intersecting_other_cylinder(cylinders[3])}"""
 
 print(
     f"""\nPurple & blue:
-min distance computed is {cylinders[3].min_distance_to_other_cylinder(cylinders[2])}m, 
-collision: {cylinders[3].is_intersecting_other_cylinder(cylinders[2])}
-interpenetration: {cylinders[3].interpenetration_with_other_cylinder(cylinders[2])}"""
+min distance computed is {cylinders[3].min_distance_to_other_cylinder(cylinders[2])}m,
+collision: {cylinders[3].is_intersecting_other_cylinder(cylinders[2])}"""
 )
+# interpenetration: {cylinders[3].interference_volume_with_other_cylinder(cylinders[2])}
 
-end = time()
+end = perf_counter()
 print(f"\nTotal collision detection computation time: {end - start}s")
-print(f"Time per collision: {(end - start)/6}s")
+print(f"Time per collision: {((end - start)/12)*1000}ms")
