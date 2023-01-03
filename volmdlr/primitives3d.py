@@ -476,7 +476,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         """
-
+        Serialize the ExtrudedProfile.
         """
         dict_ = dc.DessiaObject.base_dict(self)
         dict_.update({'color': self.color,
