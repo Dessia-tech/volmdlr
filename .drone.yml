@@ -14,6 +14,7 @@ steps:
   - cd /tmp
   - git clone $DRONE_GIT_HTTP_URL
   - cd volmdlr
+  - git checkout master
   - git fetch origin testing
   - git checkout testing
   - git merge master
@@ -29,6 +30,7 @@ steps:
   - cd /tmp
   - git clone $DRONE_GIT_HTTP_URL
   - cd volmdlr
+  - git checkout testing
   - git fetch origin dev
   - git checkout dev
   - git merge testing
