@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
 * Mesh: delete_duplicated_nodes
 * BSplineSurface3D: fix arc3d_to_2d method
-* BSplineCurve2D: normal_vector (use to_wire)
+* BSplineCurve2D: tangent (use position/length)
 
 ### Removed
 
