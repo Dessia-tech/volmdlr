@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches
 
 import plot_data.core as plot_data
-import dessia_common as dc
+import dessia_common.core as dc
 import volmdlr.core_compiled
 import volmdlr.core
 import volmdlr.geometry

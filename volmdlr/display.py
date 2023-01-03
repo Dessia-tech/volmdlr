@@ -5,7 +5,7 @@
 """
 from typing import List, Tuple
 import math
-import dessia_common as dc
+import dessia_common.core as dc
 import volmdlr.edges
 # import volmdlr.faces as vmf
 
