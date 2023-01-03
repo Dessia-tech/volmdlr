@@ -5600,17 +5600,6 @@ class ArcEllipse3D(Edge):
         u2 = (self.interior - self.end)
         u1.normalize()
         u2.normalize()
-        # vec1 = self.start - self.center
-        # normal = self.major_dir.cross(vec1)
-        # if normal == volmdlr.O3D:
-        #     if u1 == u2:
-        #         vec1 = self.extra - self.center
-        #         normal = self.major_dir.cross(vec1)
-        #     else:
-        #         vec1 = self.end - self.center
-        #         normal = self.major_dir.cross(vec1)
-        # normal.normalize()
-        # self.normal = normal
         if u1 == u2:
             u2 = (self.interior - self.interior)
             u2.normalize()
@@ -5643,7 +5632,6 @@ class ArcEllipse3D(Edge):
                              [1],
                              [1]))
             C = npy.dot(invA, One)  # matrice colonne de taille 3
-            # theta = 0.5 * math.atan(2 * C[2] / (C[1] - C[0])) + math.pi / 2
             theta = 0.5 * math.atan(2 * C[2] / (C[1] - C[0]))
             c1 = C[0] + C[1]
             c2 = (C[1] - C[0]) / math.cos(2 * theta)
@@ -5664,23 +5652,14 @@ class ArcEllipse3D(Edge):
         self.theta = theta
 
         # Angle pour start
-        # center2d = volmdlr.Point2D(center_new.x, center_new.y)
-        # start_2d = volmdlr.Point2D(start_new.x, start_new.y)
-        # major_dir2d = self.major_dir.to_2d(self.center, self.major_dir, self.normal.cross(self.major_dir))
-        # angle1 = volmdlr.core.clockwise_angle(start_2d - center2d, major_dir2d)
-
         u1, u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
         angle1 = volmdlr.geometry.sin_cos_angle(u1, u2)
         self.angle_start = angle1
         # Angle pour end
-        # end_2d = volmdlr.Point2D(end_new.x, end_new.y)
-        # angle2 = volmdlr.core.clockwise_angle(end_2d - center2d, major_dir2d)
         u3, u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
         angle2 = volmdlr.geometry.sin_cos_angle(u3, u4)
         self.angle_end = angle2
         # Angle pour interior
-        # interior_2d = volmdlr.Point2D(interior_new.x, interior_new.y)
-        # anglei = volmdlr.core.clockwise_angle(interior_2d - center2d, major_dir2d)
         u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
         anglei = volmdlr.geometry.sin_cos_angle(u5, u6)
         self.angle_interior = anglei

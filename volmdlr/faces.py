@@ -11,7 +11,6 @@ from itertools import product, combinations
 import networkx as nx
 import triangle
 import numpy as npy
-import sympy
 
 import scipy as scp
 import scipy.optimize as opt
@@ -5731,38 +5730,6 @@ class PlaneFace3D(Face3D):
                         surface2d=surface2d,
                         name=name)
 
-    # @classmethod
-    # def _repair_points_and_polygon2d(cls, points, plane):
-    #     if points[0] == points[-1]:
-    #         points = points[:-1]
-    #     polygon_points = [
-    #         p.to_2d(plane.origin, plane.vectors[0], plane.vectors[1]) for p in
-    #         points]
-    #     repaired_points = [p.copy() for p in points]
-    #     polygon2D = volmdlr.ClosedPolygon2D(polygon_points)
-    #     if polygon2D.SelfIntersect()[0]:
-    #         repaired_points = [repaired_points[1]] + [
-    #             repaired_points[0]] + repaired_points[2:]
-    #         polygon_points = [polygon_points[1]] + [
-    #             polygon_points[0]] + polygon_points[2:]
-    #         if polygon_points[0] == polygon_points[-1]:
-    #             repaired_points = repaired_points[:-1]
-    #             polygon_points = polygon_points[:-1]
-    #         polygon2D = volmdlr.ClosedPolygon2D(polygon_points)
-    #     return repaired_points, polygon2D
-
-    # @classmethod
-    # def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
-    #     plane3d = Plane3D.dict_to_object(dict_['surface3d'],
-    #                                      global_dict=global_dict,
-    #                                      pointers_memo=pointers_memo,
-    #                                      path=f'{path}/surface3d')
-    #     surface2d = Surface2D.dict_to_object(dict_['surface2d'],
-    #                                          global_dict=global_dict,
-    #                                          pointers_memo=pointers_memo,
-    #                                          path=f'{path}/surface2d')
-    #     return cls(plane3d, surface2d, dict_['name'])
-
     def copy(self, deep=True, memo=None):
         return PlaneFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                            self.name)
@@ -5782,16 +5749,6 @@ class PlaneFace3D(Face3D):
     def get_bounding_box(self):
         return self.outer_contour3d._bounding_box()
 
-    # def average_center_point(self):
-    #     """
-    #     excluding holes
-    #     """
-    #     points = self.points
-    #     nb = len(points)
-    #     x = npy.sum([p[0] for p in points]) / nb
-    #     y = npy.sum([p[1] for p in points]) / nb
-    #     z = npy.sum([p[2] for p in points]) / nb
-    #     return volmdlr.Point3D((x, y, z))
 
     def distance_to_point(self, point, return_other_point=False):
         # """
@@ -6934,13 +6891,8 @@ class CylindricalFace3D(Face3D):
         """
         Find out in which direction the faces are adjacent.
 
-<<<<<<< HEAD
-        :param other_face3d : volmdlr.faces.CylindricalFace3D
-        :return:adjacent_direction
-=======
         :param other_face3d: The face to evaluation.
         :type other_face3d: volmdlr.faces.CylindricalFace3D
->>>>>>> origin/dev
         """
 
         contour1 = self.outer_contour3d

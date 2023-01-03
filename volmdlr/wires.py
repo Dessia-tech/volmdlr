@@ -331,22 +331,9 @@ class WireMixin:
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
         if isinstance(primitive, Contour2D):
             print(True)
-        for prim in self.primitives:
-            # if not hasattr(prim, 'unit_direction_vector') and \
-            #         hasattr(prim, 'tangent'):
-            #     vector1 = prim.tangent(0.5)
-            # else:
-            #     vector1 = prim.unit_direction_vector(0.5)
-            #
-            # if not hasattr(primitive, 'unit_direction_vector') and \
-            #         hasattr(primitive, 'tangent'):
-            #     vector2 = primitive.tangent(0.5)
-            # else:
-            #     vector2 = primitive.unit_direction_vector(0.5)
-            # if vector1.is_colinear_to(vector2):
-            points = primitive.discretization_points(number_points=10)
-            if all(self.point_over_contour(point, tol) for point in points):
-                return True
+        points = primitive.discretization_points(number_points=10)
+        if all(self.point_over_contour(point, tol) for point in points):
+            return True
         return False
 
 
@@ -2022,13 +2009,7 @@ class Contour2D(ContourMixin, Wire2D):
                 cutting_points = []
                 point1, point2 = [cutting_contour.primitives[0].start,
                                   cutting_contour.primitives[-1].end]
-                # middle_point = cutting_contour.point_at_abscissa(cutting_contour.length() / 2)
                 if not any(base_contour.point_belongs(prim.middle_point()) for prim in cutting_contour.primitives):
-                # for prim in cutting_contour.primitives:
-                #     middle_point = prim.middle_point()
-                #     if not base_contour.point_belongs(middle_point):
-                #         break
-                # else:
                     continue
                 if base_contour.point_over_contour(point1) and base_contour.point_over_contour(point2):
                     cutting_points = [point1, point2]
@@ -2043,7 +2024,6 @@ class Contour2D(ContourMixin, Wire2D):
                     for cntr in [contour1, contour2]:
                         all_divided_contour = True
                         for cut_contour in list_cutting_contours:
-                            # points_at_abs = cut_contour.discretization_points(cut_contour.length() / 5)
                             points_at_abs = [prim.middle_point() for prim in cut_contour.primitives]
                             for point_at_abs in points_at_abs:
                                 if cntr.point_belongs(point_at_abs) and \
@@ -4547,11 +4527,7 @@ class Contour3D(ContourMixin, Wire3D):
 
     def to_2d(self, plane_origin, x, y):
         """
-<<<<<<< HEAD
-        Tranforms a Contour3D into a Contour2D, given a plane origin and an u and v plane vector.
-=======
         Projects in 2D the contour3D to give a Contour2D.
->>>>>>> origin/dev
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
