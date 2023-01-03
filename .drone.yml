@@ -11,11 +11,13 @@ steps:
     branch: master
   failure: ignore
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
   - git fetch origin testing
   - git checkout testing
   - git merge master
   - git push
-  - git checkout master
 
 - name: merge testing on dev
   image: alpine/git
@@ -24,11 +26,13 @@ steps:
     branch: testing
   failure: ignore
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
   - git fetch origin dev
   - git checkout dev
   - git merge testing
   - git push
-  - git checkout testing
 
 - name: check code complexity
   image: python:3.9
