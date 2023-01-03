@@ -2,6 +2,7 @@
 volmdlr utils for calculating 3D to surface parametric domain operationa
 """
 import math
+import bisect
 
 import volmdlr
 import volmdlr.edges as vme
@@ -131,3 +132,31 @@ def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, poin
     end = volmdlr.Point2D(theta2, phi2)
 
     return start, end
+
+
+def array_range_search(x, xmin, xmax):
+    """
+    Find the indices of the elements in the sorted list `x` that fall within the specified range.
+
+    This function use bisect pyhton builtin module, which uses binary search and has a time complexity of O(log(n)).
+    Where n is the array length.
+
+    :param x: A sorted list of values.
+    :type x: list
+    :param xmin: The minimum value in the range.
+    :type xmin: float
+    :param xmax: The maximum value in the range.
+    :type xmax: float
+    :return: A tuple containing the indices of the first and last elements in `x` that fall within the specified range.
+    :rtype: Tuple[int, int]
+
+    :Example:
+
+    >>> x = [1, 2, 3, 4, 5]
+    >>> array_range_search(x, 2, 4)
+    (1, 3)
+    """
+
+    left = bisect.bisect_left(x, xmin)
+    right = bisect.bisect_right(x, xmax)
+    return left, right
