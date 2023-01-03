@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+ISO STEP reader/writer.
 """
 
 import time
@@ -678,6 +678,7 @@ class Step(dc.DessiaObject):
 
     def instanciate(self, name, arguments, object_dict):
         """
+        Gives the volmdlr object related to the step function.
         """
         self.parse_arguments(arguments)
 

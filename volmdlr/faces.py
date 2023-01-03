@@ -4846,14 +4846,14 @@ class Face3D(volmdlr.core.Primitive3D):
     @property
     def outer_contour3d(self):
         """
-
+        Gives the 3d version of the outer contour of the face.
         """
         return self.surface3d.contour2d_to_3d(self.surface2d.outer_contour)
 
     @property
     def inner_contours3d(self):
         """
-
+        Gives the 3d version of the inner contours of the face.
         """
         return [self.surface3d.contour2d_to_3d(c) for c in
                 self.surface2d.inner_contours]
@@ -5186,6 +5186,7 @@ class PlaneFace3D(Face3D):
     @property
     def bounding_box(self):
         """
+        Returns the bounding box, uses a cache.
         """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
