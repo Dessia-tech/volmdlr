@@ -1272,9 +1272,16 @@ class BSplineCurve2D(BSplineCurve):
         normal vector is to be calculated
         :return: The normal vector of the BSplineCurve2D
         """
-        tangent_vector = self.tangent(abscissa)
-        normal_vector = tangent_vector.normal_vector()
-        return normal_vector
+        # TODO: The commented version is not exact, and the new one is not efficient
+        # tangent_vector = self.tangent(abscissa)
+        # normal_vector = tangent_vector.normal_vector()
+        # return normal_vector
+
+        wire = self.to_wire(n=20)
+        distances = [primitive.point_distance(self.point_at_abscissa(abscissa)) \
+                     for primitive in wire.primitives]
+
+        return wire.primitives[distances.index(min(distances))].normal_vector(0.5)
 
     def unit_normal_vector(self, abscissa: float):
         """
