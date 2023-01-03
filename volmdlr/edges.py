@@ -1680,7 +1680,7 @@ class LineSegment2D(LineSegment):
         return circle1, circle2
 
     def infinite_primitive(self, offset):
-        n = self.unit_normal_vector()
+        n = -self.unit_normal_vector()
         offset_point_1 = self.start + offset * n
         offset_point_2 = self.end + offset * n
 
@@ -1966,29 +1966,16 @@ class Arc2D(Arc):
         Check if a Point2D belongs to the Arc2D.
 
         """
-        vector_start = self.start - self.center
-        vector_end = self.end - self.center
-        vector_point = point2d - self.center
-        r1 = vector_start.norm()
-        cp = vector_point.norm()
-        if math.isclose(cp, r1, abs_tol=abs_tol):
-            if self.get_arc_direction():
-                arc_angle = - volmdlr.core.clockwise_angle(vector_start,
-                                                           vector_end)
-                point_angle = - volmdlr.core.clockwise_angle(vector_start,
-                                                             vector_point)
-
-            else:
-                arc_angle = volmdlr.core.clockwise_angle(vector_start,
-                                                         vector_end)
-                point_angle = volmdlr.core.clockwise_angle(vector_start,
-                                                           vector_point)
-            if point_angle <= arc_angle:
-                return True
+        distance_point_to_center = point2d.point_distance(self.center)
+        if not math.isclose(distance_point_to_center, self.radius, abs_tol=abs_tol):
+            return False
+        try:
+            point_abscissa = self.abscissa(point2d)
+        except ValueError:
+            return False
+        if self.length() >= point_abscissa >= 0:
+            return True
         return False
-
-    # def to_circle(self):
-    #     return volmdlr.wires.Circle2D(self.center, self.radius)
 
     def to_full_arc_2d(self):
         return FullArc2D(center=self.center,
@@ -2382,15 +2369,41 @@ class Arc2D(Arc):
                       self.end)
                 ]
 
-    def infinite_primitive(self, offset):
+    def cut_between_two_points(self, point1, point2):
+        """
+        Cuts Arc between to points, and return the a new arc bwetween these two points.
 
-        if not self.is_trigo:
+        """
+        if (point1 == self.start and point2 == self.end) or \
+                (point2 == self.start and point1 == self.end):
+            return self
+        raise NotImplementedError
+
+    def infinite_primitive(self, offset):
+        vector_start_center = self.start - self.center
+        vector_start_center.normalize()
+        vector_end_center = self.end - self.center
+        vector_end_center.normalize()
+        vector_interior_center = self.interior - self.center
+        vector_interior_center.normalize()
+        if self.is_trigo:
             radius = self.radius + offset
+            center = self.center
+
         else:
             radius = self.radius - offset
-
-        return FullArc2D(self.center,
-                         self.center + radius * volmdlr.Point2D(1, 0.))
+            if radius < 0:
+                return None
+            center = self.center
+            # mid_point = self.middle_point()
+            # vec1 = self.center - mid_point
+            # vec1.normalize()
+            # vec1 = 2 * offset * math.sqrt(2) * vec1
+            # center = self.center.translation(vec1)
+        start = center + radius * vector_start_center
+        end = center + radius * vector_end_center
+        interior = center + radius * vector_interior_center
+        return Arc2D(start, interior, end)
 
     def complementary(self):
 
@@ -3249,7 +3262,8 @@ class Line3D(Line):
 
 class LineSegment3D(LineSegment):
     """
-    Define a line segment limited by two points
+    Define a line segment limited by two points.
+
     """
 
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
@@ -4423,7 +4437,8 @@ class BezierCurve3D(BSplineCurve3D):
 
 class Arc3D(Arc):
     """
-    An arc is defined by a starting point, an end point and an interior point
+    An arc is defined by a starting point, an end point and an interior point.
+
     """
 
     def __init__(self, start, interior, end, name=''):
@@ -5181,7 +5196,8 @@ class Arc3D(Arc):
 class FullArc3D(Arc3D):
     """
     An edge that starts at start_end, ends at the same point after having described
-    a circle
+    a circle.
+
     """
 
     def __init__(self, center: volmdlr.Point3D, start_end: volmdlr.Point3D,
@@ -5387,7 +5403,8 @@ class FullArc3D(Arc3D):
 
 class ArcEllipse3D(Edge):
     """
-    An arc is defined by a starting point, an end point and an interior point
+    An arc is defined by a starting point, an end point and an interior point.
+
     """
 
     def __init__(self, start, interior, end, center, major_dir,
