@@ -3021,7 +3021,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return ClosedPolygon3D(points3d)
 
     def plot(self, ax=None, color='k', alpha=1,
-             plot_points=False, point_numbering=False,
+             plot_points=False, point_numbering=False, arrow=False,
              fill=False, fill_color='w', equal_aspect=True):
         if ax is None:
             _, ax = plt.subplots()
@@ -3031,7 +3031,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             ax.fill([p[0] for p in self.points], [p[1] for p in self.points],
                     facecolor=fill_color)
         for line_segment in self.line_segments:
-            line_segment.plot(ax=ax, color=color, alpha=alpha)
+            line_segment.plot(ax=ax, color=color, alpha=alpha, arrow=arrow)
 
         if plot_points or point_numbering:
             for point in self.points:
@@ -3253,6 +3253,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         finds another point inside the polygon.
 
         """
+        barycenter = self.barycenter()
+        if self.point_belongs(barycenter):
+            return barycenter
         intersetions1 = {}
         linex_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D * 5)
         linex_neg = volmdlr.edges.LineSegment2D(volmdlr.O2D, -volmdlr.X2D * 5)

@@ -36,6 +36,7 @@ import volmdlr.display as vmd
 import volmdlr.geometry
 import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
+from volmdlr.utils.parametric import array_range_search
 
 
 def knots_vector_inv(knots_vector):
@@ -159,7 +160,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         :rtype: :class:`volmdlr.display.DisplayMesh2D`
         """
         area = self.bounding_rectangle().area()
-        # tri_opt = f'pa{0.05 * area}'
         tri_opt = "p"
         if area == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
@@ -180,7 +180,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         segments.append((n - 1, 0))
 
         if not self.inner_contours:  # No holes
-
             vertices_grid = [(p.x, p.y) for p in points_grid]
             vertices.extend(vertices_grid)
             tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
@@ -203,25 +202,26 @@ class Surface2D(volmdlr.core.Primitive2D):
                     vertices.append((point.x, point.y))
                     point_index[point] = n
                     n += 1
+
             for point1, point2 in zip(inner_polygon_nodes[:-1],
                                       inner_polygon_nodes[1:]):
                 segments.append((point_index[point1], point_index[point2]))
             segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
-            rpi = inner_contour.random_point_inside()
-            holes.append((rpi.x, rpi.y))
+
+            rpi = inner_polygon.point_in_polygon()
+            holes.append([rpi.x, rpi.y])
 
             if triangulates_with_grid:
                 # removes with a region search the grid points that are in the inner contour
-                xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
-                x_grid_range = npy.where((x >= xmin) & (x <= xmax))[0]
-                y_grid_range = npy.where((y >= ymin) & (y <= ymax))[0]
+                xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle().bounds()
+                x_grid_range = array_range_search(x, xmin, xmax)
+                y_grid_range = array_range_search(y, ymin, ymax)
                 for i in x_grid_range:
                     for j in y_grid_range:
                         point = grid_point_index.get((i, j))
                         if not point:
                             continue
                         if inner_polygon.point_belongs(point):
-                            # if point in points_grid
                             points_grid.remove(point)
                             grid_point_index.pop((i, j))
 
@@ -231,14 +231,12 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                'segments': npy.array(segments).reshape((-1, 2)),
+               'holes': npy.array(holes).reshape((-1, 2))
                }
-        if holes:
-            tri['holes'] = npy.array(holes).reshape((-1, 2))
         t = triangle.triangulate(tri, tri_opt)
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-
         return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
 
     def split_by_lines(self, lines):
@@ -736,12 +734,12 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
-            # if isinstance(self, BSplineSurface3D):
-            #     # onlyfiles = next(os.walk(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours'))[2]  # directory is your directory path as string
-            #     # l = len(onlyfiles)
-            #     # contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours\contour3d_{l}.json')
-            #     # self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surfaces\surface3d_{l}.json')
-            #     outer_contour2d.plot()
+            if isinstance(self, BSplineSurface3D):
+                # onlyfiles = next(os.walk(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours'))[2]  # directory is your directory path as string
+                # l = len(onlyfiles)
+                # contours3d[0].save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_contours\contour3d_{l}.json')
+                # self.save_to_file(fr'C:\Users\gabri\Documents\dessia\GitHub\volmdlr\scripts\step\bspline_surfaces\surface3d_{l}.json')
+                outer_contour2d.plot()
             inner_contours2d = []
         elif lc3d > 1:
             area = -1
@@ -1803,6 +1801,9 @@ class ToroidalSurface3D(Surface3D):
         return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
+        """
+        Tansform a 3D spatial point (x, y, z) into a 2D spherical parametric point (theta, phi).
+        """
         x, y, z = self.frame.new_coordinates(point3d)
         z = min(self.r, max(-self.r, z))
 
@@ -2448,6 +2449,9 @@ class SphericalSurface3D(Surface3D):
         return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
+        """
+        Tansform a 3D spatial point (x, y, z) into a 2D spherical parametric point (theta, phi).
+        """
         x, y, z = self.frame.new_coordinates(point3d)
         z = min(self.radius, max(-self.radius, z))
 
@@ -3088,10 +3092,8 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
-        umin, umax = self.surface.domain[0]
-        vmin, vmax = self.surface.domain[1]
-        x = min(max(x, umin), umax)
-        y = min(max(y, vmin), vmax)
+        x = min(max(x, 0), 1)
+        y = min(max(y, 0), 1)
 
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
@@ -3336,30 +3338,15 @@ class BSplineSurface3D(Surface3D):
                             break
                     if flag_line:
                         return [linesegment]
-                u1, v1 = self.point3d_to_2d(bspline_curve3d.start)
-                u2, v2 = self.point3d_to_2d(bspline_curve3d.end)
 
-                u3, v3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.01 * lth))
-                # control_points = [self.point3d_to_2d(p) for p in bspline_curve3d.control_points]
                 if self.x_periodicity:
                     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
-                    if u3 < u1 < u2:
-                        points = [volmdlr.Point2D(p.x - self.x_periodicity, p.y)
-                                          if p.x > u1 else p for p in points]
-                    elif u3 > u1 > u2:
-                        points = [volmdlr.Point2D(p.x + self.x_periodicity, p.y)
-                                          if p.x < u1 else p for p in points]
+
                 if self.y_periodicity:
                     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
-                    if v3 < v1 < v2:
-                        points = [volmdlr.Point2D(p.x, p.y - self.y_periodicity)
-                                          if p.y > v1 else p for p in points]
-                    elif v3 > v1 > v2:
-                        points = [volmdlr.Point2D(p.x, p.y + self.y_periodicity)
-                                          if p.y < v1 else p for p in points]
 
-                return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree,
-                                                                     periodic=bspline_curve3d.periodic)]
+                return [vme.BSplineCurve2D.from_points_interpolation(
+                    points, bspline_curve3d.degree, periodic=bspline_curve3d.periodic)]
 
             elif 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
@@ -7331,7 +7318,21 @@ class SphericalFace3D(Face3D):
 
 class RuledFace3D(Face3D):
     """
+    A 3D face with a ruled surface.
 
+    This class represents a 3D face with a ruled surface, which is a surface
+    formed by straight lines connecting two input curves. It is a subclass of
+    the `Face3D` class and inherits all of its attributes and methods.
+
+
+    :param surface3d: The 3D ruled surface of the face.
+    :type surface3d: `RuledSurface3D`
+    :param surface2d: The 2D projection of the face onto the parametric domain (u, v).
+    :type surface2d: `Surface2D`
+    :param name: The name of the face.
+    :type name: str
+    :param color: The color of the face.
+    :type color: tuple
     """
     min_x_density = 50
     min_y_density = 1
@@ -7393,6 +7394,21 @@ class RuledFace3D(Face3D):
 
 
 class BSplineFace3D(Face3D):
+    """
+    A 3D face with a B-spline surface.
+
+    This class represents a 3D face with a B-spline surface, which is a smooth
+    surface defined by a set of control points and knots. It is a subclass of
+    the `Face3D` class and inherits all of its attributes and methods.
+
+    :param surface3d: The 3D B-spline surface of the face.
+    :type surface3d: `BSplineSurface3D`
+    :param surface2d: The 2D projection of the face onto the parametric domain (u, v).
+    :type surface2d: `Surface2D`
+    :param name: The name of the face.
+    :type name: str
+    """
+
     def __init__(self, surface3d: BSplineSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
@@ -7439,7 +7455,7 @@ class BSplineFace3D(Face3D):
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
         if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
-            resolution = 50
+            resolution = 25
         else:
             resolution = 10
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
@@ -7690,7 +7706,7 @@ class BSplineFace3D(Face3D):
 
     def adjacent_direction(self, other_bspline_face3d):
         """
-        find directions (u or v) between two faces, in the nearest edges between them
+        Find directions (u or v) between two faces, in the nearest edges between them.
         """
 
         start1, end1, start2, end2 = self.extremities(other_bspline_face3d)
@@ -7755,6 +7771,25 @@ class BSplineFace3D(Face3D):
 
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
+    """
+    A 3D open shell composed of multiple faces.
+
+    This class represents a 3D open shell, which is a collection of connected
+    faces with no volume. It is a subclass of the `CompositePrimitive3D` class
+    and inherits all of its attributes and methods.
+
+
+    :param faces: The faces of the shell.
+    :type faces: List[`Face3D`]
+    :param color: The color of the shell.
+    :type color: Tuple[float, float, float]
+    :param alpha: The transparency of the shell, should be a value in the interval (0, 1).
+    :type alpha: float
+    :param name: The name of the shell.
+    :type name: str
+    :param bounding_box: The bounding box of the shell.
+    :type bounding_box: :class:`volmdlr.core.BoundingBox`
+    """
     _standalone_in_db = True
     _non_serializable_attributes = ['primitives']
     _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box', 'primitives']
@@ -8130,7 +8165,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def intersection_internal_aabb_volume(self, shell2: 'OpenShell3D',
                                           resolution: float):
         """
-        aabb made of the intersection points and the points of self internal to shell2
+        Aabb made of the intersection points and the points of self internal to shell2.
         """
         intersections_points = []
         for face1 in self.faces:
@@ -8157,7 +8192,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def intersection_external_aabb_volume(self, shell2: 'OpenShell3D',
                                           resolution: float):
         """
-        aabb made of the intersection points and the points of self external to shell2
+        Aabb made of the intersection points and the points of self external to shell2.
         """
         intersections_points = []
         for face1 in self.faces:
