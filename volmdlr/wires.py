@@ -4253,7 +4253,7 @@ class Contour3D(ContourMixin, Wire3D):
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
                  name: str = ''):
         """
-
+        Defines a contour3D from a collection of edges following each other stored in primitives list.
         """
 
         Wire3D.__init__(self, primitives=primitives, name=name)
@@ -4946,9 +4946,8 @@ class Circle3D(Contour3D):
 
     def _bounding_box(self):
         """
+        Computes the bounding box.
         """
-        # u = self.normal.deterministic_unit_normal_vector()
-        # v = self.normal.cross(u)
         points = [self.frame.origin + self.radius * v
                   for v in [self.frame.u, -self.frame.u,
                             self.frame.v, -self.frame.v]]

@@ -9,7 +9,12 @@ steps:
   when:
     event: push
     branch: master
+  failure: ignore
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout master
   - git fetch origin testing
   - git checkout testing
   - git merge master
@@ -20,12 +25,16 @@ steps:
   when:
     event: push
     branch: testing
+  failure: ignore
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout testing
   - git fetch origin dev
   - git checkout dev
   - git merge testing
   - git push
-
 
 - name: check code complexity
   image: python:3.9
@@ -73,6 +82,7 @@ steps:
   - coverage json
   - coverage report
   - python coverage.py
+  - python coverage_script.py
 
   volumes:
     # Mount pip cache from host
