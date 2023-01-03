@@ -14,6 +14,7 @@ from dessia_common.core import DessiaObject
 import volmdlr as vm
 import volmdlr.wires as vmw
 import volmdlr.edges as vme
+import volmdlr.gmsh_vm
 # from volmdlr.core_compiled import Matrix33
 
 # from itertools import combinations
@@ -47,6 +48,10 @@ class FlatElementError(Exception):
 
 
 class Node2D(vm.Point2D):
+    """
+    A node is a Point2D with some hash capabilities for perfomance used for Mesh.
+    """
+
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
 
@@ -63,6 +68,10 @@ class Node2D(vm.Point2D):
 
 
 class Node3D(vm.Point3D):
+    """
+    A node is a Point3D with some hash capabilities for perfomance used for Mesh.
+    """
+
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))
 
@@ -774,7 +783,8 @@ class Mesh(DessiaObject):
         self.elements_groups = elements_groups
         self.nodes = self._set_nodes_number()
         self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
-
+        self._nodes_correction = {}
+        self._gmsh = None
         DessiaObject.__init__(self, name='')
 
     # def __add__(self, other_mesh):
@@ -899,28 +909,138 @@ class Mesh(DessiaObject):
         z = [n.z for n in nodes]
         return min(x), max(x), min(y), max(y), min(z), max(z)
 
-    def delete_duplicated_nodes(self, tol=1e-4):
-        mesh = self.__class__(self.elements_groups[:])
-        nodes_list = list(mesh.nodes[:])
-        nodes_index = []
+    # def delete_duplicated_nodes(self, tol=1e-4):
+    #     mesh = self.__class__(self.elements_groups[:])
+    #     nodes_list = list(mesh.nodes[:])
+    #     nodes_index = []
 
-        for i, node in enumerate(nodes_list):
-            for j in range(i + 1, len(nodes_list)):
-                dist = node.point_distance(nodes_list[j])
-                if dist < tol:
-                    nodes_index.append((j, i))
+    #     for i, node in enumerate(nodes_list):
+    #         for j in range(i + 1, len(nodes_list)):
+    #             dist = node.point_distance(nodes_list[j])
+    #             if dist < tol:
+    #                 nodes_index.append((j, i))
 
-        if nodes_index:
-            nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
-            for _, index in enumerate(nodes_index):
-                nodes_list.pop(index[0])
-                for group in mesh.elements_groups:
-                    if mesh.nodes[index[0]] in group.nodes:
-                        dict_node_element = group.elements_per_node
-                        for element in dict_node_element[mesh.nodes[index[0]]]:
-                            element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
+    #     if nodes_index:
+    #         nodes_index = sorted(nodes_index, key=lambda item: item[0], reverse=True)
+    #         for _, index in enumerate(nodes_index):
+    #             nodes_list.pop(index[0])
+    #             for group in mesh.elements_groups:
+    #                 if mesh.nodes[index[0]] in group.nodes:
+    #                     dict_node_element = group.elements_per_node
+    #                     for element in dict_node_element[mesh.nodes[index[0]]]:
+    #                         element.points[element.points.index(mesh.nodes[index[0]])] = mesh.nodes[index[1]]
 
-            mesh.nodes = nodes_list
-            mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+    #         mesh.nodes = nodes_list
+    #         mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+
+    #     return mesh
+
+    def nodes_correction(self, reference_index, tol=1e-4):
+        if not self._nodes_correction:
+            nodes_reference = self.elements_groups[reference_index].nodes
+            groups = self.elements_groups[:]
+            groups.pop(reference_index)
+            nodes_correction = {}
+
+            for group in groups:
+                for node in group.nodes:
+                    for node_ref in nodes_reference:
+                        d = node.point_distance(node_ref)
+                        if 1e-8 < d < 1e-4:
+                            nodes_correction[node] = node_ref
+
+            self._nodes_correction = nodes_correction
+
+        return self._nodes_correction
+
+    def delete_duplicated_nodes(self, reference_index, tol=1e-4):
+
+        groups = self.elements_groups[:]
+        groups.pop(reference_index)
+
+        nodes_correction = self.nodes_correction(reference_index, tol)
+
+        count = 0
+        old_elements, new_elements = set(), set()
+        for g, group in enumerate(groups):
+            elements = []
+            for element in group.elements:
+                new = False
+                points = []
+
+                for point in element.points:
+                    correc_point = nodes_correction.get(point)
+                    if correc_point is not None:
+                        points.append(correc_point)
+                        count += 1
+                        old_elements.add(element)
+                        new = True
+                    else:
+                        points.append(point)
+
+                elements.append(element.__class__(points))
+                if new:
+                    new_elements.add(element.__class__(points))
+
+            groups[g] = group.__class__(elements, name='')
+
+        groups.insert(reference_index, self.elements_groups[reference_index])
+
+        mesh = self.__class__(groups)
+        mesh.gmsh = self.gmsh
+        mesh.set_nodes_correction(self.get_nodes_correction())
 
         return mesh
+
+    def get_nodes_correction(self):
+        """
+        A getter method for nodes_correction private variable.
+
+        :return: A dict of nodes_correction
+        :rtype: dict
+        """
+
+        return self._nodes_correction
+
+    def set_nodes_correction(self, nodes_correction):
+        """
+        A setter method for nodes_correction private variable.
+
+        :param nodes_correction: A dict of nodes_correction
+        :type nodes_correction: dict
+        """
+
+        if not isinstance(nodes_correction, dict):
+            raise ValueError("It must be volmdlr.GmshParser class")
+        self._nodes_correction = nodes_correction
+
+    @property
+    def gmsh(self):
+        """
+        A property to get gmsh (a private variable).
+
+        :return: A gmsh_parser data
+        :rtype: GmshParser
+        """
+
+        return self._gmsh
+
+    @gmsh.setter
+    def gmsh(self, gmsh_parser):
+        """
+        A setter for gmsh (a private variable).
+
+        :param gmsh_parser: A gmsh_parser data
+        :type gmsh_parser: GmshParser
+        """
+
+        if not isinstance(gmsh_parser, volmdlr.gmsh_vm.GmshParser):
+            raise ValueError("It must be volmdlr.GmshParser class")
+        self._gmsh = gmsh_parser
+
+    def copy(self):
+        m = self.__class__(elements_groups=self.elements_groups[:])
+        m.set_nodes_correction(self.get_nodes_correction())
+        m.gmsh = self.gmsh
+
+        return m

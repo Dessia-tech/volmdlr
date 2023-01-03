@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PlaneFace3D: project_faces
 * OpenShell3D: project_coincident_faces_of
 * GmshParser: to_vtk
+* BSplineCurve: derivatives
 
 
 ### Fixed
@@ -19,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
 * Contour2D: bounding_rectangle (specify number_points for discretization_points)
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
+* Mesh: delete_duplicated_nodes
+* BSplineSurface3D: fix arc3d_to_2d method
+
 
 ### Removed
 
@@ -26,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance improvements
 * ClosedPolygon2D: triangulation
+* Cylinder: min_distance_to_other_cylinder
+* BSplineCurve: discretization_points
 
 
 ### Refactorings
@@ -44,6 +50,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 
 ### New Features
 
+* Open/Closed TriangleShells: ability to implement specific algorithm to triangles
 * Block: faces_center (calculate directly point in the middle of the faces)
 * Circle2D: split_by_line
 * BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
@@ -118,6 +125,8 @@ time we have to verify if a point is inside
 
 
 ### Refactorings
+
+* cleanup of ClosedShell (double methods with Openshells)
 * LineSegment3D: intersections
 * Line2D: sort_points_along_line
 * Line3D: intersections

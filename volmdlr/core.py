@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Base classes.
 """
 
 import os
@@ -20,6 +20,8 @@ import volmdlr
 import volmdlr.templates
 
 npy.seterr(divide='raise')
+
+DEFAULT_COLOR = (0.8, 0.8, 0.8)
 
 # TODO: put voldmlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
