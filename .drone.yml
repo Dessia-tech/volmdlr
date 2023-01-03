@@ -15,6 +15,7 @@ steps:
   - git checkout testing
   - git merge master
   - git push
+  - git checkout master
 
 - name: merge testing on dev
   image: alpine/git
@@ -27,7 +28,7 @@ steps:
   - git checkout dev
   - git merge testing
   - git push
-
+  - git checkout testing
 
 - name: check code complexity
   image: python:3.9
