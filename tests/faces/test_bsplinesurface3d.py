@@ -4,6 +4,8 @@ Unit tests for volmdlr.faces.BSplineSurface3D
 import unittest
 from volmdlr.models import bspline_surfaces
 import volmdlr.grid
+import volmdlr.faces as vmf
+import volmdlr.edges as vme
 
 
 class TestBSplineSurface3D(unittest.TestCase):
@@ -16,6 +18,34 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(contour2d_dim.area(), 18.12438798529036, places=5)
         self.assertAlmostEqual(contour2d_dim.length(), 16.816547325087043)
 
+    def test_periodicity(self):
+        bspline_suface = vmf.BSplineSurface3D.load_from_file('faces/surface3d_8.json')
+        self.assertAlmostEqual(bspline_suface.x_periodicity,  0.8888888888888888)
+        self.assertFalse(bspline_suface.y_periodicity)
+
+    def test_bbox(self):
+        surface = bspline_surfaces.bspline_surface_3
+        bbox = surface.bounding_box
+        volume = bbox.volume()
+
+        # Check if the bounding box volume is correct
+        self.assertEqual(volume, 4.0)
+
+    def test_arc3d_to_2d(self):
+        bspline_surface = vmf.BSplineSurface3D.load_from_file('faces/BSplineSurface3D_with_Arc3D.json')
+        arc = vme.Arc3D(volmdlr.Point3D(0.01, 0.018, 0.014),
+                        volmdlr.Point3D(0.00970710678118655, 0.018, 0.014707106781186547),
+                        volmdlr.Point3D(0.009, 0.018, 0.015))
+
+        test = bspline_surface.arc3d_to_2d(arc3d=arc)[0]
+
+        inv_prof = bspline_surface.linesegment2d_to_3d(test)[0]
+
+        # Verifies the inversion operation
+        self.assertIsInstance(inv_prof, vme.Arc3D)
+        self.assertEqual(inv_prof.start, arc.start)
+        self.assertEqual(inv_prof.end, arc.end)
+
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=0)

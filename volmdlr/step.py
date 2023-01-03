@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import plot_data.graph
 
-import dessia_common as dc
+import dessia_common.core as dc
 
 import volmdlr
 import volmdlr.core
@@ -21,9 +21,20 @@ import volmdlr.faces
 import volmdlr.primitives3d
 import volmdlr.wires
 
-# import webbrowser
-# from jinja2 import Environment, PackageLoader, select_autoescape
-# import os
+
+def set_to_list(step_set):
+    """
+    Convert a string representation of a set to a list of strings.
+
+    :param step_set: String representation of a set, e.g. "{A,B,C}"
+    :type step_set: str
+    :return: List of strings, e.g. ["A", "B", "C"]
+    :rtype: List[str]
+    """
+    char_list = step_set.split(',')
+    char_list[0] = char_list[0][1:]
+    char_list[-1] = char_list[-1][:-1]
+    return list(char_list)
 
 
 def step_split_arguments(function_arg):
@@ -58,30 +69,89 @@ def step_split_arguments(function_arg):
 
 
 def vertex_point(arguments, object_dict):
+    """
+    Returns the data in case of a VERTEX.
+    """
     return object_dict[arguments[1]]
 
 
 def oriented_edge(arguments, object_dict):
+    """
+    Returns the data in case of an ORIENTED_EDGE.
+    """
     return object_dict[arguments[3]]
 
 
 def face_outer_bound(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def face_bound(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def surface_curve(arguments, object_dict):
+    """
+    Returns xx.
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def seam_curve(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+    """
     return object_dict[arguments[1]]
 
 
 def trimmed_curve(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+    """
+
     curve = object_dict[arguments[1]]
     point1 = object_dict[int(arguments[2][0][1:])]
     point2 = object_dict[int(arguments[3][0][1:])]
@@ -89,15 +159,31 @@ def trimmed_curve(arguments, object_dict):
 
 
 def vertex_loop(arguments, object_dict):
+    """
+    Returns the data in case of a VERTEX_LOOP.
+    """
     return object_dict[arguments[1]]
 
 
 def pcurve(arguments, object_dict):
-    # Pas besoin de mettre PCURVE ici s'il n'est pas dans STEP_TO_VOLMDLR
+    """
+    Returns the data in case of a PCURVE.
+    """
     return object_dict[arguments[1]]
 
 
 def geometric_curve_set(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     sub_objects = []
     for argument in arguments[1]:
         sub_obj = object_dict[int(argument[1:])]
@@ -106,11 +192,24 @@ def geometric_curve_set(arguments, object_dict):
 
 
 def shell_base_surface_model(arguments, object_dict):
-    # Shell3D
+    """
+    Returns the data in case of a Shell3D.
+    """
     return object_dict[int(arguments[1][0][1:])]
 
 
 def item_defined_transformation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     # Frame3D
     # volmdlr_object1 = object_dict[arguments[2]]
     volmdlr_object2 = object_dict[arguments[3]]
@@ -121,7 +220,9 @@ def item_defined_transformation(arguments, object_dict):
 
 
 def manifold_surface_shape_representation(arguments, object_dict):
-    # Shell3D
+    """
+    Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
+    """
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
@@ -132,14 +233,31 @@ def manifold_surface_shape_representation(arguments, object_dict):
 
 
 def manifold_solid_brep(arguments, object_dict):
+    """
+    Returns the data in case of a manifold_solid_brep with voids.
+    """
     return object_dict[arguments[1]]
 
 
 def brep_with_voids(arguments, object_dict):
+    """
+    Returns the data in case of a BREP with voids.
+    """
     return object_dict[arguments[1]]
 
 
 def shape_representation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     # does it have the extra argument comming from
     # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
     # them
@@ -177,6 +295,17 @@ def shape_representation(arguments, object_dict):
 
 
 def advanced_brep_shape_representation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
@@ -235,8 +364,9 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
         modified_arguments, object_dict)
 
 
-class StepFunction:
+class StepFunction(dc.DessiaObject):
     def __init__(self, function_id, function_name, function_arg):
+        dc.DessiaObject.__init__(self)
         self.id = function_id
         self.name = function_name
         self.arg = function_arg
@@ -365,7 +495,7 @@ class Step(dc.DessiaObject):
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
-                    arg_list = volmdlr.core.set_to_list(argument)
+                    arg_list = set_to_list(argument)
                     arguments[i] = arg_list
 
             function = StepFunction(function_id, function_name, arguments)
@@ -568,7 +698,7 @@ class Step(dc.DessiaObject):
                                                                     arguments))
         return volmdlr_object
 
-    def to_volume_model(self, show_times=False):
+    def to_volume_model(self, show_times: bool = False):
         """
         show_times=True displays the numer of times a given class has been
         instanciated and the totatl time of all the instanciations of this
