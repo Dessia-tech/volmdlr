@@ -1278,7 +1278,7 @@ class BSplineCurve2D(BSplineCurve):
         # return normal_vector
 
         wire = self.to_wire(n=20)
-        distances = [primitive.point_distance(self.point_at_abscissa(abscissa)) \
+        distances = [primitive.point_distance(self.point_at_abscissa(abscissa))
                      for primitive in wire.primitives]
 
         return wire.primitives[distances.index(min(distances))].normal_vector(0.5)
