@@ -35,6 +35,7 @@ import volmdlr.display as vmd
 import volmdlr.geometry
 import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
+from volmdlr.utils.parametric import array_range_search
 
 
 def knots_vector_inv(knots_vector):
@@ -158,7 +159,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         :rtype: :class:`volmdlr.display.DisplayMesh2D`
         """
         area = self.bounding_rectangle().area()
-        # tri_opt = f'pa{0.05 * area}'
         tri_opt = "p"
         if area == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
@@ -212,15 +212,14 @@ class Surface2D(volmdlr.core.Primitive2D):
             if triangulates_with_grid:
                 # removes with a region search the grid points that are in the inner contour
                 xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
-                x_grid_range = npy.where((x >= xmin) & (x <= xmax))[0]
-                y_grid_range = npy.where((y >= ymin) & (y <= ymax))[0]
+                x_grid_range = array_range_search(x, xmin, xmax)
+                y_grid_range = array_range_search(y, ymin, ymax)
                 for i in x_grid_range:
                     for j in y_grid_range:
                         point = grid_point_index.get((i, j))
                         if not point:
                             continue
                         if inner_polygon.point_belongs(point):
-                            # if point in points_grid
                             points_grid.remove(point)
                             grid_point_index.pop((i, j))
 
