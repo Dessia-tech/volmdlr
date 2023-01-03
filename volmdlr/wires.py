@@ -1144,7 +1144,7 @@ class ContourMixin(WireMixin):
                 if contour.is_superposing(contour2):
                     break
             else:
-                 valid_contours.append(contour)
+                valid_contours.append(contour)
         return valid_contours
 
     def discretized_primitives(self, number_points: float):
@@ -2277,7 +2277,7 @@ class ClosedPolygonMixin:
                          max_distance: float = 0.05, angle: float = 15):
         points = [self.points[0]]
         previous_point = None
-        for i, point in enumerate(self.points[1:]):
+        for point in self.points[1:]:
             distance = point.point_distance(points[-1])
             if distance > min_distance:
                 if distance > max_distance:
@@ -2310,8 +2310,7 @@ class ClosedPolygonMixin:
                 if distance2 < min_distance and cos < angle:
                     points = points[:-2] + [points[-1]]
             previous_point = point
-        distance = points[0].point_distance(points[-1])
-        if distance < min_distance:
+        if points[0].point_distance(points[-1]) < min_distance:
             points.remove(points[-1])
 
         if volmdlr.wires.ClosedPolygon2D(points).area() == 0.0:
