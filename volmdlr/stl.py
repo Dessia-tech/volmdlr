@@ -4,7 +4,6 @@
 
 """
 # from binaryornot.check import is_binary
-import io
 import struct
 import warnings
 # from typing import BinaryIO
@@ -15,6 +14,7 @@ from binaryornot.check import is_binary
 from kaitaistruct import KaitaiStream
 
 import dessia_common.core as dc
+from dessia_common.files import BinaryFile, StringFile
 import volmdlr as vm
 import volmdlr.core as vmc
 import volmdlr.faces as vmf
@@ -82,7 +82,7 @@ class Stl(dc.DessiaObject):
         return all_points
 
     @classmethod
-    def from_binary_stream(cls, stream: io.BytesIO, distance_multiplier: float = 0.001):
+    def from_binary_stream(cls, stream: BinaryFile, distance_multiplier: float = 0.001):
         stream.seek(0)
 
         stream = KaitaiStream(stream)
@@ -127,7 +127,7 @@ class Stl(dc.DessiaObject):
         return cls(triangles, name=name)
 
     @classmethod
-    def from_text_stream(cls, stream: io.StringIO,
+    def from_text_stream(cls, stream: StringFile,
                          distance_multiplier: float = 0.001):
         stream.seek(0)
 
@@ -304,10 +304,11 @@ class Stl(dc.DessiaObject):
         for triangle in self.triangles:
             normal = triangle.normal()
             for point in triangle.points:
-                if point in list(points_normals.keys()):
+                try:
                     points_normals[point].append(normal)
-                else:
+                except KeyError:
                     points_normals[point] = [normal]
+
         for key, value in points_normals.items():
             point_normal = vm.O3D
             for point in value:
@@ -321,7 +322,6 @@ class Stl(dc.DessiaObject):
                 point_normal.normalize()
             normals.append(point_normal)
         self.normals = normals
-
         return points_normals
 
     def clean_flat_triangles(self) -> 'Stl':

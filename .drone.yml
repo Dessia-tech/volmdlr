@@ -7,9 +7,14 @@ steps:
 - name: merge master on testing
   image: alpine/git
   when:
-    event: push 
+    event: push
     branch: master
+  failure: ignore
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout master
   - git fetch origin testing
   - git checkout testing
   - git merge master
@@ -18,21 +23,32 @@ steps:
 - name: merge testing on dev
   image: alpine/git
   when:
-    event: push 
+    event: push
     branch: testing
+  failure: ignore
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout testing
   - git fetch origin dev
   - git checkout dev
   - git merge testing
   - git push
 
-
 - name: check code complexity
   image: python:3.9
   commands:
-  - pip install radon pylint
+  - pip install radon pylint pydocstyle
   - ./code_quality.sh
   - python code_pylint.py
+  - python code_pydocstyle.py
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
 
 - name: check pep8 formatting
   image: python:3.9
@@ -40,6 +56,13 @@ steps:
     - git fetch --tags
     - pip3 install -U pip autopep8
     - bash code_pep8.sh
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+
 
 - name: install, build doc run scripts
   image: python:3.8
@@ -57,7 +80,15 @@ steps:
   - coverage combine scripts/.coverage tests/.coverage
   - coverage json
   - coverage report
+  - ls -la
+  - pwd
   - python coverage_script.py
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
 
 - name: generate sdist
   image: python:3.8
@@ -65,6 +96,12 @@ steps:
   - git fetch --tags
   - pip install Cython
   - python setup.py sdist
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
 
 - name: upload to pypi
   image: plugins/pypi
@@ -102,3 +139,8 @@ steps:
     password:
       from_secret: email_password
     from: technical@dessia.tech
+
+volumes:
+  - name: pip_cache
+    host:
+      path: /tmp/cache/drone/pip
