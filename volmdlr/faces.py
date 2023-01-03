@@ -4544,8 +4544,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def set_operations_new_faces(self, intersecting_combinations, contour_extract_inside):
         self_copy = self.copy(deep=True)
-        list_cutting_contours = self_copy.get_face_cutting_contours(
-            intersecting_combinations)
+        list_cutting_contours = self_copy.get_face_cutting_contours(intersecting_combinations)
         if not list_cutting_contours:
             return [self_copy]
         return self_copy.divide_face(list_cutting_contours, contour_extract_inside)
@@ -4751,14 +4750,13 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         face_intersecting_primitives2d = []
         for intersecting_combination in dict_intersecting_combinations.keys():
-            if self in intersecting_combination:
+            if self == intersecting_combination[0] or self == intersecting_combination[1]:
                 for intersection_wire in dict_intersecting_combinations[intersecting_combination]:
                     if len(intersection_wire.primitives) != 1:
                         raise NotImplementedError
                     # primitive2 = intersection_wire
                     primitive2_2d = self.surface3d.contour3d_to_2d(intersection_wire)
-                    if not self.surface2d.outer_contour.primitive_over_contour(
-                                primitive2_2d.primitives[0], tol=1e-7):
+                    if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d.primitives[0], tol=1e-7):
                         face_intersecting_primitives2d.append(primitive2_2d.primitives[0])
         return face_intersecting_primitives2d
 

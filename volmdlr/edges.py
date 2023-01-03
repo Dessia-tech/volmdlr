@@ -1152,13 +1152,17 @@ class BSplineCurve2D(BSplineCurve):
 
         # self.curve.delta = 0.01
         # points = [volmdlr.Point2D(px, py) for (px, py) in self.curve.evalpts]
-        length = self.length()
-        points = [self.point_at_abscissa(length * i / 50) for i in range(51)]
+        # length = self.length()
+        # points = [self.point_at_abscissa(length * i / 50) for i in range(51)]
+        # points = self.discretization_points(number_points=100)
+        points = self.points
 
         x_points = [p.x for p in points]
         y_points = [p.y for p in points]
         ax.plot(x_points, y_points, color=color, alpha=alpha)
-
+        if plot_points:
+            for point in points:
+                point.plot(ax, color=color)
         return ax
 
     def to_3d(self, plane_origin, x1, x2):
@@ -1227,7 +1231,7 @@ class BSplineCurve2D(BSplineCurve):
             point.rotation_inplace(center, angle)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.discretization_points(number_points=500)
+        polygon_points = self.points
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
@@ -1236,21 +1240,28 @@ class BSplineCurve2D(BSplineCurve):
             intersections = linesegment.line_intersections(line2d)
 
             if intersections and intersections[0] not in list_intersections:
-                # abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
-                # if initial_abscissa < length * 0.1:
-                #     list_abcissas = [abscissa * n for n in
-                #                      npy.linspace(0, 1, 100)]
-                # else:
-                #     list_abcissas = [new_abscissa for new_abscissa in
-                #                      npy.linspace(initial_abscissa, abscissa, 100)]
-                # distance = npy.inf
-                # for i_abscissa in list_abcissas:
-                #     point_in_curve = self.point_at_abscissa(i_abscissa)
-                #     dist = point_in_curve.point_distance(intersections[0])
-                #     if dist < distance:
-                #         distance = dist
-                #         intersection = point_in_curve
-                list_intersections.append(intersections[0])
+                abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
+                if initial_abscissa < length * 0.1:
+                    number_points = int(linesegment.length() / 1e-6)
+                    list_abcissas = [n for n in npy.linspace(initial_abscissa, initial_abscissa + linesegment.length(),
+                                                             number_points)]
+                else:
+                    resolution = 1e-6
+                    nb_pts = max(2, int(0.0001 / resolution))
+                    list_abcissas = [new_abscissa for new_abscissa in npy.linspace(abscissa - 0.0001 / 2,
+                                                                                   abscissa + 0.0001 / 2, nb_pts)]
+                distance = npy.inf
+                for i_abscissa in list_abcissas:
+                    point_in_curve = self.point_at_abscissa(i_abscissa)
+                    dist = point_in_curve.point_distance(intersections[0])
+                    if dist < distance:
+                        distance = dist
+                        intersection = point_in_curve
+                    else:
+                        break
+                list_intersections.append(intersection)
+                if not list_intersections:
+                    print(True)
             initial_abscissa += linesegment.length()
         return list_intersections
 
@@ -1291,7 +1302,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def point_distance(self, point):
         distance = math.inf
-        polygon_points = self.discretization_points(number_points=20)
+        polygon_points = self.points
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             line = LineSegment2D(p1, p2)
             dist = line.point_distance(point)
@@ -1312,7 +1323,7 @@ class BSplineCurve2D(BSplineCurve):
         """
         Calculates intersections between a BSplineCurve2D and a LineSegment2D.
 
-        :param linesegment: linesegment to verify intersections.
+        :param linesegment2d: linesegment to verify intersections.
         :return: list with the intersections points.
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):

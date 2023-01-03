@@ -4,30 +4,30 @@
 Module containing wires & contours.
 """
 
-import warnings
 import itertools
 import math
+import sys
+import warnings
 # import random
 from collections import deque
 from statistics import mean
 from typing import List
 
+import matplotlib.patches
+import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as npy
-from scipy.spatial import Delaunay, ConvexHull
 import scipy.integrate as scipy_integrate
-
-import matplotlib.pyplot as plt
-import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
-import plot_data.core as plot_data
-
-import volmdlr
-import volmdlr.utils.intersections as vm_utils_intersections
+from scipy.spatial import Delaunay, ConvexHull
 from volmdlr.core_compiled import polygon_point_belongs
+
+import plot_data.core as plot_data
+import volmdlr
 import volmdlr.core
-import volmdlr.edges
 import volmdlr.display as vmd
+import volmdlr.edges
+import volmdlr.utils.intersections as vm_utils_intersections
 
 
 def bounding_rectangle_adjacent_contours(contours: List):
@@ -1095,6 +1095,8 @@ class ContourMixin(WireMixin):
     def contours_from_edges(cls, edges, tol=1e-7):
         if not edges:
             return []
+        if len(edges) == 1:
+            return [cls(edges)]
         touching_primitives = cls.touching_edges_pairs(edges)
         for prims in touching_primitives:
             if prims[0] in edges:
@@ -1133,7 +1135,15 @@ class ContourMixin(WireMixin):
         list_contours = list_contours + [cls(primitives).order_contour()
                                          for primitives
                                          in contours_primitives_lists]
-        return list_contours
+        valid_contours = [list_contours[0]]
+        list_contours.remove(list_contours[0])
+        for contour in list_contours:
+            for contour2 in valid_contours:
+                if contour.is_superposing(contour2):
+                    break
+            else:
+                 valid_contours.append(contour)
+        return valid_contours
 
     def discretized_primitives(self, number_points: float):
         """
@@ -1231,6 +1241,7 @@ class ContourMixin(WireMixin):
 
     def shared_primitives_extremities(self, contour):
         """
+        #todo: is this discription correct?
         Extract shared primitives extremities between two adjacent contours.
 
         """
@@ -1240,8 +1251,7 @@ class ContourMixin(WireMixin):
             return []
 
         list_p, edges1 = [], set()
-        for edge_1, edge_2 in itertools.product(self.primitives,
-                                                contour.primitives):
+        for edge_1, edge_2 in itertools.product(self.primitives, contour.primitives):
             edges = [edge_1, edge_2, edge_1]
             for edge1, edge2 in zip(edges, edges[1:]):
                 for point in [edge2.start, edge2.end]:
@@ -1283,23 +1293,15 @@ class ContourMixin(WireMixin):
         for i in range(0, len(points), 2):
             point1, point2 = points[i], points[i + 1]
 
-            shared_primitives_prim = self.extract_without_primitives(point1,
-                                                                     point2,
-                                                                     False)
-            if contour.point_over_contour(shared_primitives_prim[0].middle_point(), 1e-4) is False:
-                shared_primitives_1.extend(self.extract_without_primitives(point1,
-                                                                           point2,
-                                                                           True))
+            shared_primitives_prim = self.extract_without_primitives(point1, point2, False)
+            if any(not contour.point_over_contour(prim.middle_point(), 1e-4) for prim in shared_primitives_prim):
+                shared_primitives_1.extend(self.extract_without_primitives(point1, point2, True))
             else:
                 shared_primitives_1.extend(shared_primitives_prim)
 
-            shared_primitives_prim = contour.extract_without_primitives(point1,
-                                                                        point2,
-                                                                        False)
-            if self.point_over_contour(shared_primitives_prim[0].middle_point(), 1e-4) is False:
-                shared_primitives_2.extend(contour.extract_without_primitives(point1,
-                                                                              point2,
-                                                                              True))
+            shared_primitives_prim = contour.extract_without_primitives(point1, point2, False)
+            if any(not self.point_over_contour(prim.middle_point(), 1e-4) for prim in shared_primitives_prim):
+                shared_primitives_2.extend(contour.extract_without_primitives(point1, point2, True))
             else:
                 shared_primitives_2.extend(shared_primitives_prim)
 
@@ -1310,38 +1312,32 @@ class ContourMixin(WireMixin):
         Extract not shared primitives between two adjacent contours, to be merged.
 
         """
-
+        contour1 = self
+        contour2 = contour
         points = self.shared_primitives_extremities(contour)
-        merge_primitives = []
-
-        for i in range(1, len(points) + 1, 2):
-            if i == (len(points) - 1):
-                point1, point2 = points[i], points[0]
-            else:
-                point1, point2 = points[i], points[i + 1]
-
-            merge_primitives_prim = self.extract_without_primitives(point1,
-                                                                    point2,
-                                                                    False)
-            if contour.point_over_contour(merge_primitives_prim[0].middle_point(), 1e-4) is True:
-                merge_primitives_prim = self.extract_without_primitives(point1,
-                                                                        point2,
-                                                                        True)
-                merge_primitives.extend(merge_primitives_prim)
-            else:
-                merge_primitives.extend(merge_primitives_prim)
-
-            merge_primitives_prim = contour.extract_without_primitives(point1,
-                                                                       point2,
-                                                                       False)
-            if self.point_over_contour(merge_primitives_prim[0].middle_point(), 1e-4) is True:
-                merge_primitives_prim = contour.extract_without_primitives(point1,
-                                                                           point2,
-                                                                           True)
-                merge_primitives.extend(merge_primitives_prim)
-            else:
-                merge_primitives.extend(merge_primitives_prim)
-
+        points = self.sort_points_along_wire(points)
+        merge_primitives1 = []
+        merge_primitives2 = []
+        for point1, point2 in zip(points[:-1], points[1:]):
+            merge_primitives_prim1 = contour1.extract_without_primitives(point1, point2, False)
+            merge_primitives_prim2 = contour1.extract_without_primitives(point1, point2, True)
+            for prims in [merge_primitives_prim1, merge_primitives_prim2]:
+                if all(contour.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
+                    continue
+                if not all(not contour.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
+                    contour1 = getattr(sys.modules[__name__], 'Contour' + self.__class__.__name__[-2:])(prims)
+                elif all(not contour.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
+                    merge_primitives1.extend(prims)
+            merge_primitives_prim3 = contour2.extract_without_primitives(point1, point2, False)
+            merge_primitives_prim4 = contour2.extract_without_primitives(point1, point2, True)
+            for prims in [merge_primitives_prim3, merge_primitives_prim4]:
+                if all(self.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
+                    continue
+                if not all(not self.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
+                    contour2 = getattr(sys.modules[__name__], 'Contour'+self.__class__.__name__[-2:])(prims)
+                elif all(not self.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
+                    merge_primitives2.extend(prims)
+        merge_primitives = merge_primitives1 + merge_primitives2
         return merge_primitives
 
     def edges_order_with_adjacent_contour(self, contour):
@@ -1788,44 +1784,26 @@ class Contour2D(ContourMixin, Wire2D):
         intersections = self.line_crossings(line)
         if not intersections or len(intersections) < 2:
             return [self]
-        if len(intersections) % 2 != 0:
-            ax = self.plot()
-            line.plot(ax=ax)
-            for i in intersections:
-                i[0].plot(ax=ax)
-            self.save_to_file('/home/axel/Bureau/contour2d')
-            line.save_to_file('/home/axel/Bureau/line2d')
-            raise NotImplementedError(
-                '{} intersections not supported yet'.format(
-                    len(intersections)))
-
         points_intersections = [point for point, prim in intersections]
         sorted_points = line.sort_points_along_line(points_intersections)
         list_contours = []
         contour_to_cut = self
-        cutting_points_counter = 0
-        while cutting_points_counter != len(sorted_points):
 
-            point1 = sorted_points[cutting_points_counter]
-            point2 = sorted_points[cutting_points_counter + 1]
+        for point1, point2 in zip(sorted_points[:-1], sorted_points[1:]):
             closing_line = volmdlr.edges.LineSegment2D(point1, point2)
+            if not contour_to_cut.point_belongs(closing_line.middle_point()):
+                continue
             closing_contour = Contour2D([closing_line])
-            contour1, contour2 = contour_to_cut.get_divided_contours(point1,
-                                                                     point2,
-                                                                     closing_contour,
-                                                                     True)
-            if sorted_points.index(point1) + 2 < len(sorted_points) - 1:
-                if contour1.point_over_contour(
-                        sorted_points[sorted_points.index(point1) + 2]):
+            contour1, contour2 = contour_to_cut.get_divided_contours(point1, point2, closing_contour, True)
+            if sorted_points.index(point1) + 2 <= len(sorted_points) - 1:
+                if contour1.point_over_contour(sorted_points[sorted_points.index(point1) + 2]):
                     contour_to_cut = contour1
                     list_contours.append(contour2)
-                elif contour2.point_over_contour(
-                        sorted_points[sorted_points.index(point1) + 2]):
+                elif contour2.point_over_contour(sorted_points[sorted_points.index(point1) + 2]):
                     contour_to_cut = contour2
                     list_contours.append(contour1)
             else:
                 list_contours.extend([contour1, contour2])
-            cutting_points_counter += 2
         return list_contours
 
     def simple_triangulation(self):
@@ -2094,10 +2072,10 @@ class Contour2D(ContourMixin, Wire2D):
                 # finished = True
                 contours = contours[::-1]
                 if counter > 100 * len(list_contour) + len(contours):
-                    print('new_base_contours:', len(new_base_contours))
-                    print('len(contours):', len(contours))
-                    ax = contours[0].plot()
-                    base_contour.plot(ax=ax, color='b')
+                    # print('new_base_contours:', len(new_base_contours))
+                    # print('len(contours):', len(contours))
+                    # ax = contours[0].plot()
+                    # base_contour.plot(ax=ax, color='b')
                     warnings.warn('There probably exists an open contour (two wires that could not be connected)')
                     finished = True
 
