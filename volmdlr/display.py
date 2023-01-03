@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Classes to define mesh for display use. Display mesh do not require good aspect ratios on elements.
 """
+
 from typing import List, Tuple
 import math
 import dessia_common.core as dc
