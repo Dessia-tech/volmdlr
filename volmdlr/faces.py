@@ -179,7 +179,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         segments.append((n - 1, 0))
 
         if not self.inner_contours:  # No holes
-
             vertices_grid = [(p.x, p.y) for p in points_grid]
             vertices.extend(vertices_grid)
             tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
@@ -202,16 +201,18 @@ class Surface2D(volmdlr.core.Primitive2D):
                     vertices.append((point.x, point.y))
                     point_index[point] = n
                     n += 1
+
             for point1, point2 in zip(inner_polygon_nodes[:-1],
                                       inner_polygon_nodes[1:]):
                 segments.append((point_index[point1], point_index[point2]))
             segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
-            rpi = inner_contour.random_point_inside()
-            holes.append((rpi.x, rpi.y))
+
+            rpi = inner_polygon.point_in_polygon()
+            holes.append([rpi.x, rpi.y])
 
             if triangulates_with_grid:
                 # removes with a region search the grid points that are in the inner contour
-                xmin, xmax, ymin, ymax = inner_contour.bounding_rectangle().bounds()
+                xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle().bounds()
                 x_grid_range = array_range_search(x, xmin, xmax)
                 y_grid_range = array_range_search(y, ymin, ymax)
                 for i in x_grid_range:
@@ -229,14 +230,12 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                'segments': npy.array(segments).reshape((-1, 2)),
+               'holes': npy.array(holes).reshape((-1, 2))
                }
-        if holes:
-            tri['holes'] = npy.array(holes).reshape((-1, 2))
         t = triangle.triangulate(tri, tri_opt)
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-
         return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
 
     def split_by_lines(self, lines):
@@ -7352,7 +7351,7 @@ class BSplineFace3D(Face3D):
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
         if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
-            resolution = 50
+            resolution = 25
         else:
             resolution = 10
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
