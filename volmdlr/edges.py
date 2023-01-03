@@ -15,7 +15,7 @@ import scipy as scp
 import scipy.optimize
 import scipy.integrate as scipy_integrate
 
-from geomdl import utilities, BSpline, fitting, operations
+from geomdl import utilities, BSpline, fitting, operations, NURBS
 from geomdl.operations import length_curve, split_curve
 from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
@@ -110,7 +110,7 @@ class Edge(dc.DessiaObject):
         if number_points is None or number_points == 1:
             number_points = 2
         if angle_resolution:
-            number_points = int(3.1415 * angle_resolution)
+            number_points = int(math.pi * angle_resolution)
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
@@ -471,15 +471,16 @@ class BSplineCurve(Edge):
         self.periodic = periodic
         self.name = name
 
-        curve = BSpline.Curve()
-        curve.degree = degree
+        points = [[*point] for point in control_points]
         if weights is None:
-            points = [[*point] for point in control_points]
+            curve = BSpline.Curve()
+            curve.degree = degree
             curve.ctrlpts = points
         else:
-            points_w = [[*point * weights[i], weights[i]] for i, point
-                        in enumerate(control_points)]
-            curve.ctrlptsw = points_w
+            curve = NURBS.Curve()
+            curve.degree = degree
+            curve.ctrlpts = points
+            curve.weights = weights
 
         knot_vector = []
         for i, knot in enumerate(knots):
@@ -823,7 +824,7 @@ class BSplineCurve(Edge):
         """
 
         if angle_resolution:
-            number_points = int(3.1415 * angle_resolution)
+            number_points = int(math.pi * angle_resolution)
         if len(self.points) == number_points:
             return self.points
         curve = self.curve
@@ -2042,6 +2043,11 @@ class Arc2D(Arc):
                              xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2])
             center = volmdlr.Point2D(*npy.linalg.solve(A, b))
         return center
+
+    def reverse(self):
+        return self.__class__(self.end.copy(),
+                              self.interior.copy(),
+                              self.start.copy())
 
     @property
     def is_trigo(self):

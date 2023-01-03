@@ -3983,7 +3983,7 @@ class Circle2D(Contour2D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         if not number_points and angle_resolution:
-            number_points = math.ceil(3.1415 * angle_resolution) + 2
+            number_points = math.ceil(math.pi * angle_resolution) + 2
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 

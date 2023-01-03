@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 # import matplotlib.tri as plt_tri
 # from pygeodesic import geodesic
 
-from geomdl import BSpline
+from geomdl import BSpline, NURBS
 from geomdl import utilities
 from geomdl.fitting import interpolate_surface, approximate_surface
 from geomdl.operations import split_surface_u, split_surface_v
@@ -2789,14 +2789,17 @@ class BSplineSurface3D(Surface3D):
                 i = 1
             else:
                 i += 1
-        surface = BSpline.Surface()
-        surface.degree_u = degree_u
-        surface.degree_v = degree_v
         if weights is None:
+            surface = BSpline.Surface()
+            surface.degree_u = degree_u
+            surface.degree_v = degree_v
             P = [(control_points[i][0], control_points[i][1],
                   control_points[i][2]) for i in range(len(control_points))]
             surface.set_ctrlpts(P, nb_u, nb_v)
         else:
+            surface = NURBS.Surface()
+            surface.degree_u = degree_u
+            surface.degree_v = degree_v
             Pw = [(control_points[i][0] * weights[i],
                    control_points[i][1] * weights[i],
                    control_points[i][2] * weights[i],
