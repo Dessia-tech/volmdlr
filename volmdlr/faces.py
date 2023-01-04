@@ -5069,7 +5069,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def face_inside(self, face2):
         """
-        Verifies if a planeface is inside another planeface.
+        Verifies if a face is inside another one.
 
         It returns True if face2 is inside or False if the opposite.
         """
@@ -5875,31 +5875,31 @@ class PlaneFace3D(Face3D):
                 return False
         return True
 
-    def face_intersections_inner_contours(self, face2):
-        intersections = []
-        for inner_contour2d in face2.surface2d.inner_contours:
-            inner_contour3d = face2.surface3d.contour2d_to_3d(inner_contour2d)
-            for inner_edge2 in inner_contour3d.primitives:
-                intersection_points = self.edge_intersections(inner_edge2)
-                if intersection_points:
-                    for point in intersection_points:
-                        if point not in intersections:
-                            intersections.append(point)
+    # def face_intersections_inner_contours(self, face2):
+    #     intersections = []
+    #     for inner_contour2d in face2.surface2d.inner_contours:
+    #         inner_contour3d = face2.surface3d.contour2d_to_3d(inner_contour2d)
+    #         for inner_edge2 in inner_contour3d.primitives:
+    #             intersection_points = self.edge_intersections(inner_edge2)
+    #             if intersection_points:
+    #                 for point in intersection_points:
+    #                     if point not in intersections:
+    #                         intersections.append(point)
+    #
+    #     return intersections
 
-        return intersections
-
-    def validate_inner_contour_intersections(self, intersections, face2=None):
-        intersection_primitives = []
-        for point1, point2 in combinations(intersections, 2):
-            if point1 != point2:
-                line_segment3d = vme.LineSegment3D(point1, point2)
-                if self.edge3d_inside(line_segment3d) and line_segment3d not in intersection_primitives:
-                    if face2 is not None:
-                        if face2.edge3d_inside(line_segment3d):
-                            intersection_primitives.append(line_segment3d)
-                    else:
-                        intersection_primitives.append(line_segment3d)
-        return intersection_primitives
+    # def validate_inner_contour_intersections(self, intersections, face2=None):
+    #     intersection_primitives = []
+    #     for point1, point2 in combinations(intersections, 2):
+    #         if point1 != point2:
+    #             line_segment3d = vme.LineSegment3D(point1, point2)
+    #             if self.edge3d_inside(line_segment3d) and line_segment3d not in intersection_primitives:
+    #                 if face2 is not None:
+    #                     if face2.edge3d_inside(line_segment3d):
+    #                         intersection_primitives.append(line_segment3d)
+    #                 else:
+    #                     intersection_primitives.append(line_segment3d)
+    #     return intersection_primitives
 
     def planeface_intersections(self, planeface):
         face2_plane_interections = planeface.surface3d.plane_intersection(self.surface3d)
