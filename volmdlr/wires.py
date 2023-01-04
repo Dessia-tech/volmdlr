@@ -484,9 +484,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def plot_data(self, name: str = '', fill=None, color='black',
                   stroke_width: float = 1, opacity: float = 1):
-
         data = []
-
         for item in self.primitives:
             data.append(item.plot_data())
         return data
