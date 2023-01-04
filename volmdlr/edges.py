@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Edges related classes.
 """
 
 import math
@@ -15,7 +15,7 @@ import scipy as scp
 import scipy.optimize
 import scipy.integrate as scipy_integrate
 
-from geomdl import utilities, BSpline, fitting, operations
+from geomdl import utilities, BSpline, fitting, operations, NURBS
 from geomdl.operations import length_curve, split_curve
 from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
@@ -107,8 +107,10 @@ class Edge(dc.DessiaObject):
             a controlled angular distance. Usefull to mesh an arc
         :return: a list of sampled points
         """
-        if number_points is None:
+        if number_points is None or number_points == 1:
             number_points = 2
+        if angle_resolution:
+            number_points = int(math.pi * angle_resolution)
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
@@ -469,15 +471,16 @@ class BSplineCurve(Edge):
         self.periodic = periodic
         self.name = name
 
-        curve = BSpline.Curve()
-        curve.degree = degree
+        points = [[*point] for point in control_points]
         if weights is None:
-            points = [[*point] for point in control_points]
+            curve = BSpline.Curve()
+            curve.degree = degree
             curve.ctrlpts = points
         else:
-            points_w = [[*point * weights[i], weights[i]] for i, point
-                        in enumerate(control_points)]
-            curve.ctrlptsw = points_w
+            curve = NURBS.Curve()
+            curve.degree = degree
+            curve.ctrlpts = points
+            curve.weights = weights
 
         knot_vector = []
         for i, knot in enumerate(knots):
@@ -700,7 +703,7 @@ class BSplineCurve(Edge):
 
         points, n = [], 10
         for primitive in ordered_wire.primitives:
-            points.extend(primitive.polygon_points(n))
+            points.extend(primitive.discretization_points(n))
         points.pop(n + 1)
 
         return self.__class__.from_points_interpolation(
@@ -728,10 +731,10 @@ class BSplineCurve(Edge):
         for i, primitive in enumerate(ordered_wire.primitives):
             degree.append(primitive.degree)
             if i == 0:
-                points.extend(primitive.polygon_points(discretization_points))
+                points.extend(primitive.discretization_points(number_points=discretization_points))
             else:
                 points.extend(
-                    primitive.polygon_points(discretization_points)[1::])
+                    primitive.discretization_points(number_points=discretization_points)[1::])
 
         return cls.from_points_interpolation(points, min(degree))
 
@@ -821,7 +824,7 @@ class BSplineCurve(Edge):
         """
 
         if angle_resolution:
-            number_points = int(3.1415 * angle_resolution)
+            number_points = int(math.pi * angle_resolution)
         if len(self.points) == number_points:
             return self.points
         curve = self.curve
@@ -1452,7 +1455,7 @@ class BSplineCurve2D(BSplineCurve):
 
         """
 
-        points = self.polygon_points(500)
+        points = self.discretization_points(number_points=500)
         return point.nearest_point(points)
 
     def linesegment_intersections(self, linesegment):
@@ -2041,6 +2044,11 @@ class Arc2D(Arc):
             center = volmdlr.Point2D(*npy.linalg.solve(A, b))
         return center
 
+    def reverse(self):
+        return self.__class__(self.end.copy(),
+                              self.interior.copy(),
+                              self.start.copy())
+
     @property
     def is_trigo(self):
         if not self._is_trigo:
@@ -2546,7 +2554,7 @@ class Arc2D(Arc):
 
         """
 
-        return volmdlr.wires.Wire2D.from_points(self.polygon_points(angle_resolution))
+        return volmdlr.wires.Wire2D.from_points(self.discretization_points(angle_resolution=angle_resolution))
 
     def axial_symmetry(self, line):
         """
@@ -4151,10 +4159,11 @@ class BSplineCurve3D(BSplineCurve):
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
-        lines = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
-        dir_vector = lines[0].unit_direction_vector()
-        if all(line.unit_direction_vector() == dir_vector for line in lines):
-            return LineSegment3D(points[0], points[-1])
+        lines = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:]) if pt1 != pt2]
+        if lines:  # quick fix. Real problem: Tolerance too low (1e-6 m = 0.001mm)
+            dir_vector = lines[0].unit_direction_vector()
+            if all(line.unit_direction_vector() == dir_vector for line in lines):
+                return LineSegment3D(points[0], points[-1])
         # curve_form = arguments[3]
         if arguments[4] == '.F.':
             closed_curve = False
@@ -4420,11 +4429,11 @@ class BSplineCurve3D(BSplineCurve):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic, self.name)
 
-    def polygon_points(self):
+    def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
-        please use discretization_points instead',
+                please use discretization_points instead',
                       DeprecationWarning)
-        return self.discretization_points()
+        return self.discretization_points(angle_resolution=discretization_resolution)
 
     def curvature(self, u: float, point_in_curve: bool = False):
         # u should be in the interval [0,1]
@@ -5316,6 +5325,17 @@ class FullArc3D(Arc3D):
 
     def copy(self, *args, **kwargs):
         return FullArc3D(self._center.copy(), self.end.copy(), self._normal.copy())
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        dict_ = self.base_dict()
+        dict_['center'] = self.center.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/center')
+        dict_['radius'] = self.radius
+        dict_['angle'] = self.angle
+        dict_['is_trigo'] = self.is_trigo
+        dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
+        dict_['normal'] = self.normal.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/normal')
+        dict_['name'] = self.name
+        return dict_
 
     def to_2d(self, plane_origin, x, y):
         """

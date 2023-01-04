@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+ISO STEP reader/writer.
 """
 
 import time
@@ -48,6 +48,8 @@ def step_split_arguments(function_arg):
         function_arg += ')'
     arguments = []
     argument = ""
+    if len(function_arg) > 0 and function_arg[0] == "(":
+        function_arg += ")"
     parenthesis = 1
     for char in function_arg:
         if char == "(":
@@ -678,6 +680,7 @@ class Step(dc.DessiaObject):
 
     def instanciate(self, name, arguments, object_dict):
         """
+        Gives the volmdlr object related to the step function.
         """
         self.parse_arguments(arguments)
 

@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 # import matplotlib.tri as plt_tri
 # from pygeodesic import geodesic
 
-from geomdl import BSpline
+from geomdl import BSpline, NURBS
 from geomdl import utilities
 from geomdl.fitting import interpolate_surface, approximate_surface
 from geomdl.operations import split_surface_u, split_surface_v
@@ -35,6 +35,7 @@ import volmdlr.display as vmd
 import volmdlr.geometry
 import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
+from volmdlr.utils.parametric import array_range_search
 
 
 def knots_vector_inv(knots_vector):
@@ -146,30 +147,51 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return point_inside_outer_contour
 
-    def triangulation(self):
+    def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
         Triangulates the Surface2D using the Triangle library.
 
-        :param min_x_density: unused
-        :param min_y_density: unused
+        :param number_points_x: Number of discretization points in x direction.
+        :type number_points_x: int
+        :param number_points_y: Number of discretization points in y direction.
+        :type number_points_y: int
         :return: The triangulated surface as a display mesh.
         :rtype: :class:`volmdlr.display.DisplayMesh2D`
         """
-        if self.area() == 0.:
+        area = self.bounding_rectangle().area()
+        tri_opt = "p"
+        if area == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
 
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
+        triangulates_with_grid = number_points_x > 0 or number_points_y > 0
 
-        if not self.inner_contours:  # No holes
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=10, discretize_line=triangulates_with_grid)
+
+        if not self.inner_contours and not triangulates_with_grid:
             return outer_polygon.triangulation()
+
+        points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
+                                                                                      number_points_y=number_points_y)
         points = [vmd.Node2D(*p) for p in outer_polygon.points]
         vertices = [(p.x, p.y) for p in points]
-        n = len(outer_polygon.points)
+        n = len(points)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
+
+        if not self.inner_contours:  # No holes
+            vertices_grid = [(p.x, p.y) for p in points_grid]
+            vertices.extend(vertices_grid)
+            tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+                   'segments': npy.array(segments).reshape((-1, 2)),
+                   }
+            t = triangle.triangulate(tri, tri_opt)
+            triangles = t['triangles'].tolist()
+            np = t['vertices'].shape[0]
+            points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
+            return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
-
         for inner_contour in self.inner_contours:
             inner_polygon = inner_contour.to_polygon(angle_resolution=10)
             inner_polygon_nodes = [vmd.Node2D.from_point(p) for p in inner_polygon.points]
@@ -179,18 +201,38 @@ class Surface2D(volmdlr.core.Primitive2D):
                     vertices.append((point.x, point.y))
                     point_index[point] = n
                     n += 1
+
             for point1, point2 in zip(inner_polygon_nodes[:-1],
                                       inner_polygon_nodes[1:]):
                 segments.append((point_index[point1], point_index[point2]))
             segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
-            rpi = inner_contour.random_point_inside()
-            holes.append((rpi.x, rpi.y))
+
+            rpi = inner_polygon.point_in_polygon()
+            holes.append([rpi.x, rpi.y])
+
+            if triangulates_with_grid:
+                # removes with a region search the grid points that are in the inner contour
+                xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle().bounds()
+                x_grid_range = array_range_search(x, xmin, xmax)
+                y_grid_range = array_range_search(y, ymin, ymax)
+                for i in x_grid_range:
+                    for j in y_grid_range:
+                        point = grid_point_index.get((i, j))
+                        if not point:
+                            continue
+                        if inner_polygon.point_belongs(point):
+                            points_grid.remove(point)
+                            grid_point_index.pop((i, j))
+
+        if triangulates_with_grid:
+            vertices_grid = [(p.x, p.y) for p in points_grid]
+            vertices.extend(vertices_grid)
 
         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-               'segments': npy.array(segments).reshape((-1, 2))}
-        if holes:
-            tri['holes'] = npy.array(holes).reshape((-1, 2))
-        t = triangle.triangulate(tri, 'p')
+               'segments': npy.array(segments).reshape((-1, 2)),
+               'holes': npy.array(holes).reshape((-1, 2))
+               }
+        t = triangle.triangulate(tri, tri_opt)
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
@@ -366,38 +408,25 @@ class Surface2D(volmdlr.core.Primitive2D):
                 sp33, sp34 = intersections[6][1].split(intersections[6][0])
                 sp44, sp43 = intersections[7][1].split(intersections[7][0])
 
-                primitives1 = []
-                primitives1.append(
-                    volmdlr.edges.LineSegment2D(intersections[6][0],
-                                                intersections[1][0]))
-                primitives1.append(new_inner_1.primitives[ip1])
-                primitives1.append(
-                    volmdlr.edges.LineSegment2D(intersections[0][0],
-                                                intersections[5][0]))
-                primitives1.append(new_inner_2.primitives[ip5])
-                primitives1.append(
-                    volmdlr.edges.LineSegment2D(intersections[4][0],
-                                                intersections[7][0]))
-                primitives1.append(sp44)
+                primitives1 = [volmdlr.edges.LineSegment2D(intersections[6][0], intersections[1][0]),
+                               new_inner_1.primitives[ip1],
+                               volmdlr.edges.LineSegment2D(intersections[0][0], intersections[5][0]),
+                               new_inner_2.primitives[ip5],
+                               volmdlr.edges.LineSegment2D(intersections[4][0], intersections[7][0]),
+                               sp44
+                               ]
                 primitives1.extend(self.outer_contour.primitives[ip3 + 1:ip4])
                 primitives1.append(sp34)
 
-                primitives2 = []
-                primitives2.append(
-                    volmdlr.edges.LineSegment2D(intersections[7][0],
-                                                intersections[4][0]))
-                primitives2.append(new_inner_2.primitives[ip6])
-                primitives2.append(
-                    volmdlr.edges.LineSegment2D(intersections[5][0],
-                                                intersections[0][0]))
-                primitives2.append(new_inner_1.primitives[ip2])
-                primitives2.append(
-                    volmdlr.edges.LineSegment2D(intersections[1][0],
-                                                intersections[6][0]))
-                primitives2.append(sp33)
-                a = self.outer_contour.primitives[:ip3]
-                a.reverse()
-                primitives2.extend(a)
+                primitives2 = [volmdlr.edges.LineSegment2D(intersections[7][0], intersections[4][0]),
+                               new_inner_2.primitives[ip6],
+                               volmdlr.edges.LineSegment2D(intersections[5][0], intersections[0][0]),
+                               new_inner_1.primitives[ip2],
+                               volmdlr.edges.LineSegment2D(intersections[1][0], intersections[6][0]),
+                               sp33
+                               ]
+
+                primitives2.extend(self.outer_contour.primitives[:ip3].reverse())
                 primitives2.append(sp43)
 
                 all_contours.extend([volmdlr.wires.Contour2D(primitives1),
@@ -823,7 +852,8 @@ class Surface3D(DessiaObject):
                 try:
                     primitives3d.extend(getattr(self, method_name)(primitive2d))
                 except NotImplementedError:
-                    print('Error NotImplementedError')
+                    print(f'Class {self.__class__.__name__} does not implement {method_name}'
+                          f'with {primitive2d.__class__.__name__}')
             else:
                 raise NotImplementedError(
                     'Class {} does not implement {}'.format(
@@ -1432,6 +1462,7 @@ class CylindricalSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
+
         points = [self.point3d_to_2d(p) for p in bspline_curve3d.control_points]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
@@ -2758,19 +2789,20 @@ class BSplineSurface3D(Surface3D):
                 i = 1
             else:
                 i += 1
-        surface = BSpline.Surface()
-        surface.degree_u = degree_u
-        surface.degree_v = degree_v
         if weights is None:
+            surface = BSpline.Surface()
             P = [(control_points[i][0], control_points[i][1],
                   control_points[i][2]) for i in range(len(control_points))]
-            surface.set_ctrlpts(P, nb_u, nb_v)
+
         else:
-            Pw = [(control_points[i][0] * weights[i],
-                   control_points[i][1] * weights[i],
-                   control_points[i][2] * weights[i],
-                   weights[i]) for i in range(len(control_points))]
-            surface.set_ctrlpts(Pw, nb_u, nb_v)
+            surface = NURBS.Surface()
+            P = [(control_points[i][0] * weights[i],
+                  control_points[i][1] * weights[i],
+                  control_points[i][2] * weights[i],
+                  weights[i]) for i in range(len(control_points))]
+        surface.degree_u = degree_u
+        surface.degree_v = degree_v
+        surface.set_ctrlpts(P, nb_u, nb_v)
         knot_vector_u = []
         for i, u_knot in enumerate(u_knots):
             knot_vector_u.extend([u_knot] * u_multiplicities[i])
@@ -3139,11 +3171,6 @@ class BSplineSurface3D(Surface3D):
                 flag = False
                 break
 
-        x_perio = self.x_periodicity if self.x_periodicity is not None \
-            else 1.
-        y_perio = self.y_periodicity if self.y_periodicity is not None \
-            else 1.
-
         if self.x_periodicity and not self.y_periodicity \
                 and bspline_curve3d.periodic:
             p1 = self.point3d_to_2d(bspline_curve3d.points[0])
@@ -3214,7 +3241,7 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * lth)) for i in range(11)]
+                points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=10)]
                 linesegments = [vme.BSplineCurve2D.from_points_interpolation(
                     points, min(self.degree_u, self.degree_v))]
 
@@ -4846,14 +4873,14 @@ class Face3D(volmdlr.core.Primitive3D):
     @property
     def outer_contour3d(self):
         """
-
+        Gives the 3d version of the outer contour of the face.
         """
         return self.surface3d.contour2d_to_3d(self.surface2d.outer_contour)
 
     @property
     def inner_contours3d(self):
         """
-
+        Gives the 3d version of the inner contours of the face.
         """
         return [self.surface3d.contour2d_to_3d(c) for c in
                 self.surface2d.inner_contours]
@@ -4969,22 +4996,15 @@ class Face3D(volmdlr.core.Primitive3D):
     def triangulation_lines(self):
         return [], []
 
+    def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
+        return [0, 0]
+
     def triangulation(self):
-        lines_x, lines_y = self.triangulation_lines()
-        if lines_x and lines_y:
-            surfaces = []
-            for surface in self.surface2d.split_by_lines(lines_x):
-                surfaces.extend(surface.split_by_lines(lines_y))
-
-        elif lines_x:
-            surfaces = self.surface2d.split_by_lines(lines_x)
-        elif lines_y:
-            surfaces = self.surface2d.split_by_lines(lines_y)
-        else:
-            surfaces = [self.surface2d]
-
-        meshes = [s.triangulation() for s in surfaces]
-        mesh2d = vmd.DisplayMesh2D.merge_meshes(meshes)
+        number_points_x, number_points_y = self.grid_size()
+        mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
         return vmd.DisplayMesh3D(
             [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
              mesh2d.points],
@@ -5186,6 +5206,7 @@ class PlaneFace3D(Face3D):
     @property
     def bounding_box(self):
         """
+        Returns the bounding box, uses a cache.
         """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
@@ -6521,6 +6542,19 @@ class CylindricalFace3D(Face3D):
                                     volmdlr.Point2D(theta, zmax)))
         return lines, []
 
+    def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
+        angle_resolution = 5
+        theta_min, theta_max, _, _ = self.surface2d.bounding_rectangle().bounds()
+        delta_theta = theta_max - theta_min
+        number_points_x = int(delta_theta * angle_resolution)
+
+        number_points_y = 0
+
+        return number_points_x, number_points_y
+
     def range_closest(self, list_points):
         """
         Needs a docstring.
@@ -6936,6 +6970,21 @@ class ToroidalFace3D(Face3D):
                                       volmdlr.Point2D(theta_max, phi)))
         return lines_x, lines_y
 
+    def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
+        angle_resolution = 5
+        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
+
+        delta_theta = theta_max - theta_min
+        number_points_x = int(delta_theta * angle_resolution)
+
+        delta_phi = phi_max - phi_min
+        number_points_y = int(delta_phi * angle_resolution)
+
+        return number_points_x, number_points_y
+
 
 class ConicalFace3D(Face3D):
     """
@@ -7038,6 +7087,19 @@ class ConicalFace3D(Face3D):
             lines_y = []
         return lines_x, lines_y
 
+    def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
+        angle_resolution = 5
+        theta_min, theta_max, _, _ = self.surface2d.bounding_rectangle().bounds()
+        delta_theta = theta_max - theta_min
+        number_points_x = math.ceil(delta_theta * angle_resolution)
+
+        number_points_y = 0
+
+        return number_points_x, number_points_y
+
     # def create_triangle(self, all_contours_points, part):
     #     Triangles, ts = [], []
     #     pts, h_list = [], []
@@ -7136,6 +7198,21 @@ class SphericalFace3D(Face3D):
                                       volmdlr.Point2D(theta_max, phi)))
         return lines_x, lines_y
 
+    def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
+        angle_resolution = 9
+        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
+
+        delta_theta = theta_max - theta_min
+        number_points_x = int(delta_theta * angle_resolution)
+
+        delta_phi = phi_max - phi_min
+        number_points_y = int(delta_phi * angle_resolution)
+
+        return number_points_x, number_points_y
+
 
 class RuledFace3D(Face3D):
     """
@@ -7200,6 +7277,19 @@ class RuledFace3D(Face3D):
                                     volmdlr.Point2D(x, ymax)))
         return lines, []
 
+    def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
+        angle_resolution = 10
+        xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
+        delta_x = xmax - xmin
+        number_points_x = int(delta_x * angle_resolution)
+
+        number_points_y = 0
+
+        return number_points_x, number_points_y
+
 
 class BSplineFace3D(Face3D):
     """
@@ -7257,6 +7347,23 @@ class BSplineFace3D(Face3D):
             lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v),
                                       volmdlr.Point2D(v_max, v)))
         return lines_x, lines_y
+
+    def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
+        if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
+            resolution = 25
+        else:
+            resolution = 10
+        u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
+        delta_u = u_max - u_min
+        number_points_x = int(delta_u * resolution)
+
+        delta_v = v_max - v_min
+        number_points_y = int(delta_v * resolution)
+
+        return number_points_x, number_points_y
 
     def pair_with(self, other_bspline_face3d):
         """
@@ -8059,6 +8166,24 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
 
 class ClosedShell3D(OpenShell3D):
+    """
+    A 3D closed shell composed of multiple faces.
+
+    This class represents a 3D closed shell, which is a collection of connected
+    faces with a volume. It is a subclass of the `OpenShell3D` class and
+    inherits all of its attributes and methods. In addition, it has a method
+    to check whether a face is inside the shell.
+
+    :param faces: The faces of the shell.
+    :type faces: List[`Face3D`]
+    :param color: The color of the shell.
+    :type color: Tuple[float, float, float]
+    :param alpha: The transparency of the shell, should be a value in the range (0, 1).
+    :type alpha: float
+    :param name: The name of the shell.
+    :type name: str
+    """
+
     STEP_FUNCTION = 'CLOSED_SHELL'
 
     def is_face_inside(self, face: Face3D):
@@ -8711,6 +8836,23 @@ class ClosedShell3D(OpenShell3D):
 
 
 class OpenTriangleShell3D(OpenShell3D):
+    """
+    A 3D open shell composed of multiple triangle faces.
+
+    This class represents a 3D open shell, which is a collection of connected
+    triangle faces with no volume. It is a subclass of the `OpenShell3D` class
+    and inherits all of its attributes and methods.
+
+    :param faces: The triangle faces of the shell.
+    :type faces: List[`Triangle3D`]
+    :param color: The color of the shell.
+    :type color: Tuple[float, float, float]
+    :param alpha: The transparency of the shell, should be a value in the range (0, 1).
+    :type alpha: float
+    :param name: The name of the shell.
+    :type name: str
+    """
+
     def __init__(self, faces: List[Triangle3D],
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
@@ -8757,6 +8899,24 @@ class OpenTriangleShell3D(OpenShell3D):
 
 
 class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
+    """
+        A 3D closed shell composed of multiple triangle faces.
+
+    This class represents a 3D closed shell, which is a collection of connected
+    triangle faces with a volume. It is a subclass of both the `ClosedShell3D`
+    and `OpenTriangleShell3D` classes and inherits all of their attributes and
+    methods.
+
+    :param faces: The triangle faces of the shell.
+    :type faces: List[`Triangle3D`]
+    :param color: The color of the shell.
+    :type color: Tuple[float, float, float]
+    :param alpha: The transparency of the shell, should be a value in the range (0, 1).
+    :type alpha: float
+    :param name: The name of the shell.
+    :type name: str
+    """
+
     def __init__(self, faces: List[Triangle3D],
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):

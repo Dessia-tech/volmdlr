@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+STL reader & writer.
 
+https://en.wikipedia.org/wiki/STL_(file_format)
 """
 # from binaryornot.check import is_binary
 import struct

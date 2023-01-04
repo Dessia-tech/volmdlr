@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Mesh: delete_duplicated_nodes
 * BSplineSurface3D: fix arc3d_to_2d method
 * Frame3D : fix from_point_and_vector method ( error for the case vector=main_axis)
+* BSplineCurve: fix to take into account weighted B-spline curves.
+* Step: fix reading of rational BSpline curves and surfaces from step file.
 
 ### Removed
 
@@ -32,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ClosedPolygon2D: triangulation
 * Cylinder: min_distance_to_other_cylinder
 * BSplineCurve: discretization_points
+* Face3D: triangulation
 
 
 ### Refactorings
