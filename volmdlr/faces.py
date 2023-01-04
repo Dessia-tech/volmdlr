@@ -2805,12 +2805,9 @@ class BSplineSurface3D(Surface3D):
                    control_points[i][2] * weights[i],
                    weights[i]) for i in range(len(control_points))]
             surface.set_ctrlpts(Pw, nb_u, nb_v)
-        knot_vector_u = []
-        for i, u_knot in enumerate(u_knots):
-            knot_vector_u.extend([u_knot] * u_multiplicities[i])
-        knot_vector_v = []
-        for i, v_knot in enumerate(v_knots):
-            knot_vector_v.extend([v_knot] * v_multiplicities[i])
+        knot_vector_u = [[u_knot] * u_multiplicities[i] for i, u_knot in enumerate(u_knots)]
+        knot_vector_v = [[v_knot] * v_multiplicities[i] for i, v_knot in enumerate(v_knots)]
+
         surface.knotvector_u = knot_vector_u
         surface.knotvector_v = knot_vector_v
         surface.delta = 0.05
