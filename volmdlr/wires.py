@@ -1620,10 +1620,10 @@ class Contour2D(ContourMixin, Wire2D):
         return self._bounding_rectangle
 
     def get_bouding_rectangle(self):
-        xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle().bounds()
+        xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle.bounds()
         for edge in self.primitives[1:]:
             xmin_edge, xmax_edge, ymin_edge, ymax_edge = \
-                edge.bounding_rectangle().bounds()
+                edge.bounding_rectangle.bounds()
             xmin = min(xmin, xmin_edge)
             xmax = max(xmax, xmax_edge)
             ymin = min(ymin, ymin_edge)
@@ -4059,47 +4059,48 @@ class Ellipse2D(Contour2D):
         :param line: line to calculate intersections
         :return: list of points intersections, if there are any
         """
-        if self.theta != 0:
-            frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
-            frame_mapped_ellipse = self.frame_mapping(frame, 'new')
-            frame_mapped_line = line.frame_mapping(frame, 'new')
-            line_inters = frame_mapped_ellipse.line_intersections(frame_mapped_line)
-            line_intersections = [frame.old_coordinates(point) for point in line_inters]
-            return line_intersections
+        intersections = vm_utils_intersections.ellipse2d_line_intersections(self, line)
+        # if self.theta != 0:
+        #     frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
+        #     frame_mapped_ellipse = self.frame_mapping(frame, 'new')
+        #     frame_mapped_line = line.frame_mapping(frame, 'new')
+        #     line_inters = frame_mapped_ellipse.line_intersections(frame_mapped_line)
+        #     line_intersections = [frame.old_coordinates(point) for point in line_inters]
+        #     return line_intersections
+        #
+        # if line.points[1].x == line.points[0].x:
+        #     x1 = line.points[0].x
+        #     x2 = x1
+        #     y1 = self.minor_axis * math.sqrt((1 - x1 ** 2 / self.major_axis ** 2))
+        #     y2 = -y1
+        #     c = self.center.y + line.points[0].y
+        # else:
+        #     m = (line.points[1].y - line.points[0].y) / (line.points[1].x - line.points[0].x)
+        #     c = - m * (line.points[0].x + self.center.x) + line.points[0].y + self.center.y
+        #     if self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2 > c ** 2:
+        #         x1 = - (2 * (self.major_axis ** 2) * m * c + math.sqrt(
+        #             (2 * (self.major_axis ** 2) * m * c) ** 2 - 4 * (
+        #                         self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2) *
+        #             self.major_axis ** 2 * (c ** 2 - self.minor_axis ** 2))) / (
+        #                          2 * (self.major_axis ** 2 * (m ** 2) +
+        #                               self.minor_axis ** 2))
+        #
+        #         x2 = - (2 * (self.major_axis ** 2) * m * c - math.sqrt(
+        #             (2 * (self.major_axis ** 2) * m * c) ** 2 - 4 * (
+        #                         self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2) *
+        #             self.major_axis ** 2 * (c ** 2 - self.minor_axis ** 2))) / (
+        #                          2 * (self.major_axis ** 2 * (m ** 2) +
+        #                               self.minor_axis ** 2))
+        #         y1 = m * x1 + c
+        #         y2 = m * x2 + c
+        # point1 = volmdlr.Point2D(x1, y1)
+        # point2 = volmdlr.Point2D(x2, y2)
+        # if point1 == point2:
+        #     return [point1]
+        # return [point1, point2]
+        return intersections
 
-        if line.points[1].x == line.points[0].x:
-            x1 = line.points[0].x
-            x2 = x1
-            y1 = self.minor_axis * math.sqrt((1 - x1 ** 2 / self.major_axis ** 2))
-            y2 = -y1
-            c = self.center.y + line.points[0].y
-        else:
-            m = (line.points[1].y - line.points[0].y) / (line.points[1].x - line.points[0].x)
-            c = - m * (line.points[0].x + self.center.x) + line.points[0].y + self.center.y
-            if self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2 > c ** 2:
-                x1 = - (2 * (self.major_axis ** 2) * m * c + math.sqrt(
-                    (2 * (self.major_axis ** 2) * m * c) ** 2 - 4 * (
-                                self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2) *
-                    self.major_axis ** 2 * (c ** 2 - self.minor_axis ** 2))) / (
-                                 2 * (self.major_axis ** 2 * (m ** 2) +
-                                      self.minor_axis ** 2))
-
-                x2 = - (2 * (self.major_axis ** 2) * m * c - math.sqrt(
-                    (2 * (self.major_axis ** 2) * m * c) ** 2 - 4 * (
-                                self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2) *
-                    self.major_axis ** 2 * (c ** 2 - self.minor_axis ** 2))) / (
-                                 2 * (self.major_axis ** 2 * (m ** 2) +
-                                      self.minor_axis ** 2))
-                y1 = m * x1 + c
-                y2 = m * x2 + c
-        point1 = volmdlr.Point2D(x1, y1)
-        point2 = volmdlr.Point2D(x2, y2)
-        if point1 == point2:
-            return [point1]
-        return [point1, point2]
-
-    def linesegment_intersections(self,
-                                  linesegment: 'volmdlr.edges.LineSegment2D'):
+    def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D'):
         """
         Calculates the intersections between a linesegment and an ellipse.
 
