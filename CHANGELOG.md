@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ClosedPolygon2D: triangulation
 * Cylinder: min_distance_to_other_cylinder
 * BSplineCurve: discretization_points
+* Face3D: triangulation
 
 
 ### Refactorings

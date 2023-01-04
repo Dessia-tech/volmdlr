@@ -8165,6 +8165,24 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
 
 class ClosedShell3D(OpenShell3D):
+    """
+      A 3D closed shell composed of multiple faces.
+
+      This class represents a 3D closed shell, which is a collection of connected
+      faces with a volume. It is a subclass of the `OpenShell3D` class and
+      inherits all of its attributes and methods. In addition, it has a method
+      to check whether a face is inside the shell.
+
+      :param faces: The faces of the shell.
+      :type faces: List[`Face3D`]
+      :param color: The color of the shell.
+      :type color: Tuple[float, float, float]
+      :param alpha: The transparency of the shell, should be a value in the range (0, 1).
+      :type alpha: float
+      :param name: The name of the shell.
+      :type name: str
+      """
+
     STEP_FUNCTION = 'CLOSED_SHELL'
 
     def is_face_inside(self, face: Face3D):
@@ -8817,6 +8835,23 @@ class ClosedShell3D(OpenShell3D):
 
 
 class OpenTriangleShell3D(OpenShell3D):
+    """
+       A 3D open shell composed of multiple triangle faces.
+
+       This class represents a 3D open shell, which is a collection of connected
+       triangle faces with no volume. It is a subclass of the `OpenShell3D` class
+       and inherits all of its attributes and methods.
+
+       :param faces: The triangle faces of the shell.
+       :type faces: List[`Triangle3D`]
+       :param color: The color of the shell.
+       :type color: Tuple[float, float, float]
+       :param alpha: The transparency of the shell, should be a value in the range (0, 1).
+       :type alpha: float
+       :param name: The name of the shell.
+       :type name: str
+       """
+
     def __init__(self, faces: List[Triangle3D],
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
@@ -8863,6 +8898,23 @@ class OpenTriangleShell3D(OpenShell3D):
 
 
 class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
+    """
+        A 3D closed shell composed of multiple triangle faces.
+
+    This class represents a 3D closed shell, which is a collection of connected
+    triangle faces with a volume. It is a subclass of both the `ClosedShell3D`
+    and `OpenTriangleShell3D` classes and inherits all of their attributes and
+    methods.
+
+    :param faces: The triangle faces of the shell.
+    :type faces: List[`Triangle3D`]
+    :param color: The color of the shell.
+    :type color: Tuple[float, float, float]
+    :param alpha: The transparency of the shell, should be a value in the range (0, 1).
+    :type alpha: float
+    :param name: The name of the shell.
+    :type name: str
+    """
     def __init__(self, faces: List[Triangle3D],
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
