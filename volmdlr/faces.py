@@ -8915,6 +8915,7 @@ class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
     :param name: The name of the shell.
     :type name: str
     """
+
     def __init__(self, faces: List[Triangle3D],
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
