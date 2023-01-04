@@ -1788,10 +1788,10 @@ class Contour2D(ContourMixin, Wire2D):
         if not intersections or len(intersections) < 2:
             return [self]
         if len(intersections) % 2 != 0:
-            ax = self.plot()
-            line.plot(ax=ax)
-            for i in intersections:
-                i[0].plot(ax=ax)
+            # ax = self.plot()
+            # line.plot(ax=ax)
+            # for i in intersections:
+            #     i[0].plot(ax=ax)
             raise NotImplementedError(
                 '{} intersections not supported yet'.format(
                     len(intersections)))
