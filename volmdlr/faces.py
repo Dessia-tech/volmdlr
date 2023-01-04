@@ -2791,23 +2791,24 @@ class BSplineSurface3D(Surface3D):
                 i += 1
         if weights is None:
             surface = BSpline.Surface()
-            surface.degree_u = degree_u
-            surface.degree_v = degree_v
             P = [(control_points[i][0], control_points[i][1],
                   control_points[i][2]) for i in range(len(control_points))]
-            surface.set_ctrlpts(P, nb_u, nb_v)
+
         else:
             surface = NURBS.Surface()
-            surface.degree_u = degree_u
-            surface.degree_v = degree_v
-            Pw = [(control_points[i][0] * weights[i],
-                   control_points[i][1] * weights[i],
-                   control_points[i][2] * weights[i],
-                   weights[i]) for i in range(len(control_points))]
-            surface.set_ctrlpts(Pw, nb_u, nb_v)
-        knot_vector_u = [[u_knot] * u_multiplicities[i] for i, u_knot in enumerate(u_knots)]
-        knot_vector_v = [[v_knot] * v_multiplicities[i] for i, v_knot in enumerate(v_knots)]
-
+            P = [(control_points[i][0] * weights[i],
+                  control_points[i][1] * weights[i],
+                  control_points[i][2] * weights[i],
+                  weights[i]) for i in range(len(control_points))]
+        surface.degree_u = degree_u
+        surface.degree_v = degree_v
+        surface.set_ctrlpts(P, nb_u, nb_v)
+        knot_vector_u = []
+        for i, u_knot in enumerate(u_knots):
+            knot_vector_u.extend([u_knot] * u_multiplicities[i])
+        knot_vector_v = []
+        for i, v_knot in enumerate(v_knots):
+            knot_vector_v.extend([v_knot] * v_multiplicities[i])
         surface.knotvector_u = knot_vector_u
         surface.knotvector_v = knot_vector_v
         surface.delta = 0.05
