@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * OpenShell3D: project_coincident_faces_of
 * GmshParser: to_vtk
 * BSplineCurve: derivatives
+* ArcEllipse2D: line_intersections, frame_mapping, linesegment_intersections
 
 
 ### Fixed
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
 * Mesh: delete_duplicated_nodes
 * BSplineSurface3D: fix arc3d_to_2d method
+
 
 
 ### Removed
@@ -43,6 +45,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 
 * Contour2D: point_belongs
 * Basis2D, Basis3D, Frame2D, Frame3D: local_to_global_coordinates and global_to_local_coordinates
+* ArcEllipse2D: linesegment_intersections
 
 
 

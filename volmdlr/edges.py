@@ -2906,20 +2906,20 @@ class ArcEllipse2D(Edge):
             theta, A, B = theta_A_B(start_new, interior_new, end_new,
                                     center_new)
 
-        self.Gradius = A
-        self.Sradius = B
+        self.major_axis = A
+        self.minor_axis = B
         self.theta = theta
 
         # Angle pour start
-        u1, u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
+        u1, u2 = start_new.x / self.major_axis, start_new.y / self.minor_axis
         angle1 = volmdlr.geometry.sin_cos_angle(u1, u2)
         self.angle_start = angle1
         # Angle pour end
-        u3, u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
+        u3, u4 = end_new.x / self.major_axis, end_new.y / self.minor_axis
         angle2 = volmdlr.geometry.sin_cos_angle(u3, u4)
         self.angle_end = angle2
         # Angle pour interior
-        u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
+        u5, u6 = interior_new.x / self.major_axis, interior_new.y / self.minor_axis
         anglei = volmdlr.geometry.sin_cos_angle(u5, u6)
         self.angle_interior = anglei
 
@@ -2977,13 +2977,13 @@ class ArcEllipse2D(Edge):
         :param abs_tol: tolerance applied during calculations
         :return: True if the point belongs, False otherwise
         """
-        if not math.isclose((point.x - self.center.x) ** 2 / self.Gradius ** 2 +
-                            (point.y - self.center.y) ** 2 / self.Sradius ** 2, 1, abs_tol=abs_tol) and not \
-                math.isclose((point.x - self.center.x) ** 2 / self.Sradius ** 2 +
-                             (point.y - self.center.y) ** 2 / self.Gradius ** 2, 1, abs_tol=abs_tol):
+        if not math.isclose((point.x - self.center.x) ** 2 / self.major_axis ** 2 +
+                            (point.y - self.center.y) ** 2 / self.minor_axis ** 2, 1, abs_tol=abs_tol) and not \
+                math.isclose((point.x - self.center.x) ** 2 / self.minor_axis ** 2 +
+                             (point.y - self.center.y) ** 2 / self.major_axis ** 2, 1, abs_tol=abs_tol):
             return False
         new_point = self.frame.new_coordinates(point)
-        u1, u2 = new_point.x / self.Gradius, new_point.y / self.Sradius
+        u1, u2 = new_point.x / self.major_axis, new_point.y / self.minor_axis
         angle_new_point = volmdlr.geometry.sin_cos_angle(u1, u2)
         if self.angle_start < self.angle_end and self.angle_end >= angle_new_point >= self.angle_start:
             return True
@@ -3007,8 +3007,8 @@ class ArcEllipse2D(Edge):
                 angle_end = self.angle_start
 
             def arc_length(theta):
-                return math.sqrt((self.Gradius ** 2) * math.sin(theta) ** 2 +
-                                 (self.Sradius ** 2) * math.cos(theta) ** 2)
+                return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
+                                 (self.minor_axis ** 2) * math.cos(theta) ** 2)
 
             res, _ = scipy_integrate.quad(arc_length, angle_start, angle_end)
             return res
@@ -3038,11 +3038,11 @@ class ArcEllipse2D(Edge):
         """
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
-            area = math.pi * self.Gradius * self.Sradius - 0.5 * self.Gradius * self.Sradius * (
+            area = math.pi * self.major_axis * self.minor_axis - 0.5 * self.major_axis * self.minor_axis * (
                     angle - math.sin(angle))
         else:
             angle = self.angle
-            area = 0.5 * self.Gradius * self.Sradius * (angle - math.sin(angle))
+            area = 0.5 * self.major_axis * self.minor_axis * (angle - math.sin(angle))
 
         if self.is_trigo:
             return area
@@ -3080,7 +3080,7 @@ class ArcEllipse2D(Edge):
             angle_start = self.angle_start
 
         discretization_points = [self.frame.old_coordinates(
-            volmdlr.Point2D(self.Gradius * math.cos(angle), self.Sradius * math.sin(angle)))
+            volmdlr.Point2D(self.major_axis * math.cos(angle), self.minor_axis * math.sin(angle)))
             for angle in npy.linspace(angle_start, angle_end, number_points)]
         if not is_trigo:
             discretization_points = discretization_points[::-1]
@@ -3098,7 +3098,7 @@ class ArcEllipse2D(Edge):
         point_end3d = self.end.to_3d(plane_origin, x, y)
         point_center3d = self.center.to_3d(plane_origin, x, y)
 
-        a_max2d = self.center + self.major_dir * self.Gradius
+        a_max2d = self.center + self.major_dir * self.major_axis
         a_max3d = a_max2d.to_3d(plane_origin, x, y)
         new_major_dir = a_max3d - point_center3d
         new_major_dir.normalize()
@@ -3139,15 +3139,57 @@ class ArcEllipse2D(Edge):
         return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(),
                               self.center.copy(), self.major_dir.copy(), self.name)
 
-    def linesegment_intersections(self, linesegment2d: LineSegment2D):
-        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
-            return []
-        ellipse2d_linesegment_intersections = vm_utils_intersections.ellipse2d_line_intersections(self, linesegment2d)
+    def line_intersections(self, line2d: Line2D):
+        """
+        Intersections between an ArcEllipse2D and a Line2D.
+
+        :param line2d: Line2D to verify intersections
+        :return: List with all intersections
+        """
+        ellipse2d_linesegment_intersections = vm_utils_intersections.ellipse2d_line_intersections(self, line2d)
         linesegment_intersections = []
         for inter in ellipse2d_linesegment_intersections:
             if self.point_belongs(inter):
                 linesegment_intersections.append(inter)
         return linesegment_intersections
+
+    def linesegment_intersections(self, linesegment2d: LineSegment2D):
+        """
+        Intersections between an ArcEllipse2D and a LineSegment2D.
+
+        :param linesegment2d: LineSegment2D to verify intersections
+        :return: List with all intersections
+        """
+        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
+        intersections = self.line_intersections(linesegment2d)
+        linesegment_intersections = []
+        for inter in intersections:
+            if linesegment2d.point_belongs(inter):
+                linesegment_intersections.append(inter)
+        return linesegment_intersections
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and return a new ArcEllipse2D.
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            return ArcEllipse2D(frame.local_to_global_coordinates(self.start),
+                                frame.local_to_global_coordinates(self.interior),
+                                frame.local_to_global_coordinates(self.end),
+                                frame.local_to_global_coordinates(self.center),
+                                self.major_dir)
+        if side == 'new':
+            point_major_dir = self.center + self.major_dir * self.major_axis
+            major_dir = frame.global_to_local_coordinates(point_major_dir)
+            major_dir.normalize()
+            return ArcEllipse2D(frame.global_to_local_coordinates(self.start),
+                                frame.global_to_local_coordinates(self.interior),
+                                frame.global_to_local_coordinates(self.end),
+                                frame.global_to_local_coordinates(self.center),
+                                major_dir)
+        raise ValueError('Side should be \'new\' \'old\'')
 
 
 class Line3D(Line):

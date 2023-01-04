@@ -20,7 +20,7 @@ def circle_3d_linesegment_intersections(circle_3d, linesegment):
         circle_linseg_intersections = frame_mapped_circle.line_intersections(frame_mapped_lineseg)
         intersections = []
         for inter in circle_linseg_intersections:
-            intersections.append(circle_3d.frame.old_coordinates(inter))
+            intersections.append(circle_3d.frame.local_to_global_coordinates(inter))
         return intersections
     distance_center_lineseg = linesegment.point_distance(circle_3d.frame.origin)
     if distance_center_lineseg > circle_3d.radius:
@@ -54,12 +54,13 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
     :param line: line to calculate intersections
     :return: list of points intersections, if there are any
     """
-    if ellipse2d.theta != 0:
+    theta = volmdlr.geometry.clockwise_angle(ellipse2d.major_dir, volmdlr.X2D)
+    if not math.isclose(theta, 0.0, abs_tol=1e-6) and not math.isclose(theta, 2*math.pi, abs_tol=1e-6):
         frame = volmdlr.Frame2D(ellipse2d.center, ellipse2d.major_dir, ellipse2d.minor_dir)
         frame_mapped_ellipse = ellipse2d.frame_mapping(frame, 'new')
         frame_mapped_line = line2d.frame_mapping(frame, 'new')
         line_inters = frame_mapped_ellipse.line_intersections(frame_mapped_line)
-        line_intersections = [frame.old_coordinates(point) for point in line_inters]
+        line_intersections = [frame.local_to_global_coordinates(point) for point in line_inters]
         return line_intersections
 
     if line2d.points[1].x == line2d.points[0].x:
