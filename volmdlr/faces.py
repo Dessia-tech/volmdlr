@@ -8712,6 +8712,10 @@ class ClosedShell3D(OpenShell3D):
 
 
 class OpenTriangleShell3D(OpenShell3D):
+    """
+    A 3D open shell composed of multiple Triangle faces.
+
+    """
     def __init__(self, faces: List[Triangle3D],
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):

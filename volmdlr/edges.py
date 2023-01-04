@@ -545,8 +545,7 @@ class BSplineCurve(Edge):
 
     def unit_direction_vector(self, abscissa: float):
         """
-        Computes the 2D or 3D unit direction vector of B-spline curve at
-        a given abscissa.
+        Computes the 2D or 3D unit direction vector of B-spline curve at a given abscissa.
 
         :param abscissa: The abscissa on the B-spline curve where the unit
             direction vector will be computed
@@ -570,8 +569,7 @@ class BSplineCurve(Edge):
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
                  tol: float = 1e-4):
         """
-        Computes the abscissa of a 2D or 3D point using the least square
-        method.
+        Computes the abscissa of a 2D or 3D point using the least square method.
 
         :param point: The point located on the B-spline curve.
         :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`].
@@ -763,8 +761,7 @@ class BSplineCurve(Edge):
 
     def tangent(self, position: float = 0.0):
         """
-        Evaluates the tangent vector of the B-spline curve at the input
-        parameter value.
+        Evaluates the tangent vector of the B-spline curve at the input parameter value.
 
         :param position: Value of the parameter, between 0 and 1
         :type position: float
@@ -1020,8 +1017,7 @@ class Line2D(Line):
 
     def create_tangent_circle(self, point, other_line):
         """
-        Computes the two circles that are tangent to 2 lines and intersect
-        a point located on one of the two lines.
+        Computes the two circles that are tangent to 2 lines and intersect a point located on one of the two lines.
 
         """
 
