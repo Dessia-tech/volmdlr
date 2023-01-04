@@ -195,6 +195,7 @@ babylon_unpacker_body_template = Template(
                 // mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
                 // mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
                 mat.backFaceCulling = false;
+                mat.twoSidedLighting = true;
                 mesh.material = mat;
                 mat.diffuseColor = new BABYLON.Color3(mesh_data['color'][0],
                                                         mesh_data['color'][1],

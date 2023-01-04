@@ -824,13 +824,12 @@ class BSplineCurve(Edge):
         """
 
         if angle_resolution:
-            number_points = int(3.1415 * angle_resolution)
-        if len(self.points) == number_points or (number_points is None and angle_resolution is None):
+            number_points = int(math.pi * angle_resolution)
+        if len(self.points) == number_points or (not number_points and not angle_resolution):
             return self.points
         curve = self.curve
         curve.delta = 1 / number_points
         curve_points = curve.evalpts
-        self.curve = curve
 
         point_dimension = f'Point{self.__class__.__name__[-2::]}'
         return [getattr(volmdlr, point_dimension)(*p) for p in curve_points]
@@ -5548,6 +5547,7 @@ class ArcEllipse3D(Edge):
         self._bbox = None
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
+
         def theta_A_B(s, i, e, c):
             # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi
             # grd axe, B=demi petit axe
