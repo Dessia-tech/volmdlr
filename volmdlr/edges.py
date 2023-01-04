@@ -467,7 +467,6 @@ class BSplineCurve(Edge):
         self.knot_multiplicities = knot_multiplicities
         self.weights = weights
         self.periodic = periodic
-        self.name = name
 
         curve = BSpline.Curve()
         curve.degree = degree
@@ -1844,12 +1843,6 @@ class LineSegment2D(LineSegment):
         offset_point_2 = self.end + offset * n
 
         return Line2D(offset_point_1, offset_point_2)
-
-    def polygon_points(self, discretization_resolution: int):
-        warnings.warn('polygon_points is deprecated,\
-        please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(number_points=discretization_resolution)
 
     def to_wire(self, n: int):
         """
@@ -4900,10 +4893,7 @@ class Arc3D(Arc):
     def plot(self, ax=None, color='k', alpha=1,
              edge_ends=False, edge_direction=False):
         if ax is None:
-            fig = plt.figure()
-            ax = Axes3D(fig)
-        else:
-            fig = None
+            ax = plt.figure().add_subplot(111, projection='3d')
         # if plot_points:
         #     ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
         #             color='b')

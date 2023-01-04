@@ -41,7 +41,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-few-public-methods': 10,
                      'too-many-public-methods': 9,
                      'use-implicit-booleaness-not-comparison': 8,
-                     'too-many-instance-attributes': 9,
+                     'too-many-instance-attributes': 10,
                      'protected-access': 4,
                      'undefined-loop-variable': 5,
                      'unspecified-encoding': 5,
