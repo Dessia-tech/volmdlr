@@ -115,18 +115,39 @@ class WireMixin:
         return [self.point_at_abscissa(i / n * length) for i in
                 range(n + 1)]
 
-    def point_at_abscissa(self, curvilinear_abscissa: float):
+    def find_primitive_at_abscissa(self, curvilinear_abscissa: float):
+        """
+        Returns the primitive holding the point at the given abscissa and cumulative length of primitives before.
+
+        """
         length = 0.
         for primitive in self.primitives:
             primitive_length = primitive.length()
             if length + primitive_length > curvilinear_abscissa:
-                return primitive.point_at_abscissa(
-                    curvilinear_abscissa - length)
+                return primitive, length
             length += primitive_length
+
+        return self.primitives[-1], length - self.primitives[-1].length()
+
+    def point_at_abscissa(self, curvilinear_abscissa: float):
+        """
+        Returns the point at the given abscissa.
+        """
+        primitive, length = self.find_primitive_at_abscissa(curvilinear_abscissa)
+        return primitive.point_at_abscissa(curvilinear_abscissa - length)
+
         # In case we did not find yet, ask last primitive its end
-        if math.isclose(curvilinear_abscissa, length, abs_tol=1e-6):
-            return self.primitives[-1].end  # point_at_abscissa(primitive_length)
-        raise ValueError('abscissa out of contour length')
+        # if math.isclose(curvilinear_abscissa, length, abs_tol=1e-6):
+        #     return self.primitives[-1].end  # point_at_abscissa(primitive_length)
+        # raise ValueError('abscissa out of contour length')
+
+    def normal_at_abscissa(self, curvilinear_abscissa: float):
+        primitive, length = self.find_primitive_at_abscissa(curvilinear_abscissa)
+        return primitive.unit_normal_vector(curvilinear_abscissa - length)
+
+    def direction_at_abscissa(self, curvilinear_abscissa: float):
+        primitive, length = self.find_primitive_at_abscissa(curvilinear_abscissa)
+        return primitive.unit_direction_vector(curvilinear_abscissa - length)
 
     def extract_primitives(self, point1, primitive1, point2, primitive2,
                            inside: bool = True):

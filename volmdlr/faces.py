@@ -8208,7 +8208,7 @@ class ClosedShell3D(OpenShell3D):
                                            list_coincident_faces
                                            )
         faces += new_valid_faces
-        return [OpenShell3D(faces)]
+        return [ClosedShell3D(faces)]  # Before: return [OpenShell3D(faces)] Why?
 
     def subtract_to_closed_shell(self, shell2, tol=1e-8):
         """
