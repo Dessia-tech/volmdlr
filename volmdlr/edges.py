@@ -1252,17 +1252,6 @@ class BSplineCurve2D(BSplineCurve):
         return volmdlr.core.BoundingRectangle(bbox[0][0], bbox[1][0],
                                               bbox[0][1], bbox[1][1])
 
-    def length(self):
-        """
-        Computes the length of the 2 dimensional B-spline curve.
-
-        :return: The length of the 2 dimensional B-spline curve
-        :rtype: float
-        """
-        if not self._length:
-            self._length = length_curve(self.curve)
-        return self._length
-
     def tangent(self, position: float = 0.0):
         """
         Computes the tangent at a given parameter between 0 and 1.
