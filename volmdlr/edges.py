@@ -5,6 +5,7 @@ Edges related classes.
 """
 
 import math
+import sys
 import warnings
 from typing import List, Dict, Any, Union
 
@@ -860,6 +861,62 @@ class BSplineCurve(Edge):
         return [getattr(volmdlr, f'Vector{self.__class__.__name__[-2::]}')(*p)
                 for p in self.curve.derivatives(u, order)]
 
+    def line_intersections(self, line):
+        polygon_points = self.points
+        list_intersections = []
+        length = self.length()
+        initial_abscissa = 0
+        for points in zip(polygon_points[:-1], polygon_points[1:]):
+            linesegment_name = 'LineSegment'+self.__class__.__name__[-2:]
+            linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
+            intersections = linesegment.line_intersections(line)
+
+            if intersections and intersections[0] not in list_intersections:
+                abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
+                if initial_abscissa < length * 0.1:
+                    number_points = int(linesegment.length() / 1e-6)
+                    list_abcissas = list(
+                        n for n in npy.linspace(initial_abscissa, initial_abscissa + linesegment.length(),
+                                                number_points))
+                else:
+                    distance_from_point_to_search = 0.0001 / 2
+                    nb_pts = 1000
+                    list_abcissas = list(new_abscissa for new_abscissa in npy.linspace(
+                        abscissa - distance_from_point_to_search, abscissa + distance_from_point_to_search, nb_pts))
+                distance = npy.inf
+                for i_abscissa in list_abcissas:
+                    point_in_curve = super(self.__class__, self).point_at_abscissa(i_abscissa)
+                    dist = point_in_curve.point_distance(intersections[0])
+                    if dist < distance:
+                        distance = dist
+                        intersection = point_in_curve
+                    else:
+                        break
+                list_intersections.append(intersection)
+            initial_abscissa += linesegment.length()
+        return list_intersections
+
+    def get_linesegment_intersections(self, linesegment):
+        """
+        Calculates intersections between a BSplineCurve and a LineSegment.
+
+        :param linesegment: linesegment to verify intersections.
+        :return: list with the intersections points.
+        """
+        results = self.line_intersections(linesegment.to_line())
+        intersections_points = []
+        for result in results:
+            if linesegment.point_belongs(result, 1e-5):
+                intersections_points.append(result)
+        return intersections_points
+
+    def point_at_abscissa(self, abscissa):
+        length = self.length()
+        adim_abs = max(min(abscissa / length, 1.), 0.)
+        point_name = 'Point'+self.__class__.__name__[-2:]
+        return getattr(volmdlr, point_name)(*self.curve.evaluate_single(adim_abs))
+
+
 
 class Line2D(Line):
     """
@@ -1263,7 +1320,7 @@ class BSplineCurve2D(BSplineCurve):
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
 
-    def point_at_abscissa(self, abscissa):
+    def point_at_abscissa(self, abscissa, resolution=1000):
         length = self.length()
         adim_abs = max(min(abscissa / length, 1.), 0.)
         return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
@@ -1353,14 +1410,6 @@ class BSplineCurve2D(BSplineCurve):
                         tuple(self.knot_multiplicities),
                         tuple(self.knots))
         return content, point_id + 1
-
-    def discretization_points(self, *, number_points: int = 50, angle_resolution: int = None):
-        length = self.length()
-        if angle_resolution:
-            number_points = angle_resolution
-        if not number_points:
-            number_points = len(self.points)
-        return [self.point_at_abscissa(i * length / number_points) for i in range(number_points + 1)]
 
     def polygon_points(self, n: int = 15):
         warnings.warn('polygon_points is deprecated,\
@@ -1488,11 +1537,12 @@ class BSplineCurve2D(BSplineCurve):
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
-        results = self.line_intersections(linesegment2d.to_line())
-        intersections_points = []
-        for result in results:
-            if linesegment2d.point_belongs(result, 1e-6):
-                intersections_points.append(result)
+        intersections_points = self.get_linesegment_intersections(linesegment2d)
+        # results = self.line_intersections(linesegment2d.to_line())
+        # intersections_points = []
+        # for result in results:
+        #     if linesegment2d.point_belongs(result, 1e-6):
+        #         intersections_points.append(result)
         return intersections_points
 
     def axial_symmetry(self, line):
@@ -3633,11 +3683,11 @@ class LineSegment3D(LineSegment):
     def line_intersections(self, line):
         line_self = self.to_line()
         if line_self.skew_to(line):
-            return None
+            return []
         intersection = line_self.intersection(line)
         if intersection and self.point_belongs(intersection):
-            return intersection
-        return None
+            return [intersection]
+        return []
 
     def linesegment_intersection(self, linesegment):
         line1 = self.to_line()
@@ -3645,7 +3695,7 @@ class LineSegment3D(LineSegment):
         intersection = line1.intersection(line2)
         if intersection and self.point_belongs(intersection) and linesegment.point_belongs(intersection):
             return intersection
-        return None
+        return []
 
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
@@ -4174,7 +4224,7 @@ class BSplineCurve3D(BSplineCurve):
         """
         if math.isclose(abscissa, 0, abs_tol=1e-10):
             return self.start
-        elif math.isclose(abscissa, self.length(), abs_tol=1e-10):
+        if math.isclose(abscissa, self.length(), abs_tol=1e-10):
             return self.end
         lut = self.look_up_table(resolution=resolution)
         if 0 < abscissa < self.length():
@@ -4592,14 +4642,17 @@ class BSplineCurve3D(BSplineCurve):
     def triangulation(self):
         return None
 
-    def linesegment_intersection(self, linesegment: LineSegment3D):
-        points = self.discretization_points()
-        linesegments = [LineSegment3D(start, end) for start, end in zip(points[:-1], points[1:])]
-        for line_segment in linesegments:
-            intersection = line_segment.linesegment_intersection(linesegment)
-            if intersection:
-                return intersection
-        return None
+    def linesegment_intersections(self, linesegment3d: LineSegment3D):
+        """
+        Calculates intersections between a BSplineCurve3D and a LineSegment3D.
+
+        :param linesegment3d: linesegment to verify intersections.
+        :return: list with the intersections points.
+        """
+        if not self.bounding_box.bbox_intersection(linesegment3d.bounding_box):
+            return []
+        intersections_points = self.get_linesegment_intersections(linesegment3d)
+        return intersections_points
 
 
 class BezierCurve3D(BSplineCurve3D):

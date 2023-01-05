@@ -4199,12 +4199,12 @@ class Ellipse2D(Contour2D):
         side = 'old' or 'new'
         """
         if side == 'old':
-            return Ellipse2D(self.major_axis, self.minor_axis, frame.old_coordinates(self.center),
+            return Ellipse2D(self.major_axis, self.minor_axis, frame.local_to_global_coordinates(self.center),
                              self.major_dir)
         if side == 'new':
             point_major_dir = self.center + self.major_dir * self.major_axis
             major_dir = frame.new_coordinates(point_major_dir) - self.center
-            return Ellipse2D(self.major_axis, self.minor_axis, frame.new_coordinates(self.center),
+            return Ellipse2D(self.major_axis, self.minor_axis, frame.global_to_local_coordinates(self.center),
                              major_dir)
         raise ValueError('Side should be \'new\' \'old\'')
 
