@@ -2060,25 +2060,20 @@ class Arc2D(Arc):
         xe, ye = self.end.x, self.end.y
         xs, ys = self.start.x, self.start.y
         try:
-            A = volmdlr.Matrix22(2 * (xs - xi), 2 * (ys - yi),
+            matrix_a = volmdlr.Matrix22(2 * (xs - xi), 2 * (ys - yi),
                                  2 * (xs - xe), 2 * (ys - ye))
-            b = - volmdlr.Vector2D(xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
+            b_vector = - volmdlr.Vector2D(xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
                                    xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2)
-            inv_A = A.inverse()
-            x = inv_A.vector_multiplication(b)
+            inv_matrix_a = matrix_a.inverse()
+            x = inv_matrix_a.vector_multiplication(b_vector)
             center = volmdlr.Point2D(x.x, x.y)
         except ValueError:
-            A = npy.array([[2 * (xs - xi), 2 * (ys - yi)],
+            matrix_a = npy.array([[2 * (xs - xi), 2 * (ys - yi)],
                            [2 * (xs - xe), 2 * (ys - ye)]])
-            b = - npy.array([xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
+            b_vector = - npy.array([xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
                              xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2])
-            center = volmdlr.Point2D(*npy.linalg.solve(A, b))
+            center = volmdlr.Point2D(*npy.linalg.solve(inv_matrix_a, b_vector))
         return center
-
-    def reverse(self):
-        return self.__class__(self.end.copy(),
-                              self.interior.copy(),
-                              self.start.copy())
 
     @property
     def is_trigo(self):
@@ -2607,7 +2602,7 @@ class Arc2D(Arc):
                               end=points_symmetry[2])
 
     def reverse(self):
-        return self.__class__(self.end, self.interior, self.start, self.name)
+        return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(), self.name)
 
 class FullArc2D(Arc2D):
     """

@@ -21,9 +21,9 @@ import scipy.integrate as scipy_integrate
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial import Delaunay, ConvexHull
 from triangle import triangulate
-from volmdlr.core_compiled import polygon_point_belongs
 
 import plot_data.core as plot_data
+from volmdlr.core_compiled import polygon_point_belongs
 import volmdlr
 import volmdlr.core
 import volmdlr.display as vmd
@@ -4550,25 +4550,6 @@ class Contour3D(ContourMixin, Wire3D):
                       edge_ends=edge_details, edge_direction=edge_details)
 
         return ax
-
-    def to_2d(self, plane_origin, x, y):
-        """
-        Projects in 2D the contour3D to give a Contour2D.
-
-        :param plane_origin: plane origin.
-        :param x: plane u vector.
-        :param y: plane v vector.
-        :return: the projected Contour2D.
-        :rtype: Contour2D
-        """
-        z = x.cross(y)
-        plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
-        primitives2d = []
-        for primitive in self.primitives:
-            primitive2d = plane3d.point3d_to_2d(primitive)
-            if primitive2d is not None:
-                primitives2d.append(primitive2d)
-        return Contour2D(primitives=primitives2d)
 
     def _bounding_box(self):
         """

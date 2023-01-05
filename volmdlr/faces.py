@@ -6,7 +6,7 @@ import warnings
 from typing import List, Tuple, Dict, Any
 import math
 
-from itertools import product, combinations
+from itertools import product
 
 import networkx as nx
 import triangle
@@ -3574,7 +3574,8 @@ class BSplineSurface3D(Surface3D):
         # Euclidean distance
         # D=[] # distances between 3D grid points (based on points combination [equation_points])
         # for i in range(0, len(equation_points)):
-        #     D.append((points_3d[index_points[equation_points[i][0]]].point_distance(points_3d[index_points[equation_points[i][1]]]))**2)
+        #     D.append((points_3d[index_points[equation_points[i][0]]].point_distance(
+        #         points_3d[index_points[equation_points[i][1]]]))**2)
 
         # Geodesic distance
         # xx=[]
@@ -5465,7 +5466,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         face_intersecting_primitives2d = []
         for intersecting_combination in dict_intersecting_combinations.keys():
-            if self == intersecting_combination[0] or self == intersecting_combination[1]:
+            if self in (intersecting_combination[0], intersecting_combination[1]):
                 for intersection_wire in dict_intersecting_combinations[intersecting_combination]:
                     if len(intersection_wire.primitives) != 1:
                         raise NotImplementedError
@@ -5767,7 +5768,7 @@ class PlaneFace3D(Face3D):
         self._bbox = new_bounding_box
 
     def get_bounding_box(self):
-        return self.outer_contour3d._bounding_box()
+        return self.outer_contour3d.bounding_box
 
 
     def distance_to_point(self, point, return_other_point=False):
@@ -7851,7 +7852,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         .. seealso::
             How `serialization and deserialization`_ works in dessia_common
 
-        .. _serialization and deserialization: https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        .. _serialization and deserialization:
+        https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
 
         """
         dict_ = DessiaObject.base_dict(self)
@@ -8449,7 +8451,8 @@ class ClosedShell3D(OpenShell3D):
     @staticmethod
     def dict_intersecting_combinations(intersecting_faces_combinations, tol=1e-8):
         """
-        :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...]) for intersecting faces.
+        :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...])
+        for intersecting faces.
         :type intersecting_faces_combinations: list of face objects combinaitons
         returns a dictionary containing as keys the combination of intersecting faces
         and as the values the resulting primitive from the two intersecting faces.
