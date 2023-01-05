@@ -3252,6 +3252,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         finds another point inside the polygon.
 
         """
+        translation1 = volmdlr.O2D
         barycenter = self.barycenter()
         if self.point_belongs(barycenter):
             return barycenter
