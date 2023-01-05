@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineSurface3D: fix arc3d_to_2d method
 * BSplineCurve: fix to take into account weighted B-spline curves.
 * Step: fix reading of rational BSpline curves and surfaces from step file.
+* BSplineCurve2D: tangent (use position/length)
 
 
 

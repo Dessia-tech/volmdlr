@@ -1258,7 +1258,7 @@ class BSplineCurve2D(BSplineCurve):
         :return: A 2 dimensional point representing the tangent
         :rtype: :class:`volmdlr.Point2D`
         """
-        _, tangent = operations.tangent(self.curve, position,
+        _, tangent = operations.tangent(self.curve, position / self.length(),
                                         normalize=True)
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
