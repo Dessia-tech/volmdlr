@@ -1805,8 +1805,7 @@ class Contour2D(ContourMixin, Wire2D):
 
             point1 = sorted_points[cutting_points_counter]
             point2 = sorted_points[cutting_points_counter + 1]
-            closing_line = volmdlr.edges.LineSegment2D(point1, point2)
-            closing_contour = Contour2D([closing_line])
+            closing_contour = Contour2D([volmdlr.edges.LineSegment2D(point1, point2)])
             contour1, contour2 = contour_to_cut.get_divided_contours(point1,
                                                                      point2,
                                                                      closing_contour,
@@ -1867,18 +1866,25 @@ class Contour2D(ContourMixin, Wire2D):
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
 
-    def to_polygon(self, angle_resolution):
+    def to_polygon(self, angle_resolution, discretize_line: bool = False):
         """
         Transform the contour to a polygon.
 
-        :param angle_resolution: arcs are discretized with respect of an angle resolution in points per radians
+        :param angle_resolution: Number of points per radians.
+        :type angle_resolution: float
+        :param discretize_line: Boolean indicating whether the line segments should be discretized or not.
+        :type discretize_line: bool
+        :return: The discretized version of the contour.
+        :rtype: ClosedPolygon2D
         """
 
         polygon_points = []
-        # print([(line.start, line.end) for line in self.primitives])
 
         for primitive in self.primitives:
-            polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
+            if isinstance(primitive, volmdlr.edges.LineSegment2D) and not discretize_line:
+                polygon_points.append(primitive.start)
+            else:
+                polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
         return ClosedPolygon2D(polygon_points)
 
     def grid_triangulation(self, x_density: float = None,
@@ -2667,9 +2673,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             return d_min, other_point_min
         return d_min
 
-    def to_polygon(self, angle_resolution=None):
-        return self
-
     def self_intersects(self):
         epsilon = 0
         # BENTLEY-OTTMANN ALGORITHM
@@ -3018,7 +3021,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return ClosedPolygon3D(points3d)
 
     def plot(self, ax=None, color='k', alpha=1,
-             plot_points=False, point_numbering=False,
+             plot_points=False, point_numbering=False, arrow=False,
              fill=False, fill_color='w', equal_aspect=True):
         if ax is None:
             _, ax = plt.subplots()
@@ -3028,7 +3031,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             ax.fill([p[0] for p in self.points], [p[1] for p in self.points],
                     facecolor=fill_color)
         for line_segment in self.line_segments:
-            line_segment.plot(ax=ax, color=color, alpha=alpha)
+            line_segment.plot(ax=ax, color=color, alpha=alpha, arrow=arrow)
 
         if plot_points or point_numbering:
             for point in self.points:
@@ -3073,9 +3076,40 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         t = triangulate(tri, tri_opt)
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
-        points = [vmd.Node2D(*t['vertices'][i, :]) for i in
-                  range(np)]
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
         return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+
+    def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
+        """
+        Use a n by m grid to triangulize the contour.
+
+        :param number_points_x: Number of discretization points in x direction.
+        :type number_points_x: int
+        :param number_points_y: Number of discretization points in y direction.
+        :type number_points_y: int
+        :return: Discretization data.
+        :rtype: list
+        """
+        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
+
+        n = number_points_x + 2
+        m = number_points_y + 2
+
+        x = npy.linspace(xmin, xmax, num=n)
+        y = npy.linspace(ymin, ymax, num=m)
+
+        grid_point_index = {}
+
+        polygon_points = {vmd.Node2D.from_point(p) for p in self.points}
+        points = []
+        for i, xi in enumerate(x):
+            for j, yi in enumerate(y):
+                point = vmd.Node2D(xi, yi)
+                if self.point_belongs(point) and point not in polygon_points:
+                    grid_point_index[(i, j)] = point
+                    points.append(point)
+
+        return points, x, y, grid_point_index
 
     def ear_clipping_triangulation(self):
         """
@@ -3218,6 +3252,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         finds another point inside the polygon.
 
         """
+        barycenter = self.barycenter()
+        if self.point_belongs(barycenter):
+            return barycenter
         intersetions1 = {}
         linex_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D * 5)
         linex_neg = volmdlr.edges.LineSegment2D(volmdlr.O2D, -volmdlr.X2D * 5)
@@ -3677,10 +3714,6 @@ class Circle2D(Contour2D):
         return [volmdlr.edges.Arc2D(points[0], points[1], points[2]),
                 volmdlr.edges.Arc2D(points[2], points[3], points[0])]
 
-    def to_polygon(self, angle_resolution: float):
-        return ClosedPolygon2D(
-            self.discretization_points(angle_resolution=angle_resolution))
-
     @classmethod
     def from_arc(cls, arc: volmdlr.edges.Arc2D):
         return cls(arc.center, arc.radius, arc.name + ' to circle')
@@ -3950,7 +3983,7 @@ class Circle2D(Contour2D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         if not number_points and angle_resolution:
-            number_points = math.ceil(volmdlr.TWO_PI * angle_resolution) + 2
+            number_points = math.ceil(math.pi * angle_resolution) + 2
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
