@@ -8491,18 +8491,13 @@ class ClosedShell3D(OpenShell3D):
                 faces.append(new_face)
         return faces
 
-    def subtraction_faces(self, shell2, intersecting_faces, intersecting_combinations):
-        faces = []
-        for face in intersecting_faces:
-            keep_interior_faces = False
-            if face in shell2.faces:
-                keep_interior_faces = True
-            contour_extract_inside, reference_shell = self.reference_shell(shell2, face)
-            new_faces = face.set_operations_new_faces(intersecting_combinations, contour_extract_inside)
-            valid_faces = self.get_subtraction_valid_faces(new_faces, faces, reference_shell,
-                                                           shell2, keep_interior_faces)
-            faces.extend(valid_faces)
+    def validate_intersection_substractions_faces(self, faces):
+        """
+        Final validation of new faces created during intersections or subtractions of two closedshells.
 
+        :param faces: new faces.
+        :return: valid faces.
+        """
         valid_faces = []
         finished = False
         while not finished:
@@ -8515,6 +8510,21 @@ class ClosedShell3D(OpenShell3D):
                 faces.remove(faces[0])
             if not faces:
                 finished = True
+        return valid_faces
+
+    def subtraction_faces(self, shell2, intersecting_faces, intersecting_combinations):
+        faces = []
+        for face in intersecting_faces:
+            keep_interior_faces = False
+            if face in shell2.faces:
+                keep_interior_faces = True
+            contour_extract_inside, reference_shell = self.reference_shell(shell2, face)
+            new_faces = face.set_operations_new_faces(intersecting_combinations, contour_extract_inside)
+            valid_faces = self.get_subtraction_valid_faces(new_faces, faces, reference_shell,
+                                                           shell2, keep_interior_faces)
+            faces.extend(valid_faces)
+
+        valid_faces = self.validate_intersection_substractions_faces(faces)
 
         return valid_faces
 
@@ -8542,18 +8552,7 @@ class ClosedShell3D(OpenShell3D):
                 new_faces, faces, reference_shell, shell2)
             faces.extend(valid_faces)
 
-        valid_faces = []
-        finished = False
-        while not finished:
-            for face in valid_faces:
-                if face.face_inside(faces[0]):
-                    faces.remove(faces[0])
-                    break
-            else:
-                valid_faces.append(faces[0])
-                faces.remove(faces[0])
-            if not faces:
-                finished = True
+        valid_faces = self.validate_intersection_substractions_faces(faces)
         return valid_faces
 
     def set_operations_interior_face(self, new_face, faces, inside_reference_shell):

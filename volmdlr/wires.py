@@ -329,8 +329,6 @@ class WireMixin:
         return belongs
 
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
-        if isinstance(primitive, Contour2D):
-            print(True)
         points = primitive.discretization_points(number_points=10)
         if all(self.point_over_contour(point, tol) for point in points):
             return True
@@ -2302,12 +2300,11 @@ class ClosedPolygonMixin:
                     if point not in points:
                         points.append(point)
             if len(points) > 2:
-                distance2 = points[-3].point_distance(points[-2])
                 vector1 = points[-2] - points[-3]
                 vector2 = points[-1] - points[-3]
                 cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
                 cos = math.degrees(math.acos(round(cos, 6)))
-                if distance2 < min_distance and cos < angle:
+                if points[-3].point_distance(points[-2]) < min_distance and cos < angle:
                     points = points[:-2] + [points[-1]]
             previous_point = point
         if points[0].point_distance(points[-1]) < min_distance:
