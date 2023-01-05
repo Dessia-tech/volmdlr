@@ -880,9 +880,8 @@ class BSplineCurve(Edge):
                                                 number_points))
                 else:
                     distance_from_point_to_search = 0.0001 / 2
-                    nb_pts = 1000
                     list_abcissas = list(new_abscissa for new_abscissa in npy.linspace(
-                        abscissa - distance_from_point_to_search, abscissa + distance_from_point_to_search, nb_pts))
+                        abscissa - distance_from_point_to_search, abscissa + distance_from_point_to_search, 1000))
                 distance = npy.inf
                 for i_abscissa in list_abcissas:
                     point_in_curve = super(self.__class__, self).point_at_abscissa(i_abscissa)
@@ -1410,12 +1409,6 @@ class BSplineCurve2D(BSplineCurve):
                         tuple(self.knot_multiplicities),
                         tuple(self.knots))
         return content, point_id + 1
-
-    def polygon_points(self, n: int = 15):
-        warnings.warn('polygon_points is deprecated,\
-        please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(number_points=n)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """

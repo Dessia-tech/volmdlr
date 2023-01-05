@@ -2311,8 +2311,7 @@ class ClosedPolygonMixin:
                     for n in range(number_segmnts):
                         new_point = points[-1] + (point - points[-1]) * (
                                 n + 1) / number_segmnts
-                        distance1 = new_point.point_distance(points[-1])
-                        if distance1 > max_distance:
+                        if new_point.point_distance(points[-1]) > max_distance:
                             points.append(new_point)
                 else:
                     if point not in points:
