@@ -220,9 +220,9 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False):
         if min(p1y, p2y) <= y <= max(p1y, p2y) and x <= max(p1x, p2x):
             if p1y != p2y:
                 xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
-            if p1x == p2x or x == xints:
+            if x == xints: # point is on the edge of the polygon
                 if include_edge_points:
-                    inside = True  # point is on the edge of the polygon
+                    inside = True
                     break
                 elif inside and not include_edge_points:
                     inside = False

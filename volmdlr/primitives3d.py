@@ -365,16 +365,16 @@ class Block(volmdlr.faces.ClosedShell3D):
                                  side: str):
         basis = frame.basis()
         if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_u = basis.new_coordinates(self.frame.u)
-            new_v = basis.new_coordinates(self.frame.v)
-            new_w = basis.new_coordinates(self.frame.w)
+            new_origin = frame.global_to_local_coordinates(self.frame.origin)
+            new_u = basis.global_to_local_coordinates(self.frame.u)
+            new_v = basis.global_to_local_coordinates(self.frame.v)
+            new_w = basis.global_to_local_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         elif side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_u = basis.old_coordinates(self.frame.u)
-            new_v = basis.old_coordinates(self.frame.v)
-            new_w = basis.old_coordinates(self.frame.w)
+            new_origin = frame.local_to_global_coordinates(self.frame.origin)
+            new_u = basis.local_to_global_coordinates(self.frame.u)
+            new_v = basis.local_to_global_coordinates(self.frame.v)
+            new_w = basis.local_to_global_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         else:
             raise ValueError('side value not valid, please specify'

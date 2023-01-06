@@ -1657,6 +1657,7 @@ class Contour2D(ContourMixin, Wire2D):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
             if self.point_belongs(p, include_edge_points):
                 return p
+        print(True)
         raise ValueError('Could not find a point inside')
 
     def order_contour(self):
