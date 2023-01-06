@@ -1944,16 +1944,6 @@ class Contour2D(ContourMixin, Wire2D):
                     for point in touching_points:
                         if point not in intersecting_points:
                             intersecting_points.append(point)
-                    # point1, point2 = primitive2.start, primitive2.end
-                    # point3, point4 = primitive1.start, primitive1.end
-                    # for primitive, points in zip([primitive1, primitive2], [[point1, point2], [point3, point4]]):
-                    #     for point in points:
-                    #         if point not in intersecting_points and primitive.point_belongs(point):
-                    #             intersecting_points.append(point)
-                        # if point1 not in intersecting_points and primitive1.point_belongs(point1):
-                        #     intersecting_points.append(point1)
-                        # if point2 not in intersecting_points and primitive1.point_belongs(point2):
-                        #     intersecting_points.append(point2)
             if len(intersecting_points) == 2:
                 break
         return intersecting_points
@@ -2290,8 +2280,7 @@ class ClosedPolygonMixin:
                     for n in range(number_segmnts):
                         new_point = points[-1] + (point - points[-1]) * (
                                 n + 1) / number_segmnts
-                        distance1 = new_point.point_distance(points[-1])
-                        if distance1 > max_distance:
+                        if new_point.point_distance(points[-1]) > max_distance:
                             points.append(new_point)
                 else:
                     if point not in points:
@@ -4064,47 +4053,10 @@ class Ellipse2D(Contour2D):
         :param line: line to calculate intersections
         :return: list of points intersections, if there are any
         """
-        if self.theta != 0:
-            frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
-            frame_mapped_ellipse = self.frame_mapping(frame, 'new')
-            frame_mapped_line = line.frame_mapping(frame, 'new')
-            line_inters = frame_mapped_ellipse.line_intersections(frame_mapped_line)
-            line_intersections = [frame.old_coordinates(point) for point in line_inters]
-            return line_intersections
+        intersections = vm_utils_intersections.ellipse2d_line_intersections(self, line)
+        return intersections
 
-        if line.points[1].x == line.points[0].x:
-            x1 = line.points[0].x
-            x2 = x1
-            y1 = self.minor_axis * math.sqrt((1 - x1 ** 2 / self.major_axis ** 2))
-            y2 = -y1
-            c = self.center.y + line.points[0].y
-        else:
-            m = (line.points[1].y - line.points[0].y) / (line.points[1].x - line.points[0].x)
-            c = - m * (line.points[0].x + self.center.x) + line.points[0].y + self.center.y
-            if self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2 > c ** 2:
-                x1 = - (2 * (self.major_axis ** 2) * m * c + math.sqrt(
-                    (2 * (self.major_axis ** 2) * m * c) ** 2 - 4 * (
-                                self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2) *
-                    self.major_axis ** 2 * (c ** 2 - self.minor_axis ** 2))) / (
-                                 2 * (self.major_axis ** 2 * (m ** 2) +
-                                      self.minor_axis ** 2))
-
-                x2 = - (2 * (self.major_axis ** 2) * m * c - math.sqrt(
-                    (2 * (self.major_axis ** 2) * m * c) ** 2 - 4 * (
-                                self.major_axis ** 2 * m ** 2 + self.minor_axis ** 2) *
-                    self.major_axis ** 2 * (c ** 2 - self.minor_axis ** 2))) / (
-                                 2 * (self.major_axis ** 2 * (m ** 2) +
-                                      self.minor_axis ** 2))
-                y1 = m * x1 + c
-                y2 = m * x2 + c
-        point1 = volmdlr.Point2D(x1, y1)
-        point2 = volmdlr.Point2D(x2, y2)
-        if point1 == point2:
-            return [point1]
-        return [point1, point2]
-
-    def linesegment_intersections(self,
-                                  linesegment: 'volmdlr.edges.LineSegment2D'):
+    def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D'):
         """
         Calculates the intersections between a linesegment and an ellipse.
 
@@ -4208,15 +4160,14 @@ class Ellipse2D(Contour2D):
         side = 'old' or 'new'
         """
         if side == 'old':
-            return Ellipse2D(self.major_axis, self.minor_axis, frame.old_coordinates(self.center),
+            return Ellipse2D(self.major_axis, self.minor_axis, frame.local_to_global_coordinates(self.center),
                              self.major_dir)
-        elif side == 'new':
+        if side == 'new':
             point_major_dir = self.center + self.major_dir * self.major_axis
             major_dir = frame.new_coordinates(point_major_dir) - self.center
-            return Ellipse2D(self.major_axis, self.minor_axis, frame.new_coordinates(self.center),
+            return Ellipse2D(self.major_axis, self.minor_axis, frame.global_to_local_coordinates(self.center),
                              major_dir)
-        else:
-            raise ValueError('Side should be \'new\' \'old\'')
+        raise ValueError('Side should be \'new\' \'old\'')
 
 
 class Contour3D(ContourMixin, Wire3D):
