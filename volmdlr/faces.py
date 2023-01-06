@@ -8559,6 +8559,8 @@ class ClosedShell3D(OpenShell3D):
                                         list_coincident_faces: List[Face3D],
                                         dict_intersecting_combinations=None):
         """
+        Computes intersecting_contour between two shells.
+
         :param shell2: ClosedShell3D
         :type shell2: :class:`volmdlr.faces.ClosedShell3D`
         :type list_coincident_faces: List[:class:`volmdlr.faces.Face3D`]

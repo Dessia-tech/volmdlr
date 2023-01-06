@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D: merge_primitives_with
 * BSplineCurve: fix to take into account weighted B-spline curves.
 * Step: fix reading of rational BSpline curves and surfaces from step file.
+* BSplineCurve2D: tangent (use position/length)
+* Babylon: some scene settings for better rendering
 
 
 ### Removed
