@@ -862,6 +862,12 @@ class BSplineCurve(Edge):
                 for p in self.curve.derivatives(u, order)]
 
     def line_intersections(self, line):
+        """
+        Calculates the intersections of a BSplineCurve (2D or 3D) with a Line (2D or 3D).
+
+        :param line: line to verify intersections
+        :return: list of intersections
+        """
         polygon_points = self.points
         list_intersections = []
         length = self.length()
@@ -875,25 +881,37 @@ class BSplineCurve(Edge):
                 abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
                 if initial_abscissa < length * 0.1:
                     number_points = int(linesegment.length() / 1e-6)
-                    list_abcissas = list(
+                    list_abscissas = list(
                         n for n in npy.linspace(initial_abscissa, initial_abscissa + linesegment.length(),
                                                 number_points))
                 else:
                     distance_from_point_to_search = 0.0001 / 2
-                    list_abcissas = list(new_abscissa for new_abscissa in npy.linspace(
+                    list_abscissas = list(new_abscissa for new_abscissa in npy.linspace(
                         abscissa - distance_from_point_to_search, abscissa + distance_from_point_to_search, 1000))
-                distance = npy.inf
-                for i_abscissa in list_abcissas:
-                    point_in_curve = super(self.__class__, self).point_at_abscissa(i_abscissa)
-                    dist = point_in_curve.point_distance(intersections[0])
-                    if dist < distance:
-                        distance = dist
-                        intersection = point_in_curve
-                    else:
-                        break
+                intersection = self.select_intersection_point(list_abscissas, intersections)
                 list_intersections.append(intersection)
             initial_abscissa += linesegment.length()
         return list_intersections
+
+    def select_intersection_point(self, list_abscissas, intersections):
+        """
+        Select closest point in curve to intesection point obtained with discretised linesegment.
+
+        :param list_abscissas: list of abscissas to verify the closest point.
+        :param intersections: intersection with discretised line.
+        :return:
+        """
+        distance = npy.inf
+        intersection = None
+        for i_abscissa in list_abscissas:
+            point_in_curve = BSplineCurve.point_at_abscissa(self, i_abscissa)
+            dist = point_in_curve.point_distance(intersections[0])
+            if dist < distance:
+                distance = dist
+                intersection = point_in_curve
+            else:
+                break
+        return intersection
 
     def get_linesegment_intersections(self, linesegment):
         """
