@@ -1970,12 +1970,10 @@ class Contour2D(ContourMixin, Wire2D):
                     if line_intersection[0] not in intersecting_points:
                         intersecting_points.extend(line_intersection)
                 else:
-                    point1, point2 = contour2d.primitives[0].start, \
-                                     contour2d.primitives[-1].end
-                    if point1 not in intersecting_points and primitive1.point_belongs(point1):
-                        intersecting_points.append(point1)
-                    if point2 not in intersecting_points and primitive1.point_belongs(point2):
-                        intersecting_points.append(point2)
+                    touching_points = primitive1.touching_points(primitive2)
+                    for point in touching_points:
+                        if point not in intersecting_points:
+                            intersecting_points.append(point)
             if len(intersecting_points) == 2:
                 break
         return intersecting_points

@@ -5377,7 +5377,7 @@ class PlaneFace3D(Face3D):
                 intersection_points = self.edge_intersections(inner_edge2)
                 if intersection_points:
                     for point in intersection_points:
-                        if point not in intersections:
+                        if point and point not in intersections:
                             intersections.append(point)
 
         return intersections
@@ -5404,7 +5404,7 @@ class PlaneFace3D(Face3D):
         face2_intersections = face2.face_intersections_outer_contour(self)
         self_face_intersections = self.face_intersections_outer_contour(face2)
         for point in self_face_intersections + face2_intersections:
-            if point not in intersections:
+            if point and point not in intersections:
                 intersections.append(point)
         return intersections
 

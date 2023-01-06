@@ -191,6 +191,22 @@ class Edge(dc.DessiaObject):
         raise NotImplementedError(f'the unit_direction_vector method must be'
                                   f' overloaded by {self.__class__.__name__}')
 
+    def touching_points(self, edge2):
+        """
+        Verifies if two edges are touching each other.
+        In case theese two edges are touchintg each other, return these touching points.
+        :param edge2: edge2 to verify touching points.
+        :return: list of touching points.
+        """
+        point1, point2 = edge2.start, edge2.end
+        point3, point4 = self.start, self.end
+        touching_points = []
+        for primitive, points in zip([self, edge2], [[point1, point2], [point3, point4]]):
+            for point in points:
+                if point not in touching_points and primitive.point_belongs(point):
+                    touching_points.append(point)
+        return touching_points
+
 
 class Line(dc.DessiaObject):
     """
