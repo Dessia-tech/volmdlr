@@ -207,25 +207,26 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False):
     x, y = point
 
     for i in range(n):
-        xints = float("inf")
         p1x, p1y = points[i]
         p2x, p2y = points[(i + 1) % n]  # comes back to the first point (points[0]) when i = n - 1
 
-        if min(p1y, p2y) < y < max(p1y, p2y) and x < max(p1x, p2x):
+        if min(p1y, p2y) < y <= max(p1y, p2y) and x <= max(p1x, p2x):
             if p1y != p2y:
                 xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
             if p1x == p2x or x <= xints:
                 inside = not inside  # if the number of intersections is odd, the inside variable will be True
 
         # Check if point is on the edge
-        if include_edge_points:
-            if y == min(p1y, p2y) or y == max(p1y, p2y):
-                if x <= max(p1x, p2x):
-                    if p1y != p2y:
-                        xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
-                    if p1x == p2x or x <= xints:
-                        inside = True  # point is on the edge of the polygon
-                        break
+        if min(p1y, p2y) <= y <= max(p1y, p2y) and x <= max(p1x, p2x):
+            if p1y != p2y:
+                xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+            if p1x == p2x or x == xints:
+                if include_edge_points:
+                    inside = True  # point is on the edge of the polygon
+                    break
+                elif inside and not include_edge_points:
+                    inside = False
+                    break
     return inside
 
 # =============================================================================
