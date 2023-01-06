@@ -873,7 +873,7 @@ class BSplineCurve(Edge):
         length = self.length()
         initial_abscissa = 0
         for points in zip(polygon_points[:-1], polygon_points[1:]):
-            linesegment_name = 'LineSegment'+self.__class__.__name__[-2:]
+            linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
             linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
             intersections = linesegment.line_intersections(line)
 
@@ -930,9 +930,8 @@ class BSplineCurve(Edge):
     def point_at_abscissa(self, abscissa):
         length = self.length()
         adim_abs = max(min(abscissa / length, 1.), 0.)
-        point_name = 'Point'+self.__class__.__name__[-2:]
+        point_name = 'Point' + self.__class__.__name__[-2:]
         return getattr(volmdlr, point_name)(*self.curve.evaluate_single(adim_abs))
-
 
 
 class Line2D(Line):
