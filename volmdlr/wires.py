@@ -3733,13 +3733,22 @@ class Circle2D(Contour2D):
                 for teta in npy.linspace(0, volmdlr.TWO_PI, resolution + 1)][
                :-1]
 
-    def point_belongs(self, point, abs_tol=1e-9):
-        return point.point_distance(self.center) <= self.radius + abs_tol
+    def point_belongs(self, point, include_edge_points: bool = False):
+        """
+        Verifies if a point is inside the Circle2D.
 
-    # def border_points(self):
-    #     start = self.center - self.radius * volmdlr.Point2D(1, 0)
-    #     end = self.center + self.radius * volmdlr.Point2D(1, 0)
-    #     return [start, end]
+        :param point: A 2D point to check if it is inside the Circle2D.
+        :type point: `volmdlr.Point2D`
+        :param include_edge_points: A boolean indicating whether points on the edge of the Circle2D
+            should be considered inside the circle.
+        :type include_edge_points: bool
+        :return: True if point inside the circle or false otherwise.
+        :rtype: bool
+        """
+
+        if include_edge_points:
+            return point.point_distance(self.center) <= self.radius
+        return point.point_distance(self.center) < self.radius
 
     def bounding_rectangle(self):
 
