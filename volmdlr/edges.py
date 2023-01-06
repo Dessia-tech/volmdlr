@@ -194,7 +194,9 @@ class Edge(dc.DessiaObject):
     def touching_points(self, edge2):
         """
         Verifies if two edges are touching each other.
+
         In case theese two edges are touchintg each other, return these touching points.
+
         :param edge2: edge2 to verify touching points.
         :return: list of touching points.
         """
