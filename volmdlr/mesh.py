@@ -88,6 +88,9 @@ class Node3D(vm.Point3D):
 
 
 class LinearElement(vme.LineSegment2D):
+    """
+    Class for elements of linear meshes.
+    """
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
