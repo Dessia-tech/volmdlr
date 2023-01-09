@@ -5758,6 +5758,8 @@ class PlaneFace3D(Face3D):
     @property
     def bounding_box(self):
         """
+        Returns the boundary box of a PlanFace3D.
+
         """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
@@ -8046,7 +8048,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     @property
     def bounding_box(self):
         """
-        Returns the boundary box
+        Returns the boundary box.
+
         """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
