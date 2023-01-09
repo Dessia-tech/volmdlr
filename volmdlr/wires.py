@@ -2093,7 +2093,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def discretized_contour(self, n: float):
         """
-        discretize each contour's primitive and return a new contour with teses discretized primitives
+        Discretize each contour's primitive and return a new contour with teses discretized primitives.
         """
         contour = Contour2D((self.discretized_primitives(n)))
 
@@ -2102,7 +2102,7 @@ class Contour2D(ContourMixin, Wire2D):
     @classmethod
     def from_bounding_rectangle(cls, xmin, xmax, ymin, ymax):
         """
-        create a contour2d with bounding_box parameters, using linesegments2d
+        Create a contour2d with bounding_box parameters, using linesegments2d.
         """
 
         edge0 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymin))
@@ -2117,7 +2117,7 @@ class Contour2D(ContourMixin, Wire2D):
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
         """
-        create a contour2d from points with line_segments2D
+        Create a contour2d from points with line_segments2D.
         """
 
         if len(points) < 3:
@@ -2135,7 +2135,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
         """
-        cut a contou2d with bspline_curve2d to define two different contours
+        Cut a contou2d with bspline_curve2d to define two different contours.
         """
         # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
 
@@ -2145,7 +2145,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def clean_primitives(self):
         """
-        delete primitives with start=end, and return a new contour
+        Delete primitives with start=end, and return a new contour.
         """
 
         new_primitives = []
