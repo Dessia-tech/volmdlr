@@ -56,7 +56,9 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * Basis2D, Basis3D, Frame2D, Frame3D: local_to_global_coordinates and global_to_local_coordinates
 * ArcEllipse2D: linesegment_intersections
 
+### CI
 
+* Mandatory CHANGELOG.md update for PR
 
 ## v0.7.0 [Testing]
 
