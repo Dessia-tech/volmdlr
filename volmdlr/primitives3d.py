@@ -506,7 +506,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of Extruded Profile.
+        Creates a copy of ExtrudedProfile.
 
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),
@@ -739,7 +739,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of Revolved Profile.
+        Creates a copy of RevolvedProfile.
 
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),
@@ -1828,6 +1828,11 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
 # class Sphere(volmdlr.Primitive3D):
 class Sphere(RevolvedProfile):
+    """
+    Defines a sphere at a given position & radius.
+
+    """
+
     def __init__(self, center, radius,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
