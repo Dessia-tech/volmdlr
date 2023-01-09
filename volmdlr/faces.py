@@ -19,6 +19,9 @@ import matplotlib.pyplot as plt
 # import matplotlib.tri as plt_tri
 # from pygeodesic import geodesic
 
+from trimesh import Trimesh
+from trimesh.proximity import closest_point
+
 from geomdl import BSpline, NURBS
 from geomdl import utilities
 from geomdl.fitting import interpolate_surface, approximate_surface
@@ -8923,3 +8926,29 @@ class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
+
+    def points_cloud_distances(self, points_cloud: List[volmdlr.Point3D]) \
+        -> Tuple[List[volmdlr.Point3D], List[float], List[int]]:
+        """
+        Computes distance of point to mesh for each point in points_cloud.
+        """
+        points_coords = []
+        for point in points_cloud:
+            points_coords.append(point.coordinates())
+
+        nearest_coords, distances, triangles_idx = self.coords_matrix_distances(points_coords)
+        return [volmdlr.Point3D(*coords) for coords in nearest_coords], distances, triangles_idx
+
+    def coords_matrix_distances(self, coords_matrix: List[List[float]]) \
+        -> Tuple[List[List[float]], List[float], List[int]]:
+        """
+        Computes distance of point to mesh for each point in points_cloud.
+        """
+        mesh = self.triangulation()
+        mesh_coordinates = [(point.x, point.y, point.z) for point in mesh.points]
+        tri_mesh = Trimesh(mesh_coordinates, mesh.triangles)
+
+        nearest_coords, distances, triangles_idx = closest_point(tri_mesh, coords_matrix)
+        return nearest_coords.tolist(), distances.tolist(), triangles_idx.tolist()
+
+
