@@ -694,7 +694,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     """
     Revolve a 2D profile along an axis around a certain angle.
-    
+
     """
     _non_serializable_attributes = ['faces', 'contour3D']
 
