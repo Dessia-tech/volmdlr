@@ -672,9 +672,9 @@ class Vector2D(Vector):
         :return: The Vector3D from the Vector2D set in the 3 dimensional space
         :rtype: :class:`volmdlr.Vector3D`
         """
-        return Vector3D(round(plane_origin.x + vx.x * self.x + vy.x * self.y, 12),
-                        round(plane_origin.y + vx.y * self.x + vy.y * self.y, 12),
-                        round(plane_origin.z + vx.z * self.x + vy.z * self.y, 12))
+        return Vector3D(plane_origin.x + vx.x * self.x + vy.x * self.y,
+                        plane_origin.y + vx.y * self.x + vy.y * self.y,
+                        plane_origin.z + vx.z * self.x + vy.z * self.y)
 
     def to_point(self):
         """
@@ -2199,11 +2199,11 @@ class Matrix33:
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
         if abs(u1) < 1e-9:
-            u1 = 0
+            u1 = 0.
         if abs(u2) < 1e-9:
-            u2 = 0
+            u2 = 0.
         if abs(u3) < 1e-9:
-            u3 = 0
+            u3 = 0.
         return vector.__class__(u1, u2, u3)
 
     def determinent(self):
