@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
 * Mesh: delete_duplicated_nodes
 * BSplineSurface3D: fix arc3d_to_2d method
+* BSplineCurve2D: linesegment_intersections
+* Contour2D: merge_primitives_with
 * BSplineCurve: fix to take into account weighted B-spline curves.
 * Step: fix reading of rational BSpline curves and surfaces from step file.
 * BSplineCurve2D: tangent (use position/length)
@@ -71,6 +73,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * ArcEllipse3D: discretization_points
 * FullArc3D: linesegment_intersections
 * Line: sort_points_along_line
+* Line2D: point_belongs
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
 * New Class wires.Ellipse2D
 * Ellipse2D.point_over_ellipse()
@@ -107,6 +110,8 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * Step: from stream (use BinaryFile instead of io.BinaryIO)
 * Contour: is_overlapping (consider intersecting_points is empty)
 * LineSegment2D: to_wire (use discretization_points instead of discretise)
+* Line2D: line_intersections
+* BSplineCurve2D: line_intersections
 * PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
@@ -114,6 +119,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * bounding box: fix for cylindrical and BSplineCurve3D
 * contour2d: ordering_primitives, order_primitives
 * Plane3D: plane_intersections, is_coindident
+* contour2d: ordering_primitives, order_primitives
 * Linesegment2D: infinite_primitive
 * Arc2D: point_belongs
 * Arc2D: infinite_primitive
@@ -156,6 +162,9 @@ time we have to verify if a point is inside
 * LineSegment3D: linesegment_intersections
 * Contour: is_overlapping
 * LineSegment2D: to_wire
+* Line2D: point_belongs
+* BSplineCurve2D: line_intersections
+* LineSegment2D: line_intersections
 * ArcEllipse3D: discretization_points
 * FullArc3D: linesegment_intersections
 * Line2D: sort_points_along_line

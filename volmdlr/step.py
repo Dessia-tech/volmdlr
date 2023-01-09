@@ -6,14 +6,13 @@ ISO STEP reader/writer.
 
 import time
 from typing import List
-from dessia_common.files import BinaryFile
 
 import matplotlib.pyplot as plt
 import networkx as nx
-import plot_data.graph
 
 import dessia_common.core as dc
-
+import plot_data.graph
+from dessia_common.files import BinaryFile
 import volmdlr
 import volmdlr.core
 import volmdlr.edges
@@ -412,6 +411,7 @@ class StepFunction(dc.DessiaObject):
                 self.simplify('B_SPLINE_SURFACE')
             if self.arg[1][0] == 'B_SPLINE_CURVE':
                 self.simplify('B_SPLINE_CURVE')
+        dc.DessiaObject.__init__(self, name=function_name)
 
     def simplify(self, new_name):
         # ITERATE ON SUBFUNCTIONS
