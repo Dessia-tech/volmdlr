@@ -1796,6 +1796,7 @@ class Sphere(RevolvedProfile):
     Defines a sphere at a given position & radius.
 
     """
+
     def __init__(self, center, radius,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
