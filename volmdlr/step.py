@@ -48,6 +48,8 @@ def step_split_arguments(function_arg):
         function_arg += ')'
     arguments = []
     argument = ""
+    if len(function_arg) > 0 and function_arg[0] == "(":
+        function_arg += ")"
     parenthesis = 1
     for char in function_arg:
         if char == "(":

@@ -13,10 +13,19 @@ import volmdlr.wires
 
 
 class Grid2D(DessiaObject):
+    """
+    A class defined with a list of list of points and characterized with a choosen direction.
+
+    :param lists_points: A list of a list of points
+    :type lists_points: List[List[volmdlr.Point2D]]
+    :param direction: A direction
+    :type direction: List[str]
+    """
 
     def __init__(self, lists_points: List[List[volmdlr.Point2D]],
                  direction: List[str],
                  name: str = ''):
+
         self.lists_points = lists_points
         self.direction = direction
         DessiaObject.__init__(self, name=name)
