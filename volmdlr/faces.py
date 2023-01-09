@@ -8942,7 +8942,7 @@ class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
     def coords_matrix_distances(self, coords_matrix: List[List[float]]) \
         -> Tuple[List[List[float]], List[float], List[int]]:
         """
-        Computes distance of point to mesh for each point in points_cloud.
+        Computes distance of coords_matrix columns to mesh for each column.
         """
         mesh = self.triangulation()
         mesh_coordinates = [(point.x, point.y, point.z) for point in mesh.points]

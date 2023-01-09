@@ -1366,6 +1366,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def direction_vector(self, abscissa: float):
         """
+        Get direction vector at abscissa.
+
         :param abscissa: defines where in the BSplineCurve2D the
         direction vector is to be calculated
         :return: The direection vector vector of the BSplineCurve2D
@@ -1374,6 +1376,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def normal_vector(self, abscissa: float):
         """
+        Get normal vector at abscissa.
+
         :param abscissa: defines where in the BSplineCurve2D the
         normal vector is to be calculated
         :return: The normal vector of the BSplineCurve2D
