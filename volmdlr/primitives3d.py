@@ -1810,9 +1810,9 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 # class Sphere(volmdlr.Primitive3D):
 class Sphere(RevolvedProfile):
     """
-   Defines a sphere at a given position & radius.
+    Defines a sphere at a given position & radius.
 
-   """
+    """
 
     def __init__(self, center, radius,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
