@@ -1542,11 +1542,12 @@ class HollowCylinder(RevolvedProfile):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        HollowCylinder rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated HollowCylinder
+        HollowCylinder rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated HollowCylinder.
         """
         return self.__class__(
             position=self.position.rotation(center, axis, angle),
@@ -1557,7 +1558,8 @@ class HollowCylinder(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        HollowCylinder rotation. Object is updated inplace
+        HollowCylinder rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -1567,9 +1569,10 @@ class HollowCylinder(RevolvedProfile):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation
-        :param offset: translation vector
-        :return: A new translated HollowCylinder
+        HollowCylinder translation.
+
+        :param offset: translation vector.
+        :return: A new translated HollowCylinder.
         """
         return self.__class__(
             position=self.position.translation(offset), axis=self.axis,
@@ -1578,15 +1581,17 @@ class HollowCylinder(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation. Object is updated inplace
-        :param offset: translation vector
+        HollowCylinder translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         self.position.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new HollowCylinder
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new HollowCylinder.
+
+        side = 'old' or 'new'.
         """
         basis = frame.basis()
         if side == 'old':
@@ -1603,8 +1608,9 @@ class HollowCylinder(RevolvedProfile):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        side = 'old' or 'new'.
         """
         basis = frame.basis()
         if side == 'old':
@@ -1760,7 +1766,8 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Sweep
+        Changes frame_mapping and return a new Sweep.
+
         side = 'old' or 'new'
         """
         new_wire = self.wire3d.frame_mapping(frame, side)
@@ -1785,6 +1792,10 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
 # class Sphere(volmdlr.Primitive3D):
 class Sphere(RevolvedProfile):
+    """
+    Defines a sphere at a given position & radius.
+
+    """
     def __init__(self, center, radius,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
