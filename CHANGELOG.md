@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * GmshParser: to_vtk
 * BSplineCurve: derivatives
 * ArcEllipse2D: line_intersections, frame_mapping, linesegment_intersections
+* ClosedTriangleShell3D: points_cloud_distance and coords_matrix_distance methods to compute distances from mesh
 
 
 ### Fixed

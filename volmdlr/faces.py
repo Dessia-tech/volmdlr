@@ -8950,5 +8950,3 @@ class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
 
         nearest_coords, distances, triangles_idx = closest_point(tri_mesh, coords_matrix)
         return nearest_coords.tolist(), distances.tolist(), triangles_idx.tolist()
-
-
