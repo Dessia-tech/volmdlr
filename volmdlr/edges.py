@@ -99,8 +99,9 @@ class Edge(dc.DessiaObject):
         raise NotImplementedError(f'point_at_abscissa method not implememented by {self.__class__.__name__}')
 
     def middle_point(self):
-        discretization_points = self.discretization_points(number_points=3)
-        return discretization_points[1]
+        half_length = self.length() / 2
+        middle_point = self.point_at_abscissa(abscissa=half_length)
+        return middle_point
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
@@ -448,6 +449,12 @@ class LineSegment(Edge):
         return 0.5 * (self.start + self.end)
 
     def point_at_abscissa(self, abscissa):
+        """
+        Calculates a point in the LineSegment at a given abscissa.
+
+        :param abscissa: abscissa where in the curve the point should be calculated.
+        :return: Corresponding point.
+        """
         return self.start + self.unit_direction_vector() * abscissa
 
 
@@ -949,6 +956,12 @@ class BSplineCurve(Edge):
         return intersections_points
 
     def point_at_abscissa(self, abscissa):
+        """
+        Calculates a point in the BSplineCurve at a given abscissa.
+
+        :param abscissa: abscissa where in the curve the point should be calculated.
+        :return: Corresponding point.
+        """
         length = self.length()
         adim_abs = max(min(abscissa / length, 1.), 0.)
         point_name = 'Point' + self.__class__.__name__[-2:]
@@ -1359,11 +1372,6 @@ class BSplineCurve2D(BSplineCurve):
                                         normalize=True)
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
-
-    def point_at_abscissa(self, abscissa, resolution=1000):
-        length = self.length()
-        adim_abs = max(min(abscissa / length, 1.), 0.)
-        return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
 
     def direction_vector(self, abscissa: float):
         """
@@ -1989,6 +1997,12 @@ class Arc(Edge):
         return self.radius * abs(self.angle)
 
     def point_at_abscissa(self, abscissa):
+        """
+        Calculates a point in the Arc at a given abscissa.
+
+        :param abscissa: abscissa where in the curve the point should be calculated.
+        :return: Corresponding point.
+        """
         if self.is_trigo:
             return self.start.rotation(self.center, abscissa / self.radius)
         return self.start.rotation(self.center, -abscissa / self.radius)
@@ -3360,9 +3374,9 @@ class Line3D(Line):
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
-        v1 = (self.point1 - 3 / 6 * u)
+        v1 = (self.point1 - 3 * u)
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = (self.point2 - 3 / 6 * u)
+        v2 = (self.point2 - 3 * u)
         x2, y2, z2 = v2.x, v2.y, v2.z
         if dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
@@ -4866,7 +4880,7 @@ class Arc3D(Arc):
 
     def point_at_abscissa(self, abscissa):
         """
-        Calculates a point in the Arc2D at a given abscissa.
+        Calculates a point in the Arc3D at a given abscissa.
 
         :param abscissa: abscissa where in the curve the point should be calculated.
         :return: Corresponding point.

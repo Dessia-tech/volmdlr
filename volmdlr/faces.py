@@ -1148,6 +1148,8 @@ class Plane3D(Surface3D):
         Verifies if two planes are parallel and coincident.
 
         """
+        if not isinstance(self, plane2.__class__):
+            return False
         if self.is_parallel(plane2):
             if plane2.point_on_surface(self.frame.origin):
                 return True
@@ -2871,9 +2873,9 @@ class BSplineSurface3D(Surface3D):
         xmax, ymax, zmax = max_bounds
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def control_points_matri_x(self, coordinates):
+    def control_points_matrix(self, coordinates):
         """
-        Define control points like a matri_x, for each coordinate: x:0, y:1, z:2.
+        Define control points like a matrix, for each coordinate: x:0, y:1, z:2.
 
         """
 
@@ -2980,9 +2982,9 @@ class BSplineSurface3D(Surface3D):
 
         return blending_vect
 
-    def blending_matri_x_u(self, u):
+    def blending_matrix_u(self, u):
         """
-        Compute a matri_x of basis_functions in u direction for a vector u like [0,1].
+        Compute a matrix of basis_functions in u direction for a vector u like [0,1].
 
         """
 
@@ -2992,9 +2994,9 @@ class BSplineSurface3D(Surface3D):
                 blending_mat[i][j] = self.basis_functions_u(u[i], self.degree_u, j)
         return blending_mat
 
-    def blending_matri_x_v(self, v):
+    def blending_matrix_v(self, v):
         """
-        Compute a matri_x of basis_functions in v direction for a vector v like [0,1].
+        Compute a matrix of basis_functions in v direction for a vector v like [0,1].
 
         """
 
@@ -3484,7 +3486,7 @@ class BSplineSurface3D(Surface3D):
 
     def to_step(self, current_id):
         content = ''
-        point_matri_x_ids = '('
+        point_matrix_ids = '('
         for points in self.control_points_table:
             point_ids = '('
             for point in points:
@@ -3494,16 +3496,16 @@ class BSplineSurface3D(Surface3D):
                 current_id = point_id + 1
             point_ids = point_ids[:-1]
             point_ids += '),'
-            point_matri_x_ids += point_ids
-        point_matri_x_ids = point_matri_x_ids[:-1]
-        point_matri_x_ids += ')'
+            point_matrix_ids += point_ids
+        point_matrix_ids = point_matrix_ids[:-1]
+        point_matrix_ids += ')'
 
         u_close = '.T.' if self.x_periodicity else '.F.'
         v_close = '.T.' if self.y_periodicity else '.F.'
 
         content += "#{} = B_SPLINE_SURFACE_WITH_KNOTS('{}',{},{},{},.UNSPECIFIED.,{},{},.F.,{},{},{},{},.UNSPECIFIED.);\n" \
             .format(current_id, self.name, self.degree_u, self.degree_v,
-                    point_matri_x_ids, u_close, v_close,
+                    point_matrix_ids, u_close, v_close,
                     tuple(self.u_multiplicities), tuple(self.v_multiplicities),
                     tuple(self.u_knots), tuple(self.v_knots))
         return content, [current_id]
@@ -5094,8 +5096,6 @@ class Face3D(volmdlr.core.Primitive3D):
 
         It returns True if face2 is inside or False if the opposite.
         """
-        if not isinstance(self, type(face2)):
-            return False
         if self.surface3d.is_coincident(face2.surface3d):
             self_contour2d = self.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
@@ -5773,18 +5773,13 @@ class PlaneFace3D(Face3D):
         return self.outer_contour3d.bounding_box
 
     def distance_to_point(self, point, return_other_point=False):
-        # """
-        # Only works if the surface is planar
-        # TODO : this function does not take into account if Face has holes
-        # """
-        # On projette le point sur la surface plane
-        # Si le point est à l'intérieur de la face,
-        # on retourne la distance de projection
-        # Si le point est à l'extérieur, on projette le point sur le plan
-        # On calcule en 2D la distance entre la projection
-        # et le polygone contour
-        # On utilise le theroeme de Pythagore pour calculer
-        # la distance minimale entre le point et le contour
+        """
+        Calculates the distance from a plane face and a point.
+
+        :param point: point to verify.
+        :param return_other_point: bool to decide if corresponding point on face shoud be returned.
+        :return: distance to planeface3D.
+        """
 
         projected_pt = point.plane_projection3d(self.surface3d.frame.origin,
                                                 self.surface3d.frame.u,
@@ -5809,58 +5804,14 @@ class PlaneFace3D(Face3D):
                    other_point
         return (projection_distance ** 2 + border_distance ** 2) ** 0.5
 
-    def minimum_distance_points_plane(self, other_plane_face,
-                                      return_points=False):
-        # """
-        # Only works if the surface is planar
-        # TODO : this function does not take into account if Face has holes
-        # TODO : TRAITER LE CAS OU LA DISTANCE LA PLUS COURTE N'EST PAS D'UN SOMMET
-        # """
-        # On calcule la distance entre la face 1 et chaque point de la face 2
-        # On calcule la distance entre la face 2 et chaque point de la face 1
+    def minimum_distance_points_plane(self, other_plane_face, return_points=False):
+        """
+        Given two planefaces, calculates the points which corresponds to the minimal distance between these two faces.
 
-        # if self.face_intersection(other_plane_face) is not None:
-        #     return 0, None, None
-        #
-        # polygon1_points_3D = [volmdlr.Point3D(p.vector) for p in
-        #                       self.contours3d[0].tessel_points]
-        # polygon2_points_3D = [volmdlr.Point3D(p.vector) for p in
-        #                       other_plane_face.contours3d[0].tessel_points]
-        #
-        # distances = []
-        # if not return_points:
-        #     d_min = other_plane_face.distance_to_point(polygon1_points_3D[0])
-        #     for point1 in polygon1_points_3D[1:]:
-        #         d = other_plane_face.distance_to_point(point1)
-        #         if d < d_min:
-        #             d_min = d
-        #     for point2 in polygon2_points_3D:
-        #         d = self.distance_to_point(point2)
-        #         if d < d_min:
-        #             d_min = d
-        #     return d_min
-        #
-        # else:
-        #     for point1 in polygon1_points_3D:
-        #         d, other_point = other_plane_face.distance_to_point(
-        #             point1,
-        #             return_other_point=True)
-        #         distances.append((d, point1, other_point))
-        #     for point2 in polygon2_points_3D:
-        #         d, other_point = self.distance_to_point(
-        #             point2,
-        #             return_other_point=True
-        #         )
-        #         distances.append((d, point2, other_point))
-        #
-        # d_min, point_min, other_point_min = distances[0]
-        # for distance in distances[1:]:
-        #     if distance[0] < d_min:
-        #         d_min = distance[0]
-        #         point_min = distance[1]
-        #         other_point_min = distance[2]
-        #
-        # return point_min, other_point_min
+        :param other_plane_face: second planeface.
+        :param return_points: boolean to return corresponding points or not.
+        :return: minimal distance.
+        """
 
         min_distance = math.inf
         for edge1 in self.outer_contour3d.primitives:
@@ -5876,8 +5827,7 @@ class PlaneFace3D(Face3D):
                         min_distance = dist
         if return_points:
             return min_distance, p1, p2
-        else:
-            return min_distance
+        return min_distance
 
     def linesegment_inside(self, linesegment: vme.LineSegment3D):
         direction_vector = linesegment.unit_direction_vector()
@@ -5896,32 +5846,6 @@ class PlaneFace3D(Face3D):
             if not self.point_belongs(point):
                 return False
         return True
-
-    # def face_intersections_inner_contours(self, face2):
-    #     intersections = []
-    #     for inner_contour2d in face2.surface2d.inner_contours:
-    #         inner_contour3d = face2.surface3d.contour2d_to_3d(inner_contour2d)
-    #         for inner_edge2 in inner_contour3d.primitives:
-    #             intersection_points = self.edge_intersections(inner_edge2)
-    #             if intersection_points:
-    #                 for point in intersection_points:
-    #                     if point not in intersections:
-    #                         intersections.append(point)
-    #
-    #     return intersections
-
-    # def validate_inner_contour_intersections(self, intersections, face2=None):
-    #     intersection_primitives = []
-    #     for point1, point2 in combinations(intersections, 2):
-    #         if point1 != point2:
-    #             line_segment3d = vme.LineSegment3D(point1, point2)
-    #             if self.edge3d_inside(line_segment3d) and line_segment3d not in intersection_primitives:
-    #                 if face2 is not None:
-    #                     if face2.edge3d_inside(line_segment3d):
-    #                         intersection_primitives.append(line_segment3d)
-    #                 else:
-    #                     intersection_primitives.append(line_segment3d)
-    #     return intersection_primitives
 
     def planeface_intersections(self, planeface):
         face2_plane_interections = planeface.surface3d.plane_intersection(self.surface3d)
