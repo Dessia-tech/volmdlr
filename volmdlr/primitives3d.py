@@ -400,6 +400,10 @@ class Block(volmdlr.faces.ClosedShell3D):
         self.faces = self.shell_faces()
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of a Block.
+
+        """
         new_origin = self.frame.origin.copy()
         new_u = self.frame.u.copy()
         new_v = self.frame.v.copy()
@@ -492,6 +496,10 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         return dict_
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of ExtrudedProfile.
+
+        """
         return self.__class__(plane_origin=self.plane_origin.copy(),
                               x=self.x.copy(),
                               y=self.y.copy(),
@@ -720,6 +728,10 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         return dict_
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of RevolvedProfile.
+
+        """
         return self.__class__(plane_origin=self.plane_origin.copy(),
                               x=self.x.copy(), y=self.y.copy(),
                               contour2d=self.contour2d.copy(),
@@ -1061,6 +1073,10 @@ class Cylinder(RevolvedProfile):
         self.axis = axis
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of Cylinder.
+
+        """
         new_position = self.position.copy()
         new_axis = self.axis.copy()
         return Cylinder(new_position, new_axis, self.radius, self.length,
@@ -1492,6 +1508,10 @@ class HollowCylinder(RevolvedProfile):
                                         - self.inner_radius**2)
 
     def copy(self):
+        """
+        Creates a copy of HollowCylinder.
+
+        """
         new_position = self.position.copy()
         new_axis = self.axis.copy()
         return HollowCylinder(new_position, new_axis, self.inner_radius, self.outer_radius, self.length,
@@ -1777,6 +1797,10 @@ class Sweep(volmdlr.faces.ClosedShell3D):
             face.frame_mapping_inplace(frame, side)
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of Sweep.
+
+        """
         new_contour2d = self.contour2d.copy()
         new_wire3d = self.wire3d.copy()
         return Sweep(new_contour2d, new_wire3d, color=self.color,
@@ -1785,6 +1809,11 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
 # class Sphere(volmdlr.Primitive3D):
 class Sphere(RevolvedProfile):
+    """
+   Defines a sphere at a given position & radius.
+
+   """
+
     def __init__(self, center, radius,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):

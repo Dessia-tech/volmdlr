@@ -2095,17 +2095,17 @@ class Arc2D(Arc):
         xs, ys = self.start.x, self.start.y
         try:
             matrix_a = volmdlr.Matrix22(2 * (xs - xi), 2 * (ys - yi),
-                                 2 * (xs - xe), 2 * (ys - ye))
+                                        2 * (xs - xe), 2 * (ys - ye))
             b_vector = - volmdlr.Vector2D(xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
-                                   xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2)
+                                          xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2)
             inv_matrix_a = matrix_a.inverse()
             x = inv_matrix_a.vector_multiplication(b_vector)
             center = volmdlr.Point2D(x.x, x.y)
         except ValueError:
             matrix_a = npy.array([[2 * (xs - xi), 2 * (ys - yi)],
-                           [2 * (xs - xe), 2 * (ys - ye)]])
+                                  [2 * (xs - xe), 2 * (ys - ye)]])
             b_vector = - npy.array([xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
-                             xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2])
+                                    xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2])
             center = volmdlr.Point2D(*npy.linalg.solve(inv_matrix_a, b_vector))
         return center
 
@@ -2637,6 +2637,7 @@ class Arc2D(Arc):
 
     def reverse(self):
         return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(), self.name)
+
 
 class FullArc2D(Arc2D):
     """
@@ -3359,9 +3360,9 @@ class Line3D(Line):
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
-        v1 = (self.point1 - 3/6 * u)
+        v1 = (self.point1 - 3 / 6 * u)
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = (self.point2 - 3/6 * u)
+        v2 = (self.point2 - 3 / 6 * u)
         x2, y2, z2 = v2.x, v2.y, v2.z
         if dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
@@ -4224,7 +4225,7 @@ class BSplineCurve3D(BSplineCurve):
                         *self.curve.evaluate_single((t1 + t2) / 2))
                 last_param = t
         raise ValueError('Curvilinear abscissa is bigger than length,'
-                             ' or negative')
+                         ' or negative')
 
     def normal(self, position: float = 0.0):
         _, normal = operations.normal(self.curve, position, normalize=True)
@@ -4623,6 +4624,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def triangulation(self):
         return None
+
     def linesegment_intersections(self, linesegment3d: LineSegment3D):
         """
         Calculates intersections between a BSplineCurve3D and a LineSegment3D.

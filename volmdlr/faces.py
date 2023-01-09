@@ -1455,7 +1455,7 @@ class CylindricalSurface3D(Surface3D):
         # points2d = [self.point3d_to_2d(point) for point in points3d]
         # return points2d
         raise NotImplementedError
- 
+
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
@@ -3939,10 +3939,10 @@ class BSplineSurface3D(Surface3D):
             points_dim.append(self.point2d_parametric_to_dimension(p, grid2d))
 
         bsplinecurve2d_with_dimension = vme.BSplineCurve2D(bsplinecurve2d.degree, points_dim,
-                                                                     bsplinecurve2d.knot_multiplicities,
-                                                                     bsplinecurve2d.knots,
-                                                                     bsplinecurve2d.weights,
-                                                                     bsplinecurve2d.periodic)
+                                                           bsplinecurve2d.knot_multiplicities,
+                                                           bsplinecurve2d.knots,
+                                                           bsplinecurve2d.weights,
+                                                           bsplinecurve2d.periodic)
 
         return bsplinecurve2d_with_dimension
 
@@ -3970,10 +3970,10 @@ class BSplineSurface3D(Surface3D):
                 self.point2d_with_dimension_to_parametric_frame(p, self._grids2d))
 
         bsplinecurve2d = vme.BSplineCurve2D(bsplinecurve2d.degree, points,
-                                                      bsplinecurve2d.knot_multiplicities,
-                                                      bsplinecurve2d.knots,
-                                                      bsplinecurve2d.weights,
-                                                      bsplinecurve2d.periodic)
+                                            bsplinecurve2d.knot_multiplicities,
+                                            bsplinecurve2d.knots,
+                                            bsplinecurve2d.weights,
+                                            bsplinecurve2d.periodic)
         return bsplinecurve2d
 
     def bsplinecurve2d_with_dimension_to_3d(self, bsplinecurve2d):
@@ -4887,7 +4887,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         if not self._inner_contours3d:
             self._inner_contours3d = [self.surface3d.contour2d_to_3d(c) for c in
-                self.surface2d.inner_contours]
+                                      self.surface2d.inner_contours]
         return self._inner_contours3d
 
     @property
@@ -5094,7 +5094,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
         It returns True if face2 is inside or False if the opposite.
         """
-        if not type(self) is type(face2):
+        if not isinstance(self, type(face2)):
             return False
         if self.surface3d.is_coincident(face2.surface3d):
             self_contour2d = self.outer_contour3d.to_2d(
@@ -5772,7 +5772,6 @@ class PlaneFace3D(Face3D):
     def get_bounding_box(self):
         return self.outer_contour3d.bounding_box
 
-
     def distance_to_point(self, point, return_other_point=False):
         # """
         # Only works if the surface is planar
@@ -5930,7 +5929,7 @@ class PlaneFace3D(Face3D):
             return []
         points_intersections = []
         for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d +\
-                             planeface.inner_contours3d:
+                planeface.inner_contours3d:
             for intersection in contour.line_intersections(face2_plane_interections[0]):
                 if intersection and intersection not in points_intersections:
                     points_intersections.append(intersection)
@@ -8864,7 +8863,7 @@ class ClosedShell3D(OpenShell3D):
         faces += new_valid_faces
         return [OpenShell3D(faces)]
 
-    def subtract_to_closed_shell(self, shell2: OpenShell3D, tol: float=1e-8):
+    def subtract_to_closed_shell(self, shell2: OpenShell3D, tol: float = 1e-8):
         """
         Given Two closed shells, it returns a new subtracted ClosedShell3D.
 

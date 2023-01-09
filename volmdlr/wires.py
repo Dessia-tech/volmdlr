@@ -1334,7 +1334,7 @@ class ContourMixin(WireMixin):
                 if all(self.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
                     continue
                 if not all(not self.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
-                    contour2 = getattr(sys.modules[__name__], 'Contour'+self.__class__.__name__[-2:])(prims)
+                    contour2 = getattr(sys.modules[__name__], 'Contour' + self.__class__.__name__[-2:])(prims)
                 elif all(not self.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
                     merge_primitives2.extend(prims)
         merge_primitives = merge_primitives1 + merge_primitives2
@@ -3975,6 +3975,7 @@ class Ellipse2D(Contour2D):
     :Example:
     >>> ellipse2d = wires.Ellipse2D(4, 2, volmdlr.O2D, volmdlr.Vector2D(1, 1))
     """
+
     def __init__(self, major_axis, minor_axis, center, major_dir, name=''):
         self.major_axis = major_axis
         self.minor_axis = minor_axis
@@ -4690,7 +4691,7 @@ class Circle3D(Contour3D):
         """
         if number_points:
             angle_resolution = number_points
-        discretization_points_3d = [self.center + self.radius * math.cos(teta) * self.frame.u +\
+        discretization_points_3d = [self.center + self.radius * math.cos(teta) * self.frame.u +
                                     self.radius * math.sin(teta) * self.frame.v for teta in
                                     npy.linspace(0, volmdlr.TWO_PI, angle_resolution + 1)][:-1]
         return discretization_points_3d
