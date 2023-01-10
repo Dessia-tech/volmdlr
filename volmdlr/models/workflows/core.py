@@ -6,9 +6,9 @@ Created on Fri Feb 28 11:26:19 2020
 @author: masfaraud
 """
 
-import dessia_common.workflow 
-import volmdlr.core
-import volmdlr
+# import dessia_common.workflow
+# import volmdlr.core
+# import volmdlr
 
 # packer = dessia_common.workflow.Sequence(3, float)
 #

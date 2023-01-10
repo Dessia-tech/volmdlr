@@ -24,17 +24,17 @@ block2.name='Block 2'
                      
 f1 = vm.OXYZ.copy()
 
-f2 = f1.Rotation(vm.Z3D, 0.1, copy=True)
-f2.Translation(0.1*vm.X3D, copy=False)
+f2 = f1.rotation(vm.Z3D, 0.1)
+f2.translation_inplace(0.1*vm.X3D)
 
-f3 = f2.Rotation(vm.Z3D, 0.1, copy=True)
-f3.Translation(0.1*vm.X3D, copy=False)
+f3 = f2.rotation(vm.Z3D, 0.1)
+f3.translation_inplace(0.1*vm.X3D)
 
-f4 = f3.Rotation(vm.Z3D, 0.1, copy=True)
-f4.Translation(0.1*vm.X3D, copy=False)
+f4 = f3.rotation(vm.Z3D, 0.1)
+f4.translation_inplace(0.1*vm.X3D)
 
-f5 = f4.Rotation(vm.Z3D, 0.1, copy=True)
-f5.Translation(0.1*vm.X3D, copy=False)
+f5 = f4.rotation(vm.Z3D, 0.1)
+f5.translation_inplace(0.1*vm.X3D)
 
 
 model = vm.MovingVolumeModel([block1, block2], [[f1, -f1], [f2, -f2], [f3, -f3], [f4, -f4], [f5, -f5]])

@@ -5,6 +5,9 @@ Created on Fri May 22 11:17:00 2020
 @author: Mack Pro
 """
 
+# =============================================================================
+# Take a look at it, it seems to not be correct
+# =============================================================================
 
 import volmdlr as vm
 import volmdlr.edges as vme

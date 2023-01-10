@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Extended primitives 2D classes.
 """
 
 import math
-
+import warnings
 import matplotlib.patches
 
 import volmdlr
@@ -27,35 +27,45 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         volmdlr.wires.Wire2D.__init__(self, self._primitives(), name)
 
-    def polygon_points(self, angle_resolution=5):
+    def discretization_points(self, resolution=5):
         points = []
         for primitive in self.primitives:
-            points.extend(primitive.polygon_points())
+            points.extend(primitive.discretization_points(resolution))
         return points
 
-    def arc_features(self, ipoint):
-        radius = self.radius[ipoint]
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn('polygon_points is deprecated,\
+                please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
+
+    def arc_features(self, point_index: int):
+        """
+        Returns the arc features for point at index.
+        """
+        radius = self.radius[point_index]
         if self.closed:
-            if ipoint == 0:
+            if point_index == 0:
                 pt1 = self.points[-1]
             else:
-                pt1 = self.points[ipoint - 1]
-            pti = self.points[ipoint]
-            if ipoint < self.npoints - 1:
-                pt2 = self.points[ipoint + 1]
+                pt1 = self.points[point_index - 1]
+            pti = self.points[point_index]
+            if point_index < self.npoints - 1:
+                pt2 = self.points[point_index + 1]
             else:
                 pt2 = self.points[0]
         else:
-            pt1 = self.points[ipoint - 1]
-            pti = self.points[ipoint]
-            pt2 = self.points[ipoint + 1]
+            pt1 = self.points[point_index - 1]
+            pti = self.points[point_index]
+            pt2 = self.points[point_index + 1]
 
         # TODO: change to point_distance ------> done
         point_distance1 = (pt1 - pti).norm()
         point_distance2 = (pt2 - pti).norm()
         point_distance3 = (pt1 - pt2).norm()
         alpha = math.acos(
-            -(point_distance3 ** 2 - point_distance1 ** 2 - point_distance2 ** 2) / (2 * point_distance1 * point_distance2)) / 2.
+            -(point_distance3 ** 2 - point_distance1 ** 2 - point_distance2 ** 2) / (2 * point_distance1
+                                                                                     * point_distance2)) / 2.
         point_distance = radius / math.tan(alpha)
 
         u1 = (pt1 - pti) / point_distance1
@@ -77,26 +87,47 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         return p3, pm, p4, point_distance, alpha
 
-    def rotation(self, center, angle, copy=True):
-        if copy:
-            return self.__class__([p.rotation(center, angle, copy=True)
-                                   for p in self.points],
-                                  self.radius,
-                                  adapt_radius=self.adapt_radius,
-                                  name=self.name)
-        self.__init__(
-            [p.rotation(center, angle, copy=True) for p in self.points],
-            self.radius,
-            adapt_radius=self.adapt_radius, name=self.name)
+    def rotation(self, center: volmdlr.Point2D, angle: float):
+        """
+        OpenedRoundedLineSegments2D rotation
+        :param center: rotation center
+        :param angle: angle rotation
+        :return: a new rotationed OpenedRoundedLineSegments2D
+        """
+        return self.__class__([point.rotation(center, angle)
+                               for point in self.points],
+                              self.radius,
+                              adapt_radius=self.adapt_radius,
+                              name=self.name)
 
-    def translation(self, offset, copy=True):
-        if copy:
-            return self.__class__(
-                [p.translation(offset, copy=True) for p in self.points],
-                self.radius, adapt_radius=self.adapt_radius, name=self.name)
-        self.__init__(
-            [p.translation(offset, copy=True) for p in self.points],
+    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
+        """
+        OpenedRoundedLineSegments2D rotation. Object is updated inplace
+        :param center: rotation center
+        :param angle: rotation angle
+        """
+        for point in self.points:
+            point.rotation_inplace(center, angle)
+
+    def translation(self, offset: volmdlr.Vector2D):
+        """
+        OpenedRoundedLineSegments2D translation.
+
+        :param offset: translation vector
+        :return: A new translated OpenedRoundedLineSegments2D
+        """
+        return self.__class__(
+            [point.translation(offset) for point in self.points],
             self.radius, adapt_radius=self.adapt_radius, name=self.name)
+
+    def translation_inplace(self, offset: volmdlr.Vector2D):
+        """
+        OpenedRoundedLineSegments2D translation. Object is updated inplace.
+
+        :param offset: translation vector
+        """
+        for point in self.points:
+            point.translation_inplace(offset)
 
     def offset(self, offset):
         nb = len(self.points)
@@ -173,7 +204,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def offset_single_line(self, line_index, offset):
         """
-        line_index = 0 being the 1st line
+        :param line_index: 0 being the 1st line
         """
         new_linesegment2D_points = []
         dont_add_last_point = False
@@ -378,7 +409,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         # CREATE THE NEW POINTS' LIST
         # =============================================================================
         for i in range(len(self.points)):
-            if i in new_points.keys():
+            if i in new_points:
                 new_linesegment2D_points.append(new_points[i])
             else:
                 new_linesegment2D_points.append(self.points[i])

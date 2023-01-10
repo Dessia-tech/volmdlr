@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+ISO STEP reader/writer.
 """
 
 import time
-from typing import BinaryIO, List
+from typing import List
 
 import matplotlib.pyplot as plt
 import networkx as nx
-import plot_data.graph
 
+import dessia_common.core as dc
+import plot_data.graph
+from dessia_common.files import BinaryFile
 import volmdlr
 import volmdlr.core
 import volmdlr.edges
@@ -18,9 +20,20 @@ import volmdlr.faces
 import volmdlr.primitives3d
 import volmdlr.wires
 
-# import webbrowser
-# from jinja2 import Environment, PackageLoader, select_autoescape
-# import os
+
+def set_to_list(step_set):
+    """
+    Convert a string representation of a set to a list of strings.
+
+    :param step_set: String representation of a set, e.g. "{A,B,C}"
+    :type step_set: str
+    :return: List of strings, e.g. ["A", "B", "C"]
+    :rtype: List[str]
+    """
+    char_list = step_set.split(',')
+    char_list[0] = char_list[0][1:]
+    char_list[-1] = char_list[-1][:-1]
+    return list(char_list)
 
 
 def step_split_arguments(function_arg):
@@ -34,6 +47,8 @@ def step_split_arguments(function_arg):
         function_arg += ')'
     arguments = []
     argument = ""
+    if len(function_arg) > 0 and function_arg[0] == "(":
+        function_arg += ")"
     parenthesis = 1
     for char in function_arg:
         if char == "(":
@@ -55,30 +70,89 @@ def step_split_arguments(function_arg):
 
 
 def vertex_point(arguments, object_dict):
+    """
+    Returns the data in case of a VERTEX.
+    """
     return object_dict[arguments[1]]
 
 
 def oriented_edge(arguments, object_dict):
+    """
+    Returns the data in case of an ORIENTED_EDGE.
+    """
     return object_dict[arguments[3]]
 
 
 def face_outer_bound(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def face_bound(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def surface_curve(arguments, object_dict):
+    """
+    Returns xx.
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     return object_dict[arguments[1]]
 
 
 def seam_curve(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+    """
     return object_dict[arguments[1]]
 
 
 def trimmed_curve(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+    """
+
     curve = object_dict[arguments[1]]
     point1 = object_dict[int(arguments[2][0][1:])]
     point2 = object_dict[int(arguments[3][0][1:])]
@@ -86,15 +160,31 @@ def trimmed_curve(arguments, object_dict):
 
 
 def vertex_loop(arguments, object_dict):
+    """
+    Returns the data in case of a VERTEX_LOOP.
+    """
     return object_dict[arguments[1]]
 
 
 def pcurve(arguments, object_dict):
-    # Pas besoin de mettre PCURVE ici s'il n'est pas dans STEP_TO_VOLMDLR
+    """
+    Returns the data in case of a PCURVE.
+    """
     return object_dict[arguments[1]]
 
 
 def geometric_curve_set(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     sub_objects = []
     for argument in arguments[1]:
         sub_obj = object_dict[int(argument[1:])]
@@ -103,21 +193,37 @@ def geometric_curve_set(arguments, object_dict):
 
 
 def shell_base_surface_model(arguments, object_dict):
-    # Shell3D
+    """
+    Returns the data in case of a Shell3D.
+    """
     return object_dict[int(arguments[1][0][1:])]
 
 
 def item_defined_transformation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     # Frame3D
     # volmdlr_object1 = object_dict[arguments[2]]
     volmdlr_object2 = object_dict[arguments[3]]
     # TODO : how to frame map properly from these two Frame3D ?
     # return volmdlr_object2 - volmdlr_object1
     return volmdlr_object2
+#
 
 
 def manifold_surface_shape_representation(arguments, object_dict):
-    # Shell3D
+    """
+    Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
+    """
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
@@ -128,14 +234,31 @@ def manifold_surface_shape_representation(arguments, object_dict):
 
 
 def manifold_solid_brep(arguments, object_dict):
+    """
+    Returns the data in case of a manifold_solid_brep with voids.
+    """
     return object_dict[arguments[1]]
 
 
 def brep_with_voids(arguments, object_dict):
+    """
+    Returns the data in case of a BREP with voids.
+    """
     return object_dict[arguments[1]]
 
 
 def shape_representation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     # does it have the extra argument comming from
     # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
     # them
@@ -173,6 +296,17 @@ def shape_representation(arguments, object_dict):
 
 
 def advanced_brep_shape_representation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
@@ -183,17 +317,32 @@ def advanced_brep_shape_representation(arguments, object_dict):
 
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     if arguments[2] in object_dict:
         if isinstance(object_dict[arguments[2]], list):
+
             for shell3d in object_dict[arguments[2]]:
+
                 frame3d = object_dict[arguments[4]]
-                shell3d.frame_mapping(frame3d, 'old', copy=False)
+                shell3d.frame_mapping_inplace(frame3d, 'old')
                 # return shell3d
             return None
+
         else:
             shell3d = object_dict[arguments[2]]
+
             frame3d = object_dict[arguments[4]]
-            shell3d.frame_mapping(frame3d, 'old', copy=False)
+            shell3d.frame_mapping_inplace(frame3d, 'old')
             # return shell3d
             return None
     else:
@@ -202,24 +351,56 @@ def representation_relationship_representation_relationship_with_transformation_
 
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
         arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
-    return STEP_TO_VOLMDLR[name].from_step(
+    return STEP_TO_VOLMDLR['BOUNDED_CURVE, '
+                           'B_SPLINE_CURVE, '
+                           'B_SPLINE_CURVE_WITH_KNOTS, '
+                           'CURVE, GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_CURVE, '
+                           'REPRESENTATION_ITEM'].from_step(
         modified_arguments, object_dict)
 
 
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
         arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
-    return STEP_TO_VOLMDLR[name].from_step(
+    return STEP_TO_VOLMDLR['BOUNDED_SURFACE, B_SPLINE_SURFACE, '
+                           'B_SPLINE_SURFACE_WITH_KNOTS, '
+                           'GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_SURFACE, '
+                           'REPRESENTATION_ITEM, SURFACE'].from_step(
         modified_arguments, object_dict)
 
 
-class StepFunction:
+class StepFunction(dc.DessiaObject):
     def __init__(self, function_id, function_name, function_arg):
+        dc.DessiaObject.__init__(self)
         self.id = function_id
         self.name = function_name
         self.arg = function_arg
@@ -230,6 +411,7 @@ class StepFunction:
                 self.simplify('B_SPLINE_SURFACE')
             if self.arg[1][0] == 'B_SPLINE_CURVE':
                 self.simplify('B_SPLINE_CURVE')
+        dc.DessiaObject.__init__(self, name=function_name)
 
     def simplify(self, new_name):
         # ITERATE ON SUBFUNCTIONS
@@ -247,13 +429,14 @@ class StepFunction:
         self.arg = arguments
 
 
-class Step:
+class Step(dc.DessiaObject):
+
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines
         self.functions, self.all_connections = self.read_lines()
         self._utd_graph = False
         self._graph = None
-        self.name = name
+        dc.DessiaObject.__init__(self, name=name)
 
     @property
     def graph(self):
@@ -263,7 +446,7 @@ class Step:
         return self._graph
 
     @classmethod
-    def from_stream(cls, stream: BinaryIO = None):
+    def from_stream(cls, stream: BinaryFile = None):
         stream.seek(0)
         lines = []
         for line in stream:
@@ -347,7 +530,7 @@ class Step:
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
-                    arg_list = volmdlr.core.set_to_list(argument)
+                    arg_list = set_to_list(argument)
                     arguments[i] = arg_list
 
             function = StepFunction(function_id, function_name, arguments)
@@ -530,6 +713,7 @@ class Step:
 
     def instanciate(self, name, arguments, object_dict):
         """
+        Gives the volmdlr object related to the step function.
         """
         self.parse_arguments(arguments)
 
@@ -550,10 +734,8 @@ class Step:
                                                                     arguments))
         return volmdlr_object
 
-    def to_volume_model(self, show_times=False):
+    def to_volume_model(self, show_times: bool = False):
         """
-        no_bug_mode=True loops on instanciate method's KeyErrors until all
-        the KeyErrors can be instanciated.
         show_times=True displays the numer of times a given class has been
         instanciated and the totatl time of all the instanciations of this
         given class.
@@ -578,7 +760,6 @@ class Step:
             if node != '#0' and self.functions[node].name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(node)
                 not_shell_nodes.append(int(self.functions[node].arg[1][1:]))
-
         frame_mapped_shell_node = []
         for s_node in shell_nodes:
             for fm_node in frame_mapping_nodes:
@@ -586,21 +767,19 @@ class Step:
                     frame_mapped_shell_node.append(s_node)
                     break
         shell_nodes_copy = shell_nodes.copy()
-        [shell_nodes.remove(node) for node in frame_mapped_shell_node]
-
-        [shell_nodes.remove(node) for node in not_shell_nodes]
+        remove_nodes = list(set(frame_mapped_shell_node + not_shell_nodes))
+        [shell_nodes.remove(node) for node in remove_nodes]
 
         for node in shell_nodes + frame_mapping_nodes:
             self.graph.add_edge('#0', node)
 
-        # self.draw_graph(self.graph, reduced=True, save=True)
+        # self.draw_graph(self.graph, reduced=True)
 
         nodes = []
         i = 1
         new_nodes = True
         while new_nodes:
-            new_nodes = list(nx.descendants_at_distance(
-                self.graph, '#0', i))[::-1]
+            new_nodes = list(nx.descendants_at_distance(self.graph, '#0', i))[::-1]
             nodes.extend(new_nodes)
             i += 1
 
@@ -616,9 +795,7 @@ class Step:
                     for instanciate_id in instanciate_ids[::-1]:
                         t = time.time()
                         volmdlr_object = self.instanciate(
-                            self.functions[instanciate_id].name,
-                            self.functions[instanciate_id].arg[:],
-                            object_dict)
+                            self.functions[instanciate_id].name, self.functions[instanciate_id].arg[:], object_dict)
                         t = time.time() - t
                         object_dict[instanciate_id] = volmdlr_object
                         if show_times:
@@ -645,8 +822,10 @@ class Step:
                 shells.extend(object_dict[node])
             else:
                 shells.append(object_dict[node])
-
-        return volmdlr.core.VolumeModel(shells)
+        volume_model = volmdlr.core.VolumeModel(shells)
+        # bounding_box = volume_model.bounding_box
+        # volume_model = volume_model.translation(-bounding_box.center)
+        return volume_model
 
     def to_points(self):
         object_dict = {}
@@ -732,7 +911,7 @@ STEP_TO_VOLMDLR = {
     'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
     'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
 
-    # added on 12/08/2021 by Mack in order to read BsplinePipe
+    # Bsplines
     'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
 
     # TOPOLOGICAL ENTITIES

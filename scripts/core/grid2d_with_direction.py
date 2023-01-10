@@ -7,7 +7,7 @@
 
 # %% Librairies
 
-import volmdlr as vm
+import volmdlr.grid
 import matplotlib.pyplot as plt
 
 # %% Grid2d definition 'with direction'
@@ -21,10 +21,7 @@ grid2d_directions = [[['+x','+y'], ['-x','+y'], ['+y','+x'], ['-y','+x']],
 
 for i in range(0, len(grid2d_directions)):
     for j in range(0, len(grid2d_directions[i])):
-        grid2d = vm.Point2D.grid2d_with_direction(points_x, points_y,
-                                                  xmin, xmax,
-                                                  ymin, ymax,
-                                                  grid2d_directions[i][j])[0]
+        grid2d = volmdlr.grid.Grid2D.from_properties((xmin, xmax), (ymin, ymax), (points_x, points_y), grid2d_directions[i][j]).points
     
         for k, p in enumerate(grid2d):
             if k<points_x:

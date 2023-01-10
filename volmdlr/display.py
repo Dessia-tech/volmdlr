@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Classes to define mesh for display use. Display mesh do not require good aspect ratios on elements.
 """
+
 from typing import List, Tuple
 import math
-import dessia_common as dc
+import dessia_common.core as dc
 import volmdlr.edges
 # import volmdlr.faces as vmf
 
 
 class Node2D(volmdlr.Point2D):
+    """
+    A node is a point with some hash capabilities for perfomance.
+    """
+
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
 
@@ -27,6 +32,10 @@ class Node2D(volmdlr.Point2D):
 
 
 class Node3D(volmdlr.Point3D):
+    """
+    A node is a point with some hash capabilities for perfomance.
+    """
+
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))
 
@@ -44,11 +53,17 @@ class Node3D(volmdlr.Point3D):
 
 
 class DisplayMesh(dc.DessiaObject):
+    """
+    A DisplayMesh is a list of points linked by triangles.
+    This is an abstract class for 2D & 3D.
+    """
+    _linesegment_class = volmdlr.edges.LineSegment
+
     def __init__(self, points, triangles, name=''):
 
         self.points = points
         self.triangles = triangles
-        self.name = name
+        dc.DessiaObject.__init__(self, name=name)
         self._utd_point_index = False
 
     def check(self):
@@ -68,15 +83,17 @@ class DisplayMesh(dc.DessiaObject):
     @classmethod
     def merge_meshes(cls, meshes: List['DisplayMesh']):
         """
-        Merge several meshes into one
+        Merge several meshes into one.
         """
         # Collect points
         ip = 0
         point_index = {}
         points = []
+        if len(meshes) == 1:
+            return cls(meshes[0].points, meshes[0].triangles)
         for mesh in meshes:
             for point in mesh.points:
-                if not point in point_index:
+                if point not in point_index:
                     point_index[point] = ip
                     ip += 1
                     points.append(point)
@@ -119,6 +136,9 @@ class DisplayMesh(dc.DessiaObject):
         # self._point_index = new_point_index
 
     def __add__(self, other_mesh):
+        """
+        Defines how to add two meshes.
+        """
         new_points = self.points[:]
         new_point_index = self.point_index.copy()
         ip = len(new_points)
@@ -158,6 +178,10 @@ class DisplayMesh(dc.DessiaObject):
 
 
 class DisplayMesh2D(DisplayMesh):
+    """
+    A mesh for display purposes in 2D.
+
+    """
     _linesegment_class = volmdlr.edges.LineSegment2D
     _point_class = volmdlr.Point2D
 
@@ -167,8 +191,24 @@ class DisplayMesh2D(DisplayMesh):
                  name: str = ''):
         DisplayMesh.__init__(self, points, triangles, name=name)
 
+    def area(self):
+        """
+        Return the area as the sum of areas of triangles
+        """
+        area = 0.
+        for (n1, n2, n3) in self.triangles:
+            p1 = self.points[n1]
+            p2 = self.points[n2]
+            p3 = self.points[n3]
+            area += 0.5 * abs((p2 - p1).cross(p3 - p1))
+        return area
+
 
 class DisplayMesh3D(DisplayMesh):
+    """
+    A mesh for display purposes in 3D.
+
+    """
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 
@@ -178,7 +218,9 @@ class DisplayMesh3D(DisplayMesh):
 
     def to_babylon(self):
         """
-        return mesh in babylon format: https://doc.babylonjs.com/how_to/custom
+        Returns mesh in babylon format.
+
+        https://doc.babylonjs.com/how_to/custom
         """
         positions = []
         for p in self.points:
@@ -190,9 +232,10 @@ class DisplayMesh3D(DisplayMesh):
         return positions, flatten_indices
 
     def to_stl(self):
-        '''
-        Exports to STL
-        '''
+        """
+        Exports to STL.
+
+        """
         # TODO: remove this in the future
         import volmdlr.stl as vmstl
         stl = vmstl.Stl.from_display_mesh(self)
