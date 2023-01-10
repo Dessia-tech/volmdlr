@@ -108,15 +108,15 @@ babylon_unpacker_body_template = Template(
         scene.lastEdgewidthUpdate = Date.now();
 
 
-        // camera.onViewMatrixChangedObservable.add(() => {
-        //     if ((Date.now() - scene.lastEdgewidthUpdate) > 1000){
-        //         scene.lastEdgewidthUpdate = Date.now();
-        //         for (mesh of scene.meshes){
-        //             var dist = BABYLON.Vector3.Distance(camera.position, mesh.position);
-        //             mesh.edgesWidth = dist*0.1;
-        //         }
-        //     }
-        //  })
+        //camera.onViewMatrixChangedObservable.add(() => {
+        //    if ((Date.now() - scene.lastEdgewidthUpdate) > 1000){
+        //        scene.lastEdgewidthUpdate = Date.now();
+        //        for (mesh of scene.meshes){
+        //            var dist = BABYLON.Vector3.Distance(camera.position, mesh.position);
+        //            mesh.edgesWidth = dist*0.1;
+        //        }
+        //    }
+        // })
 
       	var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(-1, -1, -1), scene);
       	light1.intensity=0.5;
