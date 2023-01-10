@@ -844,6 +844,12 @@ class Surface3D(DessiaObject):
         return volmdlr.wires.Contour2D(primitives2d)
 
     def contour2d_to_3d(self, contour2d):
+        """
+        Computes the 3D representation of a given contour2D.
+        
+        :param contour2d: The given contour2D
+        """
+        
         primitives3d = []
         for primitive2d in contour2d.primitives:
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
@@ -1252,9 +1258,17 @@ class Plane3D(Surface3D):
         return point3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
 
     def dimensioned_surface2d(self, dimensionless_surface2d: Surface2D):
+        """
+        Computes the dimentioned surface2D associated to the given parametric surface2d.
+        """
         return dimensionless_surface2d
 
     def contour2d_to_3d(self, contour2d):
+        """
+        Computes the 3D representation of a given contour2D.
+        
+        :param contour2d: The given contour2D
+        """
         return contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
 
     def contour3d_to_2d(self, contour3d):
@@ -1310,7 +1324,7 @@ class CylindricalSurface3D(Surface3D):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = None
 
-    def __init__(self, frame, radius, name=''):
+    def __init__(self, frame: volmdlr.core.Frame3D, radius: float, name: str=''):
         self.frame = frame
         self.radius = radius
         Surface3D.__init__(self, name=name)
@@ -1321,7 +1335,7 @@ class CylindricalSurface3D(Surface3D):
                             point2d.y)
         return self.frame.old_coordinates(p)
 
-    def point3d_to_2d(self, point3d):
+    def point3d_to_2d(self, point3d: volmdlr.core.Point3D):
         """
         Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a cartesian coordinates point (x, y, z).
 
@@ -1340,14 +1354,16 @@ class CylindricalSurface3D(Surface3D):
             theta = 0.0
 
         return volmdlr.Point2D(theta, z)
-    
-    def dimensioned_surface2d(self, dimensionless_surface2d:Surface2D):
+
+    def dimensioned_surface2d(self, dimensionless_surface2d: Surface2D):
+        """
+        Computes the dimentioned surface2D associated to the given parametric surface2d.
+        """
         frame = volmdlr.OXY.copy()
         frame.u = self.radius
         return dimensionless_surface2d.frame_mapping(frame, side='old')
-    
 
-    def arc3d_to_2d(self, arc3d):
+    def arc3d_to_2d(self, arc3d: vme.Arc3D):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
 
