@@ -6719,7 +6719,7 @@ class CylindricalFace3D(Face3D):
         if not (other_cyl.surface2d.outer_contour.point_belongs(pt2_2d)):
             # Find the closest one
             
-            poly2 = other_cyl.surface2d.outer_contour.to_polygon()
+            poly2 = other_cyl.surface2d.outer_contour.to_polygon(angle_resolution=10)
             _, new_pt2_2d = poly2.point_border_distance(pt2_2d,
                                                          return_other_point=True)
             pt2 = volmdlr.Point3D(r2 * math.cos(new_pt2_2d[0]),
@@ -6739,7 +6739,7 @@ class CylindricalFace3D(Face3D):
         v1 = self.surface3d.frame.v
         frame1 = volmdlr.Frame3D(self.center, u1, v1, n1)
 
-        poly2d = planeface.surface2d.outer_contour.to_polygon()
+        poly2d = planeface.surface2d.outer_contour.to_polygon(angle_resolution=10)
         pfpoints = poly2d.points
         xmin, ymin = min([pt.x for pt in pfpoints]), min([pt.y for pt in pfpoints])
         xmax, ymax = max([pt.x for pt in pfpoints]), max([pt.y for pt in pfpoints])
@@ -6802,7 +6802,7 @@ class CylindricalFace3D(Face3D):
         if not (self.surface2d.outer_contour.point_belongs(pt1_2d)):
             # Find the closest one
 
-            poly1 = self.surface2d.outer_contour.to_polygon()
+            poly1 = self.surface2d.outer_contour.to_polygon(angle_resolution=10)
             _, new_pt1_2d = poly1.point_border_distance(pt1_2d,
                                                          return_other_point=True)
             pt1 = volmdlr.Point3D(r * math.cos(new_pt1_2d[0]),
@@ -6812,7 +6812,7 @@ class CylindricalFace3D(Face3D):
 
         if not (planeface.surface2d.outer_contour.point_belongs(pt2_2d)):
             # Find the closest one
-            poly2 = planeface.surface2d.outer_contour.to_polygon()
+            poly2 = planeface.surface2d.outer_contour.to_polygon(angle_resolution=10)
             _, new_pt2_2d = poly2.point_border_distance(pt2_2d,
                                                          return_other_point=True)
             pt2 = volmdlr.Point2D(new_pt2_2d[0], new_pt2_2d[1])
@@ -6997,7 +6997,7 @@ class ToroidalFace3D(Face3D):
 # =============================================================================
 
     def minimum_maximum_tore(self):
-        poly = self.surface2d.outer_contour.to_polygon() 
+        poly = self.surface2d.outer_contour.to_polygon(angle_resolution=10) 
         points = poly.points
         min_phi, min_theta = min([pt[1] for pt in points]), min(
             [pt[0] for pt in points])
@@ -7143,7 +7143,7 @@ class ToroidalFace3D(Face3D):
         if not other_tore.surface2d.outer_contour.point_belongs(pt2_2d):
             # Find the closest one
 
-            poly2 = other_tore.surface2d.outer_contour.to_polygon()
+            poly2 = other_tore.surface2d.outer_contour.to_polygon(angle_resolution=10)
             _, new_pt2_2d = poly2.point_border_distance(pt2_2d,
                                                         return_other_point=True)
 
@@ -7273,7 +7273,7 @@ class ToroidalFace3D(Face3D):
 
         if not self.surface2d.outer_contour.point_belongs(pt2_2d):
             # Find the closest one
-            poly2 = self.surface2d.outer_contour.to_polygon()
+            poly2 = self.surface2d.outer_contour.to_polygon(angle_resolution=10)
             _, new_pt2_2d = poly2.point_border_distance(pt2_2d,
                                                         return_other_point=True)
             
@@ -7282,7 +7282,7 @@ class ToroidalFace3D(Face3D):
 
         if not cyl.surface2d.outer_contour.point_belongs(pt1_2d):
             # Find the closest one
-            poly1 = cyl.surface2d.outer_contour.to_polygon()
+            poly1 = cyl.surface2d.outer_contour.to_polygon(angle_resolution=10)
             _, new_pt1_2d = poly1.point_border_distance(pt1_2d,
                                                         return_other_point=True)
 
@@ -7297,7 +7297,7 @@ class ToroidalFace3D(Face3D):
                                       planeface):  # Planeface with contour2D
         # TODO: check that it takes into account holes
 
-        poly2d = planeface.surface2d.outer_contour.to_polygon()
+        poly2d = planeface.surface2d.outer_contour.to_polygon(angle_resolution=10)
         pfpoints = poly2d.points
         xmin, ymin = min([pt[0] for pt in pfpoints]), min([pt[1] for pt in pfpoints])
         xmax, ymax = max([pt[0] for pt in pfpoints]), max([pt[1] for pt in pfpoints])
@@ -7380,7 +7380,7 @@ class ToroidalFace3D(Face3D):
 
         if not self.surface2d.outer_contour.point_belongs(pt1_2d):
             # Find the closest one
-            poly1 = self.surface2d.outer_contour.to_polygon()
+            poly1 = self.surface2d.outer_contour.to_polygon(angle_resolution=10)
             _, new_pt1_2d = poly1.point_border_distance(pt1_2d,
                                                          return_other_point=True)
 
@@ -7389,7 +7389,7 @@ class ToroidalFace3D(Face3D):
 
         if not planeface.surface2d.outer_contour.point_belongs(pt2_2d):
             # Find the closest one
-            poly2 = planeface.surface2d.outer_contour.to_polygon()
+            poly2 = planeface.surface2d.outer_contour.to_polygon(angle_resolution=10)
             _, new_pt2_2d = poly2.point_border_distance(pt2_2d,
                                                          return_other_point=True)
 
