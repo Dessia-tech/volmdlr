@@ -39,6 +39,7 @@ import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
 from volmdlr.utils.parametric import array_range_search
 
+
 def knots_vector_inv(knots_vector):
     """
     Compute knot elements and multiplicities based on the global knot vector.
