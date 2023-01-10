@@ -19,6 +19,8 @@ import matplotlib.pyplot as plt
 # import matplotlib.tri as plt_tri
 # from pygeodesic import geodesic
 
+from functools import lru_cache
+
 from geomdl import BSpline, NURBS
 from geomdl import utilities
 from geomdl.fitting import interpolate_surface, approximate_surface
@@ -29,6 +31,7 @@ from geomdl.construct import extract_curves
 from dessia_common.core import DessiaObject
 import volmdlr.core
 import volmdlr.core_compiled
+import volmdlr.bspline_compiled
 import volmdlr.edges as vme
 import volmdlr.wires
 import volmdlr.display as vmd
@@ -48,6 +51,30 @@ def knots_vector_inv(knots_vector):
     multiplicities = [knots_vector.count(knot) for knot in knots]
 
     return knots, multiplicities
+
+@lru_cache(maxsize=10000)
+def binomial_coefficient(k, i):
+    """
+    Computes the binomial coefficient (denoted by *k choose i*).
+
+    Please see the following website for details: http://mathworld.wolfram.com/BinomialCoefficient.html
+
+    :param k: size of the set of distinct elements
+    :type k: int
+    :param i: size of the subsets
+    :type i: int
+    :return: combination of *k* and *i*
+    :rtype: float
+    """
+    # Special case
+    if i > k:
+        return float(0)
+    # Compute binomial coefficient
+    k_fact = math.factorial(k)
+    i_fact = math.factorial(i)
+    k_i_fact = math.factorial(k - i)
+    return float(k_fact / (k_i_fact * i_fact))
+
 
 
 class Surface2D(volmdlr.core.Primitive2D):
@@ -4794,12 +4821,254 @@ class BSplineSurface3D(Surface3D):
         to u k times and v l times
         :rtype: List[`volmdlr.Vector3D`]
         """
-        derivatives = self.surface.derivatives(u, v, order)
+        if self.surface.rational:
+            derivatives = volmdlr.bspline_compiled._rational_derivatives(self.surface.data, u, v, order)
+        else:
+            derivatives = volmdlr.bspline_compiled._derivatives(self.surface.data, u, v, order)
         for i in range(order + 1):
             for j in range(order + 1):
                 derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])
         return derivatives
 
+    def find_span_linear(self, degree, knot_vector, num_ctrlpts, knot, **kwargs):
+        """ Finds the span of a single knot over the knot vector using linear search.
+
+        Alternative implementation for the Algorithm A2.1 from The NURBS Book by Piegl & Tiller.
+
+        :param degree: degree, :math:`p`
+        :type degree: int
+        :param knot_vector: knot vector, :math:`U`
+        :type knot_vector: list, tuple
+        :param num_ctrlpts: number of control points, :math:`n + 1`
+        :type num_ctrlpts: int
+        :param knot: knot or parameter, :math:`u`
+        :type knot: float
+        :return: knot span
+        :rtype: int
+        """
+        span = degree + 1  # Knot span index starts from zero
+        while span < num_ctrlpts and knot_vector[span] <= knot:
+            span += 1
+
+        return span - 1
+
+    def basis_function_ders(self, degree, knot_vector, span, knot, order):
+        """
+        Computes derivatives of the basis functions for a single parameter.
+
+        Implementation of Algorithm A2.3 from The NURBS Book by Piegl & Tiller.
+
+        :param degree: degree, :math:`p`
+        :type degree: int
+        :param knot_vector: knot vector, :math:`U`
+        :type knot_vector: list, tuple
+        :param span: knot span, :math:`i`
+        :type span: int
+        :param knot: knot or parameter, :math:`u`
+        :type knot: float
+        :param order: order of the derivative
+        :type order: int
+        :return: derivatives of the basis functions
+        :rtype: list
+        """
+        # Initialize variables
+        left = [1.0 for _ in range(degree + 1)]
+        right = [1.0 for _ in range(degree + 1)]
+        ndu = [[1.0 for _ in range(degree + 1)] for _ in range(degree + 1)]  # N[0][0] = 1.0 by definition
+
+        for j in range(1, degree + 1):
+            left[j] = knot - knot_vector[span + 1 - j]
+            right[j] = knot_vector[span + j] - knot
+            saved = 0.0
+            r = 0
+            for r in range(r, j):
+                # Lower triangle
+                ndu[j][r] = right[r + 1] + left[j - r]
+                temp = ndu[r][j - 1] / ndu[j][r]
+                # Upper triangle
+                ndu[r][j] = saved + (right[r + 1] * temp)
+                saved = left[j - r] * temp
+            ndu[j][j] = saved
+
+        # Load the basis functions
+        ders = [[0.0 for _ in range(degree + 1)] for _ in range((min(degree, order) + 1))]
+        for j in range(0, degree + 1):
+            ders[0][j] = ndu[j][degree]
+
+        # Start calculating derivatives
+        a = [[1.0 for _ in range(degree + 1)] for _ in range(2)]
+        # Loop over function index
+        for r in range(0, degree + 1):
+            # Alternate rows in array a
+            s1 = 0
+            s2 = 1
+            a[0][0] = 1.0
+            # Loop to compute k-th derivative
+            for k in range(1, order + 1):
+                d = 0.0
+                rk = r - k
+                pk = degree - k
+                if r >= k:
+                    a[s2][0] = a[s1][0] / ndu[pk + 1][rk]
+                    d = a[s2][0] * ndu[rk][pk]
+                if rk >= -1:
+                    j1 = 1
+                else:
+                    j1 = -rk
+                if (r - 1) <= pk:
+                    j2 = k - 1
+                else:
+                    j2 = degree - r
+                for j in range(j1, j2 + 1):
+                    a[s2][j] = (a[s1][j] - a[s1][j - 1]) / ndu[pk + 1][rk + j]
+                    d += (a[s2][j] * ndu[rk + j][pk])
+                if r <= pk:
+                    a[s2][k] = -a[s1][k - 1] / ndu[pk + 1][r]
+                    d += (a[s2][k] * ndu[r][pk])
+                ders[k][r] = d
+
+                # Switch rows
+                j = s1
+                s1 = s2
+                s2 = j
+
+        # Multiply through by the the correct factors
+        r = float(degree)
+        for k in range(1, order + 1):
+            for j in range(0, degree + 1):
+                ders[k][j] *= r
+            r *= (degree - k)
+
+        # Return the basis function derivatives list
+        return ders
+    def _derivatives(self, datadict, parpos, deriv_order = 0):
+        """
+        Evaluates the n-th order derivatives at the input parametric position.
+
+        :param datadict: data dictionary containing the necessary variables
+        :type datadict: dict
+        :param parpos: parametric position where the derivatives will be computed
+        :type parpos: list, tuple
+        :param deriv_order: derivative order; to get the i-th derivative
+        :type deriv_order: int
+        :return: evaluated derivatives
+        :rtype: list
+        """
+        # Geometry data from datadict
+        degree = datadict['degree']
+        knotvector = datadict['knotvector']
+        ctrlpts = datadict['control_points']
+        size = datadict['size']
+        dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
+        pdimension = datadict['pdimension']
+
+        # Algorithm A3.6
+        d = (min(degree[0], deriv_order), min(degree[1], deriv_order))
+
+        SKL = [[[0.0 for _ in range(dimension)] for _ in range(deriv_order + 1)] for _ in range(deriv_order + 1)]
+
+        # span = [0 for _ in range(pdimension)]
+        span = [0] * pdimension
+        basisdrv = [[] for _ in range(pdimension)]
+        for idx in range(pdimension):
+            span[idx] = self.find_span_linear(degree[idx], knotvector[idx], size[idx], parpos[idx])
+            basisdrv[idx] = self.basis_function_ders(degree[idx], knotvector[idx], span[idx], parpos[idx], d[idx])
+
+        for k in range(0, d[0] + 1):
+            temp = [[0.0 for _ in range(dimension)] for _ in range(degree[1] + 1)]
+            for s in range(0, degree[1] + 1):
+                n = len(temp[s])
+                tmp = temp[s]
+                for r in range(0, degree[0] + 1):
+                    cu = span[0] - degree[0] + r
+                    cv = span[1] - degree[1] + s
+                    cp = ctrlpts[cv + (size[1] * cu)]
+                    t = [0.0]*n
+                    for i in range(n):
+                        t[i] = tmp[i] + (basisdrv[0][k][r] * cp[i])
+                    # temp[s][:] = [tmp + (basisdrv[0][k][r] * cp) for tmp, cp in
+                    #               zip(temp[s], ctrlpts[cv + (size[1] * cu)])]
+                    temp[s][:] = t
+            # dd = min(deriv_order - k, d[1])
+            dd = min(deriv_order, d[1])
+            for l in range(0, dd + 1):
+                for s in range(0, degree[1] + 1):
+                    elem = SKL[k][l]
+                    tmp = temp[s]
+                    n = len(tmp)
+                    t = [0.0]*n
+                    for i in range(n):
+                        t[i] = elem[i] + (basisdrv[1][l][s] * tmp[i])
+                    SKL[k][l][:] = t
+                    # SKL[k][l][:] = [elem + (basisdrv[1][l][s] * tmp) for elem, tmp in zip(SKL[k][l], temp[s])]
+        return SKL
+
+    def _rational_derivatives(self, datadict, parpos, deriv_order = 0, **kwargs):
+        """ Evaluates the n-th order derivatives at the input parametric position.
+
+        :param datadict: data dictionary containing the necessary variables
+        :type datadict: dict
+        :param parpos: parametric position where the derivatives will be computed
+        :type parpos: list, tuple
+        :param deriv_order: derivative order; to get the i-th derivative
+        :type deriv_order: int
+        :return: evaluated derivatives
+        :rtype: list
+        """
+        dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
+
+        # Call the parent function to evaluate A(u) and w(u) derivatives
+        SKLw = self._derivatives(datadict, parpos, deriv_order, **kwargs)
+
+        # Generate an empty list of derivatives
+        SKL = [[[0.0 for _ in range(dimension)] for _ in range(deriv_order + 1)] for _ in range(deriv_order + 1)]
+
+        # Algorithm A4.4
+        for k in range(0, deriv_order + 1):
+            # for l in range(0, deriv_order - k + 1):
+            for l in range(0, deriv_order + 1):
+                # Deep copying might seem a little overkill but we also want to avoid same pointer issues too
+                # v = copy.deepcopy(SKLw[k][l])
+                v = SKLw[k][l]
+                for j in range(1, l + 1):
+                    drv = SKL[k][l - j]
+                    n = len(drv)
+                    t = [0.0] * n
+                    for ii in range(n):
+                        t[ii] = v[ii] - (binomial_coefficient(l, j) * SKLw[0][j][-1] * drv[ii])
+                    v[:] = t
+                    # v[:] = [tmp - (binomial_coefficient(l, j) * SKLw[0][j][-1] * drv) for tmp, drv in
+                    #         zip(v, SKL[k][l - j])]
+                for i in range(1, k + 1):
+                    drv = SKL[k - i][l]
+                    n = len(drv)
+                    t = [0.0] * n
+                    for ii in range(n):
+                        t[ii] = v[ii] - (binomial_coefficient(k, i) * SKLw[i][0][-1] * drv[ii])
+                    v[:] = t
+                    # v[:] = [tmp - (binomial_coefficient(k, i) * SKLw[i][0][-1] * drv) for tmp, drv in
+                    #         zip(v, SKL[k - i][l])]
+                    v2 = [0.0 for _ in range(dimension - 1)]
+                    for j in range(1, l + 1):
+                        drv = SKL[k - i][l - j]
+                        n = len(drv)
+                        t = [0.0] * n
+                        for ii in range(n):
+                            t[ii] = v2[ii] + (binomial_coefficient(l, j) * SKLw[i][j][-1] * drv[ii])
+                        v2[:] = t
+                        # v2[:] = [tmp + (binomial_coefficient(l, j) * SKLw[i][j][-1] * drv) for tmp, drv in
+                        #          zip(v2, SKL[k - i][l - j])]
+                    n = min(len(v), len(v2))
+                    t = [0.0] * n
+                    for ii in range(n):
+                        t[ii] = v[ii] - (binomial_coefficient(k, i) * v2[ii])
+                    v[:] = t
+                    # v[:] = [tmp - (binomial_coefficient(k, i) * tmp2) for tmp, tmp2 in zip(v, v2)]
+
+                SKL[k][l][:] = [tmp / SKLw[0][0][-1] for tmp in v[0:(dimension - 1)]]
+
+        # Return S(u,v) derivatives
+        return SKL
 
 class BezierSurface3D(BSplineSurface3D):
     """
