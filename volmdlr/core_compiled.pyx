@@ -3571,10 +3571,10 @@ class Frame3D(Basis3D):
 
         if vector == main_axis:
             # The local frame is oriented like the global frame
-            return cls(O3D, X3D, Y3D, Z3D)
+            return cls(point, X3D, Y3D, Z3D)
 
         if vector == -main_axis:
-            return cls(O3D, -X3D, -Y3D, -Z3D)
+            return cls(point, -X3D, -Y3D, -Z3D)
 
         # The local frame is oriented differently from the global frame
         # Rotation angle
