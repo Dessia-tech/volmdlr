@@ -4,9 +4,11 @@ Cloud of points classes
 """
 
 import math
-from typing import List
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
+
+from trimesh.proximity import closest_point
 
 import dessia_common.core as dc
 import volmdlr as vm
@@ -170,6 +172,18 @@ class PointCloud3D(dc.DessiaObject):
                 faces.extend(list_faces)
         return vmf.ClosedShell3D(faces)
 
+    def shell_distances(self, shells: vmf.OpenTriangleShell3D) -> Tuple['PointCloud3D', List[float], List[int]]:
+        """
+        Computes distance of point to shell for each point in self.points.
+
+        :return: The point cloud of points projection on nearest triangle, their distances and the corresponding
+        triangles index
+        :rtype: Tuple[PointCloud3D, List[float], List[int]]
+        """
+        shells_trimesh = shells.to_trimesh()
+        nearest_coords, distances, triangles_idx = closest_point(shells_trimesh, self.points)
+        return PointCloud3D([vm.Point3D(*coords) for coords in nearest_coords]), distances, triangles_idx
+
     # def alpha_shape(self, alpha:float, number_point_samples:int):
     #     '''
     #     Parameters
@@ -311,3 +325,12 @@ class PointCloud2D(dc.DessiaObject):
             if poly is not None:
                 clean_points += poly.points
         return PointCloud2D(clean_points, name=self.name + '_clean')
+
+    def to_coords_matrix(self) -> List[List[float]]:
+        """
+        Generate a n_points x 2 matrix of coordinates of points, for performance when operating on all coordinates.
+        """
+        coords_matrix = []
+        for point in self.points:
+            coords_matrix.append(point.coordinates())
+        return coords_matrix

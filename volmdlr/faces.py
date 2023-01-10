@@ -20,7 +20,6 @@ import matplotlib.pyplot as plt
 # from pygeodesic import geodesic
 
 from trimesh import Trimesh
-from trimesh.proximity import closest_point
 
 from geomdl import BSpline, NURBS
 from geomdl import utilities
@@ -39,7 +38,6 @@ import volmdlr.geometry
 import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
 from volmdlr.utils.parametric import array_range_search
-
 
 def knots_vector_inv(knots_vector):
     """
@@ -8872,8 +8870,8 @@ class OpenTriangleShell3D(OpenShell3D):
         return False
 
     def to_mesh_data(self):
-        positions = npy.array(3 * len(self.faces), 3)
-        faces = npy.array(len(self.faces), 3)
+        positions = npy.zeros((3 * len(self.faces), 3))
+        faces = npy.zeros((len(self.faces), 3))
         for i, triangle_face in enumerate(self.faces):
             i1 = 3 * i
             i2 = i1 + 1
@@ -8902,29 +8900,8 @@ class OpenTriangleShell3D(OpenShell3D):
             triangles.append(Triangle3D(points[i1], points[i2], points[i3]))
         return cls(triangles)
 
-    def points_cloud_distances(self, points_cloud: List[volmdlr.Point3D]) \
-            -> Tuple[List[volmdlr.Point3D], List[float], List[int]]:
-        """
-        Computes distance of point to mesh for each point in points_cloud.
-        """
-        points_coords = []
-        for point in points_cloud:
-            points_coords.append(point.coordinates())
-
-        nearest_coords, distances, triangles_idx = self.coords_matrix_distances(points_coords)
-        return [volmdlr.Point3D(*coords) for coords in nearest_coords], distances, triangles_idx
-
-    def coords_matrix_distances(self, coords_matrix: List[List[float]]) \
-            -> Tuple[List[List[float]], List[float], List[int]]:
-        """
-        Computes distance of coords_matrix columns to mesh for each column.
-        """
-        mesh = self.triangulation()
-        mesh_coordinates = [(point.x, point.y, point.z) for point in mesh.points]
-        tri_mesh = Trimesh(mesh_coordinates, mesh.triangles)
-
-        nearest_coords, distances, triangles_idx = closest_point(tri_mesh, coords_matrix)
-        return nearest_coords.tolist(), distances.tolist(), triangles_idx.tolist()
+    def to_trimesh(self):
+        return Trimesh(*self.to_mesh_data())
 
 
 class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
