@@ -1396,7 +1396,7 @@ class CylindricalSurface3D(Surface3D):
         """
         new_frame = self.frame.rotation(center=center, axis=axis,
                                         angle=angle)
-        return CylindricalFace3D(new_frame, self.radius)
+        return CylindricalSurface3D(new_frame, self.radius)
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -1415,7 +1415,7 @@ class CylindricalSurface3D(Surface3D):
         :param offset: translation vector.
         :return: A new translated CylindricalFace3D.
         """
-        return CylindricalFace3D(self.frame.translation(offset), self.radius)
+        return CylindricalSurface3D(self.frame.translation(offset), self.radius)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """

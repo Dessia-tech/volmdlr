@@ -199,41 +199,51 @@ def advanced_brep_shape_representation(arguments, object_dict):
 
 
 def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representation_frames):
+    frame_origin = [frmd3d for frmd3d in item_defined_frames if frmd3d.origin != volmdlr.O3D][0]
     for shell3d in closed_shells:
         # frame3d = item_defined_frames[1]
+
         for f3d in item_defined_frames:  # item_defined_transformation
-            for frame3d in shape_representation_frames:  # shape_representation
-                if f3d.origin != volmdlr.O3D != frame3d.origin and frame3d != f3d:
+            if f3d.origin != volmdlr.O3D:
+                if f3d.u == frame_origin.u and f3d.v == frame_origin.v and f3d.w == frame_origin.w:
                     break
-            else:
-                continue
-            break
+                else:
+                    raise NotImplementedError
         else:
-            continue
-        new_faces = [face.frame_mapping(frame3d, 'new') for face in shell3d.faces]
+            raise NotImplementedError
+        #     for frame3d in shape_representation_frames:  # shape_representation
+        #         if f3d.origin != volmdlr.O3D != frame3d.origin and frame3d != f3d:
+        #             break
+        #     else:
+        #         continue
+        #     break
+        # else:
+        #     continue
+        # new_faces = [face.frame_mapping(frame3d, 'new') for face in shell3d.faces]
+        new_faces = [face.translation(f3d.origin) for face in shell3d.faces]
         shell3d.faces = new_faces
 
 
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
-    raise NotImplementedError("We are still not able to read assemblies in step files")
+    # raise NotImplementedError("We are still not able to read assemblies in step files")
     # return None
-    # if arguments[2] in object_dict:
-    #     if isinstance(object_dict[arguments[2]], list): # arguments = {, , [], [], item_....}
-    #         if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
-    #                       and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-    #             frame_map_closed_shell(object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]])
-    #
-    #         elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
-    #                 not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-    #             frame_map_closed_shell(object_dict[arguments[3]], object_dict[arguments[4]], object_dict[arguments[2]])
-    #         return None
-    #     # shell3d = object_dict[arguments[2]]
-    #     # frame3d = object_dict[arguments[4]]
-    #     # shell3d.frame_mapping_inplace(frame3d, 'old')
-    #     # return shell3d
-    #     return None
-    # return None
+    if arguments[2] in object_dict:
+        if isinstance(object_dict[arguments[2]], list): # arguments = {, , [], [], item_....}
+            if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
+                          and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
+                frame_map_closed_shell(object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]])
+
+            elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
+                    not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
+                frame_map_closed_shell(object_dict[arguments[3]], object_dict[arguments[4]], object_dict[arguments[2]])
+            return None
+        # shell3d = object_dict[arguments[2]]
+        # frame3d = object_dict[arguments[4]]
+        # shell3d.frame_mapping_inplace(frame3d, 'old')
+        # return shell3d
+        return None
+    return None
 
 
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
