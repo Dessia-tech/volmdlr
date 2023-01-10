@@ -36,11 +36,17 @@ class TestArcEllipse2D(unittest.TestCase):
                          self.arc_ellipse2d.abscissa(self.discretized_points[1]))
 
     def test_bounding_rectangle(self):
-        bounding_rectangle = self.arc_ellipse2d.bounding_rectangle()
-        self.assertEqual(bounding_rectangle.bounds(), (-0.3, 0.0, -0.08713203435567374, 0.33713203435567374))
+        self.assertEqual(self.arc_ellipse2d.bounding_rectangle.bounds(),
+                         (-0.1250000000001241, 0.0, -0.0841650066332621, 0.12499999999999996))
 
     def test_straight_line_area(self):
         self.assertEqual(self.arc_ellipse2d.straight_line_area(), 0.00663975840258857)
+
+    def test_linesegment_intersections(self):
+        line = edges.LineSegment2D(volmdlr.Point2D(0.0, -0.08), self.arc_ellipse2d.center)
+        inters = self.arc_ellipse2d.linesegment_intersections(line)
+        self.assertEqual(len(inters), 1)
+        self.assertEqual(inters[0], volmdlr.Point2D(-0.04213625371737764, -0.022413786586250567))
 
 
 if __name__ == '__main__':
