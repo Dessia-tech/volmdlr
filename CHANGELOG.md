@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * OpenShell3D: project_coincident_faces_of
 * GmshParser: to_vtk
 * BSplineCurve: derivatives
+* ClosedPolygon2D: point_belongs, now the user can choose whether points on the edge of the polygon
+            should be considered inside or not.
 * ArcEllipse2D: line_intersections, frame_mapping, linesegment_intersections
 
 
