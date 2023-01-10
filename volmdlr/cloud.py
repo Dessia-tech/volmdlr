@@ -325,12 +325,3 @@ class PointCloud2D(dc.DessiaObject):
             if poly is not None:
                 clean_points += poly.points
         return PointCloud2D(clean_points, name=self.name + '_clean')
-
-    def to_coords_matrix(self) -> List[List[float]]:
-        """
-        Generate a n_points x 2 matrix of coordinates of points, for performance when operating on all coordinates.
-        """
-        coords_matrix = []
-        for point in self.points:
-            coords_matrix.append(point.coordinates())
-        return coords_matrix
