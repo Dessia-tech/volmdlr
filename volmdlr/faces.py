@@ -846,10 +846,10 @@ class Surface3D(DessiaObject):
     def contour2d_to_3d(self, contour2d):
         """
         Computes the 3D representation of a given contour2D.
-        
+
         :param contour2d: The given contour2D
         """
-        
+
         primitives3d = []
         for primitive2d in contour2d.primitives:
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
@@ -1266,7 +1266,7 @@ class Plane3D(Surface3D):
     def contour2d_to_3d(self, contour2d):
         """
         Computes the 3D representation of a given contour2D.
-        
+
         :param contour2d: The given contour2D
         """
         return contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
@@ -1324,7 +1324,7 @@ class CylindricalSurface3D(Surface3D):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = None
 
-    def __init__(self, frame: volmdlr.core.Frame3D, radius: float, name: str=''):
+    def __init__(self, frame: volmdlr.core.Frame3D, radius: float, name: str = ''):
         self.frame = frame
         self.radius = radius
         Surface3D.__init__(self, name=name)
@@ -1857,12 +1857,11 @@ class ToroidalSurface3D(Surface3D):
             phi = 0.0
         return volmdlr.Point2D(theta, phi)
 
-    def dimensioned_surface2d(self, dimensionless_surface2d:Surface2D):
+    def dimensioned_surface2d(self, dimensionless_surface2d: Surface2D):
         frame = volmdlr.OXY.copy()
         frame.u = self.R
         frame.v = self.r
         return dimensionless_surface2d.frame_mapping(frame, side='old')
-
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2503,7 +2502,7 @@ class SphericalSurface3D(Surface3D):
 
         return volmdlr.Point2D(theta, phi)
 
-    def dimensioned_surface2d(self, dimensionless_surface2d:Surface2D):
+    def dimensioned_surface2d(self, dimensionless_surface2d: Surface2D):
         frame = volmdlr.OXY.copy()
         frame.u = self.radius
         frame.v = self.radius
