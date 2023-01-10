@@ -1251,9 +1251,8 @@ class Plane3D(Surface3D):
     def point3d_to_2d(self, point3d):
         return point3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
 
-    def dimensioned_surface2d(dimensionless_surface2d:Surface2D):
+    def dimensioned_surface2d(self, dimensionless_surface2d: Surface2D):
         return dimensionless_surface2d
-
 
     def contour2d_to_3d(self, contour2d):
         return contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
