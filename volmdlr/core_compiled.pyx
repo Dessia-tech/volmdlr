@@ -198,26 +198,29 @@ cdef(double, double, double,
 
 # =============================================================================
 
-def polygon_point_belongs(point, points):
+def polygon_point_belongs(point, points, include_edge_points: bool = False):
 
     cdef int i
     cdef int n = len(points)
     cdef bint inside = False
     cdef float x, y, p1x, p1y, p2x, p2y, xints
     x, y = point
-    p1x, p1y = points[0]
-
-    for i in range(n + 1):
-        p2x, p2y = points[i % n]
-        if y > min(p1y, p2y):
-            if y <= max(p1y, p2y):
-                if x <= max(p1x, p2x):
-                    if p1y != p2y:
-                        xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
-                    if p1x == p2x or x <= xints:
-                        inside = not inside
-        p1x, p1y = p2x, p2y
-
+    for i in range(n):
+        p1x, p1y = points[i]
+        p2x, p2y = points[(i + 1) % n]
+        xints = math.inf
+        if min(p1y, p2y) <= y <= max(p1y, p2y) and min(p1x, p2x) <= x <= max(p1x, p2x):
+            if p1y != p2y:
+                xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+            if p1y == p2y or x == xints:
+                if include_edge_points:
+                    return True
+                return False
+        if min(p1y, p2y) < y <= max(p1y, p2y) and x <= max(p1x, p2x):
+            if p1y != p2y:
+                xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+            if p1x == p2x or x < xints:
+                inside = not inside
     return inside
 
 # =============================================================================
@@ -912,9 +915,9 @@ class Point2D(Vector2D):
         :return: The Point3D from the Point2D set in the 3 dimensional space
         :rtype: :class:`volmdlr.Point3D`
         """
-        return Point3D(plane_origin.x + vx.x * self.x + vy.x * self.y,
-                       plane_origin.y + vx.y * self.x + vy.y * self.y,
-                       plane_origin.z + vx.z * self.x + vy.z * self.y)
+        return Point3D(round(plane_origin.x + vx.x * self.x + vy.x * self.y, 12),
+                       round(plane_origin.y + vx.y * self.x + vy.y * self.y, 12),
+                       round(plane_origin.z + vx.z * self.x + vy.z * self.y, 12))
 
     def to_vector(self):
         """
@@ -2230,7 +2233,12 @@ class Matrix33:
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
-
+        if abs(u1) < 1e-9:
+            u1 = 0.
+        if abs(u2) < 1e-9:
+            u2 = 0.
+        if abs(u3) < 1e-9:
+            u3 = 0.
         return vector.__class__(u1, u2, u3)
 
     def determinent(self):
@@ -3596,10 +3604,10 @@ class Frame3D(Basis3D):
 
         if vector == main_axis:
             # The local frame is oriented like the global frame
-            return cls(O3D, X3D, Y3D, Z3D)
+            return cls(point, X3D, Y3D, Z3D)
 
         if vector == -main_axis:
-            return cls(O3D, -X3D, -Y3D, -Z3D)
+            return cls(point, -X3D, -Y3D, -Z3D)
 
         # The local frame is oriented differently from the global frame
         # Rotation angle
