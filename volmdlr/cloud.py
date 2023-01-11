@@ -21,7 +21,7 @@ import volmdlr.primitives3d as p3d
 
 
 class PointCloud3D(dc.DessiaObject):
-    def __init__(self, points, name: str = ''):
+    def __init__(self, points: List[vm.Point3D], name: str = ''):
         self.points = points
         dc.DessiaObject.__init__(self, name=name)
 
@@ -181,8 +181,14 @@ class PointCloud3D(dc.DessiaObject):
         :rtype: Tuple[PointCloud3D, List[float], List[int]]
         """
         shells_trimesh = shells.to_trimesh()
-        nearest_coords, distances, triangles_idx = closest_point(shells_trimesh, self.points)
+        nearest_coords, distances, triangles_idx = closest_point(shells_trimesh, self.to_coord_matrix())
         return PointCloud3D([vm.Point3D(*coords) for coords in nearest_coords]), distances, triangles_idx
+
+    def to_coord_matrix(self) -> List[List[float]]:
+        """
+        Generate a n_points x 3 matrix of coordinates.
+        """
+        return [point.coordinates() for point in self.points]
 
     # def alpha_shape(self, alpha:float, number_point_samples:int):
     #     '''
@@ -325,3 +331,9 @@ class PointCloud2D(dc.DessiaObject):
             if poly is not None:
                 clean_points += poly.points
         return PointCloud2D(clean_points, name=self.name + '_clean')
+
+    def to_coord_matrix(self) -> List[List[float]]:
+        """
+        Generate a n_points x 2 matrix of coordinates.
+        """
+        return [point.coordinates() for point in self.points]
