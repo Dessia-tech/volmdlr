@@ -297,6 +297,7 @@ time we have to verify if a point is inside
 * triangulation of planar faces
 * Wire3D: Bounding box
 * Arc2D: primitives bad calculation (arc2d)
+* Update plotdata in setup.py
 
 ### Performance improvements
 
