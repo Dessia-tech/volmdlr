@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+STL reader & writer.
 
+https://en.wikipedia.org/wiki/STL_(file_format)
 """
 # from binaryornot.check import is_binary
 import struct
@@ -240,10 +242,10 @@ class Stl(dc.DessiaObject):
             stream.write(struct.pack(BINARY_FACET, *data))
 
     def to_closed_shell(self):
-        return vmf.ClosedShell3D(self.triangles, name=self.name)
+        return vmf.ClosedTriangleShell3D(self.triangles, name=self.name)
 
     def to_open_shell(self):
-        return vmf.OpenShell3D(self.triangles, name=self.name)
+        return vmf.OpenTriangleShell3D(self.triangles, name=self.name)
 
     def to_volume_model(self):
         closed_shell = self.to_closed_shell()
