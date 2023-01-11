@@ -3,7 +3,6 @@
 Setup install script for volmdlr
 
 """
-import numpy
 from setuptools import setup
 #from distutils.core import setup
 from Cython.Build import cythonize
@@ -114,7 +113,6 @@ setup(name='volmdlr',
       license='Creative Commons Attribution-Share Alike license',
       packages=['volmdlr', 'volmdlr.models', 'volmdlr.models.workflows', 'volmdlr.utils'],#,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
       package_dir={},
-      include_dirs= [numpy.get_include()],
       include_package_data = True,
       install_requires=['packaging',
                         'dessia_common>=0.7.0',
