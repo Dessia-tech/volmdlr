@@ -781,6 +781,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
                  name: str = ''):
+        self._bbox = None
         volmdlr.core.CompositePrimitive3D.__init__(self, primitives=primitives, name=name)
 
     def _bounding_box(self):
@@ -795,6 +796,12 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
                 if point not in points:
                     points.append(point)
         return volmdlr.core.BoundingBox.from_points(points)
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bounding_box
 
     def extract(self, point1, primitive1, point2, primitive2):
         return Wire3D(self.extract_primitives(self, point1, primitive1, point2,
