@@ -5401,13 +5401,23 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return triangles
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
+        """
+        Simnplify polygon3d.
+
+        :param min_distance: minimal allowed distance.
+        :param max_distance: maximal allowed distance.
+        :return: Simplified closed polygon 3d.
+        """
         return ClosedPolygon3D(self.simplify_polygon(
             min_distance=min_distance, max_distance=max_distance).points)
 
     def convex_sewing(self, polygon2, x, y):
         """
-        x and y are used for plane projection to make
-        sure it is being projected in the right plane
+        Sew to Convex Polygon.
+
+        :param polygon2: other polygon to sew with.
+        :param x: u vector for plane projection.
+        :param y: v vector for plane projection.
         """
         center1, center2 = self.average_center_point(), polygon2.average_center_point()
         center1_, center2_ = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
