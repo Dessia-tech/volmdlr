@@ -1957,6 +1957,11 @@ class Measure3D(volmdlr.edges.Line3D):
 
 
 class BSplineExtrusion(volmdlr.core.Primitive3D):
+    """
+    Defines the extrusion of a BSpline.
+
+    :param vectorextru: extrusion vector.
+    """
 
     def __init__(self, obj, vectorextru: volmdlr.Vector3D, name: str = ''):
         self.obj = obj
