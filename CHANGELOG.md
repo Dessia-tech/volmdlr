@@ -295,7 +295,7 @@ time we have to verify if a point is inside
 * BSplineSurface3D.from_cylindrical_faces (consider **kwargs parameters)
 * Duplicated methods cleaned
 * triangulation of planar faces
-* Wire3D: Bounding box
+* Wire3D: fix Bounding box
 
 ### Performance improvements
 
