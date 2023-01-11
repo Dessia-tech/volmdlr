@@ -318,15 +318,20 @@ def advanced_brep_shape_representation(arguments, object_dict):
 
 
 def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representation_frames):
-    frame_origin = [frmd3d for frmd3d in item_defined_frames if frmd3d.origin != volmdlr.O3D][0]
+    frame_origin = [frmd3d for frmd3d in item_defined_frames if frmd3d.origin == volmdlr.O3D][0]
+    new_closedshells = []
     for shell3d in closed_shells:
         # frame3d = item_defined_frames[1]
         for f3d in item_defined_frames:  # item_defined_transformation
             if f3d.origin != volmdlr.O3D:
                 if f3d.u == frame_origin.u and f3d.v == frame_origin.v and f3d.w == frame_origin.w:
-                    break
+                    new_faces = [face.translation(f3d.origin) for face in shell3d.faces]
+                    new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
                 else:
-                    raise NotImplementedError
+                    new_faces = [face.frame_mapping(f3d, 'old') for face in shell3d.faces]
+                    new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
+                new_closedshells.append(new_closed_shell3d)
+                break
         else:
             raise NotImplementedError
         #     for frame3d in shape_representation_frames:  # shape_representation
@@ -338,9 +343,10 @@ def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representat
         # else:
         #     continue
         # new_faces = [face.frame_mapping(frame3d, 'new') for face in shell3d.faces]
-        new_faces = [face.translation(f3d.origin) for face in shell3d.faces]
-        shell3d.faces = new_faces
-
+        # new_faces = [face.translation(f3d.origin) for face in shell3d.faces]
+        # new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
+        # new_closedshells.append(new_closed_shell3d)
+    return new_closedshells
 
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
@@ -361,18 +367,18 @@ def representation_relationship_representation_relationship_with_transformation_
         if isinstance(object_dict[arguments[2]], list): # arguments = {, , [], [], item_....}
             if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
                           and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                frame_map_closed_shell(object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]])
+                return frame_map_closed_shell(object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]])
 
             elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
                     not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                frame_map_closed_shell(object_dict[arguments[3]], object_dict[arguments[4]], object_dict[arguments[2]])
-            return None
+                return frame_map_closed_shell(object_dict[arguments[3]], object_dict[arguments[4]], object_dict[arguments[2]])
+            return []
         # shell3d = object_dict[arguments[2]]
         # frame3d = object_dict[arguments[4]]
         # shell3d.frame_mapping_inplace(frame3d, 'old')
         # return shell3d
-        return None
-    return None
+        return []
+    return []
 
 
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
@@ -777,11 +783,14 @@ class Step(dc.DessiaObject):
         shell_nodes = []
         # sr_nodes = []
         not_shell_nodes = []
+        assembly_nodes = []
         for node in self.graph.nodes:
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
             if node != '#0' and (self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]):
                 shell_nodes.append(node)
+            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_SHAPE_REPRESENTATION_RELATIONSHIP':
+                assembly_nodes.append(node)
             # if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
             #     # Really a shell node ?
             #     sr_nodes.append(node)
@@ -846,11 +855,15 @@ class Step(dc.DessiaObject):
             print()
 
         shells = []
-        for node in shell_nodes_copy:
-            if isinstance(object_dict[node], list):
+        if frame_mapping_nodes:
+            for node in frame_mapping_nodes:
                 shells.extend(object_dict[node])
-            else:
-                shells.append(object_dict[node])
+        else:
+            for node in shell_nodes_copy:
+                if isinstance(object_dict[node], list):
+                    shells.extend(object_dict[node])
+                else:
+                    shells.append(object_dict[node])
         volume_model = volmdlr.core.VolumeModel(shells)
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)
