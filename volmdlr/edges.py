@@ -2135,7 +2135,7 @@ class Arc2D(Arc):
                                   [2 * (xs - xe), 2 * (ys - ye)]])
             b_vector = - npy.array([xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
                                     xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2])
-            center = volmdlr.Point2D(*npy.linalg.solve(inv_matrix_a, b_vector))
+            center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
         return center
 
     @property
