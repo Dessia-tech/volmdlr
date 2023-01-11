@@ -19,8 +19,6 @@ import matplotlib.pyplot as plt
 # import matplotlib.tri as plt_tri
 # from pygeodesic import geodesic
 
-from functools import lru_cache
-
 from geomdl import BSpline, NURBS
 from geomdl import utilities
 from geomdl.fitting import interpolate_surface, approximate_surface
@@ -51,30 +49,6 @@ def knots_vector_inv(knots_vector):
     multiplicities = [knots_vector.count(knot) for knot in knots]
 
     return knots, multiplicities
-
-
-@lru_cache(maxsize=10000)
-def binomial_coefficient(k, i):
-    """
-    Computes the binomial coefficient (denoted by *k choose i*).
-
-    Please see the following website for details: http://mathworld.wolfram.com/BinomialCoefficient.html
-
-    :param k: size of the set of distinct elements
-    :type k: int
-    :param i: size of the subsets
-    :type i: int
-    :return: combination of *k* and *i*
-    :rtype: float
-    """
-    # Special case
-    if i > k:
-        return float(0)
-    # Compute binomial coefficient
-    k_fact = math.factorial(k)
-    i_fact = math.factorial(i)
-    k_i_fact = math.factorial(k - i)
-    return float(k_fact / (k_i_fact * i_fact))
 
 
 class Surface2D(volmdlr.core.Primitive2D):
@@ -3037,7 +3011,7 @@ class BSplineSurface3D(Surface3D):
         x, y = point2d
         x = min(max(x, 0), 1)
         y = min(max(y, 0), 1)
-
+        # uses derivatives for performance because it's already compiled
         return volmdlr.Point3D(*self.derivatives(x, y, 0)[0][0])
         # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
