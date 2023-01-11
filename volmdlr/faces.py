@@ -8926,6 +8926,10 @@ class OpenTriangleShell3D(OpenShell3D):
     def to_trimesh(self):
         return Trimesh(*self.to_mesh_data())
 
+    @classmethod
+    def from_trimesh(cls, trimesh):
+        return cls.from_mesh_data(trimesh.vertices.tolist(), trimesh.faces.tolist())
+
 
 class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
     """
