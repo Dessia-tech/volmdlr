@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: tangent (use position/length)
 * Babylon: some scene settings for better rendering
 * Try to lighten some dicts of core_compiled.
+* Arc2D: fix get_center: name referenced before assignement
 
 ### Removed
 
