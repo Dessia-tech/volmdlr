@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * OpenShell3D: project_coincident_faces_of
 * GmshParser: to_vtk
 * BSplineCurve: derivatives
+* ClosedPolygon2D: point_belongs, now the user can choose whether points on the edge of the polygon
+            should be considered inside or not.
 * ArcEllipse2D: line_intersections, frame_mapping, linesegment_intersections
 
 
@@ -23,14 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
 * Mesh: delete_duplicated_nodes
 * BSplineSurface3D: fix arc3d_to_2d method
+* Frame3D : fix from_point_and_vector method ( error for the case vector=main_axis)
 * BSplineCurve2D: linesegment_intersections
 * Contour2D: merge_primitives_with
 * BSplineCurve: fix to take into account weighted B-spline curves.
 * Step: fix reading of rational BSpline curves and surfaces from step file.
 * BSplineCurve2D: tangent (use position/length)
 * Babylon: some scene settings for better rendering
-
-
+* Arc2D: fix get_center: name referenced before assignement
 
 ### Removed
 
@@ -44,8 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Refactorings
-* Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated. 
-local_to_global_coordinates and global_to_local_coordinates are the new more explicit ones. 
+* Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated.
+local_to_global_coordinates and global_to_local_coordinates are the new more explicit ones.
 
 
 ### Unittests
@@ -293,6 +295,7 @@ time we have to verify if a point is inside
 * BSplineSurface3D.from_cylindrical_faces (consider **kwargs parameters)
 * Duplicated methods cleaned
 * triangulation of planar faces
+* Wire3D: Bounding box
 
 ### Performance improvements
 

@@ -30,6 +30,14 @@ npy.seterr(divide='raise')
 
 class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
                                 volmdlr.primitives.RoundedLineSegments):
+    """
+
+    :param points: Points used to draw the wire.
+    :type points: List of Point3D.
+    :param radius: Radius used to connect different parts of the wire.
+    :type radius: {position1(n): float which is the radius linked the n-1 and.
+    n+1 points, position2(n+1):...}
+    """
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
 
@@ -156,7 +164,8 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 
 class Block(volmdlr.faces.ClosedShell3D):
     """
-    Creates a block
+    Creates a block.
+
     :param frame: a frame 3D. The origin of the frame is the center of the block,
      the 3 vectors are defining the edges. The frame has not to be orthogonal
     """
@@ -365,16 +374,16 @@ class Block(volmdlr.faces.ClosedShell3D):
                                  side: str):
         basis = frame.basis()
         if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_u = basis.new_coordinates(self.frame.u)
-            new_v = basis.new_coordinates(self.frame.v)
-            new_w = basis.new_coordinates(self.frame.w)
+            new_origin = frame.global_to_local_coordinates(self.frame.origin)
+            new_u = basis.global_to_local_coordinates(self.frame.u)
+            new_v = basis.global_to_local_coordinates(self.frame.v)
+            new_w = basis.global_to_local_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         elif side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_u = basis.old_coordinates(self.frame.u)
-            new_v = basis.old_coordinates(self.frame.v)
-            new_w = basis.old_coordinates(self.frame.w)
+            new_origin = frame.local_to_global_coordinates(self.frame.origin)
+            new_u = basis.local_to_global_coordinates(self.frame.u)
+            new_v = basis.local_to_global_coordinates(self.frame.v)
+            new_w = basis.local_to_global_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         else:
             raise ValueError('side value not valid, please specify'
@@ -685,6 +694,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     """
     Revolve a 2D profile along an axis around a certain angle.
+
     """
     _non_serializable_attributes = ['faces', 'contour3D']
 
@@ -1425,9 +1435,9 @@ class Cone(RevolvedProfile):
         """
         Cone rotation. Object is updated inplace.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: rotation angle.
         """
         self.position.rotation_inplace(center, axis, angle)
         self.axis.rotation_inplace(center, axis, angle)
@@ -1435,6 +1445,7 @@ class Cone(RevolvedProfile):
     def volume(self):
         """
         Returns the volume of the cone.
+
         """
         return self.length * math.pi * self.radius**2 / 3
 
@@ -1443,6 +1454,7 @@ class HollowCylinder(RevolvedProfile):
     """
     Creates a hollow cylinder with the position, the axis of revolution,
     the inner and outer radius and the length.
+
     """
 
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -1562,11 +1574,12 @@ class HollowCylinder(RevolvedProfile):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        HollowCylinder rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated HollowCylinder
+        HollowCylinder rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated HollowCylinder.
         """
         return self.__class__(
             position=self.position.rotation(center, axis, angle),
@@ -1577,7 +1590,8 @@ class HollowCylinder(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        HollowCylinder rotation. Object is updated inplace
+        HollowCylinder rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -1587,9 +1601,10 @@ class HollowCylinder(RevolvedProfile):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation
-        :param offset: translation vector
-        :return: A new translated HollowCylinder
+        HollowCylinder translation.
+
+        :param offset: translation vector.
+        :return: A new translated HollowCylinder.
         """
         return self.__class__(
             position=self.position.translation(offset), axis=self.axis,
@@ -1598,15 +1613,17 @@ class HollowCylinder(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation. Object is updated inplace
-        :param offset: translation vector
+        HollowCylinder translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         self.position.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new HollowCylinder
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new HollowCylinder.
+
+        side = 'old' or 'new'.
         """
         basis = frame.basis()
         if side == 'old':
@@ -1623,8 +1640,9 @@ class HollowCylinder(RevolvedProfile):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        side = 'old' or 'new'.
         """
         basis = frame.basis()
         if side == 'old':
@@ -1640,6 +1658,7 @@ class HollowCylinder(RevolvedProfile):
 class Sweep(volmdlr.faces.ClosedShell3D):
     """
     Sweep a 2D contour along a Wire3D.
+
     """
 
     def __init__(self, contour2d: List[volmdlr.wires.Contour2D],
@@ -1938,6 +1957,11 @@ class Measure3D(volmdlr.edges.Line3D):
 
 
 class BSplineExtrusion(volmdlr.core.Primitive3D):
+    """
+    Defines the extrusion of a BSpline.
+
+    :param vectorextru: extrusion vector.
+    """
 
     def __init__(self, obj, vectorextru: volmdlr.Vector3D, name: str = ''):
         self.obj = obj
