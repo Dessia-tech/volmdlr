@@ -576,7 +576,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         :param wire : volmdlr.wires.Wire2D.
         :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
         """
-
         intersections, intersections_points = [], []
         for primitive in wire.primitives:
             method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_intersections'
@@ -602,7 +601,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         :param points: points to define wire 2d.
         """
-
         edges = []
         for i in range(0, len(points) - 1):
             edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
@@ -612,9 +610,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_crossings(self,
                               linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of crossings in ther form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        Returns a list of crossings in ther form of a tuple.
 
+        Tupole is (point, primitive) of the wire primitives
+        intersecting with the line.
         """
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
@@ -630,7 +629,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         :param wire: volmdlr.wires.Wire2D
         :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
         """
-
         crossings, crossings_points = [], []
         for primitive in wire.primitives:
             method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_crossings'
@@ -652,7 +650,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def to_wire_with_linesegments(self):
         """
         Convert a wire with different primitives to a wire with just linesegments.
-
         """
 
         wires = []
@@ -3952,15 +3949,14 @@ class Circle2D(Contour2D):
     def axial_symmetry(self, line):
         """
         Finds out the symmetric circle2d according to a line.
-
         """
-
         return self.__class__(center=self.center.axial_symmetry(line),
                               radius=self.radius)
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 40):
         """
-        discretize a Contour to have "n" points
+        Discretize a Contour to have "n" points.
+
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
@@ -4705,7 +4701,8 @@ class Circle3D(Contour3D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        discretize a Circle to have "n" points
+        Discretize a Circle to have "n" points.
+
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
@@ -4803,7 +4800,7 @@ class Circle3D(Contour3D):
 
     def point_at_abscissa(self, curvilinear_abscissa):
         """
-        start point is at intersection of frame.u axis
+        Start point is at intersection of frame.u axis.
         """
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
@@ -5399,8 +5396,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     def convex_sewing(self, polygon2, x, y):
         """
-        x and y are used for plane projection to make
-        sure it is being projected in the right plane
+        Plane projection uses x and y to make sure it is being projected in the right plane.
         """
         center1, center2 = self.average_center_point(), polygon2.average_center_point()
         center1_, center2_ = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
