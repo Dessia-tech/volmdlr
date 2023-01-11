@@ -1,8 +1,5 @@
 from math import factorial
-import numpy as np
-cimport numpy as np
-cimport cython
-
+import numpy as npy
 from functools import lru_cache
 
 @lru_cache(maxsize=10000)
@@ -102,7 +99,7 @@ cpdef basis_function_ders(int degree, knot_vector, int span, double knot, int or
         ders[0][j] = ndu[j][degree]
 
     # Start calculating derivatives
-    cdef double[:, :] a = np.zeros((2, degree + 1))
+    cdef double[:, :] a = npy.zeros((2, degree + 1))
     for i in range(2):
         for j in range(degree + 1):
             a[i][j] = 1.0
