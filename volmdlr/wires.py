@@ -781,6 +781,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
                  name: str = ''):
+        self._bbox = None
         volmdlr.core.CompositePrimitive3D.__init__(self, primitives=primitives, name=name)
 
     def _bounding_box(self):
@@ -795,6 +796,12 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
                 if point not in points:
                     points.append(point)
         return volmdlr.core.BoundingBox.from_points(points)
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bounding_box
 
     def extract(self, point1, primitive1, point2, primitive2):
         return Wire3D(self.extract_primitives(self, point1, primitive1, point2,
@@ -1500,7 +1507,7 @@ class Contour2D(ContourMixin, Wire2D):
 
         return Contour3D(p3d)
 
-    def point_belongs(self, point, abs_tol: float = 1e-6):
+    def point_belongs(self, point, include_edge_points: bool = False):
         # TODO: This is incomplete!!!
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
@@ -1641,12 +1648,21 @@ class Contour2D(ContourMixin, Wire2D):
     def invert_inplace(self):
         self.primitives = self.inverted_primitives()
 
-    def random_point_inside(self):
+    def random_point_inside(self, include_edge_points: bool = False):
+        """
+        Finds a random point inside the polygon.
+
+        :param include_edge_points: Choose True if you want to consider a point on the polygon bord inside.
+        :type include_edge_points: bool
+        :return: A random point inside the polygon
+        :rtype: `volmdlr.Point2D`
+        """
         xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
         for _ in range(2000):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
-            if self.point_belongs(p):
+            if self.point_belongs(p, include_edge_points):
                 return p
+        print(True)
         raise ValueError('Could not find a point inside')
 
     def order_contour(self):
@@ -2405,12 +2421,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             barycenter1_2d += point
         return barycenter1_2d / len(self.points)
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, include_edge_points: bool = False):
         """
         Ray casting algorithm copied from internet.
         """
         return polygon_point_belongs((point.x, point.y),
-                                     [(p.x, p.y) for p in self.points])
+                                     [(p.x, p.y) for p in self.points], include_edge_points=include_edge_points)
 
     def second_moment_area(self, point):
         Ix, Iy, Ixy = 0., 0., 0.
@@ -3071,7 +3087,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         for i, xi in enumerate(x):
             for j, yi in enumerate(y):
                 point = vmd.Node2D(xi, yi)
-                if self.point_belongs(point) and point not in polygon_points:
+                if self.point_belongs(point, include_edge_points=True) and point not in polygon_points:
                     grid_point_index[(i, j)] = point
                     points.append(point)
 
@@ -3684,8 +3700,22 @@ class Circle2D(Contour2D):
     def from_arc(cls, arc: volmdlr.edges.Arc2D):
         return cls(arc.center, arc.radius, arc.name + ' to circle')
 
-    def point_belongs(self, point, abs_tol=1e-9):
-        return point.point_distance(self.center) <= self.radius + abs_tol
+    def point_belongs(self, point, include_edge_points: bool = False):
+        """
+        Verifies if a point is inside the Circle2D.
+
+        :param point: A 2D point to check if it is inside the Circle2D.
+        :type point: `volmdlr.Point2D`
+        :param include_edge_points: A boolean indicating whether points on the edge of the Circle2D
+            should be considered inside the circle.
+        :type include_edge_points: bool
+        :return: True if point inside the circle or false otherwise.
+        :rtype: bool
+        """
+
+        if include_edge_points:
+            return point.point_distance(self.center) <= self.radius
+        return point.point_distance(self.center) < self.radius
 
     def bounding_rectangle(self):
 
@@ -5371,13 +5401,23 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return triangles
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
+        """
+        Simnplify polygon3d.
+
+        :param min_distance: minimal allowed distance.
+        :param max_distance: maximal allowed distance.
+        :return: Simplified closed polygon 3d.
+        """
         return ClosedPolygon3D(self.simplify_polygon(
             min_distance=min_distance, max_distance=max_distance).points)
 
     def convex_sewing(self, polygon2, x, y):
         """
-        x and y are used for plane projection to make
-        sure it is being projected in the right plane
+        Sew to Convex Polygon.
+
+        :param polygon2: other polygon to sew with.
+        :param x: u vector for plane projection.
+        :param y: v vector for plane projection.
         """
         center1, center2 = self.average_center_point(), polygon2.average_center_point()
         center1_, center2_ = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
