@@ -147,16 +147,16 @@ def array_range_search(x, xmin, xmax):
     :type xmin: float
     :param xmax: The maximum value in the range.
     :type xmax: float
-    :return: A tuple containing the indices of the first and last elements in `x` that fall within the specified range.
-    :rtype: Tuple[int, int]
-
+    :return: A python range from the first to the last elements in `x`.
+    :rtype: range
     :Example:
 
     >>> x = [1, 2, 3, 4, 5]
     >>> array_range_search(x, 2, 4)
-    (1, 3)
+    range(1, 3)
     """
 
     left = bisect.bisect_left(x, xmin)
     right = bisect.bisect_right(x, xmax)
-    return left, right
+
+    return range(left, right)

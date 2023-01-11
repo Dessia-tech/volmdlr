@@ -9,7 +9,12 @@ steps:
   when:
     event: push
     branch: master
+  failure: ignore
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout master
   - git fetch origin testing
   - git checkout testing
   - git merge master
@@ -20,12 +25,16 @@ steps:
   when:
     event: push
     branch: testing
+  failure: ignore
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout testing
   - git fetch origin dev
   - git checkout dev
   - git merge testing
   - git push
-
 
 - name: check code complexity
   image: python:3.9
@@ -53,6 +62,12 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
+- name: check changelog update
+  image: python:3.8
+  when:
+    event: pull_request
+  commands:
+    - bash code_changelog.sh
 
 - name: install, build doc run scripts and tutorials
   image: python:3.8

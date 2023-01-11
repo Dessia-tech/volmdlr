@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Edges related classes.
 """
 
 import math
+import sys
 import warnings
 from typing import List, Dict, Any, Union
 
@@ -95,7 +96,12 @@ class Edge(dc.DessiaObject):
         """
         Calcultes the point at given abscissa.
         """
-        raise NotImplementedError(f'point_at_absciss method not implememented by {self.__class__.__name__}')
+        raise NotImplementedError(f'point_at_abscissa method not implememented by {self.__class__.__name__}')
+
+    def middle_point(self):
+        half_length = self.length() / 2
+        middle_point = self.point_at_abscissa(abscissa=half_length)
+        return middle_point
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
@@ -110,7 +116,7 @@ class Edge(dc.DessiaObject):
         if number_points is None or number_points == 1:
             number_points = 2
         if angle_resolution:
-            number_points = int(3.1415 * angle_resolution)
+            number_points = int(math.pi * angle_resolution)
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
@@ -187,8 +193,26 @@ class Edge(dc.DessiaObject):
         :return: Return True if the point belongs to this surface,
             or False otherwise
         """
-        raise NotImplementedError(f'the unit_direction_vector method must be'
+        raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
+
+    def touching_points(self, edge2):
+        """
+        Verifies if two edges are touching each other.
+
+        In case theese two edges are touchintg each other, return these touching points.
+
+        :param edge2: edge2 to verify touching points.
+        :return: list of touching points.
+        """
+        point1, point2 = edge2.start, edge2.end
+        point3, point4 = self.start, self.end
+        touching_points = []
+        for primitive, points in zip([self, edge2], [[point1, point2], [point3, point4]]):
+            for point in points:
+                if point not in touching_points and primitive.point_belongs(point):
+                    touching_points.append(point)
+        return touching_points
 
 
 class Line(dc.DessiaObject):
@@ -425,6 +449,12 @@ class LineSegment(Edge):
         return 0.5 * (self.start + self.end)
 
     def point_at_abscissa(self, abscissa):
+        """
+        Calculates a point in the LineSegment at a given abscissa.
+
+        :param abscissa: abscissa where in the curve the point should be calculated.
+        :return: Corresponding point.
+        """
         return self.start + self.unit_direction_vector() * abscissa
 
 
@@ -469,7 +499,6 @@ class BSplineCurve(Edge):
         self.knot_multiplicities = knot_multiplicities
         self.weights = weights
         self.periodic = periodic
-        self.name = name
 
         points = [[*point] for point in control_points]
         if weights is None:
@@ -549,8 +578,7 @@ class BSplineCurve(Edge):
 
     def unit_direction_vector(self, abscissa: float):
         """
-        Computes the 2D or 3D unit direction vector of B-spline curve at
-        a given abscissa.
+        Computes the 2D or 3D unit direction vector of B-spline curve at a given abscissa.
 
         :param abscissa: The abscissa on the B-spline curve where the unit
             direction vector will be computed
@@ -574,8 +602,7 @@ class BSplineCurve(Edge):
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
                  tol: float = 1e-4):
         """
-        Computes the abscissa of a 2D or 3D point using the least square
-        method.
+        Computes the abscissa of a 2D or 3D point using the least square method.
 
         :param point: The point located on the B-spline curve.
         :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`].
@@ -767,16 +794,14 @@ class BSplineCurve(Edge):
 
     def tangent(self, position: float = 0.0):
         """
-        Evaluates the tangent vector of the B-spline curve at the input
-        parameter value.
+        Evaluates the tangent vector of the B-spline curve at the input parameter value.
 
         :param position: Value of the parameter, between 0 and 1
         :type position: float
         :return: The tangent vector
         :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
         """
-        _, tangent = operations.tangent(self.curve, position,
-                                        normalize=True)
+        _, tangent = operations.tangent(self.curve, position, normalize=True)
 
         dimension = f'Vector{self.__class__.__name__[-2::]}'
         tangent = getattr(volmdlr, dimension)(*tangent)
@@ -825,6 +850,7 @@ class BSplineCurve(Edge):
 
         if angle_resolution:
             number_points = int(math.pi * angle_resolution)
+
         if len(self.points) == number_points or (not number_points and not angle_resolution):
             return self.points
         curve = self.curve
@@ -862,6 +888,84 @@ class BSplineCurve(Edge):
 
         return [getattr(volmdlr, f'Vector{self.__class__.__name__[-2::]}')(*p)
                 for p in self.curve.derivatives(u, order)]
+
+    def line_intersections(self, line):
+        """
+        Calculates the intersections of a BSplineCurve (2D or 3D) with a Line (2D or 3D).
+
+        :param line: line to verify intersections
+        :return: list of intersections
+        """
+        polygon_points = self.points
+        list_intersections = []
+        length = self.length()
+        initial_abscissa = 0
+        for points in zip(polygon_points[:-1], polygon_points[1:]):
+            linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
+            linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
+            intersections = linesegment.line_intersections(line)
+
+            if intersections and intersections[0] not in list_intersections:
+                abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
+                if initial_abscissa < length * 0.1:
+                    number_points = int(linesegment.length() / 1e-6)
+                    list_abscissas = list(
+                        n for n in npy.linspace(initial_abscissa, initial_abscissa + linesegment.length(),
+                                                number_points))
+                else:
+                    distance_from_point_to_search = 0.0001 / 2
+                    list_abscissas = list(new_abscissa for new_abscissa in npy.linspace(
+                        abscissa - distance_from_point_to_search, abscissa + distance_from_point_to_search, 1000))
+                intersection = self.select_intersection_point(list_abscissas, intersections)
+                list_intersections.append(intersection)
+            initial_abscissa += linesegment.length()
+        return list_intersections
+
+    def select_intersection_point(self, list_abscissas, intersections):
+        """
+        Select closest point in curve to intesection point obtained with discretised linesegment.
+
+        :param list_abscissas: list of abscissas to verify the closest point.
+        :param intersections: intersection with discretised line.
+        :return:
+        """
+        distance = npy.inf
+        intersection = None
+        for i_abscissa in list_abscissas:
+            point_in_curve = BSplineCurve.point_at_abscissa(self, i_abscissa)
+            dist = point_in_curve.point_distance(intersections[0])
+            if dist < distance:
+                distance = dist
+                intersection = point_in_curve
+            else:
+                break
+        return intersection
+
+    def get_linesegment_intersections(self, linesegment):
+        """
+        Calculates intersections between a BSplineCurve and a LineSegment.
+
+        :param linesegment: linesegment to verify intersections.
+        :return: list with the intersections points.
+        """
+        results = self.line_intersections(linesegment.to_line())
+        intersections_points = []
+        for result in results:
+            if linesegment.point_belongs(result, 1e-5):
+                intersections_points.append(result)
+        return intersections_points
+
+    def point_at_abscissa(self, abscissa):
+        """
+        Calculates a point in the BSplineCurve at a given abscissa.
+
+        :param abscissa: abscissa where in the curve the point should be calculated.
+        :return: Corresponding point.
+        """
+        length = self.length()
+        adim_abs = max(min(abscissa / length, 1.), 0.)
+        point_name = 'Point' + self.__class__.__name__[-2:]
+        return getattr(volmdlr, point_name)(*self.curve.evaluate_single(adim_abs))
 
 
 class Line2D(Line):
@@ -1023,8 +1127,7 @@ class Line2D(Line):
 
     def create_tangent_circle(self, point, other_line):
         """
-        Computes the two circles that are tangent to 2 lines and intersect
-        a point located on one of the two lines.
+        Computes the two circles that are tangent to 2 lines and intersect a point located on one of the two lines.
 
         """
 
@@ -1113,7 +1216,7 @@ class Line2D(Line):
         # CHANGEMENT DE REPERE:
         new_u2 = volmdlr.Vector2D(pt_K - I)
         new_u2.normalize()
-        new_v2 = new_u2.normalVector(unit=True)
+        new_v2 = new_u2.normal_vector(unit=True)
         new_basis2 = volmdlr.Frame2D(I, new_u2, new_v2)
 
         new_a = new_basis2.new_coordinates(A)
@@ -1173,6 +1276,16 @@ class Line2D(Line):
         """
         return LineSegment2D(point1, point2)
 
+    def point_belongs(self, point2d, abs_tol: float = 1e-6):
+        """
+        Verifies if the point2d belongs to the line.
+
+        :param point2d: point to be verified.
+        :param abs_tol: absolute tolerance to consider in calculus.
+        :return: True if point belongs to line, False otherwise.
+        """
+        return math.isclose(self.point_distance(point2d), 0, abs_tol=abs_tol)
+
     def point_distance(self, point2d):
         """
         Calculate the shortest distance between a line and a point.
@@ -1220,6 +1333,7 @@ class BSplineCurve2D(BSplineCurve):
                  weights: List[float] = None,
                  periodic: bool = False,
                  name: str = ''):
+        self._bounding_rectangle = None
 
         BSplineCurve.__init__(self, degree,
                               control_points,
@@ -1228,7 +1342,10 @@ class BSplineCurve2D(BSplineCurve):
                               weights,
                               periodic,
                               name)
+        self._bounding_rectangle = None
+        self._length = None
 
+    @property
     def bounding_rectangle(self):
         """
         Computes the bounding rectangle of the 2 dimensional B-spline curve.
@@ -1236,14 +1353,11 @@ class BSplineCurve2D(BSplineCurve):
         :return: The bounding rectangle.
         :rtype: :class:`volmdlr.core.BoundingRectangle`
         """
-
-        points = self.discretization_points()
-
-        points_x = [p.x for p in points]
-        points_y = [p.y for p in points]
-
-        return volmdlr.core.BoundingRectangle(min(points_x), max(points_x),
-                                              min(points_y), max(points_y))
+        if not self._bounding_rectangle:
+            bbox = self.curve.bbox
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(bbox[0][0], bbox[1][0],
+                                                                      bbox[0][1], bbox[1][1])
+        return self._bounding_rectangle
 
     def tangent(self, position: float = 0.0):
         """
@@ -1254,15 +1368,10 @@ class BSplineCurve2D(BSplineCurve):
         :return: A 2 dimensional point representing the tangent
         :rtype: :class:`volmdlr.Point2D`
         """
-        _, tangent = operations.tangent(self.curve, position,
+        _, tangent = operations.tangent(self.curve, position / self.length(),
                                         normalize=True)
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
-
-    def point_at_abscissa(self, abscissa):
-        length = self.length()
-        adim_abs = max(min(abscissa / length, 1.), 0.)
-        return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
 
     def direction_vector(self, abscissa: float):
         """
@@ -1313,15 +1422,14 @@ class BSplineCurve2D(BSplineCurve):
         if ax is None:
             _, ax = plt.subplots()
 
-        # self.curve.delta = 0.01
-        # points = [volmdlr.Point2D(px, py) for (px, py) in self.curve.evalpts]
-        length = self.length()
-        points = [self.point_at_abscissa(length * i / 50) for i in range(51)]
+        points = self.points
 
         x_points = [p.x for p in points]
         y_points = [p.y for p in points]
         ax.plot(x_points, y_points, color=color, alpha=alpha)
-
+        if plot_points:
+            for point in points:
+                point.plot(ax, color=color)
         return ax
 
     def to_3d(self, plane_origin, x1, x2):
@@ -1351,12 +1459,6 @@ class BSplineCurve2D(BSplineCurve):
                         tuple(self.knots))
         return content, point_id + 1
 
-    def polygon_points(self, n: int = 15):
-        warnings.warn('polygon_points is deprecated,\
-        please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(number_points=n)
-
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
         BSplineCurve2D rotation.
@@ -1380,32 +1482,6 @@ class BSplineCurve2D(BSplineCurve):
         """
         for point in self.control_points:
             point.rotation_inplace(center, angle)
-
-    def line_intersections(self, line2d: Line2D):
-        polygon_points = self.discretization_points(number_points=100)
-        list_intersections = []
-        length = self.length()
-        initial_abscissa = 0
-        for points in zip(polygon_points[:-1], polygon_points[1:]):
-            linesegment = LineSegment2D(points[0], points[1])
-            intersections = linesegment.line_intersections(line2d)
-            initial_abscissa += linesegment.length()
-            if intersections:
-                if initial_abscissa < length * 0.1:
-                    list_abcissas = [initial_abscissa * n for n in
-                                     npy.linspace(0, 1, 100)]
-                else:
-                    list_abcissas = [initial_abscissa * n for n in
-                                     npy.linspace(0.9, 1, 100)]
-                distance = npy.inf
-                for abscissa in list_abcissas:
-                    point_in_curve = self.point_at_abscissa(abscissa)
-                    dist = point_in_curve.point_distance(intersections[0])
-                    if dist < distance:
-                        distance = dist
-                        intersection = point_in_curve
-                list_intersections.append(intersection)
-        return list_intersections
 
     def line_crossings(self, line2d: Line2D):
         polygon_points = self.discretization_points(number_points=50)
@@ -1444,7 +1520,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def point_distance(self, point):
         distance = math.inf
-        polygon_points = self.discretization_points(number_points=20)
+        polygon_points = self.points
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             line = LineSegment2D(p1, p2)
             dist = line.point_distance(point)
@@ -1461,18 +1537,16 @@ class BSplineCurve2D(BSplineCurve):
         points = self.discretization_points(number_points=500)
         return point.nearest_point(points)
 
-    def linesegment_intersections(self, linesegment):
+    def linesegment_intersections(self, linesegment2d):
         """
         Calculates intersections between a BSplineCurve2D and a LineSegment2D.
 
-        :param linesegment: linesegment to verify intersections.
+        :param linesegment2d: linesegment to verify intersections.
         :return: list with the intersections points.
         """
-        results = self.line_intersections(linesegment.to_line())
-        intersections_points = []
-        for result in results:
-            if linesegment.point_belongs(result, 1e-6):
-                intersections_points.append(result)
+        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
+        intersections_points = self.get_linesegment_intersections(linesegment2d)
         return intersections_points
 
     def axial_symmetry(self, line):
@@ -1524,6 +1598,7 @@ class LineSegment2D(LineSegment):
         if start == end:
             raise NotImplementedError
         self.points = [start, end]
+        self._bounding_rectangle = None
         LineSegment.__init__(self, start, end, name=name)
 
     def __hash__(self):
@@ -1541,6 +1616,12 @@ class LineSegment2D(LineSegment):
         if self.__class__.__name__ != other_object.__class__.__name__:
             return False
         return self.start == other_object.start and self.end == other_object.end
+
+    def direction_independent_eq(self, linesegment2):
+        """Verifies if two linesegments are the same, not considering its direction"""
+        if self == linesegment2:
+            return True
+        return self.start == linesegment2.end and self.end == linesegment2.start
 
     def to_dict(self, *args, **kwargs):
         return {'object_class': 'volmdlr.edges.LineSegment2D',
@@ -1561,9 +1642,13 @@ class LineSegment2D(LineSegment):
             return True
         return False
 
+    @property
     def bounding_rectangle(self):
-        return volmdlr.core.BoundingRectangle(min(self.start.x, self.end.x), max(self.start.x, self.end.x),
-                                              min(self.start.y, self.end.y), max(self.start.y, self.end.y))
+        if not self._bounding_rectangle:
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(
+                min(self.start.x, self.end.x), max(self.start.x, self.end.x),
+                min(self.start.y, self.end.y), max(self.start.y, self.end.y))
+        return self._bounding_rectangle
 
     def straight_line_area(self):
         return 0.
@@ -1625,52 +1710,45 @@ class LineSegment2D(LineSegment):
                     return []
 
             return [point_projection1]
-        else:
-            vector1 = self.start - line.point1
-            vector2 = self.start - line.point2
-            vector3 = self.end - line.point1
-            vector4 = self.end - line.point2
-            if math.isclose(vector1.cross(vector2), 0, abs_tol=1e-6):
-                return [self.start]
-            if math.isclose(vector3.cross(vector4), 0, abs_tol=1e-6):
-                return [self.end]
+        if line.point_belongs(self.start):
+            return [self.start]
+        if line.point_belongs(self.end):
+            return [self.end]
         return []
 
-    def linesegment_intersections(self, linesegment: 'LineSegment2D'):
+    def linesegment_intersections(self, linesegment2d: 'LineSegment2D'):
         """
         Touching linesegments does not intersect.
-
         """
-        point = volmdlr.Point2D.line_intersection(self, linesegment)
+        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
+        point = volmdlr.Point2D.line_intersection(self, linesegment2d)
         # TODO: May be these commented conditions should be used for linesegment_crossings
         if point:  # and (point != self.start) and (point != self.end):
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
                 return []
 
-            point_projection2, _ = linesegment.point_projection(point)
+            point_projection2, _ = linesegment2d.point_projection(point)
             if point_projection2 is None:
                 return []
 
             return [point_projection1]
-        else:
-            return []
+        return []
 
     def line_crossings(self, line: 'Line2D'):
         if self.direction_vector().is_colinear_to(line.direction_vector()):
             return []
-        else:
-            line_intersection = self.line_intersections(line)
-            if line_intersection and (line_intersection[0] == self.end or line_intersection[0] == self.start):
-                return []
-            return line_intersection
+        line_intersection = self.line_intersections(line)
+        if line_intersection and (line_intersection[0] == self.end or line_intersection[0] == self.start):
+            return []
+        return line_intersection
 
     def linesegment_crossings(self, linesegment: 'LineSegment2D'):
         if self.direction_vector().is_colinear_to(
                 linesegment.direction_vector()):
             return []
-        else:
-            return self.linesegment_intersections(linesegment)
+        return self.linesegment_intersections(linesegment)
 
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
              plot_points=False):
@@ -1819,12 +1897,6 @@ class LineSegment2D(LineSegment):
 
         return Line2D(offset_point_1, offset_point_2)
 
-    def polygon_points(self, discretization_resolution: int):
-        warnings.warn('polygon_points is deprecated,\
-        please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(number_points=discretization_resolution)
-
     def to_wire(self, n: int):
         """
         Convert a linesegment2d to a wire2d defined with 'n' line_segments.
@@ -1925,12 +1997,15 @@ class Arc(Edge):
         return self.radius * abs(self.angle)
 
     def point_at_abscissa(self, abscissa):
+        """
+        Calculates a point in the Arc at a given abscissa.
+
+        :param abscissa: abscissa where in the curve the point should be calculated.
+        :return: Corresponding point.
+        """
         if self.is_trigo:
-            return self.start.rotation(self.center,
-                                       abscissa / self.radius)
-        else:
-            return self.start.rotation(self.center,
-                                       -abscissa / self.radius)
+            return self.start.rotation(self.center, abscissa / self.radius)
+        return self.start.rotation(self.center, -abscissa / self.radius)
 
     @staticmethod
     def get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i):
@@ -2009,6 +2084,7 @@ class Arc2D(Arc):
         self._center = None
         self._is_trigo = None
         self._angle = None
+        self._bounding_rectangle = None
         Arc.__init__(self, start=start, end=end, interior=interior, name=name)
         start_to_center = start - self.center
         end_to_center = end - self.center
@@ -2032,19 +2108,19 @@ class Arc2D(Arc):
         xe, ye = self.end.x, self.end.y
         xs, ys = self.start.x, self.start.y
         try:
-            A = volmdlr.Matrix22(2 * (xs - xi), 2 * (ys - yi),
-                                 2 * (xs - xe), 2 * (ys - ye))
-            b = - volmdlr.Vector2D(xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
-                                   xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2)
-            inv_A = A.inverse()
-            x = inv_A.vector_multiplication(b)
+            matrix_a = volmdlr.Matrix22(2 * (xs - xi), 2 * (ys - yi),
+                                        2 * (xs - xe), 2 * (ys - ye))
+            b_vector = - volmdlr.Vector2D(xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
+                                          xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2)
+            inv_matrix_a = matrix_a.inverse()
+            x = inv_matrix_a.vector_multiplication(b_vector)
             center = volmdlr.Point2D(x.x, x.y)
         except ValueError:
-            A = npy.array([[2 * (xs - xi), 2 * (ys - yi)],
-                           [2 * (xs - xe), 2 * (ys - ye)]])
-            b = - npy.array([xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
-                             xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2])
-            center = volmdlr.Point2D(*npy.linalg.solve(A, b))
+            matrix_a = npy.array([[2 * (xs - xi), 2 * (ys - yi)],
+                                  [2 * (xs - xe), 2 * (ys - ye)]])
+            b_vector = - npy.array([xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
+                                    xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2])
+            center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
         return center
 
     def reverse(self):
@@ -2107,9 +2183,7 @@ class Arc2D(Arc):
         if point_angle <= arc_angle:
             return abs(
                 LineSegment2D(point, self.center).length() - self.radius)
-        else:
-            return min(LineSegment2D(point, self.start).length(),
-                       LineSegment2D(point, self.end).length())
+        return min(LineSegment2D(point, self.start).length(), LineSegment2D(point, self.end).length())
 
     def point_belongs(self, point2d, abs_tol=1e-10):
         """
@@ -2144,6 +2218,8 @@ class Arc2D(Arc):
         return intersection_points
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D):
+        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
         full_arc_2d = self.to_full_arc_2d()
         fa2d_intersection_points = full_arc_2d.linesegment_intersections(
             linesegment2d)
@@ -2231,10 +2307,17 @@ class Arc2D(Arc):
         return self.center + 4 / (3 * self.angle) * self.radius * math.sin(
             self.angle * 0.5) * u
 
+    @property
     def bounding_rectangle(self):
-        # TODO: Enhance this!!!
-        return volmdlr.core.BoundingRectangle(self.center.x - self.radius, self.center.x + self.radius,
-                                              self.center.y - self.radius, self.center.y + self.radius)
+        if not self._bounding_rectangle:
+            discretization_points = self.discretization_points(number_points=20)
+            x_values, y_values = [], []
+            for point in discretization_points:
+                x_values.append(point.x)
+                y_values.append(point.y)
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(min(x_values), max(x_values),
+                                                                      min(y_values), max(y_values))
+        return self._bounding_rectangle
 
     def straight_line_area(self):
         if self.angle >= math.pi:
@@ -2571,6 +2654,9 @@ class Arc2D(Arc):
                               interior=points_symmetry[1],
                               end=points_symmetry[2])
 
+    def reverse(self):
+        return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(), self.name)
+
 
 class FullArc2D(Arc2D):
     """
@@ -2627,6 +2713,14 @@ class FullArc2D(Arc2D):
             return False
         return (self.center == other_arc.center) \
             and (self.start_end == other_arc.start_end)
+
+    @property
+    def bounding_rectangle(self):
+        if not self._bounding_rectangle:
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(
+                self.center.x - self.radius, self.center.x + self.radius,
+                self.center.y - self.radius, self.center.y + self.radius)
+        return self._bounding_rectangle
 
     def straight_line_area(self):
         area = self.area()
@@ -2764,7 +2858,7 @@ class FullArc2D(Arc2D):
             t1 = -b / (2 * a)
             return [pt1 + t1 * vec]
 
-        elif disc > 0:
+        if disc > 0:
             sqrt_disc = math.sqrt(disc)
             t1 = (-b + sqrt_disc) / (2 * a)
             t2 = (-b - sqrt_disc) / (2 * a)
@@ -2774,6 +2868,8 @@ class FullArc2D(Arc2D):
         return []
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D, tol=1e-9):
+        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
         try:
             if linesegment2d.start == self.center:
                 pt1 = linesegment2d.end
@@ -2801,7 +2897,7 @@ class FullArc2D(Arc2D):
                 return points
             return []
 
-        elif disc > 0:
+        if disc > 0:
             sqrt_disc = math.sqrt(disc)
             t1 = (-b + sqrt_disc) / (2 * a)
             t2 = (-b - sqrt_disc) / (2 * a)
@@ -2848,6 +2944,7 @@ class ArcEllipse2D(Edge):
         self.frame = frame
         start_new, end_new = frame.new_coordinates(self.start), frame.new_coordinates(self.end)
         interior_new, center_new = frame.new_coordinates(self.interior), frame.new_coordinates(self.center)
+        self._bounding_rectangle = None
 
         def theta_A_B(s, i, e, c):
             """
@@ -2878,24 +2975,25 @@ class ArcEllipse2D(Edge):
         else:
             theta, A, B = theta_A_B(start_new, interior_new, end_new,
                                     center_new)
+            # theta, A, B = theta_A_B(self.start, self.interior, self.end,
+            #                         self.center)
 
-        self.Gradius = A
-        self.Sradius = B
+        self.major_axis = A
+        self.minor_axis = B
         self.theta = theta
 
         # Angle pour start
-        u1, u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
+        u1, u2 = start_new.x / self.major_axis, start_new.y / self.minor_axis
         angle1 = volmdlr.geometry.sin_cos_angle(u1, u2)
         self.angle_start = angle1
         # Angle pour end
-        u3, u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
+        u3, u4 = end_new.x / self.major_axis, end_new.y / self.minor_axis
         angle2 = volmdlr.geometry.sin_cos_angle(u3, u4)
         self.angle_end = angle2
         # Angle pour interior
-        u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
+        u5, u6 = interior_new.x / self.major_axis, interior_new.y / self.minor_axis
         anglei = volmdlr.geometry.sin_cos_angle(u5, u6)
         self.angle_interior = anglei
-
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
             trigowise_path = (anglei + volmdlr.TWO_PI) - angle1
@@ -2950,13 +3048,13 @@ class ArcEllipse2D(Edge):
         :param abs_tol: tolerance applied during calculations
         :return: True if the point belongs, False otherwise
         """
-        if not math.isclose((point.x - self.center.x) ** 2 / self.Gradius ** 2 +
-                            (point.y - self.center.y) ** 2 / self.Sradius ** 2, 1, abs_tol=abs_tol) and not \
-                math.isclose((point.x - self.center.x) ** 2 / self.Sradius ** 2 +
-                             (point.y - self.center.y) ** 2 / self.Gradius ** 2, 1, abs_tol=abs_tol):
+        if not math.isclose((point.x - self.center.x) ** 2 / self.major_axis ** 2 +
+                            (point.y - self.center.y) ** 2 / self.minor_axis ** 2, 1, abs_tol=abs_tol) and not \
+                math.isclose((point.x - self.center.x) ** 2 / self.minor_axis ** 2 +
+                             (point.y - self.center.y) ** 2 / self.major_axis ** 2, 1, abs_tol=abs_tol):
             return False
         new_point = self.frame.new_coordinates(point)
-        u1, u2 = new_point.x / self.Gradius, new_point.y / self.Sradius
+        u1, u2 = new_point.x / self.major_axis, new_point.y / self.minor_axis
         angle_new_point = volmdlr.geometry.sin_cos_angle(u1, u2)
         if self.angle_start < self.angle_end and self.angle_end >= angle_new_point >= self.angle_start:
             return True
@@ -2980,24 +3078,28 @@ class ArcEllipse2D(Edge):
                 angle_end = self.angle_start
 
             def arc_length(theta):
-                return math.sqrt((self.Gradius ** 2) * math.sin(theta) ** 2 +
-                                 (self.Sradius ** 2) * math.cos(theta) ** 2)
+                return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
+                                 (self.minor_axis ** 2) * math.cos(theta) ** 2)
 
             res, _ = scipy_integrate.quad(arc_length, angle_start, angle_end)
             return res
         raise ValueError(f'point {point} does not belong to ellipse')
 
+    @property
     def bounding_rectangle(self):
         """
         Calculates the bounding rectangle for the arcellipse2d.
-
         :return: volmdlr.core.BoudingRectangle object.
         """
-        min_a, max_a = self.center - self.Gradius * self.major_dir, self.center + self.Gradius * self.major_dir
-        min_b, max_b = self.center - self.Sradius * self.minor_dir, self.center + self.Sradius * self.minor_dir
-        x_values = [point.x for point in [min_a, max_a, min_b, max_b]]
-        y_values = [point.y for point in [min_a, max_a, min_b, max_b]]
-        return volmdlr.core.BoundingRectangle(min(x_values), max(x_values), min(y_values), max(y_values))
+        if not self._bounding_rectangle:
+            discretization_points = self.discretization_points(number_points=20)
+            x_values, y_values = [], []
+            for point in discretization_points:
+                x_values.append(point.x)
+                y_values.append(point.y)
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(min(x_values), max(x_values),
+                                                                      min(y_values), max(y_values))
+        return self._bounding_rectangle
 
     def straight_line_area(self):
         """
@@ -3007,11 +3109,11 @@ class ArcEllipse2D(Edge):
         """
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
-            area = math.pi * self.Gradius * self.Sradius - 0.5 * self.Gradius * self.Sradius * (
+            area = math.pi * self.major_axis * self.minor_axis - 0.5 * self.major_axis * self.minor_axis * (
                     angle - math.sin(angle))
         else:
             angle = self.angle
-            area = 0.5 * self.Gradius * self.Sradius * (angle - math.sin(angle))
+            area = 0.5 * self.major_axis * self.minor_axis * (angle - math.sin(angle))
 
         if self.is_trigo:
             return area
@@ -3049,7 +3151,7 @@ class ArcEllipse2D(Edge):
             angle_start = self.angle_start
 
         discretization_points = [self.frame.old_coordinates(
-            volmdlr.Point2D(self.Gradius * math.cos(angle), self.Sradius * math.sin(angle)))
+            volmdlr.Point2D(self.major_axis * math.cos(angle), self.minor_axis * math.sin(angle)))
             for angle in npy.linspace(angle_start, angle_end, number_points)]
         if not is_trigo:
             discretization_points = discretization_points[::-1]
@@ -3067,7 +3169,7 @@ class ArcEllipse2D(Edge):
         point_end3d = self.end.to_3d(plane_origin, x, y)
         point_center3d = self.center.to_3d(plane_origin, x, y)
 
-        a_max2d = self.center + self.major_dir * self.Gradius
+        a_max2d = self.center + self.major_dir * self.major_axis
         a_max3d = a_max2d.to_3d(plane_origin, x, y)
         new_major_dir = a_max3d - point_center3d
         new_major_dir.normalize()
@@ -3107,6 +3209,58 @@ class ArcEllipse2D(Edge):
     def reverse(self):
         return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(),
                               self.center.copy(), self.major_dir.copy(), self.name)
+
+    def line_intersections(self, line2d: Line2D):
+        """
+        Intersections between an ArcEllipse2D and a Line2D.
+
+        :param line2d: Line2D to verify intersections
+        :return: List with all intersections
+        """
+        ellipse2d_linesegment_intersections = vm_utils_intersections.ellipse2d_line_intersections(self, line2d)
+        linesegment_intersections = []
+        for inter in ellipse2d_linesegment_intersections:
+            if self.point_belongs(inter):
+                linesegment_intersections.append(inter)
+        return linesegment_intersections
+
+    def linesegment_intersections(self, linesegment2d: LineSegment2D):
+        """
+        Intersections between an ArcEllipse2D and a LineSegment2D.
+
+        :param linesegment2d: LineSegment2D to verify intersections
+        :return: List with all intersections
+        """
+        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
+        intersections = self.line_intersections(linesegment2d)
+        linesegment_intersections = []
+        for inter in intersections:
+            if linesegment2d.point_belongs(inter):
+                linesegment_intersections.append(inter)
+        return linesegment_intersections
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and return a new ArcEllipse2D.
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            return ArcEllipse2D(frame.local_to_global_coordinates(self.start),
+                                frame.local_to_global_coordinates(self.interior),
+                                frame.local_to_global_coordinates(self.end),
+                                frame.local_to_global_coordinates(self.center),
+                                self.major_dir)
+        if side == 'new':
+            point_major_dir = self.center + self.major_dir * self.major_axis
+            major_dir = frame.global_to_local_coordinates(point_major_dir)
+            major_dir.normalize()
+            return ArcEllipse2D(frame.global_to_local_coordinates(self.start),
+                                frame.global_to_local_coordinates(self.interior),
+                                frame.global_to_local_coordinates(self.end),
+                                frame.global_to_local_coordinates(self.center),
+                                major_dir)
+        raise ValueError('Side should be \'new\' \'old\'')
 
 
 class Line3D(Line):
@@ -3342,7 +3496,7 @@ class Line3D(Line):
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if not self.point_belongs(point1) or not self.point_belongs(point2):
             raise ValueError('Point not on curve')
-        return Line3D(point1, point2)
+        return LineSegment3D(point1, point2)
 
     def copy(self, *args, **kwargs):
         return Line3D(*[p.copy() for p in [self.point1, self.point2]])
@@ -3542,19 +3696,19 @@ class LineSegment3D(LineSegment):
     def line_intersections(self, line):
         line_self = self.to_line()
         if line_self.skew_to(line):
-            return None
+            return []
         intersection = line_self.intersection(line)
         if intersection and self.point_belongs(intersection):
-            return intersection
-        return None
+            return [intersection]
+        return []
 
-    def linesegment_intersection(self, linesegment):
+    def linesegment_intersections(self, linesegment):
         line1 = self.to_line()
         line2 = linesegment.to_line()
         intersection = line1.intersection(line2)
         if intersection and self.point_belongs(intersection) and linesegment.point_belongs(intersection):
-            return intersection
-        return None
+            return [intersection]
+        return []
 
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
@@ -3616,7 +3770,7 @@ class LineSegment3D(LineSegment):
         if side == 'old':
             return LineSegment3D(
                 *[frame.old_coordinates(point) for point in self.points])
-        elif side == 'new':
+        if side == 'new':
             return LineSegment3D(
                 *[frame.new_coordinates(point) for point in self.points])
         raise ValueError('Please Enter a valid side: old or new')
@@ -3739,8 +3893,7 @@ class LineSegment3D(LineSegment):
             p1 = self.start + s * u
             p2 = other_line.start + t * v
             return p1, p2
-        else:
-            return self.start, other_line.start
+        return self.start, other_line.start
 
     def Matrix_distance(self, other_line):
         u = self.direction_vector()
@@ -3806,25 +3959,22 @@ class LineSegment3D(LineSegment):
             k = (z - c * v3) / u3
             if math.isclose(k * u1 + c * v1, x, abs_tol=1e-7):
                 return k
-        else:
-            return NotImplementedError
+        raise NotImplementedError
 
     def minimum_distance(self, element, return_points=False):
         if element.__class__ is Arc3D or element.__class__ is volmdlr.wires.Circle3D:
             pt1, pt2 = element.minimum_distance_points_line(self)
             if return_points:
                 return pt1.point_distance(pt2), pt1, pt2
-            else:
-                return pt1.point_distance(pt2)
+            return pt1.point_distance(pt2)
 
-        elif element.__class__ is LineSegment3D:
+        if element.__class__ is LineSegment3D:
             p1, p2 = self.Matrix_distance(element)
             if return_points:
                 return p1.point_distance(p2), p1, p2
-            else:
-                return p1.point_distance(p2)
+            return p1.point_distance(p2)
 
-        elif element.__class__ is BSplineCurve3D:
+        if element.__class__ is BSplineCurve3D:
             points = element.points
             lines = []
             dist_min = math.inf
@@ -3839,11 +3989,9 @@ class LineSegment3D(LineSegment):
             if return_points:
                 p1, p2 = min_points
                 return dist_min, p1, p2
-            else:
-                return dist_min
+            return dist_min
 
-        else:
-            return NotImplementedError
+        raise NotImplementedError
 
     def extrusion(self, extrusion_vector):
         u = self.unit_direction_vector()
@@ -4083,7 +4231,7 @@ class BSplineCurve3D(BSplineCurve):
         """
         if math.isclose(abscissa, 0, abs_tol=1e-10):
             return self.start
-        elif math.isclose(abscissa, self.length(), abs_tol=1e-10):
+        if math.isclose(abscissa, self.length(), abs_tol=1e-10):
             return self.end
         lut = self.look_up_table(resolution=resolution)
         if 0 < abscissa < self.length():
@@ -4095,9 +4243,8 @@ class BSplineCurve3D(BSplineCurve):
                     return volmdlr.Point3D(
                         *self.curve.evaluate_single((t1 + t2) / 2))
                 last_param = t
-        else:
-            raise ValueError('Curvilinear abscissa is bigger than length,'
-                             ' or negative')
+        raise ValueError('Curvilinear abscissa is bigger than length,'
+                         ' or negative')
 
     def normal(self, position: float = 0.0):
         _, normal = operations.normal(self.curve, position, normalize=True)
@@ -4301,21 +4448,17 @@ class BSplineCurve3D(BSplineCurve):
                 or (point1 == self.end and point2 == self.start):
             return self
 
-        elif point1 == self.start and point2 != self.end:
-            parameter2 = self.point3d_to_parameter(point2)
-            return self.cut_after(parameter2)
+        if point1 == self.start and point2 != self.end:
+            return self.cut_after(self.point3d_to_parameter(point2))
 
-        elif point2 == self.start and point1 != self.end:
-            parameter1 = self.point3d_to_parameter(point1)
-            return self.cut_after(parameter1)
+        if point2 == self.start and point1 != self.end:
+            return self.cut_after(self.point3d_to_parameter(point1))
 
-        elif point1 != self.start and point2 == self.end:
-            parameter1 = self.point3d_to_parameter(point1)
-            return self.cut_before(parameter1)
+        if point1 != self.start and point2 == self.end:
+            return self.cut_before(self.point3d_to_parameter(point1))
 
-        elif point2 != self.start and point1 == self.end:
-            parameter2 = self.point3d_to_parameter(point2)
-            return self.cut_before(parameter2)
+        if point2 != self.start and point1 == self.end:
+            return self.cut_before(self.point3d_to_parameter(point2))
 
         parameter1 = self.point3d_to_parameter(point1)
         parameter2 = self.point3d_to_parameter(point2)
@@ -4501,14 +4644,17 @@ class BSplineCurve3D(BSplineCurve):
     def triangulation(self):
         return None
 
-    def linesegment_intersection(self, linesegment: LineSegment3D):
-        points = self.discretization_points()
-        linesegments = [LineSegment3D(start, end) for start, end in zip(points[:-1], points[1:])]
-        for line_segment in linesegments:
-            intersection = line_segment.linesegment_intersection(linesegment)
-            if intersection:
-                return intersection
-        return None
+    def linesegment_intersections(self, linesegment3d: LineSegment3D):
+        """
+        Calculates intersections between a BSplineCurve3D and a LineSegment3D.
+
+        :param linesegment3d: linesegment to verify intersections.
+        :return: list with the intersections points.
+        """
+        if not self.bounding_box.bbox_intersection(linesegment3d.bounding_box):
+            return []
+        intersections_points = self.get_linesegment_intersections(linesegment3d)
+        return intersections_points
 
 
 class BezierCurve3D(BSplineCurve3D):
@@ -4739,7 +4885,7 @@ class Arc3D(Arc):
 
     def point_at_abscissa(self, abscissa):
         """
-        Calculates a point in the Arc2D at a given abscissa.
+        Calculates a point in the Arc3D at a given abscissa.
 
         :param abscissa: abscissa where in the curve the point should be calculated.
         :return: Corresponding point.
@@ -4849,10 +4995,7 @@ class Arc3D(Arc):
     def plot(self, ax=None, color='k', alpha=1,
              edge_ends=False, edge_direction=False):
         if ax is None:
-            fig = plt.figure()
-            ax = Axes3D(fig)
-        else:
-            fig = None
+            ax = plt.figure().add_subplot(111, projection='3d')
         # if plot_points:
         #     ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
         #             color='b')
@@ -5148,15 +5291,15 @@ class Arc3D(Arc):
         line3d = Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.center)
         if math.isclose(tore_center.point_distance(self.center), 0.,
-                        abs_tol=1e-9):
+                        abs_tol=1e-6):
             # Sphere
             start_p, _ = line3d.point_projection(self.start)
             u = self.start - start_p
 
-            if math.isclose(u.norm(), 0, abs_tol=1e-9):
+            if math.isclose(u.norm(), 0, abs_tol=1e-6):
                 end_p, _ = line3d.point_projection(self.end)
                 u = self.end - end_p
-                if math.isclose(u.norm(), 0, abs_tol=1e-9):
+                if math.isclose(u.norm(), 0, abs_tol=1e-6):
                     interior_p, _ = line3d.point_projection(self.interior)
                     u = self.interior - interior_p
 
@@ -5175,7 +5318,7 @@ class Arc3D(Arc):
             u = self.center - tore_center
             u.normalize()
             v = axis.cross(u)
-            if not math.isclose(self.normal.dot(u), 0., abs_tol=1e-9):
+            if not math.isclose(self.normal.dot(u), 0., abs_tol=1e-6):
                 raise NotImplementedError(
                     'Outside of plane revolution not supported')
 
@@ -5527,7 +5670,6 @@ class ArcEllipse3D(Edge):
         u2 = (self.interior - self.end)
         u1.normalize()
         u2.normalize()
-
         if u1 == u2:
             u2 = (self.interior - self.interior)
             u2.normalize()
@@ -5592,7 +5734,6 @@ class ArcEllipse3D(Edge):
         u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
         anglei = volmdlr.geometry.sin_cos_angle(u5, u6)
         self.angle_interior = anglei
-
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
             trigowise_path = (anglei + volmdlr.TWO_PI) - angle1
@@ -5639,7 +5780,6 @@ class ArcEllipse3D(Edge):
             to mesh an arc
         :return: a list of sampled points
         """
-
         if not number_points:
             if not angle_resolution:
                 number_points = 2
@@ -5658,7 +5798,6 @@ class ArcEllipse3D(Edge):
         else:
             angle_end = self.angle_end
             angle_start = self.angle_start
-
         discretization_points = [self.frame.old_coordinates(
             volmdlr.Point3D(self.Gradius * math.cos(angle), self.Sradius * math.sin(angle), 0))
             for angle in npy.linspace(angle_start, angle_end, number_points)]
@@ -5672,7 +5811,6 @@ class ArcEllipse3D(Edge):
 
     def _get_points(self):
         return self.discretization_points()
-
     points = property(_get_points)
 
     def to_2d(self, plane_origin, x, y):
@@ -5739,7 +5877,6 @@ class ArcEllipse3D(Edge):
             y.append(py)
             z.append(pz)
 
-        ax.plot(x, y, z, 'k')
         ax.plot(x, y, z, color, alpha=alpha)
         if edge_ends:
             self.start.plot(ax)
