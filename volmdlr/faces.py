@@ -3038,7 +3038,8 @@ class BSplineSurface3D(Surface3D):
         x = min(max(x, 0), 1)
         y = min(max(y, 0), 1)
 
-        return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
+        return volmdlr.Point3D(*self.derivatives(x, y, 0)[0][0])
+        # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-5):
         """
@@ -4822,8 +4823,10 @@ class BSplineSurface3D(Surface3D):
         :rtype: List[`volmdlr.Vector3D`]
         """
         if self.surface.rational:
+            # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
             derivatives = volmdlr.bspline_compiled._rational_derivatives(self.surface.data, u, v, order)
         else:
+            # derivatives = self._derivatives(self.surface.data, (u, v), order)
             derivatives = volmdlr.bspline_compiled._derivatives(self.surface.data, u, v, order)
         for i in range(order + 1):
             for j in range(order + 1):
