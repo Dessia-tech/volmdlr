@@ -3688,10 +3688,10 @@ class Circle2D(Contour2D):
 
     def _primitives(self):
         points = [
-            self.center + volmdlr.Point2D(self.center.x + self.radius, self.center.y),
-            self.center + volmdlr.Point2D(self.center.x, self.center.y - self.radius),
-            self.center + volmdlr.Point2D(self.center.x - self.radius, self.center.y),
-            self.center + volmdlr.Point2D(self.center.x, self.center.y + self.radius)]
+            volmdlr.Point2D(self.center.x + self.radius, self.center.y),
+            volmdlr.Point2D(self.center.x, self.center.y - self.radius),
+            volmdlr.Point2D(self.center.x - self.radius, self.center.y),
+            volmdlr.Point2D(self.center.x, self.center.y + self.radius)]
 
         return [volmdlr.edges.Arc2D(points[0], points[1], points[2]),
                 volmdlr.edges.Arc2D(points[2], points[3], points[0])]
