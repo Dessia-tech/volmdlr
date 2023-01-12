@@ -1,3 +1,4 @@
+#cython: language_level=3
 from math import factorial
 import numpy as npy
 from functools import lru_cache
