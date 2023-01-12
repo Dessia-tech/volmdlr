@@ -1,6 +1,5 @@
 from math import factorial
 import numpy as npy
-cimport numpy as npy
 from functools import lru_cache
 
 @lru_cache(maxsize=10000)
