@@ -3591,6 +3591,14 @@ class Triangle(ClosedPolygonMixin):
 
 
 class Triangle2D(Triangle):
+    """
+    Defines a triangle 2D.
+
+    :param point1: triangle point 1.
+    :param point2: triangle point 2.
+    :param point3: triangle point3.
+    """
+
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
                  point3: volmdlr.Point2D, name: str = ''):
         # self.point1 = point1
@@ -3726,13 +3734,26 @@ class Circle2D(Contour2D):
         return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
 
     def line_intersections(self, line: volmdlr.edges.Line2D, tol=1e-9):
+        """
+        Calculates the intersections between a circle 2D and Line 2D.
+
+        :param line: line to calculate intersections
+        :param tol: tolerence to consider in calculations.
+        :return: circle and line intersections.
+        """
         full_arc_2d = volmdlr.edges.FullArc2D(
             center=self.center, start_end=self.point_at_abscissa(0),
             name=self.name)
         return full_arc_2d.line_intersections(line, tol)
 
-    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment2D,
-                                  tol=1e-9):
+    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment2D, tol=1e-9):
+        """
+        Calculates the intersections between a circle 2D and LineSegment 2D.
+
+        :param linesegment: linesegment to calculate intersections
+        :param tol: tolerence to consider in calculations.
+        :return: circle and linesegment intersections.
+        """
         full_arc_2d = volmdlr.edges.FullArc2D(
             center=self.center, start_end=self.point_at_abscissa(0),
             name=self.name)
@@ -3797,6 +3818,12 @@ class Circle2D(Contour2D):
         return intersections
 
     def length(self):
+        """
+        Calculates the length of the Circle 2D.
+
+        :return: the circle's length.
+        """
+
         return volmdlr.TWO_PI * self.radius
 
     def plot(self, ax=None, color='k', alpha=1,
@@ -4810,7 +4837,8 @@ class Circle3D(Contour3D):
 
     def point_at_abscissa(self, curvilinear_abscissa):
         """
-        start point is at intersection of frame.u axis
+        Start point is at intersection of frame.u axis.
+
         """
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
@@ -4889,6 +4917,7 @@ class Circle3D(Contour3D):
     def _bounding_box(self):
         """
         Computes the bounding box.
+
         """
         points = [self.frame.origin + self.radius * v
                   for v in [self.frame.u, -self.frame.u,
@@ -5828,6 +5857,14 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
 
 class Triangle3D(Triangle):
+    """
+    Defines a triangle 2D.
+
+    :param point1: triangle point 1.
+    :param point2: triangle point 2.
+    :param point3: triangle point3.
+    """
+
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  point3: volmdlr.Point3D, name: str = ''):
         # self.point1 = point1
