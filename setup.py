@@ -10,7 +10,6 @@ from Cython.Build import cythonize
 from os.path import dirname, isdir, join
 import re
 from subprocess import CalledProcessError, check_output
-import numpy
 
 tag_re = re.compile(r'\btag: %s([0-9][^,]*)\b')
 version_re = re.compile('^Version: (.+)$', re.M)
@@ -114,7 +113,6 @@ setup(name='volmdlr',
       license='Creative Commons Attribution-Share Alike license',
       packages=['volmdlr', 'volmdlr.models', 'volmdlr.models.workflows', 'volmdlr.utils'],#,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
       package_dir={},
-      include_dirs=[numpy.get_include()],
       include_package_data = True,
       install_requires=['packaging',
                         'dessia_common>=0.7.0',
