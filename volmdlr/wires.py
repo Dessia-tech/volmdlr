@@ -3598,6 +3598,7 @@ class Triangle2D(Triangle):
     :param point2: triangle point 2.
     :param point3: triangle point3.
     """
+
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
                  point3: volmdlr.Point2D, name: str = ''):
         # self.point1 = point1
@@ -5863,6 +5864,7 @@ class Triangle3D(Triangle):
     :param point2: triangle point 2.
     :param point3: triangle point3.
     """
+
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  point3: volmdlr.Point3D, name: str = ''):
         # self.point1 = point1
