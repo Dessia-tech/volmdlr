@@ -1557,7 +1557,7 @@ class Contour2D(ContourMixin, Wire2D):
         for edge in self.primitives:
             area += trigo * edge.straight_line_area()
 
-        return area
+        return abs(area)
 
     def center_of_mass(self):
         """
