@@ -206,8 +206,9 @@ class Surface2D(volmdlr.core.Primitive2D):
                                       inner_polygon_nodes[1:]):
                 segments.append((point_index[point1], point_index[point2]))
             segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
-
-            rpi = inner_polygon.random_point_inside(include_edge_points=False)
+            rpi = inner_polygon.barycenter()
+            if not inner_polygon.point_belongs(rpi, include_edge_points=False):
+                rpi = inner_polygon.random_point_inside(include_edge_points=False)
             holes.append([rpi.x, rpi.y])
 
             if triangulates_with_grid:

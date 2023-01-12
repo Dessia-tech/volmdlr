@@ -6,6 +6,7 @@ ISO STEP reader/writer.
 
 import time
 from typing import List
+import numpy as npy
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -324,12 +325,36 @@ def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representat
         # frame3d = item_defined_frames[1]
         for f3d in item_defined_frames:  # item_defined_transformation
             if f3d.origin != volmdlr.O3D:
-                if f3d.u == frame_origin.u and f3d.v == frame_origin.v and f3d.w == frame_origin.w:
-                    new_faces = [face.translation(f3d.origin) for face in shell3d.faces]
-                    new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
-                else:
-                    new_faces = [face.frame_mapping(f3d, 'old') for face in shell3d.faces]
-                    new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
+                # if f3d.u == frame_origin.u and f3d.v == frame_origin.v and f3d.w == frame_origin.w:
+                #     new_faces = [face.translation(f3d.origin) for face in shell3d.faces]
+                #     new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
+                # else:
+                # new_frame = f3d + frame_origin
+
+                basis_a = frame_origin.basis()
+                basis_b = f3d.basis()
+                A = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+                               [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                               [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+                B = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+                               [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                               [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+                transfer_matrix = npy.linalg.solve(A, B)
+                u_vector = volmdlr.Vector3D(*transfer_matrix[0])
+                # u_vector.normalize()
+                v_vector = volmdlr.Vector3D(*transfer_matrix[1])
+                # v_vector.normalize()
+                w_vector = volmdlr.Vector3D(*transfer_matrix[2])
+                # w_vector.normalize()
+                new_frame = volmdlr.Frame3D(f3d.origin, u_vector,
+                                            v_vector,
+                                            w_vector)
+                # new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
+                new_faces = []
+                for face in shell3d.faces:
+                    new_face = face.frame_mapping(new_frame, 'old')
+                    new_faces.append(new_face)
+                new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
                 new_closedshells.append(new_closed_shell3d)
                 break
         else:
@@ -362,7 +387,7 @@ def representation_relationship_representation_relationship_with_transformation_
 
     """
     # raise NotImplementedError("We are still not able to read assemblies in step files")
-    # return None
+    # return []
     if arguments[2] in object_dict:
         if isinstance(object_dict[arguments[2]], list): # arguments = {, , [], [], item_....}
             if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
@@ -858,7 +883,7 @@ class Step(dc.DessiaObject):
         if frame_mapping_nodes:
             for node in frame_mapping_nodes:
                 shells.extend(object_dict[node])
-        else:
+        if not shells:
             for node in shell_nodes_copy:
                 if isinstance(object_dict[node], list):
                     shells.extend(object_dict[node])
