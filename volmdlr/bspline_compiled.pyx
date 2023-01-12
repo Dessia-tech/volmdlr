@@ -3,6 +3,7 @@ from math import factorial
 import numpy as npy
 from functools import lru_cache
 
+
 @lru_cache(maxsize=10000)
 def binomial_coefficient(int k, int i):
     """
@@ -26,8 +27,6 @@ def binomial_coefficient(int k, int i):
     cdef float k_i_fact = factorial(k - i)
     return k_fact / (k_i_fact * i_fact)
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
 cdef int find_span_linear(int degree, knot_vector, int num_ctrlpts, double knot):
     """ Finds the span of a single knot over the knot vector using linear search.
 
@@ -50,8 +49,6 @@ cdef int find_span_linear(int degree, knot_vector, int num_ctrlpts, double knot)
 
     return span - 1
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
 cpdef basis_function_ders(int degree, knot_vector, int span, double knot, int order):
     """
     Computes derivatives of the basis functions for a single parameter.
