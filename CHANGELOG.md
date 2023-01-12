@@ -5,11 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
-## v0.7.0
+## v0.8.0 [Unrealeased]
 
 ### New Features
 
+* PlaneFace3D: project_faces
+* OpenShell3D: project_coincident_faces_of
+* GmshParser: to_vtk
+* BSplineCurve: derivatives
+* ClosedPolygon2D: point_belongs, now the user can choose whether points on the edge of the polygon
+            should be considered inside or not.
+* ArcEllipse2D: line_intersections, frame_mapping, linesegment_intersections
+
+
+### Fixed
+
+* PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
+* Contour2D: bounding_rectangle (specify number_points for discretization_points)
+* BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
+* Mesh: delete_duplicated_nodes
+* BSplineSurface3D: fix arc3d_to_2d method
+* Frame3D : fix from_point_and_vector method ( error for the case vector=main_axis)
+* BSplineCurve2D: linesegment_intersections
+* Contour2D: merge_primitives_with
+* BSplineCurve: fix to take into account weighted B-spline curves.
+* Step: fix reading of rational BSpline curves and surfaces from step file.
+* BSplineCurve2D: tangent (use position/length)
+* Babylon: some scene settings for better rendering
+* Arc2D: fix get_center: name referenced before assignement
+
+### Removed
+
+* babylon script remaining functions
+
+### Performance improvements
+* ClosedPolygon2D: triangulation
+* Cylinder: min_distance_to_other_cylinder
+* BSplineCurve: discretization_points
+* Face3D: triangulation
+
+
+### Refactorings
+* Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated.
+local_to_global_coordinates and global_to_local_coordinates are the new more explicit ones.
+
+
+### Unittests
+
+* Contour2D: point_belongs
+* Basis2D, Basis3D, Frame2D, Frame3D: local_to_global_coordinates and global_to_local_coordinates
+* ArcEllipse2D: linesegment_intersections
+
+### CI
+
+* Mandatory CHANGELOG.md update for PR
+
+## v0.7.0 [Testing]
+
+### New Features
+
+* Open/Closed TriangleShells: ability to implement specific algorithm to triangles
 * Block: faces_center (calculate directly point in the middle of the faces)
 * Circle2D: split_by_line
 * BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
@@ -22,11 +77,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ArcEllipse3D: discretization_points
 * FullArc3D: linesegment_intersections
 * Line: sort_points_along_line
+* Line2D: point_belongs
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
-
+* New Class wires.Ellipse2D
+* Ellipse2D.point_over_ellipse()
+* Ellipse2D.line_intersections()
+* Ellipse2D.linesegment_intersections()
+* Ellipse2D.discretization_points()
+* Ellipse2D.abscissa()
+* Ellipse2D.point_angle_with_major_dir()
+* Ellipse2D.area()
+* Ellipse2D.rotation()
+* Ellipse2D.tranlation()
+* Ellipse2D.frame_mapping()
+* Line2D.frame_mapping()
+* Plane3D: is_parallel, fullarc_intersections
+* Arc2D: cut_betweeen_two_points
+* Contour3D: linesegment_intersections, line_intersections
+* Circle3D: primitives: [Arc3D, Arc3D], get_primitives, abscissa, linesegment_intersections
+* Arc3D: line_intersections, linesegment_intersections
+* new module utils: intersections -> circle_3d_linesegment_intersections
+* hash for Frame2D
+* Ellipse3D: point_belongs, abscissa, length, to_2d
+* CylindricalSurface3D: point_on_surface, is_coincident, arcellipse3d_to_2d
+* BSplineSurface3D: derivatives
 
 ### Fixed
 
+* Contour2D: point_belongs
 * BsplineCurve: abscissa (use different start point between 0 and length)
 * Arc3D: plot
 * Cylinder: point_belongs
@@ -36,19 +114,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Step: from stream (use BinaryFile instead of io.BinaryIO)
 * Contour: is_overlapping (consider intersecting_points is empty)
 * LineSegment2D: to_wire (use discretization_points instead of discretise)
+* Line2D: line_intersections
+* BSplineCurve2D: line_intersections
+* PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
 * ArcEllipse2D: to_3d
 * Fix boolean operations when faces are 100% coincident
 * Fix some to_step methods from edges.py and faces.py
+* bounding box: fix for cylindrical and BSplineCurve3D
+* contour2d: ordering_primitives, order_primitives
+* Plane3D: plane_intersections, is_coindident
+* contour2d: ordering_primitives, order_primitives
+* Linesegment2D: infinite_primitive
+* Arc2D: point_belongs
+* Arc2D: infinite_primitive
+* Wire2D: infinite_intersections
+* infinite primitive offset of linesegment
+* Ellispe3D: discretization_points
+* BSplineSurface: Improved surface periodicity calculation
 
 
 ### Performance improvements
 
 * Avoid unneeded bbox computation
+* triangulation performance by use of Node2D instead of points (x15 on casing)
+* cache variable self._polygon_point_belongs_100, to avoid recalculating each
+time we have to verify if a point is inside
+* Improvements in BSplineSurface3D.point3d_to_2d performance
 
 
 ### Refactorings
+
+* cleanup of ClosedShell (double methods with Openshells)
 * LineSegment3D: intersections
 * Line2D: sort_points_along_line
+* Line3D: intersections
 
 
 ### Unittests
@@ -67,11 +166,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment3D: linesegment_intersections
 * Contour: is_overlapping
 * LineSegment2D: to_wire
+* Line2D: point_belongs
+* BSplineCurve2D: line_intersections
+* LineSegment2D: line_intersections
 * ArcEllipse3D: discretization_points
 * FullArc3D: linesegment_intersections
 * Line2D: sort_points_along_line
 * Line3D: sort_points_along_line
 * ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
+* Ellipse2D.point_over_ellipse()
+* Ellipse2D.line_intersections()
+* Ellipse2D.linesegment_intersections()
+* Ellipse2D.discretization_points()
+* Ellipse2D.abscissa()
+* Ellipse2D.point_angle_with_major_dir()
+* Ellipse2D.area()
+* Ellipse2D.rotation()
+* Ellipse2D.tranlation()
+* Ellipse2D.frame_mapping()
+* Line2D.frame_mapping()
+* Plane3D: plane_intersections, fullarc_intersections, is_parallel, is_coincident
+* Contour2D: offset
+* ArcEllipse3D.to_2d()
+* Circle3D: point_belongs
+* Circle3D: discretization_points
+* Arc3D: line_intersections, linesegment_intersections
+* Contour2D: ordering_contour, is_ordered, order_contour
+* Ellipse3D: point_belongs, abscissa, length, to_2d, discretization_points
+* CylindricalSurface3D: point_on_surface, is_coincident
+
 
 ## v0.6.1 [12/13/2022]
 
@@ -119,19 +242,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D: point_belongs (bug when contour has only one primitive, like FullArc2D)
 * Contour: contours_from_edges
 * PlaneFace3D: face_intersections
-<<<<<<< HEAD
-<<<<<<< HEAD
 * Edge: insert_knots_and_mutiplicity
 * BSplineCurve3D: from_step
 * Surface2D: cut_by_line
 * Circle3D: to_step
 * ArcEllipse3D.to_2d()
-
-=======
 * infinite primitive offset of linesegment
->>>>>>> master
-=======
->>>>>>> master
 
 ### Performance improvements
 
@@ -179,6 +295,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineSurface3D.from_cylindrical_faces (consider **kwargs parameters)
 * Duplicated methods cleaned
 * triangulation of planar faces
+* Wire3D: fix Bounding box
+* Wire3D: Bounding box
+* Arc2D: primitives bad calculation (arc2d)
+* Update plotdata in setup.py
+* add some fixes pydocstyle
 
 ### Performance improvements
 
@@ -227,7 +348,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
-* union of shells (only with planeface for the moment 
+* union of shells (only with planeface for the moment
 * Sewing of polygon3D
 * Concav hull of PointCloud2D
 
@@ -321,7 +442,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.2.6
 
 ### Changed
-- debugs on frame 2D 
+- debugs on frame 2D
 
 ### Optimized
 - babylon data generation speed up
@@ -353,11 +474,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PEP8: method names
 - PointAtCurvilinearAbscissa changed to point_at_abscissa
 - MPLPlot changed to plot()
-- plot now returns only ax instead of fig, ax 
+- plot now returns only ax instead of fig, ax
 
 ## v0.1.11
 
-### Added 
+### Added
 - Calculate the distance between LineSegment3D/LS3D, Arc3D/LS3D, Arc3D/Arc3D and between CylindricalFace3D too.
 - Use PlaneFace3D with contours2D in a classic way and use it with contours3D with a 'from_contours3d' as CylindricalFace3D does.
 - Calculate the distance between CylindricalFace3D and PlaneFace3D.
@@ -384,7 +505,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - color and alpha options for various primitives
 - line segments intersection
- 
+
 ### Debug
 - arcs: is_trigo and angle were sometimes false
 
