@@ -2650,7 +2650,7 @@ class Arc2D(Arc):
                               end=points_symmetry[2])
 
     def reverse(self):
-        return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(), self.name)
+        return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(), name=self.name)
 
 
 class FullArc2D(Arc2D):
@@ -5660,7 +5660,7 @@ class ArcEllipse3D(Edge):
         major_dir.normalize()
         self.major_dir = major_dir  # Vector for Gradius
         # self.extra = extra
-
+        self._bbox = None
         u1 = (self.interior - self.start)
         u2 = (self.interior - self.end)
         u1.normalize()
@@ -5806,6 +5806,33 @@ class ArcEllipse3D(Edge):
     def _get_points(self):
         return self.discretization_points()
     points = property(_get_points)
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def get_bounding_box(self):
+        """
+        Calculates the bounding box of the Arc3D.
+
+        :return: a volmdlr.core.BoundingBox object.
+        """
+        # TODO: implement exact calculation
+
+        points = self.discretization_points(angle_resolution=10)
+        xmin = min(point.x for point in points)
+        xmax = max(point.x for point in points)
+        ymin = min(point.y for point in points)
+        ymax = max(point.y for point in points)
+        zmin = min(point.z for point in points)
+        zmax = max(point.z for point in points)
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def to_2d(self, plane_origin, x, y):
         """

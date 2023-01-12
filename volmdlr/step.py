@@ -75,6 +75,15 @@ def vertex_point(arguments, object_dict):
     """
     return object_dict[arguments[1]]
 
+def axis1_placement(arguments, object_dict):
+    return object_dict[arguments[1]], object_dict[arguments[2]]
+
+def surface_of_revolution(arguments, object_dict):
+    # This function is not rigth
+    name = arguments[0]
+    contour = object_dict[arguments[1]]
+    axis_placement = object_dict[arguments[2]]
+    return volmdlr.primitives3d.RevolvedProfile.from_contour3d(contour,axis_placement[0], axis_placement[1])
 
 def oriented_edge(arguments, object_dict):
     """
@@ -711,7 +720,7 @@ class Step(dc.DessiaObject):
                 argument.append(arg_id)
                 arguments[i] = argument
 
-    def instanciate(self, name, arguments, object_dict):
+    def instanciate(self, name, arguments, object_dict, error_handler: bool = False):
         """
         Gives the volmdlr object related to the step function.
         """
@@ -719,22 +728,36 @@ class Step(dc.DessiaObject):
 
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
-        if hasattr(volmdlr.step, fun_name):
-            volmdlr_object = getattr(volmdlr.step, fun_name)(arguments,
-                                                             object_dict)
+        volmdlr_object = []
+        if not error_handler:
+            if hasattr(volmdlr.step, fun_name):
+                volmdlr_object = getattr(volmdlr.step, fun_name)(arguments,
+                                                                 object_dict)
 
-        elif name in STEP_TO_VOLMDLR and hasattr(
-                STEP_TO_VOLMDLR[name], "from_step"):
-            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
-                arguments, object_dict)
+            elif name in STEP_TO_VOLMDLR and hasattr(
+                    STEP_TO_VOLMDLR[name], "from_step"):
+                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                    arguments, object_dict)
 
+            else:
+                raise NotImplementedError(
+                    'Dont know how to interpret {} with args {}'.format(name,
+                                                                        arguments))
         else:
-            raise NotImplementedError(
-                'Dont know how to interpret {} with args {}'.format(name,
-                                                                    arguments))
+            try:
+                if hasattr(volmdlr.step, fun_name):
+                    volmdlr_object = getattr(volmdlr.step, fun_name)(arguments,
+                                                                     object_dict)
+
+                elif name in STEP_TO_VOLMDLR and hasattr(
+                        STEP_TO_VOLMDLR[name], "from_step"):
+                    volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                        arguments, object_dict)
+            except Exception:
+                return None
         return volmdlr_object
 
-    def to_volume_model(self, show_times: bool = False):
+    def to_volume_model(self, show_times: bool = False, error_handler: bool = False):
         """
         show_times=True displays the numer of times a given class has been
         instanciated and the totatl time of all the instanciations of this
@@ -785,6 +808,7 @@ class Step(dc.DessiaObject):
         # nodes = dessia_common.graph.explore_tree_from_leaves(self.graph)
 
         times = {}
+        errors = {}
         for node in nodes[::-1]:
             # instanciate_ids = [edge[1]]
             instanciate_ids = [node]
@@ -794,8 +818,12 @@ class Step(dc.DessiaObject):
                     for instanciate_id in instanciate_ids[::-1]:
                         t = time.time()
                         volmdlr_object = self.instanciate(
-                            self.functions[instanciate_id].name, self.functions[instanciate_id].arg[:], object_dict)
+                            self.functions[instanciate_id].name, self.functions[instanciate_id].arg[:], object_dict,
+                                    error_handler=error_handler)
                         t = time.time() - t
+                        if not volmdlr_object:
+                            errors[instanciate_id] = object_dict
+                            # continue
                         object_dict[instanciate_id] = volmdlr_object
                         if show_times:
                             if volmdlr_object.__class__ not in times:
@@ -817,11 +845,12 @@ class Step(dc.DessiaObject):
 
         shells = []
         for node in shell_nodes_copy:
+            # if node not in errors:
             if isinstance(object_dict[node], list):
                 shells.extend(object_dict[node])
-            else:
+            elif object_dict[node]:
                 shells.append(object_dict[node])
-        volume_model = volmdlr.core.VolumeModel(shells)
+        volume_model = volmdlr.core.VolumeModel(shells, errors=errors)
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)
         return volume_model

@@ -778,9 +778,10 @@ class VolumeModel(dc.PhysicalObject):
                                  'faces']
     _dessia_methods = ['to_stl_model']
 
-    def __init__(self, primitives: List[Primitive3D], name: str = ''):
+    def __init__(self, primitives: List[Primitive3D], errors: dict = {}, name: str = ''):
         self.primitives = primitives
         self.name = name
+        self.errors = errors
         self.shells = []
         self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)
@@ -1034,10 +1035,11 @@ class VolumeModel(dc.PhysicalObject):
         meshes = []
         lines = []
         for primitive in self.primitives:
-            if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes())
-            if hasattr(primitive, 'babylon_curves'):
-                lines.append(primitive.babylon_curves())
+            if primitive:
+                if hasattr(primitive, 'babylon_meshes'):
+                    meshes.extend(primitive.babylon_meshes())
+                if hasattr(primitive, 'babylon_curves'):
+                    lines.append(primitive.babylon_curves())
 
         bbox = self.bounding_box
         center = bbox.center

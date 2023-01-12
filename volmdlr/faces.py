@@ -8165,8 +8165,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def triangulation(self):
         meshes = []
         for i, face in enumerate(self.faces):
-            face_mesh = face.triangulation()
-            meshes.append(face_mesh)
+            if face:
+                face_mesh = face.triangulation()
+                meshes.append(face_mesh)
         return vmd.DisplayMesh3D.merge_meshes(meshes)
 
     def plot(self, ax=None, color: str = 'k', alpha: float = 1):
