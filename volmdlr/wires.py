@@ -781,6 +781,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
                  name: str = ''):
+        self._bbox = None
         volmdlr.core.CompositePrimitive3D.__init__(self, primitives=primitives, name=name)
 
     def _bounding_box(self):
@@ -795,6 +796,12 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
                 if point not in points:
                     points.append(point)
         return volmdlr.core.BoundingBox.from_points(points)
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
 
     def extract(self, point1, primitive1, point2, primitive2):
         return Wire3D(self.extract_primitives(self, point1, primitive1, point2,
@@ -3584,6 +3591,14 @@ class Triangle(ClosedPolygonMixin):
 
 
 class Triangle2D(Triangle):
+    """
+    Defines a triangle 2D.
+
+    :param point1: triangle point 1.
+    :param point2: triangle point 2.
+    :param point3: triangle point3.
+    """
+
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
                  point3: volmdlr.Point2D, name: str = ''):
         # self.point1 = point1
@@ -3681,10 +3696,10 @@ class Circle2D(Contour2D):
 
     def _primitives(self):
         points = [
-            self.center + volmdlr.Point2D(self.center.x + self.radius, self.center.y),
-            self.center + volmdlr.Point2D(self.center.x, self.center.y - self.radius),
-            self.center + volmdlr.Point2D(self.center.x - self.radius, self.center.y),
-            self.center + volmdlr.Point2D(self.center.x, self.center.y + self.radius)]
+            volmdlr.Point2D(self.center.x + self.radius, self.center.y),
+            volmdlr.Point2D(self.center.x, self.center.y - self.radius),
+            volmdlr.Point2D(self.center.x - self.radius, self.center.y),
+            volmdlr.Point2D(self.center.x, self.center.y + self.radius)]
 
         return [volmdlr.edges.Arc2D(points[0], points[1], points[2]),
                 volmdlr.edges.Arc2D(points[2], points[3], points[0])]
@@ -3719,13 +3734,26 @@ class Circle2D(Contour2D):
         return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
 
     def line_intersections(self, line: volmdlr.edges.Line2D, tol=1e-9):
+        """
+        Calculates the intersections between a circle 2D and Line 2D.
+
+        :param line: line to calculate intersections
+        :param tol: tolerence to consider in calculations.
+        :return: circle and line intersections.
+        """
         full_arc_2d = volmdlr.edges.FullArc2D(
             center=self.center, start_end=self.point_at_abscissa(0),
             name=self.name)
         return full_arc_2d.line_intersections(line, tol)
 
-    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment2D,
-                                  tol=1e-9):
+    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment2D, tol=1e-9):
+        """
+        Calculates the intersections between a circle 2D and LineSegment 2D.
+
+        :param linesegment: linesegment to calculate intersections
+        :param tol: tolerence to consider in calculations.
+        :return: circle and linesegment intersections.
+        """
         full_arc_2d = volmdlr.edges.FullArc2D(
             center=self.center, start_end=self.point_at_abscissa(0),
             name=self.name)
@@ -3790,6 +3818,12 @@ class Circle2D(Contour2D):
         return intersections
 
     def length(self):
+        """
+        Calculates the length of the Circle 2D.
+
+        :return: the circle's length.
+        """
+
         return volmdlr.TWO_PI * self.radius
 
     def plot(self, ax=None, color='k', alpha=1,
@@ -4803,7 +4837,8 @@ class Circle3D(Contour3D):
 
     def point_at_abscissa(self, curvilinear_abscissa):
         """
-        start point is at intersection of frame.u axis
+        Start point is at intersection of frame.u axis.
+
         """
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
@@ -4882,6 +4917,7 @@ class Circle3D(Contour3D):
     def _bounding_box(self):
         """
         Computes the bounding box.
+
         """
         points = [self.frame.origin + self.radius * v
                   for v in [self.frame.u, -self.frame.u,
@@ -5394,13 +5430,23 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return triangles
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
+        """
+        Simnplify polygon3d.
+
+        :param min_distance: minimal allowed distance.
+        :param max_distance: maximal allowed distance.
+        :return: Simplified closed polygon 3d.
+        """
         return ClosedPolygon3D(self.simplify_polygon(
             min_distance=min_distance, max_distance=max_distance).points)
 
     def convex_sewing(self, polygon2, x, y):
         """
-        x and y are used for plane projection to make
-        sure it is being projected in the right plane
+        Sew to Convex Polygon.
+
+        :param polygon2: other polygon to sew with.
+        :param x: u vector for plane projection.
+        :param y: v vector for plane projection.
         """
         center1, center2 = self.average_center_point(), polygon2.average_center_point()
         center1_, center2_ = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
@@ -5811,6 +5857,14 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
 
 class Triangle3D(Triangle):
+    """
+    Defines a triangle 2D.
+
+    :param point1: triangle point 1.
+    :param point2: triangle point 2.
+    :param point3: triangle point3.
+    """
+
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  point3: volmdlr.Point3D, name: str = ''):
         # self.point1 = point1
