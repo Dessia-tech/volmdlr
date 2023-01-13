@@ -1,6 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #cython: language_level=3
+"""
+
+Cython functions for bspline
+
+"""
+# from __future__ import annotations
 from math import factorial
-import numpy as npy
 from functools import lru_cache
 
 
@@ -22,12 +29,13 @@ def binomial_coefficient(int k, int i):
     if i > k:
         return float(0)
     # Compute binomial coefficient
-    cdef float k_fact = factorial(k)
-    cdef float i_fact = factorial(i)
-    cdef float k_i_fact = factorial(k - i)
+    cdef double k_fact = factorial(k)
+    cdef double i_fact = factorial(i)
+    cdef double k_i_fact = factorial(k - i)
     return k_fact / (k_i_fact * i_fact)
 
-cdef int find_span_linear(int degree, knot_vector, int num_ctrlpts, double knot):
+
+cdef int find_span_linear(int degree, list knot_vector, int num_ctrlpts, double knot):
     """ Finds the span of a single knot over the knot vector using linear search.
 
     Alternative implementation for the Algorithm A2.1 from The NURBS Book by Piegl & Tiller.
@@ -49,7 +57,8 @@ cdef int find_span_linear(int degree, knot_vector, int num_ctrlpts, double knot)
 
     return span - 1
 
-cpdef basis_function_ders(int degree, knot_vector, int span, double knot, int order):
+
+cdef basis_function_ders(int degree, list knot_vector, int span, double knot, int order):
     """
     Computes derivatives of the basis functions for a single parameter.
 
@@ -70,13 +79,11 @@ cpdef basis_function_ders(int degree, knot_vector, int span, double knot, int or
     """
     # Initialize variables
     cdef int i, j, k, r
-    cdef list ndu = [[1.0 for _ in range(degree + 1)] for _ in range(degree + 1)]
-    cdef list ders = [[0.0 for _ in range(degree + 1)] for _ in range((min(degree, order) + 1))]
     cdef int s1, s2, j1, j2, pk, rk
-    cdef double saved, temp
-
-    cdef list left = [1]*(degree + 1)
-    cdef list right = [1]*(degree + 1)
+    cdef double saved, temp, d, res
+    cdef list left = [1.0 for _ in range(degree + 1)]
+    cdef list right = [1.0 for _ in range(degree + 1)]
+    cdef list ndu = [[1.0 for _ in range(degree + 1)] for _ in range(degree + 1)]  # N[0][0] = 1.0 by definition
 
     for j in range(1, degree + 1):
         left[j] = knot - knot_vector[span + 1 - j]
@@ -93,15 +100,12 @@ cpdef basis_function_ders(int degree, knot_vector, int span, double knot, int or
         ndu[j][j] = saved
 
     # Load the basis functions
+    cdef list ders = [[0.0 for _ in range(degree + 1)] for _ in range((min(degree, order) + 1))]
     for j in range(0, degree + 1):
         ders[0][j] = ndu[j][degree]
 
     # Start calculating derivatives
-    cdef double[:, :] a = npy.zeros((2, degree + 1))
-    for i in range(2):
-        for j in range(degree + 1):
-            a[i][j] = 1.0
-
+    cdef list a = [[1.0 for _ in range(degree + 1)] for _ in range(2)]
     # Loop over function index
     for r in range(0, degree + 1):
         # Alternate rows in array a
@@ -138,17 +142,17 @@ cpdef basis_function_ders(int degree, knot_vector, int span, double knot, int or
             s2 = j
 
     # Multiply through by the the correct factors
-    cdef double s = float(degree)
+    f = float(degree)
     for k in range(1, order + 1):
         for j in range(0, degree + 1):
-            ders[k][j] *= s
-        s *= (degree - k)
+            ders[k][j] *= f
+        f *= (degree - k)
 
     # Return the basis function derivatives list
     return ders
 
 
-def derivatives(dict datadict, double uc, double vc, int deriv_order):
+def derivatives(dict datadict, tuple parpos, int deriv_order=0):
     """
     Evaluates the n-th order derivatives at the input parametric position.
 
@@ -162,9 +166,6 @@ def derivatives(dict datadict, double uc, double vc, int deriv_order):
     :rtype: list
     """
     # Geometry data from datadict
-    cdef double[2] parpos
-    parpos[0] = uc
-    parpos[1] = vc
     cdef int[2] degree = datadict['degree']
     cdef tuple knotvector = datadict['knotvector']
     cdef tuple ctrlpts = datadict['control_points']
@@ -172,24 +173,22 @@ def derivatives(dict datadict, double uc, double vc, int deriv_order):
     cdef int dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
     cdef int pdimension = datadict['pdimension']
 
-    cdef int idx, k, s, r, n, i
-
+    cdef idx, k, l, s, r, n, i, dd, cu, cv
     # Algorithm A3.6
     cdef int[2] d = [min(degree[0], deriv_order), min(degree[1], deriv_order)]
 
     cdef list SKL = [[[0.0 for _ in range(dimension)] for _ in range(deriv_order + 1)] for _ in range(deriv_order + 1)]
 
-    cdef int[2] span
+    # span = [0 for _ in range(pdimension)]
+    cdef int[2] span = [0, 1]
     cdef list basisdrv = [[] for _ in range(pdimension)]
     for idx in range(pdimension):
         span[idx] = find_span_linear(degree[idx], knotvector[idx], size[idx], parpos[idx])
         basisdrv[idx] = basis_function_ders(degree[idx], knotvector[idx], span[idx], parpos[idx], d[idx])
-
-    cdef list tmp = [0] * dimension
-    cdef list t = [0] * dimension
-    cdef list cp
-    cdef list temp
-    cdef int cu, cv
+    cdef list t = [0.0] * dimension
+    cdef list cp = [0.0] * dimension
+    cdef list tmp = [0.0] * dimension
+    cdef list temp = [[0.0 for _ in range(dimension)] for _ in range(degree[1] + 1)]
     for k in range(0, d[0] + 1):
         temp = [[0.0 for _ in range(dimension)] for _ in range(degree[1] + 1)]
         for s in range(0, degree[1] + 1):
@@ -198,9 +197,8 @@ def derivatives(dict datadict, double uc, double vc, int deriv_order):
                 cu = span[0] - degree[0] + r
                 cv = span[1] - degree[1] + s
                 cp = ctrlpts[cv + (size[1] * cu)]
-                for i in range(n):
+                for i in range(dimension):
                     t[i] = tmp[i] + (basisdrv[0][k][r] * cp[i])
-
                 temp[s][:] = t
 
         dd = min(deriv_order, d[1])
@@ -214,7 +212,7 @@ def derivatives(dict datadict, double uc, double vc, int deriv_order):
     return SKL
 
 
-def rational_derivatives(dict datadict, double uc, double vc, int deriv_order):
+def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
     """ Evaluates the n-th order derivatives at the input parametric position.
 
     :param datadict: data dictionary containing the necessary variables
@@ -226,23 +224,21 @@ def rational_derivatives(dict datadict, double uc, double vc, int deriv_order):
     :return: evaluated derivatives
     :rtype: list
     """
+    cdef i, j, k, l, ii
     cdef int dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
-    cdef double[2] parpos
-    parpos[0] = uc
-    parpos[1] = vc
+
     # Call the parent function to evaluate A(u) and w(u) derivatives
-    cdef list SKLw = derivatives(datadict, uc, vc, deriv_order)
+    cdef list SKLw = derivatives(datadict, parpos, deriv_order)
+
     # Generate an empty list of derivatives
     cdef list SKL = [[[0.0 for _ in range(dimension)] for _ in range(deriv_order + 1)] for _ in range(deriv_order + 1)]
+    cdef list t = [0.0] * dimension
 
-    cdef int j, i, ii, k, l
     cdef list tmp = [0.0]*dimension
-    cdef list t = [0.0]*dimension
     cdef list drv = [0.0]*dimension
     cdef list v = [0.0]*dimension
     cdef list v2 = [0.0]*(dimension-1)
     cdef list res = [0.0]*(dimension-1)
-
     # Algorithm A4.4
     for k in range(0, deriv_order + 1):
         for l in range(0, deriv_order + 1):
@@ -251,30 +247,28 @@ def rational_derivatives(dict datadict, double uc, double vc, int deriv_order):
             v = SKLw[k][l]
             for j in range(1, l + 1):
                 drv = SKL[k][l - j]
-                for ii in range(dimension-1):
+                for ii in range(dimension):
                     t[ii] = v[ii] - (binomial_coefficient(l, j) * SKLw[0][j][-1] * drv[ii])
                 v[:] = t
-
             for i in range(1, k + 1):
                 drv = SKL[k - i][l]
-                for ii in range(dimension-1):
+                for ii in range(dimension):
                     t[ii] = v[ii] - (binomial_coefficient(k, i) * SKLw[i][0][-1] * drv[ii])
                 v[:] = t
-
+                v2 = [0.0 for _ in range(dimension - 1)]
                 for j in range(1, l + 1):
                     drv = SKL[k - i][l - j]
-                    for ii in range(dimension - 1):
+                    for ii in range(dimension):
                         t[ii] = v2[ii] + (binomial_coefficient(l, j) * SKLw[i][j][-1] * drv[ii])
                     v2[:] = t
-
                 for ii in range(dimension - 1):
                     t[ii] = v[ii] - (binomial_coefficient(k, i) * v2[ii])
                 v[:] = t
 
-            for i in range(0, dimension - 1):
+            res = [0.0] * (dimension - 1)
+            for i in range(dimension - 1):
                 res[i] = v[i] / SKLw[0][0][-1]
-            SKL[k][l][:] = res
 
+            SKL[k][l][:] = res
     # Return S(u,v) derivatives
     return SKL
-
