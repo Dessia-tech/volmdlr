@@ -7,9 +7,7 @@ Created on Mon Jan 27 10:54:45 2020
 """
 
 import volmdlr as vm
-
 import volmdlr.primitives3D as primitives3D
-
 
 block1 = primitives3D.Block(vm.Frame3D(vm.O3D.copy(),
                                       vm.X3D.copy(), vm.Y3D.copy(), vm.Z3D.copy()),

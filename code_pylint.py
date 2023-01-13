@@ -1,7 +1,7 @@
 import os
+import random
 import sys
 
-import random
 from pylint import __version__
 from pylint.lint import Run
 

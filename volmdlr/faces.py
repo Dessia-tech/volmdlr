@@ -2,40 +2,38 @@
 Surfaces & faces
 """
 
-import warnings
-from typing import List, Tuple, Dict, Any
 import math
-
+import warnings
 from itertools import product
-
-import networkx as nx
-import triangle
-import numpy as npy
-
-import scipy as scp
-import scipy.optimize as opt
+from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
-# import matplotlib.tri as plt_tri
-# from pygeodesic import geodesic
-
-from geomdl import BSpline, NURBS
-from geomdl import utilities
-from geomdl.fitting import interpolate_surface, approximate_surface
-from geomdl.operations import split_surface_u, split_surface_v
-from geomdl.construct import extract_curves
-
+import networkx as nx
+import numpy as npy
+import scipy as scp
+import scipy.optimize as opt
+import triangle
 # import dessia_common
 from dessia_common.core import DessiaObject
+from geomdl import NURBS, BSpline, utilities
+from geomdl.construct import extract_curves
+from geomdl.fitting import approximate_surface, interpolate_surface
+from geomdl.operations import split_surface_u, split_surface_v
+
 import volmdlr.core
 import volmdlr.core_compiled
-import volmdlr.edges as vme
-import volmdlr.wires
 import volmdlr.display as vmd
+import volmdlr.edges as vme
 import volmdlr.geometry
 import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
+import volmdlr.wires
 from volmdlr.utils.parametric import array_range_search
+
+# import matplotlib.tri as plt_tri
+# from pygeodesic import geodesic
+
+
 
 
 def knots_vector_inv(knots_vector):

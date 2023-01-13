@@ -1,8 +1,9 @@
-import pydocstyle
 import os
-from glob import glob
 import random
 from datetime import date
+from glob import glob
+
+import pydocstyle
 
 print(f'Pydocstyle version: {pydocstyle.__version__}')
 

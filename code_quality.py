@@ -8,6 +8,7 @@ Created on Mon Jan  3 22:50:39 2022
 
 # from radon.complexity import cc
 import os
+
 from pylama.main import check_paths, parse_options
 
 MAX_RADON_SCORE = 20

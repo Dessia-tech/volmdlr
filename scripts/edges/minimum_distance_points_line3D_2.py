@@ -7,14 +7,14 @@ Created on Tue May 12 17:14:06 2020
 """
 
 
-import numpy as npy
-import volmdlr as volmdlr
-import volmdlr.primitives3d as primitives3D
-import volmdlr.primitives2d as primitives2D
-import matplotlib.pyplot as plt
 import random
 
+import matplotlib.pyplot as plt
+import numpy as npy
 
+import volmdlr as volmdlr
+import volmdlr.primitives2d as primitives2D
+import volmdlr.primitives3d as primitives3D
 
 radius_circle = 0.008
 c = volmdlr.wires.Circle2D(volmdlr.Point2D(0,0), radius_circle)

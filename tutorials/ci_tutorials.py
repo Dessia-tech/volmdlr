@@ -1,5 +1,7 @@
-import os, glob
+import glob
+import os
 import time
+
 import nbformat
 from nbconvert import PythonExporter
 

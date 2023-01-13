@@ -4,13 +4,13 @@ Setup install script for volmdlr
 
 """
 
-from setuptools import setup
+import re
+from os.path import dirname, isdir, join
+from subprocess import CalledProcessError, check_output
+
 #from distutils.core import setup
 from Cython.Build import cythonize
-
-from os.path import dirname, isdir, join
-import re
-from subprocess import CalledProcessError, check_output
+from setuptools import setup
 
 tag_re = re.compile(r'\btag: %s([0-9][^,]*)\b')
 version_re = re.compile('^Version: (.+)$', re.M)
