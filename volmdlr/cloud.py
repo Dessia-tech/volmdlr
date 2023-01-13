@@ -180,9 +180,21 @@ class PointCloud3D(dc.DessiaObject):
         triangles index
         :rtype: Tuple[PointCloud3D, List[float], List[int]]
         """
+        nearest_coords, distances, triangles_idx = self.shell_distances_ndarray(shells)
+        return (PointCloud3D([vm.Point3D(*coords) for coords in nearest_coords]),
+                distances.tolist(),
+                triangles_idx.tolist())
+
+    def shell_distances_ndarray(self, shells: vmf.OpenTriangleShell3D):
+        """
+        Computes distance of point to shell for each point in self.points in a numpy formated data.
+
+        :return: The point cloud of points projection on nearest triangle, their distances and the corresponding
+        triangles index
+        :rtype: Tuple[npy.ndarray(float), npy.ndarray(float), npy.ndarray(int)]
+        """
         shells_trimesh = shells.to_trimesh()
-        nearest_coords, distances, triangles_idx = closest_point(shells_trimesh, self.to_coord_matrix())
-        return PointCloud3D([vm.Point3D(*coords) for coords in nearest_coords]), distances, triangles_idx
+        return closest_point(shells_trimesh, self.to_coord_matrix())
 
     def to_coord_matrix(self) -> List[List[float]]:
         """
