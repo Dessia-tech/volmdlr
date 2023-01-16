@@ -318,59 +318,30 @@ def advanced_brep_shape_representation(arguments, object_dict):
     return shells
 
 
-def frame_map_closed_shell(closed_shells, item_defined_frames, shape_representation_frames):
-    frame_origin = [frmd3d for frmd3d in item_defined_frames if frmd3d.origin == volmdlr.O3D][0]
+def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, shape_representation_frames):
+    global_fame = shape_representation_frames[0]
+    transfomed_frame = [frame for frame in item_defined_transformation_frames if frame != global_fame][0]
     new_closedshells = []
+    
     for shell3d in closed_shells:
-        # frame3d = item_defined_frames[1]
-        for f3d in item_defined_frames:  # item_defined_transformation
-            if f3d.origin != volmdlr.O3D:
-                # if f3d.u == frame_origin.u and f3d.v == frame_origin.v and f3d.w == frame_origin.w:
-                #     new_faces = [face.translation(f3d.origin) for face in shell3d.faces]
-                #     new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
-                # else:
-                # new_frame = f3d + frame_origin
-
-                basis_a = frame_origin.basis()
-                basis_b = f3d.basis()
-                A = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
-                               [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
-                               [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
-                B = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
-                               [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
-                               [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
-                transfer_matrix = npy.linalg.solve(A, B)
-                u_vector = volmdlr.Vector3D(*transfer_matrix[0])
-                # u_vector.normalize()
-                v_vector = volmdlr.Vector3D(*transfer_matrix[1])
-                # v_vector.normalize()
-                w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-                # w_vector.normalize()
-                new_frame = volmdlr.Frame3D(f3d.origin, u_vector,
-                                            v_vector,
-                                            w_vector)
-                # new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
-                new_faces = []
-                for face in shell3d.faces:
-                    new_face = face.frame_mapping(new_frame, 'old')
-                    new_faces.append(new_face)
-                new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
-                new_closedshells.append(new_closed_shell3d)
-                break
-        else:
-            raise NotImplementedError
-        #     for frame3d in shape_representation_frames:  # shape_representation
-        #         if f3d.origin != volmdlr.O3D != frame3d.origin and frame3d != f3d:
-        #             break
-        #     else:
-        #         continue
-        #     break
-        # else:
-        #     continue
-        # new_faces = [face.frame_mapping(frame3d, 'new') for face in shell3d.faces]
-        # new_faces = [face.translation(f3d.origin) for face in shell3d.faces]
-        # new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
-        # new_closedshells.append(new_closed_shell3d)
+        basis_a = global_fame.basis()
+        basis_b = transfomed_frame.basis()
+        A = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+                       [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                       [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+        B = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+                       [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                       [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+        transfer_matrix = npy.linalg.solve(A, B)
+        u_vector = volmdlr.Vector3D(*transfer_matrix[0])
+        v_vector = volmdlr.Vector3D(*transfer_matrix[1])
+        w_vector = volmdlr.Vector3D(*transfer_matrix[2])
+        new_frame = volmdlr.Frame3D(transfomed_frame.origin, u_vector,
+                                    v_vector,
+                                    w_vector)
+        new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
+        new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
+        new_closedshells.append(new_closed_shell3d)
     return new_closedshells
 
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(

@@ -137,7 +137,9 @@ class Edge(dc.DessiaObject):
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
-            return LineSegment3D(p1, p2, arguments[0][1:-1])
+            if p1 != p2:
+                return LineSegment3D(p1, p2, arguments[0][1:-1])
+            return None
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D':
                 p1, p2 = p2, p1
@@ -3491,6 +3493,7 @@ class Line3D(Line):
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if not self.point_belongs(point1) or not self.point_belongs(point2):
             raise ValueError('Point not on curve')
+
         return LineSegment3D(point1, point2)
 
     def copy(self, *args, **kwargs):
