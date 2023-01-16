@@ -224,15 +224,15 @@ class WireMixin:
         return self.extract_primitives(point1, primitives[ind[0]], point2,
                                        primitives[ind[1]], inside)
 
-    def abscissa(self, point):
+    def abscissa(self, point, tol=1e-6):
         """
         Compute the curvilinear abscisse of a point on a wire.
 
         """
-        if self.point_over_wire(point, 1e-6):
+        if self.point_over_wire(point, tol):
             length = 0
             for primitive in self.primitives:
-                if primitive.point_belongs(point, 1e-6):
+                if primitive.point_belongs(point, tol):
                     length += primitive.abscissa(point)
                     break
                 length += primitive.length()
