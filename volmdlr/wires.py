@@ -3034,7 +3034,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         return ax
 
-    def triangulation(self, tri_opt: str = 'p'):
+    def triangulation(self, tri_opt: str = 'pd'):
         """
         Perform triangulation on the polygon.
 

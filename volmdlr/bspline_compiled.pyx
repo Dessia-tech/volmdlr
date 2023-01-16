@@ -232,11 +232,11 @@ def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
 
     # Generate an empty list of derivatives
     cdef list SKL = [[[0.0 for _ in range(dimension)] for _ in range(deriv_order + 1)] for _ in range(deriv_order + 1)]
-    cdef list t = [0.0] * dimension
+    cdef list t = [0.0] * (dimension-1)
 
-    cdef list tmp = [0.0]*dimension
-    cdef list drv = [0.0]*dimension
-    cdef list v = [0.0]*dimension
+    cdef list tmp = [0.0]*(dimension-1)
+    cdef list drv = [0.0]*(dimension-1)
+    cdef list v = [0.0]*(dimension-1)
     cdef list v2 = [0.0]*(dimension-1)
     cdef list res = [0.0]*(dimension-1)
     # Algorithm A4.4
@@ -247,18 +247,18 @@ def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
             v = SKLw[k][l]
             for j in range(1, l + 1):
                 drv = SKL[k][l - j]
-                for ii in range(dimension):
+                for ii in range(dimension - 1):
                     t[ii] = v[ii] - (binomial_coefficient(l, j) * SKLw[0][j][-1] * drv[ii])
                 v[:] = t
             for i in range(1, k + 1):
                 drv = SKL[k - i][l]
-                for ii in range(dimension):
+                for ii in range(dimension - 1):
                     t[ii] = v[ii] - (binomial_coefficient(k, i) * SKLw[i][0][-1] * drv[ii])
                 v[:] = t
                 v2 = [0.0 for _ in range(dimension - 1)]
                 for j in range(1, l + 1):
                     drv = SKL[k - i][l - j]
-                    for ii in range(dimension):
+                    for ii in range(dimension - 1):
                         t[ii] = v2[ii] + (binomial_coefficient(l, j) * SKLw[i][j][-1] * drv[ii])
                     v2[:] = t
                 for ii in range(dimension - 1):
