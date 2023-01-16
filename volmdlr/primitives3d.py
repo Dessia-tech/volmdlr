@@ -795,7 +795,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def volume(self):
         """
-        Volume from guldin formulae
+        Volume from guldin formulae.
         """
         p1 = self.axis_point.PlaneProjection3D(self.plane_origin,
                                                self.x, self.y)
@@ -833,10 +833,14 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        RevolvedProfile rotation. Object is updated inplace
+        Revolvedprofile rotation. Object is updated inplace.
+
         :param center: rotation center
+        :type center: `volmdlr.Point3D`
         :param axis: rotation axis
+        :type axis: `volmdlr.Vector3D`
         :param angle: rotation angle
+        :type angle: float
         """
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
@@ -846,7 +850,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        RevolvedProfile translation
+        Revolvedprofile translation.
+
         :param offset: translation vector
         :return: A new translated RevolvedProfile
         """
@@ -860,7 +865,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        RevolvedProfile translation. Object is updated inplace
+        Revolvedprofile translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.plane_origin.translation_inplace(offset)
@@ -884,7 +890,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new RevolvedProfile
+        Changes frame_mapping and return a new RevolvedProfile.
+
         side = 'old' or 'new'
         """
         axis, x, y = self.frame_mapping_parameters(frame, side)
