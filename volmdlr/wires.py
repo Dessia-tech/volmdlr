@@ -4833,9 +4833,13 @@ class Circle3D(Contour3D):
         return ax
 
     def point_at_abscissa(self, curvilinear_abscissa):
+<<<<<<< HEAD
         """
         Start point is at intersection of frame.u axis.
         """
+=======
+        """ Start point is at intersection of frame.u axis. """
+>>>>>>> 9da4b025be753998116378d4f852ea7e5c2065e6
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
