@@ -1601,7 +1601,7 @@ class HollowCylinder(RevolvedProfile):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation.
+        Translation for HollowCylinder.
 
         :param offset: translation vector.
         :return: A new translated HollowCylinder.
@@ -1613,7 +1613,7 @@ class HollowCylinder(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation. Object is updated inplace.
+        Translation for HollowCylinder. Object is updated inplace.
 
         :param offset: translation vector.
         """
