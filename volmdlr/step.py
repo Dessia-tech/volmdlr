@@ -403,6 +403,7 @@ class StepFunction(dc.DessiaObject):
     Abstract class defining a step function.
 
     """
+
     def __init__(self, function_id, function_name, function_arg):
         dc.DessiaObject.__init__(self)
         self.id = function_id
