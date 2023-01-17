@@ -335,6 +335,85 @@ class WireMixin:
         return False
 
 
+class EdgeCollection3D(WireMixin):
+    """
+    A collection of simple edges 3D.
+    """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['basis_primitives']
+    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_data_hash_attributes = []
+
+    def __init__(self, primitives: List[volmdlr.edges.Edge], color=None, alpha=1, name: str = ''):
+        self.primitives = primitives
+        self.color = color
+        self.alpha = alpha
+        self._bbox = None
+        self.name = name
+
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+        """ Plot edges with matplolib, not tested. """
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        for primitive in self.primitives:
+            primitive.plot(ax=ax, color=color, alpha=alpha)
+        return ax
+
+    def _bounding_box(self):
+        """ Flawed method, to be enforced by overloading. """
+        return volmdlr.core.BoundingBox.from_points(self.points())
+
+    @property
+    def bounding_box(self):
+        """ Get big bounding box of all edges. """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    def points(self):
+        """ Get list of all points. """
+        points = []
+        for prim in self.primitives:
+            points += [prim.start, prim.end]
+        return points
+
+    def babylon_param(self):
+        """ Get dict for babylonjs object settings. """
+        babylon_param = {'alpha': self.alpha,
+                         'name': self.name,
+                         'color': [0, 0, 0.6]}
+        if self.color is None:
+            babylon_param['edges_color'] = [0, 0, 0.6]
+        else:
+            babylon_param['edges_color'] = list(self.color)
+        return babylon_param
+
+    def babylon_points(self):
+        """ Get list of points coordinates. """
+        return [[p.x, p.y, p.z] for p in self.points()]
+
+    def to_babylon(self):
+        """ Generate a mesh from all edges for performance when drawing. """
+        positions = []
+        for prim in self.primitives:
+            positions += [prim.start.x, prim.start.y, prim.start.z,
+                          prim.end.x, prim.end.y, prim.end.z,
+                          prim.end.x, prim.end.y, prim.end.z]
+
+        indices = list(range(len(positions)))
+        return positions, indices
+
+    def babylon_meshes(self):
+        """ Set the mesh for babylonjs. """
+        positions, indices = self.to_babylon()
+        babylon_mesh = {'positions': positions,
+                        'indices': indices}
+        babylon_mesh.update(self.babylon_param())
+        return [babylon_mesh]
+
+
 class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     """
     A collection of simple primitives, following each other making a wire.

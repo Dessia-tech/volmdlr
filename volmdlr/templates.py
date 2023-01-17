@@ -188,7 +188,13 @@ babylon_unpacker_body_template = Template(
                 vertexData.applyToMesh(mesh);
                 mesh.enableEdgesRendering(0.9);
                 mesh.edgesWidth = max_length*0.025;
-                mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);
+                if ('edges_color' in mesh_data) {
+                        mesh.edgesColor = new BABYLON.Color4(mesh_data['edges_color'][0],
+                                                             mesh_data['edges_color'][1],
+                                                             mesh_data['edges_color'][2],
+                                                             mesh_data['edge_alpha']);
+                        }
+                else {mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6)};
                 var mat = new BABYLON.StandardMaterial("material", scene);
                 // mat.diffuseColor = BABYLON.Color3.Green();
                 // mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);
@@ -198,8 +204,8 @@ babylon_unpacker_body_template = Template(
                 mat.twoSidedLighting = true;
                 mesh.material = mat;
                 mat.diffuseColor = new BABYLON.Color3(mesh_data['color'][0],
-                                                        mesh_data['color'][1],
-                                                        mesh_data['color'][2]);
+                                                      mesh_data['color'][1],
+                                                      mesh_data['color'][2]);
                 mat.alpha = mesh_data['alpha'];
 
                 }
