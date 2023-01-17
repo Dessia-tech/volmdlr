@@ -105,10 +105,10 @@ class WireMixin:
 
         :param angle_resolution: distance between two discretized points.
         """
+        length = self.length()
         if number_points:
             n = number_points - 1
         elif angle_resolution:
-            length = self.length()
             n = int(length / angle_resolution) + 1
 
         return [self.point_at_abscissa(i / n * length) for i in
@@ -343,6 +343,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def __init__(self, primitives: List[volmdlr.core.Primitive2D],
                  name: str = ''):
+        self._bounding_rectangle = None
         volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
 
     def to_3d(self, plane_origin, x, y):
@@ -771,6 +772,22 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             if intersections_linesegments != []:
                 intersections_points.extend(intersections_linesegments)
         return intersections_points
+
+    def bounding_rectangle(self):
+        if not self._bounding_rectangle:
+            self._bounding_rectangle = self.get_bouding_rectangle()
+        return self._bounding_rectangle
+
+    def get_bouding_rectangle(self):
+        xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle.bounds()
+        for edge in self.primitives[1:]:
+            xmin_edge, xmax_edge, ymin_edge, ymax_edge = \
+                edge.bounding_rectangle.bounds()
+            xmin = min(xmin, xmin_edge)
+            xmax = max(xmax, xmax_edge)
+            ymin = min(ymin, ymin_edge)
+            ymax = max(ymax, ymax_edge)
+        return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
@@ -1439,7 +1456,6 @@ class Contour2D(ContourMixin, Wire2D):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
         self._polygon_100_points = None
-        self._bounding_rectangle = None
 
     def __hash__(self):
         return sum(hash(e) for e in self.primitives)
@@ -1619,22 +1635,6 @@ class Contour2D(ContourMixin, Wire2D):
             if not self.point_belongs(point) and not self.point_over_contour(point, abs_tol=1e-7):
                 return False
         return True
-
-    def bounding_rectangle(self):
-        if not self._bounding_rectangle:
-            self._bounding_rectangle = self.get_bouding_rectangle()
-        return self._bounding_rectangle
-
-    def get_bouding_rectangle(self):
-        xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle.bounds()
-        for edge in self.primitives[1:]:
-            xmin_edge, xmax_edge, ymin_edge, ymax_edge = \
-                edge.bounding_rectangle.bounds()
-            xmin = min(xmin, xmin_edge)
-            xmax = max(xmax, xmax_edge)
-            ymin = min(ymin, ymin_edge)
-            ymax = max(ymax, ymax_edge)
-        return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
 
     def inverted_primitives(self):
         new_primitives = []
