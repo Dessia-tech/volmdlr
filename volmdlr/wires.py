@@ -1829,7 +1829,7 @@ class Contour2D(ContourMixin, Wire2D):
         Split in n slices.
 
         """
-        xmin, xmax, _, _ = self.bounding_rectangle().bounds()
+        xmin, xmax, _, _ = self.bounding_rectangle.bounds()
         cutted_contours = []
         iteration_contours = [self]
         for i in range(n - 1):
@@ -1884,8 +1884,8 @@ class Contour2D(ContourMixin, Wire2D):
         """
         Compute a triangulation using a n-by-m grid to triangulize the contour.
         """
-        bounding_rectangle = self.bounding_rectangle()
-        # xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        bounding_rectangle = self.bounding_rectangle
+        # xmin, xmax, ymin, ymax = self.bounding_rectangle
         dx = bounding_rectangle[1] - bounding_rectangle[0]  # xmax - xmin
         dy = bounding_rectangle[3] - bounding_rectangle[2]  # ymax - ymin
         if number_points_x is None:
@@ -2572,7 +2572,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return delaunay_triangles
 
     def offset(self, offset):
-        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
+        xmin, xmax, ymin, ymax = self.bounding_rectangle.bounds()
 
         max_offset_len = min(xmax - xmin, ymax - ymin) / 2
         if offset <= -max_offset_len:
@@ -5385,8 +5385,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         self_poly2d.translation_inplace(-self_center2d)
         other_poly2d.translation_inplace(-other_center2d)
 
-        bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle().bounds(), \
-            other_poly2d.bounding_rectangle().bounds()
+        bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle.bounds(), \
+            other_poly2d.bounding_rectangle.bounds()
         position = [abs(value) for value in bbox_self2d] \
             + [abs(value) for value in bbox_other2d]
         max_scale = 2 * max(position)
