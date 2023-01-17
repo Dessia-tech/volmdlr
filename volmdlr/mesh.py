@@ -64,6 +64,15 @@ class Node2D(vm.Point2D):
 
     @classmethod
     def from_point(cls, point2d):
+        """
+        Defines a node2d from a point2d.
+
+        :param point2d: A point2d
+        :type point2d: vm.Point2D
+        :return: A node2d
+        :rtype: Node2D
+        """
+
         return cls(point2d.x, point2d.y)
 
 
@@ -84,10 +93,23 @@ class Node3D(vm.Point3D):
 
     @classmethod
     def from_point(cls, point3d):
+        """
+        Defines a node3d from a point3d.
+
+        :param point3d: A point3d
+        :type point3d: vm.Point3D
+        :return: A node3d
+        :rtype: Node3D
+        """
+
         return cls(point3d.x, point3d.y, point3d.z)
 
 
 class LinearElement(vme.LineSegment2D):
+    """
+    A class that defines a linear element.
+    """
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
