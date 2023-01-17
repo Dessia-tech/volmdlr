@@ -70,30 +70,66 @@ def step_split_arguments(function_arg):
 
 
 def uncertainty_measure_with_unit(arguments, object_dict):
+    """
+    Gets the global length incertainty.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionnary containing already instanciated objects.
+    :return: Global length incertainty.
+    """
     length_measure = float(arguments[0].split('(')[1][:-1])
     return length_measure * object_dict[arguments[1]]
 
 
 def conversion_based_unit_length_unit_named_unit(arguments, object_dict):
+    """
+    Gets the conversion based unit length.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionnary containing already instanciated objects.
+    :return: conversion based unit length.
+    """
     return object_dict[arguments[1]]
 
 
 def length_measure_with_unit(arguments, object_dict):
-    """"""
+    """
+    Calculates the step file's si unit conversion factor.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionnary containing already instanciated objects.
+    :return: si unit conversion factor.
+    """
     length_measure = float(arguments[0].split('(')[1][:-1])
     length_unit_named_unit_si_unit = object_dict[arguments[1]]
     return length_measure * length_unit_named_unit_si_unit
 
 
 def length_unit_named_unit_si_unit(arguments, object_dict):
+    """
+    Gets the length si unit.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionnary containing already instanciated objects.
+    :return: length si unit
+    """
     si_unit_length = SI_PREFIX[arguments[1]]
     return si_unit_length
 
 
-def geometric_representation_context_global_uncertainty_assigned_context_global_unit_assigned_context_representation_context(arguments, object_dict):
+def geometric_representation_context_global_uncertainty_assigned_context_global_unit_assigned_context_representation_context(
+        arguments, object_dict):
+    """
+    Gets the global length incertainty.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionnary containing already instanciated objects.
+    :return: Global length incertainty.
+    """
     global_unit_uncertainty_ref = int(arguments[2][0][1:])
     length_global_uncertainty = object_dict[global_unit_uncertainty_ref]
     return length_global_uncertainty
+
 
 def vertex_point(arguments, object_dict):
     """
@@ -108,7 +144,7 @@ def oriented_edge(arguments, object_dict):
     """
     edge_orientation = arguments[4]
     if edge_orientation == '.T.':
-            return object_dict[arguments[3]]
+        return object_dict[arguments[3]]
     return object_dict[arguments[3]].reverse()
 
 
@@ -459,7 +495,10 @@ class StepFunction(dc.DessiaObject):
 
 
 class Step(dc.DessiaObject):
+    """
+    Defines the Step class.
 
+    """
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines
         self.functions, self.all_connections = self.read_lines()
@@ -1008,5 +1047,5 @@ for k, v in STEP_TO_VOLMDLR.items():
             VOLMDLR_TO_STEP[v] = [k]
 
 SI_PREFIX = {'.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9, '.MEGA.': 1e6, '.KILO.': 1e3,
-             '.HECTO.': 1e2, '.DECA.':1e1, '$':1e0, '.DECI.': 1e-1, '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6,
-             '.NANO.': 1e-9, '.PICO.': 1e-12, '.FEMTO.':1e-15, '.ATTO.': 1e-18}
+             '.HECTO.': 1e2, '.DECA.': 1e1, '$': 1e0, '.DECI.': 1e-1, '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6,
+             '.NANO.': 1e-9, '.PICO.': 1e-12, '.FEMTO.': 1e-15, '.ATTO.': 1e-18}
