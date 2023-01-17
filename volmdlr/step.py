@@ -506,7 +506,7 @@ class Step(dc.DessiaObject):
         self._utd_graph = False
         self._graph = None
         self.global_incertainty = 1e-6
-        self.unit_conversion_factor = None
+        self.unit_conversion_factor = 1
         dc.DessiaObject.__init__(self, name=name)
 
     @property
@@ -864,6 +864,8 @@ class Step(dc.DessiaObject):
         times = {}
         for i, node in enumerate([length_global_uncertainty_node] + nodes[::-1]):
             # instanciate_ids = [edge[1]]
+            if node is None:
+                continue
             instanciate_ids = [node]
             error = True
             while error:
