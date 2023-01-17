@@ -101,8 +101,8 @@ def length_measure_with_unit(arguments, object_dict):
     :return: si unit conversion factor.
     """
     length_measure = float(arguments[0].split('(')[1][:-1])
-    length_unit_named_unit_si_unit = object_dict[arguments[1]]
-    return length_measure * length_unit_named_unit_si_unit
+    length_si_unit = object_dict[arguments[1]]
+    return length_measure * length_si_unit
 
 
 def length_unit_named_unit_si_unit(arguments, object_dict):
