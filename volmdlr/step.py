@@ -69,6 +69,32 @@ def step_split_arguments(function_arg):
     return arguments
 
 
+def uncertainty_measure_with_unit(arguments, object_dict):
+    length_measure = float(arguments[0].split('(')[1][:-1])
+    return length_measure * object_dict[arguments[1]]
+
+
+def conversion_based_unit_length_unit_named_unit(arguments, object_dict):
+    return object_dict[arguments[1]]
+
+
+def length_measure_with_unit(arguments, object_dict):
+    """"""
+    length_measure = float(arguments[0].split('(')[1][:-1])
+    length_unit_named_unit_si_unit = object_dict[arguments[1]]
+    return length_measure * length_unit_named_unit_si_unit
+
+
+def length_unit_named_unit_si_unit(arguments, object_dict):
+    si_unit_length = SI_PREFIX[arguments[1]]
+    return si_unit_length
+
+
+def geometric_representation_context_global_uncertainty_assigned_context_global_unit_assigned_context_representation_context(arguments, object_dict):
+    global_unit_uncertainty_ref = int(arguments[2][0][1:])
+    length_global_uncertainty = object_dict[global_unit_uncertainty_ref]
+    return length_global_uncertainty
+
 def vertex_point(arguments, object_dict):
     """
     Returns the data in case of a VERTEX.
@@ -80,7 +106,10 @@ def oriented_edge(arguments, object_dict):
     """
     Returns the data in case of an ORIENTED_EDGE.
     """
-    return object_dict[arguments[3]]
+    edge_orientation = arguments[4]
+    if edge_orientation == '.T.':
+            return object_dict[arguments[3]]
+    return object_dict[arguments[3]].reverse()
 
 
 def face_outer_bound(arguments, object_dict):
@@ -262,7 +291,7 @@ def shape_representation(arguments, object_dict):
     # does it have the extra argument comming from
     # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
     # them
-    if len(arguments) == 4:
+    if len(arguments[:-1]) == 4:
         shells = object_dict[int(arguments[3])]
         return shells
     else:
@@ -436,6 +465,8 @@ class Step(dc.DessiaObject):
         self.functions, self.all_connections = self.read_lines()
         self._utd_graph = False
         self._graph = None
+        self.global_incertainty = 1e-6
+        self.unit_conversion_factor = None
         dc.DessiaObject.__init__(self, name=name)
 
     @property
@@ -720,13 +751,10 @@ class Step(dc.DessiaObject):
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
         if hasattr(volmdlr.step, fun_name):
-            volmdlr_object = getattr(volmdlr.step, fun_name)(arguments,
-                                                             object_dict)
+            volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
 
-        elif name in STEP_TO_VOLMDLR and hasattr(
-                STEP_TO_VOLMDLR[name], "from_step"):
-            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
-                arguments, object_dict)
+        elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
+            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict)
 
         else:
             raise NotImplementedError(
@@ -746,6 +774,9 @@ class Step(dc.DessiaObject):
         self.graph.add_node("#0")
         frame_mapping_nodes = []
         shell_nodes = []
+        unit_measure_nodes = []
+        length_global_uncertainty_node = None
+        conversion_factor_node = None
         # sr_nodes = []
         not_shell_nodes = []
         for node in self.graph.nodes:
@@ -753,6 +784,12 @@ class Step(dc.DessiaObject):
                 frame_mapping_nodes.append(node)
             if node != '#0' and (self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]):
                 shell_nodes.append(node)
+            # if node != '#0' and self.functions[node].name in [
+            #     'UNCERTAINTY_MEASURE_WITH_UNIT', 'LENGTH_UNIT, NAMED_UNIT, SI_UNIT']:
+            #     unit_measure_nodes.append(node)
+            if node != '#0' and not length_global_uncertainty_node and self.functions[node].name ==\
+                    'UNCERTAINTY_MEASURE_WITH_UNIT':
+                length_global_uncertainty_node = node
             # if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
             #     # Really a shell node ?
             #     sr_nodes.append(node)
@@ -785,7 +822,7 @@ class Step(dc.DessiaObject):
         # nodes = dessia_common.graph.explore_tree_from_leaves(self.graph)
 
         times = {}
-        for node in nodes[::-1]:
+        for i, node in enumerate([length_global_uncertainty_node] + nodes[::-1]):
             # instanciate_ids = [edge[1]]
             instanciate_ids = [node]
             error = True
@@ -793,8 +830,10 @@ class Step(dc.DessiaObject):
                 try:
                     for instanciate_id in instanciate_ids[::-1]:
                         t = time.time()
+                        arguments = self.functions[instanciate_id].arg[:]
                         volmdlr_object = self.instanciate(
-                            self.functions[instanciate_id].name, self.functions[instanciate_id].arg[:], object_dict)
+                            self.functions[instanciate_id].name,
+                            self.functions[instanciate_id].arg[:] + [self.unit_conversion_factor], object_dict)
                         t = time.time() - t
                         object_dict[instanciate_id] = volmdlr_object
                         if show_times:
@@ -808,6 +847,9 @@ class Step(dc.DessiaObject):
                     # Sometimes the bfs search don't instanciate the nodes of a
                     # depth in the right order, leading to error
                     instanciate_ids.append(key.args[0])
+            if i == 0:
+                self.global_incertainty = volmdlr_object
+                self.unit_conversion_factor = object_dict[int(arguments[1][1:])]
 
         if show_times:
             print()
@@ -939,6 +981,11 @@ STEP_TO_VOLMDLR = {
     'GEOMETRIC_CURVE_SET': None,
 
     # step subfunctions
+    'UNCERTAINTY_MEASURE_WITH_UNIT': None,
+    'CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT': None,
+    'LENGTH_MEASURE_WITH_UNIT': None,
+    'LENGTH_UNIT, NAMED_UNIT, SI_UNIT': None,
+    'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT': None,
     'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': volmdlr.faces.OpenShell3D.translation,
     'SHELL_BASED_SURFACE_MODEL': None,
     'MANIFOLD_SURFACE_SHAPE_REPRESENTATION': None,
@@ -959,3 +1006,7 @@ for k, v in STEP_TO_VOLMDLR.items():
             VOLMDLR_TO_STEP[v].append(k)
         else:
             VOLMDLR_TO_STEP[v] = [k]
+
+SI_PREFIX = {'.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9, '.MEGA.': 1e6, '.KILO.': 1e3,
+             '.HECTO.': 1e2, '.DECA.':1e1, '$':1e0, '.DECI.': 1e-1, '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6,
+             '.NANO.': 1e-9, '.PICO.': 1e-12, '.FEMTO.':1e-15, '.ATTO.': 1e-18}
