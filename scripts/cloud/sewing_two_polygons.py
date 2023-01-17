@@ -7,16 +7,17 @@ Created on Fri Jun  4 15:15:37 2021
 """
 
 
-import volmdlr.cloud
-import volmdlr.core
-import volmdlr as vm
-import volmdlr.wires as vmw
-import volmdlr.faces as vmf
-import volmdlr.edges as vme
 import matplotlib.pyplot as plt
 # import cv2
 import numpy as np
 from scipy.spatial import Delaunay
+
+import volmdlr as vm
+import volmdlr.cloud
+import volmdlr.core
+import volmdlr.edges as vme
+import volmdlr.faces as vmf
+import volmdlr.wires as vmw
 
 polygons_points=[[vm.Point3D(-0.02785286331176758, 0.14365164184570312, 0.16285931396484374),
 vm.Point3D(-0.039570194244384765, 0.14255133056640626, 0.16285931396484374),

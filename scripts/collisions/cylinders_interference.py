@@ -4,11 +4,12 @@ Generate random cylinders and create the casing for them
 """
 
 from time import time
-from volmdlr.primitives3d import Cylinder
-import volmdlr.core
-import volmdlr as vm
+
 import numpy
 
+import volmdlr as vm
+import volmdlr.core
+from volmdlr.primitives3d import Cylinder
 
 cylinders = [
     Cylinder(

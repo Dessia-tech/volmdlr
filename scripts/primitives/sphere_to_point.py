@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 
-import volmdlr.primitives3d as p3d
-import volmdlr as vm
-
-import volmdlr.core as vmc
-import random
 import math
+import random
+
+import volmdlr as vm
+import volmdlr.core as vmc
+import volmdlr.primitives3d as p3d
 
 center = vm.Point3D.random(0, 0.1, 0, 0.1, -0.1, 0)
 radius = random.randrange(5,500,5)

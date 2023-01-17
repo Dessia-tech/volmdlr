@@ -54,4 +54,3 @@ jobs:
           user: dessia_tech
           password: ${{ secrets.pypi_password }}
           # To test: repository_url: https://test.pypi.org/legacy/
-

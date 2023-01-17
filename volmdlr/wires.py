@@ -17,18 +17,18 @@ import matplotlib.patches
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as npy
+import plot_data.core as plot_data
 import scipy.integrate as scipy_integrate
 from mpl_toolkits.mplot3d import Axes3D
-from scipy.spatial import Delaunay, ConvexHull
+from scipy.spatial import ConvexHull, Delaunay
 from triangle import triangulate
 
-import plot_data.core as plot_data
-from volmdlr.core_compiled import polygon_point_belongs
 import volmdlr
 import volmdlr.core
 import volmdlr.display as vmd
 import volmdlr.edges
 import volmdlr.utils.intersections as vm_utils_intersections
+from volmdlr.core_compiled import polygon_point_belongs
 
 
 def argmax(list_of_float):
@@ -224,15 +224,15 @@ class WireMixin:
         return self.extract_primitives(point1, primitives[ind[0]], point2,
                                        primitives[ind[1]], inside)
 
-    def abscissa(self, point):
+    def abscissa(self, point, tol=1e-6):
         """
         Compute the curvilinear abscisse of a point on a wire.
 
         """
-        if self.point_over_wire(point, 1e-6):
+        if self.point_over_wire(point, tol):
             length = 0
             for primitive in self.primitives:
-                if primitive.point_belongs(point, 1e-6):
+                if primitive.point_belongs(point, tol):
                     length += primitive.abscissa(point)
                     break
                 length += primitive.length()
@@ -3994,7 +3994,8 @@ class Circle2D(Contour2D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 40):
         """
-        discretize a Contour to have "n" points
+        Discretize a Contour to have "n" points.
+
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
@@ -4750,7 +4751,8 @@ class Circle3D(Contour3D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        discretize a Circle to have "n" points
+        Discretize a Circle to have "n" points.
+
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull

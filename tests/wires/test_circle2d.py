@@ -1,6 +1,7 @@
 import unittest
-import volmdlr.wires as vmw
+
 import volmdlr.edges
+import volmdlr.wires as vmw
 
 circle = vmw.Circle2D(volmdlr.O2D, 0.50)
 line = volmdlr.edges.Line2D(volmdlr.O2D, volmdlr.Point2D(0, 1))

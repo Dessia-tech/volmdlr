@@ -7,7 +7,7 @@ Created on Mon Jun  7 16:23:04 2021
 """
 
 import volmdlr as vm
-import volmdlr.core as vmc 
+import volmdlr.core as vmc
 import volmdlr.wires as vmw
 
 p1 = vm.Point2D(0, 0)
