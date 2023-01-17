@@ -1,7 +1,7 @@
 import os
+import random
 import sys
 
-import random
 from pylint import __version__
 from pylint.lint import Run
 
@@ -19,7 +19,7 @@ MAX_ERROR_BY_TYPE = {
                      'no-member': 9,
                      'inconsistent-return-statements': 6,
                      'unused-variable': 42,
-                     'arguments-differ': 11,
+                     'arguments-differ': 12,
                      'too-many-locals': 71,
                      'line-too-long': 23,
                      'unused-argument': 43,

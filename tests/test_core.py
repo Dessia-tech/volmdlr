@@ -5,11 +5,11 @@ Testing core module functions
 """
 
 import math
-import numpy as npy
-import volmdlr as vm
-
-
 import unittest
+
+import numpy as npy
+
+import volmdlr as vm
 import volmdlr.wires
 
 

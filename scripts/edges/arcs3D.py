@@ -9,9 +9,6 @@ Created on Tue Oct 23 18:06:45 2018
 import volmdlr
 import volmdlr.edges
 
-
-
-
 i = volmdlr.X3D
 e = i.rotation(volmdlr.O3D, volmdlr.Z3D, 1)
 s = i.rotation(volmdlr.O3D, volmdlr.Z3D, -3.5)

@@ -25,6 +25,3 @@
   - branch: 
   - commit:  
   - python version: 
-
-
-

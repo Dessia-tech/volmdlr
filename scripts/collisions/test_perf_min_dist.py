@@ -1,7 +1,7 @@
 import time
 
-from volmdlr.primitives3d import Cylinder
 import volmdlr as vm
+from volmdlr.primitives3d import Cylinder
 
 cylinder1 = Cylinder(
     position=vm.Point3D(0, 0.1, 0),

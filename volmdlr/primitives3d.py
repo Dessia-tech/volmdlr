@@ -5,22 +5,20 @@ Common primitives 3D
 """
 
 import math
-
-from typing import Tuple, List, Dict
 from random import uniform
-
-from scipy.optimize import minimize, Bounds, NonlinearConstraint
-from scipy.stats import qmc
-
-import numpy as npy
-import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple
 
 import dessia_common.core as dc
+import matplotlib.pyplot as plt
+import numpy as npy
+from scipy.optimize import Bounds, NonlinearConstraint, minimize
+from scipy.stats import qmc
+
 import volmdlr
 import volmdlr.core
-import volmdlr.primitives
-import volmdlr.faces
 import volmdlr.edges
+import volmdlr.faces
+import volmdlr.primitives
 import volmdlr.wires
 
 # import dessia_common.typings as dct
@@ -1608,7 +1606,7 @@ class HollowCylinder(RevolvedProfile):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation.
+        Translation for HollowCylinder.
 
         :param offset: translation vector.
         :return: A new translated HollowCylinder.
@@ -1620,7 +1618,7 @@ class HollowCylinder(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation. Object is updated inplace.
+        Translation for HollowCylinder. Object is updated inplace.
 
         :param offset: translation vector.
         """

@@ -2,8 +2,7 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import faces, edges, wires
-from volmdlr import Point3D, OXYZ, Point2D, Z3D
+from volmdlr import OXYZ, Z3D, Point2D, Point3D, edges, faces, wires
 
 
 class TestCylindricalSurface3D(unittest.TestCase):

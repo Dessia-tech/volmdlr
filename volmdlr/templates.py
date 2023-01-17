@@ -1,8 +1,8 @@
 
 import os
 from string import Template
-import pkg_resources
 
+import pkg_resources
 
 babylon_unpacker_cdn_header = '''
 <!doctype html>
