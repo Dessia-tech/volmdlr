@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#cython: language_level=3
+# cython: language_level=3
 """
 
 Cython functions
 
 """
 # from __future__ import annotations
-from typing import TypeVar, List, Tuple, Text, Any, Dict, Union
+from typing import List, Tuple, Text, Any, Dict
 import math
 import warnings
 import random
 
-import matplotlib.axes
 import numpy as npy
 from mpl_toolkits.mplot3d import proj3d
 import matplotlib.pyplot as plt
@@ -198,32 +197,36 @@ cdef(double, double, double,
 
 # =============================================================================
 
-def polygon_point_belongs(point, points):
+def polygon_point_belongs(point, points, include_edge_points: bool = False):
 
     cdef int i
     cdef int n = len(points)
     cdef bint inside = False
     cdef float x, y, p1x, p1y, p2x, p2y, xints
     x, y = point
-    p1x, p1y = points[0]
-
-    for i in range(n + 1):
-        p2x, p2y = points[i % n]
-        if y > min(p1y, p2y):
-            if y <= max(p1y, p2y):
-                if x <= max(p1x, p2x):
-                    if p1y != p2y:
-                        xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
-                    if p1x == p2x or x <= xints:
-                        inside = not inside
-        p1x, p1y = p2x, p2y
-
+    for i in range(n):
+        p1x, p1y = points[i]
+        p2x, p2y = points[(i + 1) % n]
+        xints = math.inf
+        if min(p1y, p2y) <= y <= max(p1y, p2y) and min(p1x, p2x) <= x <= max(p1x, p2x):
+            if p1y != p2y:
+                xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+            if p1y == p2y or x == xints:
+                if include_edge_points:
+                    return True
+                return False
+        if min(p1y, p2y) < y <= max(p1y, p2y) and x <= max(p1x, p2x):
+            if p1y != p2y:
+                xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+            if p1x == p2x or x < xints:
+                inside = not inside
     return inside
 
 # =============================================================================
 
 
-cdef(double, (double, double)) CLineSegment2DPointDistance((double, double) p1, (double, double) p2, (double, double) point):
+cdef(double, (double, double)) CLineSegment2DPointDistance((double, double) p1,
+                                                           (double, double) p2, (double, double) point):
     cdef double t
 
     ux, uy = Csub2D(p2[0], p2[1], p1[0], p1[1])
@@ -242,7 +245,10 @@ def LineSegment2DPointDistance(points, point):
 
 # =============================================================================
 
-cdef (double, (double, double, double)) CLineSegment3DPointDistance((double, double, double) p1, (double, double, double) p2, (double, double, double) point):
+
+cdef (double, (double, double, double)) CLineSegment3DPointDistance((double, double, double) p1,
+                                                                    (double, double, double) p2,
+                                                                    (double, double, double) point):
     cdef double t
 
     ux, uy, uz = Csub3D(p2[0], p2[1], p2[2], p1[0], p1[1], p1[2])
@@ -253,12 +259,14 @@ cdef (double, (double, double, double)) CLineSegment3DPointDistance((double, dou
     ppx, ppy, ppz = projection[0]-point[0], projection[1]-point[1], projection[2]-point[2]
     return CVector3Dnorm(ppx, ppy, ppz), projection
 
+
 def LineSegment3DPointDistance(points, point):
     return CLineSegment3DPointDistance(tuple(points[0]), tuple(points[1]), tuple(point))
 
 # =============================================================================
 #  Points, Vectors
 # =============================================================================
+
 
 class Arrow3D(FancyArrowPatch):
     def __init__(self, xs, ys, zs, *args, **kwargs):
@@ -271,16 +279,16 @@ class Arrow3D(FancyArrowPatch):
         self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
         FancyArrowPatch.draw(self, renderer)
 
-    def plot(self, ax=None, color='b'):
+    def plot(self, ax=None, color="b"):
         if ax is None:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
 
         points = [self.start, self.end]
         x = [p.x for p in points]
         y = [p.y for p in points]
         z = [p.z for p in points]
-        ax.plot(x, y, z, 'o-k')
+        ax.plot(x, y, z, "o-k")
         return ax
 
 
@@ -307,7 +315,7 @@ class Vector(DessiaObject):
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector: 'Vector'):
+    def is_colinear_to(self, other_vector: "Vector"):
         """
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.
@@ -326,7 +334,7 @@ class Vector(DessiaObject):
             return False
 
     @classmethod
-    def mean_point(cls, points: List['Vector']):
+    def mean_point(cls, points: List["Vector"]):
         """
         Find the mean point from a list of points. All the objects of this list
         should be of same dimension.
@@ -345,7 +353,7 @@ class Vector(DessiaObject):
         return point
 
     @classmethod
-    def remove_duplicate(cls, points: List['Vector']):
+    def remove_duplicate(cls, points: List["Vector"]):
         """
         An approximative method to remove duplicated points from a list.
         All the objects of this list should be of same dimension.
@@ -370,13 +378,13 @@ class Vector2D(Vector):
     :param name: The vector's name
     :type name: str
     """
-    def __init__(self, x: float, y: float, name=''):
+    def __init__(self, x: float, y: float, name=""):
         self.x = x
         self.y = y
         self.name = name
 
     def __repr__(self):
-        return '{}: [{}, {}]'.format(self.__class__.__name__, self.x, self.y)
+        return "{}: [{}, {}]".format(self.__class__.__name__, self.x, self.y)
 
     def __setitem__(self, key, item):
         if key == 0:
@@ -428,7 +436,7 @@ class Vector2D(Vector):
     def __eq__(self, other_vector):
         return self.is_close(other_vector)
 
-    def is_close(self, other_vector: 'Vector2D', tol: float = 1e-6):
+    def is_close(self, other_vector: "Vector2D", tol: float = 1e-6):
         """
         Checks if two vectors are close to each other considering the
         euclidean distance. The tolerance can be modified. The two vectors
@@ -443,7 +451,7 @@ class Vector2D(Vector):
             to each other, `False` otherwise
         :rtype: bool
         """
-        if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
+        if other_vector.__class__.__name__ not in ["Vector2D", "Point2D"]:
             return False
         return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
 
@@ -466,11 +474,12 @@ class Vector2D(Vector):
         .. seealso::
             How `serialization and deserialization`_ works in dessia_common
 
-        .. _serialization and deserialization: https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {'object_class': 'volmdlr.Vector2D',
-                'x': self.x, 'y': self.y,
-                'name': self.name}
+        return {"object_class": "volmdlr.Vector2D",
+                "x": self.x, "y": self.y,
+                "name": self.name}
 
     def copy(self, deep=True, memo=None):
         """
@@ -507,7 +516,7 @@ class Vector2D(Vector):
         self.x /= n
         self.y /= n
 
-    def dot(self, other_vector: 'Vector2D'):
+    def dot(self, other_vector: "Vector2D"):
         """
         Computes the dot product (scalar product) of two 2 dimensional vectors.
 
@@ -521,7 +530,7 @@ class Vector2D(Vector):
                             other_vector.x,
                             other_vector.y)
 
-    def cross(self, other_vector: 'Vector2D'):
+    def cross(self, other_vector: "Vector2D"):
         """
         Computes the cross product of two 2 dimensional vectors.
 
@@ -532,7 +541,7 @@ class Vector2D(Vector):
         """
         return self.x * other_vector.y - self.y * other_vector.x
 
-    def point_distance(self, other_vector: 'Vector2D'):
+    def point_distance(self, other_vector: "Vector2D"):
         """
         Computes the euclidiean distance between two Vector2D objects.
 
@@ -543,7 +552,7 @@ class Vector2D(Vector):
         """
         return (self - other_vector).norm()
 
-    def rotation_parameters(self, center: 'Point2D', angle: float):
+    def rotation_parameters(self, center: "Point2D", angle: float):
         """
         Calculates the parameters to be used in rotation methods
 
@@ -559,7 +568,7 @@ class Vector2D(Vector):
         v2y = math.sin(angle) * u[0] + math.cos(angle) * u[1] + center[1]
         return v2x, v2y
 
-    def rotation(self, center: 'Point2D', angle: float):
+    def rotation(self, center: "Point2D", angle: float):
         """
         Rotates the 2 dimensional vector and returns a new rotated vector
 
@@ -573,7 +582,7 @@ class Vector2D(Vector):
         v2x, v2y = self.rotation_parameters(center, angle)
         return self.__class__(v2x, v2y)
 
-    def rotation_inplace(self, center: 'Point2D', angle: float):
+    def rotation_inplace(self, center: "Point2D", angle: float):
         """
         Rotates the 2 dimensional vector and changes its values inplace
 
@@ -588,7 +597,7 @@ class Vector2D(Vector):
         self.x = v2x
         self.y = v2y
 
-    def translation(self, offset: 'Vector2D'):
+    def translation(self, offset: "Vector2D"):
         """
         Translates the 2 dimensional vector and returns a new translated vector
 
@@ -601,7 +610,7 @@ class Vector2D(Vector):
         v2y = self.y + offset[1]
         return self.__class__(v2x, v2y)
 
-    def translation_inplace(self, offset: 'Vector2D'):
+    def translation_inplace(self, offset: "Vector2D"):
         """
         Translates the vector and changes its values inplace
 
@@ -615,7 +624,7 @@ class Vector2D(Vector):
         self.x = v2x
         self.y = v2y
 
-    def frame_mapping(self, frame: 'Frame2D', side: str):
+    def frame_mapping(self, frame: "Frame2D", side: str):
         """
         # TODO: Needs correction. Add an example ?
         Transforms a 2 dimensional vector from the current reference frame to a
@@ -631,13 +640,13 @@ class Vector2D(Vector):
         :return: A frame mapped Vector2D-like object
         :rtype: :class:`volmdlr.Vector2D`
         """
-        if side == 'old':
+        if side == "old":
             new_vector = frame.old_coordinates(self)
-        if side == 'new':
+        if side == "new":
             new_vector = frame.new_coordinates(self)
         return new_vector
 
-    def frame_mapping_inplace(self, frame: 'Frame2D', side: str):
+    def frame_mapping_inplace(self, frame: "Frame2D", side: str):
         """
         # TODO: To be completed
 
@@ -648,14 +657,14 @@ class Vector2D(Vector):
         :return: None
         :rtype: None
         """
-        if side == 'old':
+        if side == "old":
             new_vector = frame.old_coordinates(self)
-        if side == 'new':
+        if side == "new":
             new_vector = frame.new_coordinates(self)
         self.x = new_vector.x
         self.y = new_vector.y
 
-    def to_3d(self, plane_origin: 'Vector3D', vx: 'Vector3D', vy: 'Vector3D'):
+    def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
         """
         Returns the 3 dimensional vector corresponding to the 2 dimensional
         vector placed on the 3 dimensional plane (XY) of the 3 dimensional
@@ -734,9 +743,9 @@ class Vector2D(Vector):
                    random.uniform(ymin, ymax))
 
     def plot(self, amplitude: float = 0.5, width: float = None,
-             head_width: float = None, origin: 'Vector2D' = None,
-             ax: 'matplotlib.axes.Axes' = None,
-             color: str = 'k', line: bool = False, label: str = None,
+             head_width: float = None, origin: "Vector2D" = None,
+             ax: "matplotlib.axes.Axes" = None,
+             color: str = "k", line: bool = False, label: str = None,
              normalize: bool = False):
         """
         Plots the 2 dimensional vector. If the vector has a norm greater than
@@ -803,8 +812,8 @@ class Vector2D(Vector):
                                     color=color))
 
         if line:
-            style = '-' + color
-            linestyle = '-.'
+            style = "-" + color
+            linestyle = "-."
             origin = Point2D(*origin)
             p1, p2 = origin, origin + self
             u = p2 - p1
@@ -834,7 +843,7 @@ class Point2D(Vector2D):
     :type name: str
     """
 
-    def __init__(self, x: float, y: float, name: Text = ''):
+    def __init__(self, x: float, y: float, name: Text = ""):
         Vector2D.__init__(self, x=x, y=y, name=name)
 
     def __add__(self, other_vector):
@@ -866,13 +875,14 @@ class Point2D(Vector2D):
         .. seealso::
             How `serialization and deserialization`_ works in dessia_common
 
-        .. _serialization and deserialization: https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {'object_class': 'volmdlr.Point2D',
-                'x': self.x, 'y': self.y,
-                'name': self.name}
+        return {"object_class": "volmdlr.Point2D",
+                "x": self.x, "y": self.y,
+                "name": self.name}
 
-    def to_3d(self, plane_origin: 'Vector3D', vx: 'Vector3D', vy:'Vector3D'):
+    def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
         """
         Returns the 3 dimensional point corresponding to the 2 dimensional
         point placed on the 3 dimensional plane (XY) of the 3 dimensional
@@ -889,9 +899,9 @@ class Point2D(Vector2D):
         :return: The Point3D from the Point2D set in the 3 dimensional space
         :rtype: :class:`volmdlr.Point3D`
         """
-        return Point3D(plane_origin.x + vx.x * self.x + vy.x * self.y,
-                       plane_origin.y + vx.y * self.x + vy.y * self.y,
-                       plane_origin.z + vx.z * self.x + vy.z * self.y)
+        return Point3D(round(plane_origin.x + vx.x * self.x + vy.x * self.y, 12),
+                       round(plane_origin.y + vx.y * self.x + vy.y * self.y, 12),
+                       round(plane_origin.z + vx.z * self.x + vy.z * self.y, 12))
 
     def to_vector(self):
         """
@@ -915,7 +925,7 @@ class Point2D(Vector2D):
 
         return content, current_id
 
-    def plot(self, ax=None, color='k', alpha=1, plot_points=True):
+    def plot(self, ax=None, color="k", alpha=1, plot_points=True):
         """
         Plots the 2 dimensional point as a dot.
 
@@ -934,10 +944,10 @@ class Point2D(Vector2D):
         if ax is None:
             fig, ax = plt.subplots()
 
-        ax.plot([self.x], [self.y], color=color, alpha=alpha, marker='o')
+        ax.plot([self.x], [self.y], color=color, alpha=alpha, marker="o")
         return ax
 
-    def point_distance(self, other_point: 'Point2D'):
+    def point_distance(self, other_point: "Point2D"):
         """
         Computes the euclidiean distance between two Point2D objects.
 
@@ -949,8 +959,8 @@ class Point2D(Vector2D):
         return (self - other_point).norm()
 
     @classmethod
-    def line_intersection(cls, line1: 'volmdlr.edges.Line2D',
-                          line2: 'volmdlr.edges.Line2D',
+    def line_intersection(cls, line1: "volmdlr.edges.Line2D",
+                          line2: "volmdlr.edges.Line2D",
                           curvilinear_abscissa: bool = False):
         """
         Returns a Point2D based on the intersection between two infinte lines.
@@ -991,8 +1001,8 @@ class Point2D(Vector2D):
                 return cls(x, y), t, u
 
     @classmethod
-    def segment_intersection(cls, segment1: 'volmdlr.edges.LineSegment2D',
-                             segment2: 'volmdlr.edges.LineSegment2D',
+    def segment_intersection(cls, segment1: "volmdlr.edges.LineSegment2D",
+                             segment2: "volmdlr.edges.LineSegment2D",
                              curvilinear_abscissa: bool = False):
         """
         Returns a Point2D based on the intersection between two finite lines.
@@ -1039,12 +1049,11 @@ class Point2D(Vector2D):
             else:
                 return None, None, None
 
-    def plot_data(self, marker=None, color='black', size=1,
+    def plot_data(self, marker=None, color="black", size=1,
                   opacity=1, arrow=False, stroke_width=None):
         """
-        Transforms the two-dimensional point into a plot_data twe-dimensional 
-        point.
-        
+        Transforms the two-dimensional point into a plot_data twe-dimensional point.
+
         :param marker: # TODO: unused parameter
         :type marker: str, optional
         :param color: # TODO: unused parameter
@@ -1066,9 +1075,8 @@ class Point2D(Vector2D):
     def middle_point(cls, point1: Vector2D,
                      point2: Vector2D):
         """
-        Computes the middle point between two two-dimensional vector-like 
-        objects.
-        
+        Computes the middle point between two two-dimensional vector-like objects.
+
         :param point1: the first point
         :type point1: :class:`volmdlr.Vector2D`
         :param point2: the second point
@@ -1080,7 +1088,7 @@ class Point2D(Vector2D):
 
     @classmethod
     def line_projection(cls, point: Vector2D,
-                        line: 'volmdlr.edges.Line2D'):
+                        line: "volmdlr.edges.Line2D"):
         """
         Computes the projection of a two-dimensional vector-like object on an
         infinite two-dimensional line
@@ -1115,7 +1123,7 @@ class Point2D(Vector2D):
                 min_distance, min_point = pd, point
         return min_point
 
-    def axial_symmetry(self, line: 'volmdlr.edges.Line2D'):
+    def axial_symmetry(self, line: "volmdlr.edges.Line2D"):
         """
         Returns the symmetric two-dimensional point according to a line.
 
@@ -1148,14 +1156,14 @@ class Vector3D(Vector):
     :type name: str
     """
 
-    def __init__(self, x: float, y: float, z: float, name: Text = ''):
+    def __init__(self, x: float, y: float, z: float, name: Text = ""):
         self.x = x
         self.y = y
         self.z = z
         self.name = name
 
     def __repr__(self):
-        return '{}: [{}, {}, {}]'.format(self.__class__.__name__, self.x, self.y, self.z)
+        return "{}: [{}, {}, {}]".format(self.__class__.__name__, self.x, self.y, self.z)
 
     def __setitem__(self, key, item):
         if key == 0:
@@ -1215,7 +1223,7 @@ class Vector3D(Vector):
 
         return 0
 
-    def __eq__(self, other_vector: 'Vector3D'):
+    def __eq__(self, other_vector: "Vector3D"):
         return self.is_close(other_vector)
 
     def is_close(self, other_vector, tol=1e-6):
@@ -1233,7 +1241,7 @@ class Vector3D(Vector):
             to each other, `False` otherwise
         :rtype: bool
         """
-        if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
+        if other_vector.__class__.__name__ not in ["Vector3D", "Point3D"]:
             return False
         # return math.isclose(self.x, other_vector.x, abs_tol=tol) \
         # and math.isclose(self.y, other_vector.y, abs_tol=tol) \
@@ -1259,15 +1267,16 @@ class Vector3D(Vector):
         .. seealso::
             How `serialization and deserialization`_ works in dessia_common
 
-        .. _serialization and deserialization: https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {'object_class': 'volmdlr.Vector3D',
-                'x': self.x, 'y': self.y, 'z': self.z,
-                'name': self.name}
+        return {"object_class": "volmdlr.Vector3D",
+                "x": self.x, "y": self.y, "z": self.z,
+                "name": self.name}
 
     @classmethod
     def dict_to_object(cls, dict_, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = '#'):
+                       pointers_memo: Dict[str, Any] = None, path: str = "#"):
         """
         Deserializes a dictionary to a 3 dimensional vector.
 
@@ -1288,10 +1297,11 @@ class Vector3D(Vector):
         .. seealso::
             How `serialization and deserialization`_ works in dessia_common
 
-        .. _serialization and deserialization: https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
 
-        return Vector3D(dict_['x'], dict_['y'], dict_['z'], dict_.get('name', ''))
+        return Vector3D(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
 
     def dot(self, other_vector):
         """
@@ -1305,7 +1315,7 @@ class Vector3D(Vector):
         return CVector3DDot(self.x, self.y, self.z,
                             other_vector.x, other_vector.y, other_vector.z)
 
-    def cross(self, other_vector: 'Vector3D') -> 'Vector3D':
+    def cross(self, other_vector: "Vector3D") -> "Vector3D":
         """
         Computes the cross product between two 3 dimensional vectors.
 
@@ -1344,7 +1354,7 @@ class Vector3D(Vector):
         self.y /= n
         self.z /= n
 
-    def point_distance(self, point2: 'Vector3D') -> float:
+    def point_distance(self, point2: "Vector3D") -> float:
         """
         Computes the euclidiean distance between two Vector3D objects.
 
@@ -1355,7 +1365,7 @@ class Vector3D(Vector):
         """
         return (self - point2).norm()
 
-    def rotation(self, center: 'Point3D', axis: 'Vector3D', angle: float):
+    def rotation(self, center: "Point3D", axis: "Vector3D", angle: float):
         """
         Rotates of angle around axis the 2 dimensional vector and returns
         a new rotated vector.
@@ -1374,7 +1384,7 @@ class Vector3D(Vector):
         vector2 = vector3D_rotation(self, center, axis, angle)
         return self.__class__(*vector2)
 
-    def rotation_inplace(self, center: 'Point3D', axis: 'Vector3D',
+    def rotation_inplace(self, center: "Point3D", axis: "Vector3D",
                          angle: float):
         """
         Rotates of angle around axis the 2 dimensional vector and changes
@@ -1445,7 +1455,7 @@ class Vector3D(Vector):
         self.y = y1
         self.z = z1
 
-    def y_rotation(self, angle:float):
+    def y_rotation(self, angle: float):
         """
         Rotation of angle around Y axis and returns a new vector as result.
 
@@ -1471,7 +1481,7 @@ class Vector3D(Vector):
         self.x = x1
         self.z = z1
 
-    def z_rotation(self, angle:float):
+    def z_rotation(self, angle: float):
         """
         rrotation of angle around Z axis and returns a new vector as result.
 
@@ -1497,7 +1507,7 @@ class Vector3D(Vector):
         self.x = x1
         self.y = y1
 
-    def translation(self, offset: 'Vector3D'):
+    def translation(self, offset: "Vector3D"):
         """
         Translates the vector and returns a new translated vector
 
@@ -1508,7 +1518,7 @@ class Vector3D(Vector):
         """
         return self + offset
 
-    def translation_inplace(self, offset: 'Vector3D'):
+    def translation_inplace(self, offset: "Vector3D"):
         """
         Translates the vector and changes its values inplace.
 
@@ -1521,7 +1531,7 @@ class Vector3D(Vector):
         self.y += offset[1]
         self.z += offset[2]
 
-    def frame_mapping(self, frame: 'Frame3D', side: str):
+    def frame_mapping(self, frame: "Frame3D", side: str):
         """
         # TODO: Needs correction. Add an example ?
         Transforms a 3 dimensional vector from the current reference frame to a
@@ -1537,14 +1547,14 @@ class Vector3D(Vector):
         :return: A frame mapped Vector3D-like object
         :rtype: :class:`volmdlr.Vector3D`
         """
-        if side == 'old':
+        if side == "old":
             new_vector = frame.old_coordinates(self)
 
-        if side == 'new':
+        if side == "new":
             new_vector = frame.new_coordinates(self)
         return new_vector
 
-    def frame_mapping_inplace(self, frame: 'Frame3D', side: str):
+    def frame_mapping_inplace(self, frame: "Frame3D", side: str):
         """
         # TODO: To be completed
 
@@ -1555,17 +1565,17 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
-        if side == 'old':
+        if side == "old":
             new_vector = frame.old_coordinates(self)
 
-        if side == 'new':
+        if side == "new":
             new_vector = frame.new_coordinates(self)
         self.x = new_vector.x
         self.y = new_vector.y
         self.z = new_vector.z
 
-    def plane_projection3d(self, plane_origin: 'Vector3D', x: 'Vector3D',
-                           y: 'Vector3D'):
+    def plane_projection3d(self, plane_origin: "Vector3D", x: "Vector3D",
+                           y: "Vector3D"):
         """
         Projects a Vector3D-like object on a 3D plane.
 
@@ -1582,8 +1592,8 @@ class Vector3D(Vector):
         z.normalize()
         return self - z.dot(self - plane_origin) * z
 
-    def plane_projection2d(self, plane_origin: 'Vector3D', x: 'Vector3D',
-                           y: 'Vector3D'):
+    def plane_projection2d(self, plane_origin: "Vector3D", x: "Vector3D",
+                           y: "Vector3D"):
         """
         Projects a Vector3D-like object on a 2D plane.
 
@@ -1604,8 +1614,8 @@ class Vector3D(Vector):
         u2 = p3d.dot(y)
         return Point2D(u1, u2)
 
-    def to_2d(self, plane_origin: 'Vector3D', x: 'Vector3D',
-              y: 'Vector3D'):
+    def to_2d(self, plane_origin: "Vector3D", x: "Vector3D",
+              y: "Vector3D"):
         """
         # TODO: difference with plane_projection2d needs details
         Transforms a Vector3D-like object to a Point2D.
@@ -1749,7 +1759,7 @@ class Vector3D(Vector):
             current_id += 1
         return content, current_id
 
-    def plot(self, ax=None, starting_point=None, color=''):
+    def plot(self, ax=None, starting_point=None, color=""):
         """
         Plots the 3 dimensional vector.
 
@@ -1769,7 +1779,7 @@ class Vector3D(Vector):
             starting_point = Point3D(0, 0, 0)
         if ax is None:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
         xs = [starting_point[0], self.x + starting_point[0]]
         ys = [starting_point[1], self.y + starting_point[1]]
         zs = [starting_point[2], self.z + starting_point[2]]
@@ -1787,7 +1797,6 @@ Z3D = Vector3D(0, 0, 1)
 
 
 class Point3D(Vector3D):
-    _standalone_in_db = False
     """
     Class representing a 3 dimensional point.
 
@@ -1801,7 +1810,9 @@ class Point3D(Vector3D):
     :type name: str
     """
 
-    def __init__(self, x: float, y: float, z: float, name: Text = ''):
+    _standalone_in_db = False
+
+    def __init__(self, x: float, y: float, z: float, name: Text = ""):
         Vector3D.__init__(self, x, y, z, name)
 
     def __add__(self, other_vector):
@@ -1837,15 +1848,16 @@ class Point3D(Vector3D):
         .. seealso::
             How `serialization and deserialization`_ works in dessia_common
 
-        .. _serialization and deserialization: https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {'object_class': 'volmdlr.Point3D',
-                'x': self.x, 'y': self.y, 'z': self.z,
-                'name': self.name}
+        return {"object_class": "volmdlr.Point3D",
+                "x": self.x, "y": self.y, "z": self.z,
+                "name": self.name}
 
     @classmethod
     def dict_to_object(cls, dict_, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = '#'):
+                       pointers_memo: Dict[str, Any] = None, path: str = "#"):
         """
         Deserializes a dictionary to a 3 dimensional point.
 
@@ -1866,11 +1878,12 @@ class Point3D(Vector3D):
         .. seealso::
             How `serialization and deserialization`_ works in dessia_common
 
-        .. _serialization and deserialization: https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return Point3D(dict_['x'], dict_['y'], dict_['z'], dict_.get('name', ''))
+        return Point3D(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
 
-    def plot(self, ax=None, color='k', alpha=1, marker='o'):
+    def plot(self, ax=None, color="k", alpha=1, marker="o"):
         """
         Plots the 3 dimensional point.
 
@@ -1891,7 +1904,7 @@ class Point3D(Vector3D):
         """
         if ax is None:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
 
         ax.plot([self.x], [self.y], [self.z], color=color, alpha=alpha,
                 marker=marker)
@@ -1930,7 +1943,7 @@ class Point3D(Vector3D):
         """
         return Vector3D(self.x, self.y, self.z)
 
-    def point_distance(self, point2: 'Point3D') -> float:
+    def point_distance(self, point2: "Point3D") -> float:
         """
         Computes the euclidean distance between two 3 dimensional points.
 
@@ -1942,7 +1955,7 @@ class Point3D(Vector3D):
         return (self - point2).norm()
 
     @classmethod
-    def middle_point(cls, point1: 'Point3D', point2: 'Point3D'):
+    def middle_point(cls, point1: "Point3D", point2: "Point3D"):
         """
         Computes the middle point between two 3 dimensional points.
 
@@ -1968,11 +1981,10 @@ class Point3D(Vector3D):
             and the new current id
         :rtype: tuple
         """
-        content = "#{} = CARTESIAN_POINT('{}',({:.6f},{:.6f},{:.6f}));\n"\
-                        .format(current_id, self.name,
-                                1000. * self.x,
-                                1000. * self.y,
-                                1000. * self.z)
+        content = "#{} = CARTESIAN_POINT('{}',({:.6f},{:.6f},{:.6f}));\n".format(current_id, self.name,
+                                                                                 1000. * self.x,
+                                                                                 1000. * self.y,
+                                                                                 1000. * self.z)
         if vertex:
             content += "#{} = VERTEX_POINT('{}',#{});\n".format(current_id + 1,
                                                                 self.name,
@@ -1992,11 +2004,11 @@ class Point3D(Vector3D):
         s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
         s += "sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n".format(self.x, self.y, self.z)
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
-        s += 'mat.diffuseColor = new BABYLON.Color3(1, 0, 0);\n'
-        s += 'sphere.material = mat;\n'
+        s += "mat.diffuseColor = new BABYLON.Color3(1, 0, 0);\n"
+        s += "sphere.material = mat;\n"
         return s
 
-    def nearest_point(self, points: List['Point3D']):
+    def nearest_point(self, points: List["Point3D"]):
         """
         Returns the nearest 3 dimensional point out of the list.
 
@@ -2101,7 +2113,7 @@ class Matrix22:
             return Matrix22(det_inv * self.M22, -det_inv * self.M12,
                             -det_inv * self.M21, det_inv * self.M11)
         else:
-            raise ValueError('The matrix is singular')
+            raise ValueError("The matrix is singular")
 
     # def vector_multiplication(self, vector):
     #     return vector.__class__(self.M11 * vector.x + self.M12 * vector.y,
@@ -2157,17 +2169,19 @@ class Matrix33:
                         self.M33 + other_matrix.M33)
 
     def __mul__(self, other_matrix):
-        M11, M12, M13, M21, M22, M23, M31, M32, M33 = Cmatrix_multiplication3(self.M11, self.M12, self.M13,
-                                                                              self.M21, self.M22, self.M23,
-                                                                              self.M31, self.M32, self.M33,
-                                                                              other_matrix.M11, other_matrix.M12, other_matrix.M13,
-                                                                              other_matrix.M21, other_matrix.M22, other_matrix.M23,
-                                                                              other_matrix.M31, other_matrix.M32, other_matrix.M33)
+        (M11, M12, M13,
+         M21, M22, M23,
+         M31, M32, M33) = Cmatrix_multiplication3(self.M11, self.M12, self.M13,
+                                                  self.M21, self.M22, self.M23,
+                                                  self.M31, self.M32, self.M33,
+                                                  other_matrix.M11, other_matrix.M12, other_matrix.M13,
+                                                  other_matrix.M21, other_matrix.M22, other_matrix.M23,
+                                                  other_matrix.M31, other_matrix.M32, other_matrix.M33)
 
         return Matrix33(M11, M12, M13, M21, M22, M23, M31, M32, M33)
 
     def __repr__(self):
-        s = '[{} {} {}]\n[{} {} {}]\n[{} {} {}]\n'.format(self.M11, self.M12, self.M13,
+        s = "[{} {} {}]\n[{} {} {}]\n[{} {} {}]\n".format(self.M11, self.M12, self.M13,
                                                           self.M21, self.M22, self.M23,
                                                           self.M31, self.M32, self.M33)
         return s
@@ -2198,7 +2212,12 @@ class Matrix33:
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
-
+        if abs(u1) < 1e-9:
+            u1 = 0.
+        if abs(u2) < 1e-9:
+            u2 = 0.
+        if abs(u3) < 1e-9:
+            u3 = 0.
         return vector.__class__(u1, u2, u3)
 
     def determinent(self):
@@ -2235,7 +2254,7 @@ class Matrix33:
                             det_inv * (self.M11 * self.M22 - self.M21 * self.M12)  # a11a22−a21a12
                             )
         else:
-            raise ValueError('The matrix is singular')
+            raise ValueError("The matrix is singular")
 
     @classmethod
     def random_matrix(cls, minimum: float = 0., maximum: float = 1.):
@@ -2295,7 +2314,7 @@ class Basis2D(Basis):
     :type v: :class:`volmdlr.Vector2D`
     """
 
-    def __init__(self, u: Vector2D, v: Vector2D, name: Text = ''):
+    def __init__(self, u: Vector2D, v: Vector2D, name: Text = ""):
         self.u = u
         self.v = v
         self.name = name
@@ -2303,10 +2322,8 @@ class Basis2D(Basis):
     def __eq__(self, other_basis):
         if other_basis.__class__.__name__ != self.__class__.__name__:
             return False
-        return all([other_vector == vector
-                         for other_vector, vector
-                         in zip([other_basis.u, other_basis.v],
-                                [self.u, self.v])])
+        return all([other_vector == vector for other_vector, vector in zip([other_basis.u, other_basis.v],
+                                                                           [self.u, self.v])])
 
     def __neg__(self):
         p_inv = self.inverse_transfer_matrix()
@@ -2314,7 +2331,7 @@ class Basis2D(Basis):
                        Vector3D(p_inv[:, 1]))
 
     def __repr__(self):
-        return '{}: U={}, V={}'.format(self.__class__.__name__, *self.vectors)
+        return "{}: U={}, V={}".format(self.__class__.__name__, *self.vectors)
 
     def _get_vectors(self):
         return (self.u, self.v)
@@ -2331,15 +2348,16 @@ class Basis2D(Basis):
         .. seealso::
             How `serialization and deserialization`_ works in dessia_common
 
-        .. _serialization and deserialization: https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {'object_class': 'volmdlr.Basis2D',
-                'name': self.name,
-                'u': self.u.to_dict(),
-                'v': self.v.to_dict()
+        return {"object_class": "volmdlr.Basis2D",
+                "name": self.name,
+                "u": self.u.to_dict(),
+                "v": self.v.to_dict()
                 }
 
-    def to_frame(self, origin: Point2D) -> 'Frame2D':
+    def to_frame(self, origin: Point2D) -> "Frame2D":
         """
         Returns the 2 dimensional frame oriented the same way as the Basis2D
         and having for origin the given 2 dimensional point.
@@ -2471,7 +2489,7 @@ class Basis2D(Basis):
     def normalize(self):
         """
         Normalizes the basis, modifying its coordinates in place.
-        
+
         :return: None
         :rtype: None
         """
@@ -2496,7 +2514,7 @@ class Basis3D(Basis):
     _standalone_in_db = False
 
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
-    def __init__(self, u: Vector3D, v: Vector3D, w: Vector3D, name: Text = ''):
+    def __init__(self, u: Vector3D, v: Vector3D, w: Vector3D, name: Text = ""):
         self.u = u
         self.v = v
         self.w = w
@@ -2546,7 +2564,7 @@ class Basis3D(Basis):
                                round(self.w, ndigits)))
 
     def __repr__(self):
-        return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, *self.vectors)
+        return "{}: U={}, V={}, W={}".format(self.__class__.__name__, *self.vectors)
 
     def _get_vectors(self):
         return (self.u, self.v, self.w)
@@ -2561,20 +2579,21 @@ class Basis3D(Basis):
         .. seealso::
             How `serialization and deserialization`_ works in dessia_common
 
-        .. _serialization and deserialization: https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {'object_class': 'volmdlr.Basis3D',
-                'name': self.name,
-                'u': self.u.to_dict(),
-                'v': self.v.to_dict(),
-                'w': self.w.to_dict()
+        return {"object_class": "volmdlr.Basis3D",
+                "name": self.name,
+                "u": self.u.to_dict(),
+                "v": self.v.to_dict(),
+                "w": self.w.to_dict()
                 }
 
     vectors = property(_get_vectors)
 
     # TODO: transform to annotation when available
     @classmethod
-    def from_two_vectors(cls, vector1: Vector3D, vector2: Vector3D) -> 'Basis3D':
+    def from_two_vectors(cls, vector1: Vector3D, vector2: Vector3D) -> "Basis3D":
         """
         Creates a basis with first vector1 adimensionned, as u, v is the
         vector2 substracted of u component, w is the cross product of u and v.
@@ -2603,7 +2622,7 @@ class Basis3D(Basis):
         """
         return Frame3D(origin, self.u, self.v, self.w)
 
-    def rotation(self, axis: Vector3D, angle:float):
+    def rotation(self, axis: Vector3D, angle: float):
         """
         Rotates the 3 dimensional basis and returns a new rotated one.
 
@@ -2639,7 +2658,7 @@ class Basis3D(Basis):
         self.v = new_v
         self.w = new_w
 
-    def x_rotation(self, angle:float):
+    def x_rotation(self, angle: float):
         """
         Rotates the basis around the X axis and a new basis is returned
         as a result.
@@ -2653,7 +2672,6 @@ class Basis3D(Basis):
         new_v = self.v.x_rotation(angle)
         new_w = self.w.x_rotation(angle)
         return Basis3D(new_u, new_v, new_w, self.name)
-
 
     def x_rotation_inplace(self, angle: float):
         """
@@ -2669,7 +2687,7 @@ class Basis3D(Basis):
         self.v = self.v.x_rotation(angle)
         self.w = self.w.x_rotation(angle)
 
-    def y_rotation(self, angle:float):
+    def y_rotation(self, angle: float):
         """
         Rotates the basis around the Y axis and a new basis is returned
         as a result.
@@ -2684,7 +2702,7 @@ class Basis3D(Basis):
         new_w = self.w.y_rotation(angle)
         return Basis3D(new_u, new_v, new_w, self.name)
 
-    def y_rotation_inplace(self, angle):
+    def y_rotation_inplace(self, angle: float):
         """
         Rotates the basis around the Y axis and its parameters are
         changed inplace.
@@ -2698,7 +2716,7 @@ class Basis3D(Basis):
         self.v = self.v.y_rotation(angle)
         self.w = self.w.y_rotation(angle)
 
-    def z_rotation(self, angle:float):
+    def z_rotation(self, angle: float):
         """
         Rotates the basis around the Z axis and a new basis is returned
         as a result.
@@ -2921,12 +2939,12 @@ class Frame2D(Basis2D):
     :param v:Vector2D: second vector of the basis
     """
 
-    def __init__(self, origin: Point2D, u: Vector2D, v: Vector2D, name: Text = ''):
+    def __init__(self, origin: Point2D, u: Vector2D, v: Vector2D, name: Text = ""):
         self.origin = origin
         Basis2D.__init__(self, u, v, name=name)
 
     def __repr__(self):
-        return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
+        return "{}: O={} U={}, V={}".format(self.__class__.__name__, self.origin, self.u, self.v)
 
     def __neg__(self):
         Pinv = self.inverse_transfer_matrix()
@@ -2974,13 +2992,14 @@ class Frame2D(Basis2D):
         .. seealso::
             How `serialization and deserialization`_ works in dessia_common
 
-        .. _serialization and deserialization: https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {'object_class': 'volmdlr.Frame2D',
-                'name': self.name,
-                'origin': self.origin.to_dict(),
-                'u': self.u.to_dict(),
-                'v': self.v.to_dict()
+        return {"object_class": "volmdlr.Frame2D",
+                "name": self.name,
+                "origin": self.origin.to_dict(),
+                "u": self.u.to_dict(),
+                "v": self.v.to_dict()
                 }
 
     def basis(self):
@@ -3048,20 +3067,18 @@ class Frame2D(Basis2D):
         """
         return Basis2D.local_to_global_coordinates(self, vector) + self.origin
 
-
-    def frame_mapping(self, frame: 'Frame2D', side: str):
+    def frame_mapping(self, frame: "Frame2D", side: str):
         basis = frame.basis()
-        if side == 'new':
+        if side == "new":
             new_origin = frame.new_coordinates(self.origin)
             new_u = basis.new_coordinates(self.u)
             new_v = basis.new_coordinates(self.v)
-        elif side == 'old':
+        elif side == "old":
             new_origin = frame.old_coordinates(self.origin)
             new_u = basis.old_coordinates(self.u)
             new_v = basis.old_coordinates(self.v)
         else:
-            raise ValueError('side value not valid, please specify'
-                              'a correct value: \'old\' or \'new\'')
+            raise ValueError("side value not valid, please specify a correct value: \'old\' or \'new\'")
         return Frame2D(new_origin, new_u, new_v)
 
     def translation(self, vector):
@@ -3112,7 +3129,7 @@ class Frame2D(Basis2D):
         self.u = new_base.u
         self.v = new_base.v
 
-    def Draw(self, ax=None, style='ok'):
+    def Draw(self, ax=None, style="ok"):
         """
         # TODO : unused ? to be deleted ?
 
@@ -3124,9 +3141,9 @@ class Frame2D(Basis2D):
             fig, ax = plt.subplots()
 
         ax.plot(*self.origin, style)
-        self.u.plot(origin=self.origin, ax=ax, color='r')
-        self.v.plot(origin=self.origin, ax=ax, color='g')
-        ax.axis('equal')
+        self.u.plot(origin=self.origin, ax=ax, color="r")
+        self.v.plot(origin=self.origin, ax=ax, color="g")
+        ax.axis("equal")
 
     def copy(self, deep=True, memo=None):
         """
@@ -3152,13 +3169,13 @@ class Frame3D(Basis3D):
     :param w:Vector3D: third vector of the basis
     """
 
-    def __init__(self, origin: Point3D, u: Vector3D, v: Vector3D, w: Vector3D, name: Text = ''):
+    def __init__(self, origin: Point3D, u: Vector3D, v: Vector3D, w: Vector3D, name: Text = ""):
         self.origin = origin
         Basis3D.__init__(self, u, v, w)
         self.name = name
 
     def __repr__(self):
-        return '{}: O={} U={}, V={}, W={}'.format(self.__class__.__name__,
+        return "{}: O={} U={}, V={}, W={}".format(self.__class__.__name__,
                                                   self.origin,
                                                   self.u, self.v, self.w)
 
@@ -3231,14 +3248,15 @@ class Frame3D(Basis3D):
         .. seealso::
             How `serialization and deserialization`_ works in dessia_common
 
-        .. _serialization and deserialization: https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {'object_class': 'volmdlr.Frame3D',
-                'name': self.name,
-                'origin': self.origin.to_dict(),
-                'u': self.u.to_dict(),
-                'v': self.v.to_dict(),
-                'w': self.w.to_dict()
+        return {"object_class": "volmdlr.Frame3D",
+                "name": self.name,
+                "origin": self.origin.to_dict(),
+                "u": self.u.to_dict(),
+                "v": self.v.to_dict(),
+                "w": self.w.to_dict()
                 }
 
     # @classmethod
@@ -3315,24 +3333,23 @@ class Frame3D(Basis3D):
         """
         return Basis3D.local_to_global_coordinates(self, vector) + self.origin
 
-    def frame_mapping(self, frame: 'Frame3D', side: str):
+    def frame_mapping(self, frame: "Frame3D", side: str):
         basis = frame.basis()
-        if side == 'new':
+        if side == "new":
             new_origin = frame.new_coordinates(self.origin)
             new_u = basis.new_coordinates(self.u)
             new_v = basis.new_coordinates(self.v)
             new_w = basis.new_coordinates(self.w)
 
-        elif side == 'old':
+        elif side == "old":
             new_origin = frame.old_coordinates(self.origin)
             new_u = basis.old_coordinates(self.u)
             new_v = basis.old_coordinates(self.v)
             new_w = basis.old_coordinates(self.w)
         else:
-            raise ValueError('side value not valid, please specify'
+            raise ValueError("side value not valid, please specify"
                              'a correct value: \'old\' or \'new\'')
         return Frame3D(new_origin, new_u, new_v, new_w)
-
 
     def rotation(self, center: Point3D, axis: Vector3D, angle: float):
         """
@@ -3431,7 +3448,7 @@ class Frame3D(Basis3D):
             .format(current_id, self.name, origin_id, u_id, v_id)
         return content, current_id
 
-    def plot2d(self, x=X3D, y=Y3D, ax=None, color='k'):
+    def plot2d(self, x=X3D, y=Y3D, ax=None, color="k"):
         """
         Plots the 3 dimensional frame on a 2 dimensional surface given
         by (x, y).
@@ -3465,7 +3482,7 @@ class Frame3D(Basis3D):
 
         return fig, ax
 
-    def plot(self, ax=None, color='b', alpha=1., plot_points=True,
+    def plot(self, ax=None, color="b", alpha=1., plot_points=True,
              ratio=1.):
         """
         Plots the 3 dimensional frame.
@@ -3488,22 +3505,22 @@ class Frame3D(Basis3D):
         """
         if ax is None:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
 
         x1 = [p.x for p in (self.origin, self.origin + self.u * ratio)]
         y1 = [p.y for p in (self.origin, self.origin + self.u * ratio)]
         z1 = [p.z for p in (self.origin, self.origin + self.u * ratio)]
-        ax.plot(x1, y1, z1, 'r')
+        ax.plot(x1, y1, z1, "r")
 
         x2 = [p.x for p in (self.origin, self.origin + self.v * ratio)]
         y2 = [p.y for p in (self.origin, self.origin + self.v * ratio)]
         z2 = [p.z for p in (self.origin, self.origin + self.v * ratio)]
-        ax.plot(x2, y2, z2, 'g')
+        ax.plot(x2, y2, z2, "g")
 
         x3 = [p.x for p in (self.origin, self.origin + self.w * ratio)]
         y3 = [p.y for p in (self.origin, self.origin + self.w * ratio)]
         z3 = [p.z for p in (self.origin, self.origin + self.w * ratio)]
-        ax.plot(x3, y3, z3, 'b')
+        ax.plot(x3, y3, z3, "b")
         return ax
 
     @classmethod
@@ -3520,11 +3537,11 @@ class Frame3D(Basis3D):
         :rtype: :class:`volmdlr.Frame3D`
         """
         origin = object_dict[arguments[1]]
-        if arguments[2] == '$':
+        if arguments[2] == "$":
             u = None
         else:
             u = object_dict[arguments[2]]
-        if arguments[3] == '$':
+        if arguments[3] == "$":
             v = None
         else:
             v = object_dict[arguments[3]]
@@ -3563,10 +3580,10 @@ class Frame3D(Basis3D):
 
         if vector == main_axis:
             # The local frame is oriented like the global frame
-            return cls(O3D, X3D, Y3D, Z3D)
+            return cls(point, X3D, Y3D, Z3D)
 
         if vector == -main_axis:
-            return cls(O3D, -X3D, -Y3D, -Z3D)
+            return cls(point, -X3D, -Y3D, -Z3D)
 
         # The local frame is oriented differently from the global frame
         # Rotation angle
@@ -3584,35 +3601,35 @@ class Frame3D(Basis3D):
 
         return cls(point, u, v, w)
 
-    def babylonjs(self, size=0.1, parent=None):
-        """
-        # TODO: to be deleted ?
-        Returns the babylonjs script for 3D display in browser.
+    # def babylonjs(self, size=0.1, parent=None):
+    #     """
+    #     # TODO: to be deleted ?
+    #     Returns the babylonjs script for 3D display in browser.
 
-        :param size: The adjustable size of the 3 dimensional frame. Default
-            value is 0.1
-        :type size: float, optional
-        :param parent:
-        :type parent:
-        :return: A babylonjs script
-        :rtype: str
-        """
-        s = 'var origin = new BABYLON.Vector3({},{},{});\n'.format(*self.origin)
-        s += 'var o_u = new BABYLON.Vector3({}, {}, {});\n'.format(*(size * self.u + self.origin))
-        s += 'var o_v = new BABYLON.Vector3({}, {}, {});\n'.format(*(size * self.v + self.origin))
-        s += 'var o_w = new BABYLON.Vector3({}, {}, {});\n'.format(*(size * self.w + self.origin))
-        s += 'var line1 = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: [origin, o_u], radius: {}}}, scene);'.format(
-            0.03 * size)
-        s += 'line1.material = red_material;\n'
-        s += 'var line2 = BABYLON.MeshBuilder.CreateTube("frame_V", {{path: [origin, o_v], radius: {}}}, scene);'.format(
-            0.03 * size)
-        s += 'line2.material = green_material;\n'
-        s += 'var line3 = BABYLON.MeshBuilder.CreateTube("frame_W", {{path: [origin, o_w], radius: {}}}, scene);'.format(
-            0.03 * size)
-        s += 'line3.material = blue_material;\n'
-        if parent is not None:
-            s += 'line1.parent = {};\n'.format(parent)
-            s += 'line2.parent = {};\n'.format(parent)
-            s += 'line3.parent = {};\n'.format(parent)
+    #     :param size: The adjustable size of the 3 dimensional frame. Default
+    #         value is 0.1
+    #     :type size: float, optional
+    #     :param parent:
+    #     :type parent:
+    #     :return: A babylonjs script
+    #     :rtype: str
+    #     """
+    #     s = "var origin = new BABYLON.Vector3({},{},{});\n".format(*self.origin)
+    #     s += "var o_u = new BABYLON.Vector3({}, {}, {});\n".format(*(size * self.u + self.origin))
+    #     s += "var o_v = new BABYLON.Vector3({}, {}, {});\n".format(*(size * self.v + self.origin))
+    #     s += "var o_w = new BABYLON.Vector3({}, {}, {});\n".format(*(size * self.w + self.origin))
+    #     s += 'var line1 = BABYLON.MeshBuilder.CreateTube("frame_U",{{path:[origin, o_u], radius:{}}},scene);'.format(
+    #         0.03 * size)
+    #     s += "line1.material = red_material;\n"
+    #     s += 'var line2 = BABYLON.MeshBuilder.CreateTube("frame_V",{{path:[origin, o_v], radius:{}}},scene);'.format(
+    #         0.03 * size)
+    #     s += "line2.material = green_material;\n"
+    #     s += 'var line3 = BABYLON.MeshBuilder.CreateTube("frame_W",{{path:[origin, o_w], radius:{}}},scene);'.format(
+    #         0.03 * size)
+    #     s += "line3.material = blue_material;\n"
+    #     if parent is not None:
+    #         s += "line1.parent = {};\n".format(parent)
+    #         s += "line2.parent = {};\n".format(parent)
+    #         s += "line3.parent = {};\n".format(parent)
 
-        return s
+    #     return s

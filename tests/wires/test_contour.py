@@ -2,13 +2,14 @@
 Unit tests for volmdlr.wires.Contour
 """
 import unittest
+
 import volmdlr.wires
 
 
 class TestContour(unittest.TestCase):
 
     def test_is_overlapping(self):
-        p1 = [volmdlr.Point2D(-0.2, -0.2), volmdlr.Point2D(0.2, -0.2), 
+        p1 = [volmdlr.Point2D(-0.2, -0.2), volmdlr.Point2D(0.2, -0.2),
               volmdlr.Point2D(0.2, 0.2), volmdlr.Point2D(-0.2, 0.2)]
 
         contour1 = volmdlr.wires.ClosedPolygon2D(p1)

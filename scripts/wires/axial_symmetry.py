@@ -7,10 +7,11 @@
 
 # %% Librairies
 
+import matplotlib.pyplot as plt
+
 import volmdlr as vm
 import volmdlr.edges
 import volmdlr.wires
-import matplotlib.pyplot as plt
 
 # %% Initial Data
 

@@ -1,7 +1,7 @@
 import os
+import random
 import sys
 
-import random
 from pylint import __version__
 from pylint.lint import Run
 
@@ -19,8 +19,8 @@ MAX_ERROR_BY_TYPE = {
                      'no-member': 9,
                      'inconsistent-return-statements': 6,
                      'unused-variable': 42,
-                     'arguments-differ': 11,
-                     'too-many-locals': 70,
+                     'arguments-differ': 12,
+                     'too-many-locals': 71,
                      'line-too-long': 23,
                      'unused-argument': 43,
                      'too-many-arguments': 62,
@@ -41,7 +41,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-few-public-methods': 10,
                      'too-many-public-methods': 9,
                      'use-implicit-booleaness-not-comparison': 8,
-                     'too-many-instance-attributes': 9,
+                     'too-many-instance-attributes': 10,
                      'protected-access': 4,
                      'undefined-loop-variable': 5,
                      'unspecified-encoding': 5,

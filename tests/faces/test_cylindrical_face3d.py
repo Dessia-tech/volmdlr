@@ -2,7 +2,7 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import faces, edges
+from volmdlr import edges, faces
 
 
 class TestCylindricalFace3D(unittest.TestCase):

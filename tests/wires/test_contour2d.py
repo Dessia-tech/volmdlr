@@ -3,8 +3,8 @@ import unittest
 from dessia_common.core import DessiaObject
 
 import volmdlr
+from volmdlr import edges, wires
 from volmdlr.models.contours import contour2d_1, contour2d_2
-from volmdlr import wires, edges
 
 
 class TestContour2D(unittest.TestCase):
