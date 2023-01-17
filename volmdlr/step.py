@@ -499,6 +499,7 @@ class Step(dc.DessiaObject):
     Defines the Step class.
 
     """
+
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines
         self.functions, self.all_connections = self.read_lines()
