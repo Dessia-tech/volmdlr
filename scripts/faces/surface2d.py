@@ -5,8 +5,8 @@ Surface2D examples
 """
 
 import volmdlr
-import volmdlr.primitives2d as p2d
 import volmdlr.faces as faces
+import volmdlr.primitives2d as p2d
 import volmdlr.wires as wires
 
 l = 0.12

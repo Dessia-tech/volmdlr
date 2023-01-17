@@ -31,5 +31,3 @@ Core objects 3D
 
 .. autoclass:: volmdlr.Frame3D
   :members:
-
-

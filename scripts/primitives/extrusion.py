@@ -7,11 +7,12 @@ Created on Fri Mar  3 09:56:29 2017
 """
 
 import numpy as npy
+
 import volmdlr as vm
 import volmdlr.edges as edges
-import volmdlr.wires as wires
-import volmdlr.primitives3d as primitives3d
 import volmdlr.primitives2d as primitives2d
+import volmdlr.primitives3d as primitives3d
+import volmdlr.wires as wires
 
 p1 = vm.Point2D(0, 0)
 p2 = vm.Point2D(0.1, 0.)

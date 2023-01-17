@@ -6,8 +6,9 @@ Created on Thu Apr  2 14:09:52 2020
 """
 
 
-import volmdlr as vm
 import math
+
+import volmdlr as vm
 
 Gradius = 8e-3 #Grand radius
 Sradius = 3e-3 #Small radius
