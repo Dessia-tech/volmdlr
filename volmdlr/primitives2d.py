@@ -5,7 +5,6 @@ Extended primitives 2D classes.
 """
 
 import math
-import warnings
 
 import matplotlib.patches
 
@@ -31,12 +30,6 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                                      name='')
 
         volmdlr.wires.Wire2D.__init__(self, self._primitives(), name)
-
-    @property
-    def bounding_rectangle(self):
-        if not self._bounding_rectangle:
-            self._bounding_rectangle = self.get_bouding_rectangle()
-        return self._bounding_rectangle
 
     def arc_features(self, point_index: int):
         """

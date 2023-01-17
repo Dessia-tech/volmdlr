@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Performance improvements
-
+* wires.py's 2D objects: chache bounding_rectangle results
 
 ### Refactorings
 

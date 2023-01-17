@@ -70,10 +70,10 @@ def bounding_rectangle_adjacent_contours(contours: List):
     :return: The bounding box
     :rtype: :class:`volmdlr.core.BoundingRectangle`
     """
-    xmin, xmax, ymin, ymax = contours[0].bounding_rectangle().bounds()
+    xmin, xmax, ymin, ymax = contours[0].bounding_rectangle.bounds()
 
     for i in range(1, len(contours)):
-        xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle().bounds()
+        xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle.bounds()
         xmin = min(xmin, xmin_contour)
         xmax = max(xmax, xmax_contour)
         ymin = min(ymin, ymin_contour)
@@ -773,6 +773,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                 intersections_points.extend(intersections_linesegments)
         return intersections_points
 
+    @property
     def bounding_rectangle(self):
         if not self._bounding_rectangle:
             self._bounding_rectangle = self.get_bouding_rectangle()
@@ -1525,7 +1526,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def point_belongs(self, point, include_edge_points: bool = False):
         # TODO: This is incomplete!!!
-        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.bounding_rectangle
         if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
             return False
         # if self.edge_polygon.point_belongs(point):
@@ -1657,7 +1658,7 @@ class Contour2D(ContourMixin, Wire2D):
         :return: A random point inside the polygon
         :rtype: `volmdlr.Point2D`
         """
-        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
+        xmin, xmax, ymin, ymax = self.bounding_rectangle.bounds()
         for _ in range(2000):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
             if self.point_belongs(p, include_edge_points):
@@ -3072,7 +3073,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         :return: Discretization data.
         :rtype: list
         """
-        xmin, xmax, ymin, ymax = self.bounding_rectangle().bounds()
+        xmin, xmax, ymin, ymax = self.bounding_rectangle.bounds()
 
         n = number_points_x + 2
         m = number_points_y + 2
@@ -3725,7 +3726,7 @@ class Circle2D(Contour2D):
             return point.point_distance(self.center) <= self.radius
         return point.point_distance(self.center) < self.radius
 
-    def bounding_rectangle(self):
+    def get_bounding_rectangle(self):
 
         xmin = self.center.x - self.radius
         xmax = self.center.x + self.radius

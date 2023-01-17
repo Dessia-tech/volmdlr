@@ -208,7 +208,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
             if triangulates_with_grid:
                 # removes with a region search the grid points that are in the inner contour
-                xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle().bounds()
+                xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
                 x_grid_range = array_range_search(x, xmin, xmax)
                 y_grid_range = array_range_search(y, ymin, ymax)
                 for i in x_grid_range:
@@ -262,7 +262,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         Split in n slices.
         """
-        bounding_rectangle = self.outer_contour.bounding_rectangle()
+        bounding_rectangle = self.outer_contour.bounding_rectangle
         lines = []
         for i in range(n - 1):
             xi = bounding_rectangle[0] + (i + 1) * (bounding_rectangle[1] - bounding_rectangle[0]) / n
@@ -615,7 +615,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         """
 
-        return self.outer_contour.bounding_rectangle()
+        return self.outer_contour.bounding_rectangle
 
     @classmethod
     def from_contours(cls, outer_contour, inner_contours):
@@ -4245,15 +4245,15 @@ class BSplineSurface3D(Surface3D):
             direction = cylindrical_faces[0].adjacent_direction(cylindrical_faces[1])
 
             if direction == 'x':
-                bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle()
+                bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle
                 ymin = bounding_rectangle_0[2]
                 ymax = bounding_rectangle_0[3]
                 for face in cylindrical_faces:
-                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle
                     ymin = min(ymin, bounding_rectangle[2])
                     ymax = max(ymax, bounding_rectangle[3])
                 for face in cylindrical_faces:
-                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle
 
                     points_3d = face.surface3d.grid3d(
                         volmdlr.grid.Grid2D.from_properties(
@@ -4266,15 +4266,15 @@ class BSplineSurface3D(Surface3D):
                             points_3d, points_x, points_y, degree_u, degree_v))
 
             elif direction == 'y':
-                bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle()
+                bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle
                 xmin = bounding_rectangle_0[0]
                 xmax = bounding_rectangle_0[1]
                 for face in cylindrical_faces:
-                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle
                     xmin = min(xmin, bounding_rectangle[0])
                     xmax = max(xmax, bounding_rectangle[1])
                 for face in cylindrical_faces:
-                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle
 
                     points_3d = face.surface3d.grid3d(
                         volmdlr.grid.Grid2D.from_properties(
@@ -4322,7 +4322,7 @@ class BSplineSurface3D(Surface3D):
 
         points_x = kwargs['points_x']
         points_y = kwargs['points_y']
-        bounding_rectangle = cylindrical_face.surface2d.outer_contour.bounding_rectangle()
+        bounding_rectangle = cylindrical_face.surface2d.outer_contour.bounding_rectangle
         points_3d = cylindrical_face.surface3d.grid3d(
             volmdlr.grid.Grid2D.from_properties(x_limits=(bounding_rectangle[0],
                                                           bounding_rectangle[1]),
@@ -4539,7 +4539,7 @@ class BSplineSurface3D(Surface3D):
         resolution = 8
 
         for contour in contours:
-            u_min, u_max, v_min, v_max = contour.bounding_rectangle().bounds()
+            u_min, u_max, v_min, v_max = contour.bounding_rectangle.bounds()
             if du > dv:
                 delta_u = u_max - u_min
                 nlines_x = int(delta_u * resolution)
@@ -6511,7 +6511,7 @@ class CylindricalFace3D(Face3D):
         return self.outer_contour3d.bounding_box
 
     def triangulation_lines(self, angle_resolution=5):
-        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
+        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle.bounds()
         delta_theta = theta_max - theta_min
         nlines = math.ceil(delta_theta * angle_resolution)
         lines = []
@@ -6921,7 +6921,7 @@ class ToroidalFace3D(Face3D):
         self.center = surface3d.frame.origin
         self.normal = surface3d.frame.w
 
-        theta_min, theta_max, phi_min, phi_max = surface2d.outer_contour.bounding_rectangle().bounds()
+        theta_min, theta_max, phi_min, phi_max = surface2d.outer_contour.bounding_rectangle.bounds()
 
         self.theta_min = theta_min
         self.theta_max = theta_max
@@ -7043,7 +7043,7 @@ class ConicalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
-        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle().bounds()
+        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
 
         xp = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
               + volmdlr.X3D.dot(
