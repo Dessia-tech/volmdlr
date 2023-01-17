@@ -7,12 +7,12 @@ ISO STEP reader/writer.
 import time
 from typing import List
 
+import dessia_common.core as dc
 import matplotlib.pyplot as plt
 import networkx as nx
-
-import dessia_common.core as dc
 import plot_data.graph
 from dessia_common.files import BinaryFile
+
 import volmdlr
 import volmdlr.core
 import volmdlr.edges

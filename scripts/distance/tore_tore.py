@@ -5,13 +5,15 @@ Created on Tue Jun  2 14:15:50 2020
 @author: Mack Pro
 """
 
-import numpy as npy
-import volmdlr as volmdlr
-import volmdlr.primitives3D as primitives3D
-import volmdlr.primitives2D as primitives2D
-import matplotlib.pyplot as plt
-import random
 import math
+import random
+
+import matplotlib.pyplot as plt
+import numpy as npy
+
+import volmdlr as volmdlr
+import volmdlr.primitives2D as primitives2D
+import volmdlr.primitives3D as primitives3D
 
 rmin, rmax = 100, 1000
 posmin, posmax = -100, 100

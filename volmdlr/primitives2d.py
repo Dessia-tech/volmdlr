@@ -6,6 +6,7 @@ Extended primitives 2D classes.
 
 import math
 import warnings
+
 import matplotlib.patches
 
 import volmdlr

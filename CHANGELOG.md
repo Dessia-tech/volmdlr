@@ -82,6 +82,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 ### CI
 
 * Mandatory CHANGELOG.md update for PR
+* pre-commit checks with cython-lint
 
 ## v0.7.0
 
