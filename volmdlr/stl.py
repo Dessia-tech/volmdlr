@@ -11,15 +11,15 @@ import warnings
 # from typing import BinaryIO
 from typing import List
 
-import dessia_common.core as dc
 from binaryornot.check import is_binary
-from dessia_common.files import BinaryFile, StringFile
 # import kaitaistruct
 from kaitaistruct import KaitaiStream
 
+import dessia_common.core as dc
 import volmdlr as vm
 import volmdlr.core as vmc
 import volmdlr.faces as vmf
+from dessia_common.files import BinaryFile, StringFile
 
 # from kaitaistruct import KaitaiStream
 

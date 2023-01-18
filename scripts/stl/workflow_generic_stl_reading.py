@@ -1,7 +1,6 @@
 import dessia_common.workflow as wf
-from dessia_common.typings import MethodType
-
 import volmdlr as vm
+from dessia_common.typings import MethodType
 from volmdlr import stl
 
 read_stl_method_type = wf.blocks.ClassMethodType(class_=vm.stl.Stl, name='from_binary_stream')

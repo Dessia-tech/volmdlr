@@ -13,22 +13,22 @@ import numpy as npy
 import scipy as scp
 import scipy.optimize as opt
 import triangle
-# import dessia_common
-from dessia_common.core import DessiaObject
 from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
 from geomdl.fitting import approximate_surface, interpolate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 
+import volmdlr.bspline_compiled
 import volmdlr.core
 import volmdlr.core_compiled
-import volmdlr.bspline_compiled
-import volmdlr.edges as vme
 import volmdlr.display as vmd
+import volmdlr.edges as vme
 import volmdlr.geometry
 import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
+# import dessia_common
+from dessia_common.core import DessiaObject
 from volmdlr.utils.parametric import array_range_search
 
 # import matplotlib.tri as plt_tri

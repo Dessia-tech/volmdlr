@@ -1,8 +1,7 @@
 import unittest
 
-from dessia_common.core import DessiaObject
-
 import volmdlr
+from dessia_common.core import DessiaObject
 from volmdlr import edges, wires
 from volmdlr.models.contours import contour2d_1, contour2d_2
 

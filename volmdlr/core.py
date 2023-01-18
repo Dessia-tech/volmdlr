@@ -11,11 +11,11 @@ import webbrowser
 from datetime import datetime
 from typing import List
 
-import dessia_common.core as dc
-import dessia_common.files as dcf
 import matplotlib.pyplot as plt
 import numpy as npy
 
+import dessia_common.core as dc
+import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 

@@ -17,12 +17,12 @@ import matplotlib.patches
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as npy
-import plot_data.core as plot_data
 import scipy.integrate as scipy_integrate
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial import ConvexHull, Delaunay
 from triangle import triangulate
 
+import plot_data.core as plot_data
 import volmdlr
 import volmdlr.core
 import volmdlr.display as vmd

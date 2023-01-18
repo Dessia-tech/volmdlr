@@ -8,10 +8,8 @@ import re
 from os.path import dirname, isdir, join
 from subprocess import CalledProcessError, check_output
 
-from setuptools import setup
-
 from Cython.Build import cythonize  # isort: skip This prevent a build bug
-
+from setuptools import setup
 
 tag_re = re.compile(r"\btag: %s([0-9][^,]*)\b")
 version_re = re.compile("^Version: (.+)$", re.M)
