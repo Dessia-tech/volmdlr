@@ -6,7 +6,6 @@ Cloud of points classes
 import math
 from typing import List, Tuple
 
-import dessia_common.core as dc
 import matplotlib.pyplot as plt
 
 from trimesh.proximity import closest_point
