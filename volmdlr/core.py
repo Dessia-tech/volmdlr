@@ -13,7 +13,7 @@ from typing import List
 
 import dessia_common.core as dc
 import dessia_common.files as dcf
-import gmsh
+# import gmsh
 import matplotlib.pyplot as plt
 import numpy as npy
 
