@@ -5,6 +5,7 @@ import math
 import unittest
 
 import dessia_common.core as dc
+
 import volmdlr
 from volmdlr import edges, wires
 

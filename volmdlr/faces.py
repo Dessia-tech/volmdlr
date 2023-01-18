@@ -18,8 +18,6 @@ from geomdl.construct import extract_curves
 from geomdl.fitting import approximate_surface, interpolate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 
-from dessia_common.core import DessiaObject  # isort: skip
-
 import volmdlr.bspline_compiled
 import volmdlr.core
 import volmdlr.core_compiled
@@ -31,6 +29,9 @@ import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
 # import dessia_common
 from volmdlr.utils.parametric import array_range_search
+
+from dessia_common.core import DessiaObject  # isort: skip
+
 
 # import matplotlib.tri as plt_tri
 # from pygeodesic import geodesic

@@ -9,10 +9,11 @@ from typing import List
 
 import numpy as npy
 
-from dessia_common.core import DessiaObject  # isort: skip
-
 import volmdlr
 import volmdlr.wires
+
+from dessia_common.core import DessiaObject  # isort: skip
+
 
 
 class Grid2D(DessiaObject):

@@ -7,6 +7,7 @@ Script to show volmdlr capabilities on extrusions
 import math
 
 import plot_data
+
 from volmdlr.models import casing
 from volmdlr.primitives3d import Block
 

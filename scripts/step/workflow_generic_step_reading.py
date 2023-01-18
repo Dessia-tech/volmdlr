@@ -1,8 +1,9 @@
 import io
 
 import dessia_common.workflow as wf
-import volmdlr as vm
 from dessia_common.typings import MethodType
+
+import volmdlr as vm
 from volmdlr import step
 
 read_step_method_type = wf.blocks.ClassMethodType(

@@ -6,9 +6,9 @@ Cloud of points classes
 import math
 from typing import List
 
+import dessia_common.core as dc
 import matplotlib.pyplot as plt
 
-import dessia_common.core as dc
 import volmdlr as vm
 import volmdlr.faces as vmf
 import volmdlr.primitives3d as p3d

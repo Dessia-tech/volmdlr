@@ -9,9 +9,9 @@
 
 import json
 
+import dessia_common.core as dc
 import geomdl
 
-import dessia_common.core as dc
 import volmdlr as vm
 import volmdlr.faces as vmf
 

@@ -8,12 +8,12 @@ import math
 from random import uniform
 from typing import Dict, List, Tuple
 
+import dessia_common.core as dc
 import matplotlib.pyplot as plt
 import numpy as npy
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 from scipy.stats import qmc
 
-import dessia_common.core as dc
 import volmdlr
 import volmdlr.core
 import volmdlr.edges

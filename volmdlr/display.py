@@ -8,6 +8,7 @@ import math
 from typing import List, Tuple
 
 import dessia_common.core as dc
+
 import volmdlr.edges
 
 # import volmdlr.faces as vmf

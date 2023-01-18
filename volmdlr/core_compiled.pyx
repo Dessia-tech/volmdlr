@@ -14,11 +14,10 @@ from typing import Any, Dict, List, Text, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as npy
-from matplotlib.patches import FancyArrow, FancyArrowPatch
-from mpl_toolkits.mplot3d import proj3d
-
 import plot_data
 from dessia_common.core import DessiaObject
+from matplotlib.patches import FancyArrow, FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
 
 # =============================================================================
 

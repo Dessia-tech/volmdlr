@@ -3,9 +3,9 @@ Unit tests for volmdlr.faces.BSplineCurve
 """
 import unittest
 
+import dessia_common
 from geomdl import BSpline
 
-import dessia_common
 import volmdlr
 import volmdlr.edges as vme
 from volmdlr.models import bspline_curves
