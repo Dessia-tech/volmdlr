@@ -3380,7 +3380,8 @@ class BSplineSurface3D(Surface3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        BSplineSurface3D translation. Object is updated inplace
+        BSplineSurface3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         new_bsplinesurface3d = self.translation(offset)
