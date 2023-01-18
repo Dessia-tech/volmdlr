@@ -9,6 +9,7 @@ Cython functions for bspline
 # from __future__ import annotations
 from math import factorial
 from functools import lru_cache
+import cython
 
 
 @lru_cache(maxsize=10000)
@@ -246,7 +247,7 @@ def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
             # Deep copying might seem a little overkill but we also want to avoid same pointer issues too
             # v = copy.deepcopy(SKLw[k][l])
             v = SKLw[k][li]
-            for j in range(1, l + 1):
+            for j in range(1, li + 1):
                 drv = SKL[k][li - j]
                 for ii in range(dimension - 1):
                     tmp[ii] = v[ii] - (binomial_coefficient(li, j) * SKLw[0][j][-1] * drv[ii])
