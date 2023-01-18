@@ -2579,10 +2579,13 @@ class SphericalSurface3D(Surface3D):
 
         elif (positive_singularity or negative_singularity) and \
                 math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
+            if abs(phi1) == 0.5 * math.pi:
+                return [vme.LineSegment2D(volmdlr.Point2D(theta3, phi1), volmdlr.Point2D(theta2, phi2))]
             if theta1 == math.pi and theta2 != math.pi:
                 theta1 = -math.pi
             if theta2 == math.pi and theta1 != math.pi:
                 theta2 = -math.pi
+
             return [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
                     vme.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta2, half_pi),
                                       name="construction"),
@@ -2654,22 +2657,37 @@ class SphericalSurface3D(Surface3D):
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             if theta1 > theta3:
                 p1 = volmdlr.Point2D(theta1, phi1)
-                p2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
+                p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi2)
             elif theta1 < theta3:
                 p1 = volmdlr.Point2D(theta1, phi1)
-                p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi2)
+                p2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
             return [vme.LineSegment2D(p1, p2)]
 
-        if self.frame.w.dot(fullarc3d.normal) == 0:
+        if math.isclose(self.frame.w.dot(fullarc3d.normal), 0, abs_tol=1e-4):
+            theta_plus_pi = theta1 + math.pi
+            if theta1 > theta3:
+                theta_plus_pi = theta1 - math.pi
+            elif theta1 < theta3:
+                theta_plus_pi = theta1 + math.pi
+            half_pi = 0.5 * math.pi
             if phi1 > phi3:
-                p1 = volmdlr.Point2D(theta1, phi1)
-                p2 = volmdlr.Point2D(theta2, phi1 + math.pi)
+                # p1 = volmdlr.Point2D(theta1, phi1)
+                # p2 = volmdlr.Point2D(theta2, phi1 + math.pi)
+                half_pi = 0.5*math.pi
             elif phi1 < phi3:
-                p1 = volmdlr.Point2D(theta1, phi1)
-                p2 = volmdlr.Point2D(theta2, phi1 - math.pi)
-            return [vme.LineSegment2D(p1, p2)]
+                # p1 = volmdlr.Point2D(theta1, phi1)
+                # p2 = volmdlr.Point2D(theta2, phi1 - math.pi)
+                half_pi = -0.5 * math.pi
+            if abs(phi1) == 0.5 * math.pi:
+                return [vme.LineSegment2D(volmdlr.Point2D(theta3, phi1), volmdlr.Point2D(theta3, -half_pi)),
+                        vme.LineSegment2D(volmdlr.Point2D(theta4, -half_pi), volmdlr.Point2D(theta4, phi2))]
 
-        points = [self.point3d_to_2d(p) for p in fullarc3d.discretization_points(angle_resolution=5)]
+            return [vme.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, -half_pi)),
+                    vme.LineSegment2D(volmdlr.Point2D(theta_plus_pi, -half_pi),
+                                      volmdlr.Point2D(theta_plus_pi, half_pi)),
+                    vme.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta1, phi2))]
+
+        points = [self.point3d_to_2d(p) for p in fullarc3d.discretization_points(angle_resolution=10)]
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         theta1 = vm_parametric.repair_start_end_angle_periodicity(theta1, theta3)
