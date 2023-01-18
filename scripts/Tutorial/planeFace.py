@@ -5,11 +5,12 @@ Created on Tue May 26 09:45:01 2020
 @author: Mack Pro
 """
 
-import volmdlr as volmdlr
-import volmdlr.primitives3D as primitives3D
-import volmdlr.primitives2D as primitives2D
-import random
 import math
+import random
+
+import volmdlr as volmdlr
+import volmdlr.primitives2D as primitives2D
+import volmdlr.primitives3D as primitives3D
 
 posmin, posmax = -100, 100
 

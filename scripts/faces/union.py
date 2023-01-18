@@ -5,12 +5,12 @@ Created on Mon Jun 28 11:34:09 2021
 
 @author: dasilva
 """
-import time
-import volmdlr as vm
-import volmdlr.wires as vmw
-import volmdlr.faces as vmf
-
 import math
+import time
+
+import volmdlr as vm
+import volmdlr.faces as vmf
+import volmdlr.wires as vmw
 
 time_before = time.time()
 

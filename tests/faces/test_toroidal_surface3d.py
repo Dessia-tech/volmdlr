@@ -1,8 +1,8 @@
-import unittest
 import math
+import unittest
 
 import volmdlr
-from volmdlr import faces, edges
+from volmdlr import edges, faces
 
 
 class TestToroidalSurface3D(unittest.TestCase):

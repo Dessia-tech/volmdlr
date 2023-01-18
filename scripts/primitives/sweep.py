@@ -7,6 +7,7 @@ Created on Tue Sep 11 15:16:33 2018
 """
 
 import random
+
 import matplotlib.pyplot as plt
 
 import volmdlr as vm

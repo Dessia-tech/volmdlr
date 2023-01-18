@@ -17,18 +17,18 @@ import matplotlib.patches
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as npy
+import plot_data.core as plot_data
 import scipy.integrate as scipy_integrate
 from mpl_toolkits.mplot3d import Axes3D
-from scipy.spatial import Delaunay, ConvexHull
+from scipy.spatial import ConvexHull, Delaunay
 from triangle import triangulate
 
-import plot_data.core as plot_data
-from volmdlr.core_compiled import polygon_point_belongs
 import volmdlr
 import volmdlr.core
 import volmdlr.display as vmd
 import volmdlr.edges
 import volmdlr.utils.intersections as vm_utils_intersections
+from volmdlr.core_compiled import polygon_point_belongs
 
 
 def argmax(list_of_float):
@@ -225,15 +225,15 @@ class WireMixin:
         return self.extract_primitives(point1, primitives[ind[0]], point2,
                                        primitives[ind[1]], inside)
 
-    def abscissa(self, point):
+    def abscissa(self, point, tol=1e-6):
         """
         Compute the curvilinear abscisse of a point on a wire.
 
         """
-        if self.point_over_wire(point, 1e-6):
+        if self.point_over_wire(point, tol):
             length = 0
             for primitive in self.primitives:
-                if primitive.point_belongs(point, 1e-6):
+                if primitive.point_belongs(point, tol):
                     length += primitive.abscissa(point)
                     break
                 length += primitive.length()
@@ -802,7 +802,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     def bounding_box(self):
         if not self._bbox:
             self._bbox = self._bounding_box()
-        return self._bounding_box
+        return self._bbox
 
     def extract(self, point1, primitive1, point2, primitive2):
         return Wire3D(self.extract_primitives(self, point1, primitive1, point2,
@@ -3592,6 +3592,14 @@ class Triangle(ClosedPolygonMixin):
 
 
 class Triangle2D(ClosedPolygon2D):
+    """
+    Defines a triangle 2D.
+
+    :param point1: triangle point 1.
+    :param point2: triangle point 2.
+    :param point3: triangle point3.
+    """
+
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
                  point3: volmdlr.Point2D, name: str = ''):
         # self.point1 = point1
@@ -3688,10 +3696,10 @@ class Circle2D(Contour2D):
 
     def _primitives(self):
         points = [
-            self.center + volmdlr.Point2D(self.center.x + self.radius, self.center.y),
-            self.center + volmdlr.Point2D(self.center.x, self.center.y - self.radius),
-            self.center + volmdlr.Point2D(self.center.x - self.radius, self.center.y),
-            self.center + volmdlr.Point2D(self.center.x, self.center.y + self.radius)]
+            volmdlr.Point2D(self.center.x + self.radius, self.center.y),
+            volmdlr.Point2D(self.center.x, self.center.y - self.radius),
+            volmdlr.Point2D(self.center.x - self.radius, self.center.y),
+            volmdlr.Point2D(self.center.x, self.center.y + self.radius)]
 
         return [volmdlr.edges.Arc2D(points[0], points[1], points[2]),
                 volmdlr.edges.Arc2D(points[2], points[3], points[0])]
@@ -3726,13 +3734,26 @@ class Circle2D(Contour2D):
         return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
 
     def line_intersections(self, line: volmdlr.edges.Line2D, tol=1e-9):
+        """
+        Calculates the intersections between a circle 2D and Line 2D.
+
+        :param line: line to calculate intersections
+        :param tol: tolerence to consider in calculations.
+        :return: circle and line intersections.
+        """
         full_arc_2d = volmdlr.edges.FullArc2D(
             center=self.center, start_end=self.point_at_abscissa(0),
             name=self.name)
         return full_arc_2d.line_intersections(line, tol)
 
-    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment2D,
-                                  tol=1e-9):
+    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment2D, tol=1e-9):
+        """
+        Calculates the intersections between a circle 2D and LineSegment 2D.
+
+        :param linesegment: linesegment to calculate intersections
+        :param tol: tolerence to consider in calculations.
+        :return: circle and linesegment intersections.
+        """
         full_arc_2d = volmdlr.edges.FullArc2D(
             center=self.center, start_end=self.point_at_abscissa(0),
             name=self.name)
@@ -3797,6 +3818,12 @@ class Circle2D(Contour2D):
         return intersections
 
     def length(self):
+        """
+        Calculates the length of the Circle 2D.
+
+        :return: the circle's length.
+        """
+
         return volmdlr.TWO_PI * self.radius
 
     def plot(self, ax=None, color='k', alpha=1,
@@ -3967,7 +3994,8 @@ class Circle2D(Contour2D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 40):
         """
-        discretize a Contour to have "n" points
+        Discretize a Contour to have "n" points.
+
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
@@ -4264,6 +4292,17 @@ class Contour3D(ContourMixin, Wire3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a Contour3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding Contour3D object.
+        :rtype: :class:`volmdlr.wires.Contour3D`
+        """
         name = arguments[0][1:-1]
         raw_edges = []
         # edge_ends = {}
@@ -4713,7 +4752,8 @@ class Circle3D(Contour3D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        discretize a Circle to have "n" points
+        Discretize a Circle to have "n" points.
+
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
@@ -4811,7 +4851,8 @@ class Circle3D(Contour3D):
 
     def point_at_abscissa(self, curvilinear_abscissa):
         """
-        start point is at intersection of frame.u axis
+        Start point is at intersection of frame.u axis.
+
         """
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
@@ -4829,8 +4870,20 @@ class Circle3D(Contour3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a Circle3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding Circle3D object.
+        :rtype: :class:`volmdlr.wires.Circle3D`
+        """
+        unit_conversion_factor = arguments[-1]
         center = object_dict[arguments[1]].origin
-        radius = float(arguments[2]) / 1000
+        radius = float(arguments[2]) * unit_conversion_factor
         if object_dict[arguments[1]].u is not None:
             normal = object_dict[arguments[1]].u
             other_vec = object_dict[arguments[1]].v
@@ -4840,8 +4893,7 @@ class Circle3D(Contour3D):
             normal = object_dict[arguments[1]].v  # ou w
             other_vec = None
         normal.normalize()
-        return cls.from_center_normal(center, normal, radius,
-                                      arguments[0][1:-1])
+        return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
         circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u,
@@ -4890,6 +4942,7 @@ class Circle3D(Contour3D):
     def _bounding_box(self):
         """
         Computes the bounding box.
+
         """
         points = [self.frame.origin + self.radius * v
                   for v in [self.frame.u, -self.frame.u,
@@ -5233,11 +5286,23 @@ class Ellipse3D(Contour3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a Ellipse3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding Ellipse3D object.
+        :rtype: :class:`volmdlr.wires.Ellipse3D`
+        """
+        unit_conversion_factor = arguments[-1]
         center = object_dict[arguments[1]].origin
         normal = object_dict[arguments[1]].u  # ancien w
         major_dir = object_dict[arguments[1]].v  # ancien u
-        major_axis = float(arguments[2]) / 1000
-        minor_axis = float(arguments[3]) / 1000
+        major_axis = float(arguments[2]) * unit_conversion_factor
+        minor_axis = float(arguments[3]) * unit_conversion_factor
         return cls(major_axis, minor_axis, center, normal, major_dir,
                    arguments[0][1:-1])
 
@@ -5829,6 +5894,14 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
 
 class Triangle3D(Triangle):
+    """
+    Defines a triangle 2D.
+
+    :param point1: triangle point 1.
+    :param point2: triangle point 2.
+    :param point3: triangle point3.
+    """
+
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  point3: volmdlr.Point3D, name: str = ''):
         # self.point1 = point1

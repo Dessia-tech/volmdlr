@@ -6,8 +6,10 @@ Created on Thu Apr  2 15:25:47 2020
 """
 
 
-import volmdlr as vm
 import math
+
+import volmdlr as vm
+
 # import matplotlib.pyplot as plt
 
 r1 = 10e-3 #Radius of the generative arc3D

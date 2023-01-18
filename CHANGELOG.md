@@ -5,7 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.8.0 [Unrealeased]
+## v0.9.0 [Unrealeased]
+
+### New Features
+* Unit coversion factor parameter added to the end of the from_step arguments parameter.
+So we can convert the units correctly
+* 
+
+### Fixed
+
+* WireMixin: abscissa (add tolerance as parameter)
+
+
+### Removed
+
+
+### Performance improvements
+
+
+### Refactorings
+
+
+### Unittests
+
+
+
+## v0.8.0 [Testing]
 
 ### New Features
 
@@ -59,8 +84,9 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 ### CI
 
 * Mandatory CHANGELOG.md update for PR
+* pre-commit checks with cython-lint
 
-## v0.7.0 [Testing]
+## v0.7.0
 
 ### New Features
 
@@ -295,7 +321,11 @@ time we have to verify if a point is inside
 * BSplineSurface3D.from_cylindrical_faces (consider **kwargs parameters)
 * Duplicated methods cleaned
 * triangulation of planar faces
+* Wire3D: fix Bounding box
 * Wire3D: Bounding box
+* Arc2D: primitives bad calculation (arc2d)
+* Update plotdata in setup.py
+* add some fixes pydocstyle
 
 ### Performance improvements
 

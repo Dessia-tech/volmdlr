@@ -7,27 +7,26 @@ Edges related classes.
 import math
 import sys
 import warnings
-from typing import List, Dict, Any, Union
+from typing import Any, Dict, List, Union
 
+import dessia_common.core as dc
 import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as npy
+import plot_data.core as plot_data
 import scipy as scp
-import scipy.optimize
 import scipy.integrate as scipy_integrate
-
-from geomdl import utilities, BSpline, fitting, operations, NURBS
+import scipy.optimize
+from geomdl import NURBS, BSpline, fitting, operations, utilities
 from geomdl.operations import length_curve, split_curve
 from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
 
-import plot_data.core as plot_data
-import dessia_common.core as dc
-import volmdlr.utils.intersections as vm_utils_intersections
-import volmdlr.core_compiled
 import volmdlr.core
+import volmdlr.core_compiled
 import volmdlr.geometry
+import volmdlr.utils.intersections as vm_utils_intersections
 
 
 def standardize_knot_vector(knot_vector):
@@ -128,6 +127,17 @@ class Edge(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to an Edge type object.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding Edge object
+        :rtype: :class:`volmdlr.edges.Edge`
+        """
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
@@ -2559,7 +2569,7 @@ class Arc2D(Arc):
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   anticlockwise: bool = None):
 
-        list_node = self.discretization_points()
+        list_node = self.discretization_points(number_points=5)
         data = []
         for nd in list_node:
             data.append({'x': nd.x, 'y': nd.y})
@@ -2905,6 +2915,9 @@ class FullArc2D(Arc2D):
 
         return []
 
+    def reverse(self):
+        return self
+
 
 class ArcEllipse2D(Edge):
     """
@@ -3024,7 +3037,7 @@ class ArcEllipse2D(Edge):
             self.offset_angle = angle2
 
     def _get_points(self):
-        return self.discretization_points()
+        return self.discretization_points(number_points=20)
 
     points = property(_get_points)
 
@@ -3501,6 +3514,17 @@ class Line3D(Line):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to an Line3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding Line3D object
+        :rtype: :class:`volmdlr.edges.Line3D`
+        """
         point1 = object_dict[arguments[1]]
         direction = object_dict[arguments[2]]
         point2 = point1 + direction
@@ -4303,6 +4327,17 @@ class BSplineCurve3D(BSplineCurve):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a BSplineCurve3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding BSplineCurve3D.
+        :rtype: :class:`volmdlr.edges.BSplineCurve3D`
+        """
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
@@ -4326,7 +4361,7 @@ class BSplineCurve3D(BSplineCurve):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
 
-        if 9 in range(len(arguments)):
+        if 10 in range(len(arguments)):
             weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
         else:
             weight_data = None
@@ -5647,6 +5682,13 @@ class FullArc3D(Arc3D):
             return [volmdlr.Point3D(x_coordinate, y_coordinate, self.frame.origin.z)]
         return []
 
+    def reverse(self):
+        """
+        Defines a new FullArc3D, odentical to self, but in the oposite direction.
+
+        """
+        return self
+
 
 class ArcEllipse3D(Edge):
     """
@@ -5763,7 +5805,7 @@ class ArcEllipse3D(Edge):
             self.offset_angle = angle2
 
         volmdlr.core.CompositePrimitive3D.__init__(self,
-                                                   primitives=self.discretization_points(),
+                                                   primitives=self.discretization_points(number_points=10),
                                                    name=name)
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
@@ -5806,7 +5848,7 @@ class ArcEllipse3D(Edge):
         return self.discretization_points(angle_resolution=discretization_resolution)
 
     def _get_points(self):
-        return self.discretization_points()
+        return self.discretization_points(number_points=20)
     points = property(_get_points)
 
     def to_2d(self, plane_origin, x, y):

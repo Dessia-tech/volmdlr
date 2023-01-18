@@ -6,12 +6,13 @@ Created on Wed Nov  6 10:25:22 2019
 @author: ringhausen
 """
 
+import math
+
 import volmdlr as vm
 import volmdlr.edges as vme
-import volmdlr.wires as vmw
-import volmdlr.primitives3d as p3d
 import volmdlr.primitives2d as p2d
-import math
+import volmdlr.primitives3d as p3d
+import volmdlr.wires as vmw
 
 #%%
 
