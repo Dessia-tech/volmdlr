@@ -2753,10 +2753,10 @@ class SphericalSurface3D(Surface3D):
                 delta = previous_primitive.end - primitives2d[i].start
                 dist = delta.norm()
                 if not math.isclose(delta.norm(), 0, abs_tol=1e-5):
-                    if primitives2d[i].end == primitives2d[i - 1].end and \
-                            primitives2d[i].length() == volmdlr.TWO_PI:
-                        primitives2d[i] = primitives2d[i].reverse()
-                    elif dist and math.isclose(abs(previous_primitive.end.y), 0.5 * math.pi, abs_tol=1e-6):
+                    # if primitives2d[i].end == primitives2d[i - 1].end and \
+                    #         primitives2d[i].length() == volmdlr.TWO_PI:
+                    #     primitives2d[i] = primitives2d[i].reverse()
+                    if dist and math.isclose(abs(previous_primitive.end.y), 0.5 * math.pi, abs_tol=1e-6):
                         primitives2d.insert(i, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                  name="construction"))
                     else:
@@ -2781,9 +2781,6 @@ class SphericalSurface3D(Surface3D):
                                            first_start, name="construction")
                          ]
                 primitives2d.extend(lines)
-            #     line_symmetry = vme.Line(primitives2d[0].end, primitives2d[0].end + volmdlr.Y2D)
-            #     primitives2d[1] = primitives2d[1].axial_symmetry(line_symmetry)
-            #     primitives2d = repair(primitives2d)
             else:
                 primitives2d.append(vme.LineSegment2D(last_end, first_start))
         return primitives2d
