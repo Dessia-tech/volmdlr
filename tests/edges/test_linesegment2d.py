@@ -2,6 +2,7 @@
 Unit tests for volmdlr.edges.LineSegment2D
 """
 import unittest
+
 import volmdlr
 from volmdlr import edges
 

@@ -7,27 +7,26 @@ Edges related classes.
 import math
 import sys
 import warnings
-from typing import List, Dict, Any, Union
+from typing import Any, Dict, List, Union
 
+import dessia_common.core as dc
 import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as npy
+import plot_data.core as plot_data
 import scipy as scp
-import scipy.optimize
 import scipy.integrate as scipy_integrate
-
-from geomdl import utilities, BSpline, fitting, operations, NURBS
+import scipy.optimize
+from geomdl import NURBS, BSpline, fitting, operations, utilities
 from geomdl.operations import length_curve, split_curve
 from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
 
-import plot_data.core as plot_data
-import dessia_common.core as dc
-import volmdlr.utils.intersections as vm_utils_intersections
-import volmdlr.core_compiled
 import volmdlr.core
+import volmdlr.core_compiled
 import volmdlr.geometry
+import volmdlr.utils.intersections as vm_utils_intersections
 
 
 def standardize_knot_vector(knot_vector):

@@ -5,11 +5,12 @@ Created on Mon Apr 27 11:22:27 2020
 @author: Mack Pro
 """
 
-import numpy as npy
-import volmdlr as vm
-import volmdlr.primitives3d as primitives3D
-import volmdlr.primitives2d as primitives2D
 import matplotlib.pyplot as plt
+import numpy as npy
+
+import volmdlr as vm
+import volmdlr.primitives2d as primitives2D
+import volmdlr.primitives3d as primitives3D
 
 p0 = vm.Point2D(0,0)
 p1 = vm.Point2D(0.02, 0) 

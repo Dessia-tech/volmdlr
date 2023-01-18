@@ -6,13 +6,15 @@ Created on Fri May 22 11:19:52 2020
 """
 
 
-import numpy as npy
-import volmdlr as volmdlr
-import volmdlr.primitives3D as primitives3D
-import volmdlr.primitives2D as primitives2D
-import matplotlib.pyplot as plt
-import random
 import math
+import random
+
+import matplotlib.pyplot as plt
+import numpy as npy
+
+import volmdlr as volmdlr
+import volmdlr.primitives2D as primitives2D
+import volmdlr.primitives3D as primitives3D
 
 #### Cyl Cyl
 rmin, rmax = 10, 100

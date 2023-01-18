@@ -2,6 +2,7 @@
 Unit tests for volmdlr.wires.Contour
 """
 import unittest
+
 import volmdlr.wires
 
 
