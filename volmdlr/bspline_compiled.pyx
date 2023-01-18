@@ -269,7 +269,6 @@ def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
                     tmp[ii] = v[ii] - (binomial_coefficient(k, i) * v2[ii])
                 v[:] = tmp
 
-            res = [0.0] * (dimension - 1)
             for i in range(dimension - 1):
                 res[i] = v[i] / SKLw[0][0][-1]
 
