@@ -34,8 +34,9 @@ def binomial_coefficient(int k, int i):
     cdef double k_i_fact = factorial(k - i)
     return k_fact / (k_i_fact * i_fact)
 
-
-cdef int find_span_linear(int degree, list knot_vector, int num_ctrlpts, double knot):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef int find_span_linear(int degree, list knot_vector, int num_ctrlpts, double knot):
     """ Finds the span of a single knot over the knot vector using linear search.
 
     Alternative implementation for the Algorithm A2.1 from The NURBS Book by Piegl & Tiller.
@@ -57,8 +58,9 @@ cdef int find_span_linear(int degree, list knot_vector, int num_ctrlpts, double 
 
     return span - 1
 
-
-cdef basis_function_ders(int degree, list knot_vector, int span, double knot, int order):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef basis_function_ders(int degree, list knot_vector, int span, double knot, int order):
     """
     Computes derivatives of the basis functions for a single parameter.
 
@@ -224,7 +226,7 @@ def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
     :return: evaluated derivatives
     :rtype: list
     """
-    cdef int i, j, k, l, ii
+    cdef int i, j, k, li, ii
     cdef int dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
 
     # Call the parent function to evaluate A(u) and w(u) derivatives
@@ -240,25 +242,25 @@ def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
     cdef list res = [0.0]*(dimension-1)
     # Algorithm A4.4
     for k in range(0, deriv_order + 1):
-        for l in range(0, deriv_order + 1):
+        for li in range(0, deriv_order + 1):
             # Deep copying might seem a little overkill but we also want to avoid same pointer issues too
             # v = copy.deepcopy(SKLw[k][l])
-            v = SKLw[k][l]
+            v = SKLw[k][li]
             for j in range(1, l + 1):
-                drv = SKL[k][l - j]
+                drv = SKL[k][li - j]
                 for ii in range(dimension - 1):
-                    tmp[ii] = v[ii] - (binomial_coefficient(l, j) * SKLw[0][j][-1] * drv[ii])
+                    tmp[ii] = v[ii] - (binomial_coefficient(li, j) * SKLw[0][j][-1] * drv[ii])
                 v[:] = tmp
             for i in range(1, k + 1):
-                drv = SKL[k - i][l]
+                drv = SKL[k - i][li]
                 for ii in range(dimension - 1):
                     tmp[ii] = v[ii] - (binomial_coefficient(k, i) * SKLw[i][0][-1] * drv[ii])
                 v[:] = tmp
                 v2 = [0.0 for _ in range(dimension - 1)]
-                for j in range(1, l + 1):
-                    drv = SKL[k - i][l - j]
+                for j in range(1, li + 1):
+                    drv = SKL[k - i][li - j]
                     for ii in range(dimension - 1):
-                        tmp[ii] = v2[ii] + (binomial_coefficient(l, j) * SKLw[i][j][-1] * drv[ii])
+                        tmp[ii] = v2[ii] + (binomial_coefficient(li, j) * SKLw[i][j][-1] * drv[ii])
                     v2[:] = tmp
                 for ii in range(dimension - 1):
                     tmp[ii] = v[ii] - (binomial_coefficient(k, i) * v2[ii])
@@ -268,6 +270,6 @@ def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
             for i in range(dimension - 1):
                 res[i] = v[i] / SKLw[0][0][-1]
 
-            SKL[k][l][:] = res
+            SKL[k][li][:] = res
     # Return S(u,v) derivatives
     return SKL
