@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#cython: language_level=3
+# cython: language_level=3
 """
 
 Cython functions for bspline
@@ -78,7 +78,7 @@ cdef basis_function_ders(int degree, list knot_vector, int span, double knot, in
     :rtype: list
     """
     # Initialize variables
-    cdef int i, j, k, r
+    cdef int j, k, r
     cdef int s1, s2, j1, j2, pk, rk
     cdef double saved, temp, d, res
     cdef list left = [1.0 for _ in range(degree + 1)]
@@ -173,7 +173,7 @@ def derivatives(dict datadict, tuple parpos, int deriv_order=0):
     cdef int dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
     cdef int pdimension = datadict['pdimension']
 
-    cdef idx, k, l, s, r, n, i, dd, cu, cv
+    cdef int idx, k, l, s, r, i, dd, cu, cv
     # Algorithm A3.6
     cdef int[2] d = [min(degree[0], deriv_order), min(degree[1], deriv_order)]
 
@@ -224,7 +224,7 @@ def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
     :return: evaluated derivatives
     :rtype: list
     """
-    cdef i, j, k, l, ii
+    cdef int i, j, k, l, ii
     cdef int dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
 
     # Call the parent function to evaluate A(u) and w(u) derivatives
