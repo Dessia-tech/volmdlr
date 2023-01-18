@@ -1158,9 +1158,9 @@ class Point2D(Vector2D):
         '''
 
         if point_mesh_size:
-            return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+', '+str(point_mesh_size)+'};'
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
         else:
-            return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+'};'
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+"};"
 
 
 O2D = Point2D(0, 0)
@@ -2073,9 +2073,9 @@ class Point3D(Vector3D):
         """
 
         if point_mesh_size:
-            return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+', '+str(point_mesh_size)+'};'
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
         else:
-            return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+'};'
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+"};"
 
 
 O3D = Point3D(0, 0, 0)

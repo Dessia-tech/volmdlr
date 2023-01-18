@@ -18,4 +18,3 @@ if [[ -n "$DETECTED_CHANGES" ]]
 fi
 
 exit 0
-

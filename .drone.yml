@@ -148,8 +148,6 @@ steps:
 volumes:
   - name: pip_cache
     host:
-      # path: /tmp/cache/drone/pip
-
       path: /tmp/cache/drone/pip
   - name: cache
     host:
