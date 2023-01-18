@@ -3034,7 +3034,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         return ax
 
-    def triangulation(self, tri_opt: str = 'p'):
+    def triangulation(self, tri_opt: str = 'pd'):
         """
         Perform triangulation on the polygon.
 
@@ -3994,7 +3994,7 @@ class Circle2D(Contour2D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 40):
         """
-        Discretize a Contour to have "n" points.
+        Discretize the Contour to have "n" points.
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
@@ -4740,7 +4740,7 @@ class Circle3D(Contour3D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        Discretize a Circle to have "n" points.
+        Discretize the Circle to have "n" points.
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
