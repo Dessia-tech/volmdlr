@@ -80,7 +80,7 @@ cdef basis_function_ders(int degree, list knot_vector, int span, double knot, in
     # Initialize variables
     cdef int j, k, r
     cdef int s1, s2, j1, j2, pk, rk
-    cdef double saved, temp, d, res
+    cdef double saved, temp, d
     cdef list left = [1.0 for _ in range(degree + 1)]
     cdef list right = [1.0 for _ in range(degree + 1)]
     cdef list ndu = [[1.0 for _ in range(degree + 1)] for _ in range(degree + 1)]  # N[0][0] = 1.0 by definition
@@ -173,7 +173,7 @@ def derivatives(dict datadict, tuple parpos, int deriv_order=0):
     cdef int dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
     cdef int pdimension = datadict['pdimension']
 
-    cdef int idx, k, l, s, r, i, dd, cu, cv
+    cdef int idx, k, li, s, r, i, dd, cu, cv
     # Algorithm A3.6
     cdef int[2] d = [min(degree[0], deriv_order), min(degree[1], deriv_order)]
 
@@ -202,13 +202,13 @@ def derivatives(dict datadict, tuple parpos, int deriv_order=0):
                 temp[s][:] = t
 
         dd = min(deriv_order, d[1])
-        for l in range(0, dd + 1):
+        for li in range(0, dd + 1):
             for s in range(0, degree[1] + 1):
-                elem = SKL[k][l]
+                elem = SKL[k][li]
                 tmp = temp[s]
                 for i in range(dimension):
-                    t[i] = elem[i] + (basisdrv[1][l][s] * tmp[i])
-                SKL[k][l][:] = t
+                    t[i] = elem[i] + (basisdrv[1][li][s] * tmp[i])
+                SKL[k][li][:] = t
     return SKL
 
 
@@ -232,7 +232,6 @@ def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
 
     # Generate an empty list of derivatives
     cdef list SKL = [[[0.0 for _ in range(dimension)] for _ in range(deriv_order + 1)] for _ in range(deriv_order + 1)]
-    cdef list t = [0.0] * (dimension-1)
 
     cdef list tmp = [0.0]*(dimension-1)
     cdef list drv = [0.0]*(dimension-1)
@@ -248,22 +247,22 @@ def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
             for j in range(1, l + 1):
                 drv = SKL[k][l - j]
                 for ii in range(dimension - 1):
-                    t[ii] = v[ii] - (binomial_coefficient(l, j) * SKLw[0][j][-1] * drv[ii])
-                v[:] = t
+                    tmp[ii] = v[ii] - (binomial_coefficient(l, j) * SKLw[0][j][-1] * drv[ii])
+                v[:] = tmp
             for i in range(1, k + 1):
                 drv = SKL[k - i][l]
                 for ii in range(dimension - 1):
-                    t[ii] = v[ii] - (binomial_coefficient(k, i) * SKLw[i][0][-1] * drv[ii])
-                v[:] = t
+                    tmp[ii] = v[ii] - (binomial_coefficient(k, i) * SKLw[i][0][-1] * drv[ii])
+                v[:] = tmp
                 v2 = [0.0 for _ in range(dimension - 1)]
                 for j in range(1, l + 1):
                     drv = SKL[k - i][l - j]
                     for ii in range(dimension - 1):
-                        t[ii] = v2[ii] + (binomial_coefficient(l, j) * SKLw[i][j][-1] * drv[ii])
-                    v2[:] = t
+                        tmp[ii] = v2[ii] + (binomial_coefficient(l, j) * SKLw[i][j][-1] * drv[ii])
+                    v2[:] = tmp
                 for ii in range(dimension - 1):
-                    t[ii] = v[ii] - (binomial_coefficient(k, i) * v2[ii])
-                v[:] = t
+                    tmp[ii] = v[ii] - (binomial_coefficient(k, i) * v2[ii])
+                v[:] = tmp
 
             res = [0.0] * (dimension - 1)
             for i in range(dimension - 1):
