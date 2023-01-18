@@ -2566,8 +2566,7 @@ class Arc2D(Arc):
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   anticlockwise: bool = None):
-
-        list_node = self.discretization_points(number_points=5)
+        list_node = self.discretization_points(number_points=20)
         data = []
         for nd in list_node:
             data.append({'x': nd.x, 'y': nd.y})
@@ -5803,7 +5802,7 @@ class ArcEllipse3D(Edge):
             self.offset_angle = angle2
 
         volmdlr.core.CompositePrimitive3D.__init__(self,
-                                                   primitives=self.discretization_points(number_points=10),
+                                                   primitives=self.discretization_points(number_points=20),
                                                    name=name)
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
