@@ -192,7 +192,7 @@ babylon_unpacker_body_template = Template(
                         mesh.edgesColor = new BABYLON.Color4(mesh_data['edges_color'][0],
                                                              mesh_data['edges_color'][1],
                                                              mesh_data['edges_color'][2],
-                                                             mesh_data['edge_alpha']);
+                                                             mesh_data['alpha']);
                         }
                 else {mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6)};
                 var mat = new BABYLON.StandardMaterial("material", scene);
