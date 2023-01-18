@@ -12,19 +12,13 @@ import networkx as nx
 import numpy as npy
 import scipy as scp
 import scipy.optimize as opt
-
-# import matplotlib.tri as plt_tri
-# from pygeodesic import geodesic
-
 import triangle
-
-from trimesh import Trimesh
-
 from dessia_common.core import DessiaObject
 from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
 from geomdl.fitting import approximate_surface, interpolate_surface
 from geomdl.operations import split_surface_u, split_surface_v
+from trimesh import Trimesh
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -35,6 +29,10 @@ import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
 from volmdlr.utils.parametric import array_range_search
+
+# import matplotlib.tri as plt_tri
+# from pygeodesic import geodesic
+
 
 # import matplotlib.tri as plt_tri
 # from pygeodesic import geodesic
