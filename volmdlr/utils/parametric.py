@@ -58,7 +58,7 @@ def repair_start_end_angle_periodicity(angle, ref_angle):
     return angle
 
 
-def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, angle3d):
+def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, angle3d, periodicity):
     """
     Repairs Arc3D continuity after convertion of points to parametric 2D space.
     """
@@ -76,9 +76,9 @@ def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, ang
         angle_end = ref_up
 
     if angle_start > 0 > angle_after_start:
-        angle_start -= 2 * math.pi
+        angle_start -= periodicity
     elif angle_start < 0 < angle_after_start:
-        angle_start += 2 * math.pi
+        angle_start += periodicity
 
     return angle_start, angle_end
 
@@ -95,14 +95,14 @@ def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
     if abs(theta2) == math.pi:
         theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
-    theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d)
+    theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d, volmdlr.TWO_PI)
 
     start = volmdlr.Point2D(theta1, z1)
     end = volmdlr.Point2D(theta2, z2)
     return [start, end]
 
 
-def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, point_before_end):
+def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, point_before_end, x_periodicity, y_periodicity):
     """
     Verifies theta and phi from start and end of an arc3d after transformation from spatial to parametric coordinates.
     """
@@ -123,10 +123,10 @@ def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, poin
         phi2 = repair_start_end_angle_periodicity(phi2, phi4)
 
     if math.isclose(phi1, phi2, abs_tol=1e-4):
-        theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d)
+        theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d, x_periodicity)
 
     if math.isclose(theta1, theta2, abs_tol=1e-4):
-        phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2, angle3d)
+        phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2, angle3d, y_periodicity)
 
     start = volmdlr.Point2D(theta1, phi1)
     end = volmdlr.Point2D(theta2, phi2)

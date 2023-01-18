@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: tangent (use position/length)
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
-
+* SphericalSurface3D : enhancement of primitives parametrization on surface parametric domain.
 
 ### Removed
 

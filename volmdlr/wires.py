@@ -105,10 +105,10 @@ class WireMixin:
 
         :param angle_resolution: distance between two discretized points.
         """
+        length = self.length()
         if number_points:
             n = number_points - 1
         elif angle_resolution:
-            length = self.length()
             n = int(length / angle_resolution) + 1
 
         return [self.point_at_abscissa(i / n * length) for i in

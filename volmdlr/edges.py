@@ -304,6 +304,9 @@ class Line(dc.DessiaObject):
         projection = projection.to_point()
         return projection, t * norm_u
 
+    def point_reflection(self, point):
+        return point + 2 * (self.point_projection(point)[0] - point)
+
     def abscissa(self, point):
         """
         Calculate the abscissa of a point on the line.
@@ -5382,10 +5385,10 @@ class Arc3D(Arc):
         """
         if not math.isclose(point3d.point_distance(self.center), self.radius, abs_tol=abs_tol):
             return False
-        vector1 = self.start - self.center
-        vector2 = self.interior - self.center
-        vector3 = point3d - self.center
-        if not math.isclose(vector1.dot(vector2.cross(vector3)), 0.0, abs_tol=abs_tol):
+        # vector1 = self.start - self.center
+        # vector2 = self.interior - self.center
+        vector = point3d - self.center
+        if not math.isclose(vector.dot(self.frame.w), 0.0, abs_tol=abs_tol):
             return False
         point_abscissa = self.abscissa(point3d)
         abscissa_start = self.abscissa(self.start)
