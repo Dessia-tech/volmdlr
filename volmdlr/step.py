@@ -11,16 +11,15 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import plot_data.graph
 
+import dessia_common.core as dc  # isort: skip
+from dessia_common.files import BinaryFile  # isort: skip
+
 import volmdlr
 import volmdlr.core
 import volmdlr.edges
 import volmdlr.faces
 import volmdlr.primitives3d
 import volmdlr.wires
-
-import dessia_common.core as dc  # isort: skip
-from dessia_common.files import BinaryFile  # isort: skip
-
 
 
 def set_to_list(step_set):

@@ -11,14 +11,13 @@ from typing import List  # TypeVar, Tuple, Dict
 import matplotlib.pyplot as plt
 import numpy as npy
 
+from dessia_common.core import DessiaObject  # isort: skip
+
 # import volmdlr.core_compiled
 import volmdlr as vm
 import volmdlr.edges as vme
 import volmdlr.gmsh_vm
 import volmdlr.wires as vmw
-
-from dessia_common.core import DessiaObject  # isort: skip
-
 
 
 # from volmdlr.core_compiled import Matrix33
