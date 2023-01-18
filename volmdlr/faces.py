@@ -34,9 +34,6 @@ from volmdlr.utils.parametric import array_range_search
 # from pygeodesic import geodesic
 
 
-
-
-
 # import matplotlib.tri as plt_tri
 # from pygeodesic import geodesic
 
