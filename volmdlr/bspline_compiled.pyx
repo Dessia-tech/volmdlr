@@ -35,6 +35,7 @@ def binomial_coefficient(int k, int i):
     cdef double k_i_fact = factorial(k - i)
     return k_fact / (k_i_fact * i_fact)
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef int find_span_linear(int degree, list knot_vector, int num_ctrlpts, double knot):
@@ -58,6 +59,7 @@ cpdef int find_span_linear(int degree, list knot_vector, int num_ctrlpts, double
         span += 1
 
     return span - 1
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
