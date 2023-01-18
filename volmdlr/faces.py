@@ -13,13 +13,14 @@ import numpy as npy
 import scipy as scp
 import scipy.optimize as opt
 import triangle
-# import dessia_common
-from dessia_common.core import DessiaObject
 from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
 from geomdl.fitting import approximate_surface, interpolate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 
+from dessia_common.core import DessiaObject  # isort: skip
+
+import volmdlr.bspline_compiled
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.display as vmd
@@ -28,7 +29,9 @@ import volmdlr.geometry
 import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
+# import dessia_common
 from volmdlr.utils.parametric import array_range_search
+
 
 # import matplotlib.tri as plt_tri
 # from pygeodesic import geodesic
@@ -189,7 +192,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=10)
+            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=triangulates_with_grid)
             inner_polygon_nodes = [vmd.Node2D.from_point(p) for p in inner_polygon.points]
             for point in inner_polygon_nodes:
                 if point not in point_index:
@@ -3006,8 +3009,9 @@ class BSplineSurface3D(Surface3D):
         x, y = point2d
         x = min(max(x, 0), 1)
         y = min(max(y, 0), 1)
-
-        return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
+        # uses derivatives for performance because it's already compiled
+        return volmdlr.Point3D(*self.derivatives(x, y, 0)[0][0])
+        # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-5):
         """
@@ -3378,7 +3382,8 @@ class BSplineSurface3D(Surface3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        BSplineSurface3D translation. Object is updated inplace
+        BSplineSurface3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         new_bsplinesurface3d = self.translation(offset)
@@ -4790,7 +4795,12 @@ class BSplineSurface3D(Surface3D):
         to u k times and v l times
         :rtype: List[`volmdlr.Vector3D`]
         """
-        derivatives = self.surface.derivatives(u, v, order)
+        if self.surface.rational:
+            # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
+            derivatives = volmdlr.bspline_compiled.rational_derivatives(self.surface.data, (u, v), order)
+        else:
+            # derivatives = self._derivatives(self.surface.data, (u, v), order)
+            derivatives = volmdlr.bspline_compiled.derivatives(self.surface.data, (u, v), order)
         for i in range(order + 1):
             for j in range(order + 1):
                 derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])
@@ -8165,7 +8175,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             meshes.append(face_mesh)
         return vmd.DisplayMesh3D.merge_meshes(meshes)
 
-    def plot(self, ax=None, color: str = 'k', alpha: float = 1):
+    def plot(self, ax=None, color: str = 'k', alpha: float = 1.0):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 
