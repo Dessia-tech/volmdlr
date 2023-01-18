@@ -13,7 +13,6 @@ import numpy as npy
 import scipy as scp
 import scipy.optimize as opt
 
-import matplotlib.pyplot as plt
 # import matplotlib.tri as plt_tri
 # from pygeodesic import geodesic
 
