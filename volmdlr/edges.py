@@ -68,7 +68,6 @@ def insert_knots_and_mutiplicity(knots, knot_mutiplicities, knot_to_add, num):
 class Edge(dc.DessiaObject):
     """
     Defines a simple edge Object.
-
     """
 
     def __init__(self, start, end, name=''):
@@ -120,6 +119,9 @@ class Edge(dc.DessiaObject):
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def polygon_points(self, discretization_resolution: int):
+        """
+        Deprecated method of discretization_points.
+        """
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
@@ -127,6 +129,9 @@ class Edge(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Get edges from step.
+        """
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
@@ -1374,6 +1379,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def direction_vector(self, abscissa: float):
         """
+        Get direction vector at abscissa.
+
         :param abscissa: defines where in the BSplineCurve2D the
         direction vector is to be calculated
         :return: The direection vector vector of the BSplineCurve2D
@@ -1382,6 +1389,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def normal_vector(self, abscissa: float):
         """
+        Get normal vector at abscissa.
+
         :param abscissa: defines where in the BSplineCurve2D the
         normal vector is to be calculated
         :return: The normal vector of the BSplineCurve2D
@@ -2009,9 +2018,10 @@ class Arc(Edge):
     @staticmethod
     def get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i):
         """
+        Get arc paths from radius.
 
         :param radius_1: radius from center to start point.
-        :param radius_2: radius form center ro end point.
+        :param radius_2: radius form center to end point.
         :param radius_i: radius from center to interior point.
         :return: the clockwise and trigowise paths.
         """
@@ -2037,6 +2047,9 @@ class Arc(Edge):
         return clockwise_path, trigowise_path
 
     def middle_point(self):
+        """
+        Get point in the middle of Arc.
+        """
         return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
@@ -2072,6 +2085,8 @@ class Arc(Edge):
 
 class Arc2D(Arc):
     """
+    Class to draw Arc2D.
+
     angle: the angle measure always >= 0
     """
 

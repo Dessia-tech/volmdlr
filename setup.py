@@ -21,10 +21,16 @@ def readme():
     with open("README.md") as f:
         return f.read()
 
+<<<<<<< HEAD
+def version_from_git_describe(version):
+    if version[0]=='v':
+            version = version[1:]
+=======
 
 def version_from_git_describe(version):
     if version[0] == "v":
         version = version[1:]
+>>>>>>> origin/dev
 
     # PEP 440 compatibility
     number_commits_ahead = 0
@@ -34,20 +40,38 @@ def version_from_git_describe(version):
 
     # print('number_commits_ahead', number_commits_ahead)
 
+<<<<<<< HEAD
+    split_versions = version.split('.')
+    if 'post' in split_versions[-1]:
+=======
     split_versions = version.split(".")
     if "post" in split_versions[-1]:
+>>>>>>> origin/dev
         suffix = split_versions[-1]
         split_versions = split_versions[:-1]
     else:
         suffix = None
 
+<<<<<<< HEAD
+    for pre_release_segment in ['a', 'b', 'rc']:
+=======
     for pre_release_segment in ["a", "b", "rc"]:
+>>>>>>> origin/dev
         if pre_release_segment in split_versions[-1]:
             if number_commits_ahead > 0:
                 split_versions[-1] = str(split_versions[-1].split(pre_release_segment)[0])
                 if len(split_versions) == 2:
                     split_versions.append("0")
                 if len(split_versions) == 1:
+<<<<<<< HEAD
+                    split_versions.extend(['0', '0'])
+
+                split_versions[-1] = str(int(split_versions[-1])+1)
+                future_version = '.'.join(split_versions)
+                return '{}.dev{}'.format(future_version, number_commits_ahead)
+            else:
+                return '.'.join(split_versions)
+=======
                     split_versions.extend(["0", "0"])
 
                 split_versions[-1] = str(int(split_versions[-1]) + 1)
@@ -55,6 +79,7 @@ def version_from_git_describe(version):
                 return "{}.dev{}".format(future_version, number_commits_ahead)
             else:
                 return ".".join(split_versions)
+>>>>>>> origin/dev
 
     if number_commits_ahead > 0:
         if len(split_versions) == 2:
@@ -68,6 +93,16 @@ def version_from_git_describe(version):
         if suffix is not None:
             split_versions.append(suffix)
 
+<<<<<<< HEAD
+        return '.'.join(split_versions)
+
+# Just testing if get_version works well
+assert version_from_git_describe('v0.1.7.post2') == '0.1.7.post2'
+assert version_from_git_describe('v0.0.1-25-gaf0bf53') == '0.0.2.dev25+gaf0bf53'
+assert version_from_git_describe('v0.1-15-zsdgaz') == '0.1.1.dev15+zsdgaz'
+assert version_from_git_describe('v1') == '1'
+assert version_from_git_describe('v1-3-aqsfjbo') == '1.0.1.dev3+aqsfjbo'
+=======
         return ".".join(split_versions)
 
 
@@ -78,6 +113,7 @@ assert version_from_git_describe("v0.1-15-zsdgaz") == "0.1.1.dev15+zsdgaz"
 assert version_from_git_describe("v1") == "1"
 assert version_from_git_describe("v1-3-aqsfjbo") == "1.0.1.dev3+aqsfjbo"
 
+>>>>>>> origin/dev
 
 def get_version():
     # Return the version if it has been injected into the file by git-archive
