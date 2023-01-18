@@ -102,10 +102,14 @@ def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
     return [start, end]
 
 
-def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, point_before_end, x_periodicity, y_periodicity):
+def arc3d_to_spherical_verification(start, end, angle3d, reference_points, periodicity):
     """
     Verifies theta and phi from start and end of an arc3d after transformation from spatial to parametric coordinates.
     """
+    point_after_start = reference_points[0]
+    point_before_end = reference_points[1]
+    x_periodicity = periodicity[0]
+    y_periodicity = periodicity[1]
     theta1, phi1 = start
     theta2, phi2 = end
     theta3, phi3 = point_after_start
