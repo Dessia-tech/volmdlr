@@ -3,7 +3,8 @@ import unittest
 import numpy as npy
 
 import volmdlr as vm
-from volmdlr import faces, cloud
+from volmdlr import cloud, faces
+
 
 class TestCloud(unittest.TestCase):
     points_cloud = cloud.PointCloud3D([vm.Point3D(0, 0, 0), vm.Point3D(10, 10, 10),vm.Point3D(-2.5, 1.2, 0)])

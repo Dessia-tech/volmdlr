@@ -352,7 +352,7 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
             points = self.polygon_points(50)
         return points
 
-    def babylon_lines(self, points = None):
+    def babylon_lines(self, points=None):
         if points is None:
             points = self.babylon_points()
         babylon_lines = {'points': points}
