@@ -6,19 +6,18 @@
 Cython functions
 
 """
-# from __future__ import annotations
-from typing import List, Tuple, Text, Any, Dict
 import math
-import warnings
 import random
+import warnings
+# from __future__ import annotations
+from typing import Any, Dict, List, Text, Tuple
 
-import numpy as npy
-from mpl_toolkits.mplot3d import proj3d
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyArrow, FancyArrowPatch
-
-from dessia_common.core import DessiaObject
+import numpy as npy
 import plot_data
+from dessia_common.core import DessiaObject
+from matplotlib.patches import FancyArrow, FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
 
 # =============================================================================
 
