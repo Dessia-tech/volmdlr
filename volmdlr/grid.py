@@ -6,8 +6,10 @@ Module containing grid and relative objects
 """
 
 from typing import List
+
 import numpy as npy
 from dessia_common.core import DessiaObject
+
 import volmdlr
 import volmdlr.wires
 

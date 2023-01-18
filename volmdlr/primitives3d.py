@@ -5,22 +5,20 @@ Common primitives 3D
 """
 
 import math
-
-from typing import Tuple, List, Dict
 from random import uniform
-
-from scipy.optimize import minimize, Bounds, NonlinearConstraint
-from scipy.stats import qmc
-
-import numpy as npy
-import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple
 
 import dessia_common.core as dc
+import matplotlib.pyplot as plt
+import numpy as npy
+from scipy.optimize import Bounds, NonlinearConstraint, minimize
+from scipy.stats import qmc
+
 import volmdlr
 import volmdlr.core
-import volmdlr.primitives
-import volmdlr.faces
 import volmdlr.edges
+import volmdlr.faces
+import volmdlr.primitives
 import volmdlr.wires
 
 # import dessia_common.typings as dct
@@ -30,6 +28,14 @@ npy.seterr(divide='raise')
 
 class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
                                 volmdlr.primitives.RoundedLineSegments):
+    """
+
+    :param points: Points used to draw the wire.
+    :type points: List of Point3D.
+    :param radius: Radius used to connect different parts of the wire.
+    :type radius: {position1(n): float which is the radius linked the n-1 and.
+    n+1 points, position2(n+1):...}
+    """
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
 
@@ -156,7 +162,8 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 
 class Block(volmdlr.faces.ClosedShell3D):
     """
-    Creates a block
+    Creates a block.
+
     :param frame: a frame 3D. The origin of the frame is the center of the block,
      the 3 vectors are defining the edges. The frame has not to be orthogonal
     """
@@ -365,16 +372,16 @@ class Block(volmdlr.faces.ClosedShell3D):
                                  side: str):
         basis = frame.basis()
         if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_u = basis.new_coordinates(self.frame.u)
-            new_v = basis.new_coordinates(self.frame.v)
-            new_w = basis.new_coordinates(self.frame.w)
+            new_origin = frame.global_to_local_coordinates(self.frame.origin)
+            new_u = basis.global_to_local_coordinates(self.frame.u)
+            new_v = basis.global_to_local_coordinates(self.frame.v)
+            new_w = basis.global_to_local_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         elif side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_u = basis.old_coordinates(self.frame.u)
-            new_v = basis.old_coordinates(self.frame.v)
-            new_w = basis.old_coordinates(self.frame.w)
+            new_origin = frame.local_to_global_coordinates(self.frame.origin)
+            new_u = basis.local_to_global_coordinates(self.frame.u)
+            new_v = basis.local_to_global_coordinates(self.frame.v)
+            new_w = basis.local_to_global_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         else:
             raise ValueError('side value not valid, please specify'
@@ -400,6 +407,10 @@ class Block(volmdlr.faces.ClosedShell3D):
         self.faces = self.shell_faces()
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of a Block.
+
+        """
         new_origin = self.frame.origin.copy()
         new_u = self.frame.u.copy()
         new_v = self.frame.v.copy()
@@ -492,6 +503,10 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         return dict_
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of ExtrudedProfile.
+
+        """
         return self.__class__(plane_origin=self.plane_origin.copy(),
                               x=self.x.copy(),
                               y=self.y.copy(),
@@ -677,6 +692,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     """
     Revolve a 2D profile along an axis around a certain angle.
+
     """
     _non_serializable_attributes = ['faces', 'contour3D']
 
@@ -720,6 +736,10 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         return dict_
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of RevolvedProfile.
+
+        """
         return self.__class__(plane_origin=self.plane_origin.copy(),
                               x=self.x.copy(), y=self.y.copy(),
                               contour2d=self.contour2d.copy(),
@@ -1061,6 +1081,10 @@ class Cylinder(RevolvedProfile):
         self.axis = axis
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of Cylinder.
+
+        """
         new_position = self.position.copy()
         new_axis = self.axis.copy()
         return Cylinder(new_position, new_axis, self.radius, self.length,
@@ -1409,9 +1433,9 @@ class Cone(RevolvedProfile):
         """
         Cone rotation. Object is updated inplace.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: rotation angle.
         """
         self.position.rotation_inplace(center, axis, angle)
         self.axis.rotation_inplace(center, axis, angle)
@@ -1419,6 +1443,7 @@ class Cone(RevolvedProfile):
     def volume(self):
         """
         Returns the volume of the cone.
+
         """
         return self.length * math.pi * self.radius**2 / 3
 
@@ -1427,6 +1452,7 @@ class HollowCylinder(RevolvedProfile):
     """
     Creates a hollow cylinder with the position, the axis of revolution,
     the inner and outer radius and the length.
+
     """
 
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -1492,6 +1518,10 @@ class HollowCylinder(RevolvedProfile):
                                         - self.inner_radius**2)
 
     def copy(self):
+        """
+        Creates a copy of HollowCylinder.
+
+        """
         new_position = self.position.copy()
         new_axis = self.axis.copy()
         return HollowCylinder(new_position, new_axis, self.inner_radius, self.outer_radius, self.length,
@@ -1542,11 +1572,12 @@ class HollowCylinder(RevolvedProfile):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        HollowCylinder rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated HollowCylinder
+        HollowCylinder rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated HollowCylinder.
         """
         return self.__class__(
             position=self.position.rotation(center, axis, angle),
@@ -1557,7 +1588,8 @@ class HollowCylinder(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        HollowCylinder rotation. Object is updated inplace
+        HollowCylinder rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -1567,9 +1599,10 @@ class HollowCylinder(RevolvedProfile):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation
-        :param offset: translation vector
-        :return: A new translated HollowCylinder
+        Translation for HollowCylinder.
+
+        :param offset: translation vector.
+        :return: A new translated HollowCylinder.
         """
         return self.__class__(
             position=self.position.translation(offset), axis=self.axis,
@@ -1578,15 +1611,17 @@ class HollowCylinder(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation. Object is updated inplace
-        :param offset: translation vector
+        Translation for HollowCylinder. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         self.position.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new HollowCylinder
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new HollowCylinder.
+
+        side = 'old' or 'new'.
         """
         basis = frame.basis()
         if side == 'old':
@@ -1603,8 +1638,9 @@ class HollowCylinder(RevolvedProfile):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        side = 'old' or 'new'.
         """
         basis = frame.basis()
         if side == 'old':
@@ -1620,6 +1656,7 @@ class HollowCylinder(RevolvedProfile):
 class Sweep(volmdlr.faces.ClosedShell3D):
     """
     Sweep a 2D contour along a Wire3D.
+
     """
 
     def __init__(self, contour2d: List[volmdlr.wires.Contour2D],
@@ -1777,6 +1814,10 @@ class Sweep(volmdlr.faces.ClosedShell3D):
             face.frame_mapping_inplace(frame, side)
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of Sweep.
+
+        """
         new_contour2d = self.contour2d.copy()
         new_wire3d = self.wire3d.copy()
         return Sweep(new_contour2d, new_wire3d, color=self.color,
@@ -1785,6 +1826,11 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
 # class Sphere(volmdlr.Primitive3D):
 class Sphere(RevolvedProfile):
+    """
+    Defines a sphere at a given position & radius.
+
+    """
+
     def __init__(self, center, radius,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
@@ -1909,6 +1955,11 @@ class Measure3D(volmdlr.edges.Line3D):
 
 
 class BSplineExtrusion(volmdlr.core.Primitive3D):
+    """
+    Defines the extrusion of a BSpline.
+
+    :param vectorextru: extrusion vector.
+    """
 
     def __init__(self, obj, vectorextru: volmdlr.Vector3D, name: str = ''):
         self.obj = obj

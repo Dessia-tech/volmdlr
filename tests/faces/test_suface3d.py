@@ -1,11 +1,11 @@
-import unittest
 import math
+import unittest
 
-import volmdlr.faces as vmf
-import volmdlr.edges as vme
-import volmdlr.wires as vmw
 import volmdlr
-from volmdlr import Point3D, OXYZ, Point2D, X3D, Y3D, Z3D
+import volmdlr.edges as vme
+import volmdlr.faces as vmf
+import volmdlr.wires as vmw
+from volmdlr import OXYZ, X3D, Y3D, Z3D, Point2D, Point3D
 
 
 class TestSurface3D(unittest.TestCase):

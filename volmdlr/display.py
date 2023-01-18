@@ -4,10 +4,13 @@
 Classes to define mesh for display use. Display mesh do not require good aspect ratios on elements.
 """
 
-from typing import List, Tuple
 import math
+from typing import List, Tuple
+
 import dessia_common.core as dc
+
 import volmdlr.edges
+
 # import volmdlr.faces as vmf
 
 

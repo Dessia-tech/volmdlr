@@ -1,7 +1,7 @@
+Cython
+geomdl
+matplotlib
 numpy
 scipy
-matplotlib
-Cython
 triangle
-geomdl
 gmsh

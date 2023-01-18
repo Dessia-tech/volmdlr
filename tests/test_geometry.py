@@ -5,8 +5,10 @@ Geometry unittest.
 """
 
 import unittest
+
 import numpy as npy
-from volmdlr import geometry, Y3D, Point2D
+
+from volmdlr import Y3D, Point2D, geometry
 
 
 class TestClosedShell3D(unittest.TestCase):

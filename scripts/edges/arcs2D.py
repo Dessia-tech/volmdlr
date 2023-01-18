@@ -9,7 +9,6 @@ Created on Tue Oct 23 18:06:45 2018
 import volmdlr
 import volmdlr.edges
 
-
 # Random arc
 i = volmdlr.Point2D.random(-1,1,-1,1)
 e = volmdlr.Point2D.random(-1,1,-1,1)
