@@ -6,10 +6,9 @@
 Cython functions for bspline
 
 """
-# from __future__ import annotations
+import cython
 from math import factorial
 from functools import lru_cache
-import cython
 
 
 @lru_cache(maxsize=10000)
