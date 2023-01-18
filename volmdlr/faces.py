@@ -18,7 +18,7 @@ from geomdl.construct import extract_curves
 from geomdl.fitting import approximate_surface, interpolate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 
-from dessia_common.core import DessiaObject  # isort: ski
+from dessia_common.core import DessiaObject  # isort: skip
 
 import volmdlr.bspline_compiled
 import volmdlr.core
