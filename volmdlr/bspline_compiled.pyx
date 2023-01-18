@@ -171,12 +171,12 @@ def derivatives(dict datadict, tuple parpos, int deriv_order=0):
     :rtype: list
     """
     # Geometry data from datadict
-    cdef int[2] degree = datadict['degree']
-    cdef tuple knotvector = datadict['knotvector']
-    cdef tuple ctrlpts = datadict['control_points']
-    cdef tuple size = datadict['size']
-    cdef int dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
-    cdef int pdimension = datadict['pdimension']
+    cdef int[2] degree = datadict["degree"]
+    cdef tuple knotvector = datadict["knotvector"]
+    cdef tuple ctrlpts = datadict["control_points"]
+    cdef tuple size = datadict["size"]
+    cdef int dimension = datadict["dimension"] + 1 if datadict["rational"] else datadict["dimension"]
+    cdef int pdimension = datadict["pdimension"]
 
     cdef int idx, k, li, s, r, i, dd, cu, cv
     # Algorithm A3.6
@@ -230,7 +230,7 @@ def rational_derivatives(dict datadict, tuple parpos, int deriv_order=0):
     :rtype: list
     """
     cdef int i, j, k, li, ii
-    cdef int dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
+    cdef int dimension = datadict["dimension"] + 1 if datadict["rational"] else datadict["dimension"]
 
     # Call the parent function to evaluate A(u) and w(u) derivatives
     cdef list SKLw = derivatives(datadict, parpos, deriv_order)
