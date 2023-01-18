@@ -8,11 +8,12 @@ import time
 from typing import List
 import numpy as npy
 
-import dessia_common.core as dc
 import matplotlib.pyplot as plt
 import networkx as nx
 import plot_data.graph
-from dessia_common.files import BinaryFile
+
+import dessia_common.core as dc  # isort: skip
+from dessia_common.files import BinaryFile  # isort: skip
 
 import volmdlr
 import volmdlr.core
@@ -492,6 +493,11 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
 
 
 class StepFunction(dc.DessiaObject):
+    """
+    Abstract class defining a step function.
+
+    """
+
     def __init__(self, function_id, function_name, function_arg):
         dc.DessiaObject.__init__(self)
         self.id = function_id

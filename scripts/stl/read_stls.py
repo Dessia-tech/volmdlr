@@ -1,16 +1,17 @@
 
+import os
+
 import volmdlr.cloud
+# import volmdlr.stl as vmstl
+# import volmdlr.cloud
+import volmdlr.core
 import volmdlr.stl as vmstl
 
 # -*- coding: utf-8 -*-
 """
 """
 
-import os
 
-# import volmdlr.stl as vmstl
-# import volmdlr.cloud
-import volmdlr.core
 
 # import volmdlr as vm
 # import volmdlr.wires as vmw

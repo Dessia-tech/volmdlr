@@ -68,6 +68,7 @@ So we can convert the units correctly
 * Cylinder: min_distance_to_other_cylinder
 * BSplineCurve: discretization_points
 * Face3D: triangulation
+* BSplineSurface3D: compile BSplineSurface3D.derivatives
 
 
 ### Refactorings
