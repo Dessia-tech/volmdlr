@@ -1418,7 +1418,7 @@ class ContourMixin(WireMixin):
 
     def get_geo_lines(self, tag: int, primitives_tags: List[int]):
         """
-        gets the lines that define a Contour in a .geo file
+        Gets the lines that define a Contour in a .geo file.
 
         :param tag: The contour index
         :type tag: int
