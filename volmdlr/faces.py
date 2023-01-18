@@ -4,9 +4,8 @@ Surfaces & faces
 
 import math
 import warnings
-from itertools import product
+from itertools import product, chain
 from typing import Any, Dict, List, Tuple
-from itertools import chain
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as npy

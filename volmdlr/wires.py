@@ -2889,11 +2889,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 cos = round(vect1.dot(vect2) / (vect1.norm() * vect2.norm()),
                             4)
                 if cos < concavity:
-                    new_line_A = volmdlr.edges.LineSegment2D(start=line.start, end=middle_point)
-                    new_line_B = volmdlr.edges.LineSegment2D(start=middle_point, end=line.end)
-                    if not (line_colides_with_hull(line=new_line_A,
+                    new_line_a = volmdlr.edges.LineSegment2D(start=line.start, end=middle_point)
+                    new_line_b = volmdlr.edges.LineSegment2D(start=middle_point, end=line.end)
+                    if not (line_colides_with_hull(line=new_line_a,
                                                    concave_hull=hull_concave_edges) and line_colides_with_hull(
-                            line=new_line_B, concave_hull=hull_concave_edges)):
+                            line=new_line_b, concave_hull=hull_concave_edges)):
                         ok_middle_points.append(middle_point)
                         list_cossines.append(cos)
             if len(ok_middle_points) > 0:
@@ -3327,7 +3327,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                                         middle_point + normal_vector)
 
         line_intersections = {line_segment1: [], line_segment2: []}
-        for ls in [line_segment1, line_segment2
+        for line_segment in [line_segment1, line_segment2
                    ]:
             inter_points = []
             for prim in polygon2.line_segments + self.line_segments[
@@ -3335,20 +3335,20 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                                      polygon_primitive)] + self.line_segments[
                                                                            self.line_segments.index(
                                                                                polygon_primitive) + 1:]:
-                inters = prim.linesegment_intersections(ls)
+                inters = prim.linesegment_intersections(line_segment)
                 if inters:
-                    line_intersections[ls].append((inters[0], prim))
+                    line_intersections[line_segment].append((inters[0], prim))
                     inter_points.append(inters[0])
-                elif ls.point_belongs(prim.start, 1e-7):
+                elif line_segment.point_belongs(prim.start, 1e-7):
                     if prim.start not in inter_points:
-                        line_intersections[ls].append((prim.start, prim))
+                        line_intersections[line_segment].append((prim.start, prim))
                         inter_points.append(prim.start)
-                elif ls.point_belongs(prim.end, 1e-7):
+                elif line_segment.point_belongs(prim.end, 1e-7):
                     if prim.end not in inter_points:
-                        line_intersections[ls].append((prim.end, prim))
+                        line_intersections[line_segment].append((prim.end, prim))
                         inter_points.append(prim.end)
                 elif prim.point_belongs(middle_point, 1e-7):
-                    line_intersections[ls].append((prim.middle_point(), prim))
+                    line_intersections[line_segment].append((prim.middle_point(), prim))
                     inter_points.append(prim.middle_point())
         return line_intersections
 

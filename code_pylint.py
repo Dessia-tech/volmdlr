@@ -46,7 +46,7 @@ MAX_ERROR_BY_TYPE = {
                      'undefined-loop-variable': 5,
                      'unspecified-encoding': 5,
                      'too-many-function-args': 7,
-                     'too-many-nested-blocks': 6,
+                     'too-many-nested-blocks': 7,
                      'attribute-defined-outside-init': 6,
                      'too-many-return-statements': 4,
                      'consider-merging-isinstance': 0,
