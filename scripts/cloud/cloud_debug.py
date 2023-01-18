@@ -3,15 +3,16 @@
 
 """
 
-import volmdlr.cloud
-import volmdlr.core
-import volmdlr as vm
-import volmdlr.wires as vmw
-import volmdlr.faces as vmf
-import volmdlr.edges as vme
+import os
+
 import matplotlib.pyplot as plt
 
-import os
+import volmdlr as vm
+import volmdlr.cloud
+import volmdlr.core
+import volmdlr.edges as vme
+import volmdlr.faces as vmf
+import volmdlr.wires as vmw
 
 faces = []
 for file in os.listdir("E:/path/to/folder") :
@@ -35,4 +36,3 @@ volum.babylonjs()
 # volum = volmdlr.core.VolumeModel(faces)
 
 # volum.babylonjs()
-

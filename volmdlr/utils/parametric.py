@@ -1,8 +1,8 @@
 """
 volmdlr utils for calculating 3D to surface parametric domain operationa
 """
-import math
 import bisect
+import math
 
 import volmdlr
 import volmdlr.edges as vme

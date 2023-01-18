@@ -4,10 +4,11 @@
 
 """
 import math
+
 import volmdlr as vm
 import volmdlr.wires as vmw
-
-from volmdlr.primitives2d import ClosedRoundedLineSegments2D, OpenedRoundedLineSegments2D
+from volmdlr.primitives2d import (ClosedRoundedLineSegments2D,
+                                  OpenedRoundedLineSegments2D)
 from volmdlr.primitives3d import RevolvedProfile
 
 p1 = vm.Point2D(-0.08, 0.1755)
@@ -129,4 +130,3 @@ assert math.isclose(planar_face_triangulation().area(), planar_face.surface2d.ar
 
 model_copy = model.copy()
 assert model_copy == model
-

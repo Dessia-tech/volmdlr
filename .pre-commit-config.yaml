@@ -1,0 +1,34 @@
+# File introduces automated checks triggered on git events
+# to enable run `pip install pre-commit && pre-commit install`
+
+repos:
+  - repo: https://github.com/pycqa/isort
+    rev: 5.5.2
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/MarcoGorelli/cython-lint
+    rev: v0.10.1
+    hooks:
+      - id: cython-lint
+        args: [--max-line-length, "120"]
+      - id: double-quote-cython-strings
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+      - id: check-json
+      - id: check-added-large-files
+      - id: check-yaml
+      - id: debug-statements
+      - id: requirements-txt-fixer
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+
+  - repo: local
+    hooks:
+      - id: shellcheck
+        name: shellcheck
+        entry: shellcheck
+        language: system
+        types: [shell]

@@ -1,9 +1,9 @@
-import unittest
 import math
+import unittest
 
 import volmdlr
-import volmdlr.faces as vmf
 import volmdlr.edges as vme
+import volmdlr.faces as vmf
 import volmdlr.wires as vmw
 from volmdlr import O3D, X3D, Y3D, Z3D, Point2D, Point3D
 
