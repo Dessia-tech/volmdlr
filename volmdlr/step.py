@@ -10,10 +10,10 @@ from typing import List
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from dessia_common.files import BinaryFile
-
-import dessia_common.core as dc
+import dessia_common.core as dc  # isort: skip
+from dessia_common.files import BinaryFile  # isort: skip
 import plot_data.graph
+
 import volmdlr
 import volmdlr.core
 import volmdlr.edges

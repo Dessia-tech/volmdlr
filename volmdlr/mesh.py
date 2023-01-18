@@ -11,7 +11,7 @@ from typing import List  # TypeVar, Tuple, Dict
 import matplotlib.pyplot as plt
 import numpy as npy
 
-from dessia_common.core import DessiaObject
+from dessia_common.core import DessiaObject  # isort: skip
 
 # import volmdlr.core_compiled
 import volmdlr as vm

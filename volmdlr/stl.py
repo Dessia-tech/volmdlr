@@ -15,8 +15,9 @@ from binaryornot.check import is_binary
 # import kaitaistruct
 from kaitaistruct import KaitaiStream
 
-from dessia_common.files import BinaryFile, StringFile
-import dessia_common.core as dc
+import dessia_common.core as dc  # isort: skip
+from dessia_common.files import BinaryFile, StringFile  # isort: skip
+
 import volmdlr as vm
 import volmdlr.core as vmc
 import volmdlr.faces as vmf

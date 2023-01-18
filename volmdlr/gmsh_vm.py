@@ -3,7 +3,7 @@
 """
 Gmsh and related objects
 """
-from dessia_common.core import DessiaObject
+from dessia_common.core import DessiaObject  # isort: skip
 
 import volmdlr
 import volmdlr.mesh
