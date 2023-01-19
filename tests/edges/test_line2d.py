@@ -11,6 +11,13 @@ class TestLine2D(unittest.TestCase):
         self.assertEqual(line_2d.point_distance(volmdlr.Point2D(2, 2)), 0.0)
         self.assertEqual(line_2d.point_distance(volmdlr.Point2D(1, 2)), 0.7071067811865475)
 
+    def test_point_belongs(self):
+        line = edges.Line2D(volmdlr.O2D, volmdlr.Point2D(1, 1))
+        point1 = volmdlr.Point2D(2, 2)
+        point2 = volmdlr.Point2D(1, 2)
+        self.assertTrue(line.point_belongs(point1))
+        self.assertFalse(line.point_belongs(point2))
+
     def test_sort_points_along_line(self):
         line2d = edges.Line2D(volmdlr.O2D, volmdlr.Point2D(1, 2))
         list_points2d = [volmdlr.Point2D(2, 4), volmdlr.Point2D(1.5, 3),

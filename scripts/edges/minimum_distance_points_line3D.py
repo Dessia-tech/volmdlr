@@ -6,6 +6,7 @@ Minimum distance line between two lines
 
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
+
 #import numpy as npy
 
 p11 = vm.Point3D.random(-1,1,-1,1,-1,1)
@@ -30,4 +31,3 @@ m.MPLPlot() #Problem
 
 #m.mpl_plot() ?
 #m.babylonjs() ? 
-

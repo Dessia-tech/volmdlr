@@ -31,5 +31,3 @@ Edges in 3D
 
 .. autoclass:: volmdlr.edges.Arc3D
   :members:
-
-

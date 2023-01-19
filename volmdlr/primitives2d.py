@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Extended primitives 2D classes.
 """
 
 import math
-import warnings
+
 import matplotlib.patches
 
 import volmdlr
@@ -15,6 +15,10 @@ from volmdlr.primitives import RoundedLineSegments
 
 
 class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
+    """
+    Defines a OpenedRoundedLineSegments2D.
+
+    """
     closed = False
     line_class = volmdlr.edges.LineSegment2D
     arc_class = volmdlr.edges.Arc2D
@@ -26,18 +30,6 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                                      name='')
 
         volmdlr.wires.Wire2D.__init__(self, self._primitives(), name)
-
-    def discretization_points(self, resolution=5):
-        points = []
-        for primitive in self.primitives:
-            points.extend(primitive.discretization_points(resolution))
-        return points
-
-    def polygon_points(self, discretization_resolution: int):
-        warnings.warn('polygon_points is deprecated,\
-                please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
 
     def arc_features(self, point_index: int):
         """

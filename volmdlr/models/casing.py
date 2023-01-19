@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Test case representing a casing. Use extrusion features.
 """
 
 import volmdlr as vm
-from volmdlr import primitives2d
-from volmdlr import primitives3d
+from volmdlr import primitives2d, primitives3d
 
 thickness = 0.005
 height = 0.080

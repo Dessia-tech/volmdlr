@@ -1,8 +1,11 @@
-import pydocstyle
 import os
-from glob import glob
 import random
 from datetime import date
+from glob import glob
+
+import pydocstyle
+
+print(f'Pydocstyle version: {pydocstyle.__version__}')
 
 file_list = filter(lambda z: not z.endswith("__init__.py"),
                    [y for x in os.walk('./volmdlr')
@@ -18,56 +21,18 @@ UNWATCHED_ERRORS = [
 ]
 
 MAX_ERROR_BY_TYPE = {
+    # If the error code is not in this dict, then there is no tolerance on the error.
     # http://www.pydocstyle.org/en/stable/error_codes.html
-    'D100': 1,
     'D101': 50,
-    'D102': 667,
+    'D102': 656,
     'D103': 30,
-    'D104': 1,
-    'D105': 1,
-    'D106': 1,
-    'D107': 1,
 
-    'D200': 1,
-    'D201': 1,
-    'D202': 1,
-    'D203': 1,
-    'D204': 1,
-    'D205': 223,
-    'D206': 1,
-    'D207': 1,
-    'D208': 7,
-    'D209': 1,
-    'D210': 1,
-    'D211': 1,
-    'D212': 1,
-    'D213': 2,
-    'D214': 1,
-    'D215': 1,
+    'D205': 214,
 
     'D300': 6,
-    'D301': 1,
-    'D302': 1,
 
-    'D400': 242,
-    'D401': 1,
-    'D402': 1,
-    'D403': 46,
-    'D404': 6,
-    'D405': 1,
-    'D406': 1,
-    'D407': 1,
-    'D408': 1,
-    'D409': 1,
-    'D410': 1,
-    'D411': 1,
-    'D412': 1,
-    'D413': 3,
-    'D414': 1,
-    'D415': 1,
-    'D416': 1,
-    'D417': 8,
-    'D418': 1,
+    'D400': 228,
+    'D403': 44,
 }
 
 error_detected = False

@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-
+Cloud of points classes
 """
 
 import math
 from typing import List
 
+import dessia_common.core as dc
 import matplotlib.pyplot as plt
 
-import dessia_common.core as dc
 import volmdlr as vm
-# import volmdlr.core
-import volmdlr.wires as vmw
 import volmdlr.faces as vmf
+import volmdlr.primitives3d as p3d
 import volmdlr.step as vstep
 import volmdlr.stl as vmstl
-import volmdlr.primitives3d as p3d
+# import volmdlr.core
+import volmdlr.wires as vmw
 
 
 class PointCloud3D(dc.DessiaObject):
