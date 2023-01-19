@@ -1315,7 +1315,7 @@ class CylindricalSurface3D(Surface3D):
         p = volmdlr.Point3D(self.radius * math.cos(point2d.x),
                             self.radius * math.sin(point2d.x),
                             point2d.y)
-        return self.frame.old_coordinates(p)
+        return self.frame.local_to_global_coordinates(p)
 
     def point3d_to_2d(self, point3d):
         """
@@ -1324,7 +1324,7 @@ class CylindricalSurface3D(Surface3D):
         :param point3d: Point at the CylindricalSuface3D
         :type point3d: `volmdlr.`Point3D`
         """
-        x, y, z = self.frame.new_coordinates(point3d)
+        x, y, z = self.frame.global_to_local_coordinates(point3d)
         # Do not delte this, mathematical problem when x and y close to zero but not 0
         if abs(x) < 1e-12:
             x = 0
@@ -1751,7 +1751,7 @@ class CylindricalSurface3D(Surface3D):
         :param point3d: point to verify.
         :return: True if point on surface, False otherwise.
         """
-        new_point = self.frame.new_coordinates(point3d)
+        new_point = self.frame.global_to_local_coordinates(point3d)
         if math.isclose(new_point.x ** 2 + new_point.y ** 2, self.radius ** 2, abs_tol=1e-6):
             return True
         return False
@@ -1816,7 +1816,7 @@ class ToroidalSurface3D(Surface3D):
         """
         Tansform a 3D spatial point (x, y, z) into a 2D spherical parametric point (theta, phi).
         """
-        x, y, z = self.frame.new_coordinates(point3d)
+        x, y, z = self.frame.global_to_local_coordinates(point3d)
         z = min(self.r, max(-self.r, z))
 
         # Do not delte this, mathematical problem when x and y close to zero (should be zero) but not 0
@@ -2173,7 +2173,7 @@ class ConicalSurface3D(Surface3D):
         :param point3d: Point at the CylindricalSuface3D.
         :type point3d: :class:`volmdlr.`Point3D`
         """
-        x, y, z = self.frame.new_coordinates(point3d)
+        x, y, z = self.frame.global_to_local_coordinates(point3d)
         # Do not delte this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Genarally this is related to uncertaintity of step files.
         if abs(x) < 1e-12:
