@@ -2446,6 +2446,7 @@ class SphericalSurface3D(Surface3D):
 
     @property
     def bounding_box(self):
+
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
@@ -5217,10 +5218,15 @@ class Face3D(volmdlr.core.Primitive3D):
     def rotation_inplace(self, center: volmdlr.Point3D,
                          axis: volmdlr.Vector3D, angle: float):
         """
-        Face3D rotation. Object is updated inplace
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
+        Face3D rotation.
+
+         Object is updated inplace.
+        :param center: rotation center.
+        :type center: `volmdlr.Point3D`
+        :param axis: rotation axis.
+        :type axis: `volmdlr.Vector3D`
+        :param angle: rotation angle.
+        :type angle: float
         """
         self.surface3d.rotation_inplace(center=center, axis=axis, angle=angle)
         new_bounding_box = self.get_bounding_box()
@@ -5228,8 +5234,10 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Face3D translation
-        :param offset: translation vector
+        Face3D translation.
+
+        :param offset: Translation vector.
+        :type offset: `volmdlr.Vector3D`
         :return: A new translated Face3D
         """
         new_surface3d = self.surface3d.translation(offset=offset)
@@ -6382,6 +6390,9 @@ class Triangle3D(PlaneFace3D):
 
     @property
     def bounding_box(self):
+        """
+        Returns the surface bounding box.
+        """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
@@ -6677,6 +6688,9 @@ class CylindricalFace3D(Face3D):
 
     @property
     def bounding_box(self):
+        """
+        Returns the surface bounding box.
+        """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
@@ -7142,6 +7156,9 @@ class ToroidalFace3D(Face3D):
 
     @property
     def bounding_box(self):
+        """
+        Returns the surface bounding box.
+        """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
@@ -7215,6 +7232,9 @@ class ConicalFace3D(Face3D):
 
     @property
     def bounding_box(self):
+        """
+        Surface bounding box.
+        """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
