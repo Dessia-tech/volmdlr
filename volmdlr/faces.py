@@ -1433,7 +1433,6 @@ class CylindricalSurface3D(Surface3D):
         Transformation of an arcellipse3d to 2d, in a cylindrical surface.
 
         """
-        length = arcellipse3d.length()
         points = [self.point3d_to_2d(p)
                   for p in arcellipse3d.discretization_points(number_points=50)]
 
@@ -1464,10 +1463,7 @@ class CylindricalSurface3D(Surface3D):
         elif theta3 > theta1 > theta2:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
 
-        new_points = [p1 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
-        new_points.append(points[-1])
-
-        bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(new_points, degree=2)
+        bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points, degree=2)
         return [bsplinecurve2d]
 
     def ellipse3d_to_2d(self, ellipse3d):
@@ -2055,10 +2051,7 @@ class ToroidalSurface3D(Surface3D):
         elif theta3 > theta1 > theta2:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
 
-        new_points = [p1 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
-        new_points.append(points[-1])
-
-        return [vme.BSplineCurve2D.from_points_interpolation(points=new_points, degree=3, periodic=True)]
+        return [vme.BSplineCurve2D.from_points_interpolation(points=points, degree=3, periodic=True)]
 
     def triangulation(self):
         face = self.rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
@@ -2590,13 +2583,14 @@ class SphericalSurface3D(Surface3D):
         if math.isclose(theta1, theta2, abs_tol=1e-4) or math.isclose(phi1, phi2, abs_tol=1e-4):
             return [vme.LineSegment2D(start, end)]
 
-        return self.arc3d_to_2d_with_singularity(arc3d, start, end, theta3, phi3, length)
+        return self.arc3d_to_2d_with_singularity(arc3d, start, end, point_after_start)
 
-    def arc3d_to_2d_with_singularity(self, arc3d, start, end, theta3, phi3, length):
+    def arc3d_to_2d_with_singularity(self, arc3d, start, end, point_after_start):
         # trying to treat when the arc starts at theta1 passes at the singularity at |phi| = 0.5*math.pi
         # and ends at theta2 = theta1 + math.pi
         theta1, phi1 = start
         theta2, phi2 = end
+        theta3, phi3 = point_after_start
 
         half_pi = 0.5 * math.pi
         point_positive_singularity = self.point2d_to_3d(volmdlr.Point2D(theta1, half_pi))
@@ -2641,7 +2635,6 @@ class SphericalSurface3D(Surface3D):
 
         # maybe this is incomplete and not exact
         angle3d = arc3d.angle
-        periodic = False
         number_points = math.ceil(angle3d * 50) + 1  # 50 points per radian
         if number_points < 5:
             number_points = 5
@@ -2663,7 +2656,7 @@ class SphericalSurface3D(Surface3D):
         # elif phi3 > phi1 > phi2:
         #     points = [p + volmdlr.Point2D(self.y_periodicity, 0) if p.y < 0 else p for p in points]
         try:
-            return [vme.BSplineCurve2D.from_points_interpolation(points, 3, periodic)]
+            return [vme.BSplineCurve2D.from_points_interpolation(points, 2)]
         except Exception:
             print("Error while trying to transform Arc3D to parametric Spherical space:")
             print(points)
@@ -2698,14 +2691,13 @@ class SphericalSurface3D(Surface3D):
         theta1, phi1 = self.point3d_to_2d(fullarc3d.start)
         theta2, phi2 = self.point3d_to_2d(fullarc3d.end)
         theta3, phi3 = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
-        theta4, phi4 = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
+        theta4, _ = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
 
         if self.frame.w.is_colinear_to(fullarc3d.normal):
+            p1 = volmdlr.Point2D(theta1, phi1)
             if theta1 > theta3:
-                p1 = volmdlr.Point2D(theta1, phi1)
                 p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi2)
             elif theta1 < theta3:
-                p1 = volmdlr.Point2D(theta1, phi1)
                 p2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
             return [vme.LineSegment2D(p1, p2)]
 
@@ -2729,7 +2721,7 @@ class SphericalSurface3D(Surface3D):
                                       volmdlr.Point2D(theta_plus_pi, half_pi)),
                     vme.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta1, phi2))]
 
-        points = [self.point3d_to_2d(p) for p in fullarc3d.discretization_points(angle_resolution=10)]
+        points = [self.point3d_to_2d(p) for p in fullarc3d.discretization_points(angle_resolution=25)]
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         theta1 = vm_parametric.repair_start_end_angle_periodicity(theta1, theta3)
@@ -2743,11 +2735,7 @@ class SphericalSurface3D(Surface3D):
         elif theta3 > theta1 > theta2:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
 
-        new_points = [p1 for p1, p2 in zip(points[:-1], points[1:]) if p1 != p2]
-        new_points.append(points[-1])
-
-        return [vme.BSplineCurve2D.from_points_interpolation(new_points, 3,
-                                                             periodic=True)]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, 2)]
 
     def plot(self, ax=None, color='grey', alpha=0.5):
         # points = []
