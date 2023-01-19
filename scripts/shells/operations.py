@@ -5,9 +5,9 @@ Goal: call shells methods (point_belongs, volume)
 """
 
 import time
+
 import volmdlr as vm
 from volmdlr.models import casing
-
 
 bottom, sides, belt = casing.primitives
 

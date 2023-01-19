@@ -1,7 +1,8 @@
 import math
 import unittest
+
 import volmdlr
-from volmdlr import wires, edges
+from volmdlr import edges, wires
 
 
 class TestArc3D(unittest.TestCase):

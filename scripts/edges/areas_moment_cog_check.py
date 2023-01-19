@@ -1,4 +1,5 @@
 import math
+
 import volmdlr as vm
 import volmdlr.edges as vme
 import volmdlr.wires as vmw
@@ -73,4 +74,3 @@ for iarc, arc in enumerate([vme.Arc2D(vm.Point2D(0.3, 0.4),
     # assert math.isclose(Ixy_diff, 0., abs_tol=1e-9)
 
     # print(sma_arc, sma_triangle, sma_sl_arc)
-

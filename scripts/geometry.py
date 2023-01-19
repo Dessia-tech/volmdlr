@@ -1,6 +1,7 @@
-import volmdlr.geometry as vmg
 import math
 import random
+
+import volmdlr.geometry as vmg
 
 for (x1, x2, cos_min, cos_max) in [(0., 0.1, math.cos(0.1), 1),
                                    (0.1, 0.2, math.cos(0.2), math.cos(0.1))]:
@@ -15,8 +16,6 @@ cosx = [math.cos(xi) for xi in x]
 sinx = [math.sin(xi) for xi in x]
 
 import matplotlib.pyplot as plt
-
-
 
 for i in range(3):
     fig, (ax1, ax2) = plt.subplots(2)

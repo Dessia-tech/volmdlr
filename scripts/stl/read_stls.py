@@ -1,20 +1,23 @@
 
-import volmdlr.stl as vmstl
 import volmdlr.cloud
+import volmdlr.stl as vmstl
+
 # -*- coding: utf-8 -*-
 """
 """
 
+import os
+
 # import volmdlr.stl as vmstl
 # import volmdlr.cloud
 import volmdlr.core
+
 # import volmdlr as vm
 # import volmdlr.wires as vmw
 # import volmdlr.faces as vmf
 # import volmdlr.edges as vme
 # import matplotlib.pyplot as plt
 
-import os
 # import numpy as np
 # from scipy.spatial import ConvexHull
 shells = []
@@ -59,6 +62,3 @@ for stl_file in [
 
 volume_model = volmdlr.core.VolumeModel(shells)
 volume_model.babylonjs()
-
-
-

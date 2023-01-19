@@ -1,7 +1,6 @@
 import unittest
 
 import volmdlr
-
 from volmdlr.core import BoundingRectangle
 
 

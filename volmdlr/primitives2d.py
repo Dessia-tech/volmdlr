@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Extended primitives 2D classes.
 """
 
 import math
 import warnings
+
 import matplotlib.patches
 
 import volmdlr

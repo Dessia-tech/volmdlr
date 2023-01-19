@@ -6,8 +6,8 @@ Created on Thu Aug 4 2022
 @author: s.bendjebla
 """
 
-import volmdlr 
-import volmdlr.core 
+import volmdlr
+import volmdlr.core
 
 # %% VolumeModel: dict_to_object
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Base classes.
 """
 
 import os
@@ -11,15 +11,14 @@ import webbrowser
 from datetime import datetime
 from typing import List
 
-import matplotlib.pyplot as plt
-import numpy as npy
-import gmsh
-
 import dessia_common.core as dc
 import dessia_common.files as dcf
+# import gmsh
+import matplotlib.pyplot as plt
+import numpy as npy
+
 import volmdlr
 import volmdlr.templates
-
 
 npy.seterr(divide='raise')
 
@@ -660,9 +659,15 @@ class BoundingBox(dc.DessiaObject):
                 self.zmax - self.zmin)
 
     def bbox_intersection(self, bbox2):
-        return self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
-               and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-               and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin
+        if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
+            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin\
+                    and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
+                return True
+        if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
+            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+                    and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
+                return True
+        return False
 
     def is_inside_bbox(self, bbox2):
         return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6) \

@@ -1,6 +1,7 @@
 """
 volmdlr utils for calculating 3D to surface parametric domain operationa
 """
+import bisect
 import math
 
 import volmdlr
@@ -36,32 +37,25 @@ def repair_singularity(primitive, last_primitive):
     return new_primitives
 
 
-def repair_start_end_angle_periodicity(angle_start, angle_end, ref_start, ref_end):
+def repair_start_end_angle_periodicity(angle, ref_angle):
     """
     Repairs start and end angles in parametric coordinates.
 
-    Uses ref_start (angle just after start_angle) and ref_end (angle just before angle_end).
-    :param angle_start: Angle coordinate of start point.
-    :type angle_start: float
-    :param angle_end: Angle coordinate of end point.
-    :type angle_end: float
-    :param ref_start: Angle just after angle_start.
-    :type ref_start: float
-    :param ref_end: Angle just before angle_end.
-    :type ref_end: float
-    :return: Returns the repaired angle_start and angle_end
-    :rtype: List[float, float]
+    Uses ref_angle (angle just after start angle, if repairing start angle or angle just before end if repairing end
+        angle).
+
+    :param angle: Angle to repair.
+    :type angle: float
+    :param ref_angle: Angle of reference.
+    :return: Returns the repaired angle.
+    :rtype: float
     """
     # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-    if math.isclose(angle_start, math.pi, abs_tol=1e-6) and ref_start < 0:
-        angle_start = -math.pi
-    elif math.isclose(angle_start, -math.pi, abs_tol=1e-6) and ref_start > 0:
-        angle_start = math.pi
-    if math.isclose(angle_end, math.pi, abs_tol=1e-6) and ref_end < 0:
-        angle_end = -math.pi
-    elif math.isclose(angle_end, -math.pi, abs_tol=1e-6) and ref_end > 0:
-        angle_end = math.pi
-    return angle_start, angle_end
+    if math.isclose(angle, math.pi, abs_tol=1e-6) and ref_angle < 0:
+        angle = -math.pi
+    elif math.isclose(angle, -math.pi, abs_tol=1e-6) and ref_angle > 0:
+        angle = math.pi
+    return angle
 
 
 def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, angle3d):
@@ -96,7 +90,10 @@ def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
     theta1, z1 = start
     theta2, z2 = end
 
-    theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
+    if abs(theta1) == math.pi:
+        theta1 = repair_start_end_angle_periodicity(theta1, theta3)
+    if abs(theta2) == math.pi:
+        theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
     theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d)
 
@@ -114,10 +111,16 @@ def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, poin
     theta3, phi3 = point_after_start
     theta4, phi4 = point_before_end
     # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
-    theta1, theta2 = repair_start_end_angle_periodicity(theta1, theta2, theta3, theta4)
+    if abs(theta1) == math.pi:
+        theta1 = repair_start_end_angle_periodicity(theta1, theta3)
+    if abs(theta2) == math.pi:
+        theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
     # Verify if phi1 or phi2 point should be -pi or pi because phi -> ]-pi, pi]
-    phi1, phi2 = repair_start_end_angle_periodicity(phi1, phi2, phi3, phi4)
+    if abs(phi1) == math.pi:
+        phi1 = repair_start_end_angle_periodicity(phi1, phi3)
+    if abs(phi2) == math.pi:
+        phi2 = repair_start_end_angle_periodicity(phi2, phi4)
 
     if math.isclose(phi1, phi2, abs_tol=1e-4):
         theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d)
@@ -129,3 +132,31 @@ def arc3d_to_spherical_verification(start, end, angle3d, point_after_start, poin
     end = volmdlr.Point2D(theta2, phi2)
 
     return start, end
+
+
+def array_range_search(x, xmin, xmax):
+    """
+    Find the indices of the elements in the sorted list `x` that fall within the specified range.
+
+    This function use bisect pyhton builtin module, which uses binary search and has a time complexity of O(log(n)).
+    Where n is the array length.
+
+    :param x: A sorted list of values.
+    :type x: list
+    :param xmin: The minimum value in the range.
+    :type xmin: float
+    :param xmax: The maximum value in the range.
+    :type xmax: float
+    :return: A python range from the first to the last elements in `x`.
+    :rtype: range
+
+    :Example:
+
+    >>> x = [1, 2, 3, 4, 5]
+    >>> array_range_search(x, 2, 4)
+    range(1, 3)
+    """
+
+    left = bisect.bisect_left(x, xmin)
+    right = bisect.bisect_right(x, xmax)
+    return range(left, right)

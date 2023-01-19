@@ -1,8 +1,8 @@
 
 import volmdlr
 import volmdlr.edges
-import volmdlr.wires
 import volmdlr.faces
+import volmdlr.wires
 
 p1 = volmdlr.Point3D(0.15, 0.48, 0.5)
 p2 = volmdlr.Point3D(0.15, 0.1, 0.5)

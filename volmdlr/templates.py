@@ -1,8 +1,8 @@
 
 import os
 from string import Template
-import pkg_resources
 
+import pkg_resources
 
 babylon_unpacker_cdn_header = '''
 <!doctype html>
@@ -108,15 +108,15 @@ babylon_unpacker_body_template = Template(
         scene.lastEdgewidthUpdate = Date.now();
 
 
-        camera.onViewMatrixChangedObservable.add(() => {
-            if ((Date.now() - scene.lastEdgewidthUpdate) > 1000){
-                scene.lastEdgewidthUpdate = Date.now();
-                for (mesh of scene.meshes){
-                    var dist = BABYLON.Vector3.Distance(camera.position, mesh.position);
-                    mesh.edgesWidth = dist*0.1;
-                }
-            }
-         })
+        //camera.onViewMatrixChangedObservable.add(() => {
+        //    if ((Date.now() - scene.lastEdgewidthUpdate) > 1000){
+        //        scene.lastEdgewidthUpdate = Date.now();
+        //        for (mesh of scene.meshes){
+        //            var dist = BABYLON.Vector3.Distance(camera.position, mesh.position);
+        //            mesh.edgesWidth = dist*0.1;
+        //        }
+        //    }
+        // })
 
       	var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(-1, -1, -1), scene);
       	light1.intensity=0.5;
@@ -187,7 +187,7 @@ babylon_unpacker_body_template = Template(
                 vertexData.normals = normals;
                 vertexData.applyToMesh(mesh);
                 mesh.enableEdgesRendering(0.9);
-                mesh.edgesWidth = max_length*0.1;
+                mesh.edgesWidth = max_length*0.025;
                 mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);
                 var mat = new BABYLON.StandardMaterial("material", scene);
                 // mat.diffuseColor = BABYLON.Color3.Green();
@@ -195,6 +195,7 @@ babylon_unpacker_body_template = Template(
                 // mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
                 // mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
                 mat.backFaceCulling = false;
+                mat.twoSidedLighting = true;
                 mesh.material = mat;
                 mat.diffuseColor = new BABYLON.Color3(mesh_data['color'][0],
                                                         mesh_data['color'][1],

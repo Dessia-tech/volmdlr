@@ -9,7 +9,12 @@ steps:
   when:
     event: push
     branch: master
+  failure: ignore
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout master
   - git fetch origin testing
   - git checkout testing
   - git merge master
@@ -20,25 +25,30 @@ steps:
   when:
     event: push
     branch: testing
+  failure: ignore
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout testing
   - git fetch origin dev
   - git checkout dev
   - git merge testing
   - git push
 
-
 - name: check code complexity
   image: python:3.9
   commands:
-  - pip install radon pylint pydocstyle
+  - pip install radon pylint pydocstyle pre-commit shellcheck-py cython-lint
   - ./code_quality.sh
   - python code_pylint.py
   - python code_pydocstyle.py
+  - pre-commit run -a
 
   volumes:
     # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
+    - name: cache
+      path: /root/.cache
 
 
 - name: check pep8 formatting
@@ -53,6 +63,12 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
+- name: check changelog update
+  image: python:3.8
+  when:
+    event: pull_request
+  commands:
+    - bash code_changelog.sh
 
 - name: install, build doc run scripts and tutorials
   image: python:3.8
@@ -133,3 +149,6 @@ volumes:
   - name: pip_cache
     host:
       path: /tmp/cache/drone/pip
+  - name: cache
+    host:
+      path: /tmp/cache/drone
