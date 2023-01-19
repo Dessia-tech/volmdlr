@@ -164,7 +164,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         triangulates_with_grid = number_points_x > 0 or number_points_y > 0
 
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=9, discretize_line=triangulates_with_grid)
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=10, discretize_line=triangulates_with_grid)
 
         if not self.inner_contours and not triangulates_with_grid:
             return outer_polygon.triangulation()
@@ -207,7 +207,6 @@ class Surface2D(volmdlr.core.Primitive2D):
             segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
 
             rpi = inner_polygon.random_point_inside(include_edge_points=False)
-
             holes.append([rpi.x, rpi.y])
 
             if triangulates_with_grid:
@@ -2517,8 +2516,7 @@ class SphericalSurface3D(Surface3D):
         """
         x, y, z = self.frame.global_to_local_coordinates(point3d)
         z = min(self.radius, max(-self.radius, z))
-        # if y == -0.0:
-        #     y = 0.0
+
         if z == -0.0:
             z = 0.0
 
@@ -2697,18 +2695,10 @@ class SphericalSurface3D(Surface3D):
         # TODO: On a spherical surface we can have fullarc3d in any plane
         length = fullarc3d.length()
 
-        start = self.point3d_to_2d(fullarc3d.start)
-        end = self.point3d_to_2d(fullarc3d.end)
-        point_after_start = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
-        point_before_end = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
-        theta3, phi3 = point_after_start
-        theta4, phi4 = point_before_end
-
-        start, end = vm_parametric.arc3d_to_spherical_verification(start, end, volmdlr.TWO_PI,
-                                                                   [point_after_start, point_before_end],
-                                                                   [self.x_periodicity, self.y_periodicity])
-        theta1, phi1 = start
-        theta2, phi2 = end
+        theta1, phi1 = self.point3d_to_2d(fullarc3d.start)
+        theta2, phi2 = self.point3d_to_2d(fullarc3d.end)
+        theta3, phi3 = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
+        theta4, phi4 = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
 
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             if theta1 > theta3:
@@ -2727,12 +2717,8 @@ class SphericalSurface3D(Surface3D):
                 theta_plus_pi = theta1 + math.pi
             half_pi = 0.5 * math.pi
             if phi1 > phi3:
-                # p1 = volmdlr.Point2D(theta1, phi1)
-                # p2 = volmdlr.Point2D(theta2, phi1 + math.pi)
-                half_pi = 0.5*math.pi
+                half_pi = 0.5 * math.pi
             elif phi1 < phi3:
-                # p1 = volmdlr.Point2D(theta1, phi1)
-                # p2 = volmdlr.Point2D(theta2, phi1 - math.pi)
                 half_pi = -0.5 * math.pi
             if abs(phi1) == 0.5 * math.pi:
                 return [vme.LineSegment2D(volmdlr.Point2D(theta3, phi1), volmdlr.Point2D(theta3, -half_pi)),
@@ -2807,10 +2793,10 @@ class SphericalSurface3D(Surface3D):
         :return: A list of primitives.
         :rtype: list
         """
-        # Search for a primitive that can be used as reference for reparing periodicity
-        pos = 0
-        x_periodicity = self.x_periodicity
-        y_periodicity = self.y_periodicity
+        # # Search for a primitive that can be used as reference for reparing periodicity
+        # pos = 0
+        # x_periodicity = self.x_periodicity
+        # y_periodicity = self.y_periodicity
         # if x_periodicity and not y_periodicity:
         #     for i, primitive in enumerate(primitives2d):
         #         start = primitive.start
@@ -2821,7 +2807,6 @@ class SphericalSurface3D(Surface3D):
         #     if pos != 0:
         #         primitives2d = primitives2d[pos:] + primitives2d[:pos]
 
-        # def repair(primitives2d):
         i = 1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
@@ -2840,10 +2825,11 @@ class SphericalSurface3D(Surface3D):
         # primitives2d = repair(primitives2d)
         last_end = primitives2d[-1].end
         first_start = primitives2d[0].start
-        if last_end != first_start:
+        if not last_end.is_close(first_start, tol=1e-3):
             last_end_3d = self.point2d_to_3d(last_end)
             first_start_3d = self.point2d_to_3d(first_start)
-            if last_end_3d.is_close(first_start_3d, 1e-6) and abs(last_end.y) != 0.5 * math.pi:
+            if last_end_3d.is_close(first_start_3d, 1e-6) and \
+                    not math.isclose(abs(last_end.y), 0.5 * math.pi, abs_tol=1e-5):
                 if first_start.x > last_end.x:
                     half_pi = -0.5 * math.pi
                 else:
@@ -2970,7 +2956,6 @@ class BSplineSurface3D(Surface3D):
                 i = 1
             else:
                 i += 1
-
         if weights is None:
             surface = BSpline.Surface()
             P = [(control_points[i][0], control_points[i][1],
@@ -3422,9 +3407,9 @@ class BSplineSurface3D(Surface3D):
                 linesegments = [vme.LineSegment2D(p1, p2)]
             # How to check if end of surface overlaps start or the opposite ?
         else:
-            # lth = bspline_curve3d.length()
+            lth = bspline_curve3d.length()
             # uses straight line length to improve performance
-            lth = bspline_curve3d.start.point_distance(bspline_curve3d.end)
+            # lth = bspline_curve3d.start.point_distance(bspline_curve3d.end)
             if lth > 1e-5:
                 points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=10)]
                 if points[0] != points[-1]:
@@ -3444,7 +3429,7 @@ class BSplineSurface3D(Surface3D):
                     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
 
                 return [vme.BSplineCurve2D.from_points_interpolation(
-                    points, bspline_curve3d.degree, periodic=bspline_curve3d.periodic)]
+                    points, min(self.degree_u, self.degree_v))]
 
             elif 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
