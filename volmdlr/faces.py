@@ -1468,7 +1468,7 @@ class CylindricalSurface3D(Surface3D):
 
     def ellipse3d_to_2d(self, ellipse3d):
         """
-        Transformation of an ellipse3d to 2d, in a cylindrical surface.
+        Transformation of an Ellipse3D to 2D, in a cylindrical surface.
 
         """
         # points3d = ellipse3d.discretization_points(number_points = 50)
