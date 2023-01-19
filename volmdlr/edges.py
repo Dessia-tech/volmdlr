@@ -2125,11 +2125,6 @@ class Arc2D(Arc):
             center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
         return center
 
-    def reverse(self):
-        return self.__class__(self.end.copy(),
-                              self.interior.copy(),
-                              self.start.copy())
-
     @property
     def is_trigo(self):
         if not self._is_trigo:
