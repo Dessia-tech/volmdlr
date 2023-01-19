@@ -2636,10 +2636,7 @@ class SphericalSurface3D(Surface3D):
         # maybe this is incomplete and not exact
         angle3d = arc3d.angle
         number_points = math.ceil(angle3d * 50) + 1  # 50 points per radian
-        if number_points < 5:
-            number_points = 5
-        if number_points % 2 == 0:
-            number_points += 1
+        number_points = max(number_points, 5)
         points3d = arc3d.discretization_points(number_points=number_points)
         points = [self.point3d_to_2d(p) for p in points3d]
 
