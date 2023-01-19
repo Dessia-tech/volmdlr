@@ -15,13 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * WireMixin: abscissa (add tolerance as parameter)
-
+* OpenRoundedLineSegment2D: deleted discretization_points() so it uses the one from WireMixin.
+* Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
 
 ### Removed
 
 
 ### Performance improvements
-
+* wires.py's 2D objects: chache bounding_rectangle results
 
 ### Refactorings
 
@@ -68,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: min_distance_to_other_cylinder
 * BSplineCurve: discretization_points
 * Face3D: triangulation
+* BSplineSurface3D: compile BSplineSurface3D.derivatives
 
 
 ### Refactorings

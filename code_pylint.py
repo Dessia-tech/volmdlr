@@ -29,7 +29,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-branches': 27,
                      'too-many-statements': 18,
                      'super-init-not-called': 12,
-                     'no-name-in-module': 4,
+                     'no-name-in-module': 5,
                      'abstract-method': 32,
                      'empty-docstring': 15,
                      'duplicate-code': 9,

@@ -12,7 +12,6 @@ from setuptools import setup
 
 from Cython.Build import cythonize  # isort: skip This prevent a build bug
 
-
 tag_re = re.compile(r"\btag: %s([0-9][^,]*)\b")
 version_re = re.compile("^Version: (.+)$", re.M)
 
@@ -104,43 +103,35 @@ def get_version():
     # print('version', version)
     return version
 
-setup(
-    name="volmdlr",
-    version=get_version(),
-    #      setup_requires=['setuptools_scm'],
-    description=" A volume modeler computation-oriented. Include rendering bindings.",
-    long_description=readme(),
-    long_description_content_type="text/markdown",
-    keywords="volume, modeler, CAD",
-    url="https://github.com/Dessia-tech/volmdlr",
-    author="DessiA Technologies",
-    author_email="root@dessia.tech",
-    license="Creative Commons Attribution-Share Alike license",
-    packages=[
-        "volmdlr",
-        "volmdlr.models",
-        "volmdlr.models.workflows",
-        "volmdlr.utils",
-    ],  # ,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
-    package_dir={},
-    include_package_data=True,
-    install_requires=[
-        "packaging",
-        "dessia_common>=0.7.0",
-        "Cython",
-        "numpy",
-        "matplotlib",
-        "scipy",
-        "geomdl",
-        "jsonschema",
-        "networkx",
-        "triangle",
-        "plot_data>=0.10.9",
-        "kaitaistruct",
-        "binaryornot",
-        "sympy",
-        'gmsh'
-    ],
-    classifiers=["Topic :: Scientific/Engineering", "Development Status :: 3 - Alpha"],
-    ext_modules=cythonize(["volmdlr/core_compiled.pyx"]),
-)
+
+setup(name='volmdlr',
+      version = get_version(),
+#      setup_requires=['setuptools_scm'],
+      description=' A volume modeler computation-oriented. Include rendering bindings.',
+      long_description=readme(),
+      long_description_content_type='text/markdown',
+      keywords='volume, modeler, CAD',
+      url='https://github.com/Dessia-tech/volmdlr',
+      author='DessiA Technologies',
+      author_email='root@dessia.tech',
+      license='Creative Commons Attribution-Share Alike license',
+      packages=['volmdlr', 'volmdlr.models', 'volmdlr.models.workflows', 'volmdlr.utils'],#,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
+      package_dir={},
+      include_package_data = True,
+      install_requires=['packaging',
+                        'dessia_common>=0.7.0',
+                        'Cython',
+                        'numpy',
+                        'matplotlib',
+                        'scipy',
+                        'geomdl',
+                        'jsonschema',
+                        'networkx',
+                        'triangle',
+                        'plot_data>=0.10.9',
+                        'kaitaistruct',
+                        'binaryornot',
+                        'sympy',
+                        ],
+      classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
+      ext_modules = cythonize(["volmdlr/core_compiled.pyx", "volmdlr/bspline_compiled.pyx"]))
