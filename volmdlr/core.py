@@ -68,9 +68,9 @@ def delete_double_point(list_point):
     """
     # TODO : this method would be faster using sets
     points = []
-    for pt in list_point:
-        if pt not in points:
-            points.append(pt)
+    for point in list_point:
+        if point not in points:
+            points.append(point)
         else:
             continue
     return points
@@ -967,14 +967,14 @@ class VolumeModel(dc.PhysicalObject):
             s += "import sys\nsys.path.append('" + freecad_lib_path + "')\n"
 
         s += "import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
-        for ip, primitive in enumerate(self.primitives):
+        for i_prim, primitive in enumerate(self.primitives):
             if primitive.name == '':
-                primitive_name = f'Primitive_{ip}'
+                primitive_name = f'Primitive_{i_prim}'
             else:
-                primitive_name = f'Primitive_{ip}_{primitive.name}'
+                primitive_name = f'Primitive_{i_prim}_{primitive.name}'
             s += f"part = doc.addObject('App::Part','{primitive_name}')\n"
             if hasattr(primitive, 'FreeCADExport'):
-                sp = primitive.FreeCADExport(ip)
+                sp = primitive.FreeCADExport(i_prim)
                 if sp != '':
                     #                        s += (sp+'\n')
                     s += (sp)
@@ -985,12 +985,12 @@ class VolumeModel(dc.PhysicalObject):
                     #         or isinstance(primitive, LineSegment3D) \
                     #         or isinstance(primitive, Ellipse3D):
                     #     #                            print(primitive)
-                    #     #                            s += 'S = Part.Shape([primitive{}])\n'.format(ip)
+                    #     #                            s += 'S = Part.Shape([primitive{}])\n'.format(i_prim)
                     #     #                            s += 'shapeobj.Shape = S\n'
                     #     s += 'shapeobj.Shape = primitive{}.toShape()\n'.format(
-                    #         ip)
+                    #         i_prim)
                     # else:
-                    s += f"shapeobj.Shape = primitive{ip}\n"
+                    s += f"shapeobj.Shape = primitive{i_prim}\n"
                     s += 'part.addObject(shapeobj)\n\n'
             # --------------------DEBUG-------------------
         #                else:
@@ -1032,14 +1032,14 @@ class VolumeModel(dc.PhysicalObject):
                                 freecad_lib_path=freecad_lib_path,
                                 export_types=export_types,
                                 tolerance=tolerance)
-        with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
-            f.write(bytes(s, 'utf8'))
+        with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as file:
+            file.write(bytes(s, 'utf8'))
 
-        arg = f.name
+        arg = file.name
         output = subprocess.call([python_path, arg])
 
-        f.close()
-        os.remove(f.name)
+        file.close()
+        os.remove(file.name)
         return output
 
     def babylon_data(self):
@@ -1565,11 +1565,11 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def update_surfaces_list(face_contours, surfaces, contours, i):
-        for k_, face_c in enumerate(face_contours):
-            for l_, contour_l in enumerate(contours):
-                for c_, contour in enumerate(contour_l):
+        for k_f, face_c in enumerate(face_contours):
+            for l_c, contour_l in enumerate(contours):
+                for c_c, contour in enumerate(contour_l):
                     if face_c.is_superposing(contour):
-                        surfaces[i][k_] = surfaces[l_][c_]
+                        surfaces[i][k_f] = surfaces[l_c][c_c]
                         continue
         return surfaces
 
@@ -1619,8 +1619,8 @@ class VolumeModel(dc.PhysicalObject):
         #     initial_mesh_size = 5
 
         if file_name == '':
-            with tempfile.NamedTemporaryFile(delete=False) as f:
-                file_name = f.name
+            with tempfile.NamedTemporaryFile(delete=False) as file:
+                file_name = file.name
 
         self.to_geo(file_name=file_name,
                     factor=factor,
@@ -1695,8 +1695,8 @@ class VolumeModel(dc.PhysicalObject):
                 kwargs[element[0]] = element[1]
 
         if file_name == '':
-            with tempfile.NamedTemporaryFile(delete=False) as f:
-                file_name = f.name
+            with tempfile.NamedTemporaryFile(delete=False) as file:
+                file_name = file.name
 
         self.to_geo(file_name=file_name,
                     factor=factor,
@@ -1734,8 +1734,8 @@ class VolumeModel(dc.PhysicalObject):
                 kwargs[element[0]] = element[1]
 
         if file_name == '':
-            with tempfile.NamedTemporaryFile(delete=False) as f:
-                file_name = f.name
+            with tempfile.NamedTemporaryFile(delete=False) as file:
+                file_name = file.name
 
         with open(file_name, mode='w', encoding='utf-8') as file:
             self.to_msh_stream(mesh_dimension,
