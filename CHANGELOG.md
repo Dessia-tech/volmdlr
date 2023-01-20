@@ -44,6 +44,8 @@ So we can convert the units correctly
 * ClosedPolygon2D: point_belongs, now the user can choose whether points on the edge of the polygon
             should be considered inside or not.
 * ArcEllipse2D: line_intersections, frame_mapping, linesegment_intersections
+* ClosedTriangleShell3D: to_trimesh method
+* PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
 
 
 ### Fixed
@@ -61,7 +63,7 @@ So we can convert the units correctly
 * BSplineCurve2D: tangent (use position/length)
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
-
+* BSplineSurface3D: debug linesegment2d_to_3d method.
 ### Removed
 
 * babylon script remaining functions
