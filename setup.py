@@ -143,5 +143,5 @@ setup(
         "rtree",
     ],
     classifiers=["Topic :: Scientific/Engineering", "Development Status :: 3 - Alpha"],
-    ext_modules=cythonize(["volmdlr/core_compiled.pyx"]),
+    ext_modules=cythonize(["volmdlr/core_compiled.pyx", "volmdlr/bspline_compiled.pyx"]),
 )
