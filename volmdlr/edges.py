@@ -68,7 +68,6 @@ def insert_knots_and_mutiplicity(knots, knot_mutiplicities, knot_to_add, num):
 class Edge(dc.DessiaObject):
     """
     Defines a simple edge Object.
-
     """
 
     def __init__(self, start, end, name=''):
@@ -120,6 +119,9 @@ class Edge(dc.DessiaObject):
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def polygon_points(self, discretization_resolution: int):
+        """
+        Deprecated method of discretization_points.
+        """
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
@@ -127,6 +129,17 @@ class Edge(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to an Edge type object.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding Edge object
+        :rtype: :class:`volmdlr.edges.Edge`
+        """
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
@@ -459,8 +472,9 @@ class LineSegment(Edge):
 
 class BSplineCurve(Edge):
     """
-    An abstract class for B-spline curves. The following rule must be
-    respected : `number of knots = number of control points + degree + 1`.
+    An abstract class for B-spline curves.
+
+    The following rule must be respected : `number of knots = number of control points + degree + 1`.
 
     :param degree: The degree of the B-spline curve.
     :type degree: int
@@ -813,6 +827,7 @@ class BSplineCurve(Edge):
                                   degree: int, periodic: bool = False):
         """
         Creates a B-spline curve interpolation through the data points.
+
         Please refer to Algorithm A9.1 on The NURBS Book (2nd Edition),
         pp.369-370 for details.
 
@@ -1301,7 +1316,9 @@ class Line2D(Line):
 
 class BSplineCurve2D(BSplineCurve):
     """
-    A class for 2 dimensional B-spline curves. The following rule must be
+    A class for 2 dimensional B-spline curves.
+
+    The following rule must be
     respected : `number of knots = number of control points + degree + 1`.
 
     :param degree: The degree of the 2 dimensional B-spline curve
@@ -1374,6 +1391,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def direction_vector(self, abscissa: float):
         """
+        Get direction vector at abscissa.
+
         :param abscissa: defines where in the BSplineCurve2D the
         direction vector is to be calculated
         :return: The direection vector vector of the BSplineCurve2D
@@ -1382,6 +1401,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def normal_vector(self, abscissa: float):
         """
+        Get normal vector at abscissa.
+
         :param abscissa: defines where in the BSplineCurve2D the
         normal vector is to be calculated
         :return: The normal vector of the BSplineCurve2D
@@ -1617,7 +1638,10 @@ class LineSegment2D(LineSegment):
         return self.start == other_object.start and self.end == other_object.end
 
     def direction_independent_eq(self, linesegment2):
-        """Verifies if two linesegments are the same, not considering its direction"""
+        """
+        Verifies if two linesegments are the same, not considering its direction.
+
+        """
         if self == linesegment2:
             return True
         return self.start == linesegment2.end and self.end == linesegment2.start
@@ -2009,9 +2033,10 @@ class Arc(Edge):
     @staticmethod
     def get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i):
         """
+        Get arc paths from radius.
 
         :param radius_1: radius from center to start point.
-        :param radius_2: radius form center ro end point.
+        :param radius_2: radius form center to end point.
         :param radius_i: radius from center to interior point.
         :return: the clockwise and trigowise paths.
         """
@@ -2037,6 +2062,9 @@ class Arc(Edge):
         return clockwise_path, trigowise_path
 
     def middle_point(self):
+        """
+        Get point in the middle of Arc.
+        """
         return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
@@ -2072,6 +2100,8 @@ class Arc(Edge):
 
 class Arc2D(Arc):
     """
+    Class to draw Arc2D.
+
     angle: the angle measure always >= 0
     """
 
@@ -2251,6 +2281,8 @@ class Arc2D(Arc):
 
     def direction_vector(self, abscissa: float):
         """
+        Get direction vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         direction vector is to be calculated
         :return: The direction vector of the Arc2D
@@ -2259,6 +2291,8 @@ class Arc2D(Arc):
 
     def unit_direction_vector(self, abscissa: float):
         """
+        Get unit direction vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         unit direction vector is to be calculated
         :return: The unit direction vector of the Arc2D
@@ -2269,6 +2303,8 @@ class Arc2D(Arc):
 
     def normal_vector(self, abscissa: float):
         """
+        Get the normal vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         normal vector is to be calculated
         :return: The normal vector of the Arc2D
@@ -2282,6 +2318,8 @@ class Arc2D(Arc):
 
     def unit_normal_vector(self, abscissa: float):
         """
+        Get the unit normal vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         unit normal vector is to be calculated
         :return: The unit normal vector of the Arc2D
@@ -2555,7 +2593,6 @@ class Arc2D(Arc):
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   anticlockwise: bool = None):
-
         list_node = self.discretization_points(number_points=20)
         data = []
         for nd in list_node:
@@ -2629,19 +2666,11 @@ class Arc2D(Arc):
         return Arc2D(self.start, interior, self.end)
 
     def to_wire(self, angle_resolution: float = 10.):
-        """
-        Convert an arc to a wire2d defined with line_segments.
-
-        """
-
+        """ Convert an arc to a wire2d defined with line_segments. """
         return volmdlr.wires.Wire2D.from_points(self.discretization_points(angle_resolution=angle_resolution))
 
     def axial_symmetry(self, line):
-        """
-        Finds out the symmetric arc2d according to a line.
-
-        """
-
+        """ Finds out the symmetric arc2d according to a line. """
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
 
         return self.__class__(start=points_symmetry[0],
@@ -2653,10 +2682,7 @@ class Arc2D(Arc):
 
 
 class FullArc2D(Arc2D):
-    """
-    An edge that starts at start_end, ends at the same point after having described a circle.
-
-    """
+    """ An edge that starts at start_end, ends at the same point after having described a circle. """
 
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
                  name: str = ''):
@@ -2901,6 +2927,9 @@ class FullArc2D(Arc2D):
             return valid_points
 
         return []
+
+    def reverse(self):
+        return self
 
 
 class ArcEllipse2D(Edge):
@@ -3497,6 +3526,17 @@ class Line3D(Line):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to an Line3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding Line3D object
+        :rtype: :class:`volmdlr.edges.Line3D`
+        """
         point1 = object_dict[arguments[1]]
         direction = object_dict[arguments[2]]
         point2 = point1 + direction
@@ -3758,7 +3798,8 @@ class LineSegment3D(LineSegment):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes LineSegment3D frame_mapping and return a new LineSegment3D
+        Changes LineSegment3D frame_mapping and return a new LineSegment3D.
+
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -3771,7 +3812,8 @@ class LineSegment3D(LineSegment):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes vector frame_mapping and the object is updated inplace
+        Changes vector frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -4300,6 +4342,17 @@ class BSplineCurve3D(BSplineCurve):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a BSplineCurve3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding BSplineCurve3D.
+        :rtype: :class:`volmdlr.edges.BSplineCurve3D`
+        """
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
@@ -4323,7 +4376,7 @@ class BSplineCurve3D(BSplineCurve):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
 
-        if 9 in range(len(arguments)):
+        if 10 in range(len(arguments)):
             weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
         else:
             weight_data = None
@@ -5643,6 +5696,13 @@ class FullArc3D(Arc3D):
                         self.radius ** 2, abs_tol=1e-6):
             return [volmdlr.Point3D(x_coordinate, y_coordinate, self.frame.origin.z)]
         return []
+
+    def reverse(self):
+        """
+        Defines a new FullArc3D, odentical to self, but in the oposite direction.
+
+        """
+        return self
 
 
 class ArcEllipse3D(Edge):
