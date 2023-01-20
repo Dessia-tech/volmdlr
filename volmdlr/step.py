@@ -72,11 +72,11 @@ def step_split_arguments(function_arg):
 
 def uncertainty_measure_with_unit(arguments, object_dict):
     """
-    Gets the global length incertainty.
+    Gets the global length uncertainty.
 
     :param arguments: step primitive arguments
     :param object_dict: dictionnary containing already instanciated objects.
-    :return: Global length incertainty.
+    :return: Global length uncertainty.
     """
     length_measure = float(arguments[0].split('(')[1][:-1])
     return length_measure * object_dict[arguments[1]]
@@ -121,11 +121,11 @@ def length_unit_named_unit_si_unit(arguments, object_dict):
 def geometric_representation_context_global_uncertainty_assigned_context_global_unit_assigned_context_representation_context(
         arguments, object_dict):
     """
-    Gets the global length incertainty.
+    Gets the global length uncertainty.
 
     :param arguments: step primitive arguments
     :param object_dict: dictionnary containing already instanciated objects.
-    :return: Global length incertainty.
+    :return: Global length uncertainty.
     """
     global_unit_uncertainty_ref = int(arguments[2][0][1:])
     length_global_uncertainty = object_dict[global_unit_uncertainty_ref]
@@ -511,7 +511,7 @@ class Step(dc.DessiaObject):
         self.functions, self.all_connections = self.read_lines()
         self._utd_graph = False
         self._graph = None
-        self.global_incertainty = 1e-6
+        self.global_uncertainty = 1e-6
         self.unit_conversion_factor = 1
         dc.DessiaObject.__init__(self, name=name)
 
@@ -896,7 +896,7 @@ class Step(dc.DessiaObject):
                     # depth in the right order, leading to error
                     instanciate_ids.append(key.args[0])
             if i == 0:
-                self.global_incertainty = volmdlr_object
+                self.global_uncertainty = volmdlr_object
                 self.unit_conversion_factor = object_dict[int(arguments[1][1:])]
 
         if show_times:
@@ -1056,5 +1056,5 @@ for k, v in STEP_TO_VOLMDLR.items():
             VOLMDLR_TO_STEP[v] = [k]
 
 SI_PREFIX = {'.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9, '.MEGA.': 1e6, '.KILO.': 1e3,
-             '.HECTO.': 1e2, '.DECA.': 1e1, '$': 1e0, '.DECI.': 1e-1, '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6,
+             '.HECTO.': 1e2, '.DECA.': 1e1, '$': 1, '.DECI.': 1e-1, '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6,
              '.NANO.': 1e-9, '.PICO.': 1e-12, '.FEMTO.': 1e-15, '.ATTO.': 1e-18}
