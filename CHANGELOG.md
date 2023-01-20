@@ -73,6 +73,7 @@ So we can convert the units correctly
 * Cylinder: min_distance_to_other_cylinder
 * BSplineCurve: discretization_points
 * Face3D: triangulation
+* EdgeCollection3D: new object for displaying series of edges
 * BSplineSurface3D: compile BSplineSurface3D.derivatives
 
 
