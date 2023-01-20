@@ -6466,39 +6466,39 @@ class Triangle3D(PlaneFace3D):
         self.bounding_box = new_bounding_box
 
     def subdescription(self, resolution=0.01):
-        
+
         lengths = [self.points[0].point_distance(self.points[1]),
                    self.points[1].point_distance(self.points[2]),
                    self.points[2].point_distance(self.points[0])]
         ls_max = max(lengths)
-        
+
         if ls_max <= resolution:
             return self.points
-        
+
         pos_ls_max = lengths.index(ls_max)
-        p0, p1, p2 = self.points[-3+pos_ls_max], self.points[-3+pos_ls_max+1], self.points[-3+pos_ls_max+2]
-        
+        p0, p1, p2 = self.points[-3 + pos_ls_max], self.points[-3 + pos_ls_max + 1], self.points[-3 + pos_ls_max + 2]
+
         v_init = p0 - p1
         v_init.normalize()
         p0_res = []
-        
+
         nb = int(ls_max / resolution) + 2
         for k in range(nb):
             if k == 0:
                 p0_res.append(p1)
             l = min(k * resolution, ls_max)
-            p0_res.append(p1+v_init*l)
-                
+            p0_res.append(p1 + v_init * l)
+
         v1, l1 = p2 - p1, p2.point_distance(p1)
         v1.normalize()
         p1_res = []
-        
+
         for k, p0_k in enumerate(p0_res):
             if k == 0:
                 point_v1 = p1
-            l = min(p0_res[0].point_distance(p0_k)*l1/ls_max, l1)
-            point_v1 = p1+v1*l
-            
+            l = min(p0_res[0].point_distance(p0_k) * l1 / ls_max, l1)
+            point_v1 = p1 + v1 * l
+
             l_int = point_v1.point_distance(p0_k)
             nb_int = int(l_int / resolution) + 2
             if nb_int == 2:
@@ -6506,22 +6506,22 @@ class Triangle3D(PlaneFace3D):
             else:
                 v_int = point_v1 - p0_k
                 v_int.normalize()
-                step_in = l_int/(nb_int-1)
+                step_in = l_int / (nb_int - 1)
                 for i in range(nb_int):
                     l = min(i * step_in, l_int)
                     if l != 0:
-                        p1_res.append(p0_k+v_int*l)
-                        
-        return npy.unique(p0_res+p1_res).tolist()
-    
+                        p1_res.append(p0_k + v_int * l)
+
+        return npy.unique(p0_res + p1_res).tolist()
+
     def subdescription_to_triangles(self, resolution=0.01):
         """
         Returns a list of Triangle3D with resolution as max
         length of subtriangles side.
         """
-        
+
         sub_triangles, done = [self.points], False
-        
+
         while not done:
             triangles = []
             for t, subtri in enumerate(sub_triangles):
@@ -6529,24 +6529,24 @@ class Triangle3D(PlaneFace3D):
                            subtri[1].point_distance(subtri[2]),
                            subtri[2].point_distance(subtri[0])]
                 ls_max = max(lengths)
-                
+
                 if ls_max > resolution:
                     pos_ls_max = lengths.index(ls_max)
-                    pt_mid = (subtri[-3+pos_ls_max] + subtri[-3+pos_ls_max+1]) / 2
-                    triangles.extend([[subtri[-3+pos_ls_max], pt_mid, subtri[-3+pos_ls_max+2]],
-                                      [subtri[-3+pos_ls_max+1], pt_mid, subtri[-3+pos_ls_max+2]]])
-                    
+                    pt_mid = (subtri[-3 + pos_ls_max] + subtri[-3 + pos_ls_max + 1]) / 2
+                    triangles.extend([[subtri[-3 + pos_ls_max], pt_mid, subtri[-3 + pos_ls_max + 2]],
+                                      [subtri[-3 + pos_ls_max + 1], pt_mid, subtri[-3 + pos_ls_max + 2]]])
+
                 else:
                     triangles.append(subtri)
-                    
+
             if len(sub_triangles) == len(triangles):
                 done = True
                 break
-            
+
             sub_triangles = triangles
-            
-        return [Triangle3D(subtri[0],subtri[1],subtri[2]) for subtri in sub_triangles]
-        
+
+        return [Triangle3D(subtri[0], subtri[1], subtri[2]) for subtri in sub_triangles]
+
     def middle(self):
         return (self.point1 + self.point2 + self.point3) / 3
 
