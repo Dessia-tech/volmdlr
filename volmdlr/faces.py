@@ -6478,41 +6478,39 @@ class Triangle3D(PlaneFace3D):
         pos_ls_max = lengths.index(ls_max)
         p0, p1, p2 = self.points[-3+pos_ls_max], self.points[-3+pos_ls_max+1], self.points[-3+pos_ls_max+2]
         
-        
         v_init = p0 - p1
         v_init.normalize()
         p0_res = []
         
         nb = int(ls_max / resolution) + 2
         for k in range(nb):
-            l = min(k * resolution, ls_max)
-            if l == 0:
+            if k == 0:
                 p0_res.append(p1)
-            else:
-                p0_res.append(p1+v_init*l)
+            l = min(k * resolution, ls_max)
+            p0_res.append(p1+v_init*l)
                 
         v1, l1 = p2 - p1, p2.point_distance(p1)
         v1.normalize()
         p1_res = []
         
-        for k in range(len(p0_res)):
-            l = min(p0_res[0].point_distance(p0_res[k])*l1/ls_max, l1)
-            if l == 0:
+        for k, p0_k in enumerate(p0_res):
+            if k == 0:
                 point_v1 = p1
-            else:
-                point_v1 = p1+v1*l
+            l = min(p0_res[0].point_distance(p0_k)*l1/ls_max, l1)
+            point_v1 = p1+v1*l
             
-            nb_int = int(point_v1.point_distance(p0_res[k]) / resolution) + 2
+            l_int = point_v1.point_distance(p0_k)
+            nb_int = int(l_int / resolution) + 2
             if nb_int == 2:
                 p1_res.append(point_v1)
             else:
-                v_int, l_int = point_v1 - p0_res[k], point_v1.point_distance(p0_res[k])
+                v_int = point_v1 - p0_k
                 v_int.normalize()
-                step_in = point_v1.point_distance(p0_res[k])/(nb_int-1)
+                step_in = l_int/(nb_int-1)
                 for i in range(nb_int):
                     l = min(i * step_in, l_int)
                     if l != 0:
-                        p1_res.append(p0_res[k]+v_int*l)
+                        p1_res.append(p0_k+v_int*l)
                         
         return npy.unique(p0_res+p1_res).tolist()
     
