@@ -574,13 +574,17 @@ class BSplineCurve(Edge):
         print('self.__class__: ', self.__class__)
         print('self.curve.__class__: ', self.curve.__class__)
 
-        d=self.to_dict()
-        bs=self.__class__.dict_to_object(d)
-        length_curve(bs.curve)
-        print('bs.curve.__class__: ', bs.curve.__class__)
+        # d=self.to_dict()
+        # bs=self.__class__.dict_to_object(d)
+        # length_curve(bs.curve)
+        # print('bs.curve.__class__: ', bs.curve.__class__)
+        from geomdl.exceptions import GeomdlException
 
         if not self._length:
-            self._length = length_curve(self.curve)
+            try:
+                self._length = length_curve(self.curve)
+            except GeomdlException:
+                self._length = self.to_wire(50).length()
         return self._length
 
     def unit_direction_vector(self, abscissa: float):
