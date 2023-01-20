@@ -6406,52 +6406,41 @@ class Triangle3D(PlaneFace3D):
             elif t_poly2d.point_over_contour(pt):
                 points.append(pt.to_3d(frame.origin, frame.u, frame.v))
 
-        return volmdlr.Vector3D.remove_duplicate(points)
-
+        return npy.unique(points).tolist()
+    
     def subdescription_to_triangles(self, resolution=0.01):
         """
         Returns a list of Triangle3D with resolution as max
         length of subtriangles side.
         """
-
-        frame = self.surface3d.frame
-        pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
-
-        t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
-
-        sub_triangles2d = [t_poly2d]
-        done = False
+        
+        sub_triangles, done = [self.points], False
+        
         while not done:
-            triangles2d = []
-            for t, subtri in enumerate(sub_triangles2d):
-                ls_length = [ls.length() for ls in subtri.line_segments]
-                ls_max = max(ls_length)
-
+            triangles = []
+            for t, subtri in enumerate(sub_triangles):
+                lengths = [subtri[0].point_distance(subtri[1]),
+                            subtri[1].point_distance(subtri[2]),
+                            subtri[2].point_distance(subtri[0])]
+                ls_max = max(lengths)
+                
                 if ls_max > resolution:
-                    pos_ls_max = ls_length.index(ls_max)
-                    taller = subtri.line_segments[pos_ls_max]
-                    p1, p2 = taller.start, taller.end
-                    p3 = list(set(subtri.points) - set([p1, p2]))[0]
-
-                    pt_mid = (p1 + p2) / 2
-                    new_triangles2d = [volmdlr.wires.ClosedPolygon2D([p1, pt_mid, p3]),
-                                       volmdlr.wires.ClosedPolygon2D([p2, pt_mid, p3])]
-
-                    triangles2d.extend(new_triangles2d)
+                    pos_ls_max = lengths.index(ls_max)
+                    pt_mid = (subtri[-3+pos_ls_max] + subtri[-3+pos_ls_max+1]) / 2
+                    triangles.extend([[subtri[-3+pos_ls_max], pt_mid, subtri[-3+pos_ls_max+2]],
+                                      [subtri[-3+pos_ls_max+1], pt_mid, subtri[-3+pos_ls_max+2]]])
+                    
                 else:
-                    triangles2d.append(subtri)
-
-            if len(sub_triangles2d) == len(triangles2d):
+                    triangles.append(subtri)
+                    
+            if len(sub_triangles) == len(triangles):
                 done = True
                 break
-            sub_triangles2d = triangles2d
-
-        triangles3d = [Triangle3D(tri.points[0].to_3d(frame.origin, frame.u, frame.v),
-                                  tri.points[1].to_3d(frame.origin, frame.u, frame.v),
-                                  tri.points[2].to_3d(frame.origin, frame.u, frame.v)) for tri in sub_triangles2d]
-
-        return triangles3d
-
+            
+            sub_triangles = triangles
+            
+        return [Triangle3D(subtri[0],subtri[1],subtri[2]) for subtri in sub_triangles]
+        
     def middle(self):
         return (self.point1 + self.point2 + self.point3) / 3
 
