@@ -1711,7 +1711,7 @@ class Vector3D(Vector):
         """
         Converts a step primitive from a 3 dimensional vector to a Vector3D.
 
-        :param arguments: The arguments of the step primitive
+        :param arguments: The arguments of the step primitive. The last arguments represents the unit_conversion_factor
         :type arguments: list
         :param object_dict: The dictionnary containing all the step primitives
             that have already been instanciated
@@ -1721,7 +1721,10 @@ class Vector3D(Vector):
         """
         if type(arguments[1]) is int:
             # VECTOR
-            return cls(*object_dict[arguments[1]], arguments[0][1:-1])
+            unit_conversion_factor = arguments[-1]
+            new_vector = unit_conversion_factor*float(arguments[2])*object_dict[arguments[1]]
+            new_vector.name = arguments[0][1:-1]
+            return new_vector
         else:
             # DIRECTION
             # return cls(*[float(i)/1000 for i in arguments[1][1:-1].split(",")],
@@ -1930,7 +1933,8 @@ class Point3D(Vector3D):
         :return: The corresponding Point3D object
         :rtype: :class:`volmdlr.Point3D`
         """
-        return cls(*[float(i) / 1000 for i in arguments[1][1:-1].split(",")],
+        unit_conversion_factor = arguments[-1]
+        return cls(*[float(i) * unit_conversion_factor for i in arguments[1][1:-1].split(",")],
                    arguments[0][1:-1])
 
     def to_vector(self):
@@ -3527,7 +3531,7 @@ class Frame3D(Basis3D):
         """
         Converts a step primitive from a 3 dimensional point to a Frame3D.
 
-        :param arguments: The arguments of the step primitive
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
         :param object_dict: The dictionnary containing all the step primitives
             that have already been instanciated
