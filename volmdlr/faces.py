@@ -6379,43 +6379,16 @@ class Triangle3D(PlaneFace3D):
         self.bounding_box = new_bounding_box
 
     def subdescription(self, resolution=0.01):
-        frame = self.surface3d.frame
-        pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
-
-        t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
-
-        xmin, xmax = min(pt.x for pt in pts2d), max(pt.x for pt in pts2d)
-        ymin, ymax = min(pt.y for pt in pts2d), max(pt.y for pt in pts2d)
-
-        nbx, nby = int(((xmax - xmin) / resolution) + 2), int(((ymax - ymin) / resolution) + 2)
-        points_box = []
-        for i in range(nbx):
-            x = min(xmin + i * resolution, xmax)
-            if x == xmin:
-                x = xmin + 0.01 * resolution
-            for j in range(nby):
-                y = min(ymin + j * resolution, ymax)
-                if y == ymin:
-                    y = ymin + 0.01 * resolution
-                points_box.append(volmdlr.Point2D(x, y))
-
-        points = [pt.copy() for pt in self.points]
-        for pt in points_box:
-            if t_poly2d.point_belongs(pt):
-                points.append(pt.to_3d(frame.origin, frame.u, frame.v))
-            elif t_poly2d.point_over_contour(pt):
-                points.append(pt.to_3d(frame.origin, frame.u, frame.v))
-
-        return npy.unique(points).tolist()
-    
-    def subdescription2(self, resolution=0.01):
         
         lengths = [self.points[0].point_distance(self.points[1]),
                    self.points[1].point_distance(self.points[2]),
                    self.points[2].point_distance(self.points[0])]
         ls_max = max(lengths)
-        pos_ls_max = lengths.index(ls_max)
         
+        if ls_max <= resolution:
+            return self.points
+        
+        pos_ls_max = lengths.index(ls_max)
         p0, p1, p2 = self.points[-3+pos_ls_max], self.points[-3+pos_ls_max+1], self.points[-3+pos_ls_max+2]
         
         
