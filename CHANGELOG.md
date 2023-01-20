@@ -61,7 +61,7 @@ So we can convert the units correctly
 * BSplineCurve2D: tangent (use position/length)
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
-
+* BSplineSurface3D: debug linesegment2d_to_3d method.
 ### Removed
 
 * babylon script remaining functions
