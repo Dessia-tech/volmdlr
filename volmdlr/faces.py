@@ -7913,8 +7913,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        OpenShell3D translation. Object is updated inplace
-        :param offset: translation vector
+        OpenShell3D translation. Object is updated inplace.
+
+        :param offset: Translation vector.
+        :type offset: `volmdlr.Vector3D`
+        :return: Translate the OpenShell3D in place.
+        :rtype: None
         """
         for face in self.faces:
             face.translation_inplace(offset)
