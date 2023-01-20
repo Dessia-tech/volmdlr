@@ -53,9 +53,7 @@ class FlatElementError(Exception):
 
 
 class Node2D(vm.Point2D):
-    """
-    A node is a Point2D with some hash capabilities for perfomance used for Mesh.
-    """
+    """ A node is a Point2D with some hash capabilities for perfomance used for Mesh. """
 
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
@@ -82,9 +80,7 @@ class Node2D(vm.Point2D):
 
 
 class Node3D(vm.Point3D):
-    """
-    A node is a Point3D with some hash capabilities for perfomance used for Mesh.
-    """
+    """ A node is a Point3D with some hash capabilities for perfomance used for Mesh. """
 
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))
@@ -111,9 +107,7 @@ class Node3D(vm.Point3D):
 
 
 class LinearElement(vme.LineSegment2D):
-    """
-    A class that defines a linear element.
-    """
+    """ A class that defines a linear element. """
 
     _standalone_in_db = False
     _non_serializable_attributes = []
@@ -151,6 +145,7 @@ class LinearElement(vme.LineSegment2D):
 
 
 class TriangularElement(vmw.Triangle):
+    """ Abstract class to define a triangular element. """
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -292,6 +287,7 @@ class TriangularElement(vmw.Triangle):
 
 
 class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
+    """ Class to define a 2D triangular element. """
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -464,6 +460,8 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
 
 
 class QuadrilateralElement2D(vmw.ClosedPolygon2D):
+    """ Class to define a 2D quadrilateral element. """
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -483,6 +481,8 @@ class QuadrilateralElement2D(vmw.ClosedPolygon2D):
 
 
 class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
+    """ Class to define a 3D triangular element. """
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -630,6 +630,8 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
 
 
 class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
+    """ Class to define a 3D tetrahedral element. """
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']

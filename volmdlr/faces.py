@@ -13,10 +13,12 @@ import numpy as npy
 import scipy as scp
 import scipy.optimize as opt
 import triangle
+
 from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
 from geomdl.fitting import approximate_surface, interpolate_surface
 from geomdl.operations import split_surface_u, split_surface_v
+from trimesh import Trimesh
 
 from dessia_common.core import DessiaObject  # isort: skip
 
@@ -31,6 +33,10 @@ import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
 # import dessia_common
 from volmdlr.utils.parametric import array_range_search
+
+
+# import matplotlib.tri as plt_tri
+# from pygeodesic import geodesic
 
 
 # import matplotlib.tri as plt_tri
@@ -8993,8 +8999,8 @@ class OpenTriangleShell3D(OpenShell3D):
         return False
 
     def to_mesh_data(self):
-        positions = npy.array(3 * len(self.faces), 3)
-        faces = npy.array(len(self.faces), 3)
+        positions = npy.zeros((3 * len(self.faces), 3))
+        faces = npy.zeros((len(self.faces), 3))
         for i, triangle_face in enumerate(self.faces):
             i1 = 3 * i
             i2 = i1 + 1
@@ -9022,6 +9028,13 @@ class OpenTriangleShell3D(OpenShell3D):
         for i1, i2, i3 in faces:
             triangles.append(Triangle3D(points[i1], points[i2], points[i3]))
         return cls(triangles)
+
+    def to_trimesh(self):
+        return Trimesh(*self.to_mesh_data())
+
+    @classmethod
+    def from_trimesh(cls, trimesh):
+        return cls.from_mesh_data(trimesh.vertices.tolist(), trimesh.faces.tolist())
 
 
 class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):

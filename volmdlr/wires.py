@@ -577,7 +577,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         :param wire : volmdlr.wires.Wire2D.
         :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
         """
-
         intersections, intersections_points = [], []
         for primitive in wire.primitives:
             method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_intersections'
@@ -603,7 +602,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         :param points: points to define wire 2d.
         """
-
         edges = []
         for i in range(0, len(points) - 1):
             edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
@@ -613,9 +611,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_crossings(self,
                               linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of crossings in ther form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        Returns a list of crossings in ther form of a tuple.
 
+        Tupole is (point, primitive) of the wire primitives
+        intersecting with the line.
         """
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
@@ -631,7 +630,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         :param wire: volmdlr.wires.Wire2D
         :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
         """
-
         crossings, crossings_points = [], []
         for primitive in wire.primitives:
             method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_crossings'
@@ -653,7 +651,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def to_wire_with_linesegments(self):
         """
         Convert a wire with different primitives to a wire with just linesegments.
-
         """
 
         wires = []
@@ -3987,9 +3984,7 @@ class Circle2D(Contour2D):
     def axial_symmetry(self, line):
         """
         Finds out the symmetric circle2d according to a line.
-
         """
-
         return self.__class__(center=self.center.axial_symmetry(line),
                               radius=self.radius)
 
@@ -4850,10 +4845,7 @@ class Circle3D(Contour3D):
         return ax
 
     def point_at_abscissa(self, curvilinear_abscissa):
-        """
-        Start point is at intersection of frame.u axis.
-
-        """
+        """ Start point is at intersection of frame.u axis. """
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
