@@ -1628,7 +1628,10 @@ class LineSegment2D(LineSegment):
         return self.start == other_object.start and self.end == other_object.end
 
     def direction_independent_eq(self, linesegment2):
-        """Verifies if two linesegments are the same, not considering its direction"""
+        """
+        Verifies if two linesegments are the same, not considering its direction.
+
+        """
         if self == linesegment2:
             return True
         return self.start == linesegment2.end and self.end == linesegment2.start
