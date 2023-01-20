@@ -1721,7 +1721,10 @@ class Vector3D(Vector):
         """
         if type(arguments[1]) is int:
             # VECTOR
-            return cls(*object_dict[arguments[1]], arguments[0][1:-1])
+            unit_conversion_factor = arguments[-1]
+            new_vector = unit_conversion_factor*float(arguments[2])*object_dict[arguments[1]]
+            new_vector.name = arguments[0][1:-1]
+            return new_vector
         else:
             # DIRECTION
             # return cls(*[float(i)/1000 for i in arguments[1][1:-1].split(",")],
