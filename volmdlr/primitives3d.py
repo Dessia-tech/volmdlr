@@ -1981,16 +1981,25 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a BSplineExtrusion.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding BSplineExtrusion object.
+        :rtype: :class:`volmdlr.primitives3d.BSplineExtrusion`
+        """
         name = arguments[0][1:-1]
         if object_dict[arguments[1]].__class__ is volmdlr.wires.Ellipse3D:
             ell = object_dict[arguments[1]]
             vectextru = -object_dict[arguments[2]]
             return cls(ell, vectextru, name)
 
-        elif object_dict[arguments[1]].__class__ is \
-                volmdlr.edges.BSplineCurve3D:
+        if object_dict[arguments[1]].__class__ is volmdlr.edges.BSplineCurve3D:
             bsplinecurve = object_dict[arguments[1]]
             vectextru = object_dict[arguments[2]]
             return cls(bsplinecurve, vectextru, name)
-        else:
-            raise NotImplementedError  # a adapter pour les bpsline
+        raise NotImplementedError  # a adapter pour les bpsline
