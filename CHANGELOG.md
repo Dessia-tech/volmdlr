@@ -57,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: tangent (use position/length)
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
-
+* BSplineSurface3D: debug linesegment2d_to_3d method.
 ### Removed
 
 * babylon script remaining functions
