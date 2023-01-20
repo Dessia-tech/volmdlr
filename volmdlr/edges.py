@@ -127,6 +127,17 @@ class Edge(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to an Edge type object.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding Edge object
+        :rtype: :class:`volmdlr.edges.Edge`
+        """
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
@@ -1617,7 +1628,10 @@ class LineSegment2D(LineSegment):
         return self.start == other_object.start and self.end == other_object.end
 
     def direction_independent_eq(self, linesegment2):
-        """Verifies if two linesegments are the same, not considering its direction"""
+        """
+        Verifies if two linesegments are the same, not considering its direction.
+
+        """
         if self == linesegment2:
             return True
         return self.start == linesegment2.end and self.end == linesegment2.start
@@ -2555,7 +2569,6 @@ class Arc2D(Arc):
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   anticlockwise: bool = None):
-
         list_node = self.discretization_points(number_points=20)
         data = []
         for nd in list_node:
@@ -2901,6 +2914,9 @@ class FullArc2D(Arc2D):
             return valid_points
 
         return []
+
+    def reverse(self):
+        return self
 
 
 class ArcEllipse2D(Edge):
@@ -3497,6 +3513,17 @@ class Line3D(Line):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to an Line3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding Line3D object
+        :rtype: :class:`volmdlr.edges.Line3D`
+        """
         point1 = object_dict[arguments[1]]
         direction = object_dict[arguments[2]]
         point2 = point1 + direction
@@ -4300,6 +4327,17 @@ class BSplineCurve3D(BSplineCurve):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a BSplineCurve3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding BSplineCurve3D.
+        :rtype: :class:`volmdlr.edges.BSplineCurve3D`
+        """
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
@@ -4323,7 +4361,7 @@ class BSplineCurve3D(BSplineCurve):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
 
-        if 9 in range(len(arguments)):
+        if 10 in range(len(arguments)):
             weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
         else:
             weight_data = None
@@ -5643,6 +5681,13 @@ class FullArc3D(Arc3D):
                         self.radius ** 2, abs_tol=1e-6):
             return [volmdlr.Point3D(x_coordinate, y_coordinate, self.frame.origin.z)]
         return []
+
+    def reverse(self):
+        """
+        Defines a new FullArc3D, odentical to self, but in the oposite direction.
+
+        """
+        return self
 
 
 class ArcEllipse3D(Edge):

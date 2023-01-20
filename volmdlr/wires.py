@@ -4293,6 +4293,17 @@ class Contour3D(ContourMixin, Wire3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a Contour3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding Contour3D object.
+        :rtype: :class:`volmdlr.wires.Contour3D`
+        """
         name = arguments[0][1:-1]
         raw_edges = []
         # edge_ends = {}
@@ -4859,8 +4870,20 @@ class Circle3D(Contour3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a Circle3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding Circle3D object.
+        :rtype: :class:`volmdlr.wires.Circle3D`
+        """
+        unit_conversion_factor = arguments[-1]
         center = object_dict[arguments[1]].origin
-        radius = float(arguments[2]) / 1000
+        radius = float(arguments[2]) * unit_conversion_factor
         if object_dict[arguments[1]].u is not None:
             normal = object_dict[arguments[1]].u
             other_vec = object_dict[arguments[1]].v
@@ -4870,8 +4893,7 @@ class Circle3D(Contour3D):
             normal = object_dict[arguments[1]].v  # ou w
             other_vec = None
         normal.normalize()
-        return cls.from_center_normal(center, normal, radius,
-                                      arguments[0][1:-1])
+        return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
         circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u,
@@ -5264,11 +5286,23 @@ class Ellipse3D(Contour3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a Ellipse3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding Ellipse3D object.
+        :rtype: :class:`volmdlr.wires.Ellipse3D`
+        """
+        unit_conversion_factor = arguments[-1]
         center = object_dict[arguments[1]].origin
         normal = object_dict[arguments[1]].u  # ancien w
         major_dir = object_dict[arguments[1]].v  # ancien u
-        major_axis = float(arguments[2]) / 1000
-        minor_axis = float(arguments[3]) / 1000
+        major_axis = float(arguments[2]) * unit_conversion_factor
+        minor_axis = float(arguments[3]) * unit_conversion_factor
         return cls(major_axis, minor_axis, center, normal, major_dir,
                    arguments[0][1:-1])
 
