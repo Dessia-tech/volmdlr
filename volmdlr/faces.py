@@ -3077,7 +3077,7 @@ class BSplineSurface3D(Surface3D):
                 break
         if not flag:
             arc = vme.Arc3D(points[0], points[5], points[-1])
-            flag_arc = all([arc.point_belongs(pt, abs_tol=1e-4) for pt in points])
+            flag_arc = all(arc.point_belongs(pt, abs_tol=1e-4) for pt in points)
 
         periodic = False
         if self.x_periodicity is not None and \
