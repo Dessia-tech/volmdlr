@@ -571,6 +571,7 @@ class BSplineCurve(Edge):
         :return: The length of the B-spline curve.
         :rtype: float
         """
+        print('self.curve:', self.curve)
         if not self._length:
             self._length = length_curve(self.curve)
         return self._length
