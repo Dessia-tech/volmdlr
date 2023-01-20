@@ -6419,7 +6419,7 @@ class Triangle3D(PlaneFace3D):
         p0, p1, p2 = self.points[-3+pos_ls_max], self.points[-3+pos_ls_max+1], self.points[-3+pos_ls_max+2]
         
         
-        v_init = p1 - p0
+        v_init = p0 - p1
         v_init.normalize()
         p0_res = []
         
@@ -6427,44 +6427,34 @@ class Triangle3D(PlaneFace3D):
         for k in range(nb):
             l = min(k * resolution, ls_max)
             if l == 0:
-                p0_res.append(p0)
+                p0_res.append(p1)
             else:
-                p0_res.append(p0+v_init*l)
+                p0_res.append(p1+v_init*l)
                 
-        v1 = p2 - p1
+        v1, l1 = p2 - p1, p2.point_distance(p1)
         v1.normalize()
-        res1 = (p0_res[1] - p0_res[0]).dot(v1)
-        # real_res1 = int(resolution/res1)*res1
-        # nb_res1 = int(p2.point_distance(p1) / real_res1) + 2
-        
-        # nb_res1 = int(p2.point_distance(p1) / res1) + 2
-        
         p1_res = []
-        # for k in range(nb_res1):
-        for k in range(len(p0_res)):
-            # l = min(k * real_res1, p2.point_distance(p1))
-            l = min(k * res1, p2.point_distance(p1))
-            if l == 0:
-                p1_res.append(p1)
-            else:
-                p1_res.append(p1+v1*l)
         
-        # v2 = p2 - p0
-        # v2.normalize()
-        # in_points = []
-        # res2 = (p0_res[1] - p0_res[0]).dot(v2)
-        # real_res2 = int(resolution/res2)*res2
-        # # for p, p_init in enumerate(p0_res[::int(resolution/res1)]):
-        # for p, p_init in enumerate(p0_res[::int(resolution/res1)]):
-        #     nb_res2 = int(p_init.point_distance(p1_res[p]) / real_res2) + 2
-        #     for k in range(nb_res2):
-        #         l = min(k * real_res2, p_init.point_distance(p1_res[p]))
-        #         if l != 0:
-        #             in_points.append(p_init+v2*l)
-                
-        return p0_res+p1_res#+in_points
-
-        # return npy.unique(points).tolist()
+        for k in range(len(p0_res)):
+            l = min(p0_res[0].point_distance(p0_res[k])*l1/ls_max, l1)
+            if l == 0:
+                point_v1 = p1
+            else:
+                point_v1 = p1+v1*l
+            
+            nb_int = int(point_v1.point_distance(p0_res[k]) / resolution) + 2
+            if nb_int == 2:
+                p1_res.append(point_v1)
+            else:
+                v_int, l_int = point_v1 - p0_res[k], point_v1.point_distance(p0_res[k])
+                v_int.normalize()
+                step_in = point_v1.point_distance(p0_res[k])/(nb_int-1)
+                for i in range(nb_int):
+                    l = min(i * step_in, l_int)
+                    if l != 0:
+                        p1_res.append(p0_res[k]+v_int*l)
+                        
+        return npy.unique(p0_res+p1_res).tolist()
     
     def subdescription_to_triangles(self, resolution=0.01):
         """
