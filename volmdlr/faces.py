@@ -3134,14 +3134,15 @@ class BSplineSurface3D(Surface3D):
             linesegment2d.point_at_abscissa(i * lth / 10.)) for i in range(11)]
 
         linesegment = vme.LineSegment3D(points[0], points[-1])
-        arc = vme.Arc3D(points[0], points[5], points[-1])
         flag = True
-        flag_arc = True
+        flag_arc = False
         for pt in points:
             if not linesegment.point_belongs(pt, abs_tol=1e-4):
                 flag = False
-            if not arc.point_belongs(pt, abs_tol=1e-4):
-                flag_arc = False
+                break
+        if not flag:
+            arc = vme.Arc3D(points[0], points[5], points[-1])
+            flag_arc = all(arc.point_belongs(pt, abs_tol=1e-4) for pt in points)
 
         periodic = False
         if self.x_periodicity is not None and \
@@ -3157,15 +3158,15 @@ class BSplineSurface3D(Surface3D):
 
         if flag and not flag_arc:
             # All the points are on the same LineSegment3D
-            linesegments = [linesegment]
+            primitives = [linesegment]
         elif flag_arc:
-            linesegments = [arc]
+            primitives = [arc]
         else:
-            linesegments = [vme.BSplineCurve3D.from_points_interpolation(
-                points, max(self.degree_u, self.degree_v), periodic=periodic)]
+            primitives = [vme.BSplineCurve3D.from_points_interpolation(
+                points, min(self.degree_u, self.degree_v), periodic=periodic)]
             # linesegments = [vme.LineSegment3D(p1, p2)
             #                 for p1, p2 in zip(points[:-1], points[1:])]
-        return linesegments
+        return primitives
 
     def linesegment3d_to_2d(self, linesegment3d):
         """
@@ -8009,8 +8010,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        OpenShell3D translation. Object is updated inplace
-        :param offset: translation vector
+        OpenShell3D translation. Object is updated inplace.
+
+        :param offset: Translation vector.
+        :type offset: `volmdlr.Vector3D`
+        :return: Translate the OpenShell3D in place.
+        :rtype: None
         """
         for face in self.faces:
             face.translation_inplace(offset)
