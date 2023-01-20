@@ -8,7 +8,8 @@ Module containing grid and relative objects
 from typing import List
 
 import numpy as npy
-from dessia_common.core import DessiaObject
+
+from dessia_common.core import DessiaObject  # isort: skip
 
 import volmdlr
 import volmdlr.wires
