@@ -385,10 +385,21 @@ def advanced_brep_shape_representation(arguments, object_dict):
 
 
 def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, shape_representation_frames):
+    """
+    Frame maps a closed shell in an assembly to its good position.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     global_fame = shape_representation_frames[0]
     transfomed_frame = [frame for frame in item_defined_transformation_frames if frame != global_fame][0]
     new_closedshells = []
-    
+
     for shell3d in closed_shells:
         basis_a = global_fame.basis()
         basis_b = transfomed_frame.basis()
@@ -410,6 +421,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         new_closedshells.append(new_closed_shell3d)
     return new_closedshells
 
+
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
     """
@@ -426,14 +438,16 @@ def representation_relationship_representation_relationship_with_transformation_
     # raise NotImplementedError("We are still not able to read assemblies in step files")
     # return []
     if arguments[2] in object_dict:
-        if isinstance(object_dict[arguments[2]], list): # arguments = {, , [], [], item_....}
+        if isinstance(object_dict[arguments[2]], list):  # arguments = {, , [], [], item_....}
             if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
                           and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                return frame_map_closed_shell(object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]])
+                return frame_map_closed_shell(object_dict[arguments[2]],
+                                              object_dict[arguments[4]], object_dict[arguments[3]])
 
             elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
                     not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                return frame_map_closed_shell(object_dict[arguments[3]], object_dict[arguments[4]], object_dict[arguments[2]])
+                return frame_map_closed_shell(object_dict[arguments[3]],
+                                              object_dict[arguments[4]], object_dict[arguments[2]])
             return []
         # shell3d = object_dict[arguments[2]]
         # frame3d = object_dict[arguments[4]]

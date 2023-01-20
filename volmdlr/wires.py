@@ -72,7 +72,6 @@ def bounding_rectangle_adjacent_contours(contours: List):
     """
     xmin, xmax, ymin, ymax = contours[0].bounding_rectangle.bounds()
 
-
     for i in range(1, len(contours)):
         xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle.bounds()
         xmin = min(xmin, xmin_contour)

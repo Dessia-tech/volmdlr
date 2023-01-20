@@ -472,7 +472,9 @@ class LineSegment(Edge):
 
 class BSplineCurve(Edge):
     """
-    An abstract class for B-spline curves. The following rule must be
+    An abstract class for B-spline curves.
+
+    The following rule must be
     respected : `number of knots = number of control points + degree + 1`.
 
     :param degree: The degree of the B-spline curve.
@@ -1302,10 +1304,10 @@ class Line2D(Line):
         """
         Calculate the shortest distance between a line and a point.
 
-        :param point2d: Point to calculate distance
-        :type point2d: :class:`volmdlr.Point2D`
-        :return: Distance to point
-        :rtype: float
+        :param point2d: Point to calculate distance.
+        :type point2d: :class:`volmdlr.Point2D`.
+        :return: Distance to point.
+        :rtype: float.
         """
         vector_r = self.point1 - point2d
         vector_v = self.normal_vector()
@@ -1387,14 +1389,16 @@ class BSplineCurve2D(BSplineCurve):
 
     def direction_vector(self, abscissa: float):
         """
+
         :param abscissa: defines where in the BSplineCurve2D the
-        direction vector is to be calculated
+        direction vector is to be calculated.
         :return: The direection vector vector of the BSplineCurve2D
         """
         return self.tangent(abscissa)
 
     def normal_vector(self, abscissa: float):
         """
+
         :param abscissa: defines where in the BSplineCurve2D the
         normal vector is to be calculated
         :return: The normal vector of the BSplineCurve2D
