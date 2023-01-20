@@ -584,7 +584,33 @@ class BSplineCurve(Edge):
             try:
                 self._length = length_curve(self.curve)
             except GeomdlException:
-                self._length = self.to_wire(50).length()
+                control_points = self.control_points
+                weights = self.weights
+                degree = self.degree
+                knots = self.knots
+                knot_multiplicities = self.knot_multiplicities
+
+                points = [[*point] for point in control_points]
+                if weights is None:
+                    curve = BSpline.Curve()
+                    curve.degree = degree
+                    curve.ctrlpts = points
+                else:
+                    curve = NURBS.Curve()
+                    curve.degree = degree
+                    curve.ctrlpts = points
+                    curve.weights = weights
+
+                knot_vector = []
+                for i, knot in enumerate(knots):
+                    knot_vector.extend([knot] * knot_multiplicities[i])
+                curve.knotvector = knot_vector
+                curve.delta = 0.01
+                self.curve = curve
+
+                self._length = length_curve(self.curve)
+
+                # self._length = self.to_wire(50).length()
         return self._length
 
     def unit_direction_vector(self, abscissa: float):
