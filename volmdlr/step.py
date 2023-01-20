@@ -435,8 +435,6 @@ def representation_relationship_representation_relationship_with_transformation_
     :rtype: TYPE
 
     """
-    # raise NotImplementedError("We are still not able to read assemblies in step files")
-    # return []
     if arguments[2] in object_dict:
         if isinstance(object_dict[arguments[2]], list):  # arguments = {, , [], [], item_....}
             if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
@@ -449,10 +447,6 @@ def representation_relationship_representation_relationship_with_transformation_
                 return frame_map_closed_shell(object_dict[arguments[3]],
                                               object_dict[arguments[4]], object_dict[arguments[2]])
             return []
-        # shell3d = object_dict[arguments[2]]
-        # frame3d = object_dict[arguments[4]]
-        # shell3d.frame_mapping_inplace(frame3d, 'old')
-        # return shell3d
         return []
     return []
 
