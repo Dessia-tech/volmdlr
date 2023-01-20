@@ -144,7 +144,7 @@ class LinearElement(vme.LineSegment2D):
 
 
 class TriangularElement(vmw.Triangle):
-    """ A class that defines a triangular element. """
+    """ Abstract class to define a triangular element. """
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -286,6 +286,7 @@ class TriangularElement(vmw.Triangle):
 
 
 class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
+    """ Class to define a 2D triangular element. """
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -458,6 +459,8 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
 
 
 class QuadrilateralElement2D(vmw.ClosedPolygon2D):
+    """ Class to define a 2D quadrilateral element. """
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -477,6 +480,8 @@ class QuadrilateralElement2D(vmw.ClosedPolygon2D):
 
 
 class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
+    """ Class to define a 3D triangular element. """
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -624,6 +629,8 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
 
 
 class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
+    """ Class to define a 3D tetrahedral element. """
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
