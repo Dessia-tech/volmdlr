@@ -12,7 +12,6 @@ from setuptools import setup
 
 from Cython.Build import cythonize  # isort: skip This prevent a build bug
 
-
 tag_re = re.compile(r"\btag: %s([0-9][^,]*)\b")
 version_re = re.compile("^Version: (.+)$", re.M)
 

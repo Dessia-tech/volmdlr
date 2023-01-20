@@ -32,7 +32,7 @@ MAX_ERROR_BY_TYPE = {
     'D300': 6,
 
     'D400': 255,
-    'D403': 46,
+    'D403': 44,
 }
 
 error_detected = False
