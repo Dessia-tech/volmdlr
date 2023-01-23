@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 * Unit coversion factor parameter added to the end of the from_step arguments parameter.
 So we can convert the units correctly
+* SphericalSurface3D: rotation, translation, frame_mapping
+* read steps: Identify assemblies in a step file.
 * 
 
 ### Fixed
