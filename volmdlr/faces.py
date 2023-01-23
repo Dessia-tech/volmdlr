@@ -1884,7 +1884,7 @@ class ToroidalSurface3D(Surface3DMixin):
         self.frame = frame
         self.R = R
         self.r = r
-        Surface3D.__init__(self, name=name)
+        Surface3DMixin.__init__(self, name=name)
 
         self._bbox = None
 
@@ -2229,7 +2229,7 @@ class ConicalSurface3D(Surface3DMixin):
                  name: str = ''):
         self.frame = frame
         self.semi_angle = semi_angle
-        Surface3D.__init__(self, name=name)
+        Surface3DMixin.__init__(self, name=name)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
