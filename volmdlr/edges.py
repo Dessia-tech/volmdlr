@@ -4594,8 +4594,7 @@ class BSplineCurve3D(BSplineCurve):
         return self.from_geomdl_curve(modified_curve)
 
     # Copy paste du LineSegment3D
-    def plot(self, ax=None, edge_ends=False, color='k', alpha=1,
-             edge_direction=False):
+    def plot(self, ax=None, color='k', alpha=1, edge_ends=False, edge_direction=False):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
