@@ -183,6 +183,7 @@ def face_bound(arguments, object_dict):
 def surface_curve(arguments, object_dict):
     """
     Returns xx.
+
     :param arguments: DESCRIPTION
     :type arguments: TYPE
     :param object_dict: DESCRIPTION
@@ -385,13 +386,27 @@ def advanced_brep_shape_representation(arguments, object_dict):
 
 
 def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, shape_representation_frames):
-    global_fame = shape_representation_frames[0]
-    transfomed_frame = [frame for frame in item_defined_transformation_frames if frame != global_fame][0]
+    """
+    Frame maps a closed shell in an assembly to its good position.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    if shape_representation_frames[0].origin == volmdlr.O3D:
+        global_frame = shape_representation_frames[0]
+    else:
+        global_frame = [frame for frame in item_defined_transformation_frames if frame.origin == volmdlr.O3D][0]
+    transformed_frame = [frame for frame in item_defined_transformation_frames if frame != global_frame][0]
     new_closedshells = []
-    
+
     for shell3d in closed_shells:
-        basis_a = global_fame.basis()
-        basis_b = transfomed_frame.basis()
+        basis_a = global_frame.basis()
+        basis_b = transformed_frame.basis()
         A = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
                        [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
                        [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
@@ -402,7 +417,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transfomed_frame.origin, u_vector,
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector,
                                     v_vector,
                                     w_vector)
         new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
@@ -410,35 +425,24 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         new_closedshells.append(new_closed_shell3d)
     return new_closedshells
 
+
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
         arguments, object_dict):
     """
-    Returns xx.
-
-    :param arguments: DESCRIPTION
-    :type arguments: TYPE
-    :param object_dict: DESCRIPTION
-    :type object_dict: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
-
+    Representation relationship with transformation shape. To clarify.
     """
-    # raise NotImplementedError("We are still not able to read assemblies in step files")
-    # return []
     if arguments[2] in object_dict:
-        if isinstance(object_dict[arguments[2]], list): # arguments = {, , [], [], item_....}
+        if isinstance(object_dict[arguments[2]], list):  # arguments = {, , [], [], item_....}
             if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
                           and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                return frame_map_closed_shell(object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]])
+                return frame_map_closed_shell(object_dict[arguments[2]],
+                                              object_dict[arguments[4]], object_dict[arguments[3]])
 
             elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
                     not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                return frame_map_closed_shell(object_dict[arguments[3]], object_dict[arguments[4]], object_dict[arguments[2]])
+                return frame_map_closed_shell(object_dict[arguments[3]],
+                                              object_dict[arguments[4]], object_dict[arguments[2]])
             return []
-        # shell3d = object_dict[arguments[2]]
-        # frame3d = object_dict[arguments[4]]
-        # shell3d.frame_mapping_inplace(frame3d, 'old')
-        # return shell3d
         return []
     return []
 
@@ -446,15 +450,7 @@ def representation_relationship_representation_relationship_with_transformation_
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
         arguments, object_dict):
     """
-    Returns xx.
-
-    :param arguments: DESCRIPTION
-    :type arguments: TYPE
-    :param object_dict: DESCRIPTION
-    :type object_dict: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
-
+    Bounded b spline with knots curve geometric representation item. To clarify.
     """
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
@@ -471,15 +467,7 @@ def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_repre
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
         arguments, object_dict):
     """
-    Returns xx.
-
-    :param arguments: DESCRIPTION
-    :type arguments: TYPE
-    :param object_dict: DESCRIPTION
-    :type object_dict: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
-
+    Bounded b spline surface with knots curve geometric representation item. To clarify.
     """
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":

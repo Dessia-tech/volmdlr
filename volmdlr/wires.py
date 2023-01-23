@@ -72,7 +72,6 @@ def bounding_rectangle_adjacent_contours(contours: List):
     """
     xmin, xmax, ymin, ymax = contours[0].bounding_rectangle.bounds()
 
-
     for i in range(1, len(contours)):
         xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle.bounds()
         xmin = min(xmin, xmin_contour)
@@ -336,6 +335,85 @@ class WireMixin:
         return False
 
 
+class EdgeCollection3D(WireMixin):
+    """
+    A collection of simple edges 3D.
+    """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['basis_primitives']
+    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_data_hash_attributes = []
+
+    def __init__(self, primitives: List[volmdlr.edges.Edge], color=None, alpha=1, name: str = ''):
+        self.primitives = primitives
+        self.color = color
+        self.alpha = alpha
+        self._bbox = None
+        self.name = name
+
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+        """ Plot edges with matplolib, not tested. """
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        for primitive in self.primitives:
+            primitive.plot(ax=ax, color=color, alpha=alpha)
+        return ax
+
+    def _bounding_box(self):
+        """ Flawed method, to be enforced by overloading. """
+        return volmdlr.core.BoundingBox.from_points(self.points())
+
+    @property
+    def bounding_box(self):
+        """ Get big bounding box of all edges. """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    def points(self):
+        """ Get list of all points. """
+        points = []
+        for prim in self.primitives:
+            points += [prim.start, prim.end]
+        return points
+
+    def babylon_param(self):
+        """ Get dict for babylonjs object settings. """
+        babylon_param = {'alpha': self.alpha,
+                         'name': self.name,
+                         'color': [0, 0, 0.6]}
+        if self.color is None:
+            babylon_param['edges_color'] = [0, 0, 0.6]
+        else:
+            babylon_param['edges_color'] = list(self.color)
+        return babylon_param
+
+    def babylon_points(self):
+        """ Get list of points coordinates. """
+        return [[p.x, p.y, p.z] for p in self.points()]
+
+    def to_babylon(self):
+        """ Generate a mesh from all edges for performance when drawing. """
+        positions = []
+        for prim in self.primitives:
+            positions += [prim.start.x, prim.start.y, prim.start.z,
+                          prim.end.x, prim.end.y, prim.end.z,
+                          prim.end.x, prim.end.y, prim.end.z]
+
+        indices = list(range(len(positions)))
+        return positions, indices
+
+    def babylon_meshes(self):
+        """ Set the mesh for babylonjs. """
+        positions, indices = self.to_babylon()
+        babylon_mesh = {'positions': positions,
+                        'indices': indices}
+        babylon_mesh.update(self.babylon_param())
+        return [babylon_mesh]
+
+
 class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     """
     A collection of simple primitives, following each other making a wire.
@@ -578,7 +656,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         :param wire : volmdlr.wires.Wire2D.
         :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
         """
-
         intersections, intersections_points = [], []
         for primitive in wire.primitives:
             method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_intersections'
@@ -604,7 +681,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         :param points: points to define wire 2d.
         """
-
         edges = []
         for i in range(0, len(points) - 1):
             edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
@@ -614,9 +690,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_crossings(self,
                               linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of crossings in ther form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        Returns a list of crossings in ther form of a tuple.
 
+        Tupole is (point, primitive) of the wire primitives
+        intersecting with the line.
         """
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
@@ -632,7 +709,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         :param wire: volmdlr.wires.Wire2D
         :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
         """
-
         crossings, crossings_points = [], []
         for primitive in wire.primitives:
             method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_crossings'
@@ -654,7 +730,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def to_wire_with_linesegments(self):
         """
         Convert a wire with different primitives to a wire with just linesegments.
-
         """
 
         wires = []
@@ -3987,9 +4062,7 @@ class Circle2D(Contour2D):
     def axial_symmetry(self, line):
         """
         Finds out the symmetric circle2d according to a line.
-
         """
-
         return self.__class__(center=self.center.axial_symmetry(line),
                               radius=self.radius)
 
@@ -4851,10 +4924,7 @@ class Circle3D(Contour3D):
         return ax
 
     def point_at_abscissa(self, curvilinear_abscissa):
-        """
-        Start point is at intersection of frame.u axis.
-
-        """
+        """ Start point is at intersection of frame.u axis. """
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
