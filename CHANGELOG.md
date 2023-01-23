@@ -46,6 +46,7 @@ So we can convert the units correctly
 * ArcEllipse2D: line_intersections, frame_mapping, linesegment_intersections
 * ClosedTriangleShell3D: to_trimesh method
 * PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
+* BSplineSurface3D: Now the plot method uses u and v curves
 
 
 ### Fixed

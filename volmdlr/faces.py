@@ -3525,9 +3525,17 @@ class BSplineSurface3D(Surface3D):
         self.control_points = new_bsplinesurface3d.control_points
         self.surface = new_bsplinesurface3d.surface
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, color='grey', alpha=0.5):
+        u_curves = [vme.BSplineCurve3D.from_geomdl_curve(u) for u in self.curves['u']]
+        v_curves = [vme.BSplineCurve3D.from_geomdl_curve(v) for v in self.curves['v']]
+        if ax is None:
+            ax = plt.figure().add_subplot(111, projection='3d')
+        for u in u_curves:
+            u.plot(ax=ax, color=color, alpha=alpha)
+        for v in v_curves:
+            v.plot(ax=ax, color=color, alpha=alpha)
         for p in self.control_points:
-            ax = p.plot(ax=ax)
+            p.plot(ax, color=color, alpha=alpha)
         return ax
 
     def simplify_surface(self):
