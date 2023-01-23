@@ -211,7 +211,8 @@ class PointCloud3D(dc.DessiaObject):
     #         the algorigthm is able to find the concave parts of the object, giving a more precise object
     #         surface approximation
     #     number_point_samples : int
-    #         denotes the number of points to be used from the point cloud to reconstruct the surface. It uses poisson disk sampling algorithm
+    #         denotes the number of points to be used from the point cloud to reconstruct the surface.
+    #         It uses poisson disk sampling algorithm.
     #
     #     Returns
     #     -------
@@ -235,8 +236,11 @@ class PointCloud3D(dc.DessiaObject):
     #         )
     #         mesh.compute_vertex_normals()
     #     # open3d.visualization.draw_geometries([mesh], mesh_show_back_face=True)
-    #     vertices = [volmdlr.Point3D(float(x), float(y), float(z)) for x, y, z in list(npy.asarray(mesh.vertices))]
-    #     triangles = [vmf.Triangle3D(vertices[p1], vertices[p2], vertices[p3], color = (1, 0.1, 0.1), alpha = 0.6) for p1, p2, p3 in list(npy.asarray(mesh.triangles))]
+    #     vertices = [volmdlr.Point3D(float(x), float(y), float(z))
+    #                 for x, y, z in list(npy.asarray(mesh.vertices))]
+    #     triangles = [vmf.Triangle3D(vertices[p1], vertices[p2], vertices[p3],
+    #                                 color = (1, 0.1, 0.1), alpha = 0.6)
+    #                  for p1, p2, p3 in list(npy.asarray(mesh.triangles))]
     #
     #     return vmf.ClosedShell3D(triangles)
 

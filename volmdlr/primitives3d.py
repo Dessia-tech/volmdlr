@@ -633,7 +633,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Extrudedprofile rotation.
+        Extruded profile rotation.
 
         :param center: rotation center
         :param axis: rotation axis
@@ -653,7 +653,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Extrudedprofile rotation. Object is updated inplace.
+        Extruded profile rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis
@@ -667,7 +667,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Extrudedprofile translation.
+        Extruded profile translation.
 
         :param offset: translation vector
         :return: A new translated ExtrudedProfile
@@ -682,7 +682,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        ExtrudedProfile translation. Object is updated inplace.
+        Extruded profile translation. Object is updated inplace.
 
         :param offset: translation vector
         """
