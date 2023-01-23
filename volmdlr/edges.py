@@ -558,7 +558,7 @@ class BSplineCurve(Edge):
             periodic=self.periodic)
 
     @classmethod
-    def from_geomdl_curve(cls, curve, weights: List[float] = None):
+    def from_geomdl_curve(cls, curve):
         """
         # TODO: to be completed
 
@@ -576,8 +576,7 @@ class BSplineCurve(Edge):
                    control_points=[getattr(volmdlr, point_dimension)(*p)
                                    for p in curve.ctrlpts],
                    knots=knots,
-                   knot_multiplicities=knot_multiplicities,
-                   weights=weights)
+                   knot_multiplicities=knot_multiplicities)
 
     def length(self):
         """

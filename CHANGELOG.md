@@ -62,6 +62,7 @@ So we can convert the units correctly
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
 * BSplineSurface3D: debug linesegment2d_to_3d method.
+* Parametric operations with BSpline curves.
 ### Removed
 
 * babylon script remaining functions
