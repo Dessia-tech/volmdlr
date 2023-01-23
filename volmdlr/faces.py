@@ -2,40 +2,45 @@
 Surfaces & faces
 """
 
-import warnings
-from typing import List, Tuple, Dict, Any
 import math
-
+import warnings
 from itertools import product
-
-import networkx as nx
-import triangle
-import numpy as npy
-
-import scipy as scp
-import scipy.optimize as opt
+from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
-# import matplotlib.tri as plt_tri
-# from pygeodesic import geodesic
+import networkx as nx
+import numpy as npy
+import scipy as scp
+import scipy.optimize as opt
+import triangle
 
-from geomdl import BSpline, NURBS
-from geomdl import utilities
-from geomdl.fitting import interpolate_surface, approximate_surface
-from geomdl.operations import split_surface_u, split_surface_v
+from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
+from geomdl.fitting import approximate_surface, interpolate_surface
+from geomdl.operations import split_surface_u, split_surface_v
+from trimesh import Trimesh
 
-# import dessia_common
-from dessia_common.core import DessiaObject
+from dessia_common.core import DessiaObject  # isort: skip
+
+import volmdlr.bspline_compiled
 import volmdlr.core
 import volmdlr.core_compiled
-import volmdlr.edges as vme
-import volmdlr.wires
 import volmdlr.display as vmd
+import volmdlr.edges as vme
 import volmdlr.geometry
 import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
+import volmdlr.wires
+# import dessia_common
 from volmdlr.utils.parametric import array_range_search
+
+
+# import matplotlib.tri as plt_tri
+# from pygeodesic import geodesic
+
+
+# import matplotlib.tri as plt_tri
+# from pygeodesic import geodesic
 
 
 def knots_vector_inv(knots_vector):
@@ -193,7 +198,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=10)
+            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=triangulates_with_grid)
             inner_polygon_nodes = [vmd.Node2D.from_point(p) for p in inner_polygon.points]
             for point in inner_polygon_nodes:
                 if point not in point_index:
@@ -206,13 +211,14 @@ class Surface2D(volmdlr.core.Primitive2D):
                                       inner_polygon_nodes[1:]):
                 segments.append((point_index[point1], point_index[point2]))
             segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
-
-            rpi = inner_polygon.random_point_inside(include_edge_points=False)
+            rpi = inner_polygon.barycenter()
+            if not inner_polygon.point_belongs(rpi, include_edge_points=False):
+                rpi = inner_polygon.random_point_inside(include_edge_points=False)
             holes.append([rpi.x, rpi.y])
 
             if triangulates_with_grid:
                 # removes with a region search the grid points that are in the inner contour
-                xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle().bounds()
+                xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
                 x_grid_range = array_range_search(x, xmin, xmax)
                 y_grid_range = array_range_search(y, ymin, ymax)
                 for i in x_grid_range:
@@ -266,7 +272,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         Split in n slices.
         """
-        bounding_rectangle = self.outer_contour.bounding_rectangle()
+        bounding_rectangle = self.outer_contour.bounding_rectangle
         lines = []
         for i in range(n - 1):
             xi = bounding_rectangle[0] + (i + 1) * (bounding_rectangle[1] - bounding_rectangle[0]) / n
@@ -619,7 +625,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         """
 
-        return self.outer_contour.bounding_rectangle()
+        return self.outer_contour.bounding_rectangle
 
     @classmethod
     def from_contours(cls, outer_contour, inner_contours):
@@ -964,6 +970,17 @@ class Plane3D(Surface3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a Plane3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding Plane3D object.
+        :rtype: :class:`volmdlr.faces.Plane3D`
+        """
         frame3d = object_dict[arguments[1]]
         frame3d.normalize()
         frame = volmdlr.Frame3D(frame3d.origin,
@@ -1502,13 +1519,25 @@ class CylindricalSurface3D(Surface3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a CylindricalSurface3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding CylindricalSurface3D object.
+        :rtype: :class:`volmdlr.faces.CylindricalSurface3D`
+        """
+        unit_conversion_factor = arguments[-1]
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, -frame3d.u
         U.normalize()
         W.normalize()
         V = W.cross(U)
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
-        radius = float(arguments[2]) / 1000
+        radius = float(arguments[2]) * unit_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -1565,7 +1594,7 @@ class CylindricalSurface3D(Surface3D):
         """
         new_frame = self.frame.rotation(center=center, axis=axis,
                                         angle=angle)
-        return CylindricalFace3D(new_frame, self.radius)
+        return CylindricalSurface3D(new_frame, self.radius)
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -1584,7 +1613,7 @@ class CylindricalSurface3D(Surface3D):
         :param offset: translation vector.
         :return: A new translated CylindricalFace3D.
         """
-        return CylindricalFace3D(self.frame.translation(offset), self.radius)
+        return CylindricalSurface3D(self.frame.translation(offset), self.radius)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
@@ -1834,14 +1863,26 @@ class ToroidalSurface3D(Surface3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a ToroidalSurface3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding ToroidalSurface3D object.
+        :rtype: :class:`volmdlr.faces.ToroidalSurface3D`
+        """
+        unit_conversion_factor = arguments[-1]
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, -frame3d.u
         U.normalize()
         W.normalize()
         V = W.cross(U)
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
-        rcenter = float(arguments[2]) / 1000
-        rcircle = float(arguments[3]) / 1000
+        rcenter = float(arguments[2]) * unit_conversion_factor
+        rcircle = float(arguments[3]) * unit_conversion_factor
         return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -2103,12 +2144,24 @@ class ConicalSurface3D(Surface3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a ConicalSurface3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding ConicalSurface3D object.
+        :rtype: :class:`volmdlr.faces.ConicalSurface3D`
+        """
+        unit_conversion_factor = arguments[-1]
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, frame3d.u
         U.normalize()
         W.normalize()
         V = W.cross(U)
-        radius = float(arguments[2]) / 1000
+        radius = float(arguments[2]) * unit_conversion_factor
         semi_angle = float(arguments[3])
         origin = frame3d.origin - radius / math.tan(semi_angle) * W
         frame_direct = volmdlr.Frame3D(origin, U, V, W)
@@ -2425,13 +2478,25 @@ class SphericalSurface3D(Surface3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a SphericalSurface3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding SphericalSurface3D object.
+        :rtype: :class:`volmdlr.faces.SphericalSurface3D`
+        """
+        unit_conversion_factor = arguments[-1]
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, frame3d.u
         U.normalize()
         W.normalize()
         V = W.cross(U)
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
-        radius = float(arguments[2]) / 1000
+        radius = float(arguments[2]) * unit_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
     def point2d_to_3d(self, point2d):
@@ -2678,6 +2743,39 @@ class SphericalSurface3D(Surface3D):
             i += 1
 
         return primitives2d
+
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
+        """
+        Spherical Surface 3D rotation.
+
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated Spherical Surface 3D
+        """
+        new_frame = self.frame.rotation(center=center, axis=axis, angle=angle)
+        return SphericalSurface3D(new_frame, self.radius)
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        Spherical Surface 3D translation.
+
+        :param offset: translation vector
+        :return: A new translated Spherical Surface 3D
+        """
+        new_frame = self.frame.translation(offset)
+        return SphericalSurface3D(new_frame, self.radius)
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes Spherical Surface 3D's frame and return a new Spherical Surface 3D.
+
+        :param frame: Frame of reference
+        :type frame: `volmdlr.Frame3D`
+        :param side: 'old' or 'new'
+        """
+        new_frame = self.frame.frame_mapping(frame, side)
+        return SphericalSurface3D(new_frame, self.radius)
 
 
 class RuledSurface3D(Surface3D):
@@ -3010,8 +3108,9 @@ class BSplineSurface3D(Surface3D):
         x, y = point2d
         x = min(max(x, 0), 1)
         y = min(max(y, 0), 1)
-
-        return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
+        # uses derivatives for performance because it's already compiled
+        return volmdlr.Point3D(*self.derivatives(x, y, 0)[0][0])
+        # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-5):
         """
@@ -3069,14 +3168,15 @@ class BSplineSurface3D(Surface3D):
             linesegment2d.point_at_abscissa(i * lth / 10.)) for i in range(11)]
 
         linesegment = vme.LineSegment3D(points[0], points[-1])
-        arc = vme.Arc3D(points[0], points[5], points[-1])
         flag = True
-        flag_arc = True
+        flag_arc = False
         for pt in points:
             if not linesegment.point_belongs(pt, abs_tol=1e-4):
                 flag = False
-            if not arc.point_belongs(pt, abs_tol=1e-4):
-                flag_arc = False
+                break
+        if not flag:
+            arc = vme.Arc3D(points[0], points[5], points[-1])
+            flag_arc = all(arc.point_belongs(pt, abs_tol=1e-4) for pt in points)
 
         periodic = False
         if self.x_periodicity is not None and \
@@ -3092,15 +3192,15 @@ class BSplineSurface3D(Surface3D):
 
         if flag and not flag_arc:
             # All the points are on the same LineSegment3D
-            linesegments = [linesegment]
+            primitives = [linesegment]
         elif flag_arc:
-            linesegments = [arc]
+            primitives = [arc]
         else:
-            linesegments = [vme.BSplineCurve3D.from_points_interpolation(
-                points, max(self.degree_u, self.degree_v), periodic=periodic)]
+            primitives = [vme.BSplineCurve3D.from_points_interpolation(
+                points, min(self.degree_u, self.degree_v), periodic=periodic)]
             # linesegments = [vme.LineSegment3D(p1, p2)
             #                 for p1, p2 in zip(points[:-1], points[1:])]
-        return linesegments
+        return primitives
 
     def linesegment3d_to_2d(self, linesegment3d):
         """
@@ -3382,7 +3482,8 @@ class BSplineSurface3D(Surface3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        BSplineSurface3D translation. Object is updated inplace
+        BSplineSurface3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         new_bsplinesurface3d = self.translation(offset)
@@ -3433,6 +3534,17 @@ class BSplineSurface3D(Surface3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a BSplineSurface3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding BSplineSurface3D object.
+        :rtype: :class:`volmdlr.faces.BSplineSurface3D`
+        """
         name = arguments[0][1:-1]
         degree_u = int(arguments[1])
         degree_v = int(arguments[2])
@@ -3466,7 +3578,7 @@ class BSplineSurface3D(Surface3D):
         v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
         knot_spec = arguments[12]
 
-        if 13 in range(len(arguments)):
+        if 13 in range(len(arguments[:-1])):
             weight_data = [
                 float(i) for i in
                 arguments[13][1:-1].replace("(", "").replace(")", "").split(",")
@@ -4249,15 +4361,15 @@ class BSplineSurface3D(Surface3D):
             direction = cylindrical_faces[0].adjacent_direction(cylindrical_faces[1])
 
             if direction == 'x':
-                bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle()
+                bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle
                 ymin = bounding_rectangle_0[2]
                 ymax = bounding_rectangle_0[3]
                 for face in cylindrical_faces:
-                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle
                     ymin = min(ymin, bounding_rectangle[2])
                     ymax = max(ymax, bounding_rectangle[3])
                 for face in cylindrical_faces:
-                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle
 
                     points_3d = face.surface3d.grid3d(
                         volmdlr.grid.Grid2D.from_properties(
@@ -4270,15 +4382,15 @@ class BSplineSurface3D(Surface3D):
                             points_3d, points_x, points_y, degree_u, degree_v))
 
             elif direction == 'y':
-                bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle()
+                bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle
                 xmin = bounding_rectangle_0[0]
                 xmax = bounding_rectangle_0[1]
                 for face in cylindrical_faces:
-                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle
                     xmin = min(xmin, bounding_rectangle[0])
                     xmax = max(xmax, bounding_rectangle[1])
                 for face in cylindrical_faces:
-                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle
 
                     points_3d = face.surface3d.grid3d(
                         volmdlr.grid.Grid2D.from_properties(
@@ -4326,7 +4438,7 @@ class BSplineSurface3D(Surface3D):
 
         points_x = kwargs['points_x']
         points_y = kwargs['points_y']
-        bounding_rectangle = cylindrical_face.surface2d.outer_contour.bounding_rectangle()
+        bounding_rectangle = cylindrical_face.surface2d.outer_contour.bounding_rectangle
         points_3d = cylindrical_face.surface3d.grid3d(
             volmdlr.grid.Grid2D.from_properties(x_limits=(bounding_rectangle[0],
                                                           bounding_rectangle[1]),
@@ -4543,7 +4655,7 @@ class BSplineSurface3D(Surface3D):
         resolution = 8
 
         for contour in contours:
-            u_min, u_max, v_min, v_max = contour.bounding_rectangle().bounds()
+            u_min, u_max, v_min, v_max = contour.bounding_rectangle.bounds()
             if du > dv:
                 delta_u = u_max - u_min
                 nlines_x = int(delta_u * resolution)
@@ -4794,7 +4906,12 @@ class BSplineSurface3D(Surface3D):
         to u k times and v l times
         :rtype: List[`volmdlr.Vector3D`]
         """
-        derivatives = self.surface.derivatives(u, v, order)
+        if self.surface.rational:
+            # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
+            derivatives = volmdlr.bspline_compiled.rational_derivatives(self.surface.data, (u, v), order)
+        else:
+            # derivatives = self._derivatives(self.surface.data, (u, v), order)
+            derivatives = volmdlr.bspline_compiled.derivatives(self.surface.data, (u, v), order)
         for i in range(order + 1):
             for j in range(order + 1):
                 derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])
@@ -4918,12 +5035,22 @@ class Face3D(volmdlr.core.Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a Face3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding Face3D object.
+        :rtype: :class:`volmdlr.faces.Face3D`
+        """
         name = arguments[0][1:-1]
         contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
         surface = object_dict[int(arguments[2])]
         if hasattr(surface, 'face_from_contours3d'):
-            if (len(contours) == 1) and isinstance(contours[0],
-                                                   volmdlr.Point3D):
+            if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
                 return surface
 
             return surface.face_from_contours3d(contours, name)
@@ -6515,7 +6642,7 @@ class CylindricalFace3D(Face3D):
         return self.outer_contour3d.bounding_box
 
     def triangulation_lines(self, angle_resolution=5):
-        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
+        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle.bounds()
         delta_theta = theta_max - theta_min
         nlines = math.ceil(delta_theta * angle_resolution)
         lines = []
@@ -6925,7 +7052,7 @@ class ToroidalFace3D(Face3D):
         self.center = surface3d.frame.origin
         self.normal = surface3d.frame.w
 
-        theta_min, theta_max, phi_min, phi_max = surface2d.outer_contour.bounding_rectangle().bounds()
+        theta_min, theta_max, phi_min, phi_max = surface2d.outer_contour.bounding_rectangle.bounds()
 
         self.theta_min = theta_min
         self.theta_max = theta_max
@@ -7047,7 +7174,7 @@ class ConicalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
-        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle().bounds()
+        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
 
         xp = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
               + volmdlr.X3D.dot(
@@ -7792,6 +7919,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a OpenShell3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding OpenShell3D object.
+        :rtype: :class:`volmdlr.faces.OpenShell3D`
+        """
         faces = []
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
@@ -7906,8 +8044,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        OpenShell3D translation. Object is updated inplace
-        :param offset: translation vector
+        OpenShell3D translation. Object is updated inplace.
+
+        :param offset: Translation vector.
+        :type offset: `volmdlr.Vector3D`
+        :return: Translate the OpenShell3D in place.
+        :rtype: None
         """
         for face in self.faces:
             face.translation_inplace(offset)
@@ -8170,7 +8312,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 meshes.append(face_mesh)
         return vmd.DisplayMesh3D.merge_meshes(meshes)
 
-    def plot(self, ax=None, color: str = 'k', alpha: float = 1):
+    def plot(self, ax=None, color: str = 'k', alpha: float = 1.0):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 
@@ -8892,8 +9034,8 @@ class OpenTriangleShell3D(OpenShell3D):
         return False
 
     def to_mesh_data(self):
-        positions = npy.array(3 * len(self.faces), 3)
-        faces = npy.array(len(self.faces), 3)
+        positions = npy.zeros((3 * len(self.faces), 3))
+        faces = npy.zeros((len(self.faces), 3))
         for i, triangle_face in enumerate(self.faces):
             i1 = 3 * i
             i2 = i1 + 1
@@ -8917,10 +9059,17 @@ class OpenTriangleShell3D(OpenShell3D):
     @classmethod
     def from_mesh_data(cls, positions, faces):
         triangles = []
-        points = [volmdlr.core.Point3D(px, py, pz) for px, py, pz in positions]
+        points = [volmdlr.Point3D(px, py, pz) for px, py, pz in positions]
         for i1, i2, i3 in faces:
             triangles.append(Triangle3D(points[i1], points[i2], points[i3]))
         return cls(triangles)
+
+    def to_trimesh(self):
+        return Trimesh(*self.to_mesh_data())
+
+    @classmethod
+    def from_trimesh(cls, trimesh):
+        return cls.from_mesh_data(trimesh.vertices.tolist(), trimesh.faces.tolist())
 
 
 class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):

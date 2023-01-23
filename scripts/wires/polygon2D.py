@@ -6,12 +6,11 @@ Created on Fri Mar 10 17:02:36 2017
 """
 
 import math
-import volmdlr as vm
-import volmdlr.wires as vmw
-import volmdlr.primitives2d as primitives2d
 import time
 
-
+import volmdlr as vm
+import volmdlr.primitives2d as primitives2d
+import volmdlr.wires as vmw
 
 p1 = vm.Point2D(0, 0)
 p2 = vm.Point2D(1, 0)

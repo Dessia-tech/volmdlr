@@ -5,7 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.8.0 [Unrealeased]
+## v0.9.0 [Unrealeased]
+
+### New Features
+* Unit coversion factor parameter added to the end of the from_step arguments parameter.
+So we can convert the units correctly
+* SphericalSurface3D: rotation, translation, frame_mapping
+* read steps: Identify assemblies in a step file.
+* 
+
+### Fixed
+
+* WireMixin: abscissa (add tolerance as parameter)
+* OpenRoundedLineSegment2D: deleted discretization_points() so it uses the one from WireMixin.
+* Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
+
+### Removed
+
+
+### Performance improvements
+* wires.py's 2D objects: chache bounding_rectangle results
+
+### Refactorings
+
+
+### Unittests
+
+
+
+## v0.8.0 [Testing]
 
 ### New Features
 
@@ -16,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ClosedPolygon2D: point_belongs, now the user can choose whether points on the edge of the polygon
             should be considered inside or not.
 * ArcEllipse2D: line_intersections, frame_mapping, linesegment_intersections
+* ClosedTriangleShell3D: to_trimesh method
+* PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
 
 
 ### Fixed
@@ -33,7 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: tangent (use position/length)
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
-
+* BSplineSurface3D: debug linesegment2d_to_3d method.
+* OpenTriangleShell3D: fix from_mesh_data method
 ### Removed
 
 * babylon script remaining functions
@@ -43,6 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: min_distance_to_other_cylinder
 * BSplineCurve: discretization_points
 * Face3D: triangulation
+* EdgeCollection3D: new object for displaying series of edges
+* BSplineSurface3D: compile BSplineSurface3D.derivatives
 
 
 ### Refactorings
@@ -59,8 +92,9 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 ### CI
 
 * Mandatory CHANGELOG.md update for PR
+* pre-commit checks with cython-lint
 
-## v0.7.0 [Testing]
+## v0.7.0
 
 ### New Features
 
@@ -295,8 +329,11 @@ time we have to verify if a point is inside
 * BSplineSurface3D.from_cylindrical_faces (consider **kwargs parameters)
 * Duplicated methods cleaned
 * triangulation of planar faces
+* Wire3D: fix Bounding box
 * Wire3D: Bounding box
 * Arc2D: primitives bad calculation (arc2d)
+* Update plotdata in setup.py
+* add some fixes pydocstyle
 
 ### Performance improvements
 

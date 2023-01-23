@@ -2,10 +2,11 @@
 Unit tests for volmdlr.faces.BSplineSurface3D
 """
 import unittest
-from volmdlr.models import bspline_surfaces
-import volmdlr.grid
-import volmdlr.faces as vmf
+
 import volmdlr.edges as vme
+import volmdlr.faces as vmf
+import volmdlr.grid
+from volmdlr.models import bspline_surfaces
 
 
 class TestBSplineSurface3D(unittest.TestCase):

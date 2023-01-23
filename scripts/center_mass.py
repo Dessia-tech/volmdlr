@@ -6,11 +6,13 @@ Created on Tue Feb 12 19:23:27 2019
 @author: steven
 """
 
+import math
+
+import plot_data
+
 import volmdlr as vm
 import volmdlr.edges as edges
 import volmdlr.wires as wires
-import math
-import plot_data
 
 r = 0.23
 

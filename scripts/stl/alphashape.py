@@ -6,18 +6,21 @@ Created on Tue Aug 10 14:11:53 2021
 @author: dasilva
 """
 
-import volmdlr.stl as vmstl
+import os
+
+import numpy as np
+from scipy.spatial import ConvexHull
+
 import volmdlr.cloud
 import volmdlr.core
+import volmdlr.stl as vmstl
+
 # import volmdlr as vm
 # import volmdlr.wires as vmw
 # import volmdlr.faces as vmf
 # import volmdlr.edges as vme
 # import matplotlib.pyplot as plt
 
-import os
-import numpy as np
-from scipy.spatial import ConvexHull
 shells = []
 path = os.getcwd()
 stl_path = path

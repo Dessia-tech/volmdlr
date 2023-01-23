@@ -12,7 +12,6 @@ from geomdl import BSpline
 import volmdlr as vm
 import volmdlr.faces
 
-
 # %% Surface 1
 # %%% Control points
 
