@@ -260,7 +260,7 @@ def geometric_curve_set(arguments, object_dict):
     return sub_objects
 
 
-def shell_base_surface_model(arguments, object_dict):
+def shell_based_surface_model(arguments, object_dict):
     """
     Returns the data in case of a Shell3D.
     """
