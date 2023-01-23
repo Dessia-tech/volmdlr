@@ -1762,16 +1762,6 @@ class CylindricalSurface3D(Surface3D):
             return True
         return False
 
-    # def point_projection(self, point3d):
-    #     point = self.frame.global_to_local_coordinates(point3d)
-    #     point_at_cylinder_axis_with_equal_z = volmdlr.Point3D(0, 0, point.z)
-    #     linesegment = vme.LineSegment3D(point_at_cylinder_axis_with_equal_z, point)
-    #     intersection = self.linesegment_intersections(linesegment)
-    #     if intersection:
-    #         print(True)
-    #         return self.frame.local_to_global_coordinates(intersection[0])
-    #     return point3d
-
 
 class ToroidalSurface3D(Surface3D):
     """
