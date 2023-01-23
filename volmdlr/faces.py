@@ -9066,7 +9066,7 @@ class OpenTriangleShell3D(OpenShell3D):
     @classmethod
     def from_mesh_data(cls, positions, faces):
         triangles = []
-        points = [volmdlr.core.Point3D(px, py, pz) for px, py, pz in positions]
+        points = [volmdlr.Point3D(px, py, pz) for px, py, pz in positions]
         for i1, i2, i3 in faces:
             triangles.append(Triangle3D(points[i1], points[i2], points[i3]))
         return cls(triangles)

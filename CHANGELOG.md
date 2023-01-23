@@ -66,6 +66,8 @@ So we can convert the units correctly
 * Arc2D: fix get_center: name referenced before assignement
 * BSplineSurface3D: debug linesegment2d_to_3d method.
 * Parametric operations with BSpline curves.
+* OpenTriangleShell3D: fix from_mesh_data method
+
 ### Removed
 
 * babylon script remaining functions
