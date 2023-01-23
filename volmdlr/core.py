@@ -77,8 +77,7 @@ def delete_double_point(list_point):
 
 def step_ids_to_str(ids):
     """
-    Returns a string with a '#' in front of each ID and a comma separating
-    eachone.
+    Returns a string with a '#' in front of each ID and a comma separating eachone.
 
     :param ids: A list of step primitives IDs
     :type ids: List[int]
@@ -895,8 +894,9 @@ class VolumeModel(dc.PhysicalObject):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        side = 'old' or 'new'.
         """
         for primitives in self.primitives:
             primitives.frame_mapping_inplace(frame, side)
@@ -904,7 +904,8 @@ class VolumeModel(dc.PhysicalObject):
 
     def copy(self, deep=True, memo=None):
         """
-        Specific copy
+        Specific copy.
+
         """
         new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
@@ -923,6 +924,7 @@ class VolumeModel(dc.PhysicalObject):
     def plot(self, equal_aspect=True):
         """
         Matplotlib plot of model.
+
         To use for debug.
         """
         fig = plt.figure()
@@ -1031,6 +1033,11 @@ class VolumeModel(dc.PhysicalObject):
         return output
 
     def babylon_data(self):
+        """
+        Get babylonjs data.
+
+        :return: Dictionary with babylon data.
+        """
         meshes = []
         lines = []
         for primitive in self.primitives:
@@ -1247,6 +1254,11 @@ class MovingVolumeModel(VolumeModel):
         return VolumeModel(primitives)
 
     def babylon_data(self):
+        """
+        Get babylonjs data.
+
+        :return: Dictionary with babylon data.
+        """
         meshes = []
         primitives_to_meshes = []
         for ip, primitive in enumerate(self.primitives):

@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 * Unit coversion factor parameter added to the end of the from_step arguments parameter.
 So we can convert the units correctly
+* SphericalSurface3D: rotation, translation, frame_mapping
+* read steps: Identify assemblies in a step file.
 * 
 
 ### Fixed
@@ -63,6 +65,7 @@ So we can convert the units correctly
 * Arc2D: fix get_center: name referenced before assignement
 * SphericalSurface3D : enhancement of primitives parametrization on surface parametric domain.
 * BSplineSurface3D: debug linesegment2d_to_3d method.
+* OpenTriangleShell3D: fix from_mesh_data method
 
 ### Removed
 
