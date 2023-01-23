@@ -1,3 +1,6 @@
+"""
+Some conical surfaces models to perfom unittest.
+"""
 import math
 
 import volmdlr
