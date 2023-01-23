@@ -1312,6 +1312,7 @@ PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
 PLANE3D_OYZ = Plane3D(volmdlr.OYZX)
 PLANE3D_OZX = Plane3D(volmdlr.OZXY)
 
+
 class Surface3DMixin(Surface3D):
     def face_from_contours3d(self, contours3d: List[volmdlr.wires.Contour3D], name: str = ''):
         """
@@ -1327,7 +1328,7 @@ class Surface3DMixin(Surface3D):
         for inner_contour in face.surface2d.inner_contours:
             point1 = inner_contour.point_at_abscissa(0.0)
             point2 = inner_contour.point_at_abscissa(inner_contour.length())
-            if abs(point2.x - point1.x) == 2*math.pi:
+            if abs(point2.x - point1.x) == 2 * math.pi:
                 point3 = face.surface2d.outer_contour.point_at_abscissa(0.0)
                 point4 = face.surface2d.outer_contour.point_at_abscissa(face.surface2d.outer_contour.length())
 
@@ -1369,8 +1370,8 @@ class Surface3DMixin(Surface3D):
                 closing_linesegment1 = volmdlr.edges.LineSegment2D(point1, point3)
                 closing_linesegment2 = volmdlr.edges.LineSegment2D(point2, point4)
                 new_outer_contour_primitives = [closing_linesegment1, closing_linesegment2] + \
-                                               old_outer_contour_positioned.primitives + \
-                                               old_innner_contour_positioned.primitives
+                    old_outer_contour_positioned.primitives + \
+                    old_innner_contour_positioned.primitives
                 new_outer_contour = volmdlr.wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour()
             else:
@@ -1383,6 +1384,7 @@ class Surface3DMixin(Surface3D):
         #     print(True)
         new_face = class_(self, Surface2D(new_outer_contour, new_inner_contours))
         return new_face
+
 
 class CylindricalSurface3D(Surface3DMixin):
     """
