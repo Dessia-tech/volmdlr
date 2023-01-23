@@ -6466,6 +6466,10 @@ class Triangle3D(PlaneFace3D):
         self.bounding_box = new_bounding_box
 
     def subdescription(self, resolution=0.01):
+        """
+        Returns a list of Point3D with resolution as max
+        between Point3D.
+        """
 
         lengths = [self.points[0].point_distance(self.points[1]),
                    self.points[1].point_distance(self.points[2]),
@@ -6524,7 +6528,7 @@ class Triangle3D(PlaneFace3D):
 
         while not done:
             triangles = []
-            for t, subtri in enumerate(sub_triangles):
+            for subtri in sub_triangles:
                 lengths = [subtri[0].point_distance(subtri[1]),
                            subtri[1].point_distance(subtri[2]),
                            subtri[2].point_distance(subtri[0])]
