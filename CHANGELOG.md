@@ -65,6 +65,7 @@ So we can convert the units correctly
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
 * BSplineSurface3D: debug linesegment2d_to_3d method.
+* OpenTriangleShell3D: fix from_mesh_data method
 ### Removed
 
 * babylon script remaining functions
