@@ -68,7 +68,6 @@ def insert_knots_and_mutiplicity(knots, knot_mutiplicities, knot_to_add, num):
 class Edge(dc.DessiaObject):
     """
     Defines a simple edge Object.
-
     """
 
     def __init__(self, start, end, name=''):
@@ -120,6 +119,9 @@ class Edge(dc.DessiaObject):
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def polygon_points(self, discretization_resolution: int):
+        """
+        Deprecated method of discretization_points.
+        """
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
@@ -470,8 +472,9 @@ class LineSegment(Edge):
 
 class BSplineCurve(Edge):
     """
-    An abstract class for B-spline curves. The following rule must be
-    respected : `number of knots = number of control points + degree + 1`.
+    An abstract class for B-spline curves.
+
+    The following rule must be respected : `number of knots = number of control points + degree + 1`.
 
     :param degree: The degree of the B-spline curve.
     :type degree: int
@@ -825,6 +828,7 @@ class BSplineCurve(Edge):
                                   degree: int, periodic: bool = False):
         """
         Creates a B-spline curve interpolation through the data points.
+
         Please refer to Algorithm A9.1 on The NURBS Book (2nd Edition),
         pp.369-370 for details.
 
@@ -1313,7 +1317,9 @@ class Line2D(Line):
 
 class BSplineCurve2D(BSplineCurve):
     """
-    A class for 2 dimensional B-spline curves. The following rule must be
+    A class for 2 dimensional B-spline curves.
+
+    The following rule must be
     respected : `number of knots = number of control points + degree + 1`.
 
     :param degree: The degree of the 2 dimensional B-spline curve
@@ -1386,6 +1392,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def direction_vector(self, abscissa: float):
         """
+        Get direction vector at abscissa.
+
         :param abscissa: defines where in the BSplineCurve2D the
         direction vector is to be calculated
         :return: The direection vector vector of the BSplineCurve2D
@@ -1394,6 +1402,8 @@ class BSplineCurve2D(BSplineCurve):
 
     def normal_vector(self, abscissa: float):
         """
+        Get normal vector at abscissa.
+
         :param abscissa: defines where in the BSplineCurve2D the
         normal vector is to be calculated
         :return: The normal vector of the BSplineCurve2D
@@ -2024,9 +2034,10 @@ class Arc(Edge):
     @staticmethod
     def get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i):
         """
+        Get arc paths from radius.
 
         :param radius_1: radius from center to start point.
-        :param radius_2: radius form center ro end point.
+        :param radius_2: radius form center to end point.
         :param radius_i: radius from center to interior point.
         :return: the clockwise and trigowise paths.
         """
@@ -2052,6 +2063,9 @@ class Arc(Edge):
         return clockwise_path, trigowise_path
 
     def middle_point(self):
+        """
+        Get point in the middle of Arc.
+        """
         return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
@@ -2087,6 +2101,8 @@ class Arc(Edge):
 
 class Arc2D(Arc):
     """
+    Class to draw Arc2D.
+
     angle: the angle measure always >= 0
     """
 
@@ -2266,6 +2282,8 @@ class Arc2D(Arc):
 
     def direction_vector(self, abscissa: float):
         """
+        Get direction vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         direction vector is to be calculated
         :return: The direction vector of the Arc2D
@@ -2274,6 +2292,8 @@ class Arc2D(Arc):
 
     def unit_direction_vector(self, abscissa: float):
         """
+        Get unit direction vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         unit direction vector is to be calculated
         :return: The unit direction vector of the Arc2D
@@ -2284,6 +2304,8 @@ class Arc2D(Arc):
 
     def normal_vector(self, abscissa: float):
         """
+        Get the normal vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         normal vector is to be calculated
         :return: The normal vector of the Arc2D
@@ -2297,6 +2319,8 @@ class Arc2D(Arc):
 
     def unit_normal_vector(self, abscissa: float):
         """
+        Get the unit normal vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         unit normal vector is to be calculated
         :return: The unit normal vector of the Arc2D
@@ -2643,19 +2667,11 @@ class Arc2D(Arc):
         return Arc2D(self.start, interior, self.end)
 
     def to_wire(self, angle_resolution: float = 10.):
-        """
-        Convert an arc to a wire2d defined with line_segments.
-
-        """
-
+        """ Convert an arc to a wire2d defined with line_segments. """
         return volmdlr.wires.Wire2D.from_points(self.discretization_points(angle_resolution=angle_resolution))
 
     def axial_symmetry(self, line):
-        """
-        Finds out the symmetric arc2d according to a line.
-
-        """
-
+        """ Finds out the symmetric arc2d according to a line. """
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
 
         return self.__class__(start=points_symmetry[0],
@@ -2667,10 +2683,7 @@ class Arc2D(Arc):
 
 
 class FullArc2D(Arc2D):
-    """
-    An edge that starts at start_end, ends at the same point after having described a circle.
-
-    """
+    """ An edge that starts at start_end, ends at the same point after having described a circle. """
 
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
                  name: str = ''):
@@ -3786,7 +3799,8 @@ class LineSegment3D(LineSegment):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes LineSegment3D frame_mapping and return a new LineSegment3D
+        Changes LineSegment3D frame_mapping and return a new LineSegment3D.
+
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -3799,7 +3813,8 @@ class LineSegment3D(LineSegment):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes vector frame_mapping and the object is updated inplace
+        Changes vector frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         if side == 'old':
