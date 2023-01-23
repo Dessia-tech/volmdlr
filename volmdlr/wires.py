@@ -1649,7 +1649,7 @@ class Contour2D(ContourMixin, Wire2D):
         for edge in self.primitives:
             area += trigo * edge.straight_line_area()
 
-        return area
+        return abs(area)
 
     def center_of_mass(self):
         """
@@ -3667,7 +3667,7 @@ class Triangle(ClosedPolygonMixin):
         self._line_segments = None
 
 
-class Triangle2D(Triangle):
+class Triangle2D(ClosedPolygon2D):
     """
     Defines a triangle 2D.
 
@@ -3683,13 +3683,12 @@ class Triangle2D(Triangle):
         # self.point3 = point3
         # self.name = name
 
-        # # ClosedPolygon2D.__init__(self, points=[point1, point2, point3],
-        # # name=name)
-
-        Triangle.__init__(self, point1,
-                          point2,
-                          point3,
-                          name)
+        ClosedPolygon2D.__init__(self, points=[point1, point2, point3], name=name)
+        #
+        # Triangle.__init__(self, point1,
+        #                   point2,
+        #                   point3,
+        #                   name)
 
     def area(self):
         u = self.point2 - self.point1
@@ -4391,6 +4390,8 @@ class Contour3D(ContourMixin, Wire3D):
             return cls(raw_edges, name=name)
 
         # Making things right for first 2 primitives
+        if any(edge is None for edge in raw_edges):
+            raise ValueError
         distances = [raw_edges[0].end.point_distance(raw_edges[1].start),
                      raw_edges[0].start.point_distance(raw_edges[1].start),
                      raw_edges[0].end.point_distance(raw_edges[1].end),
@@ -4494,7 +4495,6 @@ class Contour3D(ContourMixin, Wire3D):
                     current_id, surface_id=surface_id, curve2d=curve2d)
             else:
                 primitive_content, primitive_ids = primitive.to_step(current_id, surface_id=surface_id)
-
             content += primitive_content
             current_id = primitive_ids[-1] + 1
             for primitive_id in primitive_ids:

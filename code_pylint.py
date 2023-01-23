@@ -35,7 +35,7 @@ MAX_ERROR_BY_TYPE = {
                      'duplicate-code': 9,
                      'no-self-use': 16,
                      'arguments-renamed': 3,
-                     'too-many-ancestors': 7,
+                     'too-many-ancestors': 8,
                      'expression-not-assigned': 1,
                      'non-parent-init-called': 6,
                      'too-few-public-methods': 10,
