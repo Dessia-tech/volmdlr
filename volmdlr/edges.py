@@ -1391,7 +1391,36 @@ class BSplineCurve2D(BSplineCurve):
         :rtype: :class:`volmdlr.core.BoundingRectangle`
         """
         if not self._bounding_rectangle:
-            bbox = self.curve.bbox
+            # bbox = self.curve.bbox
+            try:
+                bbox = self.curve.bbox
+            except AttributeError:
+                control_points = self.control_points
+                weights = self.weights
+                degree = self.degree
+                knots = self.knots
+                knot_multiplicities = self.knot_multiplicities
+
+                points = [[*point] for point in control_points]
+                if weights is None:
+                    curve = BSpline.Curve()
+                    curve.degree = degree
+                    curve.ctrlpts = points
+                else:
+                    curve = NURBS.Curve()
+                    curve.degree = degree
+                    curve.ctrlpts = points
+                    curve.weights = weights
+
+                knot_vector = []
+                for i, knot in enumerate(knots):
+                    knot_vector.extend([knot] * knot_multiplicities[i])
+                curve.knotvector = knot_vector
+                curve.delta = 0.01
+                self.curve = curve
+
+                bbox = self.curve.bbox
+
             self._bounding_rectangle = volmdlr.core.BoundingRectangle(bbox[0][0], bbox[1][0],
                                                                       bbox[0][1], bbox[1][1])
         return self._bounding_rectangle
