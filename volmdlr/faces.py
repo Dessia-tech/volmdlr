@@ -1321,68 +1321,68 @@ class Surface3DMixin(Surface3D):
         """
         face = super().face_from_contours3d(contours3d)
         new_inner_contours = []
-        if face.surface2d.inner_contours:
-            for inner_contour in face.surface2d.inner_contours:
-                point1 = inner_contour.point_at_abscissa(0.0)
-                point2 = inner_contour.point_at_abscissa(inner_contour.length())
-                if abs(point2.x - point1.x) == 2*math.pi:
-                    point3 = face.surface2d.outer_contour.point_at_abscissa(0.0)
-                    point4 = face.surface2d.outer_contour.point_at_abscissa(face.surface2d.outer_contour.length())
 
-                    distx_point1_point3 = point1.x - point3.x
-                    distx_point1_point4 = point1.x - point4.x
-                    distx_point2_point3 = point2.x - point3.x
-                    distx_point2_point4 = point2.x - point4.x
-                    if point1.x == point3.x and point2.x == point4.x:
-                        old_outer_contour_positioned = face.surface2d.outer_contour
-                        old_innner_contour_positioned = inner_contour
-                    else:
-                        if math.isclose(distx_point1_point4, distx_point2_point3, abs_tol=1e-6):
-                            translation_vector = volmdlr.Vector2D(distx_point1_point4, 0)
-                            if point1.y < point3.y:
-                                old_outer_contour_positioned = face.surface2d.outer_contour.translation(
-                                    offset=translation_vector)
-                                old_innner_contour_positioned = inner_contour
-                            else:
-                                old_innner_contour_positioned = inner_contour.translation(offset=-translation_vector)
-                                old_outer_contour_positioned = face.surface2d.outer_contour
-                            if distx_point2_point4 > distx_point1_point3:
-                                old_outer_contour_positioned = old_outer_contour_positioned.invert()
-                        elif math.isclose(distx_point2_point4, distx_point1_point3, abs_tol=1e-2):
-                            translation_vector = volmdlr.Vector2D(distx_point1_point3, 0)
-                            if point1.y < point3.y:
-                                old_outer_contour_positioned = face.surface2d.outer_contour.translation(
-                                    offset=translation_vector)
-                                old_innner_contour_positioned = inner_contour
-                            else:
-                                old_innner_contour_positioned = inner_contour.translation(offset=-translation_vector)
-                                old_outer_contour_positioned = face.surface2d.outer_contour
-                        else:
-                            raise NotImplementedError
-                        point1 = old_innner_contour_positioned.point_at_abscissa(0.0)
-                        point2 = old_innner_contour_positioned.point_at_abscissa(old_innner_contour_positioned.length())
-                        point3 = old_outer_contour_positioned.point_at_abscissa(0.0)
-                        point4 = old_outer_contour_positioned.point_at_abscissa(face.surface2d.outer_contour.length())
-                        # point4 = volmdlr.Point2D(point2.x, point4.y)
-                    closing_linesegment1 = volmdlr.edges.LineSegment2D(point1, point3)
-                    closing_linesegment2 = volmdlr.edges.LineSegment2D(point2, point4)
-                    new_outer_contour_primitives = [closing_linesegment1, closing_linesegment2] + \
-                                                   old_outer_contour_positioned.primitives + \
-                                                   old_innner_contour_positioned.primitives
-                    new_outer_contour = volmdlr.wires.Contour2D(primitives=new_outer_contour_primitives)
-                    new_outer_contour.order_contour()
+        if not face.surface2d.inner_contours:
+            return face
+        for inner_contour in face.surface2d.inner_contours:
+            point1 = inner_contour.point_at_abscissa(0.0)
+            point2 = inner_contour.point_at_abscissa(inner_contour.length())
+            if abs(point2.x - point1.x) == 2*math.pi:
+                point3 = face.surface2d.outer_contour.point_at_abscissa(0.0)
+                point4 = face.surface2d.outer_contour.point_at_abscissa(face.surface2d.outer_contour.length())
+
+                distx_point1_point3 = point1.x - point3.x
+                distx_point1_point4 = point1.x - point4.x
+                distx_point2_point3 = point2.x - point3.x
+                distx_point2_point4 = point2.x - point4.x
+                if point1.x == point3.x and point2.x == point4.x:
+                    old_outer_contour_positioned = face.surface2d.outer_contour
+                    old_innner_contour_positioned = inner_contour
                 else:
-                    new_inner_contours.append(inner_contour)
-            if isinstance(self.face_class, str):
-                class_ = globals()[self.face_class]
+                    if math.isclose(distx_point1_point4, distx_point2_point3, abs_tol=1e-6):
+                        translation_vector = volmdlr.Vector2D(distx_point1_point4, 0)
+                        if point1.y < point3.y:
+                            old_outer_contour_positioned = face.surface2d.outer_contour.translation(
+                                offset=translation_vector)
+                            old_innner_contour_positioned = inner_contour
+                        else:
+                            old_innner_contour_positioned = inner_contour.translation(offset=-translation_vector)
+                            old_outer_contour_positioned = face.surface2d.outer_contour
+                        if distx_point2_point4 > distx_point1_point3:
+                            old_outer_contour_positioned = old_outer_contour_positioned.invert()
+                    elif math.isclose(distx_point2_point4, distx_point1_point3, abs_tol=1e-2):
+                        translation_vector = volmdlr.Vector2D(distx_point1_point3, 0)
+                        if point1.y < point3.y:
+                            old_outer_contour_positioned = face.surface2d.outer_contour.translation(
+                                offset=translation_vector)
+                            old_innner_contour_positioned = inner_contour
+                        else:
+                            old_innner_contour_positioned = inner_contour.translation(offset=-translation_vector)
+                            old_outer_contour_positioned = face.surface2d.outer_contour
+                    else:
+                        raise NotImplementedError
+                    point1 = old_innner_contour_positioned.point_at_abscissa(0.0)
+                    point2 = old_innner_contour_positioned.point_at_abscissa(old_innner_contour_positioned.length())
+                    point3 = old_outer_contour_positioned.point_at_abscissa(0.0)
+                    point4 = old_outer_contour_positioned.point_at_abscissa(face.surface2d.outer_contour.length())
+                    # point4 = volmdlr.Point2D(point2.x, point4.y)
+                closing_linesegment1 = volmdlr.edges.LineSegment2D(point1, point3)
+                closing_linesegment2 = volmdlr.edges.LineSegment2D(point2, point4)
+                new_outer_contour_primitives = [closing_linesegment1, closing_linesegment2] + \
+                                               old_outer_contour_positioned.primitives + \
+                                               old_innner_contour_positioned.primitives
+                new_outer_contour = volmdlr.wires.Contour2D(primitives=new_outer_contour_primitives)
+                new_outer_contour.order_contour()
             else:
-                class_ = self.face_class
-            # if class_ == CylindricalFace3D:
-            #     print(True)
-            new_face = class_(self, Surface2D(new_outer_contour, new_inner_contours))
-            return new_face
-
-        return face
+                new_inner_contours.append(inner_contour)
+        if isinstance(self.face_class, str):
+            class_ = globals()[self.face_class]
+        else:
+            class_ = self.face_class
+        # if class_ == CylindricalFace3D:
+        #     print(True)
+        new_face = class_(self, Surface2D(new_outer_contour, new_inner_contours))
+        return new_face
 
 class CylindricalSurface3D(Surface3DMixin):
     """
@@ -1398,7 +1398,7 @@ class CylindricalSurface3D(Surface3DMixin):
     def __init__(self, frame, radius, name=''):
         self.frame = frame
         self.radius = radius
-        Surface3D.__init__(self, name=name)
+        Surface3DMixin.__init__(self, name=name)
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         p = volmdlr.Point3D(self.radius * math.cos(point2d.x),
@@ -1864,7 +1864,7 @@ class ToroidalSurface3D(Surface3DMixin):
         self.frame = frame
         self.R = R
         self.r = r
-        Surface3D.__init__(self, name=name)
+        Surface3DMixin.__init__(self, name=name)
 
         self._bbox = None
 
@@ -2211,7 +2211,7 @@ class ConicalSurface3D(Surface3DMixin):
                  name: str = ''):
         self.frame = frame
         self.semi_angle = semi_angle
-        Surface3D.__init__(self, name=name)
+        Surface3DMixin.__init__(self, name=name)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
