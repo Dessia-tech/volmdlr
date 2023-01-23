@@ -555,7 +555,7 @@ class BSplineCurve(Edge):
             periodic=self.periodic)
 
     @classmethod
-    def from_geomdl_curve(cls, curve):
+    def from_geomdl_curve(cls, curve, weights: List[float] = None):
         """
         # TODO: to be completed
 
@@ -573,7 +573,8 @@ class BSplineCurve(Edge):
                    control_points=[getattr(volmdlr, point_dimension)(*p)
                                    for p in curve.ctrlpts],
                    knots=knots,
-                   knot_multiplicities=knot_multiplicities)
+                   knot_multiplicities=knot_multiplicities,
+                   weights=weights)
 
     def length(self):
         """
@@ -4655,16 +4656,6 @@ class BSplineCurve3D(BSplineCurve):
             return 1 / maximum_curvarture, point
         maximum_curvarture = self.maximum_curvature(point_in_curve)
         return 1 / maximum_curvarture
-
-    @classmethod
-    def from_geomdl_curve(cls, curve):
-        knots = list(sorted(set(curve.knotvector)))
-        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
-        return cls(degree=curve.degree,
-                   control_points=[volmdlr.Point3D(*pts)
-                                   for pts in curve.ctrlpts],
-                   knots=knots,
-                   knot_multiplicities=knot_multiplicities)
 
     def global_minimum_curvature(self, nb_eval: int = 21):
         check = [i / (nb_eval - 1) for i in range(nb_eval)]

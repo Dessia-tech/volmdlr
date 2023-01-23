@@ -871,29 +871,19 @@ class Surface3D(DessiaObject):
         """
         Is this right?.
         """
-        control_points = [self.point3d_to_2d(p)
-                          for p in bspline_curve3d.control_points]
-        return [vme.BSplineCurve2D(
-            bspline_curve3d.degree,
-            control_points=control_points,
-            knot_multiplicities=bspline_curve3d.knot_multiplicities,
-            knots=bspline_curve3d.knots,
-            weights=bspline_curve3d.weights,
-            periodic=bspline_curve3d.periodic)]
+        n = len(bspline_curve3d.control_points)
+        points = [self.point2d_to_3d(p)
+                  for p in bspline_curve3d.discretization_points(number_points=n)]
+        return [vme.BSplineCurve3D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
         Is this right?
         """
-        control_points = [self.point2d_to_3d(p)
-                          for p in bspline_curve2d.control_points]
-        return [vme.BSplineCurve3D(
-            bspline_curve2d.degree,
-            control_points=control_points,
-            knot_multiplicities=bspline_curve2d.knot_multiplicities,
-            knots=bspline_curve2d.knots,
-            weights=bspline_curve2d.weights,
-            periodic=bspline_curve2d.periodic)]
+        n = len(bspline_curve2d.control_points)
+        points = [self.point2d_to_3d(p)
+                  for p in bspline_curve2d.discretization_points(number_points=n)]
+        return [vme.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree, bspline_curve2d.periodic)]
 
     def normal_from_point2d(self, point2d):
 
@@ -1311,7 +1301,9 @@ class CylindricalSurface3D(Surface3D):
     The local plane is defined by (theta, z).
 
     :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
+    :param frame:
     :param radius: Cylinder's radius
+    :type radius: float
     """
     face_class = 'CylindricalFace3D'
     x_periodicity = volmdlr.TWO_PI
@@ -1473,8 +1465,9 @@ class CylindricalSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
-
-        points = [self.point3d_to_2d(p) for p in bspline_curve3d.control_points]
+        n = len(bspline_curve3d.control_points)
+        # points = [self.point3d_to_2d(p) for p in bspline_curve3d.control_points]
+        points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -1502,13 +1495,8 @@ class CylindricalSurface3D(Surface3D):
         elif theta3 > theta1 > theta2:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
 
-        return [vme.BSplineCurve2D(
-            bspline_curve3d.degree,
-            control_points=points,
-            knot_multiplicities=bspline_curve3d.knot_multiplicities,
-            knots=bspline_curve3d.knots,
-            weights=bspline_curve3d.weights,
-            periodic=bspline_curve3d.periodic)]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree,
+                                                             periodic=bspline_curve3d.periodic)]
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -1761,6 +1749,16 @@ class CylindricalSurface3D(Surface3D):
             return True
         return False
 
+    # def point_projection(self, point3d):
+    #     point = self.frame.global_to_local_coordinates(point3d)
+    #     point_at_cylinder_axis_with_equal_z = volmdlr.Point3D(0, 0, point.z)
+    #     linesegment = vme.LineSegment3D(point_at_cylinder_axis_with_equal_z, point)
+    #     intersection = self.linesegment_intersections(linesegment)
+    #     if intersection:
+    #         print(True)
+    #         return self.frame.local_to_global_coordinates(intersection[0])
+    #     return point3d
+
 
 class ToroidalSurface3D(Surface3D):
     """
@@ -2000,7 +1998,8 @@ class ToroidalSurface3D(Surface3D):
         length = bspline_curve3d.length()
         theta3, phi3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
         theta4, phi4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
-        points = [self.point3d_to_2d(p) for p in bspline_curve3d.control_points]
+        n = len(bspline_curve3d.control_points)
+        points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         if abs(theta1) == math.pi:
@@ -2027,13 +2026,7 @@ class ToroidalSurface3D(Surface3D):
         elif phi3 > phi1 > phi2:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in points]
 
-        return [vme.BSplineCurve2D(
-            bspline_curve3d.degree,
-            control_points=points,
-            knot_multiplicities=bspline_curve3d.knot_multiplicities,
-            knots=bspline_curve3d.knots,
-            weights=bspline_curve3d.weights,
-            periodic=bspline_curve3d.periodic)]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
         """
@@ -2278,8 +2271,8 @@ class ConicalSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
-
-        points = [self.point3d_to_2d(p) for p in bspline_curve3d.control_points]
+        n = len(bspline_curve3d.control_points)
+        points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
@@ -2307,13 +2300,8 @@ class ConicalSurface3D(Surface3D):
         elif theta3 > theta1 > theta2:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
 
-        return [vme.BSplineCurve2D(
-            bspline_curve3d.degree,
-            control_points=points,
-            knot_multiplicities=bspline_curve3d.knot_multiplicities,
-            knots=bspline_curve3d.knots,
-            weights=bspline_curve3d.weights,
-            periodic=bspline_curve3d.periodic)]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree,
+                                                             periodic=bspline_curve3d.periodic)]
 
     def circle3d_to_2d(self, circle3d):
         """
@@ -3301,9 +3289,10 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=10)]
+                n = len(bspline_curve3d.control_points)
+                points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
                 linesegments = [vme.BSplineCurve2D.from_points_interpolation(
-                    points, min(self.degree_u, self.degree_v))]
+                    points=points, degree=bspline_curve3d.degree)]
 
             elif 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
