@@ -1,0 +1,39 @@
+{
+  "name": "",
+  "object_class": "volmdlr.wires.Contour3D",
+  "package_version": "0.7.1.dev905+g8a826d99",
+  "color": null,
+  "alpha": 1,
+  "primitives": [
+    {
+      "name": "",
+      "object_class": "volmdlr.edges.FullArc3D",
+      "package_version": "0.7.1.dev905+g8a826d99",
+      "center": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "name": ""
+      },
+      "radius": 0.00383540469389546,
+      "angle": 6.283185307179586,
+      "is_trigo": true,
+      "start_end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.00383540469389546,
+        "y": 0.0,
+        "z": 0.0,
+        "name": ""
+      },
+      "normal": {
+        "object_class": "volmdlr.Vector3D",
+        "x": 0.0,
+        "y": 0.0,
+        "z": 1.0,
+        "name": ""
+      }
+    }
+  ],
+  "basis_primitives": []
+}

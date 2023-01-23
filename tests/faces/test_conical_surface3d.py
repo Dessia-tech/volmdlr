@@ -1,6 +1,7 @@
 import math
 import unittest
 
+import dessia_common
 import volmdlr
 import volmdlr.edges as vme
 import volmdlr.faces as vmf
@@ -65,6 +66,40 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertEqual(fullarc2d.length(), 2 * math.pi)
         self.assertEqual(linesegment2d_cone.start, Point2D(2 * math.pi, 0.1))
         self.assertEqual(linesegment2d_cone.end, Point2D(2 * math.pi, 0.0))
+
+    def test_face_from_contours(self):
+        buggy_conical_surface = dessia_common.DessiaObject.load_from_file(
+            'faces/objects_conical_tests/conical_surface1.json')
+        buggy_contours3d1 = dessia_common.DessiaObject.load_from_file(
+            'faces/objects_conical_tests/face_from_contours1_0.json')
+        buggy_contours3d2 = dessia_common.DessiaObject.load_from_file(
+            'faces/objects_conical_tests/face_from_contours1_1.json')
+
+        conical_face = buggy_conical_surface.face_from_contours3d([buggy_contours3d1, buggy_contours3d2])
+        self.assertFalse(len(conical_face.surface2d.inner_contours))
+        self.assertAlmostEqual(conical_face.area(), 0.003769911184307754)
+
+        buggy_conical_surface = dessia_common.DessiaObject.load_from_file(
+            'faces/objects_conical_tests/conical_surface3d_1.json')
+        buggy_contours3d1 = dessia_common.DessiaObject.load_from_file(
+            'faces/objects_conical_tests/face_contour1.json')
+        buggy_contours3d2 = dessia_common.DessiaObject.load_from_file(
+            'faces/objects_conical_tests/face_contour2.json')
+
+        conical_face = buggy_conical_surface.face_from_contours3d([buggy_contours3d1, buggy_contours3d2])
+        self.assertFalse(len(conical_face.surface2d.inner_contours))
+        self.assertAlmostEqual(conical_face.area(), 0.0016259747918786344)
+
+        buggy_conical_surface = dessia_common.DessiaObject.load_from_file(
+            'faces/objects_conical_tests/conical_surface3d_2.json')
+        buggy_contours3d1 = dessia_common.DessiaObject.load_from_file(
+            'faces/objects_conical_tests/face_contour3_.json')
+        buggy_contours3d2 = dessia_common.DessiaObject.load_from_file(
+            'faces/objects_conical_tests/face_contour4_.json')
+
+        conical_face = buggy_conical_surface.face_from_contours3d([buggy_contours3d1, buggy_contours3d2])
+        self.assertFalse(len(conical_face.surface2d.inner_contours))
+        self.assertAlmostEqual(conical_face.area(), 0.05663155229526495)
 
 
 if __name__ == '__main__':

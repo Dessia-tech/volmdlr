@@ -1380,8 +1380,6 @@ class Surface3DMixin(Surface3D):
             class_ = globals()[self.face_class]
         else:
             class_ = self.face_class
-        # if class_ == CylindricalFace3D:
-        #     print(True)
         new_face = class_(self, Surface2D(new_outer_contour, new_inner_contours))
         return new_face
 
