@@ -149,7 +149,9 @@ class Edge(dc.DessiaObject):
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
-            return LineSegment3D(p1, p2, arguments[0][1:-1])
+            if p1 != p2:
+                return LineSegment3D(p1, p2, arguments[0][1:-1])
+            return None
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D':
                 p1, p2 = p2, p1
@@ -474,7 +476,8 @@ class BSplineCurve(Edge):
     """
     An abstract class for B-spline curves.
 
-    The following rule must be respected : `number of knots = number of control points + degree + 1`.
+    The following rule must be
+    respected : `number of knots = number of control points + degree + 1`.
 
     :param degree: The degree of the B-spline curve.
     :type degree: int
@@ -1304,10 +1307,10 @@ class Line2D(Line):
         """
         Calculate the shortest distance between a line and a point.
 
-        :param point2d: Point to calculate distance
-        :type point2d: :class:`volmdlr.Point2D`
-        :return: Distance to point
-        :rtype: float
+        :param point2d: Point to calculate distance.
+        :type point2d: :class:`volmdlr.Point2D`.
+        :return: Distance to point.
+        :rtype: float.
         """
         vector_r = self.point1 - point2d
         vector_v = self.normal_vector()
@@ -1394,7 +1397,7 @@ class BSplineCurve2D(BSplineCurve):
         Get direction vector at abscissa.
 
         :param abscissa: defines where in the BSplineCurve2D the
-        direction vector is to be calculated
+        direction vector is to be calculated.
         :return: The direection vector vector of the BSplineCurve2D
         """
         return self.tangent(abscissa)
@@ -3519,6 +3522,7 @@ class Line3D(Line):
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if not self.point_belongs(point1) or not self.point_belongs(point2):
             raise ValueError('Point not on curve')
+
         return LineSegment3D(point1, point2)
 
     def copy(self, *args, **kwargs):
@@ -4145,7 +4149,6 @@ class LineSegment3D(LineSegment):
     def to_step(self, current_id, surface_id=None):
         line = self.to_line()
         content, line_id = line.to_step(current_id)
-
         current_id = line_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         current_id = start_id + 1
