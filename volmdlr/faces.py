@@ -2209,7 +2209,7 @@ class ConicalSurface3D(Surface3D):
         :param point3d: Point at the CylindricalSuface3D.
         :type point3d: :class:`volmdlr.`Point3D`
         """
-        x, y, z = self.frame.new_coordinates(point3d)
+        x, y, z = self.frame.global_to_local_coordinates(point3d)
         # Do not delte this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Genarally this is related to uncertaintity of step files.
         if abs(x) < 1e-12:
@@ -2283,6 +2283,8 @@ class ConicalSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
+        # n = max(len(bspline_curve3d.control_points), bspline_curve3d.degree + 2)
+        # n = 25
         n = len(bspline_curve3d.control_points)
         points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
