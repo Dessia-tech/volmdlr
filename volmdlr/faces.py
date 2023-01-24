@@ -6499,6 +6499,7 @@ class Triangle3D(PlaneFace3D):
 
     def subdescription(self, resolution=0.01):
         """
+        
         Returns a list of Point3D with resolution as max
         between Point3D.
         """
@@ -6553,6 +6554,7 @@ class Triangle3D(PlaneFace3D):
 
     def subdescription_to_triangles(self, resolution=0.01):
         """
+       
         Returns a list of Triangle3D with resolution as max
         length of subtriangles side.
         """
