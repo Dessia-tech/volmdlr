@@ -183,6 +183,7 @@ def face_bound(arguments, object_dict):
 def surface_curve(arguments, object_dict):
     """
     Returns xx.
+
     :param arguments: DESCRIPTION
     :type arguments: TYPE
     :param object_dict: DESCRIPTION
@@ -279,12 +280,11 @@ def item_defined_transformation(arguments, object_dict):
 
     """
     # Frame3D
-    # volmdlr_object1 = object_dict[arguments[2]]
+    volmdlr_object1 = object_dict[arguments[2]]
     volmdlr_object2 = object_dict[arguments[3]]
     # TODO : how to frame map properly from these two Frame3D ?
     # return volmdlr_object2 - volmdlr_object1
-    return volmdlr_object2
-#
+    return [volmdlr_object1, volmdlr_object2]
 
 
 def manifold_surface_shape_representation(arguments, object_dict):
