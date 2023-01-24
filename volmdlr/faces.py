@@ -6387,12 +6387,10 @@ class Triangle3D(PlaneFace3D):
 
     def area(self) -> float:
         """
-
         :return: area triangle
         :rtype: float
 
         Formula explained here: https://www.triangle-calculator.com/?what=vc
-
         """
         a = self.point1.point_distance(self.point2)
         b = self.point2.point_distance(self.point3)
@@ -6592,7 +6590,6 @@ class Triangle3D(PlaneFace3D):
 
     def normal(self):
         """
-
         Returns
         -------
         normal to the face
@@ -6608,7 +6605,6 @@ class Triangle3D(PlaneFace3D):
 
 class CylindricalFace3D(Face3D):
     """
-
     :param contours2d: The cylinder's contour2D.
     :type contours2d: volmdlr.Contour2D.
     :param cylindricalsurface3d: Information about the Cylinder.
