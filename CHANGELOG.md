@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+* Unit coversion factor parameter added to the end of the from_step arguments parameter (So we can convert the units correctly)
+* SphericalSurface3D: rotation, translation, frame_mapping
+* read steps: Identify assemblies in a step file.
 * Create .geo and .msh files (Mesh geometries with GMSH)
 
 
@@ -42,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ClosedPolygon2D: point_belongs, now the user can choose whether points on the edge of the polygon
             should be considered inside or not.
 * ArcEllipse2D: line_intersections, frame_mapping, linesegment_intersections
+* ClosedTriangleShell3D: to_trimesh method
+* PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
+* BSplineSurface3D: Now the plot method uses u and v curves
 
 
 ### Fixed
@@ -59,6 +65,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: tangent (use position/length)
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
+* BSplineSurface3D: debug linesegment2d_to_3d method.
+* Parametric operations with BSpline curves.
+* OpenTriangleShell3D: fix from_mesh_data method
 
 ### Removed
 
@@ -69,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: min_distance_to_other_cylinder
 * BSplineCurve: discretization_points
 * Face3D: triangulation
+* EdgeCollection3D: new object for displaying series of edges
 * BSplineSurface3D: compile BSplineSurface3D.derivatives
 
 

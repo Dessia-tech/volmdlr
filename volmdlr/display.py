@@ -170,12 +170,15 @@ class DisplayMesh(dc.DessiaObject):
                         ha='center', va='center')
 
         for i1, i2, i3 in self.triangles:
-            self._linesegment_class(self.points[i1], self.points[i2]).plot(
-                ax=ax)
-            self._linesegment_class(self.points[i2], self.points[i3]).plot(
-                ax=ax)
-            self._linesegment_class(self.points[i1], self.points[i3]).plot(
-                ax=ax)
+            point1 = self.points[i1]
+            point2 = self.points[i2]
+            point3 = self.points[i3]
+            if point1 != point2:
+                self._linesegment_class(point1, point2).plot(ax=ax)
+            if point2 != point3:
+                self._linesegment_class(point2, point3).plot(ax=ax)
+            if point1 != point3:
+                self._linesegment_class(point1, point3).plot(ax=ax)
 
         return ax
 

@@ -633,7 +633,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        ExtrudedProfile rotation.
+        Extruded profile rotation.
 
         :param center: rotation center
         :param axis: rotation axis
@@ -653,7 +653,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        ExtrudedProfile rotation. Object is updated inplace.
+        Extruded profile rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis
@@ -667,7 +667,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        ExtrudedProfile translation.
+        Extruded profile translation.
 
         :param offset: translation vector
         :return: A new translated ExtrudedProfile
@@ -682,7 +682,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        ExtrudedProfile translation. Object is updated inplace.
+        Extruded profile translation. Object is updated inplace.
 
         :param offset: translation vector
         """
@@ -737,7 +737,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of RevolvedProfile.
+        Creates a copy of Revolvedprofile.
 
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),
@@ -1981,16 +1981,25 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a BSplineExtrusion.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding BSplineExtrusion object.
+        :rtype: :class:`volmdlr.primitives3d.BSplineExtrusion`
+        """
         name = arguments[0][1:-1]
         if object_dict[arguments[1]].__class__ is volmdlr.wires.Ellipse3D:
             ell = object_dict[arguments[1]]
             vectextru = -object_dict[arguments[2]]
             return cls(ell, vectextru, name)
 
-        elif object_dict[arguments[1]].__class__ is \
-                volmdlr.edges.BSplineCurve3D:
+        if object_dict[arguments[1]].__class__ is volmdlr.edges.BSplineCurve3D:
             bsplinecurve = object_dict[arguments[1]]
             vectextru = object_dict[arguments[2]]
             return cls(bsplinecurve, vectextru, name)
-        else:
-            raise NotImplementedError  # a adapter pour les bpsline
+        raise NotImplementedError  # a adapter pour les bpsline

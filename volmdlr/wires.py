@@ -335,6 +335,85 @@ class WireMixin:
         return False
 
 
+class EdgeCollection3D(WireMixin):
+    """
+    A collection of simple edges 3D.
+    """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['basis_primitives']
+    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_data_hash_attributes = []
+
+    def __init__(self, primitives: List[volmdlr.edges.Edge], color=None, alpha=1, name: str = ''):
+        self.primitives = primitives
+        self.color = color
+        self.alpha = alpha
+        self._bbox = None
+        self.name = name
+
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+        """ Plot edges with matplolib, not tested. """
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        for primitive in self.primitives:
+            primitive.plot(ax=ax, color=color, alpha=alpha)
+        return ax
+
+    def _bounding_box(self):
+        """ Flawed method, to be enforced by overloading. """
+        return volmdlr.core.BoundingBox.from_points(self.points())
+
+    @property
+    def bounding_box(self):
+        """ Get big bounding box of all edges. """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    def points(self):
+        """ Get list of all points. """
+        points = []
+        for prim in self.primitives:
+            points += [prim.start, prim.end]
+        return points
+
+    def babylon_param(self):
+        """ Get dict for babylonjs object settings. """
+        babylon_param = {'alpha': self.alpha,
+                         'name': self.name,
+                         'color': [0, 0, 0.6]}
+        if self.color is None:
+            babylon_param['edges_color'] = [0, 0, 0.6]
+        else:
+            babylon_param['edges_color'] = list(self.color)
+        return babylon_param
+
+    def babylon_points(self):
+        """ Get list of points coordinates. """
+        return [[p.x, p.y, p.z] for p in self.points()]
+
+    def to_babylon(self):
+        """ Generate a mesh from all edges for performance when drawing. """
+        positions = []
+        for prim in self.primitives:
+            positions += [prim.start.x, prim.start.y, prim.start.z,
+                          prim.end.x, prim.end.y, prim.end.z,
+                          prim.end.x, prim.end.y, prim.end.z]
+
+        indices = list(range(len(positions)))
+        return positions, indices
+
+    def babylon_meshes(self):
+        """ Set the mesh for babylonjs. """
+        positions, indices = self.to_babylon()
+        babylon_mesh = {'positions': positions,
+                        'indices': indices}
+        babylon_mesh.update(self.babylon_param())
+        return [babylon_mesh]
+
+
 class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     """
     A collection of simple primitives, following each other making a wire.
@@ -577,7 +656,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         :param wire : volmdlr.wires.Wire2D.
         :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
         """
-
         intersections, intersections_points = [], []
         for primitive in wire.primitives:
             method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_intersections'
@@ -603,7 +681,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         :param points: points to define wire 2d.
         """
-
         edges = []
         for i in range(0, len(points) - 1):
             edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
@@ -613,9 +690,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_crossings(self,
                               linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of crossings in ther form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        Returns a list of crossings in ther form of a tuple.
 
+        Tupole is (point, primitive) of the wire primitives
+        intersecting with the line.
         """
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
@@ -631,7 +709,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         :param wire: volmdlr.wires.Wire2D
         :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
         """
-
         crossings, crossings_points = [], []
         for primitive in wire.primitives:
             method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_crossings'
@@ -653,7 +730,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def to_wire_with_linesegments(self):
         """
         Convert a wire with different primitives to a wire with just linesegments.
-
         """
 
         wires = []
@@ -1594,7 +1670,7 @@ class Contour2D(ContourMixin, Wire2D):
         for edge in self.primitives:
             area += trigo * edge.straight_line_area()
 
-        return area
+        return abs(area)
 
     def center_of_mass(self):
         """
@@ -3613,7 +3689,7 @@ class Triangle(ClosedPolygonMixin):
         self._line_segments = None
 
 
-class Triangle2D(Triangle):
+class Triangle2D(ClosedPolygon2D):
     """
     Defines a triangle 2D.
 
@@ -3629,13 +3705,12 @@ class Triangle2D(Triangle):
         # self.point3 = point3
         # self.name = name
 
-        # # ClosedPolygon2D.__init__(self, points=[point1, point2, point3],
-        # # name=name)
-
-        Triangle.__init__(self, point1,
-                          point2,
-                          point3,
-                          name)
+        ClosedPolygon2D.__init__(self, points=[point1, point2, point3], name=name)
+        #
+        # Triangle.__init__(self, point1,
+        #                   point2,
+        #                   point3,
+        #                   name)
 
     def area(self):
         u = self.point2 - self.point1
@@ -4009,9 +4084,7 @@ class Circle2D(Contour2D):
     def axial_symmetry(self, line):
         """
         Finds out the symmetric circle2d according to a line.
-
         """
-
         return self.__class__(center=self.center.axial_symmetry(line),
                               radius=self.radius)
 
@@ -4320,6 +4393,17 @@ class Contour3D(ContourMixin, Wire3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a Contour3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding Contour3D object.
+        :rtype: :class:`volmdlr.wires.Contour3D`
+        """
         name = arguments[0][1:-1]
         raw_edges = []
         # edge_ends = {}
@@ -4333,6 +4417,8 @@ class Contour3D(ContourMixin, Wire3D):
             return cls(raw_edges, name=name)
 
         # Making things right for first 2 primitives
+        if any(edge is None for edge in raw_edges):
+            raise ValueError
         distances = [raw_edges[0].end.point_distance(raw_edges[1].start),
                      raw_edges[0].start.point_distance(raw_edges[1].start),
                      raw_edges[0].end.point_distance(raw_edges[1].end),
@@ -4436,7 +4522,6 @@ class Contour3D(ContourMixin, Wire3D):
                     current_id, surface_id=surface_id, curve2d=curve2d)
             else:
                 primitive_content, primitive_ids = primitive.to_step(current_id, surface_id=surface_id)
-
             content += primitive_content
             current_id = primitive_ids[-1] + 1
             for primitive_id in primitive_ids:
@@ -4866,10 +4951,7 @@ class Circle3D(Contour3D):
         return ax
 
     def point_at_abscissa(self, curvilinear_abscissa):
-        """
-        Start point is at intersection of frame.u axis.
-
-        """
+        """ Start point is at intersection of frame.u axis. """
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
@@ -4886,8 +4968,20 @@ class Circle3D(Contour3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a Circle3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding Circle3D object.
+        :rtype: :class:`volmdlr.wires.Circle3D`
+        """
+        unit_conversion_factor = arguments[-1]
         center = object_dict[arguments[1]].origin
-        radius = float(arguments[2]) / 1000
+        radius = float(arguments[2]) * unit_conversion_factor
         if object_dict[arguments[1]].u is not None:
             normal = object_dict[arguments[1]].u
             other_vec = object_dict[arguments[1]].v
@@ -4897,8 +4991,7 @@ class Circle3D(Contour3D):
             normal = object_dict[arguments[1]].v  # ou w
             other_vec = None
         normal.normalize()
-        return cls.from_center_normal(center, normal, radius,
-                                      arguments[0][1:-1])
+        return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
         circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u,
@@ -5291,11 +5384,23 @@ class Ellipse3D(Contour3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a Ellipse3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding Ellipse3D object.
+        :rtype: :class:`volmdlr.wires.Ellipse3D`
+        """
+        unit_conversion_factor = arguments[-1]
         center = object_dict[arguments[1]].origin
         normal = object_dict[arguments[1]].u  # ancien w
         major_dir = object_dict[arguments[1]].v  # ancien u
-        major_axis = float(arguments[2]) / 1000
-        minor_axis = float(arguments[3]) / 1000
+        major_axis = float(arguments[2]) * unit_conversion_factor
+        minor_axis = float(arguments[3]) * unit_conversion_factor
         return cls(major_axis, minor_axis, center, normal, major_dir,
                    arguments[0][1:-1])
 
