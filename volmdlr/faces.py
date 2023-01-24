@@ -3374,8 +3374,11 @@ class BSplineSurface3D(Surface3D):
         """
         x_perio = self.x_periodicity if self.x_periodicity is not None else 1.
         y_perio = self.y_periodicity if self.y_periodicity is not None else 1.
-        return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start),
-                                  self.point3d_to_2d(linesegment3d.end))]
+        start = self.point3d_to_2d(linesegment3d.start)
+        end = self.point3d_to_2d(linesegment3d.end)
+        if start == end:
+            return None
+        return [vme.LineSegment2D(start, end)]
 
     def _repair_periodic_boundary_points(self, curve3d, points_2d, direction_periodicity):
         """
@@ -7726,7 +7729,7 @@ class BSplineFace3D(Face3D):
         if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
             resolution = 25
         else:
-            resolution = 10
+            resolution = 15
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
         number_points_x = int(delta_u * resolution)
