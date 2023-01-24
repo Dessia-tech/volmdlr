@@ -6479,7 +6479,7 @@ class Triangle3D(PlaneFace3D):
                  angle: float):
         """
         Triangle3D rotation.
-        
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -6496,7 +6496,7 @@ class Triangle3D(PlaneFace3D):
                          angle: float):
         """
         Triangle3D rotation. Object is updated inplace.
-        
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -6599,7 +6599,7 @@ class Triangle3D(PlaneFace3D):
 
     def normal(self):
         """
-        
+
         Returns
         -------
         normal to the face
