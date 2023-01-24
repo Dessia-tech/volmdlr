@@ -2064,14 +2064,14 @@ class ToroidalSurface3D(Surface3DMixin):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        if self.frame.w.is_colinear_to(fullarc3d.normal):
+        if self.frame.w.is_colinear_to(fullarc3d.normal, 1e-4):
             p1 = self.point3d_to_2d(fullarc3d.start)
             return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.X2D)]
-        elif fullarc3d.normal.dot(self.frame.w):
+        else:
             p1 = self.point3d_to_2d(fullarc3d.start)
             return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.Y2D)]
-        else:
-            raise ValueError('Impossible!')
+        # else:
+        #     raise ValueError('Impossible!')
 
     def circle3d_to_2d(self, circle3d):
         """
@@ -7342,14 +7342,15 @@ class ToroidalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 5
+        theta_angle_resolution = 11
+        phi_angle_resolution = 7
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
-        number_points_x = int(delta_theta * angle_resolution)
+        number_points_x = int(delta_theta * theta_angle_resolution)
 
         delta_phi = phi_max - phi_min
-        number_points_y = int(delta_phi * angle_resolution)
+        number_points_y = int(delta_phi * phi_angle_resolution)
 
         return number_points_x, number_points_y
 
@@ -7573,7 +7574,7 @@ class SphericalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 9
+        angle_resolution = 11
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
