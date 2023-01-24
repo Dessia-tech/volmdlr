@@ -2085,7 +2085,7 @@ class ToroidalSurface3D(Surface3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        ToroidalSurface3D translation
+        ToroidalSurface3D translation.
         :param offset: translation vector
         :return: A new translated ToroidalSurface3D
         """
@@ -3464,7 +3464,7 @@ class BSplineSurface3D(Surface3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        BSplineSurface3D translation
+        BSplineSurface3D translation.
         :param offset: translation vector
         :return: A new translated BSplineSurface3D
         """
@@ -3508,7 +3508,7 @@ class BSplineSurface3D(Surface3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         new_bsplinesurface3d = self.frame_mapping(frame, side)
@@ -4981,7 +4981,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def point_belongs(self, point3d: volmdlr.Point3D):
         """
-        Tells you if a point is on the 3D face and inside its contour
+        Tells you if a point is on the 3D face and inside its contour.
         """
         point2d = self.surface3d.point3d_to_2d(point3d)
         check_point3d = self.surface3d.point2d_to_3d(point2d)
@@ -5168,7 +5168,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def rotation_inplace(self, center: volmdlr.Point3D,
                          axis: volmdlr.Vector3D, angle: float):
         """
-        Face3D rotation. Object is updated inplace
+        Face3D rotation. Object is updated inplace.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -5179,7 +5179,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Face3D translation
+        Face3D translation.
         :param offset: translation vector
         :return: A new translated Face3D
         """
@@ -6423,7 +6423,7 @@ class Triangle3D(PlaneFace3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         self.point1.frame_mapping_inplace(frame, side)
@@ -6470,7 +6470,8 @@ class Triangle3D(PlaneFace3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Triangle3D rotation
+        Triangle3D rotation.
+        
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -6486,8 +6487,8 @@ class Triangle3D(PlaneFace3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
+        Triangle3D rotation. Object is updated inplace.
         
-        Triangle3D rotation. Object is updated inplace
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -6500,7 +6501,6 @@ class Triangle3D(PlaneFace3D):
 
     def subdescription(self, resolution=0.01):
         """
-        
         Returns a list of Point3D with resolution as max
         between Point3D.
         """
@@ -6555,7 +6555,6 @@ class Triangle3D(PlaneFace3D):
 
     def subdescription_to_triangles(self, resolution=0.01):
         """
-       
         Returns a list of Triangle3D with resolution as max
         length of subtriangles side.
         """
