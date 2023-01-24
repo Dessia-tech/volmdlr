@@ -2104,6 +2104,11 @@ class Arc2D(Arc):
         return self._center
 
     def get_center(self):
+        """
+        Calculates the center of the Arc.
+
+        :return: asc's center.
+        """
         xi, yi = self.interior.x, self.interior.y
         xe, ye = self.end.x, self.end.y
         xs, ys = self.start.x, self.start.y
@@ -2143,6 +2148,11 @@ class Arc2D(Arc):
         return self._clockwise_and_trigowise_paths
 
     def get_arc_direction(self):
+        """
+        Gets arc direction: clockwise or trigonometric.
+
+        :return: True if clockwise. trigowise if False.
+        """
         clockwise_path, trigowise_path =\
             self.clockwise_and_trigowise_paths
         if clockwise_path > trigowise_path:
