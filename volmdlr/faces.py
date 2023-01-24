@@ -6486,6 +6486,7 @@ class Triangle3D(PlaneFace3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
+        
         Triangle3D rotation. Object is updated inplace
         :param center: rotation center
         :param axis: rotation axis
@@ -6591,6 +6592,7 @@ class Triangle3D(PlaneFace3D):
 
     def normal(self):
         """
+        
         Returns
         -------
         normal to the face
