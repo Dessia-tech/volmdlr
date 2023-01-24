@@ -6512,11 +6512,10 @@ class Triangle3D(PlaneFace3D):
             return self.points
 
         pos_length_max = lengths.index(max_length)
-        point0 = self.points[-3 + pos_length_max] 
+        point0 = self.points[-3 + pos_length_max]
         point1 = self.points[-3 + pos_length_max + 1]
         point2 = self.points[-3 + pos_length_max + 2]
-        
-        
+
         vector_0_1 = point0 - point1
         vector_0_1.normalize()
         points_0_1 = []
