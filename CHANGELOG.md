@@ -46,6 +46,7 @@ So we can convert the units correctly
 * ArcEllipse2D: line_intersections, frame_mapping, linesegment_intersections
 * ClosedTriangleShell3D: to_trimesh method
 * PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
+* BSplineSurface3D: Now the plot method uses u and v curves
 
 
 ### Fixed
@@ -65,6 +66,7 @@ So we can convert the units correctly
 * Arc2D: fix get_center: name referenced before assignement
 * SphericalSurface3D : enhancement of primitives parametrization on surface parametric domain.
 * BSplineSurface3D: debug linesegment2d_to_3d method.
+* Parametric operations with BSpline curves.
 * OpenTriangleShell3D: fix from_mesh_data method
 
 ### Removed
