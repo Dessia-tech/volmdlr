@@ -2784,10 +2784,9 @@ class SphericalSurface3D(Surface3D):
             return [vme.LineSegment2D(p1, p2)]
 
         if math.isclose(self.frame.w.dot(fullarc3d.normal), 0, abs_tol=1e-4):
-            theta_plus_pi = theta1 + math.pi
             if theta1 > theta3:
                 theta_plus_pi = theta1 - math.pi
-            elif theta1 < theta3:
+            else:
                 theta_plus_pi = theta1 + math.pi
             half_pi = 0.5 * math.pi
             if phi1 > phi3:
