@@ -2788,10 +2788,9 @@ class SphericalSurface3D(Surface3D):
                 theta_plus_pi = theta1 - math.pi
             else:
                 theta_plus_pi = theta1 + math.pi
-            half_pi = 0.5 * math.pi
             if phi1 > phi3:
                 half_pi = 0.5 * math.pi
-            elif phi1 < phi3:
+            else:
                 half_pi = -0.5 * math.pi
             if abs(phi1) == 0.5 * math.pi:
                 return [vme.LineSegment2D(volmdlr.Point2D(theta3, phi1), volmdlr.Point2D(theta3, -half_pi)),
