@@ -15,6 +15,14 @@ from volmdlr.primitives import RoundedLineSegments
 
 
 class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
+    """
+    Opened Rounded LineSegment2D class.
+
+    :param points: Points used to draw the wire.
+    :type points: List of Point2D.
+    :param radius: Radius used to connect different parts of the wire.
+    :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}.
+    """
     closed = False
     line_class = volmdlr.edges.LineSegment2D
     arc_class = volmdlr.edges.Arc2D
@@ -439,6 +447,11 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
 
 
 class Measure2D(volmdlr.edges.LineSegment2D):
+    """
+    Measure 2D class.
+
+    """
+
     def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
         """
         :param unit: 'mm', 'm' or None. If None, the distance won't be in the label

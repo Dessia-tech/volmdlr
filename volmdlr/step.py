@@ -399,6 +399,11 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
 
 
 class StepFunction(dc.DessiaObject):
+    """
+    Abstract class defining a step function.
+
+    """
+
     def __init__(self, function_id, function_name, function_arg):
         dc.DessiaObject.__init__(self)
         self.id = function_id
@@ -430,6 +435,10 @@ class StepFunction(dc.DessiaObject):
 
 
 class Step(dc.DessiaObject):
+    """
+    Defines the Step class.
+
+    """
 
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines

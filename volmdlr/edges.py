@@ -373,6 +373,13 @@ class LineSegment(Edge):
         return self._length
 
     def abscissa(self, point, tol=1e-6):
+        """
+        Calculates the abscissa parameter of a Line Segment, at a point.
+
+        :param point: point to verify abscissa.
+        :param tol: tolerance.
+        :return: abscissa parameter.
+        """
         if point.point_distance(self.start) < tol:
             return 0
         if point.point_distance(self.end) < tol:
@@ -429,6 +436,12 @@ class LineSegment(Edge):
         return self.unit_direction_vector(abscissa).normal_vector()
 
     def point_projection(self, point):
+        """
+        Calculates the projection of a point on a Line Segment.
+
+        :param point: point to be verified.
+        :return: point projection.
+        """
         p1, p2 = self.start, self.end
         vector = p2 - p1
         norm_u = vector.norm()
@@ -438,6 +451,12 @@ class LineSegment(Edge):
         return projection, t * norm_u
 
     def split(self, split_point):
+        """
+        Split a Line Segment at a given point into two Line Segments.
+
+        :param split_point: spliting point.
+        :return: list with the two splied line segments.
+        """
         if split_point == self.start:
             return [None, self.copy()]
         if split_point == self.end:
@@ -446,6 +465,10 @@ class LineSegment(Edge):
                 self.__class__(split_point, self.end)]
 
     def middle_point(self):
+        """
+        Calculates the middle point of a Line Segment.
+        :return:
+        """
         return 0.5 * (self.start + self.end)
 
     def point_at_abscissa(self, abscissa):
@@ -2104,6 +2127,11 @@ class Arc2D(Arc):
         return self._center
 
     def get_center(self):
+        """
+        Calculates the center of the Arc.
+
+        :return: asc's center.
+        """
         xi, yi = self.interior.x, self.interior.y
         xe, ye = self.end.x, self.end.y
         xs, ys = self.start.x, self.start.y
@@ -2143,6 +2171,11 @@ class Arc2D(Arc):
         return self._clockwise_and_trigowise_paths
 
     def get_arc_direction(self):
+        """
+        Gets arc direction: clockwise or trigonometric.
+
+        :return: True if clockwise. trigowise if False.
+        """
         clockwise_path, trigowise_path =\
             self.clockwise_and_trigowise_paths
         if clockwise_path > trigowise_path:
