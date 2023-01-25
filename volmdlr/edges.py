@@ -848,7 +848,7 @@ class BSplineCurve(Edge):
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
-        curve = fitting.interpolate_curve([[*point] for point in points], degree)
+        curve = fitting.interpolate_curve([[*point] for point in points], degree, centripetal=True)
 
         bsplinecurve = cls.from_geomdl_curve(curve)
         if not periodic:
@@ -4635,7 +4635,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def curvature(self, u: float, point_in_curve: bool = False):
         # u should be in the interval [0,1]
-        ders = self.derivatives(u, 3)  # 3 first derivative
+        ders = self.derivatives(u, 2)  # 2 first derivative
         c1, c2 = ders[1], ders[2]
         denom = c1.cross(c2)
         if c1 == volmdlr.O3D or c2 == volmdlr.O3D or denom.norm() == 0.0:
