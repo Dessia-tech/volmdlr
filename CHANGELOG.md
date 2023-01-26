@@ -20,6 +20,8 @@ So we can convert the units correctly
 * OpenRoundedLineSegment2D: deleted discretization_points() so it uses the one from WireMixin.
 * Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
 * BSplineCurve: from_points_interpolation, uses centripedal method for better fitting.
+* Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard. 
+
 ### Removed
 
 
@@ -30,6 +32,7 @@ So we can convert the units correctly
 
 
 ### Unittests
+ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
 
 
 
