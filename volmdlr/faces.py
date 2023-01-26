@@ -1383,7 +1383,6 @@ class PeriodicalSurface(Surface3D):
         new_face = class_(self, Surface2D(new_outer_contour, new_inner_contours))
         return new_face
 
-<<<<<<< 3_step_to_volmdlr
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
@@ -1437,8 +1436,6 @@ class PeriodicalSurface(Surface3D):
         else:
             raise ValueError(f'Impossible: fullarc3d.normal: {fullarc3d.normal} self.frame.w: {self.frame.w}')
 
-=======
->>>>>>> dev
 
 class CylindricalSurface3D(PeriodicalSurface):
     """
