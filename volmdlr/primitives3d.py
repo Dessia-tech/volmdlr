@@ -811,11 +811,16 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        RevolvedProfile rotation
+        Revolved profile rotation.
+
         :param center: rotation center
+        :type center: volmdlr.Point3D
         :param axis: rotation axis
+        :type axis: volmdlr.Vector3D
         :param angle: angle rotation
+        :type angle: float
         :return: a new rotated RevolvedProfile
+        :rtype: RevolvedProfile
         """
         return self.__class__(
             plane_origin=self.plane_origin.rotation(center, axis, angle),
@@ -1579,12 +1584,16 @@ class HollowCylinder(RevolvedProfile):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        HollowCylinder rotation.
+        Hollow cylinder rotation.
 
         :param center: rotation center.
+        :type center: volmdlr.Point3D
         :param axis: rotation axis.
+        :type axis: volmdlr.Vector3D
         :param angle: angle rotation.
+        :type angle: float
         :return: a new rotated HollowCylinder.
+        :rtype: HollowCylinder
         """
         return self.__class__(
             position=self.position.rotation(center, axis, angle),
@@ -1595,7 +1604,7 @@ class HollowCylinder(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        HollowCylinder rotation. Object is updated inplace.
+        Hollow cylinder rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis
