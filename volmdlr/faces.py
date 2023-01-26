@@ -1330,6 +1330,9 @@ class PeriodicalSurface(Surface3D):
             point1 = inner_contour.point_at_abscissa(0.0)
             point2 = inner_contour.point_at_abscissa(inner_contour.length())
             if abs(point2.x - point1.x) == 2 * math.pi:
+                point3 = face.surface2d.outer_contour.point_at_abscissa(0.0)
+                point4 = face.surface2d.outer_contour.point_at_abscissa(face.surface2d.outer_contour.length())
+
                 distx_point1_point3 = point1.x - point3.x
                 distx_point1_point4 = point1.x - point4.x
                 distx_point2_point3 = point2.x - point3.x
