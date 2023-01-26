@@ -886,9 +886,9 @@ class Surface3D(DessiaObject):
         Is this right?.
         """
         n = len(bspline_curve3d.control_points)
-        points = [self.point2d_to_3d(p)
+        points = [self.point3d_to_2d(p)
                   for p in bspline_curve3d.discretization_points(number_points=n)]
-        return [vme.BSplineCurve3D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -1330,9 +1330,6 @@ class PeriodicalSurface(Surface3D):
             point1 = inner_contour.point_at_abscissa(0.0)
             point2 = inner_contour.point_at_abscissa(inner_contour.length())
             if abs(point2.x - point1.x) == 2 * math.pi:
-                point3 = face.surface2d.outer_contour.point_at_abscissa(0.0)
-                point4 = face.surface2d.outer_contour.point_at_abscissa(face.surface2d.outer_contour.length())
-
                 distx_point1_point3 = point1.x - point3.x
                 distx_point1_point4 = point1.x - point4.x
                 distx_point2_point3 = point2.x - point3.x
@@ -1341,7 +1338,7 @@ class PeriodicalSurface(Surface3D):
                     old_outer_contour_positioned = face.surface2d.outer_contour
                     old_innner_contour_positioned = inner_contour
                 else:
-                    if math.isclose(distx_point1_point4, distx_point2_point3, abs_tol=1e-6):
+                    if math.isclose(distx_point1_point4, distx_point2_point3, abs_tol=1e-2):
                         translation_vector = volmdlr.Vector2D(distx_point1_point4, 0)
                         if point1.y < point3.y:
                             old_outer_contour_positioned = face.surface2d.outer_contour.translation(
