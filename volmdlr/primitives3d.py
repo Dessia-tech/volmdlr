@@ -1357,10 +1357,10 @@ class Cone(RevolvedProfile):
         p1 = volmdlr.Point2D(0., 0.)
         p2 = volmdlr.Point2D(0., self.radius)
         p3 = volmdlr.Point2D(self.length, 0.)
-        l1 = volmdlr.edges.LineSegment2D(p1, p2)
-        l2 = volmdlr.edges.LineSegment2D(p2, p3)
-        l3 = volmdlr.edges.LineSegment2D(p3, p1)
-        contour = volmdlr.wires.Contour2D([l1, l2, l3])
+
+        contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(p1, p2),
+                                           volmdlr.edges.LineSegment2D(p2, p3),
+                                           volmdlr.edges.LineSegment2D(p3, p1)])
         y = axis.random_unit_normal_vector()
         RevolvedProfile.__init__(self, position, axis, y, contour, position,
                                  axis, color=color, alpha=alpha, name=name)
