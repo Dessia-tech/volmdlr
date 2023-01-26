@@ -811,7 +811,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        RevolvedProfile rotation
+        Revolved Profile rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -831,7 +832,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Revolvedprofile rotation. Object is updated inplace.
+        Revolved profile rotation. Object is updated inplace.
 
         :param center: rotation center
         :type center: `volmdlr.Point3D`
@@ -848,7 +849,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Revolvedprofile translation.
+        Revolved profile translation.
 
         :param offset: translation vector
         :return: A new translated RevolvedProfile
@@ -863,7 +864,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Revolvedprofile translation. Object is updated inplace.
+        Revolved profile translation. Object is updated inplace.
 
         :param offset: translation vector
         """
@@ -1579,7 +1580,7 @@ class HollowCylinder(RevolvedProfile):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        HollowCylinder rotation.
+        Hollow  Cylinder rotation.
 
         :param center: rotation center.
         :param axis: rotation axis.
@@ -1595,7 +1596,7 @@ class HollowCylinder(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        HollowCylinder rotation. Object is updated inplace.
+        Hollow Cylinder rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis

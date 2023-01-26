@@ -2154,7 +2154,7 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        ToroidalSurface3D translation
+        ToroidalSurface3D translation.
         :param offset: translation vector
         :return: A new translated ToroidalSurface3D
         """
@@ -3535,7 +3535,7 @@ class BSplineSurface3D(Surface3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        BSplineSurface3D translation
+        BSplineSurface3D translation.
         :param offset: translation vector
         :return: A new translated BSplineSurface3D
         """
@@ -3579,7 +3579,7 @@ class BSplineSurface3D(Surface3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         new_bsplinesurface3d = self.frame_mapping(frame, side)
@@ -5247,7 +5247,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def rotation_inplace(self, center: volmdlr.Point3D,
                          axis: volmdlr.Vector3D, angle: float):
         """
-        Face3D rotation. Object is updated inplace
+        Face3D rotation. Object is updated inplace.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -5258,7 +5258,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Face3D translation
+        Face3D translation.
         :param offset: translation vector
         :return: A new translated Face3D
         """
@@ -6466,12 +6466,10 @@ class Triangle3D(PlaneFace3D):
 
     def area(self) -> float:
         """
-
         :return: area triangle
         :rtype: float
 
         Formula explained here: https://www.triangle-calculator.com/?what=vc
-
         """
         a = self.point1.point_distance(self.point2)
         b = self.point2.point_distance(self.point3)
@@ -6504,7 +6502,7 @@ class Triangle3D(PlaneFace3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         self.point1.frame_mapping_inplace(frame, side)
@@ -6551,7 +6549,8 @@ class Triangle3D(PlaneFace3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Triangle3D rotation
+        Triangle3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -6567,7 +6566,8 @@ class Triangle3D(PlaneFace3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Triangle3D rotation. Object is updated inplace
+        Triangle3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -6579,34 +6579,58 @@ class Triangle3D(PlaneFace3D):
         self.bounding_box = new_bounding_box
 
     def subdescription(self, resolution=0.01):
-        frame = self.surface3d.frame
-        pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        """
+        Returns a list of Point3D with resolution as max
+        between Point3D.
+        """
 
-        t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
+        lengths = [self.points[0].point_distance(self.points[1]),
+                   self.points[1].point_distance(self.points[2]),
+                   self.points[2].point_distance(self.points[0])]
+        max_length = max(lengths)
 
-        xmin, xmax = min(pt.x for pt in pts2d), max(pt.x for pt in pts2d)
-        ymin, ymax = min(pt.y for pt in pts2d), max(pt.y for pt in pts2d)
+        if max_length <= resolution:
+            return self.points
 
-        nbx, nby = int(((xmax - xmin) / resolution) + 2), int(((ymax - ymin) / resolution) + 2)
-        points_box = []
-        for i in range(nbx):
-            x = min(xmin + i * resolution, xmax)
-            if x == xmin:
-                x = xmin + 0.01 * resolution
-            for j in range(nby):
-                y = min(ymin + j * resolution, ymax)
-                if y == ymin:
-                    y = ymin + 0.01 * resolution
-                points_box.append(volmdlr.Point2D(x, y))
+        pos_length_max = lengths.index(max_length)
+        point0 = self.points[-3 + pos_length_max]
+        point1 = self.points[-3 + pos_length_max + 1]
+        point2 = self.points[-3 + pos_length_max + 2]
 
-        points = [pt.copy() for pt in self.points]
-        for pt in points_box:
-            if t_poly2d.point_belongs(pt):
-                points.append(pt.to_3d(frame.origin, frame.u, frame.v))
-            elif t_poly2d.point_over_contour(pt):
-                points.append(pt.to_3d(frame.origin, frame.u, frame.v))
+        vector_0_1 = point0 - point1
+        vector_0_1.normalize()
+        points_0_1 = []
 
-        return volmdlr.Vector3D.remove_duplicate(points)
+        for k in range(int(max_length / resolution) + 2):
+            if k == 0:
+                points_0_1.append(point1)
+            distance_to_point = min(k * resolution, max_length)
+            points_0_1.append(point1 + vector_0_1 * distance_to_point)
+
+        vector_2_1, length_2_1 = point2 - point1, point2.point_distance(point1)
+        vector_2_1.normalize()
+        points_in = []
+
+        for k, p0_1 in enumerate(points_0_1):
+            if k == 0:
+                point_on_2_1 = point1
+            distance_to_point = min(points_0_1[0].point_distance(p0_1) * length_2_1 / max_length, length_2_1)
+            point_on_2_1 = point1 + vector_2_1 * distance_to_point
+
+            length_2_0 = point_on_2_1.point_distance(p0_1)
+            nb_int = int(length_2_0 / resolution) + 2
+            if nb_int == 2:
+                points_in.append(point_on_2_1)
+            else:
+                vector_2_0 = point_on_2_1 - p0_1
+                vector_2_0.normalize()
+                step_in = length_2_0 / (nb_int - 1)
+                for i in range(nb_int):
+                    distance_to_point = min(i * step_in, length_2_0)
+                    if distance_to_point != 0:
+                        points_in.append(p0_1 + vector_2_0 * distance_to_point)
+
+        return npy.unique(points_0_1 + points_in).tolist()
 
     def subdescription_to_triangles(self, resolution=0.01):
         """
@@ -6614,43 +6638,32 @@ class Triangle3D(PlaneFace3D):
         length of subtriangles side.
         """
 
-        frame = self.surface3d.frame
-        pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        sub_triangles, done = [self.points], False
 
-        t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
-
-        sub_triangles2d = [t_poly2d]
-        done = False
         while not done:
-            triangles2d = []
-            for t, subtri in enumerate(sub_triangles2d):
-                ls_length = [ls.length() for ls in subtri.line_segments]
-                ls_max = max(ls_length)
+            triangles = []
+            for subtri in sub_triangles:
+                lengths = [subtri[0].point_distance(subtri[1]),
+                           subtri[1].point_distance(subtri[2]),
+                           subtri[2].point_distance(subtri[0])]
+                max_length = max(lengths)
 
-                if ls_max > resolution:
-                    pos_ls_max = ls_length.index(ls_max)
-                    taller = subtri.line_segments[pos_ls_max]
-                    p1, p2 = taller.start, taller.end
-                    p3 = list(set(subtri.points) - set([p1, p2]))[0]
+                if max_length > resolution:
+                    pos_length_max = lengths.index(max_length)
+                    pt_mid = (subtri[-3 + pos_length_max] + subtri[-3 + pos_length_max + 1]) / 2
+                    triangles.extend([[subtri[-3 + pos_length_max], pt_mid, subtri[-3 + pos_length_max + 2]],
+                                      [subtri[-3 + pos_length_max + 1], pt_mid, subtri[-3 + pos_length_max + 2]]])
 
-                    pt_mid = (p1 + p2) / 2
-                    new_triangles2d = [volmdlr.wires.ClosedPolygon2D([p1, pt_mid, p3]),
-                                       volmdlr.wires.ClosedPolygon2D([p2, pt_mid, p3])]
-
-                    triangles2d.extend(new_triangles2d)
                 else:
-                    triangles2d.append(subtri)
+                    triangles.append(subtri)
 
-            if len(sub_triangles2d) == len(triangles2d):
+            if len(sub_triangles) == len(triangles):
                 done = True
                 break
-            sub_triangles2d = triangles2d
 
-        triangles3d = [Triangle3D(tri.points[0].to_3d(frame.origin, frame.u, frame.v),
-                                  tri.points[1].to_3d(frame.origin, frame.u, frame.v),
-                                  tri.points[2].to_3d(frame.origin, frame.u, frame.v)) for tri in sub_triangles2d]
+            sub_triangles = triangles
 
-        return triangles3d
+        return [Triangle3D(subtri[0], subtri[1], subtri[2]) for subtri in sub_triangles]
 
     def middle(self):
         return (self.point1 + self.point2 + self.point3) / 3
@@ -6673,7 +6686,6 @@ class Triangle3D(PlaneFace3D):
 
 class CylindricalFace3D(Face3D):
     """
-
     :param contours2d: The cylinder's contour2D.
     :type contours2d: volmdlr.Contour2D.
     :param cylindricalsurface3d: Information about the Cylinder.

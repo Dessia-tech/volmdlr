@@ -26,6 +26,7 @@ So we can convert the units correctly
 
 ### Performance improvements
 * wires.py's 2D objects: chache bounding_rectangle results
+* faces.py's Triangle3D objects: subdescription points and triangles
 
 ### Refactorings
 
