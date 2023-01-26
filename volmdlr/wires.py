@@ -1528,7 +1528,7 @@ class Contour2D(ContourMixin, Wire2D):
                                     'primitive_to_index',
                                     'basis_primitives', '_utd_analysis']
 
-    def __init__(self, primitives: List[volmdlr.edges],
+    def __init__(self, primitives: List[volmdlr.edges.Edge],
                  name: str = ''):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
