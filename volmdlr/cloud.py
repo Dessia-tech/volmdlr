@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-
+Cloud of points classes
 """
 
 import math
@@ -19,6 +19,11 @@ import volmdlr.primitives3d as p3d
 
 
 class PointCloud3D(dc.DessiaObject):
+    """
+    Point Cloud3D class.
+    :param points: list of points for point cloud.
+    """
+
     def __init__(self, points, name: str = ''):
         self.points = points
         dc.DessiaObject.__init__(self, name=name)
@@ -256,6 +261,12 @@ class PointCloud3D(dc.DessiaObject):
 
 
 class PointCloud2D(dc.DessiaObject):
+    """
+    Point Cloud2D class.
+
+    :param points: list of points for point cloud.
+    """
+
     def __init__(self, points, name: str = ''):
         self.points = points
         dc.DessiaObject.__init__(self, name=name)

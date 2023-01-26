@@ -1,0 +1,684 @@
+{
+  "name": "",
+  "object_class": "volmdlr.edges.BSplineCurve2D",
+  "package_version": "0.6.1.dev338+g675c34b5",
+  "degree": 3,
+  "weights": null,
+  "periodic": false,
+  "start": {
+    "object_class": "volmdlr.Point2D",
+    "x": 1.8145832652650462,
+    "y": -0.002645245718097368,
+    "name": ""
+  },
+  "end": {
+    "object_class": "volmdlr.Point2D",
+    "x": 1.1253080658755532,
+    "y": -0.0026445257162969068,
+    "name": ""
+  },
+  "control_points": [
+    {
+      "$ref": "#/start"
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7718942746977386,
+      "y": -0.002645360133066842,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6951666458091068,
+      "y": -0.0026455249513999447,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.580197936322792,
+      "y": -0.002645590125172594,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4696698768399319,
+      "y": -0.0026455446893032864,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3591724316653475,
+      "y": -0.002645361484251442,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2443827413548716,
+      "y": -0.002645057502051188,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.1678413916087054,
+      "y": -0.0026447310413683094,
+      "name": ""
+    },
+    {
+      "$ref": "#/end"
+    }
+  ],
+  "knots": [
+    0.0,
+    0.18579947721238416,
+    0.3339491786003233,
+    0.500389581350698,
+    0.6668615823647308,
+    0.814878038099138,
+    1.0
+  ],
+  "knot_multiplicities": [
+    4,
+    1,
+    1,
+    1,
+    1,
+    1,
+    4
+  ],
+  "points": [
+    {
+      "$ref": "#/start"
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.8076208895136423,
+      "y": -0.0026452641748558156,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.8006585137622377,
+      "y": -0.002645282214494589,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7936961380108307,
+      "y": -0.002645299822706449,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7867337622594226,
+      "y": -0.0026453169851841586,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7797713865080145,
+      "y": -0.0026453336876204837,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7728090107566044,
+      "y": -0.0026453499157081846,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7658466350051933,
+      "y": -0.0026453656551400253,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7588842592537812,
+      "y": -0.0026453808916087696,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7519218835023678,
+      "y": -0.002645395610807179,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7449595077509534,
+      "y": -0.0026454097984280173,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7379971319995378,
+      "y": -0.002645423440164047,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7310347562481212,
+      "y": -0.0026454365217080315,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7240723804967037,
+      "y": -0.0026454490287527352,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7171100047452854,
+      "y": -0.002645460946990919,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7101476289938655,
+      "y": -0.0026454722621153466,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.7031852532424447,
+      "y": -0.0026454829598187815,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6962228774910235,
+      "y": -0.0026454930257939864,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6892605017396016,
+      "y": -0.0026455024457337243,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6822981259881784,
+      "y": -0.0026455112064390513,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6753357502367539,
+      "y": -0.0026455193109160553,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.668373374485329,
+      "y": -0.0026455267744547877,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6614109987339039,
+      "y": -0.0026455336126504636,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.654448622982477,
+      "y": -0.0026455398410982975,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6474862472310505,
+      "y": -0.0026455454753935067,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.640523871479623,
+      "y": -0.0026455505311313043,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6335614957281956,
+      "y": -0.0026455550239069085,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6265991199767675,
+      "y": -0.002645558969315533,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6196367442253385,
+      "y": -0.0026455623829523926,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6126743684739102,
+      "y": -0.0026455652804127055,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.6057119927224806,
+      "y": -0.0026455676772916834,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5987496169710518,
+      "y": -0.0026455695891845457,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.591787241219622,
+      "y": -0.0026455710316865048,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5848248654681925,
+      "y": -0.002645572020392778,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.577862489716763,
+      "y": -0.0026455725679962257,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5709001139653336,
+      "y": -0.002645572673244794,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5639377382139044,
+      "y": -0.0026455723307034227,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5569753624624751,
+      "y": -0.0026455715349362604,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5500129867110461,
+      "y": -0.0026455702805074557,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5430506109596172,
+      "y": -0.002645568561981156,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5360882352081884,
+      "y": -0.0026455663739215103,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5291258594567598,
+      "y": -0.002645563710892665,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5221634837053317,
+      "y": -0.0026455605674587696,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.515201107953904,
+      "y": -0.0026455569381839705,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5082387322024764,
+      "y": -0.002645552817632417,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.5012763564510492,
+      "y": -0.002645548200368256,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4943139806996226,
+      "y": -0.002645543080955637,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4873516049481958,
+      "y": -0.002645537453958706,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.48038922919677,
+      "y": -0.0026455313139416127,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4734268534453445,
+      "y": -0.0026455246554685044,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4664644776939197,
+      "y": -0.00264551747327597,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.459502101942495,
+      "y": -0.002645509766889227,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4525397261910717,
+      "y": -0.002645501541129232,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4455773504396483,
+      "y": -0.0026454928010911155,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4386149746882257,
+      "y": -0.0026454835518700177,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4316525989368036,
+      "y": -0.0026454737985610716,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4246902231853822,
+      "y": -0.002645463546259414,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4177278474339616,
+      "y": -0.0026454528000601804,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4107654716825415,
+      "y": -0.0026454415650585057,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.4038030959311227,
+      "y": -0.0026454298463495277,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3968407201797044,
+      "y": -0.002645417649028379,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3898783444282865,
+      "y": -0.0026454049781901973,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3829159686768693,
+      "y": -0.002645391838930118,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3759535929254536,
+      "y": -0.002645378236343277,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3689912171740384,
+      "y": -0.002645364175524809,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3620288414226243,
+      "y": -0.002645349661569851,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3550664656712106,
+      "y": -0.002645334699573537,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.348104089919798,
+      "y": -0.002645319291256837,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3411417141683868,
+      "y": -0.002645303424039488,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3341793384169762,
+      "y": -0.0026452870815529355,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3272169626655674,
+      "y": -0.002645270247428598,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.3202545869141593,
+      "y": -0.0026452529052978934,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.313292211162753,
+      "y": -0.0026452350387922412,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.306329835411348,
+      "y": -0.0026452166315430606,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2993674596599445,
+      "y": -0.0026451976671817696,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2924050839085428,
+      "y": -0.002645178129339787,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2854427081571427,
+      "y": -0.0026451580016485328,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2784803324057448,
+      "y": -0.0026451372677394236,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2715179566543486,
+      "y": -0.0026451159112438802,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2645555809029545,
+      "y": -0.0026450939157933204,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2575932051515628,
+      "y": -0.0026450712650191626,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2506308294001727,
+      "y": -0.002645047942729588,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2436684536487856,
+      "y": -0.0026450239438325866,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2367060778974006,
+      "y": -0.0026449992807311535,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2297437021460178,
+      "y": -0.002644973967367681,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2227813263946374,
+      "y": -0.002644948017684561,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2158189506432593,
+      "y": -0.002644921445624183,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2088565748918834,
+      "y": -0.0026448942651289397,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.2018941991405099,
+      "y": -0.002644866490141222,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.1949318233891386,
+      "y": -0.0026448381346034213,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.1879694476377698,
+      "y": -0.002644809212457928,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.1810070718864032,
+      "y": -0.0026447797376471342,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.1740446961350393,
+      "y": -0.002644749724113431,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.167082320383677,
+      "y": -0.0026447191857992096,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.1601199446323174,
+      "y": -0.0026446881366468606,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.15315756888096,
+      "y": -0.002644656590598777,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.1461951931296048,
+      "y": -0.0026446245615973476,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.139232817378252,
+      "y": -0.0026445920635849653,
+      "name": ""
+    },
+    {
+      "object_class": "volmdlr.Point2D",
+      "x": 1.1322704416269014,
+      "y": -0.0026445591105040216,
+      "name": ""
+    },
+    {
+      "$ref": "#/end"
+    }
+  ]
+}
