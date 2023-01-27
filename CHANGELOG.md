@@ -9,13 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.9.0 [Unrealeased]
 
 ### New Features
-* Unit coversion factor parameter added to the end of the from_step arguments parameter.
-So we can convert the units correctly
+
+* Unit coversion factor parameter added to the end of the from_step arguments parameter (So we can convert the units correctly)
 * SphericalSurface3D: rotation, translation, frame_mapping
 * read steps: Identify assemblies in a step file.
 * ClosedTriangleShell3D: to_trimesh method
 * PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
 * BSplineSurface3D: Now the plot method uses u and v curves
+* Create .geo and .msh files (Mesh geometries with GMSH)
 
 
 ### Fixed
