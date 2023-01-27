@@ -6364,12 +6364,6 @@ class Triangle3D(PlaneFace3D):
     """
     _standalone_in_db = False
 
-    # _generic_eq = True
-    # _non_serializable_attributes = ['bounding_box', 'polygon2D']
-    # _non_data_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
-    #                       'inner_contours3d']
-    # _non_data_hash_attributes = []
-
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  point3: volmdlr.Point3D, alpha=1, color=None, name: str = ''):
         self.point1 = point1
@@ -6387,13 +6381,7 @@ class Triangle3D(PlaneFace3D):
         self._inner_contours3d = None
         # self.bounding_box = self._bounding_box()
 
-        DessiaObject.__init__(self, name=name)
-
-        # Don't use inheritence for performance: class method fakes face3D behavior
-        # Face3D.__init__(self,
-        #                 surface3d=plane3d,
-        #                 surface2d=surface2d,
-        #                 name=name)
+        # DessiaObject.__init__(self, name=name)
 
     def _data_hash(self):
         """
@@ -6449,13 +6437,11 @@ class Triangle3D(PlaneFace3D):
         return self._surface2d
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
-        dict_ = DessiaObject.base_dict(self)
-        dict_['point1'] = self.point1.to_dict()
-        dict_['point2'] = self.point2.to_dict()
-        dict_['point3'] = self.point3.to_dict()
-        dict_['name'] = self.name
-
-        return dict_
+        return {'object_class': 'volmdlr.faces.Triangle3D',
+                'point1': self.point1.to_dict(),
+                'point2': self.point2.to_dict(),
+                'point3': self.point3.to_dict(),
+                'name': self.name}
 
     @classmethod
     def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
