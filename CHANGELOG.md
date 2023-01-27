@@ -20,17 +20,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * WireMixin: abscissa (add tolerance as parameter)
 * OpenRoundedLineSegment2D: deleted discretization_points() so it uses the one from WireMixin.
 * Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
+* Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard. 
 
 ### Removed
 
 
 ### Performance improvements
 * wires.py's 2D objects: chache bounding_rectangle results
+* faces.py's Triangle3D objects: subdescription points and triangles
 
 ### Refactorings
 
 
 ### Unittests
+ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
 
 
 
