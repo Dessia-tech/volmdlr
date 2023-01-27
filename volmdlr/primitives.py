@@ -16,6 +16,10 @@ import volmdlr.edges
 
 
 class RoundedLineSegments:
+    """
+    Rounded Line Segments class.
+
+    """
     _non_serializable_attributes = ['line_class', 'arc_class', 'basis_primitives', 'primitives']
 
     line_class = volmdlr.edges.LineSegment

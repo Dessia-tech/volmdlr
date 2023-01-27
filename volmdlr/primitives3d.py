@@ -488,6 +488,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         """
         Serialize the ExtrudedProfile.
+
         """
         dict_ = dc.DessiaObject.base_dict(self)
         dict_.update({'color': self.color,
@@ -504,7 +505,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of ExtrudedProfile.
+        Creates a copy of Extruded Profile.
 
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),
@@ -520,6 +521,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def shell_faces(self):
         """
         Computes the shell faces from init data.
+
         """
         lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(
             self.plane_origin, self.x, self.y)
@@ -609,9 +611,9 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new ExtrudeProfile
+        Changes frame_mapping and return a new ExtrudeProfile.
 
-        :param side: = 'old' or 'new'
+        :param side: = 'old' or 'new'.
         """
         extrusion_vector, x, y = self.frame_mapping_parameters(frame,
                                                                side)
@@ -622,7 +624,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
 
         :param side: = 'old' or 'new'
         """
@@ -633,12 +635,12 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Extruded profile rotation.
+        Extruded Profile rotation.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated ExtrudedProfile
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated ExtrudedProfile.
         """
         return self.__class__(
             plane_origin=self.plane_origin.rotation(center, axis, angle),
@@ -653,7 +655,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Extruded profile rotation. Object is updated inplace.
+        Extruded Profile rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis
@@ -667,7 +669,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Extruded profile translation.
+        Extruded Profile translation.
 
         :param offset: translation vector
         :return: A new translated ExtrudedProfile
@@ -836,14 +838,14 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Revolvedprofile rotation. Object is updated inplace.
+        Revolved profile rotation. Object is updated inplace.
 
-        :param center: rotation center
-        :type center: `volmdlr.Point3D`
-        :param axis: rotation axis
-        :type axis: `volmdlr.Vector3D`
-        :param angle: rotation angle
-        :type angle: float
+        :param center: rotation center.
+        :type center: `volmdlr.Point3D`.
+        :param axis: rotation axis.
+        :type axis: `volmdlr.Vector3D`.
+        :param angle: rotation angle.
+        :type angle: float.
         """
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
@@ -853,10 +855,10 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Revolvedprofile translation.
+        Revolved Profile translation.
 
-        :param offset: translation vector
-        :return: A new translated RevolvedProfile
+        :param offset: translation vector.
+        :return: A new translated RevolvedProfile.
         """
         return self.__class__(
             plane_origin=self.plane_origin.translation(offset),
@@ -868,9 +870,9 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Revolvedprofile translation. Object is updated inplace.
+        Revolved Profile translation. Object is updated inplace.
 
-        :param offset: translation vector
+        :param offset: translation vector.
         """
         self.plane_origin.translation_inplace(offset)
         self.axis_point.translation_inplace(offset)
@@ -893,7 +895,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new RevolvedProfile.
+        Changes frame_mapping and return a new Revolved Profile.
 
         side = 'old' or 'new'
         """
@@ -906,7 +908,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         self.axis, self.x, self.y = self.frame_mapping_parameters(frame, side)
@@ -956,31 +959,31 @@ class Cylinder(RevolvedProfile):
         # This was copied for HollowCylinder. Inheritence removed to avoid problems
         radius = self.radius
 
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        if pointA[0] > pointB[0]:
-            pointA, pointB = pointB, pointA
-        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[0] > point_b[0]:
+            point_a, point_b = point_b, point_a
+        xmin = point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = point_b[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[1] > pointB[1]:
-            pointA, pointB = pointB, pointA
-        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[1] > point_b[1]:
+            point_a, point_b = point_b, point_a
+        ymin = point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = point_b[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[2] > pointB[2]:
-            pointA, pointB = pointB, pointA
-        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
-        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[2] > point_b[2]:
+            point_a, point_b = point_b, point_a
+        zmin = point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = point_b[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
@@ -1375,29 +1378,29 @@ class Cone(RevolvedProfile):
         A is the point at the basis.
         B is the top.
         """
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        x_bound = (pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[0])
+        x_bound = (point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[0])
         xmin = min(x_bound)
         xmax = max(x_bound)
 
-        y_bound = (pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[1])
+        y_bound = (point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[1])
         ymin = min(y_bound)
         ymax = max(y_bound)
 
-        z_bound = (pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[2])
+        z_bound = (point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[2])
         zmin = min(z_bound)
         zmax = max(z_bound)
 
@@ -1497,31 +1500,31 @@ class HollowCylinder(RevolvedProfile):
 
         radius = self.outer_radius
 
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        if pointA[0] > pointB[0]:
-            pointA, pointB = pointB, pointA
-        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[0] > point_b[0]:
+            point_a, point_b = point_b, point_a
+        xmin = point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = point_b[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[1] > pointB[1]:
-            pointA, pointB = pointB, pointA
-        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[1] > point_b[1]:
+            point_a, point_b = point_b, point_a
+        ymin = point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = point_b[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[2] > pointB[2]:
-            pointA, pointB = pointB, pointA
-        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
-        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[2] > point_b[2]:
+            point_a, point_b = point_b, point_a
+        zmin = point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = point_b[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
@@ -1584,7 +1587,7 @@ class HollowCylinder(RevolvedProfile):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Hollow cylinder rotation.
+        Hollow  Cylinder rotation.
 
         :param center: rotation center.
         :type center: volmdlr.Point3D
@@ -1604,7 +1607,7 @@ class HollowCylinder(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Hollow cylinder rotation. Object is updated inplace.
+        Hollow Cylinder rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis
