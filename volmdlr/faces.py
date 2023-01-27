@@ -1335,7 +1335,6 @@ class PeriodicalSurface(Surface3D):
             # check if inner_contour has a length of 2pi in theta.
             if math.isclose(abs(theta4 - theta3), 2 * math.pi, abs_tol=1e-3):
 
-
                 outer_contour_theta = [theta1, theta2]
                 inner_contour_theta = [theta3, theta4]
                 oc_xmin_index, outer_contour_xmin = min(enumerate(outer_contour_theta), key=lambda x: x[1])
@@ -1348,7 +1347,7 @@ class PeriodicalSurface(Surface3D):
 
                 # Contours are aligned
                 if (math.isclose(theta1, theta3, abs_tol=1e-3) and math.isclose(theta2, theta4, abs_tol=1e-3)) \
-                    or (math.isclose(theta1, theta4, abs_tol=1e-3) and math.isclose(theta2, theta3, abs_tol=1e-3)):
+                        or (math.isclose(theta1, theta4, abs_tol=1e-3) and math.isclose(theta2, theta3, abs_tol=1e-3)):
                     old_innner_contour_positioned = inner_contour
 
                 # Inner contour is a fullarc parametric represetation
@@ -1434,8 +1433,8 @@ class PeriodicalSurface(Surface3D):
                 closing_linesegment1 = volmdlr.edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = volmdlr.edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = old_outer_contour_positioned.primitives + [closing_linesegment1] + \
-                                               old_innner_contour_positioned.primitives + \
-                                               [closing_linesegment2]
+                    old_innner_contour_positioned.primitives + \
+                    [closing_linesegment2]
                 new_outer_contour = volmdlr.wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour()
             else:

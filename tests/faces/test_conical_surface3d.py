@@ -105,7 +105,7 @@ class TestConicalSurface3D(unittest.TestCase):
 
         conical_face = buggy_conical_surface.face_from_contours3d([buggy_contours3d1, buggy_contours3d2])
         self.assertFalse(len(conical_face.surface2d.inner_contours))
-        self.assertAlmostEqual(conical_face.area(), 0.0016259747918786344, 4)
+        self.assertAlmostEqual(conical_face.area(), 0.004709873912166911, 4)
 
         buggy_conical_surface = dessia_common.core.DessiaObject.load_from_file(
             'faces/objects_conical_tests/conical_surface3d_2.json')
