@@ -6,8 +6,10 @@ Common abstract primitives
 
 import math
 from typing import Dict, List
+
 from numpy import zeros
 from scipy.optimize import linprog
+
 # import dessia_common as dc
 import volmdlr
 import volmdlr.edges

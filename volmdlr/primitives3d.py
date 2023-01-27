@@ -5,22 +5,20 @@ Common primitives 3D
 """
 
 import math
-
-from typing import Tuple, List, Dict
 from random import uniform
-
-from scipy.optimize import minimize, Bounds, NonlinearConstraint
-from scipy.stats import qmc
-
-import numpy as npy
-import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple
 
 import dessia_common.core as dc
+import matplotlib.pyplot as plt
+import numpy as npy
+from scipy.optimize import Bounds, NonlinearConstraint, minimize
+from scipy.stats import qmc
+
 import volmdlr
 import volmdlr.core
-import volmdlr.primitives
-import volmdlr.faces
 import volmdlr.edges
+import volmdlr.faces
+import volmdlr.primitives
 import volmdlr.wires
 
 # import dessia_common.typings as dct
@@ -686,7 +684,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Extruded Profile translation. Object is updated inplace.
+        Extruded profile translation. Object is updated inplace.
 
         :param offset: translation vector
         """
@@ -741,7 +739,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of RevolvedProfile.
+        Creates a copy of Revolvedprofile.
 
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),
@@ -836,11 +834,14 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Revolved Profile rotation. Object is updated inplace.
+        Revolved profile rotation. Object is updated inplace.
 
         :param center: rotation center.
+        :type center: `volmdlr.Point3D`.
         :param axis: rotation axis.
+        :type axis: `volmdlr.Vector3D`.
         :param angle: rotation angle.
+        :type angle: float.
         """
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
@@ -1582,7 +1583,7 @@ class HollowCylinder(RevolvedProfile):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        HollowCylinder rotation.
+        Hollow  Cylinder rotation.
 
         :param center: rotation center.
         :param axis: rotation axis.
@@ -1598,7 +1599,7 @@ class HollowCylinder(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        HollowCylinder rotation. Object is updated inplace.
+        Hollow Cylinder rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis
@@ -1609,7 +1610,7 @@ class HollowCylinder(RevolvedProfile):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation.
+        Translation for HollowCylinder.
 
         :param offset: translation vector.
         :return: A new translated HollowCylinder.
@@ -1621,7 +1622,7 @@ class HollowCylinder(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation. Object is updated inplace.
+        Translation for HollowCylinder. Object is updated inplace.
 
         :param offset: translation vector.
         """
@@ -1984,16 +1985,25 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a BSplineExtrusion.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding BSplineExtrusion object.
+        :rtype: :class:`volmdlr.primitives3d.BSplineExtrusion`
+        """
         name = arguments[0][1:-1]
         if object_dict[arguments[1]].__class__ is volmdlr.wires.Ellipse3D:
             ell = object_dict[arguments[1]]
             vectextru = -object_dict[arguments[2]]
             return cls(ell, vectextru, name)
 
-        elif object_dict[arguments[1]].__class__ is \
-                volmdlr.edges.BSplineCurve3D:
+        if object_dict[arguments[1]].__class__ is volmdlr.edges.BSplineCurve3D:
             bsplinecurve = object_dict[arguments[1]]
             vectextru = object_dict[arguments[2]]
             return cls(bsplinecurve, vectextru, name)
-        else:
-            raise NotImplementedError  # a adapter pour les bpsline
+        raise NotImplementedError  # a adapter pour les bpsline

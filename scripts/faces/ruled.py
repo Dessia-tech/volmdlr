@@ -6,8 +6,8 @@
 
 import volmdlr
 import volmdlr.edges
-import volmdlr.wires
 import volmdlr.primitives3d
+import volmdlr.wires
 
 n = 5
 

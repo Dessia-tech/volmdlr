@@ -74,5 +74,3 @@ Faces
 
 .. automodule:: volmdlr.faces
   :members:
-
-

@@ -1,7 +1,7 @@
 import os
+import random
 import sys
 
-import random
 from pylint import __version__
 from pylint.lint import Run
 
@@ -19,7 +19,7 @@ MAX_ERROR_BY_TYPE = {
                      'no-member': 9,
                      'inconsistent-return-statements': 6,
                      'unused-variable': 42,
-                     'arguments-differ': 11,
+                     'arguments-differ': 12,
                      'too-many-locals': 71,
                      'line-too-long': 23,
                      'unused-argument': 43,
@@ -29,13 +29,13 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-branches': 27,
                      'too-many-statements': 18,
                      'super-init-not-called': 12,
-                     'no-name-in-module': 4,
-                     'abstract-method': 32,
+                     'no-name-in-module': 5,
+                     'abstract-method': 34,
                      'empty-docstring': 15,
                      'duplicate-code': 9,
                      'no-self-use': 16,
                      'arguments-renamed': 3,
-                     'too-many-ancestors': 7,
+                     'too-many-ancestors': 8,
                      'expression-not-assigned': 1,
                      'non-parent-init-called': 6,
                      'too-few-public-methods': 10,

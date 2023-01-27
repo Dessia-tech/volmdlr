@@ -1,7 +1,8 @@
-import unittest
-import volmdlr
-from volmdlr import faces, edges
 import math
+import unittest
+
+import volmdlr
+from volmdlr import edges, faces
 
 
 class TestPlane3D(unittest.TestCase):

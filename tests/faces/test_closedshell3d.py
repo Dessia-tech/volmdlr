@@ -1,7 +1,8 @@
 import math
 import unittest
-from volmdlr import primitives3d, wires, faces, edges
+
 import volmdlr
+from volmdlr import edges, faces, primitives3d, wires
 
 
 class TestClosedShell3D(unittest.TestCase):
