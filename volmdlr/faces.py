@@ -1319,56 +1319,123 @@ class PeriodicalSurface(Surface3D):
         """
         face = super().face_from_contours3d(contours3d)
         new_inner_contours = []
-
-        if not face.surface2d.inner_contours:
+        point1 = face.surface2d.outer_contour.primitives[0].start
+        point2 = face.surface2d.outer_contour.primitives[-1].end
+        # if not face.surface2d.inner_contours:
+        if not face.surface2d.inner_contours or point1.is_close(point2):
             return face
+        # Take the start point of the outer_contour as reference.
+        theta1, z1 = point1
+        theta2, z2 = point2
+        old_outer_contour_positioned = face.surface2d.outer_contour
+        new_outer_contour = old_outer_contour_positioned
         for inner_contour in face.surface2d.inner_contours:
-            point1 = inner_contour.point_at_abscissa(0.0)
-            point2 = inner_contour.point_at_abscissa(inner_contour.length())
-            if abs(point2.x - point1.x) == 2 * math.pi:
-                point3 = face.surface2d.outer_contour.point_at_abscissa(0.0)
-                point4 = face.surface2d.outer_contour.point_at_abscissa(face.surface2d.outer_contour.length())
+            theta3, z3 = inner_contour.primitives[0].start
+            theta4, z4 = inner_contour.primitives[-1].end
+            # check if inner_contour has a length of 2pi in theta.
+            if math.isclose(abs(theta4 - theta3), 2 * math.pi, abs_tol=1e-3):
 
-                distx_point1_point3 = point1.x - point3.x
-                distx_point1_point4 = point1.x - point4.x
-                distx_point2_point3 = point2.x - point3.x
-                distx_point2_point4 = point2.x - point4.x
-                if point1.x == point3.x and point2.x == point4.x:
-                    old_outer_contour_positioned = face.surface2d.outer_contour
+
+                outer_contour_theta = [theta1, theta2]
+                inner_contour_theta = [theta3, theta4]
+                oc_xmin_index, outer_contour_xmin = min(enumerate(outer_contour_theta), key=lambda x: x[1])
+                oc_xmax_index, outer_contour_xman = max(enumerate(outer_contour_theta), key=lambda x: x[1])
+                ic_xmin_index, inner_contour_xmin = min(enumerate(inner_contour_theta), key=lambda x: x[1])
+                ic_xmax_index, inner_contour_xmax = max(enumerate(inner_contour_theta), key=lambda x: x[1])
+
+                # check if tetha3 or theta4 is in [theta1, theta2] interval
+                overlap = outer_contour_xmin <= inner_contour_xmax and outer_contour_xman >= inner_contour_xmin
+
+                # Contours are aligned
+                if (math.isclose(theta1, theta3, abs_tol=1e-3) and math.isclose(theta2, theta4, abs_tol=1e-3)) \
+                    or (math.isclose(theta1, theta4, abs_tol=1e-3) and math.isclose(theta2, theta3, abs_tol=1e-3)):
                     old_innner_contour_positioned = inner_contour
+
+                # Inner contour is a fullarc parametric represetation
+                elif len(inner_contour.primitives) == 1 and isinstance(inner_contour.primitives[0], vme.LineSegment2D)\
+                        and math.isclose(z3, z4, abs_tol=1e-5):
+
+                    x_offset = outer_contour_theta[oc_xmin_index] - inner_contour_theta[ic_xmin_index]
+                    translation_vector = volmdlr.Vector2D(x_offset, 0)
+                    old_innner_contour_positioned = inner_contour.translation(offset=translation_vector)
+
+                # Outer contour is a fullarc parametric represetation
+                elif len(old_outer_contour_positioned.primitives) == 1 and \
+                        isinstance(old_outer_contour_positioned.primitives[0], vme.LineSegment2D) and \
+                        math.isclose(z1, z2, abs_tol=1e-5):
+                    x_offset = inner_contour_theta[ic_xmin_index] - outer_contour_theta[oc_xmin_index]
+                    translation_vector = volmdlr.Vector2D(x_offset, 0)
+                    old_innner_contour_positioned = inner_contour
+                    old_outer_contour_positioned = old_outer_contour_positioned.translation(offset=translation_vector)
+
                 else:
-                    if math.isclose(distx_point1_point4, distx_point2_point3, abs_tol=1e-6):
-                        translation_vector = volmdlr.Vector2D(distx_point1_point4, 0)
-                        if point1.y < point3.y:
-                            old_outer_contour_positioned = face.surface2d.outer_contour.translation(
-                                offset=translation_vector)
-                            old_innner_contour_positioned = inner_contour
+                    if overlap:
+                        if inner_contour_xmin < outer_contour_xmin:
+                            overlapping_theta = outer_contour_theta[oc_xmin_index]
+                            outer_contour_side = oc_xmin_index
+                            side = 0
                         else:
-                            old_innner_contour_positioned = inner_contour.translation(offset=-translation_vector)
-                            old_outer_contour_positioned = face.surface2d.outer_contour
-                        if distx_point2_point4 > distx_point1_point3:
-                            old_outer_contour_positioned = old_outer_contour_positioned.invert()
-                    elif math.isclose(distx_point2_point4, distx_point1_point3, abs_tol=1e-2):
-                        translation_vector = volmdlr.Vector2D(distx_point1_point3, 0)
-                        if point1.y < point3.y:
-                            old_outer_contour_positioned = face.surface2d.outer_contour.translation(
-                                offset=translation_vector)
-                            old_innner_contour_positioned = inner_contour
+                            overlapping_theta = outer_contour_theta[oc_xmax_index]
+                            outer_contour_side = oc_xmax_index
+                            side = 1
+                        line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
+                                          volmdlr.Point2D(overlapping_theta, z3))
+
+                    # if not direct intersection -> find intersection at periodicity
+                    else:
+                        if theta3 < theta1:
+                            overlapping_theta = outer_contour_theta[oc_xmin_index] - 2 * math.pi
+                            outer_contour_side = oc_xmin_index
+                            side = 0
                         else:
-                            old_innner_contour_positioned = inner_contour.translation(offset=-translation_vector)
-                            old_outer_contour_positioned = face.surface2d.outer_contour
+                            overlapping_theta = outer_contour_theta[oc_xmax_index] + 2 * math.pi
+                            outer_contour_side = oc_xmax_index
+                            side = 1
+                        line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
+                                          volmdlr.Point2D(overlapping_theta, z3))
+
+                    cutted_contour = inner_contour.cut_by_line(line)
+
+                    if len(cutted_contour) == 2:
+                        contour1, contour2 = cutted_contour
+                        inner_contour_direction = theta3 < theta4
+                        if (not side and inner_contour_direction) or (side and not inner_contour_direction):
+                            x_offset = outer_contour_theta[outer_contour_side] - contour2.primitives[0].start.x
+                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                            contour2_positionned = contour2.translation(offset=translation_vector)
+                            x_offset = contour2_positionned.primitives[-1].end.x - contour1.primitives[0].start.x
+                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                            contour1_positionned = contour1.translation(offset=translation_vector)
+                        else:
+                            x_offset = outer_contour_theta[outer_contour_side] - contour1.primitives[-1].end.x
+                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                            contour1_positionned = contour1.translation(offset=translation_vector)
+                            x_offset = contour1_positionned.primitives[0].start.x - contour2.primitives[-1].end.x
+                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                            contour2_positionned = contour2.translation(offset=translation_vector)
+
+                        old_innner_contour_positioned = volmdlr.wires.Contour2D(contour1_positionned.primitives +
+                                                                                contour2_positionned.primitives)
+                        old_innner_contour_positioned.order_contour()
                     else:
                         raise NotImplementedError
-                    point1 = old_innner_contour_positioned.point_at_abscissa(0.0)
-                    point2 = old_innner_contour_positioned.point_at_abscissa(old_innner_contour_positioned.length())
-                    point3 = old_outer_contour_positioned.point_at_abscissa(0.0)
-                    point4 = old_outer_contour_positioned.point_at_abscissa(face.surface2d.outer_contour.length())
-                    # point4 = volmdlr.Point2D(point2.x, point4.y)
-                closing_linesegment1 = volmdlr.edges.LineSegment2D(point1, point3)
-                closing_linesegment2 = volmdlr.edges.LineSegment2D(point2, point4)
-                new_outer_contour_primitives = [closing_linesegment1, closing_linesegment2] + \
-                    old_outer_contour_positioned.primitives + \
-                    old_innner_contour_positioned.primitives
+                point1 = old_outer_contour_positioned.primitives[0].start
+                point2 = old_outer_contour_positioned.primitives[-1].end
+                point3 = old_innner_contour_positioned.primitives[0].start
+                point4 = old_innner_contour_positioned.primitives[-1].end
+
+                outer_contour_direction = point1.x < point2.x
+                inner_contour_direction = point3.x < point4.x
+                if outer_contour_direction == inner_contour_direction:
+                    old_innner_contour_positioned = old_innner_contour_positioned.invert()
+                    point3 = old_innner_contour_positioned.primitives[0].start
+                    point4 = old_innner_contour_positioned.primitives[-1].end
+
+                closing_linesegment1 = volmdlr.edges.LineSegment2D(point2, point3)
+                closing_linesegment2 = volmdlr.edges.LineSegment2D(point4, point1)
+                new_outer_contour_primitives = old_outer_contour_positioned.primitives + [closing_linesegment1] + \
+                                               old_innner_contour_positioned.primitives + \
+                                               [closing_linesegment2]
                 new_outer_contour = volmdlr.wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour()
             else:
