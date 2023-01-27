@@ -4068,7 +4068,7 @@ class Circle2D(Contour2D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 40):
         """
-        Discretize the Contour to have "n" points.
+        Discretize a Contour to have "n" points.
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
@@ -4826,7 +4826,7 @@ class Circle3D(Contour3D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        Discretize the Circle to have "n" points.
+        Discretize a Circle to have "n" points.
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned

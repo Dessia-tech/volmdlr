@@ -488,6 +488,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         """
         Serialize the ExtrudedProfile.
+
         """
         dict_ = dc.DessiaObject.base_dict(self)
         dict_.update({'color': self.color,
@@ -504,7 +505,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of ExtrudedProfile.
+        Creates a copy of Extruded Profile.
 
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),
@@ -520,6 +521,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def shell_faces(self):
         """
         Computes the shell faces from init data.
+
         """
         lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(
             self.plane_origin, self.x, self.y)
@@ -609,9 +611,9 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new ExtrudeProfile
+        Changes frame_mapping and return a new ExtrudeProfile.
 
-        :param side: = 'old' or 'new'
+        :param side: = 'old' or 'new'.
         """
         extrusion_vector, x, y = self.frame_mapping_parameters(frame,
                                                                side)
@@ -622,7 +624,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
 
         :param side: = 'old' or 'new'
         """
@@ -633,12 +635,12 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Extruded profile rotation.
+        Extruded Profile rotation.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated ExtrudedProfile
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated ExtrudedProfile.
         """
         return self.__class__(
             plane_origin=self.plane_origin.rotation(center, axis, angle),
@@ -653,7 +655,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Extruded profile rotation. Object is updated inplace.
+        Extruded Profile rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis
@@ -667,7 +669,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Extruded profile translation.
+        Extruded Profile translation.
 
         :param offset: translation vector
         :return: A new translated ExtrudedProfile
@@ -813,10 +815,10 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         """
         Revolved Profile rotation.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated RevolvedProfile
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated RevolvedProfile.
         """
         return self.__class__(
             plane_origin=self.plane_origin.rotation(center, axis, angle),
@@ -834,12 +836,12 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         """
         Revolved profile rotation. Object is updated inplace.
 
-        :param center: rotation center
-        :type center: `volmdlr.Point3D`
-        :param axis: rotation axis
-        :type axis: `volmdlr.Vector3D`
-        :param angle: rotation angle
-        :type angle: float
+        :param center: rotation center.
+        :type center: `volmdlr.Point3D`.
+        :param axis: rotation axis.
+        :type axis: `volmdlr.Vector3D`.
+        :param angle: rotation angle.
+        :type angle: float.
         """
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
@@ -849,10 +851,10 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Revolved profile translation.
+        Revolved Profile translation.
 
-        :param offset: translation vector
-        :return: A new translated RevolvedProfile
+        :param offset: translation vector.
+        :return: A new translated RevolvedProfile.
         """
         return self.__class__(
             plane_origin=self.plane_origin.translation(offset),
@@ -864,9 +866,9 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Revolved profile translation. Object is updated inplace.
+        Revolved Profile translation. Object is updated inplace.
 
-        :param offset: translation vector
+        :param offset: translation vector.
         """
         self.plane_origin.translation_inplace(offset)
         self.axis_point.translation_inplace(offset)
@@ -889,7 +891,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new RevolvedProfile.
+        Changes frame_mapping and return a new Revolved Profile.
 
         side = 'old' or 'new'
         """
@@ -902,7 +904,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         self.axis, self.x, self.y = self.frame_mapping_parameters(frame, side)
