@@ -383,7 +383,7 @@ class GmshParser(DessiaObject):
                 values = []
                 for points in value:
                     values.append(GmshParser.to_2d(points))
-            nodes[key] = values
+                nodes[key] = values
             nodes['all_nodes'] = GmshParser.to_2d(nodes_points)
         else:
             nodes['all_nodes'] = nodes_points
@@ -645,9 +645,15 @@ class GmshParser(DessiaObject):
         :rtype: bool
         """
 
+        checking = set()
         for node in list_nodes:
-            if node[2] != 0:
-                return False
+            if node[2] == 0:
+                checking.add(True)
+            else:
+                checking.add(False)
+
+        if False in checking:
+            return False
         return True
 
     @staticmethod
