@@ -190,6 +190,7 @@ class DisplayMesh2D(DisplayMesh):
     A mesh for display purposes in 2D.
 
     """
+
     _linesegment_class = volmdlr.edges.LineSegment2D
     _point_class = volmdlr.Point2D
 
@@ -201,7 +202,7 @@ class DisplayMesh2D(DisplayMesh):
 
     def area(self):
         """
-        Return the area as the sum of areas of triangles
+        Return the area as the sum of areas of triangles.
         """
         area = 0.
         for (n1, n2, n3) in self.triangles:
@@ -217,6 +218,7 @@ class DisplayMesh3D(DisplayMesh):
     A mesh for display purposes in 3D.
 
     """
+
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 

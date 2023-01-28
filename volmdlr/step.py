@@ -735,6 +735,18 @@ class Step(dc.DessiaObject):
         return F
 
     def draw_graph(self, graph=None, reduced=False):
+        """
+        Draw a graph for Step data.
+
+        :param graph: DESCRIPTION, defaults to None
+        :type graph: TYPE, optional
+        :param reduced: DESCRIPTION, defaults to False
+        :type reduced: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
         delete = ['CARTESIAN_POINT', 'DIRECTION']
         if graph is None:
             new_graph = self.create_graph()
