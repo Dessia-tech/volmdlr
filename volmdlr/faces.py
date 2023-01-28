@@ -12,7 +12,7 @@ import networkx as nx
 import numpy as npy
 import scipy as scp
 import scipy.optimize as opt
-import triangle
+import triangle as triangle_lib
 
 from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
@@ -189,7 +189,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                    'segments': npy.array(segments).reshape((-1, 2)),
                    }
-            t = triangle.triangulate(tri, tri_opt)
+            t = triangle_lib.triangulate(tri, tri_opt)
             triangles = t['triangles'].tolist()
             np = t['vertices'].shape[0]
             points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
@@ -238,7 +238,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                'segments': npy.array(segments).reshape((-1, 2)),
                'holes': npy.array(holes).reshape((-1, 2))
                }
-        t = triangle.triangulate(tri, tri_opt)
+        t = triangle_lib.triangulate(tri, tri_opt)
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
@@ -1025,6 +1025,7 @@ class Plane3D(Surface3D):
     def from_points(cls, points):
         """
         Returns the plane3d that goes through the 3 first points on the list.
+
         Why for more than 3 points we only do some check and never raise error?
         """
         if len(points) < 3:
@@ -1620,7 +1621,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
         Changes frame_mapping and return a new CylindricalSurface3D.
 
-        side = 'old' or 'new'
+        :param side: 'old' or 'new'
         """
         new_frame = self.frame.frame_mapping(frame, side)
         return CylindricalSurface3D(new_frame, self.radius,
@@ -1629,7 +1630,8 @@ class CylindricalSurface3D(PeriodicalSurface):
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+
+        :param side: 'old' or 'new'
         """
         new_frame = self.frame.frame_mapping(frame, side)
         self.frame = new_frame
@@ -1974,7 +1976,7 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
 
         :param frame: The new frame to map to.
         :type frame: `volmdlr.Frame3D
@@ -4371,7 +4373,7 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, **kwargs):
         """
-        Bspline Surface approximate through 3d points
+        Bspline Surface approximate through 3d points.
 
         Parameters
         ----------
@@ -7360,7 +7362,7 @@ class ConicalFace3D(Face3D):
     #             segments = [[0, 1], [1, 2], [2, 0]]
     #             listindice = [i, 0, i + 1]
     #         tri = {'vertices': vertices, 'segments': segments}
-    #         t = triangle.triangulate(tri, 'p')
+    #         t = triangle_lib.triangulate(tri, 'p')
     #         if 'triangles' in t:
     #             triangles = t['triangles'].tolist()
     #             triangles[0] = listindice
@@ -9146,6 +9148,16 @@ class OpenTriangleShell3D(OpenShell3D):
     @classmethod
     def from_trimesh(cls, trimesh):
         return cls.from_mesh_data(trimesh.vertices.tolist(), trimesh.faces.tolist())
+
+    def triangulation(self):
+        points = []
+        triangles = []
+        for i, triangle in enumerate(self.faces):
+            points.append(vmd.Node3D.from_point(triangle.point1))
+            points.append(vmd.Node3D.from_point(triangle.point2))
+            points.append(vmd.Node3D.from_point(triangle.point3))
+            triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
+        return vmd.DisplayMesh3D(points, triangles)
 
 
 class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):

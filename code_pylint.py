@@ -28,7 +28,7 @@ MAX_ERROR_BY_TYPE = {
                      'consider-using-enumerate': 22,
                      'too-many-branches': 27,
                      'too-many-statements': 18,
-                     'super-init-not-called': 12,
+                     'super-init-not-called': 13,
                      'no-name-in-module': 5,
                      'abstract-method': 34,
                      'empty-docstring': 15,

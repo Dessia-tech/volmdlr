@@ -66,7 +66,9 @@ class DisplayMesh(dc.DessiaObject):
 
         self.points = points
         self.triangles = triangles
-        dc.DessiaObject.__init__(self, name=name)
+        # Avoiding calling dessia object init because it is ineficient
+        # dc.DessiaObject.__init__(self, name=name)
+        self.name = name
         self._utd_point_index = False
 
     def check(self):
@@ -119,7 +121,7 @@ class DisplayMesh(dc.DessiaObject):
         # point_index
         # t1 = time.time()
         for point in other_mesh.points:
-            if not point in self.point_index:
+            if point not in self.point_index:
                 self.point_index[point] = ip
                 ip += 1
                 self.points.append(point)
@@ -146,7 +148,7 @@ class DisplayMesh(dc.DessiaObject):
         new_point_index = self.point_index.copy()
         ip = len(new_points)
         for point in other_mesh.points:
-            if not point in new_point_index:
+            if point not in new_point_index:
                 new_point_index[point] = ip
                 ip += 1
                 new_points.append(point)
@@ -220,7 +222,7 @@ class DisplayMesh3D(DisplayMesh):
 
     def __init__(self, points: List[volmdlr.Point3D],
                  triangles: List[Tuple[int, int, int]], name=''):
-        DisplayMesh.__init__(self, points, triangles)
+        DisplayMesh.__init__(self, points, triangles, name=name)
 
     def to_babylon(self):
         """
