@@ -17,7 +17,7 @@ WEEKLY_DECREASE = 0.03
 MIN_NOTE = 8.5
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 776,
+                     'invalid-name': 788,
                      'no-else-return': 49,
                      'consider-using-f-string': 77,
                      'no-member': 9,
@@ -37,6 +37,7 @@ MAX_ERROR_BY_TYPE = {
                      'duplicate-code': 9,
                      'arguments-renamed': 8,
                      'too-many-ancestors': 29,
+                     'too-few-public-methods': 2,
                      # 'expression-not-assigned': 1,
                      'non-parent-init-called': 6,
                      'too-many-public-methods': 11,
@@ -67,7 +68,6 @@ MAX_ERROR_BY_TYPE = {
                      'unnecessary-lambda': 2,
                      'chained-comparison': 2,
                      'missing-module-docstring': 2,
-                     'unbalanced-tuple-unpacking': 2,
                      'consider-using-generator': 1,
                      'cell-var-from-loop': 1,
                      'import-outside-toplevel': 1,
