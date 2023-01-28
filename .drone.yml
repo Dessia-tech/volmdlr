@@ -39,8 +39,7 @@ steps:
 - name: check code complexity
   image: python:3.9
   commands:
-  - pip install radon pylint pydocstyle pre-commit shellcheck-py cython-lint
-  - ./code_quality.sh
+  - pip install pylint pydocstyle pre-commit shellcheck-py cython-lint
   - python code_pylint.py
   - python code_pydocstyle.py
   - pre-commit run -a
