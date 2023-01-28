@@ -955,31 +955,31 @@ class Cylinder(RevolvedProfile):
         # This was copied for HollowCylinder. Inheritence removed to avoid problems
         radius = self.radius
 
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        if pointA[0] > pointB[0]:
-            pointA, pointB = pointB, pointA
-        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[0] > point_b[0]:
+            point_a, point_b = point_b, point_a
+        xmin = point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = point_b[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[1] > pointB[1]:
-            pointA, pointB = pointB, pointA
-        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[1] > point_b[1]:
+            point_a, point_b = point_b, point_a
+        ymin = point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = point_b[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[2] > pointB[2]:
-            pointA, pointB = pointB, pointA
-        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
-        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[2] > point_b[2]:
+            point_a, point_b = point_b, point_a
+        zmin = point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = point_b[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
@@ -1374,29 +1374,29 @@ class Cone(RevolvedProfile):
         A is the point at the basis.
         B is the top.
         """
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        x_bound = (pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[0])
+        x_bound = (point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[0])
         xmin = min(x_bound)
         xmax = max(x_bound)
 
-        y_bound = (pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[1])
+        y_bound = (point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[1])
         ymin = min(y_bound)
         ymax = max(y_bound)
 
-        z_bound = (pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[2])
+        z_bound = (point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[2])
         zmin = min(z_bound)
         zmax = max(z_bound)
 
@@ -1496,31 +1496,31 @@ class HollowCylinder(RevolvedProfile):
 
         radius = self.outer_radius
 
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        if pointA[0] > pointB[0]:
-            pointA, pointB = pointB, pointA
-        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[0] > point_b[0]:
+            point_a, point_b = point_b, point_a
+        xmin = point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = point_b[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[1] > pointB[1]:
-            pointA, pointB = pointB, pointA
-        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[1] > point_b[1]:
+            point_a, point_b = point_b, point_a
+        ymin = point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = point_b[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[2] > pointB[2]:
-            pointA, pointB = pointB, pointA
-        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
-        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[2] > point_b[2]:
+            point_a, point_b = point_b, point_a
+        zmin = point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = point_b[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
