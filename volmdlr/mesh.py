@@ -43,7 +43,6 @@ import volmdlr.wires as vmw
 
 class FlatElementError(Exception):
     """An error in case an element is flat."""
-    pass
 
 # def find_duplicate_linear_element(linear_elements1, linear_elements2):
 #     duplicates = []

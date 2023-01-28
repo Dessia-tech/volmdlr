@@ -4053,21 +4053,21 @@ class LineSegment3D(LineSegment):
             return p1, p2
         return self.start, other_line.start
 
-    def Matrix_distance(self, other_line):
+    def matrix_distance(self, other_line):
         u = self.direction_vector()
         v = other_line.direction_vector()
         w = other_line.start - self.start
 
-        a = u.dot(u)
-        b = -u.dot(v)
-        d = v.dot(v)
+        a11 = u.dot(u)
+        a12 = -u.dot(v)
+        a22 = v.dot(v)
 
-        e = w.dot(u)
-        f = -w.dot(v)
+        b1 = w.dot(u)
+        b2 = -w.dot(v)
 
-        A = npy.array([[a, b],
-                       [b, d]])
-        B = npy.array([e, f])
+        A = npy.array([[a11, a12],
+                       [a12, a22]])
+        B = npy.array([b1, b2])
 
         res = scp.optimize.lsq_linear(A, B, bounds=(0, 1))
         p1 = self.point_at_abscissa(res.x[0] * self.length())
@@ -4127,7 +4127,7 @@ class LineSegment3D(LineSegment):
             return pt1.point_distance(pt2)
 
         if element.__class__ is LineSegment3D:
-            p1, p2 = self.Matrix_distance(element)
+            p1, p2 = self.matrix_distance(element)
             if return_points:
                 return p1.point_distance(p2), p1, p2
             return p1.point_distance(p2)
@@ -4139,7 +4139,7 @@ class LineSegment3D(LineSegment):
             for p1, p2 in zip(points[0:-1], points[1:]):
                 lines.append(LineSegment3D(p1, p2))
             for line in lines:
-                p1, p2 = self.Matrix_distance(line)
+                p1, p2 = self.matrix_distance(line)
                 dist = p1.point_distance(p2)
                 if dist < dist_min:
                     dist_min = dist
@@ -5861,13 +5861,11 @@ class ArcEllipse3D(Edge):
                            [xi ** 2, yi ** 2, 2 * xi * yi],
                            [xe ** 2, ye ** 2, 2 * xe * ye]))
             invA = npy.linalg.inv(A)
-            One = npy.array(([1],
-                             [1],
-                             [1]))
-            C = npy.dot(invA, One)  # matrice colonne de taille 3
-            theta = 0.5 * math.atan(2 * C[2] / (C[1] - C[0]))
-            c1 = C[0] + C[1]
-            c2 = (C[1] - C[0]) / math.cos(2 * theta)
+            identity = npy.array(([1], [1], [1]))
+            r1, r2, r3 = npy.dot(invA, identity)  # 3 item column matrix
+            theta = 0.5 * math.atan(2 * r3 / (r2 - r1))
+            c1 = r1 + r2
+            c2 = (r2 - r1) / math.cos(2 * theta)
             gdaxe = math.sqrt((2 / (c1 - c2)))
             ptax = math.sqrt((2 / (c1 + c2)))
             return theta, gdaxe, ptax
