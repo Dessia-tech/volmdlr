@@ -10,6 +10,7 @@ import tempfile
 import webbrowser
 from datetime import datetime
 from typing import List
+from functools import lru_cache
 
 import dessia_common.core as dc
 import dessia_common.files as dcf
@@ -543,9 +544,21 @@ class BoundingBox(dc.DessiaObject):
         self.zmin = zmin
         self.zmax = zmax
 
-        dc.DessiaObject.__init__(self, name=name)
+        # disabling super init call for efficiency, put back when dc disable kwargs
+        # dc.DessiaObject.__init__(self, name=name)
+        self.name = name
 
-        self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
+    @property
+    @lru_cache
+    def center(self):
+        """
+        Computes the center of the bounding box.
+
+        TODO: change lru_cache to cached property when support for py3.7 is dropped.
+        """
+        return volmdlr.Point3D(0.5 * (self.xmin + self.xmax),
+                               0.5 * (self.ymin + self.ymax),
+                               0.5 * (self.zmin + self.zmax))
 
     def __hash__(self):
         return sum(hash(point) for point in self.points)
