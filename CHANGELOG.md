@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+* edges: remove attributes points from lines & linesegments for performance purpose
 
 ### Performance improvements
 * wires.py's 2D objects: chache bounding_rectangle results

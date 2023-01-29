@@ -1219,22 +1219,22 @@ class Line2D(Line):
         # line will be (CD)
 
         if math.isclose(self.point_distance(point), 0, abs_tol=1e-10):
-            I = volmdlr.Vector2D(point[0], point[1])
-            A = volmdlr.Vector2D(self.points[0][0], self.points[0][1])
-            B = volmdlr.Vector2D(self.points[1][0], self.points[1][1])
-            C = volmdlr.Vector2D(other_line.points[0][0],
-                                 other_line.points[0][1])
-            D = volmdlr.Vector2D(other_line.points[1][0],
-                                 other_line.points[1][1])
+            I = volmdlr.Vector2D(point[0], point.y)
+            A = volmdlr.Vector2D(self.point1.x, self.point1.y)
+            B = volmdlr.Vector2D(self.point2.x, self.point2.y)
+            C = volmdlr.Vector2D(other_line.point1.x,
+                                 other_line.point1.y)
+            D = volmdlr.Vector2D(other_line.point2.x,
+                                 other_line.point2.y)
 
         elif math.isclose(other_line.point_distance(point), 0, abs_tol=1e-10):
-            I = volmdlr.Vector2D(point[0], point[1])
-            C = volmdlr.Vector2D(self.points[0][0], self.points[0][1])
-            D = volmdlr.Vector2D(self.points[1][0], self.points[1][1])
-            A = volmdlr.Vector2D(other_line.points[0][0],
-                                 other_line.points[0][1])
-            B = volmdlr.Vector2D(other_line.points[1][0],
-                                 other_line.points[1][1])
+            I = volmdlr.Vector2D(point.x, point.y)
+            C = volmdlr.Vector2D(self.point1.x, self.point1.y)
+            D = volmdlr.Vector2D(self.point2.x, self.point2.y)
+            A = volmdlr.Vector2D(other_line.point1.x,
+                                 other_line.point1.y)
+            B = volmdlr.Vector2D(other_line.point2.x,
+                                 other_line.point2.y)
         else:
             raise AttributeError("The point isn't on any of the two lines")
 
@@ -3469,8 +3469,8 @@ class Line3D(Line):
         direction_vector1 = self.direction_vector()
         direction_vector2 = line2.direction_vector()
         if direction_vector1.is_colinear_to(direction_vector2):
-            return direction_vector1.cross(line2.points[0] - self.points[0]).norm() / direction_vector1.norm()
-        vector = line2.points[0] - self.points[0]
+            return direction_vector1.cross(line2.point1 - self.point1).norm() / direction_vector1.norm()
+        vector = line2.point1 - self.point1
         line_distance = abs(vector.dot(direction_vector1.cross(direction_vector2))) / direction_vector1.cross(
             direction_vector2).norm()
         return line_distance
@@ -3503,16 +3503,16 @@ class Line3D(Line):
             return None
         if math.isclose(distance_to_line, 0, abs_tol=1e-6) and \
                 math.isclose(direction_vector1.dot(direction_vector2), 0, abs_tol=1e-6):
-            projected_point, _ = self.point_projection(line2.points[0])
+            projected_point, _ = self.point_projection(line2.point1)
             return projected_point
-        vector = self.points[0] - line2.points[0]
+        vector = self.point1 - line2.point1
         t_coefficient = (
                                 vector.dot(direction_vector2) * direction_vector2.dot(direction_vector1) -
                                 vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
                                 direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
                                 direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
-        u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
-            direction_vector2)) / direction_vector2.dot(direction_vector2)
+        # u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
+        #     direction_vector2)) / direction_vector2.dot(direction_vector2)
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
 
@@ -4079,7 +4079,7 @@ class LineSegment3D(LineSegment):
         return p1, p2
 
     def parallel_distance(self, other_linesegment):
-        pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.points[0]
+        pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
         plane1 = volmdlr.faces.Plane3D.from_3_points(pt_a, pt_b, pt_c)

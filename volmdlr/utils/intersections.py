@@ -26,26 +26,27 @@ def circle_3d_linesegment_intersections(circle_3d, linesegment):
     if distance_center_lineseg > circle_3d.radius:
         return []
     direction_vector = linesegment.direction_vector()
-    if linesegment.points[0].z == linesegment.points[1].z == circle_3d.frame.origin.z:
+    if linesegment.start.z == linesegment.end.z == circle_3d.frame.origin.z:
         quadratic_equation_a = (1 + (direction_vector.y ** 2 / direction_vector.x ** 2))
-        quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.points[0].x +
-                                2 * (direction_vector.y / direction_vector.x) * linesegment.points[0].y)
-        quadratic_equation_c = ((linesegment.points[0].y - (direction_vector.y / direction_vector.x) *
-                                 linesegment.points[0].x) ** 2 - circle_3d.radius ** 2)
+        quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x +
+                                2 * (direction_vector.y / direction_vector.x) * linesegment.start.y)
+        quadratic_equation_c = ((linesegment.start.y - (direction_vector.y / direction_vector.x) *
+                                 linesegment.start.x) ** 2 - circle_3d.radius ** 2)
         delta = (quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c)
         x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
         x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)
-        y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment.points[0].x) + linesegment.points[0].y
-        y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment.points[0].x) + linesegment.points[0].y
+        y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment.start.x) + linesegment.start.y
+        y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment.start.x) + linesegment.start.y
         return [volmdlr.Point3D(x1, y1, circle_3d.frame.origin.z), volmdlr.Point3D(x2, y2, circle_3d.frame.origin.z)]
     z_constant = circle_3d.frame.origin.z
-    constant = (z_constant - linesegment.points[0].z) / direction_vector.z
-    x_coordinate = constant * direction_vector.x + linesegment.points[0].x
-    y_coordinate = constant * direction_vector.y + linesegment.points[0].y
+    constant = (z_constant - linesegment.start.z) / direction_vector.z
+    x_coordinate = constant * direction_vector.x + linesegment.start.x
+    y_coordinate = constant * direction_vector.y + linesegment.start.y
     if math.isclose((x_coordinate - circle_3d.frame.origin.x) ** 2 + (y_coordinate - circle_3d.frame.origin.y) ** 2,
                     circle_3d.radius ** 2, abs_tol=1e-6):
         return [volmdlr.Point3D(x_coordinate, y_coordinate, z_constant)]
     return []
+
 
 def ellipse2d_line_intersections(ellipse2d, line2d):
     """
@@ -63,15 +64,15 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
         line_intersections = [frame.local_to_global_coordinates(point) for point in line_inters]
         return line_intersections
 
-    if line2d.points[1].x == line2d.points[0].x:
-        x1 = line2d.points[0].x
+    if line2d.point2.x == line2d.point1.x:
+        x1 = line2d.point1.x
         x2 = x1
         y1 = ellipse2d.minor_axis * math.sqrt((1 - x1 ** 2 / ellipse2d.major_axis ** 2))
         y2 = -y1
-        c = ellipse2d.center.y + line2d.points[0].y
+        c = ellipse2d.center.y + line2d.point1.y
     else:
-        m = (line2d.points[1].y - line2d.points[0].y) / (line2d.points[1].x - line2d.points[0].x)
-        c = - m * (line2d.points[0].x + ellipse2d.center.x) + line2d.points[0].y + ellipse2d.center.y
+        m = (line2d.point2.y - line2d.point1.y) / (line2d.point2.x - line2d.point1.x)
+        c = - m * (line2d.point1.x + ellipse2d.center.x) + line2d.point1.y + ellipse2d.center.y
         if ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2 > c ** 2:
             x1 = - (2 * (ellipse2d.major_axis ** 2) * m * c + math.sqrt(
                 (2 * (ellipse2d.major_axis ** 2) * m * c) ** 2 - 4 * (
