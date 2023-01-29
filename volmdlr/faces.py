@@ -5430,10 +5430,8 @@ class Face3D(volmdlr.core.Primitive3D):
     def triangulation(self):
         number_points_x, number_points_y = self.grid_size()
         mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
-        return vmd.DisplayMesh3D(
-            [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
-             mesh2d.points],
-            mesh2d.triangles)
+        return vmd.DisplayMesh3D([vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in mesh2d.points],
+                                 mesh2d.triangles)
 
     def plot2d(self, ax=None, color='k', alpha=1):
         if ax is None:
