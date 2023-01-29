@@ -75,7 +75,10 @@ class Edge(dc.DessiaObject):
         self.end = end
         self._length = None
         self._direction_vector = None
-        dc.DessiaObject.__init__(self, name=name)
+
+        # Disabling super init call for performance
+        # dc.DessiaObject.__init__(self, name=name)
+        self.name = name
 
     def __getitem__(self, key):
         if key == 0:
@@ -1056,7 +1059,7 @@ class Line2D(Line):
 
     def __init__(self, point1: volmdlr.Point2D,
                  point2: volmdlr.Point2D, *, name=''):
-        self.points = [point1, point2]
+        # self.points = [point1, point2]
         Line.__init__(self, point1, point2, name=name)
 
     def to_3d(self, plane_origin, x1, x2):
@@ -1683,7 +1686,7 @@ class LineSegment2D(LineSegment):
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
         if start == end:
             raise NotImplementedError
-        self.points = [start, end]
+        # self.points = [start, end]
         self._bounding_rectangle = None
         LineSegment.__init__(self, start, end, name=name)
 
@@ -3417,7 +3420,7 @@ class Line3D(Line):
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  name: str = ''):
         Line.__init__(self, point1, point2, name=name)
-        self.points = [point1, point2]
+        # self.points = [point1, point2]
         self._bbox = None
 
     @property
@@ -3702,7 +3705,7 @@ class LineSegment3D(LineSegment):
                  name: str = ''):
         if start == end:
             raise NotImplementedError
-        self.points = [start, end]
+        # self.points = [start, end]
         LineSegment.__init__(self, start=start, end=end, name=name)
         self._bbox = None
 
