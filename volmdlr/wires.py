@@ -3405,7 +3405,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         line_intersections = {line_segment1: [], line_segment2: []}
         for line_segment in [line_segment1, line_segment2
-                   ]:
+                             ]:
             inter_points = []
             for prim in polygon2.line_segments + self.line_segments[
                                                  :self.line_segments.index(
@@ -4223,7 +4223,7 @@ class Ellipse2D(Contour2D):
         :param linesegment: linesegment to calculate intersections.
         :return: list of points intersections, if there are any.
         """
-        line_intersections = self.line_intersections(linesegment)
+        line_intersections = self.line_intersections(linesegment.to_line())
         intersections = []
         for intersection in line_intersections:
             if linesegment.point_belongs(intersection):

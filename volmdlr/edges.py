@@ -1129,7 +1129,7 @@ class Line2D(Line):
         :return: The mapped line.
         :rtype: :class:`volmdlr.edges.Line2D`
         """
-        return Line2D(*[point.frame_mapping(frame, side) for point in self.points])
+        return Line2D(*[point.frame_mapping(frame, side) for point in [self.point1, self.point2]])
 
     def plot(self, ax=None, color='k', dashed=True):
         """
@@ -1576,8 +1576,8 @@ class BSplineCurve2D(BSplineCurve):
         polygon_points = self.discretization_points(number_points=50)
         crossings = []
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-            l = LineSegment2D(p1, p2)
-            crossings.extend(l.line_crossings(line2d))
+            linesegment = LineSegment2D(p1, p2)
+            crossings.extend(linesegment.line_crossings(line2d))
         return crossings
 
     def to_wire(self, n: int):
@@ -3929,10 +3929,10 @@ class LineSegment3D(LineSegment):
         """
         if side == 'old':
             return LineSegment3D(
-                *[frame.old_coordinates(point) for point in self.points])
+                *[frame.old_coordinates(point) for point in [self.start, self.end]])
         if side == 'new':
             return LineSegment3D(
-                *[frame.new_coordinates(point) for point in self.points])
+                *[frame.new_coordinates(point) for point in [self.start, self.end]])
         raise ValueError('Please Enter a valid side: old or new')
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
