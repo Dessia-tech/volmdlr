@@ -165,6 +165,7 @@ class DisplayMesh(dc.DessiaObject):
         return self.__class__(new_points, new_triangles)
 
     def plot(self, ax=None, numbering=False):
+        """Plots the mesh with matplotlib."""
         for ip, point in enumerate(self.points):
             ax = point.plot(ax=ax)
             if numbering:
