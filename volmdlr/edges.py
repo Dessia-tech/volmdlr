@@ -4693,11 +4693,14 @@ class BSplineCurve3D(BSplineCurve):
 
     def cut_before(self, parameter: float):
         # Is a value of parameter below 4e-3 a real need for precision ?
-        if math.isclose(parameter, 0, abs_tol=5e-6):
+        if math.isclose(parameter, 0, abs_tol=4e-3):
             return self
-        elif math.isclose(parameter, 1, abs_tol=5e-6):
+        elif math.isclose(parameter, 1, abs_tol=4e-3):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
-        curves = operations.split_curve(self.curve, parameter)
+        try:
+            curves = operations.split_curve(self.curve, parameter)
+        except Exception:
+            print(True)
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
