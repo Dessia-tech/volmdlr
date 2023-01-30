@@ -153,7 +153,7 @@ steps:
   settings:
     host: magenta.dessia.tech
     target: /var/www/cdn/volmdlr/coverage/${DRONE_BRANCH}
-    source: htmlcov/index.html
+    source: htmlcov/*
     strip_components: 1
     username: drone
     password:
