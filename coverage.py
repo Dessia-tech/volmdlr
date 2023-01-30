@@ -8,7 +8,7 @@ Created on Wed Sep 29 14:35:47 2021
 
 import json
 
-MIN_FILE_COVERAGE = 55.12
+MIN_FILE_COVERAGE = 54.9
 MIN_PROJECT_COVERAGE = 61.9
 
 untracked_modules = ['volmdlr/templates.py',

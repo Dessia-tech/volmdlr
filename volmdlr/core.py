@@ -156,22 +156,6 @@ class CompositePrimitive2D(CompositePrimitive):
 
         self._utd_primitives_to_index = False
 
-    # def primitive_to_index(self, primitive):
-    #     if not self._utd_primitives_to_index:
-    #         self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
-    #         self._utd_primitives_to_index = True
-    #     return self._primitives_to_index[primitive]
-
-    # def update_basis_primitives(self):
-    #     basis_primitives = []
-    #     for primitive in self.primitives:
-    #         if hasattr(primitive, 'basis_primitives'):
-    #             basis_primitives.extend(primitive.basis_primitives)
-    #         else:
-    #             basis_primitives.append(primitive)
-
-    #     self.basis_primitives = basis_primitives
-
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
         Rotates the CompositePrimitive2D.
