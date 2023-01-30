@@ -8,6 +8,7 @@ import math
 from random import uniform
 from typing import Dict, List, Tuple
 
+import dessia_common
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -1091,10 +1092,15 @@ class Cylinder(RevolvedProfile):
         self.position.frame_mapping_inplace(frame, side)
         self.axis = axis
 
+    def to_dict(self, use_pointers: bool = False, memo: bool = None, path: str = '#'):
+        """
+        Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class RevolvedProfile
+        """
+        return dessia_common.DessiaObject.to_dict(self, use_pointers, memo, path)
+
     def copy(self, deep=True, memo=None):
         """
         Creates a copy of Cylinder.
-
         """
         new_position = self.position.copy()
         new_axis = self.axis.copy()
