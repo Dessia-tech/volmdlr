@@ -145,14 +145,6 @@ steps:
       from_secret: email_password
     from: technical@dessia.tech
 
-volumes:
-  - name: pip_cache
-    host:
-      path: /tmp/cache/drone/pip
-  - name: cache
-    host:
-      path: /tmp/cache/drone
-
 - name: upload coverage
   image: appleboy/drone-scp
   when:
@@ -165,5 +157,13 @@ volumes:
     username: drone
     password:
       from_secret: ssh_drone_password
+
+volumes:
+  - name: pip_cache
+    host:
+      path: /tmp/cache/drone/pip
+  - name: cache
+    host:
+      path: /tmp/cache/drone
 
 
