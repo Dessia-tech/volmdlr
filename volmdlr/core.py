@@ -386,7 +386,9 @@ class BoundingRectangle(dc.DessiaObject):
         self.xmax = xmax
         self.ymin = ymin
         self.ymax = ymax
-        dc.DessiaObject.__init__(self, name=name)
+        # Disabling Dessia object init call for performance. Check when perf enhancement on dessia_common side
+        # dc.DessiaObject.__init__(self, name=name)
+        self.name = name
 
     def __getitem__(self, key):
         if key == 0:
