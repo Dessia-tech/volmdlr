@@ -1052,6 +1052,14 @@ class Surface3D(DessiaObject):
         return volmdlr.wires.Contour2D(primitives2d)
 
     def contour2d_to_3d(self, contour2d):
+        """
+        Transforms a Contour2D in the parametric domain of the surface into a Contour3D in cartesian coordinate.
+
+        :param contour2d: The contour to be transformed.
+        :type contour2d: :class:`volmdlr.wires.Contour2D`
+        :return: A 3D contour object.
+        :rtype: :class:`volmdlr.wires.Contour3D`
+        """
         primitives3d = []
         for primitive2d in contour2d.primitives:
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
@@ -2270,7 +2278,18 @@ class ToroidalSurface3D(PeriodicalSurface):
         new_frame = self.frame.frame_mapping(frame, side)
         self.frame = new_frame
 
-    def rectangular_cut(self, theta1, theta2, phi1, phi2, name=''):
+    def rectangular_cut(self, theta1: float, theta2: float, phi1: float, phi2: float, name: str = ""):
+        """
+        Cut a rectangular piece of the ToroidalSurface3D object and return a ToroidalFace3D object.
+
+        :param theta1: Start angle of the cut in theta direction.
+        :param theta2: End angle of the cut in theta direction.
+        :param phi1: Start angle of the cut in phi direction.
+        :param phi2: End angle of the cut in phi direction.
+        :param name: (optional) Name of the returned ToroidalFace3D object. Defaults to "".
+        :return: A ToroidalFace3D object created by cutting the ToroidalSurface3D object.
+        :rtype: ToroidalFace3D
+        """
         if phi1 == phi2:
             phi2 += volmdlr.TWO_PI
         elif phi2 < phi1:
@@ -7898,6 +7917,9 @@ class SphericalFace3D(Face3D):
         return self.surface3d.bounding_box
 
     def triangulation_lines(self, angle_resolution=7):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
@@ -7964,6 +7986,9 @@ class RuledFace3D(Face3D):
 
     @property
     def bounding_box(self):
+        """
+        Returns the bounding box of the surface.
+        """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
@@ -7984,6 +8009,9 @@ class RuledFace3D(Face3D):
         return volmdlr.core.BoundingBox.from_points(points)
 
     def triangulation_lines(self, angle_resolution=10):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
         nlines = int(delta_x * angle_resolution)
