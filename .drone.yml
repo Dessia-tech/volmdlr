@@ -165,5 +165,3 @@ volumes:
   - name: cache
     host:
       path: /tmp/cache/drone
-
-
