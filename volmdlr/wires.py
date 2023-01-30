@@ -1663,14 +1663,18 @@ class Contour2D(ContourMixin, Wire2D):
 
     def area(self):
         area = self.edge_polygon.area()
-        if self.edge_polygon.is_trigo():
-            trigo = 1
-        else:
-            trigo = -1
-        for edge in self.primitives:
-            area += trigo * edge.straight_line_area()
-
-        return abs(area)
+        classes = {prim.__class__ for prim in self.primitives}
+        verify_classes = classes.issubset({volmdlr.edges.LineSegment2D, volmdlr.edges.Arc2D})
+        if verify_classes:
+            if self.edge_polygon.is_trigo():
+                trigo = 1
+            else:
+                trigo = -1
+            for edge in self.primitives:
+                area += trigo * edge.straight_line_area()
+            return abs(area)
+        polygon = self.to_polygon(angle_resolution=50)
+        return polygon.triangulation().area()
 
     def center_of_mass(self):
         """

@@ -1491,6 +1491,9 @@ class BSplineCurve2D(BSplineCurve):
         return normal_vector
 
     def straight_line_area(self):
+        """
+        Uses shoelace algorithm for evaluating the area.
+        """
         points = self.discretization_points(number_points=100)
         x = [point.x for point in points]
         y = [point.y for point in points]
