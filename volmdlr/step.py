@@ -965,7 +965,8 @@ class Step(dc.DessiaObject):
         shells = []
         if frame_mapping_nodes:
             for node in frame_mapping_nodes:
-                shells.extend(object_dict[node])
+                if object_dict[node]:
+                    shells.extend(object_dict[node])
         if not shells:
             for node in shell_nodes_copy:
                 if object_dict[node]:
@@ -1091,11 +1092,11 @@ STEP_TO_VOLMDLR = {
     'GEOMETRIC_CURVE_SET': None,
 
     # step subfunctions
-    'UNCERTAINTY_MEASURE_WITH_UNIT': None,
-    'CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT': None,
-    'LENGTH_MEASURE_WITH_UNIT': None,
-    'LENGTH_UNIT, NAMED_UNIT, SI_UNIT': None,
-    'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT': None,
+    # 'UNCERTAINTY_MEASURE_WITH_UNIT': None,
+    # 'CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT': None,
+    # 'LENGTH_MEASURE_WITH_UNIT': None,
+    # 'LENGTH_UNIT, NAMED_UNIT, SI_UNIT': None,
+    # 'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT': None,
     'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': volmdlr.faces.OpenShell3D.translation,
     'SHELL_BASED_SURFACE_MODEL': None,
     'MANIFOLD_SURFACE_SHAPE_REPRESENTATION': None,
