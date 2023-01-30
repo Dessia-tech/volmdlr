@@ -5,14 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## v0.9.0 [Unrealeased]
 
 ### New Features
-* Unit coversion factor parameter added to the end of the from_step arguments parameter.
-So we can convert the units correctly
+
+* Unit coversion factor parameter added to the end of the from_step arguments parameter (So we can convert the units correctly)
 * SphericalSurface3D: rotation, translation, frame_mapping
 * read steps: Identify assemblies in a step file.
-* 
+* ClosedTriangleShell3D: to_trimesh method
+* PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
+* BSplineSurface3D: Now the plot method uses u and v curves
+* Create .geo and .msh files (Mesh geometries with GMSH)
+
 
 ### Fixed
 
@@ -21,12 +26,18 @@ So we can convert the units correctly
 * Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
 * BSplineCurve: from_points_interpolation, uses centripedal method for better fitting.
 * Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard. 
+* BSplineSurface3D: debug linesegment2d_to_3d method.
+* Parametric operations with BSpline curves.
+* OpenTriangleShell3D: fix from_mesh_data method
 
 ### Removed
 
 
 ### Performance improvements
 * wires.py's 2D objects: chache bounding_rectangle results
+* faces.py's Triangle3D objects: subdescription points and triangles
+* EdgeCollection3D: new object for displaying series of edges
+* BSplineSurface3D: compile BSplineSurface3D.derivatives
 
 ### Refactorings
 
@@ -36,7 +47,7 @@ ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
 
 
 
-## v0.8.0 [Testing]
+## v0.8.0 [Released 26/01/2023]
 
 ### New Features
 
@@ -47,90 +58,10 @@ ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
 * ClosedPolygon2D: point_belongs, now the user can choose whether points on the edge of the polygon
             should be considered inside or not.
 * ArcEllipse2D: line_intersections, frame_mapping, linesegment_intersections
-* ClosedTriangleShell3D: to_trimesh method
-* PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
-* BSplineSurface3D: Now the plot method uses u and v curves
-
-
-### Fixed
-
-* PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
-* Contour2D: bounding_rectangle (specify number_points for discretization_points)
-* BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
-* Mesh: delete_duplicated_nodes
-* BSplineSurface3D: fix arc3d_to_2d method
-* Frame3D : fix from_point_and_vector method ( error for the case vector=main_axis)
-* BSplineCurve2D: linesegment_intersections
-* Contour2D: merge_primitives_with
-* BSplineCurve: fix to take into account weighted B-spline curves.
-* Step: fix reading of rational BSpline curves and surfaces from step file.
-* BSplineCurve2D: tangent (use position/length)
-* Babylon: some scene settings for better rendering
-* Arc2D: fix get_center: name referenced before assignement
-* BSplineSurface3D: debug linesegment2d_to_3d method.
-* Parametric operations with BSpline curves.
-* OpenTriangleShell3D: fix from_mesh_data method
-
-### Removed
-
-* babylon script remaining functions
-
-### Performance improvements
-* ClosedPolygon2D: triangulation
-* Cylinder: min_distance_to_other_cylinder
-* BSplineCurve: discretization_points
-* Face3D: triangulation
-* EdgeCollection3D: new object for displaying series of edges
-* BSplineSurface3D: compile BSplineSurface3D.derivatives
-
-
-### Refactorings
-* Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated.
-local_to_global_coordinates and global_to_local_coordinates are the new more explicit ones.
-
-
-### Unittests
-
-* Contour2D: point_belongs
-* Basis2D, Basis3D, Frame2D, Frame3D: local_to_global_coordinates and global_to_local_coordinates
-* ArcEllipse2D: linesegment_intersections
-
-### CI
-
-* Mandatory CHANGELOG.md update for PR
-* pre-commit checks with cython-lint
-
-## v0.7.0
-
-### New Features
-
-* Open/Closed TriangleShells: ability to implement specific algorithm to triangles
-* Block: faces_center (calculate directly point in the middle of the faces)
-* Circle2D: split_by_line
-* BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
-* Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside
-* CylindricalSurface3D: line_intersections, linesegment_intersections, plane_intersection
-* Line2D: point_distance
-* Line3D: to_2d
-* Line3D: skew_to (verifies if two Line3D are skew)
-* LineSegment3D: line_interserctions
-* ArcEllipse3D: discretization_points
-* FullArc3D: linesegment_intersections
-* Line: sort_points_along_line
-* Line2D: point_belongs
-* ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
+* Line2D: point_belongs, frame_mapping()
 * New Class wires.Ellipse2D
-* Ellipse2D.point_over_ellipse()
-* Ellipse2D.line_intersections()
-* Ellipse2D.linesegment_intersections()
-* Ellipse2D.discretization_points()
-* Ellipse2D.abscissa()
-* Ellipse2D.point_angle_with_major_dir()
-* Ellipse2D.area()
-* Ellipse2D.rotation()
-* Ellipse2D.tranlation()
-* Ellipse2D.frame_mapping()
-* Line2D.frame_mapping()
+* Ellipse2D: point_over_ellipse(), line_intersections(), linesegment_intersections(), discretization_points(),
+abscissa(), point_angle_with_major_dir(), area(), rotation(), tranlation(), frame_mapping()
 * Plane3D: is_parallel, fullarc_intersections
 * Arc2D: cut_betweeen_two_points
 * Contour3D: linesegment_intersections, line_intersections
@@ -144,22 +75,23 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 
 ### Fixed
 
-* Contour2D: point_belongs
-* BsplineCurve: abscissa (use different start point between 0 and length)
-* Arc3D: plot
-* Cylinder: point_belongs
-* FullArc3D: plot (use discretization_points instead of discretise)
-* Face3D: line_intersections: consider borders
-* STL: from stream (use BinaryFile and StringFile instead of io.BinaryIO and FileIO)
-* Step: from stream (use BinaryFile instead of io.BinaryIO)
-* Contour: is_overlapping (consider intersecting_points is empty)
-* LineSegment2D: to_wire (use discretization_points instead of discretise)
+* PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
+* Contour2D: bounding_rectangle (specify number_points for discretization_points), point_belongs
 * Line2D: line_intersections
 * BSplineCurve2D: line_intersections
 * PlaneFace3D: cut_by_coincident_face (consider self.inner_contours inside face)
-* ArcEllipse2D: to_3d
-* Fix boolean operations when faces are 100% coincident
-* Fix some to_step methods from edges.py and faces.py
+* BSplineCurve2D: bounding_rectangle (specify number_points for discretization_points)
+* Mesh: delete_duplicated_nodes
+* BSplineSurface3D: fix arc3d_to_2d method
+* Frame3D : fix from_point_and_vector method ( error for the case vector=main_axis)
+* BSplineCurve2D: linesegment_intersections
+* Contour2D: merge_primitives_with
+* BSplineCurve: fix to take into account weighted B-spline curves.
+* Step: fix reading of rational BSpline curves and surfaces from step file.
+* BSplineCurve2D: tangent (use position/length)
+* Babylon: some scene settings for better rendering
+* Arc2D: fix get_center: name referenced before assignement
+* pydocstyle fixes
 * bounding box: fix for cylindrical and BSplineCurve3D
 * contour2d: ordering_primitives, order_primitives
 * Plane3D: plane_intersections, is_coindident
@@ -172,10 +104,15 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * Ellispe3D: discretization_points
 * BSplineSurface: Improved surface periodicity calculation
 
+### Removed
+
+* babylon script remaining functions
 
 ### Performance improvements
-
-* Avoid unneeded bbox computation
+* ClosedPolygon2D: triangulation
+* Cylinder: min_distance_to_other_cylinder
+* BSplineCurve: discretization_points
+* Face3D: triangulation
 * triangulation performance by use of Node2D instead of points (x15 on casing)
 * cache variable self._polygon_point_belongs_100, to avoid recalculating each
 time we have to verify if a point is inside
@@ -183,37 +120,18 @@ time we have to verify if a point is inside
 
 
 ### Refactorings
-
-* cleanup of ClosedShell (double methods with Openshells)
-* LineSegment3D: intersections
-* Line2D: sort_points_along_line
+* Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated.
+local_to_global_coordinates and global_to_local_coordinates are the new more explicit ones.
 * Line3D: intersections
-
 
 ### Unittests
 
-* PlaneFace3D: line_intersections
-* BsplineCurve: abscissa
-* Circle2D: split_by_line
-* BoundingRectangle: area, center, intersection, is_inside, point_belongs, intersection_area, distance_to_point, distance_to_b_rectangle
-* Cylinder: point_belongs, random_point_inside, interference_volume_with_other_cylinder, min_distance_to_other_cylinder, is_intersecting_other_cylinder, lhs_points_inside
-* CylindricalFace3D: linesegment_intersections
-* CylindricalSurface3D: line_intersections
-* Line3D: line_distance
-* Line3D: skew_to
-* Line3D: intersections
-* LineSegment3D: line_intersections
-* LineSegment3D: linesegment_intersections
-* Contour: is_overlapping
+* Contour2D: point_belongs
+* Basis2D, Basis3D, Frame2D, Frame3D: local_to_global_coordinates and global_to_local_coordinates
+* ArcEllipse2D: linesegment_intersections
 * LineSegment2D: to_wire
 * Line2D: point_belongs
 * BSplineCurve2D: line_intersections
-* LineSegment2D: line_intersections
-* ArcEllipse3D: discretization_points
-* FullArc3D: linesegment_intersections
-* Line2D: sort_points_along_line
-* Line3D: sort_points_along_line
-* ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
 * Ellipse2D.point_over_ellipse()
 * Ellipse2D.line_intersections()
 * Ellipse2D.linesegment_intersections()
@@ -234,6 +152,83 @@ time we have to verify if a point is inside
 * Contour2D: ordering_contour, is_ordered, order_contour
 * Ellipse3D: point_belongs, abscissa, length, to_2d, discretization_points
 * CylindricalSurface3D: point_on_surface, is_coincident
+
+### CI
+
+* Mandatory CHANGELOG.md update for PR
+* pre-commit checks with cython-lint
+
+## v0.7.0 
+
+### New Features
+
+* Open/Closed TriangleShells: ability to implement specific algorithm to triangles
+* Block: faces_center (calculate directly point in the middle of the faces)
+* Circle2D: split_by_line
+* BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs, intersection_area, distance_to_b_rectangle, distance_to_point
+* Cylinder: random_point_inside, interference_volume_with_other_cylinder, lhs_points_inside
+* CylindricalSurface3D: line_intersections, linesegment_intersections, plane_intersection
+* Line2D: point_distance
+* Line3D: to_2d
+* Line3D: skew_to (verifies if two Line3D are skew)
+* LineSegment3D: line_interserctions
+* ArcEllipse3D: discretization_points
+* FullArc3D: linesegment_intersections
+* Line: sort_points_along_line
+* Line2D: point_belongs
+* ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
+
+### Fixed
+
+* Contour2D: point_belongs
+* BsplineCurve: abscissa (use different start point between 0 and length)
+* Arc3D: plot
+* Cylinder: point_belongs
+* FullArc3D: plot (use discretization_points instead of discretise)
+* Face3D: line_intersections: consider borders
+* STL: from stream (use BinaryFile and StringFile instead of io.BinaryIO and FileIO)
+* Step: from stream (use BinaryFile instead of io.BinaryIO)
+* Contour: is_overlapping (consider intersecting_points is empty)
+* LineSegment2D: to_wire (use discretization_points instead of discretise)
+* ArcEllipse2D: to_3d
+* Fix boolean operations when faces are 100% coincident
+* Fix some to_step methods from edges.py and faces.py
+
+
+### Performance improvements
+
+* Avoid unneeded bbox computation
+
+
+### Refactorings
+
+* cleanup of ClosedShell (double methods with Openshells)
+* LineSegment3D: intersections
+* Line2D: sort_points_along_line
+
+
+
+### Unittests
+
+* PlaneFace3D: line_intersections
+* BsplineCurve: abscissa
+* Circle2D: split_by_line
+* BoundingRectangle: area, center, intersection, is_inside, point_belongs, intersection_area, distance_to_point, distance_to_b_rectangle
+* Cylinder: point_belongs, random_point_inside, interference_volume_with_other_cylinder, min_distance_to_other_cylinder, is_intersecting_other_cylinder, lhs_points_inside
+* CylindricalFace3D: linesegment_intersections
+* CylindricalSurface3D: line_intersections
+* Line3D: line_distance
+* Line3D: skew_to
+* Line3D: intersections
+* LineSegment3D: line_intersections
+* LineSegment3D: linesegment_intersections
+* Contour: is_overlapping
+* LineSegment2D: line_intersections
+* ArcEllipse3D: discretization_points
+* FullArc3D: linesegment_intersections
+* Line2D: sort_points_along_line
+* Line3D: sort_points_along_line
+* ArcEllipse2D: length, point_belongs, abscissa, bounding_rectangle, straight_line_area, discretization_points, reverse
 
 
 ## v0.6.1 [12/13/2022]
