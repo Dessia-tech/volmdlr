@@ -1012,13 +1012,26 @@ class Surface3D(DessiaObject):
             delta = previous_primitive.end - primitives2d[i].start
 
             if not math.isclose(delta.norm(), 0, abs_tol=1e-5) and \
-                primitives2d[i].end == primitives2d[i - 1].end and \
-                    primitives2d[i].length() == volmdlr.TWO_PI:
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
+                    math.isclose(primitives2d[i].length(), volmdlr.TWO_PI, abs_tol=1e-5):
                 primitives2d[i] = primitives2d[i].reverse()
 
             elif not math.isclose(delta.norm(), 0, abs_tol=1e-5):
                 primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
+        last_end = primitives2d[-1].end
+        first_start = primitives2d[0].start
+        if not last_end.is_close(first_start, tol=1e-3):
+            deltax = first_start.x - last_end.x
+            deltay = first_start.y - last_end.y
+            if abs(deltax) % x_periodicity == 0:
+                primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
+                                                     volmdlr.Point2D(primitives2d[-1].end.x +deltax,
+                                                                     primitives2d[-1].end.y))
+            elif abs(deltax) % y_periodicity == 0:
+                primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
+                                                     volmdlr.Point2D(primitives2d[-1].end.x,
+                                                                     primitives2d[-1].end.y +deltay))
 
         return primitives2d
 
@@ -2348,12 +2361,35 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
+        start = self.point3d_to_2d(fullarc3d.start)
+        end = self.point3d_to_2d(fullarc3d.end)
+
+        length = fullarc3d.length()
+        angle3d = fullarc3d.angle
+        point_after_start = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
+        point_before_end = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
+
+        start, end = vm_parametric.arc3d_to_spherical_verification(start, end, angle3d,
+                                                                   [point_after_start, point_before_end],
+                                                                   [self.x_periodicity, self.y_periodicity])
+        theta1, phi1 = start
+        # theta2, phi2 = end
+        theta3, phi3 = point_after_start
+        # theta4, phi4 = point_before_end
         if self.frame.w.is_colinear_to(fullarc3d.normal, abs_tol=1e-4):
-            p1 = self.point3d_to_2d(fullarc3d.start)
-            return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.X2D)]
+            p1 = start
+            if theta1 > theta3:
+                p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi1)
+            elif theta1 < theta3:
+                p2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi1)
+            return [vme.LineSegment2D(p1, p2)]
         else:
-            p1 = self.point3d_to_2d(fullarc3d.start)
-            return [vme.LineSegment2D(p1, p1 + volmdlr.TWO_PI * volmdlr.Y2D)]
+            p1 = start
+            if phi1 > phi3:
+                p2 = volmdlr.Point2D(theta1, phi1 - volmdlr.TWO_PI)
+            elif phi1 < phi3:
+                p2 = volmdlr.Point2D(theta1, phi1 + volmdlr.TWO_PI)
+            return [vme.LineSegment2D(p1, p2)]
         # else:
         #     raise ValueError('Impossible!')
 
