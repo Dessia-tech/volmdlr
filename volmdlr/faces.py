@@ -1703,7 +1703,7 @@ class PeriodicalSurface(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
-        n = max(len(bspline_curve3d.control_points), 10)
+        n = len(bspline_curve3d.control_points)
         points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
@@ -2367,7 +2367,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         length = bspline_curve3d.length()
         theta3, phi3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
         theta4, phi4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
-        n = max(len(bspline_curve3d.control_points), 10)
+        n = len(bspline_curve3d.control_points)
         points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
