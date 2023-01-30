@@ -1107,6 +1107,10 @@ class Cylinder(RevolvedProfile):
         :param other_cylinder: volmdlr Cylinder
         :return: minimal distance between two 3D cylinders
         """
+        # Basic check
+        if self.point_belongs(other_cylinder.position) or other_cylinder.point_belongs(self.position):
+            return 0.
+
         # Local frames of cylinders
         frame0 = volmdlr.Frame3D.from_point_and_vector(
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
