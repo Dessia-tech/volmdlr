@@ -88,6 +88,7 @@ steps:
   - coverage combine scripts/.coverage tests/.coverage tutorials/.coverage
   - coverage json
   - coverage report
+  - coverage html
   - python coverage.py
 
   volumes:
