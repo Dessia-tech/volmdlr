@@ -145,6 +145,19 @@ steps:
       from_secret: email_password
     from: technical@dessia.tech
 
+- name: upload coverage
+  image: appleboy/drone-scp
+  when:
+    event: push
+  settings:
+    host: magenta.dessia.tech
+    target: /var/www/cdn/volmdlr/coverage/${DRONE_BRANCH}
+    source: htmlcov/index.html
+    strip_components: 1
+    username: drone
+    password:
+      from_secret: ssh_drone_password
+
 volumes:
   - name: pip_cache
     host:

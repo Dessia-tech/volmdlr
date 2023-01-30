@@ -1510,6 +1510,27 @@ class ContourMixin(WireMixin):
     def point_over_contour(self, point, abs_tol=1e-6):
         return self.point_over_wire(point, abs_tol)
 
+    def get_geo_lines(self, tag: int, primitives_tags: List[int]):
+        """
+        Gets the lines that define a Contour in a .geo file.
+
+        :param tag: The contour index
+        :type tag: int
+        :param primitives_tags: The contour' primitives index
+        :type primitives_tags: List[int]
+
+        :return: A line
+        :rtype: str
+        """
+
+        return 'Line Loop(' + str(tag) + ') = {' + str(primitives_tags)[1:-1] + '};'
+
+    def get_geo_points(self):
+        points = set()
+        for primitive in self.primitives:
+            points.update(primitive.get_geo_points())
+        return points
+
 
 class Contour2D(ContourMixin, Wire2D):
     """
@@ -1528,7 +1549,7 @@ class Contour2D(ContourMixin, Wire2D):
                                     'primitive_to_index',
                                     'basis_primitives', '_utd_analysis']
 
-    def __init__(self, primitives: List[volmdlr.core.Primitive2D],
+    def __init__(self, primitives: List[volmdlr.edges.Edge],
                  name: str = ''):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
@@ -1642,14 +1663,18 @@ class Contour2D(ContourMixin, Wire2D):
 
     def area(self):
         area = self.edge_polygon.area()
-        if self.edge_polygon.is_trigo():
-            trigo = 1
-        else:
-            trigo = -1
-        for edge in self.primitives:
-            area += trigo * edge.straight_line_area()
-
-        return abs(area)
+        classes = {prim.__class__ for prim in self.primitives}
+        verify_classes = classes.issubset({volmdlr.edges.LineSegment2D, volmdlr.edges.Arc2D})
+        if verify_classes:
+            if self.edge_polygon.is_trigo():
+                trigo = 1
+            else:
+                trigo = -1
+            for edge in self.primitives:
+                area += trigo * edge.straight_line_area()
+            return abs(area)
+        polygon = self.to_polygon(angle_resolution=50)
+        return polygon.triangulation().area()
 
     def center_of_mass(self):
         """
@@ -1897,6 +1922,7 @@ class Contour2D(ContourMixin, Wire2D):
                     list_contours.append(contour1)
             else:
                 list_contours.extend([contour1, contour2])
+
         return list_contours
 
     def split_regularly(self, n):
@@ -2943,11 +2969,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 cos = round(vect1.dot(vect2) / (vect1.norm() * vect2.norm()),
                             4)
                 if cos < concavity:
-                    new_line_A = volmdlr.edges.LineSegment2D(start=line.start, end=middle_point)
-                    new_line_B = volmdlr.edges.LineSegment2D(start=middle_point, end=line.end)
-                    if not (line_colides_with_hull(line=new_line_A,
+                    new_line_a = volmdlr.edges.LineSegment2D(start=line.start, end=middle_point)
+                    new_line_b = volmdlr.edges.LineSegment2D(start=middle_point, end=line.end)
+                    if not (line_colides_with_hull(line=new_line_a,
                                                    concave_hull=hull_concave_edges) and line_colides_with_hull(
-                            line=new_line_B, concave_hull=hull_concave_edges)):
+                            line=new_line_b, concave_hull=hull_concave_edges)):
                         ok_middle_points.append(middle_point)
                         list_cossines.append(cos)
             if len(ok_middle_points) > 0:
@@ -3381,7 +3407,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                                         middle_point + normal_vector)
 
         line_intersections = {line_segment1: [], line_segment2: []}
-        for ls in [line_segment1, line_segment2
+        for line_segment in [line_segment1, line_segment2
                    ]:
             inter_points = []
             for prim in polygon2.line_segments + self.line_segments[
@@ -3389,20 +3415,20 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                                      polygon_primitive)] + self.line_segments[
                                                                            self.line_segments.index(
                                                                                polygon_primitive) + 1:]:
-                inters = prim.linesegment_intersections(ls)
+                inters = prim.linesegment_intersections(line_segment)
                 if inters:
-                    line_intersections[ls].append((inters[0], prim))
+                    line_intersections[line_segment].append((inters[0], prim))
                     inter_points.append(inters[0])
-                elif ls.point_belongs(prim.start, 1e-7):
+                elif line_segment.point_belongs(prim.start, 1e-7):
                     if prim.start not in inter_points:
-                        line_intersections[ls].append((prim.start, prim))
+                        line_intersections[line_segment].append((prim.start, prim))
                         inter_points.append(prim.start)
-                elif ls.point_belongs(prim.end, 1e-7):
+                elif line_segment.point_belongs(prim.end, 1e-7):
                     if prim.end not in inter_points:
-                        line_intersections[ls].append((prim.end, prim))
+                        line_intersections[line_segment].append((prim.end, prim))
                         inter_points.append(prim.end)
                 elif prim.point_belongs(middle_point, 1e-7):
-                    line_intersections[ls].append((prim.middle_point(), prim))
+                    line_intersections[line_segment].append((prim.middle_point(), prim))
                     inter_points.append(prim.middle_point())
         return line_intersections
 
@@ -4067,7 +4093,7 @@ class Circle2D(Contour2D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 40):
         """
-        Discretize the Contour to have "n" points.
+        Discretize a Contour to have "n" points.
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
@@ -4085,6 +4111,11 @@ class Circle2D(Contour2D):
         please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(angle_resolution=discretization_resolution)
+
+    def get_geo_points(self):
+        return [volmdlr.Point3D(self.radius, self.center.y, 0),
+                volmdlr.Point3D(self.center.x, self.center.y, 0),
+                volmdlr.Point3D(-self.radius, self.center.y, 0)]
 
 
 class Ellipse2D(Contour2D):
@@ -4826,7 +4857,7 @@ class Circle3D(Contour3D):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        Discretize the Circle to have "n" points.
+        Discretize a Circle to have "n" points.
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned

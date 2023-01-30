@@ -314,20 +314,22 @@ class Vector(DessiaObject):
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector: "Vector"):
+    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
         """
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.
 
         :param other_vector: A vector-like object
         :type other_vector: :class:`volmdlr.Vector`
+        :param abs_tol: Absolute tolerance to consider colinear
+        :type abs_tol: float
         :return: `True` if the two vectors are colinear, `False` otherwise
         :rtype: bool
         """
         try:
             return math.isclose(abs(self.dot(other_vector)) / self.norm() / other_vector.norm(),
                                 1,
-                                abs_tol=1e-5)
+                                abs_tol=abs_tol)
 
         except ZeroDivisionError:
             return False
@@ -1136,6 +1138,31 @@ class Point2D(Vector2D):
         point_symmetry = point_projection + (point_projection - self)
 
         return point_symmetry
+
+    def coordinates(self):
+        '''
+        gets x,y coordinates of a point2d
+        '''
+
+        return (self.x, self.y)
+
+    def get_geo_lines(self, tag: int, point_mesh_size: float = None):
+        '''
+        gets the lines that define a Point2D in a .geo file
+
+        :param tag: The point index
+        :type tag: int
+        :param mesh_size: The target mesh size close to the point, defaults to None
+        :type mesh_size: float, optional
+
+        :return: A line
+        :rtype: str
+        '''
+
+        if point_mesh_size:
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
+        else:
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+"};"
 
 
 O2D = Point2D(0, 0)
@@ -2037,6 +2064,24 @@ class Point3D(Vector3D):
         :rtype: tuple
         """
         return self.x, self.y, self.z
+
+    def get_geo_lines(self, tag: int, point_mesh_size: float = None):
+        """
+        gets the lines that define a Point3D in a .geo file
+
+        :param tag: The point index
+        :type tag: int
+        :param mesh_size: The target mesh size close to the point, defaults to None
+        :type mesh_size: float, optional
+
+        :return: A line
+        :rtype: str
+        """
+
+        if point_mesh_size:
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
+        else:
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+"};"
 
 
 O3D = Point3D(0, 0, 0)
