@@ -152,3 +152,18 @@ volumes:
   - name: cache
     host:
       path: /tmp/cache/drone
+
+- name: upload coverage
+  image: appleboy/drone-scp
+  when:
+    event: push
+  settings:
+    host: magenta.dessia.tech
+    target: /var/www/cdn/volmdlr/coverage
+    source: htmlcov/$$DRONE_BRANCH.html
+    strip_components: 1
+    username: drone
+    password:
+      from_secret: ssh_drone_password
+
+
