@@ -160,7 +160,7 @@ volumes:
   settings:
     host: magenta.dessia.tech
     target: /var/www/cdn/volmdlr/coverage
-    source: htmlcov/$$DRONE_BRANCH.html
+    source: htmlcov/${DRONE_BRANCH}.html
     strip_components: 1
     username: drone
     password:
