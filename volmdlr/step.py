@@ -968,10 +968,11 @@ class Step(dc.DessiaObject):
                 shells.extend(object_dict[node])
         if not shells:
             for node in shell_nodes_copy:
-                if isinstance(object_dict[node], list):
-                    shells.extend(object_dict[node])
-                else:
-                    shells.append(object_dict[node])
+                if object_dict[node]:
+                    if isinstance(object_dict[node], list):
+                        shells.extend(object_dict[node])
+                    else:
+                        shells.append(object_dict[node])
         volume_model = volmdlr.core.VolumeModel(shells, errors=errors)
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)
