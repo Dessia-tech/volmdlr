@@ -144,7 +144,9 @@ class LinearElement(vme.LineSegment2D):
 
 
 class TriangularElement(vmw.Triangle):
-    """ Abstract class to define a triangular element. """
+    """
+    A mesh element defined with 3 nodes.
+    """
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']

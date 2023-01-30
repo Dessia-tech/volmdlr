@@ -4,7 +4,7 @@ Surfaces & faces
 
 import math
 import warnings
-from itertools import product
+from itertools import chain, product
 from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
@@ -326,6 +326,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             primitive is the intersected primitive.
         :rtype: List[Tuple[:class:`volmdlr.Point2D`,
             :class:`volmdlr.core.Primitive2D`]]
+
         """
         intersection_points = []
         for primitive in self.outer_contour.primitives:
@@ -343,6 +344,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         Split in n slices.
         # TODO: is this used ?
+
         """
 
         cutted_contours = []
@@ -712,6 +714,199 @@ class Surface2D(volmdlr.core.Primitive2D):
         new_contour = self.frame_mapping(frame, side)
         self.outer_contour = new_contour.outer_contour
         self.inner_contours = new_contour.inner_contours
+
+    def geo_lines(self):  # , mesh_size_list=None):
+        """
+        Gets the lines that define a Surface2D in a .geo file.
+        """
+
+        i, p = None, None
+        lines, line_surface, lines_tags = [], [], []
+        point_account, line_account, line_loop_account = 0, 0, 1
+        for c, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
+
+            if isinstance(contour, volmdlr.wires.Circle2D):
+                points = [volmdlr.Point2D(contour.center.x - contour.radius, contour.center.y),
+                          contour.center,
+                          volmdlr.Point2D(contour.center.x + contour.radius, contour.center.y)]
+                index = []
+                for i, point in enumerate(points):
+                    lines.append(point.get_geo_lines(tag=point_account + i + 1,
+                                                     point_mesh_size=None))
+                    index.append(point_account + i + 1)
+
+                lines.append('Circle(' + str(line_account + 1) +
+                             ') = {' + str(index[0]) + ', ' + str(index[1]) + ', ' + str(index[2]) + '};')
+                lines.append('Circle(' + str(line_account + 2) +
+                             ') = {' + str(index[2]) + ', ' + str(index[1]) + ', ' + str(index[0]) + '};')
+
+                lines_tags.append(line_account + 1)
+                lines_tags.append(line_account + 2)
+
+                lines.append('Line Loop(' + str(c + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
+                line_surface.append(line_loop_account)
+
+                point_account = point_account + 2 + 1
+                line_account, line_loop_account = line_account + 1 + 1, line_loop_account + 1
+                lines_tags = []
+
+            elif isinstance(contour, (volmdlr.wires.Contour2D, volmdlr.wires.ClosedPolygon2D)):
+                if not isinstance(contour, volmdlr.wires.ClosedPolygon2D):
+                    contour = contour.to_polygon(1)
+                for i, point in enumerate(contour.points):
+                    lines.append(point.get_geo_lines(tag=point_account + i + 1,
+                                                     point_mesh_size=None))
+
+                for p, primitive in enumerate(contour.primitives):
+                    if p != len(contour.primitives) - 1:
+                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
+                                                             start_point_tag=point_account + p + 1,
+                                                             end_point_tag=point_account + p + 2))
+                    else:
+                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
+                                                             start_point_tag=point_account + p + 1,
+                                                             end_point_tag=point_account + 1))
+                    lines_tags.append(line_account + p + 1)
+
+                lines.append('Line Loop(' + str(c + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
+                line_surface.append(line_loop_account)
+                point_account = point_account + i + 1
+                line_account, line_loop_account = line_account + p + 1, line_loop_account + 1
+                lines_tags = []
+
+        lines.append('Plane Surface(' + str(1) + ') = {' + str(line_surface)[1:-1] + '};')
+
+        return lines
+
+    def mesh_lines(self,
+                   factor: float,
+                   curvature_mesh_size: int = None,
+                   min_points: int = None,
+                   initial_mesh_size: float = 5):
+        """
+        Gets the lines that define mesh parameters for a Surface2D, to be added to a .geo file.
+
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A list of lines that describe mesh parameters
+        :rtype: List[str]
+        """
+
+        lines = []
+        if factor == 0:
+            factor = 1e-3
+
+        size = (math.sqrt(self.area()) / initial_mesh_size) * factor
+
+        if min_points:
+            primitives, primitives_length = [], []
+            for _, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
+                if isinstance(contour, volmdlr.wires.Circle2D):
+                    primitives.append(contour)
+                    primitives.append(contour)
+                    primitives_length.append(contour.length() / 2)
+                    primitives_length.append(contour.length() / 2)
+                else:
+                    for p, primitive in enumerate(contour.primitives):
+                        if ((primitive not in primitives)
+                                and (primitive.reverse() not in primitives)):
+                            primitives.append(primitive)
+                            primitives_length.append(primitive.length())
+
+            for i, length in enumerate(primitives_length):
+                if length < min_points * size:
+                    lines.append('Transfinite Curve {' + str(i) + '} = ' + str(min_points) + ' Using Progression 1;')
+
+        lines.append('Field[1] = MathEval;')
+        lines.append('Field[1].F = "' + str(size) + '";')
+        lines.append('Background Field = 1;')
+        if curvature_mesh_size:
+            lines.append('Mesh.MeshSizeFromCurvature = ' + str(curvature_mesh_size) + ';')
+
+        # lines.append('Coherence;')
+
+        return lines
+
+    def to_geo(self, file_name: str,
+               factor: float, **kwargs):
+        # curvature_mesh_size: int = None,
+        # min_points: int = None,
+        # initial_mesh_size: float = 5):
+        """
+        Gets the .geo file for the Surface2D.
+        """
+
+        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+            if element[0] not in kwargs:
+                kwargs[element[0]] = element[1]
+
+        lines = self.geo_lines()
+        lines.extend(self.mesh_lines(factor, kwargs['curvature_mesh_size'],
+                                     kwargs['min_points'], kwargs['initial_mesh_size']))
+
+        with open(file_name + '.geo', 'w', encoding="utf-8") as f:
+            for line in lines:
+                f.write(line)
+                f.write('\n')
+        f.close()
+
+    def to_msh(self, file_name: str, mesh_dimension: int,
+               factor: float, **kwargs):
+        # curvature_mesh_size: int = 0,
+        # min_points: int = None,
+        # initial_mesh_size: float = 5):
+        """
+        Gets .msh file for the Surface2D generated by gmsh.
+
+        :param file_name: The msh. file name
+        :type file_name: str
+        :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+        :type mesh_dimension: int
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+            if element[0] not in kwargs:
+                kwargs[element[0]] = element[1]
+
+        self.to_geo(file_name=file_name, mesh_dimension=mesh_dimension,
+                    factor=factor, curvature_mesh_size=kwargs['curvature_mesh_size'],
+                    min_points=kwargs['min_points'], initial_mesh_size=kwargs['initial_mesh_size'])
+
+        volmdlr.core.VolumeModel.generate_msh_file(file_name, mesh_dimension)
+
+        # gmsh.initialize()
+        # gmsh.open(file_name + ".geo")
+
+        # gmsh.model.geo.synchronize()
+        # gmsh.model.mesh.generate(mesh_dimension)
+
+        # gmsh.write(file_name + ".msh")
+
+        # gmsh.finalize()
 
 
 class Surface3D(DessiaObject):
@@ -1655,7 +1850,7 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         new_frame = self.frame.frame_mapping(frame, side)
@@ -2001,7 +2196,7 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
 
         :param frame: The new frame to map to.
         :type frame: `volmdlr.Frame3D
@@ -2179,7 +2374,7 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        ToroidalSurface3D translation
+        ToroidalSurface3D translation.
         :param offset: translation vector
         :return: A new translated ToroidalSurface3D
         """
@@ -3630,7 +3825,8 @@ class BSplineSurface3D(Surface3D):
                 name, points, self.u_multiplicities, self.v_multiplicities,
                 self.degree_u, self.degree_v, self.u_knots, self.v_knots)
         else:
-            script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={},weights={})\n'.format(
+            script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={}, \
+                vknots={},weights={})\n'.format(
                 name, points, self.u_multiplicities, self.v_multiplicities,
                 self.degree_u, self.degree_v, self.u_knots, self.v_knots,
                 self.weights)
@@ -3640,7 +3836,7 @@ class BSplineSurface3D(Surface3D):
     def rotation(self, center: volmdlr.Vector3D,
                  axis: volmdlr.Vector3D, angle: float):
         """
-        BSplineSurface3D rotation
+        BSplineSurface3D rotation.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -3677,7 +3873,7 @@ class BSplineSurface3D(Surface3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        BSplineSurface3D translation
+        BSplineSurface3D translation.
         :param offset: translation vector
         :return: A new translated BSplineSurface3D
         """
@@ -3705,7 +3901,7 @@ class BSplineSurface3D(Surface3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new BSplineSurface3D
+        Changes frame_mapping and return a new BSplineSurface3D.
         side = 'old' or 'new'
         """
         new_control_points = [p.frame_mapping(frame, side) for p in
@@ -3721,7 +3917,7 @@ class BSplineSurface3D(Surface3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         new_bsplinesurface3d = self.frame_mapping(frame, side)
@@ -3743,7 +3939,7 @@ class BSplineSurface3D(Surface3D):
 
     def simplify_surface(self):
         """
-        Verifies if BSplineSurface3D could be a Plane3D
+        Verifies if BSplineSurface3D could be a Plane3D.
         :return: simplified surface if possible, otherwis, returns self
         """
         points = [self.control_points[0], self.control_points[math.ceil(len(self.control_points) / 2)],
@@ -3836,11 +4032,11 @@ class BSplineSurface3D(Surface3D):
         u_close = '.T.' if self.x_periodicity else '.F.'
         v_close = '.T.' if self.y_periodicity else '.F.'
 
-        content += "#{} = B_SPLINE_SURFACE_WITH_KNOTS('{}',{},{},{},.UNSPECIFIED.,{},{},.F.,{},{},{},{},.UNSPECIFIED.);\n" \
-            .format(current_id, self.name, self.degree_u, self.degree_v,
-                    point_matrix_ids, u_close, v_close,
-                    tuple(self.u_multiplicities), tuple(self.v_multiplicities),
-                    tuple(self.u_knots), tuple(self.v_knots))
+        content += "#{} = B_SPLINE_SURFACE_WITH_KNOTS('{}',{},{},{},.UNSPECIFIED.,{},{},.F.,{},{},{},{},.UNSPECIFIED.);\
+            \n".format(current_id, self.name, self.degree_u, self.degree_v,
+                       point_matrix_ids, u_close, v_close,
+                       tuple(self.u_multiplicities), tuple(self.v_multiplicities),
+                       tuple(self.u_knots), tuple(self.v_knots))
         return content, [current_id]
 
     def grid3d(self, grid2d: volmdlr.grid.Grid2D):
@@ -3998,6 +4194,7 @@ class BSplineSurface3D(Surface3D):
     def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, grid2d: volmdlr.grid.Grid2D):
         """
         Convert a point2d from the parametric to the dimensioned frame.
+
         """
 
         # Check if the 0<point2d.x<1 and 0<point2d.y<1
@@ -4105,6 +4302,7 @@ class BSplineSurface3D(Surface3D):
     def point2d_with_dimension_to_parametric_frame(self, point2d, grid2d: volmdlr.grid.Grid2D):
         """
         Convert a point2d from the dimensioned to the parametric frame.
+
         """
 
         if self._grids2d != grid2d:
@@ -4213,6 +4411,7 @@ class BSplineSurface3D(Surface3D):
     def linesegment2d_parametric_to_dimension(self, linesegment2d, grid2d: volmdlr.grid.Grid2D):
         """
         Convert a linesegment2d from the parametric to the dimensioned frame.
+
         """
 
         points = linesegment2d.discretization_points(number_points=20)
@@ -4237,6 +4436,7 @@ class BSplineSurface3D(Surface3D):
     def linesegment2d_with_dimension_to_parametric_frame(self, linesegment2d):
         """
         Convert a linesegment2d from the dimensioned to the parametric frame.
+
         """
 
         try:
@@ -4262,6 +4462,7 @@ class BSplineSurface3D(Surface3D):
     def bsplinecurve2d_parametric_to_dimension(self, bsplinecurve2d, grid2d: volmdlr.grid.Grid2D):
         """
         Convert a bsplinecurve2d from the parametric to the dimensioned frame.
+
         """
 
         # check if bsplinecurve2d is in a list
@@ -4296,6 +4497,7 @@ class BSplineSurface3D(Surface3D):
     def bsplinecurve2d_with_dimension_to_parametric_frame(self, bsplinecurve2d):
         """
         Convert a bsplinecurve2d from the dimensioned to the parametric frame.
+
         """
 
         points_dim = bsplinecurve2d.control_points
@@ -4481,7 +4683,7 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v):
         """
-        Bspline Surface interpolation through 3d points
+        Bspline Surface interpolation through 3d points.
 
         Parameters
         ----------
@@ -4513,7 +4715,7 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, **kwargs):
         """
-        Bspline Surface approximate through 3d points
+        Bspline Surface approximate through 3d points.
 
         Parameters
         ----------
@@ -4958,7 +5160,8 @@ class BSplineSurface3D(Surface3D):
         """
         Check if the two surfaces are intersected or not.
 
-        return True, when there are more 50points on the intersection zone
+        return True, when there are more 50points on the intersection zone.
+
         """
 
         # intersection_results = self.intersection_with(other_bspline_surface3d)
@@ -5534,6 +5737,90 @@ class Face3D(volmdlr.core.Primitive3D):
         if contour1.is_sharing_primitives_with(contour2):
             return True
         return False
+
+    def geo_lines(self):  # , mesh_size_list=None):
+        """
+        Gets the lines that define a Face3D in a .geo file
+        """
+
+        i, p = None, None
+        lines, line_surface, lines_tags = [], [], []
+        point_account, line_account, line_loop_account = 0, 0, 1
+        for c, contour in enumerate(list(chain(*[[self.outer_contour3d], self.inner_contours3d]))):
+
+            if isinstance(contour, volmdlr.wires.Circle2D):
+                # point=[contour.radius, contour.center.y, 0]
+                # lines.append('Point('+str(point_account+1)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # point = [*contour.center, 0]
+                # lines.append('Point('+str(point_account+2)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # point=[-contour.radius, contour.center.y, 0]
+                # lines.append('Point('+str(point_account+3)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # lines.append('Circle('+str(line_account+1)+') = {'+str(point_account+1)+','+str(point_account+2) \
+                #              +','+str(point_account+3)+'};')
+                # lines.append('Circle('+str(line_account+2)+') = {'+str(point_account+3)+','+str(point_account+2) \
+                #              + ','+str(point_account+1)+'};')
+
+                # lines_tags.extend([line_account+1, line_account+2])
+
+                # lines.append('Line Loop('+str(line_loop_account+1)+') = {'+str(lines_tags)[1:-1]+'};')
+
+                # line_surface.append(line_loop_account+1)
+
+                # lines_tags = []
+                # point_account, line_account, line_loop_account = point_account+3, line_account+2, line_loop_account+1
+
+                pass
+
+            elif isinstance(contour, (volmdlr.wires.Contour3D, volmdlr.wires.ClosedPolygon3D)):
+                if not isinstance(contour, volmdlr.wires.ClosedPolygon3D):
+                    contour = contour.to_polygon(1)
+                for i, point in enumerate(contour.points):
+                    lines.append(point.get_geo_lines(tag=point_account + i + 1,
+                                                     point_mesh_size=None))
+
+                for p, primitive in enumerate(contour.primitives):
+                    if p != len(contour.primitives) - 1:
+                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
+                                                             start_point_tag=point_account + p + 1,
+                                                             end_point_tag=point_account + p + 2))
+                    else:
+                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
+                                                             start_point_tag=point_account + p + 1,
+                                                             end_point_tag=point_account + 1))
+                    lines_tags.append(line_account + p + 1)
+
+                lines.append('Line Loop(' + str(c + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
+                line_surface.append(line_loop_account)
+                point_account = point_account + i + 1
+                line_account, line_loop_account = line_account + p + 1, line_loop_account + 1
+                lines_tags = []
+
+        lines.append('Plane Surface(' + str(1) + ') = {' + str(line_surface)[1:-1] + '};')
+
+        return lines
+
+    def to_geo(self, file_name: str):  # , mesh_size_list=None):
+        """
+        Gets the .geo file for the Face3D
+        """
+
+        lines = self.geo_lines()
+
+        with open(file_name + '.geo', 'w', encoding="utf-8") as f:
+            for line in lines:
+                f.write(line)
+                f.write('\n')
+        f.close()
+
+    def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
+        """
+        Gets the lines that define a PlaneFace3D in a .geo file
+        """
+
+        return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
     def edge3d_inside(self, edge3d):
         method_name = f'{edge3d.__class__.__name__.lower()[:-2]}_inside'
@@ -6500,6 +6787,13 @@ class PlaneFace3D(Face3D):
 
         return list_faces
 
+    def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
+        """
+        Gets the lines that define a PlaneFace3D in a .geo file.
+        """
+
+        return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
+
 
 class Triangle3D(PlaneFace3D):
     """
@@ -6618,12 +6912,10 @@ class Triangle3D(PlaneFace3D):
 
     def area(self) -> float:
         """
-
         :return: area triangle
         :rtype: float
 
         Formula explained here: https://www.triangle-calculator.com/?what=vc
-
         """
         a = self.point1.point_distance(self.point2)
         b = self.point2.point_distance(self.point3)
@@ -6656,7 +6948,7 @@ class Triangle3D(PlaneFace3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
         side = 'old' or 'new'
         """
         self.point1.frame_mapping_inplace(frame, side)
@@ -6703,7 +6995,8 @@ class Triangle3D(PlaneFace3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Triangle3D rotation
+        Triangle3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -6719,7 +7012,8 @@ class Triangle3D(PlaneFace3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Triangle3D rotation. Object is updated inplace
+        Triangle3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -6731,34 +7025,58 @@ class Triangle3D(PlaneFace3D):
         self.bounding_box = new_bounding_box
 
     def subdescription(self, resolution=0.01):
-        frame = self.surface3d.frame
-        pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        """
+        Returns a list of Point3D with resolution as max
+        between Point3D.
+        """
 
-        t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
+        lengths = [self.points[0].point_distance(self.points[1]),
+                   self.points[1].point_distance(self.points[2]),
+                   self.points[2].point_distance(self.points[0])]
+        max_length = max(lengths)
 
-        xmin, xmax = min(pt.x for pt in pts2d), max(pt.x for pt in pts2d)
-        ymin, ymax = min(pt.y for pt in pts2d), max(pt.y for pt in pts2d)
+        if max_length <= resolution:
+            return self.points
 
-        nbx, nby = int(((xmax - xmin) / resolution) + 2), int(((ymax - ymin) / resolution) + 2)
-        points_box = []
-        for i in range(nbx):
-            x = min(xmin + i * resolution, xmax)
-            if x == xmin:
-                x = xmin + 0.01 * resolution
-            for j in range(nby):
-                y = min(ymin + j * resolution, ymax)
-                if y == ymin:
-                    y = ymin + 0.01 * resolution
-                points_box.append(volmdlr.Point2D(x, y))
+        pos_length_max = lengths.index(max_length)
+        point0 = self.points[-3 + pos_length_max]
+        point1 = self.points[-3 + pos_length_max + 1]
+        point2 = self.points[-3 + pos_length_max + 2]
 
-        points = [pt.copy() for pt in self.points]
-        for pt in points_box:
-            if t_poly2d.point_belongs(pt):
-                points.append(pt.to_3d(frame.origin, frame.u, frame.v))
-            elif t_poly2d.point_over_contour(pt):
-                points.append(pt.to_3d(frame.origin, frame.u, frame.v))
+        vector_0_1 = point0 - point1
+        vector_0_1.normalize()
+        points_0_1 = []
 
-        return volmdlr.Vector3D.remove_duplicate(points)
+        for k in range(int(max_length / resolution) + 2):
+            if k == 0:
+                points_0_1.append(point1)
+            distance_to_point = min(k * resolution, max_length)
+            points_0_1.append(point1 + vector_0_1 * distance_to_point)
+
+        vector_2_1, length_2_1 = point2 - point1, point2.point_distance(point1)
+        vector_2_1.normalize()
+        points_in = []
+
+        for k, p0_1 in enumerate(points_0_1):
+            if k == 0:
+                point_on_2_1 = point1
+            distance_to_point = min(points_0_1[0].point_distance(p0_1) * length_2_1 / max_length, length_2_1)
+            point_on_2_1 = point1 + vector_2_1 * distance_to_point
+
+            length_2_0 = point_on_2_1.point_distance(p0_1)
+            nb_int = int(length_2_0 / resolution) + 2
+            if nb_int == 2:
+                points_in.append(point_on_2_1)
+            else:
+                vector_2_0 = point_on_2_1 - p0_1
+                vector_2_0.normalize()
+                step_in = length_2_0 / (nb_int - 1)
+                for i in range(nb_int):
+                    distance_to_point = min(i * step_in, length_2_0)
+                    if distance_to_point != 0:
+                        points_in.append(p0_1 + vector_2_0 * distance_to_point)
+
+        return npy.unique(points_0_1 + points_in).tolist()
 
     def subdescription_to_triangles(self, resolution=0.01):
         """
@@ -6766,43 +7084,32 @@ class Triangle3D(PlaneFace3D):
         length of subtriangles side.
         """
 
-        frame = self.surface3d.frame
-        pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        sub_triangles, done = [self.points], False
 
-        t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
-
-        sub_triangles2d = [t_poly2d]
-        done = False
         while not done:
-            triangles2d = []
-            for t, subtri in enumerate(sub_triangles2d):
-                ls_length = [ls.length() for ls in subtri.line_segments]
-                ls_max = max(ls_length)
+            triangles = []
+            for subtri in sub_triangles:
+                lengths = [subtri[0].point_distance(subtri[1]),
+                           subtri[1].point_distance(subtri[2]),
+                           subtri[2].point_distance(subtri[0])]
+                max_length = max(lengths)
 
-                if ls_max > resolution:
-                    pos_ls_max = ls_length.index(ls_max)
-                    taller = subtri.line_segments[pos_ls_max]
-                    p1, p2 = taller.start, taller.end
-                    p3 = list(set(subtri.points) - set([p1, p2]))[0]
+                if max_length > resolution:
+                    pos_length_max = lengths.index(max_length)
+                    pt_mid = (subtri[-3 + pos_length_max] + subtri[-3 + pos_length_max + 1]) / 2
+                    triangles.extend([[subtri[-3 + pos_length_max], pt_mid, subtri[-3 + pos_length_max + 2]],
+                                      [subtri[-3 + pos_length_max + 1], pt_mid, subtri[-3 + pos_length_max + 2]]])
 
-                    pt_mid = (p1 + p2) / 2
-                    new_triangles2d = [volmdlr.wires.ClosedPolygon2D([p1, pt_mid, p3]),
-                                       volmdlr.wires.ClosedPolygon2D([p2, pt_mid, p3])]
-
-                    triangles2d.extend(new_triangles2d)
                 else:
-                    triangles2d.append(subtri)
+                    triangles.append(subtri)
 
-            if len(sub_triangles2d) == len(triangles2d):
+            if len(sub_triangles) == len(triangles):
                 done = True
                 break
-            sub_triangles2d = triangles2d
 
-        triangles3d = [Triangle3D(tri.points[0].to_3d(frame.origin, frame.u, frame.v),
-                                  tri.points[1].to_3d(frame.origin, frame.u, frame.v),
-                                  tri.points[2].to_3d(frame.origin, frame.u, frame.v)) for tri in sub_triangles2d]
+            sub_triangles = triangles
 
-        return triangles3d
+        return [Triangle3D(subtri[0], subtri[1], subtri[2]) for subtri in sub_triangles]
 
     def middle(self):
         return (self.point1 + self.point2 + self.point3) / 3
@@ -6825,7 +7132,6 @@ class Triangle3D(PlaneFace3D):
 
 class CylindricalFace3D(Face3D):
     """
-
     :param contours2d: The cylinder's contour2D.
     :type contours2d: volmdlr.Contour2D.
     :param cylindricalsurface3d: Information about the Cylinder.
@@ -7226,6 +7532,13 @@ class CylindricalFace3D(Face3D):
         if coord.index(max(coord)) == 0:
             return 'x'
         return 'y'
+
+    def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
+        """
+        Gets the lines that define a CylindricalFace3D in a .geo file
+        """
+
+        return 'Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
     def arc_inside(self, arc: vme.Arc3D):
         """
@@ -8592,6 +8905,165 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             list_faces.extend(face1.project_faces(shell.faces))
 
         return self.__class__(list_faces)
+
+    def get_geo_lines(self, update_data,
+                      point_mesh_size: float = None):
+        """
+        Gets the lines that define an OpenShell3D geometry in a .geo file.
+
+        :param update_data: Data used for VolumeModel defined with different shells
+        :type update_data: dict
+        :param point_mesh_size: The mesh size at a specific point, defaults to None
+        :type point_mesh_size: float, optional
+
+        :return: A list of lines that describe the geomery & the updated data
+        :rtype: Tuple(List[str], dict)
+        """
+
+        primitives = []
+        points = set()
+        for face in self.faces:
+            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                points.update(contour.get_geo_points())
+                if isinstance(contour, volmdlr.wires.Circle2D):
+                    pass
+                else:
+                    for _, primitive in enumerate(contour.primitives):
+                        if ((primitive not in primitives)
+                                and (primitive.reverse() not in primitives)):
+                            primitives.append(primitive)
+
+                # if isinstance(contour, volmdlr.wires.Circle2D):
+                #     points.add(volmdlr.Point3D(contour.radius, contour.center.y, 0))
+                #     points.add(volmdlr.Point3D(contour.center.x, contour.center.y, 0))
+                #     points.add(volmdlr.Point3D(-contour.radius, contour.center.y, 0))
+
+                # else:
+                #     for _, primitive in enumerate(contour.primitives):
+                #         if isinstance(primitive, volmdlr.edges.LineSegment):
+                #             points.add(primitive.start)
+                #             points.add(primitive.end)
+
+                #         if isinstance(primitive, volmdlr.edges.Arc):
+                #             points.add(primitive.start)
+                #             points.add(primitive.center)
+                #             points.add(primitive.end)
+
+                #         if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
+                #             # for point in primitive.control_points:
+                #             # points.add(point)
+                #             for point in primitive.discretization_points():
+                #                 points.add(point)
+
+                #         if ((primitive not in primitives)
+                #                 and (primitive.reverse() not in primitives)):
+                #             primitives.append(primitive)
+
+        indices_check = len(primitives) * [None]
+
+        point_account = update_data['point_account']
+        line_account, line_loop_account = update_data['line_account'] + 1, update_data['line_loop_account']
+        lines, line_surface, lines_tags = [], [], []
+
+        points = list(points)
+        for p_index, point in enumerate(points):
+            lines.append(point.get_geo_lines(tag=p_index + point_account + 1,
+                                             point_mesh_size=point_mesh_size))
+
+        for f_index, face in enumerate(self.faces):
+            line_surface = []
+            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                lines_tags = []
+                if isinstance(contour, volmdlr.wires.Circle2D):
+                    pass
+                else:
+                    for _, primitive in enumerate(contour.primitives):
+
+                        try:
+                            # line_account += 1
+                            # print(line_account)
+                            index = primitives.index(primitive)
+                            if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
+                                discretization_points = primitive.discretization_points()
+                                start_point_tag = points.index(discretization_points[0]) + 1
+                                end_point_tag = points.index(discretization_points[1]) + 1
+                                primitive_linesegments = volmdlr.edges.LineSegment3D(
+                                    discretization_points[0], discretization_points[1])
+                                lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
+                                                                                  start_point_tag=start_point_tag
+                                                                                  + point_account,
+                                                                                  end_point_tag=end_point_tag
+                                                                                  + point_account))
+
+                            if isinstance(primitive, volmdlr.edges.LineSegment):
+                                start_point_tag = points.index(primitive.start) + 1
+                                end_point_tag = points.index(primitive.end) + 1
+                                lines.append(primitive.get_geo_lines(tag=line_account,
+                                                                     start_point_tag=start_point_tag + point_account,
+                                                                     end_point_tag=end_point_tag + point_account))
+                            elif isinstance(primitive, volmdlr.edges.Arc):
+                                start_point_tag = points.index(primitive.start) + 1
+                                center_point_tag = points.index(primitive.center) + 1
+                                end_point_tag = points.index(primitive.end) + 1
+                                lines.append(primitive.get_geo_lines(tag=line_account,
+                                                                     start_point_tag=start_point_tag + point_account,
+                                                                     center_point_tag=center_point_tag + point_account,
+                                                                     end_point_tag=end_point_tag + point_account))
+
+                            lines_tags.append(line_account)
+                            indices_check[index] = line_account
+                            line_account += 1
+
+                        except ValueError:
+                            index = primitives.index(primitive.reverse())
+                            lines_tags.append(-indices_check[index])
+
+                    lines.append(contour.get_geo_lines(line_loop_account + 1, lines_tags))
+
+                    line_surface.append(line_loop_account + 1)
+                    line_loop_account += 1
+                    lines_tags = []
+
+            lines.append(face.get_geo_lines((f_index + 1 + update_data['surface_account']),
+                                            line_surface))
+
+            line_surface = []
+
+        lines.append('Surface Loop(' + str(1 + update_data['surface_loop_account']) + ') = {'
+                     + str(list(range(update_data['surface_account'] + 1,
+                                      update_data['surface_account'] +
+                                      len(self.faces) + 1)))[1:-1] + '};')
+
+        update_data['point_account'] += len(points)
+        update_data['line_account'] += line_account - 1
+        update_data['line_loop_account'] += line_loop_account
+        update_data['surface_account'] += len(self.faces)
+        update_data['surface_loop_account'] += 1
+
+        return lines, update_data
+
+    def get_mesh_lines_with_transfinite_curves(self, min_points, size):
+
+        lines, primitives, primitives_length = [], [], []
+        for face in self.faces:
+            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                if isinstance(contour, volmdlr.wires.Circle2D):
+                    primitives.append(contour)
+                    primitives.append(contour)
+                    primitives_length.append(contour.length() / 2)
+                    primitives_length.append(contour.length() / 2)
+                else:
+                    for _, primitive_c in enumerate(contour.primitives):
+                        if ((primitive_c not in primitives)
+                                and (primitive_c.reverse() not in primitives)):
+                            primitives.append(primitive_c)
+                            primitives_length.append(primitive_c.length())
+
+        for i, length in enumerate(primitives_length):
+            if length < min_points * size:
+                lines.append('Transfinite Curve {' + str(i) + '} = ' +
+                             str(min_points) + ' Using Progression 1;')
+        return lines
 
 
 class ClosedShell3D(OpenShell3D):
