@@ -1547,8 +1547,8 @@ class PeriodicalSurface(Surface3D):
                 inner_contour_theta = [theta3, theta4]
                 oc_xmin_index, outer_contour_xmin = min(enumerate(outer_contour_theta), key=lambda x: x[1])
                 oc_xmax_index, outer_contour_xman = max(enumerate(outer_contour_theta), key=lambda x: x[1])
-                ic_xmin_index, inner_contour_xmin = min(enumerate(inner_contour_theta), key=lambda x: x[1])
-                ic_xmax_index, inner_contour_xmax = max(enumerate(inner_contour_theta), key=lambda x: x[1])
+                inner_contour_xmin = min(inner_contour_theta)
+                inner_contour_xmax = max(inner_contour_theta)
 
                 # check if tetha3 or theta4 is in [theta1, theta2] interval
                 overlap = outer_contour_xmin <= inner_contour_xmax and outer_contour_xman >= inner_contour_xmin
@@ -1559,22 +1559,22 @@ class PeriodicalSurface(Surface3D):
                     old_innner_contour_positioned = inner_contour
 
                 # Inner contour is a fullarc parametric represetation
-                elif len(inner_contour.primitives) == 1 and isinstance(inner_contour.primitives[0], vme.LineSegment2D)\
-                        and math.isclose(z3, z4, abs_tol=1e-5):
-
-                    x_offset = outer_contour_theta[oc_xmin_index] - inner_contour_theta[ic_xmin_index]
-                    translation_vector = volmdlr.Vector2D(x_offset, 0)
-                    old_innner_contour_positioned = inner_contour.translation(offset=translation_vector)
-
-                # Outer contour is a fullarc parametric represetation
-                elif len(old_outer_contour_positioned.primitives) == 1 and \
-                        isinstance(old_outer_contour_positioned.primitives[0], vme.LineSegment2D) and \
-                        math.isclose(z1, z2, abs_tol=1e-5):
-                    x_offset = inner_contour_theta[ic_xmin_index] - outer_contour_theta[oc_xmin_index]
-                    translation_vector = volmdlr.Vector2D(x_offset, 0)
-                    old_innner_contour_positioned = inner_contour
-                    old_outer_contour_positioned = old_outer_contour_positioned.translation(offset=translation_vector)
-
+                # elif len(inner_contour.primitives) == 1 and isinstance(inner_contour.primitives[0], vme.LineSegment2D)\
+                #         and math.isclose(z3, z4, abs_tol=1e-5):
+                #
+                #     theta_offset = outer_contour_theta[oc_xmin_index] - inner_contour_theta[ic_xmin_index]
+                #     translation_vector = volmdlr.Vector2D(theta_offset, 0)
+                #     old_innner_contour_positioned = inner_contour.translation(offset=translation_vector)
+                #
+                # # Outer contour is a fullarc parametric represetation
+                # elif len(old_outer_contour_positioned.primitives) == 1 and \
+                #         isinstance(old_outer_contour_positioned.primitives[0], vme.LineSegment2D) and \
+                #         math.isclose(z1, z2, abs_tol=1e-5):
+                #     theta_offset = inner_contour_theta[ic_xmin_index] - outer_contour_theta[oc_xmin_index]
+                #     translation_vector = volmdlr.Vector2D(theta_offset, 0)
+                #     old_innner_contour_positioned = inner_contour
+                #     old_outer_contour_positioned = old_outer_contour_positioned.translation(offset=translation_vector)
+                #
                 else:
                     if overlap:
                         if inner_contour_xmin < outer_contour_xmin:
@@ -1601,24 +1601,24 @@ class PeriodicalSurface(Surface3D):
                         line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
                                           volmdlr.Point2D(overlapping_theta, z3))
 
-                    cutted_contour = inner_contour.cut_by_line(line)
+                    cutted_contours = inner_contour.split_by_line(line)
 
-                    if len(cutted_contour) == 2:
-                        contour1, contour2 = cutted_contour
-                        inner_contour_direction = theta3 < theta4
-                        if (not side and inner_contour_direction) or (side and not inner_contour_direction):
-                            x_offset = outer_contour_theta[outer_contour_side] - contour2.primitives[0].start.x
-                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                    if len(cutted_contours) == 2:
+                        contour1, contour2 = cutted_contours
+                        increasing_theta = theta3 < theta4
+                        if (not side and increasing_theta) or (side and not increasing_theta):
+                            theta_offset = outer_contour_theta[outer_contour_side] - contour2.primitives[0].start.x
+                            translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour2_positionned = contour2.translation(offset=translation_vector)
-                            x_offset = contour2_positionned.primitives[-1].end.x - contour1.primitives[0].start.x
-                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                            theta_offset = contour2_positionned.primitives[-1].end.x - contour1.primitives[0].start.x
+                            translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour1_positionned = contour1.translation(offset=translation_vector)
                         else:
-                            x_offset = outer_contour_theta[outer_contour_side] - contour1.primitives[-1].end.x
-                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                            theta_offset = outer_contour_theta[outer_contour_side] - contour1.primitives[-1].end.x
+                            translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour1_positionned = contour1.translation(offset=translation_vector)
-                            x_offset = contour1_positionned.primitives[0].start.x - contour2.primitives[-1].end.x
-                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                            theta_offset = contour1_positionned.primitives[0].start.x - contour2.primitives[-1].end.x
+                            translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour2_positionned = contour2.translation(offset=translation_vector)
 
                         old_innner_contour_positioned = volmdlr.wires.Contour2D(contour1_positionned.primitives +

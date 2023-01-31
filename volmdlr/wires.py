@@ -1926,6 +1926,25 @@ class Contour2D(ContourMixin, Wire2D):
 
         return list_contours
 
+    def split_by_line(self, line: volmdlr.edges.Line2D) -> List['Contour2D']:
+        intersections = self.line_crossings(line)
+        intersections = [point for point, prim in intersections]
+        if not intersections:
+            return [self]
+        if len(intersections) < 2:
+            extracted_outerpoints_contour1 = \
+                volmdlr.wires.Contour2D.extract_contours(self, self.primitives[0].start, intersections[0], True)[0]
+            extracted_innerpoints_contour1 = \
+                volmdlr.wires.Contour2D.extract_contours(self, intersections[0], self.primitives[0].end, True)[0]
+            return extracted_outerpoints_contour1, extracted_innerpoints_contour1
+        elif len(intersections) == 2:
+            extracted_outerpoints_contour1 = \
+                volmdlr.wires.Contour2D.extract_contours(self, intersections[0], intersections[1], True)[0]
+            extracted_innerpoints_contour1 = \
+                volmdlr.wires.Contour2D.extract_contours(self, intersections[0], intersections[1], False)[0]
+            return extracted_innerpoints_contour1, extracted_outerpoints_contour1
+        raise NotImplementedError
+
     def split_regularly(self, n):
         """
         Split in n slices.
