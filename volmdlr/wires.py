@@ -1663,14 +1663,18 @@ class Contour2D(ContourMixin, Wire2D):
 
     def area(self):
         area = self.edge_polygon.area()
-        if self.edge_polygon.is_trigo():
-            trigo = 1
-        else:
-            trigo = -1
-        for edge in self.primitives:
-            area += trigo * edge.straight_line_area()
-
-        return abs(area)
+        classes = {prim.__class__ for prim in self.primitives}
+        verify_classes = classes.issubset({volmdlr.edges.LineSegment2D, volmdlr.edges.Arc2D})
+        if verify_classes:
+            if self.edge_polygon.is_trigo():
+                trigo = 1
+            else:
+                trigo = -1
+            for edge in self.primitives:
+                area += trigo * edge.straight_line_area()
+            return abs(area)
+        polygon = self.to_polygon(angle_resolution=50)
+        return polygon.triangulation().area()
 
     def center_of_mass(self):
         """
@@ -1921,6 +1925,25 @@ class Contour2D(ContourMixin, Wire2D):
                 list_contours.extend([contour1, contour2])
 
         return list_contours
+
+    def split_by_line(self, line: volmdlr.edges.Line2D) -> List['Contour2D']:
+        intersections = self.line_crossings(line)
+        intersections = [point for point, prim in intersections]
+        if not intersections:
+            return [self]
+        if len(intersections) < 2:
+            extracted_outerpoints_contour1 = \
+                volmdlr.wires.Contour2D.extract_contours(self, self.primitives[0].start, intersections[0], True)[0]
+            extracted_innerpoints_contour1 = \
+                volmdlr.wires.Contour2D.extract_contours(self, intersections[0], self.primitives[0].end, True)[0]
+            return extracted_outerpoints_contour1, extracted_innerpoints_contour1
+        elif len(intersections) == 2:
+            extracted_outerpoints_contour1 = \
+                volmdlr.wires.Contour2D.extract_contours(self, intersections[0], intersections[1], True)[0]
+            extracted_innerpoints_contour1 = \
+                volmdlr.wires.Contour2D.extract_contours(self, intersections[0], intersections[1], False)[0]
+            return extracted_innerpoints_contour1, extracted_outerpoints_contour1
+        raise NotImplementedError
 
     def split_regularly(self, n):
         """
@@ -2530,8 +2553,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def second_moment_area(self, point):
         Ix, Iy, Ixy = 0., 0., 0.
         for pi, pj in zip(self.points, self.points[1:] + [self.points[0]]):
-            xi, yi = (pi - point)
-            xj, yj = (pj - point)
+            xi, yi = pi - point
+            xj, yj = pj - point
             Ix += (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi)
             Iy += (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi)
             Ixy += (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
@@ -3405,7 +3428,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         line_intersections = {line_segment1: [], line_segment2: []}
         for line_segment in [line_segment1, line_segment2
-                   ]:
+                             ]:
             inter_points = []
             for prim in polygon2.line_segments + self.line_segments[
                                                  :self.line_segments.index(
@@ -5071,8 +5094,8 @@ class Circle3D(Contour3D):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
-        u1 = (point2 - point1)
-        u2 = (point2 - point3)
+        u1 = point2 - point1
+        u2 = point2 - point3
         try:
             u1.normalize()
             u2.normalize()

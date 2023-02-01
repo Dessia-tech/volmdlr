@@ -28,7 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard. 
 * BSplineSurface3D: debug linesegment2d_to_3d method.
 * Parametric operations with BSpline curves.
-* OpenTriangleShell3D: fix from_mesh_data method
+* OpenTriangleShell3D: fix from_mesh_data method.
+* PeriodicalSurface: fix face from contours.
 
 ### Removed
 
