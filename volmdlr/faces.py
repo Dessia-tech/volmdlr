@@ -9271,6 +9271,7 @@ class ClosedShell3D(OpenShell3D):
         :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...])
         for intersecting faces.
         :type intersecting_faces_combinations: list of face objects combinaitons
+        :param tol: tolerance
         returns a dictionary containing as keys the combination of intersecting faces
         and as the values the resulting primitive from the two intersecting faces.
         It is done so it is not needed to calculate the same intersecting primitive twice.
