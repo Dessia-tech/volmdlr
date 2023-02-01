@@ -5528,6 +5528,7 @@ class Face3D(volmdlr.core.Primitive3D):
                          axis: volmdlr.Vector3D, angle: float):
         """
         Face3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -5539,6 +5540,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def translation(self, offset: volmdlr.Vector3D):
         """
         Face3D translation.
+
         :param offset: translation vector
         :return: A new translated Face3D
         """
@@ -5547,7 +5549,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Face3D translation. Object is updated inplace
+        Face3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.surface3d.translation_inplace(offset=offset)
@@ -5566,7 +5569,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         self.surface3d.frame_mapping_inplace(frame, side)
