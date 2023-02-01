@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
 * BSplineSurface3D: Now the plot method uses u and v curves
 * Create .geo and .msh files (Mesh geometries with GMSH)
+* RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
+* RevolutionFace3D
 
 
 ### Fixed

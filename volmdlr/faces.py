@@ -3194,18 +3194,24 @@ class RevolutionSurface3D(PeriodicalSurface):
         self.axis = axis
 
         point1 = wire.point_at_abscissa(0)
-        point2 = wire.point_at_abscissa(0.5 * wire.length())
+        point2 = wire.point_at_abscissa(wire.length())
+        if point1 == point2:
+            point2 = wire.point_at_abscissa(0.25 * wire.length())
         vector1 = point1 - axis_point
         vector2 = point2 - axis_point
 
         vector1.normalize()
         vector2.normalize()
-        v = vector1.cross(vector2)
+        v = vector2.cross(vector1)
         w = axis
         w.normalize()
         u = v.cross(w)
+        frame = volmdlr.Frame3D(origin=axis_point, u=u, v=v, w=w)
+        x, _, _ = frame.global_to_local_coordinates(self.wire.point_at_abscissa(0))
+        if x < 0:
+            frame = volmdlr.Frame3D(origin=axis_point, u=-u, v=-v, w=w)
+        self.frame = frame
 
-        self.frame = volmdlr.Frame3D(origin=axis_point, u=u, v=v, w=w)
         PeriodicalSurface.__init__(self, name=name)
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
@@ -3228,15 +3234,19 @@ class RevolutionSurface3D(PeriodicalSurface):
         # y = round(y, 12)
         u = math.atan2(y, x)
         # u = volmdlr.geometry.sin_cos_angle(x, y)
-        if u < 0:
-            u += volmdlr.TWO_PI
-        point_at_curve = point3d.rotation(self.axis_point, self.axis, -(u + math.pi))
+        # if u < 0:
+        #     u += volmdlr.TWO_PI
+        point_at_curve = point3d.rotation(self.axis_point, self.axis, -u)
         # rotated_curve = self.wire.rotation(self.axis_point, self.axis, u)
         # v = rotated_curve.abscissa(point3d, 1e-4) / self.wire.length()
         v = self.wire.abscissa(point_at_curve) / self.wire.length()
         ax = self.plot()
+        self.frame.plot(ax)
         self.wire.plot(ax)
-        point_at_curve.plot(ax, 'r')
+        point1 = self.wire.point_at_abscissa(0)
+        point2 = self.wire.point_at_abscissa(0.25 * self.wire.length())
+        point1.plot(ax, 'b')
+        point2.plot(ax, 'r')
         return volmdlr.Point2D(u, v)
 
     def rectangular_cut(self, x1: float, x2: float,
