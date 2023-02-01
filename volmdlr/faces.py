@@ -3188,14 +3188,10 @@ class RevolutionSurface3D(PeriodicalSurface):
     y_periodicity = None
 
     def __init__(self, wire: Union[volmdlr.wires.Wire3D, volmdlr.wires.Contour3D],
-                 axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float = 2 * math.pi, name: str = ''):
+                 axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D, name: str = ''):
         self.wire = wire
         self.axis_point = axis_point
         self.axis = axis
-        self.angle = angle
-        if angle < 2 * math.pi:
-            self.x_periodicity = None
 
         point1 = wire.point_at_abscissa(0)
         point2 = wire.point_at_abscissa(0.5 * wire.length())
@@ -3224,12 +3220,23 @@ class RevolutionSurface3D(PeriodicalSurface):
         return point
 
     def point3d_to_2d(self, point3d):
+        """
+        Transform a 3D cartesian point (x, y, z) into a parametric (u, v) point.
+        """
         x, y, z = self.frame.global_to_local_coordinates(point3d)
-        x = round(x, 12)
-        y = round(y, 12)
+        # x = round(x, 12)
+        # y = round(y, 12)
         u = math.atan2(y, x)
-        point_at_curve = point3d.rotation(self.axis_point, self.axis, -u)
+        # u = volmdlr.geometry.sin_cos_angle(x, y)
+        if u < 0:
+            u += volmdlr.TWO_PI
+        point_at_curve = point3d.rotation(self.axis_point, self.axis, -(u + math.pi))
+        # rotated_curve = self.wire.rotation(self.axis_point, self.axis, u)
+        # v = rotated_curve.abscissa(point3d, 1e-4) / self.wire.length()
         v = self.wire.abscissa(point_at_curve) / self.wire.length()
+        ax = self.plot()
+        self.wire.plot(ax)
+        point_at_curve.plot(ax, 'r')
         return volmdlr.Point2D(u, v)
 
     def rectangular_cut(self, x1: float, x2: float,
@@ -3247,7 +3254,7 @@ class RevolutionSurface3D(PeriodicalSurface):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
         for i in range(21):
-            theta = i / 20. * self.angle
+            theta = i / 20. * volmdlr.TWO_PI
             wire = self.wire.rotation(self.axis_point, self.axis, theta)
             wire.plot(ax=ax, color=color, alpha=alpha)
 
