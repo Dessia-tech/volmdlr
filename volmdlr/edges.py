@@ -4992,7 +4992,7 @@ class Arc3D(Arc):
         :return: clockwise path and trigonomectric path property
         """
         if not self._utd_clockwise_and_trigowise_paths:
-            vec1 = (self.start - self.center)
+            vec1 = self.start - self.center
             vec1.normalize()
             vec2 = self.normal.cross(vec1)
             radius_1 = self.start.to_2d(self.center, vec1, vec2)
@@ -5786,11 +5786,11 @@ class FullArc3D(Arc3D):
             return []
 
         if linesegment.start.z == linesegment.end.z == self.frame.origin.z:
-            quadratic_equation_a = (1 + (direction_vector.y ** 2 / direction_vector.x ** 2))
-            quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x +
-                                    2 * (direction_vector.y / direction_vector.x) * linesegment.start.y)
-            quadratic_equation_c = ((linesegment.start.y - (direction_vector.y / direction_vector.x) *
-                                     linesegment.start.x) ** 2 - self.radius ** 2)
+            quadratic_equation_a = 1 + (direction_vector.y ** 2 / direction_vector.x ** 2)
+            quadratic_equation_b = -2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x + \
+                                    2 * (direction_vector.y / direction_vector.x) * linesegment.start.y
+            quadratic_equation_c = (linesegment.start.y - (direction_vector.y / direction_vector.x) *
+                                     linesegment.start.x) ** 2 - self.radius ** 2
             delta = (quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c)
             x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
             x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)
