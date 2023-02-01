@@ -123,7 +123,7 @@ def vectors3d_angle(vector1, vector2):
     :param vector2: The second 3 dimensional vectors
     :type vector2: :class:`volmdlr.Vector3D`
     :return: The angle between the two vectors
-    :rtype: flaot
+    :rtype: float
     """
     dot_v1v2 = vector1.dot(vector2)
     theta = math.acos(dot_v1v2 / (vector1.norm() * vector2.norm()))
@@ -138,7 +138,7 @@ def sin_cos_angle(u1, u2):
     :param u1: The value of the cosinus of the returned angle
     :type u1: float
     :param u2: The value of the sinus of the returned angle
-    :type u2: flaot
+    :type u2: float
     :return: The angle verifying the two equations
     :rtype: float
     """

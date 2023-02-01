@@ -5,7 +5,7 @@
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 import volmdlr.grid
 import matplotlib.pyplot as plt

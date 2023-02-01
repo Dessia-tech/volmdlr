@@ -442,7 +442,7 @@ class Vector2D(Vector):
         :param tol: The tolerance under which the euclidean distance is
             considered equal to 0
         :type tol: float
-        :return: `True` if the two Vector2D-like objects are close enought
+        :return: `True` if the two Vector2D-like objects are close enough
             to each other, `False` otherwise
         :rtype: bool
         """
@@ -452,7 +452,7 @@ class Vector2D(Vector):
 
     def approx_hash(self):
         """
-        Computes an approximative hash value based on the coordiantes.
+        Computes an approximative hash value based on the coordinates.
 
         :return: An approximative hash value
         :rtype: int
@@ -461,7 +461,7 @@ class Vector2D(Vector):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 2 dimensional vector into a dictionary.
+        Serializes a 2 dimensional vector into a dictionary.
 
         :return: A serialized version of the Vector2D
         :rtype: dict
@@ -720,7 +720,7 @@ class Vector2D(Vector):
     @classmethod
     def random(cls, xmin: float, xmax: float, ymin: float, ymax: float):
         """
-        Retunrs a random 2 dimensional point.
+        Returns a random 2 dimensional point.
 
         :param xmin: The minimal abscissa
         :type xmin: float
@@ -861,7 +861,7 @@ class Point2D(Vector2D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 2 dimensional point into a dictionary.
+        Serializes a 2 dimensional point into a dictionary.
 
         :return: A serialized version of the Point2D
         :rtype: dict
@@ -926,7 +926,7 @@ class Point2D(Vector2D):
         :type ax: :class:`matplotlib.axes.Axes`, optional
         :param color: The color of the arrow
         :type color: str, optional
-        :param alpha: The transparency of the point from 0 to 1. 0 beeing
+        :param alpha: The transparency of the point from 0 to 1. 0 being
             fully transparent
         :type alpha: float, optional
         :param plot_points: # TODO: delete this attribute
@@ -956,7 +956,7 @@ class Point2D(Vector2D):
                           line2: 'volmdlr.edges.Line2D',
                           curvilinear_abscissa: bool = False):
         """
-        Returns a Point2D based on the intersection between two infinte lines.
+        Returns a Point2D based on the intersection between two infinite lines.
 
         :param line1: The first line
         :type line1: :class:`volmdlr.edges.Line2D`
@@ -1232,7 +1232,7 @@ class Vector3D(Vector):
         :param tol: The tolerance under which the euclidean distance is
             considered equal to 0
         :type tol: float
-        :return: `True` if the two Vector3D-like objects are close enought
+        :return: `True` if the two Vector3D-like objects are close enough
             to each other, `False` otherwise
         :rtype: bool
         """
@@ -1245,7 +1245,7 @@ class Vector3D(Vector):
 
     def approx_hash(self):
         """
-        Computes an approximative hash value based on the coordiantes.
+        Computes an approximative hash value based on the coordinates.
 
         :return: An approximative hash value
         :rtype: int
@@ -1254,7 +1254,7 @@ class Vector3D(Vector):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 3 dimensional vector into a dictionary.
+        Serializes a 3 dimensional vector into a dictionary.
 
         :return: A serialized version of the Vector3D
         :rtype: dict
@@ -1670,7 +1670,7 @@ class Vector3D(Vector):
     def random(cls, xmin: float, xmax: float, ymin: float, ymax: float,
                zmin: float, zmax: float):
         """
-        Retunrs a random 2 dimensional point.
+        Returns a random 2 dimensional point.
 
         :param xmin: The minimal abscissa
         :type xmin: float
@@ -1707,7 +1707,7 @@ class Vector3D(Vector):
 
         :param arguments: The arguments of the step primitive
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
+        :param object_dict: The dictionary containing all the step primitives
             that have already been instanciated
         :type object_dict: dict
         :return: The corresponding Vector3D object
@@ -1832,7 +1832,7 @@ class Point3D(Vector3D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 3 dimensional point into a dictionary.
+        Serializes a 3 dimensional point into a dictionary.
 
         :return: A serialized version of the Point3D
         :rtype: dict
@@ -1915,7 +1915,7 @@ class Point3D(Vector3D):
 
         :param arguments: The arguments of the step primitive
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
+        :param object_dict: The dictionary containing all the step primitives
             that have already been instanciated
         :type object_dict: dict
         :return: The corresponding Point3D object
@@ -2018,7 +2018,7 @@ class Point3D(Vector3D):
 
     def coordinates(self):
         """
-        Returns the coordiantes of a Point3D as a tuple of values.
+        Returns the coordinates of a Point3D as a tuple of values.
 
         :return: A tuple containing the abscissan, the ordiante and the
             applicate of the Point3D
@@ -2039,7 +2039,7 @@ class Matrix22:
     Class representing a 2x2 matrix.
 
     :param M11: The first line, first column value
-    :type M11: flaot
+    :type M11: float
     :param M12: The first line, second column value
     :type M12: float
     :param M21: The second line, first column value
@@ -2116,7 +2116,7 @@ class Matrix33:
         Class representing a 3x3 matrix.
 
         :param M11: The first line, first column value
-        :type M11: flaot
+        :type M11: float
         :param M12: The first line, second column value
         :type M12: float
         :param M13: The first line, third column value
@@ -2125,13 +2125,13 @@ class Matrix33:
         :type M21: float
         :param M22: The second line, second column value
         :type M22: float
-        :param M23: The second line, thrid column value
+        :param M23: The second line, third column value
         :type M23: float
         :param M31: The third line, first column value
         :type M31: float
         :param M32: The third line, second column value
         :type M32: float
-        :param M33: The third line, thrid column value
+        :param M33: The third line, third column value
         :type M33: float
         """
 
@@ -2331,7 +2331,7 @@ class Basis2D(Basis):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 2 dimensional basis into a dictionary.
+        Serializes a 2 dimensional basis into a dictionary.
 
         :return: A serialized version of the Basis2D
         :rtype: dict
@@ -2561,7 +2561,7 @@ class Basis3D(Basis):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 3 dimensional basis into a dictionary.
+        Serializes a 3 dimensional basis into a dictionary.
 
         :return: A serialized version of the Basis3D
         :rtype: dict
@@ -2974,7 +2974,7 @@ class Frame2D(Basis2D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 2 dimensional frame into a dictionary.
+        Serializes a 2 dimensional frame into a dictionary.
 
         :return: A serialized version of the Frame2D
         :rtype: dict
@@ -3231,7 +3231,7 @@ class Frame3D(Basis3D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 3 dimensional frame into a dictionary.
+        Serializes a 3 dimensional frame into a dictionary.
 
         :return: A serialized version of the Frame3D
         :rtype: dict
@@ -3521,7 +3521,7 @@ class Frame3D(Basis3D):
 
         :param arguments: The arguments of the step primitive
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
+        :param object_dict: The dictionary containing all the step primitives
             that have already been instanciated
         :type object_dict: dict
         :return: The corresponding Frame3D object

@@ -6,7 +6,7 @@ Created on Tue Oct 18 2022
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 import volmdlr as vm
 import volmdlr.wires
