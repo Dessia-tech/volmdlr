@@ -6873,17 +6873,10 @@ class Triangle3D(PlaneFace3D):
         self.bounding_box = new_bounding_box
 
     def subdescription(self, resolution=0.01):
-        """
-        Returns a list of Point3D with resolution as max
-        between Point3D.
-        """
         lengths = [self.points[0].point_distance(self.points[1]),
                    self.points[1].point_distance(self.points[2]),
                    self.points[2].point_distance(self.points[0])]
         max_length = max(lengths)
-
-        if max_length <= resolution:
-            return self.points
 
         pos_length_max = lengths.index(max_length)
         point0 = self.points[-3 + pos_length_max]
@@ -6893,28 +6886,34 @@ class Triangle3D(PlaneFace3D):
         vector_0_1 = point0 - point1
         vector_0_1.normalize()
         points_0_1 = []
-        for k in range(int(max_length / resolution) + 2):
+
+        length_2_1 = point2.point_distance(point1)
+        vector_2_1 = (point2 - point1) / length_2_1
+        points_in = []
+
+        for k in range(math.ceil(max_length / resolution) + 1):
             if k == 0:
                 points_0_1.append(point1)
             distance_to_point = min(k * resolution, max_length)
-            points_0_1.append(point1 + vector_0_1 * distance_to_point)
+            p0_1 = point1 + vector_0_1 * distance_to_point
+            points_0_1.append(p0_1)
 
-        vector_2_1, length_2_1 = point2 - point1, point2.point_distance(point1)
-        vector_2_1.normalize()
-        points_in = []
-
-        for k, p0_1 in enumerate(points_0_1):
-            point_on_2_1 = point1 + min(p0_1.point_distance(points_0_1[0]) * length_2_1 / max_length,
-                                        length_2_1) * vector_2_1
-
+            distance_to_point = min(p0_1.point_distance(point1) * length_2_1 / max_length, length_2_1)
+            point_on_2_1 = point1 + vector_2_1 * distance_to_point
             length_2_0 = point_on_2_1.point_distance(p0_1)
-            nb_int = int(length_2_0 / resolution) + 2
-            vector_2_0 = point_on_2_1 - p0_1
-            vector_2_0.normalize()
-            step_in = length_2_0 / (nb_int - 1)
-            for i in range(nb_int):
-                if i != 0:
-                    points_in.append(p0_1 + min(i * step_in, length_2_0) * vector_2_0)
+            nb_int = math.ceil(length_2_0 / resolution) + 1
+            if nb_int == 2:
+                points_in.append(point_on_2_1)
+            else:
+                vector_2_0 = point_on_2_1 - p0_1
+                try:
+                    vector_2_0 /= length_2_0
+                    step_in = length_2_0 / (nb_int - 1)
+                except ZeroDivisionError:
+                    pass
+                for i in range(1, nb_int - 1):
+                    distance_to_point = i * step_in
+                    points_in.append(p0_1 + vector_2_0 * distance_to_point)
 
         return npy.unique(points_0_1 + points_in).tolist()
 
