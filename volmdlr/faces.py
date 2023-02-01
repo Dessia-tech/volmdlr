@@ -1026,12 +1026,12 @@ class Surface3D(DessiaObject):
             deltay = first_start.y - last_end.y
             if abs(deltax) % x_periodicity == 0:
                 primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
-                                                     volmdlr.Point2D(primitives2d[-1].end.x +deltax,
+                                                     volmdlr.Point2D(primitives2d[-1].end.x + deltax,
                                                                      primitives2d[-1].end.y))
             elif abs(deltax) % y_periodicity == 0:
                 primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
                                                      volmdlr.Point2D(primitives2d[-1].end.x,
-                                                                     primitives2d[-1].end.y +deltay))
+                                                                     primitives2d[-1].end.y + deltay))
 
         return primitives2d
 
@@ -1540,16 +1540,16 @@ class PeriodicalSurface(Surface3D):
         """
         face = super().face_from_contours3d(contours3d)
         new_inner_contours = []
-        old_outer_contour_positioned = face.surface2d.outer_contour
-        new_outer_contour = old_outer_contour_positioned
-        point1 = old_outer_contour_positioned.primitives[0].start
-        point2 = old_outer_contour_positioned.primitives[-1].end
+        point1 = face.surface2d.outer_contour.primitives[0].start
+        point2 = face.surface2d.outer_contour.primitives[-1].end
         # if not face.surface2d.inner_contours:
         if not face.surface2d.inner_contours or point1.is_close(point2):
             return face
         # Take the start point of the outer_contour as reference.
         theta1, z1 = point1
         theta2, z2 = point2
+        old_outer_contour_positioned = face.surface2d.outer_contour
+        new_outer_contour = old_outer_contour_positioned
         for inner_contour in face.surface2d.inner_contours:
             theta3, z3 = inner_contour.primitives[0].start
             theta4, z4 = inner_contour.primitives[-1].end
@@ -1558,80 +1558,36 @@ class PeriodicalSurface(Surface3D):
 
                 outer_contour_theta = [theta1, theta2]
                 inner_contour_theta = [theta3, theta4]
-                oc_xmin_index, outer_contour_xmin = min(enumerate(outer_contour_theta), key=lambda x: x[1])
-                oc_xmax_index, outer_contour_xman = max(enumerate(outer_contour_theta), key=lambda x: x[1])
-                ic_xmin_index, inner_contour_xmin = min(enumerate(inner_contour_theta), key=lambda x: x[1])
-                ic_xmax_index, inner_contour_xmax = max(enumerate(inner_contour_theta), key=lambda x: x[1])
-
-                # check if tetha3 or theta4 is in [theta1, theta2] interval
-                overlap = outer_contour_xmin <= inner_contour_xmax and outer_contour_xman >= inner_contour_xmin
 
                 # Contours are aligned
                 if (math.isclose(theta1, theta3, abs_tol=1e-3) and math.isclose(theta2, theta4, abs_tol=1e-3)) \
                         or (math.isclose(theta1, theta4, abs_tol=1e-3) and math.isclose(theta2, theta3, abs_tol=1e-3)):
                     old_innner_contour_positioned = inner_contour
 
-                # Inner contour is a fullarc parametric represetation
-                elif len(inner_contour.primitives) == 1 and isinstance(inner_contour.primitives[0], vme.LineSegment2D)\
-                        and math.isclose(z3, z4, abs_tol=1e-5):
-
-                    x_offset = outer_contour_theta[oc_xmin_index] - inner_contour_theta[ic_xmin_index]
-                    translation_vector = volmdlr.Vector2D(x_offset, 0)
-                    old_innner_contour_positioned = inner_contour.translation(offset=translation_vector)
-
-                # Outer contour is a fullarc parametric represetation
-                elif len(old_outer_contour_positioned.primitives) == 1 and \
-                        isinstance(old_outer_contour_positioned.primitives[0], vme.LineSegment2D) and \
-                        math.isclose(z1, z2, abs_tol=1e-5):
-                    x_offset = inner_contour_theta[ic_xmin_index] - outer_contour_theta[oc_xmin_index]
-                    translation_vector = volmdlr.Vector2D(x_offset, 0)
-                    old_innner_contour_positioned = inner_contour
-                    old_outer_contour_positioned = old_outer_contour_positioned.translation(offset=translation_vector)
-
                 else:
-                    if overlap:
-                        if inner_contour_xmin < outer_contour_xmin:
-                            overlapping_theta = outer_contour_theta[oc_xmin_index]
-                            outer_contour_side = oc_xmin_index
-                            side = 0
-                        else:
-                            overlapping_theta = outer_contour_theta[oc_xmax_index]
-                            outer_contour_side = oc_xmax_index
-                            side = 1
-                        line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
-                                          volmdlr.Point2D(overlapping_theta, z3))
+                    overlapping_theta, outer_contour_side, side = self._get_overlapping_theta(outer_contour_theta,
+                                                                                              inner_contour_theta)
+                    line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
+                                      volmdlr.Point2D(overlapping_theta, z3))
 
-                    # if not direct intersection -> find intersection at periodicity
-                    else:
-                        if theta3 < theta1:
-                            overlapping_theta = outer_contour_theta[oc_xmin_index] - 2 * math.pi
-                            outer_contour_side = oc_xmin_index
-                            side = 0
-                        else:
-                            overlapping_theta = outer_contour_theta[oc_xmax_index] + 2 * math.pi
-                            outer_contour_side = oc_xmax_index
-                            side = 1
-                        line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
-                                          volmdlr.Point2D(overlapping_theta, z3))
+                    cutted_contours = inner_contour.split_by_line(line)
 
-                    cutted_contour = inner_contour.cut_by_line(line)
-
-                    if len(cutted_contour) == 2:
-                        contour1, contour2 = cutted_contour
-                        inner_contour_direction = theta3 < theta4
-                        if (not side and inner_contour_direction) or (side and not inner_contour_direction):
-                            x_offset = outer_contour_theta[outer_contour_side] - contour2.primitives[0].start.x
-                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                    if len(cutted_contours) == 2:
+                        contour1, contour2 = cutted_contours
+                        increasing_theta = theta3 < theta4
+                        if (not side and increasing_theta) or (side and not increasing_theta):
+                            theta_offset = outer_contour_theta[outer_contour_side] - contour2.primitives[0].start.x
+                            translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour2_positionned = contour2.translation(offset=translation_vector)
-                            x_offset = contour2_positionned.primitives[-1].end.x - contour1.primitives[0].start.x
-                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                            theta_offset = contour2_positionned.primitives[-1].end.x - contour1.primitives[0].start.x
+                            translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour1_positionned = contour1.translation(offset=translation_vector)
                         else:
-                            x_offset = outer_contour_theta[outer_contour_side] - contour1.primitives[-1].end.x
-                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                            theta_offset = outer_contour_theta[outer_contour_side] - contour1.primitives[-1].end.x
+                            translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour1_positionned = contour1.translation(offset=translation_vector)
-                            x_offset = contour1_positionned.primitives[0].start.x - contour2.primitives[-1].end.x
-                            translation_vector = volmdlr.Vector2D(x_offset, 0)
+                            theta_offset = contour1_positionned.primitives[0].start.x - contour2.primitives[-1].end.x
+                            translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour2_positionned = contour2.translation(offset=translation_vector)
 
                         old_innner_contour_positioned = volmdlr.wires.Contour2D(contour1_positionned.primitives +
@@ -1666,6 +1622,50 @@ class PeriodicalSurface(Surface3D):
             class_ = self.face_class
         new_face = class_(self, Surface2D(new_outer_contour, new_inner_contours))
         return new_face
+
+    def _get_overlapping_theta(self, outer_contour_startend_theta, inner_contour_startend_theta):
+        """
+        Find overlapping theta domain between two contours on periodical Surfaces.
+        """
+        oc_xmin_index, outer_contour_xmin = min(enumerate(outer_contour_startend_theta), key=lambda x: x[1])
+        oc_xmax_index, outer_contour_xman = max(enumerate(outer_contour_startend_theta), key=lambda x: x[1])
+        inner_contour_xmin = min(inner_contour_startend_theta)
+        inner_contour_xmax = max(inner_contour_startend_theta)
+
+        # check if tetha3 or theta4 is in [theta1, theta2] interval
+        overlap = outer_contour_xmin <= inner_contour_xmax and outer_contour_xman >= inner_contour_xmin
+
+        if overlap:
+            if inner_contour_xmin < outer_contour_xmin:
+                overlapping_theta = outer_contour_startend_theta[oc_xmin_index]
+                outer_contour_side = oc_xmin_index
+                side = 0
+            else:
+                overlapping_theta = outer_contour_startend_theta[oc_xmax_index]
+                outer_contour_side = oc_xmax_index
+                side = 1
+
+        # if not direct intersection -> find intersection at periodicity
+        else:
+            if inner_contour_xmin < outer_contour_xmin:
+                overlapping_theta = outer_contour_startend_theta[oc_xmin_index] - 2 * math.pi
+                outer_contour_side = oc_xmin_index
+                side = 0
+            else:
+                overlapping_theta = outer_contour_startend_theta[oc_xmax_index] + 2 * math.pi
+                outer_contour_side = oc_xmax_index
+                side = 1
+        return overlapping_theta, outer_contour_side, side
+
+    def linesegment3d_to_2d(self, linesegment3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        start = self.point3d_to_2d(linesegment3d.start)
+        end = self.point3d_to_2d(linesegment3d.end)
+        if start.x != end.x:
+            end = volmdlr.Point2D(start.x, end.y)
+        return [vme.LineSegment2D(start, end)]
 
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
@@ -1757,6 +1757,26 @@ class PeriodicalSurface(Surface3D):
         return [vme.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree,
                                                              periodic=bspline_curve3d.periodic)]
 
+    def linesegment2d_to_3d(self, linesegment2d):
+        theta1, z1 = linesegment2d.start
+        theta2, z2 = linesegment2d.end
+        if math.isclose(theta1, theta2, abs_tol=1e-4):
+            return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
+                                      self.point2d_to_3d(linesegment2d.end))]
+        if math.isclose(z1, z2, abs_tol=1e-4):
+            if abs(theta1 - theta2) == volmdlr.TWO_PI:
+                return [vme.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
+                                      start_end=self.point2d_to_3d(linesegment2d.start),
+                                      normal=self.frame.w)]
+
+            return [vme.Arc3D(
+                self.point2d_to_3d(linesegment2d.start),
+                self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
+                self.point2d_to_3d(linesegment2d.end)
+            )]
+        # TODO: this is a non exact method!
+        return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start), self.point2d_to_3d(linesegment2d.end))]
+
 
 class CylindricalSurface3D(PeriodicalSurface):
     """
@@ -1801,37 +1821,6 @@ class CylindricalSurface3D(PeriodicalSurface):
             theta = 0.0
 
         return volmdlr.Point2D(theta, z)
-
-    def linesegment3d_to_2d(self, linesegment3d):
-        """
-        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
-        """
-        start = self.point3d_to_2d(linesegment3d.start)
-        end = self.point3d_to_2d(linesegment3d.end)
-        if start.x != end.x:
-            end = volmdlr.Point2D(start.x, end.y)
-        return [vme.LineSegment2D(start, end)]
-
-    def linesegment2d_to_3d(self, linesegment2d):
-        theta1, z1 = linesegment2d.start
-        theta2, z2 = linesegment2d.end
-        if math.isclose(theta1, theta2, abs_tol=1e-4):
-            return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
-                                      self.point2d_to_3d(linesegment2d.end))]
-        if math.isclose(z1, z2, abs_tol=1e-4):
-            if abs(theta1 - theta2) == volmdlr.TWO_PI:
-                return [vme.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
-                                      start_end=self.point2d_to_3d(linesegment2d.start),
-                                      normal=self.frame.w)]
-
-            return [vme.Arc3D(
-                self.point2d_to_3d(linesegment2d.start),
-                self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
-                self.point2d_to_3d(linesegment2d.end)
-            )]
-        # TODO: this is a non exact method!
-        return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start), self.point2d_to_3d(linesegment2d.end))]
-        # raise NotImplementedError('Ellipse? delta_theta={} delta_z={}'.format(abs(theta2-theta1), abs(z1-z2)))
 
     def circle3d_to_2d(self, circle3d):
         """
@@ -1887,7 +1876,6 @@ class CylindricalSurface3D(PeriodicalSurface):
         # points2d = [self.point3d_to_2d(point) for point in points3d]
         # return points2d
         raise NotImplementedError
-
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2662,33 +2650,6 @@ class ConicalSurface3D(PeriodicalSurface):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         return []
-
-    def linesegment2d_to_3d(self, linesegment2d):
-        theta1, z1 = linesegment2d.start
-        theta2, z2 = linesegment2d.end
-
-        if math.isclose(theta1, theta2, abs_tol=1e-4):
-            return [vme.LineSegment3D(
-                self.point2d_to_3d(linesegment2d.start),
-                self.point2d_to_3d(linesegment2d.end),
-            )]
-        elif math.isclose(z1, z2, abs_tol=1e-4) and math.isclose(z1, 0.,
-                                                                 abs_tol=1e-6):
-            return []
-        elif math.isclose(z1, z2, abs_tol=1e-4):
-            if abs(theta1 - theta2) == volmdlr.TWO_PI:
-                return [vme.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
-                                      start_end=self.point2d_to_3d(linesegment2d.start),
-                                      normal=self.frame.w)]
-            else:
-                return [vme.Arc3D(
-                    self.point2d_to_3d(linesegment2d.start),
-                    self.point2d_to_3d(
-                        volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
-                    self.point2d_to_3d(linesegment2d.end))
-                ]
-        else:
-            raise NotImplementedError('Ellipse?')
 
     def translation(self, offset: volmdlr.Vector3D):
         """
