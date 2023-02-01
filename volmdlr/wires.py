@@ -3428,7 +3428,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         line_intersections = {line_segment1: [], line_segment2: []}
         for line_segment in [line_segment1, line_segment2
-                   ]:
+                             ]:
             inter_points = []
             for prim in polygon2.line_segments + self.line_segments[
                                                  :self.line_segments.index(

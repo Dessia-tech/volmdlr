@@ -1545,61 +1545,17 @@ class PeriodicalSurface(Surface3D):
 
                 outer_contour_theta = [theta1, theta2]
                 inner_contour_theta = [theta3, theta4]
-                oc_xmin_index, outer_contour_xmin = min(enumerate(outer_contour_theta), key=lambda x: x[1])
-                oc_xmax_index, outer_contour_xman = max(enumerate(outer_contour_theta), key=lambda x: x[1])
-                inner_contour_xmin = min(inner_contour_theta)
-                inner_contour_xmax = max(inner_contour_theta)
-
-                # check if tetha3 or theta4 is in [theta1, theta2] interval
-                overlap = outer_contour_xmin <= inner_contour_xmax and outer_contour_xman >= inner_contour_xmin
 
                 # Contours are aligned
                 if (math.isclose(theta1, theta3, abs_tol=1e-3) and math.isclose(theta2, theta4, abs_tol=1e-3)) \
                         or (math.isclose(theta1, theta4, abs_tol=1e-3) and math.isclose(theta2, theta3, abs_tol=1e-3)):
                     old_innner_contour_positioned = inner_contour
 
-                # Inner contour is a fullarc parametric represetation
-                # elif len(inner_contour.primitives) == 1 and isinstance(inner_contour.primitives[0], vme.LineSegment2D)\
-                #         and math.isclose(z3, z4, abs_tol=1e-5):
-                #
-                #     theta_offset = outer_contour_theta[oc_xmin_index] - inner_contour_theta[ic_xmin_index]
-                #     translation_vector = volmdlr.Vector2D(theta_offset, 0)
-                #     old_innner_contour_positioned = inner_contour.translation(offset=translation_vector)
-                #
-                # # Outer contour is a fullarc parametric represetation
-                # elif len(old_outer_contour_positioned.primitives) == 1 and \
-                #         isinstance(old_outer_contour_positioned.primitives[0], vme.LineSegment2D) and \
-                #         math.isclose(z1, z2, abs_tol=1e-5):
-                #     theta_offset = inner_contour_theta[ic_xmin_index] - outer_contour_theta[oc_xmin_index]
-                #     translation_vector = volmdlr.Vector2D(theta_offset, 0)
-                #     old_innner_contour_positioned = inner_contour
-                #     old_outer_contour_positioned = old_outer_contour_positioned.translation(offset=translation_vector)
-                #
                 else:
-                    if overlap:
-                        if inner_contour_xmin < outer_contour_xmin:
-                            overlapping_theta = outer_contour_theta[oc_xmin_index]
-                            outer_contour_side = oc_xmin_index
-                            side = 0
-                        else:
-                            overlapping_theta = outer_contour_theta[oc_xmax_index]
-                            outer_contour_side = oc_xmax_index
-                            side = 1
-                        line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
-                                          volmdlr.Point2D(overlapping_theta, z3))
-
-                    # if not direct intersection -> find intersection at periodicity
-                    else:
-                        if theta3 < theta1:
-                            overlapping_theta = outer_contour_theta[oc_xmin_index] - 2 * math.pi
-                            outer_contour_side = oc_xmin_index
-                            side = 0
-                        else:
-                            overlapping_theta = outer_contour_theta[oc_xmax_index] + 2 * math.pi
-                            outer_contour_side = oc_xmax_index
-                            side = 1
-                        line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
-                                          volmdlr.Point2D(overlapping_theta, z3))
+                    overlapping_theta, outer_contour_side, side = self._get_overlapping_theta(outer_contour_theta,
+                                                                                              inner_contour_theta)
+                    line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
+                                      volmdlr.Point2D(overlapping_theta, z3))
 
                     cutted_contours = inner_contour.split_by_line(line)
 
@@ -1653,6 +1609,37 @@ class PeriodicalSurface(Surface3D):
             class_ = self.face_class
         new_face = class_(self, Surface2D(new_outer_contour, new_inner_contours))
         return new_face
+
+    def _get_overlapping_theta(self, outer_contour_startend_theta, inner_contour_startend_theta):
+        oc_xmin_index, outer_contour_xmin = min(enumerate(outer_contour_startend_theta), key=lambda x: x[1])
+        oc_xmax_index, outer_contour_xman = max(enumerate(outer_contour_startend_theta), key=lambda x: x[1])
+        inner_contour_xmin = min(inner_contour_startend_theta)
+        inner_contour_xmax = max(inner_contour_startend_theta)
+
+        # check if tetha3 or theta4 is in [theta1, theta2] interval
+        overlap = outer_contour_xmin <= inner_contour_xmax and outer_contour_xman >= inner_contour_xmin
+
+        if overlap:
+            if inner_contour_xmin < outer_contour_xmin:
+                overlapping_theta = outer_contour_startend_theta[oc_xmin_index]
+                outer_contour_side = oc_xmin_index
+                side = 0
+            else:
+                overlapping_theta = outer_contour_startend_theta[oc_xmax_index]
+                outer_contour_side = oc_xmax_index
+                side = 1
+
+        # if not direct intersection -> find intersection at periodicity
+        else:
+            if inner_contour_xmin < outer_contour_xmin:
+                overlapping_theta = outer_contour_startend_theta[oc_xmin_index] - 2 * math.pi
+                outer_contour_side = oc_xmin_index
+                side = 0
+            else:
+                overlapping_theta = outer_contour_startend_theta[oc_xmax_index] + 2 * math.pi
+                outer_contour_side = oc_xmax_index
+                side = 1
+        return overlapping_theta, outer_contour_side, side
 
 
 class CylindricalSurface3D(PeriodicalSurface):
