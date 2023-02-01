@@ -6877,7 +6877,6 @@ class Triangle3D(PlaneFace3D):
         Returns a list of Point3D with resolution as max
         between Point3D.
         """
-
         lengths = [self.points[0].point_distance(self.points[1]),
                    self.points[1].point_distance(self.points[2]),
                    self.points[2].point_distance(self.points[0])]
@@ -6894,7 +6893,6 @@ class Triangle3D(PlaneFace3D):
         vector_0_1 = point0 - point1
         vector_0_1.normalize()
         points_0_1 = []
-
         for k in range(int(max_length / resolution) + 2):
             if k == 0:
                 points_0_1.append(point1)
@@ -6906,23 +6904,17 @@ class Triangle3D(PlaneFace3D):
         points_in = []
 
         for k, p0_1 in enumerate(points_0_1):
-            if k == 0:
-                point_on_2_1 = point1
-            distance_to_point = min(points_0_1[0].point_distance(p0_1) * length_2_1 / max_length, length_2_1)
-            point_on_2_1 = point1 + vector_2_1 * distance_to_point
+            point_on_2_1 = point1 + min(p0_1.point_distance(points_0_1[0]) * length_2_1 / max_length,
+                                        length_2_1) * vector_2_1
 
             length_2_0 = point_on_2_1.point_distance(p0_1)
             nb_int = int(length_2_0 / resolution) + 2
-            if nb_int == 2:
-                points_in.append(point_on_2_1)
-            else:
-                vector_2_0 = point_on_2_1 - p0_1
-                vector_2_0.normalize()
-                step_in = length_2_0 / (nb_int - 1)
-                for i in range(nb_int):
-                    distance_to_point = min(i * step_in, length_2_0)
-                    if distance_to_point != 0:
-                        points_in.append(p0_1 + vector_2_0 * distance_to_point)
+            vector_2_0 = point_on_2_1 - p0_1
+            vector_2_0.normalize()
+            step_in = length_2_0 / (nb_int - 1)
+            for i in range(nb_int):
+                if i != 0:
+                    points_in.append(p0_1 + min(i * step_in, length_2_0) * vector_2_0)
 
         return npy.unique(points_0_1 + points_in).tolist()
 
