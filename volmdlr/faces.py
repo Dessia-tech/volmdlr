@@ -1640,21 +1640,21 @@ class PeriodicalSurface(Surface3D):
                 overlapping_theta = outer_contour_startend_theta[oc_xmin_index]
                 outer_contour_side = oc_xmin_index
                 side = 0
-            else:
-                overlapping_theta = outer_contour_startend_theta[oc_xmax_index]
-                outer_contour_side = oc_xmax_index
-                side = 1
+                return overlapping_theta, outer_contour_side, side
+            overlapping_theta = outer_contour_startend_theta[oc_xmax_index]
+            outer_contour_side = oc_xmax_index
+            side = 1
+            return overlapping_theta, outer_contour_side, side
 
         # if not direct intersection -> find intersection at periodicity
-        else:
-            if inner_contour_xmin < outer_contour_xmin:
-                overlapping_theta = outer_contour_startend_theta[oc_xmin_index] - 2 * math.pi
-                outer_contour_side = oc_xmin_index
-                side = 0
-            else:
-                overlapping_theta = outer_contour_startend_theta[oc_xmax_index] + 2 * math.pi
-                outer_contour_side = oc_xmax_index
-                side = 1
+        if inner_contour_xmin < outer_contour_xmin:
+            overlapping_theta = outer_contour_startend_theta[oc_xmin_index] - 2 * math.pi
+            outer_contour_side = oc_xmin_index
+            side = 0
+            return overlapping_theta, outer_contour_side, side
+        overlapping_theta = outer_contour_startend_theta[oc_xmax_index] + 2 * math.pi
+        outer_contour_side = oc_xmax_index
+        side = 1
         return overlapping_theta, outer_contour_side, side
 
     def linesegment3d_to_2d(self, linesegment3d):
@@ -2971,11 +2971,6 @@ class SphericalSurface3D(Surface3D):
             points = [p - volmdlr.Point2D(self.x_periodicity, 0) if p.x > 0 else p for p in points]
         elif theta3 > theta1 > theta2:
             points = [p + volmdlr.Point2D(self.x_periodicity, 0) if p.x < 0 else p for p in points]
-        #
-        # if phi3 < phi1 < phi2:
-        #     points = [p - volmdlr.Point2D(self.y_periodicity, 0) if p.y > 0 else p for p in points]
-        # elif phi3 > phi1 > phi2:
-        #     points = [p + volmdlr.Point2D(self.y_periodicity, 0) if p.y < 0 else p for p in points]
         try:
             return [vme.BSplineCurve2D.from_points_interpolation(points, 2)]
         except Exception:
@@ -5607,7 +5602,8 @@ class Face3D(volmdlr.core.Primitive3D):
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
         """
-        Face3D rotation
+        Face3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -5647,7 +5643,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Face3D translation. Object is updated inplace
+        Face3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.surface3d.translation_inplace(offset=offset)
@@ -5656,7 +5653,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Face3D
+        Changes frame_mapping and return a new Face3D.
+
         side = 'old' or 'new'
         """
         new_surface3d = self.surface3d.frame_mapping(frame, side)
@@ -5665,7 +5663,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         self.surface3d.frame_mapping_inplace(frame, side)
