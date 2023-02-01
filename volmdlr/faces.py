@@ -1627,21 +1627,21 @@ class PeriodicalSurface(Surface3D):
                 overlapping_theta = outer_contour_startend_theta[oc_xmin_index]
                 outer_contour_side = oc_xmin_index
                 side = 0
-            else:
-                overlapping_theta = outer_contour_startend_theta[oc_xmax_index]
-                outer_contour_side = oc_xmax_index
-                side = 1
+                return overlapping_theta, outer_contour_side, side
+            overlapping_theta = outer_contour_startend_theta[oc_xmax_index]
+            outer_contour_side = oc_xmax_index
+            side = 1
+            return overlapping_theta, outer_contour_side, side
 
         # if not direct intersection -> find intersection at periodicity
-        else:
-            if inner_contour_xmin < outer_contour_xmin:
-                overlapping_theta = outer_contour_startend_theta[oc_xmin_index] - 2 * math.pi
-                outer_contour_side = oc_xmin_index
-                side = 0
-            else:
-                overlapping_theta = outer_contour_startend_theta[oc_xmax_index] + 2 * math.pi
-                outer_contour_side = oc_xmax_index
-                side = 1
+        if inner_contour_xmin < outer_contour_xmin:
+            overlapping_theta = outer_contour_startend_theta[oc_xmin_index] - 2 * math.pi
+            outer_contour_side = oc_xmin_index
+            side = 0
+            return overlapping_theta, outer_contour_side, side
+        overlapping_theta = outer_contour_startend_theta[oc_xmax_index] + 2 * math.pi
+        outer_contour_side = oc_xmax_index
+        side = 1
         return overlapping_theta, outer_contour_side, side
 
 
