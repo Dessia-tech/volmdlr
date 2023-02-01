@@ -2937,12 +2937,8 @@ class SphericalSurface3D(Surface3D):
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y > 0 else p for p in points]
         elif phi3 > phi1 > phi2:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in points]
-        try:
-            return [vme.BSplineCurve2D.from_points_interpolation(points, 2)]
-        except Exception:
-            print("Error while trying to transform Arc3D to parametric Spherical space:")
-            print(points)
-        return None
+
+        return [vme.BSplineCurve2D.from_points_interpolation(points, 2)]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         # TODO: this is incomplete, a bspline_curve2d can be also a bspline_curve3d

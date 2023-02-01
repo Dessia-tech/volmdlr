@@ -2553,8 +2553,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def second_moment_area(self, point):
         Ix, Iy, Ixy = 0., 0., 0.
         for pi, pj in zip(self.points, self.points[1:] + [self.points[0]]):
-            xi, yi = (pi - point)
-            xj, yj = (pj - point)
+            xi, yi = pi - point
+            xj, yj = pj - point
             Ix += (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi)
             Iy += (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi)
             Ixy += (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
@@ -5094,8 +5094,8 @@ class Circle3D(Contour3D):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
-        u1 = (point2 - point1)
-        u2 = (point2 - point3)
+        u1 = point2 - point1
+        u2 = point2 - point3
         try:
             u1.normalize()
             u2.normalize()
