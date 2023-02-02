@@ -39,6 +39,7 @@ steps:
 - name: check code complexity
   image: python:3.9
   commands:
+  - apt install enchant-2
   - pip install pylint==2.6.0 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant
   - python code_pylint.py
   - python code_pydocstyle.py
