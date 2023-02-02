@@ -2668,6 +2668,33 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         return []
 
+    def linesegment2d_to_3d(self, linesegment2d):
+        theta1, z1 = linesegment2d.start
+        theta2, z2 = linesegment2d.end
+
+        if math.isclose(theta1, theta2, abs_tol=1e-4):
+            return [vme.LineSegment3D(
+                self.point2d_to_3d(linesegment2d.start),
+                self.point2d_to_3d(linesegment2d.end),
+            )]
+        elif math.isclose(z1, z2, abs_tol=1e-4) and math.isclose(z1, 0.,
+                                                                 abs_tol=1e-6):
+            return []
+        elif math.isclose(z1, z2, abs_tol=1e-4):
+            if abs(theta1 - theta2) == volmdlr.TWO_PI:
+                return [vme.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
+                                      start_end=self.point2d_to_3d(linesegment2d.start),
+                                      normal=self.frame.w)]
+            else:
+                return [vme.Arc3D(
+                    self.point2d_to_3d(linesegment2d.start),
+                    self.point2d_to_3d(
+                        volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
+                    self.point2d_to_3d(linesegment2d.end))
+                ]
+        else:
+            raise NotImplementedError('Ellipse?')
+
     def translation(self, offset: volmdlr.Vector3D):
         """
         ConicalSurface3D translation.
@@ -3591,7 +3618,7 @@ class BSplineSurface3D(Surface3D):
                 flag = False
                 break
         if not flag:
-            arc = vme.Arc3D(points[0], points[5], points[-1])
+            arc = vme.Arc3D(points[0], points[10], points[-1])
             flag_arc = all(arc.point_belongs(pt, abs_tol=1e-4) for pt in points)
 
         periodic = False

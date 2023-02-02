@@ -4921,6 +4921,7 @@ class Arc3D(Arc):
             u1.normalize()
             u2.normalize()
         except ZeroDivisionError:
+            print(True)
             raise ValueError(
                 'Start, end and interior points of an arc must be distincts') from ZeroDivisionError
 
