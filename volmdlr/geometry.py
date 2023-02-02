@@ -34,7 +34,7 @@ def transfer_matrix_to_euler_angles(R):
     """
     Returns the euler angle from a transfer matrix.
     """
-    if ((R[2, 2] != 1) and (R[2, 2] != -1)):
+    if (R[2, 2] != 1) and (R[2, 2] != -1):
         theta = math.acos(R[2, 2])
         psi = math.atan2(R[2, 0] / math.sin(theta), R[2, 1] / math.sin(theta))
         phi = math.atan2(R[0, 2] / math.sin(theta), -R[1, 2] / math.sin(theta))
@@ -245,7 +245,7 @@ def angle_principal_measure(angle, min_angle=-math.pi):
     Returns angle between O and 2 pi.
     """
     max_angle = min_angle + vm.TWO_PI
-    angle = angle % (vm.TWO_PI)
+    angle = angle % vm.TWO_PI
 
     if math.isclose(angle, min_angle, abs_tol=1e-9):
         return min_angle

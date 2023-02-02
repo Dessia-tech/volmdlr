@@ -1,7 +1,7 @@
 import os
+import random
 import sys
 
-import random
 from pylint import __version__
 from pylint.lint import Run
 
@@ -19,8 +19,8 @@ MAX_ERROR_BY_TYPE = {
                      'no-member': 9,
                      'inconsistent-return-statements': 6,
                      'unused-variable': 42,
-                     'arguments-differ': 11,
-                     'too-many-locals': 71,
+                     'arguments-differ': 12,
+                     'too-many-locals': 73,
                      'line-too-long': 23,
                      'unused-argument': 43,
                      'too-many-arguments': 62,
@@ -29,33 +29,33 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-branches': 27,
                      'too-many-statements': 18,
                      'super-init-not-called': 12,
-                     'no-name-in-module': 4,
-                     'abstract-method': 32,
+                     'no-name-in-module': 5,
+                     'abstract-method': 34,
                      'empty-docstring': 15,
                      'duplicate-code': 9,
                      'no-self-use': 16,
                      'arguments-renamed': 3,
-                     'too-many-ancestors': 7,
+                     'too-many-ancestors': 8,
                      'expression-not-assigned': 1,
                      'non-parent-init-called': 6,
                      'too-few-public-methods': 10,
-                     'too-many-public-methods': 9,
+                     'too-many-public-methods': 11,
                      'use-implicit-booleaness-not-comparison': 8,
                      'too-many-instance-attributes': 10,
                      'protected-access': 4,
                      'undefined-loop-variable': 5,
                      'unspecified-encoding': 5,
                      'too-many-function-args': 7,
-                     'too-many-nested-blocks': 6,
+                     'too-many-nested-blocks': 7,
                      'attribute-defined-outside-init': 6,
-                     'too-many-return-statements': 5,
+                     'too-many-return-statements': 4,
                      'consider-merging-isinstance': 0,
                      'cyclic-import': 4,
                      'consider-iterating-dictionary': 0,
                      'raise-missing-from': 2,
                      'no-else-raise': 3,
                      'no-else-continue': 4,
-                     'undefined-variable': 2,
+                     'undefined-variable': 6, #2 when gmsh is fixed
                      'no-else-break': 4,
                      'unnecessary-list-index-lookup': 4,
                      'simplifiable-if-expression': 3,

@@ -8,8 +8,8 @@ Created on Thu Oct 20 2022
 
 # %% Libraries
 
-import volmdlr.wires
 import volmdlr.edges
+import volmdlr.wires
 
 # %% Contour2d_1
 

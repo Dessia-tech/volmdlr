@@ -5,22 +5,20 @@ Common primitives 3D
 """
 
 import math
-
-from typing import Tuple, List, Dict
 from random import uniform
-
-from scipy.optimize import minimize, Bounds, NonlinearConstraint
-from scipy.stats import qmc
-
-import numpy as npy
-import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple
 
 import dessia_common.core as dc
+import matplotlib.pyplot as plt
+import numpy as npy
+from scipy.optimize import Bounds, NonlinearConstraint, minimize
+from scipy.stats import qmc
+
 import volmdlr
 import volmdlr.core
-import volmdlr.primitives
-import volmdlr.faces
 import volmdlr.edges
+import volmdlr.faces
+import volmdlr.primitives
 import volmdlr.wires
 
 # import dessia_common.typings as dct
@@ -701,7 +699,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Extruded Profile translation. Object is updated inplace.
+        Extruded profile translation. Object is updated inplace.
 
         :param offset: translation vector
         """
@@ -756,7 +754,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of RevolvedProfile.
+        Creates a copy of Revolvedprofile.
 
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),
@@ -851,11 +849,14 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Revolved Profile rotation. Object is updated inplace.
+        Revolved profile rotation. Object is updated inplace.
 
         :param center: rotation center.
+        :type center: `volmdlr.Point3D`.
         :param axis: rotation axis.
+        :type axis: `volmdlr.Vector3D`.
         :param angle: rotation angle.
+        :type angle: float.
         """
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
@@ -968,31 +969,31 @@ class Cylinder(RevolvedProfile):
         # This was copied for HollowCylinder. Inheritence removed to avoid problems
         radius = self.radius
 
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        if pointA[0] > pointB[0]:
-            pointA, pointB = pointB, pointA
-        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[0] > point_b[0]:
+            point_a, point_b = point_b, point_a
+        xmin = point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = point_b[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[1] > pointB[1]:
-            pointA, pointB = pointB, pointA
-        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[1] > point_b[1]:
+            point_a, point_b = point_b, point_a
+        ymin = point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = point_b[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[2] > pointB[2]:
-            pointA, pointB = pointB, pointA
-        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
-        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[2] > point_b[2]:
+            point_a, point_b = point_b, point_a
+        zmin = point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = point_b[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
@@ -1393,29 +1394,29 @@ class Cone(RevolvedProfile):
         A is the point at the basis.
         B is the top.
         """
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        x_bound = (pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[0])
+        x_bound = (point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[0])
         xmin = min(x_bound)
         xmax = max(x_bound)
 
-        y_bound = (pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[1])
+        y_bound = (point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[1])
         ymin = min(y_bound)
         ymax = max(y_bound)
 
-        z_bound = (pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[2])
+        z_bound = (point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[2])
         zmin = min(z_bound)
         zmax = max(z_bound)
 
@@ -1515,31 +1516,31 @@ class HollowCylinder(RevolvedProfile):
 
         radius = self.outer_radius
 
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        if pointA[0] > pointB[0]:
-            pointA, pointB = pointB, pointA
-        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[0] > point_b[0]:
+            point_a, point_b = point_b, point_a
+        xmin = point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = point_b[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[1] > pointB[1]:
-            pointA, pointB = pointB, pointA
-        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[1] > point_b[1]:
+            point_a, point_b = point_b, point_a
+        ymin = point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = point_b[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[2] > pointB[2]:
-            pointA, pointB = pointB, pointA
-        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
-        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[2] > point_b[2]:
+            point_a, point_b = point_b, point_a
+        zmin = point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = point_b[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
@@ -2004,16 +2005,25 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a BSplineExtrusion.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding BSplineExtrusion object.
+        :rtype: :class:`volmdlr.primitives3d.BSplineExtrusion`
+        """
         name = arguments[0][1:-1]
         if object_dict[arguments[1]].__class__ is volmdlr.wires.Ellipse3D:
             ell = object_dict[arguments[1]]
             vectextru = -object_dict[arguments[2]]
             return cls(ell, vectextru, name)
 
-        elif object_dict[arguments[1]].__class__ is \
-                volmdlr.edges.BSplineCurve3D:
+        if object_dict[arguments[1]].__class__ is volmdlr.edges.BSplineCurve3D:
             bsplinecurve = object_dict[arguments[1]]
             vectextru = object_dict[arguments[2]]
             return cls(bsplinecurve, vectextru, name)
-        else:
-            raise NotImplementedError  # a adapter pour les bpsline
+        raise NotImplementedError  # a adapter pour les bpsline

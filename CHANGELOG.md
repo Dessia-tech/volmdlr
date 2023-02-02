@@ -5,7 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## v0.9.0 [Unreleased yet]
+
+### New Features
+
+* Unit coversion factor parameter added to the end of the from_step arguments parameter (So we can convert the units correctly)
+* SphericalSurface3D: rotation, translation, frame_mapping
+* read steps: Identify assemblies in a step file.
+* ClosedTriangleShell3D: to_trimesh method
+* PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
+* BSplineSurface3D: Now the plot method uses u and v curves
+* Create .geo and .msh files (Mesh geometries with GMSH)
+
+
+### Fixed
+
+* WireMixin: abscissa (add tolerance as parameter)
+* OpenRoundedLineSegment2D: deleted discretization_points() so it uses the one from WireMixin.
+* Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
+* BSplineCurve: from_points_interpolation, uses centripedal method for better fitting.
+* Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard. 
+* BSplineSurface3D: debug linesegment2d_to_3d method.
+* Parametric operations with BSpline curves.
+* OpenTriangleShell3D: fix from_mesh_data method.
+* PeriodicalSurface: fix face from contours.
+
+### Removed
+
+
+### Performance improvements
+* wires.py's 2D objects: chache bounding_rectangle results
+* faces.py's Triangle3D objects: subdescription points and triangles
+* EdgeCollection3D: new object for displaying series of edges
+* BSplineSurface3D: compile BSplineSurface3D.derivatives
+
+### Refactorings
+
+
+### Unittests
+ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
+
+
 
 ## v0.8.0 [Released 26/01/2023]
 
@@ -52,7 +93,7 @@ abscissa(), point_angle_with_major_dir(), area(), rotation(), tranlation(), fram
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
 * pydocstyle fixes
-* * bounding box: fix for cylindrical and BSplineCurve3D
+* bounding box: fix for cylindrical and BSplineCurve3D
 * contour2d: ordering_primitives, order_primitives
 * Plane3D: plane_intersections, is_coindident
 * contour2d: ordering_primitives, order_primitives
@@ -63,7 +104,7 @@ abscissa(), point_angle_with_major_dir(), area(), rotation(), tranlation(), fram
 * infinite primitive offset of linesegment
 * Ellispe3D: discretization_points
 * BSplineSurface: Improved surface periodicity calculation
-* 
+
 ### Removed
 
 * babylon script remaining functions
@@ -116,6 +157,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 ### CI
 
 * Mandatory CHANGELOG.md update for PR
+* pre-commit checks with cython-lint
 
 ## v0.7.0 
 

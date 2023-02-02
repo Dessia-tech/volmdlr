@@ -4,17 +4,22 @@
 Module containing mesh and relative objects
 """
 
-from typing import List  # TypeVar, Tuple, Dict
-from itertools import combinations
 import math
+from itertools import combinations
+from typing import List  # TypeVar, Tuple, Dict
+
 import matplotlib.pyplot as plt
 import numpy as npy
-from dessia_common.core import DessiaObject
+
+from dessia_common.core import DessiaObject  # isort: skip
+
 # import volmdlr.core_compiled
 import volmdlr as vm
-import volmdlr.wires as vmw
 import volmdlr.edges as vme
 import volmdlr.gmsh_vm
+import volmdlr.wires as vmw
+
+
 # from volmdlr.core_compiled import Matrix33
 
 # from itertools import combinations
@@ -50,6 +55,7 @@ class FlatElementError(Exception):
 class Node2D(vm.Point2D):
     """
     A node is a Point2D with some hash capabilities for performance used for Mesh.
+
     """
 
     def __hash__(self):
@@ -64,6 +70,15 @@ class Node2D(vm.Point2D):
 
     @classmethod
     def from_point(cls, point2d):
+        """
+        Defines a node2d from a point2d.
+
+        :param point2d: A point2d
+        :type point2d: vm.Point2D
+        :return: A node2d
+        :rtype: Node2D
+        """
+
         return cls(point2d.x, point2d.y)
 
 
@@ -84,10 +99,20 @@ class Node3D(vm.Point3D):
 
     @classmethod
     def from_point(cls, point3d):
+        """
+        Defines a node3d from a point3d.
+
+        :param point3d: A point3d
+        :type point3d: vm.Point3D
+        :return: A node3d
+        :rtype: Node3D
+        """
+
         return cls(point3d.x, point3d.y, point3d.z)
 
 
 class LinearElement(vme.LineSegment2D):
+    """ A class that defines a linear element. """
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -124,6 +149,9 @@ class LinearElement(vme.LineSegment2D):
 
 
 class TriangularElement(vmw.Triangle):
+    """
+    A mesh element defined with 3 nodes.
+    """
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -265,6 +293,7 @@ class TriangularElement(vmw.Triangle):
 
 
 class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
+    """ Class to define a 2D triangular element. """
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -437,6 +466,8 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
 
 
 class QuadrilateralElement2D(vmw.ClosedPolygon2D):
+    """ Class to define a 2D quadrilateral element. """
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -456,6 +487,8 @@ class QuadrilateralElement2D(vmw.ClosedPolygon2D):
 
 
 class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
+    """ Class to define a 3D triangular element. """
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -603,6 +636,8 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
 
 
 class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
+    """ Class to define a 3D tetrahedral element. """
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']

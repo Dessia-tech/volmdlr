@@ -6,10 +6,12 @@ Created on Fri May 22 11:17:00 2020
 """
 
 
+import random
+
+import matplotlib.pyplot as plt
+
 import volmdlr as vm
 import volmdlr.edges as vme
-import matplotlib.pyplot as plt
-import random
 
 ### Cas arc/LS
 

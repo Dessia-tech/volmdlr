@@ -1,10 +1,11 @@
 
 
+import matplotlib.pyplot as plt
+
 import volmdlr as vm
 import volmdlr.edges as edges
-import volmdlr.wires as wires
 import volmdlr.primitives2d as p2d
-import matplotlib.pyplot as plt
+import volmdlr.wires as wires
 
 plt, (ax1, ax2, ax3) = plt.subplots(1, 3)
 

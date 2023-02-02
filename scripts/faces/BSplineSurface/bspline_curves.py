@@ -7,8 +7,9 @@
 
 # %% Libraries
 
-import volmdlr as vm
 import matplotlib.patches as mpatches
+
+import volmdlr as vm
 from volmdlr.models import bspline_surfaces
 
 #%%  BSpline-surface definition 

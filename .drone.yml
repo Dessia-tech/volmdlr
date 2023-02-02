@@ -51,15 +51,16 @@ steps:
 - name: check code complexity
   image: python:3.9
   commands:
-  - pip install radon pylint pydocstyle
+  - pip install radon pylint pydocstyle pre-commit shellcheck-py cython-lint
   - ./code_quality.sh
   - python code_pylint.py
   - python code_pydocstyle.py
+  - pre-commit run -a
 
   volumes:
     # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
+    - name: cache
+      path: /root/.cache
 
 
 - name: check pep8 formatting
@@ -148,3 +149,6 @@ volumes:
   - name: pip_cache
     host:
       path: /tmp/cache/drone/pip
+  - name: cache
+    host:
+      path: /tmp/cache/drone

@@ -4,8 +4,9 @@
 """
 
 import volmdlr as vm
-import volmdlr.step as vm_step
 import volmdlr.primitives3d as primitives3d
+import volmdlr.step as vm_step
+
 resolution = 0.0010
 
 box = primitives3d.Block(

@@ -5,7 +5,7 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import wires, edges
+from volmdlr import edges, wires
 
 
 class TestEllipse2D(unittest.TestCase):

@@ -7,9 +7,10 @@
 
 # %% Libraries
 
+import matplotlib.patches as mpatches
+
 import volmdlr as vm
 import volmdlr.edges
-import matplotlib.patches as mpatches
 
 #%%  BSpline-curve 2D definition 
 
@@ -50,4 +51,3 @@ for i,p in enumerate(points2d):
 
 ax.legend(handles=[mpatches.Patch(color='green', label='Belongs'),
                    mpatches.Patch(color='red', label='Not')])
-

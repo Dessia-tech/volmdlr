@@ -7,27 +7,26 @@ Edges related classes.
 import math
 import sys
 import warnings
-from typing import List, Dict, Any, Union
+from typing import Any, Dict, List, Union
 
+import dessia_common.core as dc
 import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as npy
+import plot_data.core as plot_data
 import scipy as scp
-import scipy.optimize
 import scipy.integrate as scipy_integrate
-
-from geomdl import utilities, BSpline, fitting, operations, NURBS
+import scipy.optimize
+from geomdl import NURBS, BSpline, fitting, operations, utilities
 from geomdl.operations import length_curve, split_curve
 from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
 
-import plot_data.core as plot_data
-import dessia_common.core as dc
-import volmdlr.utils.intersections as vm_utils_intersections
-import volmdlr.core_compiled
 import volmdlr.core
+import volmdlr.core_compiled
 import volmdlr.geometry
+import volmdlr.utils.intersections as vm_utils_intersections
 
 
 def standardize_knot_vector(knot_vector):
@@ -69,7 +68,6 @@ def insert_knots_and_mutiplicity(knots, knot_mutiplicities, knot_to_add, num):
 class Edge(dc.DessiaObject):
     """
     Defines a simple edge Object.
-
     """
 
     def __init__(self, start, end, name=''):
@@ -121,6 +119,9 @@ class Edge(dc.DessiaObject):
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def polygon_points(self, discretization_resolution: int):
+        """
+        Deprecated method of discretization_points.
+        """
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
@@ -128,6 +129,17 @@ class Edge(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to an Edge type object.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding Edge object
+        :rtype: :class:`volmdlr.edges.Edge`
+        """
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
@@ -137,7 +149,9 @@ class Edge(dc.DessiaObject):
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
-            return LineSegment3D(p1, p2, arguments[0][1:-1])
+            if p1 != p2:
+                return LineSegment3D(p1, p2, arguments[0][1:-1])
+            return None
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D':
                 p1, p2 = p2, p1
@@ -480,10 +494,32 @@ class LineSegment(Edge):
         """
         return self.start + self.unit_direction_vector() * abscissa
 
+    def get_geo_lines(self, tag: int, start_point_tag: int, end_point_tag: int):
+        """
+        Gets the lines that define a LineSegment in a .geo file.
+
+        :param tag: The linesegment index
+        :type tag: int
+        :param start_point_tag: The linesegment' start point index
+        :type start_point_tag: int
+        :param end_point_tag: The linesegment' end point index
+        :type end_point_tag: int
+
+        :return: A line
+        :rtype: str
+        """
+
+        return 'Line(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + str(end_point_tag) + '};'
+
+    def get_geo_points(self):
+        return [self.start, self.end]
+
 
 class BSplineCurve(Edge):
     """
-    An abstract class for B-spline curves. The following rule must be
+    An abstract class for B-spline curves.
+
+    The following rule must be
     respected : `number of knots = number of control points + degree + 1`.
 
     :param degree: The degree of the B-spline curve.
@@ -837,6 +873,7 @@ class BSplineCurve(Edge):
                                   degree: int, periodic: bool = False):
         """
         Creates a B-spline curve interpolation through the data points.
+
         Please refer to Algorithm A9.1 on The NURBS Book (2nd Edition),
         pp.369-370 for details.
 
@@ -851,7 +888,7 @@ class BSplineCurve(Edge):
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
-        curve = fitting.interpolate_curve([[*point] for point in points], degree)
+        curve = fitting.interpolate_curve([[*point] for point in points], degree, centripetal=True)
 
         bsplinecurve = cls.from_geomdl_curve(curve)
         if not periodic:
@@ -911,6 +948,26 @@ class BSplineCurve(Edge):
 
         return [getattr(volmdlr, f'Vector{self.__class__.__name__[-2::]}')(*p)
                 for p in self.curve.derivatives(u, order)]
+
+    def get_geo_lines(self, tag: int, control_points_tags: List[int]):
+        """
+        Gets the lines that define a BsplineCurve in a .geo file.
+
+        :param tag: The BsplineCurve index
+        :type tag: int
+        :param start_point_tag: The linesegment' start point index
+        :type start_point_tag: int
+        :param end_point_tag: The linesegment' end point index
+        :type end_point_tag: int
+
+        :return: A line
+        :rtype: str
+        """
+
+        return 'BSpline(' + str(tag) + ') = {' + str(control_points_tags)[1:-1] + '};'
+
+    def get_geo_points(self):
+        return list(self.discretization_points())
 
     def line_intersections(self, line):
         """
@@ -1313,10 +1370,10 @@ class Line2D(Line):
         """
         Calculate the shortest distance between a line and a point.
 
-        :param point2d: Point to calculate distance
-        :type point2d: :class:`volmdlr.Point2D`
-        :return: Distance to point
-        :rtype: float
+        :param point2d: Point to calculate distance.
+        :type point2d: :class:`volmdlr.Point2D`.
+        :return: Distance to point.
+        :rtype: float.
         """
         vector_r = self.point1 - point2d
         vector_v = self.normal_vector()
@@ -1325,7 +1382,9 @@ class Line2D(Line):
 
 class BSplineCurve2D(BSplineCurve):
     """
-    A class for 2 dimensional B-spline curves. The following rule must be
+    A class for 2 dimensional B-spline curves.
+
+    The following rule must be
     respected : `number of knots = number of control points + degree + 1`.
 
     :param degree: The degree of the 2 dimensional B-spline curve
@@ -1398,14 +1457,18 @@ class BSplineCurve2D(BSplineCurve):
 
     def direction_vector(self, abscissa: float):
         """
+        Get direction vector at abscissa.
+
         :param abscissa: defines where in the BSplineCurve2D the
-        direction vector is to be calculated
+        direction vector is to be calculated.
         :return: The direection vector vector of the BSplineCurve2D
         """
         return self.tangent(abscissa)
 
     def normal_vector(self, abscissa: float):
         """
+        Get normal vector at abscissa.
+
         :param abscissa: defines where in the BSplineCurve2D the
         normal vector is to be calculated
         :return: The normal vector of the BSplineCurve2D
@@ -1641,7 +1704,10 @@ class LineSegment2D(LineSegment):
         return self.start == other_object.start and self.end == other_object.end
 
     def direction_independent_eq(self, linesegment2):
-        """Verifies if two linesegments are the same, not considering its direction"""
+        """
+        Verifies if two linesegments are the same, not considering its direction.
+
+        """
         if self == linesegment2:
             return True
         return self.start == linesegment2.end and self.end == linesegment2.start
@@ -1768,6 +1834,9 @@ class LineSegment2D(LineSegment):
         return line_intersection
 
     def linesegment_crossings(self, linesegment: 'LineSegment2D'):
+        """
+        Gives the crossings with a linesegment.
+        """
         if self.direction_vector().is_colinear_to(
                 linesegment.direction_vector()):
             return []
@@ -1775,6 +1844,9 @@ class LineSegment2D(LineSegment):
 
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
              plot_points=False):
+        """
+        Plots the Linesegment2D.
+        """
         if ax is None:
             _, ax = plt.subplots()
 
@@ -2033,9 +2105,10 @@ class Arc(Edge):
     @staticmethod
     def get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i):
         """
+        Get arc paths from radius.
 
         :param radius_1: radius from center to start point.
-        :param radius_2: radius form center ro end point.
+        :param radius_2: radius form center to end point.
         :param radius_i: radius from center to interior point.
         :return: the clockwise and trigowise paths.
         """
@@ -2061,6 +2134,9 @@ class Arc(Edge):
         return clockwise_path, trigowise_path
 
     def middle_point(self):
+        """
+        Get point in the middle of Arc.
+        """
         return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
@@ -2093,9 +2169,34 @@ class Arc(Edge):
                       DeprecationWarning)
         return self.discretization_points(number_points=discretization_resolution)
 
+    def get_geo_lines(self, tag: int, start_point_tag: int, center_point_tag: int, end_point_tag: int):
+        """
+        Gets the lines that define an Arc in a .geo file.
+
+        :param tag: The linesegment index
+        :type tag: int
+        :param start_point_tag: The linesegment' start point index
+        :type start_point_tag: int
+        :param center_point_tag: The linesegment' center point index
+        :type center_point_tag: int
+        :param end_point_tag: The linesegment' end point index
+        :type end_point_tag: int
+
+        :return: A line
+        :rtype: str
+        """
+
+        return 'Circle(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + \
+            str(center_point_tag) + ', ' + str(end_point_tag) + '};'
+
+    def get_geo_points(self):
+        return [self.start, self.center, self.end]
+
 
 class Arc2D(Arc):
     """
+    Class to draw Arc2D.
+
     angle: the angle measure always >= 0
     """
 
@@ -2153,6 +2254,9 @@ class Arc2D(Arc):
 
     @property
     def is_trigo(self):
+        """
+        Gives if the edge goes in the trigo direction.
+        """
         if not self._is_trigo:
             self._is_trigo = self.get_arc_direction()
         return self._is_trigo
@@ -2184,6 +2288,9 @@ class Arc2D(Arc):
 
     @property
     def angle(self):
+        """
+        Returns the angle in radians of the arc.
+        """
         if not self._angle:
             self._angle = self.get_angle()
         return self._angle
@@ -2201,6 +2308,9 @@ class Arc2D(Arc):
     points = property(_get_points)
 
     def point_distance(self, point):
+        """
+        Returns the distance between a point and the edge.
+        """
         vector_start = self.start - self.center
         vector_point = point - self.center
         vector_end = self.end - self.center
@@ -2230,6 +2340,9 @@ class Arc2D(Arc):
         return False
 
     def to_full_arc_2d(self):
+        """
+        Convert to a full arc2d.
+        """
         return FullArc2D(center=self.center,
                          start_end=self.point_at_abscissa(0),
                          name=self.name)
@@ -2258,6 +2371,9 @@ class Arc2D(Arc):
         return intersection_points
 
     def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
+        """
+        Returns the abscissa of a given point2d.
+        """
         if point2d.point_distance(self.start) < tol:
             return 0
         if point2d.point_distance(self.end) < tol:
@@ -2285,6 +2401,8 @@ class Arc2D(Arc):
 
     def direction_vector(self, abscissa: float):
         """
+        Get direction vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         direction vector is to be calculated
         :return: The direction vector of the Arc2D
@@ -2293,8 +2411,11 @@ class Arc2D(Arc):
 
     def unit_direction_vector(self, abscissa: float):
         """
+        Get unit direction vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         unit direction vector is to be calculated
+
         :return: The unit direction vector of the Arc2D
         """
         direction_vector = self.direction_vector(abscissa)
@@ -2303,6 +2424,8 @@ class Arc2D(Arc):
 
     def normal_vector(self, abscissa: float):
         """
+        Get the normal vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         normal vector is to be calculated
         :return: The normal vector of the Arc2D
@@ -2316,6 +2439,8 @@ class Arc2D(Arc):
 
     def unit_normal_vector(self, abscissa: float):
         """
+        Get the unit normal vector of the Arc2D.
+
         :param abscissa: defines where in the Arc2D the
         unit normal vector is to be calculated
         :return: The unit normal vector of the Arc2D
@@ -2589,8 +2714,7 @@ class Arc2D(Arc):
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   anticlockwise: bool = None):
-
-        list_node = self.discretization_points()
+        list_node = self.discretization_points(number_points=20)
         data = []
         for nd in list_node:
             data.append({'x': nd.x, 'y': nd.y})
@@ -2663,19 +2787,11 @@ class Arc2D(Arc):
         return Arc2D(self.start, interior, self.end)
 
     def to_wire(self, angle_resolution: float = 10.):
-        """
-        Convert an arc to a wire2d defined with line_segments.
-
-        """
-
+        """ Convert an arc to a wire2d defined with line_segments. """
         return volmdlr.wires.Wire2D.from_points(self.discretization_points(angle_resolution=angle_resolution))
 
     def axial_symmetry(self, line):
-        """
-        Finds out the symmetric arc2d according to a line.
-
-        """
-
+        """ Finds out the symmetric arc2d according to a line. """
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
 
         return self.__class__(start=points_symmetry[0],
@@ -2687,10 +2803,7 @@ class Arc2D(Arc):
 
 
 class FullArc2D(Arc2D):
-    """
-    An edge that starts at start_end, ends at the same point after having described a circle.
-
-    """
+    """ An edge that starts at start_end, ends at the same point after having described a circle. """
 
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
                  name: str = ''):
@@ -2936,6 +3049,9 @@ class FullArc2D(Arc2D):
 
         return []
 
+    def reverse(self):
+        return self
+
 
 class ArcEllipse2D(Edge):
     """
@@ -3055,7 +3171,7 @@ class ArcEllipse2D(Edge):
             self.offset_angle = angle2
 
     def _get_points(self):
-        return self.discretization_points()
+        return self.discretization_points(number_points=20)
 
     points = property(_get_points)
 
@@ -3425,7 +3541,7 @@ class Line3D(Line):
     def minimum_distance_points(self, other_line):
         """
         Returns the points on this line and the other line that are the closest
-        of lines
+        of lines.
         """
         u = self.point2 - self.point1
         v = other_line.point2 - other_line.point1
@@ -3524,6 +3640,7 @@ class Line3D(Line):
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if not self.point_belongs(point1) or not self.point_belongs(point2):
             raise ValueError('Point not on curve')
+
         return LineSegment3D(point1, point2)
 
     def copy(self, *args, **kwargs):
@@ -3531,6 +3648,17 @@ class Line3D(Line):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to an Line3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding Line3D object
+        :rtype: :class:`volmdlr.edges.Line3D`
+        """
         point1 = object_dict[arguments[1]]
         direction = object_dict[arguments[2]]
         point2 = point1 + direction
@@ -3741,7 +3869,7 @@ class LineSegment3D(LineSegment):
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
         """
-        LineSegment3D rotation
+        LineSegment3D rotation.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -3753,7 +3881,7 @@ class LineSegment3D(LineSegment):
     def rotation_inplace(self, center: volmdlr.Point3D,
                          axis: volmdlr.Vector3D, angle: float):
         """
-        Line2D rotation. Object is updated inplace
+        Line2D rotation. Object is updated inplace.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -3774,7 +3902,7 @@ class LineSegment3D(LineSegment):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        LineSegment3D translation
+        LineSegment3D translation.
         :param offset: translation vector
         :return: A new translated LineSegment3D
         """
@@ -3783,7 +3911,7 @@ class LineSegment3D(LineSegment):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        LineSegment3D translation. Object is updated inplace
+        LineSegment3D translation. Object is updated inplace.
         :param offset: translation vector
         """
         for point in self.points:
@@ -3792,7 +3920,8 @@ class LineSegment3D(LineSegment):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes LineSegment3D frame_mapping and return a new LineSegment3D
+        Changes LineSegment3D frame_mapping and return a new LineSegment3D.
+
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -3805,7 +3934,8 @@ class LineSegment3D(LineSegment):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes vector frame_mapping and the object is updated inplace
+        Changes vector frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -3890,7 +4020,7 @@ class LineSegment3D(LineSegment):
 
     def to_bspline_curve(self, resolution=10):
         """
-        Convert a LineSegment3D to a BSplineCurve3D
+        Convert a LineSegment3D to a BSplineCurve3D.
         """
         degree = 1
         points = [self.point_at_abscissa(abscissa / self.length())
@@ -3905,7 +4035,7 @@ class LineSegment3D(LineSegment):
     def minimum_distance_points(self, other_line):
         """
         Returns the points on this line and the other line that are the closest
-        of lines
+        of lines.
         """
         u = self.end - self.start
         v = other_line.end - other_line.start
@@ -4137,7 +4267,6 @@ class LineSegment3D(LineSegment):
     def to_step(self, current_id, surface_id=None):
         line = self.to_line()
         content, line_id = line.to_step(current_id)
-
         current_id = line_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         current_id = start_id + 1
@@ -4334,6 +4463,17 @@ class BSplineCurve3D(BSplineCurve):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a BSplineCurve3D.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated
+        :type object_dict: dict
+        :return: The corresponding BSplineCurve3D.
+        :rtype: :class:`volmdlr.edges.BSplineCurve3D`
+        """
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
@@ -4357,7 +4497,7 @@ class BSplineCurve3D(BSplineCurve):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
 
-        if 9 in range(len(arguments)):
+        if 10 in range(len(arguments)):
             weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
         else:
             weight_data = None
@@ -4439,7 +4579,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        BSplineCurve3D rotation
+        BSplineCurve3D rotation.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -4455,7 +4595,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        BSplineCurve3D rotation. Object is updated inplace
+        BSplineCurve3D rotation. Object is updated inplace.
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -4572,8 +4712,7 @@ class BSplineCurve3D(BSplineCurve):
         return self.from_geomdl_curve(modified_curve)
 
     # Copy paste du LineSegment3D
-    def plot(self, ax=None, edge_ends=False, color='k', alpha=1,
-             edge_direction=False):
+    def plot(self, ax=None, color='k', alpha=1, edge_ends=False, edge_direction=False):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4633,7 +4772,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def maximum_curvature(self, point_in_curve: bool = False):
         """
-        Returns the maximum curvature of a curve and the point where it is located
+        Returns the maximum curvature of a curve and the point where it is located.
         """
         if point_in_curve:
             maximum_curvarture, point = max(self.global_maximum_curvature(nb_eval=21, point_in_curve=point_in_curve))
@@ -4644,23 +4783,13 @@ class BSplineCurve3D(BSplineCurve):
 
     def minimum_radius(self, point_in_curve=False):
         """
-        Returns the minimum curvature radius of a curve and the point where it is located
+        Returns the minimum curvature radius of a curve and the point where it is located.
         """
         if point_in_curve:
             maximum_curvarture, point = self.maximum_curvature(point_in_curve)
             return 1 / maximum_curvarture, point
         maximum_curvarture = self.maximum_curvature(point_in_curve)
         return 1 / maximum_curvarture
-
-    @classmethod
-    def from_geomdl_curve(cls, curve):
-        knots = list(sorted(set(curve.knotvector)))
-        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
-        return cls(degree=curve.degree,
-                   control_points=[volmdlr.Point3D(*pts)
-                                   for pts in curve.ctrlpts],
-                   knots=knots,
-                   knot_multiplicities=knot_multiplicities)
 
     def global_minimum_curvature(self, nb_eval: int = 21):
         check = [i / (nb_eval - 1) for i in range(nb_eval)]
@@ -4880,7 +5009,7 @@ class Arc3D(Arc):
     @property
     def angle(self):
         """
-        Arc angle property
+        Arc angle property.
         :return: arc angle
         """
         if not self._utd_angle:
@@ -4890,7 +5019,7 @@ class Arc3D(Arc):
 
     def get_angle(self):
         """
-        Gets the arc angle
+        Gets the arc angle.
         :return: arc angle
         """
         clockwise_path, trigowise_path = \
@@ -5645,9 +5774,10 @@ class FullArc3D(Arc3D):
 
     def linesegment_intersections(self, linesegment: LineSegment3D):
         """
-        Calculates the intersections between a fullarc3d and a linesegment3d
-        :param linesegment: linesegment3d to verify intersections
-        :return: list of points3d, if there are any intersections, an empty list if otherwise
+        Calculates the intersections between a fullarc3d and a linesegment3d.
+
+        :param linesegment: linesegment3d to verify intersections.
+        :return: list of points3d, if there are any intersections, an empty list if otherwise.
         """
         distance_center_lineseg = linesegment.point_distance(self.frame.origin)
         if distance_center_lineseg > self.radius:
@@ -5659,10 +5789,10 @@ class FullArc3D(Arc3D):
 
         if linesegment.start.z == linesegment.end.z == self.frame.origin.z:
             quadratic_equation_a = 1 + (direction_vector.y ** 2 / direction_vector.x ** 2)
-            quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x +
-                                    2 * (direction_vector.y / direction_vector.x) * linesegment.start.y)
-            quadratic_equation_c = ((linesegment.start.y - (direction_vector.y / direction_vector.x) *
-                                     linesegment.start.x) ** 2 - self.radius ** 2)
+            quadratic_equation_b = -2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x + \
+                                    2 * (direction_vector.y / direction_vector.x) * linesegment.start.y
+            quadratic_equation_c = (linesegment.start.y - (direction_vector.y / direction_vector.x) *
+                                     linesegment.start.x) ** 2 - self.radius ** 2
             delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c
             x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
             x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)
@@ -5678,6 +5808,13 @@ class FullArc3D(Arc3D):
                         self.radius ** 2, abs_tol=1e-6):
             return [volmdlr.Point3D(x_coordinate, y_coordinate, self.frame.origin.z)]
         return []
+
+    def reverse(self):
+        """
+        Defines a new FullArc3D, odentical to self, but in the oposite direction.
+
+        """
+        return self
 
 
 class ArcEllipse3D(Edge):
@@ -5719,8 +5856,7 @@ class ArcEllipse3D(Edge):
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
         def theta_A_B(s, i, e, c):
-            # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi
-            # grd axe, B=demi petit axe
+            # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
             xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
                 1] - c[1], e[0] - c[0], e[1] - c[1]
             A = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],
@@ -5795,7 +5931,7 @@ class ArcEllipse3D(Edge):
             self.offset_angle = angle2
 
         volmdlr.core.CompositePrimitive3D.__init__(self,
-                                                   primitives=self.discretization_points(),
+                                                   primitives=self.discretization_points(number_points=20),
                                                    name=name)
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
@@ -5838,7 +5974,7 @@ class ArcEllipse3D(Edge):
         return self.discretization_points(angle_resolution=discretization_resolution)
 
     def _get_points(self):
-        return self.discretization_points()
+        return self.discretization_points(number_points=20)
     points = property(_get_points)
 
     def to_2d(self, plane_origin, x, y):

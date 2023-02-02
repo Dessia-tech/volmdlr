@@ -1,6 +1,7 @@
+import matplotlib.pyplot as plt
+
 import volmdlr as vm
 import volmdlr.edges as vme
-import matplotlib.pyplot as plt
 
 degree = 3
 points = [vm.Point2D(0, 0),

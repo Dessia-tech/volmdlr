@@ -7,10 +7,11 @@
 
 # %% Libraries
 
+import numpy as npy
+
 import volmdlr as vm
 import volmdlr.faces as vmf
 import volmdlr.step as vms
-import numpy as npy
 
 # %% Read Step file
 

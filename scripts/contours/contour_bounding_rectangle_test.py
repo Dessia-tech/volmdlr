@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 
 import volmdlr as vm
-from volmdlr.core import BoundingRectangle
-import volmdlr.wires as vmw
 import volmdlr.edges as vme
+import volmdlr.wires as vmw
+from volmdlr.core import BoundingRectangle
 
 line_seg1 = vme.LineSegment2D(vm.Point2D(-0.5, -0.2), vm.O2D)
 line_seg2 = vme.LineSegment2D(vm.O2D, vm.Point2D(0.3, 1))
