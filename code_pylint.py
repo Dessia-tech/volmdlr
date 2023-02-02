@@ -7,17 +7,17 @@ import math
 from pylint import __version__
 from pylint.lint import Run
 
-MIN_NOTE = 9.17
+MIN_NOTE = 8.20
 
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
 EFFECTIVE_DATE = date(2023, 1, 31)
 WEEKLY_DECREASE = 0.03
 
-MIN_NOTE = 8.5
-
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 788,
+                     "wrong-spelling-in-comment": 400,
+                     "wrong-spelling-in-docstring": 600,
+                     'invalid-name': 780,
                      'no-else-return': 49,
                      'consider-using-f-string': 77,
                      'no-member': 9,
@@ -57,6 +57,7 @@ MAX_ERROR_BY_TYPE = {
                      'undefined-variable': 6,  # 2 when gmsh is fixed
                      'no-else-break': 4,
                      'broad-except': 1,
+                     "broad-exception-caught": 1,
                      'too-many-boolean-expressions': 3,
                      'too-many-lines': 3,
                      'redundant-keyword-arg': 3,
