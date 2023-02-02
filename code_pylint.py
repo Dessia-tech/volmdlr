@@ -13,9 +13,9 @@ UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-fin
 MIN_NOTE = 8.5
 
 MAX_ERROR_BY_TYPE = {
-                     "wrong-spelling-in-comment": 436,
-                     "wrong-spelling-in-docstring": 662,
-                     'invalid-name': 787,
+                     "wrong-spelling-in-comment": 400,
+                     "wrong-spelling-in-docstring": 600,
+                     'invalid-name': 780,
                      'no-else-return': 49,
                      'consider-using-f-string': 77,
                      'no-member': 9,

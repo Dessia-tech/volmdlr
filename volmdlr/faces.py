@@ -3876,7 +3876,8 @@ class BSplineSurface3D(Surface3D):
     def simplify_surface(self):
         """
         Verifies if BSplineSurface3D could be a Plane3D.
-        :return: simplified surface if possible, otherwis, returns self
+
+        :return: simplified surface if possible, otherwise, returns self
         """
         points = [self.control_points[0], self.control_points[math.ceil(len(self.control_points) / 2)],
                   self.control_points[-1]]
@@ -6679,7 +6680,7 @@ class PlaneFace3D(Face3D):
 
     def project_faces(self, faces):
         """
-        Divide self based on faces's outer, and inner contours
+        Divide self based on the faces outer, and inner contours
 
         :param faces: DESCRIPTION
         :type faces: TYPE
@@ -6888,8 +6889,9 @@ class Triangle3D(PlaneFace3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace.
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated in-place.
+
+        :param side: 'old' or 'new'
         """
         self.point1.frame_mapping_inplace(frame, side)
         self.point2.frame_mapping_inplace(frame, side)
@@ -6909,7 +6911,8 @@ class Triangle3D(PlaneFace3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Plane3D translation
+        Plane3D translation.
+
         :param offset: translation vector
         :return: A new translated Plane3D
         """
@@ -6923,7 +6926,8 @@ class Triangle3D(PlaneFace3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Plane3D translation. Object is updated inplace
+        Plane3D translation. Object is updated in-place.
+
         :param offset: translation vector
         """
         self.point1.translation_inplace(offset)
@@ -7158,52 +7162,51 @@ class CylindricalFace3D(Face3D):
 
         return number_points_x, number_points_y
 
-    def range_closest(self, list_points):
-        """
-        Needs a docstring.
+    # def range_closest(self, list_points):
+    #     """
+    #     Needs a docstring.
 
-        :param list_points:
-        :type list_points:
-        :return:
-        :rtype:
-        """
-        # This method has be edited as it was really bad coded:
-        #             * parameter removed, use of self data instead
-        points_set = volmdlr.core.delete_double_point(list_points)
-        points_set3D = CylindricalFace3D.points2d_to3d(None, [points_set],
-                                                       self.radius, self.surface3d.frame)
+    #     :param list_points:
+    #     :type list_points:
+    #     :return:
+    #     :rtype:
+    #     """
+    #     points_set = volmdlr.core.delete_double_point(list_points)
+    #     points_set3D = CylindricalFace3D.points2d_to3d(None, [points_set],
+    #                                                    self.radius, self.surface3d.frame)
 
-        points_3dint = [points_set3D[0]]
-        points_2dint = [points_set[0]]
-        s = 1
-        for k in range(1, len(points_set)):
-            closest = points_set3D[s]
-            while closest is None:
-                s += 1
-                closest = points_set3D[s]
-            dist_min = (points_3dint[-1] - closest).norm()
-            pos = s
-            for i in range(s + 1, len(points_set3D)):
-                close_test = points_set3D[i]
-                if close_test is None:
-                    continue
-                else:
-                    dist_test = (points_3dint[-1] - close_test).norm()
-                    if dist_test <= dist_min:
-                        dist_min = dist_test
-                        closest = close_test
-                        pos = i
-            points_2dint.append(points_set[pos])
-            points_set3D[pos] = None
+    #     points_3dint = [points_set3D[0]]
+    #     points_2dint = [points_set[0]]
+    #     s = 1
+    #     for k in range(1, len(points_set)):
+    #         closest = points_set3D[s]
+    #         while closest is None:
+    #             s += 1
+    #             closest = points_set3D[s]
+    #         dist_min = (points_3dint[-1] - closest).norm()
+    #         pos = s
+    #         for i in range(s + 1, len(points_set3D)):
+    #             close_test = points_set3D[i]
+    #             if close_test is None:
+    #                 continue
+    #             else:
+    #                 dist_test = (points_3dint[-1] - close_test).norm()
+    #                 if dist_test <= dist_min:
+    #                     dist_min = dist_test
+    #                     closest = close_test
+    #                     pos = i
+    #         points_2dint.append(points_set[pos])
+    #         points_set3D[pos] = None
 
-        return points_2dint
+    #     return points_2dint
 
-    def minimum_maximum(self, contour2d, radius):
-        points = contour2d.tessel_points
-        min_h, min_theta = min(pt[1] for pt in points), min(pt[0] for pt in points)
-        max_h, max_theta = max(pt[1] for pt in points), max(pt[0] for pt in points)
+    # def minimum_maximum(self, contour2d, radius):
+    #     """"""
+    #     points = contour2d.tessel_points
+    #     min_h, min_theta = min(pt[1] for pt in points), min(pt[0] for pt in points)
+    #     max_h, max_theta = max(pt[1] for pt in points), max(pt[0] for pt in points)
 
-        return min_h, min_theta, max_h, max_theta
+    #     return min_h, min_theta, max_h, max_theta
 
     # Seems buggy
     # def minimum_distance_points_cyl(self, other_cyl):

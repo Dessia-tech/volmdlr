@@ -10,3 +10,8 @@ rtype
 str
 Bspline
 toroidal
+STL
+STEP
+LHS
+cosinus
+inplace

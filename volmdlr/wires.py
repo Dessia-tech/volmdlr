@@ -569,7 +569,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_intersections(self,
                                   linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of intersection in ther form of a tuple (point,
+        Returns a list of intersection in their form of a tuple (point,
         primitive) of the wire primitives intersecting with the line.
 
         """

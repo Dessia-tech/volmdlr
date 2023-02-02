@@ -32,7 +32,7 @@ def euler_angles_to_transfer_matrix(psi, theta, phi):
 
 def transfer_matrix_to_euler_angles(R):
     """
-    Returns the euler angle from a transfer matrix.
+    Returns the Euler angle from a transfer matrix.
     """
     if (R[2, 2] != 1) and (R[2, 2] != -1):
         theta = math.acos(R[2, 2])

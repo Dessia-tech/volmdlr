@@ -4058,16 +4058,13 @@ class LineSegment3D(LineSegment):
         v = other_line.direction_vector()
         w = other_line.start - self.start
 
-        a = u.dot(u)
-        b = -u.dot(v)
-        d = v.dot(v)
+        a11 = u.dot(u)
+        a12 = -u.dot(v)
+        a22 = v.dot(v)
 
-        e = w.dot(u)
-        f = -w.dot(v)
-
-        A = npy.array([[a, b],
-                       [b, d]])
-        B = npy.array([e, f])
+        A = npy.array([[a11, a12],
+                       [a12, a22]])
+        B = npy.array([w.dot(u), -w.dot(v)])
 
         res = scp.optimize.lsq_linear(A, B, bounds=(0, 1))
         p1 = self.point_at_abscissa(res.x[0] * self.length())
