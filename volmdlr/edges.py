@@ -318,9 +318,6 @@ class Line(dc.DessiaObject):
         projection = projection.to_point()
         return projection, t * norm_u
 
-    def point_reflection(self, point):
-        return point + 2 * (self.point_projection(point)[0] - point)
-
     def abscissa(self, point):
         """
         Calculate the abscissa of a point on the line.
