@@ -82,7 +82,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         p3 = pti + u1 * point_distance
         p4 = pti + u2 * point_distance
 
-        w = (u1 + u2)
+        w = u1 + u2
         if w != volmdlr.Vector2D(0, 0):
             w.normalize()
 
