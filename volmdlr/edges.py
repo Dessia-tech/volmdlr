@@ -1075,7 +1075,7 @@ class Line2D(Line):
         :return: The 3D line.
         :rtype: :class:`volmdlr.edges.Line3D`
         """
-        points_3d = [p.to_3d(plane_origin, x1, x2) for p in self.points]
+        points_3d = [p.to_3d(plane_origin, x1, x2) for p in [self.point1, self.point2]]
         return Line3D(*points_3d, self.name)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
@@ -1087,7 +1087,7 @@ class Line2D(Line):
         :return: a new rotated Line2D.
         """
         return Line2D(*[point.rotation(center, angle)
-                        for point in self.points])
+                        for point in [self.point1, self.point2]])
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
@@ -1096,7 +1096,7 @@ class Line2D(Line):
         :param center: rotation center.
         :param angle: rotation angle.
         """
-        for point in self.points:
+        for point in [self.point1, self.point2]:
             point.rotation_inplace(center, angle)
 
     def translation(self, offset: volmdlr.Vector2D):
@@ -1106,7 +1106,7 @@ class Line2D(Line):
         :param offset: translation vector.
         :return: A new translated Line2D.
         """
-        return Line2D(*[point.translation(offset) for point in self.points])
+        return Line2D(*[point.translation(offset) for point in [self.point1, self.point2]])
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
@@ -1114,7 +1114,7 @@ class Line2D(Line):
 
         :param offset: translation vector.
         """
-        for point in self.points:
+        for point in [self.point1, self.point2]:
             point.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
@@ -1219,7 +1219,7 @@ class Line2D(Line):
         # line will be (CD)
 
         if math.isclose(self.point_distance(point), 0, abs_tol=1e-10):
-            I = volmdlr.Vector2D(point[0], point.y)
+            I = volmdlr.Vector2D(point.x, point.y)
             A = volmdlr.Vector2D(self.point1.x, self.point1.y)
             B = volmdlr.Vector2D(self.point2.x, self.point2.y)
             C = volmdlr.Vector2D(other_line.point1.x,

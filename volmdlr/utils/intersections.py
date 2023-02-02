@@ -32,7 +32,7 @@ def circle_3d_linesegment_intersections(circle_3d, linesegment):
                                 2 * (direction_vector.y / direction_vector.x) * linesegment.start.y)
         quadratic_equation_c = ((linesegment.start.y - (direction_vector.y / direction_vector.x) *
                                  linesegment.start.x) ** 2 - circle_3d.radius ** 2)
-        delta = (quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c)
+        delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c
 
         x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
         x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)

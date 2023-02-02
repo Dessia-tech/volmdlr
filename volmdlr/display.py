@@ -11,8 +11,6 @@ import dessia_common.core as dc
 
 import volmdlr.edges
 
-# import volmdlr.faces as vmf
-
 
 class Node2D(volmdlr.Point2D):
     """

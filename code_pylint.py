@@ -15,8 +15,8 @@ EFFECTIVE_DATE = date(2023, 1, 31)
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
-                     "wrong-spelling-in-comment": 400,
-                     "wrong-spelling-in-docstring": 600,
+                     "wrong-spelling-in-comment": 380,
+                     "wrong-spelling-in-docstring": 580,
                      'invalid-name': 780,
                      'no-else-return': 49,
                      'consider-using-f-string': 77,

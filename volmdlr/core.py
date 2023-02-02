@@ -369,7 +369,7 @@ class BoundingRectangle(dc.DessiaObject):
         self.xmax = xmax
         self.ymin = ymin
         self.ymax = ymax
-        # Disabling Dessia object init call for performance. Check when perf enhancement on dessia_common side
+        # Disabling Dessia object init call for performance. Check when performance enhancement on dessia_common side
         # dc.DessiaObject.__init__(self, name=name)
         self.name = name
 
@@ -682,27 +682,6 @@ class BoundingBox(dc.DessiaObject):
         lz = min(self.zmax, bbox2.zmax) - max(self.zmin, bbox2.zmin)
 
         return lx * ly * lz
-
-    # def intersection_volume(self, bbox2):
-    #     if not self.bbox_intersection(bbox2):
-    #         return 0
-    #
-    #     permute_bbox1 = self
-    #     permute_bbox2 = bbox2
-    #
-    #     if permute_bbox2.xmin < permute_bbox1.xmin:
-    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-    #     lx = permute_bbox1.xmax - permute_bbox2.xmin
-    #
-    #     if permute_bbox2.ymin < permute_bbox1.ymin:
-    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-    #     ly = permute_bbox1.ymax - permute_bbox2.ymin
-    #
-    #     if permute_bbox2.zmin < permute_bbox1.zmin:
-    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-    #     lz = permute_bbox1.zmax - permute_bbox2.zmin
-    #
-    #     return lx*ly*lz
 
     def distance_to_bbox(self, bbox2):
         if self.bbox_intersection(bbox2):

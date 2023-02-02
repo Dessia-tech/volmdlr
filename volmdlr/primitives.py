@@ -73,7 +73,7 @@ class RoundedLineSegments:
 
             for i in rounded_points_indices[1:]:
                 # Computing the arc
-                ps2, pi2, pe2, dist2, alpha2 = self.arc_features(i)
+                _, pi2, _, dist2, alpha2 = self.arc_features(i)
                 dist[i] = dist2
                 alpha[i] = alpha2
                 if i - 1 in self.radius:
@@ -148,7 +148,7 @@ class RoundedLineSegments:
                         neq_ub += lg - 1
 
                 # Constructing simplex problem
-                # Concstructing C
+                # C matrix:
                 if ndof > 0:
                     C = zeros(ndof)
                     for j, i in dof.items():
