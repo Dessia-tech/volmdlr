@@ -213,6 +213,20 @@ class Edge(dc.DessiaObject):
                     touching_points.append(point)
         return touching_points
 
+    def edge_intersections(self, edge2: 'Edge'):
+        if not self.bounding_rectangle.b_rectangle_intersection(edge2.bounding_rectangle):
+            return []
+        intersections = []
+        method_name = f'{edge2.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(self, method_name):
+            intersections = getattr(self, method_name)(edge2)
+            return intersections
+        method_name = f'{self.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(edge2, method_name):
+            intersections = getattr(edge2, method_name)(self)
+            return intersections
+        raise NotImplementedError
+
 
 class Line(dc.DessiaObject):
     """
@@ -1484,11 +1498,13 @@ class BSplineCurve2D(BSplineCurve):
         cog = cog / len(polygon_points)
         return cog
 
-    def plot(self, ax=None, color='k', alpha=1, plot_points=False):
+    def plot(self, ax=None, color='k', alpha=1, plot_points=False, discretization_points=True):
         if ax is None:
             _, ax = plt.subplots()
 
         points = self.points
+        if discretization_points:
+            points = self.discretization_points(number_points=10000)
 
         x_points = [p.x for p in points]
         y_points = [p.y for p in points]
@@ -2289,6 +2305,15 @@ class Arc2D(Arc):
             if self.point_belongs(pt):
                 intersection_points.append(pt)
         return intersection_points
+
+    def bsplinecurve_intersections(self, bspline):
+        linesegments = bspline.to_wire(50).primitives
+        intersections = []
+        for linesegment in linesegments:
+            intersection = self.linesegment_intersections(linesegment)
+            if intersection:
+                intersections.extend(intersection)
+        return intersections
 
     def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
         if point2d.point_distance(self.start) < tol:

@@ -334,6 +334,19 @@ class WireMixin:
             return True
         return False
 
+    @classmethod
+    def from_points(cls, points):
+        """
+        Define a wire based on points2d with line_segments2d.
+
+        :param points: points to define wire 2d.
+        """
+        class_name = 'LineSegment' + points[0].__class__.__name__[-2:]
+        linesegment_class_ = getattr(volmdlr.edges, class_name)
+        edges = []
+        for i in range(0, len(points) - 1):
+            edges.append(linesegment_class_(points[i], points[i + 1]))
+        return cls(edges)
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     """
@@ -596,19 +609,19 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         return intersections
 
-    @classmethod
-    def from_points(cls, points: List[volmdlr.Point2D]):
-        """
-        Define a wire based on points2d with line_segments2d.
-
-        :param points: points to define wire 2d.
-        """
-
-        edges = []
-        for i in range(0, len(points) - 1):
-            edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
-
-        return cls(edges)
+    # @classmethod
+    # def from_points(cls, points: List[volmdlr.Point2D]):
+    #     """
+    #     Define a wire based on points2d with line_segments2d.
+    #
+    #     :param points: points to define wire 2d.
+    #     """
+    #
+    #     edges = []
+    #     for i in range(0, len(points) - 1):
+    #         edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
+    #
+    #     return cls(edges)
 
     def linesegment_crossings(self,
                               linesegment: 'volmdlr.edges.LineSegment2D'):
@@ -770,6 +783,15 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         for linesegment in linesegments:
             intersections_linesegments = self.linesegment_intersections(linesegment)
             if intersections_linesegments != []:
+                intersections_points.extend(intersections_linesegments)
+        return intersections_points
+
+    def arc_crossings(self, arc: volmdlr.edges.Arc2D):
+        # return self.bsplinecurve_crossings(arc)
+        intersections_points = []
+        for primitive in self.primitives:
+            intersections = primitive.edge_intersections(arc)
+            if intersections:
                 intersections_points.extend(intersections_linesegments)
         return intersections_points
 
