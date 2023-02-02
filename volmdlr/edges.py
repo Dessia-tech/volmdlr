@@ -1476,10 +1476,10 @@ class BSplineCurve2D(BSplineCurve):
         content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
                    ".UNSPECIFIED.,.F.,.F.,{},{}," \
                    ".UNSPECIFIED.);\n".format(
-                        point_id, self.name, self.degree,
-                        volmdlr.core.step_ids_to_str(points_ids),
-                        tuple(self.knot_multiplicities),
-                        tuple(self.knots))
+                       point_id, self.name, self.degree,
+                       volmdlr.core.step_ids_to_str(points_ids),
+                       tuple(self.knot_multiplicities),
+                       tuple(self.knots))
         return content, point_id + 1
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
@@ -3138,7 +3138,7 @@ class ArcEllipse2D(Edge):
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
             area = math.pi * self.major_axis * self.minor_axis - 0.5 * self.major_axis * self.minor_axis * (
-                    angle - math.sin(angle))
+                angle - math.sin(angle))
         else:
             angle = self.angle
             area = 0.5 * self.major_axis * self.minor_axis * (angle - math.sin(angle))
@@ -3388,10 +3388,10 @@ class Line3D(Line):
             return projected_point
         vector = self.points[0] - line2.points[0]
         t_coefficient = (
-                                vector.dot(direction_vector2) * direction_vector2.dot(direction_vector1) -
-                                vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
-                                direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
-                                direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
+            vector.dot(direction_vector2) * direction_vector2.dot(direction_vector1) -
+            vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
+            direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
+            direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
         u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
             direction_vector2)) / direction_vector2.dot(direction_vector2)
         intersection = self.point1 + t_coefficient * direction_vector1
@@ -4759,6 +4759,7 @@ class Arc3D(Arc):
     @classmethod
     def from_angle(cls, start: volmdlr.Point3D, angle: float,
                    axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D):
+        """Gives the arc3D from a start, an angle and an axis."""
         start_gen = start
         int_gen = start_gen.rotation(axis_point, axis, angle / 2)
         end_gen = start_gen.rotation(axis_point, axis, angle)
@@ -5860,6 +5861,7 @@ class ArcEllipse3D(Edge):
         return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, name=self.name)
 
     def length(self):
+        """Computes the length."""
         return self.angle * math.sqrt(
             (self.Gradius ** 2 + self.Sradius ** 2) / 2)
 
@@ -5884,6 +5886,7 @@ class ArcEllipse3D(Edge):
                               self.name)
 
     def plot(self, ax=None, color: str = 'k', alpha=1.0, edge_ends=False, edge_direction=False):
+        """Plot the arc ellipse."""
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
