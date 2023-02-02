@@ -326,9 +326,8 @@ def shape_representation(arguments, object_dict):
     :rtype: TYPE
 
     """
-    # does it have the extra argument comming from
-    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
-    # them
+    # does it have the extra argument coming from
+    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this case return them
     if len(arguments[:-1]) == 4:
         shells = object_dict[int(arguments[3])]
         return shells

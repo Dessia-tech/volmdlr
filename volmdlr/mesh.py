@@ -53,7 +53,9 @@ class FlatElementError(Exception):
 
 
 class Node2D(vm.Point2D):
-    """ A node is a Point2D with some hash capabilities for perfomance used for Mesh. """
+    """
+    A node is a Point2D with some hash capabilities for performance used for Mesh.
+    """
 
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
@@ -80,7 +82,9 @@ class Node2D(vm.Point2D):
 
 
 class Node3D(vm.Point3D):
-    """ A node is a Point3D with some hash capabilities for perfomance used for Mesh. """
+    """
+    A node is a Point3D with some hash capabilities for performance used for Mesh.
+    """
 
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))

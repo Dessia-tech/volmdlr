@@ -830,8 +830,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Return the sum of volumes of the primitives.
 
-        It does not make any boolean operation in case of overlaping.
-
+        It does not make any boolean operation in case of overlapping.
         """
         volume = 0
         for primitive in self.primitives:
@@ -1663,7 +1662,7 @@ class VolumeModel(dc.PhysicalObject):
 
 class MovingVolumeModel(VolumeModel):
     """
-    A volume model with possibility to declare time steps at which the primitives are positionned with frames.
+    A volume model with possibility to declare time steps at which the primitives are positioned with frames.
 
     """
 

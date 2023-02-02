@@ -88,13 +88,13 @@ class Edge(dc.DessiaObject):
         """
         Calculates the edge's length.
         """
-        raise NotImplementedError(f'length method not implememented by {self.__class__.__name__}')
+        raise NotImplementedError(f'length method not implemented by {self.__class__.__name__}')
 
     def point_at_abscissa(self, abscissa):
         """
         Calcultes the point at given abscissa.
         """
-        raise NotImplementedError(f'point_at_abscissa method not implememented by {self.__class__.__name__}')
+        raise NotImplementedError(f'point_at_abscissa method not implemented by {self.__class__.__name__}')
 
     def middle_point(self):
         half_length = self.length() / 2
@@ -108,7 +108,7 @@ class Edge(dc.DessiaObject):
         :param number_points: the number of points (including start and end
             points) if unset, only start and end will be returned
         :param angle_resolution: if set, the sampling will be adapted to have
-            a controlled angular distance. Usefull to mesh an arc
+            a controlled angular distance. Useful to mesh an arc
         :return: a list of sampled points
         """
         if number_points is None or number_points == 1:
@@ -214,7 +214,7 @@ class Edge(dc.DessiaObject):
         """
         Verifies if two edges are touching each other.
 
-        In case theese two edges are touchintg each other, return these touching points.
+        In case these two edges are touching each other, return these touching points.
 
         :param edge2: edge2 to verify touching points.
         :return: list of touching points.
@@ -348,7 +348,7 @@ class Line(dc.DessiaObject):
         :param split_point: The point where to split the line
         :type split_point: Union[:class:`volmdlr.Point2D`,
             :class:`volmdlr.Point3D`]
-        :return: A list containg two lines
+        :return: A list containing two lines
         """
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
@@ -410,9 +410,9 @@ class LineSegment(Edge):
         """
         Computes a unit direction vector for the line segment.
 
-        :param abscissa: defines where in the line segement the unit
+        :param abscissa: defines where in the line segment the unit
             direction vector is to be calculated.
-        :return: The unit direction vector of the LineSegement.
+        :return: The unit direction vector of the LineSegment.
         """
         direction_vector = self.direction_vector()
         direction_vector.normalize()
@@ -422,9 +422,9 @@ class LineSegment(Edge):
         """
         Returns a direction vector at a given abscissa, it is not normalized.
 
-        :param abscissa: defines where in the line segement
+        :param abscissa: defines where in the line segment
             direction vector is to be calculated.
-        :return: The direction vector of the LineSegement.
+        :return: The direction vector of the LineSegment.
         """
         if not self._direction_vector:
             self._direction_vector = self.end - self.start
@@ -434,9 +434,9 @@ class LineSegment(Edge):
         """
         Returns a normal vector at a given abscissa, it is not normalized.
 
-        :param abscissa: defines where in the line_segement
+        :param abscissa: defines where in the line_segment
         normal vector is to be calculated.
-        :return: The normal vector of the LineSegement.
+        :return: The normal vector of the LineSegment.
         """
         return self.direction_vector(abscissa).normal_vector()
 
@@ -444,8 +444,8 @@ class LineSegment(Edge):
         """
         Returns the unit normal vector at a given abscissa.
 
-        :param abscissa: defines where in the line_segement unit normal vector is to be calculated.
-        :return: The unit normal vector of the LineSegement.
+        :param abscissa: defines where in the line_segment unit normal vector is to be calculated.
+        :return: The unit normal vector of the LineSegment.
         """
         return self.unit_direction_vector(abscissa).normal_vector()
 
@@ -468,8 +468,8 @@ class LineSegment(Edge):
         """
         Split a Line Segment at a given point into two Line Segments.
 
-        :param split_point: spliting point.
-        :return: list with the two splied line segments.
+        :param split_point: splitting point.
+        :return: list with the two split line segments.
         """
         if split_point == self.start:
             return [None, self.copy()]
@@ -830,7 +830,7 @@ class BSplineCurve(Edge):
                                   degree: int, **kwargs):
         """
         Creates a B-spline curve approximation using least squares method with
-        fixed number of control points. It is recommanded to specify the
+        fixed number of control points. It is recommended to specify the
         number of control points.
         Please refer to The NURBS Book (2nd Edition), pp.410-413 for details.
 
@@ -1003,7 +1003,7 @@ class BSplineCurve(Edge):
 
     def select_intersection_point(self, list_abscissas, intersections):
         """
-        Select closest point in curve to intesection point obtained with discretised linesegment.
+        Select closest point in curve to intersection point obtained with discretised linesegment.
 
         :param list_abscissas: list of abscissas to verify the closest point.
         :param intersections: intersection with discretised line.
@@ -2149,7 +2149,7 @@ class Arc(Edge):
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
             to mesh an arc
         :return: a list of sampled points
         """
@@ -3211,7 +3211,7 @@ class ArcEllipse2D(Edge):
         Calculates the abscissa of a given point.
 
         :param point: point for calculating abscissa
-        :return: a float, between 0 and the arcellise2d's lenght
+        :return: a float, between 0 and the arcellise2d's length
         """
         if self.point_belongs(point):
             angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
@@ -3269,7 +3269,7 @@ class ArcEllipse2D(Edge):
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned.
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
             to mesh an arc.
         :return: a list of sampled points.
         """
@@ -3679,7 +3679,7 @@ class Line3D(Line):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a Line3D into an Line2D, given an plane origin and a u and v plane vector.
+        Transforms a Line3D into an Line2D, given an plane origin and a u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -4006,7 +4006,7 @@ class LineSegment3D(LineSegment):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a LineSegment3D into an LineSegment2D, given an plane origin and a u and v plane vector.
+        Transforms a LineSegment3D into an LineSegment2D, given an plane origin and a u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -4188,7 +4188,7 @@ class LineSegment3D(LineSegment):
                 volmdlr.Frame3D(p1_proj, u, v, axis))
             r, R = sorted([d1, d2])
             if angle == volmdlr.TWO_PI:
-                # Only 2 circles as countours
+                # Only 2 circles as contours
                 outer_contour2d = volmdlr.wires.Circle2D(volmdlr.O2D, R)
                 if not math.isclose(r, 0, abs_tol=1e-9):
                     inner_contours2d = [volmdlr.wires.Circle2D(volmdlr.O2D, r)]
@@ -4729,7 +4729,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a BSplineCurve3D into an BSplineCurve2D, given an plane origin and a u and v plane vector.
+        Transforms a BSplineCurve3D into an BSplineCurve2D, given an plane origin and a u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -5033,7 +5033,7 @@ class Arc3D(Arc):
 
     def reverse(self):
         """
-        Defines a new Arc3D, odentical to self, but in the oposite direction.
+        Defines a new Arc3D, odentical to self, but in the opposite direction.
 
         """
         return self.__class__(self.end.copy(),
@@ -5283,7 +5283,7 @@ class Arc3D(Arc):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a Arc3D into an Arc2D, given an plane origin and a u and v plane vector.
+        Transforms a Arc3D into an Arc2D, given an plane origin and a u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -5642,7 +5642,7 @@ class FullArc3D(Arc3D):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a FullArc3D into an FullArc2D, given an plane origin and a u and v plane vector.
+        Transforms a FullArc3D into an FullArc2D, given an plane origin and a u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -5773,8 +5773,8 @@ class FullArc3D(Arc3D):
 
     def linesegment_intersections(self, linesegment: LineSegment3D):
         """
-        Calculates the intersections between a fullarc3d and a linesegment3d.
-        :param linesegment: linesegment3d to verifie intersections
+        Calculates the intersections between a fullarc3d and a linesegment3d
+        :param linesegment: linesegment3d to verify intersections
         :return: list of points3d, if there are any intersections, an empty list if otherwise
         """
         distance_center_lineseg = linesegment.point_distance(self.frame.origin)
@@ -5938,7 +5938,7 @@ class ArcEllipse3D(Edge):
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
             to mesh an arc
         :return: a list of sampled points
         """
@@ -5977,7 +5977,7 @@ class ArcEllipse3D(Edge):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a ArcEllipse3D into an ArcEllipse2D, given an plane origin and a u and v plane vector.
+        Transforms a ArcEllipse3D into an ArcEllipse2D, given an plane origin and a u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.

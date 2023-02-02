@@ -1677,7 +1677,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :type point3d: `volmdlr.`Point3D`
         """
         x, y, z = self.frame.new_coordinates(point3d)
-        # Do not delte this, mathematical problem when x and y close to zero but not 0
+        # Do not delete this, mathematical problem when x and y close to zero but not 0
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
@@ -2023,9 +2023,9 @@ class CylindricalSurface3D(PeriodicalSurface):
                                                           plane3d.frame.v, plane3d.frame.w), self.radius)
         return [circle3d]
 
-    def concurent_plane_intersection(self, plane3d):
+    def concurrent_plane_intersection(self, plane3d):
         """
-        Cylinder plane intersections when plane's normal is concurent with the cylinder axis, but not orthogonal.
+        Cylinder plane intersections when plane's normal is concurrent with the cylinder axis, but not orthogonal.
 
         # Ellipse vector equation : < rcos(t), rsin(t), -(1 / c)*(d + arcos(t) + brsint(t)); d = - (ax_0 + by_0 + cz_0)
         :param plane3d: intersecting plane
@@ -2069,7 +2069,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             return self.parallel_plane_intersection(plane3d)
         if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
             return self.perpendicular_plane_intersection(plane3d)
-        return self.concurent_plane_intersection(plane3d)
+        return self.concurrent_plane_intersection(plane3d)
 
     def is_coincident(self, surface3d):
         """
@@ -2160,7 +2160,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         x, y, z = self.frame.new_coordinates(point3d)
         z = min(self.r, max(-self.r, z))
 
-        # Do not delte this, mathematical problem when x and y close to zero (should be zero) but not 0
+        # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Genarally this is related to uncertaintity of step files.
         if abs(x) < 1e-12:
             x = 0
@@ -2859,7 +2859,7 @@ class SphericalSurface3D(Surface3D):
         if z == -0.0:
             z = 0.0
 
-        # Do not delte this, mathematical problem when x and y close to zero (should be zero) but not 0
+        # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Genarally this is related to uncertaintity of step files.
         if abs(x) < 1e-12:
             x = 0
@@ -3261,7 +3261,7 @@ class BSplineSurface3D(Surface3D):
         self._grids2d_deformed = None
         self._bbox = None
 
-        self._x_periodicity = False  # Use False instread of None because None is a possible value of x_periodicity
+        self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
 
     @property
@@ -3300,7 +3300,7 @@ class BSplineSurface3D(Surface3D):
 
     def _bounding_box(self):
         """
-        Computes the bounding box ot the surface.
+        Computes the bounding box of the surface.
 
         """
         min_bounds, max_bounds = self.surface.bbox
@@ -3875,8 +3875,13 @@ class BSplineSurface3D(Surface3D):
 
     def simplify_surface(self):
         """
+<<<<<<< HEAD
         Verifies if BSplineSurface3D could be a Plane3D.
         :return: simplified surface if possible, otherwis, returns self
+=======
+        Verifies if BSplineSurface3D could be a Plane3D
+        :return: simplified surface if possible, otherwise, returns self
+>>>>>>> e2d362326e7d1b869986dbf708c17c572c191138
         """
         points = [self.control_points[0], self.control_points[math.ceil(len(self.control_points) / 2)],
                   self.control_points[-1]]
@@ -5372,7 +5377,7 @@ class Face3D(volmdlr.core.Primitive3D):
     @property
     def bounding_box(self):
         """
-        Needs to be overriden if an error is raised.
+        Needs to be overridden if an error is raised.
         """
         raise NotImplementedError(
             f"bounding_box method must be"
@@ -5880,7 +5885,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def divide_face(self, list_cutting_contours: List[volmdlr.wires.Contour2D], inside):
         """
-        Devides a Face 3D with a list of cutting contours.
+        Divides a Face 3D with a list of cutting contours.
 
         :param list_cutting_contours: list of contours cutting the face
         :param inside: when extracting a contour from another contour. It defines the extracted
@@ -5903,7 +5908,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def divide_face_with_open_cutting_contours(self, list_open_cutting_contours, inside):
         """
-        Devides a face 3D with a list of closed cutting contour, that is, it will cut holes on the face.
+        Divides a face 3D with a list of closed cutting contour, that is, it will cut holes on the face.
 
         :param list_open_cutting_contours: list containing the open cutting contours.
         :param inside: inside portion.
@@ -5929,7 +5934,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def divide_face_with_closed_cutting_contours(self, list_closed_cutting_contours, list_faces):
         """
-        Devides a Face3D with a list of Open cutting contours, that is, Contours going from one side
+        Divides a Face3D with a list of Open cutting contours, that is, Contours going from one side
         to another of the Face, or from the outer contour to one inner contour.
 
         :param list_closed_cutting_contours: list containing the closed cutting contours
@@ -6253,7 +6258,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
         :param inner_contour: inner contour.
         :param spliting_points: current inner contour spliting points.
-        :param spliting_points_and_cutting_contour: dictionnary containing all spliting points and
+        :param spliting_points_and_cutting_contour: dictionary containing all spliting points and
         the corresponding cutting contour.
         :param connectig_to_outer_contour: list of the cutting contours connected to the outer contour.
         :return: spliting points to be removed from list of spliting points and current inner contour updated.
@@ -6359,7 +6364,7 @@ class PlaneFace3D(Face3D):
         Calculates the distance from a plane face and a point.
 
         :param point: point to verify.
-        :param return_other_point: bool to decide if corresponding point on face shoud be returned.
+        :param return_other_point: bool to decide if corresponding point on face should be returned.
         :return: distance to planeface3D.
         """
 
@@ -8396,7 +8401,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         """
-        Seralizes a 3 dimensional open shell into a dictionary.
+        Serializes a 3 dimensional open shell into a dictionary.
         This method does not use pointers for faces as it has no sense
         to have duplicate faces.
 
@@ -8680,7 +8685,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def minimum_distance_points(self, shell2, resolution):
         """
-        Returns a Mesure object if the distance is not zero, otherwise returns None
+        Returns a Measure object if the distance is not zero, otherwise returns None
         """
         shell2_inter = self.shell_intersection(shell2, resolution)
         if shell2_inter is not None and shell2_inter != 1:
@@ -9456,7 +9461,7 @@ class ClosedShell3D(OpenShell3D):
     def validate_set_operation(self, shell2, tol):
         """
         Verifies if two shells are valid for union or subtractions operations,
-        that is, if they are disjointed or if one is totaly inside the other.
+        that is, if they are disjointed or if one is totally inside the other.
 
         If it returns an empty list, it means the two shells are valid to continue the
         operation.
@@ -9626,7 +9631,7 @@ class ClosedShell3D(OpenShell3D):
 
     def intersection(self, shell2, tol=1e-8):
         """
-        Given two ClosedShell3D, it returns the new objet resulting
+        Given two ClosedShell3D, it returns the new object resulting
         from the intersection of the two.
 
         """
