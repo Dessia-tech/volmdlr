@@ -1734,8 +1734,8 @@ class PeriodicalSurface(Surface3D):
             elif theta1 < theta3:
                 p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
             return [vme.LineSegment2D(p1, p2)]
-        else:
-            raise ValueError(f'Impossible: fullarc3d.normal: {fullarc3d.normal} self.frame.w: {self.frame.w}')
+
+        raise ValueError(f'Impossible: fullarc3d.normal: {fullarc3d.normal} self.frame.w: {self.frame.w}')
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
