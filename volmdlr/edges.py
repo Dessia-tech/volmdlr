@@ -3104,7 +3104,7 @@ class ArcEllipse2D(Edge):
             One = npy.array(([1],
                              [1],
                              [1]))
-            C = npy.dot(invA, One)  # matrice colonne de taille 3
+            C = npy.dot(invA, One)
             theta = 0.5 * math.atan(2 * C[2] / (C[1] - C[0]))
             c1 = C[0] + C[1]
             c2 = (C[1] - C[0]) / math.cos(2 * theta)
@@ -3774,80 +3774,6 @@ class LineSegment3D(LineSegment):
         if start != end:
             return LineSegment2D(start, end)
         return None
-
-    # def intersection(self, segment2):
-    #     x1 = self.start.x
-    #     y1 = self.start.y
-    #     z1 = self.start.z
-    #     x2 = self.end.x
-    #     y2 = self.end.y
-    #     z2 = self.end.z
-    #     x3 = segment2.start.x
-    #     y3 = segment2.start.y
-    #     z3 = segment2.start.z
-    #     x4 = segment2.end.x
-    #     y4 = segment2.end.y
-    #     z4 = segment2.end.z
-    #
-    #     if x3 == 0 and x4 == 0 and y4 - y3 == 0:
-    #         x5, y5, z5 = x3, y3, z3
-    #         x6, y6, z6 = x4, y4, z4
-    #         x3, y3, z3 = x1, y1, z1
-    #         x4, y4, z4 = x2, y2, z2
-    #         x1, y1, z1 = x5, y5, z5
-    #         x2, y2, z2 = x6, y6, z6
-    #
-    #     elif y3 == 0 and y4 == 0 and x4 - x3 == 0:
-    #         x5, y5, z5 = x3, y3, z3
-    #         x6, y6, z6 = x4, y4, z4
-    #         x3, y3, z3 = x1, y1, z1
-    #         x4, y4, z4 = x2, y2, z2
-    #         x1, y1, z1 = x5, y5, z5
-    #         x2, y2, z2 = x6, y6, z6
-    #
-    #     res, list_t1 = [], []
-    #
-    #     # 2 unknown 3eq with t1 et t2 unknown
-    #     if (x2 - x1 + y1 - y2) != 0 and (y4 - y3) != 0:
-    #         t1 = (x3 - x1 + (x4 - x3) * (y1 - y3) / (y4 - y3)) / (
-    #             x2 - x1 + y1 - y2)
-    #         t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
-    #         res1 = z1 + (z2 - z1) * t1
-    #         res2 = z3 + (z4 - z3) * t2
-    #         list_t1.append(t1)
-    #         res.append([res1, res2])
-    #
-    #     if (z2 - z1 + y1 - y2) != 0 and (y4 - y3) != 0:
-    #         t1 = (z3 - z1 + (z4 - z3) * (y1 - y3) / (y4 - y3)) / (
-    #             z2 - z1 + y1 - y2)
-    #         t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
-    #         res1 = x1 + (x2 - x1) * t1
-    #         res2 = x3 + (x4 - x3) * t2
-    #         list_t1.append(t1)
-    #         res.append([res1, res2])
-    #
-    #     if (z2 - z1 + x1 - x2) != 0 and (x4 - x3) != 0:
-    #         t1 = (z3 - z1 + (z4 - z3) * (x1 - x3) / (x4 - x3)) / (
-    #             z2 - z1 + x1 - x2)
-    #         t2 = (x1 - x3 + (x2 - x1) * t1) / (x4 - x3)
-    #         res1 = y1 + (y2 - y1) * t1
-    #         res2 = y3 + (y4 - y3) * t2
-    #         list_t1.append(t1)
-    #         res.append([res1, res2])
-    #
-    #     if len(res) == 0:
-    #         return None
-    #
-    #     for pair, t1 in zip(res, list_t1):
-    #         res1, res2 = pair[0], pair[1]
-    #         if math.isclose(res1, res2,
-    #                         abs_tol=1e-7):  # if there is an intersection point
-    #             if t1 >= 0 or t1 <= 1:
-    #                 return volmdlr.Point3D(x1 + (x2 - x1) * t1,
-    #                                        y1 + (y2 - y1) * t1,
-    #                                        z1 + (z2 - z1) * t1)
-    #
-    #     return None
 
     def line_intersections(self, line):
         line_self = self.to_line()

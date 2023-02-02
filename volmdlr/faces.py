@@ -31,16 +31,7 @@ import volmdlr.geometry
 import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
-# import dessia_common
 from volmdlr.utils.parametric import array_range_search
-
-
-# import matplotlib.tri as plt_tri
-# from pygeodesic import geodesic
-
-
-# import matplotlib.tri as plt_tri
-# from pygeodesic import geodesic
 
 
 def knots_vector_inv(knots_vector):
@@ -2161,7 +2152,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         z = min(self.r, max(-self.r, z))
 
         # Do not delte this, mathematical problem when x and y close to zero (should be zero) but not 0
-        # Genarally this is related to uncertaintity of step files.
+        # Usually this is related to uncertaintity of step files.
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
@@ -2860,7 +2851,7 @@ class SphericalSurface3D(Surface3D):
             z = 0.0
 
         # Do not delte this, mathematical problem when x and y close to zero (should be zero) but not 0
-        # Genarally this is related to uncertaintity of step files.
+        # Usually this is related to uncertaintity of step files.
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
@@ -4039,27 +4030,6 @@ class BSplineSurface3D(Surface3D):
             for j in range(1, points_y - 1):
                 equation_points.append(((i, j - 1), (i, j + 1)))
 
-        # Euclidean distance
-        # D=[] # distances between 3D grid points (based on points combination [equation_points])
-        # for i in range(0, len(equation_points)):
-        #     D.append((points_3d[index_points[equation_points[i][0]]].point_distance(
-        #         points_3d[index_points[equation_points[i][1]]]))**2)
-
-        # Geodesic distance
-        # xx=[]
-        # for p in points_2d:
-        #     xx.append(p.x)
-        # yy=[]
-        # for p in points_2d:
-        #     yy.append(p.y)
-
-        # triang = plt_tri.Triangulation(xx, yy)
-        # faces = triang.triangles
-        # points = npy.empty([len(points_3d),3])
-        # for i in range(0,len(points_3d)):
-        #     points[i] = npy.array([points_3d[i].x,points_3d[i].y,points_3d[i].z])
-
-        # geoalg = geodesic.PyGeodesicAlgorithmExact(points, faces)
         D = []  # geodesic distances between 3D grid points (based on points combination [equation_points])
         for i in range(0, len(equation_points)):
             D.append((self.geodesic_distance(
@@ -4084,15 +4054,6 @@ class BSplineSurface3D(Surface3D):
 
             F[i + 1] = X[0] * 1000
             F[i + 2] = X[1] * 1000
-            # i=i+2
-            # # F[i+3] = X[(len(points_2d)-points_x)*2]
-            # l= 3
-            # for f in range(1, points_x):
-            #     F[i+f] = X[l]*1000
-            #     l = l+2
-            # F[i+3] = X[3]*1000
-            # F[i+4] = X[5]*1000
-            # F[i+4] = X[points_x*2]*1000
 
             return F
 
