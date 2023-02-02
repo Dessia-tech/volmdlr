@@ -6,7 +6,7 @@ Created on Mon Feb 14 2022
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 from volmdlr.models import bspline_surfaces
 import volmdlr.core

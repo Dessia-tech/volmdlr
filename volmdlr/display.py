@@ -13,7 +13,7 @@ import volmdlr.edges
 
 class Node2D(volmdlr.Point2D):
     """
-    A node is a point with some hash capabilities for perfomance.
+    A node is a point with some hash capabilities for performance.
     """
 
     def __hash__(self):
@@ -33,7 +33,7 @@ class Node2D(volmdlr.Point2D):
 
 class Node3D(volmdlr.Point3D):
     """
-    A node is a point with some hash capabilities for perfomance.
+    A node is a point with some hash capabilities for performance.
     """
 
     def __hash__(self):

@@ -5,7 +5,7 @@
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 # import volmdlr.step as vms
 import numpy as npy

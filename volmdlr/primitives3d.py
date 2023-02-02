@@ -1141,7 +1141,7 @@ class Cylinder(RevolvedProfile):
         matrix1 = frame1.transfer_matrix()
         x1, y1, z1 = frame1.origin.x, frame1.origin.y, frame1.origin.z
 
-        # Euclidian distance
+        # Euclidean distance
         def dist(p0, p1):
             return math.sqrt(
                 (p0[0] - p1[0]) ** 2 + (p0[1] - p1[1]) ** 2 + (p0[2] - p1[2]) ** 2
