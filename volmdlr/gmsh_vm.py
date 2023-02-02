@@ -526,7 +526,7 @@ class GmshParser(DessiaObject):
 
         physical_names = {}
         for i in range(1, int(lines[0].split()[0]) + 1):
-            physical_dim = (lines[i].split()[0])
+            physical_dim = lines[i].split()[0]
             try:
                 physical_names['physical_dim_' + physical_dim]
             except KeyError:

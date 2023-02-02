@@ -34,7 +34,7 @@ def transfer_matrix_to_euler_angles(R):
     """
     Returns the euler angle from a transfer matrix.
     """
-    if ((R[2, 2] != 1) and (R[2, 2] != -1)):
+    if (R[2, 2] != 1) and (R[2, 2] != -1):
         theta = math.acos(R[2, 2])
         psi = math.atan2(R[2, 0] / math.sin(theta), R[2, 1] / math.sin(theta))
         phi = math.atan2(R[0, 2] / math.sin(theta), -R[1, 2] / math.sin(theta))
@@ -81,7 +81,7 @@ def huygens2d(Ix, Iy, Ixy, area, point1, point2):
     """
     Area acts the same way as the mass in 3D.
     """
-    a, b = (point1 - point2)
+    a, b = point1 - point2
     # I2 = I1+area*array([[b**2,-a*b],[-a*b,a**2]])
     # return I2
     return Ix + area * b**2, Iy + area * a**2, Ixy - area * a * b
@@ -245,7 +245,7 @@ def angle_principal_measure(angle, min_angle=-math.pi):
     Returns angle between O and 2 pi.
     """
     max_angle = min_angle + vm.TWO_PI
-    angle = angle % (vm.TWO_PI)
+    angle = angle % vm.TWO_PI
 
     if math.isclose(angle, min_angle, abs_tol=1e-9):
         return min_angle
