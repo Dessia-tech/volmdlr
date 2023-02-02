@@ -689,7 +689,9 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.__class__(outer_contour, inner_contours)
 
     def rotation_inplace(self, center, angle):
-
+        """
+        Rotate the surface inplace.
+        """
         new_surface2d = self.rotation(center, angle)
         self.outer_contour = new_surface2d.outer_contour
         self.inner_contours = new_surface2d.inner_contours
@@ -1218,9 +1220,15 @@ class Plane3D(Surface3D):
         return cls(volmdlr.Frame3D(point, v1, v2, normal))
 
     @classmethod
-    def from_plane_vectors(cls, plane_origin: volmdlr.Point3D,
-                           plane_x: volmdlr.Vector3D,
-                           plane_y: volmdlr.Vector3D):
+    def from_plane_vectors(cls, plane_origin: volmdlr.Point3D, plane_x: volmdlr.Vector3D, plane_y: volmdlr.Vector3D):
+        """
+        Initializes a 3D plane object with a given plane origin and plane x and y vectors.
+
+        :param plane_origin: A volmdlr.Point3D representing the origin of the plane.
+        :param plane_x: A volmdlr.Vector3D representing the x-axis of the plane.
+        :param plane_y: A volmdlr.Vector3D representing the y-axis of the plane.
+        :return: A Plane3D object initialized from the provided plane origin and plane x and y vectors.
+        """
         normal = plane_x.cross(plane_y)
         return cls(volmdlr.Frame3D(plane_origin, plane_x, plane_y, normal))
 
@@ -1283,6 +1291,14 @@ class Plane3D(Surface3D):
                                                                           coefficient_b ** 2 + coefficient_c ** 2)
 
     def line_intersections(self, line):
+        """
+        Find the intersection with a line.
+
+        :param line: Line to evaluate the intersection
+        :type line: :class:`vme.Line`
+        :return: ADD DESCRIPTION
+        :rtype: List[volmdlr.Point3D]
+        """
         u = line.point2 - line.point1
         w = line.point1 - self.frame.origin
         if math.isclose(self.frame.w.dot(u), 0, abs_tol=1e-08):
@@ -1779,6 +1795,12 @@ class CylindricalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, name=name)
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        """
+        Coverts a parametric coordinate on the surface into a 3D spatial point (x, y, z).
+
+        :param point2d: Point at the CylindricalSuface3D
+        :type point2d: `volmdlr.`Point2D`
+        """
         p = volmdlr.Point3D(self.radius * math.cos(point2d.x),
                             self.radius * math.sin(point2d.x),
                             point2d.y)
@@ -2242,6 +2264,12 @@ class ToroidalSurface3D(PeriodicalSurface):
             [p1, p2, p3, p4, p5, p6, p7, p8])
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        """
+        Coverts a parametric coordinate on the surface into a 3D spatial point (x, y, z).
+
+        :param point2d: Point at the ToroidalSuface3D
+        :type point2d: `volmdlr.`Point2D`
+        """
         theta, phi = point2d
         x = (self.R + self.r * math.cos(phi)) * math.cos(theta)
         y = (self.R + self.r * math.cos(phi)) * math.sin(theta)
@@ -2636,6 +2664,12 @@ class ConicalSurface3D(PeriodicalSurface):
         self.frame = new_frame
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        """
+        Coverts a parametric coordinate on the surface into a 3D spatial point (x, y, z).
+
+        :param point2d: Point at the ConicalSuface3D
+        :type point2d: `volmdlr.`Point2D`
+        """
         theta, z = point2d
         r = math.tan(self.semi_angle) * z
         new_point = volmdlr.Point3D(r * math.cos(theta),
@@ -2936,8 +2970,15 @@ class SphericalSurface3D(Surface3D):
         return cls(frame_direct, radius, arguments[0][1:-1])
 
     def point2d_to_3d(self, point2d):
-        # source mathcurve.com/surfaces/sphere
+        """
+        Coverts a parametric coordinate on the surface into a 3D spatial point (x, y, z).
+
+        source: mathcurve.com/surfaces/sphere
         # -pi<theta<pi, -pi/2<phi<pi/2
+
+        :param point2d: Point at the CylindricalSuface3D.
+        :type point2d: `volmdlr.`Point2D`
+        """
         theta, phi = point2d
         x = self.radius * math.cos(phi) * math.cos(theta)
         y = self.radius * math.cos(phi) * math.sin(theta)
