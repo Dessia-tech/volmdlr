@@ -502,10 +502,9 @@ class BoundingRectangle(dc.DessiaObject):
 
     def distance_to_point(self, point: volmdlr.Point2D):
         """
-        Calculate the minimal distance between the bounding rectangle and
-        a specified point.
+        Calculate the minimal distance between the bounding rectangle and a specified point.
 
-        :param point: A 2 dimensional point
+        :param point: A 2D point
         :type point: :class:`volmdlr.Point2D`
         """
         if self.point_belongs(point):
