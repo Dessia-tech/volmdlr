@@ -37,9 +37,8 @@ steps:
   - git push
 
 - name: check code complexity
-  image: python:3.9
+  image: dessia/python-ci:3.9
   commands:
-  - apt-get update && apt-get install -y enchant-2
   - pip install pylint==2.6.0 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant
   - python code_pylint.py
   - python code_pydocstyle.py
