@@ -52,7 +52,7 @@ steps:
 - name: check code complexity
   image: dessia/python-ci:3.9
   commands:
-  - pip install pylint==2.6.0 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant
+  - pip install pylint==2.6.1 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
   - python code_pylint.py
   - python code_pydocstyle.py
   - pre-commit run -a
