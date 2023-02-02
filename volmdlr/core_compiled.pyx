@@ -663,6 +663,14 @@ class Vector2D(Vector):
         self.x = new_vector.x
         self.y = new_vector.y
 
+    def vector_projection(self, other_vector):
+        """
+        Projects the vector onto other_vector.
+
+        :param other_vector: Vector to project self.
+        """
+        return (self.dot(other_vector) / other_vector.dot(other_vector)) * other_vector
+
     def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
         """
         Returns the 3 dimensional vector corresponding to the 2 dimensional
@@ -1597,6 +1605,14 @@ class Vector3D(Vector):
         self.x = new_vector.x
         self.y = new_vector.y
         self.z = new_vector.z
+
+    def vector_projection(self, other_vector):
+        """
+        Projects the vector onto other_vector.
+
+        :param other_vector: Vector to project self.
+        """
+        return (self.dot(other_vector)/other_vector.dot(other_vector))*other_vector
 
     def plane_projection3d(self, plane_origin: "Vector3D", x: "Vector3D",
                            y: "Vector3D"):

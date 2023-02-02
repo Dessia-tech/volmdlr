@@ -5744,9 +5744,9 @@ class FullArc3D(Arc3D):
         return ax
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
-        new_start_end = self.start.rotation(center, axis, angle, True)
-        new_center = self._center.rotation(center, axis, angle, True)
-        new_normal = self._normal.rotation(center, axis, angle, True)
+        new_start_end = self.start.rotation(center, axis, angle)
+        new_center = self._center.rotation(center, axis, angle)
+        new_normal = self._normal.rotation(center, axis, angle)
         return FullArc3D(new_center, new_start_end,
                          new_normal, name=self.name)
 
