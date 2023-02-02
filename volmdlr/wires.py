@@ -3239,7 +3239,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 if p1 != p3:
                     line_segment = volmdlr.edges.LineSegment2D(p1, p3)
 
-                # Checking if intersections does not contrain the verticies
+                # Checking if intersections does not contrain the vertices
                 # of line_segment
                 intersect = False
                 intersections = current_polygon.linesegment_intersections(line_segment)

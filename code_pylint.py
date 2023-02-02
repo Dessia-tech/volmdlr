@@ -13,7 +13,9 @@ UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-fin
 MIN_NOTE = 8.5
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 809,
+                     "wrong-spelling-in-comment": 436,
+                     "wrong-spelling-in-docstring": 662,
+                     'invalid-name': 787,
                      'no-else-return': 49,
                      'consider-using-f-string': 77,
                      'no-member': 9,
@@ -55,7 +57,7 @@ MAX_ERROR_BY_TYPE = {
                      'raise-missing-from': 2,
                      'no-else-raise': 3,
                      'no-else-continue': 4,
-                     'undefined-variable': 6, #2 when gmsh is fixed
+                     'undefined-variable': 6,  # 2 when gmsh is fixed
                      'no-else-break': 4,
                      'unnecessary-list-index-lookup': 4,
                      'simplifiable-if-expression': 3,

@@ -185,7 +185,7 @@ class CompositePrimitive2D(CompositePrimitive):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Rotates the CompositePrimitive2D. Object is updated inplace.
+        Rotates the CompositePrimitive2D. Object is updated in-place.
 
         :param center: rotation center
         :param angle: rotation angle
@@ -208,7 +208,7 @@ class CompositePrimitive2D(CompositePrimitive):
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        Translates the CompositePrimitive2D. Object is updated inplace.
+        Translates the CompositePrimitive2D. Object is updated in-place.
 
         :param offset: translation vector
         """
@@ -1014,7 +1014,7 @@ class VolumeModel(dc.PhysicalObject):
         :param python_path: path of python binded to freecad
 
             * on windows: something like C:\\\\Program Files\\\\FreeCAD X.XX\\\\bin\\\\python
-            * on linux: python if installed by a dstribution package
+            * on linux: python if installed by a distribution package
         :param filepath: path of fcstd file (without extension)
         :param freecad_lib_path: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
         :param tolerance: the tolerance of tesselation for mesh exports

@@ -830,7 +830,7 @@ class BSplineCurve(Edge):
                                   degree: int, **kwargs):
         """
         Creates a B-spline curve approximation using least squares method with
-        fixed number of control points. It is recommanded to specify the
+        fixed number of control points. It is recommended to specify the
         number of control points.
         Please refer to The NURBS Book (2nd Edition), pp.410-413 for details.
 
@@ -1579,7 +1579,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def to_wire(self, n: int):
         """
-        Convert a bspline curve to a wire2d defined with 'n' line_segments.
+        Convert a Bspline curve to a wire2d defined with 'n' line_segments.
 
         """
 
@@ -1593,7 +1593,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def reverse(self):
         """
-        Reverse the bspline's direction by reversing its start and end points.
+        Reverse the Bspline's direction by reversing its start and end points.
 
         """
 

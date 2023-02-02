@@ -974,7 +974,7 @@ class Surface3D(DessiaObject):
         :return: A list of primitives.
         :rtype: list
         """
-        # Search for a primitive that can be used as reference for reparing periodicity
+        # Search for a primitive that can be used as reference for repairing periodicity
         pos = 0
         x_periodicity = self.x_periodicity
         y_periodicity = self.y_periodicity
@@ -1677,7 +1677,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :type point3d: `volmdlr.`Point3D`
         """
         x, y, z = self.frame.new_coordinates(point3d)
-        # Do not delte this, mathematical problem when x and y close to zero but not 0
+        # Do not delete this, mathematical problem when x and y close to zero but not 0
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
@@ -5150,7 +5150,7 @@ class BSplineSurface3D(Surface3D):
             xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
 
         elif self.is_intersected_with(other_bspline_surface3d):
-            # find pimitives to split with
+            # find primitives to split with
             contour1 = bspline_face3d.outer_contour3d
             contour2 = other_bspline_face3d.outer_contour3d
 
