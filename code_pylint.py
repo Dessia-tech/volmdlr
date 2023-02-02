@@ -61,6 +61,7 @@ MAX_ERROR_BY_TYPE = {
                      'simplifiable-if-expression': 3,
                      'redefined-builtin': 3,
                      'broad-except': 1,
+                     "broad-exception-caught": 1,
                      'too-many-boolean-expressions': 3,
                      'too-many-lines': 3,
                      'redundant-keyword-arg': 3,
