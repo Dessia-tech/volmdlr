@@ -38,6 +38,10 @@ steps:
 
 - name: notify by email
   when:
+    event: push
+    branch:
+      - master
+      - dev
     status:
     - failure
   image: drillster/drone-email
