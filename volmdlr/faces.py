@@ -1024,11 +1024,11 @@ class Surface3D(DessiaObject):
         if not last_end.is_close(first_start, tol=1e-3):
             deltax = first_start.x - last_end.x
             deltay = first_start.y - last_end.y
-            if abs(deltax) % x_periodicity == 0:
+            if x_periodicity and abs(deltax) % x_periodicity == 0:
                 primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
                                                      volmdlr.Point2D(primitives2d[-1].end.x + deltax,
                                                                      primitives2d[-1].end.y))
-            elif abs(deltax) % y_periodicity == 0:
+            elif y_periodicity and abs(deltax) % y_periodicity == 0:
                 primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
                                                      volmdlr.Point2D(primitives2d[-1].end.x,
                                                                      primitives2d[-1].end.y + deltay))
@@ -1058,10 +1058,13 @@ class Surface3D(DessiaObject):
             else:
                 raise NotImplementedError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
+        wire2d = volmdlr.wires.Wire2D(primitives2d)
+        delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
+        if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
+            return volmdlr.wires.Contour2D(primitives2d)
         # Fix contour
         if self.x_periodicity or self.y_periodicity:
             primitives2d = self.repair_primitives_periodicity(primitives2d)
-
         return volmdlr.wires.Contour2D(primitives2d)
 
     def contour2d_to_3d(self, contour2d):
