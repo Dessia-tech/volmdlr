@@ -1231,9 +1231,15 @@ class Plane3D(Surface3D):
         return cls(volmdlr.Frame3D(point, v1, v2, normal))
 
     @classmethod
-    def from_plane_vectors(cls, plane_origin: volmdlr.Point3D,
-                           plane_x: volmdlr.Vector3D,
-                           plane_y: volmdlr.Vector3D):
+    def from_plane_vectors(cls, plane_origin: volmdlr.Point3D, plane_x: volmdlr.Vector3D, plane_y: volmdlr.Vector3D):
+        """
+        Initializes a 3D plane object with a given plane origin and plane x and y vectors.
+
+        :param plane_origin: A volmdlr.Point3D representing the origin of the plane.
+        :param plane_x: A volmdlr.Vector3D representing the x-axis of the plane.
+        :param plane_y: A volmdlr.Vector3D representing the y-axis of the plane.
+        :return: A Plane3D object initialized from the provided plane origin and plane x and y vectors.
+        """
         normal = plane_x.cross(plane_y)
         return cls(volmdlr.Frame3D(plane_origin, plane_x, plane_y, normal))
 
@@ -1296,6 +1302,14 @@ class Plane3D(Surface3D):
                                                                           coefficient_b ** 2 + coefficient_c ** 2)
 
     def line_intersections(self, line):
+        """
+        Find the intersection with a line.
+
+        :param line: Line to evaluate the intersection
+        :type line: :class:`vme.Line`
+        :return: ADD DESCRIPTION
+        :rtype: List[volmdlr.Point3D]
+        """
         u = line.point2 - line.point1
         w = line.point1 - self.frame.origin
         if math.isclose(self.frame.w.dot(u), 0, abs_tol=1e-08):
