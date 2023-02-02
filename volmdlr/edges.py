@@ -1476,10 +1476,10 @@ class BSplineCurve2D(BSplineCurve):
         content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
                    ".UNSPECIFIED.,.F.,.F.,{},{}," \
                    ".UNSPECIFIED.);\n".format(
-                        point_id, self.name, self.degree,
-                        volmdlr.core.step_ids_to_str(points_ids),
-                        tuple(self.knot_multiplicities),
-                        tuple(self.knots))
+                       point_id, self.name, self.degree,
+                       volmdlr.core.step_ids_to_str(points_ids),
+                       tuple(self.knot_multiplicities),
+                       tuple(self.knots))
         return content, point_id + 1
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
@@ -2378,8 +2378,8 @@ class Arc2D(Arc):
             math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
 
         # Triangle
-        xi, yi = (self.start - self.center)
-        xj, yj = (self.end - self.center)
+        xi, yi = self.start - self.center
+        xj, yj = self.end - self.center
         Ix2 = (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi) / 12.
         Iy2 = (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi) / 12.
         Ixy2 = (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
@@ -3138,7 +3138,7 @@ class ArcEllipse2D(Edge):
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
             area = math.pi * self.major_axis * self.minor_axis - 0.5 * self.major_axis * self.minor_axis * (
-                    angle - math.sin(angle))
+                angle - math.sin(angle))
         else:
             angle = self.angle
             area = 0.5 * self.major_axis * self.minor_axis * (angle - math.sin(angle))
@@ -3388,10 +3388,10 @@ class Line3D(Line):
             return projected_point
         vector = self.points[0] - line2.points[0]
         t_coefficient = (
-                                vector.dot(direction_vector2) * direction_vector2.dot(direction_vector1) -
-                                vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
-                                direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
-                                direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
+            vector.dot(direction_vector2) * direction_vector2.dot(direction_vector1) -
+            vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
+            direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
+            direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
         u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
             direction_vector2)) / direction_vector2.dot(direction_vector2)
         intersection = self.point1 + t_coefficient * direction_vector1
@@ -3407,9 +3407,9 @@ class Line3D(Line):
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
-        v1 = (self.point1 - 3 * u)
+        v1 = self.point1 - 3 * u
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = (self.point2 - 3 * u)
+        v2 = self.point2 - 3 * u
         x2, y2, z2 = v2.x, v2.y, v2.z
         if dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
@@ -4044,10 +4044,10 @@ class LineSegment3D(LineSegment):
         d1 = self.start.point_distance(p1_proj)
         d2 = self.end.point_distance(p2_proj)
         if not math.isclose(d1, 0., abs_tol=1e-9):
-            u = (self.start - p1_proj)  # Unit vector from p1_proj to p1
+            u = self.start - p1_proj  # Unit vector from p1_proj to p1
             u.normalize()
         elif not math.isclose(d2, 0., abs_tol=1e-9):
-            u = (self.end - p2_proj)  # Unit vector from p1_proj to p1
+            u = self.end - p2_proj  # Unit vector from p1_proj to p1
             u.normalize()
         else:
             return []
@@ -4759,6 +4759,7 @@ class Arc3D(Arc):
     @classmethod
     def from_angle(cls, start: volmdlr.Point3D, angle: float,
                    axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D):
+        """Gives the arc3D from a start, an angle and an axis."""
         start_gen = start
         int_gen = start_gen.rotation(axis_point, axis, angle / 2)
         end_gen = start_gen.rotation(axis_point, axis, angle)
@@ -4834,7 +4835,7 @@ class Arc3D(Arc):
         return self._frame
 
     def get_frame(self):
-        vec1 = (self.start - self.center)
+        vec1 = self.start - self.center
         vec1.normalize()
         vec2 = self.normal.cross(vec1)
         frame = volmdlr.Frame3D(self.center, vec1, vec2, self.normal)
@@ -4863,7 +4864,7 @@ class Arc3D(Arc):
         :return: clockwise path and trigonomectric path property
         """
         if not self._utd_clockwise_and_trigowise_paths:
-            vec1 = (self.start - self.center)
+            vec1 = self.start - self.center
             vec1.normalize()
             vec2 = self.normal.cross(vec1)
             radius_1 = self.start.to_2d(self.center, vec1, vec2)
@@ -5657,12 +5658,12 @@ class FullArc3D(Arc3D):
             return []
 
         if linesegment.start.z == linesegment.end.z == self.frame.origin.z:
-            quadratic_equation_a = (1 + (direction_vector.y ** 2 / direction_vector.x ** 2))
+            quadratic_equation_a = 1 + (direction_vector.y ** 2 / direction_vector.x ** 2)
             quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x +
                                     2 * (direction_vector.y / direction_vector.x) * linesegment.start.y)
             quadratic_equation_c = ((linesegment.start.y - (direction_vector.y / direction_vector.x) *
                                      linesegment.start.x) ** 2 - self.radius ** 2)
-            delta = (quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c)
+            delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c
             x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
             x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)
             y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment.start.x) + linesegment.start.y
@@ -5694,12 +5695,12 @@ class ArcEllipse3D(Edge):
         self.major_dir = major_dir  # Vector for Gradius
         # self.extra = extra
 
-        u1 = (self.interior - self.start)
-        u2 = (self.interior - self.end)
+        u1 = self.interior - self.start
+        u2 = self.interior - self.end
         u1.normalize()
         u2.normalize()
         if u1 == u2:
-            u2 = (self.interior - self.interior)
+            u2 = self.interior - self.interior
             u2.normalize()
 
         n = u2.cross(u1)
@@ -5860,6 +5861,7 @@ class ArcEllipse3D(Edge):
         return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, name=self.name)
 
     def length(self):
+        """Computes the length."""
         return self.angle * math.sqrt(
             (self.Gradius ** 2 + self.Sradius ** 2) / 2)
 
@@ -5884,6 +5886,7 @@ class ArcEllipse3D(Edge):
                               self.name)
 
     def plot(self, ax=None, color: str = 'k', alpha=1.0, edge_ends=False, edge_direction=False):
+        """Plot the arc ellipse."""
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
