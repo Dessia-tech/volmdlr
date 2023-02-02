@@ -1,44 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Module containing mesh and relative objects
+Module containing mesh and relative objects.
 """
 
 import math
 from itertools import combinations
-from typing import List  # TypeVar, Tuple, Dict
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as npy
 
 from dessia_common.core import DessiaObject  # isort: skip
 
-# import volmdlr.core_compiled
 import volmdlr as vm
 import volmdlr.edges as vme
 import volmdlr.gmsh_vm
 import volmdlr.wires as vmw
-
-
-# from volmdlr.core_compiled import Matrix33
-
-# from itertools import combinations
-# import numpy as npy
-# import volmdlr.wires
-# import volmdlr.faces
-# from volmdlr.core_compiled import Matrix33
-# import matplotlib
-# import random
-# from itertools import product
-# from matplotlib.colors import LinearSegmentedColormap
-
-# cdict = {'red':  [(0.0, 0.0, 0.0),
-#                    (1.0, 1.0, 1.0)],
-#          'green': [(0.0, 0.0, 0.0),
-#                    (1.0, 0.0, 0.0)],
-#          'blue':  [(0.0, 1.0, 1.0),
-#                    (1.0, 0.0, 0.0)]}
-# blue_red = LinearSegmentedColormap('BLueRed', cdict)
 
 
 class FlatElementError(Exception):

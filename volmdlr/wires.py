@@ -5995,14 +5995,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
         triangles_points += polygon2_3d.close_sewing(dict_closing_pairs)
 
-        # print('list closing indexes :', list_closing_point_indexes)
-        # # print('length polygon2 points: ', len(polygon2_3d.points))
-        # print('dict_closing_pairs :', dict_closing_pairs)
-
-        # volum = volmdlr.core.VolumeModel(triangles)
-        # volum.babylonjs()
-        # print('p1 3d points :', self.points)
-        # print('p2 3d points :', polygon2.points)
         return triangles_points
 
     def sewing(self, polygon2, x, y):
@@ -6024,13 +6016,6 @@ class Triangle3D(Triangle):
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  point3: volmdlr.Point3D, name: str = ''):
-        # self.point1 = point1
-        # self.point2 = point2
-        # self.point3 = point3
-        # self.name = name
-
-        # # ClosedPolygon2D.__init__(self, points=[point1, point2, point3],
-        # # name=name)
 
         Triangle.__init__(self, point1,
                           point2,

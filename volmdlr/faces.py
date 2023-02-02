@@ -31,16 +31,7 @@ import volmdlr.geometry
 import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
-# import dessia_common
 from volmdlr.utils.parametric import array_range_search
-
-
-# import matplotlib.tri as plt_tri
-# from pygeodesic import geodesic
-
-
-# import matplotlib.tri as plt_tri
-# from pygeodesic import geodesic
 
 
 def knots_vector_inv(knots_vector):
@@ -974,7 +965,7 @@ class Surface3D(DessiaObject):
         :return: A list of primitives.
         :rtype: list
         """
-        # Search for a primitive that can be used as reference for reparing periodicity
+        # Search for a primitive that can be used as reference for repairing periodicity
         pos = 0
         x_periodicity = self.x_periodicity
         y_periodicity = self.y_periodicity
@@ -2162,6 +2153,7 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Genarally this is related to uncertaintity of step files.
+
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
@@ -4039,27 +4031,6 @@ class BSplineSurface3D(Surface3D):
             for j in range(1, points_y - 1):
                 equation_points.append(((i, j - 1), (i, j + 1)))
 
-        # Euclidean distance
-        # D=[] # distances between 3D grid points (based on points combination [equation_points])
-        # for i in range(0, len(equation_points)):
-        #     D.append((points_3d[index_points[equation_points[i][0]]].point_distance(
-        #         points_3d[index_points[equation_points[i][1]]]))**2)
-
-        # Geodesic distance
-        # xx=[]
-        # for p in points_2d:
-        #     xx.append(p.x)
-        # yy=[]
-        # for p in points_2d:
-        #     yy.append(p.y)
-
-        # triang = plt_tri.Triangulation(xx, yy)
-        # faces = triang.triangles
-        # points = npy.empty([len(points_3d),3])
-        # for i in range(0,len(points_3d)):
-        #     points[i] = npy.array([points_3d[i].x,points_3d[i].y,points_3d[i].z])
-
-        # geoalg = geodesic.PyGeodesicAlgorithmExact(points, faces)
         D = []  # geodesic distances between 3D grid points (based on points combination [equation_points])
         for i in range(0, len(equation_points)):
             D.append((self.geodesic_distance(
@@ -4084,15 +4055,6 @@ class BSplineSurface3D(Surface3D):
 
             F[i + 1] = X[0] * 1000
             F[i + 2] = X[1] * 1000
-            # i=i+2
-            # # F[i+3] = X[(len(points_2d)-points_x)*2]
-            # l= 3
-            # for f in range(1, points_x):
-            #     F[i+f] = X[l]*1000
-            #     l = l+2
-            # F[i+3] = X[3]*1000
-            # F[i+4] = X[5]*1000
-            # F[i+4] = X[points_x*2]*1000
 
             return F
 
@@ -5151,7 +5113,7 @@ class BSplineSurface3D(Surface3D):
             xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
 
         elif self.is_intersected_with(other_bspline_surface3d):
-            # find pimitives to split with
+            # find primitives to split with
             contour1 = bspline_face3d.outer_contour3d
             contour2 = other_bspline_face3d.outer_contour3d
 
@@ -6680,7 +6642,7 @@ class PlaneFace3D(Face3D):
 
     def project_faces(self, faces):
         """
-        Divide self based on faces's outer, and inner contours
+        Divide self based on the faces outer, and inner contours
 
         :param faces: DESCRIPTION
         :type faces: TYPE
@@ -6889,8 +6851,9 @@ class Triangle3D(PlaneFace3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace.
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated in-place.
+
+        :param side: 'old' or 'new'
         """
         self.point1.frame_mapping_inplace(frame, side)
         self.point2.frame_mapping_inplace(frame, side)
@@ -6910,7 +6873,8 @@ class Triangle3D(PlaneFace3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Plane3D translation
+        Plane3D translation.
+
         :param offset: translation vector
         :return: A new translated Plane3D
         """
@@ -6924,7 +6888,8 @@ class Triangle3D(PlaneFace3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Plane3D translation. Object is updated inplace
+        Plane3D translation. Object is updated in-place.
+
         :param offset: translation vector
         """
         self.point1.translation_inplace(offset)
@@ -7159,52 +7124,51 @@ class CylindricalFace3D(Face3D):
 
         return number_points_x, number_points_y
 
-    def range_closest(self, list_points):
-        """
-        Needs a docstring.
+    # def range_closest(self, list_points):
+    #     """
+    #     Needs a docstring.
 
-        :param list_points:
-        :type list_points:
-        :return:
-        :rtype:
-        """
-        # This method has be edited as it was really bad coded:
-        #             * parameter removed, use of self data instead
-        points_set = volmdlr.core.delete_double_point(list_points)
-        points_set3D = CylindricalFace3D.points2d_to3d(None, [points_set],
-                                                       self.radius, self.surface3d.frame)
+    #     :param list_points:
+    #     :type list_points:
+    #     :return:
+    #     :rtype:
+    #     """
+    #     points_set = volmdlr.core.delete_double_point(list_points)
+    #     points_set3D = CylindricalFace3D.points2d_to3d(None, [points_set],
+    #                                                    self.radius, self.surface3d.frame)
 
-        points_3dint = [points_set3D[0]]
-        points_2dint = [points_set[0]]
-        s = 1
-        for k in range(1, len(points_set)):
-            closest = points_set3D[s]
-            while closest is None:
-                s += 1
-                closest = points_set3D[s]
-            dist_min = (points_3dint[-1] - closest).norm()
-            pos = s
-            for i in range(s + 1, len(points_set3D)):
-                close_test = points_set3D[i]
-                if close_test is None:
-                    continue
-                else:
-                    dist_test = (points_3dint[-1] - close_test).norm()
-                    if dist_test <= dist_min:
-                        dist_min = dist_test
-                        closest = close_test
-                        pos = i
-            points_2dint.append(points_set[pos])
-            points_set3D[pos] = None
+    #     points_3dint = [points_set3D[0]]
+    #     points_2dint = [points_set[0]]
+    #     s = 1
+    #     for k in range(1, len(points_set)):
+    #         closest = points_set3D[s]
+    #         while closest is None:
+    #             s += 1
+    #             closest = points_set3D[s]
+    #         dist_min = (points_3dint[-1] - closest).norm()
+    #         pos = s
+    #         for i in range(s + 1, len(points_set3D)):
+    #             close_test = points_set3D[i]
+    #             if close_test is None:
+    #                 continue
+    #             else:
+    #                 dist_test = (points_3dint[-1] - close_test).norm()
+    #                 if dist_test <= dist_min:
+    #                     dist_min = dist_test
+    #                     closest = close_test
+    #                     pos = i
+    #         points_2dint.append(points_set[pos])
+    #         points_set3D[pos] = None
 
-        return points_2dint
+    #     return points_2dint
 
-    def minimum_maximum(self, contour2d, radius):
-        points = contour2d.tessel_points
-        min_h, min_theta = min(pt[1] for pt in points), min(pt[0] for pt in points)
-        max_h, max_theta = max(pt[1] for pt in points), max(pt[0] for pt in points)
+    # def minimum_maximum(self, contour2d, radius):
+    #     """"""
+    #     points = contour2d.tessel_points
+    #     min_h, min_theta = min(pt[1] for pt in points), min(pt[0] for pt in points)
+    #     max_h, max_theta = max(pt[1] for pt in points), max(pt[0] for pt in points)
 
-        return min_h, min_theta, max_h, max_theta
+    #     return min_h, min_theta, max_h, max_theta
 
     # Seems buggy
     # def minimum_distance_points_cyl(self, other_cyl):

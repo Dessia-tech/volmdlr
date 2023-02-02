@@ -437,8 +437,8 @@ class Block(volmdlr.faces.ClosedShell3D):
     def plot_data(self, x3d, y3d, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
         lines = []
-        for edge3D in self.edges():
-            lines.append(edge3D.plot_data(x3d, y3d, marker, color,
+        for edge3d in self.edges():
+            lines.append(edge3d.plot_data(x3d, y3d, marker, color,
                                           stroke_width, dash, opacity, arrow))
 
         return lines
