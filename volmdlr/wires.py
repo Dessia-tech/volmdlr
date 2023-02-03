@@ -427,7 +427,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def to_3d(self, plane_origin, x, y):
         """
-        Tranforms a Wire2D into an Wire3D, given a plane origin and an u and v plane vector.
+        Transforms a Wire2D into an Wire3D, given a plane origin and an u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -556,7 +556,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def line_intersections(self, line: 'volmdlr.edges.Line2D'):
         """
-        Returns a list of intersection in ther form of a tuple (point,
+        Returns a list of intersection in the form of a tuple (point,
         primitive) of the wire primitives intersecting with the line.
 
         """
@@ -569,7 +569,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_intersections(self,
                                   linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of intersection in ther form of a tuple (point,
+        Returns a list of intersection in the form of a tuple (point,
         primitive) of the wire primitives intersecting with the line.
 
         """
@@ -628,7 +628,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def line_crossings(self, line: volmdlr.edges.Line2D):
         """
-        Calculates valid crossing intersections of a wire and an infinit line.
+        Calculates valid crossing intersections of a wire and an infinite line.
 
         :param line: line crossing the wire
         :type line: volmdlr.edges.Line2D
@@ -690,10 +690,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_crossings(self,
                               linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of crossings in ther form of a tuple.
+        Returns a list of crossings in the form of a tuple (point,
+        primitive) of the wire primitives intersecting with the line.
 
-        Tupole is (point, primitive) of the wire primitives
-        intersecting with the line.
         """
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
@@ -820,7 +819,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def bsplinecurve_crossings(self,
                                bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
-        Returns a list of crossings in ther form of a tuple (point,
+        Returns a list of crossings in the form of a tuple (point,
         primitive) of the wire primitives crossings with the bsplinecurve.
 
         """
@@ -836,7 +835,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def bsplinecurve_intersections(self,
                                    bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
-        Returns a list of intersections in ther form of a tuple (point,
+        Returns a list of intersections in the form of a tuple (point,
         primitive) of the wire primitives intersections with the bsplinecurve.
 
         """
@@ -1008,7 +1007,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
 class ContourMixin(WireMixin):
     """
-    Abstract class for Contour, storing methods and attributs used by Contour2D and Contour3D.
+    Abstract class for Contour, storing methods and attributes used by Contour2D and Contour3D.
 
     """
 
@@ -1356,7 +1355,7 @@ class ContourMixin(WireMixin):
 
     def shared_primitives_extremities(self, contour):
         """
-        #todo: is this discription correct?
+        #todo: is this description correct?
         Extract shared primitives extremities between two adjacent contours.
 
         """
@@ -1622,7 +1621,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def to_3d(self, plane_origin, x, y):
         """
-        Tranforms a Contour2D into an Contour3D, given a plane origin and an u and v plane vector.
+        Transforms a Contour2D into an Contour3D, given a plane origin and an u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -1768,7 +1767,7 @@ class Contour2D(ContourMixin, Wire2D):
         """
         Finds a random point inside the polygon.
 
-        :param include_edge_points: Choose True if you want to consider a point on the polygon bord inside.
+        :param include_edge_points: Choose True if you want to consider a point on the polygon inside.
         :type include_edge_points: bool
         :return: A random point inside the polygon
         :rtype: `volmdlr.Point2D`
@@ -1828,7 +1827,7 @@ class Contour2D(ContourMixin, Wire2D):
     def repair_cut_contour(self, n, intersections, line):
         """
         Choose:
-        n=0 for Side 1: opposite side of begining of contour
+        n=0 for Side 1: opposite side of beginning of contour
         n=1 for Side 2: start of contour to first intersect (i=0) and
          i odd to i+1 even
         """
@@ -3050,7 +3049,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             hull_concave_edges.sort(key=lambda x: x.length(), reverse=True)
 
         # line  = hull_concave_edges[0]
-        # print('first line legth :', line.length())
+        # print('first line length :', line.length())
         # nearby_points = get_nearby_points(line, unused_points, scale_factor)
         # print('points next the first line in the end: ', nearby_points)
         # divided_line = get_divided_line(line, nearby_points, hull_concave_edges, concavity)
@@ -3128,7 +3127,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def to_3d(self, plane_origin, x, y):
         """
-        Tranforms a ClosedPolygon2D into an ClosedPolygon3D, given a plane origin and an u and v plane vector.
+        Transforms a ClosedPolygon2D into an ClosedPolygon3D, given a plane origin and an u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -3253,7 +3252,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 if p1 != p3:
                     line_segment = volmdlr.edges.LineSegment2D(p1, p3)
 
-                # Checking if intersections does not contrain the verticies
+                # Checking if intersections does not contain the vertices
                 # of line_segment
                 intersect = False
                 intersections = current_polygon.linesegment_intersections(line_segment)
@@ -3527,7 +3526,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def search_farthest(self, interseting_point, possible_closing_points):
         """
         While Sewing two Polygons, and searching a face\'s closing point, this
-        method verifies it shoul the closest of the farthest available
+        method verifies it chooses the closest of the farthest available
         :return: True if to search the farthest of False if not
         """
         distance = math.inf
@@ -3711,7 +3710,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 class Triangle(ClosedPolygonMixin):
     """
     Defines a triangle from 3 points. It is a Super Class for Triangle2D and Triangle3D,
-    storing their main attribut and methods.
+    storing their main attribute and methods.
 
 
     """
@@ -3732,7 +3731,7 @@ class Triangle2D(ClosedPolygon2D):
 
     :param point1: triangle point 1.
     :param point2: triangle point 2.
-    :param point3: triangle point3.
+    :param point3: triangle point 3.
     """
 
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
@@ -3873,7 +3872,7 @@ class Circle2D(Contour2D):
         Calculates the intersections between a circle 2D and Line 2D.
 
         :param line: line to calculate intersections
-        :param tol: tolerence to consider in calculations.
+        :param tol: tolerance to consider in calculations.
         :return: circle and line intersections.
         """
         full_arc_2d = volmdlr.edges.FullArc2D(
@@ -3886,7 +3885,7 @@ class Circle2D(Contour2D):
         Calculates the intersections between a circle 2D and LineSegment 2D.
 
         :param linesegment: linesegment to calculate intersections
-        :param tol: tolerence to consider in calculations.
+        :param tol: tolerance to consider in calculations.
         :return: circle and linesegment intersections.
         """
         full_arc_2d = volmdlr.edges.FullArc2D(
@@ -3984,7 +3983,7 @@ class Circle2D(Contour2D):
 
     def to_3d(self, plane_origin, x, y):
         """
-        Tranforms a Circle2D into an Circle3D, given a plane origin and an u and v plane vector.
+        Transforms a Circle2D into an Circle3D, given a plane origin and an u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -4131,7 +4130,7 @@ class Circle2D(Contour2D):
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
             to mesh an arc
         :return: a list of sampled points
         """
@@ -4210,7 +4209,7 @@ class Ellipse2D(Contour2D):
 
     def to_3d(self, plane_origin, x, y):
         """
-        Tranforms a Ellipse2D into an Ellipse3D, given a plane origin and an u and v plane vector.
+        Transforms a Ellipse2D into an Ellipse3D, given a plane origin and an u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -4288,7 +4287,7 @@ class Ellipse2D(Contour2D):
         Calculates the abscissa for a given point.
 
         :param point: point to calculate the abcissa.
-        :return: the correspoding abscissa, 0 < abscissa < ellipse's length.
+        :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
         if self.point_over_ellipse(point):
             angle_abscissa = self.point_angle_with_major_dir(point)
@@ -4477,7 +4476,7 @@ class Contour3D(ContourMixin, Wire3D):
             # deltaz2 = abs(raw_edges[0].end.z - raw_edges[1].end.z)
             raise NotImplementedError(
                 f'Number of edges: {len(raw_edges)}',
-                'First 2 edges of contour not follwing each other',
+                'First 2 edges of contour not following each other',
                 f'delta_x = {abs(raw_edges[0].start.x - raw_edges[1].end.x)},'
                 f' {abs(raw_edges[0].end.x - raw_edges[1].end.x)}',
                 f'delta_y = {abs(raw_edges[0].start.y - raw_edges[1].end.y)},'
@@ -4526,7 +4525,7 @@ class Contour3D(ContourMixin, Wire3D):
                 # deltaz2 = abs(raw_edge.end.z - last_edge.end.z)
                 raise NotImplementedError(
                     f'Number of edges: {len(raw_edges)}',
-                    'Edges of contour not follwing each other',
+                    'Edges of contour not following each other',
                     f'delta_x = {abs(raw_edge.start.x - last_edge.end.x)},'
                     f' {abs(raw_edge.end.x - last_edge.end.x)}',
                     f'delta_y = {abs(raw_edge.start.y - last_edge.end.y)},'
@@ -4717,7 +4716,7 @@ class Contour3D(ContourMixin, Wire3D):
 
     def _bounding_box(self):
         """
-        Computes the bounding box ot the contour3D.
+        Computes the bounding box of the contour3D.
 
         """
         return volmdlr.core.BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
@@ -4894,7 +4893,7 @@ class Circle3D(Contour3D):
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
             to mesh an arc
         :return: a list of sampled points
         """
@@ -5086,7 +5085,7 @@ class Circle3D(Contour3D):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a Circle3D into an Circle2D, given a plane origin and an u and v plane vector.
+        Transforms a Circle3D into an Circle2D, given a plane origin and an u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -5277,7 +5276,7 @@ class Ellipse3D(Contour3D):
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned.
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Usefull
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
             to mesh an arc.
         :return: a list of sampled points.
         """
@@ -5295,7 +5294,7 @@ class Ellipse3D(Contour3D):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a Ellipse3D into an EllipseD, given a plane origin and an u and v plane vector.
+        Transforms a Ellipse3D into an EllipseD, given a plane origin and an u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -5533,7 +5532,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a ClosedPolygon3D into an ClosedPolygon2D, given a plane origin and an u and v plane vector.
+        Transforms a ClosedPolygon3D into an ClosedPolygon2D, given a plane origin and an u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -5741,7 +5740,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                                               closing_point_index,
                                               passed_by_zero_index):
         """
-        Cleans the dictionnary containing the sewing closing pairs informations
+        Cleans the dictionary containing the sewing closing pairs information
         in case it needs to be recalculated due to changing closing points.
 
         """
@@ -6010,14 +6009,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
         triangles_points += polygon2_3d.close_sewing(dict_closing_pairs)
 
-        # print('list closing indexes :', list_closing_point_indexes)
-        # # print('length polygon2 points: ', len(polygon2_3d.points))
-        # print('dict_closing_pairs :', dict_closing_pairs)
-
-        # volum = volmdlr.core.VolumeModel(triangles)
-        # volum.babylonjs()
-        # print('p1 3d points :', self.points)
-        # print('p2 3d points :', polygon2.points)
         return triangles_points
 
     def sewing(self, polygon2, x, y):
@@ -6039,13 +6030,6 @@ class Triangle3D(Triangle):
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  point3: volmdlr.Point3D, name: str = ''):
-        # self.point1 = point1
-        # self.point2 = point2
-        # self.point3 = point3
-        # self.name = name
-
-        # # ClosedPolygon2D.__init__(self, points=[point1, point2, point3],
-        # # name=name)
 
         Triangle.__init__(self, point1,
                           point2,

@@ -5,14 +5,12 @@ STL reader & writer.
 
 https://en.wikipedia.org/wiki/STL_(file_format)
 """
-# from binaryornot.check import is_binary
+
 import struct
 import warnings
-# from typing import BinaryIO
 from typing import List
 
 from binaryornot.check import is_binary
-# import kaitaistruct
 from kaitaistruct import KaitaiStream
 
 import dessia_common.core as dc  # isort: skip
@@ -21,9 +19,6 @@ from dessia_common.files import BinaryFile, StringFile  # isort: skip
 import volmdlr as vm
 import volmdlr.core as vmc
 import volmdlr.faces as vmf
-
-
-# from kaitaistruct import KaitaiStream
 
 
 class Stl(dc.DessiaObject):
