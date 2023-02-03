@@ -96,6 +96,10 @@ abscissa(), point_angle_with_major_dir(), area(), rotation(), tranlation(), fram
 * BSplineCurve2D: tangent (use position/length)
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
+* SphericalSurface3D : enhancement of primitives parametrization on surface parametric domain.
+* BSplineSurface3D: debug linesegment2d_to_3d method.
+* Parametric operations with BSpline curves.
+* OpenTriangleShell3D: fix from_mesh_data method
 * pydocstyle fixes
 * bounding box: fix for cylindrical and BSplineCurve3D
 * contour2d: ordering_primitives, order_primitives
