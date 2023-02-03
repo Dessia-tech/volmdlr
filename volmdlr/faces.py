@@ -1082,9 +1082,9 @@ class Surface3D(DessiaObject):
         Is this right?.
         """
         n = len(bspline_curve3d.control_points)
-        points = [self.point2d_to_3d(p)
+        points = [self.point3d_to_2d(p)
                   for p in bspline_curve3d.discretization_points(number_points=n)]
-        return [vme.BSplineCurve3D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -1616,7 +1616,7 @@ class PeriodicalSurface(Surface3D):
             class_ = self.face_class
         new_face = class_(self, Surface2D(new_outer_contour, new_inner_contours))
         return new_face
-        
+
     def _get_overlapping_theta(self, outer_contour_startend_theta, inner_contour_startend_theta):
         """
         Find overlapping theta domain between two contours on periodical Surfaces.
@@ -1650,6 +1650,16 @@ class PeriodicalSurface(Surface3D):
         outer_contour_side = oc_xmax_index
         side = 1
         return overlapping_theta, outer_contour_side, side
+
+    def linesegment3d_to_2d(self, linesegment3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        start = self.point3d_to_2d(linesegment3d.start)
+        end = self.point3d_to_2d(linesegment3d.end)
+        if start.x != end.x:
+            end = volmdlr.Point2D(start.x, end.y)
+        return [vme.LineSegment2D(start, end)]
 
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
@@ -1795,7 +1805,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         p = volmdlr.Point3D(self.radius * math.cos(point2d.x),
                             self.radius * math.sin(point2d.x),
                             point2d.y)
-        return self.frame.old_coordinates(p)
+        return self.frame.local_to_global_coordinates(p)
 
     def point3d_to_2d(self, point3d):
         """
@@ -1804,8 +1814,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         :param point3d: Point at the CylindricalSuface3D
         :type point3d: `volmdlr.`Point3D`
         """
-        x, y, z = self.frame.new_coordinates(point3d)
-        # Do not delete this, mathematical problem when x and y close to zero but not 0
+        x, y, z = self.frame.global_to_local_coordinates(point3d)
+        # Do not delte this, mathematical problem when x and y close to zero but not 0
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
