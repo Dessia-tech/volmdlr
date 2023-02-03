@@ -28,10 +28,10 @@ def circle_3d_linesegment_intersections(circle_3d, linesegment):
     direction_vector = linesegment.direction_vector()
     if linesegment.start.z == linesegment.end.z == circle_3d.frame.origin.z:
         quadratic_equation_a = 1 + (direction_vector.y ** 2 / direction_vector.x ** 2)
-        quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x +
-                                2 * (direction_vector.y / direction_vector.x) * linesegment.start.y)
-        quadratic_equation_c = ((linesegment.start.y - (direction_vector.y / direction_vector.x) *
-                                 linesegment.start.x) ** 2 - circle_3d.radius ** 2)
+        quadratic_equation_b = -2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.points[0].x + \
+                               2 * (direction_vector.y / direction_vector.x) * linesegment.points[0].y
+        quadratic_equation_c = (linesegment.points[0].y - (direction_vector.y / direction_vector.x) *
+                                linesegment.points[0].x) ** 2 - circle_3d.radius ** 2
         delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c
 
         x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
@@ -58,7 +58,7 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
     :return: list of points intersections, if there are any
     """
     theta = volmdlr.geometry.clockwise_angle(ellipse2d.major_dir, volmdlr.X2D)
-    if not math.isclose(theta, 0.0, abs_tol=1e-6) and not math.isclose(theta, 2*math.pi, abs_tol=1e-6):
+    if not math.isclose(theta, 0.0, abs_tol=1e-6) and not math.isclose(theta, 2 * math.pi, abs_tol=1e-6):
         frame = volmdlr.Frame2D(ellipse2d.center, ellipse2d.major_dir, ellipse2d.minor_dir)
         frame_mapped_ellipse = ellipse2d.frame_mapping(frame, 'new')
         frame_mapped_line = line2d.frame_mapping(frame, 'new')
