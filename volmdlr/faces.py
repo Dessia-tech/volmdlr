@@ -3313,6 +3313,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         self.axis = axis
 
         point1 = wire.point_at_abscissa(0)
+        if point1 == axis_point:
+            point1 = wire.point_at_abscissa(0.1 * wire.length())
         vector1 = point1 - axis_point
         w = axis
         w.normalize()
