@@ -95,6 +95,10 @@ https://documentation.dessia.tech/volmdlr/
 
 100% opensource on LGPL licence. See LICENCE for more details.
 
-## Contributors
+## Team and contributors
+
+The project leader is [Wirajan Da Silva](https://github.com/WirajanDASILVA).
+Volmdlr is mainly developed by the [dessia](https://dessia.tech) company as a part of its opensource SDK, but contributions are welcomed. See [CONTRIBUTING.md](/blob/master/CONTRIBUTING.md) for details
 
 - [DessiA team](https://github.com/orgs/Dessia-tech/people)
+- [luzpaz](https://github.com/luzpaz)
