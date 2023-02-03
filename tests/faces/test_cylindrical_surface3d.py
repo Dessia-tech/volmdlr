@@ -130,10 +130,10 @@ class TestCylindricalSurface3D(unittest.TestCase):
         linesegment2d = contour2d_cylinder.primitives[2]
 
         self.assertEqual(area, 0.02*math.pi)
-        self.assertEqual(fullarc2d.start, Point2D(2*math.pi, 0.003))
+        self.assertEqual(fullarc2d.start, Point2D(-2*math.pi, 0.003))
         self.assertEqual(fullarc2d.end, Point2D(0, 0.003))
-        self.assertEqual(linesegment2d.start, Point2D(2*math.pi, 0.013))
-        self.assertEqual(linesegment2d.end, Point2D(2*math.pi, 0.003))
+        self.assertEqual(linesegment2d.start, Point2D(-2*math.pi, 0.013))
+        self.assertEqual(linesegment2d.end, Point2D(-2*math.pi, 0.003))
 
     def test_face_from_contours3d(self):
         surface = dessia_common.core.DessiaObject.load_from_file(
