@@ -5,7 +5,7 @@
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 import matplotlib.patches as mpatches
 
