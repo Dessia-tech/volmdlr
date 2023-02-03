@@ -4430,16 +4430,13 @@ class BSplineCurve3D(BSplineCurve):
                        tuple(self.knots))
 
         if surface_id:
-            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                curve_id + 1, curve_id, curve_id + 2)
-            content += "#{} = PCURVE('',#{},#{});\n".format(
-                curve_id + 2, surface_id, curve_id + 3)
+            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{curve_id + 2}),.PCURVE_S1.);\n"
+            content += f"#{curve_id + 2} = PCURVE('',#{surface_id},#{curve_id + 3});\n"
 
             # 2D parametric curve
             curve2d_content, curve2d_id = curve2d.to_step(curve_id + 5)
 
-            content += "#{} = DEFINITIONAL_REPRESENTATION('',(#{}),#{});\n".format(
-                curve_id + 3, curve2d_id - 1, curve_id + 4)
+            content += f"#{curve_id + 3} = DEFINITIONAL_REPRESENTATION('',(#{curve2d_id - 1}),#{curve_id + 4});\n"
             content += f"#{curve_id + 4} = ( GEOMETRIC_REPRESENTATION_CONTEXT(2)" \
                        f"PARAMETRIC_REPRESENTATION_CONTEXT() REPRESENTATION_CONTEXT('2D SPACE','') );\n"
 
