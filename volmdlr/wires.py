@@ -84,7 +84,7 @@ def bounding_rectangle_adjacent_contours(contours: List):
 
 class WireMixin:
     """
-    Abstract class for Wire, storing methods and atributs used by many classes in this module.
+    Abstract class for Wire, storing methods and attributes used by many classes in this module.
 
     """
     _non_data_hash_attributes = ['basis_primitives']
@@ -4139,7 +4139,7 @@ class Circle2D(Contour2D):
 
 class Ellipse2D(Contour2D):
     """
-    Defines an Ellipse in two-dimenssions.
+    Defines an Ellipse in two-dimensions.
 
     Ellipse2D defined by a major axis (A), minor axis (B), a center and a vector
     representing the direction of the major axis.
@@ -4272,7 +4272,7 @@ class Ellipse2D(Contour2D):
         """
         Calculates the abscissa for a given point.
 
-        :param point: point to calculate the abcissa.
+        :param point: point to calculate the abscissa.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
         if self.point_over_ellipse(point):
@@ -4420,8 +4420,7 @@ class Contour3D(ContourMixin, Wire3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionnary containing all the step primitives that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding Contour3D object.
         :rtype: :class:`volmdlr.wires.Contour3D`
@@ -4995,8 +4994,7 @@ class Circle3D(Contour3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionnary containing all the step primitives that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding Circle3D object.
         :rtype: :class:`volmdlr.wires.Circle3D`
@@ -5411,8 +5409,7 @@ class Ellipse3D(Contour3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionnary containing all the step primitives that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding Ellipse3D object.
         :rtype: :class:`volmdlr.wires.Ellipse3D`

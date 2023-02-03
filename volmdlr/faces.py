@@ -6045,11 +6045,11 @@ class Face3D(volmdlr.core.Primitive3D):
                 if all(dict_cutting_contour_intersections[inters] in connectig_to_outer_contour for inters in
                        dict_inner_contour_intersections[inner_contours[0]]) and cutting_contour not in \
                         used_cutting_contours and inner_contours[0] not in used_inner_contour:
-                    inner_contour_spliting_points = dict_inner_contour_intersections[inner_contours[0]]
-                    inner_contour_spliting_points = list(sorted(
-                        inner_contour_spliting_points, key=lambda point, ic=inner_contours[0]: ic.abscissa(point)))
+                    inner_contour_splitting_points = dict_inner_contour_intersections[inner_contours[0]]
+                    inner_contour_splitting_points = list(sorted(
+                        inner_contour_splitting_points, key=lambda point, ic=inner_contours[0]: ic.abscissa(point)))
 
-                    point1, point2 = self.inner_contour_cutting_points(inner_contour_spliting_points, cutting_contour)
+                    point1, point2 = self.inner_contour_cutting_points(inner_contour_splitting_points, cutting_contour)
                     primitives1.extend(inner_contours[0].extract_with_points(point1, point2, True))
                     primitives2.extend(inner_contours[0].extract_with_points(point1, point2, False))
                     if sum(prim.length() for prim in primitives2) > sum(prim.length() for prim in primitives1):
@@ -6064,23 +6064,23 @@ class Face3D(volmdlr.core.Primitive3D):
                 elif cutting_contour not in valid_cutting_contours:
                     valid_cutting_contours.append(cutting_contour)
             elif len(inner_contours) == 2:
-                inner_contour_spliting_points1 = dict_inner_contour_intersections[inner_contours[0]]
-                inner_contour_spliting_points2 = dict_inner_contour_intersections[inner_contours[1]]
-                inner_contour_spliting_points1 = list(sorted(
-                    inner_contour_spliting_points1, key=lambda point, ic=inner_contours[0]: ic.abscissa(point)))
-                inner_contour_spliting_points2 = list(sorted(
-                    inner_contour_spliting_points2, key=lambda point, ic=inner_contours[1]: ic.abscissa(point)))
-                inside1, inside2 = self.is_inside_portion(cutting_contour, inner_contour_spliting_points1,
-                                                          inner_contour_spliting_points2)
+                inner_contour_splitting_points1 = dict_inner_contour_intersections[inner_contours[0]]
+                inner_contour_splitting_points2 = dict_inner_contour_intersections[inner_contours[1]]
+                inner_contour_splitting_points1 = list(sorted(
+                    inner_contour_splitting_points1, key=lambda point, ic=inner_contours[0]: ic.abscissa(point)))
+                inner_contour_splitting_points2 = list(sorted(
+                    inner_contour_splitting_points2, key=lambda point, ic=inner_contours[1]: ic.abscissa(point)))
+                inside1, inside2 = self.is_inside_portion(cutting_contour, inner_contour_splitting_points1,
+                                                          inner_contour_splitting_points2)
                 primitives1.extend(cutting_contour.primitives[:])
                 contour_used = False
-                for inner_contour, inner_contour_spliting_points, inside in zip(
-                        inner_contours, [inner_contour_spliting_points1, inner_contour_spliting_points2],
+                for inner_contour, inner_contour_splitting_points, inside in zip(
+                        inner_contours, [inner_contour_splitting_points1, inner_contour_splitting_points2],
                         [inside1, inside2]):
                     if inner_contour in used_inner_contour:
                         contour_used = True
                         continue
-                    point1, point2 = self.inner_contour_cutting_points(inner_contour_spliting_points, cutting_contour)
+                    point1, point2 = self.inner_contour_cutting_points(inner_contour_splitting_points, cutting_contour)
                     primitives1.extend(inner_contour.extract_with_points(point1, point2, inside))
                     primitives1.extend(dict_cutting_contour_intersections[point2].primitives)
                     primitives2.extend(inner_contour.extract_with_points(point1, point2, not inside))
@@ -6119,15 +6119,15 @@ class Face3D(volmdlr.core.Primitive3D):
                         inner_contours_connected_cutting_contour[cutting_contour].append(inner_contour)
                 for intersection in inner_contour_intersections:
                     dict_cutting_contour_intersections[intersection] = cutting_contour
-            spliting_points = dict_inner_contour_intersections[inner_contour]
-            spliting_points = list(sorted(
-                spliting_points, key=lambda point, ic=inner_contour: ic.abscissa(point)))
-            remove_spliting_points, new_inner_contour, remove_cutting_contour = self.inner_contours_recalculation(
-                inner_contour, spliting_points, dict_cutting_contour_intersections, connectig_to_outer_contour)
+            splitting_points = dict_inner_contour_intersections[inner_contour]
+            splitting_points = list(sorted(
+                splitting_points, key=lambda point, ic=inner_contour: ic.abscissa(point)))
+            remove_splitting_points, new_inner_contour, remove_cutting_contour = self.inner_contours_recalculation(
+                inner_contour, splitting_points, dict_cutting_contour_intersections, connectig_to_outer_contour)
             (dict_cutting_contour_intersections, dict_inner_contour_intersections,
              inner_contours_connected_cutting_contour, list_cutting_contours) = \
-                self.updated_dictionnaries_cutting_contours(remove_spliting_points, remove_cutting_contour,
-                                                            spliting_points, dict_cutting_contour_intersections,
+                self.updated_dictionnaries_cutting_contours(remove_splitting_points, remove_cutting_contour,
+                                                            splitting_points, dict_cutting_contour_intersections,
                                                             inner_contour, new_inner_contour, list_cutting_contours,
                                                             dict_inner_contour_intersections,
                                                             inner_contours_connected_cutting_contour)
@@ -6136,51 +6136,51 @@ class Face3D(volmdlr.core.Primitive3D):
                 dict_cutting_contour_intersections, list_cutting_contours)
 
     @staticmethod
-    def inner_contour_cutting_points(inner_contour_spliting_points, cutting_contour):
+    def inner_contour_cutting_points(inner_contour_splitting_points, cutting_contour):
         """
         Searches the inner contour points where it must be cutted.
 
-        :param inner_contour_spliting_points: all points os intersection with this inner contour.
+        :param inner_contour_splitting_points: all points os intersection with this inner contour.
         :param cutting_contour: first cutting contour being used to cut inner contour.
         :return: point1, point2
         """
-        if cutting_contour.primitives[0].start in inner_contour_spliting_points:
-            index_point1 = inner_contour_spliting_points.index(cutting_contour.primitives[0].start)
+        if cutting_contour.primitives[0].start in inner_contour_splitting_points:
+            index_point1 = inner_contour_splitting_points.index(cutting_contour.primitives[0].start)
         else:
-            index_point1 = inner_contour_spliting_points.index(cutting_contour.primitives[-1].end)
-        if index_point1 != len(inner_contour_spliting_points) - 1:
+            index_point1 = inner_contour_splitting_points.index(cutting_contour.primitives[-1].end)
+        if index_point1 != len(inner_contour_splitting_points) - 1:
             index_point2 = index_point1 + 1
         else:
             index_point2 = 0
-        point1 = inner_contour_spliting_points[index_point1]
-        point2 = inner_contour_spliting_points[index_point2]
+        point1 = inner_contour_splitting_points[index_point1]
+        point2 = inner_contour_splitting_points[index_point2]
         return point1, point2
 
     @staticmethod
-    def is_inside_portion(cutting_contour, inner_contour_spliting_points1, inner_contour_spliting_points2):
+    def is_inside_portion(cutting_contour, inner_contour_splitting_points1, inner_contour_splitting_points2):
         """
         For multiple inner contour intersections with cutting contours, defines if we get the inside or outside portion
         of the inner contour pair.
 
         :param cutting_contour: cutting_contour cutting the two inner contours.
-        :param inner_contour_spliting_points1: spliting points for contour1.
-        :param inner_contour_spliting_points2: spliting points for contour1.
+        :param inner_contour_splitting_points1: splitting points for contour1.
+        :param inner_contour_splitting_points2: splitting points for contour1.
         :return:
         """
-        if (cutting_contour.primitives[0].start != inner_contour_spliting_points1[-1] and
-            cutting_contour.primitives[-1].end != inner_contour_spliting_points2[-1]) or \
-                (cutting_contour.primitives[0].start != inner_contour_spliting_points2[-1] and
-                 cutting_contour.primitives[-1].end != inner_contour_spliting_points2[-1]):
+        if (cutting_contour.primitives[0].start != inner_contour_splitting_points1[-1] and
+            cutting_contour.primitives[-1].end != inner_contour_splitting_points2[-1]) or \
+                (cutting_contour.primitives[0].start != inner_contour_splitting_points2[-1] and
+                 cutting_contour.primitives[-1].end != inner_contour_splitting_points2[-1]):
             is_inside1 = True
             is_inside2 = False
-        elif (cutting_contour.primitives[0].start == inner_contour_spliting_points1[-1] and
-              cutting_contour.primitives[-1].end == inner_contour_spliting_points2[-1]):
+        elif (cutting_contour.primitives[0].start == inner_contour_splitting_points1[-1] and
+              cutting_contour.primitives[-1].end == inner_contour_splitting_points2[-1]):
             is_inside1 = True
             is_inside2 = False
-        elif (cutting_contour.primitives[0].start != inner_contour_spliting_points1[-1] and
-              cutting_contour.primitives[-1].end == inner_contour_spliting_points2[-1]) or \
-                (cutting_contour.primitives[0].start == inner_contour_spliting_points1[-1] and
-                 cutting_contour.primitives[-1].end != inner_contour_spliting_points2[-1]):
+        elif (cutting_contour.primitives[0].start != inner_contour_splitting_points1[-1] and
+              cutting_contour.primitives[-1].end == inner_contour_splitting_points2[-1]) or \
+                (cutting_contour.primitives[0].start == inner_contour_splitting_points1[-1] and
+                 cutting_contour.primitives[-1].end != inner_contour_splitting_points2[-1]):
             is_inside1 = True
             is_inside2 = True
         else:
@@ -6190,7 +6190,7 @@ class Face3D(volmdlr.core.Primitive3D):
     @staticmethod
     def get_connecting_contour(lists_primitives, inner_primitives):
         """
-        Find which contour from resulting inner contour spliting is connected to saved cutting_contours.
+        Find which contour from resulting inner contour splitting is connected to saved cutting_contours.
 
         :param lists_primitives: saved cutting contours.
         :param inner_primitives: splited inner contour.
@@ -6208,57 +6208,57 @@ class Face3D(volmdlr.core.Primitive3D):
         lists_primitives = new_list_primitives[:]
         return lists_primitives
 
-    def inner_contours_recalculation(self, inner_contour, spliting_points, spliting_points_and_cutting_contour,
+    def inner_contours_recalculation(self, inner_contour, splitting_points, splitting_points_and_cutting_contour,
                                      connectig_to_outer_contour):
         """
         Verifies if there is a cutting contours from face intersections connected to an inner contour at the two ends,
         if true this inner contour is updated with this cutting contour.
 
         :param inner_contour: inner contour.
-        :param spliting_points: current inner contour spliting points.
-        :param spliting_points_and_cutting_contour: dictionary containing all spliting points and
+        :param splitting_points: current inner contour splitting points.
+        :param splitting_points_and_cutting_contour: dictionary containing all splitting points and
         the corresponding cutting contour.
         :param connectig_to_outer_contour: list of the cutting contours connected to the outer contour.
-        :return: spliting points to be removed from list of spliting points and current inner contour updated.
+        :return: splitting points to be removed from list of splitting points and current inner contour updated.
         """
         j = self.surface2d.inner_contours.index(inner_contour)
-        remove_spliting_points = []
+        remove_splitting_points = []
         remove_cutting_contour = []
-        for point1, point2 in zip(spliting_points[:-1], spliting_points[1:]):
-            if spliting_points_and_cutting_contour[point1] not in connectig_to_outer_contour and \
-                    spliting_points_and_cutting_contour[point2] not in connectig_to_outer_contour and \
-                    spliting_points_and_cutting_contour[point1] == spliting_points_and_cutting_contour[point2]:
-                remove_cutting_contour.append(spliting_points_and_cutting_contour[point1])
-                remove_spliting_points.extend([point1, point2])
+        for point1, point2 in zip(splitting_points[:-1], splitting_points[1:]):
+            if splitting_points_and_cutting_contour[point1] not in connectig_to_outer_contour and \
+                    splitting_points_and_cutting_contour[point2] not in connectig_to_outer_contour and \
+                    splitting_points_and_cutting_contour[point1] == splitting_points_and_cutting_contour[point2]:
+                remove_cutting_contour.append(splitting_points_and_cutting_contour[point1])
+                remove_splitting_points.extend([point1, point2])
                 primitives1 = inner_contour.extract_with_points(point1, point2, True) + \
-                    spliting_points_and_cutting_contour[point1].primitives
+                    splitting_points_and_cutting_contour[point1].primitives
                 primitives2 = inner_contour.extract_with_points(point1, point2, False) + \
-                    spliting_points_and_cutting_contour[point1].primitives
+                    splitting_points_and_cutting_contour[point1].primitives
                 contour1 = volmdlr.wires.Contour2D(primitives1).order_contour()
                 contour2 = volmdlr.wires.Contour2D(primitives2).order_contour()
                 if contour1.is_inside(inner_contour):
                     self.surface2d.inner_contours[j] = contour1
                     inner_contour = self.surface2d.inner_contours[j]
-                    remove_spliting_points.extend([point1, point2])
+                    remove_splitting_points.extend([point1, point2])
                 elif contour2.is_inside(inner_contour):
                     self.surface2d.inner_contours[j] = contour2
                     inner_contour = self.surface2d.inner_contours[j]
-                    remove_spliting_points.extend([point1, point2])
-        return remove_spliting_points, inner_contour, remove_cutting_contour
+                    remove_splitting_points.extend([point1, point2])
+        return remove_splitting_points, inner_contour, remove_cutting_contour
 
     @staticmethod
-    def updated_dictionnaries_cutting_contours(remove_spliting_points, remove_cutting_contour, spliting_points,
+    def updated_dictionnaries_cutting_contours(remove_splitting_points, remove_cutting_contour, splitting_points,
                                                dict_cutting_contour_intersections, old_inner_contour,
                                                new_inner_contour, list_cutting_contours,
                                                dict_inner_contour_intersections,
                                                inner_contours_connected_cutting_contour):
-        for remove_point in remove_spliting_points:
-            if remove_point in spliting_points:
-                spliting_points.remove(remove_point)
+        for remove_point in remove_splitting_points:
+            if remove_point in splitting_points:
+                splitting_points.remove(remove_point)
             if remove_point in dict_cutting_contour_intersections:
                 del dict_cutting_contour_intersections[remove_point]
         del dict_inner_contour_intersections[old_inner_contour]
-        dict_inner_contour_intersections[new_inner_contour] = spliting_points
+        dict_inner_contour_intersections[new_inner_contour] = splitting_points
         for contour in remove_cutting_contour:
             if contour in list_cutting_contours:
                 list_cutting_contours.remove(contour)

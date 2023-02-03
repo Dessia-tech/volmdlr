@@ -174,7 +174,7 @@ class PointCloud3D(dc.DessiaObject):
                                              color=(1, 0.1, 0.1))
                               for triangle_points in list_triangles_points]
                 faces.extend(list_faces)
-        return vmf.ClosedTriangleShell3D(faces)
+        return vmf.ClosedShell3D(faces)
 
     def shell_distances(self, shells: vmf.OpenTriangleShell3D) -> Tuple['PointCloud3D', List[float], List[int]]:
         """

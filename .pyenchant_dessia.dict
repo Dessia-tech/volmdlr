@@ -1,3 +1,4 @@
+volmdlr
 dessia
 jsonschema
 dbscan
@@ -16,3 +17,6 @@ LHS
 cosinus
 inplace
 trigo
+Bezier
+numpy
+linesegment
