@@ -5,7 +5,6 @@ Base classes.
 """
 
 import os
-import subprocess
 import tempfile
 import webbrowser
 from datetime import datetime
