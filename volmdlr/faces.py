@@ -2672,7 +2672,7 @@ class ConicalSurface3D(PeriodicalSurface):
                 self.point2d_to_3d(linesegment2d.end),
             )]
         if math.isclose(z1, z2, abs_tol=1e-4) and math.isclose(z1, 0.,
-                                                                 abs_tol=1e-6):
+                                                               abs_tol=1e-6):
             return []
         if math.isclose(z1, z2, abs_tol=1e-4):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
@@ -3496,7 +3496,6 @@ class BSplineSurface3D(Surface3D):
     def blending_vector_u(self, u):
         """
         Compute a vector of basis_functions in u direction for u=u.
-
         """
 
         blending_vect = npy.empty((1, self.nb_u))
