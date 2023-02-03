@@ -3098,8 +3098,10 @@ class ArcEllipse2D(Edge):
 
         def theta_A_B(s, i, e, c):
             """
-            From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
-            theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
+            From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given.
+            theta= ellipse's inclination angle related to the horizontal
+            (clockwise),A=semi major axis, B=semi minor axis.
+
             """
             xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
                 1] - c[1], e[0] - c[0], e[1] - c[1]

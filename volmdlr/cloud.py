@@ -195,14 +195,14 @@ class PointCloud3D(dc.DessiaObject):
 
         :return: The point cloud of points projection on nearest triangle, their distances and the corresponding
         triangles index
-        :rtype: Tuple[npy.ndarray(float), npy.ndarray(float), npy.ndarray(int)]
+        :rtype: Tuple[numpy.ndarray(float), numpy.ndarray(float), numpy.ndarray(int)]
         """
         shells_trimesh = shells.to_trimesh()
         return closest_point(shells_trimesh, self.to_coord_matrix())
 
     def to_coord_matrix(self) -> List[List[float]]:
         """
-        Generate a n_points x 3 matrix of coordinates.
+        Generate an n_points x 3 matrix of coordinates.
         """
         return [point.coordinates() for point in self.points]
 
@@ -226,7 +226,7 @@ class PointCloud3D(dc.DessiaObject):
     #     '''
     #
     #     points = [[p.x, p.y, p.z] for p in self.points]
-    #     array = npy.array(points)
+    #     array = numpy.array(points)
     #     points = open3d.cpu.pybind.utility.Vector3dVector(array)
     #     pcd = open3d.geometry.PointCloud()
     #     pcd.points = points
@@ -242,10 +242,10 @@ class PointCloud3D(dc.DessiaObject):
     #         mesh.compute_vertex_normals()
     #     # open3d.visualization.draw_geometries([mesh], mesh_show_back_face=True)
     #     vertices = [volmdlr.Point3D(float(x), float(y), float(z))
-    #                 for x, y, z in list(npy.asarray(mesh.vertices))]
+    #                 for x, y, z in list(numpy.asarray(mesh.vertices))]
     #     triangles = [vmf.Triangle3D(vertices[p1], vertices[p2], vertices[p3],
     #                                 color = (1, 0.1, 0.1), alpha = 0.6)
-    #                  for p1, p2, p3 in list(npy.asarray(mesh.triangles))]
+    #                  for p1, p2, p3 in list(numpy.asarray(mesh.triangles))]
     #
     #     return vmf.ClosedShell3D(triangles)
 
