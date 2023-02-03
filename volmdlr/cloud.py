@@ -213,7 +213,7 @@ class PointCloud3D(dc.DessiaObject):
     #     alpha : float
     #         the parameter alpha determines how precise the object surface reconstruction is wanted to be.
     #         The bigger the value of alpha is, more convex the final object will be. If it is smaller,
-    #         the algorigthm is able to find the concave parts of the object, giving a more precise object
+    #         the algorithm is able to find the concave parts of the object, giving a more precise object
     #         surface approximation
     #     number_point_samples : int
     #         denotes the number of points to be used from the point cloud to reconstruct the surface.

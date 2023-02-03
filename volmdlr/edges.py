@@ -4591,8 +4591,6 @@ class BSplineCurve3D(BSplineCurve):
         if bspline_curve.weights is not None:
             raise NotImplementedError
 
-        # Que faire quand on rajoute un noeud au milieu ?
-        # plus simple de passer par cut_after cut_before
         new_ctrlpts = bspline_curve.control_points[bspline_curve.degree:
                                                    -bspline_curve.degree]
         new_multiplicities = bspline_curve.knot_multiplicities[1:-1]
