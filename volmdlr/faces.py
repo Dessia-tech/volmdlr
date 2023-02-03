@@ -2405,6 +2405,9 @@ class ToroidalSurface3D(PeriodicalSurface):
                               name)
 
     def linesegment2d_to_3d(self, linesegment2d):
+        """
+        Converts the parametric boundary representation into a 3D primitive.
+        """
         theta1, phi1 = linesegment2d.start
         theta2, phi2 = linesegment2d.end
         if math.isclose(theta1, theta2, abs_tol=1e-4):
@@ -2626,14 +2629,14 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         unit_conversion_factor = arguments[-1]
         frame3d = object_dict[arguments[1]]
-        U, W = frame3d.v, frame3d.u
-        U.normalize()
-        W.normalize()
-        V = W.cross(U)
+        u, w = frame3d.v, frame3d.u
+        u.normalize()
+        w.normalize()
+        v = w.cross(u)
         radius = float(arguments[2]) * unit_conversion_factor
         semi_angle = float(arguments[3])
-        origin = frame3d.origin - radius / math.tan(semi_angle) * W
-        frame_direct = volmdlr.Frame3D(origin, U, V, W)
+        origin = frame3d.origin - radius / math.tan(semi_angle) * w
+        frame_direct = volmdlr.Frame3D(origin, u, v, w)
         return cls(frame_direct, semi_angle, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -5991,6 +5994,9 @@ class Face3D(volmdlr.core.Primitive3D):
         return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
     def edge3d_inside(self, edge3d):
+        """
+        Returns True if edge3d is coplanar to the face.
+        """
         method_name = f'{edge3d.__class__.__name__.lower()[:-2]}_inside'
         if hasattr(self, method_name):
             return getattr(self, method_name)(edge3d)
