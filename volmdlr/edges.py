@@ -3923,13 +3923,6 @@ class LineSegment3D(LineSegment):
         return edge2D.plot_data(marker, color, stroke_width,
                                 dash, opacity, arrow)
 
-    # def FreeCADExport(self, name, ndigits=6):
-    #     name = 'primitive' + str(name)
-    #     x1, y1, z1 = round(1000 * self.start, ndigits)
-    #     x2, y2, z2 = round(1000 * self.end, ndigits)
-    #     return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(
-    #         name, x1, y1, z1, x2, y2, z2)
-
     def to_line(self):
         return Line3D(self.start, self.end)
 
@@ -4365,27 +4358,6 @@ class BSplineCurve3D(BSplineCurve):
         res = scipy.optimize.minimize(fun=f, x0=(0.5), bounds=[(0, 1)],
                                       tol=1e-9)
         return res.x[0]
-
-    # def FreeCADExport(self, ip, ndigits=3):
-    #     name = 'primitive{}'.format(ip)
-    #     points = '['
-    #     for i in range(len(self.control_points)):
-    #         point = 'fc.Vector({},{},{}),'.format(self.control_points[i][0],
-    #                                               self.control_points[i][1],
-    #                                               self.control_points[i][2])
-    #         points += point
-    #     points = points[:-1]
-    #     points += ']'
-    #     # !!! : A QUOI SERT LE DERNIER ARG DE BSplineCurve (False)?
-    #     # LA MULTIPLICITE EN 3e ARG ET LES KNOTS EN 2e ARG ?
-    #     return '{} = Part.BSplineCurve({},{},{},{},{},{},{})\n'.format(name,
-    #                                                                    points,
-    #                                                                    self.knot_multiplicities,
-    #                                                                    self.knots,
-    #                                                                    self.periodic,
-    #                                                                    self.degree,
-    #                                                                    self.weights,
-    #                                                                    False)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -5128,13 +5100,6 @@ class Arc3D(Arc):
         ax.plot(x, y, color=color)
 
         return ax
-
-    # def FreeCADExport(self, name, ndigits=6):
-    #     xs, ys, zs = round(1000 * self.start, ndigits)
-    #     xi, yi, zi = round(1000 * self.interior, ndigits)
-    #     xe, ye, ze = round(1000 * self.end, ndigits)
-    #     return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n' \
-    #         .format(name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
 
     def copy(self, *args, **kwargs):
         return Arc3D(self.start.copy(), self.interior.copy(), self.end.copy())
@@ -5990,13 +5955,6 @@ class ArcEllipse3D(Edge):
             y.append(yi)
         ax.plot(x, y, color=color)
         return ax
-
-    # def FreeCADExport(self, name, ndigits=6):
-    #     xs, ys, zs = round(1000 * self.start, ndigits).vector
-    #     xi, yi, zi = round(1000 * self.interior, ndigits).vector
-    #     xe, ye, ze = round(1000 * self.end, ndigits).vector
-    #     return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(
-    #         name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
 
     def triangulation(self):
         return None
