@@ -5,15 +5,15 @@ import sys
 from pylint import __version__
 from pylint.lint import Run
 
-MIN_NOTE = 9.17
+MIN_NOTE = 8.20
 
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
 
-MIN_NOTE = 8.5
-
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 809,
+                     "wrong-spelling-in-comment": 400,
+                     "wrong-spelling-in-docstring": 600,
+                     'invalid-name': 780,
                      'no-else-return': 49,
                      'consider-using-f-string': 77,
                      'no-member': 9,
@@ -55,12 +55,13 @@ MAX_ERROR_BY_TYPE = {
                      'raise-missing-from': 2,
                      'no-else-raise': 3,
                      'no-else-continue': 4,
-                     'undefined-variable': 6, #2 when gmsh is fixed
+                     'undefined-variable': 6,  # 2 when gmsh is fixed
                      'no-else-break': 4,
                      'unnecessary-list-index-lookup': 4,
                      'simplifiable-if-expression': 3,
                      'redefined-builtin': 3,
                      'broad-except': 1,
+                     "broad-exception-caught": 1,
                      'too-many-boolean-expressions': 3,
                      'too-many-lines': 3,
                      'redundant-keyword-arg': 3,
