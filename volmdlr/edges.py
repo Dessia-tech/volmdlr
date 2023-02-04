@@ -1756,6 +1756,8 @@ class LineSegment2D(LineSegment):
 
     def straight_line_point_belongs(self, point):
         """
+        Closing straight line point belongs verification.
+
         Verifies if a point belongs to the surface created by closing the edge with a
         line between its start and end points.
 
