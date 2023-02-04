@@ -31,7 +31,7 @@
 Volmdlr is a python volume modeler used as a CAD platform.
 It is simple to understand and operate.
 With it, you can easily create 3D models.
-Check the exemples to see what you can do with this library.
+Check the examples to see what you can do with this library.
 
 <p align="center"><img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing.jpg" width="40%" /> <img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing_contours.png" width="55%" /></p>
 <i>A casing is defined by a 2D contour formed with the primitive RoundedLineSegment2D. This contour is offset by the casing width.</i><br/><br/><br/>
@@ -46,7 +46,7 @@ Check the exemples to see what you can do with this library.
 </i><br/><br/><br/>
 
 <p align="center"><img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/bspline_surface_split.png" width="47%" /></p>
-<i>A 3D B-spline surface splitted by a 3D B-spline curve.</i><br/><br/><br/>
+<i>A 3D B-spline surface split by a 3D B-spline curve.</i><br/><br/><br/>
 
 ## Features
 
