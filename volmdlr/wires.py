@@ -4984,7 +4984,11 @@ class Circle3D(Contour3D):
         :param linesegment: LineSegment3D to verify intersections
         :return: list of points intersecting Circle
         """
-        intersections = vm_utils_intersections.circle_3d_linesegment_intersections(self, linesegment)
+        intersections = []
+        circle3d_line_intersections = vm_utils_intersections.circle_3d_line_intersections(self, linesegment.to_line())
+        for intersection in circle3d_line_intersections:
+            if linesegment.point_belongs(intersection):
+                intersections.append(intersection)
         return intersections
 
     @classmethod

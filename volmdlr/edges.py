@@ -5457,7 +5457,7 @@ class Arc3D(Arc):
         :param linesegment3d: linesegment to verify intersections.
         :return: list with intersections points between line and Arc3D.
         """
-        circle3d_lineseg_inters = vm_utils_intersections.circle_3d_linesegment_intersections(self, line3d)
+        circle3d_lineseg_inters = vm_utils_intersections.circle_3d_line_intersections(self, line3d)
         linesegment_intersections = []
         for intersection in circle3d_lineseg_inters:
             if self.point_belongs(intersection, 1e-6):
