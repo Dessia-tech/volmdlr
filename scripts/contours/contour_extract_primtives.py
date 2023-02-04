@@ -6,11 +6,12 @@ Created on Tue Oct 18 2022
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
-import volmdlr.wires
-import volmdlr.edges
 import matplotlib.pyplot as plt
+
+import volmdlr.edges
+import volmdlr.wires
 
 # %% Data
 

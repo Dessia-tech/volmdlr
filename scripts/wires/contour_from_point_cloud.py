@@ -8,11 +8,14 @@ Created on Tue Jun 22 14:20:01 2021
 
 
 import math
-import volmdlr as vm
-import volmdlr.wires as vmw
-import volmdlr.primitives2d as primitives2d
 import time
-import matplotlib.pyplot as plt 
+
+import matplotlib.pyplot as plt
+
+import volmdlr as vm
+import volmdlr.primitives2d as primitives2d
+import volmdlr.wires as vmw
+
 n = 1000
 
 points = []

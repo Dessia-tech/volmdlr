@@ -5,11 +5,12 @@ Created on Wed Mar 14 15:32:37 2018
 
 @author: Steven Masfaraud masfaraud@dessia.tech
 """
-import volmdlr as vm
-import volmdlr.wires as vmw
-import volmdlr.edges as vme
 #import volmdlr.primitives2D as primitives2D
 import numpy as npy
+
+import volmdlr as vm
+import volmdlr.edges as vme
+import volmdlr.wires as vmw
 
 #for i in range(20):
 triangle_points=[vm.Point2D.random(0, 1, 0, 1) for i in range(3)]

@@ -5,7 +5,7 @@ Extended primitives 2D classes.
 """
 
 import math
-import warnings
+
 import matplotlib.patches
 
 import volmdlr
@@ -15,6 +15,14 @@ from volmdlr.primitives import RoundedLineSegments
 
 
 class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
+    """
+    Opened Rounded LineSegment2D class.
+
+    :param points: Points used to draw the wire.
+    :type points: List of Point2D.
+    :param radius: Radius used to connect different parts of the wire.
+    :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}.
+    """
     closed = False
     line_class = volmdlr.edges.LineSegment2D
     arc_class = volmdlr.edges.Arc2D
@@ -26,18 +34,6 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                                      name='')
 
         volmdlr.wires.Wire2D.__init__(self, self._primitives(), name)
-
-    def discretization_points(self, resolution=5):
-        points = []
-        for primitive in self.primitives:
-            points.extend(primitive.discretization_points(resolution))
-        return points
-
-    def polygon_points(self, discretization_resolution: int):
-        warnings.warn('polygon_points is deprecated,\
-                please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
 
     def arc_features(self, point_index: int):
         """
@@ -74,7 +70,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         p3 = pti + u1 * point_distance
         p4 = pti + u2 * point_distance
 
-        w = (u1 + u2)
+        w = u1 + u2
         if w != volmdlr.Vector2D(0, 0):
             w.normalize()
 
@@ -439,6 +435,11 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
 
 
 class Measure2D(volmdlr.edges.LineSegment2D):
+    """
+    Measure 2D class.
+
+    """
+
     def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
         """
         :param unit: 'mm', 'm' or None. If None, the distance won't be in the label

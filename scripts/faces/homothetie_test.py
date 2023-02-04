@@ -3,14 +3,15 @@
 
 """
 
-import volmdlr
-import volmdlr.stl as vms
-import volmdlr.faces as vmf
-import volmdlr.cloud
 import math
-import volmdlr.primitives3d as p3d
 
 from scipy.optimize import bisect, minimize
+
+import volmdlr
+import volmdlr.cloud
+import volmdlr.faces as vmf
+import volmdlr.primitives3d as p3d
+import volmdlr.stl as vms
 
 stl = vms.Stl.from_file('C:\\Users\\Mack_Pro\\Documents\\git\\Renault\\DynamicLoop\Mise a jour GMP S30\\jeu2\\forbi_disc\\new_HR18 FDU piece chaude.stl')
 shell3d = stl.to_closed_shell()

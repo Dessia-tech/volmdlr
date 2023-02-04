@@ -5,10 +5,11 @@
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 # import volmdlr.step as vms
 import numpy as npy
+
 from volmdlr.models import bspline_surfaces
 
 # %% Read Step file

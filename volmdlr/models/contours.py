@@ -6,10 +6,10 @@ Created on Thu Oct 20 2022
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
-import volmdlr.wires
 import volmdlr.edges
+import volmdlr.wires
 
 # %% Contour2d_1
 

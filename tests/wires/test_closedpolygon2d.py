@@ -2,6 +2,7 @@
 Unittest for ClosedPolygon2D class
 """
 import unittest
+
 import volmdlr
 import volmdlr.display as vmd
 import volmdlr.wires as vmw

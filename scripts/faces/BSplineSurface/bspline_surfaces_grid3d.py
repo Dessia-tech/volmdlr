@@ -5,12 +5,12 @@
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 import volmdlr as vm
+import volmdlr.grid
 # import volmdlr.step as vms
 from volmdlr.models import bspline_surfaces
-import volmdlr.grid
 
 # %% Read Step file
 

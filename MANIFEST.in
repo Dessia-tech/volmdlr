@@ -3,4 +3,3 @@ include volmdlr/core_compiled.pyx
 exclude volmdlr/core_compiled.c
 prune .git
 include pyproject.toml
-

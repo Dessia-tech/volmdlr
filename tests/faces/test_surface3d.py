@@ -1,11 +1,11 @@
-import unittest
 import math
+import unittest
 
-import volmdlr.faces as vmf
-import volmdlr.edges as vme
-import volmdlr.wires as vmw
 import volmdlr
-from volmdlr import Point3D, OXYZ, Point2D, X3D, Y3D, Z3D
+import volmdlr.edges as vme
+import volmdlr.faces as vmf
+import volmdlr.wires as vmw
+from volmdlr import OXYZ, X3D, Y3D, Z3D, Point2D, Point3D
 
 
 class TestSurface3D(unittest.TestCase):
@@ -26,10 +26,10 @@ class TestSurface3D(unittest.TestCase):
         linesegment2d = contour2d_cylinder.primitives[2]
 
         self.assertEqual(area, 0.02*math.pi)
-        self.assertEqual(fullarc2d.start, Point2D(2*math.pi, 0.003))
+        self.assertEqual(fullarc2d.start, Point2D(-2*math.pi, 0.003))
         self.assertEqual(fullarc2d.end, Point2D(0, 0.003))
-        self.assertEqual(linesegment2d.start, Point2D(2*math.pi, 0.013))
-        self.assertEqual(linesegment2d.end, Point2D(2*math.pi, 0.003))
+        self.assertEqual(linesegment2d.start, Point2D(-2*math.pi, 0.013))
+        self.assertEqual(linesegment2d.end, Point2D(-2*math.pi, 0.003))
 
 
 if __name__ == '__main__':

@@ -4,16 +4,19 @@
 Classes to define mesh for display use. Display mesh do not require good aspect ratios on elements.
 """
 
-from typing import List, Tuple
 import math
+from typing import List, Tuple
+
 import dessia_common.core as dc
+
 import volmdlr.edges
+
 # import volmdlr.faces as vmf
 
 
 class Node2D(volmdlr.Point2D):
     """
-    A node is a point with some hash capabilities for perfomance.
+    A node is a point with some hash capabilities for performance.
     """
 
     def __hash__(self):
@@ -33,7 +36,7 @@ class Node2D(volmdlr.Point2D):
 
 class Node3D(volmdlr.Point3D):
     """
-    A node is a point with some hash capabilities for perfomance.
+    A node is a point with some hash capabilities for performance.
     """
 
     def __hash__(self):
@@ -167,12 +170,15 @@ class DisplayMesh(dc.DessiaObject):
                         ha='center', va='center')
 
         for i1, i2, i3 in self.triangles:
-            self._linesegment_class(self.points[i1], self.points[i2]).plot(
-                ax=ax)
-            self._linesegment_class(self.points[i2], self.points[i3]).plot(
-                ax=ax)
-            self._linesegment_class(self.points[i1], self.points[i3]).plot(
-                ax=ax)
+            point1 = self.points[i1]
+            point2 = self.points[i2]
+            point3 = self.points[i3]
+            if point1 != point2:
+                self._linesegment_class(point1, point2).plot(ax=ax)
+            if point2 != point3:
+                self._linesegment_class(point2, point3).plot(ax=ax)
+            if point1 != point3:
+                self._linesegment_class(point1, point3).plot(ax=ax)
 
         return ax
 
@@ -182,6 +188,7 @@ class DisplayMesh2D(DisplayMesh):
     A mesh for display purposes in 2D.
 
     """
+
     _linesegment_class = volmdlr.edges.LineSegment2D
     _point_class = volmdlr.Point2D
 
@@ -193,7 +200,7 @@ class DisplayMesh2D(DisplayMesh):
 
     def area(self):
         """
-        Return the area as the sum of areas of triangles
+        Return the area as the sum of areas of triangles.
         """
         area = 0.
         for (n1, n2, n3) in self.triangles:
@@ -209,6 +216,7 @@ class DisplayMesh3D(DisplayMesh):
     A mesh for display purposes in 3D.
 
     """
+
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 

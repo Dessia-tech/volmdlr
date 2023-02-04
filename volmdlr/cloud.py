@@ -4,22 +4,28 @@ Cloud of points classes
 """
 
 import math
-from typing import List
-
-import matplotlib.pyplot as plt
+from typing import List, Tuple
 
 import dessia_common.core as dc
+import matplotlib.pyplot as plt
+from trimesh.proximity import closest_point
+
 import volmdlr as vm
-# import volmdlr.core
-import volmdlr.wires as vmw
 import volmdlr.faces as vmf
+import volmdlr.primitives3d as p3d
 import volmdlr.step as vstep
 import volmdlr.stl as vmstl
-import volmdlr.primitives3d as p3d
+# import volmdlr.core
+import volmdlr.wires as vmw
 
 
 class PointCloud3D(dc.DessiaObject):
-    def __init__(self, points, name: str = ''):
+    """
+    Point Cloud3D class.
+    :param points: list of points for point cloud.
+    """
+
+    def __init__(self, points: List[vm.Point3D], name: str = ''):
         self.points = points
         dc.DessiaObject.__init__(self, name=name)
 
@@ -170,6 +176,36 @@ class PointCloud3D(dc.DessiaObject):
                 faces.extend(list_faces)
         return vmf.ClosedShell3D(faces)
 
+    def shell_distances(self, shells: vmf.OpenTriangleShell3D) -> Tuple['PointCloud3D', List[float], List[int]]:
+        """
+        Computes distance of point to shell for each point in self.points.
+
+        :return: The point cloud of points projection on nearest triangle, their distances and the corresponding
+        triangles index
+        :rtype: Tuple[PointCloud3D, List[float], List[int]]
+        """
+        nearest_coords, distances, triangles_idx = self.shell_distances_ndarray(shells)
+        return (PointCloud3D([vm.Point3D(*coords) for coords in nearest_coords]),
+                distances.tolist(),
+                triangles_idx.tolist())
+
+    def shell_distances_ndarray(self, shells: vmf.OpenTriangleShell3D):
+        """
+        Computes distance of point to shell for each point in self.points in a numpy formated data.
+
+        :return: The point cloud of points projection on nearest triangle, their distances and the corresponding
+        triangles index
+        :rtype: Tuple[npy.ndarray(float), npy.ndarray(float), npy.ndarray(int)]
+        """
+        shells_trimesh = shells.to_trimesh()
+        return closest_point(shells_trimesh, self.to_coord_matrix())
+
+    def to_coord_matrix(self) -> List[List[float]]:
+        """
+        Generate a n_points x 3 matrix of coordinates.
+        """
+        return [point.coordinates() for point in self.points]
+
     # def alpha_shape(self, alpha:float, number_point_samples:int):
     #     '''
     #     Parameters
@@ -180,7 +216,8 @@ class PointCloud3D(dc.DessiaObject):
     #         the algorigthm is able to find the concave parts of the object, giving a more precise object
     #         surface approximation
     #     number_point_samples : int
-    #         denotes the number of points to be used from the point cloud to reconstruct the surface. It uses poisson disk sampling algorithm
+    #         denotes the number of points to be used from the point cloud to reconstruct the surface.
+    #         It uses poisson disk sampling algorithm.
     #
     #     Returns
     #     -------
@@ -204,8 +241,11 @@ class PointCloud3D(dc.DessiaObject):
     #         )
     #         mesh.compute_vertex_normals()
     #     # open3d.visualization.draw_geometries([mesh], mesh_show_back_face=True)
-    #     vertices = [volmdlr.Point3D(float(x), float(y), float(z)) for x, y, z in list(npy.asarray(mesh.vertices))]
-    #     triangles = [vmf.Triangle3D(vertices[p1], vertices[p2], vertices[p3], color = (1, 0.1, 0.1), alpha = 0.6) for p1, p2, p3 in list(npy.asarray(mesh.triangles))]
+    #     vertices = [volmdlr.Point3D(float(x), float(y), float(z))
+    #                 for x, y, z in list(npy.asarray(mesh.vertices))]
+    #     triangles = [vmf.Triangle3D(vertices[p1], vertices[p2], vertices[p3],
+    #                                 color = (1, 0.1, 0.1), alpha = 0.6)
+    #                  for p1, p2, p3 in list(npy.asarray(mesh.triangles))]
     #
     #     return vmf.ClosedShell3D(triangles)
 
@@ -256,6 +296,12 @@ class PointCloud3D(dc.DessiaObject):
 
 
 class PointCloud2D(dc.DessiaObject):
+    """
+    Point Cloud2D class.
+
+    :param points: list of points for point cloud.
+    """
+
     def __init__(self, points, name: str = ''):
         self.points = points
         dc.DessiaObject.__init__(self, name=name)
@@ -311,3 +357,9 @@ class PointCloud2D(dc.DessiaObject):
             if poly is not None:
                 clean_points += poly.points
         return PointCloud2D(clean_points, name=self.name + '_clean')
+
+    def to_coord_matrix(self) -> List[List[float]]:
+        """
+        Generate a n_points x 2 matrix of coordinates.
+        """
+        return [point.coordinates() for point in self.points]
