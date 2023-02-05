@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 import webbrowser
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 
 import dessia_common.core as dc
 import dessia_common.files as dcf
@@ -256,7 +256,7 @@ class Primitive3D(dc.PhysicalObject):
     Defines a Primitive3D.
     """
 
-    def __init__(self, color=None, alpha=1, name=''):
+    def __init__(self, color: Tuple[float, float, float] = None, alpha: float = 1, name: str = ''):
         self.color = color
         self.alpha = alpha
 
@@ -304,7 +304,7 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
     _non_data_eq_attributes = ['name', 'basis_primitives']
     _non_data_hash_attributes = []
 
-    def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
+    def __init__(self, primitives: List[Primitive3D], color: Tuple[float, float, float] = None, alpha=1, name: str = ''):
         CompositePrimitive.__init__(self, primitives=primitives, name=name)
         Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
         self._utd_primitives_to_index = False
@@ -421,7 +421,7 @@ class BoundingRectangle(dc.DessiaObject):
         :type b_rectangle2: :class:`BoundingRectangle`
         """
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
-            and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+               and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
 
     def is_inside_b_rectangle(self, b_rectangle2, tol: float = 1e-6):
         """
@@ -433,7 +433,7 @@ class BoundingRectangle(dc.DessiaObject):
         :type tol: float
         """
         return (self.xmin >= b_rectangle2.xmin - tol) and (self.xmax <= b_rectangle2.xmax + tol) \
-            and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
+               and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
 
     def point_belongs(self, point: volmdlr.Point2D):
         """
@@ -642,7 +642,7 @@ class BoundingBox(dc.DessiaObject):
 
     def bbox_intersection(self, bbox2):
         if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
-            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin\
+            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
                     and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
                 return True
         if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
@@ -1307,7 +1307,6 @@ class VolumeModel(dc.PhysicalObject):
                 # meshsizes_max.append(size)
 
                 if kwargs['min_points']:
-
                     lines.extend(primitive.get_mesh_lines_with_transfinite_curves(min_points=kwargs['min_points'],
                                                                                   size=size))
 

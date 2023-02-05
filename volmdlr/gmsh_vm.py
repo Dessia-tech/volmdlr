@@ -7,6 +7,7 @@ from dessia_common.core import DessiaObject  # isort: skip
 
 import volmdlr
 import volmdlr.mesh
+from typing import Dict
 
 
 class GmshParser(DessiaObject):
@@ -21,10 +22,10 @@ class GmshParser(DessiaObject):
     _generic_eq = True
 
     def __init__(self,
-                 mesh_format: dict,
-                 nodes: dict,
-                 elements: dict,
-                 entities: dict,
+                 mesh_format: Dict[str, any],
+                 nodes: Dict[str, any],
+                 elements: Dict[str, any],
+                 entities: Dict[str, any],
                  physical_names=None,
                  partitioned_entities=None,
                  periodic=None,
