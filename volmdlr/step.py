@@ -485,6 +485,7 @@ class StepFunction(dc.DessiaObject):
     Abstract class defining a step function.
 
     """
+    _standalone_in_db = True
 
     def __init__(self, function_id, function_name, function_arg):
         dc.DessiaObject.__init__(self)
