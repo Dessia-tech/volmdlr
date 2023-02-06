@@ -561,17 +561,17 @@ class BoundingBox(dc.DessiaObject):
 
     def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#') -> dict:
         """
-        Converts the bounding box to a dict.
+        Converts the bounding box to a dictionary representation.
 
         :param use_pointers: DESCRIPTION, defaults to True
         :type use_pointers: bool, optional
         :param memo: DESCRIPTION, defaults to None
         :type memo: TYPE, optional
-        :param path: DESCRIPTION, defaults to '#'
+        :param path: A string representing the current position of the object in the serialized data structure.
         :type path: str, optional
-        :return: DESCRIPTION
-        :rtype: TYPE
 
+        :return: The dictionary representation of the bounding box.
+        :rtype: dict
         """
         return {'object_class': 'volmdlr.core.BoundingBox',
                 'name': self.name,
