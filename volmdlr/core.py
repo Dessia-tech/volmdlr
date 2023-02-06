@@ -518,7 +518,7 @@ class BoundingBox(dc.DessiaObject):
     An axis aligned boundary box.
     """
 
-    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax, name=''):
+    def __init__(self, xmin: float, xmax: float, ymin: float, ymax: float, zmin: float, zmax: float, name: str = ""):
         """
         Initializes a bounding box.
 
@@ -548,10 +548,10 @@ class BoundingBox(dc.DessiaObject):
 
         self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return sum(hash(point) for point in self.points)
 
-    def __add__(self, other_bbox):
+    def __add__(self, other_bbox) -> "BoundingBox":
         return BoundingBox(min(self.xmin, other_bbox.xmin),
                            max(self.xmax, other_bbox.xmax),
                            min(self.ymin, other_bbox.ymin),
@@ -559,7 +559,7 @@ class BoundingBox(dc.DessiaObject):
                            min(self.zmin, other_bbox.zmin),
                            max(self.zmax, other_bbox.zmax))
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#') -> dict:
         """
         Converts the bounding box to a dict.
 
@@ -584,7 +584,7 @@ class BoundingBox(dc.DessiaObject):
                 }
 
     @property
-    def points(self):
+    def points(self) -> List[volmdlr.Point3D]:
         """
         Returns the eight corner points of the bounding box.
 
@@ -643,7 +643,7 @@ class BoundingBox(dc.DessiaObject):
         return ax
 
     @classmethod
-    def from_bounding_boxes(cls, bounding_boxes):
+    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"]) -> "BoundingBox":
         """
         Creates a bounding box that contains multiple bounding boxes.
 
