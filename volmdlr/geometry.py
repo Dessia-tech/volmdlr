@@ -32,9 +32,9 @@ def euler_angles_to_transfer_matrix(psi, theta, phi):
 
 def transfer_matrix_to_euler_angles(R):
     """
-    Returns the euler angle from a transfer matrix.
+    Returns the Euler angle from a transfer matrix.
     """
-    if ((R[2, 2] != 1) and (R[2, 2] != -1)):
+    if (R[2, 2] != 1) and (R[2, 2] != -1):
         theta = math.acos(R[2, 2])
         psi = math.atan2(R[2, 0] / math.sin(theta), R[2, 1] / math.sin(theta))
         phi = math.atan2(R[0, 2] / math.sin(theta), -R[1, 2] / math.sin(theta))
@@ -81,7 +81,7 @@ def huygens2d(Ix, Iy, Ixy, area, point1, point2):
     """
     Area acts the same way as the mass in 3D.
     """
-    a, b = (point1 - point2)
+    a, b = point1 - point2
     # I2 = I1+area*array([[b**2,-a*b],[-a*b,a**2]])
     # return I2
     return Ix + area * b**2, Iy + area * a**2, Ixy - area * a * b
@@ -123,7 +123,7 @@ def vectors3d_angle(vector1, vector2):
     :param vector2: The second 3 dimensional vectors
     :type vector2: :class:`volmdlr.Vector3D`
     :return: The angle between the two vectors
-    :rtype: flaot
+    :rtype: float
     """
     dot_v1v2 = vector1.dot(vector2)
     theta = math.acos(dot_v1v2 / (vector1.norm() * vector2.norm()))
@@ -138,7 +138,7 @@ def sin_cos_angle(u1, u2):
     :param u1: The value of the cosinus of the returned angle
     :type u1: float
     :param u2: The value of the sinus of the returned angle
-    :type u2: flaot
+    :type u2: float
     :return: The angle verifying the two equations
     :rtype: float
     """
@@ -245,7 +245,7 @@ def angle_principal_measure(angle, min_angle=-math.pi):
     Returns angle between O and 2 pi.
     """
     max_angle = min_angle + vm.TWO_PI
-    angle = angle % (vm.TWO_PI)
+    angle = angle % vm.TWO_PI
 
     if math.isclose(angle, min_angle, abs_tol=1e-9):
         return min_angle

@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## v0.9.0 [Unrealeased]
+## v0.9.0 [Unreleased yet]
 
 ### New Features
 
@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
 * BSplineSurface3D: Now the plot method uses u and v curves
 * Create .geo and .msh files (Mesh geometries with GMSH)
+* RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
+* RevolutionFace3D
 
 
 ### Fixed
@@ -24,10 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * WireMixin: abscissa (add tolerance as parameter)
 * OpenRoundedLineSegment2D: deleted discretization_points() so it uses the one from WireMixin.
 * Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
+* BSplineCurve: from_points_interpolation, uses centripedal method for better fitting.
 * Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard. 
 * BSplineSurface3D: debug linesegment2d_to_3d method.
 * Parametric operations with BSpline curves.
-* OpenTriangleShell3D: fix from_mesh_data method
+* OpenTriangleShell3D: fix from_mesh_data method.
+* PeriodicalSurface: fix face from contours.
 
 ### Removed
 
@@ -44,7 +48,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
 
+## CI
 
+- add spell check to pylint with pyenchant
 
 ## v0.8.0 [Released 26/01/2023]
 
@@ -90,6 +96,10 @@ abscissa(), point_angle_with_major_dir(), area(), rotation(), tranlation(), fram
 * BSplineCurve2D: tangent (use position/length)
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
+* SphericalSurface3D : enhancement of primitives parametrization on surface parametric domain.
+* BSplineSurface3D: debug linesegment2d_to_3d method.
+* Parametric operations with BSpline curves.
+* OpenTriangleShell3D: fix from_mesh_data method
 * pydocstyle fixes
 * bounding box: fix for cylindrical and BSplineCurve3D
 * contour2d: ordering_primitives, order_primitives

@@ -151,26 +151,9 @@ class CompositePrimitive2D(CompositePrimitive):
 
     def __init__(self, primitives, name=''):
         CompositePrimitive.__init__(self, primitives, name=name)
-        # self.primitives = primitives
         self.update_basis_primitives()
 
         self._utd_primitives_to_index = False
-
-    # def primitive_to_index(self, primitive):
-    #     if not self._utd_primitives_to_index:
-    #         self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
-    #         self._utd_primitives_to_index = True
-    #     return self._primitives_to_index[primitive]
-
-    # def update_basis_primitives(self):
-    #     basis_primitives = []
-    #     for primitive in self.primitives:
-    #         if hasattr(primitive, 'basis_primitives'):
-    #             basis_primitives.extend(primitive.basis_primitives)
-    #         else:
-    #             basis_primitives.append(primitive)
-
-    #     self.basis_primitives = basis_primitives
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -185,7 +168,7 @@ class CompositePrimitive2D(CompositePrimitive):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Rotates the CompositePrimitive2D. Object is updated inplace.
+        Rotates the CompositePrimitive2D. Object is updated in-place.
 
         :param center: rotation center
         :param angle: rotation angle
@@ -208,7 +191,7 @@ class CompositePrimitive2D(CompositePrimitive):
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        Translates the CompositePrimitive2D. Object is updated inplace.
+        Translates the CompositePrimitive2D. Object is updated in-place.
 
         :param offset: translation vector
         """
@@ -238,7 +221,7 @@ class CompositePrimitive2D(CompositePrimitive):
         self.update_basis_primitives()
 
     def plot(self, ax=None, color='k', alpha=1,
-             plot_points=False, equal_aspect=True):
+             plot_points=False, equal_aspect=False):
 
         if ax is None:
             _, ax = plt.subplots()
@@ -830,7 +813,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Return the sum of volumes of the primitives.
 
-        It does not make any boolean operation in case of overlaping.
+        It does not make any boolean operation in case of overlapping.
 
         """
         volume = 0
@@ -1014,7 +997,7 @@ class VolumeModel(dc.PhysicalObject):
         :param python_path: path of python binded to freecad
 
             * on windows: something like C:\\\\Program Files\\\\FreeCAD X.XX\\\\bin\\\\python
-            * on linux: python if installed by a dstribution package
+            * on linux: python if installed by a distribution package
         :param filepath: path of fcstd file (without extension)
         :param freecad_lib_path: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
         :param tolerance: the tolerance of tesselation for mesh exports
@@ -1663,7 +1646,7 @@ class VolumeModel(dc.PhysicalObject):
 
 class MovingVolumeModel(VolumeModel):
     """
-    A volume model with possibility to declare time steps at which the primitives are positionned with frames.
+    A volume model with possibility to declare time steps at which the primitives are positioned with frames.
 
     """
 
