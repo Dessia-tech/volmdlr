@@ -755,6 +755,16 @@ class BoundingBox(dc.DessiaObject):
         return lx * ly * lz
 
     def distance_to_bbox(self, bbox2: "BoundingBox") -> float:
+        """
+        Calculates the distance between the bounding box and another bounding box.
+        If the bounding boxes intersect, the distance is 0.
+        Otherwise, the distance is the minimum Euclidean distance between their closest faces.
+
+        :param bbox2: Another bounding box to compare with.
+        :type bbox2: BoundingBox
+        :return: The distance between the bounding boxes.
+        :rtype: float
+        """
         if self.bbox_intersection(bbox2):
             return 0
 
