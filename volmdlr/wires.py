@@ -988,6 +988,20 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         primitives2d = self.get_primitives_2d(plane_origin, x, y)
         return Wire2D(primitives=primitives2d)
 
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                 angle: float):
+        """
+        Wire3D rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated Wire3D.
+        """
+        new_edges = [edge.rotation(center, axis, angle) for edge
+                     in self.primitives]
+        return Wire3D(new_edges, self.name)
+
 
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
 

@@ -140,6 +140,13 @@ def vertex_point(arguments, object_dict):
     return object_dict[arguments[1]]
 
 
+def axis1_placement(arguments, object_dict):
+    """
+    Returns the data in case of a AXIS1_PLACEMENT.
+    """
+    return object_dict[arguments[1]], object_dict[arguments[2]]
+
+
 def oriented_edge(arguments, object_dict):
     """
     Returns the data in case of an ORIENTED_EDGE.
@@ -178,6 +185,8 @@ def face_bound(arguments, object_dict):
 
     """
     return object_dict[arguments[1]]
+
+# def surface_of_revolution(arguments, object_dict):
 
 
 def surface_curve(arguments, object_dict):
@@ -1033,7 +1042,7 @@ STEP_TO_VOLMDLR = {
     'RECTANGULAR_TRIMMED_SURFACE': None,
     'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.primitives3d.BSplineExtrusion,
     # CAN BE A BSplineSurface3D
-    'SURFACE_OF_REVOLUTION': None,
+    'SURFACE_OF_REVOLUTION': volmdlr.faces.RevolutionSurface3D,
     'UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
     'QUASI_UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
     'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
