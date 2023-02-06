@@ -44,13 +44,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactorings
 
+### Documentation
+- BoundingBox docstrings
 
 ### Unittests
 ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
 
 ## CI
-
 - add spell check to pylint with pyenchant
+- make code_pydocstyle more explicit
 
 ## v0.8.0 [Released 26/01/2023]
 
