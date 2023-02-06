@@ -519,6 +519,24 @@ class BoundingBox(dc.DessiaObject):
     """
 
     def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax, name=''):
+        """
+        Initializes a bounding box.
+
+        :param xmin: The x-coordinate of the lower-left corner.
+        :type xmin: float
+        :param xmax: The x-coordinate of the upper-right corner.
+        :type xmax: float
+        :param ymin: The y-coordinate of the lower-left corner.
+        :type ymin: float
+        :param ymax: The y-coordinate of the upper-right corner.
+        :type ymax: float
+        :param zmin: The z-coordinate of the lower-left corner.
+        :type zmin: float
+        :param zmax: The z-coordinate of the upper-right corner.
+        :type zmax: float
+        :param name: The name of the bounding box.
+        :type name: str, optional
+        """
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
