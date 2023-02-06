@@ -488,8 +488,7 @@ class BoundingRectangle(dc.DessiaObject):
 
     def distance_to_point(self, point: volmdlr.Point2D):
         """
-        Calculate the minimal distance between the bounding rectangle and
-        a specified point.
+        Calculate the minimal distance between the bounding rectangle and a specified point.
 
         :param point: A 2 dimensional point
         :type point: :class:`volmdlr.Point2D`
@@ -759,6 +758,7 @@ class BoundingBox(dc.DessiaObject):
     def distance_to_bbox(self, bbox2: "BoundingBox") -> float:
         """
         Calculates the distance between the bounding box and another bounding box.
+
         If the bounding boxes intersect, the distance is 0.
         Otherwise, the distance is the minimum Euclidean distance between their closest faces.
 
@@ -790,6 +790,7 @@ class BoundingBox(dc.DessiaObject):
     def point_belongs(self, point: volmdlr.Point3D) -> bool:
         """
         Determines if a point belongs to the bounding box.
+
         :param point: The point to check for inclusion.
         :type point: volmdlr.Point3D
         :return: True if the point belongs to the bounding box, False otherwise.
@@ -967,6 +968,7 @@ class VolumeModel(dc.PhysicalObject):
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new VolumeModel.
+
         side = 'old' or 'new'
         """
         new_primitives = [primitive.frame_mapping(frame, side)
