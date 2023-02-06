@@ -800,6 +800,14 @@ class BoundingBox(dc.DessiaObject):
         )
 
     def distance_to_point(self, point: volmdlr.Point3D) -> float:
+        """
+        Calculates the minimum Euclidean distance between the bounding box and a point.
+
+        :param point: The point to compare with.
+        :type point: volmdlr.Point3D
+        :return: The minimum distance between the point and the bounding box.
+        :rtype: float
+        """
         if self.point_belongs(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
                         self.ymax - point[1], point[1] - self.ymin,
