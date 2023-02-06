@@ -631,6 +631,12 @@ class BoundingBox(dc.DessiaObject):
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def to_frame(self):
+        """
+        Converts the bounding box to a 3D frame.
+
+        :return: A 3D frame with origin at the center and axes aligned with the x, y, and z dimensions of the bounding box.
+        :rtype: volmdlr.Frame3D
+        """
         x = volmdlr.Vector3D((self.xmax - self.xmin), 0, 0)
         y = volmdlr.Vector3D(0, (self.ymax - self.ymin), 0)
         z = volmdlr.Vector3D(0, 0, (self.zmax - self.zmin))
