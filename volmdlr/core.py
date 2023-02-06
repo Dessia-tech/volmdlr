@@ -661,7 +661,15 @@ class BoundingBox(dc.DessiaObject):
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
-    def from_points(cls, points):
+    def from_points(cls, points: List[volmdlr.Point3D]) -> "BoundingBox":
+        """
+        Initializes a bounding box from a list of points.
+
+        :param points: The list of points to create the bounding box from.
+        :type points: List[Point3D]
+        :return: The bounding box initialized from the list of points.
+        :rtype: BoundingBox
+        """
         # if len(points) == 0:
         #     return (0, 0, 0, 0, 0, 0)
         xmin = min(pt.x for pt in points)
