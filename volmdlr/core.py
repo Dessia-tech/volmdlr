@@ -666,7 +666,7 @@ class BoundingBox(dc.DessiaObject):
         Initializes a bounding box from a list of points.
 
         :param points: The list of points to create the bounding box from.
-        :type points: List[Point3D]
+        :type points: List[volmdlr.Point3D]
         :return: The bounding box initialized from the list of points.
         :rtype: BoundingBox
         """
@@ -775,7 +775,7 @@ class BoundingBox(dc.DessiaObject):
     #
     #     return lx*ly*lz
 
-    def distance_to_bbox(self, bbox2: "BoundingBox") -> bool:
+    def distance_to_bbox(self, bbox2: "BoundingBox") -> float:
         if self.bbox_intersection(bbox2):
             return 0
 
@@ -801,7 +801,7 @@ class BoundingBox(dc.DessiaObject):
                and self.ymin < point[1] < self.ymax \
                and self.zmin < point[2] < self.zmax
 
-    def distance_to_point(self, point: volmdlr.Point3D) -> bool:
+    def distance_to_point(self, point: volmdlr.Point3D) -> float:
         if self.point_belongs(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
                         self.ymax - point[1], point[1] - self.ymin,
