@@ -644,6 +644,14 @@ class BoundingBox(dc.DessiaObject):
 
     @classmethod
     def from_bounding_boxes(cls, bounding_boxes):
+        """
+        Creates a bounding box that contains multiple bounding boxes.
+
+        :param bounding_boxes: A list of bounding boxes that need to be contained.
+        :type bounding_boxes: list of BoundingBox
+        :return: A new bounding box that contains all the input bounding boxes.
+        :rtype: BoundingBox
+        """
         xmin = min(bb.xmin for bb in bounding_boxes)
         xmax = max(bb.xmax for bb in bounding_boxes)
         ymin = min(bb.ymin for bb in bounding_boxes)
