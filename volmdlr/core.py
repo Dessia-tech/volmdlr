@@ -734,7 +734,15 @@ class BoundingBox(dc.DessiaObject):
                and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
 
-    def intersection_volume(self, bbox2: "BoundingBox") -> bool:
+    def intersection_volume(self, bbox2: "BoundingBox") -> float:
+        """
+        Calculate the volume of the intersection of two bounding boxes.
+
+        :param bbox2: The second bounding box to intersect with the first one.
+        :type bbox2: BoundingBox
+        :return: The volume of the intersection of two bounding boxes.
+        :rtype: float
+        """
         if not self.bbox_intersection(bbox2):
             return 0
         if self.is_inside_bbox(bbox2) or bbox2.is_inside_bbox(self):
