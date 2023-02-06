@@ -601,6 +601,16 @@ class BoundingBox(dc.DessiaObject):
                 volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
 
     def plot(self, ax=None, color='gray'):
+        """
+        Plot the bounding box on 3D axes.
+
+        :param ax: The 3D axes to plot on. If not provided, a new figure will be created.
+        :type ax: matplotlib.axes._subplots.Axes3DSubplot, optional
+        :param color: The color of the lines used to plot the bounding box.
+        :type color: str, optional
+        :return: The 3D axes with the plotted bounding box.
+        :rtype: matplotlib.axes._subplots.Axes3DSubplot
+        """
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
