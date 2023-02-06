@@ -641,6 +641,14 @@ class BoundingBox(dc.DessiaObject):
                 self.zmax - self.zmin)
 
     def bbox_intersection(self, bbox2):
+        """
+        Calculates if there is an intersection between two bounding boxes.
+
+        :param bbox2: The second bounding box to compare with the current bounding box (self).
+        :type bbox2: BoundingBox
+        :return: A boolean value indicating whether the two bounding boxes intersect (True) or not (False).
+        :rtype: bool
+        """
         if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
             if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin\
                     and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
