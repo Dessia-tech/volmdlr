@@ -615,7 +615,6 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         :return: Returns a python object with useful methods
         :rtype: :class:`volmdlr.core.BoundingRectangle
-
         """
 
         return self.outer_contour.bounding_rectangle
@@ -1243,6 +1242,7 @@ class Plane3D(Surface3D):
     def from_points(cls, points):
         """
         Returns the plane3d that goes through the 3 first points on the list.
+
         Why for more than 3 points we only do some check and never raise error?
         """
         if len(points) < 3:
@@ -2150,8 +2150,7 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     Theta is the angle around the big (R) circle and phi around the small (r).
 
-    :param frame: Tore's frame: origin is the center, u is pointing at
-        theta=0
+    :param frame: Tore's frame: origin is the center, u is pointing at theta=0
     :param R: Tore's radius
     :param r: Circle to revolute radius
 
