@@ -585,6 +585,12 @@ class BoundingBox(dc.DessiaObject):
 
     @property
     def points(self):
+        """
+        Returns the eight corner points of the bounding box.
+
+        :return: A list of eight 3D points representing the corners of the bounding box.
+        :rtype: list of volmdlr.Point3D
+        """
         return [volmdlr.Point3D(self.xmin, self.ymin, self.zmin),
                 volmdlr.Point3D(self.xmax, self.ymin, self.zmin),
                 volmdlr.Point3D(self.xmax, self.ymax, self.zmin),
