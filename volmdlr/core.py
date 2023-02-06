@@ -680,7 +680,7 @@ class BoundingBox(dc.DessiaObject):
         zmax = max(pt.z for pt in points)
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def to_frame(self):
+    def to_frame(self) -> volmdlr.Frame3D:
         """
         Converts the bounding box to a 3D frame.
 
@@ -692,7 +692,7 @@ class BoundingBox(dc.DessiaObject):
         z = volmdlr.Vector3D(0, 0, (self.zmax - self.zmin))
         return volmdlr.Frame3D(self.center, x, y, z)
 
-    def volume(self):
+    def volume(self) -> float:
         """
         Calculates the volume of a bounding box.
 
@@ -702,7 +702,7 @@ class BoundingBox(dc.DessiaObject):
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
                 self.zmax - self.zmin)
 
-    def bbox_intersection(self, bbox2):
+    def bbox_intersection(self, bbox2: "BoundingBox") -> bool:
         """
         Calculates if there is an intersection between two bounding boxes.
 
@@ -721,12 +721,12 @@ class BoundingBox(dc.DessiaObject):
                 return True
         return False
 
-    def is_inside_bbox(self, bbox2):
+    def is_inside_bbox(self, bbox2: "BoundingBox") -> bool:
         return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6) \
                and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
 
-    def intersection_volume(self, bbox2):
+    def intersection_volume(self, bbox2: "BoundingBox") -> bool:
         if not self.bbox_intersection(bbox2):
             return 0
         if self.is_inside_bbox(bbox2) or bbox2.is_inside_bbox(self):
@@ -759,7 +759,7 @@ class BoundingBox(dc.DessiaObject):
     #
     #     return lx*ly*lz
 
-    def distance_to_bbox(self, bbox2):
+    def distance_to_bbox(self, bbox2: "BoundingBox") -> bool:
         if self.bbox_intersection(bbox2):
             return 0
 
@@ -780,12 +780,12 @@ class BoundingBox(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def point_belongs(self, point):
+    def point_belongs(self, point: volmdlr.Point3D) -> bool:
         return self.xmin < point[0] < self.xmax \
                and self.ymin < point[1] < self.ymax \
                and self.zmin < point[2] < self.zmax
 
-    def distance_to_point(self, point):
+    def distance_to_point(self, point: volmdlr.Point3D) -> bool:
         if self.point_belongs(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
                         self.ymax - point[1], point[1] - self.ymin,
