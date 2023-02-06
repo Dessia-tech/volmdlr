@@ -712,7 +712,7 @@ class BoundingBox(dc.DessiaObject):
         :rtype: bool
         """
         if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
-            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin\
+            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
                     and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
                 return True
         if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
