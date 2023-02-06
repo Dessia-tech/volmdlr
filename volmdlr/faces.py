@@ -333,8 +333,8 @@ class Surface2D(volmdlr.core.Primitive2D):
     def split_at_centers(self):
         """
         Split in n slices.
-        # TODO: is this used ?
 
+        # TODO: is this used ?
         """
 
         cutted_contours = []
@@ -1939,6 +1939,7 @@ class CylindricalSurface3D(PeriodicalSurface):
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         new_frame = self.frame.frame_mapping(frame, side)
@@ -2506,6 +2507,7 @@ class ToroidalSurface3D(PeriodicalSurface):
     def translation(self, offset: volmdlr.Vector3D):
         """
         ToroidalSurface3D translation.
+
         :param offset: translation vector
         :return: A new translated ToroidalSurface3D
         """
@@ -4066,6 +4068,7 @@ class BSplineSurface3D(Surface3D):
                  axis: volmdlr.Vector3D, angle: float):
         """
         BSplineSurface3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -4103,6 +4106,7 @@ class BSplineSurface3D(Surface3D):
     def translation(self, offset: volmdlr.Vector3D):
         """
         BSplineSurface3D translation.
+
         :param offset: translation vector
         :return: A new translated BSplineSurface3D
         """
@@ -4131,6 +4135,7 @@ class BSplineSurface3D(Surface3D):
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new BSplineSurface3D.
+
         side = 'old' or 'new'
         """
         new_control_points = [p.frame_mapping(frame, side) for p in
@@ -4147,6 +4152,7 @@ class BSplineSurface3D(Surface3D):
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         new_bsplinesurface3d = self.frame_mapping(frame, side)
@@ -5220,8 +5226,7 @@ class BSplineSurface3D(Surface3D):
 
     def split_surface_u(self, u: float):
         """
-        Splits the surface at the input parametric coordinate on the
-        u-direction.
+        Splits the surface at the input parametric coordinate on the u-direction.
 
         :param u: Parametric coordinate u chosen between 0 and 1
         :type u: float
@@ -5238,8 +5243,7 @@ class BSplineSurface3D(Surface3D):
 
     def split_surface_v(self, v: float):
         """
-        Splits the surface at the input parametric coordinate on the
-        v-direction.
+        Splits the surface at the input parametric coordinate on the v-direction.
 
         :param v: Parametric coordinate v chosen between 0 and 1
         :type v: float
@@ -7146,6 +7150,7 @@ class Triangle3D(PlaneFace3D):
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Triangle3D
+
         side = 'old' or 'new'
         """
         np1 = self.point1.frame_mapping(frame, side)
