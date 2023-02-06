@@ -754,27 +754,6 @@ class BoundingBox(dc.DessiaObject):
 
         return lx * ly * lz
 
-    # def intersection_volume(self, bbox2):
-    #     if not self.bbox_intersection(bbox2):
-    #         return 0
-    #
-    #     permute_bbox1 = self
-    #     permute_bbox2 = bbox2
-    #
-    #     if permute_bbox2.xmin < permute_bbox1.xmin:
-    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-    #     lx = permute_bbox1.xmax - permute_bbox2.xmin
-    #
-    #     if permute_bbox2.ymin < permute_bbox1.ymin:
-    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-    #     ly = permute_bbox1.ymax - permute_bbox2.ymin
-    #
-    #     if permute_bbox2.zmin < permute_bbox1.zmin:
-    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-    #     lz = permute_bbox1.zmax - permute_bbox2.zmin
-    #
-    #     return lx*ly*lz
-
     def distance_to_bbox(self, bbox2: "BoundingBox") -> float:
         if self.bbox_intersection(bbox2):
             return 0
