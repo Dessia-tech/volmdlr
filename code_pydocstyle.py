@@ -80,6 +80,7 @@ for error_code, number_errors in code_to_number.items():
             )
             for error in errors_to_show:
                 print(f"{error.filename} line {error.line}: {error.message}")
+
         elif max_errors - ratchet_limit <= number_errors < max_errors:
             # The number of errors is below the maximum acceptable, but above the ratchet_limit:
             # the user can reduce the maximum number of errors
