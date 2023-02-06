@@ -204,6 +204,7 @@ class CompositePrimitive2D(CompositePrimitive):
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new CompositePrimitive2D.
+
         side = 'old' or 'new'
         """
         return self.__class__([primitive.frame_mapping(frame, side)
@@ -212,6 +213,7 @@ class CompositePrimitive2D(CompositePrimitive):
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         primitives = []
