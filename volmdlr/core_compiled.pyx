@@ -353,6 +353,14 @@ class Vector(DessiaObject):
         point /= n
         return point
 
+    def vector_projection(self, other_vector):
+        """
+        Projects the vector onto other_vector.
+
+        :param other_vector: Vector to project self.
+        """
+        return (self.dot(other_vector) / other_vector.dot(other_vector)) * other_vector
+
     @classmethod
     def remove_duplicate(cls, points: List["Vector"]):
         """
