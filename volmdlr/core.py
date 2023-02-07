@@ -1011,7 +1011,7 @@ class VolumeModel(dc.PhysicalObject):
             * on linux: python if installed by a dstribution package
         :param filepath: path of fcstd file (without extension)
         :param freecad_lib_path: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
-        :param tolerance: the tolerance of tesselation for mesh exports
+        :param tolerance: the tolerance of tessellation for mesh exports
 
         """
         fcstd_filepath = os.path.abspath(fcstd_filepath)
