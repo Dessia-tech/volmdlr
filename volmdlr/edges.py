@@ -1790,6 +1790,8 @@ class LineSegment2D(LineSegment):
         return point, curv_abs
 
     def line_intersections(self, line: Line2D):
+        if self.direction_vector().is_colinear_to(line.direction_vector()):
+            return []
         point = volmdlr.Point2D.line_intersection(self, line)
         if point is not None:
             point_projection1, _ = self.point_projection(point)

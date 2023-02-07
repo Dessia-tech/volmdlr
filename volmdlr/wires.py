@@ -1553,6 +1553,7 @@ class Contour2D(ContourMixin, Wire2D):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
         self._polygon_100_points = None
+        self._area = None
 
     def __hash__(self):
         return sum(hash(e) for e in self.primitives)
@@ -1571,6 +1572,8 @@ class Contour2D(ContourMixin, Wire2D):
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
         if len(self.primitives) != len(other_.primitives):
+            return False
+        if self.length() != other_.length():
             return False
         equal = 0
         for prim1 in self.primitives:
@@ -1661,19 +1664,22 @@ class Contour2D(ContourMixin, Wire2D):
         return (volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymax))
 
     def area(self):
-        area = self.edge_polygon.area()
-        classes = {prim.__class__ for prim in self.primitives}
-        verify_classes = classes.issubset({volmdlr.edges.LineSegment2D, volmdlr.edges.Arc2D})
-        if verify_classes:
-            if self.edge_polygon.is_trigo():
-                trigo = 1
+        if not self._area:
+            area = self.edge_polygon.area()
+            classes = {prim.__class__ for prim in self.primitives}
+            verify_classes = classes.issubset({volmdlr.edges.LineSegment2D, volmdlr.edges.Arc2D})
+            if verify_classes:
+                if self.edge_polygon.is_trigo():
+                    trigo = 1
+                else:
+                    trigo = -1
+                for edge in self.primitives:
+                    area += trigo * edge.straight_line_area()
+                    self._area = abs(area)
             else:
-                trigo = -1
-            for edge in self.primitives:
-                area += trigo * edge.straight_line_area()
-            return abs(area)
-        polygon = self.to_polygon(angle_resolution=50)
-        return polygon.triangulation().area()
+                polygon = self.to_polygon(angle_resolution=50)
+                self._area = polygon.triangulation().area()
+        return self._area
 
     def center_of_mass(self):
         """
@@ -1725,6 +1731,8 @@ class Contour2D(ContourMixin, Wire2D):
 
         :returns: True or False
         """
+        if contour2.area() > self.area():
+            return False
         points_contour2 = []
         for prim in contour2.primitives:
             if prim.start not in points_contour2:
@@ -2324,11 +2332,15 @@ class Contour2D(ContourMixin, Wire2D):
         intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
         if not intersections or len(intersections) < 2:
             return [self]
-        if len(intersections) % 2 != 0:
+        points_intersections = []
+        for intersection, prim in intersections:
+            if intersection not in points_intersections:
+                points_intersections.append(intersection)
+        if len(points_intersections) % 2 != 0:
             raise NotImplementedError(
-                f'{len(intersections)} intersections not supported yet')
+                f'{len(points_intersections)} intersections not supported yet')
 
-        points_intersections = [point for point, prim in intersections]
+        # points_intersections = [point for point, prim in intersections]
 
         sorted_points = wire.sort_points_along_wire(points_intersections)
         list_contours = []
