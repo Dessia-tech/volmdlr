@@ -8,6 +8,7 @@ import math
 from random import uniform
 from typing import Dict, List, Tuple
 
+import dessia_common
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -1102,7 +1103,8 @@ class Cylinder(RevolvedProfile):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         basis = frame.basis()
@@ -1115,10 +1117,15 @@ class Cylinder(RevolvedProfile):
         self.position.frame_mapping_inplace(frame, side)
         self.axis = axis
 
+    def to_dict(self, use_pointers: bool = False, memo: bool = None, path: str = '#'):
+        """
+        Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class RevolvedProfile.
+        """
+        return dessia_common.DessiaObject.to_dict(self, use_pointers, memo, path)
+
     def copy(self, deep=True, memo=None):
         """
         Creates a copy of Cylinder.
-
         """
         new_position = self.position.copy()
         new_axis = self.axis.copy()
@@ -1127,10 +1134,15 @@ class Cylinder(RevolvedProfile):
 
     def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder') -> float:
         """
-        Compute the minimal distance between two volmdlr cylinders
+        Compute the minimal distance between two volmdlr cylinders.
+
         :param other_cylinder: volmdlr Cylinder
         :return: minimal distance between two 3D cylinders
         """
+        # Basic check
+        if self.point_belongs(other_cylinder.position) or other_cylinder.point_belongs(self.position):
+            return 0.
+
         # Local frames of cylinders
         frame0 = volmdlr.Frame3D.from_point_and_vector(
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
@@ -1337,7 +1349,7 @@ class Cylinder(RevolvedProfile):
             self, other_cylinder: "Cylinder", n_points: int = 1000
     ) -> float:
         """
-        Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method)
+        Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method).
 
         :param other_cylinder: volmdlr Cylinder
         :param n_points: optional parameter used for the number of random point used to discretize the cylinder

@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Parametric operations with BSpline curves.
 * OpenTriangleShell3D: fix from_mesh_data method.
 * PeriodicalSurface: fix face from contours.
+* Cylinder: to_dict, min_distance_to_other_cylinder.
 
 ### Removed
 
