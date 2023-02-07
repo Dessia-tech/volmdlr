@@ -1666,7 +1666,7 @@ class PeriodicalSurface(Surface3D):
         outer_contour_side = oc_xmax_index
         side = 1
         return overlapping_theta, outer_contour_side, side
-        
+
     def linesegment3d_to_2d(self, linesegment3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
