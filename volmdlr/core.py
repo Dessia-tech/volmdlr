@@ -204,6 +204,7 @@ class CompositePrimitive2D(CompositePrimitive):
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new CompositePrimitive2D.
+
         side = 'old' or 'new'
         """
         return self.__class__([primitive.frame_mapping(frame, side)
@@ -212,6 +213,7 @@ class CompositePrimitive2D(CompositePrimitive):
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         primitives = []
@@ -486,8 +488,7 @@ class BoundingRectangle(dc.DessiaObject):
 
     def distance_to_point(self, point: volmdlr.Point2D):
         """
-        Calculate the minimal distance between the bounding rectangle and
-        a specified point.
+        Calculate the minimal distance between the bounding rectangle and a specified point.
 
         :param point: A 2 dimensional point
         :type point: :class:`volmdlr.Point2D`
@@ -518,7 +519,25 @@ class BoundingBox(dc.DessiaObject):
     An axis aligned boundary box.
     """
 
-    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax, name=''):
+    def __init__(self, xmin: float, xmax: float, ymin: float, ymax: float, zmin: float, zmax: float, name: str = ""):
+        """
+        Initializes a bounding box.
+
+        :param xmin: The x-coordinate of the lower-left corner.
+        :type xmin: float
+        :param xmax: The x-coordinate of the upper-right corner.
+        :type xmax: float
+        :param ymin: The y-coordinate of the lower-left corner.
+        :type ymin: float
+        :param ymax: The y-coordinate of the upper-right corner.
+        :type ymax: float
+        :param zmin: The z-coordinate of the lower-left corner.
+        :type zmin: float
+        :param zmax: The z-coordinate of the upper-right corner.
+        :type zmax: float
+        :param name: The name of the bounding box.
+        :type name: str, optional
+        """
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
@@ -530,10 +549,10 @@ class BoundingBox(dc.DessiaObject):
 
         self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return sum(hash(point) for point in self.points)
 
-    def __add__(self, other_bbox):
+    def __add__(self, other_bbox) -> "BoundingBox":
         return BoundingBox(min(self.xmin, other_bbox.xmin),
                            max(self.xmax, other_bbox.xmax),
                            min(self.ymin, other_bbox.ymin),
@@ -541,19 +560,19 @@ class BoundingBox(dc.DessiaObject):
                            min(self.zmin, other_bbox.zmin),
                            max(self.zmax, other_bbox.zmax))
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#') -> dict:
         """
-        Converts the bounding box to a dict.
+        Converts the bounding box to a dictionary representation.
 
         :param use_pointers: DESCRIPTION, defaults to True
         :type use_pointers: bool, optional
         :param memo: DESCRIPTION, defaults to None
         :type memo: TYPE, optional
-        :param path: DESCRIPTION, defaults to '#'
+        :param path: A string representing the current position of the object in the serialized data structure.
         :type path: str, optional
-        :return: DESCRIPTION
-        :rtype: TYPE
 
+        :return: The dictionary representation of the bounding box.
+        :rtype: dict
         """
         return {'object_class': 'volmdlr.core.BoundingBox',
                 'name': self.name,
@@ -566,7 +585,13 @@ class BoundingBox(dc.DessiaObject):
                 }
 
     @property
-    def points(self):
+    def points(self) -> List[volmdlr.Point3D]:
+        """
+        Returns the eight corner points of the bounding box.
+
+        :return: A list of eight 3D points representing the corners of the bounding box.
+        :rtype: list of volmdlr.Point3D
+        """
         return [volmdlr.Point3D(self.xmin, self.ymin, self.zmin),
                 volmdlr.Point3D(self.xmax, self.ymin, self.zmin),
                 volmdlr.Point3D(self.xmax, self.ymax, self.zmin),
@@ -577,6 +602,16 @@ class BoundingBox(dc.DessiaObject):
                 volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
 
     def plot(self, ax=None, color='gray'):
+        """
+        Plot the bounding box on 3D axes.
+
+        :param ax: The 3D axes to plot on. If not provided, a new figure will be created.
+        :type ax: matplotlib.axes._subplots.Axes3DSubplot, optional
+        :param color: The color of the lines used to plot the bounding box.
+        :type color: str, optional
+        :return: The 3D axes with the plotted bounding box.
+        :rtype: matplotlib.axes._subplots.Axes3DSubplot
+        """
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -609,7 +644,15 @@ class BoundingBox(dc.DessiaObject):
         return ax
 
     @classmethod
-    def from_bounding_boxes(cls, bounding_boxes):
+    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"]) -> "BoundingBox":
+        """
+        Creates a bounding box that contains multiple bounding boxes.
+
+        :param bounding_boxes: A list of bounding boxes that need to be contained.
+        :type bounding_boxes: list of BoundingBox
+        :return: A new bounding box that contains all the input bounding boxes.
+        :rtype: BoundingBox
+        """
         xmin = min(bb.xmin for bb in bounding_boxes)
         xmax = max(bb.xmax for bb in bounding_boxes)
         ymin = min(bb.ymin for bb in bounding_boxes)
@@ -619,7 +662,15 @@ class BoundingBox(dc.DessiaObject):
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
-    def from_points(cls, points):
+    def from_points(cls, points: List[volmdlr.Point3D]) -> "BoundingBox":
+        """
+        Initializes a bounding box from a list of points.
+
+        :param points: The list of points to create the bounding box from.
+        :type points: List[volmdlr.Point3D]
+        :return: The bounding box initialized from the list of points.
+        :rtype: BoundingBox
+        """
         # if len(points) == 0:
         #     return (0, 0, 0, 0, 0, 0)
         xmin = min(pt.x for pt in points)
@@ -630,19 +681,39 @@ class BoundingBox(dc.DessiaObject):
         zmax = max(pt.z for pt in points)
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def to_frame(self):
+    def to_frame(self) -> volmdlr.Frame3D:
+        """
+        Converts the bounding box to a 3D frame.
+
+        :return: A 3D frame with origin at the center and axes aligned with the x, y, and z dimensions of the bounding box.
+        :rtype: volmdlr.Frame3D
+        """
         x = volmdlr.Vector3D((self.xmax - self.xmin), 0, 0)
         y = volmdlr.Vector3D(0, (self.ymax - self.ymin), 0)
         z = volmdlr.Vector3D(0, 0, (self.zmax - self.zmin))
         return volmdlr.Frame3D(self.center, x, y, z)
 
-    def volume(self):
+    def volume(self) -> float:
+        """
+        Calculates the volume of a bounding box.
+
+        :return: The volume of the bounding box.
+        :rtype: float
+        """
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
                 self.zmax - self.zmin)
 
-    def bbox_intersection(self, bbox2):
+    def bbox_intersection(self, bbox2: "BoundingBox") -> bool:
+        """
+        Calculates if there is an intersection between two bounding boxes.
+
+        :param bbox2: The second bounding box to compare with the current bounding box (self).
+        :type bbox2: BoundingBox
+        :return: A boolean value indicating whether the two bounding boxes intersect (True) or not (False).
+        :rtype: bool
+        """
         if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
-            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin\
+            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
                     and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
                 return True
         if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
@@ -651,12 +722,28 @@ class BoundingBox(dc.DessiaObject):
                 return True
         return False
 
-    def is_inside_bbox(self, bbox2):
+    def is_inside_bbox(self, bbox2: "BoundingBox") -> bool:
+        """
+        Checks if a bounding box is contained inside another bounding box.
+
+        :param bbox2: The bounding box to check against.
+        :type bbox2: BoundingBox
+        :return: True if the bounding box is contained inside bbox2, False otherwise.
+        :rtype: bool
+        """
         return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6) \
                and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
 
-    def intersection_volume(self, bbox2):
+    def intersection_volume(self, bbox2: "BoundingBox") -> float:
+        """
+        Calculate the volume of the intersection of two bounding boxes.
+
+        :param bbox2: The second bounding box to intersect with the first one.
+        :type bbox2: BoundingBox
+        :return: The volume of the intersection of two bounding boxes.
+        :rtype: float
+        """
         if not self.bbox_intersection(bbox2):
             return 0
         if self.is_inside_bbox(bbox2) or bbox2.is_inside_bbox(self):
@@ -668,28 +755,18 @@ class BoundingBox(dc.DessiaObject):
 
         return lx * ly * lz
 
-    # def intersection_volume(self, bbox2):
-    #     if not self.bbox_intersection(bbox2):
-    #         return 0
-    #
-    #     permute_bbox1 = self
-    #     permute_bbox2 = bbox2
-    #
-    #     if permute_bbox2.xmin < permute_bbox1.xmin:
-    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-    #     lx = permute_bbox1.xmax - permute_bbox2.xmin
-    #
-    #     if permute_bbox2.ymin < permute_bbox1.ymin:
-    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-    #     ly = permute_bbox1.ymax - permute_bbox2.ymin
-    #
-    #     if permute_bbox2.zmin < permute_bbox1.zmin:
-    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-    #     lz = permute_bbox1.zmax - permute_bbox2.zmin
-    #
-    #     return lx*ly*lz
+    def distance_to_bbox(self, bbox2: "BoundingBox") -> float:
+        """
+        Calculates the distance between the bounding box and another bounding box.
 
-    def distance_to_bbox(self, bbox2):
+        If the bounding boxes intersect, the distance is 0.
+        Otherwise, the distance is the minimum Euclidean distance between their closest faces.
+
+        :param bbox2: Another bounding box to compare with.
+        :type bbox2: BoundingBox
+        :return: The distance between the bounding boxes.
+        :rtype: float
+        """
         if self.bbox_intersection(bbox2):
             return 0
 
@@ -710,12 +787,30 @@ class BoundingBox(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def point_belongs(self, point):
-        return self.xmin < point[0] < self.xmax \
-               and self.ymin < point[1] < self.ymax \
-               and self.zmin < point[2] < self.zmax
+    def point_belongs(self, point: volmdlr.Point3D) -> bool:
+        """
+        Determines if a point belongs to the bounding box.
 
-    def distance_to_point(self, point):
+        :param point: The point to check for inclusion.
+        :type point: volmdlr.Point3D
+        :return: True if the point belongs to the bounding box, False otherwise.
+        :rtype: bool
+        """
+        return (
+                self.xmin < point[0] < self.xmax
+                and self.ymin < point[1] < self.ymax
+                and self.zmin < point[2] < self.zmax
+        )
+
+    def distance_to_point(self, point: volmdlr.Point3D) -> float:
+        """
+        Calculates the minimum Euclidean distance between the bounding box and a point.
+
+        :param point: The point to compare with.
+        :type point: volmdlr.Point3D
+        :return: The minimum distance between the point and the bounding box.
+        :rtype: float
+        """
         if self.point_belongs(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
                         self.ymax - point[1], point[1] - self.ymin,
@@ -873,6 +968,7 @@ class VolumeModel(dc.PhysicalObject):
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new VolumeModel.
+
         side = 'old' or 'new'
         """
         new_primitives = [primitive.frame_mapping(frame, side)
