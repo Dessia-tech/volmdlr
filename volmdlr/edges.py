@@ -1795,15 +1795,16 @@ class LineSegment2D(LineSegment):
         point = volmdlr.Point2D.line_intersection(self, line)
         if point is not None:
             point_projection1, _ = self.point_projection(point)
+            intersections = [point_projection1]
             if point_projection1 is None:
-                return []
+                intersections = []
 
-            if line.__class__.__name__ == 'LineSegment2D':
+            elif line.__class__.__name__ == 'LineSegment2D':
                 point_projection2, _ = line.point_projection(point)
                 if point_projection2 is None:
-                    return []
+                    intersections = []
 
-            return [point_projection1]
+            return intersections
         if line.point_belongs(self.start):
             return [self.start]
         if line.point_belongs(self.end):
