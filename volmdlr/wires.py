@@ -2368,10 +2368,7 @@ class Contour2D(ContourMixin, Wire2D):
                     closing_wire = wire.extract_without_primitives(point1, point2, False)
                     break
 
-            closing_wire_prim = []
-            for closing_w in closing_wire:
-                if closing_w:
-                    closing_wire_prim.append(closing_w)
+            closing_wire_prim = [closing_w for closing_w in closing_wire if closing_w]
             closing_contour = Contour2D(closing_wire_prim)
             contour1, contour2 = contour_to_cut.get_divided_contours(point1,
                                                                      point2,
