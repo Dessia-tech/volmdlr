@@ -3481,7 +3481,7 @@ class Line3D(Line):
         """
         Verifies if two Line3D are skew to each other, that is, they are not parallel and never intersect.
 
-        :param line: othe line.
+        :param line: other line.
         :return: True if they are skew, False otherwise.
         """
         if self.direction_vector().is_colinear_to(line.direction_vector()):

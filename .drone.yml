@@ -9,7 +9,6 @@ steps:
   when:
     event: push
     branch: master
-  failure: ignore
   commands:
   - cd /tmp
   - git clone $DRONE_GIT_HTTP_URL
@@ -25,7 +24,6 @@ steps:
   when:
     event: push
     branch: testing
-  failure: ignore
   commands:
   - cd /tmp
   - git clone $DRONE_GIT_HTTP_URL
