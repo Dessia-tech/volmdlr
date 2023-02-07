@@ -136,7 +136,8 @@ class TriangularElement(vmw.Triangle):
     _non_hash_attributes = ['name']
     _generic_eq = True
 
-    def __init__(self, points):
+    def __init__(self, points, point1, point2, point3):
+        super().__init__(point1, point2, point3)
         self.points = points
         # self.linear_elements = self._to_linear_elements()
         # self.form_functions = self._form_functions()
@@ -278,7 +279,8 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
     _non_hash_attributes = ['name']
     _generic_eq = True
 
-    def __init__(self, points, name: str = ''):
+    def __init__(self, points, point1, point2, point3, name: str = ''):
+        super().__init__(points, point1, point2, point3)
         self.points = points
         self.name = name
         self.linear_elements = self._to_linear_elements()

@@ -21,10 +21,10 @@ class GmshParser(DessiaObject):
     _generic_eq = True
 
     def __init__(self,
-                 mesh_format: Dict,
-                 nodes: Dict,
-                 elements: Dict,
-                 entities: Dict,
+                 mesh_format: Dict[any, any],
+                 nodes: Dict[any, any],
+                 elements: Dict[any, any],
+                 entities: Dict[any, any],
                  physical_names=None,
                  partitioned_entities=None,
                  periodic=None,
