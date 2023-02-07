@@ -2691,6 +2691,7 @@ class Arc2D(Arc):
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes vector frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         self.__init__(*[point.frame_mapping(frame, side) for point in
@@ -3243,6 +3244,7 @@ class ArcEllipse2D(Edge):
     def bounding_rectangle(self):
         """
         Calculates the bounding rectangle for the arcellipse2d.
+
         :return: volmdlr.core.BoudingRectangle object.
         """
         if not self._bounding_rectangle:
@@ -3550,8 +3552,7 @@ class Line3D(Line):
 
     def minimum_distance_points(self, other_line):
         """
-        Returns the points on this line and the other line that are the closest
-        of lines.
+        Returns the points on this line and the other line that are the closest of lines.
         """
         u = self.point2 - self.point1
         v = other_line.point2 - other_line.point1
@@ -3806,6 +3807,7 @@ class LineSegment3D(LineSegment):
                  axis: volmdlr.Vector3D, angle: float):
         """
         LineSegment3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -3818,6 +3820,7 @@ class LineSegment3D(LineSegment):
                          axis: volmdlr.Vector3D, angle: float):
         """
         Line2D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -3839,6 +3842,7 @@ class LineSegment3D(LineSegment):
     def translation(self, offset: volmdlr.Vector3D):
         """
         LineSegment3D translation.
+
         :param offset: translation vector
         :return: A new translated LineSegment3D
         """
@@ -3848,6 +3852,7 @@ class LineSegment3D(LineSegment):
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
         LineSegment3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         for point in self.points:
@@ -3963,8 +3968,7 @@ class LineSegment3D(LineSegment):
 
     def minimum_distance_points(self, other_line):
         """
-        Returns the points on this line and the other line that are the closest
-        of lines.
+        Returns the points on this line and the other line that are the closest of lines.
         """
         u = self.end - self.start
         v = other_line.end - other_line.start
@@ -4207,8 +4211,9 @@ class LineSegment3D(LineSegment):
 
 class BSplineCurve3D(BSplineCurve):
     """
-    A class for 3 dimensional B-spline curves. The following rule must be
-    respected : `number of knots = number of control points + degree + 1`
+    A class for 3 dimensional B-spline curves.
+
+    The following rule must be respected : `number of knots = number of control points + degree + 1`
 
     :param degree: The degree of the 3 dimensional B-spline curve
     :type degree: int
@@ -4301,6 +4306,7 @@ class BSplineCurve3D(BSplineCurve):
     def point_at_abscissa(self, abscissa: float, resolution: int = 1000):
         """
         Returns the 3 dimensional point at a given curvilinear abscissa.
+
         This is an approximation. Resolution parameter can be increased
         for more accurate result.
 
@@ -4482,6 +4488,7 @@ class BSplineCurve3D(BSplineCurve):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         BSplineCurve3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -4498,6 +4505,7 @@ class BSplineCurve3D(BSplineCurve):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         BSplineCurve3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -5483,8 +5491,7 @@ class Arc3D(Arc):
 
 class FullArc3D(Arc3D):
     """
-    An edge that starts at start_end, ends at the same point after having described
-    a circle.
+    An edge that starts at start_end, ends at the same point after having described a circle.
 
     """
 
