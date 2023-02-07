@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
 * BSplineSurface3D: Now the plot method uses u and v curves
 * Create .geo and .msh files (Mesh geometries with GMSH)
+* RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
+* RevolutionFace3D
 
 
 ### Fixed
@@ -30,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Parametric operations with BSpline curves.
 * OpenTriangleShell3D: fix from_mesh_data method.
 * PeriodicalSurface: fix face from contours.
+* Cylinder: to_dict, min_distance_to_other_cylinder.
 
 ### Removed
 
@@ -42,13 +45,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactorings
 
+### Documentation
+- BoundingBox docstrings
 
 ### Unittests
 ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
 
 ## CI
-
 - add spell check to pylint with pyenchant
+- make code_pydocstyle more explicit
 
 ## v0.8.0 [Released 26/01/2023]
 
@@ -94,6 +99,10 @@ abscissa(), point_angle_with_major_dir(), area(), rotation(), tranlation(), fram
 * BSplineCurve2D: tangent (use position/length)
 * Babylon: some scene settings for better rendering
 * Arc2D: fix get_center: name referenced before assignement
+* SphericalSurface3D : enhancement of primitives parametrization on surface parametric domain.
+* BSplineSurface3D: debug linesegment2d_to_3d method.
+* Parametric operations with BSpline curves.
+* OpenTriangleShell3D: fix from_mesh_data method
 * pydocstyle fixes
 * bounding box: fix for cylindrical and BSplineCurve3D
 * contour2d: ordering_primitives, order_primitives

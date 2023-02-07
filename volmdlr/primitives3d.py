@@ -8,6 +8,7 @@ import math
 from random import uniform
 from typing import Dict, List, Tuple
 
+import dessia_common
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -828,12 +829,16 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Revolved Profile rotation.
+        Revolved profile rotation.
 
-        :param center: rotation center.
-        :param axis: rotation axis.
-        :param angle: angle rotation.
-        :return: a new rotated RevolvedProfile.
+        :param center: rotation center
+        :type center: volmdlr.Point3D
+        :param axis: rotation axis
+        :type axis: volmdlr.Vector3D
+        :param angle: angle rotation
+        :type angle: float
+        :return: a new rotated RevolvedProfile
+        :rtype: RevolvedProfile
         """
         return self.__class__(
             plane_origin=self.plane_origin.rotation(center, axis, angle),
@@ -1098,7 +1103,8 @@ class Cylinder(RevolvedProfile):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         basis = frame.basis()
@@ -1111,10 +1117,15 @@ class Cylinder(RevolvedProfile):
         self.position.frame_mapping_inplace(frame, side)
         self.axis = axis
 
+    def to_dict(self, use_pointers: bool = False, memo: bool = None, path: str = '#'):
+        """
+        Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class RevolvedProfile.
+        """
+        return dessia_common.DessiaObject.to_dict(self, use_pointers, memo, path)
+
     def copy(self, deep=True, memo=None):
         """
         Creates a copy of Cylinder.
-
         """
         new_position = self.position.copy()
         new_axis = self.axis.copy()
@@ -1123,10 +1134,15 @@ class Cylinder(RevolvedProfile):
 
     def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder') -> float:
         """
-        Compute the minimal distance between two volmdlr cylinders
+        Compute the minimal distance between two volmdlr cylinders.
+
         :param other_cylinder: volmdlr Cylinder
         :return: minimal distance between two 3D cylinders
         """
+        # Basic check
+        if self.point_belongs(other_cylinder.position) or other_cylinder.point_belongs(self.position):
+            return 0.
+
         # Local frames of cylinders
         frame0 = volmdlr.Frame3D.from_point_and_vector(
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
@@ -1333,7 +1349,7 @@ class Cylinder(RevolvedProfile):
             self, other_cylinder: "Cylinder", n_points: int = 1000
     ) -> float:
         """
-        Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method)
+        Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method).
 
         :param other_cylinder: volmdlr Cylinder
         :param n_points: optional parameter used for the number of random point used to discretize the cylinder
@@ -1381,10 +1397,10 @@ class Cone(RevolvedProfile):
         p1 = volmdlr.Point2D(0., 0.)
         p2 = volmdlr.Point2D(0., self.radius)
         p3 = volmdlr.Point2D(self.length, 0.)
-        l1 = volmdlr.edges.LineSegment2D(p1, p2)
-        l2 = volmdlr.edges.LineSegment2D(p2, p3)
-        l3 = volmdlr.edges.LineSegment2D(p3, p1)
-        contour = volmdlr.wires.Contour2D([l1, l2, l3])
+
+        contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(p1, p2),
+                                           volmdlr.edges.LineSegment2D(p2, p3),
+                                           volmdlr.edges.LineSegment2D(p3, p1)])
         y = axis.random_unit_normal_vector()
         RevolvedProfile.__init__(self, position, axis, y, contour, position,
                                  axis, color=color, alpha=alpha, name=name)
@@ -1606,9 +1622,13 @@ class HollowCylinder(RevolvedProfile):
         Hollow cylinder rotation.
 
         :param center: rotation center.
+        :type center: volmdlr.Point3D
         :param axis: rotation axis.
+        :type axis: volmdlr.Vector3D
         :param angle: angle rotation.
+        :type angle: float
         :return: a new rotated HollowCylinder.
+        :rtype: HollowCylinder
         """
         return self.__class__(
             position=self.position.rotation(center, axis, angle),

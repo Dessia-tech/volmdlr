@@ -314,20 +314,22 @@ class Vector(DessiaObject):
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector: "Vector"):
+    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
         """
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.
 
         :param other_vector: A vector-like object
         :type other_vector: :class:`volmdlr.Vector`
+        :param abs_tol: Absolute tolerance to consider colinear
+        :type abs_tol: float
         :return: `True` if the two vectors are colinear, `False` otherwise
         :rtype: bool
         """
         try:
             return math.isclose(abs(self.dot(other_vector)) / self.norm() / other_vector.norm(),
                                 1,
-                                abs_tol=1e-5)
+                                abs_tol=abs_tol)
 
         except ZeroDivisionError:
             return False
@@ -350,6 +352,14 @@ class Vector(DessiaObject):
             n += 1
         point /= n
         return point
+
+    def vector_projection(self, other_vector):
+        """
+        Projects the vector onto other_vector.
+
+        :param other_vector: Vector to project self.
+        """
+        return (self.dot(other_vector) / other_vector.dot(other_vector)) * other_vector
 
     @classmethod
     def remove_duplicate(cls, points: List["Vector"]):

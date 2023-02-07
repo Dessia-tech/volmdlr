@@ -896,7 +896,7 @@ class BSplineCurve(Edge):
         bsplinecurve.periodic = True
         return bsplinecurve
 
-    def discretization_points(self, *, number_points: int = 20, angle_resolution: int = None):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
         Linear spaced discretization of the curve.
 
@@ -910,12 +910,12 @@ class BSplineCurve(Edge):
 
         if angle_resolution:
             number_points = int(math.pi * angle_resolution)
-        if len(self.points) == number_points:
+
+        if len(self.points) == number_points or (not number_points and not angle_resolution):
             return self.points
         curve = self.curve
         curve.delta = 1 / number_points
         curve_points = curve.evalpts
-        self.curve = curve
 
         point_dimension = f'Point{self.__class__.__name__[-2::]}'
         return [getattr(volmdlr, point_dimension)(*p) for p in curve_points]
@@ -1488,6 +1488,9 @@ class BSplineCurve2D(BSplineCurve):
         return normal_vector
 
     def straight_line_area(self):
+        """
+        Uses shoelace algorithm for evaluating the area.
+        """
         points = self.discretization_points(number_points=100)
         x = [point.x for point in points]
         y = [point.y for point in points]
@@ -2683,6 +2686,7 @@ class Arc2D(Arc):
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes vector frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         self.__init__(*[point.frame_mapping(frame, side) for point in
@@ -3233,6 +3237,7 @@ class ArcEllipse2D(Edge):
     def bounding_rectangle(self):
         """
         Calculates the bounding rectangle for the arcellipse2d.
+
         :return: volmdlr.core.BoudingRectangle object.
         """
         if not self._bounding_rectangle:
@@ -3540,8 +3545,7 @@ class Line3D(Line):
 
     def minimum_distance_points(self, other_line):
         """
-        Returns the points on this line and the other line that are the closest
-        of lines.
+        Returns the points on this line and the other line that are the closest of lines.
         """
         u = self.point2 - self.point1
         v = other_line.point2 - other_line.point1
@@ -3796,6 +3800,7 @@ class LineSegment3D(LineSegment):
                  axis: volmdlr.Vector3D, angle: float):
         """
         LineSegment3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -3808,6 +3813,7 @@ class LineSegment3D(LineSegment):
                          axis: volmdlr.Vector3D, angle: float):
         """
         Line2D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -3829,6 +3835,7 @@ class LineSegment3D(LineSegment):
     def translation(self, offset: volmdlr.Vector3D):
         """
         LineSegment3D translation.
+
         :param offset: translation vector
         :return: A new translated LineSegment3D
         """
@@ -3838,6 +3845,7 @@ class LineSegment3D(LineSegment):
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
         LineSegment3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         for point in self.points:
@@ -3960,8 +3968,7 @@ class LineSegment3D(LineSegment):
 
     def minimum_distance_points(self, other_line):
         """
-        Returns the points on this line and the other line that are the closest
-        of lines.
+        Returns the points on this line and the other line that are the closest of lines.
         """
         u = self.end - self.start
         v = other_line.end - other_line.start
@@ -4204,8 +4211,9 @@ class LineSegment3D(LineSegment):
 
 class BSplineCurve3D(BSplineCurve):
     """
-    A class for 3 dimensional B-spline curves. The following rule must be
-    respected : `number of knots = number of control points + degree + 1`
+    A class for 3 dimensional B-spline curves.
+
+    The following rule must be respected : `number of knots = number of control points + degree + 1`
 
     :param degree: The degree of the 3 dimensional B-spline curve
     :type degree: int
@@ -4298,6 +4306,7 @@ class BSplineCurve3D(BSplineCurve):
     def point_at_abscissa(self, abscissa: float, resolution: int = 1000):
         """
         Returns the 3 dimensional point at a given curvilinear abscissa.
+
         This is an approximation. Resolution parameter can be increased
         for more accurate result.
 
@@ -4503,6 +4512,7 @@ class BSplineCurve3D(BSplineCurve):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         BSplineCurve3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -4519,6 +4529,7 @@ class BSplineCurve3D(BSplineCurve):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         BSplineCurve3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -4839,6 +4850,7 @@ class Arc3D(Arc):
             u1.normalize()
             u2.normalize()
         except ZeroDivisionError:
+            print(True)
             raise ValueError(
                 'Start, end and interior points of an arc must be distincts') from ZeroDivisionError
 
@@ -5463,10 +5475,10 @@ class Arc3D(Arc):
         """
         if not math.isclose(point3d.point_distance(self.center), self.radius, abs_tol=abs_tol):
             return False
-        vector1 = self.start - self.center
-        vector2 = self.interior - self.center
-        vector3 = point3d - self.center
-        if not math.isclose(vector1.dot(vector2.cross(vector3)), 0.0, abs_tol=abs_tol):
+        # vector1 = self.start - self.center
+        # vector2 = self.interior - self.center
+        vector = point3d - self.center
+        if not math.isclose(vector.dot(self.frame.w), 0.0, abs_tol=abs_tol):
             return False
         point_abscissa = self.abscissa(point3d)
         abscissa_start = self.abscissa(self.start)
@@ -5512,8 +5524,7 @@ class Arc3D(Arc):
 
 class FullArc3D(Arc3D):
     """
-    An edge that starts at start_end, ends at the same point after having described
-    a circle.
+    An edge that starts at start_end, ends at the same point after having described a circle.
 
     """
 
@@ -5668,9 +5679,9 @@ class FullArc3D(Arc3D):
         return ax
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
-        new_start_end = self.start.rotation(center, axis, angle, True)
-        new_center = self._center.rotation(center, axis, angle, True)
-        new_normal = self._normal.rotation(center, axis, angle, True)
+        new_start_end = self.start.rotation(center, axis, angle)
+        new_center = self._center.rotation(center, axis, angle)
+        new_normal = self._normal.rotation(center, axis, angle)
         return FullArc3D(new_center, new_start_end,
                          new_normal, name=self.name)
 
@@ -5713,9 +5724,9 @@ class FullArc3D(Arc3D):
         if linesegment.start.z == linesegment.end.z == self.frame.origin.z:
             quadratic_equation_a = 1 + (direction_vector.y ** 2 / direction_vector.x ** 2)
             quadratic_equation_b = -2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x + \
-                                    2 * (direction_vector.y / direction_vector.x) * linesegment.start.y
+                2 * (direction_vector.y / direction_vector.x) * linesegment.start.y
             quadratic_equation_c = (linesegment.start.y - (direction_vector.y / direction_vector.x) *
-                                     linesegment.start.x) ** 2 - self.radius ** 2
+                                    linesegment.start.x) ** 2 - self.radius ** 2
             delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c
             x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
             x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)
@@ -5775,9 +5786,10 @@ class ArcEllipse3D(Edge):
             self.start), frame.new_coordinates(self.end)
         interior_new, center_new = frame.new_coordinates(
             self.interior), frame.new_coordinates(self.center)
-
+        self._bbox = None
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
+
         def theta_A_B(s, i, e, c):
             # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
             xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
@@ -6001,3 +6013,30 @@ class ArcEllipse3D(Edge):
 
     def triangulation(self):
         return None
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def get_bounding_box(self):
+        """
+        Calculates the bounding box of the Arc3D.
+
+        :return: a volmdlr.core.BoundingBox object.
+        """
+        # TODO: implement exact calculation
+
+        points = self.discretization_points(angle_resolution=10)
+        xmin = min(point.x for point in points)
+        xmax = max(point.x for point in points)
+        ymin = min(point.y for point in points)
+        ymax = max(point.y for point in points)
+        zmin = min(point.z for point in points)
+        zmax = max(point.z for point in points)
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)

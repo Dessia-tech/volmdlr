@@ -131,8 +131,7 @@ class WireMixin:
                            inside: bool = True):
         """
 
-        :param inside: extracted contour is between the two points if True and outside
-        these points if False.
+        :param inside: extracted contour is between the two points if True and outside these points if False.
         """
 
         primitives = []
@@ -192,8 +191,7 @@ class WireMixin:
     def extract_without_primitives(self, point1, point2, inside: bool = True):
         """
 
-        :param inside: extracted contour is between the two points if True and outside
-        these points if False.
+        :param inside: extracted contour is between the two points if True and outside these points if False.
         """
         primitives = self.primitives
         indices = []
@@ -462,11 +460,11 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def infinite_intersections(self, infinite_primitives):
         """
-        Returns a list  that contains:
+        Returns a list that contains:
+
         the intersections between a succession of infinite primitives (line,
         circle). There must be a method implemented to intersect the two
         infinite primitives.
-
         """
         offset_intersections = []
 
@@ -692,7 +690,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         """
         Returns a list of crossings in the form of a tuple (point,
         primitive) of the wire primitives intersecting with the line.
-
         """
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
@@ -988,6 +985,20 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         primitives2d = self.get_primitives_2d(plane_origin, x, y)
         return Wire2D(primitives=primitives2d)
 
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                 angle: float):
+        """
+        Wire3D rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated Wire3D.
+        """
+        new_edges = [edge.rotation(center, axis, angle) for edge
+                     in self.primitives]
+        return Wire3D(new_edges, self.name)
+
 
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
 
@@ -1270,8 +1281,7 @@ class ContourMixin(WireMixin):
 
     def is_superposing(self, contour2):
         """
-        Check if the contours are superposing (one on the other without
-        necessarily having an absolute equality).
+        Check if the contours are superposing (one on the other without necessarily having an absolute equality).
 
         """
 
@@ -1548,7 +1558,7 @@ class Contour2D(ContourMixin, Wire2D):
                                     'primitive_to_index',
                                     'basis_primitives', '_utd_analysis']
 
-    def __init__(self, primitives: List[volmdlr.core.Primitive2D],
+    def __init__(self, primitives: List[volmdlr.edges.Edge],
                  name: str = ''):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
