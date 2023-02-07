@@ -1,5 +1,5 @@
 #!/bin/bash
-# check pep8 formatting for all files
+# check pep8 formatting for changed files
 
 PEP8_CMD_TO_RUN="python3 -m autopep8 -i $(git diff --cached --name-only --diff-filter MARC | grep -E \.py$)"
 

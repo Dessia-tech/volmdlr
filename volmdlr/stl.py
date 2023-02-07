@@ -23,8 +23,7 @@ import volmdlr.faces as vmf
 
 class Stl(dc.DessiaObject):
     """
-    STL files are used to represent simple 3D models,
-    defined using triangular 3D faces.
+    STL files are used to represent simple 3D models, defined using triangular 3D faces.
 
     Initially it was introduced as native format for 3D Systems
     Stereolithography CAD system, but due to its extreme simplicity, it
