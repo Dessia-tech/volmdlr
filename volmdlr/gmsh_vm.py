@@ -4,7 +4,7 @@
 Gmsh and related objects
 """
 from dessia_common.core import DessiaObject  # isort: skip
-
+from typing import Dict
 import volmdlr
 import volmdlr.mesh
 
@@ -21,10 +21,10 @@ class GmshParser(DessiaObject):
     _generic_eq = True
 
     def __init__(self,
-                 mesh_format: dict,
-                 nodes: dict,
-                 elements: dict,
-                 entities: dict,
+                 mesh_format: Dict,
+                 nodes: Dict,
+                 elements: Dict,
+                 entities: Dict,
                  physical_names=None,
                  partitioned_entities=None,
                  periodic=None,
