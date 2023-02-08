@@ -98,7 +98,7 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        OpenRoundedLineSegments3D rotation
+        OpenRoundedLineSegments3D rotation.
 
         :param center: rotation center
         :param axis: rotation axis
@@ -113,7 +113,7 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
                          axis: volmdlr.Vector3D,
                          angle: float):
         """
-        OpenRoundedLineSegments3D rotation. Object is updated inplace
+        OpenRoundedLineSegments3D rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis
@@ -124,7 +124,7 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        OpenRoundedLineSegments3D translation
+        OpenRoundedLineSegments3D translation.
 
         :param offset: translation vector
         :return: A new translated OpenRoundedLineSegments3D

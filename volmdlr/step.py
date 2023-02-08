@@ -40,8 +40,8 @@ def set_to_list(step_set):
 
 def step_split_arguments(function_arg):
     """
-    Split the arguments of a function that doesn't start with '(' but end with
-    ')'
+    Split the arguments of a function that doesn't start with '(' but end with ')'.
+
     ex: IN: '#123,#124,#125)'
        OUT: ['#123', '#124', '#125']
     """
