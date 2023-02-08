@@ -138,7 +138,7 @@ class Edge(dc.DessiaObject):
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
         :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
@@ -1771,7 +1771,7 @@ class LineSegment2D(LineSegment):
         Computes the distance of a point to segment of line.
 
         :param point: point to calculate distance.
-        :param return_other_points: Bool variable to return linesegment's corresponding point or not.
+        :param return_other_points: Boolean variable to return linesegment's corresponding point or not.
         """
         distance, point = volmdlr.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)],
@@ -3664,7 +3664,7 @@ class Line3D(Line):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
+        :param object_dict: The dictionary containing all the step primitives
             that have already been instanciated
         :type object_dict: dict
         :return: The corresponding Line3D object

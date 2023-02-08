@@ -78,7 +78,7 @@ def delete_double_point(list_point):
 
 def step_ids_to_str(ids):
     """
-    Returns a string with a '#' in front of each ID and a comma separating eachone.
+    Returns a string with a '#' in front of each ID and a comma separating each-one.
 
     :param ids: A list of step primitives IDs
     :type ids: List[int]
@@ -699,7 +699,8 @@ class BoundingBox(dc.DessiaObject):
         """
         Converts the bounding box to a 3D frame.
 
-        :return: A 3D frame with origin at the center and axes aligned with the x, y, and z dimensions of the bounding box.
+        :return: A 3D frame with origin at the center and axes aligned with the x, y, and z dimensions of 
+            the bounding box.
         :rtype: volmdlr.Frame3D
         """
         x = volmdlr.Vector3D((self.xmax - self.xmin), 0, 0)
@@ -1151,7 +1152,8 @@ class VolumeModel(dc.PhysicalObject):
             step_content += primitive_content
 
             product_definition_context_id = primitive_id + 1
-            step_content += f"#{product_definition_context_id} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n"
+            step_content += (f"#{product_definition_context_id} = "
+                             + "PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n")
 
             product_context_id = product_definition_context_id + 1
             step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
@@ -1159,7 +1161,8 @@ class VolumeModel(dc.PhysicalObject):
             step_content += f"#{product_id} = PRODUCT('{primitive.name}'," \
                             f"'{primitive.name}','',(#{product_context_id}));\n"
             product_definition_formation_id = product_id + 1
-            step_content += f"#{product_definition_formation_id} = PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
+            step_content += f"#{product_definition_formation_id} = "\
+                            "PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
             product_definition_id = product_definition_formation_id + 1
             step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
                             f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"

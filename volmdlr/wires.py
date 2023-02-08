@@ -224,7 +224,7 @@ class WireMixin:
 
     def abscissa(self, point, tol=1e-6):
         """
-        Compute the curvilinear abscisse of a point on a wire.
+        Compute the curvilinear abscissa of a point on a wire.
 
         """
         if self.point_over_wire(point, tol):
@@ -1479,7 +1479,7 @@ class ContourMixin(WireMixin):
 
     def extremities_points(self, list_p):
         """
-        Return extremitises points of a list of points on a contour.
+        Return extremities points of a list of points on a contour.
 
         """
         # TODO: rewrite this awfull code!

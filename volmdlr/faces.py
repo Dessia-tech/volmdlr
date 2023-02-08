@@ -1061,7 +1061,7 @@ class Surface3D(DessiaObject):
 
     def contour2d_to_3d(self, contour2d):
         """
-        Transforms a Contour2D in the parametric domain of the surface into a Contour3D in cartesian coordinate.
+        Transforms a Contour2D in the parametric domain of the surface into a Contour3D in Cartesian coordinate.
 
         :param contour2d: The contour to be transformed.
         :type contour2d: :class:`volmdlr.wires.Contour2D`
@@ -1819,7 +1819,7 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def point3d_to_2d(self, point3d):
         """
-        Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a cartesian coordinates point (x, y, z).
+        Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a Cartesian coordinates point (x, y, z).
 
         :param point3d: Point at the CylindricalSuface3D
         :type point3d: `volmdlr.`Point3D`
@@ -2634,7 +2634,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
         """
-        Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a cartesian coordinates point (x, y, z).
+        Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a Cartesian coordinates point (x, y, z).
 
         :param point3d: Point at the CylindricalSuface3D.
         :type point3d: :class:`volmdlr.`Point3D`
@@ -3347,7 +3347,7 @@ class RevolutionSurface3D(PeriodicalSurface):
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """
-        Transform a parametric (u, v) point into a 3D cartesian point (x, y, z).
+        Transform a parametric (u, v) point into a 3D Cartesian point (x, y, z).
 
         u = [0, 2pi] and v = [0, 1] into a
         """
@@ -3358,7 +3358,7 @@ class RevolutionSurface3D(PeriodicalSurface):
 
     def point3d_to_2d(self, point3d):
         """
-        Transform a 3D cartesian point (x, y, z) into a parametric (u, v) point.
+        Transform a 3D Cartesian point (x, y, z) into a parametric (u, v) point.
         """
         x, y, z = self.frame.global_to_local_coordinates(point3d)
         if abs(x) < 1e-12:
@@ -3408,7 +3408,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         start = self.point3d_to_2d(fullarc3d.start)
         end = self.point3d_to_2d(fullarc3d.end)
 
-        theta3, z3 = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
+        theta3, _ = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
         theta4, _ = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
 
         # make sure that the references points are not undefined
@@ -3420,7 +3420,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         start, end = vm_parametric.arc3d_to_cylindrical_verification(start, end, volmdlr.TWO_PI, theta3, theta4)
 
         theta1, z1 = start
-        theta2, z2 = end
+        _, z2 = end
 
         p1 = volmdlr.Point2D(theta1, z1)
         if theta1 > theta3:
@@ -3607,7 +3607,7 @@ class BSplineSurface3D(Surface3D):
 
         knots_vec = []
         for i in range(0, len(knots)):
-            for j in range(0, multiplicities[i]):
+            for _ in range(0, multiplicities[i]):
                 knots_vec.append(knots[i])
         return knots_vec
 
@@ -3829,7 +3829,7 @@ class BSplineSurface3D(Surface3D):
         """
         Verifies points at boundary on a periodic BSplineSurface3D.
 
-        :param points_2d: List of `volmdlr.Point2D` after transformation from 3D cartesian coordinates
+        :param points_2d: List of `volmdlr.Point2D` after transformation from 3D Cartesian coordinates
         :type points_2d: volmdlr.Point2D
         :param direction_periodicity: should be 'x' if x_periodicity or 'y' if y periodicity
         :type direction_periodicity: str
@@ -4863,7 +4863,7 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def from_geomdl_surface(cls, surface):
         """
-        Create a volmdlr's BSpline_Surface3D from a geomdl's one.
+        Create a volmdlr BSpline_Surface3D from a geomdl's one.
 
         """
 
@@ -9170,7 +9170,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :param point_mesh_size: The mesh size at a specific point, defaults to None
         :type point_mesh_size: float, optional
 
-        :return: A list of lines that describe the geomery & the updated data
+        :return: A list of lines that describe the geometry & the updated data
         :rtype: Tuple(List[str], dict)
         """
 
