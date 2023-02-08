@@ -84,7 +84,7 @@ def bounding_rectangle_adjacent_contours(contours: List):
 
 class WireMixin:
     """
-    Abstract class for Wire, storing methods and atributs used by many classes in this module.
+    Abstract class for Wire, storing methods and attributes used by many classes in this module.
 
     """
     _non_data_hash_attributes = ['basis_primitives']
@@ -224,7 +224,7 @@ class WireMixin:
 
     def abscissa(self, point, tol=1e-6):
         """
-        Compute the curvilinear abscisse of a point on a wire.
+        Compute the curvilinear abscissa of a point on a wire.
 
         """
         if self.point_over_wire(point, tol):
@@ -1479,7 +1479,7 @@ class ContourMixin(WireMixin):
 
     def extremities_points(self, list_p):
         """
-        Return extremitises points of a list of points on a contour.
+        Return extremities points of a list of points on a contour.
 
         """
         # TODO: rewrite this awfull code!
@@ -4149,7 +4149,7 @@ class Circle2D(Contour2D):
 
 class Ellipse2D(Contour2D):
     """
-    Defines an Ellipse in two-dimenssions.
+    Defines an Ellipse in two-dimensions.
 
     Ellipse2D defined by a major axis (A), minor axis (B), a center and a vector
     representing the direction of the major axis.
@@ -4255,7 +4255,7 @@ class Ellipse2D(Contour2D):
         :param linesegment: linesegment to calculate intersections.
         :return: list of points intersections, if there are any.
         """
-        line_intersections = self.line_intersections(linesegment)
+        line_intersections = self.line_intersections(linesegment.to_line())
         intersections = []
         for intersection in line_intersections:
             if linesegment.point_belongs(intersection):
@@ -4282,7 +4282,7 @@ class Ellipse2D(Contour2D):
         """
         Calculates the abscissa for a given point.
 
-        :param point: point to calculate the abcissa.
+        :param point: point to calculate the abscissa.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
         if self.point_over_ellipse(point):
@@ -4430,8 +4430,7 @@ class Contour3D(ContourMixin, Wire3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionnary containing all the step primitives that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding Contour3D object.
         :rtype: :class:`volmdlr.wires.Contour3D`
@@ -4995,7 +4994,11 @@ class Circle3D(Contour3D):
         :param linesegment: LineSegment3D to verify intersections
         :return: list of points intersecting Circle
         """
-        intersections = vm_utils_intersections.circle_3d_linesegment_intersections(self, linesegment)
+        intersections = []
+        circle3d_line_intersections = vm_utils_intersections.circle_3d_line_intersections(self, linesegment.to_line())
+        for intersection in circle3d_line_intersections:
+            if linesegment.point_belongs(intersection):
+                intersections.append(intersection)
         return intersections
 
     @classmethod
@@ -5005,8 +5008,7 @@ class Circle3D(Contour3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionnary containing all the step primitives that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding Circle3D object.
         :rtype: :class:`volmdlr.wires.Circle3D`
@@ -5421,8 +5423,7 @@ class Ellipse3D(Contour3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionnary containing all the step primitives that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding Ellipse3D object.
         :rtype: :class:`volmdlr.wires.Ellipse3D`

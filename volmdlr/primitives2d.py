@@ -419,6 +419,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
                                   volmdlr.wires.Contour2D):
     """
+    Defines a polygon with some rounded corners.
+
     :param points: Points used to draw the wire
     :type points: List of Point2D
     :param radius: Radius used to connect different parts of the wire
