@@ -87,12 +87,11 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 
         l1 = volmdlr.edges.Line3D(p3, p3 + v1)
         l2 = volmdlr.edges.Line3D(p4, p4 + v2)
-        c, _ = l1.minimum_distance_points(l2)
 
         u3 = u1 + u2  # mean of v1 and v2
         u3 /= u3.norm()
 
-        interior = c - u3 * radius
+        interior = l1.minimum_distance_points(l2)[0] - u3 * radius
         return p3, interior, p4, dist, alpha
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
