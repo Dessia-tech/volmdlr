@@ -5597,7 +5597,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """Avoids storing points in memo that makes serialization slow."""
         return DessiaObject.to_dict(self, use_pointers=False)
 
