@@ -1824,7 +1824,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :type point3d: `volmdlr.`Point3D`
         """
         x, y, z = self.frame.global_to_local_coordinates(point3d)
-        # Do not delte this, mathematical problem when x and y close to zero but not 0
+        # Do not delete this, mathematical problem when x and y close to zero but not 0
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
@@ -2638,7 +2638,7 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         x, y, z = self.frame.global_to_local_coordinates(point3d)
         # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
-        # Genarally this is related to uncertaintity of step files.
+        # Genarally this is related to uncertainty of step files.
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
@@ -2901,7 +2901,7 @@ class SphericalSurface3D(Surface3D):
             z = 0.0
 
         # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
-        # Genarally this is related to uncertaintity of step files.
+        # Generally this is related to uncertainty of step files.
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:

@@ -1464,7 +1464,7 @@ class BSplineCurve2D(BSplineCurve):
 
         :param abscissa: defines where in the BSplineCurve2D the
         direction vector is to be calculated.
-        :return: The direection vector vector of the BSplineCurve2D
+        :return: The direction vector vector of the BSplineCurve2D
         """
         return self.tangent(abscissa)
 

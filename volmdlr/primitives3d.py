@@ -971,7 +971,7 @@ class Cylinder(RevolvedProfile):
         :return: The BoundingBox
         :rtype: :class:`volmdlr.core.BoundingBox`
         """
-        # This was copied for HollowCylinder. Inheritence removed to avoid problems
+        # This was copied for HollowCylinder. Inheritance removed to avoid problems
         radius = self.radius
 
         point_a = self.position - self.length / 2 * self.axis
