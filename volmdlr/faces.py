@@ -7095,7 +7095,7 @@ class Triangle3D(PlaneFace3D):
             self._utd_surface2d = True
         return self._surface2d
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class': 'volmdlr.faces.Triangle3D',
                 'point1': self.point1.to_dict(),
                 'point2': self.point2.to_dict(),

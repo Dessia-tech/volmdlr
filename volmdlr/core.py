@@ -575,7 +575,7 @@ class BoundingBox(dc.DessiaObject):
                            min(self.zmin, other_bbox.zmin),
                            max(self.zmax, other_bbox.zmax))
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#') -> dict:
+    def to_dict(self, *args, **kwargs) -> dict:
         """
         Converts the bounding box to a dictionary representation.
 
