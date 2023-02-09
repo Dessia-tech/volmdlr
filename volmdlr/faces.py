@@ -711,7 +711,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         Gets the lines that define a Surface2D in a .geo file.
         """
 
-        i, p = None, None
+        i, i_p = None, None
         lines, line_surface, lines_tags = [], [], []
         point_account, line_account, line_loop_account = 0, 0, 1
         for c, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
@@ -2972,10 +2972,8 @@ class SphericalSurface3D(Surface3D):
         theta1, phi1 = start
         theta2, phi2 = end
 
-        length = arc3d.length()
-        angle3d = arc3d.angle
-        point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
-        point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
+        point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * arc3d.length()))
+        point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * arc3d.length()))
         theta3, phi3 = point_after_start
         theta4, _ = point_before_end
         thetai = interior.x
@@ -2990,7 +2988,7 @@ class SphericalSurface3D(Surface3D):
             theta2 = thetai
             end = volmdlr.Point2D(theta2, phi2)
 
-        start, end = vm_parametric.arc3d_to_spherical_verification(start, end, angle3d,
+        start, end = vm_parametric.arc3d_to_spherical_verification(start, end, arc3d.angle,
                                                                    [point_after_start, point_before_end],
                                                                    [self.x_periodicity, self.y_periodicity])
         if start == end:  # IS THIS POSSIBLE ?
@@ -3335,7 +3333,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         vector1 = point1 - axis_point
         w_vector = axis
         w_vector.normalize()
-        u_vector = vector1 - vector1.vector_projection(w)
+        u_vector = vector1 - vector1.vector_projection(w_vector)
         u_vector.normalize()
         v_vector = w_vector.cross(u_vector)
         self.frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
