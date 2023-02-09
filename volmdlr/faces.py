@@ -808,7 +808,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                     primitives_length.append(contour.length() / 2)
                     primitives_length.append(contour.length() / 2)
                 else:
-                    for p, primitive in enumerate(contour.primitives):
+                    for primitive in contour.primitives:
                         if ((primitive not in primitives)
                                 and (primitive.reverse() not in primitives)):
                             primitives.append(primitive)
@@ -4041,9 +4041,9 @@ class BSplineSurface3D(Surface3D):
         name = 'primitive{}'.format(ip)
         script = ""
         points = '['
-        for i, pts_row in enumerate(self.control_points_table):
+        for pts_row in self.control_points_table:
             pts = '['
-            for j, pt in enumerate(pts_row):
+            for pt in pts_row:
                 point = 'fc.Vector({},{},{}),'.format(pt[0], pt[1], pt[2])
                 pts += point
             pts = pts[:-1] + '],'
@@ -5413,11 +5413,11 @@ class BSplineSurface3D(Surface3D):
                   other_bspline_face3d.surface2d.outer_contour.center_of_mass()]
         grid2d_direction = (bspline_face3d.pair_with(other_bspline_face3d))[1]
 
-        if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
+        # if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
+        #
+        #     xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
 
-            xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
-
-        elif self.is_intersected_with(other_bspline_surface3d):
+        if self.is_intersected_with(other_bspline_surface3d):
             # find primitives to split with
             contour1 = bspline_face3d.outer_contour3d
             contour2 = other_bspline_face3d.outer_contour3d
@@ -5446,8 +5446,8 @@ class BSplineSurface3D(Surface3D):
 
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
-            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-                len(bsplines_new), [1] * len(bsplines_new)
+            # xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
+            #     len(bsplines_new), [1] * len(bsplines_new)
 
             grid2d_direction = (
                 bsplines_new[0].rectangular_cut(
@@ -5455,9 +5455,9 @@ class BSplineSurface3D(Surface3D):
                     bsplines_new[1].rectangular_cut(
                         0, 1, 0, 1)))[1]
 
-        else:
-            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-                                     len(bsplines_new), [1] * len(bsplines_new)
+        # else:
+        #     xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
+        #                              len(bsplines_new), [1] * len(bsplines_new)
 
         # grid3d
         points3d = []
@@ -5715,7 +5715,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if len(subsurfaces2d) > 1:
             content = ''
             face_ids = []
-            for i, subsurface2d in enumerate(subsurfaces2d):
+            for subsurface2d in subsurfaces2d:
                 face = self.__class__(self.surface3d, subsurface2d)
                 face_content, face_id = face.to_step_without_splitting(
                     current_id)
@@ -9133,7 +9133,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def triangulation(self):
         meshes = []
-        for i, face in enumerate(self.faces):
+        for face in self.faces:
             face_mesh = face.triangulation()
             meshes.append(face_mesh)
         return vmd.DisplayMesh3D.merge_meshes(meshes)
@@ -9155,7 +9155,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         list_faces = []
         initial_faces = self.faces[:]
 
-        for i, face1 in enumerate(initial_faces):
+        for face1 in initial_faces:
             list_faces.extend(face1.project_faces(shell.faces))
 
         return self.__class__(list_faces)
