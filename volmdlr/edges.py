@@ -3675,7 +3675,7 @@ class Line3D(Line):
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
-            that have already been instanciated
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Line3D object
         :rtype: :class:`volmdlr.edges.Line3D`
@@ -4390,7 +4390,7 @@ class BSplineCurve3D(BSplineCurve):
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
         :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding BSplineCurve3D.
         :rtype: :class:`volmdlr.edges.BSplineCurve3D`

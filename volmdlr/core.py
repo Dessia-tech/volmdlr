@@ -106,6 +106,7 @@ class CompositePrimitive(dc.PhysicalObject):
         dc.PhysicalObject.__init__(self, name=name)
 
     def primitive_to_index(self, primitive):
+        """Constructs a dictionary associating primitive to its index."""
         if not self._utd_primitives_to_index:
             self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
             self._utd_primitives_to_index = True
