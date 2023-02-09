@@ -591,6 +591,17 @@ class BSplineCurve(Edge):
 
         Edge.__init__(self, start, end, name=name)
 
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """Avoids storing points in memo that makes serialization slow."""
+        dict_ = self.base_dict()
+        dict_['degree'] = self.degree
+        dict_['control_points'] = [p.to_dict() for p in self.control_points]
+        dict_['knot_multiplicities'] = self.knot_multiplicities
+        dict_['knots'] = self.knots
+        dict_['weights'] = self.weights
+        dict_['periodic'] = self.periodic
+        return dict_
+
     def reverse(self):
         """
         Reverses the B-spline's direction by reversing its control points.
@@ -2841,7 +2852,6 @@ class FullArc2D(Arc2D):
         dict_['angle'] = self.angle
         dict_['is_trigo'] = self.is_trigo
         dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
-        dict_['name'] = self.name
         return dict_
 
     def copy(self, *args, **kwargs):
