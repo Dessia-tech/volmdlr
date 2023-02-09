@@ -203,8 +203,7 @@ class Edge(dc.DessiaObject):
 
     def straight_line_point_belongs(self, point):
         """
-        Verifies if a point belongs to the surface created by closing the edge
-        with a line between its start and end points.
+        Verifies if a point belongs to the surface created by closing the edge.
 
         :param point: Point to be verified
         :return: Return True if the point belongs to this surface,
@@ -832,8 +831,9 @@ class BSplineCurve(Edge):
                                                      List[volmdlr.Point3D]],
                                   degree: int, **kwargs):
         """
-        Creates a B-spline curve approximation using least squares method with
-        fixed number of control points. It is recommended to specify the
+        Creates a B-spline curve approximation using least squares method with fixed number of control points.
+
+        It is recommended to specify the
         number of control points.
         Please refer to The NURBS Book (2nd Edition), pp.410-413 for details.
 
@@ -2588,8 +2588,7 @@ class Arc2D(Arc):
 
     def straight_line_point_belongs(self, point):
         """
-        Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points.
+        Verifies if a point belongs to the surface created by closing the edge.
 
         :param point_2d: Point to be verified.
         :return: Return True if the point belongs to this surface, or False otherwise.
@@ -3402,6 +3401,7 @@ class ArcEllipse2D(Edge):
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new ArcEllipse2D.
+
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -4275,8 +4275,7 @@ class BSplineCurve3D(BSplineCurve):
     def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):
         """
-        Creates a table of equivalence between the parameter t (evaluation
-        of the BSplineCurve) and the cumulative distance.
+        Creates a table of equivalence between the parameter t (eval. of the BSplineCurve) and the cumulative distance.
 
         :param resolution: The precision of the table. Autoadjusted by the
             algorithm. Default value set to 20
@@ -4364,9 +4363,9 @@ class BSplineCurve3D(BSplineCurve):
 
     def point3d_to_parameter(self, point: volmdlr.Point3D):
         """
-        Search for the value of the normalized evaluation parameter t
-        (between 0 and 1) that would return the given point when the
-        BSplineCurve3D is evaluated at the t value.
+        Search for the value of the normalized evaluation parameter t (between 0 and 1).
+
+        :return: the given point when the BSplineCurve3D is evaluated at the t value.
         """
         def f(param):
             p3d = volmdlr.Point3D(*self.curve.evaluate_single(param))
@@ -4891,8 +4890,9 @@ class Arc3D(Arc):
 
     def get_arc_direction(self):
         """
-        Verifies if arc is clockwise of trigowise
-        :return:
+        Verifies if arc is clockwise or trigowise.
+
+        :return: True if clockwise, False if trigowise.
         """
         clockwise_path, trigowise_path = self.clockwise_and_trigowise_paths
         if clockwise_path > trigowise_path:

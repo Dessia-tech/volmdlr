@@ -6032,7 +6032,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def to_geo(self, file_name: str):  # , mesh_size_list=None):
         """
-        Gets the .geo file for the Face3D
+        Gets the .geo file for the Face3D.
+
         """
 
         lines = self.geo_lines()
@@ -6220,8 +6221,9 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def divide_face_with_closed_cutting_contours(self, list_closed_cutting_contours, list_faces):
         """
-        Divides a Face3D with a list of Open cutting contours, that is, Contours going from one side
-        to another of the Face, or from the outer contour to one inner contour.
+        Divides a Face3D with a list of Open cutting contours.
+
+        Contours going from one side to another of the Face, or from the outer contour to one inner contour.
 
         :param list_closed_cutting_contours: list containing the closed cutting contours
         :param list_faces: list of already divided faces
