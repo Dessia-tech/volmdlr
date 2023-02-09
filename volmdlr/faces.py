@@ -4345,25 +4345,25 @@ class BSplineSurface3D(Surface3D):
 
         # System of nonlinear equations
         def non_linear_equations(X):
-            F = npy.empty(len(equation_points) + 2)
+            vector_F = npy.empty(len(equation_points) + 2)
             for i in range(0, len(equation_points)):
-                F[i] = abs((X[index_x[equation_points[i][0]]] ** 2 +
-                            X[index_x[equation_points[i][1]]] ** 2 +
-                            X[index_y[equation_points[i][0]]] ** 2 +
-                            X[index_y[equation_points[i][1]]] ** 2 -
-                            2 *
-                            X[index_x[equation_points[i][0]]] *
-                            X[index_x[equation_points[i][1]]] -
-                            2 *
-                            X[index_y[equation_points[i][0]]] *
-                            X[index_y[equation_points[i][1]]] -
-                            D[i]) /
-                           D[i])
+                vector_F[i] = abs((X[index_x[equation_points[i][0]]] ** 2 +
+                                   X[index_x[equation_points[i][1]]] ** 2 +
+                                   X[index_y[equation_points[i][0]]] ** 2 +
+                                   X[index_y[equation_points[i][1]]] ** 2 -
+                                   2 *
+                                   X[index_x[equation_points[i][0]]] *
+                                   X[index_x[equation_points[i][1]]] -
+                                   2 *
+                                   X[index_y[equation_points[i][0]]] *
+                                   X[index_y[equation_points[i][1]]] -
+                                   D[i]) /
+                                  D[i])
 
-            F[i + 1] = X[0] * 1000
-            F[i + 2] = X[1] * 1000
+            vector_F[i + 1] = X[0] * 1000
+            vector_F[i + 2] = X[1] * 1000
 
-            return F
+            return vector_F
 
         # Solution with "least_squares"
         x_init = []  # initial guess (2D grid points)
