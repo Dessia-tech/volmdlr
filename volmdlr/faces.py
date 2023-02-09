@@ -748,21 +748,21 @@ class Surface2D(volmdlr.core.Primitive2D):
                     lines.append(point.get_geo_lines(tag=point_account + i + 1,
                                                      point_mesh_size=None))
 
-                for p, primitive in enumerate(contour.primitives):
-                    if p != len(contour.primitives) - 1:
-                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
-                                                             start_point_tag=point_account + p + 1,
-                                                             end_point_tag=point_account + p + 2))
+                for i_p, primitive in enumerate(contour.primitives):
+                    if i_p != len(contour.primitives) - 1:
+                        lines.append(primitive.get_geo_lines(tag=line_account + i_p + 1,
+                                                             start_point_tag=point_account + i_p + 1,
+                                                             end_point_tag=point_account + i_p + 2))
                     else:
-                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
-                                                             start_point_tag=point_account + p + 1,
+                        lines.append(primitive.get_geo_lines(tag=line_account + i_p + 1,
+                                                             start_point_tag=point_account + i_p + 1,
                                                              end_point_tag=point_account + 1))
-                    lines_tags.append(line_account + p + 1)
+                    lines_tags.append(line_account + i_p + 1)
 
                 lines.append('Line Loop(' + str(c + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
                 line_surface.append(line_loop_account)
                 point_account = point_account + i + 1
-                line_account, line_loop_account = line_account + p + 1, line_loop_account + 1
+                line_account, line_loop_account = line_account + i_p + 1, line_loop_account + 1
                 lines_tags = []
 
         lines.append('Plane Surface(' + str(1) + ') = {' + str(line_surface)[1:-1] + '};')
@@ -1306,24 +1306,24 @@ class Plane3D(Surface3D):
         :return: ADD DESCRIPTION
         :rtype: List[volmdlr.Point3D]
         """
-        u = line.point2 - line.point1
-        w = line.point1 - self.frame.origin
-        if math.isclose(self.frame.w.dot(u), 0, abs_tol=1e-08):
+        u_vector = line.point2 - line.point1
+        w_vector = line.point1 - self.frame.origin
+        if math.isclose(self.frame.w.dot(u_vector), 0, abs_tol=1e-08):
             return []
-        intersection_abscissea = - self.frame.w.dot(w) / self.frame.w.dot(u)
-        return [line.point1 + intersection_abscissea * u]
+        intersection_abscissea = - self.frame.w.dot(w_vector) / self.frame.w.dot(u_vector)
+        return [line.point1 + intersection_abscissea * u_vector]
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D) \
             -> List[volmdlr.Point3D]:
-        u = linesegment.end - linesegment.start
-        w = linesegment.start - self.frame.origin
-        normaldotu = self.frame.w.dot(u)
+        u_vector = linesegment.end - linesegment.start
+        w_vector = linesegment.start - self.frame.origin
+        normaldotu = self.frame.w.dot(u_vector)
         if math.isclose(normaldotu, 0, abs_tol=1e-08):
             return []
-        intersection_abscissea = - self.frame.w.dot(w) / normaldotu
+        intersection_abscissea = - self.frame.w.dot(w_vector) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
             return []
-        return [linesegment.start + intersection_abscissea * u]
+        return [linesegment.start + intersection_abscissea * u_vector]
 
     def fullarc_intersections(self, fullarc: vme.FullArc3D):
         """
@@ -1626,10 +1626,9 @@ class PeriodicalSurface(Surface3D):
                 new_outer_contour.order_contour()
             else:
                 new_inner_contours.append(inner_contour)
+        class_ = self.face_class
         if isinstance(self.face_class, str):
             class_ = globals()[self.face_class]
-        else:
-            class_ = self.face_class
         new_face = class_(self, Surface2D(new_outer_contour, new_inner_contours))
         return new_face
 
@@ -2340,14 +2339,12 @@ class ToroidalSurface3D(PeriodicalSurface):
         theta2, phi2 = linesegment2d.end
         if math.isclose(theta1, theta2, abs_tol=1e-4):
             if math.isclose(phi1 - phi2, volmdlr.TWO_PI, abs_tol=1e-4):
-                u = self.frame.u.rotation(self.frame.origin, self.frame.w,
-                                          angle=theta1)
-                v = self.frame.u.rotation(self.frame.origin, self.frame.w,
-                                          angle=theta1)
-                center = self.frame.origin + self.R * u
+                u_vector = self.frame.u.rotation(self.frame.origin, self.frame.w, angle=theta1)
+                v_vector = self.frame.u.rotation(self.frame.origin, self.frame.w, angle=theta1)
+                center = self.frame.origin + self.R * u_vector
                 return [vme.FullArc3D(center=center,
-                                      start_end=center + self.r * u,
-                                      normal=v)]
+                                      start_end=center + self.r * u_vector,
+                                      normal=v_vector)]
             else:
                 return [vme.Arc3D(
                     self.point2d_to_3d(linesegment2d.start),
@@ -2928,11 +2925,11 @@ class SphericalSurface3D(Surface3D):
         interior = self.point2d_to_3d(0.5 * (linesegment2d.start + linesegment2d.end))
         end = self.point2d_to_3d(linesegment2d.end)
         if start == end or linesegment2d.length() == 2 * math.pi:
-            u = start - self.frame.origin
-            u.normalize()
-            v = interior - self.frame.origin
-            v.normalize()
-            normal = u.cross(v)
+            u_vector = start - self.frame.origin
+            u_vector.normalize()
+            v_vector = interior - self.frame.origin
+            v_vector.normalize()
+            normal = u_vector.cross(v_vector)
             return [vme.FullArc3D(self.frame.origin, start, normal)]
         return [vme.Arc3D(start, interior, end)]
 
@@ -3336,12 +3333,12 @@ class RevolutionSurface3D(PeriodicalSurface):
         if point1 == axis_point:
             point1 = wire.point_at_abscissa(0.1 * wire.length())
         vector1 = point1 - axis_point
-        w = axis
-        w.normalize()
-        u = vector1 - vector1.vector_projection(w)
-        u.normalize()
-        v = w.cross(u)
-        self.frame = volmdlr.Frame3D(origin=axis_point, u=u, v=v, w=w)
+        w_vector = axis
+        w_vector.normalize()
+        u_vector = vector1 - vector1.vector_projection(w)
+        u_vector.normalize()
+        v_vector = w_vector.cross(u_vector)
+        self.frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
 
         PeriodicalSurface.__init__(self, name=name)
 
@@ -4737,9 +4734,9 @@ class BSplineSurface3D(Surface3D):
         """
 
         number_points = math.ceil(arc2d.angle * 7) + 1
-        l = arc2d.length()
+        length = arc2d.length()
         points = [self.point2d_parametric_to_dimension(arc2d.point_at_abscissa(
-            i * l / (number_points - 1)), grid2d) for i in range(number_points)]
+            i * length / (number_points - 1)), grid2d) for i in range(number_points)]
 
         return vme.BSplineCurve2D.from_points_interpolation(
             points, max(self.degree_u, self.degree_v))
