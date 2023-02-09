@@ -31,24 +31,22 @@
 Volmdlr is a python volume modeler used as a CAD platform.
 It is simple to understand and operate.
 With it, you can easily create 3D models.
-Check the exemples to see what you can do with this library.
+Check the examples to see what you can do with this library.
 
-<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing.jpg" width="40%" />
-<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing_contours.png" width="50%" /><br/>
-<i>A casing is defined by a 2D contour formed with the primitive RoundedLineSegment2D. This contour is offset by the casing width.</i><br/>
+<p align="center"><img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing.jpg" width="40%" /> <img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing_contours.png" width="55%" /></p>
+<i>A casing is defined by a 2D contour formed with the primitive RoundedLineSegment2D. This contour is offset by the casing width.</i><br/><br/><br/>
 
-<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/sweep1.jpg" width="45%" />
-<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/sweepMPLPlot.jpg" width="45%" /><br/>
-<i>A Sweep is pipes, created with Circle2D/Arc2D which is contained in a Contour2D. You have to create the neutral fiber, i.e., the pipe’s road, with the primitive RoundedLineSegment3D.</i><br/>
+<p align="center"><img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/sweep1.jpg" width="45%" /> <img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/sweepMPLPlot.jpg" width="50%" /></p>
+<i>A Sweep is pipes, created with Circle2D/Arc2D which is contained in a Contour2D. You have to create the neutral fiber, i.e., the pipe’s road, with the primitive RoundedLineSegment3D.</i><br/><br/><br/>
 
-<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/polygon.jpg" width="47%" /><br/>
+<p align="center"><img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/polygon.jpg" width="47%" /></p>
 <i>A polygon is defined out of points. Random points are sampled and the tested whether they are inside or outside the polygon. They are plotted with the Matplotlib binding MPLPlot with custom styles:
 - red if they are outside,
 - blue if they are inside
-</i>
+</i><br/><br/><br/>
 
-<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/bspline_surface_split.png" width="47%" /><br/>
-<i>A 3D B-spline surface splitted by a 3D B-spline curve.</i>
+<p align="center"><img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/bspline_surface_split.png" width="47%" /></p>
+<i>A 3D B-spline surface split by a 3D B-spline curve.</i><br/><br/><br/>
 
 ## Features
 
@@ -97,6 +95,10 @@ https://documentation.dessia.tech/volmdlr/
 
 100% opensource on LGPL licence. See LICENCE for more details.
 
-## Contributors
+## Team and contributors
+
+The project leader is [Wirajan Da Silva](https://github.com/WirajanDASILVA).
+Volmdlr is mainly developed by the [dessia](https://dessia.tech) company as a part of its opensource SDK, but contributions are welcomed. See [CONTRIBUTING.md](/blob/master/CONTRIBUTING.md) for details
 
 - [DessiA team](https://github.com/orgs/Dessia-tech/people)
+- [luzpaz](https://github.com/luzpaz)

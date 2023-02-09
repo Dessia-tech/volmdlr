@@ -5,12 +5,13 @@
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 # import volmdlr.step as vms
 import matplotlib.pyplot as plt
-from volmdlr.models import bspline_surfaces
+
 import volmdlr.grid
+from volmdlr.models import bspline_surfaces
 
 # %% Read Step file
 

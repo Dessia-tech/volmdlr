@@ -4,37 +4,110 @@ type: docker
 name: default
 
 steps:
-- name: check code complexity
-  image: python:3.9
+- name: merge master on testing
+  image: alpine/git
+  when:
+    event: push
+    branch: master
   commands:
-  - pip install radon pylint
-  - ./code_quality.sh
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout master
+  - git fetch origin testing
+  - git checkout testing
+  - git merge master
+  - git push
+
+- name: merge testing on dev
+  image: alpine/git
+  when:
+    event: push
+    branch: testing
+  commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout testing
+  - git fetch origin dev
+  - git checkout dev
+  - git merge testing
+  - git push
+
+- name: notify by email
+  when:
+    event: push
+    branch:
+      - master
+      - dev
+    status:
+    - failure
+  image: drillster/drone-email
+  settings:
+    host: mail.dessia.tech
+    username: technical@dessia.tech
+    password:
+      from_secret: email_password
+    from: technical@dessia.tech
+
+- name: check code complexity
+  image: dessia/python-ci:3.9
+  commands:
+  - pip install pylint==2.16.1 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
   - python code_pylint.py
+  - python code_pydocstyle.py
+  - pre-commit run -a
+
+  volumes:
+    # Mount pip cache from host
+    - name: cache
+      path: /root/.cache
+
 
 - name: check pep8 formatting
   image: python:3.9
   commands:
     - git fetch --tags
-    - pip3 install -U pip autopep8
+    - pip3 install -U pip autopep8==2.0.0
     - bash code_pep8.sh
 
-- name: install, build doc run scripts
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+- name: check changelog update
+  image: python:3.8
+  when:
+    event: pull_request
+  commands:
+    - bash code_changelog.sh
+
+- name: install, build doc run scripts and tutorials
   image: python:3.8
   commands:
   - git fetch --tags
-  - pip install Cython sphinx sphinx_rtd_theme coverage
+  - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
   - python setup.py install
   - cd doc
   - make html
   - cd ../tests
-  - coverage run --source volmdlr -m unittest discover
+  - coverage run --source volmdlr -m unittest discover -v
   - cd ../scripts
   - coverage run --source volmdlr ci_scripts.py
+  - cd ../tutorials
+  - coverage run --source volmdlr ci_tutorials.py
   - cd ..
-  - coverage combine scripts/.coverage tests/.coverage
+  - coverage combine scripts/.coverage tests/.coverage tutorials/.coverage
   - coverage json
   - coverage report
+  - coverage html
   - python coverage.py
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
 
 - name: generate sdist
   image: python:3.8
@@ -42,6 +115,12 @@ steps:
   - git fetch --tags
   - pip install Cython
   - python setup.py sdist
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
 
 - name: upload to pypi
   image: plugins/pypi
@@ -68,14 +147,10 @@ steps:
       from_secret: ssh_drone_password
 
 
-- name: notify by email
-  when:
-    status:
-    - failure
-  image: drillster/drone-email
-  settings:
-    host: mail.dessia.tech
-    username: technical@dessia.tech
-    password:
-      from_secret: email_password
-    from: technical@dessia.tech
+volumes:
+  - name: pip_cache
+    host:
+      path: /tmp/cache/drone/pip
+  - name: cache
+    host:
+      path: /tmp/cache/drone

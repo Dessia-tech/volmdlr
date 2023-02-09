@@ -5,18 +5,21 @@ Common primitives 3D
 """
 
 import math
+from random import uniform
+from typing import Dict, List, Tuple
 
-from typing import Tuple, List, Dict
-from scipy.optimize import minimize, NonlinearConstraint
-
-import numpy as npy
+import dessia_common
+import dessia_common.core as dc
 import matplotlib.pyplot as plt
+import numpy as npy
+from scipy.optimize import Bounds, NonlinearConstraint, minimize
+from scipy.stats import qmc
 
 import volmdlr
 import volmdlr.core
-import volmdlr.primitives
-import volmdlr.faces
 import volmdlr.edges
+import volmdlr.faces
+import volmdlr.primitives
 import volmdlr.wires
 
 # import dessia_common.typings as dct
@@ -26,9 +29,16 @@ npy.seterr(divide='raise')
 
 class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
                                 volmdlr.primitives.RoundedLineSegments):
+    """
+
+    :param points: Points used to draw the wire.
+    :type points: List of Point3D.
+    :param radius: Radius used to connect different parts of the wire.
+    :type radius: {position1(n): float which is the radius linked the n-1 and.
+    n+1 points, position2(n+1):...}
+    """
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
-    _generic_eq = True
 
     line_class = volmdlr.edges.LineSegment3D
     arc_class = volmdlr.edges.Arc3D
@@ -41,22 +51,22 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 
         volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
 
-    def arc_features(self, ipoint):
-        radius = self.radius[ipoint]
+    def arc_features(self, point_index: int):
+        radius = self.radius[point_index]
         if self.closed:
-            if ipoint == 0:
+            if point_index == 0:
                 pt1 = self.points[-1]
             else:
-                pt1 = self.points[ipoint - 1]
-            pti = self.points[ipoint]
-            if ipoint < self.npoints - 1:
-                pt2 = self.points[ipoint + 1]
+                pt1 = self.points[point_index - 1]
+            pti = self.points[point_index]
+            if point_index < self.npoints - 1:
+                pt2 = self.points[point_index + 1]
             else:
                 pt2 = self.points[0]
         else:
-            pt1 = self.points[ipoint - 1]
-            pti = self.points[ipoint]
-            pt2 = self.points[ipoint + 1]
+            pt1 = self.points[point_index - 1]
+            pti = self.points[point_index]
+            pt2 = self.points[point_index + 1]
 
         dist1 = (pt1 - pti).norm()
         dist2 = (pt2 - pti).norm()
@@ -88,7 +98,8 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        OpenRoundedLineSegments3D rotation
+        OpenRoundedLineSegments3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -102,7 +113,8 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
                          axis: volmdlr.Vector3D,
                          angle: float):
         """
-        OpenRoundedLineSegments3D rotation. Object is updated inplace
+        OpenRoundedLineSegments3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -112,7 +124,8 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        OpenRoundedLineSegments3D translation
+        OpenRoundedLineSegments3D translation.
+
         :param offset: translation vector
         :return: A new translated OpenRoundedLineSegments3D
         """
@@ -123,6 +136,7 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
         OpenRoundedLineSegments3D translation. Object is updated inplace
+
         :param offset: translation vector
         """
         for point in self.points:
@@ -132,6 +146,8 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
                                   OpenRoundedLineSegments3D):
     """
+    Defines a closed rounded line segment in 3D.
+
     :param points: Points used to draw the wire
     :type points: List of Point3D
     :param radius: Radius used to connect different parts of the wire
@@ -141,7 +157,6 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
-    _generic_eq = True
 
     def __init__(self, points, radius, adapt_radius=False, name=''):
         volmdlr.primitives.RoundedLineSegments.__init__(
@@ -153,18 +168,17 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 
 
 class Block(volmdlr.faces.ClosedShell3D):
+    """
+    Creates a block.
+
+    :param frame: a frame 3D. The origin of the frame is the center of the block,
+     the 3 vectors are defining the edges. The frame has not to be orthogonal
+    """
     _standalone_in_db = True
-    _generic_eq = True
     _non_serializable_attributes = ['size', 'bounding_box', 'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_eq_attributes = ['name', 'color', 'alpha', 'size', 'bounding_box',
                           'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_hash_attributes = []
-
-    """
-    Creates a block
-    :param frame: a frame 3D. The origin of the frame is the center of the block,
-     the 3 vectors are defining the edges. The frame has not to be orthogonal
-    """
 
     def __init__(self, frame: volmdlr.Frame3D, *,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
@@ -175,28 +189,38 @@ class Block(volmdlr.faces.ClosedShell3D):
                      self.frame.w.norm())
 
         faces = self.shell_faces()
-        volmdlr.faces.OpenShell3D.__init__(self, faces, color=color,
-                                           alpha=alpha, name=name)
+        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
-    # def __hash__(self):
-    #     return hash(self.frame)
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+        Custom to_dict for performance
+        """
+        dict_ = dc.DessiaObject.base_dict(self)
+        dict_.update({'color': self.color,
+                      'alpha': self.alpha,
+                      'frame': self.frame.to_dict()})
+
+        return dict_
 
     def volume(self):
         return self.size[0] * self.size[1] * self.size[2]
 
     @classmethod
     def from_bounding_box(cls, bounding_box):
-        bb = bounding_box
-        xmin, xmax, ymin, ymax, zmin, zmax = bb.xmin, bb.xmax,\
-            bb.ymin, bb.ymax, bb.zmin, bb.zmax
-        origin = bb.center
-        sx, sy, sz = xmax - xmin, ymax - ymin, zmax - zmin
+        """
+        Transform a bounding box into a block.
+        """
+        origin = bounding_box.center
+        sx = bounding_box.xmax - bounding_box.xmin
+        sy = bounding_box.ymax - bounding_box.ymin
+        sz = bounding_box.zmax - bounding_box.zmin
         frame = volmdlr.Frame3D(origin, sx * volmdlr.Vector3D(1, 0, 0),
                                 sy * volmdlr.Vector3D(0, 1, 0),
                                 sz * volmdlr.Vector3D(0, 0, 1))
         return cls(frame=frame)
 
     def vertices(self):
+        """Computes the vertices of the block."""
         return [self.frame.origin - 0.5 * self.frame.u - 0.5 * self.frame.v - 0.5 * self.frame.w,
                 self.frame.origin - 0.5 * self.frame.u + 0.5 * self.frame.v - 0.5 * self.frame.w,
                 self.frame.origin + 0.5 * self.frame.u + 0.5 * self.frame.v - 0.5 * self.frame.w,
@@ -207,6 +231,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 self.frame.origin + 0.5 * self.frame.u - 0.5 * self.frame.v + 0.5 * self.frame.w]
 
     def edges(self):
+        """Computes the edges of the block."""
         p1, p2, p3, p4, p5, p6, p7, p8 = self.vertices()
         return [volmdlr.edges.LineSegment3D(p1.copy(), p2.copy()),
                 volmdlr.edges.LineSegment3D(p2.copy(), p3.copy()),
@@ -243,6 +268,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 volmdlr.wires.Contour3D([e4.copy(), e9.copy(), e8_switch.copy(), e12_switch.copy()])]
 
     def shell_faces(self):
+        """Computes the faces of the block."""
         hlx = 0.5 * self.frame.u.norm()
         hly = 0.5 * self.frame.v.norm()
         hlz = 0.5 * self.frame.w.norm()
@@ -276,10 +302,20 @@ class Block(volmdlr.faces.ClosedShell3D):
 
         return [xm_face, xp_face, ym_face, yp_face, zm_face, zp_face]
 
+    def faces_center(self):
+        """Computes the faces center of the block."""
+        return [self.frame.origin - 0.5 * self.frame.u,
+                self.frame.origin + 0.5 * self.frame.u,
+                self.frame.origin - 0.5 * self.frame.v,
+                self.frame.origin + 0.5 * self.frame.v,
+                self.frame.origin - 0.5 * self.frame.w,
+                self.frame.origin + 0.5 * self.frame.w]
+
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Block rotation
+        Block rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -293,6 +329,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                          angle: float):
         """
         Block rotation. Object is updated inplace
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -303,6 +340,7 @@ class Block(volmdlr.faces.ClosedShell3D):
     def translation(self, offset: volmdlr.Vector3D):
         """
         Block translation
+
         :param offset: translation vector
         :return: A new translated Block
         """
@@ -313,6 +351,7 @@ class Block(volmdlr.faces.ClosedShell3D):
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
         Block translation. Object is updated inplace
+
         :param offset: translation vector
         """
         self.frame.translation_inplace(offset)
@@ -347,26 +386,27 @@ class Block(volmdlr.faces.ClosedShell3D):
                                  side: str):
         basis = frame.basis()
         if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_u = basis.new_coordinates(self.frame.u)
-            new_v = basis.new_coordinates(self.frame.v)
-            new_w = basis.new_coordinates(self.frame.w)
+            new_origin = frame.global_to_local_coordinates(self.frame.origin)
+            new_u = basis.global_to_local_coordinates(self.frame.u)
+            new_v = basis.global_to_local_coordinates(self.frame.v)
+            new_w = basis.global_to_local_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         elif side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_u = basis.old_coordinates(self.frame.u)
-            new_v = basis.old_coordinates(self.frame.v)
-            new_w = basis.old_coordinates(self.frame.w)
+            new_origin = frame.local_to_global_coordinates(self.frame.origin)
+            new_u = basis.local_to_global_coordinates(self.frame.u)
+            new_v = basis.local_to_global_coordinates(self.frame.v)
+            new_w = basis.local_to_global_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         else:
-            raise ValueError(f'side value not valid, please specify'
-                             f'a correct value: \'old\' or \'new\'')
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
         return new_frame
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Frame3D
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new Frame3D.
+
+        :param side: 'old' or 'new'
         """
         new_frame = self.frame_mapping_parametres(frame, side)
         return Block(new_frame, color=self.color,
@@ -374,7 +414,8 @@ class Block(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         new_frame = self.frame_mapping_parametres(frame, side)
@@ -382,6 +423,10 @@ class Block(volmdlr.faces.ClosedShell3D):
         self.faces = self.shell_faces()
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of a Block.
+
+        """
         new_origin = self.frame.origin.copy()
         new_u = self.frame.u.copy()
         new_v = self.frame.v.copy()
@@ -393,8 +438,8 @@ class Block(volmdlr.faces.ClosedShell3D):
     def plot_data(self, x3d, y3d, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
         lines = []
-        for edge3D in self.edges():
-            lines.append(edge3D.plot_data(x3d, y3d, marker, color,
+        for edge3d in self.edges():
+            lines.append(edge3d.plot_data(x3d, y3d, marker, color,
                                           stroke_width, dash, opacity, arrow))
 
         return lines
@@ -415,7 +460,9 @@ class Block(volmdlr.faces.ClosedShell3D):
 
 class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     """
+    Extrude a profile given by outer and inner contours.
 
+    TODO: In the future change to a frame and a surface2D and an extrusion vector.
     """
     _non_serializable_attributes = ['faces', 'inner_contours3d',
                                     'outer_contour3d']
@@ -454,7 +501,29 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+        Serialize the ExtrudedProfile.
+
+        """
+        dict_ = dc.DessiaObject.base_dict(self)
+        dict_.update({'color': self.color,
+                      'alpha': self.alpha,
+                      'plane_origin': self.plane_origin.to_dict(),
+                      'outer_contour2d': self.outer_contour2d.to_dict(),
+                      'inner_contours2d': [c.to_dict() for c in self.inner_contours2d],
+                      'extrusion_vector': self.extrusion_vector.to_dict(),
+                      'x': self.x.to_dict(),
+                      'y': self.y.to_dict(),
+                      })
+
+        return dict_
+
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of Extruded Profile.
+
+        """
         return self.__class__(plane_origin=self.plane_origin.copy(),
                               x=self.x.copy(),
                               y=self.y.copy(),
@@ -466,6 +535,10 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                               name=self.name)
 
     def shell_faces(self):
+        """
+        Computes the shell faces from init data.
+
+        """
         lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(
             self.plane_origin, self.x, self.y)
         lower_face = volmdlr.faces.PlaneFace3D(
@@ -497,8 +570,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         name = 'primitive' + str(ip)
         s = 'Wo = []\n'
         s += 'Eo = []\n'
-        for ip, primitive in enumerate(self.outer_contour3d.primitives):
-            s += primitive.FreeCADExport('L{}'.format(ip))
+        for prim_index, primitive in enumerate(self.outer_contour3d.primitives):
+            s += primitive.FreeCADExport('L{}'.format(prim_index))
             s += 'Eo.append(Part.Edge(L{}))\n'.format(ip)
         s += 'Wo.append(Part.Wire(Eo[:]))\n'
         s += 'Fo = Part.Face(Wo)\n'
@@ -507,9 +580,9 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         s += 'W = []\n'
         for ic, contour in enumerate(self.inner_contours3d):
             s += 'E = []\n'
-            for ip, primitive in enumerate(contour.primitives):
-                s += primitive.FreeCADExport('L{}_{}'.format(ic, ip))
-                s += 'E.append(Part.Edge(L{}_{}))\n'.format(ic, ip)
+            for primitive_index, primitive in enumerate(contour.primitives):
+                s += primitive.FreeCADExport('L{}_{}'.format(ic, primitive_index))
+                s += 'E.append(Part.Edge(L{}_{}))\n'.format(ic, primitive_index)
             s += 'Wi = Part.Wire(E[:])\n'
             s += 'Fi.append(Part.Face(Wi))\n'
 
@@ -554,8 +627,9 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new ExtrudeProfile
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new ExtrudeProfile.
+
+        :param side: = 'old' or 'new'.
         """
         extrusion_vector, x, y = self.frame_mapping_parameters(frame,
                                                                side)
@@ -566,8 +640,9 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        :param side: = 'old' or 'new'
         """
         self.extrusion_vector, self.x, self.y =\
             self.frame_mapping_parameters(frame, side)
@@ -576,11 +651,12 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        ExtrudedProfile rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated ExtrudedProfile
+        Extruded Profile rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated ExtrudedProfile.
         """
         return self.__class__(
             plane_origin=self.plane_origin.rotation(center, axis, angle),
@@ -595,11 +671,13 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        ExtrudedProfile rotation. Object is updated inplace
+        Extruded Profile rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
         """
+
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(volmdlr.O3D, axis, angle)
         self.y.rotation_inplace(volmdlr.O3D, axis, angle)
@@ -607,7 +685,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        ExtrudedProfile translation
+        Extruded Profile translation.
+
         :param offset: translation vector
         :return: A new translated ExtrudedProfile
         """
@@ -621,7 +700,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        ExtrudedProfile translation. Object is updated inplace
+        Extruded profile translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.plane_origin.translation_inplace(offset)
@@ -629,6 +709,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
 class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     """
+    Revolve a 2D profile along an axis around a certain angle.
 
     """
     _non_serializable_attributes = ['faces', 'contour3D']
@@ -654,7 +735,29 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+        Custom to dict for performance.
+        """
+        dict_ = dc.DessiaObject.base_dict(self)
+        dict_.update({'color': self.color,
+                      'alpha': self.alpha,
+                      'plane_origin': self.plane_origin.to_dict(),
+                      'contour2d': self.contour2d.to_dict(),
+                      'axis_point': self.axis_point.to_dict(),
+                      'x': self.x.to_dict(),
+                      'y': self.y.to_dict(),
+                      'angle': self.angle,
+                      'axis': self.axis.to_dict()
+                      })
+
+        return dict_
+
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of Revolvedprofile.
+
+        """
         return self.__class__(plane_origin=self.plane_origin.copy(),
                               x=self.x.copy(), y=self.y.copy(),
                               contour2d=self.contour2d.copy(),
@@ -688,7 +791,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive' + str(ip)
         s = 'W=[]\n'
-#        for ic, contour in enumerate(self.contours3D):
+
         s += 'L=[]\n'
         for ibp, basis_primitive in enumerate(self.contour3d.edges):
             s += basis_primitive.FreeCADExport('L{}_{}'.format(1, ibp), 8)
@@ -708,7 +811,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def volume(self):
         """
-        Volume from guldin formulae
+        Volume from Guldin formulae.
         """
         p1 = self.axis_point.PlaneProjection3D(self.plane_origin,
                                                self.x, self.y)
@@ -726,11 +829,16 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        RevolvedProfile rotation
+        Revolved profile rotation.
+
         :param center: rotation center
+        :type center: volmdlr.Point3D
         :param axis: rotation axis
+        :type axis: volmdlr.Vector3D
         :param angle: angle rotation
+        :type angle: float
         :return: a new rotated RevolvedProfile
+        :rtype: RevolvedProfile
         """
         return self.__class__(
             plane_origin=self.plane_origin.rotation(center, axis, angle),
@@ -746,10 +854,14 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        RevolvedProfile rotation. Object is updated inplace
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
+        Revolved profile rotation. Object is updated inplace.
+
+        :param center: rotation center.
+        :type center: `volmdlr.Point3D`.
+        :param axis: rotation axis.
+        :type axis: `volmdlr.Vector3D`.
+        :param angle: rotation angle.
+        :type angle: float.
         """
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
@@ -759,9 +871,10 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        RevolvedProfile translation
-        :param offset: translation vector
-        :return: A new translated RevolvedProfile
+        Revolved Profile translation.
+
+        :param offset: translation vector.
+        :return: A new translated RevolvedProfile.
         """
         return self.__class__(
             plane_origin=self.plane_origin.translation(offset),
@@ -773,8 +886,9 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        RevolvedProfile translation. Object is updated inplace
-        :param offset: translation vector
+        Revolved Profile translation. Object is updated inplace.
+
+        :param offset: translation vector.
         """
         self.plane_origin.translation_inplace(offset)
         self.axis_point.translation_inplace(offset)
@@ -797,7 +911,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new RevolvedProfile
+        Changes frame_mapping and return a new Revolved Profile.
+
         side = 'old' or 'new'
         """
         axis, x, y = self.frame_mapping_parameters(frame, side)
@@ -809,7 +924,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         self.axis, self.x, self.y = self.frame_mapping_parameters(frame, side)
@@ -819,10 +935,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
 class Cylinder(RevolvedProfile):
     """
-    Creates a full cylinder with the position, the axis of revolution,
-    the radius and the length.
+    Creates a full cylinder with the position, the axis of revolution the radius and the length.
     """
-    _non_serializable_attributes = ['faces', 'contour3D']
 
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  radius: float, length: float,
@@ -852,40 +966,44 @@ class Cylinder(RevolvedProfile):
 
     def _bounding_box(self):
         """
-        This was copied for HollowCylinder. Inheritence removed to avoid problems
-        """
+        Computes the bounding box of a cylinder.
 
+        :return: The BoundingBox
+        :rtype: :class:`volmdlr.core.BoundingBox`
+        """
+        # This was copied for HollowCylinder. Inheritence removed to avoid problems
         radius = self.radius
 
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        if pointA[0] > pointB[0]:
-            pointA, pointB = pointB, pointA
-        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[0] > point_b[0]:
+            point_a, point_b = point_b, point_a
+        xmin = point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = point_b[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[1] > pointB[1]:
-            pointA, pointB = pointB, pointA
-        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[1] > point_b[1]:
+            point_a, point_b = point_b, point_a
+        ymin = point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = point_b[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[2] > pointB[2]:
-            pointA, pointB = pointB, pointA
-        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
-        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[2] > point_b[2]:
+            point_a, point_b = point_b, point_a
+        zmin = point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = point_b[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def volume(self):
+        """Computes the volume of the cylinder."""
         return self.length * math.pi * self.radius**2
 
     @classmethod
@@ -920,26 +1038,11 @@ class Cylinder(RevolvedProfile):
         else:
             return ''
 
-    def babylon_script(self, name='primitive_mesh'):
-        normal_vector1 = self.axis.RandomUnitnormalVector()
-        p1 = volmdlr.Point2D((-0.5 * self.length, self.radius))
-        p2 = volmdlr.Point2D((0.5 * self.length, self.radius))
-        p3 = volmdlr.Point2D((0.5 * self.length, 0.))
-        p4 = volmdlr.Point2D((-0.5 * self.length, 0.))
-        l1 = volmdlr.edges.LineSegment2D(p1, p2)
-        l2 = volmdlr.edges.LineSegment2D(p2, p3)
-        l3 = volmdlr.edges.LineSegment2D(p3, p4)
-        l4 = volmdlr.edges.LineSegment2D(p4, p1)
-        extruded_profile = RevolvedProfile(
-            self.position, self.axis, normal_vector1,
-            volmdlr.wires.Contour2D([l1, l2, l3, l4]),
-            self.position, self.axis, name=self.name)
-        return extruded_profile.babylon_script(name=name)
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Cylinder rotation
+        Cylinder rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -954,6 +1057,7 @@ class Cylinder(RevolvedProfile):
                          angle: float):
         """
         Cylinder rotation. Object is updated inplace
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -963,7 +1067,8 @@ class Cylinder(RevolvedProfile):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Cylinder translation
+        Cylinder translation.
+
         :param offset: translation vector
         :return: A new translated Cylinder
         """
@@ -973,14 +1078,16 @@ class Cylinder(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Cylinder translation. Object is updated inplace
+        Cylinder translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.position.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Frame3D
+        Changes frame_mapping and return a new Frame3D.
+
         side = 'old' or 'new'
         """
         basis = frame.basis()
@@ -996,7 +1103,8 @@ class Cylinder(RevolvedProfile):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         basis = frame.basis()
@@ -1009,70 +1117,161 @@ class Cylinder(RevolvedProfile):
         self.position.frame_mapping_inplace(frame, side)
         self.axis = axis
 
+    def to_dict(self, use_pointers: bool = False, memo: bool = None, path: str = '#'):
+        """
+        Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class RevolvedProfile.
+        """
+        return dessia_common.DessiaObject.to_dict(self, use_pointers, memo, path)
+
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of Cylinder.
+        """
         new_position = self.position.copy()
         new_axis = self.axis.copy()
         return Cylinder(new_position, new_axis, self.radius, self.length,
                         color=self.color, alpha=self.alpha, name=self.name)
 
-    def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder'):
+    def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder') -> float:
         """
-        Compute the minimal distance between two volmdlr cylinders
+        Compute the minimal distance between two volmdlr cylinders.
 
         :param other_cylinder: volmdlr Cylinder
         :return: minimal distance between two 3D cylinders
         """
+        # Basic check
+        if self.point_belongs(other_cylinder.position) or other_cylinder.point_belongs(self.position):
+            return 0.
+
         # Local frames of cylinders
-        frame0 = volmdlr.Frame3D.from_point_and_vector(point=self.position,
-                                                       vector=self.axis,
-                                                       main_axis=volmdlr.Z3D)
-        frame1 = volmdlr.Frame3D.from_point_and_vector(point=other_cylinder.position,
-                                                       vector=other_cylinder.axis,
-                                                       main_axis=volmdlr.Z3D)
+        frame0 = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+        frame1 = volmdlr.Frame3D.from_point_and_vector(
+            point=other_cylinder.position,
+            vector=other_cylinder.axis,
+            main_axis=volmdlr.Z3D,
+        )
+
+        matrix0 = frame0.transfer_matrix()
+        x0, y0, z0 = frame0.origin.x, frame0.origin.y, frame0.origin.z
+        matrix1 = frame1.transfer_matrix()
+        x1, y1, z1 = frame1.origin.x, frame1.origin.y, frame1.origin.z
+
+        # Euclidean distance
+        def dist(p0, p1):
+            return math.sqrt(
+                (p0[0] - p1[0]) ** 2 + (p0[1] - p1[1]) ** 2 + (p0[2] - p1[2]) ** 2
+            )
+
+        # Local coordinates to global coordinates
+        def to_global_point(p, matrix, origin):
+            return [
+                matrix.M11 * p[0] + matrix.M12 * p[1] + matrix.M13 * p[2] + origin[0],
+                matrix.M21 * p[0] + matrix.M22 * p[1] + matrix.M23 * p[2] + origin[1],
+                matrix.M31 * p[0] + matrix.M32 * p[1] + matrix.M33 * p[2] + origin[2],
+            ]
 
         # Objective function
-        def dist_points(x):
-            """
-            :param x: coords of a point in cylinder 0 local frame, coords of a point in cylinder 1 local frame
-            :return: distance between the two points
-            """
-            point0 = frame0.old_coordinates(volmdlr.Point3D(x[0], x[1], x[2]))
-            point1 = frame1.old_coordinates(volmdlr.Point3D(x[3], x[4], x[5]))
+        def objective(x):
+            p0 = to_global_point(x[:3], matrix0, [x0, y0, z0])
+            p1 = to_global_point(x[3:], matrix1, [x1, y1, z1])
 
-            return point0.point_distance(point1)
+            return dist(p0, p1)
+
+        # Gradient of objective function
+        def gradient_objective(x):
+            p0 = to_global_point(x[:3], matrix0, [x0, y0, z0])
+            p1 = to_global_point(x[3:], matrix1, [x1, y1, z1])
+
+            distance = dist(p0, p1)
+
+            return [
+                (p0[0] - p1[0]) / distance * matrix0.M11
+                + (p0[1] - p1[1]) / distance * matrix0.M21
+                + (p0[2] - p1[2]) / distance * matrix0.M31,
+                (p0[0] - p1[0]) / distance * matrix0.M12
+                + (p0[1] - p1[1]) / distance * matrix0.M22
+                + (p0[2] - p1[2]) / distance * matrix0.M32,
+                (p0[0] - p1[0]) / distance * matrix0.M13
+                + (p0[1] - p1[1]) / distance * matrix0.M23
+                + (p0[2] - p1[2]) / distance * matrix0.M33,
+                (p1[0] - p0[0]) / distance * matrix1.M11
+                + (p1[1] - p0[1]) / distance * matrix1.M21
+                + (p1[2] - p0[2]) / distance * matrix1.M31,
+                (p1[0] - p0[0]) / distance * matrix1.M12
+                + (p1[1] - p0[1]) / distance * matrix1.M22
+                + (p1[2] - p0[2]) / distance * matrix1.M32,
+                (p1[0] - p0[0]) / distance * matrix1.M13
+                + (p1[1] - p0[1]) / distance * matrix1.M23
+                + (p1[2] - p0[2]) / distance * matrix1.M33,
+            ]
 
         # Initial vector
-        p0 = frame0.old_coordinates(volmdlr.O3D)
-        p1 = frame1.old_coordinates(volmdlr.O3D)
-        x0 = (p0.x, p0.y, p0.z, p1.x, p1.y, p1.z)
+        initial_guess = npy.zeros(6)
 
         # Constraints
         def constraint_radius_0(x):
             # radius of cylinder 0
             return x[0] ** 2 + x[1] ** 2
 
-        def constraint_height_0(x):
-            # height of cylinder 0
-            return x[2]
-
         def constraint_radius_1(x):
             # radius of cylinder 1
             return x[3] ** 2 + x[4] ** 2
 
-        def constraint_height_1(x):
-            # height of cylinder 1
-            return x[5]
+        def gradient_constraint_radius_0(x):
+            # gradient of constraint_radius_0
+            return [2 * x[0], 2 * x[1], 0, 0, 0, 0]
+
+        def gradient_constraint_radius_1(x):
+            # gradient of constraint_radius_1
+            return [0, 0, 0, 2 * x[3], 2 * x[4], 0]
 
         constraints = [
-            NonlinearConstraint(fun=constraint_radius_0, lb=0, ub=self.radius ** 2),
-            NonlinearConstraint(fun=constraint_height_0, lb=-self.length / 2, ub=self.length / 2),
-            NonlinearConstraint(fun=constraint_radius_1, lb=0, ub=other_cylinder.radius ** 2),
-            NonlinearConstraint(fun=constraint_height_1, lb=-other_cylinder.length / 2, ub=other_cylinder.length / 2)
+            NonlinearConstraint(
+                fun=constraint_radius_0,
+                lb=0,
+                ub=self.radius**2,
+                jac=gradient_constraint_radius_0,
+            ),
+            NonlinearConstraint(
+                fun=constraint_radius_1,
+                lb=0,
+                ub=other_cylinder.radius**2,
+                jac=gradient_constraint_radius_1,
+            ),
         ]
 
-        return minimize(fun=dist_points, x0=x0, constraints=constraints).fun
+        # Bounds
+        bounds = Bounds(
+            lb=[
+                -self.radius,
+                -self.radius,
+                -self.length / 2,
+                -other_cylinder.radius,
+                -other_cylinder.radius,
+                -other_cylinder.length / 2,
+            ],
+            ub=[
+                self.radius,
+                self.radius,
+                self.length / 2,
+                other_cylinder.radius,
+                other_cylinder.radius,
+                other_cylinder.length / 2,
+            ],
+        )
 
-    def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder'):
+        return minimize(
+            fun=objective,
+            x0=initial_guess,
+            bounds=bounds,
+            tol=1e-6,
+            constraints=constraints,
+            jac=gradient_objective,
+        ).fun
+
+    def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder') -> bool:
         """
         :param other_cylinder: volmdlr Cylinder
         :return: boolean, True if cylinders are intersecting, False otherwise
@@ -1081,8 +1280,107 @@ class Cylinder(RevolvedProfile):
 
         return dist < 1e-5
 
+    def random_point_inside(self) -> volmdlr.Point3D:
+        """
+        :return: a random point inside the Cylinder
+        """
+        theta = uniform(0, 2 * math.pi)
+        radius = math.sqrt(uniform(0, 1)) * self.radius
+
+        x_local = radius * math.cos(theta)
+        y_local = radius * math.sin(theta)
+        z_local = uniform(-self.length / 2, self.length / 2)
+
+        local_frame = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+
+        return local_frame.local_to_global_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
+
+    def lhs_points_inside(self, n_points: int) -> List[volmdlr.Point3D]:
+        """
+        :param n_points: number of points
+        :return: Latin hypercube sampling points inside the cylinder
+        """
+        local_frame = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+
+        # sampling point in cartesian local coordinates
+        sampler = qmc.LatinHypercube(d=3, seed=0)
+        sample = qmc.scale(
+            sampler.random(n=n_points),
+            [0, 0, -self.length / 2],
+            [1, 2 * math.pi, self.length / 2],
+        )
+
+        # converting sampled point in global coordinates volmdlr.Point3D points
+        points = []
+        for point in sample:
+            radius = math.sqrt(point[0]) * self.radius
+            theta = point[1]
+
+            x_local = radius * math.cos(theta)
+            y_local = radius * math.sin(theta)
+            z_local = point[2]
+
+            points.append(
+                local_frame.local_to_global_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
+            )
+
+        return points
+
+    def point_belongs(self, point3d: volmdlr.Point3D, **kwargs) -> bool:
+        """
+        :param point3d: volmdlr Point3D
+        :return: True if the given point is inside the cylinder, False otherwise
+        """
+        local_frame = volmdlr.Frame3D.from_point_and_vector(
+            point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
+        )
+
+        local_point = local_frame.global_to_local_coordinates(point3d)
+
+        return (math.sqrt(local_point.x ** 2 + local_point.y ** 2) <= self.radius) and (
+                -self.length / 2 <= local_point.z <= self.length / 2
+        )
+
+    def interference_volume_with_other_cylinder(
+            self, other_cylinder: "Cylinder", n_points: int = 1000
+    ) -> float:
+        """
+        Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method).
+
+        :param other_cylinder: volmdlr Cylinder
+        :param n_points: optional parameter used for the number of random point used to discretize the cylinder
+        :return: an estimation of the interference volume
+        """
+
+        # doing the discretization on the smallest cylinder to have better precision
+        if self.volume() < other_cylinder.volume():
+            smallest_cylinder = self
+        else:
+            smallest_cylinder = other_cylinder
+            other_cylinder = self
+
+        return (
+                len(
+                    [
+                        point
+                        # for point in (smallest_cylinder.random_point_inside() for _ in range(n_points))
+                        for point in smallest_cylinder.lhs_points_inside(n_points)
+                        if other_cylinder.point_belongs(point)
+                    ]
+                )
+                / n_points
+        ) * smallest_cylinder.volume()
+
 
 class Cone(RevolvedProfile):
+    """
+    Defines a cone at a given position & axis.
+    """
+
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
@@ -1099,42 +1397,42 @@ class Cone(RevolvedProfile):
         p1 = volmdlr.Point2D(0., 0.)
         p2 = volmdlr.Point2D(0., self.radius)
         p3 = volmdlr.Point2D(self.length, 0.)
-        l1 = volmdlr.edges.LineSegment2D(p1, p2)
-        l2 = volmdlr.edges.LineSegment2D(p2, p3)
-        l3 = volmdlr.edges.LineSegment2D(p3, p1)
-        contour = volmdlr.wires.Contour2D([l1, l2, l3])
+
+        contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(p1, p2),
+                                           volmdlr.edges.LineSegment2D(p2, p3),
+                                           volmdlr.edges.LineSegment2D(p3, p1)])
         y = axis.random_unit_normal_vector()
         RevolvedProfile.__init__(self, position, axis, y, contour, position,
                                  axis, color=color, alpha=alpha, name=name)
 
     def _bounding_box(self):
         """
-        A is the point at the basis
-        B is the top
+        A is the point at the basis.
+        B is the top.
         """
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        x_bound = (pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[0])
+        x_bound = (point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[0])
         xmin = min(x_bound)
         xmax = max(x_bound)
 
-        y_bound = (pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[1])
+        y_bound = (point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[1])
         ymin = min(y_bound)
         ymax = max(y_bound)
 
-        z_bound = (pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
-                   pointA[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[2])
+        z_bound = (point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   point_a[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[2])
         zmin = min(z_bound)
         zmax = max(z_bound)
 
@@ -1142,7 +1440,8 @@ class Cone(RevolvedProfile):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Cone translation
+        Cone translation.
+
         :param offset: translation vector
         :return: A new translated Cone
         """
@@ -1155,7 +1454,8 @@ class Cone(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Plane3D translation. Object is updated inplace
+        Plane3D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
         self.position.translation_inplace(offset)
@@ -1163,7 +1463,8 @@ class Cone(RevolvedProfile):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Cone rotation
+        Cone rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -1177,24 +1478,34 @@ class Cone(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Cone rotation. Object is updated inplace
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
+        Cone rotation. Object is updated inplace.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: rotation angle.
         """
         self.position.rotation_inplace(center, axis, angle)
         self.axis.rotation_inplace(center, axis, angle)
 
     def volume(self):
+        """
+        Returns the volume of the cone.
+
+        """
         return self.length * math.pi * self.radius**2 / 3
 
 
 class HollowCylinder(RevolvedProfile):
+    """
+    Creates a hollow cylinder with the position, the axis of revolution,
+    the inner and outer radius and the length.
+
+    """
+
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  inner_radius: float, outer_radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1,
                  name: str = ''):
-        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.position = position
         axis.normalize()
         self.axis = axis
@@ -1221,31 +1532,31 @@ class HollowCylinder(RevolvedProfile):
 
         radius = self.outer_radius
 
-        pointA = self.position - self.length / 2 * self.axis
-        pointB = self.position + self.length / 2 * self.axis
+        point_a = self.position - self.length / 2 * self.axis
+        point_b = self.position + self.length / 2 * self.axis
 
-        dx2 = (pointA[0] - pointB[0])**2
-        dy2 = (pointA[1] - pointB[1])**2
-        dz2 = (pointA[2] - pointB[2])**2
+        dx2 = (point_a[0] - point_b[0])**2
+        dy2 = (point_a[1] - point_b[1])**2
+        dz2 = (point_a[2] - point_b[2])**2
 
         # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        if pointA[0] > pointB[0]:
-            pointA, pointB = pointB, pointA
-        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[0] > point_b[0]:
+            point_a, point_b = point_b, point_a
+        xmin = point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = point_b[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[1] > pointB[1]:
-            pointA, pointB = pointB, pointA
-        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
-        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[1] > point_b[1]:
+            point_a, point_b = point_b, point_a
+        ymin = point_a[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = point_b[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
-        if pointA[2] > pointB[2]:
-            pointA, pointB = pointB, pointA
-        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
-        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        if point_a[2] > point_b[2]:
+            point_a, point_b = point_b, point_a
+        zmin = point_a[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = point_b[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
@@ -1254,6 +1565,10 @@ class HollowCylinder(RevolvedProfile):
                                         - self.inner_radius**2)
 
     def copy(self):
+        """
+        Creates a copy of HollowCylinder.
+
+        """
         new_position = self.position.copy()
         new_axis = self.axis.copy()
         return HollowCylinder(new_position, new_axis, self.inner_radius, self.outer_radius, self.length,
@@ -1286,8 +1601,8 @@ class HollowCylinder(RevolvedProfile):
             s += 'F2 = Part.Face(W2)\n'
 
             if self.inner_radius != 0.:
-                s += 'C1 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(ri,
-                                                                                                      x, y, z, ax, ay, az)
+                s += 'C1 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(
+                    ri, x, y, z, ax, ay, az)
                 s += 'W1 = Part.Wire(C1.Edges)\n'
                 s += 'F1 = Part.Face(W1)\n'
                 s += 'F2 = F2.cut(F1)\n'
@@ -1301,31 +1616,19 @@ class HollowCylinder(RevolvedProfile):
         else:
             return ''
 
-    def babylon_script(self, name='primitive_mesh'):
-        normal_vector1 = self.axis.RandomUnitnormalVector()
-        p1 = volmdlr.Point2D((-0.5 * self.length, self.outer_radius))
-        p2 = volmdlr.Point2D((0.5 * self.length, self.outer_radius))
-        p3 = volmdlr.Point2D((0.5 * self.length, self.inner_radius))
-        p4 = volmdlr.Point2D((-0.5 * self.length, self.inner_radius))
-        l1 = volmdlr.edges.LineSegment2D(p1, p2)
-        l2 = volmdlr.edges.LineSegment2D(p2, p3)
-        l3 = volmdlr.edges.LineSegment2D(p3, p4)
-        l4 = volmdlr.edges.LineSegment2D(p4, p1)
-        extruded_profile = RevolvedProfile(self.position,
-                                           self.axis, normal_vector1,
-                                           volmdlr.wires.Contour2D([l1, l2, l3, l4]),
-                                           self.position, self.axis,
-                                           name=self.name)
-        return extruded_profile.babylon_script(name=name)
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        HollowCylinder rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated HollowCylinder
+        Hollow cylinder rotation.
+
+        :param center: rotation center.
+        :type center: volmdlr.Point3D
+        :param axis: rotation axis.
+        :type axis: volmdlr.Vector3D
+        :param angle: angle rotation.
+        :type angle: float
+        :return: a new rotated HollowCylinder.
+        :rtype: HollowCylinder
         """
         return self.__class__(
             position=self.position.rotation(center, axis, angle),
@@ -1336,7 +1639,8 @@ class HollowCylinder(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        HollowCylinder rotation. Object is updated inplace
+        Hollow cylinder rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -1346,9 +1650,10 @@ class HollowCylinder(RevolvedProfile):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation
-        :param offset: translation vector
-        :return: A new translated HollowCylinder
+        Hollow cylinder translation.
+
+        :param offset: translation vector.
+        :return: A new translated HollowCylinder.
         """
         return self.__class__(
             position=self.position.translation(offset), axis=self.axis,
@@ -1357,15 +1662,17 @@ class HollowCylinder(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        HollowCylinder translation. Object is updated inplace
-        :param offset: translation vector
+        Hollow cylinder translation. Object is updated in-place.
+
+        :param offset: translation vector.
         """
         self.position.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new HollowCylinder
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new HollowCylinder.
+
+        side = 'old' or 'new'.
         """
         basis = frame.basis()
         if side == 'old':
@@ -1382,8 +1689,9 @@ class HollowCylinder(RevolvedProfile):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        side = 'old' or 'new'.
         """
         basis = frame.basis()
         if side == 'old':
@@ -1398,9 +1706,9 @@ class HollowCylinder(RevolvedProfile):
 
 class Sweep(volmdlr.faces.ClosedShell3D):
     """
-    Sweep a 2D contour along a Wire3D
+    Sweep a 2D contour along a Wire3D.
+
     """
-    _non_serializable_attributes = ['faces']
 
     def __init__(self, contour2d: List[volmdlr.wires.Contour2D],
                  wire3d: volmdlr.wires.Wire3D, *,
@@ -1413,6 +1721,19 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         faces = self.shell_faces()
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """
+        Custom to dict for perf
+        """
+        dict_ = dc.DessiaObject.base_dict(self)
+        dict_.update({'color': self.color,
+                      'alpha': self.alpha,
+                      'wire3d': self.wire3d.to_dict(),
+                      'contour2d': self.contour2d.to_dict()
+                      })
+
+        return dict_
 
     def shell_faces(self):
         """
@@ -1544,14 +1865,22 @@ class Sweep(volmdlr.faces.ClosedShell3D):
             face.frame_mapping_inplace(frame, side)
 
     def copy(self, deep=True, memo=None):
+        """
+        Creates a copy of Sweep.
+
+        """
         new_contour2d = self.contour2d.copy()
         new_wire3d = self.wire3d.copy()
         return Sweep(new_contour2d, new_wire3d, color=self.color,
                      alpha=self.alpha, name=self.name)
 
 
-class Sphere(volmdlr.faces.ClosedShell3D):
-    _non_serializable_attributes = ['faces']
+# class Sphere(volmdlr.Primitive3D):
+class Sphere(RevolvedProfile):
+    """
+    Defines a sphere at a given position & radius.
+
+    """
 
     def __init__(self, center, radius,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
@@ -1560,26 +1889,22 @@ class Sphere(volmdlr.faces.ClosedShell3D):
         self.radius = radius
         self.position = center
 
-        face = volmdlr.faces.SphericalSurface3D(volmdlr.Frame3D(self.center, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D),
-                                                self.radius).rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
-        volmdlr.faces.ClosedShell3D.__init__(self, faces=[face], color=color, alpha=alpha, name=name)
+        # Revolved Profile for complete sphere
+        s = volmdlr.Point2D(-self.radius, 0.01 * self.radius)
+        i = volmdlr.Point2D(0, 1.01 * self.radius)
+        e = volmdlr.Point2D(self.radius, 0.01 * self.radius)  # Not coherent but it works at first, to change !!
 
-        # # Revolved Profile for complete sphere
-        # s = volmdlr.Point2D(-self.radius, 0.01 * self.radius)
-        # i = volmdlr.Point2D(0, 1.01 * self.radius)
-        # e = volmdlr.Point2D(self.radius, 0.01 * self.radius)  # Not coherent but it works at first, to change !!
+        # s = volmdlr.Point2D((-self.radius, 0))
+        # i = volmdlr.Point2D(((math.sqrt(2)/2)*self.radius,(math.sqrt(2)/2)*self.radius))
+        # e = volmdlr.Point2D(((-math.sqrt(2)/2)*self.radius,(-math.sqrt(2)/2)*self.radius))
 
-        # # s = volmdlr.Point2D((-self.radius, 0))
-        # # i = volmdlr.Point2D(((math.sqrt(2)/2)*self.radius,(math.sqrt(2)/2)*self.radius))
-        # # e = volmdlr.Point2D(((-math.sqrt(2)/2)*self.radius,(-math.sqrt(2)/2)*self.radius))
+        contour = volmdlr.wires.Contour2D([
+            volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
 
-        # contour = volmdlr.wires.Contour2D([
-        #     volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
-
-        # axis = volmdlr.X3D
-        # y = axis.random_unit_normal_vector()
-        # RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
-        #                          color=color, alpha=alpha, name=name)
+        axis = volmdlr.X3D
+        y = axis.random_unit_normal_vector()
+        RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
+                                 color=color, alpha=alpha, name=name)
 
     def volume(self):
         return 4 / 3 * math.pi * self.radius**3
@@ -1590,18 +1915,6 @@ class Sphere(volmdlr.faces.ClosedShell3D):
         x, y, z = round(1000 * self.center, ndigits)
         return '{} = Part.makeSphere({}, fc.Vector({}, {}, {}))\n'.format(
             name, r, x, y, z)
-
-    def babylon_script(self, name='primitive_mesh'):
-        p1 = volmdlr.Point2D((-self.radius, 0))
-        p2 = volmdlr.Point2D((0, self.radius))
-        p3 = volmdlr.Point2D((self.radius, 0))
-        line = volmdlr.edges.LineSegment2D(p1, p3)
-        arc = volmdlr.edges.Arc2D(p1, p2, p3)
-        extruded_profile = RevolvedProfile(
-            self.position, volmdlr.X3D, volmdlr.Y3D,
-            volmdlr.wires.Contour2D([line, arc]), self.position, volmdlr.X3D,
-            name=self.name)
-        return extruded_profile.babylon_script(name=name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1676,6 +1989,9 @@ class Sphere(volmdlr.faces.ClosedShell3D):
 
 
 class Measure3D(volmdlr.edges.Line3D):
+    """
+    Used to create a measure between two points in 3D.
+    """
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  color: Tuple[float, float, float] = (1., 0, 0)):
@@ -1688,21 +2004,13 @@ class Measure3D(volmdlr.edges.Line3D):
     def __hash__(self):
         return hash(self.point1) + hash(self.point2)
 
-    def babylon_script(self):
-        s = 'var myPoints = [];\n'
-        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(
-            self.point1.x, self.point1.y, self.point1.z)
-        s += 'myPoints.push(point1);\n'
-        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(
-            self.point2.x, self.point2.y, self.point2.z)
-        s += 'myPoints.push(point2);\n'
-        s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
-        s += 'line.color = new BABYLON.Color3({}, {}, {});\n'.format(
-            self.color[0], self.color[1], self.color[2])
-        return s
-
 
 class BSplineExtrusion(volmdlr.core.Primitive3D):
+    """
+    Defines the extrusion of a BSpline.
+
+    :param vectorextru: extrusion vector.
+    """
 
     def __init__(self, obj, vectorextru: volmdlr.Vector3D, name: str = ''):
         self.obj = obj
@@ -1712,20 +2020,30 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
             self.points = obj.tessel_points
         else:
             self.points = obj.points
-        self.name = name
+
+        volmdlr.core.Primitive3D.__init__(self, name=name)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        """
+        Converts a step primitive to a BSplineExtrusion.
+
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :type arguments: list
+        :param object_dict: The dictionnary containing all the step primitives
+            that have already been instanciated.
+        :type object_dict: dict
+        :return: The corresponding BSplineExtrusion object.
+        :rtype: :class:`volmdlr.primitives3d.BSplineExtrusion`
+        """
         name = arguments[0][1:-1]
         if object_dict[arguments[1]].__class__ is volmdlr.wires.Ellipse3D:
             ell = object_dict[arguments[1]]
             vectextru = -object_dict[arguments[2]]
             return cls(ell, vectextru, name)
 
-        elif object_dict[arguments[1]].__class__ is \
-                volmdlr.edges.BSplineCurve3D:
+        if object_dict[arguments[1]].__class__ is volmdlr.edges.BSplineCurve3D:
             bsplinecurve = object_dict[arguments[1]]
             vectextru = object_dict[arguments[2]]
             return cls(bsplinecurve, vectextru, name)
-        else:
-            raise NotImplementedError  # a adapter pour les bpsline
+        raise NotImplementedError  # a adapter pour les bpsline

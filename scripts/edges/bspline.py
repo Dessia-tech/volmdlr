@@ -9,7 +9,6 @@ Created on Fri Jan  8 16:23:49 2021
 import volmdlr as vm
 import volmdlr.edges as vme
 
-
 # 2D
 points2d = [vm.Point2D(0, 0),
             vm.Point2D(0.1, 0.1),

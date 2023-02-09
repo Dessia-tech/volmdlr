@@ -1,6 +1,7 @@
+import matplotlib.pyplot as plt
+
 import volmdlr as vm
 import volmdlr.faces as vmf
-import matplotlib.pyplot as plt
 
 degree_u = 3
 degree_v = 2

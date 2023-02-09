@@ -6,11 +6,12 @@ Created on Wed Mar 2 2022
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
+
+import matplotlib.pyplot as plt
 
 import volmdlr as vm
 import volmdlr.wires
-import matplotlib.pyplot as plt
 
 # %% Contour2d
 

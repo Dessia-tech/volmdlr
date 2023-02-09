@@ -1,7 +1,7 @@
-import volmdlr as vm
-import volmdlr.edges as vme
 import matplotlib.pyplot as plt
 
+import volmdlr as vm
+import volmdlr.edges as vme
 
 degree = 5
 control_points = [vm.Point3D(0, 0, 0),

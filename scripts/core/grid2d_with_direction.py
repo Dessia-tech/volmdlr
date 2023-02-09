@@ -5,10 +5,11 @@
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
+
+import matplotlib.pyplot as plt
 
 import volmdlr.grid
-import matplotlib.pyplot as plt
 
 # %% Grid2d definition 'with direction'
 

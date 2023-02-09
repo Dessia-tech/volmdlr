@@ -10,8 +10,6 @@ import numpy as npy
 
 import volmdlr as vm
 
-
-
 p1 = vm.Point2D(2*npy.random.random(2)-1)
 p2 = vm.Point2D(2*npy.random.random(2)-1)
 

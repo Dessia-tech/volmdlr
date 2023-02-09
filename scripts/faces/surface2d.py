@@ -5,8 +5,8 @@ Surface2D examples
 """
 
 import volmdlr
-import volmdlr.primitives2d as p2d
 import volmdlr.faces as faces
+import volmdlr.primitives2d as p2d
 import volmdlr.wires as wires
 
 l = 0.12
@@ -40,10 +40,13 @@ contour = volmdlr.primitives2d.ClosedRoundedLineSegments2D([p1, p2,
 hole = wires.Circle2D(pc, 0.5*r)
 surface = faces.Surface2D(contour, [hole])
 surface.plot()
-contours = contour.split_regularly(10)
-ax =  contours[0].plot()
-for c in contours[1:]:
-    c.plot(ax=ax)
-mesh = surface.triangulation()
-ax = surface.plot()
-mesh.plot(ax=ax)
+
+surface._check_platform()
+
+# contours = contour.split_regularly(10)
+# ax =  contours[0].plot()
+# for c in contours[1:]:
+#     c.plot(ax=ax)
+# mesh = surface.triangulation()
+# ax = surface.plot()
+# mesh.plot(ax=ax)
