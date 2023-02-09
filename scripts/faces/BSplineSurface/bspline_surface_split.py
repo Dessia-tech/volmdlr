@@ -5,7 +5,7 @@
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 import numpy as npy
 

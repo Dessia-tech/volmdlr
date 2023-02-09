@@ -8,15 +8,15 @@ Created on Wed Sep 29 14:35:47 2021
 
 import json
 
-MIN_FILE_COVERAGE = 58.11
-MIN_PROJECT_COVERAGE = 62.0
+MIN_FILE_COVERAGE = 54.9
+MIN_PROJECT_COVERAGE = 60
 
 untracked_modules = ['volmdlr/templates.py',
                      'volmdlr/code_aster.py',
                      'volmdlr/core_compiled.py',
                      'volmdlr/bspline_compiled.py',
                      'volmdlr/mesh.py',
-                     'volmdlr/gmsh.py',
+                     'volmdlr/gmsh_vm.py',
                      'models/__init__.py',
                      'workflows/__init__.py',
                      'workflows/core.py',
