@@ -591,7 +591,7 @@ class BSplineCurve(Edge):
 
         Edge.__init__(self, start, end, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """Avoids storing points in memo that makes serialization slow."""
         dict_ = self.base_dict()
         dict_['degree'] = self.degree
