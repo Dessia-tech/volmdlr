@@ -85,7 +85,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        OpenedRoundedLineSegments2D rotation
+        OpenedRoundedLineSegments2D rotation.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotationed OpenedRoundedLineSegments2D
@@ -98,7 +99,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        OpenedRoundedLineSegments2D rotation. Object is updated inplace
+        OpenedRoundedLineSegments2D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
