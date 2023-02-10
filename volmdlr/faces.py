@@ -4367,25 +4367,25 @@ class BSplineSurface3D(Surface3D):
 
         # System of nonlinear equations
         def non_linear_equations(X):
-            F = npy.empty(len(equation_points) + 2)
+            vector_F = npy.empty(len(equation_points) + 2)
             for i in range(0, len(equation_points)):
-                F[i] = abs((X[index_x[equation_points[i][0]]] ** 2 +
-                            X[index_x[equation_points[i][1]]] ** 2 +
-                            X[index_y[equation_points[i][0]]] ** 2 +
-                            X[index_y[equation_points[i][1]]] ** 2 -
-                            2 *
-                            X[index_x[equation_points[i][0]]] *
-                            X[index_x[equation_points[i][1]]] -
-                            2 *
-                            X[index_y[equation_points[i][0]]] *
-                            X[index_y[equation_points[i][1]]] -
-                            D[i]) /
-                           D[i])
+                vector_F[i] = abs((X[index_x[equation_points[i][0]]] ** 2 +
+                                   X[index_x[equation_points[i][1]]] ** 2 +
+                                   X[index_y[equation_points[i][0]]] ** 2 +
+                                   X[index_y[equation_points[i][1]]] ** 2 -
+                                   2 *
+                                   X[index_x[equation_points[i][0]]] *
+                                   X[index_x[equation_points[i][1]]] -
+                                   2 *
+                                   X[index_y[equation_points[i][0]]] *
+                                   X[index_y[equation_points[i][1]]] -
+                                   D[i]) /
+                                  D[i])
 
-            F[i + 1] = X[0] * 1000
-            F[i + 2] = X[1] * 1000
+            vector_F[i + 1] = X[0] * 1000
+            vector_F[i + 2] = X[1] * 1000
 
-            return F
+            return vector_F
 
         # Solution with "least_squares"
         x_init = []  # initial guess (2D grid points)
@@ -5618,6 +5618,10 @@ class Face3D(volmdlr.core.Primitive3D):
         # self.bounding_box = self._bounding_box()
 
         volmdlr.core.Primitive3D.__init__(self, name=name)
+
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        return DessiaObject.to_dict(self, use_pointers=False)
 
     def __hash__(self):
         return hash(self.surface3d) + hash(self.surface2d)
@@ -7115,7 +7119,7 @@ class Triangle3D(PlaneFace3D):
             self._utd_surface2d = True
         return self._surface2d
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class': 'volmdlr.faces.Triangle3D',
                 'point1': self.point1.to_dict(),
                 'point2': self.point2.to_dict(),

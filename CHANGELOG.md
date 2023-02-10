@@ -134,6 +134,8 @@ abscissa(), point_angle_with_major_dir(), area(), rotation(), tranlation(), fram
 time we have to verify if a point is inside
 * Improvements in BSplineSurface3D.point3d_to_2d performance
 * Triangle3D serialization speed-up
+* Serialization without memo for faces
+* Custom serialization for BsplineCurves
 
 ### Refactorings
 * Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated.

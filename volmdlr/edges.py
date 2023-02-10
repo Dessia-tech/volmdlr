@@ -590,6 +590,17 @@ class BSplineCurve(Edge):
 
         Edge.__init__(self, start, end, name=name)
 
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        dict_ = self.base_dict()
+        dict_['degree'] = self.degree
+        dict_['control_points'] = [p.to_dict() for p in self.control_points]
+        dict_['knot_multiplicities'] = self.knot_multiplicities
+        dict_['knots'] = self.knots
+        dict_['weights'] = self.weights
+        dict_['periodic'] = self.periodic
+        return dict_
+
     def reverse(self):
         """
         Reverses the B-spline's direction by reversing its control points.
@@ -2843,7 +2854,6 @@ class FullArc2D(Arc2D):
         dict_['angle'] = self.angle
         dict_['is_trigo'] = self.is_trigo
         dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
-        dict_['name'] = self.name
         return dict_
 
     def copy(self, *args, **kwargs):
@@ -3668,7 +3678,7 @@ class Line3D(Line):
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
-            that have already been instanciated
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Line3D object
         :rtype: :class:`volmdlr.edges.Line3D`
@@ -4382,7 +4392,7 @@ class BSplineCurve3D(BSplineCurve):
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
         :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding BSplineCurve3D.
         :rtype: :class:`volmdlr.edges.BSplineCurve3D`
