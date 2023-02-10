@@ -1705,7 +1705,6 @@ class MovingVolumeModel(VolumeModel):
                 primitives_to_meshes.append(i_prim)
 
         bbox = self._bounding_box()
-        center = bbox.center
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
@@ -1729,6 +1728,6 @@ class MovingVolumeModel(VolumeModel):
 
         babylon_data = {'meshes': meshes,
                         'max_length': max_length,
-                        'center': list(center),
+                        'center': list(bbox.center),
                         'steps': steps}
         return babylon_data
