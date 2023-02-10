@@ -1,5 +1,6 @@
 Cython
 geomdl
+gmsh
 matplotlib
 numpy
 scipy

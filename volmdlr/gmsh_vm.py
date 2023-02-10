@@ -383,7 +383,7 @@ class GmshParser(DessiaObject):
                 values = []
                 for points in value:
                     values.append(GmshParser.to_2d(points))
-            nodes[key] = values
+                nodes[key] = values
             nodes['all_nodes'] = GmshParser.to_2d(nodes_points)
         else:
             nodes['all_nodes'] = nodes_points
@@ -492,16 +492,6 @@ class GmshParser(DessiaObject):
 
         return partitioned_entities
 
-    # $Periodic
-    #   numPeriodicLinks(size_t)
-    #   entityDim(int) entityTag(int) entityTagMaster(int)
-    #   numAffine(size_t) value(double) ...
-    #   numCorrespondingNodes(size_t)
-    #     nodeTag(size_t) nodeTagMaster(size_t)
-    #     ...
-    #   ...
-    # $EndPeriodic
-
     @staticmethod
     def from_file_periodic(lines):
         """
@@ -526,7 +516,7 @@ class GmshParser(DessiaObject):
 
         physical_names = {}
         for i in range(1, int(lines[0].split()[0]) + 1):
-            physical_dim = (lines[i].split()[0])
+            physical_dim = lines[i].split()[0]
             try:
                 physical_names['physical_dim_' + physical_dim]
             except KeyError:
@@ -645,9 +635,15 @@ class GmshParser(DessiaObject):
         :rtype: bool
         """
 
+        checking = set()
         for node in list_nodes:
-            if node[2] != 0:
-                return False
+            if node[2] == 0:
+                checking.add(True)
+            else:
+                checking.add(False)
+
+        if False in checking:
+            return False
         return True
 
     @staticmethod

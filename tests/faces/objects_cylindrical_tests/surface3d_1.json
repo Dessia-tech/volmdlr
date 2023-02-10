@@ -1,0 +1,38 @@
+{
+  "name": "",
+  "object_class": "volmdlr.faces.CylindricalSurface3D",
+  "package_version": "0.8.1.dev468+g652bbe39",
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.0,
+      "y": 1.53080849893419e-19,
+      "z": 0.00077,
+      "name": ""
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -1.0,
+      "y": 0.0,
+      "z": 0.0,
+      "name": ""
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.0,
+      "y": -1.0,
+      "z": -0.0,
+      "name": ""
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.0,
+      "y": -0.0,
+      "z": 1.0,
+      "name": ""
+    }
+  },
+  "radius": 0.0025
+}
