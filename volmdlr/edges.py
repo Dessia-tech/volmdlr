@@ -137,7 +137,7 @@ class Edge(dc.DessiaObject):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
+        :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Edge object
@@ -4389,7 +4389,7 @@ class BSplineCurve3D(BSplineCurve):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
+        :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated
         :type object_dict: dict
         :return: The corresponding BSplineCurve3D.
@@ -5722,7 +5722,7 @@ class FullArc3D(Arc3D):
 
     def reverse(self):
         """
-        Defines a new FullArc3D, odentical to self, but in the oposite direction.
+        Defines a new FullArc3D, identical to self, but in the opposite direction.
 
         """
         return self

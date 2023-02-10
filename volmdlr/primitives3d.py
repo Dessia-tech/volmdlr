@@ -921,7 +921,7 @@ class Cylinder(RevolvedProfile):
         :return: The BoundingBox
         :rtype: :class:`volmdlr.core.BoundingBox`
         """
-        # This was copied for HollowCylinder. Inheritence removed to avoid problems
+        # This was copied for HollowCylinder. Inheritance removed to avoid problems
         radius = self.radius
 
         point_a = self.position - self.length / 2 * self.axis
@@ -1923,8 +1923,8 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding BSplineExtrusion object.
         :rtype: :class:`volmdlr.primitives3d.BSplineExtrusion`

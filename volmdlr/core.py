@@ -1235,7 +1235,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Gets the lines that define a VolumeModel geometry in a .geo file.
 
-        :return: A list of lines that describe the geomery
+        :return: A list of lines that describe the geometry
         :rtype: List[str]
 
         """
