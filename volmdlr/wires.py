@@ -10,6 +10,7 @@ import sys
 import warnings
 # import random
 from collections import deque
+from functools import cached_property
 from statistics import mean
 from typing import List
 
@@ -1679,7 +1680,7 @@ class Contour2D(ContourMixin, Wire2D):
             classes = {prim.__class__ for prim in self.primitives}
             verify_classes = classes.issubset({volmdlr.edges.LineSegment2D, volmdlr.edges.Arc2D})
             if verify_classes:
-                if self.edge_polygon.is_trigo():
+                if self.edge_polygon.is_trigo:
                     trigo = 1
                 else:
                     trigo = -1
@@ -1700,7 +1701,7 @@ class Contour2D(ContourMixin, Wire2D):
         center = self.edge_polygon.area() * self.edge_polygon.center_of_mass()
         # ax = self.plot()
         # self.edge_polygon.center_of_mass().plot(ax=ax, color='b')
-        if self.edge_polygon.is_trigo():
+        if self.edge_polygon.is_trigo:
             trigo = 1
         else:
             trigo = -1
@@ -1716,7 +1717,7 @@ class Contour2D(ContourMixin, Wire2D):
         Ix, Iy, Ixy = self.edge_polygon.second_moment_area(point)
         for edge in self.primitives:
             Ix_e, Iy_e, Ixy_e = edge.straight_line_second_moment_area(point)
-            if self.edge_polygon.is_trigo():
+            if self.edge_polygon.is_trigo:
                 Ix += Ix_e
                 Iy += Iy_e
                 Ixy += Ixy_e
@@ -2677,6 +2678,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         index = d.index(min(d))
         return d[index]
 
+    @cached_property
     def is_trigo(self):
         if len(self.points) < 3:
             return True
@@ -3694,7 +3696,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             vector1 = prim1.direction_vector()
             vector2 = prim2.direction_vector()
             angle = volmdlr.geometry.clockwise_angle(vector1, vector2)
-            if self.is_trigo():
+            if self.is_trigo:
                 if angle < math.pi and angle != 0:
                     return False
             elif angle > math.pi and angle != 2 * math.pi:
