@@ -3,24 +3,7 @@ Unit tests for functions defined in volmdlr core.py
 """
 import unittest
 import volmdlr
-import numpy
-from volmdlr.core import determinant, delete_double_point, step_ids_to_str
-
-
-# class TestDeterminant(unittest.TestCase):
-#     def test_determinant_1(self):
-#         vec1 = numpy.ndarray([1, 2, 3])
-#         vec2 = volmdlr.Vector3D(4, 5, 6)
-#         vec3 = volmdlr.Vector3D(7, 8, 9)
-#         result = determinant(vec1, vec2, vec3)
-#         self.assertAlmostEqual(result, 0.0)
-#
-#     def test_determinant_2(self):
-#         vec1 = volmdlr.Vector3D(3, 2, 1)
-#         vec2 = volmdlr.Vector3D(1, 2, 3)
-#         vec3 = volmdlr.Vector3D(4, 5, 6)
-#         result = determinant(vec1, vec2, vec3)
-#         self.assertAlmostEqual(result, -9.0)
+from volmdlr.core import delete_double_point, step_ids_to_str
 
 
 class TestDeleteDoublePoint(unittest.TestCase):
