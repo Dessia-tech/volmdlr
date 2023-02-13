@@ -163,7 +163,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
                 'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
                 name='')
 
-        volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
+        volmdlr.wires.Contour3D.__init__(self, primitives=self._primitives(), name=name)
 
 
 class Block(volmdlr.faces.ClosedShell3D):
@@ -1876,7 +1876,7 @@ class Sphere(RevolvedProfile):
         return in_points
 
 
-class Measure3D(volmdlr.edges.Line3D):
+class Measure3D:
     """
     Used to create a measure between two points in 3D.
     """

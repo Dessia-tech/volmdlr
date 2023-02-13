@@ -85,7 +85,7 @@ def step_ids_to_str(ids):
     :return: A string containing all the IDs
     :rtype: str
     """
-    return ','.join(['#{}'.format(i) for i in ids])
+    return ','.join([f"#{i}" for i in ids])
 
 
 class CompositePrimitive(dc.PhysicalObject):
@@ -285,8 +285,7 @@ class Primitive3D(dc.PhysicalObject):
 
     def triangulation(self):
         raise NotImplementedError(
-            'triangulation method should be implemented on class {}'.format(
-                self.__class__.__name__))
+            f"triangulation method should be implemented on class {self.__class__.__name__}")
 
     def babylon_meshes(self):
         mesh = self.triangulation()
