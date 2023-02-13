@@ -369,6 +369,7 @@ class BoundingRectangle(dc.DessiaObject):
     """
 
     def __init__(self, xmin: float, xmax: float, ymin: float, ymax: float, name: str = ''):
+        # TODO: add check on init if xmin > xmax, ymin > ymax
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
