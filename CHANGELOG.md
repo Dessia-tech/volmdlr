@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
 CompositePrimitive2D: rotation, rotation_inplace, translation, translation_inplace, frame_mapping, frame_mapping_inplace
 core.py: delete_double_point, step_ids_to_str
+CompositePrimitive3D: plot
 
 ## CI
 - add spell check to pylint with pyenchant
