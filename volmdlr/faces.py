@@ -6202,7 +6202,7 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: list divided faces.
         """
         list_faces = []
-        if not self.surface2d.outer_contour.edge_polygon.is_trigo():
+        if not self.surface2d.outer_contour.edge_polygon.is_trigo:
             self.surface2d.outer_contour.invert_inplace()
         new_faces_contours = self.surface2d.outer_contour.divide(list_open_cutting_contours, inside)
         new_inner_contours = len(new_faces_contours) * [[]]
@@ -6435,7 +6435,7 @@ class Face3D(volmdlr.core.Primitive3D):
         dict_inner_contour_intersections = {}
         dict_cutting_contour_intersections = {}
         for inner_contour in self.surface2d.inner_contours:
-            if not inner_contour.edge_polygon.is_trigo():
+            if not inner_contour.edge_polygon.is_trigo:
                 inner_contour.invert_inplace()
             dict_inner_contour_intersections[inner_contour] = []
             for cutting_contour in list_cutting_contours:
