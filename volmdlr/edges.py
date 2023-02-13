@@ -137,7 +137,7 @@ class Edge(dc.DessiaObject):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
+        :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Edge object
@@ -1280,9 +1280,9 @@ class Line2D(Line):
         if math.isclose(self.unit_direction_vector().dot(
                 other_line.unit_direction_vector()), 0, abs_tol=1e-06):
             # Perpendicular segments: 2 solution
-            line_AB = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
-            line_CD = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
-            new_pt_k = volmdlr.Point2D.line_intersection(line_AB, line_CD)
+            line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
+            line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
+            new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
 
             r = abs(new_pt_k[0])
             new_circle_center1 = volmdlr.Point2D((0, r))
@@ -1299,9 +1299,9 @@ class Line2D(Line):
         #   => 2 SOLUTIONS
         # =============================================================================
 
-        line_AB = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
-        line_CD = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
-        new_pt_k = volmdlr.Point2D.line_intersection(line_AB, line_CD)
+        line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
+        line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
+        new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
         pt_K = volmdlr.Point2D(new_basis.old_coordinates(new_pt_k))
 
         if pt_K == I:
@@ -2570,10 +2570,10 @@ class Arc2D(Arc):
         string = Line2D(self.start, self.end)
         p = volmdlr.Point2D.line_intersection(bissec, string)
         a = p.point_distance(self.start)
-        h = p.point_distance(self.center)
-        triangle_area = h * a
+        height = p.point_distance(self.center)
+        triangle_area = height * a
         # alpha = abs(self.angle)
-        triangle_cog = self.center + 2 / 3. * h * u
+        triangle_cog = self.center + 2 / 3. * height * u
         if self.angle < math.pi:
             cog = (
                 self.center_of_mass() * self.area() - triangle_area * triangle_cog) / abs(
@@ -3137,16 +3137,14 @@ class ArcEllipse2D(Edge):
 
         if start == end:
             extra_new = frame.new_coordinates(self.extra)
-            theta, A, B = theta_A_B(start_new, extra_new, interior_new,
-                                    center_new)
+            theta, major_axis, minor_axis = theta_A_B(start_new, extra_new, interior_new,
+                                                      center_new)
         else:
-            theta, A, B = theta_A_B(start_new, interior_new, end_new,
-                                    center_new)
-            # theta, A, B = theta_A_B(self.start, self.interior, self.end,
-            #                         self.center)
+            theta, major_axis, minor_axis = theta_A_B(start_new, interior_new, end_new,
+                                                      center_new)
 
-        self.major_axis = A
-        self.minor_axis = B
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
         self.theta = theta
 
         # Angle pour start
@@ -3533,8 +3531,8 @@ class Line3D(Line):
             vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
             direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
             direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
-        u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
-            direction_vector2)) / direction_vector2.dot(direction_vector2)
+        # u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
+            # direction_vector2)) / direction_vector2.dot(direction_vector2)
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
 
@@ -4391,7 +4389,7 @@ class BSplineCurve3D(BSplineCurve):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
+        :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated
         :type object_dict: dict
         :return: The corresponding BSplineCurve3D.
@@ -5725,7 +5723,7 @@ class FullArc3D(Arc3D):
 
     def reverse(self):
         """
-        Defines a new FullArc3D, odentical to self, but in the oposite direction.
+        Defines a new FullArc3D, identical to self, but in the opposite direction.
 
         """
         return self

@@ -34,12 +34,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PeriodicalSurface: fix face from contours.
 * LineSegment2D.line_intersections: verify if colinear first.
 * Cylinder: to_dict, min_distance_to_other_cylinder.
+* fix some pydocstyle errors
 
 ### Removed
 
 * edges: remove attributes points from lines & linesegments for performance purpose
 
 ### Performance improvements
+
 * wires.py's 2D objects: chache bounding_rectangle results
 * faces.py's Triangle3D objects: subdescription points and triangles
 * EdgeCollection3D: new object for displaying series of edges
@@ -47,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D.area(): save area in a cache variable.
 * Contour2D.__eq__(): verify contour length first, when verify if two contours are the same.
 * Contour2D.is_inside(): verify first if the area of the contour2 is not smaller that contour 1.
+* Disabling pointer in to_dict for most primitives
+
 ### Refactorings
 
 ### Documentation
