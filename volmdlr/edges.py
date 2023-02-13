@@ -4983,6 +4983,7 @@ class Arc3D(Arc):
     def angle(self):
         """
         Arc angle property.
+
         :return: arc angle
         """
         if not self._utd_angle:
@@ -4993,6 +4994,7 @@ class Arc3D(Arc):
     def get_angle(self):
         """
         Gets the arc angle.
+
         :return: arc angle
         """
         clockwise_path, trigowise_path = \
