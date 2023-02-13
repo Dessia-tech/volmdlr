@@ -61,7 +61,7 @@ class TestBoundingRectangle(unittest.TestCase):
         br3 = BoundingRectangle(-4, -1, -5, -2)
         self.assertEqual(self.br.distance_to_b_rectangle(br3), 1)
         br4 = BoundingRectangle(7, 10, 9, 10)
-        self.assertEqual(self.br.distance_to_b_rectangle(br4), 5 ** .5)
+        self.assertEqual(self.br.distance_to_b_rectangle(br4), 5**0.5)
 
     def test_distance_to_point(self):
         p0 = volmdlr.O2D
@@ -73,7 +73,7 @@ class TestBoundingRectangle(unittest.TestCase):
         p4 = volmdlr.Point2D(2, -5)
         self.assertEqual(self.br.distance_to_point(p4), 3)
         p5 = volmdlr.Point2D(6, 9)
-        self.assertEqual(self.br.distance_to_point(p5), 2 ** 0.5)
+        self.assertEqual(self.br.distance_to_point(p5), 2**0.5)
 
 
 if __name__ == "__main__":
