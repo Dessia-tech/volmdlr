@@ -65,6 +65,16 @@ class TestCompositePrimitive2D(unittest.TestCase):
             p2.translation_inplace(offset)
             self.assertEqual(p1, p2)
 
+    def test_frame_mapping(self):
+        frame = volmdlr.Frame2D(volmdlr.O2D, volmdlr.Vector2D(1, 1), volmdlr.Vector2D(1, -1))
+        side = 'new'
+        mapped_composite_2d = self.composite_2d.frame_mapping(frame, side)
+
+        for p1, p2 in zip(mapped_composite_2d.primitives, self.primitives):
+            self.assertNotEqual(p1, p2)
+            p2 = p2.frame_mapping(frame, side)
+            self.assertEqual(p1, p2)
+
 
 if __name__ == "__main__":
     unittest.main()
