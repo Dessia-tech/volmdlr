@@ -34,16 +34,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * OpenTriangleShell3D: fix from_mesh_data method.
 * PeriodicalSurface: fix face from contours.
 * Cylinder: to_dict, min_distance_to_other_cylinder.
+* fix some pydocstyle errors
 
 ### Removed
 
 * edges: remove attributes points from lines & linesegments for performance purpose
 
 ### Performance improvements
+
 * wires.py's 2D objects: chache bounding_rectangle results
 * faces.py's Triangle3D objects: subdescription points and triangles
 * EdgeCollection3D: new object for displaying series of edges
 * BSplineSurface3D: compile BSplineSurface3D.derivatives
+* Disabling pointer in to_dict for most primitives
 
 ### Refactorings
 

@@ -85,7 +85,7 @@ def step_ids_to_str(ids):
     :return: A string containing all the IDs
     :rtype: str
     """
-    return ','.join(['#{}'.format(i) for i in ids])
+    return ','.join([f"#{i}" for i in ids])
 
 
 class CompositePrimitive(dc.PhysicalObject):
@@ -104,6 +104,10 @@ class CompositePrimitive(dc.PhysicalObject):
         self.basis_primitives = []
 
         dc.PhysicalObject.__init__(self, name=name)
+
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        return dc.PhysicalObject.to_dict(self, use_pointers=False)
 
     def primitive_to_index(self, primitive):
         """Constructs a dictionary associating primitive to its index."""
@@ -281,8 +285,7 @@ class Primitive3D(dc.PhysicalObject):
 
     def triangulation(self):
         raise NotImplementedError(
-            'triangulation method should be implemented on class {}'.format(
-                self.__class__.__name__))
+            f"triangulation method should be implemented on class {self.__class__.__name__}")
 
     def babylon_meshes(self):
         mesh = self.triangulation()
@@ -700,7 +703,7 @@ class BoundingBox(dc.DessiaObject):
         """
         Converts the bounding box to a 3D frame.
 
-        :return: A 3D frame with origin at the center and axes aligned with the x, y, and z dimensions of 
+        :return: A 3D frame with origin at the center and axes aligned with the x, y, and z dimensions of
             the bounding box.
         :rtype: volmdlr.Frame3D
         """
@@ -748,8 +751,8 @@ class BoundingBox(dc.DessiaObject):
         :rtype: bool
         """
         return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6) \
-               and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
-               and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
+            and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
+            and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
 
     def intersection_volume(self, bbox2: "BoundingBox") -> float:
         """
@@ -1235,7 +1238,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Gets the lines that define a VolumeModel geometry in a .geo file.
 
-        :return: A list of lines that describe the geomery
+        :return: A list of lines that describe the geometry
         :rtype: List[str]
 
         """
@@ -1705,7 +1708,6 @@ class MovingVolumeModel(VolumeModel):
                 primitives_to_meshes.append(i_prim)
 
         bbox = self._bounding_box()
-        center = bbox.center
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
@@ -1729,6 +1731,6 @@ class MovingVolumeModel(VolumeModel):
 
         babylon_data = {'meshes': meshes,
                         'max_length': max_length,
-                        'center': list(center),
+                        'center': list(bbox.center),
                         'steps': steps}
         return babylon_data

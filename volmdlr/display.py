@@ -64,7 +64,7 @@ class DisplayMesh(dc.DessiaObject):
 
         self.points = points
         self.triangles = triangles
-        # Avoiding calling dessia object init because it is ineficient
+        # Avoiding calling dessia object init because its inefficiency
         # dc.DessiaObject.__init__(self, name=name)
         self.name = name
         self._utd_point_index = False

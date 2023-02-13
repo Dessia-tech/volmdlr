@@ -1167,14 +1167,6 @@ class Plane3D(Surface3D):
         if other_plane.__class__.__name__ != self.__class__.__name__:
             return False
         return self.frame == other_plane.frame
-        # return (self.frame.origin == other_plane.frame.origin and
-        #         self.frame.w.is_colinear_to(other_plane.frame.w))
-
-    # def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
-    #     # improve the object structure ?
-    #     dict_ = dc.DessiaObject.base_dict(self)
-    #     dict_['frame'] = self.frame.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/frame')
-    #     return dict_
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -1183,8 +1175,8 @@ class Plane3D(Surface3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Plane3D object.
         :rtype: :class:`volmdlr.faces.Plane3D`
@@ -1825,7 +1817,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :type point3d: `volmdlr.`Point3D`
         """
         x, y, z = self.frame.global_to_local_coordinates(point3d)
-        # Do not delte this, mathematical problem when x and y close to zero but not 0
+        # Do not delete this, mathematical problem when x and y close to zero but not 0
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
@@ -1899,8 +1891,8 @@ class CylindricalSurface3D(PeriodicalSurface):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding CylindricalSurface3D object.
         :rtype: :class:`volmdlr.faces.CylindricalSurface3D`
@@ -2250,8 +2242,8 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding ToroidalSurface3D object.
         :rtype: :class:`volmdlr.faces.ToroidalSurface3D`
@@ -2571,8 +2563,8 @@ class ConicalSurface3D(PeriodicalSurface):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding ConicalSurface3D object.
         :rtype: :class:`volmdlr.faces.ConicalSurface3D`
@@ -2861,8 +2853,8 @@ class SphericalSurface3D(Surface3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding SphericalSurface3D object.
         :rtype: :class:`volmdlr.faces.SphericalSurface3D`
@@ -4192,8 +4184,8 @@ class BSplineSurface3D(Surface3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding BSplineSurface3D object.
         :rtype: :class:`volmdlr.faces.BSplineSurface3D`
@@ -5672,8 +5664,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding Face3D object.
         :rtype: :class:`volmdlr.faces.Face3D`
@@ -8351,7 +8343,7 @@ class BSplineFace3D(Face3D):
     def pair_with(self, other_bspline_face3d):
         """
         Finds out how the uv parametric frames are located compared to
-        eachother and also how grid3d can be defined respected to these
+        each other and also how grid3d can be defined respected to these
         directions.
 
         :param other_bspline_face3d: BSplineFace3D
@@ -8755,8 +8747,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding OpenShell3D object.
         :rtype: :class:`volmdlr.faces.OpenShell3D`

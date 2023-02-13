@@ -23,3 +23,10 @@ linesegment
 freecad
 gmsh
 .geo
+.msh
+euler
+txt
+discretization
+bool
+len
+isort

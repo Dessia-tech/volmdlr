@@ -9,8 +9,8 @@ from volmdlr import primitives2d, primitives3d
 
 thickness = 0.005
 height = 0.080
-screw_holes_diameter = 0.006
-screw_holes_clearance = 0.003
+SCREW_HOLES_DIAMETER = 0.006
+SCREW_HOLES_CLEARANCE = 0.003
 n_screws = 25
 
 p1 = vm.Point2D(0, 0)
@@ -33,15 +33,15 @@ sides = primitives3d.ExtrudedProfile(vm.O3D, vm.X3D, vm.Y3D,
 bottom = primitives3d.ExtrudedProfile(vm.O3D, vm.X3D, vm.Y3D, outer_contour, [],
                                       -thickness * vm.Z3D, name='bottom')
 
-screw_holes_rl = inner_contour.offset(-(thickness+screw_holes_clearance + 0.5 * screw_holes_diameter))
+screw_holes_rl = inner_contour.offset(-(thickness+SCREW_HOLES_CLEARANCE + 0.5 * SCREW_HOLES_DIAMETER))
 screw_holes = []
 length = screw_holes_rl.length()
 for i in range(n_screws):
     s = i * length/n_screws
     p = screw_holes_rl.point_at_abscissa(s)
-    screw_holes.append(vm.wires.Circle2D(p, screw_holes_diameter*0.5))
+    screw_holes.append(vm.wires.Circle2D(p, SCREW_HOLES_DIAMETER*0.5))
 
-belt_outer_contour = inner_contour.offset(-(2*screw_holes_clearance + screw_holes_diameter+thickness))
+belt_outer_contour = inner_contour.offset(-(2*SCREW_HOLES_CLEARANCE + SCREW_HOLES_DIAMETER+thickness))
 belt = primitives3d.ExtrudedProfile(vm.Z3D*(height - 2*thickness), vm.X3D, vm.Y3D,
                                     belt_outer_contour,
                                     [inner_contour]+screw_holes,
