@@ -3135,16 +3135,14 @@ class ArcEllipse2D(Edge):
 
         if start == end:
             extra_new = frame.new_coordinates(self.extra)
-            theta, A, B = theta_A_B(start_new, extra_new, interior_new,
-                                    center_new)
+            theta, major_axis, minor_axis = theta_A_B(start_new, extra_new, interior_new,
+                                                      center_new)
         else:
-            theta, A, B = theta_A_B(start_new, interior_new, end_new,
-                                    center_new)
-            # theta, A, B = theta_A_B(self.start, self.interior, self.end,
-            #                         self.center)
+            theta, major_axis, minor_axis = theta_A_B(start_new, interior_new, end_new,
+                                                      center_new)
 
-        self.major_axis = A
-        self.minor_axis = B
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
         self.theta = theta
 
         # Angle pour start
@@ -3530,8 +3528,8 @@ class Line3D(Line):
             vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
             direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
             direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
-        u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
-            direction_vector2)) / direction_vector2.dot(direction_vector2)
+        # u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
+            # direction_vector2)) / direction_vector2.dot(direction_vector2)
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
 
