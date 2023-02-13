@@ -544,6 +544,7 @@ class BoundingBox(dc.DessiaObject):
         :param name: The name of the bounding box.
         :type name: str, optional
         """
+        # TODO: add checks on inputs
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
