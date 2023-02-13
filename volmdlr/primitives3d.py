@@ -163,7 +163,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
                 'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
                 name='')
 
-        volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
+        volmdlr.wires.Contour3D.__init__(self, primitives=self._primitives(), name=name)
 
 
 class Block(volmdlr.faces.ClosedShell3D):
@@ -190,7 +190,7 @@ class Block(volmdlr.faces.ClosedShell3D):
         faces = self.shell_faces()
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """
         Custom to_dict for performance
         """
@@ -500,7 +500,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """
         Serialize the ExtrudedProfile.
 
@@ -706,7 +706,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """
         Custom to dict for performance.
         """
@@ -1622,10 +1622,8 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
-        """
-        Custom to dict for perf
-        """
+    def to_dict(self, *args, **kwargs):
+        """Custom serialization for performance."""
         dict_ = dc.DessiaObject.base_dict(self)
         dict_.update({'color': self.color,
                       'alpha': self.alpha,
@@ -1637,7 +1635,9 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
     def shell_faces(self):
         """
-        For now it does not take into account rotation of sections
+        Generates the shell faces.
+
+        For now it does not take into account rotation of sections.
         """
 
         # End  planar faces
@@ -1748,8 +1748,9 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Sweep
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new Sweep.
+
+        :param side: 'old' or 'new'
         """
         new_wire = self.wire3d.frame_mapping(frame, side)
         return Sweep(self.contour2d, new_wire, color=self.color,
@@ -1757,18 +1758,16 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        :param side: 'old' or 'new'
         """
         self.wire3d.frame_mapping_inplace(frame, side)
         for face in self.faces:
             face.frame_mapping_inplace(frame, side)
 
     def copy(self, deep=True, memo=None):
-        """
-        Creates a copy of Sweep.
-
-        """
+        """Creates a copy of the Sweep."""
         new_contour2d = self.contour2d.copy()
         new_wire3d = self.wire3d.copy()
         return Sweep(new_contour2d, new_wire3d, color=self.color,
@@ -1794,10 +1793,6 @@ class Sphere(RevolvedProfile):
         i = volmdlr.Point2D(0, 1.01 * self.radius)
         e = volmdlr.Point2D(self.radius, 0.01 * self.radius)  # Not coherent but it works at first, to change !!
 
-        # s = volmdlr.Point2D((-self.radius, 0))
-        # i = volmdlr.Point2D(((math.sqrt(2)/2)*self.radius,(math.sqrt(2)/2)*self.radius))
-        # e = volmdlr.Point2D(((-math.sqrt(2)/2)*self.radius,(-math.sqrt(2)/2)*self.radius))
-
         contour = volmdlr.wires.Contour2D([
             volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
 
@@ -1812,7 +1807,7 @@ class Sphere(RevolvedProfile):
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Sphere
-        side = 'old' or 'new'
+        :param side: 'old' or 'new'
         """
         return Sphere(self.center.frame_mapping(frame, side), self.radius)
 
@@ -1881,7 +1876,7 @@ class Sphere(RevolvedProfile):
         return in_points
 
 
-class Measure3D(volmdlr.edges.Line3D):
+class Measure3D:
     """
     Used to create a measure between two points in 3D.
     """
