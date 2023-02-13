@@ -57,6 +57,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                  name: str = 'name'):
         self.outer_contour = outer_contour
         self.inner_contours = inner_contours
+        self._area = None
 
         volmdlr.core.Primitive2D.__init__(self, name=name)
 
@@ -74,7 +75,9 @@ class Surface2D(volmdlr.core.Primitive2D):
         Computes the area of the surface.
 
         """
-        return self.outer_contour.area() - sum(contour.area() for contour in self.inner_contours)
+        if not self._area:
+            self._area = self.outer_contour.area() - sum(contour.area() for contour in self.inner_contours)
+        return self._area
 
     def second_moment_area(self, point: volmdlr.Point2D):
         """
