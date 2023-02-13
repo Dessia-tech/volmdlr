@@ -1,6 +1,6 @@
 import unittest
-import matplotlib.pyplot as plt
 import volmdlr
+import volmdlr.core
 import volmdlr.edges
 
 
@@ -33,7 +33,19 @@ class TestCompositePrimitive2D(unittest.TestCase):
         rotated_composite_2d = self.composite_2d.rotation(center, angle)
 
         for p1, p2 in zip(rotated_composite_2d.primitives, self.primitives):
-            self.assertEqual(p1, p2.rotation(center, angle))
+            self.assertNotEqual(p1, p2)
+            p2 = p2.rotation(center, angle)
+            self.assertEqual(p1, p2)
+
+    def test_rotation_inplace(self):
+        center = volmdlr.Point2D(-1.7, -0.3)
+        angle = -8
+        self.composite_2d.rotation_inplace(center, angle)
+
+        for p1, p2 in zip(self.composite_2d.primitives, self.primitives):
+            self.assertNotEqual(p1, p2)
+            p2.rotation_inplace(center, angle)
+            self.assertEqual(p1, p2)
 
 
 if __name__ == "__main__":
