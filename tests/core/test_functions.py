@@ -7,12 +7,13 @@ from volmdlr.core import delete_double_point, step_ids_to_str
 
 
 class TestDeleteDoublePoint(unittest.TestCase):
-    points = [
-        volmdlr.Point3D(0, 0, 0),
-        volmdlr.Point3D(1, 1, 1),
-        volmdlr.Point3D(0, 0, 0),
-        volmdlr.Point3D(2, 2, 2),
-    ]
+    def setUp(self):
+        self.points = [
+            volmdlr.Point3D(0, 0, 0),
+            volmdlr.Point3D(1, 1, 1),
+            volmdlr.Point3D(0, 0, 0),
+            volmdlr.Point3D(2, 2, 2),
+        ]
 
     def test_delete_double_point(self):
         result = delete_double_point(self.points)
