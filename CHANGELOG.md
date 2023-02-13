@@ -34,16 +34,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PeriodicalSurface: fix face from contours.
 * Cylinder: to_dict, min_distance_to_other_cylinder.
 * Step_assemblies: consider when no transformation is needed.
+* fix some pydocstyle errors
 
 ### Removed
 
 * edges: remove attributes points from lines & linesegments for performance purpose
 
 ### Performance improvements
+
 * wires.py's 2D objects: chache bounding_rectangle results
 * faces.py's Triangle3D objects: subdescription points and triangles
 * EdgeCollection3D: new object for displaying series of edges
 * BSplineSurface3D: compile BSplineSurface3D.derivatives
+* Disabling pointer in to_dict for most primitives
 
 ### Refactorings
 
@@ -132,6 +135,8 @@ abscissa(), point_angle_with_major_dir(), area(), rotation(), tranlation(), fram
 time we have to verify if a point is inside
 * Improvements in BSplineSurface3D.point3d_to_2d performance
 * Triangle3D serialization speed-up
+* Serialization without memo for faces
+* Custom serialization for BsplineCurves
 
 ### Refactorings
 * Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated.

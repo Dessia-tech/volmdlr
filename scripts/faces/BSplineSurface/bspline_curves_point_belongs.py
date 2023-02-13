@@ -12,7 +12,7 @@ import matplotlib.patches as mpatches
 import volmdlr as vm
 import volmdlr.edges
 
-#%%  BSpline-curve 2D definition 
+# %%  BSpline-curve 2D definition
 
 # Parameters
 knots = [0.0, 0.29927104501765267, 0.46883825500950527, 0.6072437200108631, 0.7456491850122211, 1.0]
@@ -42,10 +42,10 @@ points2d = [vm.Point2D(0.18337173875665347, 0.29040613195152876),
             vm.Point2D(1, 0.7),
             vm.Point2D(0.3393332354977111, 0.2220637856052557)]
 
-colors = {True:'g', False:'r'}
+colors = {True: 'g', False: 'r'}
 
 ax = bspline_curve2d.plot()
-for i,p in enumerate(points2d):
+for i, p in enumerate(points2d):
     belongs = bspline_curve2d.point_belongs(p)
     p.plot(ax=ax, color=colors[belongs])
 

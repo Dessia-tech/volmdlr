@@ -87,12 +87,11 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 
         l1 = volmdlr.edges.Line3D(p3, p3 + v1)
         l2 = volmdlr.edges.Line3D(p4, p4 + v2)
-        c, _ = l1.minimum_distance_points(l2)
 
         u3 = u1 + u2  # mean of v1 and v2
         u3 /= u3.norm()
 
-        interior = c - u3 * radius
+        interior = l1.minimum_distance_points(l2)[0] - u3 * radius
         return p3, interior, p4, dist, alpha
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -164,7 +163,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
                 'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
                 name='')
 
-        volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
+        volmdlr.wires.Contour3D.__init__(self, primitives=self._primitives(), name=name)
 
 
 class Block(volmdlr.faces.ClosedShell3D):
@@ -191,7 +190,7 @@ class Block(volmdlr.faces.ClosedShell3D):
         faces = self.shell_faces()
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """
         Custom to_dict for performance
         """
@@ -501,7 +500,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """
         Serialize the ExtrudedProfile.
 
@@ -565,34 +564,6 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     #             primitive.plot(ax)
     #     ax.margins(0.1)
     #     return ax
-
-    def FreeCADExport(self, ip):
-        name = 'primitive' + str(ip)
-        s = 'Wo = []\n'
-        s += 'Eo = []\n'
-        for prim_index, primitive in enumerate(self.outer_contour3d.primitives):
-            s += primitive.FreeCADExport('L{}'.format(prim_index))
-            s += 'Eo.append(Part.Edge(L{}))\n'.format(ip)
-        s += 'Wo.append(Part.Wire(Eo[:]))\n'
-        s += 'Fo = Part.Face(Wo)\n'
-
-        s += 'Fi = []\n'
-        s += 'W = []\n'
-        for ic, contour in enumerate(self.inner_contours3d):
-            s += 'E = []\n'
-            for primitive_index, primitive in enumerate(contour.primitives):
-                s += primitive.FreeCADExport('L{}_{}'.format(ic, primitive_index))
-                s += 'E.append(Part.Edge(L{}_{}))\n'.format(ic, primitive_index)
-            s += 'Wi = Part.Wire(E[:])\n'
-            s += 'Fi.append(Part.Face(Wi))\n'
-
-        if len(self.inner_contours3d) != 0:
-            s += 'Fo = Fo.cut(Fi)\n'
-        e1, e2, e3 = round(1000 * self.extrusion_vector, 6)
-
-        s += '{} = Fo.extrude(fc.Vector({}, {}, {}))\n'.format(name, e1,
-                                                               e2, e3)
-        return s
 
     def area(self):
         areas = self.outer_contour2d.area()
@@ -735,7 +706,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """
         Custom to dict for performance.
         """
@@ -787,27 +758,6 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
             faces.append(face2)
 
         return faces
-
-    def FreeCADExport(self, ip, ndigits=3):
-        name = 'primitive' + str(ip)
-        s = 'W=[]\n'
-
-        s += 'L=[]\n'
-        for ibp, basis_primitive in enumerate(self.contour3d.edges):
-            s += basis_primitive.FreeCADExport('L{}_{}'.format(1, ibp), 8)
-            s += 'L.append(L{}_{})\n'.format(1, ibp)
-        s += 'S = Part.Shape(L)\n'
-        s += 'W.append(Part.Wire(S.Edges))\n'
-        s += 'F=Part.Face(W)\n'
-        a1, a2, a3 = self.axis.vector
-        ap1, ap2, ap3 = self.axis_point.vector
-        ap1 = round(ap1 * 1000, ndigits)
-        ap2 = round(ap2 * 1000, ndigits)
-        ap3 = round(ap3 * 1000, ndigits)
-        angle = self.angle / math.pi * 180
-        s += '{} = F.revolve(fc.Vector({},{},{}), fc.Vector({},{},{}),{})\n'.format(name,
-                                                                                    ap1, ap2, ap3, a1, a2, a3, angle)
-        return s
 
     def volume(self):
         """
@@ -971,7 +921,7 @@ class Cylinder(RevolvedProfile):
         :return: The BoundingBox
         :rtype: :class:`volmdlr.core.BoundingBox`
         """
-        # This was copied for HollowCylinder. Inheritence removed to avoid problems
+        # This was copied for HollowCylinder. Inheritance removed to avoid problems
         radius = self.radius
 
         point_a = self.position - self.length / 2 * self.axis
@@ -1017,26 +967,6 @@ class Cylinder(RevolvedProfile):
         axis.normalize()
         return cls(position, axis, radius, length=length,
                    color=color, alpha=alpha, name=name)
-
-    def FreeCADExport(self, ip):
-        if self.radius > 0:
-            name = 'primitive' + str(ip)
-            e = str(1000 * self.length)
-            r = str(1000 * self.radius)
-            position = 1000 * (self.position - self.axis * self.length / 2.)
-            x, y, z = position
-            x = str(x)
-            y = str(y)
-            z = str(z)
-
-            ax, ay, az = self.axis
-            ax = str(ax)
-            ay = str(ay)
-            az = str(az)
-            return name + '=Part.makeCylinder(' + r + ',' + e + ',fc.Vector(' + x + ',' + y + \
-                ',' + z + '),fc.Vector(' + ax + ',' + ay + ',' + az + '),360)\n'
-        else:
-            return ''
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
@@ -1586,36 +1516,6 @@ class HollowCylinder(RevolvedProfile):
         return cls(position, axis, inner_radius=inner_radius, outer_radius=outer_radius, length=length,
                    color=color, alpha=alpha, name=name)
 
-    def FreeCADExport(self, ip):
-        if self.outer_radius > 0.:
-            name = 'primitive' + str(ip)
-            re = round(1000 * self.outer_radius, 6)
-            ri = round(1000 * self.inner_radius, 6)
-            x, y, z = round((1000 * (self.position - self.axis * self.length / 2)),
-                            6)
-            ax, ay, az = npy.round(self.axis.vector, 6)
-
-            s = 'C2 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(
-                re, x, y, z, ax, ay, az)
-            s += 'W2 = Part.Wire(C2.Edges)\n'
-            s += 'F2 = Part.Face(W2)\n'
-
-            if self.inner_radius != 0.:
-                s += 'C1 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(
-                    ri, x, y, z, ax, ay, az)
-                s += 'W1 = Part.Wire(C1.Edges)\n'
-                s += 'F1 = Part.Face(W1)\n'
-                s += 'F2 = F2.cut(F1)\n'
-
-            vx, vy, vz = round(self.axis * self.length * 1000, 6)
-
-            s += '{} = F2.extrude(fc.Vector({}, {}, {}))\n'.format(name, vx,
-                                                                   vy, vz)
-            return s
-
-        else:
-            return ''
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
@@ -1722,10 +1622,8 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
-        """
-        Custom to dict for perf
-        """
+    def to_dict(self, *args, **kwargs):
+        """Custom serialization for performance."""
         dict_ = dc.DessiaObject.base_dict(self)
         dict_.update({'color': self.color,
                       'alpha': self.alpha,
@@ -1737,7 +1635,9 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
     def shell_faces(self):
         """
-        For now it does not take into account rotation of sections
+        Generates the shell faces.
+
+        For now it does not take into account rotation of sections.
         """
 
         # End  planar faces
@@ -1848,8 +1748,9 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Sweep
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new Sweep.
+
+        :param side: 'old' or 'new'
         """
         new_wire = self.wire3d.frame_mapping(frame, side)
         return Sweep(self.contour2d, new_wire, color=self.color,
@@ -1857,18 +1758,16 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        :param side: 'old' or 'new'
         """
         self.wire3d.frame_mapping_inplace(frame, side)
         for face in self.faces:
             face.frame_mapping_inplace(frame, side)
 
     def copy(self, deep=True, memo=None):
-        """
-        Creates a copy of Sweep.
-
-        """
+        """Creates a copy of the Sweep."""
         new_contour2d = self.contour2d.copy()
         new_wire3d = self.wire3d.copy()
         return Sweep(new_contour2d, new_wire3d, color=self.color,
@@ -1894,10 +1793,6 @@ class Sphere(RevolvedProfile):
         i = volmdlr.Point2D(0, 1.01 * self.radius)
         e = volmdlr.Point2D(self.radius, 0.01 * self.radius)  # Not coherent but it works at first, to change !!
 
-        # s = volmdlr.Point2D((-self.radius, 0))
-        # i = volmdlr.Point2D(((math.sqrt(2)/2)*self.radius,(math.sqrt(2)/2)*self.radius))
-        # e = volmdlr.Point2D(((-math.sqrt(2)/2)*self.radius,(-math.sqrt(2)/2)*self.radius))
-
         contour = volmdlr.wires.Contour2D([
             volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
 
@@ -1909,17 +1804,10 @@ class Sphere(RevolvedProfile):
     def volume(self):
         return 4 / 3 * math.pi * self.radius**3
 
-    def FreeCADExport(self, ip, ndigits=3):
-        name = 'primitive' + str(ip)
-        r = 1000 * self.radius
-        x, y, z = round(1000 * self.center, ndigits)
-        return '{} = Part.makeSphere({}, fc.Vector({}, {}, {}))\n'.format(
-            name, r, x, y, z)
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Sphere
-        side = 'old' or 'new'
+        :param side: 'old' or 'new'
         """
         return Sphere(self.center.frame_mapping(frame, side), self.radius)
 
@@ -1988,7 +1876,7 @@ class Sphere(RevolvedProfile):
         return in_points
 
 
-class Measure3D(volmdlr.edges.Line3D):
+class Measure3D:
     """
     Used to create a measure between two points in 3D.
     """
@@ -2030,8 +1918,8 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding BSplineExtrusion object.
         :rtype: :class:`volmdlr.primitives3d.BSplineExtrusion`

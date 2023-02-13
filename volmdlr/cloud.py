@@ -21,8 +21,9 @@ import volmdlr.wires as vmw
 
 class PointCloud3D(dc.DessiaObject):
     """
-    Point Cloud3D class.
-    :param points: list of points for point cloud.
+    Point Cloud3D, a list of points.
+    
+    :param points: a list of points.
     """
 
     def __init__(self, points: List[vm.Point3D], name: str = ''):
@@ -191,7 +192,7 @@ class PointCloud3D(dc.DessiaObject):
 
     def shell_distances_ndarray(self, shells: vmf.OpenTriangleShell3D):
         """
-        Computes distance of point to shell for each point in self.points in a numpy formated data.
+        Computes distance of point to shell for each point in self.points in a numpy formatted data.
 
         :return: The point cloud of points projection on nearest triangle, their distances and the corresponding
         triangles index
@@ -201,9 +202,7 @@ class PointCloud3D(dc.DessiaObject):
         return closest_point(shells_trimesh, self.to_coord_matrix())
 
     def to_coord_matrix(self) -> List[List[float]]:
-        """
-        Generate an n_points x 3 matrix of coordinates.
-        """
+        """Generate an n_points x 3 matrix of coordinates."""
         return [point.coordinates() for point in self.points]
 
     # def alpha_shape(self, alpha:float, number_point_samples:int):
