@@ -6,9 +6,7 @@ import volmdlr.edges
 
 class TestCompositePrimitive3D(unittest.TestCase):
     def setUp(self):
-        self.primitives = [
-            volmdlr.edges.LineSegment3D(volmdlr.O3D, volmdlr.Point3D(4, 2, 1))
-        ]
+        self.primitives = [volmdlr.edges.LineSegment3D(volmdlr.O3D, volmdlr.Point3D(4, 2, 1))]
         self.composite_3d = volmdlr.core.CompositePrimitive3D(self.primitives, name="test")
 
     def test_plot(self):
