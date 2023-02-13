@@ -1,7 +1,7 @@
 import unittest
 import volmdlr
-import volmdlr.core
 import volmdlr.edges
+from volmdlr.core import CompositePrimitive2D
 
 
 class TestCompositePrimitive2D(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestCompositePrimitive2D(unittest.TestCase):
                 volmdlr.Point2D(volmdlr.TWO_PI, 0.003),
             ),
         ]
-        self.composite_2d = volmdlr.core.CompositePrimitive2D(self.primitives, name="test")
+        self.composite_2d = CompositePrimitive2D(self.primitives, name="test")
 
         self.square_primitives = [
             volmdlr.edges.LineSegment2D(volmdlr.Point2D(0, 0), volmdlr.Point2D(0, 1)),
@@ -21,7 +21,7 @@ class TestCompositePrimitive2D(unittest.TestCase):
             volmdlr.edges.LineSegment2D(volmdlr.Point2D(1, 1), volmdlr.Point2D(1, 0)),
             volmdlr.edges.LineSegment2D(volmdlr.Point2D(1, 0), volmdlr.Point2D(0, 0)),
         ]
-        self.square_composite_2d = volmdlr.core.CompositePrimitive2D(self.square_primitives, name="square")
+        self.square_composite_2d = CompositePrimitive2D(self.square_primitives, name="square")
 
     def test_plot(self):
         ax = self.composite_2d.plot()
