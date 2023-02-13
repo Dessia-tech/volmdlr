@@ -1757,6 +1757,11 @@ class LineSegment2D(LineSegment):
         return self._bounding_rectangle
 
     def straight_line_area(self):
+        """
+        Calculates the area of the LineSegment2D, with line drawn from start to end.
+
+        :return: straight_line_area.
+        """
         return 0.
 
     def straight_line_second_moment_area(self, point: volmdlr.Point2D):
@@ -1991,6 +1996,12 @@ class LineSegment2D(LineSegment):
         self.end = new_end
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None):
+        """
+        Plot data method for a LineSegment2D.
+
+        :param edge_style: edge style.
+        :return: plot_data.LineSegment2D object.
+        """
         return plot_data.LineSegment2D([self.start.x, self.start.y],
                                        [self.end.x, self.end.y],
                                        edge_style=edge_style)
@@ -2318,6 +2329,10 @@ class Arc2D(Arc):
         return self._angle
 
     def get_angle(self):
+        """
+        Gets arc angle.
+        
+        """
         clockwise_path, trigowise_path = \
             self.clockwise_and_trigowise_paths
         if self.is_trigo:
@@ -2370,6 +2385,12 @@ class Arc2D(Arc):
                          name=self.name)
 
     def line_intersections(self, line2d: Line2D):
+        """
+        Calculates the intersection between a line and an Arc2D.
+        
+        :param line2d: Line2D to verify intersections.
+        :return: a list with intersections points.
+        """
         # circle = self.to_circle()
         # circle_intersection_points = circle.line_intersections(line2d)
         full_arc_2d = self.to_full_arc_2d()
@@ -2381,6 +2402,12 @@ class Arc2D(Arc):
         return intersection_points
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D):
+        """
+        Calculates the intersection between a LineSegment2D and an Arc2D.
+
+        :param line2d: LineSegment2D to verify intersections.
+        :return: a list with intersections points.
+        """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
         full_arc_2d = self.to_full_arc_2d()
@@ -2472,9 +2499,19 @@ class Arc2D(Arc):
         return normal_vector
 
     def area(self):
+        """
+        Calculates the area of the Arc2D.
+
+        :return: the area of the Arc2D.
+        """
         return self.radius ** 2 * self.angle / 2
 
     def center_of_mass(self):
+        """
+        Calculates the center of mass of the Arc2D.
+
+        :return: center of mass point.
+        """
         #        u=self.middle.vector-self.center.vector
         u = self.middle_point() - self.center
         u.normalize()
@@ -2495,6 +2532,11 @@ class Arc2D(Arc):
         return self._bounding_rectangle
 
     def straight_line_area(self):
+        """
+        Calculates the area of the arc2d, with line drawn from start to end.
+
+        :return: straight_line_area.
+        """
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
             area = math.pi * self.radius ** 2 - 0.5 * self.radius ** 2 * (
@@ -2736,6 +2778,12 @@ class Arc2D(Arc):
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   anticlockwise: bool = None):
+        """
+        Plot data method for a Arc2D.
+
+        :param edge_style: edge style.
+        :return: plot_data.Arc2D object.
+        """
         list_node = self.discretization_points(number_points=20)
         data = []
         for nd in list_node:
@@ -2885,6 +2933,11 @@ class FullArc2D(Arc2D):
         return self._bounding_rectangle
 
     def straight_line_area(self):
+        """
+        Calculates the area of the fullarc, with line drawn from start to end.
+
+        :return: straight_line_area.
+        """
         area = self.area()
         return area
 
@@ -3269,7 +3322,7 @@ class ArcEllipse2D(Edge):
 
     def straight_line_area(self):
         """
-        Calculates the area of the elliptic arc, with line drwan from start to end.
+        Calculates the area of the elliptic arc, with line drawn from start to end.
 
         :return: straight_line_area.
         """
