@@ -47,6 +47,24 @@ class TestCompositePrimitive2D(unittest.TestCase):
             p2.rotation_inplace(center, angle)
             self.assertEqual(p1, p2)
 
+    def test_translation(self):
+        offset = volmdlr.Vector2D(0.56, -3.4)
+        rotated_composite_2d = self.composite_2d.translation(offset)
+
+        for p1, p2 in zip(rotated_composite_2d.primitives, self.primitives):
+            self.assertNotEqual(p1, p2)
+            p2 = p2.translation(offset)
+            self.assertEqual(p1, p2)
+
+    def test_translation_inplace(self):
+        offset = volmdlr.Vector2D(11, -0.04)
+        self.composite_2d.translation_inplace(offset)
+
+        for p1, p2 in zip(self.composite_2d.primitives, self.primitives):
+            self.assertNotEqual(p1, p2)
+            p2.translation_inplace(offset)
+            self.assertEqual(p1, p2)
+
 
 if __name__ == "__main__":
     unittest.main()
