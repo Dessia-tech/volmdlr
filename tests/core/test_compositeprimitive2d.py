@@ -15,9 +15,22 @@ class TestCompositePrimitive2D(unittest.TestCase):
         ]
         self.composite_2d = volmdlr.core.CompositePrimitive2D(self.primitives, name="test")
 
+        self.square_primitives = [
+            volmdlr.edges.LineSegment2D(volmdlr.Point2D(0, 0), volmdlr.Point2D(0, 1)),
+            volmdlr.edges.LineSegment2D(volmdlr.Point2D(0, 1), volmdlr.Point2D(1, 1)),
+            volmdlr.edges.LineSegment2D(volmdlr.Point2D(1, 1), volmdlr.Point2D(1, 0)),
+            volmdlr.edges.LineSegment2D(volmdlr.Point2D(1, 0), volmdlr.Point2D(0, 0)),
+        ]
+        self.square_composite_2d = volmdlr.core.CompositePrimitive2D(self.square_primitives, name="square")
+
     def test_plot(self):
         ax = self.composite_2d.plot()
         self.assertIsNotNone(ax)
+
+    def test_plot2(self):
+        ax = self.square_composite_2d.plot()
+        for ls, line in zip(self.square_composite_2d.primitives, ax.lines):
+            self.assertListEqual(line.get_xydata().tolist(), [[ls.start.x, ls.start.y], [ls.end.x, ls.end.y]])
 
     def test_plot_equal_aspect(self):
         ax = self.composite_2d.plot(equal_aspect=True)
@@ -67,7 +80,7 @@ class TestCompositePrimitive2D(unittest.TestCase):
 
     def test_frame_mapping(self):
         frame = volmdlr.Frame2D(volmdlr.O2D, volmdlr.Vector2D(1, 1), volmdlr.Vector2D(1, -1))
-        side = 'new'
+        side = "new"
         mapped_composite_2d = self.composite_2d.frame_mapping(frame, side)
 
         for p1, p2 in zip(mapped_composite_2d.primitives, self.primitives):
@@ -77,7 +90,7 @@ class TestCompositePrimitive2D(unittest.TestCase):
 
     def test_frame_mapping_inplace(self):
         frame = volmdlr.Frame2D(volmdlr.O2D, volmdlr.Vector2D(1, 1), volmdlr.Vector2D(1, -1))
-        side = 'old'
+        side = "old"
         self.composite_2d.frame_mapping_inplace(frame, side)
 
         for p1, p2 in zip(self.composite_2d.primitives, self.primitives):
