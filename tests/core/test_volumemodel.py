@@ -9,7 +9,7 @@ from copy import deepcopy
 class TestVolumeModel(unittest.TestCase):
     def setUp(self):
         self.block = Block(volmdlr.OXYZ)
-        self.sphere = Sphere(volmdlr.Point3D(2., 1., 0.), radius=.5)
+        self.sphere = Sphere(volmdlr.Point3D(2.0, 1.0, 0.0), radius=0.5)
         self.primitives = [self.block, self.sphere]
         self.volume_model = VolumeModel(deepcopy(self.primitives))
 
@@ -85,6 +85,11 @@ class TestVolumeModel(unittest.TestCase):
         self.assertEqual(
             self.volume_model.bounding_box, BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
         )
+
+    def test_plot(self):
+        volume_model_plot_lines = self.volume_model.plot().lines
+        primitives_plot_lines = [line for p in self.primitives for line in p.plot().lines]
+        self.assertEqual(len(volume_model_plot_lines), len(primitives_plot_lines))
 
 
 if __name__ == "__main__":
