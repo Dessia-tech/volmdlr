@@ -59,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 intersection_area, distance_to_b_rectangle, distance_to_point
 * BoundingBox: center, add, to_dict, points, from_bounding_boxes, from_points, to_frame, volume, bbox_intersection,
 is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_to_point, plot
+* VolumeModel: eq, volume, rotation, rotation_inplace, translation, translation_inplace, frame_mapping, 
+frame_mapping_inplace, bounding_box, plot
 
 ### CI
 - add spell check to pylint with pyenchant
