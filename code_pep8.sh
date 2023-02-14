@@ -8,7 +8,7 @@ if [[ -z "$CHANGED_FILES" ]]
   then exit 0
 fi
 
-DETECTED_CHANGES=$(python3 -m autopep8 -d $CHANGED_FILES)
+DETECTED_CHANGES=$(python3 -m autopep8 -d "$CHANGED_FILES")
 if [[ -n "$DETECTED_CHANGES" ]]
   then
   echo -e "\npep8 non conforming changes detected, please run :\n"
