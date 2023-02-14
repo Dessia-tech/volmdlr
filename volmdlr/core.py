@@ -902,6 +902,7 @@ class VolumeModel(dc.PhysicalObject):
         if len(self.primitives) != len(other.primitives):
             return False
         for p1, p2 in zip(self.primitives, other.primitives):
+            # TODO: if 2 volume models has exact same primitives but in a different order, they are different?
             equ = equ and p1 == p2
         return equ
 
