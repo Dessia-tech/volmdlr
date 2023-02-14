@@ -952,7 +952,7 @@ class Mesh(DessiaObject):
 
     #     return mesh
 
-    def nodes_correction(self, reference_index):  # , tol=1e-4
+    def nodes_correction(self, reference_index, tol=1e-4):
         if not self._nodes_correction:
             nodes_reference = self.elements_groups[reference_index].nodes
             groups = self.elements_groups[:]
