@@ -81,6 +81,7 @@ class TestBoundingBox(unittest.TestCase):
 
     def test_bbox_intersection(self):
         self.assertTrue(self.bbox1.bbox_intersection(self.bbox2))
+        self.assertTrue(self.bbox2.bbox_intersection(self.bbox1))
         self.assertFalse(self.bbox1.bbox_intersection(self.bbox3))
 
     def test_is_inside_bbox(self):
@@ -97,6 +98,9 @@ class TestBoundingBox(unittest.TestCase):
         self.assertEqual(self.bbox1.distance_to_bbox(self.bbox2), 0)
         self.assertEqual(self.bbox1.distance_to_bbox(self.bbox3), 12**0.5)
         self.assertEqual(self.bbox1.distance_to_bbox(self.bbox4), 0)
+        bbox5 = BoundingBox(-2, -1, 3, 4, -2, -1)
+        self.assertEqual(self.bbox1.distance_to_bbox(bbox5), 3**0.5)
+        self.assertEqual(bbox5.distance_to_bbox(self.bbox1), 3**0.5)
 
     def test_point_belongs(self):
         self.assertTrue(self.bbox1.point_belongs(volmdlr.Point3D(1, 1, 1)))
