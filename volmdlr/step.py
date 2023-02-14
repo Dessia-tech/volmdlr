@@ -76,7 +76,7 @@ def uncertainty_measure_with_unit(arguments, object_dict):
     Gets the global length uncertainty.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: Global length uncertainty.
     """
     length_measure = float(arguments[0].split('(')[1][:-1])
@@ -88,7 +88,7 @@ def conversion_based_unit_length_unit_named_unit(arguments, object_dict):
     Gets the conversion based unit length.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: conversion based unit length.
     """
     return object_dict[arguments[1]]
@@ -99,7 +99,7 @@ def length_measure_with_unit(arguments, object_dict):
     Calculates the step file's si unit conversion factor.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: si unit conversion factor.
     """
     length_measure = float(arguments[0].split('(')[1][:-1])
@@ -112,7 +112,7 @@ def length_unit_named_unit_si_unit(arguments, object_dict):
     Gets the length si unit.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: length si unit
     """
     si_unit_length = SI_PREFIX[arguments[1]]
@@ -125,7 +125,7 @@ def geometric_representation_context_global_uncertainty_assigned_context_global_
     Gets the global length uncertainty.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: Global length uncertainty.
     """
     global_unit_uncertainty_ref = int(arguments[2][0][1:])
@@ -851,7 +851,7 @@ class Step(dc.DessiaObject):
     def to_volume_model(self, show_times: bool = False):
         """
         show_times=True displays the number of times a given class has been
-        instanciated and the total time of all the instanciations of this
+        instantiated and the total time of all the instantiations of this
         given class.
         """
 
@@ -936,7 +936,7 @@ class Step(dc.DessiaObject):
                                 times[volmdlr_object.__class__][1] += t
                     error = False
                 except KeyError as key:
-                    # Sometimes the bfs search don't instanciate the nodes of a
+                    # Sometimes the bfs search don't instantiate the nodes of a
                     # depth in the right order, leading to error
                     instanciate_ids.append(key.args[0])
             if i == 0:
@@ -969,7 +969,7 @@ class Step(dc.DessiaObject):
         points3d = []
         for stepfunction in self.functions.values():
             if stepfunction.name == 'CARTESIAN_POINT':
-                # INSTANCIATION
+                # INSTANTIATION
                 name = self.functions[stepfunction.id].name
                 arguments = self.functions[stepfunction.id].arg[:]
                 self.parse_arguments(arguments)

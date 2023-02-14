@@ -192,7 +192,7 @@ class PointCloud3D(dc.DessiaObject):
 
     def shell_distances_ndarray(self, shells: vmf.OpenTriangleShell3D):
         """
-        Computes distance of point to shell for each point in self.points in a numpy formated data.
+        Computes distance of point to shell for each point in self.points in a numpy formatted data.
 
         :return: The point cloud of points projection on nearest triangle, their distances and the corresponding
         triangles index
