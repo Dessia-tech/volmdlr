@@ -5,8 +5,8 @@ from volmdlr.core import BoundingBox
 
 class TestBoundingBox(unittest.TestCase):
     def setUp(self):
-        self.bbox1 = BoundingBox(0., 2., 0., 2., 0., 2.)
-        self.bbox2 = BoundingBox(1., 3., 0., 5., -1., 1.)
+        self.bbox1 = BoundingBox(0.0, 2.0, 0.0, 2.0, 0.0, 2.0)
+        self.bbox2 = BoundingBox(1.0, 3.0, 0.0, 5.0, -1.0, 1.0)
         self.bbox3 = BoundingBox(4.0, 5.0, 4.0, 5.0, 4.0, 5.0)
         self.bbox4 = BoundingBox(0.5, 1.5, 0.5, 1.5, 0.5, 1.5)
 
@@ -15,7 +15,7 @@ class TestBoundingBox(unittest.TestCase):
         self.assertEqual(self.bbox2.center, volmdlr.Point3D(2, 2.5, 0))
 
     def test_add(self):
-        self.assertEqual(self.bbox1 + self.bbox2, BoundingBox(0., 3., 0., 5., -1., 2.))
+        self.assertEqual(self.bbox1 + self.bbox2, BoundingBox(0.0, 3.0, 0.0, 5.0, -1.0, 2.0))
 
     def test_to_dict(self):
         self.assertEqual(
@@ -49,7 +49,8 @@ class TestBoundingBox(unittest.TestCase):
 
     def test_from_bounding_boxes(self):
         self.assertEqual(
-            BoundingBox.from_bounding_boxes([self.bbox1, self.bbox2, self.bbox3]), BoundingBox(0., 5., 0., 5., -1., 5.)
+            BoundingBox.from_bounding_boxes([self.bbox1, self.bbox2, self.bbox3]),
+            BoundingBox(0.0, 5.0, 0.0, 5.0, -1.0, 5.0),
         )
 
     def test_from_points(self):

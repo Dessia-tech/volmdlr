@@ -17,3 +17,7 @@ class TestCompositePrimitive3D(unittest.TestCase):
 
             for i in range(3):
                 self.assertListEqual(data[i].tolist(), [ls.start[i], ls.end[i]])
+
+
+if __name__ == "__main__":
+    unittest.main()
