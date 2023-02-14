@@ -1,15 +1,22 @@
 import math
 import unittest
 import volmdlr
-from volmdlr.primitives3d import Block
+from volmdlr.primitives3d import Block, Sphere
 from volmdlr.core import VolumeModel, BoundingBox
 from copy import deepcopy
 
 
 class TestVolumeModel(unittest.TestCase):
     def setUp(self):
-        self.primitives = [Block(volmdlr.OXYZ)]
+        self.block = Block(volmdlr.OXYZ)
+        self.sphere = Sphere(volmdlr.Point3D(2., 1., 0.), radius=.5)
+        self.primitives = [self.block, self.sphere]
         self.volume_model = VolumeModel(deepcopy(self.primitives))
+
+    def test_eq(self):
+        different_volume_model = VolumeModel([deepcopy(self.sphere)])
+        self.assertNotEqual(self.volume_model, different_volume_model)
+        self.assertEqual(self.volume_model, self.volume_model)
 
     def test_volume(self):
         self.assertEqual(self.volume_model.volume(), sum([p.volume() for p in self.primitives]))
@@ -73,6 +80,11 @@ class TestVolumeModel(unittest.TestCase):
             self.assertNotEqual(p1, p2)
             p2.frame_mapping_inplace(frame, side)
             self.assertEqual(p1, p2)
+
+    def test_bounding_box(self):
+        self.assertEqual(
+            self.volume_model.bounding_box, BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+        )
 
 
 if __name__ == "__main__":
