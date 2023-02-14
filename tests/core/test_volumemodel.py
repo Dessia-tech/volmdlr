@@ -1,9 +1,9 @@
 import math
 import unittest
-import volmdlr
-from volmdlr.primitives3d import Block, Sphere
-from volmdlr.core import VolumeModel, BoundingBox
 from copy import deepcopy
+import volmdlr
+from volmdlr.primitives3d import Block
+from volmdlr.core import VolumeModel, BoundingBox
 
 
 class TestVolumeModel(unittest.TestCase):
@@ -20,7 +20,7 @@ class TestVolumeModel(unittest.TestCase):
         self.assertEqual(self.volume_model, self.volume_model)
 
     def test_volume(self):
-        self.assertEqual(self.volume_model.volume(), sum([p.volume() for p in self.primitives]))
+        self.assertEqual(self.volume_model.volume(), sum(p.volume() for p in self.primitives))
 
     def test_rotation(self):
         center = volmdlr.Point3D(0.0, 0.0, 0.0)

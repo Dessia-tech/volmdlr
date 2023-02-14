@@ -1,8 +1,8 @@
 import unittest
+from copy import deepcopy
 import volmdlr
 import volmdlr.edges
 from volmdlr.core import CompositePrimitive2D
-from copy import deepcopy
 
 
 class TestCompositePrimitive2D(unittest.TestCase):
