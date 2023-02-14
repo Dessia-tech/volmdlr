@@ -203,8 +203,7 @@ class Edge(dc.DessiaObject):
 
     def straight_line_point_belongs(self, point):
         """
-        Verifies if a point belongs to the surface created by closing the edge
-        with a line between its start and end points.
+        Verifies if a point belongs to the surface created by closing the edge.
 
         :param point: Point to be verified
         :return: Return True if the point belongs to this surface,
@@ -843,8 +842,9 @@ class BSplineCurve(Edge):
                                                      List[volmdlr.Point3D]],
                                   degree: int, **kwargs):
         """
-        Creates a B-spline curve approximation using least squares method with
-        fixed number of control points. It is recommended to specify the
+        Creates a B-spline curve approximation using least squares method with fixed number of control points.
+
+        It is recommended to specify the
         number of control points.
         Please refer to The NURBS Book (2nd Edition), pp.410-413 for details.
 
@@ -1475,7 +1475,7 @@ class BSplineCurve2D(BSplineCurve):
 
         :param abscissa: defines where in the BSplineCurve2D the
         direction vector is to be calculated.
-        :return: The direection vector vector of the BSplineCurve2D
+        :return: The direction vector vector of the BSplineCurve2D
         """
         return self.tangent(abscissa)
 
@@ -1757,6 +1757,11 @@ class LineSegment2D(LineSegment):
         return self._bounding_rectangle
 
     def straight_line_area(self):
+        """
+        Calculates the area of the LineSegment2D, with line drawn from start to end.
+
+        :return: straight_line_area.
+        """
         return 0.
 
     def straight_line_second_moment_area(self, point: volmdlr.Point2D):
@@ -1806,18 +1811,21 @@ class LineSegment2D(LineSegment):
         return point, curv_abs
 
     def line_intersections(self, line: Line2D):
+        if self.direction_vector().is_colinear_to(line.direction_vector()):
+            return []
         point = volmdlr.Point2D.line_intersection(self, line)
         if point is not None:
             point_projection1, _ = self.point_projection(point)
+            intersections = [point_projection1]
             if point_projection1 is None:
-                return []
+                intersections = []
 
-            if line.__class__.__name__ == 'LineSegment2D':
+            elif line.__class__.__name__ == 'LineSegment2D':
                 point_projection2, _ = line.point_projection(point)
                 if point_projection2 is None:
-                    return []
+                    intersections = []
 
-            return [point_projection1]
+            return intersections
         if line.point_belongs(self.start):
             return [self.start]
         if line.point_belongs(self.end):
@@ -1988,6 +1996,12 @@ class LineSegment2D(LineSegment):
         self.end = new_end
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None):
+        """
+        Plot data method for a LineSegment2D.
+
+        :param edge_style: edge style.
+        :return: plot_data.LineSegment2D object.
+        """
         return plot_data.LineSegment2D([self.start.x, self.start.y],
                                        [self.end.x, self.end.y],
                                        edge_style=edge_style)
@@ -2315,6 +2329,10 @@ class Arc2D(Arc):
         return self._angle
 
     def get_angle(self):
+        """
+        Gets arc angle.
+        
+        """
         clockwise_path, trigowise_path = \
             self.clockwise_and_trigowise_paths
         if self.is_trigo:
@@ -2367,6 +2385,12 @@ class Arc2D(Arc):
                          name=self.name)
 
     def line_intersections(self, line2d: Line2D):
+        """
+        Calculates the intersection between a line and an Arc2D.
+        
+        :param line2d: Line2D to verify intersections.
+        :return: a list with intersections points.
+        """
         # circle = self.to_circle()
         # circle_intersection_points = circle.line_intersections(line2d)
         full_arc_2d = self.to_full_arc_2d()
@@ -2378,6 +2402,12 @@ class Arc2D(Arc):
         return intersection_points
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D):
+        """
+        Calculates the intersection between a LineSegment2D and an Arc2D.
+
+        :param line2d: LineSegment2D to verify intersections.
+        :return: a list with intersections points.
+        """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
         full_arc_2d = self.to_full_arc_2d()
@@ -2469,9 +2499,19 @@ class Arc2D(Arc):
         return normal_vector
 
     def area(self):
+        """
+        Calculates the area of the Arc2D.
+
+        :return: the area of the Arc2D.
+        """
         return self.radius ** 2 * self.angle / 2
 
     def center_of_mass(self):
+        """
+        Calculates the center of mass of the Arc2D.
+
+        :return: center of mass point.
+        """
         #        u=self.middle.vector-self.center.vector
         u = self.middle_point() - self.center
         u.normalize()
@@ -2492,6 +2532,11 @@ class Arc2D(Arc):
         return self._bounding_rectangle
 
     def straight_line_area(self):
+        """
+        Calculates the area of the arc2d, with line drawn from start to end.
+
+        :return: straight_line_area.
+        """
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
             area = math.pi * self.radius ** 2 - 0.5 * self.radius ** 2 * (
@@ -2596,8 +2641,7 @@ class Arc2D(Arc):
 
     def straight_line_point_belongs(self, point):
         """
-        Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points.
+        Verifies if a point belongs to the surface created by closing the edge.
 
         :param point_2d: Point to be verified.
         :return: Return True if the point belongs to this surface, or False otherwise.
@@ -2734,6 +2778,12 @@ class Arc2D(Arc):
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   anticlockwise: bool = None):
+        """
+        Plot data method for a Arc2D.
+
+        :param edge_style: edge style.
+        :return: plot_data.Arc2D object.
+        """
         list_node = self.discretization_points(number_points=20)
         data = []
         for nd in list_node:
@@ -2883,6 +2933,11 @@ class FullArc2D(Arc2D):
         return self._bounding_rectangle
 
     def straight_line_area(self):
+        """
+        Calculates the area of the fullarc, with line drawn from start to end.
+
+        :return: straight_line_area.
+        """
         area = self.area()
         return area
 
@@ -3267,7 +3322,7 @@ class ArcEllipse2D(Edge):
 
     def straight_line_area(self):
         """
-        Calculates the area of the elliptic arc, with line drwan from start to end.
+        Calculates the area of the elliptic arc, with line drawn from start to end.
 
         :return: straight_line_area.
         """
@@ -3407,6 +3462,7 @@ class ArcEllipse2D(Edge):
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new ArcEllipse2D.
+
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -4280,8 +4336,7 @@ class BSplineCurve3D(BSplineCurve):
     def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):
         """
-        Creates a table of equivalence between the parameter t (evaluation
-        of the BSplineCurve) and the cumulative distance.
+        Creates a table of equivalence between the parameter t (eval. of the BSplineCurve) and the cumulative distance.
 
         :param resolution: The precision of the table. Autoadjusted by the
             algorithm. Default value set to 20
@@ -4369,9 +4424,9 @@ class BSplineCurve3D(BSplineCurve):
 
     def point3d_to_parameter(self, point: volmdlr.Point3D):
         """
-        Search for the value of the normalized evaluation parameter t
-        (between 0 and 1) that would return the given point when the
-        BSplineCurve3D is evaluated at the t value.
+        Search for the value of the normalized evaluation parameter t (between 0 and 1).
+
+        :return: the given point when the BSplineCurve3D is evaluated at the t value.
         """
         def f(param):
             p3d = volmdlr.Point3D(*self.curve.evaluate_single(param))
@@ -4896,8 +4951,9 @@ class Arc3D(Arc):
 
     def get_arc_direction(self):
         """
-        Verifies if arc is clockwise of trigowise
-        :return:
+        Verifies if arc is clockwise or trigowise.
+
+        :return: True if clockwise, False if trigowise.
         """
         clockwise_path, trigowise_path = self.clockwise_and_trigowise_paths
         if clockwise_path > trigowise_path:
@@ -4927,6 +4983,7 @@ class Arc3D(Arc):
     def angle(self):
         """
         Arc angle property.
+
         :return: arc angle
         """
         if not self._utd_angle:
@@ -4937,6 +4994,7 @@ class Arc3D(Arc):
     def get_angle(self):
         """
         Gets the arc angle.
+
         :return: arc angle
         """
         clockwise_path, trigowise_path = \
