@@ -7,19 +7,19 @@ from volmdlr.core import CompositePrimitive2D
 class TestCompositePrimitive2D(unittest.TestCase):
     def setUp(self):
         self.primitives = [
-            volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.Point2D(volmdlr.TWO_PI, 0)),
+            volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.Point2D(volmdlr.TWO_PI, 0.0)),
             volmdlr.edges.LineSegment2D(
-                volmdlr.Point2D(volmdlr.TWO_PI, 0),
+                volmdlr.Point2D(volmdlr.TWO_PI, 0.0),
                 volmdlr.Point2D(volmdlr.TWO_PI, 0.003),
             ),
         ]
         self.composite_2d = CompositePrimitive2D(self.primitives, name="test")
 
         self.square_primitives = [
-            volmdlr.edges.LineSegment2D(volmdlr.Point2D(0, 0), volmdlr.Point2D(0, 1)),
-            volmdlr.edges.LineSegment2D(volmdlr.Point2D(0, 1), volmdlr.Point2D(1, 1)),
-            volmdlr.edges.LineSegment2D(volmdlr.Point2D(1, 1), volmdlr.Point2D(1, 0)),
-            volmdlr.edges.LineSegment2D(volmdlr.Point2D(1, 0), volmdlr.Point2D(0, 0)),
+            volmdlr.edges.LineSegment2D(volmdlr.Point2D(0.0, 0.0), volmdlr.Point2D(0.0, 1.0)),
+            volmdlr.edges.LineSegment2D(volmdlr.Point2D(0.0, 1.0), volmdlr.Point2D(1.0, 1.0)),
+            volmdlr.edges.LineSegment2D(volmdlr.Point2D(1.0, 1.0), volmdlr.Point2D(1.0, 0.0)),
+            volmdlr.edges.LineSegment2D(volmdlr.Point2D(1.0, 0.0), volmdlr.Point2D(0.0, 0.0)),
         ]
         self.square_composite_2d = CompositePrimitive2D(self.square_primitives, name="square")
 
@@ -70,7 +70,7 @@ class TestCompositePrimitive2D(unittest.TestCase):
             self.assertEqual(p1, p2)
 
     def test_translation_inplace(self):
-        offset = volmdlr.Vector2D(11, -0.04)
+        offset = volmdlr.Vector2D(11.0, -0.04)
         self.composite_2d.translation_inplace(offset)
 
         for p1, p2 in zip(self.composite_2d.primitives, self.primitives):
@@ -79,7 +79,7 @@ class TestCompositePrimitive2D(unittest.TestCase):
             self.assertEqual(p1, p2)
 
     def test_frame_mapping(self):
-        frame = volmdlr.Frame2D(volmdlr.O2D, volmdlr.Vector2D(1, 1), volmdlr.Vector2D(1, -1))
+        frame = volmdlr.Frame2D(volmdlr.O2D, volmdlr.Vector2D(1.0, 1.0), volmdlr.Vector2D(1.0, -1.0))
         side = "new"
         mapped_composite_2d = self.composite_2d.frame_mapping(frame, side)
 
@@ -89,7 +89,7 @@ class TestCompositePrimitive2D(unittest.TestCase):
             self.assertEqual(p1, p2)
 
     def test_frame_mapping_inplace(self):
-        frame = volmdlr.Frame2D(volmdlr.O2D, volmdlr.Vector2D(1, 1), volmdlr.Vector2D(1, -1))
+        frame = volmdlr.Frame2D(volmdlr.O2D, volmdlr.Vector2D(1.0, 1.0), volmdlr.Vector2D(1.0, -1.0))
         side = "old"
         self.composite_2d.frame_mapping_inplace(frame, side)
 

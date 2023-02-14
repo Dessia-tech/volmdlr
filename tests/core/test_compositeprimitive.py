@@ -6,9 +6,9 @@ from volmdlr.core import CompositePrimitive
 
 class TestCompositePrimitive(unittest.TestCase):
     def setUp(self):
-        self.primitive1 = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.Point2D(volmdlr.TWO_PI, 0))
+        self.primitive1 = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.Point2D(volmdlr.TWO_PI, 0.0))
         self.primitive2 = volmdlr.edges.LineSegment2D(
-            volmdlr.Point2D(volmdlr.TWO_PI, 0), volmdlr.Point2D(volmdlr.TWO_PI, 0.003)
+            volmdlr.Point2D(volmdlr.TWO_PI, 0.0), volmdlr.Point2D(volmdlr.TWO_PI, 0.003)
         )
         self.primitives = [self.primitive1, self.primitive2]
         self.composite = CompositePrimitive(self.primitives, name="Composite")
