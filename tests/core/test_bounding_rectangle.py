@@ -3,7 +3,7 @@ import volmdlr
 from volmdlr.core import BoundingRectangle
 
 
-class TestBoundingRectangle(unittest.TestCase):
+class TestBoundingRectangle1(unittest.TestCase):
     def setUp(self):
         self.xmin = 0.0
         self.xmax = 5.0
@@ -90,10 +90,10 @@ class TestBoundingRectangle2(unittest.TestCase):
     b_rectangle3 = BoundingRectangle(4.0, 6.0, -1.0, 1.0)
 
     def test_area(self):
-        self.assertEqual(self.b_rectangle1.area(), 2.25)  # add assertion here
+        self.assertEqual(self.b_rectangle1.area(), 2.25)
 
     def test_center(self):
-        self.assertEqual(self.b_rectangle1.center(), volmdlr.Point2D(0.25, 0.25))  # add assertion here
+        self.assertEqual(self.b_rectangle1.center(), volmdlr.Point2D(0.25, 0.25))
 
     def test_intersection(self):
         self.assertTrue(self.b_rectangle1.b_rectangle_intersection(self.b_rectangle2))
