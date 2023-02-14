@@ -8,13 +8,14 @@ from copy import deepcopy
 
 class TestVolumeModel(unittest.TestCase):
     def setUp(self):
-        self.block = Block(volmdlr.OXYZ)
-        self.sphere = Sphere(volmdlr.Point3D(2.0, 1.0, 0.0), radius=0.5)
-        self.primitives = [self.block, self.sphere]
+        self.frame = volmdlr.Frame3D.from_point_and_vector(volmdlr.O3D, volmdlr.Vector3D(1.0, 1.0, 1.0))
+        self.block1 = Block(volmdlr.OXYZ)
+        self.block2 = Block(self.frame)
+        self.primitives = [self.block1, self.block2]
         self.volume_model = VolumeModel(deepcopy(self.primitives))
 
     def test_eq(self):
-        different_volume_model = VolumeModel([deepcopy(self.sphere)])
+        different_volume_model = VolumeModel([deepcopy(self.block2)])
         self.assertNotEqual(self.volume_model, different_volume_model)
         self.assertEqual(self.volume_model, self.volume_model)
 
