@@ -71,16 +71,16 @@ def bounding_rectangle_adjacent_contours(contours: List):
     :return: The bounding box
     :rtype: :class:`volmdlr.core.BoundingRectangle`
     """
-    xmin, xmax, ymin, ymax = contours[0].bounding_rectangle.bounds()
+    x_min, x_max, y_min, y_max = contours[0].bounding_rectangle.bounds()
 
     for i in range(1, len(contours)):
         xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle.bounds()
-        xmin = min(xmin, xmin_contour)
-        xmax = max(xmax, xmax_contour)
-        ymin = min(ymin, ymin_contour)
-        ymax = max(ymax, ymax_contour)
+        x_min = min(x_min, xmin_contour)
+        x_max = max(x_max, xmax_contour)
+        y_min = min(y_min, ymin_contour)
+        y_max = max(y_max, ymax_contour)
 
-    return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
+    return volmdlr.core.BoundingRectangle(x_min, x_max, y_min, y_max)
 
 
 class WireMixin:
@@ -853,15 +853,15 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         return self._bounding_rectangle
 
     def get_bouding_rectangle(self):
-        xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle.bounds()
+        x_min, x_max, y_min, y_max = self.primitives[0].bounding_rectangle.bounds()
         for edge in self.primitives[1:]:
             xmin_edge, xmax_edge, ymin_edge, ymax_edge = \
                 edge.bounding_rectangle.bounds()
-            xmin = min(xmin, xmin_edge)
-            xmax = max(xmax, xmax_edge)
-            ymin = min(ymin, ymin_edge)
-            ymax = max(ymax, ymax_edge)
-        return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
+            x_min = min(x_min, xmin_edge)
+            x_max = max(x_max, xmax_edge)
+            y_min = min(y_min, ymin_edge)
+            y_max = max(y_max, ymax_edge)
+        return volmdlr.core.BoundingRectangle(x_min, x_max, y_min, y_max)
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
@@ -1636,8 +1636,8 @@ class Contour2D(ContourMixin, Wire2D):
 
     def point_belongs(self, point, include_edge_points: bool = False):
         # TODO: This is incomplete!!!
-        xmin, xmax, ymin, ymax = self.bounding_rectangle
-        if point.x < xmin or point.x > xmax or point.y < ymin or point.y > ymax:
+        x_min, x_max, y_min, y_max = self.bounding_rectangle
+        if point.x < x_min or point.x > x_max or point.y < y_min or point.y > y_max:
             return False
         # if self.edge_polygon.point_belongs(point):
         #     return True
@@ -1668,11 +1668,11 @@ class Contour2D(ContourMixin, Wire2D):
         for primitive in self.primitives:
             if hasattr(primitive, 'discretization_points'):
                 points.extend(primitive.discretization_points(number_points=10))
-        xmin = min(p[0] for p in points)
-        xmax = max(p[0] for p in points)
-        ymin = min(p[1] for p in points)
-        ymax = max(p[1] for p in points)
-        return (volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymax))
+        x_min = min(p[0] for p in points)
+        x_max = max(p[0] for p in points)
+        y_min = min(p[1] for p in points)
+        y_max = max(p[1] for p in points)
+        return (volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_max))
 
     def area(self):
         if not self._area:
@@ -1777,9 +1777,9 @@ class Contour2D(ContourMixin, Wire2D):
         :return: A random point inside the polygon
         :rtype: `volmdlr.Point2D`
         """
-        xmin, xmax, ymin, ymax = self.bounding_rectangle.bounds()
+        x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
         for _ in range(2000):
-            p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
+            p = volmdlr.Point2D.random(x_min, x_max, y_min, y_max)
             if self.point_belongs(p, include_edge_points):
                 return p
         print(True)
@@ -1968,11 +1968,11 @@ class Contour2D(ContourMixin, Wire2D):
         Split in n slices.
 
         """
-        xmin, xmax, _, _ = self.bounding_rectangle.bounds()
+        x_min, x_max, _, _ = self.bounding_rectangle.bounds()
         cutted_contours = []
         iteration_contours = [self]
         for i in range(n - 1):
-            xi = xmin + (i + 1) * (xmax - xmin) / n
+            xi = x_min + (i + 1) * (x_max - x_min) / n
             cut_line = volmdlr.edges.Line2D(volmdlr.Point2D(xi, 0),
                                             volmdlr.Point2D(xi, 1))
 
@@ -2225,15 +2225,15 @@ class Contour2D(ContourMixin, Wire2D):
         return contour.order_contour()
 
     @classmethod
-    def from_bounding_rectangle(cls, xmin, xmax, ymin, ymax):
+    def from_bounding_rectangle(cls, x_min, x_max, y_min, y_max):
         """
         Create a contour2d with bounding_box parameters, using linesegments2d.
         """
 
-        edge0 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymin))
-        edge1 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmax, ymin), volmdlr.Point2D(xmax, ymax))
-        edge2 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmax, ymax), volmdlr.Point2D(xmin, ymax))
-        edge3 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymax), volmdlr.Point2D(xmin, ymin))
+        edge0 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_min))
+        edge1 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_max, y_min), volmdlr.Point2D(x_max, y_max))
+        edge2 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_max, y_max), volmdlr.Point2D(x_min, y_max))
+        edge3 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_min, y_max), volmdlr.Point2D(x_min, y_min))
 
         edges = [edge0, edge1, edge2, edge3]
 
@@ -2713,9 +2713,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return delaunay_triangles
 
     def offset(self, offset):
-        xmin, xmax, ymin, ymax = self.bounding_rectangle.bounds()
+        x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
 
-        max_offset_len = min(xmax - xmin, ymax - ymin) / 2
+        max_offset_len = min(x_max - x_min, y_max - y_min) / 2
         if offset <= -max_offset_len:
             print('Inadapted offset, '
                   'polygon might turn over. Offset must be greater than',
@@ -3214,13 +3214,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         :return: Discretization data.
         :rtype: list
         """
-        xmin, xmax, ymin, ymax = self.bounding_rectangle.bounds()
+        x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
 
         n = number_points_x + 2
         m = number_points_y + 2
 
-        x = npy.linspace(xmin, xmax, num=n)
-        y = npy.linspace(ymin, ymax, num=m)
+        x = npy.linspace(x_min, x_max, num=n)
+        y = npy.linspace(y_min, y_max, num=m)
 
         grid_point_index = {}
 
@@ -3868,11 +3868,11 @@ class Circle2D(Contour2D):
 
     def get_bounding_rectangle(self):
 
-        xmin = self.center.x - self.radius
-        xmax = self.center.x + self.radius
-        ymin = self.center.y - self.radius
-        ymax = self.center.y + self.radius
-        return volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
+        x_min = self.center.x - self.radius
+        x_max = self.center.x + self.radius
+        y_min = self.center.y - self.radius
+        y_max = self.center.y + self.radius
+        return volmdlr.core.BoundingRectangle(x_min, x_max, y_min, y_max)
 
     def line_intersections(self, line: volmdlr.edges.Line2D, tol=1e-9):
         """
