@@ -29,3 +29,4 @@ txt
 discretization
 bool
 len
+isort

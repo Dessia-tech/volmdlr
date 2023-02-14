@@ -29,8 +29,7 @@
 ## Description
 
 Volmdlr is a python volume modeler used as a CAD platform.
-It is simple to understand and operate.
-With it, you can easily create 3D models.
+With it, you can easily create 3D models from python code.
 Check the examples to see what you can do with this library.
 
 <p align="center"><img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing.jpg" width="40%" /> <img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing_contours.png" width="55%" /></p>
