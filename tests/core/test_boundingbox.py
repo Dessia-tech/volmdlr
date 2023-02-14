@@ -82,6 +82,7 @@ class TestBoundingBox(unittest.TestCase):
     def test_bbox_intersection(self):
         self.assertTrue(self.bbox1.bbox_intersection(self.bbox2))
         self.assertTrue(self.bbox2.bbox_intersection(self.bbox1))
+        self.assertTrue(self.bbox1.bbox_intersection(self.bbox1))
         self.assertFalse(self.bbox1.bbox_intersection(self.bbox3))
 
     def test_is_inside_bbox(self):
