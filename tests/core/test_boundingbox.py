@@ -1,4 +1,3 @@
-
 import unittest
 import volmdlr
 from volmdlr.core import BoundingBox
@@ -93,17 +92,24 @@ class TestBoundingBox(unittest.TestCase):
         self.assertEqual(self.bbox1.intersection_volume(self.bbox3), 0)
         self.assertEqual(self.bbox1.intersection_volume(self.bbox4), 1)
 
-    # def test_distance_to_bbox(self):
-    #     self.assertEqual(self.point1.distance_to_bbox(self.bbox1), 0)
-    #     self.assertEqual(self.point2.distance_to_bbox(self.bbox1), 1)
+    def test_distance_to_bbox(self):
+        self.assertEqual(self.bbox1.distance_to_bbox(self.bbox2), 0)
+        self.assertEqual(self.bbox1.distance_to_bbox(self.bbox3), 12**0.5)
+        self.assertEqual(self.bbox1.distance_to_bbox(self.bbox4), 0)
 
     def test_point_belongs(self):
         self.assertTrue(self.bbox1.point_belongs(volmdlr.Point3D(1, 1, 1)))
         self.assertFalse(self.bbox1.point_belongs(volmdlr.Point3D(3, 3, 3)))
 
-    # def test_distance_to_point(self):
-    #     self.assertEqual(self.bbox1.distance_to_point(self.point1), 0)
-    #     self.assertEqual(self.bbox1.distance_to_point(self.point2), 1)
+    def test_distance_to_point(self):
+        p0 = volmdlr.O3D
+        self.assertEqual(self.bbox1.distance_to_point(p0), 0)
+        p1 = volmdlr.Point3D(-1, -1, -1)
+        self.assertEqual(self.bbox1.distance_to_point(p1), 3**0.5)
+        p2 = volmdlr.Point3D(3, 3, 3)
+        self.assertEqual(self.bbox1.distance_to_point(p2), 3**0.5)
+        p3 = volmdlr.Point3D(1, 1, 1)
+        self.assertEqual(self.bbox1.distance_to_point(p3), 1)
 
 
 if __name__ == "__main__":
