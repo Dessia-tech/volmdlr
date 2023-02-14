@@ -11,6 +11,12 @@ class TestBoundingRectangle(unittest.TestCase):
         self.ymax = 8
         self.br = BoundingRectangle(self.xmin, self.xmax, self.ymin, self.ymax)
 
+    def test_getitem(self):
+        self.assertEqual(self.br[0], self.xmin)
+        self.assertEqual(self.br[1], self.xmax)
+        self.assertEqual(self.br[2], self.ymin)
+        self.assertEqual(self.br[3], self.ymax)
+
     def test_bounds(self):
         self.assertTupleEqual(self.br.bounds(), (self.xmin, self.xmax, self.ymin, self.ymax))
 
@@ -62,6 +68,8 @@ class TestBoundingRectangle(unittest.TestCase):
         self.assertEqual(self.br.distance_to_b_rectangle(br3), 1)
         br4 = BoundingRectangle(7, 10, 9, 10)
         self.assertEqual(self.br.distance_to_b_rectangle(br4), 5**0.5)
+        br5 = BoundingRectangle(-4, -1, 9, 10)
+        self.assertEqual(self.br.distance_to_b_rectangle(br5), 2**0.5)
 
     def test_distance_to_point(self):
         p0 = volmdlr.O2D
