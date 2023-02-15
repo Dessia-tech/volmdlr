@@ -8242,8 +8242,6 @@ class RevolutionFace3D(Face3D):
     :type surface2d: `Surface2D`
     :param name: The name of the face.
     :type name: str
-    :param color: The color of the face.
-    :type color: tuple
     """
     min_x_density = 50
     min_y_density = 1
@@ -8251,8 +8249,7 @@ class RevolutionFace3D(Face3D):
     def __init__(self,
                  surface3d: RuledSurface3D,
                  surface2d: Surface2D,
-                 name: str = '',
-                 color=None):
+                 name: str = ''):
         Face3D.__init__(self, surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
@@ -8269,7 +8266,7 @@ class RevolutionFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
-        # To be enhance by restricting wires to cut
+        # To be enhanced by restricting wires to cut
         curve_points = self.surface3d.wire.discretization_points(angle_resolution=20)
         points = []
         for i in range(37):
