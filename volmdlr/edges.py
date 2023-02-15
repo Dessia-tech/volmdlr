@@ -3675,8 +3675,6 @@ class Line3D(Line):
                         [self.point1, self.point2]])
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
         """
         Line3D rotation. Object is updated inplace.
 
@@ -3684,6 +3682,8 @@ class Line3D(Line):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for p in [self.point1, self.point2]:
             p.rotation_inplace(center, axis, angle)
         self._bbox = None
