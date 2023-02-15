@@ -372,7 +372,6 @@ class BoundingRectangle(dc.DessiaObject):
     """
 
     def __init__(self, xmin: float, xmax: float, ymin: float, ymax: float, name: str = ''):
-        # TODO: add check on init if xmin > xmax, ymin > ymax
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
@@ -547,7 +546,6 @@ class BoundingBox(dc.DessiaObject):
         :param name: The name of the bounding box.
         :type name: str, optional
         """
-        # TODO: add checks on inputs
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
