@@ -62,7 +62,6 @@ class TestClosedShell3D(unittest.TestCase):
         self.assertEqual(len(union_shell1_shell2.faces), 7)
 
     def test_set_operations_blocks(self):
-
         box_red = primitives3d.Block(
             volmdlr.Frame3D(
                 volmdlr.Point3D(0, 0, 0),

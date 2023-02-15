@@ -14,7 +14,7 @@ import volmdlr.primitives2d as p2d
 import volmdlr.primitives3d as p3d
 import volmdlr.wires as vmw
 
-#%%
+# %%
 
 p1 = vm.Point2D(0, 0)
 p2 = vm.Point2D(0, 2)
@@ -43,7 +43,7 @@ profile = p3d.ExtrudedProfile(vm.O3D, vm.X3D, vm.Y3D, c1, [], vm.Z3D)
 model = vm.VolumeModel([profile])
 model.BabylonShow()
 
-#%%
+# %%
 
 p1 = vm.Point2D(0, 0)
 p2 = vm.Point2D(2, 0)

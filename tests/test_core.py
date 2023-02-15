@@ -15,7 +15,6 @@ import volmdlr.wires
 
 class TestContour(unittest.TestCase):
     def test_is_overlapping(self):
-
         v2D_1 = vm.Vector2D.random(-3, 3, -3, 3)
 
         # Testing if normalized vector has norm ==1 and is still colinear to original vector

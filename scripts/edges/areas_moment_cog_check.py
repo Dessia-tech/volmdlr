@@ -10,7 +10,6 @@ for iarc, arc in enumerate(
         vme.Arc2D(vm.Point2D(0.3, 0.4), vm.Point2D(-0.35, 0.3), vm.Point2D(0.37, 0.22)),
     ]
 ):
-
     arc_triangle = vmw.ClosedPolygon2D([arc.start, arc.end, arc.center])
 
     ax = arc.plot()

@@ -788,7 +788,6 @@ class Step(dc.DessiaObject):
         subfunction_name = ""
         subfunction_arg = ""
         for char in subfunctions:
-
             if char == "(":
                 parenthesis_count += 1
                 if parenthesis_count == 1:

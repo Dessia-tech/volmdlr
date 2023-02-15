@@ -20,7 +20,6 @@ class TestRevolutionSurface3D(unittest.TestCase):
     axis = volmdlr.Z3D
 
     def test_init(self):
-
         surface = volmdlr.faces.RevolutionSurface3D(self.wire, self.axis_point, self.axis)
 
         self.assertEqual(surface.x_periodicity, volmdlr.TWO_PI)

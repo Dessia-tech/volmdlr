@@ -250,7 +250,6 @@ class Stl(dc.DessiaObject):
         return vmc.VolumeModel([closed_shell], name=self.name)
 
     def extract_points(self):
-
         points1 = [t.point1 for t in self.triangles]
         points2 = [t.point2 for t in self.triangles]
         points3 = [t.point3 for t in self.triangles]

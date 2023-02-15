@@ -705,7 +705,6 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         alpha: float = 1,
         name: str = ""
     ):
-
         self.contour2d = contour2d
         self.axis_point = axis_point
         self.axis = axis
@@ -918,7 +917,6 @@ class Cylinder(RevolvedProfile):
         alpha: float = 1.0,
         name: str = "",
     ):
-
         self.position = position
         axis.normalize()
         self.axis = axis
@@ -1343,7 +1341,6 @@ class Cone(RevolvedProfile):
         alpha: float = 1.0,
         name: str = "",
     ):
-
         self.position = position
         axis.normalize()
         self.axis = axis
@@ -1509,7 +1506,6 @@ class HollowCylinder(RevolvedProfile):
         RevolvedProfile.__init__(self, position, axis, y, contour, position, axis, color=color, alpha=alpha, name=name)
 
     def _bounding_box(self):
-
         radius = self.outer_radius
 
         point_a = self.position - self.length / 2 * self.axis
@@ -1779,7 +1775,6 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                 wire_primitive.__class__ is volmdlr.edges.BSplineCurve3D
                 or wire_primitive.__class__ is volmdlr.edges.BezierCurve3D
             ):
-
                 tangents = []
                 for k, pt in enumerate(wire_primitive.points):
                     position = k / (len(wire_primitive.points) - 1)

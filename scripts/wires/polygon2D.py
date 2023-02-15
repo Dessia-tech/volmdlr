@@ -52,7 +52,6 @@ polygon3 = vmw.ClosedPolygon2D(
 )
 
 for polygon in [polygon1, polygon2, polygon3]:
-
     cog = polygon.center_of_mass()
     (xmin, ymin), (xmax, ymax) = polygon.bounding_points()
 
@@ -61,7 +60,6 @@ for polygon in [polygon1, polygon2, polygon3]:
     points_outside = []
 
     for i in range(100):
-
         pt = vm.Point2D.random(xmin, xmax, ymin, ymax)
         if polygon.point_belongs(pt):
             points_inside.append(pt)

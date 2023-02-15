@@ -11,7 +11,6 @@ import os
 import volmdlr.step
 
 for step_file in ["bsplineface_with_inner_contours.stp", "planeface_with_inner_contour.step"]:
-
     print("Reading step file: ", step_file)
 
     filepath = os.path.join("../faces", step_file)

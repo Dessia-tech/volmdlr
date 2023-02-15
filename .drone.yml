@@ -56,8 +56,6 @@ steps:
   commands:
     - pip install black
     - bash code_black.sh
-#    - black --check -l120 .
-#    - if [ $? -eq 1 ]; then echo "Black found formatting errors. Please run 'black . -l120' to format the code."; fi
 
 
 - name: check code complexity

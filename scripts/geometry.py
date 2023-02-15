@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 import volmdlr.geometry as vmg
 
-for (x1, x2, cos_min, cos_max) in [(0.0, 0.1, math.cos(0.1), 1), (0.1, 0.2, math.cos(0.2), math.cos(0.1))]:
+for x1, x2, cos_min, cos_max in [(0.0, 0.1, math.cos(0.1), 1), (0.1, 0.2, math.cos(0.2), math.cos(0.1))]:
     fx1, fx2 = vmg.cos_image(x1, x2)
     assert fx1 == cos_min
     assert fx2 == cos_max

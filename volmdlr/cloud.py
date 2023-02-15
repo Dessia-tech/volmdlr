@@ -88,7 +88,6 @@ class PointCloud3D(dc.DessiaObject):
                 new_polygon = new_poly.to_3d(position_plane[n] * normal, vec1, vec2)
                 polygon3d.append(new_polygon)
             else:
-
                 polygon2d.append(poly)
                 new_polygon = poly.to_3d(position_plane[n] * normal, vec1, vec2)
                 polygon3d.append(new_polygon)
@@ -277,7 +276,6 @@ class PointCloud3D(dc.DessiaObject):
 
     @staticmethod
     def offset_to_shell(positions_plane: List[vmf.Plane3D], polygons2d: List[vmw.ClosedPolygon2D], offset: float):
-
         origin_f, origin_l = positions_plane[0], positions_plane[-1]
 
         new_position_plane = [origin_f - offset] + positions_plane[1:-1] + [origin_l + offset]

@@ -225,7 +225,6 @@ class CompositePrimitive2D(CompositePrimitive):
         self.update_basis_primitives()
 
     def plot(self, ax=None, color="k", alpha=1, plot_points=False, equal_aspect=False):
-
         if ax is None:
             _, ax = plt.subplots()
 
@@ -1127,7 +1126,6 @@ class VolumeModel(dc.PhysicalObject):
             self.to_step_stream(file)
 
     def to_step_stream(self, stream: dcf.StringFile):
-
         step_content = STEP_HEADER.format(
             name=self.name, filename="", timestamp=datetime.now().isoformat(), version=volmdlr.__version__
         )
@@ -1330,7 +1328,6 @@ class VolumeModel(dc.PhysicalObject):
                 # meshsizes_max.append(size)
 
                 if kwargs["min_points"]:
-
                     lines.extend(
                         primitive.get_mesh_lines_with_transfinite_curves(min_points=kwargs["min_points"], size=size)
                     )
@@ -1721,7 +1718,6 @@ class MovingVolumeModel(VolumeModel):
 
         steps = []
         for istep, frames in enumerate(self.step_frames):
-
             # step_positions = []
             # step_orientations = []
             step = {"time": istep}

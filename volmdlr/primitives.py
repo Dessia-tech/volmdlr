@@ -34,7 +34,6 @@ class RoundedLineSegments:
         adapt_radius: bool = False,
         name: str = "",
     ):
-
         self.points = points
         self.radius = {int(k): v for k, v in radius.items()}
         self.closed = closed

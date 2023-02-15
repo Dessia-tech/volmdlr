@@ -648,7 +648,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         return cls(surface2d_outer_contour, surface2d_inner_contours)
 
     def plot(self, ax=None, color="k", alpha=1, equal_aspect=False):
-
         if ax is None:
             _, ax = plt.subplots()
         self.outer_contour.plot(ax=ax, color=color, alpha=alpha, equal_aspect=equal_aspect)
@@ -675,7 +674,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.__class__(outer_contour=outer_contour, inner_contours=inner_contours)
 
     def rotation(self, center, angle):
-
         outer_contour = self.outer_contour.rotation(center, angle)
         if self.inner_contours:
             inner_contours = [contour.rotation(center, angle) for contour in self.inner_contours]
@@ -721,7 +719,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         lines, line_surface, lines_tags = [], [], []
         point_account, line_account, line_loop_account = 0, 0, 1
         for c, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
-
             if isinstance(contour, volmdlr.wires.Circle2D):
                 points = [
                     volmdlr.Point2D(contour.center.x - contour.radius, contour.center.y),
@@ -1142,7 +1139,6 @@ class Surface3D(DessiaObject):
         return [vme.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree, bspline_curve2d.periodic)]
 
     def normal_from_point2d(self, point2d):
-
         raise NotImplementedError("NotImplemented")
 
     def normal_from_point3d(self, point3d):
@@ -1187,7 +1183,6 @@ class Plane3D(Surface3D):
     face_class = "PlaneFace3D"
 
     def __init__(self, frame: volmdlr.Frame3D, name: str = ""):
-
         self.frame = frame
         self.name = name
         Surface3D.__init__(self, name=name)
@@ -1592,7 +1587,6 @@ class PeriodicalSurface(Surface3D):
             theta4, z4 = inner_contour.primitives[-1].end
             # check if inner_contour has a length of 2pi in theta.
             if math.isclose(abs(theta4 - theta3), 2 * math.pi, abs_tol=1e-3):
-
                 outer_contour_theta = [theta1, theta2]
                 inner_contour_theta = [theta3, theta4]
 
@@ -2869,7 +2863,6 @@ class SphericalSurface3D(Surface3D):
 
     @property
     def bounding_box(self):
-
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
@@ -6189,7 +6182,6 @@ class Face3D(volmdlr.core.Primitive3D):
         lines, line_surface, lines_tags = [], [], []
         point_account, line_account, line_loop_account = 0, 0, 1
         for c, contour in enumerate(list(chain(*[[self.outer_contour3d], self.inner_contours3d]))):
-
             if isinstance(contour, volmdlr.wires.Circle2D):
                 # point=[contour.radius, contour.center.y, 0]
                 # lines.append('Point('+str(point_account+1)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
@@ -6301,7 +6293,6 @@ class Face3D(volmdlr.core.Primitive3D):
             self.bounding_box.bbox_intersection(face2.bounding_box)
             or self.bounding_box.distance_to_bbox(face2.bounding_box) <= tol
         ) and (self, face2) not in list_coincident_faces:
-
             edge_intersections = []
             for prim1 in self.outer_contour3d.primitives + [
                 prim for inner_contour in self.inner_contours3d for prim in inner_contour.primitives
@@ -7206,12 +7197,10 @@ class PlaneFace3D(Face3D):
     @staticmethod
     def update_faces_with_divided_faces(divided_faces, face2_2, used, list_faces):
         for d_face in divided_faces:
-
             if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
                 if face2_2.surface2d.inner_contours:
                     divided_faces_d_face = []
                     for inner in face2_2.surface2d.inner_contours:
-
                         if True in [
                             (
                                 (
@@ -7261,7 +7250,6 @@ class PlaneFace3D(Face3D):
             if self.surface3d.is_coincident(face2.surface3d) and (
                 contour1.is_overlapping(contour2) or (contour1.is_inside(contour2) or True in inside)
             ):
-
                 if self in used_faces:
                     faces_1, face2_2 = used_faces[self][:], face2
                 else:
@@ -7660,7 +7648,6 @@ class CylindricalFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self, surface3d: CylindricalSurface3D, surface2d: Surface2D, name: str = ""):
-
         self.radius = surface3d.radius
         self.center = surface3d.frame.origin
         self.normal = surface3d.frame.w
@@ -8095,7 +8082,6 @@ class ToroidalFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self, surface3d: ToroidalSurface3D, surface2d: Surface2D, name: str = ""):
-
         # self.toroidalsurface3d = toroidalsurface3d
 
         self.center = surface3d.frame.origin
@@ -8199,7 +8185,6 @@ class ConicalFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self, surface3d: ConicalSurface3D, surface2d: Surface2D, name: str = ""):
-
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
 
@@ -8652,7 +8637,6 @@ class BSplineFace3D(Face3D):
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_uu(self, other_bspline_face3d, corresponding_directions):
-
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
@@ -8688,7 +8672,6 @@ class BSplineFace3D(Face3D):
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_vv(self, other_bspline_face3d, corresponding_directions):
-
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
@@ -8721,7 +8704,6 @@ class BSplineFace3D(Face3D):
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_uv(self, other_bspline_face3d, corresponding_directions):
-
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
@@ -8754,7 +8736,6 @@ class BSplineFace3D(Face3D):
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_vu(self, other_bspline_face3d, corresponding_directions):
-
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
@@ -8950,7 +8931,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         name: str = "",
         bounding_box: volmdlr.core.BoundingBox = None,
     ):
-
         self.faces = faces
         if not color:
             self.color = volmdlr.core.DEFAULT_COLOR
@@ -9472,7 +9452,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     pass
                 else:
                     for _, primitive in enumerate(contour.primitives):
-
                         try:
                             # line_account += 1
                             # print(line_account)
@@ -9552,7 +9531,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return lines, update_data
 
     def get_mesh_lines_with_transfinite_curves(self, min_points, size):
-
         lines, primitives, primitives_length = [], [], []
         for face in self.faces:
             for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
@@ -9705,7 +9683,6 @@ class ClosedShell3D(OpenShell3D):
         return tests[0]
 
     def point_in_shell_face(self, point: volmdlr.Point3D):
-
         for face in self.faces:
             if (
                 face.surface3d.point_on_surface(point) and face.point_belongs(point)

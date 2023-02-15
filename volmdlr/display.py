@@ -61,7 +61,6 @@ class DisplayMesh(dc.DessiaObject):
     _linesegment_class = volmdlr.edges.LineSegment
 
     def __init__(self, points, triangles, name=""):
-
         self.points = points
         self.triangles = triangles
         # Avoiding calling dessia object init because its inefficiency
@@ -199,7 +198,7 @@ class DisplayMesh2D(DisplayMesh):
         Return the area as the sum of areas of triangles.
         """
         area = 0.0
-        for (n1, n2, n3) in self.triangles:
+        for n1, n2, n3 in self.triangles:
             p1 = self.points[n1]
             p2 = self.points[n2]
             p3 = self.points[n3]

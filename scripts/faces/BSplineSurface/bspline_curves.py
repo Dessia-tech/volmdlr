@@ -12,7 +12,7 @@ import matplotlib.patches as mpatches
 import volmdlr as vm
 from volmdlr.models import bspline_surfaces
 
-#%%  BSpline-surface definition
+# %%  BSpline-surface definition
 
 # script = 'bspline_surface_definition.py'
 # print('\n## Executing script {}'.format(script))

@@ -635,7 +635,6 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
         DessiaObject.__init__(self, name=name)
 
     def _triangular_elements(self):
-
         indices_combinations = list(combinations(list(range(len(self.points))), r=3))
         # indices_combinations = [x for x in combinations(list(range(len(self.points))), r=3)]
         triangular_elements = []
@@ -657,7 +656,6 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
         return ax
 
     def _volume(self):
-
         data = []
         for i in range(3):
             data.extend([*self.points[i + 1] - self.points[0]])
@@ -975,7 +973,6 @@ class Mesh(DessiaObject):
         return self._nodes_correction
 
     def delete_duplicated_nodes(self, reference_index, tol=1e-4):
-
         groups = self.elements_groups[:]
         groups.pop(reference_index)
 

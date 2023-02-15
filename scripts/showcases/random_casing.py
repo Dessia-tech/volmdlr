@@ -352,7 +352,6 @@ for step in range(0, nb_step):
                     name="top",
                 )
             else:
-
                 top = primitives3D.ExtrudedProfile(
                     origin + extrusion_vector * list_height_polyfloor[enum + 1],
                     x,

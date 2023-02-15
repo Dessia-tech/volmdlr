@@ -157,7 +157,6 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         offset_points = []
 
         for i in range((not self.closed), nb - (not self.closed)):
-
             check = False
             ni = vectors[2 * i - 1] + vectors[2 * i]
             if ni == volmdlr.Vector2D(0, 0):
@@ -211,7 +210,6 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         dont_add_last_point = False
 
         for i, point in enumerate(self.points[:-1] + (self.closed) * [self.points[-1]]):
-
             if i == line_index:
                 # Not closed RLS2D and the offset line is the last one
                 if i == len(self.points) - 2:

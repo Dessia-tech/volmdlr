@@ -2506,7 +2506,6 @@ class Arc2D(Arc):
         return -area
 
     def straight_line_second_moment_area(self, point: volmdlr.Point2D):
-
         if self.angle2 < self.angle1:
             angle2 = self.angle2 + volmdlr.TWO_PI
 
@@ -2797,7 +2796,6 @@ class Arc2D(Arc):
         return Arc2D(start, interior, end)
 
     def complementary(self):
-
         interior = self.middle_point().rotation(self.center, math.pi)
         return Arc2D(self.start, interior, self.end)
 
@@ -2975,7 +2973,6 @@ class FullArc2D(Arc2D):
         return ax
 
     def cut_between_two_points(self, point1, point2):
-
         x1, y1 = point1 - self.center
         x2, y2 = point2 - self.center
 
@@ -3764,7 +3761,6 @@ class LineSegment3D(LineSegment):
         return self.start == other_linesegment3d.start and self.end == other_linesegment3d.end
 
     def _bounding_box(self):
-
         xmin = min(self.start.x, self.end.x)
         xmax = max(self.start.x, self.end.x)
         ymin = min(self.start.y, self.end.y)
@@ -3855,7 +3851,6 @@ class LineSegment3D(LineSegment):
         self._bbox = None
 
     def __contains__(self, point):
-
         point1, point2 = self.start, self.end
         axis = point2 - point1
         test = point.rotation(point1, axis, math.pi)
@@ -4254,7 +4249,6 @@ class BSplineCurve3D(BSplineCurve):
         periodic: bool = False,
         name: str = "",
     ):
-
         BSplineCurve.__init__(self, degree, control_points, knot_multiplicities, knots, weights, periodic, name)
 
         self._bbox = None
@@ -4418,7 +4412,6 @@ class BSplineCurve3D(BSplineCurve):
         return cls(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
 
     def to_step(self, current_id, surface_id=None, curve2d=None):
-
         points_ids = []
         content = ""
         point_id = current_id
@@ -5108,7 +5101,6 @@ class Arc3D(Arc):
         ax=None,
         color="k",
     ):
-
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
@@ -5207,7 +5199,6 @@ class Arc3D(Arc):
         return Arc2D(ps, pi, pe, name=self.name)
 
     def minimum_distance_points_arc(self, other_arc):
-
         u1 = self.start - self.center
         u1.normalize()
         u2 = self.normal.cross(u1)
@@ -5255,7 +5246,6 @@ class Arc3D(Arc):
         return p1, p2
 
     def minimum_distance_points_line(self, other_line):
-
         u = other_line.direction_vector()
         k = self.start - self.center
         k.normalize()
@@ -5347,7 +5337,6 @@ class Arc3D(Arc):
 
         # Sphere
         if math.isclose(tore_center.point_distance(self.center), 0.0, abs_tol=1e-6):
-
             start_p, _ = line3d.point_projection(self.start)
             u = self.start - start_p
 

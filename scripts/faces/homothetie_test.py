@@ -38,7 +38,6 @@ vol.babylonjs()
 
 dmin = shell3d.faces[0].point1.point_distance(new_shell_displaced.faces[0].point1)
 for face1, face2 in zip(shell3d.faces, new_shell_displaced.faces):
-
     p1, p2, p3 = face1.point1, face1.point2, face1.point3
     p12, p22, p32 = face2.point1, face2.point2, face2.point3
 

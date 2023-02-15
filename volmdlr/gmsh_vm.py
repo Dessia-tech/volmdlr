@@ -38,7 +38,6 @@ class GmshParser(DessiaObject):
         # interpolation_scheme = None,
         name: str = "",
     ):
-
         self.mesh_format = mesh_format
         self.physical_names = physical_names
         self.entities = entities

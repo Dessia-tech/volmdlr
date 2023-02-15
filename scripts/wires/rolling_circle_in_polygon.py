@@ -15,12 +15,10 @@ import volmdlr as vm
 
 
 def circle_3_segments(segment1, segment2, segment3):
-
     return vm.Circle2D
 
 
 def circle_1_point_2_segments(point, line1, line2):
-
     # point will be called I(x_I, y_I)
     # semgent1 will be [AB]
     # segment2 will be [CD]
@@ -47,7 +45,6 @@ def circle_1_point_2_segments(point, line1, line2):
     #   => AUCUNE SOLUTION
     # =============================================================================
     if new_C[1] == 0 and new_D[1] == 0:
-
         return None, None
 
     # =============================================================================
@@ -55,7 +52,6 @@ def circle_1_point_2_segments(point, line1, line2):
     #   => 1 SOLUTION
     # =============================================================================
     elif math.isclose(line1.DirectionVector(unit=True).Dot(line2.NormalVector(unit=True)), 0, abs_tol=1e-06):
-
         segments_distance = abs(new_C[1] - new_A[1])
         r = segments_distance / 2
         new_circle_center = vm.Point2D((0, r))
@@ -68,7 +64,6 @@ def circle_1_point_2_segments(point, line1, line2):
     #   => 2 SOLUTIONS
     # =============================================================================
     elif math.isclose(line1.DirectionVector(unit=True).Dot(line2.DirectionVector(unit=True)), 0, abs_tol=1e-06):
-
         line_AB = vm.Line2D(vm.Point2D(new_A), vm.Point2D(new_B))
         line_CD = vm.Line2D(vm.Point2D(new_C), vm.Point2D(new_D))
         new_pt_K = vm.Point2D.LinesIntersection(line_AB, line_CD)
@@ -88,7 +83,6 @@ def circle_1_point_2_segments(point, line1, line2):
     #   => 2 SOLUTIONS
     # =============================================================================
     else:
-
         line_AB = vm.Line2D(vm.Point2D(new_A), vm.Point2D(new_B))
         line_CD = vm.Line2D(vm.Point2D(new_C), vm.Point2D(new_D))
         new_pt_K = vm.Point2D.LinesIntersection(line_AB, line_CD)
@@ -154,7 +148,7 @@ def rolling_circle_in_polygon(polygon, interpoints_distance=0.001):
     # discrétisation du polygon
     polygon_mesh = []
     # on partcourt les arrêtes
-    for (vertice1, vertice2) in zip(polygon.points, polygon.points[1:] + [polygon.points[0]]):
+    for vertice1, vertice2 in zip(polygon.points, polygon.points[1:] + [polygon.points[0]]):
         side_direction = vm.Vector2D((vertice2[0] - vertice1[0], vertice2[1] - vertice1[1]))
         normalized_side_direction = vm.Vector2D((vertice2[0] - vertice1[0], vertice2[1] - vertice1[1]))
         normalized_side_direction.Normalize()
@@ -173,7 +167,6 @@ def rolling_circle_in_polygon(polygon, interpoints_distance=0.001):
     for index1, segment1 in enumerate(polygon_mesh):
         for index2, segment2 in enumerate(polygon_mesh):
             if index2 - index1 >= 2 and index2 - index1 < len(polygon_mesh) - 1:
-
                 for point1 in segment1[1:]:
                     seg1 = vm.LineSegment2D(segment1[0], segment1[-1])
                     seg2 = vm.LineSegment2D(segment2[0], segment2[-1])

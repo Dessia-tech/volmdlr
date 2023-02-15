@@ -12,7 +12,7 @@ import numpy as npy
 import volmdlr as vm
 from volmdlr.models import bspline_surfaces
 
-#%%  BSpline-surface definition
+# %%  BSpline-surface definition
 
 # script = 'bspline_surface_definition.py'
 # print('\n## Executing script {}'.format(script))
@@ -20,7 +20,7 @@ from volmdlr.models import bspline_surfaces
 
 bspline_surface = bspline_surfaces.bspline_surface_1
 
-#%% (1) BSpline-surface split - u_split
+# %% (1) BSpline-surface split - u_split
 # split the bspline_surface at the input parametric coordinate (u) on the u-direction, into 2 surfaces
 
 u = 0.2

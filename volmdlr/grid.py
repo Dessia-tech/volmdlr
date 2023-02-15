@@ -26,7 +26,6 @@ class Grid2D(DessiaObject):
     """
 
     def __init__(self, lists_points: List[List[volmdlr.Point2D]], direction: List[str], name: str = ""):
-
         self.lists_points = lists_points
         self.direction = direction
         DessiaObject.__init__(self, name=name)
