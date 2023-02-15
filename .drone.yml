@@ -76,6 +76,14 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
+
+- name: check black formatting
+  image: python:3.9
+  commands:
+    - pip install black
+    - black --check -l120 .
+
+
 - name: check changelog update
   image: python:3.8
   when:
