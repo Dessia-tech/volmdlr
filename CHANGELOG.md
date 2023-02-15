@@ -58,15 +58,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 * ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
-* CompositePrimitive2D: rotation, rotation_inplace, translation, translation_inplace, frame_mapping, frame_mapping_inplace
+* CompositePrimitive2D: rotation, translation, frame_mapping
 * core.py: delete_double_point, step_ids_to_str
 * CompositePrimitive3D: plot
 * BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs,
 intersection_area, distance_to_b_rectangle, distance_to_point
 * BoundingBox: center, add, to_dict, points, from_bounding_boxes, from_points, to_frame, volume, bbox_intersection,
 is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_to_point, plot
-* VolumeModel: eq, volume, rotation, rotation_inplace, translation, translation_inplace, frame_mapping, 
-frame_mapping_inplace, bounding_box, plot
+* VolumeModel: eq, volume, rotation, translation, frame_mapping, bounding_box, plot
 
 ### CI
 - add spell check to pylint with pyenchant
