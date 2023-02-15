@@ -170,7 +170,7 @@ class Edge(dc.DessiaObject):
 
         :return: the normal vector
         """
-        raise NotImplementedError("the normal_vector method must be" "overloaded by subclassing class")
+        raise NotImplementedError("the normal_vector method must be overloaded by subclassing class")
 
     def unit_normal_vector(self, abscissa):
         """
@@ -179,7 +179,7 @@ class Edge(dc.DessiaObject):
         :param abscissa: edge abscissa
         :return: unit normal vector
         """
-        raise NotImplementedError("the unit_normal_vector method must be" "overloaded by subclassing class")
+        raise NotImplementedError("the unit_normal_vector method must be overloaded by subclassing class")
 
     def direction_vector(self, abscissa):
         """
@@ -188,7 +188,7 @@ class Edge(dc.DessiaObject):
         :param abscissa: edge abscissa
         :return: direction vector
         """
-        raise NotImplementedError("the direction_vector method must be" "overloaded by subclassing class")
+        raise NotImplementedError("the direction_vector method must be overloaded by subclassing class")
 
     def unit_direction_vector(self, abscissa):
         """
@@ -197,7 +197,7 @@ class Edge(dc.DessiaObject):
         :param abscissa: edge abscissa
         :return: unit direction vector
         """
-        raise NotImplementedError("the unit_direction_vector method must be" "overloaded by subclassing class")
+        raise NotImplementedError("the unit_direction_vector method must be overloaded by subclassing class")
 
     def straight_line_point_belongs(self, point):
         """
@@ -208,7 +208,7 @@ class Edge(dc.DessiaObject):
             or False otherwise
         """
         raise NotImplementedError(
-            f"the straight_line_point_belongs method must be" f" overloaded by {self.__class__.__name__}"
+            f"the straight_line_point_belongs method must be overloaded by {self.__class__.__name__}"
         )
 
     def touching_points(self, edge2):
@@ -2049,7 +2049,7 @@ class Arc(Edge):
         :return: The center of the arc.
         """
         raise NotImplementedError(
-            "the property method center must be overloaded by subclassing" "class if not a given parameter"
+            "the property method center must be overloaded by subclassing class if not a given parameter"
         )
 
     @property
@@ -2060,7 +2060,7 @@ class Arc(Edge):
         :return: The angle of the arc.
         """
         return NotImplementedError(
-            "the property method angle must be overloaded by subclassing" "class if not a given parameter"
+            "the property method angle must be overloaded by subclassing class if not a given parameter"
         )
 
     @property
@@ -2071,7 +2071,7 @@ class Arc(Edge):
         :return: True if trigowise or False otherwise.
         """
         return NotImplementedError(
-            "the property method is_trigo must be overloaded by subclassing" "class if not a given parameter"
+            "the property method is_trigo must be overloaded by subclassing class if not a given parameter"
         )
 
     @property
@@ -2161,8 +2161,7 @@ class Arc(Edge):
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn(
-            "polygon_points is deprecated,\
-        please use discretization_points instead",
+            "polygon_points is deprecated, please use discretization_points instead",
             DeprecationWarning,
         )
         return self.discretization_points(number_points=discretization_resolution)
@@ -4327,7 +4326,7 @@ class BSplineCurve3D(BSplineCurve):
                     t2 = t
                     return volmdlr.Point3D(*self.curve.evaluate_single((t1 + t2) / 2))
                 last_param = t
-        raise ValueError("Curvilinear abscissa is bigger than length," " or negative")
+        raise ValueError("Curvilinear abscissa is bigger than length, or negative")
 
     def normal(self, position: float = 0.0):
         _, normal = operations.normal(self.curve, position, normalize=True)
@@ -5133,7 +5132,7 @@ class Arc3D(Arc):
             new_interior = frame.new_coordinates(self.interior.copy())
             new_end = frame.new_coordinates(self.end.copy())
         else:
-            raise ValueError("side value not valid, please specify" "a correct value: 'old' or 'new'")
+            raise ValueError("side value not valid, please specify a correct value: 'old' or 'new'")
         return new_start, new_interior, new_end
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):

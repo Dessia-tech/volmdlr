@@ -396,7 +396,7 @@ class Block(volmdlr.faces.ClosedShell3D):
             new_w = basis.local_to_global_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         else:
-            raise ValueError("side value not valid, please specify" "a correct value: 'old' or 'new'")
+            raise ValueError("side value not valid, please specify a correct value: 'old' or 'new'")
         return new_frame
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):

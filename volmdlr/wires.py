@@ -2603,7 +2603,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         max_offset_len = min(x_max - x_min, y_max - y_min) / 2
         if offset <= -max_offset_len:
-            print("Inadapted offset, " "polygon might turn over. Offset must be greater than", -max_offset_len)
+            print("Inadapted offset, polygon might turn over. Offset must be greater than", -max_offset_len)
             raise ValueError("inadapted offset")
         else:
             nb = len(self.points)
@@ -3531,7 +3531,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             if closing_point != volmdlr.O2D:
                 return primitive1
 
-        raise NotImplementedError("make sure the two polygons " "you are trying to sew are valid ones")
+        raise NotImplementedError("make sure the two polygons you are trying to sew are valid ones")
 
     def is_convex(self):
         """
@@ -5667,7 +5667,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                     closing_point_index = previous_closing_point_index
                 else:
                     raise NotImplementedError(
-                        "None of the normal lines intersect polygon2, " "certify projection plane given is correct"
+                        "None of the normal lines intersect polygon2, certify projection plane given is correct"
                     )
             else:
                 closing_point_index = polygon2_2d.points.index(closing_point)
