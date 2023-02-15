@@ -52,6 +52,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Disabling pointer in to_dict for most primitives
 
 ### Refactorings
+- Remove usage of deprecated method old_coordinates and new_coordinates
+- Indicate 'inplace' methods as deprecated
+
 
 ### Documentation
 - BoundingBox docstrings
