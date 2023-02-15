@@ -5,7 +5,7 @@ Surfaces & faces
 import math
 import warnings
 from itertools import chain, product
-from typing import Any, Dict, List, Tuple, Union
+from typing import List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -1106,7 +1106,8 @@ class Surface3D(DessiaObject):
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
-        Is this right?
+        Is this right?.
+
         """
         n = len(bspline_curve2d.control_points)
         points = [self.point2d_to_3d(p)
@@ -1152,13 +1153,12 @@ class Plane3D(Surface3D):
     """
     Defines a plane 3d.
 
+    :param frame: u and v of frame describe the plane, w is the normal
     """
     face_class = 'PlaneFace3D'
 
     def __init__(self, frame: volmdlr.Frame3D, name: str = ''):
-        """
-        :param frame: u and v of frame describe the plane, w is the normal
-        """
+
         self.frame = frame
         self.name = name
         Surface3D.__init__(self, name=name)
@@ -3943,7 +3943,7 @@ class BSplineSurface3D(Surface3D):
                 and bspline_curve3d.periodic:
             raise NotImplementedError
 
-        elif flag:
+        if flag:
             x_perio = self.x_periodicity if self.x_periodicity is not None \
                 else 1.
             y_perio = self.y_periodicity if self.y_periodicity is not None \
@@ -4608,18 +4608,17 @@ class BSplineSurface3D(Surface3D):
                                                         finite_elements_initial[k].primitives[0].middle_point()[1] -
                                                         finite_elements_initial[k].center_of_mass()[1]))
 
-        X = point2d_frame_deformed.frame_mapping(frame_inital, 'old')[0]
-        if X < 0:
-            X = 0
-        elif X > 1:
-            X = 1
-        Y = point2d_frame_deformed.frame_mapping(frame_inital, 'old')[1]
-        if Y < 0:
-            Y = 0
-        elif Y > 1:
-            Y = 1
+        point2d = point2d_frame_deformed.frame_mapping(frame_inital, 'old')
+        if point2d.x < 0:
+            point2d.x = 0
+        elif point2d.x > 1:
+            point2d.x = 1
+        if point2d.y < 0:
+            point2d.y = 0
+        elif point2d.y > 1:
+            point2d.y = 1
 
-        return volmdlr.Point2D(X, Y)
+        return point2d
 
     def point2d_with_dimension_to_3d(self, point2d, grid2d: volmdlr.grid.Grid2D):
         """
@@ -6045,7 +6044,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
         """
-        Gets the lines that define a PlaneFace3D in a .geo file
+        Gets the lines that define a PlaneFace3D in a .geo file.
+
         """
 
         return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
@@ -6603,10 +6603,12 @@ class Face3D(volmdlr.core.Primitive3D):
 
 class PlaneFace3D(Face3D):
     """
-    :param contours: The face's contour2D
-    :type contours: volmdlr.Contour2D
-    :param plane: Plane used to place your face
-    :type plane: Plane3D
+    Defines a PlaneFace3D class.
+
+    :param surface3d: a plane 3d.
+    :type surface3d: Plane3D.
+    :param surface2d: a 2d surface to define the plane face.
+    :type surface2d: Surface2D.
     """
     _standalone_in_db = False
     _generic_eq = True
@@ -7029,6 +7031,7 @@ class PlaneFace3D(Face3D):
 
 class Triangle3D(PlaneFace3D):
     """
+    Defines a Triangle3D class.
 
     :param point1: The first point.
     :type point1: volmdlr.Point3D.
@@ -7049,8 +7052,8 @@ class Triangle3D(PlaneFace3D):
         self.alpha = alpha
         self.name = name
 
-        self._utd_surface3d = False
-        self._utd_surface2d = False
+        self._surface3d = None
+        self._surface2d = None
         self._bbox = None
         self._outer_contour3d = None
         self._inner_contours3d = None
@@ -7093,14 +7096,13 @@ class Triangle3D(PlaneFace3D):
 
     @property
     def surface3d(self):
-        if not self._utd_surface3d:
+        if self._surface3d is None:
             self._surface3d = Plane3D.from_3_points(self.point1, self.point2, self.point3)
-            self._utd_surface3d = True
         return self._surface3d
 
     @property
     def surface2d(self):
-        if not self._utd_surface2d:
+        if self._surface2d is None:
             plane3d = self.surface3d
             contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(self.point1, self.point2),
                                                  vme.LineSegment3D(self.point2, self.point3),
@@ -7111,7 +7113,6 @@ class Triangle3D(PlaneFace3D):
 
             self._surface2d = Surface2D(outer_contour=contour2d, inner_contours=[])
 
-            self._utd_surface2d = True
         return self._surface2d
 
     def to_dict(self, *args, **kwargs):
@@ -7122,7 +7123,7 @@ class Triangle3D(PlaneFace3D):
                 'name': self.name}
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    def dict_to_object(cls, dict_, *args, **kwargs):
         point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
         point2 = volmdlr.Point3D.dict_to_object(dict_['point2'])
         point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
@@ -7130,8 +7131,10 @@ class Triangle3D(PlaneFace3D):
 
     def area(self) -> float:
         """
-        :return: area triangle
-        :rtype: float
+        Calculates the area for the Triangle3D.
+
+        :return: area triangle.
+        :rtype: float.
 
         Formula explained here: https://www.triangle-calculator.com/?what=vc
         """
@@ -7156,9 +7159,9 @@ class Triangle3D(PlaneFace3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Triangle3D
+        Changes frame_mapping and return a new Triangle3D.
 
-        side = 'old' or 'new'
+        :param side: 'old' or 'new'.
         """
         np1 = self.point1.frame_mapping(frame, side)
         np2 = self.point2.frame_mapping(frame, side)
@@ -7191,8 +7194,8 @@ class Triangle3D(PlaneFace3D):
         """
         Plane3D translation.
 
-        :param offset: translation vector
-        :return: A new translated Plane3D
+        :param offset: translation vector.
+        :return: A new translated Plane3D.
         """
         new_point1 = self.point1.translation(offset)
         new_point2 = self.point2.translation(offset)
@@ -7206,7 +7209,7 @@ class Triangle3D(PlaneFace3D):
         """
         Plane3D translation. Object is updated in-place.
 
-        :param offset: translation vector
+        :param offset: translation vector.
         """
         self.point1.translation_inplace(offset)
         self.point2.translation_inplace(offset)
@@ -7219,10 +7222,10 @@ class Triangle3D(PlaneFace3D):
         """
         Triangle3D rotation.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated Triangle3D
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated Triangle3D.
         """
         new_point1 = self.point1.rotation(center, axis, angle)
         new_point2 = self.point2.rotation(center, axis, angle)
@@ -7236,9 +7239,9 @@ class Triangle3D(PlaneFace3D):
         """
         Triangle3D rotation. Object is updated inplace.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: rotation angle.
         """
         self.point1.rotation_inplace(center, axis, angle)
         self.point2.rotation_inplace(center, axis, angle)
@@ -7248,8 +7251,7 @@ class Triangle3D(PlaneFace3D):
 
     def subdescription(self, resolution=0.01):
         """
-        Returns a list of Point3D with resolution as max
-        between Point3D.
+        Returns a list of Point3D with resolution as max between Point3D.
         """
 
         lengths = [self.points[0].point_distance(self.points[1]),
@@ -7302,8 +7304,8 @@ class Triangle3D(PlaneFace3D):
 
     def subdescription_to_triangles(self, resolution=0.01):
         """
-        Returns a list of Triangle3D with resolution as max
-        length of subtriangles side.
+        Returns a list of Triangle3D with resolution as max length of subtriangles side.
+
         """
 
         sub_triangles, done = [self.points], False
@@ -7354,12 +7356,12 @@ class Triangle3D(PlaneFace3D):
 
 class CylindricalFace3D(Face3D):
     """
-    :param contours2d: The cylinder's contour2D.
-    :type contours2d: volmdlr.Contour2D.
-    :param cylindricalsurface3d: Information about the Cylinder.
-    :type cylindricalsurface3d: CylindricalSurface3D.
-    :param points: contours2d's point.
-    :type points: List of volmdlr.Point2D.
+    Defines a CylindricalFace3D class.
+
+    :param surface3d: a cylindrical surface 3d.
+    :type surface3d: CylindricalSurface3D.
+    :param surface2d: a 2d surface to define the cylindrical face.
+    :type surface2d: Surface2D.
 
     :Example:
 
@@ -7793,15 +7795,12 @@ class CylindricalFace3D(Face3D):
 
 class ToroidalFace3D(Face3D):
     """
-    Defines a toroidal face.
+    Defines a ToroidalFace3D class.
 
-    :param contours2d: The Tore's contour2D
-    :type contours2d: volmdlr.Contour2D
-    :param toroidalsurface3d: Information about the Tore
-    :type toroidalsurface3d: ToroidalSurface3D
-    :param theta: angle of cut in main circle direction
-    :param phi: angle of cut in secondary circle direction
-    :type points: List of float
+    :param surface3d: a toroidal surface 3d.
+    :type surface3d: ToroidalSurface3D.
+    :param surface2d: a 2d surface to define the toroidal face.
+    :type surface2d: Surface2D.
 
     :Example:
 
@@ -7913,14 +7912,13 @@ class ToroidalFace3D(Face3D):
 
 class ConicalFace3D(Face3D):
     """
-    Defines a conical face.
+    Defines a ConicalFace3D class.
 
-    :param contours2d: The Cone's contour2D
-    :type contours2d: volmdlr.Contour2D
-    :param conicalsurface3d: Information about the Cone
-    :type conicalsurface3d: ConicalSurface3D
-    :param points: Contour2d's parameter Cone
-    :type points: List of float
+    :param surface3d: a conical surface 3d.
+    :type surface3d: ConicalSurface3D.
+    :param surface2d: a 2d surface to define the conical face.
+    :type surface2d: Surface2D.
+
 
     """
     min_x_density = 5
@@ -8073,12 +8071,13 @@ class ConicalFace3D(Face3D):
 
 class SphericalFace3D(Face3D):
     """
-    :param contours2d: The Sphere's contour2D
-    :type contours2d: volmdlr.Contour2D
-    :param sphericalsurface3d: Information about the Sphere
-    :type sphericalsurface3d: SphericalSurface3D
-    :param points: Angle's Sphere
-    :type points: List of float
+    Defines a SpehericalFace3D class.
+
+    :param surface3d: a spherical surface 3d.
+    :type surface3d: SphericalSurface3D.
+    :param surface2d: a 2d surface to define the spherical face.
+    :type surface2d: Surface2D.
+
 
     """
     min_x_density = 5
@@ -8242,8 +8241,6 @@ class RevolutionFace3D(Face3D):
     :type surface2d: `Surface2D`
     :param name: The name of the face.
     :type name: str
-    :param color: The color of the face.
-    :type color: tuple
     """
     min_x_density = 50
     min_y_density = 1
@@ -8251,8 +8248,7 @@ class RevolutionFace3D(Face3D):
     def __init__(self,
                  surface3d: RuledSurface3D,
                  surface2d: Surface2D,
-                 name: str = '',
-                 color=None):
+                 name: str = ''):
         Face3D.__init__(self, surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
@@ -8269,7 +8265,7 @@ class RevolutionFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
-        # To be enhance by restricting wires to cut
+        # To be enhanced by restricting wires to cut
         curve_points = self.surface3d.wire.discretization_points(angle_resolution=20)
         points = []
         for i in range(37):
@@ -8650,8 +8646,7 @@ class BSplineFace3D(Face3D):
 
         if coord.index(max(coord)) == 0:
             return 'x'
-        else:
-            return 'y'
+        return 'y'
 
     def merge_with(self, other_bspline_face3d):
         """
@@ -8721,7 +8716,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                                    name=name)
 
     def _data_hash(self):
-        return sum(face._data_hash() for face in self.faces)
+        return len(self.faces)  # sum(face._data_hash() for face in self.faces)
 
     def _data_eq(self, other_object):
         if other_object.__class__.__name__ != self.__class__.__name__:
@@ -9049,7 +9044,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                                                       return_points=True)
                     if distance == 0:
                         return None
-                    elif distance < distance_min:
+                    if distance < distance_min:
                         distance_min, point1_min, point2_min = distance, point1, point2
 
         return point1_min, point2_min
@@ -10033,6 +10028,13 @@ class OpenTriangleShell3D(OpenShell3D):
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
         OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
+
+    def to_dict(self):
+        dict_ = self.base_dict()
+        dict_['triangles'] = [t.to_dict() for t in self.triangles]
+        dict_['alpha'] = self.alpha
+        dict_['color'] = self.color
+        return dict_
 
     def point_on_shell(self, point: volmdlr.Point3D):
         for face in self.faces:

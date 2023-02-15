@@ -688,10 +688,7 @@ class BSplineCurve(Edge):
             res = scp.optimize.least_squares(
                 lambda u: (point - self.point_at_abscissa(u)).norm(),
                 x0=x0,
-                bounds=([0], [length]),
-                # ftol=tol / 10,
-                # xtol=tol / 10,
-                # loss='soft_l1'
+                bounds=([0], [length])
             )
             if res.fun < tol:
                 return res.x[0]
@@ -1493,9 +1490,10 @@ class BSplineCurve2D(BSplineCurve):
 
     def unit_normal_vector(self, abscissa: float):
         """
-        :param abscissa: defines where in the BSplineCurve2D the
-        unit normal vector is to be calculated
-        :return: The unit normal vector of the BSplineCurve2D
+        Get unit normal vector at given abscissa.
+
+        :param abscissa: defines where in the BSplineCurve2D the unit normal vector is to be calculated.
+        :return: The unit normal vector of the BSplineCurve2D.
         """
         normal_vector = self.normal_vector(abscissa)
         normal_vector.normalize()
@@ -2949,11 +2947,10 @@ class FullArc2D(Arc2D):
 
     def straight_line_point_belongs(self, point):
         """
-        Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points.
+        Verifies if a point belongs to the surface created by closing the edge.
 
-        :param point2d: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
+        :param point2d: Point to be verified.
+        :return: Return True if the point belongs to this surface, or False otherwise.
         """
         if point.point_distance(self.center) <= self.radius:
             return True
@@ -4660,8 +4657,9 @@ class BSplineCurve3D(BSplineCurve):
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=4e-3):
             return self
-        elif math.isclose(parameter, 1, abs_tol=4e-3):
+        if math.isclose(parameter, 1, abs_tol=4e-3):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
+
         curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[1])
 
@@ -4676,7 +4674,8 @@ class BSplineCurve3D(BSplineCurve):
 
     def insert_knot(self, knot: float, num: int = 1):
         """
-        Returns a new BSplineCurve3D
+        Returns a new BSplineCurve3D.
+
         """
         curve_copy = self.curve.__deepcopy__({})
         modified_curve = operations.insert_knot(curve_copy, [knot], num=[num])
@@ -5373,17 +5372,15 @@ class Arc3D(Arc):
             p1, p2 = self.minimum_distance_points_arc(element)
             if return_points:
                 return p1.point_distance(p2), p1, p2
-            else:
-                return p1.point_distance(p2)
+            return p1.point_distance(p2)
 
-        elif element.__class__ is LineSegment3D:
+        if element.__class__ is LineSegment3D:
             pt1, pt2 = self.minimum_distance_points_line(element)
             if return_points:
                 return pt1.point_distance(pt2), pt1, pt2
-            else:
-                return pt1.point_distance(pt2)
-        else:
-            return NotImplementedError
+            return pt1.point_distance(pt2)
+
+        return NotImplementedError
 
     def extrusion(self, extrusion_vector):
         if self.normal.is_colinear_to(extrusion_vector):
@@ -5403,22 +5400,18 @@ class Arc3D(Arc):
                                 w),
                 self.radius
             )
-            return [cylinder.rectangular_cut(angle1,
-                                             angle2,
-                                             0, extrusion_vector.norm())]
-        else:
-            raise NotImplementedError(
-                'Elliptic faces not handled: dot={}'.format(
-                    self.normal.dot(extrusion_vector)
-                ))
+            return [cylinder.rectangular_cut(angle1, angle2, 0., extrusion_vector.norm())]
+        raise NotImplementedError(f'Elliptic faces not handled: dot={self.normal.dot(extrusion_vector)}')
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
                    angle: float):
         line3d = Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.center)
+
+        # Sphere
         if math.isclose(tore_center.point_distance(self.center), 0.,
                         abs_tol=1e-6):
-            # Sphere
+
             start_p, _ = line3d.point_projection(self.start)
             u = self.start - start_p
 
@@ -5439,22 +5432,21 @@ class Arc3D(Arc):
             return [surface.rectangular_cut(0, angle,
                                             arc2d.angle1, arc2d.angle2)]
 
-        else:
-            # Toroidal
-            u = self.center - tore_center
-            u.normalize()
-            v = axis.cross(u)
-            if not math.isclose(self.normal.dot(u), 0., abs_tol=1e-6):
-                raise NotImplementedError(
-                    'Outside of plane revolution not supported')
+        # Toroidal
+        u = self.center - tore_center
+        u.normalize()
+        v = axis.cross(u)
+        if not math.isclose(self.normal.dot(u), 0., abs_tol=1e-6):
+            raise NotImplementedError(
+                'Outside of plane revolution not supported')
 
-            R = tore_center.point_distance(self.center)
-            surface = volmdlr.faces.ToroidalSurface3D(
-                volmdlr.Frame3D(tore_center, u, v, axis), R,
-                self.radius)
-            arc2d = self.to_2d(tore_center, u, axis)
-            return [surface.rectangular_cut(0, angle,
-                                            arc2d.angle1, arc2d.angle2)]
+        R = tore_center.point_distance(self.center)
+        surface = volmdlr.faces.ToroidalSurface3D(
+            volmdlr.Frame3D(tore_center, u, v, axis), R,
+            self.radius)
+        arc2d = self.to_2d(tore_center, u, axis)
+        return [surface.rectangular_cut(0, angle,
+                                        arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
         if self.angle >= math.pi:
