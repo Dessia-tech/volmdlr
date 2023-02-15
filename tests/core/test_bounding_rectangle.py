@@ -3,13 +3,17 @@ import volmdlr
 from volmdlr.core import BoundingRectangle
 
 
-class TestBoundingRectangle1(unittest.TestCase):
+class TestBoundingRectangle(unittest.TestCase):
     def setUp(self):
         self.xmin = 0.0
         self.xmax = 5.0
         self.ymin = -2.0
         self.ymax = 8.0
         self.br = BoundingRectangle(self.xmin, self.xmax, self.ymin, self.ymax)
+
+        self.b_rectangle1 = BoundingRectangle(-0.5, 1.0, -0.5, 1.0)
+        self.b_rectangle2 = BoundingRectangle(-1.0, 1.0, -1.0, 1.0)
+        self.b_rectangle3 = BoundingRectangle(4.0, 6.0, -1.0, 1.0)
 
     def test_getitem(self):
         self.assertEqual(self.br[0], self.xmin)
@@ -31,15 +35,22 @@ class TestBoundingRectangle1(unittest.TestCase):
         self.assertEqual(self.br.area(), 50.0)
         self.assertNotEqual(self.br.area(), 0.0)
 
+        self.assertEqual(self.b_rectangle1.area(), 2.25)
+
     def test_center(self):
         self.assertEqual(self.br.center(), volmdlr.Point2D(2.5, 3.0))
         self.assertNotEqual(self.br.center(), volmdlr.O2D)
+
+        self.assertEqual(self.b_rectangle1.center(), volmdlr.Point2D(0.25, 0.25))
 
     def test_b_rectangle_intersection(self):
         br2 = BoundingRectangle(-1.0, 2.0, -1.0, 2.0)
         self.assertTrue(self.br.b_rectangle_intersection(br2))
         br3 = BoundingRectangle(6.0, 7.0, 6.0, 7.0)
         self.assertFalse(self.br.b_rectangle_intersection(br3))
+
+        self.assertTrue(self.b_rectangle1.b_rectangle_intersection(self.b_rectangle2))
+        self.assertFalse(self.b_rectangle1.b_rectangle_intersection(self.b_rectangle3))
 
     def test_is_inside_b_rectangle(self):
         br2 = BoundingRectangle(-1.0, 6.0, -1.0, 6.0)
@@ -49,9 +60,15 @@ class TestBoundingRectangle1(unittest.TestCase):
         br4 = BoundingRectangle(6.0, 7.0, 6.0, 7.0)
         self.assertFalse(self.br.is_inside_b_rectangle(br4))
 
+        self.assertTrue(self.b_rectangle1.is_inside_b_rectangle(self.b_rectangle2))
+        self.assertFalse(self.b_rectangle1.is_inside_b_rectangle(self.b_rectangle3))
+
     def test_point_belongs(self):
         self.assertTrue(self.br.point_belongs(volmdlr.Point2D(3.0, 4.0)))
         self.assertFalse(self.br.point_belongs(volmdlr.Point2D(6.0, 7.0)))
+
+        self.assertTrue(self.b_rectangle1.point_belongs(volmdlr.Point2D(0.25, 0.25)))
+        self.assertFalse(self.b_rectangle1.point_belongs(volmdlr.Point2D(1.0, 1.0)))
 
     def test_intersection_area(self):
         br2 = BoundingRectangle(1.0, 4.0, 1.0, 4.0)
@@ -60,6 +77,9 @@ class TestBoundingRectangle1(unittest.TestCase):
         self.assertEqual(self.br.intersection_area(br3), 0.0)
         br4 = BoundingRectangle(-1.0, 6.0, -1.0, 6.0)
         self.assertEqual(self.br.intersection_area(br4), 35.0)
+
+        self.assertEqual(self.b_rectangle1.intersection_area(self.b_rectangle2), 2.25)
+        self.assertEqual(self.b_rectangle1.intersection_area(self.b_rectangle3), 0)
 
     def test_distance_to_b_rectangle(self):
         br2 = BoundingRectangle(1.0, 4.0, 1.0, 4.0)
@@ -70,6 +90,9 @@ class TestBoundingRectangle1(unittest.TestCase):
         self.assertEqual(self.br.distance_to_b_rectangle(br4), 5**0.5)
         br5 = BoundingRectangle(-4.0, -1.0, 9.0, 10.0)
         self.assertEqual(self.br.distance_to_b_rectangle(br5), 2**0.5)
+
+        self.assertEqual(self.b_rectangle1.distance_to_b_rectangle(self.b_rectangle2), 0)
+        self.assertEqual(self.b_rectangle2.distance_to_b_rectangle(self.b_rectangle3), 3)
 
     def test_distance_to_point(self):
         p0 = volmdlr.O2D
@@ -83,41 +106,8 @@ class TestBoundingRectangle1(unittest.TestCase):
         p5 = volmdlr.Point2D(6.0, 9.0)
         self.assertEqual(self.br.distance_to_point(p5), 2**0.5)
 
-
-class TestBoundingRectangle2(unittest.TestCase):
-    b_rectangle1 = BoundingRectangle(-0.5, 1.0, -0.5, 1)
-    b_rectangle2 = BoundingRectangle(-1.0, 1.0, -1.0, 1.0)
-    b_rectangle3 = BoundingRectangle(4.0, 6.0, -1.0, 1.0)
-
-    def test_area(self):
-        self.assertEqual(self.b_rectangle1.area(), 2.25)
-
-    def test_center(self):
-        self.assertEqual(self.b_rectangle1.center(), volmdlr.Point2D(0.25, 0.25))
-
-    def test_intersection(self):
-        self.assertTrue(self.b_rectangle1.b_rectangle_intersection(self.b_rectangle2))
-        self.assertFalse(self.b_rectangle1.b_rectangle_intersection(self.b_rectangle3))
-
-    def test_is_inside(self):
-        self.assertTrue(self.b_rectangle1.is_inside_b_rectangle(self.b_rectangle2))
-        self.assertFalse(self.b_rectangle1.is_inside_b_rectangle(self.b_rectangle3))
-
-    def test_point_belongs(self):
-        self.assertTrue(self.b_rectangle1.point_belongs(volmdlr.Point2D(0.25, 0.25)))
-        self.assertFalse(self.b_rectangle1.point_belongs(volmdlr.Point2D(1, 1)))
-
-    def test_intersection_area(self):
-        self.assertEqual(self.b_rectangle1.intersection_area(self.b_rectangle2), 2.25)
-        self.assertEqual(self.b_rectangle1.intersection_area(self.b_rectangle3), 0)
-
-    def test_distance_to_point(self):
         self.assertEqual(self.b_rectangle1.distance_to_point(volmdlr.Point2D(0.25, 0.25)), 0.75)
         self.assertEqual(self.b_rectangle1.distance_to_point(volmdlr.Point2D(0.25, 2)), 1)
-
-    def test_distance_to_b_rectangle(self):
-        self.assertEqual(self.b_rectangle1.distance_to_b_rectangle(self.b_rectangle2), 0)
-        self.assertEqual(self.b_rectangle2.distance_to_b_rectangle(self.b_rectangle3), 3)
 
 
 if __name__ == "__main__":
