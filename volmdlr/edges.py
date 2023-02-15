@@ -1493,9 +1493,10 @@ class BSplineCurve2D(BSplineCurve):
 
     def unit_normal_vector(self, abscissa: float):
         """
-        :param abscissa: defines where in the BSplineCurve2D the
-        unit normal vector is to be calculated
-        :return: The unit normal vector of the BSplineCurve2D
+        Get unit normal vector at given abscissa.
+
+        :param abscissa: defines where in the BSplineCurve2D the unit normal vector is to be calculated.
+        :return: The unit normal vector of the BSplineCurve2D.
         """
         normal_vector = self.normal_vector(abscissa)
         normal_vector.normalize()
@@ -2949,11 +2950,10 @@ class FullArc2D(Arc2D):
 
     def straight_line_point_belongs(self, point):
         """
-        Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points.
+        Verifies if a point belongs to the surface created by closing the edge.
 
-        :param point2d: Point to be verified
-        :return: Return True if the point belongs to this surface, or False otherwise
+        :param point2d: Point to be verified.
+        :return: Return True if the point belongs to this surface, or False otherwise.
         """
         if point.point_distance(self.center) <= self.radius:
             return True
@@ -4676,7 +4676,8 @@ class BSplineCurve3D(BSplineCurve):
 
     def insert_knot(self, knot: float, num: int = 1):
         """
-        Returns a new BSplineCurve3D
+        Returns a new BSplineCurve3D.
+
         """
         curve_copy = self.curve.__deepcopy__({})
         modified_curve = operations.insert_knot(curve_copy, [knot], num=[num])
