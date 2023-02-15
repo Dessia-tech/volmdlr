@@ -21,8 +21,8 @@ class TestClosedShell3D(unittest.TestCase):
         geometry.direction_to_euler_angles(Y3D)
 
     def test_images(self):
-        self.assertAlmostEqual(geometry.cos_image(0, 1)[1], 1.)
-        self.assertAlmostEqual(geometry.sin_image(-1, 0)[1], 0.)
+        self.assertAlmostEqual(geometry.cos_image(0, 1)[1], 1.0)
+        self.assertAlmostEqual(geometry.sin_image(-1, 0)[1], 0.0)
 
     def test_huygens2d(self):
         true_res = (11.0, 492.0, -67.0)
@@ -30,7 +30,7 @@ class TestClosedShell3D(unittest.TestCase):
         self.assertAlmostEqual(res[0], true_res[0])
         self.assertAlmostEqual(res[1], true_res[1])
         self.assertAlmostEqual(res[2], true_res[2])
-        
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     unittest.main()

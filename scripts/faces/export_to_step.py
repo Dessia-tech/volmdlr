@@ -14,17 +14,17 @@ from volmdlr.models import bspline_surfaces
 
 # %% BsplineFaces3D
 
-bspline_faces = [bspline_surfaces.bspline_surface_2.rectangular_cut(0,1,0,1)]
+bspline_faces = [bspline_surfaces.bspline_surface_2.rectangular_cut(0, 1, 0, 1)]
 
 # %% Export
 
 model = volmdlr.core.VolumeModel([volmdlr.faces.OpenShell3D(bspline_faces)])
 
-model.to_step('model_to_step.stp')
+model.to_step("model_to_step.stp")
 
 # %% Check
 
-filepath = 'model_to_step.stp'
+filepath = "model_to_step.stp"
 
 step = volmdlr.step.Step.from_file(filepath)
 model_imported = step.to_volume_model()

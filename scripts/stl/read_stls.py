@@ -1,7 +1,7 @@
-
 import os
 
 import volmdlr.cloud
+
 # import volmdlr.stl as vmstl
 # import volmdlr.cloud
 import volmdlr.core
@@ -10,7 +10,6 @@ import volmdlr.stl as vmstl
 # -*- coding: utf-8 -*-
 """
 """
-
 
 
 # import volmdlr as vm
@@ -25,10 +24,7 @@ shells = []
 path = os.getcwd()
 
 
-for stl_file in [
-                'simple.stl',
-                'cube_ascii.stl'
-                  ]:
+for stl_file in ["simple.stl", "cube_ascii.stl"]:
     # stl_path = os.path.join('stl', stl_file)
     # print('start')
     # volum = volmdlr.core.VolumeModel(cloud_faces)

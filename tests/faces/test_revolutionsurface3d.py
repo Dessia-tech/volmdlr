@@ -6,11 +6,14 @@ import volmdlr.edges as vme
 import volmdlr.wires as vmw
 import volmdlr.faces
 
+
 class TestRevolutionSurface3D(unittest.TestCase):
     linesegment = vme.LineSegment3D(volmdlr.Point3D(0.5, 0, 0), volmdlr.Point3D(0.5, 0, 0.5))
-    arc = vme.Arc3D(volmdlr.Point3D(0.5, 0, 0.5),
-                    volmdlr.Point3D(0.3 + 0.2 * math.cos(math.pi / 6), 0, 0.5 + 0.2 * math.sin(math.pi / 6)),
-                    volmdlr.Point3D(0.3 + 0.2 * math.cos(math.pi / 3), 0, 0.5 + 0.2 * math.sin(math.pi / 3)))
+    arc = vme.Arc3D(
+        volmdlr.Point3D(0.5, 0, 0.5),
+        volmdlr.Point3D(0.3 + 0.2 * math.cos(math.pi / 6), 0, 0.5 + 0.2 * math.sin(math.pi / 6)),
+        volmdlr.Point3D(0.3 + 0.2 * math.cos(math.pi / 3), 0, 0.5 + 0.2 * math.sin(math.pi / 3)),
+    )
 
     wire = vmw.Wire3D([linesegment, arc])
     axis_point = volmdlr.O3D
@@ -50,5 +53,5 @@ class TestRevolutionSurface3D(unittest.TestCase):
         self.assertEqual(rectangular_cut.surface2d.area(), volmdlr.TWO_PI)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

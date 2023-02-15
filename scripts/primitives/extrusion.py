@@ -15,11 +15,11 @@ import volmdlr.primitives3d as primitives3d
 import volmdlr.wires as wires
 
 p1 = vm.Point2D(0, 0)
-p2 = vm.Point2D(0.1, 0.)
+p2 = vm.Point2D(0.1, 0.0)
 p3 = vm.Point2D(0.1, 0.2)
-p4=vm.Point2D(0.05, 0.1)
-p5=vm.Point2D(0.,0.21)
-p6=vm.Point2D(0.05, 0.05)
+p4 = vm.Point2D(0.05, 0.1)
+p5 = vm.Point2D(0.0, 0.21)
+p6 = vm.Point2D(0.05, 0.05)
 
 p7 = vm.Point2D(0.06, 0.05)
 p8 = vm.Point2D(0.04, 0.07)
@@ -33,10 +33,10 @@ l3 = edges.LineSegment2D(p8, p6)
 c2 = wires.Contour2D([l1, l2, l3])
 
 
-profile=primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [c2], vm.X3D*0.1, name = 'extrusion')
+profile = primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [c2], vm.X3D * 0.1, name="extrusion")
 
-model=vm.core.VolumeModel([profile])
+model = vm.core.VolumeModel([profile])
 
 model.babylonjs()
 
-model.to_step('extrusion')
+model.to_step("extrusion")

@@ -18,9 +18,9 @@ face.babylonjs(debug=True, use_cdn=False)
 
 lines_x, lines_y = face.triangulation_lines()
 ax = face.surface2d.plot()
-for line in lines_x+lines_y:
-    line.plot(ax=ax, color='r')
+for line in lines_x + lines_y:
+    line.plot(ax=ax, color="r")
 
 ax2 = face.surface2d.plot()
 for surface in face.surface2d.split_by_lines(lines_x):
-    surface.plot(ax=ax2, color='b')
+    surface.plot(ax=ax2, color="b")

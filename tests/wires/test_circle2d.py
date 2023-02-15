@@ -22,5 +22,5 @@ class TestCircle2D(unittest.TestCase):
         self.assertEqual(list_arcs[1].end, arc2_validate.end)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

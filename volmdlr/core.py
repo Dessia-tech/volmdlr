@@ -13,6 +13,7 @@ from functools import lru_cache
 
 import dessia_common.core as dc
 import dessia_common.files as dcf
+
 # import gmsh
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -20,12 +21,12 @@ import numpy as npy
 import volmdlr
 import volmdlr.templates
 
-npy.seterr(divide='raise')
+npy.seterr(divide="raise")
 
 DEFAULT_COLOR = (0.8, 0.8, 0.8)
 
 # TODO: put voldmlr metadata in this freecad header
-STEP_HEADER = '''ISO-10303-21;
+STEP_HEADER = """ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('{name}'),'2;1');
 FILE_NAME('{filename}','{timestamp}',('Author'),(''),'Volmdlr v{version}','','Unknown');
@@ -39,11 +40,11 @@ DATA;
 #5 = ( NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT() );
 #6 = UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-07),#3,'distance_accuracy_value','confusion accuracy');
 #7 = ( GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#6)) GLOBAL_UNIT_ASSIGNED_CONTEXT ((#3,#4,#5)) REPRESENTATION_CONTEXT('Context #1','3D Context with UNIT and UNCERTAINTY') );
-'''
+"""
 
-STEP_FOOTER = '''ENDSEC;
+STEP_FOOTER = """ENDSEC;
 END-ISO-10303-21;
-'''
+"""
 
 
 def determinant(vec1, vec2, vec3):
@@ -85,7 +86,7 @@ def step_ids_to_str(ids):
     :return: A string containing all the IDs
     :rtype: str
     """
-    return ','.join([f"#{i}" for i in ids])
+    return ",".join([f"#{i}" for i in ids])
 
 
 class CompositePrimitive(dc.PhysicalObject):
@@ -96,7 +97,7 @@ class CompositePrimitive(dc.PhysicalObject):
     :type name: str
     """
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives, name=""):
         self.primitives = primitives
         self.name = name
         self._primitives_to_index = None
@@ -119,7 +120,7 @@ class CompositePrimitive(dc.PhysicalObject):
     def update_basis_primitives(self):
         basis_primitives = []
         for primitive in self.primitives:
-            if hasattr(primitive, 'basis_primitives'):
+            if hasattr(primitive, "basis_primitives"):
                 basis_primitives.extend(primitive.basis_primitives)
             else:
                 basis_primitives.append(primitive)
@@ -135,7 +136,7 @@ class Primitive2D(dc.PhysicalObject):
     :type name: str
     """
 
-    def __init__(self, name=''):
+    def __init__(self, name=""):
         self.name = name
 
         dc.PhysicalObject.__init__(self, name=name)
@@ -149,12 +150,11 @@ class CompositePrimitive2D(CompositePrimitive):
     :type name: str
 
     """
-    _non_serializable_attributes = ['name', '_utd_primitives_to_index',
-                                    '_primitives_to_index']
-    _non_data_hash_attributes = ['name', '_utd_primitives_to_index',
-                                 '_primitives_to_index']
 
-    def __init__(self, primitives, name=''):
+    _non_serializable_attributes = ["name", "_utd_primitives_to_index", "_primitives_to_index"]
+    _non_data_hash_attributes = ["name", "_utd_primitives_to_index", "_primitives_to_index"]
+
+    def __init__(self, primitives, name=""):
         CompositePrimitive.__init__(self, primitives, name=name)
         self.update_basis_primitives()
 
@@ -168,8 +168,7 @@ class CompositePrimitive2D(CompositePrimitive):
         :param angle: angle rotation
         :return: a new rotated CompositePrimitive2D
         """
-        return self.__class__([point.rotation(center, angle)
-                               for point in self.primitives])
+        return self.__class__([point.rotation(center, angle) for point in self.primitives])
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
@@ -191,8 +190,7 @@ class CompositePrimitive2D(CompositePrimitive):
         :param offset: translation vector
         :return: A new translated CompositePrimitive2D
         """
-        return self.__class__([primitive.translation(offset)
-                               for primitive in self.primitives])
+        return self.__class__([primitive.translation(offset) for primitive in self.primitives])
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
@@ -212,8 +210,7 @@ class CompositePrimitive2D(CompositePrimitive):
 
         side = 'old' or 'new'
         """
-        return self.__class__([primitive.frame_mapping(frame, side)
-                               for primitive in self.primitives])
+        return self.__class__([primitive.frame_mapping(frame, side) for primitive in self.primitives])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -227,14 +224,13 @@ class CompositePrimitive2D(CompositePrimitive):
         self.primitives = primitives
         self.update_basis_primitives()
 
-    def plot(self, ax=None, color='k', alpha=1,
-             plot_points=False, equal_aspect=False):
+    def plot(self, ax=None, color="k", alpha=1, plot_points=False, equal_aspect=False):
 
         if ax is None:
             _, ax = plt.subplots()
 
         if equal_aspect:
-            ax.set_aspect('equal')
+            ax.set_aspect("equal")
 
         for element in self.primitives:
             element.plot(ax=ax, color=color, alpha=alpha)  # , plot_points=plot_points)
@@ -244,17 +240,14 @@ class CompositePrimitive2D(CompositePrimitive):
 
         return ax
 
-    def plot_data(self, name, fill=None, color='black', stroke_width=0.2,
-                  opacity=1):
+    def plot_data(self, name, fill=None, color="black", stroke_width=0.2, opacity=1):
         plot_data = {}
-        plot_data['fill'] = fill
-        plot_data['name'] = name
-        plot_data['type'] = 'wire'
-        plot_data['plot_data'] = []
+        plot_data["fill"] = fill
+        plot_data["name"] = name
+        plot_data["type"] = "wire"
+        plot_data["plot_data"] = []
         for item in self.primitives:
-            plot_data['plot_data'].append(item.plot_data(color=color,
-                                                         stroke_width=stroke_width,
-                                                         opacity=opacity))
+            plot_data["plot_data"].append(item.plot_data(color=color, stroke_width=stroke_width, opacity=opacity))
         return plot_data
 
 
@@ -263,7 +256,7 @@ class Primitive3D(dc.PhysicalObject):
     Defines a Primitive3D.
     """
 
-    def __init__(self, color=None, alpha=1, name=''):
+    def __init__(self, color=None, alpha=1, name=""):
         self.color = color
         self.alpha = alpha
 
@@ -273,19 +266,19 @@ class Primitive3D(dc.PhysicalObject):
         return [self]
 
     def babylon_param(self):
-        babylon_param = {'alpha': self.alpha,
-                         'name': self.name,
-                         }
+        babylon_param = {
+            "alpha": self.alpha,
+            "name": self.name,
+        }
         if self.color is None:
-            babylon_param['color'] = [0.8, 0.8, 0.8]
+            babylon_param["color"] = [0.8, 0.8, 0.8]
         else:
-            babylon_param['color'] = list(self.color)
+            babylon_param["color"] = list(self.color)
 
         return babylon_param
 
     def triangulation(self):
-        raise NotImplementedError(
-            f"triangulation method should be implemented on class {self.__class__.__name__}")
+        raise NotImplementedError(f"triangulation method should be implemented on class {self.__class__.__name__}")
 
     def babylon_meshes(self):
         mesh = self.triangulation()
@@ -293,9 +286,7 @@ class Primitive3D(dc.PhysicalObject):
             return []
         positions, indices = mesh.to_babylon()
 
-        babylon_mesh = {'positions': positions,
-                        'indices': indices
-                        }
+        babylon_mesh = {"positions": positions, "indices": indices}
         babylon_mesh.update(self.babylon_param())
         return [babylon_mesh]
 
@@ -304,48 +295,45 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
     """
     A collection of simple primitives3D.
     """
+
     _standalone_in_db = True
     _eq_is_data_eq = True
-    _non_serializable_attributes = ['basis_primitives']
-    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_serializable_attributes = ["basis_primitives"]
+    _non_data_eq_attributes = ["name", "basis_primitives"]
     _non_data_hash_attributes = []
 
-    def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
+    def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ""):
         CompositePrimitive.__init__(self, primitives=primitives, name=name)
         Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
         self._utd_primitives_to_index = False
 
-    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+    def plot(self, ax=None, color="k", alpha=1, edge_details=False):
         if ax is None:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
         for primitive in self.primitives:
             primitive.plot(ax=ax, color=color, alpha=alpha)
         return ax
 
     def babylon_points(self):
         points = []
-        if hasattr(self, 'primitives') and \
-                hasattr(self.primitives[0], 'start'):
-            points = [[self.primitives[0].start.x,
-                       self.primitives[0].start.y,
-                       self.primitives[0].start.z]]
+        if hasattr(self, "primitives") and hasattr(self.primitives[0], "start"):
+            points = [[self.primitives[0].start.x, self.primitives[0].start.y, self.primitives[0].start.z]]
             for primitive in self.primitives:
-                if hasattr(primitive, 'curve'):
+                if hasattr(primitive, "curve"):
                     points.extend(primitive.curve.evalpts)
                 else:
-                    points.append([primitive.end.x, primitive.end.y,
-                                   primitive.end.z])
-        elif hasattr(self, 'curve'):
+                    points.append([primitive.end.x, primitive.end.y, primitive.end.z])
+        elif hasattr(self, "curve"):
             points = self.curve.evalpts
-        elif hasattr(self, 'polygon_points'):
+        elif hasattr(self, "polygon_points"):
             points = self.polygon_points(50)
         return points
 
     def babylon_lines(self, points=None):
         if points is None:
             points = self.babylon_points()
-        babylon_lines = {'points': points}
+        babylon_lines = {"points": points}
         babylon_lines.update(self.babylon_param())
         return [babylon_lines]
 
@@ -369,7 +357,7 @@ class BoundingRectangle(dc.DessiaObject):
     :type ymax: float
     """
 
-    def __init__(self, xmin: float, xmax: float, ymin: float, ymax: float, name: str = ''):
+    def __init__(self, xmin: float, xmax: float, ymin: float, ymax: float, name: str = ""):
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
@@ -395,7 +383,7 @@ class BoundingRectangle(dc.DessiaObject):
         """
         return self.xmin, self.xmax, self.ymin, self.ymax
 
-    def plot(self, ax=None, color='k', linestyle='dotted'):
+    def plot(self, ax=None, color="k", linestyle="dotted"):
         """
         Plot of the bounding rectangle and its vertex.
         """
@@ -428,8 +416,12 @@ class BoundingRectangle(dc.DessiaObject):
         :param b_rectangle2: bounding rectangle to verify intersection
         :type b_rectangle2: :class:`BoundingRectangle`
         """
-        return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
-            and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+        return (
+            self.xmin < b_rectangle2.xmax
+            and self.xmax > b_rectangle2.xmin
+            and self.ymin < b_rectangle2.ymax
+            and self.ymax > b_rectangle2.ymin
+        )
 
     def is_inside_b_rectangle(self, b_rectangle2, tol: float = 1e-6):
         """
@@ -440,8 +432,12 @@ class BoundingRectangle(dc.DessiaObject):
         :param tol: A tolerance for considering inside
         :type tol: float
         """
-        return (self.xmin >= b_rectangle2.xmin - tol) and (self.xmax <= b_rectangle2.xmax + tol) \
-            and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
+        return (
+            (self.xmin >= b_rectangle2.xmin - tol)
+            and (self.xmax <= b_rectangle2.xmax + tol)
+            and (self.ymin >= b_rectangle2.ymin - tol)
+            and (self.ymax <= b_rectangle2.ymax + tol)
+        )
 
     def point_belongs(self, point: volmdlr.Point2D):
         """
@@ -490,7 +486,7 @@ class BoundingRectangle(dc.DessiaObject):
             permute_b_rec1, permute_b_rec2 = permute_b_rec2, permute_b_rec1
         dy = max(permute_b_rec2.ymin - permute_b_rec1.ymax, 0)
 
-        return (dx ** 2 + dy ** 2) ** 0.5
+        return (dx**2 + dy**2) ** 0.5
 
     def distance_to_point(self, point: volmdlr.Point2D):
         """
@@ -500,8 +496,7 @@ class BoundingRectangle(dc.DessiaObject):
         :type point: :class:`volmdlr.Point2D`
         """
         if self.point_belongs(point):
-            return min([self.xmax - point.x, point.y - self.xmin,
-                        self.ymax - point.y, point.y - self.ymin])
+            return min([self.xmax - point.x, point.y - self.xmin, self.ymax - point.y, point.y - self.ymin])
 
         if point.x < self.xmin:
             dx = self.xmin - point.x
@@ -517,7 +512,7 @@ class BoundingRectangle(dc.DessiaObject):
         else:
             dy = 0
 
-        return (dx ** 2 + dy ** 2) ** 0.5
+        return (dx**2 + dy**2) ** 0.5
 
 
 class BoundingBox(dc.DessiaObject):
@@ -563,20 +558,22 @@ class BoundingBox(dc.DessiaObject):
 
         TODO: change lru_cache to cached property when support for py3.7 is dropped.
         """
-        return volmdlr.Point3D(0.5 * (self.xmin + self.xmax),
-                               0.5 * (self.ymin + self.ymax),
-                               0.5 * (self.zmin + self.zmax))
+        return volmdlr.Point3D(
+            0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax), 0.5 * (self.zmin + self.zmax)
+        )
 
     def __hash__(self) -> int:
         return sum(hash(point) for point in self.points)
 
     def __add__(self, other_bbox) -> "BoundingBox":
-        return BoundingBox(min(self.xmin, other_bbox.xmin),
-                           max(self.xmax, other_bbox.xmax),
-                           min(self.ymin, other_bbox.ymin),
-                           max(self.ymax, other_bbox.ymax),
-                           min(self.zmin, other_bbox.zmin),
-                           max(self.zmax, other_bbox.zmax))
+        return BoundingBox(
+            min(self.xmin, other_bbox.xmin),
+            max(self.xmax, other_bbox.xmax),
+            min(self.ymin, other_bbox.ymin),
+            max(self.ymax, other_bbox.ymax),
+            min(self.zmin, other_bbox.zmin),
+            max(self.zmax, other_bbox.zmax),
+        )
 
     def to_dict(self, *args, **kwargs) -> dict:
         """
@@ -592,15 +589,16 @@ class BoundingBox(dc.DessiaObject):
         :return: The dictionary representation of the bounding box.
         :rtype: dict
         """
-        return {'object_class': 'volmdlr.core.BoundingBox',
-                'name': self.name,
-                'xmin': self.xmin,
-                'xmax': self.xmax,
-                'ymin': self.ymin,
-                'ymax': self.ymax,
-                'zmin': self.zmin,
-                'zmax': self.zmax,
-                }
+        return {
+            "object_class": "volmdlr.core.BoundingBox",
+            "name": self.name,
+            "xmin": self.xmin,
+            "xmax": self.xmax,
+            "ymin": self.ymin,
+            "ymax": self.ymax,
+            "zmin": self.zmin,
+            "zmax": self.zmax,
+        }
 
     @property
     def points(self) -> List[volmdlr.Point3D]:
@@ -610,16 +608,18 @@ class BoundingBox(dc.DessiaObject):
         :return: A list of eight 3D points representing the corners of the bounding box.
         :rtype: list of volmdlr.Point3D
         """
-        return [volmdlr.Point3D(self.xmin, self.ymin, self.zmin),
-                volmdlr.Point3D(self.xmax, self.ymin, self.zmin),
-                volmdlr.Point3D(self.xmax, self.ymax, self.zmin),
-                volmdlr.Point3D(self.xmin, self.ymax, self.zmin),
-                volmdlr.Point3D(self.xmin, self.ymin, self.zmax),
-                volmdlr.Point3D(self.xmax, self.ymin, self.zmax),
-                volmdlr.Point3D(self.xmax, self.ymax, self.zmax),
-                volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
+        return [
+            volmdlr.Point3D(self.xmin, self.ymin, self.zmin),
+            volmdlr.Point3D(self.xmax, self.ymin, self.zmin),
+            volmdlr.Point3D(self.xmax, self.ymax, self.zmin),
+            volmdlr.Point3D(self.xmin, self.ymax, self.zmin),
+            volmdlr.Point3D(self.xmin, self.ymin, self.zmax),
+            volmdlr.Point3D(self.xmax, self.ymin, self.zmax),
+            volmdlr.Point3D(self.xmax, self.ymax, self.zmax),
+            volmdlr.Point3D(self.xmin, self.ymax, self.zmax),
+        ]
 
-    def plot(self, ax=None, color='gray'):
+    def plot(self, ax=None, color="gray"):
         """
         Plot the bounding box on 3D axes.
 
@@ -632,33 +632,32 @@ class BoundingBox(dc.DessiaObject):
         """
         if ax is None:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
 
-        bbox_edges = [[self.points[0], self.points[1]],
-                      [self.points[0], self.points[3]],
-                      [self.points[0], self.points[4]],
-                      [self.points[1], self.points[2]],
-                      [self.points[1], self.points[5]],
-                      [self.points[2], self.points[3]],
-                      [self.points[2], self.points[6]],
-                      [self.points[3], self.points[7]],
-                      [self.points[4], self.points[5]],
-                      [self.points[5], self.points[6]],
-                      [self.points[6], self.points[7]],
-                      [self.points[7], self.points[4]]]
+        bbox_edges = [
+            [self.points[0], self.points[1]],
+            [self.points[0], self.points[3]],
+            [self.points[0], self.points[4]],
+            [self.points[1], self.points[2]],
+            [self.points[1], self.points[5]],
+            [self.points[2], self.points[3]],
+            [self.points[2], self.points[6]],
+            [self.points[3], self.points[7]],
+            [self.points[4], self.points[5]],
+            [self.points[5], self.points[6]],
+            [self.points[6], self.points[7]],
+            [self.points[7], self.points[4]],
+        ]
 
         # x = [p[0] for p in self.points]
         # y = [p[1] for p in self.points]
         # z = [p[2] for p in self.points]
         # ax.scatter(x, y, z, color)
         for edge in bbox_edges:
-            ax.plot3D([edge[0][0], edge[1][0]],
-                      [edge[0][1], edge[1][1]],
-                      [edge[0][2], edge[1][2]],
-                      color=color)
-        ax.set_xlabel('X Label')
-        ax.set_ylabel('Y Label')
-        ax.set_zlabel('Z Label')
+            ax.plot3D([edge[0][0], edge[1][0]], [edge[0][1], edge[1][1]], [edge[0][2], edge[1][2]], color=color)
+        ax.set_xlabel("X Label")
+        ax.set_ylabel("Y Label")
+        ax.set_zlabel("Z Label")
         return ax
 
     @classmethod
@@ -719,8 +718,7 @@ class BoundingBox(dc.DessiaObject):
         :return: The volume of the bounding box.
         :rtype: float
         """
-        return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
-                self.zmax - self.zmin)
+        return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (self.zmax - self.zmin)
 
     def bbox_intersection(self, bbox2: "BoundingBox") -> bool:
         """
@@ -732,12 +730,10 @@ class BoundingBox(dc.DessiaObject):
         :rtype: bool
         """
         if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
-            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                    and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
+            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
                 return True
         if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
-            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                    and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
+            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
                 return True
         return False
 
@@ -750,9 +746,14 @@ class BoundingBox(dc.DessiaObject):
         :return: True if the bounding box is contained inside bbox2, False otherwise.
         :rtype: bool
         """
-        return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6) \
-            and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
-            and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
+        return (
+            (self.xmin >= bbox2.xmin - 1e-6)
+            and (self.xmax <= bbox2.xmax + 1e-6)
+            and (self.ymin >= bbox2.ymin - 1e-6)
+            and (self.ymax <= bbox2.ymax + 1e-6)
+            and (self.zmin >= bbox2.zmin - 1e-6)
+            and (self.zmax <= bbox2.zmax + 1e-6)
+        )
 
     def intersection_volume(self, bbox2: "BoundingBox") -> float:
         """
@@ -805,7 +806,7 @@ class BoundingBox(dc.DessiaObject):
             permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
         dz = max(permute_bbox2.zmin - permute_bbox1.zmax, 0)
 
-        return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
+        return (dx**2 + dy**2 + dz**2) ** 0.5
 
     def point_belongs(self, point: volmdlr.Point3D) -> bool:
         """
@@ -817,9 +818,7 @@ class BoundingBox(dc.DessiaObject):
         :rtype: bool
         """
         return (
-                self.xmin < point[0] < self.xmax
-                and self.ymin < point[1] < self.ymax
-                and self.zmin < point[2] < self.zmax
+            self.xmin < point[0] < self.xmax and self.ymin < point[1] < self.ymax and self.zmin < point[2] < self.zmax
         )
 
     def distance_to_point(self, point: volmdlr.Point3D) -> float:
@@ -832,9 +831,16 @@ class BoundingBox(dc.DessiaObject):
         :rtype: float
         """
         if self.point_belongs(point):
-            return min([self.xmax - point[0], point[0] - self.xmin,
-                        self.ymax - point[1], point[1] - self.ymin,
-                        self.zmax - point[2], point[2] - self.zmin])
+            return min(
+                [
+                    self.xmax - point[0],
+                    point[0] - self.xmin,
+                    self.ymax - point[1],
+                    point[1] - self.ymin,
+                    self.zmax - point[2],
+                    point[2] - self.zmin,
+                ]
+            )
 
         if point[0] < self.xmin:
             dx = self.xmin - point[0]
@@ -856,7 +862,7 @@ class BoundingBox(dc.DessiaObject):
             dz = point[2] - self.zmax
         else:
             dz = 0
-        return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
+        return (dx**2 + dy**2 + dz**2) ** 0.5
 
 
 class VolumeModel(dc.PhysicalObject):
@@ -868,16 +874,15 @@ class VolumeModel(dc.PhysicalObject):
     :param name: The VolumeModel's name
     :type name: str
     """
+
     _standalone_in_db = True
     _eq_is_data_eq = True
-    _non_serializable_attributes = ['shells', 'bounding_box']
-    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                               'faces']
-    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                                 'faces']
-    _dessia_methods = ['to_stl_model']
+    _non_serializable_attributes = ["shells", "bounding_box"]
+    _non_data_eq_attributes = ["name", "shells", "bounding_box", "contours", "faces"]
+    _non_data_hash_attributes = ["name", "shells", "bounding_box", "contours", "faces"]
+    _dessia_methods = ["to_stl_model"]
 
-    def __init__(self, primitives: List[Primitive3D], name: str = ''):
+    def __init__(self, primitives: List[Primitive3D], name: str = ""):
         self.primitives = primitives
         self.name = name
         self.shells = []
@@ -936,8 +941,7 @@ class VolumeModel(dc.PhysicalObject):
             volume += primitive.volume()
         return volume
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Rotates the VolumeModel.
 
@@ -946,13 +950,10 @@ class VolumeModel(dc.PhysicalObject):
         :param angle: angle rotation
         :return: a new rotated VolumeModel
         """
-        new_primitives = [
-            primitive.rotation(center, axis, angle) for
-            primitive in self.primitives]
+        new_primitives = [primitive.rotation(center, axis, angle) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Rotates the VolumeModel. Object is updated inplace.
 
@@ -971,8 +972,7 @@ class VolumeModel(dc.PhysicalObject):
         :param offset: translation vector
         :return: A new translated VolumeModel
         """
-        new_primitives = [primitive.translation(offset) for
-                          primitive in self.primitives]
+        new_primitives = [primitive.translation(offset) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
@@ -991,8 +991,7 @@ class VolumeModel(dc.PhysicalObject):
 
         side = 'old' or 'new'
         """
-        new_primitives = [primitive.frame_mapping(frame, side)
-                          for primitive in self.primitives]
+        new_primitives = [primitive.frame_mapping(frame, side) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
@@ -1015,7 +1014,7 @@ class VolumeModel(dc.PhysicalObject):
     def plot2d(self, ax=None, color=None):
         fig = plt.figure()
         if ax is None:
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
 
         for i, shell in enumerate(self.shells):
             bbox = shell.bbox()
@@ -1030,12 +1029,12 @@ class VolumeModel(dc.PhysicalObject):
         To use for debug.
         """
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d', adjustable='box')
+        ax = fig.add_subplot(111, projection="3d", adjustable="box")
         for primitive in self.primitives:
             primitive.plot(ax)
         if equal_aspect:
             # ax.set_aspect('equal')
-            ax.set_aspect('auto')
+            ax.set_aspect("auto")
         ax.margins(0.1)
         return ax
 
@@ -1048,70 +1047,58 @@ class VolumeModel(dc.PhysicalObject):
         meshes = []
         lines = []
         for primitive in self.primitives:
-            if hasattr(primitive, 'babylon_meshes'):
+            if hasattr(primitive, "babylon_meshes"):
                 meshes.extend(primitive.babylon_meshes())
-            if hasattr(primitive, 'babylon_curves'):
+            if hasattr(primitive, "babylon_curves"):
                 lines.append(primitive.babylon_curves())
 
         bbox = self.bounding_box
         center = bbox.center
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
+        max_length = max([bbox.xmax - bbox.xmin, bbox.ymax - bbox.ymin, bbox.zmax - bbox.zmin])
 
-        babylon_data = {'meshes': meshes,
-                        'lines': lines,
-                        'max_length': max_length,
-                        'center': list(center)}
+        babylon_data = {"meshes": meshes, "lines": lines, "max_length": max_length, "center": list(center)}
 
         return babylon_data
 
     @classmethod
-    def babylonjs_script(cls, babylon_data, use_cdn=True,
-                         debug=False):
+    def babylonjs_script(cls, babylon_data, use_cdn=True, debug=False):
         if use_cdn:
             script = volmdlr.templates.BABYLON_UNPACKER_CDN_HEADER  # .substitute(name=page_name)
         else:
             script = volmdlr.templates.BABYLON_UNPACKER_EMBEDDED_HEADER  # .substitute(name=page_name)
 
-        script += volmdlr.templates.BABYLON_UNPACKER_BODY_TEMPLATE.substitute(
-            babylon_data=babylon_data)
+        script += volmdlr.templates.BABYLON_UNPACKER_BODY_TEMPLATE.substitute(babylon_data=babylon_data)
         return script
 
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
         babylon_data = self.babylon_data()
-        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                       debug=debug)
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn, debug=debug)
         if page_name is None:
-            with tempfile.NamedTemporaryFile(suffix=".html",
-                                             delete=False) as file:
-                file.write(bytes(script, 'utf8'))
+            with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as file:
+                file.write(bytes(script, "utf8"))
             page_name = file.name
         else:
-            if not page_name.endswith('.html'):
-                page_name += '.html'
-            with open(page_name, 'w', encoding='utf-8') as file:
+            if not page_name.endswith(".html"):
+                page_name += ".html"
+            with open(page_name, "w", encoding="utf-8") as file:
                 file.write(script)
 
-        webbrowser.open('file://' + os.path.realpath(page_name))
+        webbrowser.open("file://" + os.path.realpath(page_name))
 
         return page_name
 
-    def save_babylonjs_to_file(self, filename: str = None,
-                               use_cdn=True, debug=False):
+    def save_babylonjs_to_file(self, filename: str = None, use_cdn=True, debug=False):
         babylon_data = self.babylon_data()
-        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                       debug=debug)
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn, debug=debug)
         if filename is None:
-            with tempfile.NamedTemporaryFile(suffix=".html",
-                                             delete=False) as file:
-                file.write(bytes(script, 'utf8'))
+            with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as file:
+                file.write(bytes(script, "utf8"))
                 return file.name
 
-        if not filename.endswith('.html'):
-            filename += '.html'
+        if not filename.endswith(".html"):
+            filename += ".html"
 
-            with open(filename, 'w', encoding='utf-8') as file:
+            with open(filename, "w", encoding="utf-8") as file:
                 file.write(script)
             return filename
 
@@ -1123,9 +1110,9 @@ class VolumeModel(dc.PhysicalObject):
         return stl
 
     def to_stl(self, filepath: str):
-        if not filepath.endswith('.stl'):
-            filepath += '.stl'
-        with open(filepath, 'wb') as file:
+        if not filepath.endswith(".stl"):
+            filepath += ".stl"
+        with open(filepath, "wb") as file:
             self.to_stl_stream(file)
 
     def to_stl_stream(self, stream: dcf.BinaryFile):
@@ -1134,21 +1121,20 @@ class VolumeModel(dc.PhysicalObject):
         return stream
 
     def to_step(self, filepath: str):
-        if not (filepath.endswith('.step') or filepath.endswith('.stp')):
-            filepath += '.step'
-        with open(filepath, 'w', encoding='utf-8') as file:
+        if not (filepath.endswith(".step") or filepath.endswith(".stp")):
+            filepath += ".step"
+        with open(filepath, "w", encoding="utf-8") as file:
             self.to_step_stream(file)
 
     def to_step_stream(self, stream: dcf.StringFile):
 
-        step_content = STEP_HEADER.format(name=self.name,
-                                          filename='',
-                                          timestamp=datetime.now().isoformat(),
-                                          version=volmdlr.__version__)
+        step_content = STEP_HEADER.format(
+            name=self.name, filename="", timestamp=datetime.now().isoformat(), version=volmdlr.__version__
+        )
         current_id = 8
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'OpenShell3D':
+            if primitive.__class__.__name__ == "OpenShell3D":
                 primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
             else:
                 primitive_content, primitive_id = primitive.to_step(current_id)
@@ -1156,43 +1142,52 @@ class VolumeModel(dc.PhysicalObject):
             step_content += primitive_content
 
             product_definition_context_id = primitive_id + 1
-            step_content += (f"#{product_definition_context_id} = "
-                             + "PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n")
+            step_content += (
+                f"#{product_definition_context_id} = " + "PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n"
+            )
 
             product_context_id = product_definition_context_id + 1
             step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
             product_id = product_context_id + 1
-            step_content += f"#{product_id} = PRODUCT('{primitive.name}'," \
-                            f"'{primitive.name}','',(#{product_context_id}));\n"
+            step_content += (
+                f"#{product_id} = PRODUCT('{primitive.name}'," f"'{primitive.name}','',(#{product_context_id}));\n"
+            )
             product_definition_formation_id = product_id + 1
-            step_content += f"#{product_definition_formation_id} = "\
-                            "PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
+            step_content += (
+                f"#{product_definition_formation_id} = " "PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
+            )
             product_definition_id = product_definition_formation_id + 1
-            step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
-                            f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
+            step_content += (
+                f"#{product_definition_id} = PRODUCT_DEFINITION('design',"
+                f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
+            )
             product_definition_shape_id = product_definition_id + 1
-            step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
-                            f"'',#{product_definition_id});\n"
+            step_content += (
+                f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," f"'',#{product_definition_id});\n"
+            )
             shape_definition_repr_id = product_definition_shape_id + 1
-            step_content += "#{} = SHAPE_DEFINITION_REPRESENTATION(#{},#{});\n".format(shape_definition_repr_id,
-                                                                                       product_definition_shape_id,
-                                                                                       primitive_id
-                                                                                       )
+            step_content += "#{} = SHAPE_DEFINITION_REPRESENTATION(#{},#{});\n".format(
+                shape_definition_repr_id, product_definition_shape_id, primitive_id
+            )
             product_related_category = shape_definition_repr_id + 1
-            step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
-                            f"'part',$,(#{product_id}));\n"
+            step_content += (
+                f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" f"'part',$,(#{product_id}));\n"
+            )
             draughting_id = product_related_category + 1
             step_content += f"#{draughting_id} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n"
             color_id = draughting_id + 1
             primitive_color = (1, 1, 1)
-            if hasattr(primitive, 'color') and primitive.color is not None:
+            if hasattr(primitive, "color") and primitive.color is not None:
                 primitive_color = primitive.color
-            step_content += f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)}," \
-                            f"{round(float(primitive_color[1]), 4)}, {round(float(primitive_color[2]), 4)});\n"
+            step_content += (
+                f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)},"
+                f"{round(float(primitive_color[1]), 4)}, {round(float(primitive_color[2]), 4)});\n"
+            )
 
             curve_style_id = color_id + 1
-            step_content += f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," \
-                            f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
+            step_content += (
+                f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
+            )
 
             fill_area_color_id = curve_style_id + 1
             step_content += f"#{fill_area_color_id} = FILL_AREA_STYLE_COLOUR('',#{color_id});\n"
@@ -1211,19 +1206,23 @@ class VolumeModel(dc.PhysicalObject):
 
             presentation_style_id = suface_style_usage_id + 1
 
-            step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
-                            f"#{curve_style_id}));\n"
+            step_content += (
+                f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id},"
+                f"#{curve_style_id}));\n"
+            )
 
             styled_item_id = presentation_style_id + 1
-            if primitive.__class__.__name__ == 'OpenShell3D':
+            if primitive.__class__.__name__ == "OpenShell3D":
                 for face_id in face_ids:
-                    step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
-                                    f"#{face_id});\n"
+                    step_content += (
+                        f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," f"#{face_id});\n"
+                    )
                     styled_item_id += 1
                 styled_item_id -= 1
             else:
-                step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
-                                f"#{primitive_id});\n"
+                step_content += (
+                    f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," f"#{primitive_id});\n"
+                )
 
             current_id = styled_item_id + 1
 
@@ -1243,11 +1242,13 @@ class VolumeModel(dc.PhysicalObject):
 
         """
 
-        update_data = {'point_account': 0,
-                       'line_account': 0,
-                       'line_loop_account': 0,
-                       'surface_account': 0,
-                       'surface_loop_account': 0}
+        update_data = {
+            "point_account": 0,
+            "line_account": 0,
+            "line_loop_account": 0,
+            "surface_account": 0,
+            "surface_loop_account": 0,
+        }
 
         lines = []
         volume = 0
@@ -1256,16 +1257,15 @@ class VolumeModel(dc.PhysicalObject):
                 volume += 1
                 lines_primitives, update_data = primitive.get_geo_lines(update_data)
                 lines.extend(lines_primitives)
-                surface_loop = ((lines[-1].split('('))[1].split(')')[0])
-                lines.append('Volume(' + str(volume) + ') = {' + surface_loop + '};')
+                surface_loop = (lines[-1].split("("))[1].split(")")[0]
+                lines.append("Volume(" + str(volume) + ") = {" + surface_loop + "};")
             elif isinstance(primitive, volmdlr.faces.OpenShell3D):
                 lines_primitives, update_data = primitive.get_geo_lines(update_data)
                 lines.extend(lines_primitives)
 
         return lines
 
-    def get_mesh_lines(self,
-                       factor: float, **kwargs):
+    def get_mesh_lines(self, factor: float, **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
         # initial_mesh_size: float = 5):
@@ -1288,7 +1288,7 @@ class VolumeModel(dc.PhysicalObject):
         :rtype: List[str]
         """
 
-        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+        for element in [("curvature_mesh_size", 0), ("min_points", None), ("initial_mesh_size", 5)]:
             if element[0] not in kwargs:
                 kwargs[element[0]] = element[1]
 
@@ -1310,11 +1310,11 @@ class VolumeModel(dc.PhysicalObject):
         field_nums = []
         lines = []
 
-        lines.append('Mesh.CharacteristicLengthMin = 0;')
-        lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
-        lines.append('Geometry.Tolerance = 1e-20;')
-        lines.append('Mesh.AngleToleranceFacetOverlap = 0.01;')
-        lines.append('General.Verbosity = 0;')
+        lines.append("Mesh.CharacteristicLengthMin = 0;")
+        lines.append("Mesh.CharacteristicLengthMax = 1e+22;")
+        lines.append("Geometry.Tolerance = 1e-20;")
+        lines.append("Mesh.AngleToleranceFacetOverlap = 0.01;")
+        lines.append("General.Verbosity = 0;")
 
         for i, primitive in enumerate(self.primitives):
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
@@ -1325,14 +1325,15 @@ class VolumeModel(dc.PhysicalObject):
                 if factor == 0:
                     factor = 1e-3
 
-                size = ((volume ** (1. / 3.)) / kwargs['initial_mesh_size']) * factor
+                size = ((volume ** (1.0 / 3.0)) / kwargs["initial_mesh_size"]) * factor
 
                 # meshsizes_max.append(size)
 
-                if kwargs['min_points']:
+                if kwargs["min_points"]:
 
-                    lines.extend(primitive.get_mesh_lines_with_transfinite_curves(min_points=kwargs['min_points'],
-                                                                                  size=size))
+                    lines.extend(
+                        primitive.get_mesh_lines_with_transfinite_curves(min_points=kwargs["min_points"], size=size)
+                    )
 
                     # primitives, primitives_length = [], []
                     # for face in primitive.faces:
@@ -1354,12 +1355,12 @@ class VolumeModel(dc.PhysicalObject):
                     #         lines.append('Transfinite Curve {' + str(i) + '} = ' +
                     #                      str(kwargs['min_points']) + ' Using Progression 1;')
 
-                lines.append('Field[' + str(field_num) + '] = MathEval;')
-                lines.append('Field[' + str(field_num) + '].F = "' + str(size) + '";')
+                lines.append("Field[" + str(field_num) + "] = MathEval;")
+                lines.append("Field[" + str(field_num) + '].F = "' + str(size) + '";')
 
-                lines.append('Field[' + str(field_num + 1) + '] = Restrict;')
-                lines.append('Field[' + str(field_num + 1) + '].InField = ' + str(field_num) + ';')
-                lines.append('Field[' + str(field_num + 1) + '].VolumesList = {' + str(i + 1) + '};')
+                lines.append("Field[" + str(field_num + 1) + "] = Restrict;")
+                lines.append("Field[" + str(field_num + 1) + "].InField = " + str(field_num) + ";")
+                lines.append("Field[" + str(field_num + 1) + "].VolumesList = {" + str(i + 1) + "};")
                 field_nums.append(field_num + 1)
                 field_num += 2
 
@@ -1372,18 +1373,17 @@ class VolumeModel(dc.PhysicalObject):
         # lines.append('Mesh.CharacteristicLengthMin = ' + str(meshsize_min) + ';')
         # lines.append('Mesh.CharacteristicLengthMax = ' + str(meshsize_max) + ';')
 
-        lines.append('Field[' + str(field_num) + '] = MinAniso;')
-        lines.append('Field[' + str(field_num) + '].FieldsList = {' + str(field_nums)[1:-1] + '};')
-        lines.append('Background Field = ' + str(field_num) + ';')
+        lines.append("Field[" + str(field_num) + "] = MinAniso;")
+        lines.append("Field[" + str(field_num) + "].FieldsList = {" + str(field_nums)[1:-1] + "};")
+        lines.append("Background Field = " + str(field_num) + ";")
 
-        lines.append('Mesh.MeshSizeFromCurvature = ' + str(kwargs['curvature_mesh_size']) + ';')
+        lines.append("Mesh.MeshSizeFromCurvature = " + str(kwargs["curvature_mesh_size"]) + ";")
 
-        lines.append('Coherence;')
+        lines.append("Coherence;")
 
         return lines
 
-    def to_geo_stream(self, stream: dcf.StringFile,
-                      factor: float, **kwargs):
+    def to_geo_stream(self, stream: dcf.StringFile, factor: float, **kwargs):
         """
         Gets the .geo file for the VolumeModel.
 
@@ -1405,24 +1405,27 @@ class VolumeModel(dc.PhysicalObject):
         :rtype: .txt
         """
 
-        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+        for element in [("curvature_mesh_size", 0), ("min_points", None), ("initial_mesh_size", 5)]:
             if element[0] not in kwargs:
                 kwargs[element[0]] = element[1]
 
         lines = self.get_geo_lines()
-        lines.extend(self.get_mesh_lines(factor,
-                                         curvature_mesh_size=kwargs['curvature_mesh_size'],
-                                         min_points=kwargs['min_points'],
-                                         initial_mesh_size=kwargs['initial_mesh_size']))
+        lines.extend(
+            self.get_mesh_lines(
+                factor,
+                curvature_mesh_size=kwargs["curvature_mesh_size"],
+                min_points=kwargs["min_points"],
+                initial_mesh_size=kwargs["initial_mesh_size"],
+            )
+        )
 
-        content = ''
+        content = ""
         for line in lines:
-            content += line + '\n'
+            content += line + "\n"
 
         stream.write(content)
 
-    def to_geo(self, file_name: str = '',
-               factor: float = 0.5, **kwargs):
+    def to_geo(self, file_name: str = "", factor: float = 0.5, **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
         # initial_mesh_size: float = 5):
@@ -1447,17 +1450,20 @@ class VolumeModel(dc.PhysicalObject):
         :rtype: .txt
         """
 
-        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+        for element in [("curvature_mesh_size", 0), ("min_points", None), ("initial_mesh_size", 5)]:
             if element[0] not in kwargs:
                 kwargs[element[0]] = element[1]
 
-        if not (file_name.endswith('.geo') or file_name.endswith('.geo')):
-            file_name += '.geo'
-        with open(file_name, 'w', encoding='utf-8') as file:
-            self.to_geo_stream(file, factor,
-                               curvature_mesh_size=kwargs['curvature_mesh_size'],
-                               min_points=kwargs['min_points'],
-                               initial_mesh_size=kwargs['initial_mesh_size'])
+        if not (file_name.endswith(".geo") or file_name.endswith(".geo")):
+            file_name += ".geo"
+        with open(file_name, "w", encoding="utf-8") as file:
+            self.to_geo_stream(
+                file,
+                factor,
+                curvature_mesh_size=kwargs["curvature_mesh_size"],
+                min_points=kwargs["min_points"],
+                initial_mesh_size=kwargs["initial_mesh_size"],
+            )
 
         # for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
         #     if element[0] not in kwargs:
@@ -1487,8 +1493,7 @@ class VolumeModel(dc.PhysicalObject):
         #         file.write('\n')
         # file.close()
 
-    def to_geo_with_stl(self, file_name: str,
-                        factor: float, **kwargs):
+    def to_geo_with_stl(self, file_name: str, factor: float, **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
         # initial_mesh_size: float = 5):
@@ -1513,7 +1518,7 @@ class VolumeModel(dc.PhysicalObject):
         :rtype: .txt
         """
 
-        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+        for element in [("curvature_mesh_size", 0), ("min_points", None), ("initial_mesh_size", 5)]:
             if element[0] not in kwargs:
                 kwargs[element[0]] = element[1]
 
@@ -1531,10 +1536,14 @@ class VolumeModel(dc.PhysicalObject):
         #     initial_mesh_size = 5
 
         lines = self.get_geo_lines()
-        lines.extend(self.get_mesh_lines(factor,
-                                         curvature_mesh_size=kwargs['curvature_mesh_size'],
-                                         min_points=kwargs['min_points'],
-                                         initial_mesh_size=kwargs['initial_mesh_size']))
+        lines.extend(
+            self.get_mesh_lines(
+                factor,
+                curvature_mesh_size=kwargs["curvature_mesh_size"],
+                min_points=kwargs["min_points"],
+                initial_mesh_size=kwargs["initial_mesh_size"],
+            )
+        )
 
         contours, faces_account = [], 0
         surfaces = []
@@ -1543,8 +1552,8 @@ class VolumeModel(dc.PhysicalObject):
                 surfaces.append(list(range(1, 1 + len(primitive.faces))))
                 face_contours = [face.outer_contour3d for face in primitive.faces]
                 contours.append(face_contours)
-                lines.append('Mesh 2;')
-                lines.append('Physical Surface(' + str(i + 1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                lines.append("Mesh 2;")
+                lines.append("Physical Surface(" + str(i + 1) + ") = {" + str(surfaces[i])[1:-1] + "};")
                 lines.append('Save "' + file_name + '.stl" ;')
                 faces_account += len(primitive.faces) + 1
             else:
@@ -1557,8 +1566,8 @@ class VolumeModel(dc.PhysicalObject):
                 #             if face_c.is_superposing(contour):
                 #                 surfaces[i][k] = surfaces[l][c]
                 #                 continue
-                lines.append('Mesh 2;')
-                lines.append('Physical Surface(' + str(i + 1) + ') = {' + str(surfaces[i])[1:-1] + '};')
+                lines.append("Mesh 2;")
+                lines.append("Physical Surface(" + str(i + 1) + ") = {" + str(surfaces[i])[1:-1] + "};")
                 lines.append('Save "' + file_name + '.stl" ;')
                 faces_account += len(primitive.faces) + 1
                 contours.append(face_contours)
@@ -1575,8 +1584,7 @@ class VolumeModel(dc.PhysicalObject):
                         continue
         return surfaces
 
-    def to_msh(self, mesh_dimension: int,
-               factor: float, file_name: str = '', **kwargs):
+    def to_msh(self, mesh_dimension: int, factor: float, file_name: str = "", **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
         # initial_mesh_size: float = 5):
@@ -1603,7 +1611,7 @@ class VolumeModel(dc.PhysicalObject):
         :rtype: .txt
         """
 
-        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+        for element in [("curvature_mesh_size", 0), ("min_points", None), ("initial_mesh_size", 5)]:
             if element[0] not in kwargs:
                 kwargs[element[0]] = element[1]
 
@@ -1620,15 +1628,17 @@ class VolumeModel(dc.PhysicalObject):
         # except KeyError:
         #     initial_mesh_size = 5
 
-        if file_name == '':
+        if file_name == "":
             with tempfile.NamedTemporaryFile(delete=False) as f:
                 file_name = f.name
 
-        self.to_geo(file_name=file_name,
-                    factor=factor,
-                    curvature_mesh_size=kwargs['curvature_mesh_size'],
-                    min_points=kwargs['min_points'],
-                    initial_mesh_size=kwargs['initial_mesh_size'])
+        self.to_geo(
+            file_name=file_name,
+            factor=factor,
+            curvature_mesh_size=kwargs["curvature_mesh_size"],
+            min_points=kwargs["min_points"],
+            initial_mesh_size=kwargs["initial_mesh_size"],
+        )
 
         self.generate_msh_file(file_name, mesh_dimension)
 
@@ -1673,7 +1683,7 @@ class MovingVolumeModel(VolumeModel):
 
     """
 
-    def __init__(self, primitives, step_frames, name=''):
+    def __init__(self, primitives, step_frames, name=""):
         VolumeModel.__init__(self, primitives=primitives, name=name)
         self.step_frames = step_frames
 
@@ -1690,8 +1700,7 @@ class MovingVolumeModel(VolumeModel):
     def step_volume_model(self, istep):
         primitives = []
         for primitive, frame in zip(self.primitives, self.step_frames[istep]):
-            primitives.append(
-                primitive.frame_mapping(frame, side='old'))
+            primitives.append(primitive.frame_mapping(frame, side="old"))
         return VolumeModel(primitives)
 
     def babylon_data(self):
@@ -1703,34 +1712,31 @@ class MovingVolumeModel(VolumeModel):
         meshes = []
         primitives_to_meshes = []
         for i_prim, primitive in enumerate(self.primitives):
-            if hasattr(primitive, 'babylon_meshes'):
+            if hasattr(primitive, "babylon_meshes"):
                 meshes.extend(primitive.babylon_meshes())
                 primitives_to_meshes.append(i_prim)
 
         bbox = self._bounding_box()
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
+        max_length = max([bbox.xmax - bbox.xmin, bbox.ymax - bbox.ymin, bbox.zmax - bbox.zmin])
 
         steps = []
         for istep, frames in enumerate(self.step_frames):
 
             # step_positions = []
             # step_orientations = []
-            step = {'time': istep}
+            step = {"time": istep}
             for iframe, frame in enumerate(frames):
                 if iframe in primitives_to_meshes:
                     imesh = primitives_to_meshes.index(iframe)
                     step[imesh] = {}
-                    step[imesh]['position'] = list(round(frame.origin, 6))
-                    step[imesh]['orientations'] = [list(round(frame.u, 6)),
-                                                   list(round(frame.v, 6)),
-                                                   list(round(frame.w, 6))]
+                    step[imesh]["position"] = list(round(frame.origin, 6))
+                    step[imesh]["orientations"] = [
+                        list(round(frame.u, 6)),
+                        list(round(frame.v, 6)),
+                        list(round(frame.w, 6)),
+                    ]
 
             steps.append(step)
 
-        babylon_data = {'meshes': meshes,
-                        'max_length': max_length,
-                        'center': list(bbox.center),
-                        'steps': steps}
+        babylon_data = {"meshes": meshes, "max_length": max_length, "center": list(bbox.center), "steps": steps}
         return babylon_data

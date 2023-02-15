@@ -25,13 +25,13 @@ shells = []
 path = os.getcwd()
 stl_path = path
 os.chdir(stl_path)
-print('os.listdir(stl_path) :', os.listdir(stl_path))
+print("os.listdir(stl_path) :", os.listdir(stl_path))
 for stl_file in os.listdir(stl_path):
-    if len(stl_file.split('.')) > 1:
-        if stl_file.split('.')[1] == 'stl':
+    if len(stl_file.split(".")) > 1:
+        if stl_file.split(".")[1] == "stl":
             stl = volmdlr.stl.Stl.from_file(stl_file)
             stl.name = stl_file
-            print('name :', stl.name)
+            print("name :", stl.name)
             # list_points = stl.extract_points_BIS()
             list_points = stl.extract_points()
             print("list_points :", len(list_points))
@@ -56,6 +56,6 @@ for stl_file in os.listdir(stl_path):
             shells.append(shell)
             break
 
-    
+
 # volum = volmdlr.core.VolumeModel(shells)
 # volum.babylonjs()

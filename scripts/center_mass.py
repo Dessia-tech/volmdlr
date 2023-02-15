@@ -18,7 +18,7 @@ r = 0.23
 
 p1 = vm.Point2D(0, 0)
 p2 = vm.Point2D(r, r)
-p3 = vm.Point2D(2*r, 0)
+p3 = vm.Point2D(2 * r, 0)
 
 a = edges.Arc2D(p1, p2, p3)
 l = edges.LineSegment2D(p3, p1)
@@ -30,7 +30,7 @@ cog.plot(ax)
 
 
 assert math.isclose(a.radius, r)
-assert math.isclose(c.area(), math.pi*r**2/2.)
+assert math.isclose(c.area(), math.pi * r**2 / 2.0)
 assert math.isclose(cog[0], r)
-print(cog[1], 4*r/3.*math.pi)
-assert math.isclose(cog[1], 4*r/3./math.pi)
+print(cog[1], 4 * r / 3.0 * math.pi)
+assert math.isclose(cog[1], 4 * r / 3.0 / math.pi)

@@ -9,6 +9,7 @@
 
 import volmdlr as vm
 import volmdlr.grid
+
 # import volmdlr.step as vms
 from volmdlr.models import bspline_surfaces
 
@@ -17,20 +18,22 @@ from volmdlr.models import bspline_surfaces
 # files_path = ['bspline_surface_1.step', 'bspline_surface_2.step']
 # bspline_faces = []
 
-# for file_path in files_path: 
+# for file_path in files_path:
 #     step_file = vms.Step.from_file(file_path)
-    
+
 #     model = step_file.to_volume_model()
 #     primitives = model.primitives
-    
+
 #     faces = []
 #     for primitive in primitives:
 #         faces.extend(primitive.faces)
-    
+
 #     bspline_faces.append(faces[0])
 
-bspline_faces = [bspline_surfaces.bspline_surface_1.rectangular_cut(0,1,0,1),
-                 bspline_surfaces.bspline_surface_2.rectangular_cut(0,1,0,1)]
+bspline_faces = [
+    bspline_surfaces.bspline_surface_1.rectangular_cut(0, 1, 0, 1),
+    bspline_surfaces.bspline_surface_2.rectangular_cut(0, 1, 0, 1),
+]
 
 
 # %% Bspline surfaces
@@ -53,12 +56,12 @@ for i, bspline in enumerate(bspline_surfaces):
 
 ax1 = points3d[0][0].plot()
 for i, points in enumerate(points3d):
-    for k,p in enumerate(points):
-        if k<points_x:
+    for k, p in enumerate(points):
+        if k < points_x:
             if k == 0:
-                p.plot(ax=ax1, color='g')  
+                p.plot(ax=ax1, color="g")
             else:
-                p.plot(ax=ax1, color='r')
+                p.plot(ax=ax1, color="r")
         else:
             p.plot(ax=ax1)
 
@@ -70,8 +73,7 @@ points_x, points_y, xmin, xmax, ymin, ymax = 5, 5, 0, 1, 0, 1
 
 points3d = []
 for i, bspline in enumerate(bspline_surfaces):
-    grid2d = volmdlr.grid.Grid2D.from_properties((xmin, xmax), (ymin, ymax),
-                                                 (points_x, points_y), grid2d_direction[i])
+    grid2d = volmdlr.grid.Grid2D.from_properties((xmin, xmax), (ymin, ymax), (points_x, points_y), grid2d_direction[i])
     grid3d = bspline.grid3d(grid2d)
     points3d.append(grid3d)
 
@@ -83,8 +85,8 @@ for i, points in enumerate(points3d):
     for k, p in enumerate(points):
         if k < points_x:
             if k == 0:
-                p.plot(ax=ax1, color='g')
+                p.plot(ax=ax1, color="g")
             else:
-                p.plot(ax=ax1, color='r')
+                p.plot(ax=ax1, color="r")
         else:
             p.plot(ax=ax1)

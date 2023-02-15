@@ -15,9 +15,7 @@ import volmdlr.wires
 
 # %% Initial Data
 
-points = [vm.Point2D(0, 1),
-          vm.Point2D(0.1, 0.8),
-          vm.Point2D(0.2, 1.5)]
+points = [vm.Point2D(0, 1), vm.Point2D(0.1, 0.8), vm.Point2D(0.2, 1.5)]
 
 line = vm.edges.Line2D(vm.Point2D(-0.5, 1), vm.Point2D(-0.5, 8))
 
@@ -26,7 +24,7 @@ line = vm.edges.Line2D(vm.Point2D(-0.5, 1), vm.Point2D(-0.5, 8))
 axial_points = [point.axial_symmetry(line) for point in points]
 
 fig, ax = plt.subplots()
-ax.set_aspect('equal')
+ax.set_aspect("equal")
 line.plot(ax)
-[p.plot(ax=ax, color='r') for p in points]
-[p.plot(ax=ax, color='g') for p in axial_points]
+[p.plot(ax=ax, color="r") for p in points]
+[p.plot(ax=ax, color="g") for p in axial_points]

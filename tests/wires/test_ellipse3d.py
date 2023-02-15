@@ -20,10 +20,12 @@ class TestEllipse3D(unittest.TestCase):
 
     def test_discretization_points(self):
         discretization_points = self.ellipse.discretization_points(number_points=4)
-        expected_points = [volmdlr.Point3D(4.0, 0.0, 0.0),
-                           volmdlr.Point3D(0, -3, 0),
-                           volmdlr.Point3D(-4, 0, 0),
-                           volmdlr.Point3D(0, 3, 0)]
+        expected_points = [
+            volmdlr.Point3D(4.0, 0.0, 0.0),
+            volmdlr.Point3D(0, -3, 0),
+            volmdlr.Point3D(-4, 0, 0),
+            volmdlr.Point3D(0, 3, 0),
+        ]
         for expected_point, point in zip(expected_points, discretization_points):
             self.assertEqual(expected_point, point)
 
@@ -43,5 +45,5 @@ class TestEllipse3D(unittest.TestCase):
             self.ellipse.abscissa(point_not_on_ellipse)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

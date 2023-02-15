@@ -25,9 +25,7 @@ class Grid2D(DessiaObject):
     :type direction: List[str]
     """
 
-    def __init__(self, lists_points: List[List[volmdlr.Point2D]],
-                 direction: List[str],
-                 name: str = ''):
+    def __init__(self, lists_points: List[List[volmdlr.Point2D]], direction: List[str], name: str = ""):
 
         self.lists_points = lists_points
         self.direction = direction
@@ -65,9 +63,9 @@ class Grid2D(DessiaObject):
         """
 
         try:
-            index = self.direction.index('+' + direction_axis)
+            index = self.direction.index("+" + direction_axis)
         except ValueError:
-            index = self.direction.index('-' + direction_axis)
+            index = self.direction.index("-" + direction_axis)
 
         return index
 
@@ -87,13 +85,12 @@ class Grid2D(DessiaObject):
         :rtype:
         """
 
-        lists_points = [points[i:i + points_dim_1] for i in range(0, len(points), points_dim_1)]
+        lists_points = [points[i : i + points_dim_1] for i in range(0, len(points), points_dim_1)]
 
         return cls(lists_points, direction)
 
     @classmethod
-    def from_properties(cls, x_limits, y_limits, points_nbr,
-                        direction=None):
+    def from_properties(cls, x_limits, y_limits, points_nbr, direction=None):
         """
         Defines Grid2d based on the given properties.
 
@@ -109,21 +106,21 @@ class Grid2D(DessiaObject):
         :rtype: :class:`volmdlr.grid.Grid2D`
         """
         if direction is None:
-            direction = ['+x', '+y']
+            direction = ["+x", "+y"]
 
         xmin, xmax = x_limits
         ymin, ymax = y_limits
         points_x, points_y = points_nbr
 
         directions_properties = {
-            ('+x', '+y'): (xmin, xmax, ymin, ymax),
-            ('-x', '+y'): (xmax, xmin, ymin, ymax),
-            ('+y', '+x'): (xmin, xmax, ymin, ymax),
-            ('-y', '+x'): (xmin, xmax, ymax, ymin),
-            ('+x', '-y'): (xmin, xmax, ymax, ymin),
-            ('-x', '-y'): (xmax, xmin, ymax, ymin),
-            ('+y', '-x'): (xmax, xmin, ymin, ymax),
-            ('-y', '-x'): (xmax, xmin, ymax, ymin)
+            ("+x", "+y"): (xmin, xmax, ymin, ymax),
+            ("-x", "+y"): (xmax, xmin, ymin, ymax),
+            ("+y", "+x"): (xmin, xmax, ymin, ymax),
+            ("-y", "+x"): (xmin, xmax, ymax, ymin),
+            ("+x", "-y"): (xmin, xmax, ymax, ymin),
+            ("-x", "-y"): (xmax, xmin, ymax, ymin),
+            ("+y", "-x"): (xmax, xmin, ymin, ymax),
+            ("-y", "-x"): (xmax, xmin, ymax, ymin),
         }
 
         grid2d = []
@@ -133,7 +130,7 @@ class Grid2D(DessiaObject):
         x = npy.linspace(xmin, xmax, points_x)
         y = npy.linspace(ymin, ymax, points_y)
 
-        if direction in [['+x', '+y'], ['-x', '+y'], ['+x', '-y'], ['-x', '-y']]:
+        if direction in [["+x", "+y"], ["-x", "+y"], ["+x", "-y"], ["-x", "-y"]]:
             for yi in y:
                 for xi in x:
                     points.append(volmdlr.Point2D(xi, yi))
@@ -141,7 +138,7 @@ class Grid2D(DessiaObject):
                 grid2d.append(points)
                 points = []
 
-        elif direction in [['+y', '+x'], ['-y', '+x'], ['+y', '-x'], ['-y', '-x']]:
+        elif direction in [["+y", "+x"], ["-y", "+x"], ["+y", "-x"], ["-y", "-x"]]:
             for xi in x:
                 for yi in y:
                     points.append(volmdlr.Point2D(xi, yi))
@@ -163,11 +160,16 @@ class Grid2D(DessiaObject):
         length_1, length_2 = len(self.lists_points[0]), len(self.lists_points)
         for i in range(0, length_1 - 1):
             for j in range(0, length_2 - 1):
-                quadrilateral_polygons.append(volmdlr.wires.ClosedPolygon2D(
-                    [self.lists_points[i][j],
-                     self.lists_points[i + 1][j],
-                     self.lists_points[i + 1][j + 1],
-                     self.lists_points[i][j + 1]]))
+                quadrilateral_polygons.append(
+                    volmdlr.wires.ClosedPolygon2D(
+                        [
+                            self.lists_points[i][j],
+                            self.lists_points[i + 1][j],
+                            self.lists_points[i + 1][j + 1],
+                            self.lists_points[i][j + 1],
+                        ]
+                    )
+                )
 
         return quadrilateral_polygons
 
@@ -233,7 +235,7 @@ class Grid2D(DessiaObject):
         :rtype: Tuple[int, int]
         """
 
-        index = self.find_direction_index(direction_axis='x')
+        index = self.find_direction_index(direction_axis="x")
         if index == 0:
             points_x = len(self.lists_points[0])
             points_y = len(self.lists_points)

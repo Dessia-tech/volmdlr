@@ -9,8 +9,8 @@ from volmdlr.models.contours import contour2d_1, contour2d_2
 
 class TestContour2D(unittest.TestCase):
     contour1 = wires.Contour2D([edges.FullArc2D(center=volmdlr.O2D, start_end=volmdlr.Point2D(0.029999999, 0))])
-    not_ordered_contour = DessiaObject.load_from_file('wires/contour_not_ordered.json')
-    ordered_contour = DessiaObject.load_from_file('wires/contour_ordered.json')
+    not_ordered_contour = DessiaObject.load_from_file("wires/contour_not_ordered.json")
+    ordered_contour = DessiaObject.load_from_file("wires/contour_ordered.json")
 
     def test_point_belongs(self):
         point1 = volmdlr.Point2D(0.0144822, 0.00595264)
@@ -38,11 +38,11 @@ class TestContour2D(unittest.TestCase):
         pass
 
     def test_offset(self):
-        contour_to_offset = DessiaObject.load_from_file('wires/contour_to_offset.json')
+        contour_to_offset = DessiaObject.load_from_file("wires/contour_to_offset.json")
         stringer_contour_offset = contour_to_offset.offset(4)
         self.assertEqual(len(stringer_contour_offset.primitives), 10)
         self.assertAlmostEqual(stringer_contour_offset.area(), 546.1486677646163)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

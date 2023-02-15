@@ -15,11 +15,10 @@ face.plot()
 # Try to generate a sphere from revoltion
 radius = 0.03
 p1 = vm.Point2D(0, -radius)
-p2 = vm.Point2D(radius, 0.)
+p2 = vm.Point2D(radius, 0.0)
 p3 = vm.Point2D(0, radius)
 arc = vme.Arc2D(p1, p2, p3)
 line = vme.LineSegment2D(p3, p1)
 contour = vmw.Contour2D([arc, line])
-sphere_revolution = p3d.RevolvedProfile(vm.X3D, vm.X3D, vm.Y3D, contour,
-                                        vm.X3D, vm.Y3D, angle=1.3)
+sphere_revolution = p3d.RevolvedProfile(vm.X3D, vm.X3D, vm.Y3D, contour, vm.X3D, vm.Y3D, angle=1.3)
 sphere_revolution.babylonjs()

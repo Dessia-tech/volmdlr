@@ -24,9 +24,13 @@ def euler_angles_to_transfer_matrix(psi, theta, phi):
     stheta = math.sin(theta)
     cphi = math.cos(phi)
     sphi = math.sin(phi)
-    matrix = array([[cphi * cpsi - sphi * ctheta * spsi, -spsi * cphi - cpsi * ctheta * sphi, stheta * sphi],
-                    [cpsi * sphi + spsi * ctheta * cphi, -sphi * spsi + cphi * ctheta * cpsi, -stheta * cphi],
-                    [spsi * stheta, cpsi * stheta, ctheta]])
+    matrix = array(
+        [
+            [cphi * cpsi - sphi * ctheta * spsi, -spsi * cphi - cpsi * ctheta * sphi, stheta * sphi],
+            [cpsi * sphi + spsi * ctheta * cphi, -sphi * spsi + cphi * ctheta * cpsi, -stheta * cphi],
+            [spsi * stheta, cpsi * stheta, ctheta],
+        ]
+    )
     return matrix
 
 
@@ -97,8 +101,8 @@ def cos_image(x1: float, x2: float) -> Tuple[float, float]:
     if nb_interval >= 2:
         return -1, 1
 
-    if nb_interval == 1.:
-        if abs(interval_min) % 2 == 0.:
+    if nb_interval == 1.0:
+        if abs(interval_min) % 2 == 0.0:
             # Decreasing
             return -1, max(math.cos(x1), math.cos(x2))
         return min(math.cos(x1), math.cos(x2)), 1
@@ -162,7 +166,7 @@ def sin_cos_angle(u1, u2):
         else:
             theta = vm.TWO_PI - math.acos(u1)
     if math.isclose(theta, vm.TWO_PI, abs_tol=1e-9):
-        return 0.
+        return 0.0
     return theta
 
 
@@ -194,10 +198,8 @@ def clockwise_interior_from_circle3d(start, end, circle):
     """
     Returns the clockwise interior point between start and end on the circle.
     """
-    start2d = start.to_2d(plane_origin=circle.frame.origin,
-                          x=circle.frame.u, y=circle.frame.v)
-    end2d = end.to_2d(plane_origin=circle.frame.origin,
-                      x=circle.frame.u, y=circle.frame.v)
+    start2d = start.to_2d(plane_origin=circle.frame.origin, x=circle.frame.u, y=circle.frame.v)
+    end2d = end.to_2d(plane_origin=circle.frame.origin, x=circle.frame.u, y=circle.frame.v)
 
     # Angle pour le p1
     u1, u2 = start2d.x / circle.radius, start2d.y / circle.radius
@@ -216,10 +218,8 @@ def clockwise_interior_from_circle3d(start, end, circle):
     if theta3 > vm.TWO_PI:
         theta3 -= vm.TWO_PI
 
-    interior2d = vm.Point2D(circle.radius * math.cos(theta3),
-                            circle.radius * math.sin(theta3))
-    interior3d = interior2d.to_3d(plane_origin=circle.frame.origin,
-                                  vx=circle.frame.u, vy=circle.frame.v)
+    interior2d = vm.Point2D(circle.radius * math.cos(theta3), circle.radius * math.sin(theta3))
+    interior3d = interior2d.to_3d(plane_origin=circle.frame.origin, vx=circle.frame.u, vy=circle.frame.v)
     return interior3d
 
 

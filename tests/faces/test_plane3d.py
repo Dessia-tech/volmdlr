@@ -7,10 +7,14 @@ from volmdlr import edges, faces
 
 class TestPlane3D(unittest.TestCase):
     plane1 = faces.Plane3D(volmdlr.OXYZ)
-    plane2 = faces.Plane3D(volmdlr.OYZX.translation(volmdlr.Vector3D(1, 2, 1)).rotation(
-        volmdlr.Point3D(1, 2, 1), volmdlr.Y3D, math.pi / 4))
-    plane3 = faces.Plane3D(volmdlr.OXYZ.translation(volmdlr.Vector3D(0, 0, 1)).rotation(
-        volmdlr.O3D, volmdlr.Vector3D(0, 0, 1), math.pi / 4))
+    plane2 = faces.Plane3D(
+        volmdlr.OYZX.translation(volmdlr.Vector3D(1, 2, 1)).rotation(volmdlr.Point3D(1, 2, 1), volmdlr.Y3D, math.pi / 4)
+    )
+    plane3 = faces.Plane3D(
+        volmdlr.OXYZ.translation(volmdlr.Vector3D(0, 0, 1)).rotation(
+            volmdlr.O3D, volmdlr.Vector3D(0, 0, 1), math.pi / 4
+        )
+    )
     plane4 = faces.Plane3D(volmdlr.OXYZ.rotation(volmdlr.O3D, volmdlr.Vector3D(0, 0, 1), math.pi / 4))
 
     def test_plane_intersections(self):
@@ -29,11 +33,13 @@ class TestPlane3D(unittest.TestCase):
         self.assertFalse(self.plane1.is_coincident(self.plane2))
 
     def test_fullarc_intersections(self):
-        fullarc1 = edges.FullArc3D(self.plane2.frame.origin, self.plane2.frame.origin +
-                                   self.plane2.frame.u * 3, self.plane2.frame.w)
+        fullarc1 = edges.FullArc3D(
+            self.plane2.frame.origin, self.plane2.frame.origin + self.plane2.frame.u * 3, self.plane2.frame.w
+        )
 
-        fullarc2 = edges.FullArc3D(self.plane3.frame.origin, self.plane3.frame.origin +
-                                   self.plane3.frame.u * 3, self.plane3.frame.w)
+        fullarc2 = edges.FullArc3D(
+            self.plane3.frame.origin, self.plane3.frame.origin + self.plane3.frame.u * 3, self.plane3.frame.w
+        )
         fullarc_intersections = self.plane1.fullarc_intersections(fullarc1)
         self.assertEqual(len(fullarc_intersections), 2)
         self.assertEqual(fullarc_intersections[0], volmdlr.Point3D(0, 4.645751311, 0))
@@ -42,5 +48,5 @@ class TestPlane3D(unittest.TestCase):
         self.assertFalse(fullarc_intersections2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

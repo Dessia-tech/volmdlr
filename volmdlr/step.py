@@ -32,7 +32,7 @@ def set_to_list(step_set):
     :return: List of strings, e.g. ["A", "B", "C"]
     :rtype: List[str]
     """
-    char_list = step_set.split(',')
+    char_list = step_set.split(",")
     char_list[0] = char_list[0][1:]
     char_list[-1] = char_list[-1][:-1]
     return list(char_list)
@@ -45,8 +45,8 @@ def step_split_arguments(function_arg):
     ex: IN: '#123,#124,#125)'
        OUT: ['#123', '#124', '#125']
     """
-    if len(function_arg) > 0 and function_arg[-1] != ')':
-        function_arg += ')'
+    if len(function_arg) > 0 and function_arg[-1] != ")":
+        function_arg += ")"
     arguments = []
     argument = ""
     if len(function_arg) > 0 and function_arg[0] == "(":
@@ -79,7 +79,7 @@ def uncertainty_measure_with_unit(arguments, object_dict):
     :param object_dict: dictionary containing already instantiated objects.
     :return: Global length uncertainty.
     """
-    length_measure = float(arguments[0].split('(')[1][:-1])
+    length_measure = float(arguments[0].split("(")[1][:-1])
     return length_measure * object_dict[arguments[1]]
 
 
@@ -102,7 +102,7 @@ def length_measure_with_unit(arguments, object_dict):
     :param object_dict: dictionary containing already instantiated objects.
     :return: si unit conversion factor.
     """
-    length_measure = float(arguments[0].split('(')[1][:-1])
+    length_measure = float(arguments[0].split("(")[1][:-1])
     length_si_unit = object_dict[arguments[1]]
     return length_measure * length_si_unit
 
@@ -120,7 +120,8 @@ def length_unit_named_unit_si_unit(arguments, object_dict):
 
 
 def geometric_representation_context_global_uncertainty_assigned_context_global_unit_assigned_context_representation_context(
-        arguments, object_dict):
+    arguments, object_dict
+):
     """
     Gets the global length uncertainty.
 
@@ -152,7 +153,7 @@ def oriented_edge(arguments, object_dict):
     Returns the data in case of an ORIENTED_EDGE.
     """
     edge_orientation = arguments[4]
-    if edge_orientation == '.T.':
+    if edge_orientation == ".T.":
         return object_dict[arguments[3]]
     return object_dict[arguments[3]].reverse()
 
@@ -185,6 +186,7 @@ def face_bound(arguments, object_dict):
 
     """
     return object_dict[arguments[1]]
+
 
 # def surface_of_revolution(arguments, object_dict):
 
@@ -302,8 +304,7 @@ def manifold_surface_shape_representation(arguments, object_dict):
     """
     shells = []
     for arg in arguments[1]:
-        if isinstance(object_dict[int(arg[1:])],
-                      volmdlr.faces.OpenShell3D):
+        if isinstance(object_dict[int(arg[1:])], volmdlr.faces.OpenShell3D):
             shell = object_dict[int(arg[1:])]
             shells.append(shell)
     return shells
@@ -344,26 +345,20 @@ def shape_representation(arguments, object_dict):
     shells = []
     frames = []
     for arg in arguments[1]:
-        if int(arg[1:]) in object_dict and \
-                isinstance(object_dict[int(arg[1:])], list) and \
-                len(object_dict[int(arg[1:])]) == 1:
+        if (
+            int(arg[1:]) in object_dict
+            and isinstance(object_dict[int(arg[1:])], list)
+            and len(object_dict[int(arg[1:])]) == 1
+        ):
             shells.append(*object_dict[int(arg[1:])])
-        elif int(arg[1:]) in object_dict and \
-                isinstance(object_dict[int(arg[1:])],
-                           volmdlr.faces.OpenShell3D):
+        elif int(arg[1:]) in object_dict and isinstance(object_dict[int(arg[1:])], volmdlr.faces.OpenShell3D):
             shells.append(object_dict[int(arg[1:])])
-        elif int(arg[1:]) in object_dict and \
-                isinstance(object_dict[int(arg[1:])],
-                           volmdlr.Frame3D):
+        elif int(arg[1:]) in object_dict and isinstance(object_dict[int(arg[1:])], volmdlr.Frame3D):
             # TODO: Is there something to read here ?
             frames.append(object_dict[int(arg[1:])])
-        elif int(arg[1:]) in object_dict and \
-                isinstance(object_dict[int(arg[1:])],
-                           volmdlr.edges.Arc3D):
+        elif int(arg[1:]) in object_dict and isinstance(object_dict[int(arg[1:])], volmdlr.edges.Arc3D):
             shells.append(object_dict[int(arg[1:])])
-        elif int(arg[1:]) in object_dict and \
-                isinstance(object_dict[int(arg[1:])],
-                           volmdlr.edges.BSplineCurve3D):
+        elif int(arg[1:]) in object_dict and isinstance(object_dict[int(arg[1:])], volmdlr.edges.BSplineCurve3D):
             shells.append(object_dict[int(arg[1:])])
         else:
             pass
@@ -388,8 +383,7 @@ def advanced_brep_shape_representation(arguments, object_dict):
     """
     shells = []
     for arg in arguments[1]:
-        if isinstance(object_dict[int(arg[1:])],
-                      volmdlr.faces.OpenShell3D):
+        if isinstance(object_dict[int(arg[1:])], volmdlr.faces.OpenShell3D):
             shells.append(object_dict[int(arg[1:])])
     return shells
 
@@ -416,77 +410,96 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
     for shell3d in closed_shells:
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
-        A = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
-                       [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
-                       [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
-        B = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
-                       [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
-                       [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+        A = npy.array(
+            [
+                [basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+                [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z],
+            ]
+        )
+        B = npy.array(
+            [
+                [basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+                [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z],
+            ]
+        )
         transfer_matrix = npy.linalg.solve(A, B)
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector,
-                                    v_vector,
-                                    w_vector)
-        new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
+        new_faces = [face.frame_mapping(new_frame, "old") for face in shell3d.faces]
         new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
         new_closedshells.append(new_closed_shell3d)
     return new_closedshells
 
 
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
-        arguments, object_dict):
+    arguments, object_dict
+):
     """
     Representation relationship with transformation shape. To clarify.
     """
     if arguments[2] in object_dict:
         if isinstance(object_dict[arguments[2]], list):  # arguments = {, , [], [], item_....}
-            if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
-                          and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                return frame_map_closed_shell(object_dict[arguments[2]],
-                                              object_dict[arguments[4]], object_dict[arguments[3]])
+            if (
+                object_dict[arguments[2]]
+                and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)
+                and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D)
+            ):
+                return frame_map_closed_shell(
+                    object_dict[arguments[2]], object_dict[arguments[4]], object_dict[arguments[3]]
+                )
 
-            elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
-                    not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
-                return frame_map_closed_shell(object_dict[arguments[3]],
-                                              object_dict[arguments[4]], object_dict[arguments[2]])
+            elif (
+                object_dict[arguments[2]]
+                and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)
+                and not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D)
+            ):
+                return frame_map_closed_shell(
+                    object_dict[arguments[3]], object_dict[arguments[4]], object_dict[arguments[2]]
+                )
             return []
         return []
     return []
 
 
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
-        arguments, object_dict):
+    arguments, object_dict
+):
     """
     Bounded b spline with knots curve geometric representation item. To clarify.
     """
-    modified_arguments = [''] + arguments
+    modified_arguments = [""] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
-    return STEP_TO_VOLMDLR['BOUNDED_CURVE, '
-                           'B_SPLINE_CURVE, '
-                           'B_SPLINE_CURVE_WITH_KNOTS, '
-                           'CURVE, GEOMETRIC_REPRESENTATION_ITEM, '
-                           'RATIONAL_B_SPLINE_CURVE, '
-                           'REPRESENTATION_ITEM'].from_step(
-        modified_arguments, object_dict)
+    return STEP_TO_VOLMDLR[
+        "BOUNDED_CURVE, "
+        "B_SPLINE_CURVE, "
+        "B_SPLINE_CURVE_WITH_KNOTS, "
+        "CURVE, GEOMETRIC_REPRESENTATION_ITEM, "
+        "RATIONAL_B_SPLINE_CURVE, "
+        "REPRESENTATION_ITEM"
+    ].from_step(modified_arguments, object_dict)
 
 
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
-        arguments, object_dict):
+    arguments, object_dict
+):
     """
     Bounded b spline surface with knots curve geometric representation item. To clarify.
     """
-    modified_arguments = [''] + arguments
+    modified_arguments = [""] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
-    return STEP_TO_VOLMDLR['BOUNDED_SURFACE, B_SPLINE_SURFACE, '
-                           'B_SPLINE_SURFACE_WITH_KNOTS, '
-                           'GEOMETRIC_REPRESENTATION_ITEM, '
-                           'RATIONAL_B_SPLINE_SURFACE, '
-                           'REPRESENTATION_ITEM, SURFACE'].from_step(
-        modified_arguments, object_dict)
+    return STEP_TO_VOLMDLR[
+        "BOUNDED_SURFACE, B_SPLINE_SURFACE, "
+        "B_SPLINE_SURFACE_WITH_KNOTS, "
+        "GEOMETRIC_REPRESENTATION_ITEM, "
+        "RATIONAL_B_SPLINE_SURFACE, "
+        "REPRESENTATION_ITEM, SURFACE"
+    ].from_step(modified_arguments, object_dict)
 
 
 class StepFunction(dc.DessiaObject):
@@ -503,16 +516,15 @@ class StepFunction(dc.DessiaObject):
 
         # TODO : Modifier ce qui suit et simplify
         if self.name == "":
-            if self.arg[1][0] == 'B_SPLINE_SURFACE':
-                self.simplify('B_SPLINE_SURFACE')
-            if self.arg[1][0] == 'B_SPLINE_CURVE':
-                self.simplify('B_SPLINE_CURVE')
+            if self.arg[1][0] == "B_SPLINE_SURFACE":
+                self.simplify("B_SPLINE_SURFACE")
+            if self.arg[1][0] == "B_SPLINE_CURVE":
+                self.simplify("B_SPLINE_CURVE")
         dc.DessiaObject.__init__(self, name=function_name)
 
     def simplify(self, new_name):
         # ITERATE ON SUBFUNCTIONS
-        args = [subfun[1] for (i, subfun) in enumerate(self.arg) if
-                (len(subfun[1]) != 0 or i == 0)]
+        args = [subfun[1] for (i, subfun) in enumerate(self.arg) if (len(subfun[1]) != 0 or i == 0)]
         arguments = []
         for arg in args:
             if not arg:
@@ -531,7 +543,7 @@ class Step(dc.DessiaObject):
 
     """
 
-    def __init__(self, lines: List[str], name: str = ''):
+    def __init__(self, lines: List[str], name: str = ""):
         self.lines = lines
         self.functions, self.all_connections = self.read_lines()
         self._utd_graph = False
@@ -580,7 +592,7 @@ class Step(dc.DessiaObject):
                 continue
 
             # ASSEMBLE LINES IF THEY ARE SEPARATED
-            if line[-1] != ';':
+            if line[-1] != ";":
                 previous_line = previous_line + line
                 continue
 
@@ -603,8 +615,7 @@ class Step(dc.DessiaObject):
                 connec = connec[0].split(")")
                 if connec[0][-1] != "'":
                     function_connection = int(connec[0])
-                    function_connections.append(
-                        (function_id, function_connection))
+                    function_connections.append((function_id, function_connection))
             # print(function_connections)
 
             all_connections.extend(function_connections)
@@ -614,24 +625,23 @@ class Step(dc.DessiaObject):
             # FUNCTION ARGUMENTS
             function_arg = function_name_arg[1]
             arguments = step_split_arguments(function_arg)
-            new_name = ''
+            new_name = ""
             new_arguments = []
             if function_name == "":
                 name_arg = self.step_subfunctions(arguments)
                 for name, arg in name_arg:
-                    new_name += name + ', '
+                    new_name += name + ", "
                     new_arguments.extend(arg)
                 new_name = new_name[:-2]
                 function_name = new_name
                 arguments = new_arguments
                 for arg in arguments:
-                    if arg[0] == '#':
-                        function_connections.append(
-                            (function_id, int(arg[1:])))
+                    if arg[0] == "#":
+                        function_connections.append((function_id, int(arg[1:])))
             # print('=', function_connections)
 
             for i, argument in enumerate(arguments):
-                if argument[:2] == '(#' and argument[-1] == ')':
+                if argument[:2] == "(#" and argument[-1] == ")":
                     arg_list = set_to_list(argument)
                     arguments[i] = arg_list
 
@@ -657,7 +667,7 @@ class Step(dc.DessiaObject):
         labels = {}
 
         for function in self.functions.values():
-            if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
+            if function.name == "SHAPE_REPRESENTATION_RELATIONSHIP":
                 # Create short cut from id1 to id2
                 id1 = int(function.arg[2][1:])
                 id2 = int(function.arg[3][1:])
@@ -667,25 +677,18 @@ class Step(dc.DessiaObject):
                 self.all_connections.remove(elem2)
                 self.all_connections.append((elem1[1], elem2[1]))
 
-                self.functions[id1].arg.append('#{}'.format(id2))
+                self.functions[id1].arg.append("#{}".format(id2))
 
             elif function.name in STEP_TO_VOLMDLR:
-                G.add_node(function.id,
-                           color='rgb(0, 0, 0)',
-                           shape='.',
-                           name=str(function.id))
-                F.add_node(function.id,
-                           color='rgb(0, 0, 0)',
-                           shape='.',
-                           name=str(function.id))
-                labels[function.id] = str(function.id) + ' ' + function.name
+                G.add_node(function.id, color="rgb(0, 0, 0)", shape=".", name=str(function.id))
+                F.add_node(function.id, color="rgb(0, 0, 0)", shape=".", name=str(function.id))
+                labels[function.id] = str(function.id) + " " + function.name
 
         # Delete connection if node not found
         node_list = list(F.nodes())
         delete_connection = []
         for connection in self.all_connections:
-            if connection[0] not in node_list \
-                    or connection[1] not in node_list:
+            if connection[0] not in node_list or connection[1] not in node_list:
                 delete_connection.append(connection)
         for delete in delete_connection:
             self.all_connections.remove(delete)
@@ -756,7 +759,7 @@ class Step(dc.DessiaObject):
 
         """
 
-        delete = ['CARTESIAN_POINT', 'DIRECTION']
+        delete = ["CARTESIAN_POINT", "DIRECTION"]
         if graph is None:
             new_graph = self.create_graph()
         else:
@@ -765,10 +768,10 @@ class Step(dc.DessiaObject):
         labels = {}
         for id_nb, function in self.functions.items():
             if id_nb in new_graph.nodes and not reduced:
-                labels[id_nb] = str(id_nb) + ' ' + function.name
+                labels[id_nb] = str(id_nb) + " " + function.name
             elif id_nb in new_graph.nodes and reduced:
                 if function.name not in delete:
-                    labels[id_nb] = str(id_nb) + ' ' + function.name
+                    labels[id_nb] = str(id_nb) + " " + function.name
                 else:
                     new_graph.remove_node(id_nb)
         pos = nx.kamada_kawai_layout(new_graph)
@@ -808,18 +811,18 @@ class Step(dc.DessiaObject):
             else:
                 subfunction_arg += char
         return [
-            (subfunction_names[i], step_split_arguments(subfunction_args[i]))
-            for i in range(len(subfunction_names))]
+            (subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))
+        ]
 
     def parse_arguments(self, arguments):
         for i, arg in enumerate(arguments):
-            if isinstance(arg, str) and arg[0] == '#':
+            if isinstance(arg, str) and arg[0] == "#":
                 arguments[i] = int(arg[1:])
-            elif isinstance(arg, str) and arg[0:2] == '(#':
+            elif isinstance(arg, str) and arg[0:2] == "(#":
                 argument = []
                 arg_id = ""
                 for char in arg[1:-1]:
-                    if char == ',':
+                    if char == ",":
                         argument.append(arg_id)
                         arg_id = ""
                         continue
@@ -834,7 +837,7 @@ class Step(dc.DessiaObject):
         """
         self.parse_arguments(arguments)
 
-        fun_name = name.replace(', ', '_')
+        fun_name = name.replace(", ", "_")
         fun_name = fun_name.lower()
         if hasattr(volmdlr.step, fun_name):
             volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
@@ -843,9 +846,7 @@ class Step(dc.DessiaObject):
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict)
 
         else:
-            raise NotImplementedError(
-                'Dont know how to interpret {} with args {}'.format(name,
-                                                                    arguments))
+            raise NotImplementedError("Dont know how to interpret {} with args {}".format(name, arguments))
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
@@ -867,22 +868,33 @@ class Step(dc.DessiaObject):
         not_shell_nodes = []
         assembly_nodes = []
         for node in self.graph.nodes:
-            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
+            if (
+                node != "#0"
+                and self.functions[node].name
+                == "REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP"
+            ):
                 frame_mapping_nodes.append(node)
-            if node != '#0' and (self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]):
+            if node != "#0" and (self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]):
                 shell_nodes.append(node)
-            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_SHAPE_REPRESENTATION_RELATIONSHIP':
+            if (
+                node != "#0"
+                and self.functions[node].name
+                == "REPRESENTATION_RELATIONSHIP_REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_SHAPE_REPRESENTATION_RELATIONSHIP"
+            ):
                 assembly_nodes.append(node)
             # if node != '#0' and self.functions[node].name in [
             #     'UNCERTAINTY_MEASURE_WITH_UNIT', 'LENGTH_UNIT, NAMED_UNIT, SI_UNIT']:
             #     unit_measure_nodes.append(node)
-            if node != '#0' and not length_global_uncertainty_node and self.functions[node].name ==\
-                    'UNCERTAINTY_MEASURE_WITH_UNIT':
+            if (
+                node != "#0"
+                and not length_global_uncertainty_node
+                and self.functions[node].name == "UNCERTAINTY_MEASURE_WITH_UNIT"
+            ):
                 length_global_uncertainty_node = node
             # if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
             #     # Really a shell node ?
             #     sr_nodes.append(node)
-            if node != '#0' and self.functions[node].name == 'BREP_WITH_VOIDS':
+            if node != "#0" and self.functions[node].name == "BREP_WITH_VOIDS":
                 shell_nodes.append(node)
                 not_shell_nodes.append(int(self.functions[node].arg[1][1:]))
         frame_mapped_shell_node = []
@@ -897,7 +909,7 @@ class Step(dc.DessiaObject):
             shell_nodes.remove(node)
 
         for node in shell_nodes + frame_mapping_nodes:
-            self.graph.add_edge('#0', node)
+            self.graph.add_edge("#0", node)
 
         # self.draw_graph(self.graph, reduced=True)
 
@@ -905,7 +917,7 @@ class Step(dc.DessiaObject):
         i = 1
         new_nodes = True
         while new_nodes:
-            new_nodes = list(nx.descendants_at_distance(self.graph, '#0', i))[::-1]
+            new_nodes = list(nx.descendants_at_distance(self.graph, "#0", i))[::-1]
             nodes.extend(new_nodes)
             i += 1
 
@@ -925,7 +937,9 @@ class Step(dc.DessiaObject):
                         arguments = self.functions[instanciate_id].arg[:]
                         volmdlr_object = self.instanciate(
                             self.functions[instanciate_id].name,
-                            self.functions[instanciate_id].arg[:] + [self.unit_conversion_factor], object_dict)
+                            self.functions[instanciate_id].arg[:] + [self.unit_conversion_factor],
+                            object_dict,
+                        )
                         t = time.time() - t
                         object_dict[instanciate_id] = volmdlr_object
                         if show_times:
@@ -946,7 +960,7 @@ class Step(dc.DessiaObject):
         if show_times:
             print()
             for key, value in times.items():
-                print(f'| {key} : {value}')
+                print(f"| {key} : {value}")
             print()
 
         shells = []
@@ -968,7 +982,7 @@ class Step(dc.DessiaObject):
         object_dict = {}
         points3d = []
         for stepfunction in self.functions.values():
-            if stepfunction.name == 'CARTESIAN_POINT':
+            if stepfunction.name == "CARTESIAN_POINT":
                 # INSTANTIATION
                 name = self.functions[stepfunction.id].name
                 arguments = self.functions[stepfunction.id].arg[:]
@@ -977,9 +991,8 @@ class Step(dc.DessiaObject):
                 #     if type(arg) == str and arg[0] == '#':
                 #         arguments[i] = int(arg[1:])
                 # print(arguments)
-                if arguments[1].count(',') == 2:
-                    volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
-                        arguments, object_dict)
+                if arguments[1].count(",") == 2:
+                    volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict)
                     points3d.append(volmdlr_object)
 
         # remove first point because it refers to origin
@@ -988,111 +1001,104 @@ class Step(dc.DessiaObject):
     def plot_data(self):
         graph = self.graph.copy()
 
-        graph.remove_nodes_from([stepfunction.id for stepfunction
-                                 in self.functions.values()
-                                 if stepfunction.name in ['CARTESIAN_POINT', 'DIRECTION']])
+        graph.remove_nodes_from(
+            [
+                stepfunction.id
+                for stepfunction in self.functions.values()
+                if stepfunction.name in ["CARTESIAN_POINT", "DIRECTION"]
+            ]
+        )
         return [plot_data.graph.NetworkxGraph(graph=graph)]
 
 
 STEP_TO_VOLMDLR = {
     # GEOMETRICAL ENTITIES
-    'CARTESIAN_POINT': volmdlr.Point3D,
-    'DIRECTION': volmdlr.Vector3D,
-    'VECTOR': volmdlr.Vector3D,
-
-    'AXIS1_PLACEMENT': None,
-    'AXIS2_PLACEMENT_2D': None,  # ??????????????????
-    'AXIS2_PLACEMENT_3D': volmdlr.Frame3D,
-
-    'LINE': volmdlr.edges.Line3D,  # LineSegment3D,
-    'CIRCLE': volmdlr.wires.Circle3D,
-    'ELLIPSE': volmdlr.wires.Ellipse3D,
-    'PARABOLA': None,
-    'HYPERBOLA': None,
+    "CARTESIAN_POINT": volmdlr.Point3D,
+    "DIRECTION": volmdlr.Vector3D,
+    "VECTOR": volmdlr.Vector3D,
+    "AXIS1_PLACEMENT": None,
+    "AXIS2_PLACEMENT_2D": None,  # ??????????????????
+    "AXIS2_PLACEMENT_3D": volmdlr.Frame3D,
+    "LINE": volmdlr.edges.Line3D,  # LineSegment3D,
+    "CIRCLE": volmdlr.wires.Circle3D,
+    "ELLIPSE": volmdlr.wires.Ellipse3D,
+    "PARABOLA": None,
+    "HYPERBOLA": None,
     # 'PCURVE': None,
-    'CURVE_REPLICA': None,
-    'OFFSET_CURVE_3D': None,
-    'TRIMMED_CURVE': None,  # BSplineCurve3D cannot be trimmed on FreeCAD
-    'B_SPLINE_CURVE': volmdlr.edges.BSplineCurve3D,
-    'B_SPLINE_CURVE_WITH_KNOTS': volmdlr.edges.BSplineCurve3D,
-    'BEZIER_CURVE': volmdlr.edges.BSplineCurve3D,
-    'RATIONAL_B_SPLINE_CURVE': volmdlr.edges.BSplineCurve3D,
-    'UNIFORM_CURVE': volmdlr.edges.BSplineCurve3D,
-    'QUASI_UNIFORM_CURVE': volmdlr.edges.BSplineCurve3D,
-    'SURFACE_CURVE': None,  # TOPOLOGICAL EDGE
-    'SEAM_CURVE': None,
+    "CURVE_REPLICA": None,
+    "OFFSET_CURVE_3D": None,
+    "TRIMMED_CURVE": None,  # BSplineCurve3D cannot be trimmed on FreeCAD
+    "B_SPLINE_CURVE": volmdlr.edges.BSplineCurve3D,
+    "B_SPLINE_CURVE_WITH_KNOTS": volmdlr.edges.BSplineCurve3D,
+    "BEZIER_CURVE": volmdlr.edges.BSplineCurve3D,
+    "RATIONAL_B_SPLINE_CURVE": volmdlr.edges.BSplineCurve3D,
+    "UNIFORM_CURVE": volmdlr.edges.BSplineCurve3D,
+    "QUASI_UNIFORM_CURVE": volmdlr.edges.BSplineCurve3D,
+    "SURFACE_CURVE": None,  # TOPOLOGICAL EDGE
+    "SEAM_CURVE": None,
     # LineSegment3D, # TOPOLOGICAL EDGE ############################
-    'COMPOSITE_CURVE_SEGMENT': None,  # TOPOLOGICAL EDGE
-    'COMPOSITE_CURVE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
-    'COMPOSITE_CURVE_ON_SURFACE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
-    'BOUNDARY_CURVE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
-
-    'PLANE': volmdlr.faces.Plane3D,
-    'CYLINDRICAL_SURFACE': volmdlr.faces.CylindricalSurface3D,
-    'CONICAL_SURFACE': volmdlr.faces.ConicalSurface3D,
-    'SPHERICAL_SURFACE': volmdlr.faces.SphericalSurface3D,
-    'TOROIDAL_SURFACE': volmdlr.faces.ToroidalSurface3D,
-    'DEGENERATE_TOROIDAL_SURFACE': None,
-    'B_SPLINE_SURFACE_WITH_KNOTS': volmdlr.faces.BSplineSurface3D,
-    'B_SPLINE_SURFACE': volmdlr.faces.BSplineSurface3D,
-    'BEZIER_SURFACE': volmdlr.faces.BSplineSurface3D,
-    'OFFSET_SURFACE': None,
-    'SURFACE_REPLICA': None,
-    'RATIONAL_B_SPLINE_SURFACE': volmdlr.faces.BSplineSurface3D,
-    'RECTANGULAR_TRIMMED_SURFACE': None,
-    'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.primitives3d.BSplineExtrusion,
+    "COMPOSITE_CURVE_SEGMENT": None,  # TOPOLOGICAL EDGE
+    "COMPOSITE_CURVE": volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
+    "COMPOSITE_CURVE_ON_SURFACE": volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
+    "BOUNDARY_CURVE": volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
+    "PLANE": volmdlr.faces.Plane3D,
+    "CYLINDRICAL_SURFACE": volmdlr.faces.CylindricalSurface3D,
+    "CONICAL_SURFACE": volmdlr.faces.ConicalSurface3D,
+    "SPHERICAL_SURFACE": volmdlr.faces.SphericalSurface3D,
+    "TOROIDAL_SURFACE": volmdlr.faces.ToroidalSurface3D,
+    "DEGENERATE_TOROIDAL_SURFACE": None,
+    "B_SPLINE_SURFACE_WITH_KNOTS": volmdlr.faces.BSplineSurface3D,
+    "B_SPLINE_SURFACE": volmdlr.faces.BSplineSurface3D,
+    "BEZIER_SURFACE": volmdlr.faces.BSplineSurface3D,
+    "OFFSET_SURFACE": None,
+    "SURFACE_REPLICA": None,
+    "RATIONAL_B_SPLINE_SURFACE": volmdlr.faces.BSplineSurface3D,
+    "RECTANGULAR_TRIMMED_SURFACE": None,
+    "SURFACE_OF_LINEAR_EXTRUSION": volmdlr.primitives3d.BSplineExtrusion,
     # CAN BE A BSplineSurface3D
-    'SURFACE_OF_REVOLUTION': volmdlr.faces.RevolutionSurface3D,
-    'UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
-    'QUASI_UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
-    'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
-    'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
-
+    "SURFACE_OF_REVOLUTION": volmdlr.faces.RevolutionSurface3D,
+    "UNIFORM_SURFACE": volmdlr.faces.BSplineSurface3D,
+    "QUASI_UNIFORM_SURFACE": volmdlr.faces.BSplineSurface3D,
+    "RECTANGULAR_COMPOSITE_SURFACE": volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
+    "CURVE_BOUNDED_SURFACE": volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
     # Bsplines
-    'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
-
+    "BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE": volmdlr.faces.BSplineSurface3D,
     # TOPOLOGICAL ENTITIES
-    'VERTEX_POINT': None,
-
-    'EDGE_CURVE': volmdlr.edges.Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
-    'ORIENTED_EDGE': None,  # TOPOLOGICAL EDGE
+    "VERTEX_POINT": None,
+    "EDGE_CURVE": volmdlr.edges.Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
+    "ORIENTED_EDGE": None,  # TOPOLOGICAL EDGE
     # The one above can influence the direction with their last argument
     # TODO : maybe take them into consideration
-
-    'FACE_BOUND': None,  # TOPOLOGICAL WIRE
-    'FACE_OUTER_BOUND': None,  # TOPOLOGICAL WIRE
+    "FACE_BOUND": None,  # TOPOLOGICAL WIRE
+    "FACE_OUTER_BOUND": None,  # TOPOLOGICAL WIRE
     # Both above can influence the direction with their last argument
     # TODO : maybe take them into consideration
-    'EDGE_LOOP': volmdlr.wires.Contour3D,  # TOPOLOGICAL WIRE
-    'POLY_LOOP': volmdlr.wires.Contour3D,  # TOPOLOGICAL WIRE
-    'VERTEX_LOOP': None,  # TOPOLOGICAL WIRE
-
-    'ADVANCED_FACE': volmdlr.faces.Face3D,
-    'FACE_SURFACE': volmdlr.faces.Face3D,
-
-    'CLOSED_SHELL': volmdlr.faces.ClosedShell3D,
-    'OPEN_SHELL': volmdlr.faces.OpenShell3D,
+    "EDGE_LOOP": volmdlr.wires.Contour3D,  # TOPOLOGICAL WIRE
+    "POLY_LOOP": volmdlr.wires.Contour3D,  # TOPOLOGICAL WIRE
+    "VERTEX_LOOP": None,  # TOPOLOGICAL WIRE
+    "ADVANCED_FACE": volmdlr.faces.Face3D,
+    "FACE_SURFACE": volmdlr.faces.Face3D,
+    "CLOSED_SHELL": volmdlr.faces.ClosedShell3D,
+    "OPEN_SHELL": volmdlr.faces.OpenShell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
-    'CONNECTED_FACE_SET': volmdlr.faces.OpenShell3D,
-    'GEOMETRIC_CURVE_SET': None,
-
+    "CONNECTED_FACE_SET": volmdlr.faces.OpenShell3D,
+    "GEOMETRIC_CURVE_SET": None,
     # step subfunctions
-    'UNCERTAINTY_MEASURE_WITH_UNIT': None,
-    'CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT': None,
-    'LENGTH_MEASURE_WITH_UNIT': None,
-    'LENGTH_UNIT, NAMED_UNIT, SI_UNIT': None,
-    'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT': None,
-    'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': volmdlr.faces.OpenShell3D.translation,
-    'SHELL_BASED_SURFACE_MODEL': None,
-    'MANIFOLD_SURFACE_SHAPE_REPRESENTATION': None,
-    'MANIFOLD_SOLID_BREP': None,
-    'BREP_WITH_VOIDS': None,
-    'SHAPE_REPRESENTATION': None,
-    'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
-    'ITEM_DEFINED_TRANSFORMATION': None,
-    'SHAPE_REPRESENTATION_RELATIONSHIP': None,
-
-    'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM': volmdlr.edges.BSplineCurve3D
+    "UNCERTAINTY_MEASURE_WITH_UNIT": None,
+    "CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT": None,
+    "LENGTH_MEASURE_WITH_UNIT": None,
+    "LENGTH_UNIT, NAMED_UNIT, SI_UNIT": None,
+    "GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT": None,
+    "REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP": volmdlr.faces.OpenShell3D.translation,
+    "SHELL_BASED_SURFACE_MODEL": None,
+    "MANIFOLD_SURFACE_SHAPE_REPRESENTATION": None,
+    "MANIFOLD_SOLID_BREP": None,
+    "BREP_WITH_VOIDS": None,
+    "SHAPE_REPRESENTATION": None,
+    "ADVANCED_BREP_SHAPE_REPRESENTATION": None,
+    "ITEM_DEFINED_TRANSFORMATION": None,
+    "SHAPE_REPRESENTATION_RELATIONSHIP": None,
+    "BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM": volmdlr.edges.BSplineCurve3D,
 }
 
 VOLMDLR_TO_STEP = {}
@@ -1103,6 +1109,22 @@ for k, v in STEP_TO_VOLMDLR.items():
         else:
             VOLMDLR_TO_STEP[v] = [k]
 
-SI_PREFIX = {'.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9, '.MEGA.': 1e6, '.KILO.': 1e3,
-             '.HECTO.': 1e2, '.DECA.': 1e1, '$': 1, '.DECI.': 1e-1, '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6,
-             '.NANO.': 1e-9, '.PICO.': 1e-12, '.FEMTO.': 1e-15, '.ATTO.': 1e-18}
+SI_PREFIX = {
+    ".EXA.": 1e18,
+    ".PETA.": 1e15,
+    ".TERA.": 1e12,
+    ".GIGA.": 1e9,
+    ".MEGA.": 1e6,
+    ".KILO.": 1e3,
+    ".HECTO.": 1e2,
+    ".DECA.": 1e1,
+    "$": 1,
+    ".DECI.": 1e-1,
+    ".CENTI.": 1e-2,
+    ".MILLI.": 1e-3,
+    ".MICRO.": 1e-6,
+    ".NANO.": 1e-9,
+    ".PICO.": 1e-12,
+    ".FEMTO.": 1e-15,
+    ".ATTO.": 1e-18,
+}

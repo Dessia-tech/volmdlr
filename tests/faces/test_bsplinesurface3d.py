@@ -20,8 +20,8 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(contour2d_dim.length(), 16.81606170335965, places=2)
 
     def test_periodicity(self):
-        bspline_suface = vmf.BSplineSurface3D.load_from_file('faces/surface3d_8.json')
-        self.assertAlmostEqual(bspline_suface.x_periodicity,  0.8888888888888888)
+        bspline_suface = vmf.BSplineSurface3D.load_from_file("faces/surface3d_8.json")
+        self.assertAlmostEqual(bspline_suface.x_periodicity, 0.8888888888888888)
         self.assertFalse(bspline_suface.y_periodicity)
 
     def test_bbox(self):
@@ -33,10 +33,12 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertEqual(volume, 4.0)
 
     def test_arc3d_to_2d(self):
-        bspline_surface = vmf.BSplineSurface3D.load_from_file('faces/BSplineSurface3D_with_Arc3D.json')
-        arc = vme.Arc3D(volmdlr.Point3D(0.01, 0.018, 0.014),
-                        volmdlr.Point3D(0.00970710678118655, 0.018, 0.014707106781186547),
-                        volmdlr.Point3D(0.009, 0.018, 0.015))
+        bspline_surface = vmf.BSplineSurface3D.load_from_file("faces/BSplineSurface3D_with_Arc3D.json")
+        arc = vme.Arc3D(
+            volmdlr.Point3D(0.01, 0.018, 0.014),
+            volmdlr.Point3D(0.00970710678118655, 0.018, 0.014707106781186547),
+            volmdlr.Point3D(0.009, 0.018, 0.015),
+        )
 
         test = bspline_surface.arc3d_to_2d(arc3d=arc)[0]
 
@@ -49,10 +51,12 @@ class TestBSplineSurface3D(unittest.TestCase):
 
     def test_bsplinecurve3d_to_2d(self):
         bspline_surface = bspline_surfaces.bspline_surface_4
-        control_points = [volmdlr.Point3D(-0.012138106431296442, 0.11769707710908962, -0.10360094389690414),
-         volmdlr.Point3D(-0.012153195391844274, 0.1177764571887428, -0.10360691055433219),
-         volmdlr.Point3D(-0.01216612946601426, 0.11785649353385147, -0.10361063821784446),
-         volmdlr.Point3D(-0.012176888504086755, 0.11793706145749239, -0.10361212108019317)]
+        control_points = [
+            volmdlr.Point3D(-0.012138106431296442, 0.11769707710908962, -0.10360094389690414),
+            volmdlr.Point3D(-0.012153195391844274, 0.1177764571887428, -0.10360691055433219),
+            volmdlr.Point3D(-0.01216612946601426, 0.11785649353385147, -0.10361063821784446),
+            volmdlr.Point3D(-0.012176888504086755, 0.11793706145749239, -0.10361212108019317),
+        ]
         weights = [1.0, 0.9994807070752826, 0.9994807070752826, 1.0]
         original_bspline = vme.BSplineCurve3D(3, control_points, [4, 4], [0, 1], weights, False)
         bspline_on_parametric_domain = bspline_surface.bsplinecurve3d_to_2d(original_bspline)[0]
@@ -65,5 +69,5 @@ class TestBSplineSurface3D(unittest.TestCase):
         # self.assertTrue(point.is_close(point_test, 1e-6))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main(verbosity=0)

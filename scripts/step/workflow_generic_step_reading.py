@@ -6,17 +6,11 @@ from dessia_common.typings import MethodType
 import volmdlr as vm
 from volmdlr import step
 
-read_step_method_type = wf.blocks.ClassMethodType(
-    class_=vm.step.Step, name="from_stream"
-)
+read_step_method_type = wf.blocks.ClassMethodType(class_=vm.step.Step, name="from_stream")
 cls_method_step = wf.blocks.ClassMethod(read_step_method_type, name="Stepfile")
 
-to_volumemodel_method_type = wf.blocks.MethodType(
-    class_=vm.step.Step, name="to_volume_model"
-)
-method_volumemodel = wf.blocks.ModelMethod(
-    to_volumemodel_method_type, name="VolumeModel"
-)
+to_volumemodel_method_type = wf.blocks.MethodType(class_=vm.step.Step, name="to_volume_model")
+method_volumemodel = wf.blocks.ModelMethod(to_volumemodel_method_type, name="VolumeModel")
 
 
 cadview_block = wf.blocks.CadView(name="Display3D")

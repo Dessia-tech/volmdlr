@@ -39,9 +39,7 @@ class TestCylinder(unittest.TestCase):
         self.assertTrue(self.cylinder1.point_belongs(point))
 
     def test_interference_volume_with_other_cylinder(self):
-        interference_volume = self.cylinder1.interference_volume_with_other_cylinder(
-            other_cylinder=self.cylinder1
-        )
+        interference_volume = self.cylinder1.interference_volume_with_other_cylinder(other_cylinder=self.cylinder1)
         self.assertEqual(interference_volume, self.cylinder1.volume())
 
     def test_min_distance_to_other_cylinder(self):

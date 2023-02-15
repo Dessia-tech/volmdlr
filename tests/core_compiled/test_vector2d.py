@@ -19,5 +19,5 @@ class TestVector2D(unittest.TestCase):
         self.assertEqual(p3, volmdlr.Vector2D(0, 0))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

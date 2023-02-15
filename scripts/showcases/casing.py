@@ -25,8 +25,8 @@ box.alpha = 0.3
 casing.primitives.append(box)
 casing.babylonjs()
 
-casing.to_step('casing')
-casing.to_stl('casing')
+casing.to_step("casing")
+casing.to_stl("casing")
 
 
 contour = belt.outer_contour2d.plot_data()

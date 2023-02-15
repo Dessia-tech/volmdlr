@@ -20,13 +20,20 @@ class RoundedLineSegments:
     Rounded Line Segments class.
 
     """
-    _non_serializable_attributes = ['line_class', 'arc_class', 'basis_primitives', 'primitives']
+
+    _non_serializable_attributes = ["line_class", "arc_class", "basis_primitives", "primitives"]
 
     line_class = volmdlr.edges.LineSegment
     arc_class = volmdlr.edges.Arc
 
-    def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
-                 closed: bool = False, adapt_radius: bool = False, name: str = ''):
+    def __init__(
+        self,
+        points: List[volmdlr.Point3D],
+        radius: Dict[str, float],
+        closed: bool = False,
+        adapt_radius: bool = False,
+        name: str = "",
+    ):
 
         self.points = points
         self.radius = {int(k): v for k, v in radius.items()}
@@ -41,10 +48,12 @@ class RoundedLineSegments:
 
         side = 'old' or 'new'
         """
-        return self.__class__([point.frame_mapping(frame, side)
-                               for point in self.points], radius=self.radius,
-                              adapt_radius=self.adapt_radius,
-                              name=self.name)
+        return self.__class__(
+            [point.frame_mapping(frame, side) for point in self.points],
+            radius=self.radius,
+            adapt_radius=self.adapt_radius,
+            name=self.name,
+        )
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -56,7 +65,7 @@ class RoundedLineSegments:
             point.frame_mapping_inplace(frame, side)
 
     def arc_features(self, point_index: int):
-        raise NotImplementedError('The method arc_features should be overloaded.')
+        raise NotImplementedError("The method arc_features should be overloaded.")
 
     def _primitives(self):
         alpha = {}

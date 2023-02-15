@@ -19,8 +19,8 @@ cylinder.babylonjs()
 
 def shell_faces(cyl: volmdlr.primitives3d.Cylinder):
     normal_vector = cyl.axis.random_unit_normal_vector()
-    p1 = cyl.position + 1/2 * cyl.length * cyl.axis + cyl.radius * normal_vector
-    p2 = cyl.position - 1/2 * cyl.length * cyl.axis + cyl.radius * normal_vector
+    p1 = cyl.position + 1 / 2 * cyl.length * cyl.axis + cyl.radius * normal_vector
+    p2 = cyl.position - 1 / 2 * cyl.length * cyl.axis + cyl.radius * normal_vector
     ls = volmdlr.edges.LineSegment3D(start=p1, end=p2)
 
     return ls.revolution(axis_point=cyl.position, axis=cyl.axis, angle=volmdlr.TWO_PI)

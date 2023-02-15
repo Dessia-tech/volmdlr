@@ -15,10 +15,16 @@ import volmdlr.wires
 
 # %% Initial Data
 
-points = [vm.Point2D(6, 0), vm.Point2D(6, 2),
-          vm.Point2D(3, 2), vm.Point2D(3, 1),
-          vm.Point2D(1, 1), vm.Point2D(1, 2), 
-          vm.Point2D(0, 2), vm.Point2D(0, 0)]
+points = [
+    vm.Point2D(6, 0),
+    vm.Point2D(6, 2),
+    vm.Point2D(3, 2),
+    vm.Point2D(3, 1),
+    vm.Point2D(1, 1),
+    vm.Point2D(1, 2),
+    vm.Point2D(0, 2),
+    vm.Point2D(0, 0),
+]
 
 contour = vm.wires.Contour2D.from_points(points)
 line = vm.edges.Line2D(vm.Point2D(-1, 3), vm.Point2D(7, 3))
@@ -28,9 +34,9 @@ line = vm.edges.Line2D(vm.Point2D(-1, 3), vm.Point2D(7, 3))
 axial_contour = contour.axial_symmetry(line)
 
 fig, ax = plt.subplots()
-ax.set_aspect('equal')
+ax.set_aspect("equal")
 
 line.plot(ax)
 
-contour.plot(ax=ax, color='r')
-axial_contour.plot(ax=ax, color='g')
+contour.plot(ax=ax, color="r")
+axial_contour.plot(ax=ax, color="g")

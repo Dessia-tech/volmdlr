@@ -12,9 +12,9 @@ i = volmdlr.Point2D(-0.2, -0.25)
 e = volmdlr.Point2D(-1, 2)
 s = volmdlr.Point2D(1.5, 2)
 
-print('i', i)
-print('s', s)
-print('e', e)
+print("i", i)
+print("s", s)
+print("e", e)
 
 a = volmdlr.edges.Arc2D(s, i, e)
 start1 = volmdlr.Point2D(-2, -1.5)
@@ -29,9 +29,9 @@ l3 = volmdlr.edges.LineSegment2D(start3, end3)
 
 
 ax = a.plot()
-l1.plot(ax=ax, color='r')
-l2.plot(ax=ax, color='b')
-l3.plot(ax=ax, color='g')
+l1.plot(ax=ax, color="r")
+l2.plot(ax=ax, color="b")
+l3.plot(ax=ax, color="g")
 ax.set_xlim(-3, 3)
 ax.set_ylim(-3, 3)
 
@@ -65,9 +65,9 @@ l3 = volmdlr.edges.LineSegment2D(start3, end3)
 
 
 ax = a.plot()
-l1.plot(ax=ax, color='r')
-l2.plot(ax=ax, color='b')
-l3.plot(ax=ax, color='g')
+l1.plot(ax=ax, color="r")
+l2.plot(ax=ax, color="b")
+l3.plot(ax=ax, color="g")
 ax.set_xlim(-3, 3)
 ax.set_ylim(-3, 3)
 

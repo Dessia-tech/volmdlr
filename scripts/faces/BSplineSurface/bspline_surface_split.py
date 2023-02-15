@@ -30,9 +30,13 @@ random_colors = []
 splitted_faces = []
 for i, s in enumerate(splitted_surfaces):
     splitted_faces.append(s.rectangular_cut(0, 1, 0, 1))
-    random_colors.append([list(npy.random.choice(range(255), size=1))[0] / 256,
-                          list(npy.random.choice(range(255), size=1))[0] / 256,
-                          list(npy.random.choice(range(255), size=1))[0] / 256])
+    random_colors.append(
+        [
+            list(npy.random.choice(range(255), size=1))[0] / 256,
+            list(npy.random.choice(range(255), size=1))[0] / 256,
+            list(npy.random.choice(range(255), size=1))[0] / 256,
+        ]
+    )
     splitted_faces[i].color = random_colors[i]
 
 # %%% Display
@@ -67,25 +71,29 @@ for f in splitted_faces:
 
 # %%% Bspline-curve definition
 
-points2d = [vm.Point2D(0, 0.1),
-            vm.Point2D(0.2, 0.3),
-            vm.Point2D(0.4, 0.4),
-            vm.Point2D(0.5, 0.6),
-            vm.Point2D(0.6, 0.7),
-            vm.Point2D(0.8, 0.8),
-            vm.Point2D(1, 0.9)]
+points2d = [
+    vm.Point2D(0, 0.1),
+    vm.Point2D(0.2, 0.3),
+    vm.Point2D(0.4, 0.4),
+    vm.Point2D(0.5, 0.6),
+    vm.Point2D(0.6, 0.7),
+    vm.Point2D(0.8, 0.8),
+    vm.Point2D(1, 0.9),
+]
 
-bspline_curve3d = bspline_surface.bsplinecurve2d_to_3d(vm.edges.BSplineCurve2D.from_points_interpolation(points2d, 2))[0]
+bspline_curve3d = bspline_surface.bsplinecurve2d_to_3d(vm.edges.BSplineCurve2D.from_points_interpolation(points2d, 2))[
+    0
+]
 
 # %%% Split surface
 
 splitted_surfaces = bspline_surface.split_surface_with_bspline_curve(bspline_curve3d)
 
 splitted_faces = []
-for i,s in enumerate(splitted_surfaces):
-    splitted_faces.append(s.rectangular_cut(0,1,0,1))
+for i, s in enumerate(splitted_surfaces):
+    splitted_faces.append(s.rectangular_cut(0, 1, 0, 1))
     splitted_faces[i].color = random_colors[i]
-    
+
 # %%% Display
 
 ax = bspline_surface.rectangular_cut(0, 1, 0, 1).plot()

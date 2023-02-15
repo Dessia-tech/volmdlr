@@ -32,10 +32,10 @@ for i in range(6):
 
 contour = wires.Circle2D(vm.O2D, 0.008)
 
-rl = primitives3d.OpenRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
+rl = primitives3d.OpenRoundedLineSegments3D(points, radius, adapt_radius=True, name="wire")
 
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(111, projection="3d")
 
 for prim in rl.primitives:
     prim.plot(ax=ax)
@@ -46,10 +46,10 @@ r2 = primitives3d.OpenRoundedLineSegments3D.dict_to_object(r1)
 c1 = contour.to_dict()
 c2 = vm.wires.Circle2D.dict_to_object(c1)
 
-sweep = primitives3d.Sweep(contour, rl, name='Random pipe')
+sweep = primitives3d.Sweep(contour, rl, name="Random pipe")
 
 model = vm.core.VolumeModel([sweep])
 model._check_platform()
 model.babylonjs()
 
-model.to_step('sweep.step')
+model.to_step("sweep.step")

@@ -21,15 +21,15 @@ tri = faces.Triangle3D(p1, p2, p3)
 # vmc.VolumeModel([faces.OpenShell3D([tri])])
 
 
-subtriangles = tri.subdescription_to_triangles(resolution = 5e-2)
+subtriangles = tri.subdescription_to_triangles(resolution=5e-2)
 
-ax = tri.plot(color='r')
-for tritri in subtriangles :
+ax = tri.plot(color="r")
+for tritri in subtriangles:
     tritri.plot(ax=ax)
-tri.plot(ax=ax, color='r')
+tri.plot(ax=ax, color="r")
 
 
-subdescription = tri.subdescription(resolution = 1e-2)
-ax = tri.plot(color='r')
-for pt in subdescription :
+subdescription = tri.subdescription(resolution=1e-2)
+ax = tri.plot(color="r")
+for pt in subdescription:
     pt.plot(ax=ax)

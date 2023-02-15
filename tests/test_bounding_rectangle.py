@@ -40,5 +40,5 @@ class TestBoundingRectangle(unittest.TestCase):
         self.assertEqual(self.b_rectangle2.distance_to_b_rectangle(self.b_rectangle3), 3)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

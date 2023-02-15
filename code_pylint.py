@@ -9,67 +9,67 @@ from pylint.lint import Run
 
 MIN_NOTE = 8.20
 
-UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
+UNWATCHED_ERRORS = ["fixme", "trailing-whitespace", "import-error", "missing-final-newline"]
 
 EFFECTIVE_DATE = date(2023, 1, 31)
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
-                     "wrong-spelling-in-comment": 314,
-                     "wrong-spelling-in-docstring": 265,
-                     'invalid-name': 675,
-                     'no-else-return': 20,
-                     'consider-using-f-string': 56,
-                     'no-member': 3,
-                     'inconsistent-return-statements': 4,
-                     'unused-variable': 22,
-                     'arguments-differ': 14,
-                     'too-many-locals': 75,
-                     'unused-argument': 35,
-                     'too-many-arguments': 28,
-                     'line-too-long': 19,
-                     'consider-using-enumerate': 22,
-                     'too-many-branches': 28,
-                     'too-many-statements': 19,
-                     'super-init-not-called': 13,
-                     'no-name-in-module': 5,
-                     'abstract-method': 37,
-                     'duplicate-code': 9,
-                     'arguments-renamed': 2,
-                     'too-many-ancestors': 9,
-                     'too-few-public-methods': 3,
-                     'non-parent-init-called': 3,
-                     'too-many-public-methods': 11,
-                     'use-implicit-booleaness-not-comparison': 8,
-                     'too-many-instance-attributes': 10,
-                     'protected-access': 4,
-                     'undefined-loop-variable': 4,
-                     'unspecified-encoding': 1,
-                     'too-many-function-args': 4,
-                     'too-many-nested-blocks': 7,
-                     'too-many-return-statements': 1,
-                     'cyclic-import': 4,
-                     'raise-missing-from': 2,
-                     'no-else-raise': 3,
-                     'no-else-continue': 3,
-                     'undefined-variable': 6,  # 2 when gmsh is fixed
-                     'no-else-break': 4,
-                     'broad-except': 1,
-                     "broad-exception-caught": 1,
-                     'too-many-boolean-expressions': 3,
-                     'too-many-lines': 3,
-                     'redundant-keyword-arg': 3,
-                     'modified-iterating-list': 2,
-                     'consider-using-with': 1,
-                     'unnecessary-dunder-call': 2,
-                     'unnecessary-lambda': 2,
-                     'chained-comparison': 2,
-                     'missing-module-docstring': 2,
-                     'consider-using-generator': 1,
-                     'cell-var-from-loop': 1,
-                     'import-outside-toplevel': 1,
-                     'unsubscriptable-object': 1,
-                     }
+    "wrong-spelling-in-comment": 314,
+    "wrong-spelling-in-docstring": 265,
+    "invalid-name": 675,
+    "no-else-return": 20,
+    "consider-using-f-string": 56,
+    "no-member": 3,
+    "inconsistent-return-statements": 4,
+    "unused-variable": 22,
+    "arguments-differ": 14,
+    "too-many-locals": 75,
+    "unused-argument": 35,
+    "too-many-arguments": 28,
+    "line-too-long": 19,
+    "consider-using-enumerate": 22,
+    "too-many-branches": 28,
+    "too-many-statements": 19,
+    "super-init-not-called": 13,
+    "no-name-in-module": 5,
+    "abstract-method": 37,
+    "duplicate-code": 9,
+    "arguments-renamed": 2,
+    "too-many-ancestors": 9,
+    "too-few-public-methods": 3,
+    "non-parent-init-called": 3,
+    "too-many-public-methods": 11,
+    "use-implicit-booleaness-not-comparison": 8,
+    "too-many-instance-attributes": 10,
+    "protected-access": 4,
+    "undefined-loop-variable": 4,
+    "unspecified-encoding": 1,
+    "too-many-function-args": 4,
+    "too-many-nested-blocks": 7,
+    "too-many-return-statements": 1,
+    "cyclic-import": 4,
+    "raise-missing-from": 2,
+    "no-else-raise": 3,
+    "no-else-continue": 3,
+    "undefined-variable": 6,  # 2 when gmsh is fixed
+    "no-else-break": 4,
+    "broad-except": 1,
+    "broad-exception-caught": 1,
+    "too-many-boolean-expressions": 3,
+    "too-many-lines": 3,
+    "redundant-keyword-arg": 3,
+    "modified-iterating-list": 2,
+    "consider-using-with": 1,
+    "unnecessary-dunder-call": 2,
+    "unnecessary-lambda": 2,
+    "chained-comparison": 2,
+    "missing-module-docstring": 2,
+    "consider-using-generator": 1,
+    "cell-var-from-loop": 1,
+    "import-outside-toplevel": 1,
+    "unsubscriptable-object": 1,
+}
 
 ERRORS_WITHOUT_TIME_DECREASE = []
 
@@ -123,15 +123,18 @@ for error_type, number_errors in stats_by_msg.items():
             error_detected = True
             print(
                 f"\nFix some {error_type} errors: {number_errors}/{max_errors} "
-                f"(time effect: {time_decrease_effect} errors)")
+                f"(time effect: {time_decrease_effect} errors)"
+            )
 
             messages = extract_messages_by_type(error_type)
             messages_to_show = sorted(random.sample(messages, min(30, len(messages))), key=lambda m: (m.path, m.line))
             for message in messages_to_show:
                 print(f"{message.path} line {message.line}: {message.msg}")
         elif number_errors < max_errors:
-            print(f"\nYou can lower number of {error_type} to {number_errors+time_decrease_effect}"
-                  f" (actual {base_errors})")
+            print(
+                f"\nYou can lower number of {error_type} to {number_errors+time_decrease_effect}"
+                f" (actual {base_errors})"
+            )
 
 for error_type in MAX_ERROR_BY_TYPE:
     if error_type not in stats_by_msg:

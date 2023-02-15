@@ -22,6 +22,7 @@ import volmdlr.wires as vmw
 class FlatElementError(Exception):
     """An error in case an element is flat."""
 
+
 # def find_duplicate_linear_element(linear_elements1, linear_elements2):
 #     duplicates = []
 #     for linear_element in linear_elements1:
@@ -39,12 +40,10 @@ class Node2D(vm.Point2D):
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
 
-    def __eq__(self, other_node: 'Node2D'):
-        if other_node.__class__.__name__ not in ['Vector2D', 'Point2D',
-                                                 'Node2D']:
+    def __eq__(self, other_node: "Node2D"):
+        if other_node.__class__.__name__ not in ["Vector2D", "Point2D", "Node2D"]:
             return False
-        return math.isclose(self.x, other_node.x, abs_tol=1e-12) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-12)
+        return math.isclose(self.x, other_node.x, abs_tol=1e-12) and math.isclose(self.y, other_node.y, abs_tol=1e-12)
 
     @classmethod
     def from_point(cls, point2d):
@@ -68,12 +67,10 @@ class Node3D(vm.Point3D):
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))
 
-    def __eq__(self, other_node: 'Node3D'):
-        if other_node.__class__.__name__ not in ['Vector3D', 'Point3D',
-                                                 'Node3D']:
+    def __eq__(self, other_node: "Node3D"):
+        if other_node.__class__.__name__ not in ["Vector3D", "Point3D", "Node3D"]:
             return False
-        return math.isclose(self.x, other_node.x, abs_tol=1e-12) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-12)
+        return math.isclose(self.x, other_node.x, abs_tol=1e-12) and math.isclose(self.y, other_node.y, abs_tol=1e-12)
 
     @classmethod
     def from_point(cls, point3d):
@@ -90,15 +87,15 @@ class Node3D(vm.Point3D):
 
 
 class LinearElement(vme.LineSegment2D):
-    """ A class that defines a linear element. """
+    """A class that defines a linear element."""
+
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_eq_attributes = ["name"]
+    _non_hash_attributes = ["name"]
     _generic_eq = True
 
-    def __init__(self, start: vm.Point2D, end: vm.Point2D,
-                 interior_normal: vm.Vector2D, name: str = ''):
+    def __init__(self, start: vm.Point2D, end: vm.Point2D, interior_normal: vm.Vector2D, name: str = ""):
         self.points = [start, end]
         self.interior_normal = interior_normal
 
@@ -130,10 +127,11 @@ class TriangularElement(vmw.Triangle):
     """
     A mesh element defined with 3 nodes.
     """
+
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_eq_attributes = ["name"]
+    _non_hash_attributes = ["name"]
     _generic_eq = True
 
     def __init__(self, points):
@@ -150,12 +148,9 @@ class TriangularElement(vmw.Triangle):
         # vmw.Triangle.__init__(self, points)
 
     def _to_linear_elements(self):
-        vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
-                           self.points[1].y - self.points[0].y)
-        vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
-                           self.points[2].y - self.points[1].y)
-        vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
-                           self.points[0].y - self.points[2].y)
+        vec1 = vm.Vector2D(self.points[1].x - self.points[0].x, self.points[1].y - self.points[0].y)
+        vec2 = vm.Vector2D(self.points[2].x - self.points[1].x, self.points[2].y - self.points[1].y)
+        vec3 = vm.Vector2D(self.points[0].x - self.points[2].x, self.points[0].y - self.points[2].y)
         normal1 = vm.Vector2D(-vec1.y, vec1.x)
         normal2 = vm.Vector2D(-vec2.y, vec2.x)
         normal3 = vm.Vector2D(-vec3.y, vec3.x)
@@ -163,29 +158,34 @@ class TriangularElement(vmw.Triangle):
         normal2.normalize()
         normal3.normalize()
         if normal1.dot(vec2) < 0:
-            normal1 = - normal1
+            normal1 = -normal1
         if normal2.dot(vec3) < 0:
-            normal2 = - normal2
+            normal2 = -normal2
         if normal3.dot(vec1) < 0:
-            normal3 = - normal3
-        linear_element_1 = LinearElement(self.points[0], self.points[1],
-                                         normal1)
-        linear_element_2 = LinearElement(self.points[1], self.points[2],
-                                         normal2)
-        linear_element_3 = LinearElement(self.points[2], self.points[0],
-                                         normal3)
+            normal3 = -normal3
+        linear_element_1 = LinearElement(self.points[0], self.points[1], normal1)
+        linear_element_2 = LinearElement(self.points[1], self.points[2], normal2)
+        linear_element_3 = LinearElement(self.points[2], self.points[0], normal3)
         return [linear_element_1, linear_element_2, linear_element_3]
 
     def _form_functions(self):
-        a_matrix = vm.Matrix33(1, self.points[0].x, self.points[0].y,
-                               1, self.points[1].x, self.points[1].y,
-                               1, self.points[2].x, self.points[2].y)
+        a_matrix = vm.Matrix33(
+            1,
+            self.points[0].x,
+            self.points[0].y,
+            1,
+            self.points[1].x,
+            self.points[1].y,
+            1,
+            self.points[2].x,
+            self.points[2].y,
+        )
         try:
             inv_a = a_matrix.inverse()
         except ValueError as expt:
             # self.plot()
-            print('buggy element area', self._area())
-            raise FlatElementError('form function bug') from expt
+            print("buggy element area", self._area())
+            raise FlatElementError("form function bug") from expt
         x_1 = inv_a.vector_multiplication(vm.X3D)
         x_2 = inv_a.vector_multiplication(vm.Y3D)
         x_3 = inv_a.vector_multiplication(vm.Z3D)
@@ -271,14 +271,15 @@ class TriangularElement(vmw.Triangle):
 
 
 class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
-    """ Class to define a 2D triangular element. """
+    """Class to define a 2D triangular element."""
+
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_eq_attributes = ["name"]
+    _non_hash_attributes = ["name"]
     _generic_eq = True
 
-    def __init__(self, points, name: str = ''):
+    def __init__(self, points, name: str = ""):
         self.points = points
         self.name = name
         self.linear_elements = self._to_linear_elements()
@@ -292,12 +293,9 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         # vmw.Triangle.__init__(self, points)
 
     def _to_linear_elements(self):
-        vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
-                           self.points[1].y - self.points[0].y)
-        vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
-                           self.points[2].y - self.points[1].y)
-        vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
-                           self.points[0].y - self.points[2].y)
+        vec1 = vm.Vector2D(self.points[1].x - self.points[0].x, self.points[1].y - self.points[0].y)
+        vec2 = vm.Vector2D(self.points[2].x - self.points[1].x, self.points[2].y - self.points[1].y)
+        vec3 = vm.Vector2D(self.points[0].x - self.points[2].x, self.points[0].y - self.points[2].y)
         normal1 = vm.Vector2D(-vec1.y, vec1.x)
         normal2 = vm.Vector2D(-vec2.y, vec2.x)
         normal3 = vm.Vector2D(-vec3.y, vec3.x)
@@ -305,29 +303,34 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         normal2.normalize()
         normal3.normalize()
         if normal1.dot(vec2) < 0:
-            normal1 = - normal1
+            normal1 = -normal1
         if normal2.dot(vec3) < 0:
-            normal2 = - normal2
+            normal2 = -normal2
         if normal3.dot(vec1) < 0:
-            normal3 = - normal3
-        linear_element_1 = LinearElement(self.points[0], self.points[1],
-                                         normal1)
-        linear_element_2 = LinearElement(self.points[1], self.points[2],
-                                         normal2)
-        linear_element_3 = LinearElement(self.points[2], self.points[0],
-                                         normal3)
+            normal3 = -normal3
+        linear_element_1 = LinearElement(self.points[0], self.points[1], normal1)
+        linear_element_2 = LinearElement(self.points[1], self.points[2], normal2)
+        linear_element_3 = LinearElement(self.points[2], self.points[0], normal3)
         return [linear_element_1, linear_element_2, linear_element_3]
 
     def _form_functions(self):
-        a_matrix = vm.Matrix33(1, self.points[0].x, self.points[0].y,
-                               1, self.points[1].x, self.points[1].y,
-                               1, self.points[2].x, self.points[2].y)
+        a_matrix = vm.Matrix33(
+            1,
+            self.points[0].x,
+            self.points[0].y,
+            1,
+            self.points[1].x,
+            self.points[1].y,
+            1,
+            self.points[2].x,
+            self.points[2].y,
+        )
         try:
             inv_a = a_matrix.inverse()
         except ValueError as expt:
             self.plot()
-            print('buggy element area', self.area)
-            raise FlatElementError('form function bug') from expt
+            print("buggy element area", self.area)
+            raise FlatElementError("form function bug") from expt
         x_1 = inv_a.vector_multiplication(vm.X3D)
         x_2 = inv_a.vector_multiplication(vm.Y3D)
         x_3 = inv_a.vector_multiplication(vm.Z3D)
@@ -419,11 +422,10 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
     #     points = self.points
     #     return volmdlr.wires.ClosedPolygon2D(points)
 
-    def plot(self, ax=None, color='k', width=None,
-             plot_points=False, fill=False):
+    def plot(self, ax=None, color="k", width=None, plot_points=False, fill=False):
         if ax is None:
             _, ax = plt.subplots()
-            ax.set_aspect('equal')
+            ax.set_aspect("equal")
 
         if fill:
             x = [p[0] for p in self.points]
@@ -435,21 +437,19 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
             if width is None:
                 width = 1
             if plot_points:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-                        marker='o', linewidth=width)
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color, marker="o", linewidth=width)
             else:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-                        linewidth=width)
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color, linewidth=width)
         return ax
 
 
 class QuadrilateralElement2D(vmw.ClosedPolygon2D):
-    """ Class to define a 2D quadrilateral element. """
+    """Class to define a 2D quadrilateral element."""
 
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_eq_attributes = ["name"]
+    _non_hash_attributes = ["name"]
     _generic_eq = True
 
     def __init__(self, points):
@@ -465,12 +465,12 @@ class QuadrilateralElement2D(vmw.ClosedPolygon2D):
 
 
 class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
-    """ Class to define a 3D triangular element. """
+    """Class to define a 3D triangular element."""
 
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_eq_attributes = ["name"]
+    _non_hash_attributes = ["name"]
     _generic_eq = True
 
     def __init__(self, points):
@@ -614,15 +614,15 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
 
 
 class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
-    """ Class to define a 3D tetrahedral element. """
+    """Class to define a 3D tetrahedral element."""
 
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_eq_attributes = ["name"]
+    _non_hash_attributes = ["name"]
     _generic_eq = True
 
-    def __init__(self, points, name: str = ''):
+    def __init__(self, points, name: str = ""):
         self.points = points
         self.name = name
         # self.linear_elements = self._to_linear_elements()
@@ -641,15 +641,15 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
         triangular_elements = []
 
         for indices in indices_combinations:
-            triangular_elements.append(TriangularElement3D([self.points[indices[0]],
-                                                            self.points[indices[1]],
-                                                            self.points[indices[2]]]))
+            triangular_elements.append(
+                TriangularElement3D([self.points[indices[0]], self.points[indices[1]], self.points[indices[2]]])
+            )
 
         return triangular_elements
 
-    def plot(self, ax=None, color='k'):
+    def plot(self, ax=None, color="k"):
         if ax is None:
-            ax = plt.figure().add_subplot(projection='3d')
+            ax = plt.figure().add_subplot(projection="3d")
         for point in self.points:
             point.plot(ax=ax)
         for triangle in self.triangular_elements:
@@ -708,10 +708,14 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
                     data_betha.extend([1, self.points[c_coef].y, self.points[c_coef].z])
                     data_delta.extend([1, self.points[c_coef].x, self.points[c_coef].y])
 
-            form_funct.append([(coeff[i] * (npy.linalg.det(npy.array(data_alpha).reshape(3, 3)))),
-                               ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_betha).reshape(3, 3)))),
-                               (coeff[i] * (npy.linalg.det(npy.array(data_gamma).reshape(3, 3)))),
-                               ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_delta).reshape(3, 3))))])
+            form_funct.append(
+                [
+                    (coeff[i] * (npy.linalg.det(npy.array(data_alpha).reshape(3, 3)))),
+                    ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_betha).reshape(3, 3)))),
+                    (coeff[i] * (npy.linalg.det(npy.array(data_gamma).reshape(3, 3)))),
+                    ((-1) * coeff[i] * (npy.linalg.det(npy.array(data_delta).reshape(3, 3)))),
+                ]
+            )
 
         return form_funct[0], form_funct[1], form_funct[2], form_funct[3]
 
@@ -721,8 +725,8 @@ class ElementsGroup(DessiaObject):
 
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_eq_attributes = ["name"]
+    _non_hash_attributes = ["name"]
     _generic_eq = True
 
     def __init__(self, elements, name: str):
@@ -778,22 +782,22 @@ class ElementsGroup(DessiaObject):
     #         for elem in self.elements:
     #             elem.translation(offset, copy=False)
 
-    def plot(self, ax=None, color='k'):  # , fill=False):
+    def plot(self, ax=None, color="k"):  # , fill=False):
         if ax is None:
             _, ax = plt.subplots()
-            ax.set_aspect('equal')
+            ax.set_aspect("equal")
         for element in self.elements:
             element.plot(ax=ax, color=color)  # fill=fill
         return ax
 
 
-class Mesh(DessiaObject):    
+class Mesh(DessiaObject):
     """Defines a mesh."""
 
     _standalone_in_db = True
-    _non_serializable_attributes = ['node_to_index']
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_serializable_attributes = ["node_to_index"]
+    _non_eq_attributes = ["name"]
+    _non_hash_attributes = ["name"]
     _generic_eq = True
 
     def __init__(self, elements_groups: List[ElementsGroup]):
@@ -802,7 +806,7 @@ class Mesh(DessiaObject):
         self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
         self._nodes_correction = {}
         self._gmsh = None
-        DessiaObject.__init__(self, name='')
+        DessiaObject.__init__(self, name="")
 
     # def __add__(self, other_mesh):
     #     new_nodes = self.nodes[:]
@@ -868,11 +872,11 @@ class Mesh(DessiaObject):
 
     def plot(self, ax=None):
         if ax is None:
-            if self.elements_groups[0].elements[0].__class__.__name__[-2::] == '2D':
+            if self.elements_groups[0].elements[0].__class__.__name__[-2::] == "2D":
                 _, ax = plt.subplots()
-                ax.set_aspect('equal')
+                ax.set_aspect("equal")
             else:
-                ax = plt.figure().add_subplot(projection='3d')
+                ax = plt.figure().add_subplot(projection="3d")
         for elements_group in self.elements_groups:
             elements_group.plot(ax=ax)
         return ax
@@ -999,7 +1003,7 @@ class Mesh(DessiaObject):
                 if new:
                     new_elements.add(element.__class__(points))
 
-            groups[g] = group.__class__(elements, name='')
+            groups[g] = group.__class__(elements, name="")
 
         groups.insert(reference_index, self.elements_groups[reference_index])
 

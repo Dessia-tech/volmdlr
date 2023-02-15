@@ -10,5 +10,5 @@ class TestVector(unittest.TestCase):
         self.assertFalse(vector_ref.is_colinear_to(vector_test, abs_tol=0))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

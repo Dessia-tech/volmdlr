@@ -14,11 +14,9 @@ import volmdlr.wires
 
 # %% Contours2d
 
-p1 = [vm.Point2D(-0.2, -0.2), vm.Point2D(0.2, -0.2), 
-      vm.Point2D(0.2, 0.2), vm.Point2D(-0.2, 0.2)]
+p1 = [vm.Point2D(-0.2, -0.2), vm.Point2D(0.2, -0.2), vm.Point2D(0.2, 0.2), vm.Point2D(-0.2, 0.2)]
 
-p2 = [vm.Point2D(-0.1, 0.2), vm.Point2D(0.3, 0.2),
-      vm.Point2D(0.3, 0.6), vm.Point2D(-0.1, 0.6)]
+p2 = [vm.Point2D(-0.1, 0.2), vm.Point2D(0.3, 0.2), vm.Point2D(0.3, 0.6), vm.Point2D(-0.1, 0.6)]
 
 contour1 = vm.wires.ClosedPolygon2D(p1)
 contour2 = vm.wires.ClosedPolygon2D(p2)
@@ -29,9 +27,9 @@ to_plot, title, colors = [], [], []
 
 is_sharing = contour1.is_sharing_primitives_with(contour2)
 if is_sharing:
-    print('Contour1 is sharing primitives with Contour2')
+    print("Contour1 is sharing primitives with Contour2")
 else:
-    print('The contours are not adjacent. They dont share primitives')
+    print("The contours are not adjacent. They dont share primitives")
 
 
 # %% shared_primitives_extremities
@@ -39,39 +37,39 @@ else:
 shared_primitives_extremities = contour1.shared_primitives_extremities(contour2)
 
 to_plot.append(shared_primitives_extremities)
-title.append('shared primitives extremities')
-colors.append('k')
+title.append("shared primitives extremities")
+colors.append("k")
 
 # %% shared_primitives_with
 
 shared_primitives = contour1.shared_primitives_with(contour2)
 
 to_plot.append(shared_primitives)
-title.append('shared primitives')
-colors.append('r')
+title.append("shared primitives")
+colors.append("r")
 
 # %% merge_primitives_with
 
 merged_primitives = contour1.merge_primitives_with(contour2)
 
 to_plot.append(merged_primitives)
-title.append('primitives to be merged')
-colors.append('g')
+title.append("primitives to be merged")
+colors.append("g")
 
 # %% merge_with
 
 merged_contour = contour1.merge_with(contour2)
 
 to_plot.append([merged_contour])
-title.append('merged contour')
-colors.append('b')
+title.append("merged contour")
+colors.append("b")
 
 # %% Display
 
 fig, axs = plt.subplots(1, 4)
 
 for i, plot_ in enumerate(to_plot):
-    if i != 3: 
+    if i != 3:
         contour1.plot(ax=axs[i])
         contour2.plot(ax=axs[i])
         for p in plot_:

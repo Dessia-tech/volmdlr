@@ -20,12 +20,10 @@ class Node2D(volmdlr.Point2D):
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
 
-    def __eq__(self, other_node: 'Node2D'):
-        if other_node.__class__.__name__ not in ['Vector2D', 'Point2D',
-                                                 'Node2D']:
+    def __eq__(self, other_node: "Node2D"):
+        if other_node.__class__.__name__ not in ["Vector2D", "Point2D", "Node2D"]:
             return False
-        return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-06)
+        return math.isclose(self.x, other_node.x, abs_tol=1e-06) and math.isclose(self.y, other_node.y, abs_tol=1e-06)
 
     @classmethod
     def from_point(cls, point2d):
@@ -40,13 +38,14 @@ class Node3D(volmdlr.Point3D):
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))
 
-    def __eq__(self, other_node: 'Node3D'):
-        if other_node.__class__.__name__ not in ['Vector3D', 'Point3D',
-                                                 'Node3D']:
+    def __eq__(self, other_node: "Node3D"):
+        if other_node.__class__.__name__ not in ["Vector3D", "Point3D", "Node3D"]:
             return False
-        return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-06) \
+        return (
+            math.isclose(self.x, other_node.x, abs_tol=1e-06)
+            and math.isclose(self.y, other_node.y, abs_tol=1e-06)
             and math.isclose(self.z, other_node.z, abs_tol=1e-06)
+        )
 
     @classmethod
     def from_point(cls, point3d):
@@ -58,9 +57,10 @@ class DisplayMesh(dc.DessiaObject):
     A DisplayMesh is a list of points linked by triangles.
     This is an abstract class for 2D & 3D.
     """
+
     _linesegment_class = volmdlr.edges.LineSegment
 
-    def __init__(self, points, triangles, name=''):
+    def __init__(self, points, triangles, name=""):
 
         self.points = points
         self.triangles = triangles
@@ -83,7 +83,7 @@ class DisplayMesh(dc.DessiaObject):
         return self._point_index
 
     @classmethod
-    def merge_meshes(cls, meshes: List['DisplayMesh']):
+    def merge_meshes(cls, meshes: List["DisplayMesh"]):
         """
         Merge several meshes into one.
         """
@@ -106,9 +106,7 @@ class DisplayMesh(dc.DessiaObject):
                 p1 = mesh.points[i1]
                 p2 = mesh.points[i2]
                 p3 = mesh.points[i3]
-                triangles.append((point_index[p1],
-                                  point_index[p2],
-                                  point_index[p3]))
+                triangles.append((point_index[p1], point_index[p2], point_index[p3]))
         return cls(points, triangles)
 
     def merge_mesh(self, other_mesh):
@@ -129,9 +127,7 @@ class DisplayMesh(dc.DessiaObject):
             p1 = other_mesh.points[i1]
             p2 = other_mesh.points[i2]
             p3 = other_mesh.points[i3]
-            self.triangles.append((self._point_index[p1],
-                                   self._point_index[p2],
-                                   self._point_index[p3]))
+            self.triangles.append((self._point_index[p1], self._point_index[p2], self._point_index[p3]))
 
         # t3 = time.time()
         # print('t', t2-t1, t3-t2)
@@ -155,9 +151,7 @@ class DisplayMesh(dc.DessiaObject):
             p1 = other_mesh.points[i1]
             p2 = other_mesh.points[i2]
             p3 = other_mesh.points[i3]
-            new_triangles.append((new_point_index[p1],
-                                  new_point_index[p2],
-                                  new_point_index[p3]))
+            new_triangles.append((new_point_index[p1], new_point_index[p2], new_point_index[p3]))
 
         return self.__class__(new_points, new_triangles)
 
@@ -166,8 +160,7 @@ class DisplayMesh(dc.DessiaObject):
         for ip, point in enumerate(self.points):
             ax = point.plot(ax=ax)
             if numbering:
-                ax.text(*point, 'node {}'.format(ip + 1),
-                        ha='center', va='center')
+                ax.text(*point, "node {}".format(ip + 1), ha="center", va="center")
 
         for i1, i2, i3 in self.triangles:
             point1 = self.points[i1]
@@ -192,17 +185,20 @@ class DisplayMesh2D(DisplayMesh):
     _linesegment_class = volmdlr.edges.LineSegment2D
     _point_class = volmdlr.Point2D
 
-    def __init__(self, points: List[volmdlr.Point2D],
-                 triangles: List[Tuple[int, int, int]],
-                 edges: List[Tuple[int, int]] = None,
-                 name: str = ''):
+    def __init__(
+        self,
+        points: List[volmdlr.Point2D],
+        triangles: List[Tuple[int, int, int]],
+        edges: List[Tuple[int, int]] = None,
+        name: str = "",
+    ):
         DisplayMesh.__init__(self, points, triangles, name=name)
 
     def area(self):
         """
         Return the area as the sum of areas of triangles.
         """
-        area = 0.
+        area = 0.0
         for (n1, n2, n3) in self.triangles:
             p1 = self.points[n1]
             p2 = self.points[n2]
@@ -220,8 +216,7 @@ class DisplayMesh3D(DisplayMesh):
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 
-    def __init__(self, points: List[volmdlr.Point3D],
-                 triangles: List[Tuple[int, int, int]], name=''):
+    def __init__(self, points: List[volmdlr.Point3D], triangles: List[Tuple[int, int, int]], name=""):
         DisplayMesh.__init__(self, points, triangles, name=name)
 
     def to_babylon(self):
@@ -248,5 +243,6 @@ class DisplayMesh3D(DisplayMesh):
         """
         # TODO: remove this in the future
         import volmdlr.stl as vmstl
+
         stl = vmstl.Stl.from_display_mesh(self)
         return stl

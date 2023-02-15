@@ -44,8 +44,8 @@ ax = fig.add_subplot(111)
 for pt in points + new_points:
     pt.plot(ax=ax)
 for point in polygon.points:
-    point.plot(ax=ax, color='g')
+    point.plot(ax=ax, color="g")
 for line in polygon.line_segments:
-    line.plot(ax=ax, color='r')
+    line.plot(ax=ax, color="r")
 # for point in nearby_points:
 #     point.plot(ax=ax, color = 'r')

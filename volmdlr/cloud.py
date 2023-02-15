@@ -15,6 +15,7 @@ import volmdlr.faces as vmf
 import volmdlr.primitives3d as p3d
 import volmdlr.step as vstep
 import volmdlr.stl as vmstl
+
 # import volmdlr.core
 import volmdlr.wires as vmw
 
@@ -22,11 +23,11 @@ import volmdlr.wires as vmw
 class PointCloud3D(dc.DessiaObject):
     """
     Point Cloud3D, a list of points.
-    
+
     :param points: a list of points.
     """
 
-    def __init__(self, points: List[vm.Point3D], name: str = ''):
+    def __init__(self, points: List[vm.Point3D], name: str = ""):
         self.points = points
         dc.DessiaObject.__init__(self, name=name)
 
@@ -34,14 +35,14 @@ class PointCloud3D(dc.DessiaObject):
     def from_stl(cls, file_path):
         list_points = vmstl.Stl.from_file(file_path).extract_points_BIS()
 
-        return cls(list_points, name='from_stl')
+        return cls(list_points, name="from_stl")
 
     def _bounding_box(self):
         return vm.core.BoundingBox.from_points(self.points)
 
     def to_2d(self, plane_origin, x, y):
         list_points2d = [pt3d.to_2d(plane_origin, x, y) for pt3d in self.points]
-        return PointCloud2D(list_points2d, name='3d_to_2d')
+        return PointCloud2D(list_points2d, name="3d_to_2d")
 
     def extract(self, u, umin, umax):  # -> List[PointCloud3D] :
         extracted_points = []
@@ -71,8 +72,7 @@ class PointCloud3D(dc.DessiaObject):
         return dist_between_plane, position_plane
 
     @staticmethod
-    def check_area_polygon(initial_polygon2d, position_plane,
-                           normal, vec1, vec2):
+    def check_area_polygon(initial_polygon2d, position_plane, normal, vec1, vec2):
         areas = [0] * len(initial_polygon2d)
         for n, poly in enumerate(initial_polygon2d):
             if poly is not None:
@@ -81,12 +81,11 @@ class PointCloud3D(dc.DessiaObject):
 
         polygon2d, polygon3d = [], []
         for n, poly in enumerate(initial_polygon2d):
-            if (poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1])):
+            if poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1]):
                 continue
             elif poly.area() < avg_area / 10:
                 new_poly = vmw.ClosedPolygon2D.concave_hull(poly.points, -1, 0.000005)
-                new_polygon = new_poly.to_3d(position_plane[n] * normal, vec1,
-                                             vec2)
+                new_polygon = new_poly.to_3d(position_plane[n] * normal, vec1, vec2)
                 polygon3d.append(new_polygon)
             else:
 
@@ -111,17 +110,11 @@ class PointCloud3D(dc.DessiaObject):
                     posmax = n
             vec1, vec2 = [vm.X3D, vm.Y3D, vm.Z3D][posmax - 2], [vm.X3D, vm.Y3D, vm.Z3D][posmax - 1]
 
-        dist_between_plane, position_plane = self.position_plane(posmax=posmax,
-                                                                 resolution=resolution)
+        dist_between_plane, position_plane = self.position_plane(posmax=posmax, resolution=resolution)
         subcloud3d = [
-            self.extract(
-                normal,
-                pos_plane -
-                dist_between_plane /
-                2,
-                pos_plane +
-                dist_between_plane /
-                2) for pos_plane in position_plane]
+            self.extract(normal, pos_plane - dist_between_plane / 2, pos_plane + dist_between_plane / 2)
+            for pos_plane in position_plane
+        ]
         subcloud2d = [subcloud3d[n].to_subcloud2d(position_plane[n] * normal, vec1, vec2) for n in range(resolution)]
 
         # Offsetting
@@ -130,16 +123,16 @@ class PointCloud3D(dc.DessiaObject):
             position_plane, initial_polygon2d = self.offset_to_shell(position_plane, initial_polygon2d, offset)
         else:
             initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
-        polygon3d = self.check_area_polygon(initial_polygon2d=initial_polygon2d,
-                                            position_plane=position_plane,
-                                            normal=normal,
-                                            vec1=vec1, vec2=vec2)
+        polygon3d = self.check_area_polygon(
+            initial_polygon2d=initial_polygon2d, position_plane=position_plane, normal=normal, vec1=vec1, vec2=vec2
+        )
 
         return self.generate_shell(polygon3d, normal, vec1, vec2)
 
     @classmethod
-    def generate_shell(cls, polygon3d: List[vm.wires.ClosedPolygon3D],
-                       normal: vm.Vector3D, vec1: vm.Vector3D, vec2: vm.Vector3D):
+    def generate_shell(
+        cls, polygon3d: List[vm.wires.ClosedPolygon3D], normal: vm.Vector3D, vec1: vm.Vector3D, vec2: vm.Vector3D
+    ):
         position_plane = [p.points[0].dot(normal) for p in polygon3d]
         resolution = len(polygon3d)
 
@@ -164,20 +157,19 @@ class PointCloud3D(dc.DessiaObject):
 
                 poly2_2d = poly2.to_2d(position_plane[n + 1] * normal, vec1, vec2)
                 poly2_2d_simplified = poly2_2d.simplify_polygon(0.01, 1)
-                poly2_simplified = poly2_2d_simplified.to_3d(
-                    position_plane[n + 1] * normal, vec1, vec2)
+                poly2_simplified = poly2_2d_simplified.to_3d(position_plane[n + 1] * normal, vec1, vec2)
 
                 if 1 - poly2_2d_simplified.area() / poly2_2d.area() > 0.3:
                     poly2_simplified = poly2
-                list_triangles_points = poly1_simplified.sewing(poly2_simplified,
-                                                                vec1, vec2)
-                list_faces = [vmf.Triangle3D(*triangle_points, alpha=0.9,
-                                             color=(1, 0.1, 0.1))
-                              for triangle_points in list_triangles_points]
+                list_triangles_points = poly1_simplified.sewing(poly2_simplified, vec1, vec2)
+                list_faces = [
+                    vmf.Triangle3D(*triangle_points, alpha=0.9, color=(1, 0.1, 0.1))
+                    for triangle_points in list_triangles_points
+                ]
                 faces.extend(list_faces)
         return vmf.ClosedShell3D(faces)
 
-    def shell_distances(self, shells: vmf.OpenTriangleShell3D) -> Tuple['PointCloud3D', List[float], List[int]]:
+    def shell_distances(self, shells: vmf.OpenTriangleShell3D) -> Tuple["PointCloud3D", List[float], List[int]]:
         """
         Computes distance of point to shell for each point in self.points.
 
@@ -186,9 +178,11 @@ class PointCloud3D(dc.DessiaObject):
         :rtype: Tuple[PointCloud3D, List[float], List[int]]
         """
         nearest_coords, distances, triangles_idx = self.shell_distances_ndarray(shells)
-        return (PointCloud3D([vm.Point3D(*coords) for coords in nearest_coords]),
-                distances.tolist(),
-                triangles_idx.tolist())
+        return (
+            PointCloud3D([vm.Point3D(*coords) for coords in nearest_coords]),
+            distances.tolist(),
+            triangles_idx.tolist(),
+        )
 
     def shell_distances_ndarray(self, shells: vmf.OpenTriangleShell3D):
         """
@@ -254,7 +248,7 @@ class PointCloud3D(dc.DessiaObject):
         points = step.to_points()
         return cls(points)
 
-    def plot(self, ax=None, color='k'):
+    def plot(self, ax=None, color="k"):
         ax = self.points[0].plot(ax=ax)
         for point in self.points[1::100]:
             point.plot(ax=ax, color=color)
@@ -282,8 +276,7 @@ class PointCloud3D(dc.DessiaObject):
         return extended_points
 
     @staticmethod
-    def offset_to_shell(positions_plane: List[vmf.Plane3D],
-                        polygons2d: List[vmw.ClosedPolygon2D], offset: float):
+    def offset_to_shell(positions_plane: List[vmf.Plane3D], polygons2d: List[vmw.ClosedPolygon2D], offset: float):
 
         origin_f, origin_l = positions_plane[0], positions_plane[-1]
 
@@ -301,11 +294,11 @@ class PointCloud2D(dc.DessiaObject):
     :param points: list of points for point cloud.
     """
 
-    def __init__(self, points, name: str = ''):
+    def __init__(self, points, name: str = ""):
         self.points = points
         dc.DessiaObject.__init__(self, name=name)
 
-    def plot(self, ax=None, color='k'):
+    def plot(self, ax=None, color="k"):
         if ax is None:
             _, ax = plt.subplots()
         for point in self.points:
@@ -333,7 +326,7 @@ class PointCloud2D(dc.DessiaObject):
 
     def simplify(self, resolution=5):
         if not self.points:
-            return PointCloud2D(self.points, name=self.name + '_none')
+            return PointCloud2D(self.points, name=self.name + "_none")
 
         xy_extr = list(self.bounding_rectangle())  # xmin, xmax, ymin, ymax
 
@@ -355,7 +348,7 @@ class PointCloud2D(dc.DessiaObject):
         for poly in polys:
             if poly is not None:
                 clean_points += poly.points
-        return PointCloud2D(clean_points, name=self.name + '_clean')
+        return PointCloud2D(clean_points, name=self.name + "_clean")
 
     def to_coord_matrix(self) -> List[List[float]]:
         """
