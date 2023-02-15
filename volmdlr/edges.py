@@ -3160,8 +3160,10 @@ class ArcEllipse2D(Edge):
         self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
         frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
         self.frame = frame
-        start_new, end_new = frame.global_to_local_coordinates(self.start), frame.global_to_local_coordinates(self.end)
-        interior_new, center_new = frame.global_to_local_coordinates(self.interior), frame.global_to_local_coordinates(self.center)
+        start_new = frame.global_to_local_coordinates(self.start)
+        end_new = frame.global_to_local_coordinates(self.end)
+        interior_new = frame.global_to_local_coordinates(self.interior)
+        center_new = frame.global_to_local_coordinates(self.center)
         self._bounding_rectangle = None
 
         def theta_A_B(s, i, e, c):
