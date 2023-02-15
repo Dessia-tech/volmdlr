@@ -173,7 +173,7 @@ def posangle_arc(start, end, radius, frame=None):
     if frame is None:
         p1_new, p2_new = start, end
     else:
-        p1_new, p2_new = frame.new_coordinates(start), frame.new_coordinates(end)
+        p1_new, p2_new = frame.global_to_local_coordinates(start), frame.global_to_local_coordinates(end)
     # Angle pour le p1
     u1, u2 = p1_new.x / radius, p1_new.y / radius
     theta1 = sin_cos_angle(u1, u2)

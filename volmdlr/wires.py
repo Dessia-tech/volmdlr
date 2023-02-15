@@ -3985,7 +3985,7 @@ class Circle2D(Contour2D):
             return Circle2D(frame.local_to_global_coordinates(self.center),
                             self.radius)
         elif side == 'new':
-            return Circle2D(frame.new_coordinates(self.center),
+            return Circle2D(frame.global_to_local_coordinates(self.center),
                             self.radius)
         else:
             raise ValueError('Side should be \'new\' \'old\'')
@@ -3998,7 +3998,7 @@ class Circle2D(Contour2D):
         if side == 'old':
             self.center = frame.local_to_global_coordinates(self.center)
         elif side == 'new':
-            self.center = frame.new_coordinates(self.center)
+            self.center = frame.global_to_local_coordinates(self.center)
         else:
             raise ValueError('Side should be \'new\' \'old\'')
 
@@ -4300,7 +4300,7 @@ class Ellipse2D(Contour2D):
                              self.major_dir)
         if side == 'new':
             point_major_dir = self.center + self.major_dir * self.major_axis
-            major_dir = frame.new_coordinates(point_major_dir) - self.center
+            major_dir = frame.global_to_local_coordinates(point_major_dir) - self.center
             return Ellipse2D(self.major_axis, self.minor_axis, frame.global_to_local_coordinates(self.center),
                              major_dir)
         raise ValueError('Side should be \'new\' \'old\'')
@@ -4843,7 +4843,7 @@ class Circle3D(Contour3D):
         :param point: point to calculate abscissa.
         :return: abscissa
         """
-        x, y, _ = self.frame.new_coordinates(point)
+        x, y, _ = self.frame.global_to_local_coordinates(point)
         u1 = x / self.radius
         u2 = y / self.radius
         theta = volmdlr.geometry.sin_cos_angle(u1, u2)
@@ -5183,7 +5183,7 @@ class Ellipse3D(Contour3D):
         :param point: point to be verified.
         :return: True is point lies on the Ellipse, False otherwise
         """
-        new_point = self.frame.new_coordinates(point)
+        new_point = self.frame.global_to_local_coordinates(point)
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
                             new_point.y ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
 
@@ -5250,7 +5250,7 @@ class Ellipse3D(Contour3D):
         frame = volmdlr.Frame3D(self.center, self.major_dir,
                                 self.normal.cross(self.major_dir), self.normal)
 
-        p1_new, p2_new = frame.new_coordinates(point1), frame.new_coordinates(point2)
+        p1_new, p2_new = frame.global_to_local_coordinates(point1), frame.global_to_local_coordinates(point2)
 
         theta1 = volmdlr.geometry.sin_cos_angle(p1_new.x / self.major_axis, p1_new.y / self.minor_axis)
 

@@ -652,7 +652,7 @@ class Vector2D(Vector):
         if side == "old":
             new_vector = frame.local_to_global_coordinates(self)
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
     def frame_mapping_inplace(self, frame: "Frame2D", side: str):
@@ -669,7 +669,7 @@ class Vector2D(Vector):
         if side == "old":
             new_vector = frame.local_to_global_coordinates(self)
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         self.x = new_vector.x
         self.y = new_vector.y
 
@@ -1585,7 +1585,7 @@ class Vector3D(Vector):
             new_vector = frame.local_to_global_coordinates(self)
 
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
     def frame_mapping_inplace(self, frame: "Frame3D", side: str):
@@ -1603,7 +1603,7 @@ class Vector3D(Vector):
             new_vector = frame.local_to_global_coordinates(self)
 
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         self.x = new_vector.x
         self.y = new_vector.y
         self.z = new_vector.z
@@ -3126,9 +3126,9 @@ class Frame2D(Basis2D):
     def frame_mapping(self, frame: "Frame2D", side: str):
         basis = frame.basis()
         if side == "new":
-            new_origin = frame.new_coordinates(self.origin)
-            new_u = basis.new_coordinates(self.u)
-            new_v = basis.new_coordinates(self.v)
+            new_origin = frame.global_to_local_coordinates(self.origin)
+            new_u = basis.global_to_local_coordinates(self.u)
+            new_v = basis.global_to_local_coordinates(self.v)
         elif side == "old":
             new_origin = frame.local_to_global_coordinates(self.origin)
             new_u = basis.local_to_global_coordinates(self.u)
@@ -3392,10 +3392,10 @@ class Frame3D(Basis3D):
     def frame_mapping(self, frame: "Frame3D", side: str):
         basis = frame.basis()
         if side == "new":
-            new_origin = frame.new_coordinates(self.origin)
-            new_u = basis.new_coordinates(self.u)
-            new_v = basis.new_coordinates(self.v)
-            new_w = basis.new_coordinates(self.w)
+            new_origin = frame.global_to_local_coordinates(self.origin)
+            new_u = basis.global_to_local_coordinates(self.u)
+            new_v = basis.global_to_local_coordinates(self.v)
+            new_w = basis.global_to_local_coordinates(self.w)
 
         elif side == "old":
             new_origin = frame.local_to_global_coordinates(self.origin)

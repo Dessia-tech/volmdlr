@@ -1255,10 +1255,10 @@ class Line2D(Line):
         new_v = new_u.unit_normal_vector()
         new_basis = volmdlr.Frame2D(I, new_u, new_v)
 
-        new_a = new_basis.new_coordinates(A)
-        new_b = new_basis.new_coordinates(B)
-        new_c = new_basis.new_coordinates(C)
-        new_d = new_basis.new_coordinates(D)
+        new_a = new_basis.global_to_local_coordinates(A)
+        new_b = new_basis.global_to_local_coordinates(B)
+        new_c = new_basis.global_to_local_coordinates(C)
+        new_d = new_basis.global_to_local_coordinates(D)
 
         if new_c[1] == 0 and new_d[1] == 0:
             # Segments are on the same line: no solution
@@ -1313,11 +1313,11 @@ class Line2D(Line):
         new_v2 = new_u2.normal_vector(unit=True)
         new_basis2 = volmdlr.Frame2D(I, new_u2, new_v2)
 
-        new_a = new_basis2.new_coordinates(A)
-        new_b = new_basis2.new_coordinates(B)
-        new_c = new_basis2.new_coordinates(C)
-        new_d = new_basis2.new_coordinates(D)
-        new_pt_k = new_basis2.new_coordinates(pt_K)
+        new_a = new_basis2.global_to_local_coordinates(A)
+        new_b = new_basis2.global_to_local_coordinates(B)
+        new_c = new_basis2.global_to_local_coordinates(C)
+        new_d = new_basis2.global_to_local_coordinates(D)
+        new_pt_k = new_basis2.global_to_local_coordinates(pt_K)
 
         teta1 = math.atan2(new_c[1], new_c[0] - new_pt_k[0])
         teta2 = math.atan2(new_d[1], new_d[0] - new_pt_k[0])
@@ -1347,7 +1347,7 @@ class Line2D(Line):
         circle_center1 = new_basis2.local_to_global_coordinates(new_circle_center1)
         circle_center2 = new_basis2.local_to_global_coordinates(new_circle_center2)
 
-        if new_basis.new_coordinates(circle_center1)[1] > 0:
+        if new_basis.global_to_local_coordinates(circle_center1)[1] > 0:
             circle1 = volmdlr.wires.Circle2D(circle_center1, r1)
             circle2 = volmdlr.wires.Circle2D(circle_center2, r2)
         else:
@@ -1972,8 +1972,8 @@ class LineSegment2D(LineSegment):
             new_start = frame.local_to_global_coordinates(self.start)
             new_end = frame.local_to_global_coordinates(self.end)
         elif side == 'new':
-            new_start = frame.new_coordinates(self.start)
-            new_end = frame.new_coordinates(self.end)
+            new_start = frame.global_to_local_coordinates(self.start)
+            new_end = frame.global_to_local_coordinates(self.end)
         else:
             raise ValueError('Please Enter a valid side: old or new')
         return LineSegment2D(new_start, new_end)
@@ -1989,8 +1989,8 @@ class LineSegment2D(LineSegment):
             new_start = frame.local_to_global_coordinates(self.start)
             new_end = frame.local_to_global_coordinates(self.end)
         elif side == 'new':
-            new_start = frame.new_coordinates(self.start)
-            new_end = frame.new_coordinates(self.end)
+            new_start = frame.global_to_local_coordinates(self.start)
+            new_end = frame.global_to_local_coordinates(self.end)
         else:
             raise ValueError('Please Enter a valid side: old or new')
         self.start = new_start
@@ -3160,8 +3160,8 @@ class ArcEllipse2D(Edge):
         self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
         frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
         self.frame = frame
-        start_new, end_new = frame.new_coordinates(self.start), frame.new_coordinates(self.end)
-        interior_new, center_new = frame.new_coordinates(self.interior), frame.new_coordinates(self.center)
+        start_new, end_new = frame.global_to_local_coordinates(self.start), frame.global_to_local_coordinates(self.end)
+        interior_new, center_new = frame.global_to_local_coordinates(self.interior), frame.global_to_local_coordinates(self.center)
         self._bounding_rectangle = None
 
         def theta_A_B(s, i, e, c):
@@ -3189,7 +3189,7 @@ class ArcEllipse2D(Edge):
             return theta, gdaxe, ptax
 
         if start == end:
-            extra_new = frame.new_coordinates(self.extra)
+            extra_new = frame.global_to_local_coordinates(self.extra)
             theta, major_axis, minor_axis = theta_A_B(start_new, extra_new, interior_new,
                                                       center_new)
         else:
@@ -3271,7 +3271,7 @@ class ArcEllipse2D(Edge):
                 math.isclose((point.x - self.center.x) ** 2 / self.minor_axis ** 2 +
                              (point.y - self.center.y) ** 2 / self.major_axis ** 2, 1, abs_tol=abs_tol):
             return False
-        new_point = self.frame.new_coordinates(point)
+        new_point = self.frame.global_to_local_coordinates(point)
         u1, u2 = new_point.x / self.major_axis, new_point.y / self.minor_axis
         angle_new_point = volmdlr.geometry.sin_cos_angle(u1, u2)
         if self.angle_start < self.angle_end and self.angle_end >= angle_new_point >= self.angle_start:
@@ -3688,8 +3688,8 @@ class Line3D(Line):
             new_start = frame.local_to_global_coordinates(self.point1)
             new_end = frame.local_to_global_coordinates(self.point2)
         elif side == 'new':
-            new_start = frame.new_coordinates(self.point1)
-            new_end = frame.new_coordinates(self.point2)
+            new_start = frame.global_to_local_coordinates(self.point1)
+            new_end = frame.global_to_local_coordinates(self.point2)
         else:
             raise ValueError('Please Enter a valid side: old or new')
         return Line3D(new_start, new_end)
@@ -3704,8 +3704,8 @@ class Line3D(Line):
             new_start = frame.local_to_global_coordinates(self.point1)
             new_end = frame.local_to_global_coordinates(self.point2)
         elif side == 'new':
-            new_start = frame.new_coordinates(self.point1)
-            new_end = frame.new_coordinates(self.point2)
+            new_start = frame.global_to_local_coordinates(self.point1)
+            new_end = frame.global_to_local_coordinates(self.point2)
         else:
             raise ValueError('Please Enter a valid side: old or new')
         self.point1 = new_start
@@ -3934,7 +3934,7 @@ class LineSegment3D(LineSegment):
                 *[frame.local_to_global_coordinates(point) for point in [self.start, self.end]])
         if side == 'new':
             return LineSegment3D(
-                *[frame.new_coordinates(point) for point in [self.start, self.end]])
+                *[frame.global_to_local_coordinates(point) for point in [self.start, self.end]])
         raise ValueError('Please Enter a valid side: old or new')
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
@@ -3947,8 +3947,8 @@ class LineSegment3D(LineSegment):
             new_start = frame.local_to_global_coordinates(self.start)
             new_end = frame.local_to_global_coordinates(self.end)
         elif side == 'new':
-            new_start = frame.new_coordinates(self.start)
-            new_end = frame.new_coordinates(self.end)
+            new_start = frame.global_to_local_coordinates(self.start)
+            new_end = frame.global_to_local_coordinates(self.end)
         else:
             raise ValueError('Please Enter a valid side: old or new')
         self.start = new_start
@@ -5190,9 +5190,9 @@ class Arc3D(Arc):
             new_interior = frame.local_to_global_coordinates(self.interior.copy())
             new_end = frame.local_to_global_coordinates(self.end.copy())
         elif side == 'new':
-            new_start = frame.new_coordinates(self.start.copy())
-            new_interior = frame.new_coordinates(self.interior.copy())
-            new_end = frame.new_coordinates(self.end.copy())
+            new_start = frame.global_to_local_coordinates(self.start.copy())
+            new_interior = frame.global_to_local_coordinates(self.interior.copy())
+            new_end = frame.global_to_local_coordinates(self.end.copy())
         else:
             raise ValueError('side value not valid, please specify'
                              'a correct value: \'old\' or \'new\'')
@@ -5816,10 +5816,10 @@ class ArcEllipse3D(Edge):
 
         frame = volmdlr.Frame3D(self.center, self.major_dir, self.minor_dir, self.normal)
         self.frame = frame
-        start_new, end_new = frame.new_coordinates(
-            self.start), frame.new_coordinates(self.end)
-        interior_new, center_new = frame.new_coordinates(
-            self.interior), frame.new_coordinates(self.center)
+        start_new, end_new = frame.global_to_local_coordinates(
+            self.start), frame.global_to_local_coordinates(self.end)
+        interior_new, center_new = frame.global_to_local_coordinates(
+            self.interior), frame.global_to_local_coordinates(self.center)
         self._bbox = None
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
@@ -5842,7 +5842,7 @@ class ArcEllipse3D(Edge):
             return theta, gdaxe, ptax
 
         if start == end:
-            extra_new = frame.new_coordinates(self.interior)
+            extra_new = frame.global_to_local_coordinates(self.interior)
             theta, A, B = theta_A_B(start_new, extra_new, interior_new,
                                     center_new)
         else:
