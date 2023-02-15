@@ -67,7 +67,7 @@ class DisplayMesh(dc.DessiaObject):
         # Avoiding calling dessia object init because its inefficiency
         # dc.DessiaObject.__init__(self, name=name)
         self.name = name
-        self._utd_point_index = False
+        self._point_index = None
 
     def check(self):
         npoints = len(self.points)
@@ -78,9 +78,8 @@ class DisplayMesh(dc.DessiaObject):
 
     @property
     def point_index(self):
-        if not self._utd_point_index:
+        if self._point_index is None:
             self._point_index = {p: i for i, p in enumerate(self.points)}
-            self._utd_point_index = True
         return self._point_index
 
     @classmethod
