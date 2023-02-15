@@ -94,6 +94,9 @@ class WireMixin:
     # def __init__(self):
     #     raise TypeError ('It cannot be instantiated directly, see Wire2D, Wire3D, Contour2D or Contour3D')
 
+    def _data_hash(self):
+        return sum(hash(e) for e in self.primitives) + len(self.primitives)
+
     def length(self):
         length = 0.
         for primitive in self.primitives:
@@ -4381,9 +4384,6 @@ class Contour3D(ContourMixin, Wire3D):
         Wire3D.__init__(self, primitives=primitives, name=name)
         self._edge_polygon = None
         self._utd_bounding_box = False
-
-    def __hash__(self):
-        return sum(hash(e) for e in self.primitives)
 
     def __eq__(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:
