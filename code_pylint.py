@@ -15,14 +15,14 @@ EFFECTIVE_DATE = date(2023, 1, 31)
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
-                     "wrong-spelling-in-comment": 335,
-                     "wrong-spelling-in-docstring": 312,
+                     "wrong-spelling-in-comment": 314,
+                     "wrong-spelling-in-docstring": 265,
                      'invalid-name': 675,
-                     'no-else-return': 28,
-                     'consider-using-f-string': 57,
+                     'no-else-return': 20,
+                     'consider-using-f-string': 56,
                      'no-member': 9,
                      'inconsistent-return-statements': 4,
-                     'unused-variable': 32,
+                     'unused-variable': 31,
                      'arguments-differ': 58,
                      'too-many-locals': 75,
                      'unused-argument': 35,
@@ -48,7 +48,7 @@ MAX_ERROR_BY_TYPE = {
                      'unspecified-encoding': 1,
                      'too-many-function-args': 4,
                      'too-many-nested-blocks': 7,
-                     'attribute-defined-outside-init': 6,
+                     'attribute-defined-outside-init': 0,
                      'too-many-return-statements': 1,
                      'cyclic-import': 4,
                      'raise-missing-from': 2,

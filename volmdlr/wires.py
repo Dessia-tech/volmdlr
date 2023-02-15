@@ -3732,6 +3732,7 @@ class Triangle2D(ClosedPolygon2D):
 
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
                  point3: volmdlr.Point2D, name: str = ''):
+        # TODO: This seems buggy. Is it still used? 
         # self.point1 = point1
         # self.point2 = point2
         # self.point3 = point3
@@ -5599,7 +5600,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         """
-        Simnplify polygon3d.
+        Simplifies polygon3d.
 
         :param min_distance: minimal allowed distance.
         :param max_distance: maximal allowed distance.
