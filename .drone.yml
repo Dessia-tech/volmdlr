@@ -51,11 +51,12 @@ steps:
     from: technical@dessia.tech
 
 
-- name: check black formatting
+- name: black
   image: python:3.9
   commands:
     - pip install black
-    - black --check -l120 .
+    - black --check --diff --color .
+    - if [ $? -eq 1 ]; then echo "Black found formatting errors. Please run 'black .' to format the code."; fi
 
 
 - name: check code complexity
