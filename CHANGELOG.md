@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D.__eq__(): verify contour length first, when verify if two contours are the same.
 * Contour2D.is_inside(): verify first if the area of the contour2 is not smaller that contour 1.
 * Disabling pointer in to_dict for most primitives
+* Better hash for shells, contours & wires 
 
 ### Refactorings
 

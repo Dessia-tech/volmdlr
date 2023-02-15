@@ -93,6 +93,9 @@ class WireMixin:
                                     'basis_primitives']
 
 
+    def _data_hash(self):
+        return sum(hash(e) for e in self.primitives) + len(self.primitives)
+
     def length(self):
         length = 0.
         for primitive in self.primitives:
@@ -1554,7 +1557,7 @@ class Contour2D(ContourMixin, Wire2D):
     def __init__(self, primitives: List[volmdlr.edges.Edge],
                  name: str = ''):
         Wire2D.__init__(self, primitives, name)
-        self._utd_edge_polygon = False
+        self._edge_polygon = None
         self._polygon_100_points = None
         self._area = None
 
@@ -1587,9 +1590,8 @@ class Contour2D(ContourMixin, Wire2D):
 
     @property
     def edge_polygon(self):
-        if not self._utd_edge_polygon:
+        if self._edge_polygon is None:
             self._edge_polygon = self._get_edge_polygon()
-            self._utd_edge_polygon = True
         return self._edge_polygon
 
     def _get_edge_polygon(self):
@@ -3681,6 +3683,7 @@ class Triangle2D(ClosedPolygon2D):
 
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
                  point3: volmdlr.Point2D, name: str = ''):
+        # TODO: This seems buggy. Is it still used? 
         # self.point1 = point1
         # self.point2 = point2
         # self.point3 = point3
@@ -4323,11 +4326,8 @@ class Contour3D(ContourMixin, Wire3D):
         """
 
         Wire3D.__init__(self, primitives=primitives, name=name)
-        self._utd_edge_polygon = False
+        self._edge_polygon = None
         self._utd_bounding_box = False
-
-    def __hash__(self):
-        return sum(hash(e) for e in self.primitives)
 
     def __eq__(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:
@@ -4352,9 +4352,8 @@ class Contour3D(ContourMixin, Wire3D):
 
     @property
     def edge_polygon(self):
-        if not self._utd_edge_polygon:
+        if self._edge_polygon is None:
             self._edge_polygon = self._get_edge_polygon()
-            self._utd_edge_polygon = True
         return self._edge_polygon
 
     def _get_edge_polygon(self):
@@ -5519,7 +5518,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         """
-        Simnplify polygon3d.
+        Simplifies polygon3d.
 
         :param min_distance: minimal allowed distance.
         :param max_distance: maximal allowed distance.
