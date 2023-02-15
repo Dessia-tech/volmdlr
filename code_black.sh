@@ -1,4 +1,6 @@
 #!/bin/sh
+# check black formatting on all files
+
 if black --check -l120 .; then
     echo "\nBlack found no formatting errors."
 else
