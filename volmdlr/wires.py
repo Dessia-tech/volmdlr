@@ -3982,7 +3982,7 @@ class Circle2D(Contour2D):
         side = 'old' or 'new'
         """
         if side == 'old':
-            return Circle2D(frame.old_coordinates(self.center),
+            return Circle2D(frame.local_to_global_coordinates(self.center),
                             self.radius)
         elif side == 'new':
             return Circle2D(frame.new_coordinates(self.center),
@@ -3996,7 +3996,7 @@ class Circle2D(Contour2D):
         side = 'old' or 'new'
         """
         if side == 'old':
-            self.center = frame.old_coordinates(self.center)
+            self.center = frame.local_to_global_coordinates(self.center)
         elif side == 'new':
             self.center = frame.new_coordinates(self.center)
         else:
@@ -5261,7 +5261,7 @@ class Ellipse3D(Contour3D):
         else:
             angle = (theta1 + theta2) / 2
 
-        p3 = frame.old_coordinates(volmdlr.Point3D(self.major_axis * math.cos(angle),
+        p3 = frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(angle),
                                                    self.minor_axis * math.sin(angle), 0))
 
         return volmdlr.edges.ArcEllipse3D(point1, p3, point2, self.center,

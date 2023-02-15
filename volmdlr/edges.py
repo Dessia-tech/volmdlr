@@ -1272,7 +1272,7 @@ class Line2D(Line):
             r = segments_distance / 2
             new_circle_center = volmdlr.Point2D(
                 (0, npy.sign(new_c[1] - new_a[1]) * r))
-            circle_center = new_basis.old_coordinates(new_circle_center)
+            circle_center = new_basis.local_to_global_coordinates(new_circle_center)
             circle = volmdlr.wires.Circle2D(circle_center, r)
 
             return circle, None
@@ -1287,8 +1287,8 @@ class Line2D(Line):
             r = abs(new_pt_k[0])
             new_circle_center1 = volmdlr.Point2D((0, r))
             new_circle_center2 = volmdlr.Point2D((0, -r))
-            circle_center1 = new_basis.old_coordinates(new_circle_center1)
-            circle_center2 = new_basis.old_coordinates(new_circle_center2)
+            circle_center1 = new_basis.local_to_global_coordinates(new_circle_center1)
+            circle_center2 = new_basis.local_to_global_coordinates(new_circle_center2)
             circle1 = volmdlr.wires.Circle2D(circle_center1, r)
             circle2 = volmdlr.wires.Circle2D(circle_center2, r)
 
@@ -1302,7 +1302,7 @@ class Line2D(Line):
         line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
         line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
         new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
-        pt_K = volmdlr.Point2D(new_basis.old_coordinates(new_pt_k))
+        pt_K = volmdlr.Point2D(new_basis.local_to_global_coordinates(new_pt_k))
 
         if pt_K == I:
             return None, None
@@ -1344,8 +1344,8 @@ class Line2D(Line):
         new_circle_center1 = volmdlr.Point2D(0, -r1)
         new_circle_center2 = volmdlr.Point2D(0, r2)
 
-        circle_center1 = new_basis2.old_coordinates(new_circle_center1)
-        circle_center2 = new_basis2.old_coordinates(new_circle_center2)
+        circle_center1 = new_basis2.local_to_global_coordinates(new_circle_center1)
+        circle_center2 = new_basis2.local_to_global_coordinates(new_circle_center2)
 
         if new_basis.new_coordinates(circle_center1)[1] > 0:
             circle1 = volmdlr.wires.Circle2D(circle_center1, r1)
@@ -1969,8 +1969,8 @@ class LineSegment2D(LineSegment):
         side = 'old' or 'new'.
         """
         if side == 'old':
-            new_start = frame.old_coordinates(self.start)
-            new_end = frame.old_coordinates(self.end)
+            new_start = frame.local_to_global_coordinates(self.start)
+            new_end = frame.local_to_global_coordinates(self.end)
         elif side == 'new':
             new_start = frame.new_coordinates(self.start)
             new_end = frame.new_coordinates(self.end)
@@ -1986,8 +1986,8 @@ class LineSegment2D(LineSegment):
         :param side: 'old' or 'new'.
         """
         if side == 'old':
-            new_start = frame.old_coordinates(self.start)
-            new_end = frame.old_coordinates(self.end)
+            new_start = frame.local_to_global_coordinates(self.start)
+            new_end = frame.local_to_global_coordinates(self.end)
         elif side == 'new':
             new_start = frame.new_coordinates(self.start)
             new_end = frame.new_coordinates(self.end)
@@ -3369,7 +3369,7 @@ class ArcEllipse2D(Edge):
             angle_end = self.angle_end
             angle_start = self.angle_start
 
-        discretization_points = [self.frame.old_coordinates(
+        discretization_points = [self.frame.local_to_global_coordinates(
             volmdlr.Point2D(self.major_axis * math.cos(angle), self.minor_axis * math.sin(angle)))
             for angle in npy.linspace(angle_start, angle_end, number_points)]
         if not is_trigo:
@@ -3685,8 +3685,8 @@ class Line3D(Line):
         side = 'old' or 'new'
         """
         if side == 'old':
-            new_start = frame.old_coordinates(self.point1)
-            new_end = frame.old_coordinates(self.point2)
+            new_start = frame.local_to_global_coordinates(self.point1)
+            new_end = frame.local_to_global_coordinates(self.point2)
         elif side == 'new':
             new_start = frame.new_coordinates(self.point1)
             new_end = frame.new_coordinates(self.point2)
@@ -3701,8 +3701,8 @@ class Line3D(Line):
         side = 'old' or 'new'
         """
         if side == 'old':
-            new_start = frame.old_coordinates(self.point1)
-            new_end = frame.old_coordinates(self.point2)
+            new_start = frame.local_to_global_coordinates(self.point1)
+            new_end = frame.local_to_global_coordinates(self.point2)
         elif side == 'new':
             new_start = frame.new_coordinates(self.point1)
             new_end = frame.new_coordinates(self.point2)
@@ -3931,7 +3931,7 @@ class LineSegment3D(LineSegment):
         """
         if side == 'old':
             return LineSegment3D(
-                *[frame.old_coordinates(point) for point in [self.start, self.end]])
+                *[frame.local_to_global_coordinates(point) for point in [self.start, self.end]])
         if side == 'new':
             return LineSegment3D(
                 *[frame.new_coordinates(point) for point in [self.start, self.end]])
@@ -3944,8 +3944,8 @@ class LineSegment3D(LineSegment):
         side = 'old' or 'new'
         """
         if side == 'old':
-            new_start = frame.old_coordinates(self.start)
-            new_end = frame.old_coordinates(self.end)
+            new_start = frame.local_to_global_coordinates(self.start)
+            new_end = frame.local_to_global_coordinates(self.end)
         elif side == 'new':
             new_start = frame.new_coordinates(self.start)
             new_end = frame.new_coordinates(self.end)
@@ -5186,9 +5186,9 @@ class Arc3D(Arc):
 
     def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
         if side == 'old':
-            new_start = frame.old_coordinates(self.start.copy())
-            new_interior = frame.old_coordinates(self.interior.copy())
-            new_end = frame.old_coordinates(self.end.copy())
+            new_start = frame.local_to_global_coordinates(self.start.copy())
+            new_interior = frame.local_to_global_coordinates(self.interior.copy())
+            new_end = frame.local_to_global_coordinates(self.end.copy())
         elif side == 'new':
             new_start = frame.new_coordinates(self.start.copy())
             new_interior = frame.new_coordinates(self.interior.copy())
@@ -5929,7 +5929,7 @@ class ArcEllipse3D(Edge):
         else:
             angle_end = self.angle_end
             angle_start = self.angle_start
-        discretization_points = [self.frame.old_coordinates(
+        discretization_points = [self.frame.local_to_global_coordinates(
             volmdlr.Point3D(self.Gradius * math.cos(angle), self.Sradius * math.sin(angle), 0))
             for angle in npy.linspace(angle_start, angle_end, number_points)]
         return discretization_points

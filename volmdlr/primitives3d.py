@@ -585,9 +585,9 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                                  side: str):
         basis = frame.basis()
         if side == 'old':
-            extrusion_vector = basis.old_coordinates(self.extrusion_vector)
-            x = basis.old_coordinates(self.x)
-            y = basis.old_coordinates(self.y)
+            extrusion_vector = basis.local_to_global_coordinates(self.extrusion_vector)
+            x = basis.local_to_global_coordinates(self.x)
+            y = basis.local_to_global_coordinates(self.y)
         elif side == 'new':
             extrusion_vector = basis.new_coordinates(self.extrusion_vector)
             x = basis.new_coordinates(self.x)
@@ -847,9 +847,9 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
                                  side: str):
         basis = frame.Basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
-            x = basis.old_coordinates(self.x)
-            y = basis.old_coordinates(self.y)
+            axis = basis.local_to_global_coordinates(self.axis)
+            x = basis.local_to_global_coordinates(self.x)
+            y = basis.local_to_global_coordinates(self.y)
         elif side == 'new':
             axis = basis.new_coordinates(self.axis)
             x = basis.new_coordinates(self.x)
@@ -1022,7 +1022,7 @@ class Cylinder(RevolvedProfile):
         """
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
             axis = basis.new_coordinates(self.axis)
         else:
@@ -1039,7 +1039,7 @@ class Cylinder(RevolvedProfile):
         """
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
             axis = basis.new_coordinates(self.axis)
         else:
@@ -1576,7 +1576,7 @@ class HollowCylinder(RevolvedProfile):
         """
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
             axis = basis.new_coordinates(self.axis)
         else:
@@ -1595,7 +1595,7 @@ class HollowCylinder(RevolvedProfile):
         """
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
             axis = basis.new_coordinates(self.axis)
         else:

@@ -2204,7 +2204,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         x = (self.R + self.r * math.cos(phi)) * math.cos(theta)
         y = (self.R + self.r * math.cos(phi)) * math.sin(theta)
         z = self.r * math.sin(phi)
-        return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
+        return self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
         """
@@ -2629,7 +2629,7 @@ class ConicalSurface3D(PeriodicalSurface):
         new_point = volmdlr.Point3D(r * math.cos(theta),
                                     r * math.sin(theta),
                                     z)
-        return self.frame.old_coordinates(new_point)
+        return self.frame.local_to_global_coordinates(new_point)
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
         """
@@ -2894,7 +2894,7 @@ class SphericalSurface3D(Surface3D):
         x = self.radius * math.cos(phi) * math.cos(theta)
         y = self.radius * math.cos(phi) * math.sin(theta)
         z = self.radius * math.sin(phi)
-        return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
+        return self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
         """
@@ -7511,7 +7511,7 @@ class CylindricalFace3D(Face3D):
     #     v2 = other_cyl.cylindricalsurface3d.frame.v
     #     frame2 = volmdlr.Frame3D(other_cyl.center, u2, v2, n2)
     #     # st2 = volmdlr.Point3D((r2*math.cos(min_theta2), r2*math.sin(min_theta2), min_h2))
-    #     # start2 = frame2.old_coordinates(st2)
+    #     # start2 = frame2.local_to_global_coordinates(st2)
 
     #     w = other_cyl.center - self.center
 
@@ -7573,10 +7573,10 @@ class CylindricalFace3D(Face3D):
 
     #     pt1 = volmdlr.Point3D(
     #         (r1 * math.cos(res1.x[0]), r1 * math.sin(res1.x[0]), res1.x[1]))
-    #     p1 = frame1.old_coordinates(pt1)
+    #     p1 = frame1.local_to_global_coordinates(pt1)
     #     pt2 = volmdlr.Point3D(
     #         (r2 * math.cos(res1.x[2]), r2 * math.sin(res1.x[2]), res1.x[3]))
-    #     p2 = frame2.old_coordinates(pt2)
+    #     p2 = frame2.local_to_global_coordinates(pt2)
     #     d = p1.point_distance(p2)
     #     result = res1
 
@@ -7588,8 +7588,8 @@ class CylindricalFace3D(Face3D):
     #         pttest2 = volmdlr.Point3D((r2 * math.cos(couple.x[2]),
     #                                    r2 * math.sin(couple.x[2]),
     #                                    couple.x[3]))
-    #         ptest1 = frame1.old_coordinates(pttest1)
-    #         ptest2 = frame2.old_coordinates(pttest2)
+    #         ptest1 = frame1.local_to_global_coordinates(pttest1)
+    #         ptest2 = frame2.local_to_global_coordinates(pttest2)
     #         dtest = ptest1.point_distance(ptest2)
     #         if dtest < d:
     #             result = couple
@@ -7608,7 +7608,7 @@ class CylindricalFace3D(Face3D):
     #         pt1 = volmdlr.Point3D((r1 * math.cos(new_pt1_2d.vector[0]),
     #                                r1 * math.sin(new_pt1_2d.vector[0]),
     #                                new_pt1_2d.vector[1]))
-    #         p1 = frame1.old_coordinates(pt1)
+    #         p1 = frame1.local_to_global_coordinates(pt1)
 
     #     if not other_cyl.contours2d[0].point_belongs(pt2_2d):
     #         # Find the closest one
@@ -7619,7 +7619,7 @@ class CylindricalFace3D(Face3D):
     #         pt2 = volmdlr.Point3D((r2 * math.cos(new_pt2_2d.vector[0]),
     #                                r2 * math.sin(new_pt2_2d.vector[0]),
     #                                new_pt2_2d.vector[1]))
-    #         p2 = frame2.old_coordinates(pt2)
+    #         p2 = frame2.local_to_global_coordinates(pt2)
 
     #     return p1, p2
 
@@ -7636,7 +7636,7 @@ class CylindricalFace3D(Face3D):
     #     v1 = self.cylindricalsurface3d.frame.v
     #     frame1 = volmdlr.Frame3D(self.center, u1, v1, n1)
     #     # st1 = volmdlr.Point3D((r*math.cos(min_theta1), r*math.sin(min_theta1), min_h1))
-    #     # start1 = frame1.old_coordinates(st1)
+    #     # start1 = frame1.local_to_global_coordinates(st1)
 
     #     poly2d = planeface.polygon2D
     #     pfpoints = poly2d.points
@@ -7695,7 +7695,7 @@ class CylindricalFace3D(Face3D):
 
     #     pt1 = volmdlr.Point3D(
     #         (r * math.cos(res1.x[1]), r * math.sin(res1.x[1]), res1.x[0]))
-    #     p1 = frame1.old_coordinates(pt1)
+    #     p1 = frame1.local_to_global_coordinates(pt1)
     #     p2 = pf1 + res1.x[2] * u + res1.x[3] * v
     #     pt1_2d = volmdlr.Point2D((res1.x[1], res1.x[0]))
     #     pt2_2d = p2.to_2d(pf1, u, v)
@@ -7709,7 +7709,7 @@ class CylindricalFace3D(Face3D):
     #         pt1 = volmdlr.Point3D((r * math.cos(new_pt1_2d.vector[0]),
     #                                r * math.sin(new_pt1_2d.vector[0]),
     #                                new_pt1_2d.vector[1]))
-    #         p1 = frame1.old_coordinates(pt1)
+    #         p1 = frame1.local_to_global_coordinates(pt1)
 
     #     if not planeface.contours[0].point_belongs(pt2_2d):
     #         # Find the closest one

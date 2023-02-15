@@ -650,7 +650,7 @@ class Vector2D(Vector):
         :rtype: :class:`volmdlr.Vector2D`
         """
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
         if side == "new":
             new_vector = frame.new_coordinates(self)
         return new_vector
@@ -667,7 +667,7 @@ class Vector2D(Vector):
         :rtype: None
         """
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
         if side == "new":
             new_vector = frame.new_coordinates(self)
         self.x = new_vector.x
@@ -1582,7 +1582,7 @@ class Vector3D(Vector):
         :rtype: :class:`volmdlr.Vector3D`
         """
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
 
         if side == "new":
             new_vector = frame.new_coordinates(self)
@@ -1600,7 +1600,7 @@ class Vector3D(Vector):
         :rtype: None
         """
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
 
         if side == "new":
             new_vector = frame.new_coordinates(self)
@@ -3130,9 +3130,9 @@ class Frame2D(Basis2D):
             new_u = basis.new_coordinates(self.u)
             new_v = basis.new_coordinates(self.v)
         elif side == "old":
-            new_origin = frame.old_coordinates(self.origin)
-            new_u = basis.old_coordinates(self.u)
-            new_v = basis.old_coordinates(self.v)
+            new_origin = frame.local_to_global_coordinates(self.origin)
+            new_u = basis.local_to_global_coordinates(self.u)
+            new_v = basis.local_to_global_coordinates(self.v)
         else:
             raise ValueError("side value not valid, please specify a correct value: \'old\' or \'new\'")
         return Frame2D(new_origin, new_u, new_v)
@@ -3398,10 +3398,10 @@ class Frame3D(Basis3D):
             new_w = basis.new_coordinates(self.w)
 
         elif side == "old":
-            new_origin = frame.old_coordinates(self.origin)
-            new_u = basis.old_coordinates(self.u)
-            new_v = basis.old_coordinates(self.v)
-            new_w = basis.old_coordinates(self.w)
+            new_origin = frame.local_to_global_coordinates(self.origin)
+            new_u = basis.local_to_global_coordinates(self.u)
+            new_v = basis.local_to_global_coordinates(self.v)
+            new_w = basis.local_to_global_coordinates(self.w)
         else:
             raise ValueError("side value not valid, please specify"
                              'a correct value: \'old\' or \'new\'')
