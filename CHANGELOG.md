@@ -33,8 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Parametric operations with BSpline curves.
 * OpenTriangleShell3D: fix from_mesh_data method.
 * PeriodicalSurface: fix face from contours.
+* LineSegment2D.line_intersections: verify if colinear first.
 * Cylinder: to_dict, min_distance_to_other_cylinder.
-* fix some pydocstyle errors
+* fix some pydocstyle errors 
 
 ### Removed
 
@@ -46,6 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * faces.py's Triangle3D objects: subdescription points and triangles
 * EdgeCollection3D: new object for displaying series of edges
 * BSplineSurface3D: compile BSplineSurface3D.derivatives
+* Contour2D.area(): save area in a cache variable.
+* Contour2D.__eq__(): verify contour length first, when verify if two contours are the same.
+* Contour2D.is_inside(): verify first if the area of the contour2 is not smaller that contour 1.
 * Disabling pointer in to_dict for most primitives
 
 ### Refactorings
