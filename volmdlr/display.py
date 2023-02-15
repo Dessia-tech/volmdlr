@@ -78,7 +78,7 @@ class DisplayMesh(dc.DessiaObject):
 
     @property
     def point_index(self):
-        if not self._point_index:
+        if self._point_index is None:
             self._point_index = {p: i for i, p in enumerate(self.points)}
         return self._point_index
 
