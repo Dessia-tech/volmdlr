@@ -25,11 +25,11 @@ MAX_ERROR_BY_TYPE = {
     # If the error code is not in this dict, then there is no tolerance on the error.
     # http://www.pydocstyle.org/en/stable/error_codes.html
     "D101": 53,
-    "D102": 606,
+    "D102": 594,
 
-    "D205": 141,
+    "D205": 131,
 
-    "D400": 184,
+    "D400": 163,
 }
 
 error_detected = False
