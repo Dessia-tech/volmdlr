@@ -52,6 +52,8 @@ class RoundedLineSegments:
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.frame_mapping_inplace(frame, side)
 

@@ -602,6 +602,8 @@ class Vector2D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         v2x, v2y = self.rotation_parameters(center, angle)
         self.x = v2x
         self.y = v2y
@@ -628,6 +630,8 @@ class Vector2D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         v2x = self.x + offset[0]
         v2y = self.y + offset[1]
         self.x = v2x
@@ -666,6 +670,8 @@ class Vector2D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == "old":
             new_vector = frame.local_to_global_coordinates(self)
         if side == "new":
@@ -1435,6 +1441,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         vector2 = vector3D_rotation(self, center, axis, angle)
         self.x = vector2[0]
         self.y = vector2[1]
@@ -1485,6 +1493,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         y1, z1 = self.axis_rotation_parameters(self.y, self.z, angle)
         self.y = y1
         self.z = z1
@@ -1511,6 +1521,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         z1, x1 = self.axis_rotation_parameters(self.z, self.x, angle)
         self.x = x1
         self.z = z1
@@ -1537,6 +1549,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         x1, y1 = self.axis_rotation_parameters(self.x, self.y, angle)
         self.x = x1
         self.y = y1
@@ -1561,6 +1575,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.x += offset[0]
         self.y += offset[1]
         self.z += offset[2]
@@ -1599,6 +1615,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == "old":
             new_vector = frame.local_to_global_coordinates(self)
 
@@ -2525,6 +2543,8 @@ class Basis2D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         center = O2D
         new_u = self.u.rotation(center, angle)
         new_v = self.v.rotation(center, angle)
@@ -2706,6 +2726,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         center = O3D
         new_u = self.u.rotation(center, axis, angle)
         new_v = self.v.rotation(center, axis, angle)
@@ -2739,6 +2761,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.u = self.u.x_rotation(angle)
         self.v = self.v.x_rotation(angle)
         self.w = self.w.x_rotation(angle)
@@ -2768,6 +2792,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.u = self.u.y_rotation(angle)
         self.v = self.v.y_rotation(angle)
         self.w = self.w.y_rotation(angle)
@@ -2797,6 +2823,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.u = self.u.z_rotation(angle)
         self.v = self.v.z_rotation(angle)
         self.w = self.w.z_rotation(angle)
@@ -2881,6 +2909,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         vect_u, vect_v, vect_w = self.euler_rotation_parameters(angles)
         self.u = vect_u
         self.v = vect_v
@@ -3158,6 +3188,8 @@ class Frame2D(Basis2D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.origin = self.origin.translation(vector)
 
     def rotation(self, angle):
@@ -3181,6 +3213,8 @@ class Frame2D(Basis2D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_base = Basis2D.rotation(self, angle)
         self.u = new_base.u
         self.v = new_base.v
@@ -3441,6 +3475,8 @@ class Frame3D(Basis3D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_base = Basis3D.rotation(self, axis, angle)
         new_origin = self.origin.rotation(center, axis, angle)
         self.origin = new_origin
@@ -3469,6 +3505,8 @@ class Frame3D(Basis3D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.origin.translation_inplace(offset)
 
     def copy(self, deep=True, memo=None):

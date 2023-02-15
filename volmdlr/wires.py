@@ -917,6 +917,8 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
         :param side: 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for primitive in self.primitives:
             primitive.frame_mapping_inplace(frame, side)
 
@@ -1749,6 +1751,8 @@ class Contour2D(ContourMixin, Wire2D):
         return Contour2D(self.inverted_primitives())
 
     def invert_inplace(self):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.primitives = self.inverted_primitives()
 
     def random_point_inside(self, include_edge_points: bool = False):
@@ -2578,6 +2582,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         :param center: rotation center
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.rotation_inplace(center, angle)
 
@@ -2597,6 +2603,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.translation_inplace(offset)
 
@@ -2604,6 +2612,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return self.__class__([point.frame_mapping(frame, side) for point in self.points])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.frame_mapping_inplace(frame, side)
 
@@ -3957,6 +3967,8 @@ class Circle2D(Contour2D):
         :param center: rotation center
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.rotation_inplace(center, angle)
 
     def translation(self, offset: volmdlr.Vector2D):
@@ -3974,6 +3986,8 @@ class Circle2D(Contour2D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -3995,6 +4009,8 @@ class Circle2D(Contour2D):
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == 'old':
             self.center = frame.local_to_global_coordinates(self.center)
         elif side == 'new':
@@ -4547,6 +4563,8 @@ class Contour3D(ContourMixin, Wire3D):
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for edge in self.primitives:
             edge.rotation_inplace(center, axis, angle)
 
@@ -4567,6 +4585,8 @@ class Contour3D(ContourMixin, Wire3D):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for edge in self.primitives:
             edge.translation_inplace(offset)
 
@@ -4620,6 +4640,8 @@ class Contour3D(ContourMixin, Wire3D):
 
         :param side: 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for edge in self.primitives:
             edge.frame_mapping_inplace(frame, side)
 
@@ -4873,6 +4895,8 @@ class Circle3D(Contour3D):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
@@ -4890,6 +4914,8 @@ class Circle3D(Contour3D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.translation_inplace(offset)
 
     def plot(self, ax=None, color='k', alpha=1., edge_details=False):
@@ -5290,6 +5316,8 @@ class Ellipse3D(Contour3D):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.rotation_inplace(center, axis, angle)
         self.normal.rotation_inplace(center, axis, angle)
         self.major_dir.rotation_inplace(center, axis, angle)
@@ -5312,6 +5340,8 @@ class Ellipse3D(Contour3D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.translation_inplace(offset)
         self.normal.translation_inplace(offset)
         self.major_dir.translation_inplace(offset)
@@ -5424,6 +5454,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.rotation_inplace(center, axis, angle)
 
@@ -5444,6 +5476,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.translation_inplace(offset)
 

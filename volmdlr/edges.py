@@ -754,6 +754,8 @@ class BSplineCurve(Edge):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.control_points:
             point.translation_inplace(offset)
 
@@ -1107,6 +1109,8 @@ class Line2D(Line):
         :param center: rotation center.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in [self.point1, self.point2]:
             point.rotation_inplace(center, angle)
 
@@ -1125,6 +1129,8 @@ class Line2D(Line):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in [self.point1, self.point2]:
             point.translation_inplace(offset)
 
@@ -1584,6 +1590,8 @@ class BSplineCurve2D(BSplineCurve):
         :param center: rotation center
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.control_points:
             point.rotation_inplace(center, angle)
 
@@ -1940,6 +1948,8 @@ class LineSegment2D(LineSegment):
         :param center: rotation center.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in [self.start, self.end]:
             point.rotation_inplace(center, angle)
 
@@ -1959,6 +1969,8 @@ class LineSegment2D(LineSegment):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in [self.start, self.end]:
             point.translation_inplace(offset)
 
@@ -1985,6 +1997,8 @@ class LineSegment2D(LineSegment):
         :param frame: frame to execute the frame mapping.
         :param side: 'old' or 'new'.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == 'old':
             new_start = frame.local_to_global_coordinates(self.start)
             new_end = frame.local_to_global_coordinates(self.end)
@@ -2703,6 +2717,8 @@ class Arc2D(Arc):
         :param center: rotation center.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.start.rotation_inplace(center, angle)
         self.interior.rotation_inplace(center, angle)
         self.end.rotation_inplace(center, angle)
@@ -2727,6 +2743,8 @@ class Arc2D(Arc):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.start.translation_inplace(offset)
         self.interior.translation_inplace(offset)
         self.end.translation_inplace(offset)
@@ -2750,6 +2768,8 @@ class Arc2D(Arc):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.__init__(*[point.frame_mapping(frame, side) for point in
                         [self.start, self.interior, self.end]])
 
@@ -2973,6 +2993,8 @@ class FullArc2D(Arc2D):
         return FullArc2D(new_center, new_start_end)
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self._center.rotation(center, angle, False)
         self.start.rotation(center, angle, False)
         self.interior.rotation(center, angle, False)
@@ -2984,6 +3006,8 @@ class FullArc2D(Arc2D):
         return FullArc2D(new_center, new_start_end)
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self._center.translation_inplace(offset)
         self.start.translation_inplace(offset)
         self.end.translation_inplace(offset)
@@ -3005,6 +3029,8 @@ class FullArc2D(Arc2D):
                            [self._center, self.start]])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for p in [self._center, self.start, self.end, self.interior]:
             p.frame_mapping_inplace(frame, side)
 
@@ -3649,6 +3675,8 @@ class Line3D(Line):
                         [self.point1, self.point2]])
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         """
         Line3D rotation. Object is updated inplace.
 
@@ -3676,6 +3704,8 @@ class Line3D(Line):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in [self.point1, self.point2]:
             point.translation_inplace(offset)
         self._bbox = None
@@ -3702,6 +3732,8 @@ class Line3D(Line):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == 'old':
             new_start = frame.local_to_global_coordinates(self.point1)
             new_end = frame.local_to_global_coordinates(self.point2)
@@ -3891,6 +3923,8 @@ class LineSegment3D(LineSegment):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.rotation_inplace(center, axis, angle)
         self._bbox = None
@@ -3921,6 +3955,8 @@ class LineSegment3D(LineSegment):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.translation_inplace(offset)
         self._bbox = None
@@ -3945,6 +3981,8 @@ class LineSegment3D(LineSegment):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == 'old':
             new_start = frame.local_to_global_coordinates(self.start)
             new_end = frame.local_to_global_coordinates(self.end)
@@ -4575,6 +4613,8 @@ class BSplineCurve3D(BSplineCurve):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_control_points = [p.rotation(center, axis, angle) for p in
                               self.control_points]
         new_bsplinecurve3d = BSplineCurve3D(self.degree, new_control_points,
@@ -5098,6 +5138,8 @@ class Arc3D(Arc):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.rotation_inplace(center, axis, angle)
         self.start.rotation_inplace(center, axis, angle)
         self.interior.rotation_inplace(center, axis, angle)
@@ -5122,6 +5164,8 @@ class Arc3D(Arc):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.translation_inplace(offset)
         self.start.translation_inplace(offset)
         self.interior.translation_inplace(offset)
@@ -5217,6 +5261,8 @@ class Arc3D(Arc):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_start, new_interior, new_end = \
             self.frame_mapping_parameters(frame, side)
         self.start, self.interior, self.end = new_start, new_interior, new_end
@@ -5722,6 +5768,8 @@ class FullArc3D(Arc3D):
                          new_normal, name=self.name)
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.start.rotation(center, axis, angle, False)
         self.end.rotation(center, axis, angle, False)
         self._center.rotation(center, axis, angle, False)
@@ -5736,6 +5784,8 @@ class FullArc3D(Arc3D):
                          new_normal, name=self.name)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.start.translation(offset, False)
         self.end.translation(offset, False)
         self._center.translation(offset, False)
