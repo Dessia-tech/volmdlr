@@ -5,7 +5,7 @@ Surfaces & faces
 import math
 import warnings
 from itertools import chain, product
-from typing import Any, Dict, List, Tuple, Union
+from typing import List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -3943,7 +3943,7 @@ class BSplineSurface3D(Surface3D):
                 and bspline_curve3d.periodic:
             raise NotImplementedError
 
-        elif flag:
+        if flag:
             x_perio = self.x_periodicity if self.x_periodicity is not None \
                 else 1.
             y_perio = self.y_periodicity if self.y_periodicity is not None \
@@ -4608,18 +4608,17 @@ class BSplineSurface3D(Surface3D):
                                                         finite_elements_initial[k].primitives[0].middle_point()[1] -
                                                         finite_elements_initial[k].center_of_mass()[1]))
 
-        X = point2d_frame_deformed.frame_mapping(frame_inital, 'old')[0]
-        if X < 0:
-            X = 0
-        elif X > 1:
-            X = 1
-        Y = point2d_frame_deformed.frame_mapping(frame_inital, 'old')[1]
-        if Y < 0:
-            Y = 0
-        elif Y > 1:
-            Y = 1
+        point2d = point2d_frame_deformed.frame_mapping(frame_inital, 'old')
+        if point2d.x < 0:
+            point2d.x = 0
+        elif point2d.x > 1:
+            point2d.x = 1
+        if point2d.y < 0:
+            point2d.y = 0
+        elif point2d.y > 1:
+            point2d.y = 1
 
-        return volmdlr.Point2D(X, Y)
+        return point2d
 
     def point2d_with_dimension_to_3d(self, point2d, grid2d: volmdlr.grid.Grid2D):
         """
@@ -7053,8 +7052,8 @@ class Triangle3D(PlaneFace3D):
         self.alpha = alpha
         self.name = name
 
-        self._utd_surface3d = False
-        self._utd_surface2d = False
+        self._surface3d = None
+        self._surface2d = None
         self._bbox = None
         self._outer_contour3d = None
         self._inner_contours3d = None
@@ -7097,14 +7096,13 @@ class Triangle3D(PlaneFace3D):
 
     @property
     def surface3d(self):
-        if not self._utd_surface3d:
+        if self._surface3d is None:
             self._surface3d = Plane3D.from_3_points(self.point1, self.point2, self.point3)
-            self._utd_surface3d = True
         return self._surface3d
 
     @property
     def surface2d(self):
-        if not self._utd_surface2d:
+        if self._surface2d is None:
             plane3d = self.surface3d
             contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(self.point1, self.point2),
                                                  vme.LineSegment3D(self.point2, self.point3),
@@ -7115,7 +7113,6 @@ class Triangle3D(PlaneFace3D):
 
             self._surface2d = Surface2D(outer_contour=contour2d, inner_contours=[])
 
-            self._utd_surface2d = True
         return self._surface2d
 
     def to_dict(self, *args, **kwargs):
@@ -7126,7 +7123,7 @@ class Triangle3D(PlaneFace3D):
                 'name': self.name}
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    def dict_to_object(cls, dict_, *args, **kwargs):
         point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
         point2 = volmdlr.Point3D.dict_to_object(dict_['point2'])
         point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
@@ -8649,8 +8646,7 @@ class BSplineFace3D(Face3D):
 
         if coord.index(max(coord)) == 0:
             return 'x'
-        else:
-            return 'y'
+        return 'y'
 
     def merge_with(self, other_bspline_face3d):
         """
@@ -8720,7 +8716,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                                    name=name)
 
     def _data_hash(self):
-        return sum(face._data_hash() for face in self.faces)
+        return len(self.faces)  # sum(face._data_hash() for face in self.faces)
 
     def _data_eq(self, other_object):
         if other_object.__class__.__name__ != self.__class__.__name__:
@@ -9048,7 +9044,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                                                       return_points=True)
                     if distance == 0:
                         return None
-                    elif distance < distance_min:
+                    if distance < distance_min:
                         distance_min, point1_min, point2_min = distance, point1, point2
 
         return point1_min, point2_min
@@ -10032,6 +10028,13 @@ class OpenTriangleShell3D(OpenShell3D):
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
         OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
+
+    def to_dict(self):
+        dict_ = self.base_dict()
+        dict_['triangles'] = [t.to_dict() for t in self.triangles]
+        dict_['alpha'] = self.alpha
+        dict_['color'] = self.color
+        return dict_
 
     def point_on_shell(self, point: volmdlr.Point3D):
         for face in self.faces:
