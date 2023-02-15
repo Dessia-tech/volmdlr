@@ -7021,8 +7021,8 @@ class Triangle3D(PlaneFace3D):
         self.alpha = alpha
         self.name = name
 
-        self._utd_surface3d = False
-        self._utd_surface2d = False
+        self._surface3d = None
+        self._surface2d = None
         self._bbox = None
         self._outer_contour3d = None
         self._inner_contours3d = None
@@ -7065,14 +7065,13 @@ class Triangle3D(PlaneFace3D):
 
     @property
     def surface3d(self):
-        if not self._utd_surface3d:
+        if self._surface3d is None:
             self._surface3d = Plane3D.from_3_points(self.point1, self.point2, self.point3)
-            self._utd_surface3d = True
         return self._surface3d
 
     @property
     def surface2d(self):
-        if not self._utd_surface2d:
+        if self._surface2d is None:
             plane3d = self.surface3d
             contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(self.point1, self.point2),
                                                  vme.LineSegment3D(self.point2, self.point3),
@@ -7083,7 +7082,6 @@ class Triangle3D(PlaneFace3D):
 
             self._surface2d = Surface2D(outer_contour=contour2d, inner_contours=[])
 
-            self._utd_surface2d = True
         return self._surface2d
 
     def to_dict(self, *args, **kwargs):

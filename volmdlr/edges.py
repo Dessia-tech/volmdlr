@@ -689,10 +689,7 @@ class BSplineCurve(Edge):
             res = scp.optimize.least_squares(
                 lambda u: (point - self.point_at_abscissa(u)).norm(),
                 x0=x0,
-                bounds=([0], [length]),
-                # ftol=tol / 10,
-                # xtol=tol / 10,
-                # loss='soft_l1'
+                bounds=([0], [length])
             )
             if res.fun < tol:
                 return res.x[0]

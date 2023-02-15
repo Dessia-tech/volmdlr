@@ -1561,7 +1561,7 @@ class Contour2D(ContourMixin, Wire2D):
     def __init__(self, primitives: List[volmdlr.edges.Edge],
                  name: str = ''):
         Wire2D.__init__(self, primitives, name)
-        self._utd_edge_polygon = False
+        self._edge_polygon = None
         self._polygon_100_points = None
 
     def __hash__(self):
@@ -1600,9 +1600,8 @@ class Contour2D(ContourMixin, Wire2D):
 
     @property
     def edge_polygon(self):
-        if not self._utd_edge_polygon:
+        if self._edge_polygon is None:
             self._edge_polygon = self._get_edge_polygon()
-            self._utd_edge_polygon = True
         return self._edge_polygon
 
     def _get_edge_polygon(self):
@@ -4380,7 +4379,7 @@ class Contour3D(ContourMixin, Wire3D):
         """
 
         Wire3D.__init__(self, primitives=primitives, name=name)
-        self._utd_edge_polygon = False
+        self._edge_polygon = None
         self._utd_bounding_box = False
 
     def __hash__(self):
@@ -4409,9 +4408,8 @@ class Contour3D(ContourMixin, Wire3D):
 
     @property
     def edge_polygon(self):
-        if not self._utd_edge_polygon:
+        if self._edge_polygon is None:
             self._edge_polygon = self._get_edge_polygon()
-            self._utd_edge_polygon = True
         return self._edge_polygon
 
     def _get_edge_polygon(self):
