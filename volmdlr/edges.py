@@ -5004,7 +5004,7 @@ class Arc3D(Arc):
     @property
     def clockwise_and_trigowise_paths(self):
         """
-        :return: clockwise path and trigonomectric path property
+        :return: clockwise path and trigonomectric path property.
         """
         if not self._utd_clockwise_and_trigowise_paths:
             vec1 = self.start - self.center
@@ -5025,7 +5025,7 @@ class Arc3D(Arc):
         """
         Arc angle property.
 
-        :return: arc angle
+        :return: arc angle.
         """
         if not self._utd_angle:
             self._angle = self.get_angle()
@@ -5036,7 +5036,7 @@ class Arc3D(Arc):
         """
         Gets the arc angle.
 
-        :return: arc angle
+        :return: arc angle.
         """
         clockwise_path, trigowise_path = \
             self.clockwise_and_trigowise_paths
@@ -5148,8 +5148,8 @@ class Arc3D(Arc):
         """
         Arc3D translation.
 
-        :param offset: translation vector
-        :return: A new translated Arc3D
+        :param offset: translation vector.
+        :return: A new translated Arc3D.
         """
         new_start = self.start.translation(offset)
         new_interior = self.interior.translation(offset)
