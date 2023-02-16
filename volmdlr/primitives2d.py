@@ -289,10 +289,10 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         if not dont_add_last_point and not self.closed:
             new_linesegment2D_points.append(self.points[-1])
 
-        rls2D = self.__class__(new_linesegment2D_points, self.radius,
-                               self.closed, adapt_radius=self.adapt_radius)
+        rls_2d = self.__class__(new_linesegment2D_points, self.radius,
+                                self.closed, adapt_radius=self.adapt_radius)
 
-        return rls2D
+        return rls_2d
 
     def offset_lines(self, line_indexes, offset):
         """
@@ -417,10 +417,10 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             else:
                 new_linesegment2D_points.append(self.points[i])
 
-        rls2D = self.__class__(new_linesegment2D_points, self.radius,
-                               adapt_radius=self.adapt_radius)
+        rls_2d = self.__class__(new_linesegment2D_points, self.radius,
+                                adapt_radius=self.adapt_radius)
 
-        return rls2D
+        return rls_2d
 
 
 class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
