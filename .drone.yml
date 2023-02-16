@@ -54,7 +54,7 @@ steps:
 - name: check black formatting
   image: python:3.9
   commands:
-    - pip install black
+    - pip install black[jupyter]
     - bash code_black.sh
 
 
