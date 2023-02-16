@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PeriodicalSurface: fix face from contours.
 * LineSegment2D.line_intersections: verify if colinear first.
 * Cylinder: to_dict, min_distance_to_other_cylinder.
+* Step_assemblies: consider when no transformation is needed.
 * fix some pydocstyle errors
 
 ### Removed

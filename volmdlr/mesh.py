@@ -787,7 +787,7 @@ class ElementsGroup(DessiaObject):
         return ax
 
 
-class Mesh(DessiaObject):    
+class Mesh(DessiaObject):
     """Defines a mesh."""
 
     _standalone_in_db = True
