@@ -685,6 +685,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         Rotate the surface inplace.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_surface2d = self.rotation(center, angle)
         self.outer_contour = new_surface2d.outer_contour
         self.inner_contours = new_surface2d.inner_contours
@@ -695,6 +697,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.__class__(outer_contour, inner_contours)
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_contour = self.translation(offset)
         self.outer_contour = new_contour.outer_contour
         self.inner_contours = new_contour.inner_contours
@@ -705,6 +709,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.__class__(outer_contour, inner_contours)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_contour = self.frame_mapping(frame, side)
         self.outer_contour = new_contour.outer_contour
         self.inner_contours = new_contour.inner_contours
@@ -1419,6 +1425,8 @@ class Plane3D(Surface3D):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.rotation_inplace(center=center, axis=axis, angle=angle)
 
     def translation(self, offset: volmdlr.Vector3D):
@@ -1437,6 +1445,8 @@ class Plane3D(Surface3D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -1458,6 +1468,8 @@ class Plane3D(Surface3D):
         :type frame: `volmdlr.Frame3D`
         :param side: 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_frame = self.frame.frame_mapping(frame, side)
         self.frame.origin = new_frame.origin
         self.frame.u = new_frame.u
@@ -1939,6 +1951,8 @@ class CylindricalSurface3D(PeriodicalSurface):
 
         :param side: 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_frame = self.frame.frame_mapping(frame, side)
         self.frame = new_frame
 
@@ -1981,6 +1995,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
@@ -1998,6 +2014,8 @@ class CylindricalSurface3D(PeriodicalSurface):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.translation_inplace(offset)
 
     def grid3d(self, grid2d: volmdlr.grid.Grid2D):
@@ -2204,7 +2222,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         x = (self.R + self.r * math.cos(phi)) * math.cos(theta)
         y = (self.R + self.r * math.cos(phi)) * math.sin(theta)
         z = self.r * math.sin(phi)
-        return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
+        return self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
         """
@@ -2300,6 +2318,8 @@ class ToroidalSurface3D(PeriodicalSurface):
             Acceptable values are 'old' or 'new'.
         :type side: str
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_frame = self.frame.frame_mapping(frame, side)
         self.frame = new_frame
 
@@ -2519,6 +2539,8 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.translation_inplace(offset)
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -2542,6 +2564,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.rotation_inplace(center, axis, angle)
 
 
@@ -2614,6 +2638,8 @@ class ConicalSurface3D(PeriodicalSurface):
 
         :param side:'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_frame = self.frame.frame_mapping(frame, side)
         self.frame = new_frame
 
@@ -2629,7 +2655,7 @@ class ConicalSurface3D(PeriodicalSurface):
         new_point = volmdlr.Point3D(r * math.cos(theta),
                                     r * math.sin(theta),
                                     z)
-        return self.frame.old_coordinates(new_point)
+        return self.frame.local_to_global_coordinates(new_point)
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
         """
@@ -2729,6 +2755,8 @@ class ConicalSurface3D(PeriodicalSurface):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.translation_inplace(offset)
 
     def rotation(self, center: volmdlr.Point3D,
@@ -2753,6 +2781,8 @@ class ConicalSurface3D(PeriodicalSurface):
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.rotation_inplace(center, axis, angle)
 
     def repair_primitives_periodicity(self, primitives2d):
@@ -2894,7 +2924,7 @@ class SphericalSurface3D(Surface3D):
         x = self.radius * math.cos(phi) * math.cos(theta)
         y = self.radius * math.cos(phi) * math.sin(theta)
         z = self.radius * math.sin(phi)
-        return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
+        return self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
         """
@@ -4116,6 +4146,8 @@ class BSplineSurface3D(Surface3D):
         :return: None, BSplineSurface3D is updated inplace
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_bsplinesurface3d = self.rotation(center, axis, angle)
         self.control_points = new_bsplinesurface3d.control_points
         self.surface = new_bsplinesurface3d.surface
@@ -4145,6 +4177,8 @@ class BSplineSurface3D(Surface3D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_bsplinesurface3d = self.translation(offset)
         self.control_points = new_bsplinesurface3d.control_points
         self.surface = new_bsplinesurface3d.surface
@@ -4172,6 +4206,8 @@ class BSplineSurface3D(Surface3D):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_bsplinesurface3d = self.frame_mapping(frame, side)
         self.control_points = new_bsplinesurface3d.control_points
         self.surface = new_bsplinesurface3d.surface
@@ -5825,6 +5861,8 @@ class Face3D(volmdlr.core.Primitive3D):
         :param angle: rotation angle.
         :type angle: float
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.surface3d.rotation_inplace(center=center, axis=axis, angle=angle)
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
@@ -5846,6 +5884,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.surface3d.translation_inplace(offset=offset)
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
@@ -5866,6 +5906,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.surface3d.frame_mapping_inplace(frame, side)
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
@@ -7174,6 +7216,8 @@ class Triangle3D(PlaneFace3D):
 
         :param side: 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.point1.frame_mapping_inplace(frame, side)
         self.point2.frame_mapping_inplace(frame, side)
         self.point3.frame_mapping_inplace(frame, side)
@@ -7211,6 +7255,8 @@ class Triangle3D(PlaneFace3D):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.point1.translation_inplace(offset)
         self.point2.translation_inplace(offset)
         self.point3.translation_inplace(offset)
@@ -7243,6 +7289,8 @@ class Triangle3D(PlaneFace3D):
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.point1.rotation_inplace(center, axis, angle)
         self.point2.rotation_inplace(center, axis, angle)
         self.point3.rotation_inplace(center, axis, angle)
@@ -7508,7 +7556,7 @@ class CylindricalFace3D(Face3D):
     #     v2 = other_cyl.cylindricalsurface3d.frame.v
     #     frame2 = volmdlr.Frame3D(other_cyl.center, u2, v2, n2)
     #     # st2 = volmdlr.Point3D((r2*math.cos(min_theta2), r2*math.sin(min_theta2), min_h2))
-    #     # start2 = frame2.old_coordinates(st2)
+    #     # start2 = frame2.local_to_global_coordinates(st2)
 
     #     w = other_cyl.center - self.center
 
@@ -7570,10 +7618,10 @@ class CylindricalFace3D(Face3D):
 
     #     pt1 = volmdlr.Point3D(
     #         (r1 * math.cos(res1.x[0]), r1 * math.sin(res1.x[0]), res1.x[1]))
-    #     p1 = frame1.old_coordinates(pt1)
+    #     p1 = frame1.local_to_global_coordinates(pt1)
     #     pt2 = volmdlr.Point3D(
     #         (r2 * math.cos(res1.x[2]), r2 * math.sin(res1.x[2]), res1.x[3]))
-    #     p2 = frame2.old_coordinates(pt2)
+    #     p2 = frame2.local_to_global_coordinates(pt2)
     #     d = p1.point_distance(p2)
     #     result = res1
 
@@ -7585,8 +7633,8 @@ class CylindricalFace3D(Face3D):
     #         pttest2 = volmdlr.Point3D((r2 * math.cos(couple.x[2]),
     #                                    r2 * math.sin(couple.x[2]),
     #                                    couple.x[3]))
-    #         ptest1 = frame1.old_coordinates(pttest1)
-    #         ptest2 = frame2.old_coordinates(pttest2)
+    #         ptest1 = frame1.local_to_global_coordinates(pttest1)
+    #         ptest2 = frame2.local_to_global_coordinates(pttest2)
     #         dtest = ptest1.point_distance(ptest2)
     #         if dtest < d:
     #             result = couple
@@ -7605,7 +7653,7 @@ class CylindricalFace3D(Face3D):
     #         pt1 = volmdlr.Point3D((r1 * math.cos(new_pt1_2d.vector[0]),
     #                                r1 * math.sin(new_pt1_2d.vector[0]),
     #                                new_pt1_2d.vector[1]))
-    #         p1 = frame1.old_coordinates(pt1)
+    #         p1 = frame1.local_to_global_coordinates(pt1)
 
     #     if not other_cyl.contours2d[0].point_belongs(pt2_2d):
     #         # Find the closest one
@@ -7616,7 +7664,7 @@ class CylindricalFace3D(Face3D):
     #         pt2 = volmdlr.Point3D((r2 * math.cos(new_pt2_2d.vector[0]),
     #                                r2 * math.sin(new_pt2_2d.vector[0]),
     #                                new_pt2_2d.vector[1]))
-    #         p2 = frame2.old_coordinates(pt2)
+    #         p2 = frame2.local_to_global_coordinates(pt2)
 
     #     return p1, p2
 
@@ -7633,7 +7681,7 @@ class CylindricalFace3D(Face3D):
     #     v1 = self.cylindricalsurface3d.frame.v
     #     frame1 = volmdlr.Frame3D(self.center, u1, v1, n1)
     #     # st1 = volmdlr.Point3D((r*math.cos(min_theta1), r*math.sin(min_theta1), min_h1))
-    #     # start1 = frame1.old_coordinates(st1)
+    #     # start1 = frame1.local_to_global_coordinates(st1)
 
     #     poly2d = planeface.polygon2D
     #     pfpoints = poly2d.points
@@ -7692,7 +7740,7 @@ class CylindricalFace3D(Face3D):
 
     #     pt1 = volmdlr.Point3D(
     #         (r * math.cos(res1.x[1]), r * math.sin(res1.x[1]), res1.x[0]))
-    #     p1 = frame1.old_coordinates(pt1)
+    #     p1 = frame1.local_to_global_coordinates(pt1)
     #     p2 = pf1 + res1.x[2] * u + res1.x[3] * v
     #     pt1_2d = volmdlr.Point2D((res1.x[1], res1.x[0]))
     #     pt2_2d = p2.to_2d(pf1, u, v)
@@ -7706,7 +7754,7 @@ class CylindricalFace3D(Face3D):
     #         pt1 = volmdlr.Point3D((r * math.cos(new_pt1_2d.vector[0]),
     #                                r * math.sin(new_pt1_2d.vector[0]),
     #                                new_pt1_2d.vector[1]))
-    #         p1 = frame1.old_coordinates(pt1)
+    #         p1 = frame1.local_to_global_coordinates(pt1)
 
     #     if not planeface.contours[0].point_belongs(pt2_2d):
     #         # Find the closest one
@@ -8871,6 +8919,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for face in self.faces:
             face.rotation_inplace(center, axis, angle)
         new_bounding_box = self.get_bounding_box()
@@ -8896,6 +8946,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :return: Translate the OpenShell3D in place.
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for face in self.faces:
             face.translation_inplace(offset)
         new_bounding_box = self.get_bounding_box()
@@ -8915,6 +8967,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for face in self.faces:
             face.frame_mapping_inplace(frame, side)
         new_bounding_box = self.get_bounding_box()

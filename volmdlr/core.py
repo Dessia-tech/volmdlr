@@ -6,6 +6,7 @@ Base classes.
 
 import os
 import tempfile
+import warnings
 import webbrowser
 from datetime import datetime
 from typing import List
@@ -179,6 +180,8 @@ class CompositePrimitive2D(CompositePrimitive):
         :param center: rotation center
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         primitives = []
         for primitive in self.primitives:
             primitives.append(primitive.rotation(center, angle))
@@ -201,6 +204,8 @@ class CompositePrimitive2D(CompositePrimitive):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         primitives = []
         for primitive in self.primitives:
             primitives.append(primitive.translation(offset))
@@ -222,6 +227,8 @@ class CompositePrimitive2D(CompositePrimitive):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         primitives = []
         for primitive in self.primitives:
             primitives.append(primitive.frame_mapping(frame, side))
@@ -963,6 +970,8 @@ class VolumeModel(dc.PhysicalObject):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for primitive in self.primitives:
             primitive.rotation_inplace(center, axis, angle)
         self.bounding_box = self._bounding_box()
@@ -984,6 +993,8 @@ class VolumeModel(dc.PhysicalObject):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for primitives in self.primitives:
             primitives.translation_inplace(offset)
         self.bounding_box = self._bounding_box()
@@ -1004,6 +1015,8 @@ class VolumeModel(dc.PhysicalObject):
 
         side = 'old' or 'new'.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for primitives in self.primitives:
             primitives.frame_mapping_inplace(frame, side)
         self.bounding_box = self._bounding_box()

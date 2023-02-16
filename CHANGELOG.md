@@ -54,6 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Better hash for shells, contours & wires 
 
 ### Refactorings
+- Remove usage of deprecated method old_coordinates and new_coordinates
+- Indicate 'inplace' methods as deprecated
+
 
 ### Documentation
 - BoundingBox docstrings

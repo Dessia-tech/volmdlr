@@ -751,6 +751,8 @@ class BSplineCurve(Edge):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.control_points:
             point.translation_inplace(offset)
 
@@ -1104,6 +1106,8 @@ class Line2D(Line):
         :param center: rotation center.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in [self.point1, self.point2]:
             point.rotation_inplace(center, angle)
 
@@ -1122,6 +1126,8 @@ class Line2D(Line):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in [self.point1, self.point2]:
             point.translation_inplace(offset)
 
@@ -1252,10 +1258,10 @@ class Line2D(Line):
         new_v = new_u.unit_normal_vector()
         new_basis = volmdlr.Frame2D(I, new_u, new_v)
 
-        new_a = new_basis.new_coordinates(A)
-        new_b = new_basis.new_coordinates(B)
-        new_c = new_basis.new_coordinates(C)
-        new_d = new_basis.new_coordinates(D)
+        new_a = new_basis.global_to_local_coordinates(A)
+        new_b = new_basis.global_to_local_coordinates(B)
+        new_c = new_basis.global_to_local_coordinates(C)
+        new_d = new_basis.global_to_local_coordinates(D)
 
         if new_c[1] == 0 and new_d[1] == 0:
             # Segments are on the same line: no solution
@@ -1269,7 +1275,7 @@ class Line2D(Line):
             r = segments_distance / 2
             new_circle_center = volmdlr.Point2D(
                 (0, npy.sign(new_c[1] - new_a[1]) * r))
-            circle_center = new_basis.old_coordinates(new_circle_center)
+            circle_center = new_basis.local_to_global_coordinates(new_circle_center)
             circle = volmdlr.wires.Circle2D(circle_center, r)
 
             return circle, None
@@ -1284,8 +1290,8 @@ class Line2D(Line):
             r = abs(new_pt_k[0])
             new_circle_center1 = volmdlr.Point2D((0, r))
             new_circle_center2 = volmdlr.Point2D((0, -r))
-            circle_center1 = new_basis.old_coordinates(new_circle_center1)
-            circle_center2 = new_basis.old_coordinates(new_circle_center2)
+            circle_center1 = new_basis.local_to_global_coordinates(new_circle_center1)
+            circle_center2 = new_basis.local_to_global_coordinates(new_circle_center2)
             circle1 = volmdlr.wires.Circle2D(circle_center1, r)
             circle2 = volmdlr.wires.Circle2D(circle_center2, r)
 
@@ -1299,7 +1305,7 @@ class Line2D(Line):
         line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
         line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
         new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
-        pt_K = volmdlr.Point2D(new_basis.old_coordinates(new_pt_k))
+        pt_K = volmdlr.Point2D(new_basis.local_to_global_coordinates(new_pt_k))
 
         if pt_K == I:
             return None, None
@@ -1310,11 +1316,11 @@ class Line2D(Line):
         new_v2 = new_u2.normal_vector(unit=True)
         new_basis2 = volmdlr.Frame2D(I, new_u2, new_v2)
 
-        new_a = new_basis2.new_coordinates(A)
-        new_b = new_basis2.new_coordinates(B)
-        new_c = new_basis2.new_coordinates(C)
-        new_d = new_basis2.new_coordinates(D)
-        new_pt_k = new_basis2.new_coordinates(pt_K)
+        new_a = new_basis2.global_to_local_coordinates(A)
+        new_b = new_basis2.global_to_local_coordinates(B)
+        new_c = new_basis2.global_to_local_coordinates(C)
+        new_d = new_basis2.global_to_local_coordinates(D)
+        new_pt_k = new_basis2.global_to_local_coordinates(pt_K)
 
         teta1 = math.atan2(new_c[1], new_c[0] - new_pt_k[0])
         teta2 = math.atan2(new_d[1], new_d[0] - new_pt_k[0])
@@ -1341,10 +1347,10 @@ class Line2D(Line):
         new_circle_center1 = volmdlr.Point2D(0, -r1)
         new_circle_center2 = volmdlr.Point2D(0, r2)
 
-        circle_center1 = new_basis2.old_coordinates(new_circle_center1)
-        circle_center2 = new_basis2.old_coordinates(new_circle_center2)
+        circle_center1 = new_basis2.local_to_global_coordinates(new_circle_center1)
+        circle_center2 = new_basis2.local_to_global_coordinates(new_circle_center2)
 
-        if new_basis.new_coordinates(circle_center1)[1] > 0:
+        if new_basis.global_to_local_coordinates(circle_center1)[1] > 0:
             circle1 = volmdlr.wires.Circle2D(circle_center1, r1)
             circle2 = volmdlr.wires.Circle2D(circle_center2, r2)
         else:
@@ -1581,6 +1587,8 @@ class BSplineCurve2D(BSplineCurve):
         :param center: rotation center
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.control_points:
             point.rotation_inplace(center, angle)
 
@@ -1937,6 +1945,8 @@ class LineSegment2D(LineSegment):
         :param center: rotation center.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in [self.start, self.end]:
             point.rotation_inplace(center, angle)
 
@@ -1956,6 +1966,8 @@ class LineSegment2D(LineSegment):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in [self.start, self.end]:
             point.translation_inplace(offset)
 
@@ -1966,11 +1978,11 @@ class LineSegment2D(LineSegment):
         side = 'old' or 'new'.
         """
         if side == 'old':
-            new_start = frame.old_coordinates(self.start)
-            new_end = frame.old_coordinates(self.end)
+            new_start = frame.local_to_global_coordinates(self.start)
+            new_end = frame.local_to_global_coordinates(self.end)
         elif side == 'new':
-            new_start = frame.new_coordinates(self.start)
-            new_end = frame.new_coordinates(self.end)
+            new_start = frame.global_to_local_coordinates(self.start)
+            new_end = frame.global_to_local_coordinates(self.end)
         else:
             raise ValueError('Please Enter a valid side: old or new')
         return LineSegment2D(new_start, new_end)
@@ -1982,12 +1994,14 @@ class LineSegment2D(LineSegment):
         :param frame: frame to execute the frame mapping.
         :param side: 'old' or 'new'.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == 'old':
-            new_start = frame.old_coordinates(self.start)
-            new_end = frame.old_coordinates(self.end)
+            new_start = frame.local_to_global_coordinates(self.start)
+            new_end = frame.local_to_global_coordinates(self.end)
         elif side == 'new':
-            new_start = frame.new_coordinates(self.start)
-            new_end = frame.new_coordinates(self.end)
+            new_start = frame.global_to_local_coordinates(self.start)
+            new_end = frame.global_to_local_coordinates(self.end)
         else:
             raise ValueError('Please Enter a valid side: old or new')
         self.start = new_start
@@ -2700,6 +2714,8 @@ class Arc2D(Arc):
         :param center: rotation center.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.start.rotation_inplace(center, angle)
         self.interior.rotation_inplace(center, angle)
         self.end.rotation_inplace(center, angle)
@@ -2724,6 +2740,8 @@ class Arc2D(Arc):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.start.translation_inplace(offset)
         self.interior.translation_inplace(offset)
         self.end.translation_inplace(offset)
@@ -2747,6 +2765,8 @@ class Arc2D(Arc):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.__init__(*[point.frame_mapping(frame, side) for point in
                         [self.start, self.interior, self.end]])
 
@@ -2970,6 +2990,8 @@ class FullArc2D(Arc2D):
         return FullArc2D(new_center, new_start_end)
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self._center.rotation(center, angle, False)
         self.start.rotation(center, angle, False)
         self.interior.rotation(center, angle, False)
@@ -2981,6 +3003,8 @@ class FullArc2D(Arc2D):
         return FullArc2D(new_center, new_start_end)
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self._center.translation_inplace(offset)
         self.start.translation_inplace(offset)
         self.end.translation_inplace(offset)
@@ -3002,6 +3026,8 @@ class FullArc2D(Arc2D):
                            [self._center, self.start]])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for p in [self._center, self.start, self.end, self.interior]:
             p.frame_mapping_inplace(frame, side)
 
@@ -3157,8 +3183,10 @@ class ArcEllipse2D(Edge):
         self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
         frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
         self.frame = frame
-        start_new, end_new = frame.new_coordinates(self.start), frame.new_coordinates(self.end)
-        interior_new, center_new = frame.new_coordinates(self.interior), frame.new_coordinates(self.center)
+        start_new = frame.global_to_local_coordinates(self.start)
+        end_new = frame.global_to_local_coordinates(self.end)
+        interior_new = frame.global_to_local_coordinates(self.interior)
+        center_new = frame.global_to_local_coordinates(self.center)
         self._bounding_rectangle = None
 
         def theta_A_B(s, i, e, c):
@@ -3186,7 +3214,7 @@ class ArcEllipse2D(Edge):
             return theta, gdaxe, ptax
 
         if start == end:
-            extra_new = frame.new_coordinates(self.extra)
+            extra_new = frame.global_to_local_coordinates(self.extra)
             theta, major_axis, minor_axis = theta_A_B(start_new, extra_new, interior_new,
                                                       center_new)
         else:
@@ -3268,7 +3296,7 @@ class ArcEllipse2D(Edge):
                 math.isclose((point.x - self.center.x) ** 2 / self.minor_axis ** 2 +
                              (point.y - self.center.y) ** 2 / self.major_axis ** 2, 1, abs_tol=abs_tol):
             return False
-        new_point = self.frame.new_coordinates(point)
+        new_point = self.frame.global_to_local_coordinates(point)
         u1, u2 = new_point.x / self.major_axis, new_point.y / self.minor_axis
         angle_new_point = volmdlr.geometry.sin_cos_angle(u1, u2)
         if self.angle_start < self.angle_end and self.angle_end >= angle_new_point >= self.angle_start:
@@ -3366,7 +3394,7 @@ class ArcEllipse2D(Edge):
             angle_end = self.angle_end
             angle_start = self.angle_start
 
-        discretization_points = [self.frame.old_coordinates(
+        discretization_points = [self.frame.local_to_global_coordinates(
             volmdlr.Point2D(self.major_axis * math.cos(angle), self.minor_axis * math.sin(angle)))
             for angle in npy.linspace(angle_start, angle_end, number_points)]
         if not is_trigo:
@@ -3651,6 +3679,8 @@ class Line3D(Line):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for p in [self.point1, self.point2]:
             p.rotation_inplace(center, axis, angle)
         self._bbox = None
@@ -3671,6 +3701,8 @@ class Line3D(Line):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in [self.point1, self.point2]:
             point.translation_inplace(offset)
         self._bbox = None
@@ -3682,11 +3714,11 @@ class Line3D(Line):
         side = 'old' or 'new'
         """
         if side == 'old':
-            new_start = frame.old_coordinates(self.point1)
-            new_end = frame.old_coordinates(self.point2)
+            new_start = frame.local_to_global_coordinates(self.point1)
+            new_end = frame.local_to_global_coordinates(self.point2)
         elif side == 'new':
-            new_start = frame.new_coordinates(self.point1)
-            new_end = frame.new_coordinates(self.point2)
+            new_start = frame.global_to_local_coordinates(self.point1)
+            new_end = frame.global_to_local_coordinates(self.point2)
         else:
             raise ValueError('Please Enter a valid side: old or new')
         return Line3D(new_start, new_end)
@@ -3697,12 +3729,14 @@ class Line3D(Line):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == 'old':
-            new_start = frame.old_coordinates(self.point1)
-            new_end = frame.old_coordinates(self.point2)
+            new_start = frame.local_to_global_coordinates(self.point1)
+            new_end = frame.local_to_global_coordinates(self.point2)
         elif side == 'new':
-            new_start = frame.new_coordinates(self.point1)
-            new_end = frame.new_coordinates(self.point2)
+            new_start = frame.global_to_local_coordinates(self.point1)
+            new_end = frame.global_to_local_coordinates(self.point2)
         else:
             raise ValueError('Please Enter a valid side: old or new')
         self.point1 = new_start
@@ -3886,6 +3920,8 @@ class LineSegment3D(LineSegment):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.rotation_inplace(center, axis, angle)
         self._bbox = None
@@ -3916,6 +3952,8 @@ class LineSegment3D(LineSegment):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.translation_inplace(offset)
         self._bbox = None
@@ -3928,10 +3966,10 @@ class LineSegment3D(LineSegment):
         """
         if side == 'old':
             return LineSegment3D(
-                *[frame.old_coordinates(point) for point in [self.start, self.end]])
+                *[frame.local_to_global_coordinates(point) for point in [self.start, self.end]])
         if side == 'new':
             return LineSegment3D(
-                *[frame.new_coordinates(point) for point in [self.start, self.end]])
+                *[frame.global_to_local_coordinates(point) for point in [self.start, self.end]])
         raise ValueError('Please Enter a valid side: old or new')
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
@@ -3940,12 +3978,14 @@ class LineSegment3D(LineSegment):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == 'old':
-            new_start = frame.old_coordinates(self.start)
-            new_end = frame.old_coordinates(self.end)
+            new_start = frame.local_to_global_coordinates(self.start)
+            new_end = frame.local_to_global_coordinates(self.end)
         elif side == 'new':
-            new_start = frame.new_coordinates(self.start)
-            new_end = frame.new_coordinates(self.end)
+            new_start = frame.global_to_local_coordinates(self.start)
+            new_end = frame.global_to_local_coordinates(self.end)
         else:
             raise ValueError('Please Enter a valid side: old or new')
         self.start = new_start
@@ -4570,6 +4610,8 @@ class BSplineCurve3D(BSplineCurve):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_control_points = [p.rotation(center, axis, angle) for p in
                               self.control_points]
         new_bsplinecurve3d = BSplineCurve3D(self.degree, new_control_points,
@@ -5094,6 +5136,8 @@ class Arc3D(Arc):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.rotation_inplace(center, axis, angle)
         self.start.rotation_inplace(center, axis, angle)
         self.interior.rotation_inplace(center, axis, angle)
@@ -5118,6 +5162,8 @@ class Arc3D(Arc):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.translation_inplace(offset)
         self.start.translation_inplace(offset)
         self.interior.translation_inplace(offset)
@@ -5184,13 +5230,13 @@ class Arc3D(Arc):
 
     def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
         if side == 'old':
-            new_start = frame.old_coordinates(self.start.copy())
-            new_interior = frame.old_coordinates(self.interior.copy())
-            new_end = frame.old_coordinates(self.end.copy())
+            new_start = frame.local_to_global_coordinates(self.start.copy())
+            new_interior = frame.local_to_global_coordinates(self.interior.copy())
+            new_end = frame.local_to_global_coordinates(self.end.copy())
         elif side == 'new':
-            new_start = frame.new_coordinates(self.start.copy())
-            new_interior = frame.new_coordinates(self.interior.copy())
-            new_end = frame.new_coordinates(self.end.copy())
+            new_start = frame.global_to_local_coordinates(self.start.copy())
+            new_interior = frame.global_to_local_coordinates(self.interior.copy())
+            new_end = frame.global_to_local_coordinates(self.end.copy())
         else:
             raise ValueError('side value not valid, please specify'
                              'a correct value: \'old\' or \'new\'')
@@ -5213,6 +5259,8 @@ class Arc3D(Arc):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_start, new_interior, new_end = \
             self.frame_mapping_parameters(frame, side)
         self.start, self.interior, self.end = new_start, new_interior, new_end
@@ -5711,6 +5759,8 @@ class FullArc3D(Arc3D):
                          new_normal, name=self.name)
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.start.rotation(center, axis, angle, False)
         self.end.rotation(center, axis, angle, False)
         self._center.rotation(center, axis, angle, False)
@@ -5725,6 +5775,8 @@ class FullArc3D(Arc3D):
                          new_normal, name=self.name)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.start.translation(offset, False)
         self.end.translation(offset, False)
         self._center.translation(offset, False)
@@ -5807,10 +5859,10 @@ class ArcEllipse3D(Edge):
 
         frame = volmdlr.Frame3D(self.center, self.major_dir, self.minor_dir, self.normal)
         self.frame = frame
-        start_new, end_new = frame.new_coordinates(
-            self.start), frame.new_coordinates(self.end)
-        interior_new, center_new = frame.new_coordinates(
-            self.interior), frame.new_coordinates(self.center)
+        start_new, end_new = frame.global_to_local_coordinates(
+            self.start), frame.global_to_local_coordinates(self.end)
+        interior_new, center_new = frame.global_to_local_coordinates(
+            self.interior), frame.global_to_local_coordinates(self.center)
         self._bbox = None
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
@@ -5833,7 +5885,7 @@ class ArcEllipse3D(Edge):
             return theta, gdaxe, ptax
 
         if start == end:
-            extra_new = frame.new_coordinates(self.interior)
+            extra_new = frame.global_to_local_coordinates(self.interior)
             theta, A, B = theta_A_B(start_new, extra_new, interior_new,
                                     center_new)
         else:
@@ -5920,7 +5972,7 @@ class ArcEllipse3D(Edge):
         else:
             angle_end = self.angle_end
             angle_start = self.angle_start
-        discretization_points = [self.frame.old_coordinates(
+        discretization_points = [self.frame.local_to_global_coordinates(
             volmdlr.Point3D(self.Gradius * math.cos(angle), self.Sradius * math.sin(angle), 0))
             for angle in npy.linspace(angle_start, angle_end, number_points)]
         return discretization_points
