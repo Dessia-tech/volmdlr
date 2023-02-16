@@ -334,6 +334,19 @@ class WireMixin:
             return True
         return False
 
+    @classmethod
+    def from_points(cls, points):
+        """
+        Create a contour from points with line_segments.
+
+        """
+        linesegment_name = 'LineSegment' + points[0].__class__.__name__[-2:]
+        edges = []
+        for i in range(0, len(points) - 1):
+            edges.append(getattr(volmdlr.edges, linesegment_name)(points[i], points[i + 1]))
+        contour = cls(edges)
+        return contour
+
 
 class EdgeCollection3D(WireMixin):
     """
@@ -2211,25 +2224,6 @@ class Contour2D(ContourMixin, Wire2D):
         edges = [edge0, edge1, edge2, edge3]
 
         return Contour2D(edges)
-
-    @classmethod
-    def from_points(cls, points: List[volmdlr.Point2D]):
-        """
-        Create a contour2d from points with line_segments2D.
-        """
-
-        if len(points) < 3:
-            raise ValueError('contour is defined at least with three points')
-
-        edges = []
-        for i in range(0, len(points) - 1):
-            edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
-
-        edges.append(volmdlr.edges.LineSegment2D(points[-1], points[0]))
-
-        contour = cls(edges)
-
-        return contour
 
     def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
         """
