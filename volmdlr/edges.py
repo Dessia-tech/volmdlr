@@ -2307,7 +2307,7 @@ class Arc2D(Arc):
         return intersection_points
 
     def bsplinecurve_intersections(self, bspline):
-        linesegments = bspline.to_wire(50).primitives
+        linesegments = bspline.to_wire(1000).primitives
         intersections = []
         for linesegment in linesegments:
             intersection = self.linesegment_intersections(linesegment)
