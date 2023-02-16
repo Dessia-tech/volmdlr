@@ -1,5 +1,5 @@
 """
-Surfaces & faces
+Surfaces & faces.
 """
 
 import math
