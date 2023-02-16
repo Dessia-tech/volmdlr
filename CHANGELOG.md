@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PeriodicalSurface: fix face from contours.
 * LineSegment2D.line_intersections: verify if colinear first.
 * Cylinder: to_dict, min_distance_to_other_cylinder.
+* Step_assemblies: consider when no transformation is needed.
 * fix some pydocstyle errors
 
 ### Removed
@@ -51,16 +52,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D.__eq__(): verify contour length first, when verify if two contours are the same.
 * Contour2D.is_inside(): verify first if the area of the contour2 is not smaller that contour 1.
 * Disabling pointer in to_dict for most primitives
+* Better hash for shells, contours & wires 
 
 ### Refactorings
+- Remove usage of deprecated method old_coordinates and new_coordinates
+- Indicate 'inplace' methods as deprecated
+
 
 ### Documentation
 - BoundingBox docstrings
 
 ### Unittests
-ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
+* ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
+* CompositePrimitive2D: rotation, translation, frame_mapping
+* core.py: delete_double_point, step_ids_to_str
+* CompositePrimitive3D: plot
+* BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs,
+intersection_area, distance_to_b_rectangle, distance_to_point
+* BoundingBox: center, add, to_dict, points, from_bounding_boxes, from_points, to_frame, volume, bbox_intersection,
+is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_to_point, plot
+* VolumeModel: eq, volume, rotation, translation, frame_mapping, bounding_box, plot
 
-## CI
+### CI
 - add spell check to pylint with pyenchant
 - make code_pydocstyle more explicit
 

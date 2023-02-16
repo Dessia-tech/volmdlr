@@ -93,6 +93,9 @@ class WireMixin:
                                     'basis_primitives']
 
 
+    def _data_hash(self):
+        return sum(hash(e) for e in self.primitives) + len(self.primitives)
+
     def length(self):
         length = 0.
         for primitive in self.primitives:
@@ -930,6 +933,8 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
         :param side: 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for primitive in self.primitives:
             primitive.frame_mapping_inplace(frame, side)
 
@@ -1567,7 +1572,7 @@ class Contour2D(ContourMixin, Wire2D):
     def __init__(self, primitives: List[volmdlr.edges.Edge],
                  name: str = ''):
         Wire2D.__init__(self, primitives, name)
-        self._utd_edge_polygon = False
+        self._edge_polygon = None
         self._polygon_100_points = None
         self._area = None
 
@@ -1600,9 +1605,8 @@ class Contour2D(ContourMixin, Wire2D):
 
     @property
     def edge_polygon(self):
-        if not self._utd_edge_polygon:
+        if self._edge_polygon is None:
             self._edge_polygon = self._get_edge_polygon()
-            self._utd_edge_polygon = True
         return self._edge_polygon
 
     def _get_edge_polygon(self):
@@ -1762,6 +1766,8 @@ class Contour2D(ContourMixin, Wire2D):
         return Contour2D(self.inverted_primitives())
 
     def invert_inplace(self):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.primitives = self.inverted_primitives()
 
     def random_point_inside(self, include_edge_points: bool = False):
@@ -2572,6 +2578,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         :param center: rotation center
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.rotation_inplace(center, angle)
 
@@ -2591,6 +2599,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.translation_inplace(offset)
 
@@ -2598,6 +2608,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return self.__class__([point.frame_mapping(frame, side) for point in self.points])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.frame_mapping_inplace(frame, side)
 
@@ -3675,6 +3687,7 @@ class Triangle2D(ClosedPolygon2D):
 
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
                  point3: volmdlr.Point2D, name: str = ''):
+        # TODO: This seems buggy. Is it still used? 
         # self.point1 = point1
         # self.point2 = point2
         # self.point3 = point3
@@ -3951,6 +3964,8 @@ class Circle2D(Contour2D):
         :param center: rotation center
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.rotation_inplace(center, angle)
 
     def translation(self, offset: volmdlr.Vector2D):
@@ -3968,6 +3983,8 @@ class Circle2D(Contour2D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -3976,10 +3993,10 @@ class Circle2D(Contour2D):
         side = 'old' or 'new'
         """
         if side == 'old':
-            return Circle2D(frame.old_coordinates(self.center),
+            return Circle2D(frame.local_to_global_coordinates(self.center),
                             self.radius)
         elif side == 'new':
-            return Circle2D(frame.new_coordinates(self.center),
+            return Circle2D(frame.global_to_local_coordinates(self.center),
                             self.radius)
         else:
             raise ValueError('Side should be \'new\' \'old\'')
@@ -3989,10 +4006,12 @@ class Circle2D(Contour2D):
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == 'old':
-            self.center = frame.old_coordinates(self.center)
+            self.center = frame.local_to_global_coordinates(self.center)
         elif side == 'new':
-            self.center = frame.new_coordinates(self.center)
+            self.center = frame.global_to_local_coordinates(self.center)
         else:
             raise ValueError('Side should be \'new\' \'old\'')
 
@@ -4294,7 +4313,7 @@ class Ellipse2D(Contour2D):
                              self.major_dir)
         if side == 'new':
             point_major_dir = self.center + self.major_dir * self.major_axis
-            major_dir = frame.new_coordinates(point_major_dir) - self.center
+            major_dir = frame.global_to_local_coordinates(point_major_dir) - self.center
             return Ellipse2D(self.major_axis, self.minor_axis, frame.global_to_local_coordinates(self.center),
                              major_dir)
         raise ValueError('Side should be \'new\' \'old\'')
@@ -4317,11 +4336,8 @@ class Contour3D(ContourMixin, Wire3D):
         """
 
         Wire3D.__init__(self, primitives=primitives, name=name)
-        self._utd_edge_polygon = False
+        self._edge_polygon = None
         self._utd_bounding_box = False
-
-    def __hash__(self):
-        return sum(hash(e) for e in self.primitives)
 
     def __eq__(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:
@@ -4346,9 +4362,8 @@ class Contour3D(ContourMixin, Wire3D):
 
     @property
     def edge_polygon(self):
-        if not self._utd_edge_polygon:
+        if self._edge_polygon is None:
             self._edge_polygon = self._get_edge_polygon()
-            self._utd_edge_polygon = True
         return self._edge_polygon
 
     def _get_edge_polygon(self):
@@ -4541,6 +4556,8 @@ class Contour3D(ContourMixin, Wire3D):
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for edge in self.primitives:
             edge.rotation_inplace(center, axis, angle)
 
@@ -4561,6 +4578,8 @@ class Contour3D(ContourMixin, Wire3D):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for edge in self.primitives:
             edge.translation_inplace(offset)
 
@@ -4614,6 +4633,8 @@ class Contour3D(ContourMixin, Wire3D):
 
         :param side: 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for edge in self.primitives:
             edge.frame_mapping_inplace(frame, side)
 
@@ -4837,7 +4858,7 @@ class Circle3D(Contour3D):
         :param point: point to calculate abscissa.
         :return: abscissa
         """
-        x, y, _ = self.frame.new_coordinates(point)
+        x, y, _ = self.frame.global_to_local_coordinates(point)
         u1 = x / self.radius
         u2 = y / self.radius
         theta = volmdlr.geometry.sin_cos_angle(u1, u2)
@@ -4867,6 +4888,8 @@ class Circle3D(Contour3D):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
@@ -4884,6 +4907,8 @@ class Circle3D(Contour3D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.translation_inplace(offset)
 
     def plot(self, ax=None, color='k', alpha=1., edge_details=False):
@@ -5177,7 +5202,7 @@ class Ellipse3D(Contour3D):
         :param point: point to be verified.
         :return: True is point lies on the Ellipse, False otherwise
         """
-        new_point = self.frame.new_coordinates(point)
+        new_point = self.frame.global_to_local_coordinates(point)
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
                             new_point.y ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
 
@@ -5244,7 +5269,7 @@ class Ellipse3D(Contour3D):
         frame = volmdlr.Frame3D(self.center, self.major_dir,
                                 self.normal.cross(self.major_dir), self.normal)
 
-        p1_new, p2_new = frame.new_coordinates(point1), frame.new_coordinates(point2)
+        p1_new, p2_new = frame.global_to_local_coordinates(point1), frame.global_to_local_coordinates(point2)
 
         theta1 = volmdlr.geometry.sin_cos_angle(p1_new.x / self.major_axis, p1_new.y / self.minor_axis)
 
@@ -5255,7 +5280,7 @@ class Ellipse3D(Contour3D):
         else:
             angle = (theta1 + theta2) / 2
 
-        p3 = frame.old_coordinates(volmdlr.Point3D(self.major_axis * math.cos(angle),
+        p3 = frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(angle),
                                                    self.minor_axis * math.sin(angle), 0))
 
         return volmdlr.edges.ArcEllipse3D(point1, p3, point2, self.center,
@@ -5284,6 +5309,8 @@ class Ellipse3D(Contour3D):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.rotation_inplace(center, axis, angle)
         self.normal.rotation_inplace(center, axis, angle)
         self.major_dir.rotation_inplace(center, axis, angle)
@@ -5306,6 +5333,8 @@ class Ellipse3D(Contour3D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.translation_inplace(offset)
         self.normal.translation_inplace(offset)
         self.major_dir.translation_inplace(offset)
@@ -5418,6 +5447,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.rotation_inplace(center, axis, angle)
 
@@ -5438,6 +5469,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.translation_inplace(offset)
 
@@ -5513,7 +5546,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         """
-        Simnplify polygon3d.
+        Simplifies polygon3d.
 
         :param min_distance: minimal allowed distance.
         :param max_distance: maximal allowed distance.
