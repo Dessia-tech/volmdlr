@@ -96,7 +96,7 @@ class CompositePrimitive(dc.PhysicalObject):
     :type name: str
     """
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives, name: str = ''):
         self.primitives = primitives
         self.name = name
         self._primitives_to_index = None
@@ -1746,7 +1746,7 @@ class MovingVolumeModel(VolumeModel):
 
     """
 
-    def __init__(self, primitives, step_frames, name: str=''):
+    def __init__(self, primitives: List[Primitive3D], step_frames, name: str = ''):
         VolumeModel.__init__(self, primitives=primitives, name=name)
         self.step_frames = step_frames
 

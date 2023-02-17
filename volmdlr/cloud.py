@@ -31,7 +31,7 @@ class PointCloud3D(dc.DessiaObject):
 
     @classmethod
     def from_stl(cls, file_path):
-        list_points = vmstl.Stl.from_file(file_path).extract_points_BIS()
+        list_points = vmstl.Stl.load_from_file(file_path).extract_points_BIS()
 
         return cls(list_points, name='from_stl')
 
