@@ -50,6 +50,12 @@ steps:
       from_secret: email_password
     from: technical@dessia.tech
 
+- name: check black formatting
+  image: python:3.9
+  commands:
+    - pip install black[jupyter]==23.1.0
+    - bash code_black.sh
+
 - name: check code complexity
   image: dessia/python-ci:3.9
   commands:
