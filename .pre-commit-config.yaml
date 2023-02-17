@@ -6,7 +6,7 @@ repos:
     rev: 23.1.0
     hooks:
       - id: black
-        language_version: python3
+        language_version: python3.9
         args: [-l, "120"]
 
   - repo: https://github.com/MarcoGorelli/cython-lint
