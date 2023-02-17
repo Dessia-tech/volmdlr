@@ -6,7 +6,7 @@ if black --check .; then
 else
   echo -e "\nBlack found formatting errors."
 
-  echo "Please ru, 'pre-commit run -a' to format the code (install pre-commit with pip)"
+  echo "Please run 'pre-commit run -a' to format the code (install pre-commit with pip)"
 
   echo -e "\nAlternatively, you can run 'black .' (black v23.1.0) in source directory to format the code."
   echo "You can run 'black --check --diff --color .' to see the difference with expected formatting."
