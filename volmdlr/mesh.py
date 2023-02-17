@@ -20,7 +20,7 @@ import volmdlr.wires as vmw
 
 
 class FlatElementError(Exception):
-    pass
+    """An error in case an element is flat."""
 
 # def find_duplicate_linear_element(linear_elements1, linear_elements2):
 #     duplicates = []
@@ -720,6 +720,8 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
 
 
 class ElementsGroup(DessiaObject):
+    """Defines a group of elements."""
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -789,6 +791,8 @@ class ElementsGroup(DessiaObject):
 
 
 class Mesh(DessiaObject):
+    """Defines a mesh."""
+
     _standalone_in_db = True
     _non_serializable_attributes = ['node_to_index']
     _non_eq_attributes = ['name']

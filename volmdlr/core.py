@@ -5,11 +5,13 @@ Base classes.
 """
 
 import os
-import subprocess
 import tempfile
+import warnings
 import webbrowser
 from datetime import datetime
 from typing import List, Tuple
+from functools import lru_cache
+
 
 import dessia_common.core as dc
 import dessia_common.files as dcf
@@ -51,6 +53,7 @@ def determinant(vec1, vec2, vec3):
     Calculates the determinant for a three vector matrix.
 
     """
+    # TODO: to be removed
     a = npy.array((vec1.vector, vec2.vector, vec3.vector))
     return npy.linalg.det(a)
 
@@ -78,14 +81,14 @@ def delete_double_point(list_point):
 
 def step_ids_to_str(ids):
     """
-    Returns a string with a '#' in front of each ID and a comma separating eachone.
+    Returns a string with a '#' in front of each ID and a comma separating each-one.
 
     :param ids: A list of step primitives IDs
     :type ids: List[int]
     :return: A string containing all the IDs
     :rtype: str
     """
-    return ','.join(['#{}'.format(i) for i in ids])
+    return ','.join([f"#{i}" for i in ids])
 
 
 class CompositePrimitive(dc.PhysicalObject):
@@ -105,7 +108,12 @@ class CompositePrimitive(dc.PhysicalObject):
 
         dc.PhysicalObject.__init__(self, name=name)
 
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        return dc.PhysicalObject.to_dict(self, use_pointers=False)
+
     def primitive_to_index(self, primitive):
+        """Constructs a dictionary associating primitive to its index."""
         if not self._utd_primitives_to_index:
             self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
             self._utd_primitives_to_index = True
@@ -173,6 +181,8 @@ class CompositePrimitive2D(CompositePrimitive):
         :param center: rotation center
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         primitives = []
         for primitive in self.primitives:
             primitives.append(primitive.rotation(center, angle))
@@ -195,6 +205,8 @@ class CompositePrimitive2D(CompositePrimitive):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         primitives = []
         for primitive in self.primitives:
             primitives.append(primitive.translation(offset))
@@ -216,6 +228,8 @@ class CompositePrimitive2D(CompositePrimitive):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         primitives = []
         for primitive in self.primitives:
             primitives.append(primitive.frame_mapping(frame, side))
@@ -241,6 +255,7 @@ class CompositePrimitive2D(CompositePrimitive):
 
     def plot_data(self, name, fill=None, color='black', stroke_width=0.2,
                   opacity=1):
+        # TODO: not working on 0.8.0
         plot_data = {}
         plot_data['fill'] = fill
         plot_data['name'] = name
@@ -280,8 +295,7 @@ class Primitive3D(dc.PhysicalObject):
 
     def triangulation(self):
         raise NotImplementedError(
-            'triangulation method should be implemented on class {}'.format(
-                self.__class__.__name__))
+            f"triangulation method should be implemented on class {self.__class__.__name__}")
 
     def babylon_meshes(self):
         mesh = self.triangulation()
@@ -371,7 +385,9 @@ class BoundingRectangle(dc.DessiaObject):
         self.xmax = xmax
         self.ymin = ymin
         self.ymax = ymax
-        dc.DessiaObject.__init__(self, name=name)
+        # Disabling Dessia object init call for performance. Check when performance enhancement on dessia_common side
+        # dc.DessiaObject.__init__(self, name=name)
+        self.name = name
 
     def __getitem__(self, key):
         if key == 0:
@@ -546,9 +562,21 @@ class BoundingBox(dc.DessiaObject):
         self.zmin = zmin
         self.zmax = zmax
 
-        dc.DessiaObject.__init__(self, name=name)
+        # disabling super init call for efficiency, put back when dc disable kwargs
+        # dc.DessiaObject.__init__(self, name=name)
+        self.name = name
 
-        self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
+    @property
+    @lru_cache
+    def center(self):
+        """
+        Computes the center of the bounding box.
+
+        TODO: change lru_cache to cached property when support for py3.7 is dropped.
+        """
+        return volmdlr.Point3D(0.5 * (self.xmin + self.xmax),
+                               0.5 * (self.ymin + self.ymax),
+                               0.5 * (self.zmin + self.zmax))
 
     def __hash__(self) -> int:
         return sum(hash(point) for point in self.points)
@@ -561,7 +589,7 @@ class BoundingBox(dc.DessiaObject):
                            min(self.zmin, other_bbox.zmin),
                            max(self.zmax, other_bbox.zmax))
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#') -> dict:
+    def to_dict(self, *args, **kwargs) -> dict:
         """
         Converts the bounding box to a dictionary representation.
 
@@ -686,7 +714,8 @@ class BoundingBox(dc.DessiaObject):
         """
         Converts the bounding box to a 3D frame.
 
-        :return: A 3D frame with origin at the center and axes aligned with the x, y, and z dimensions of the bounding box.
+        :return: A 3D frame with origin at the center and axes aligned with the x, y, and z dimensions of
+            the bounding box.
         :rtype: volmdlr.Frame3D
         """
         x = volmdlr.Vector3D((self.xmax - self.xmin), 0, 0)
@@ -733,8 +762,8 @@ class BoundingBox(dc.DessiaObject):
         :rtype: bool
         """
         return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6) \
-               and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
-               and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
+            and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
+            and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
 
     def intersection_volume(self, bbox2: "BoundingBox") -> float:
         """
@@ -768,6 +797,7 @@ class BoundingBox(dc.DessiaObject):
         :return: The distance between the bounding boxes.
         :rtype: float
         """
+
         if self.bbox_intersection(bbox2):
             return 0
 
@@ -882,6 +912,7 @@ class VolumeModel(dc.PhysicalObject):
         if len(self.primitives) != len(other.primitives):
             return False
         for p1, p2 in zip(self.primitives, other.primitives):
+            # TODO: if 2 volume models has exact same primitives but in a different order, they are different?
             equ = equ and p1 == p2
         return equ
 
@@ -941,6 +972,8 @@ class VolumeModel(dc.PhysicalObject):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for primitive in self.primitives:
             primitive.rotation_inplace(center, axis, angle)
         self.bounding_box = self._bounding_box()
@@ -962,6 +995,8 @@ class VolumeModel(dc.PhysicalObject):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for primitives in self.primitives:
             primitives.translation_inplace(offset)
         self.bounding_box = self._bounding_box()
@@ -982,6 +1017,8 @@ class VolumeModel(dc.PhysicalObject):
 
         side = 'old' or 'new'.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for primitives in self.primitives:
             primitives.frame_mapping_inplace(frame, side)
         self.bounding_box = self._bounding_box()
@@ -1020,101 +1057,6 @@ class VolumeModel(dc.PhysicalObject):
         ax.margins(0.1)
         return ax
 
-    def freecad_script(self, fcstd_filepath,
-                       freecad_lib_path='/usr/lib/freecad/lib',
-                       export_types=('fcstd',),
-                       save_to='',
-                       tolerance=0.0001):
-        """
-        Generates python a FreeCAD definition of model.
-
-        :param fcstd_filename: a filename without extension to give the name at the fcstd part written in python code
-        :type fcstd_filename:str
-        """
-        fcstd_filepath = os.path.abspath(fcstd_filepath)
-        fcstd_filepath = fcstd_filepath.replace('\\', '\\\\')
-        freecad_lib_path = freecad_lib_path.replace('\\', '\\\\')
-
-        s = '# -*- coding: utf-8 -*-\n'
-        if freecad_lib_path != '':
-            s += "import sys\nsys.path.append('" + freecad_lib_path + "')\n"
-
-        s += "import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
-        for ip, primitive in enumerate(self.primitives):
-            if primitive.name == '':
-                primitive_name = f'Primitive_{ip}'
-            else:
-                primitive_name = f'Primitive_{ip}_{primitive.name}'
-            s += f"part = doc.addObject('App::Part','{primitive_name}')\n"
-            if hasattr(primitive, 'FreeCADExport'):
-                sp = primitive.FreeCADExport(ip)
-                if sp != '':
-                    #                        s += (sp+'\n')
-                    s += (sp)
-                    s += f'shapeobj = doc.addObject("Part::Feature","{primitive_name}")\n'
-                    # if isinstance(primitive, BSplineCurve3D) \
-                    #         or isinstance(primitive, BSplineSurface3D) \
-                    #         or isinstance(primitive, Circle3D) \
-                    #         or isinstance(primitive, LineSegment3D) \
-                    #         or isinstance(primitive, Ellipse3D):
-                    #     #                            print(primitive)
-                    #     #                            s += 'S = Part.Shape([primitive{}])\n'.format(ip)
-                    #     #                            s += 'shapeobj.Shape = S\n'
-                    #     s += 'shapeobj.Shape = primitive{}.toShape()\n'.format(
-                    #         ip)
-                    # else:
-                    s += f"shapeobj.Shape = primitive{ip}\n"
-                    s += 'part.addObject(shapeobj)\n\n'
-            # --------------------DEBUG-------------------
-        #                else:
-        #                    raise NotImplementedError
-        # ---------------------------------------------
-
-        s += 'doc.recompute()\n'
-        if 'fcstd' in export_types:
-            s += "doc.saveAs('" + fcstd_filepath + ".fcstd')\n\n"
-        if 'stl' in export_types:
-            s += f"import Mesh\nMesh.export(doc.Objects,'{fcstd_filepath}.stl', tolerance={tolerance})\n"
-        if 'step' in export_types:
-            s += f"Part.export(doc.Objects,'{fcstd_filepath}.step')\n"
-
-        if save_to != '':
-            with open(os.path.abspath(save_to), 'w', encoding='utf-8') as file:
-                file.write(s)
-        return s
-
-    def freecad_export(self, fcstd_filepath,
-                       python_path='python3',
-                       freecad_lib_path='/usr/lib/freecad/lib',
-                       export_types=('fcstd',),
-                       tolerance=0.0001):
-        """
-        Export model to .fcstd FreeCAD standard.
-
-        :param python_path: path of python binded to freecad
-
-            * on windows: something like C:\\\\Program Files\\\\FreeCAD X.XX\\\\bin\\\\python
-            * on linux: python if installed by a distribution package
-        :param filepath: path of fcstd file (without extension)
-        :param freecad_lib_path: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
-        :param tolerance: the tolerance of tessellation for mesh exports
-
-        """
-        fcstd_filepath = os.path.abspath(fcstd_filepath)
-        s = self.freecad_script(fcstd_filepath,
-                                freecad_lib_path=freecad_lib_path,
-                                export_types=export_types,
-                                tolerance=tolerance)
-        with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
-            f.write(bytes(s, 'utf8'))
-
-        arg = f.name
-        output = subprocess.call([python_path, arg])
-
-        f.close()
-        os.remove(f.name)
-        return output
-
     def babylon_data(self):
         """
         Get babylonjs data.
@@ -1146,11 +1088,11 @@ class VolumeModel(dc.PhysicalObject):
     def babylonjs_script(cls, babylon_data, use_cdn=True,
                          debug=False):
         if use_cdn:
-            script = volmdlr.templates.babylon_unpacker_cdn_header  # .substitute(name=page_name)
+            script = volmdlr.templates.BABYLON_UNPACKER_CDN_HEADER  # .substitute(name=page_name)
         else:
-            script = volmdlr.templates.babylon_unpacker_embedded_header  # .substitute(name=page_name)
+            script = volmdlr.templates.BABYLON_UNPACKER_EMBEDDED_HEADER  # .substitute(name=page_name)
 
-        script += volmdlr.templates.babylon_unpacker_body_template.substitute(
+        script += volmdlr.templates.BABYLON_UNPACKER_BODY_TEMPLATE.substitute(
             babylon_data=babylon_data)
         return script
 
@@ -1232,7 +1174,8 @@ class VolumeModel(dc.PhysicalObject):
             step_content += primitive_content
 
             product_definition_context_id = primitive_id + 1
-            step_content += f"#{product_definition_context_id} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n"
+            step_content += (f"#{product_definition_context_id} = "
+                             + "PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n")
 
             product_context_id = product_definition_context_id + 1
             step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
@@ -1240,7 +1183,8 @@ class VolumeModel(dc.PhysicalObject):
             step_content += f"#{product_id} = PRODUCT('{primitive.name}'," \
                             f"'{primitive.name}','',(#{product_context_id}));\n"
             product_definition_formation_id = product_id + 1
-            step_content += f"#{product_definition_formation_id} = PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
+            step_content += f"#{product_definition_formation_id} = " \
+                            "PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
             product_definition_id = product_definition_formation_id + 1
             step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
                             f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
@@ -1312,7 +1256,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Gets the lines that define a VolumeModel geometry in a .geo file.
 
-        :return: A list of lines that describe the geomery
+        :return: A list of lines that describe the geometry
         :rtype: List[str]
 
         """
@@ -1781,7 +1725,6 @@ class MovingVolumeModel(VolumeModel):
                 primitives_to_meshes.append(i_prim)
 
         bbox = self._bounding_box()
-        center = bbox.center
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
@@ -1805,6 +1748,6 @@ class MovingVolumeModel(VolumeModel):
 
         babylon_data = {'meshes': meshes,
                         'max_length': max_length,
-                        'center': list(center),
+                        'center': list(bbox.center),
                         'steps': steps}
         return babylon_data
