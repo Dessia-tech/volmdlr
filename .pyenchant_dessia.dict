@@ -1,3 +1,4 @@
+volmdlr
 dessia
 jsonschema
 dbscan
@@ -15,3 +16,18 @@ STEP
 LHS
 cosinus
 inplace
+trigo
+Bezier
+numpy
+linesegment
+freecad
+gmsh
+.geo
+.msh
+euler
+txt
+discretization
+bool
+len
+isort
+getter

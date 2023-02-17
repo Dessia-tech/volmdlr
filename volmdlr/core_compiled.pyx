@@ -314,20 +314,22 @@ class Vector(DessiaObject):
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector: "Vector"):
+    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
         """
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.
 
         :param other_vector: A vector-like object
         :type other_vector: :class:`volmdlr.Vector`
+        :param abs_tol: Absolute tolerance to consider colinear
+        :type abs_tol: float
         :return: `True` if the two vectors are colinear, `False` otherwise
         :rtype: bool
         """
         try:
             return math.isclose(abs(self.dot(other_vector)) / self.norm() / other_vector.norm(),
                                 1,
-                                abs_tol=1e-5)
+                                abs_tol=abs_tol)
 
         except ZeroDivisionError:
             return False
@@ -350,6 +352,14 @@ class Vector(DessiaObject):
             n += 1
         point /= n
         return point
+
+    def vector_projection(self, other_vector):
+        """
+        Projects the vector onto other_vector.
+
+        :param other_vector: Vector to project self.
+        """
+        return (self.dot(other_vector) / other_vector.dot(other_vector)) * other_vector
 
     @classmethod
     def remove_duplicate(cls, points: List["Vector"]):
@@ -592,6 +602,8 @@ class Vector2D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         v2x, v2y = self.rotation_parameters(center, angle)
         self.x = v2x
         self.y = v2y
@@ -618,6 +630,8 @@ class Vector2D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         v2x = self.x + offset[0]
         v2y = self.y + offset[1]
         self.x = v2x
@@ -640,9 +654,9 @@ class Vector2D(Vector):
         :rtype: :class:`volmdlr.Vector2D`
         """
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
     def frame_mapping_inplace(self, frame: "Frame2D", side: str):
@@ -656,10 +670,12 @@ class Vector2D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         self.x = new_vector.x
         self.y = new_vector.y
 
@@ -1425,6 +1441,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         vector2 = vector3D_rotation(self, center, axis, angle)
         self.x = vector2[0]
         self.y = vector2[1]
@@ -1475,6 +1493,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         y1, z1 = self.axis_rotation_parameters(self.y, self.z, angle)
         self.y = y1
         self.z = z1
@@ -1501,6 +1521,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         z1, x1 = self.axis_rotation_parameters(self.z, self.x, angle)
         self.x = x1
         self.z = z1
@@ -1527,6 +1549,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         x1, y1 = self.axis_rotation_parameters(self.x, self.y, angle)
         self.x = x1
         self.y = y1
@@ -1551,6 +1575,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.x += offset[0]
         self.y += offset[1]
         self.z += offset[2]
@@ -1572,10 +1598,10 @@ class Vector3D(Vector):
         :rtype: :class:`volmdlr.Vector3D`
         """
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
 
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
     def frame_mapping_inplace(self, frame: "Frame3D", side: str):
@@ -1589,11 +1615,13 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
 
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         self.x = new_vector.x
         self.y = new_vector.y
         self.z = new_vector.z
@@ -2515,6 +2543,8 @@ class Basis2D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         center = O2D
         new_u = self.u.rotation(center, angle)
         new_v = self.v.rotation(center, angle)
@@ -2696,6 +2726,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         center = O3D
         new_u = self.u.rotation(center, axis, angle)
         new_v = self.v.rotation(center, axis, angle)
@@ -2729,6 +2761,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.u = self.u.x_rotation(angle)
         self.v = self.v.x_rotation(angle)
         self.w = self.w.x_rotation(angle)
@@ -2758,6 +2792,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.u = self.u.y_rotation(angle)
         self.v = self.v.y_rotation(angle)
         self.w = self.w.y_rotation(angle)
@@ -2787,6 +2823,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.u = self.u.z_rotation(angle)
         self.v = self.v.z_rotation(angle)
         self.w = self.w.z_rotation(angle)
@@ -2871,6 +2909,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         vect_u, vect_v, vect_w = self.euler_rotation_parameters(angles)
         self.u = vect_u
         self.v = vect_v
@@ -3116,13 +3156,13 @@ class Frame2D(Basis2D):
     def frame_mapping(self, frame: "Frame2D", side: str):
         basis = frame.basis()
         if side == "new":
-            new_origin = frame.new_coordinates(self.origin)
-            new_u = basis.new_coordinates(self.u)
-            new_v = basis.new_coordinates(self.v)
+            new_origin = frame.global_to_local_coordinates(self.origin)
+            new_u = basis.global_to_local_coordinates(self.u)
+            new_v = basis.global_to_local_coordinates(self.v)
         elif side == "old":
-            new_origin = frame.old_coordinates(self.origin)
-            new_u = basis.old_coordinates(self.u)
-            new_v = basis.old_coordinates(self.v)
+            new_origin = frame.local_to_global_coordinates(self.origin)
+            new_u = basis.local_to_global_coordinates(self.u)
+            new_v = basis.local_to_global_coordinates(self.v)
         else:
             raise ValueError("side value not valid, please specify a correct value: \'old\' or \'new\'")
         return Frame2D(new_origin, new_u, new_v)
@@ -3148,6 +3188,8 @@ class Frame2D(Basis2D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.origin = self.origin.translation(vector)
 
     def rotation(self, angle):
@@ -3171,6 +3213,8 @@ class Frame2D(Basis2D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_base = Basis2D.rotation(self, angle)
         self.u = new_base.u
         self.v = new_base.v
@@ -3382,16 +3426,16 @@ class Frame3D(Basis3D):
     def frame_mapping(self, frame: "Frame3D", side: str):
         basis = frame.basis()
         if side == "new":
-            new_origin = frame.new_coordinates(self.origin)
-            new_u = basis.new_coordinates(self.u)
-            new_v = basis.new_coordinates(self.v)
-            new_w = basis.new_coordinates(self.w)
+            new_origin = frame.global_to_local_coordinates(self.origin)
+            new_u = basis.global_to_local_coordinates(self.u)
+            new_v = basis.global_to_local_coordinates(self.v)
+            new_w = basis.global_to_local_coordinates(self.w)
 
         elif side == "old":
-            new_origin = frame.old_coordinates(self.origin)
-            new_u = basis.old_coordinates(self.u)
-            new_v = basis.old_coordinates(self.v)
-            new_w = basis.old_coordinates(self.w)
+            new_origin = frame.local_to_global_coordinates(self.origin)
+            new_u = basis.local_to_global_coordinates(self.u)
+            new_v = basis.local_to_global_coordinates(self.v)
+            new_w = basis.local_to_global_coordinates(self.w)
         else:
             raise ValueError("side value not valid, please specify"
                              'a correct value: \'old\' or \'new\'')
@@ -3431,6 +3475,8 @@ class Frame3D(Basis3D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_base = Basis3D.rotation(self, axis, angle)
         new_origin = self.origin.rotation(center, axis, angle)
         self.origin = new_origin
@@ -3459,6 +3505,8 @@ class Frame3D(Basis3D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.origin.translation_inplace(offset)
 
     def copy(self, deep=True, memo=None):

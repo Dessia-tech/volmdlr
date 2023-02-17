@@ -26,7 +26,7 @@ ax = bspline_curve3d.plot()
 
 l = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 for absc in l:
-    pt = bspline_curve3d.point_at_abscissa(absc*bspline_curve3d.length())
+    pt = bspline_curve3d.point_at_abscissa(absc * bspline_curve3d.length())
     if absc != 0:
         pt.plot(ax=ax)
     else:

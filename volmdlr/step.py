@@ -40,8 +40,8 @@ def set_to_list(step_set):
 
 def step_split_arguments(function_arg):
     """
-    Split the arguments of a function that doesn't start with '(' but end with
-    ')'
+    Split the arguments of a function that doesn't start with '(' but end with ')'.
+
     ex: IN: '#123,#124,#125)'
        OUT: ['#123', '#124', '#125']
     """
@@ -76,7 +76,7 @@ def uncertainty_measure_with_unit(arguments, object_dict):
     Gets the global length uncertainty.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: Global length uncertainty.
     """
     length_measure = float(arguments[0].split('(')[1][:-1])
@@ -88,7 +88,7 @@ def conversion_based_unit_length_unit_named_unit(arguments, object_dict):
     Gets the conversion based unit length.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: conversion based unit length.
     """
     return object_dict[arguments[1]]
@@ -99,7 +99,7 @@ def length_measure_with_unit(arguments, object_dict):
     Calculates the step file's si unit conversion factor.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: si unit conversion factor.
     """
     length_measure = float(arguments[0].split('(')[1][:-1])
@@ -112,7 +112,7 @@ def length_unit_named_unit_si_unit(arguments, object_dict):
     Gets the length si unit.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: length si unit
     """
     si_unit_length = SI_PREFIX[arguments[1]]
@@ -125,7 +125,7 @@ def geometric_representation_context_global_uncertainty_assigned_context_global_
     Gets the global length uncertainty.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: Global length uncertainty.
     """
     global_unit_uncertainty_ref = int(arguments[2][0][1:])
@@ -138,6 +138,13 @@ def vertex_point(arguments, object_dict):
     Returns the data in case of a VERTEX.
     """
     return object_dict[arguments[1]]
+
+
+def axis1_placement(arguments, object_dict):
+    """
+    Returns the data in case of a AXIS1_PLACEMENT.
+    """
+    return object_dict[arguments[1]], object_dict[arguments[2]]
 
 
 def oriented_edge(arguments, object_dict):
@@ -178,6 +185,8 @@ def face_bound(arguments, object_dict):
 
     """
     return object_dict[arguments[1]]
+
+# def surface_of_revolution(arguments, object_dict):
 
 
 def surface_curve(arguments, object_dict):
@@ -347,7 +356,9 @@ def shape_representation(arguments, object_dict):
                 isinstance(object_dict[int(arg[1:])],
                            volmdlr.Frame3D):
             # TODO: Is there something to read here ?
-            frames.append(object_dict[int(arg[1:])])
+            frame = object_dict[int(arg[1:])]
+            if not all(component is None for component in [frame.u, frame.u, frame.w]):
+                frames.append(frame)
         elif int(arg[1:]) in object_dict and \
                 isinstance(object_dict[int(arg[1:])],
                            volmdlr.edges.Arc3D):
@@ -360,8 +371,6 @@ def shape_representation(arguments, object_dict):
             pass
     if not shells and frames:
         return frames
-    if shells and frames:
-        raise NotImplementedError
     return shells
 
 
@@ -397,6 +406,8 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
     :rtype: TYPE
 
     """
+    if item_defined_transformation_frames[0] == item_defined_transformation_frames[1]:
+        return closed_shells
     if shape_representation_frames[0].origin == volmdlr.O3D:
         global_frame = shape_representation_frames[0]
     else:
@@ -842,7 +853,7 @@ class Step(dc.DessiaObject):
     def to_volume_model(self, show_times: bool = False):
         """
         show_times=True displays the number of times a given class has been
-        instanciated and the total time of all the instanciations of this
+        instantiated and the total time of all the instantiations of this
         given class.
         """
 
@@ -927,7 +938,7 @@ class Step(dc.DessiaObject):
                                 times[volmdlr_object.__class__][1] += t
                     error = False
                 except KeyError as key:
-                    # Sometimes the bfs search don't instanciate the nodes of a
+                    # Sometimes the bfs search don't instantiate the nodes of a
                     # depth in the right order, leading to error
                     instanciate_ids.append(key.args[0])
             if i == 0:
@@ -960,7 +971,7 @@ class Step(dc.DessiaObject):
         points3d = []
         for stepfunction in self.functions.values():
             if stepfunction.name == 'CARTESIAN_POINT':
-                # INSTANCIATION
+                # INSTANTIATION
                 name = self.functions[stepfunction.id].name
                 arguments = self.functions[stepfunction.id].arg[:]
                 self.parse_arguments(arguments)
@@ -1033,7 +1044,7 @@ STEP_TO_VOLMDLR = {
     'RECTANGULAR_TRIMMED_SURFACE': None,
     'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.primitives3d.BSplineExtrusion,
     # CAN BE A BSplineSurface3D
-    'SURFACE_OF_REVOLUTION': None,
+    'SURFACE_OF_REVOLUTION': volmdlr.faces.RevolutionSurface3D,
     'UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
     'QUASI_UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
     'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
