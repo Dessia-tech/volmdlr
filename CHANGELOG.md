@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cylinder: to_dict, min_distance_to_other_cylinder.
 * Step_assemblies: consider when no transformation is needed.
 * fix some pydocstyle errors
+* Script/step/workflow: Update Workflow, use last version of dessia_common
 
 ### Removed
 
