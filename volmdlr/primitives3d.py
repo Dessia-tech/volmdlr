@@ -5,6 +5,7 @@ Common primitives 3D
 """
 
 import math
+import warnings
 from random import uniform
 from typing import Dict, List, Tuple
 
@@ -118,6 +119,8 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.rotation_inplace(center, axis, angle)
 
@@ -138,6 +141,8 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.translation_inplace(offset)
 
@@ -333,6 +338,8 @@ class Block(volmdlr.faces.ClosedShell3D):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.rotation_inplace(center, axis, angle)
         self.faces = self.shell_faces()
 
@@ -353,6 +360,8 @@ class Block(volmdlr.faces.ClosedShell3D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.translation_inplace(offset)
         self.faces = self.shell_faces()
 
@@ -417,6 +426,8 @@ class Block(volmdlr.faces.ClosedShell3D):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_frame = self.frame_mapping_parametres(frame, side)
         self.frame = new_frame
         self.faces = self.shell_faces()
@@ -585,13 +596,13 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                                  side: str):
         basis = frame.basis()
         if side == 'old':
-            extrusion_vector = basis.old_coordinates(self.extrusion_vector)
-            x = basis.old_coordinates(self.x)
-            y = basis.old_coordinates(self.y)
+            extrusion_vector = basis.local_to_global_coordinates(self.extrusion_vector)
+            x = basis.local_to_global_coordinates(self.x)
+            y = basis.local_to_global_coordinates(self.y)
         elif side == 'new':
-            extrusion_vector = basis.new_coordinates(self.extrusion_vector)
-            x = basis.new_coordinates(self.x)
-            y = basis.new_coordinates(self.y)
+            extrusion_vector = basis.global_to_local_coordinates(self.extrusion_vector)
+            x = basis.global_to_local_coordinates(self.x)
+            y = basis.global_to_local_coordinates(self.y)
         else:
             raise ValueError('side must be either old or new')
         return extrusion_vector, x, y
@@ -615,6 +626,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
         :param side: = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.extrusion_vector, self.x, self.y =\
             self.frame_mapping_parameters(frame, side)
         self.plane_origin.frame_mapping_inplace(frame, side)
@@ -648,6 +661,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(volmdlr.O3D, axis, angle)
@@ -675,6 +689,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.plane_origin.translation_inplace(offset)
 
 
@@ -813,6 +829,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         :param angle: rotation angle.
         :type angle: float.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
         self.y.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
@@ -840,6 +858,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.plane_origin.translation_inplace(offset)
         self.axis_point.translation_inplace(offset)
 
@@ -847,13 +867,13 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
                                  side: str):
         basis = frame.Basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
-            x = basis.old_coordinates(self.x)
-            y = basis.old_coordinates(self.y)
+            axis = basis.local_to_global_coordinates(self.axis)
+            x = basis.local_to_global_coordinates(self.x)
+            y = basis.local_to_global_coordinates(self.y)
         elif side == 'new':
-            axis = basis.new_coordinates(self.axis)
-            x = basis.new_coordinates(self.x)
-            y = basis.new_coordinates(self.y)
+            axis = basis.global_to_local_coordinates(self.axis)
+            x = basis.global_to_local_coordinates(self.x)
+            y = basis.global_to_local_coordinates(self.y)
         else:
             raise ValueError('side must be either old or new')
 
@@ -878,6 +898,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.axis, self.x, self.y = self.frame_mapping_parameters(frame, side)
         self.plane_origin.frame_mapping_inplace(frame, side)
         self.axis_point.frame_mapping_inplace(frame, side)
@@ -992,6 +1014,8 @@ class Cylinder(RevolvedProfile):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.rotation_inplace(center, axis, angle)
         self.axis.rotation_inplace(volmdlr.O3D, axis, angle)
 
@@ -1012,6 +1036,8 @@ class Cylinder(RevolvedProfile):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -1022,9 +1048,9 @@ class Cylinder(RevolvedProfile):
         """
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
-            axis = basis.new_coordinates(self.axis)
+            axis = basis.global_to_local_coordinates(self.axis)
         else:
             raise ValueError('side must be either old or new')
         return Cylinder(self.position.frame_mapping(frame, side),
@@ -1037,11 +1063,13 @@ class Cylinder(RevolvedProfile):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
-            axis = basis.new_coordinates(self.axis)
+            axis = basis.global_to_local_coordinates(self.axis)
         else:
             raise ValueError('side must be either old or new')
         self.position.frame_mapping_inplace(frame, side)
@@ -1388,6 +1416,8 @@ class Cone(RevolvedProfile):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.translation_inplace(offset)
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -1414,6 +1444,8 @@ class Cone(RevolvedProfile):
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.rotation_inplace(center, axis, angle)
         self.axis.rotation_inplace(center, axis, angle)
 
@@ -1545,6 +1577,8 @@ class HollowCylinder(RevolvedProfile):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.rotation_inplace(center, axis, angle)
         self.axis.rotation_inplace(volmdlr.O3D, axis, angle)
 
@@ -1566,6 +1600,8 @@ class HollowCylinder(RevolvedProfile):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -1576,9 +1612,9 @@ class HollowCylinder(RevolvedProfile):
         """
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
-            axis = basis.new_coordinates(self.axis)
+            axis = basis.global_to_local_coordinates(self.axis)
         else:
             raise ValueError('side must be either old or new')
 
@@ -1593,11 +1629,13 @@ class HollowCylinder(RevolvedProfile):
 
         side = 'old' or 'new'.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
-            axis = basis.new_coordinates(self.axis)
+            axis = basis.global_to_local_coordinates(self.axis)
         else:
             raise ValueError('side must be either old or new')
         self.position.frame_mapping_inplace(frame, side)
@@ -1762,6 +1800,8 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
         :param side: 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.wire3d.frame_mapping_inplace(frame, side)
         for face in self.faces:
             face.frame_mapping_inplace(frame, side)
@@ -1816,6 +1856,8 @@ class Sphere(RevolvedProfile):
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.frame_mapping_inplace(frame, side)
 
     def to_point_skin(self, resolution: float = 1e-3):

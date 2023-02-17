@@ -6,6 +6,7 @@ Base classes.
 
 import os
 import tempfile
+import warnings
 import webbrowser
 from datetime import datetime
 from typing import List
@@ -51,6 +52,7 @@ def determinant(vec1, vec2, vec3):
     Calculates the determinant for a three vector matrix.
 
     """
+    # TODO: to be removed
     a = npy.array((vec1.vector, vec2.vector, vec3.vector))
     return npy.linalg.det(a)
 
@@ -178,6 +180,8 @@ class CompositePrimitive2D(CompositePrimitive):
         :param center: rotation center
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         primitives = []
         for primitive in self.primitives:
             primitives.append(primitive.rotation(center, angle))
@@ -200,6 +204,8 @@ class CompositePrimitive2D(CompositePrimitive):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         primitives = []
         for primitive in self.primitives:
             primitives.append(primitive.translation(offset))
@@ -221,6 +227,8 @@ class CompositePrimitive2D(CompositePrimitive):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         primitives = []
         for primitive in self.primitives:
             primitives.append(primitive.frame_mapping(frame, side))
@@ -246,6 +254,7 @@ class CompositePrimitive2D(CompositePrimitive):
 
     def plot_data(self, name, fill=None, color='black', stroke_width=0.2,
                   opacity=1):
+        # TODO: not working on 0.8.0
         plot_data = {}
         plot_data['fill'] = fill
         plot_data['name'] = name
@@ -429,7 +438,7 @@ class BoundingRectangle(dc.DessiaObject):
         :type b_rectangle2: :class:`BoundingRectangle`
         """
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
-            and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+               and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
 
     def is_inside_b_rectangle(self, b_rectangle2, tol: float = 1e-6):
         """
@@ -441,7 +450,7 @@ class BoundingRectangle(dc.DessiaObject):
         :type tol: float
         """
         return (self.xmin >= b_rectangle2.xmin - tol) and (self.xmax <= b_rectangle2.xmax + tol) \
-            and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
+               and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
 
     def point_belongs(self, point: volmdlr.Point2D):
         """
@@ -901,6 +910,7 @@ class VolumeModel(dc.PhysicalObject):
         if len(self.primitives) != len(other.primitives):
             return False
         for p1, p2 in zip(self.primitives, other.primitives):
+            # TODO: if 2 volume models has exact same primitives but in a different order, they are different?
             equ = equ and p1 == p2
         return equ
 
@@ -960,6 +970,8 @@ class VolumeModel(dc.PhysicalObject):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for primitive in self.primitives:
             primitive.rotation_inplace(center, axis, angle)
         self.bounding_box = self._bounding_box()
@@ -981,6 +993,8 @@ class VolumeModel(dc.PhysicalObject):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for primitives in self.primitives:
             primitives.translation_inplace(offset)
         self.bounding_box = self._bounding_box()
@@ -1001,6 +1015,8 @@ class VolumeModel(dc.PhysicalObject):
 
         side = 'old' or 'new'.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for primitives in self.primitives:
             primitives.frame_mapping_inplace(frame, side)
         self.bounding_box = self._bounding_box()
@@ -1165,7 +1181,7 @@ class VolumeModel(dc.PhysicalObject):
             step_content += f"#{product_id} = PRODUCT('{primitive.name}'," \
                             f"'{primitive.name}','',(#{product_context_id}));\n"
             product_definition_formation_id = product_id + 1
-            step_content += f"#{product_definition_formation_id} = "\
+            step_content += f"#{product_definition_formation_id} = " \
                             "PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
             product_definition_id = product_definition_formation_id + 1
             step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
