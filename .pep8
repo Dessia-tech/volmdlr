@@ -1,6 +1,6 @@
 [pycodestyle]
 max_line_length = 120
-ignore = E402, E722, E126, E731
+ignore = E402, E722, E126, E731, E203
 recursive = true
 aggressive = 1
 
