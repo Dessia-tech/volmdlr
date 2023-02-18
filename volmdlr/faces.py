@@ -10085,7 +10085,7 @@ class OpenTriangleShell3D(OpenShell3D):
 
     def to_dict(self):
         dict_ = self.base_dict()
-        dict_['triangles'] = [t.to_dict() for t in self.triangles]
+        dict_['faces'] = [t.to_dict() for t in self.faces]
         dict_['alpha'] = self.alpha
         dict_['color'] = self.color
         return dict_
