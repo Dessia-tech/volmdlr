@@ -2368,7 +2368,7 @@ class Arc2D(Arc):
     def get_angle(self):
         """
         Gets arc angle.
-        
+
         """
         clockwise_path, trigowise_path = \
             self.clockwise_and_trigowise_paths
@@ -2424,7 +2424,7 @@ class Arc2D(Arc):
     def line_intersections(self, line2d: Line2D):
         """
         Calculates the intersection between a line and an Arc2D.
-        
+
         :param line2d: Line2D to verify intersections.
         :return: a list with intersections points.
         """
@@ -3635,7 +3635,7 @@ class Line3D(Line):
             direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
             direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
         # u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
-            # direction_vector2)) / direction_vector2.dot(direction_vector2)
+        # direction_vector2)) / direction_vector2.dot(direction_vector2)
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
 
