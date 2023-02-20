@@ -7320,16 +7320,15 @@ class Triangle3D(PlaneFace3D):
         for k in range(int(max_length / resolution) + 2):
             if k == 0:
                 points_0_1.append(new_points[1])
-            distance_to_point = min(k * resolution, max_length)
-            points_0_1.append(new_points[1] + vector * distance_to_point)
+            points_0_1.append(new_points[1] + vector * min(k * resolution, max_length))
 
         vector, length_2_1 = new_points[2] - new_points[1], new_points[2].point_distance(new_points[1])
         vector.normalize()
         points_in = []
 
         for p0_1 in points_0_1:
-            distance_to_point = min(points_0_1[0].point_distance(p0_1) * length_2_1 / max_length, length_2_1)
-            point_on_2_1 = new_points[1] + vector * distance_to_point
+            point_on_2_1 = new_points[1] + vector * min(points_0_1[0].point_distance(p0_1) * length_2_1 / max_length,
+                                                        length_2_1)
 
             length_2_0 = point_on_2_1.point_distance(p0_1)
             nb_int = int(length_2_0 / resolution) + 2
@@ -7340,9 +7339,8 @@ class Triangle3D(PlaneFace3D):
                 vector_2_0.normalize()
                 step_in = length_2_0 / (nb_int - 1)
                 for i in range(nb_int):
-                    distance_to_point = min(i * step_in, length_2_0)
-                    if distance_to_point != 0:
-                        points_in.append(p0_1 + vector_2_0 * distance_to_point)
+                    if min(i * step_in, length_2_0) != 0:
+                        points_in.append(p0_1 + vector_2_0 * min(i * step_in, length_2_0))
 
         return npy.unique(points_0_1 + points_in).tolist()
 
