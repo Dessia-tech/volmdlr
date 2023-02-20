@@ -3801,7 +3801,7 @@ class Circle2D(Contour2D):
             name=self.name)
         return full_arc_2d.line_intersections(line, tol)
 
-    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment2D, tol=1e-9):
+    def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment2D, tol=1e-12):
         """
         Calculates the intersections between a circle 2D and LineSegment 2D.
 
@@ -3870,6 +3870,46 @@ class Circle2D(Contour2D):
                 intersections.append(inter)
             except ValueError:
                 pass
+        return intersections
+
+    def bsplinecurve_intersections(self, bspline: volmdlr.edges.BSplineCurve2D, abs_tol:float=1e-7):
+        circle_bounding_rectangle = self.bounding_rectangle
+        bspline_discretized_points = bspline.discretization_points(number_points=10)
+        param_intersections = []
+        for point1, point2 in zip(bspline_discretized_points[:-1], bspline_discretized_points[1:]):
+            line_seg = volmdlr.edges.LineSegment2D(point1, point2)
+            abscissa1 = bspline.abscissa(point1)
+            abscissa2 = bspline.abscissa(point2)
+            if line_seg.bounding_rectangle.b_rectangle_intersection(circle_bounding_rectangle):
+                intersection = self.linesegment_intersections(line_seg)
+                if intersection:
+                    param_intersections.append((abscissa1, abscissa2))
+        intersections = []
+        finished = False
+        while not finished:
+            if not param_intersections:
+                finished = True
+            for abscissa1, abscissa2 in param_intersections:
+                discretized_points_between_1_2 = [bspline.point_at_abscissa(abscissa) for abscissa
+                                                  in npy.linspace(abscissa1, abscissa2, num=10)]
+                break_flag = False
+                for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
+                    line_seg = volmdlr.edges.LineSegment2D(point1, point2)
+                    abscissa1_ = bspline.abscissa(point1)
+                    abscissa2_ = bspline.abscissa(point2)
+                    if line_seg.bounding_rectangle.b_rectangle_intersection(circle_bounding_rectangle):
+                        intersection = self.linesegment_intersections(line_seg, 1e-12)
+                        if intersection:
+                            if bspline.point_distance(intersection[0]) > abs_tol:
+                                param_intersections.insert(0, (abscissa1_, abscissa2_))
+                                param_intersections.remove((abscissa1, abscissa2))
+                            else:
+                                intersections.append(intersection[0])
+                                param_intersections.remove((abscissa1, abscissa2))
+                            break_flag = True
+                            break
+                if break_flag:
+                    break
         return intersections
 
     def length(self):
