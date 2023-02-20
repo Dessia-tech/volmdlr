@@ -106,6 +106,28 @@ def length_measure_with_unit(arguments, object_dict):
     length_si_unit = object_dict[arguments[1]]
     return length_measure * length_si_unit
 
+def conversion_based_unit_named_unit_plane_angle_unit(arguments, object_dict):
+    """
+    Gets the conversion based plane unit angle.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionary containing already instantiated objects.
+    :return: conversion based unit length.
+    """
+    return object_dict[arguments[1]]
+
+def named_unit_plane_angle_unit_si_unit(arguments, object_dict):
+    """
+    ADD DOCSTRING
+    """
+    return SI_PREFIX[arguments[1]]
+def plane_angle_measure_with_unit(arguments, object_dict):
+    """
+    ADD DOCSTRING
+    """
+    angle_measure = float(arguments[0].split('(')[1][:-1])
+    angle_si_unit = object_dict[arguments[1]]
+    return angle_measure * angle_si_unit
 
 def length_unit_named_unit_si_unit(arguments, object_dict):
     """
@@ -128,9 +150,10 @@ def geometric_representation_context_global_uncertainty_assigned_context_global_
     :param object_dict: dictionary containing already instantiated objects.
     :return: Global length uncertainty.
     """
-    global_unit_uncertainty_ref = int(arguments[2][0][1:])
-    length_global_uncertainty = object_dict[global_unit_uncertainty_ref]
-    return length_global_uncertainty
+    length_global_uncertainty = object_dict[int(arguments[1][0][1:])]
+    length_conversion_factor = object_dict[int(arguments[2][0][1:])]
+    angle_conversion_factor = object_dict[int(arguments[2][1][1:])]
+    return length_global_uncertainty, length_conversion_factor, angle_conversion_factor
 
 
 def vertex_point(arguments, object_dict):
@@ -540,6 +563,8 @@ class Step(dc.DessiaObject):
         self._graph = None
         self.global_uncertainty = 1e-6
         self.unit_conversion_factor = 1
+        self.length_conversion_factor = 1
+        self.angle_conversion_factor = 1
         dc.DessiaObject.__init__(self, name=name)
 
     @property
@@ -842,6 +867,8 @@ class Step(dc.DessiaObject):
             volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
 
         elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
+            # if name == "CONICAL_SURFACE":
+            #     arguments[3] = float(arguments[3]) * self.angle_conversion_factor
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict)
 
         else:
@@ -858,10 +885,11 @@ class Step(dc.DessiaObject):
         """
 
         object_dict = {}
-
+        arguments = []
         self.graph.add_node("#0")
         frame_mapping_nodes = []
         shell_nodes = []
+        geometric_representation_context_node = None
         unit_measure_nodes = []
         length_global_uncertainty_node = None
         conversion_factor_node = None
@@ -875,6 +903,8 @@ class Step(dc.DessiaObject):
                 shell_nodes.append(node)
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_SHAPE_REPRESENTATION_RELATIONSHIP':
                 assembly_nodes.append(node)
+            if node != "#0" and self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
+                geometric_representation_context_node = node
             # if node != '#0' and self.functions[node].name in [
             #     'UNCERTAINTY_MEASURE_WITH_UNIT', 'LENGTH_UNIT, NAMED_UNIT, SI_UNIT']:
             #     unit_measure_nodes.append(node)
@@ -914,7 +944,7 @@ class Step(dc.DessiaObject):
         # nodes = dessia_common.graph.explore_tree_from_leaves(self.graph)
 
         times = {}
-        for i, node in enumerate([length_global_uncertainty_node] + nodes[::-1]):
+        for i, node in enumerate([geometric_representation_context_node] + nodes[::-1]):
             # instanciate_ids = [edge[1]]
             if node is None:
                 continue
@@ -942,8 +972,12 @@ class Step(dc.DessiaObject):
                     # depth in the right order, leading to error
                     instanciate_ids.append(key.args[0])
             if i == 0:
-                self.global_uncertainty = volmdlr_object
-                self.unit_conversion_factor = object_dict[int(arguments[1][1:])]
+                self.parse_arguments(arguments[1])
+                self.global_uncertainty = float(object_dict[arguments[1][0]])
+                self.parse_arguments(arguments[2])
+                self.unit_conversion_factor = float(object_dict[arguments[2][0]])
+                self.length_conversion_factor = float(object_dict[arguments[2][0]])
+                self.angle_conversion_factor = float(object_dict[arguments[2][1]])
 
         if show_times:
             print()
@@ -1083,6 +1117,9 @@ STEP_TO_VOLMDLR = {
     'CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT': None,
     'LENGTH_MEASURE_WITH_UNIT': None,
     'LENGTH_UNIT, NAMED_UNIT, SI_UNIT': None,
+    'PLANE_ANGLE_MEASURE_WITH_UNIT': None,
+    'NAMED_UNIT, PLANE_ANGLE_UNIT, SI_UNIT': None,
+    'CONVERSION_BASED_UNIT, NAMED_UNIT, PLANE_ANGLE_UNIT': None,
     'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT': None,
     'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': volmdlr.faces.OpenShell3D.translation,
     'SHELL_BASED_SURFACE_MODEL': None,

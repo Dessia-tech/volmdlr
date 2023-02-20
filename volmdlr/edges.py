@@ -4707,8 +4707,10 @@ class BSplineCurve3D(BSplineCurve):
 
     def cut_after(self, parameter: float):
         # Is a value of parameter below 4e-3 a real need for precision ?
-        if math.isclose(parameter, 0, abs_tol=4e-3):
-            raise ValueError('Nothing will be left from the BSplineCurve3D')
+        # if math.isclose(parameter, 0, abs_tol=4e-3):
+        #     # raise ValueError('Nothing will be left from the BSplineCurve3D')
+        #     curves = operations.split_curve(operations.refine_knotvector(self.curve, [4]), parameter)
+        #     return self.from_geomdl_curve(curves[0])
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
         curves = operations.split_curve(self.curve, parameter)
@@ -4928,7 +4930,6 @@ class Arc3D(Arc):
             u1.normalize()
             u2.normalize()
         except ZeroDivisionError:
-            print(True)
             raise ValueError(
                 'Start, end and interior points of an arc must be distincts') from ZeroDivisionError
 

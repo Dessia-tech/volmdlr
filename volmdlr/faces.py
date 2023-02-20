@@ -1750,7 +1750,8 @@ class PeriodicalSurface(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
-        n = len(bspline_curve3d.control_points)
+        # n = len(bspline_curve3d.control_points)
+        n = 10
         points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
@@ -3784,7 +3785,7 @@ class BSplineSurface3D(Surface3D):
         def fun(x):
             S = self.derivatives(x[0], x[1], 1)
             r = S[0][0] - point3d
-            f = r.norm() + 1e-32
+            f = r.norm() + 1e-18
             jac = npy.array([r.dot(S[1][0]) / f, r.dot(S[0][1]) / f])
             return f, jac
 
@@ -3794,6 +3795,12 @@ class BSplineSurface3D(Surface3D):
         delta_bound_x = max_bound_x - min_bound_x
         delta_bound_y = max_bound_y - min_bound_y
         x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
+               ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
+               ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
+               ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
+               (max_bound_x - delta_bound_x / 4, min_bound_y + delta_bound_y / 10),
+               ((min_bound_x + max_bound_x) / 4, max_bound_y - delta_bound_y / 10),
+               (max_bound_x - delta_bound_x / 4, max_bound_y - delta_bound_y / 10),
                (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
                (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
                (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
