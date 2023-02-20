@@ -585,10 +585,7 @@ class BSplineCurve(Edge):
                                f'Point{self.__class__.__name__[-2::]}')(*p)
                        for p in curve_points]
 
-        start = self.points[0]  # self.point_at_abscissa(0.)
-        end = self.points[-1]  # self.point_at_abscissa(self.length())
-
-        Edge.__init__(self, start, end, name=name)
+        Edge.__init__(self, self.points[0], self.points[-1], name=name)
 
     def to_dict(self, *args, **kwargs):
         """Avoids storing points in memo that makes serialization slow."""
@@ -661,6 +658,34 @@ class BSplineCurve(Edge):
         direction_vector = self.direction_vector(abscissa)
         direction_vector.normalize()
         return direction_vector
+
+    def normal_vector(self, abscissa):
+        """
+        Calculates the normal vector the edge at given abscissa.
+
+        :return: the normal vector
+        """
+        raise NotImplementedError('the normal_vector method must be'
+                                  'overloaded by child class')
+
+    def unit_normal_vector(self, abscissa):
+        """
+        Calculates the unit normal vector the edge at given abscissa.
+
+        :param abscissa: edge abscissa
+        :return: unit normal vector
+        """
+        raise NotImplementedError('the unit_normal_vector method must be'
+                                  'overloaded by child class')
+
+    def direction_vector(self, abscissa):
+        """
+        Calculates the direction vector the edge at given abscissa.
+
+        :param abscissa: edge abscissa
+        :return: direction vector
+        """
+        raise NotImplementedError('the direction_vector method must be overloaded by child class')
 
     def middle_point(self):
         """
@@ -2343,7 +2368,7 @@ class Arc2D(Arc):
     def get_angle(self):
         """
         Gets arc angle.
-        
+
         """
         clockwise_path, trigowise_path = \
             self.clockwise_and_trigowise_paths
@@ -2399,7 +2424,7 @@ class Arc2D(Arc):
     def line_intersections(self, line2d: Line2D):
         """
         Calculates the intersection between a line and an Arc2D.
-        
+
         :param line2d: Line2D to verify intersections.
         :return: a list with intersections points.
         """
@@ -3610,7 +3635,7 @@ class Line3D(Line):
             direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
             direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
         # u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
-            # direction_vector2)) / direction_vector2.dot(direction_vector2)
+        # direction_vector2)) / direction_vector2.dot(direction_vector2)
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
 

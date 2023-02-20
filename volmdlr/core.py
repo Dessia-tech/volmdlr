@@ -438,7 +438,7 @@ class BoundingRectangle(dc.DessiaObject):
         :type b_rectangle2: :class:`BoundingRectangle`
         """
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
-               and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+            and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
 
     def is_inside_b_rectangle(self, b_rectangle2, tol: float = 1e-6):
         """
@@ -450,7 +450,7 @@ class BoundingRectangle(dc.DessiaObject):
         :type tol: float
         """
         return (self.xmin >= b_rectangle2.xmin - tol) and (self.xmax <= b_rectangle2.xmax + tol) \
-               and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
+            and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
 
     def point_belongs(self, point: volmdlr.Point2D):
         """
@@ -1182,7 +1182,7 @@ class VolumeModel(dc.PhysicalObject):
                             f"'{primitive.name}','',(#{product_context_id}));\n"
             product_definition_formation_id = product_id + 1
             step_content += f"#{product_definition_formation_id} = " \
-                            "PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
+                            f"PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
             product_definition_id = product_definition_formation_id + 1
             step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
                             f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"

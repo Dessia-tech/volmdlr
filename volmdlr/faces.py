@@ -3858,7 +3858,8 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment3d_to_2d(self, linesegment3d):
         """
-        A line segment on a BSplineSurface3D will be in any case a line in 2D?
+        A line segment on a BSplineSurface3D will be in any case a line in 2D?.
+
         """
         x_perio = self.x_periodicity if self.x_periodicity is not None else 1.
         y_perio = self.y_periodicity if self.y_periodicity is not None else 1.
@@ -6008,7 +6009,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def geo_lines(self):  # , mesh_size_list=None):
         """
-        Gets the lines that define a Face3D in a .geo file
+        Gets the lines that define a Face3D in a .geo file.
+
         """
 
         i, p = None, None
@@ -6582,6 +6584,8 @@ class Face3D(volmdlr.core.Primitive3D):
     def inner_contours_recalculation(self, inner_contour, splitting_points, splitting_points_and_cutting_contour,
                                      connectig_to_outer_contour):
         """
+        Recalculates inner contours if a cutting contour is connected to an inner contour at two ends.
+
         Verifies if there is a cutting contours from face intersections connected to an inner contour at the two ends,
         if true this inner contour is updated with this cutting contour.
 
@@ -7467,7 +7471,8 @@ class CylindricalFace3D(Face3D):
 
     def point_belongs(self, point3d: volmdlr.Point3D):
         """
-        Tells you if a point is on the 3D Cylindrical face and inside its contour
+        Tells you if a point is on the 3D Cylindrical face and inside its contour.
+
         """
         point2d = self.surface3d.point3d_to_2d(point3d)
         point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
@@ -8914,7 +8919,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Shell3D rotation. Object is updated inplace
+        Shell3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle

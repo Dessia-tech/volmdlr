@@ -31,3 +31,6 @@ bool
 len
 isort
 getter
+Matplotlib
+babylonjs
+geo
