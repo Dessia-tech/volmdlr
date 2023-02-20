@@ -1753,7 +1753,7 @@ class LineSegment2D(LineSegment):
 
     def direction_independent_eq(self, linesegment2):
         """
-        Verifies if two linesegments are the same, not considering its direction.
+        Verifies if two line segments are the same, not considering its direction.
 
         """
         if self == linesegment2:
@@ -2139,9 +2139,9 @@ class Arc(Edge):
     @property
     def is_trigo(self):
         """
-        Verifies if arc is trigowise or clockwise.
+        Verifies if arc is trigonometric wise or clockwise.
 
-        :return: True if trigowise or False otherwise.
+        :return: True if trigonometric wise or False otherwise.
         """
         return NotImplementedError(
             'the property method is_trigo must be overloaded by subclassing'
@@ -5029,7 +5029,7 @@ class Arc3D(Arc):
     @property
     def clockwise_and_trigowise_paths(self):
         """
-        :return: clockwise path and trigonomectric path property.
+        :return: clockwise path and trigonometric path property.
         """
         if not self._utd_clockwise_and_trigowise_paths:
             vec1 = self.start - self.center
