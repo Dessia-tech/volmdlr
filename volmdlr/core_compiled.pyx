@@ -1772,9 +1772,8 @@ class Vector3D(Vector):
         :return: The corresponding Vector3D object
         :rtype: :class:`volmdlr.Vector3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
+
         if type(arguments[1]) is int:
             # VECTOR
             new_vector = length_conversion_factor * float(arguments[2])*object_dict[arguments[1]]
@@ -1988,9 +1987,7 @@ class Point3D(Vector3D):
         :return: The corresponding Point3D object
         :rtype: :class:`volmdlr.Point3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
         return cls(*[float(i) * length_conversion_factor for i in arguments[1][1:-1].split(",")],
                    arguments[0][1:-1])
@@ -3635,9 +3632,6 @@ class Frame3D(Basis3D):
         :return: The corresponding Frame3D object
         :rtype: :class:`volmdlr.Frame3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
-        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
         origin = object_dict[arguments[1]]
         if arguments[2] == "$":
             u = None
