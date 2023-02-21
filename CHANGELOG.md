@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Script/step/workflow: Update Workflow, use last version of dessia_common
 * LineSegment3D: Rotation method update due to points attribute deletion
 * ConicalSurface3D: fix from_step class method by adding the angle convertion factor
+* fix f string usage
 
 ### Removed
 

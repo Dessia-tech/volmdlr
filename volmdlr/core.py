@@ -1182,7 +1182,7 @@ class VolumeModel(dc.PhysicalObject):
                             f"'{primitive.name}','',(#{product_context_id}));\n"
             product_definition_formation_id = product_id + 1
             step_content += f"#{product_definition_formation_id} = " \
-                            "PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
+                            f"PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
             product_definition_id = product_definition_formation_id + 1
             step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
                             f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
