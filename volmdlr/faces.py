@@ -1,5 +1,5 @@
 """
-Surfaces & faces
+Surfaces & faces.
 """
 
 import math
@@ -1787,6 +1787,9 @@ class PeriodicalSurface(Surface3D):
                                                              periodic=bspline_curve3d.periodic)]
 
     def linesegment2d_to_3d(self, linesegment2d):
+        """
+        Converts a BREP line segment 2D onto a 3D primitive on the surface.
+        """
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
         if math.isclose(theta1, theta2, abs_tol=1e-4):
@@ -2949,7 +2952,6 @@ class SphericalSurface3D(Surface3D):
         global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
         angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
-
 
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, frame3d.u
@@ -5768,7 +5770,9 @@ class Face3D(volmdlr.core.Primitive3D):
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
-        """Sets the bounding box to a new value"""
+        """
+        Sets the bounding box to a new value.
+        """
         raise NotImplementedError(
             f"bounding_box setter method must be"
             f"overloaded by {self.__class__.__name__}")
@@ -6374,8 +6378,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def get_open_contour_divided_faces_inner_contours(self, new_faces_contours):
         """
-        If there is any inner contour, verifies which ones belong to the new divided faces from
-        an open cutting contour.
+        If there is any inner contour, verifies which ones belong to the new divided faces.
 
         :param new_faces_contours: new faces outer contour.
         :return: valid_new_faces_contours, valid_new_faces_contours.
@@ -7535,7 +7538,7 @@ class CylindricalFace3D(Face3D):
 
     def point_belongs(self, point3d: volmdlr.Point3D):
         """
-        Tells you if a point is on the 3D Cylindrical face and inside its contour
+        Tells you if a point is on the 3D Cylindrical face and inside its contour.
         """
         point2d = self.surface3d.point3d_to_2d(point3d)
         point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))

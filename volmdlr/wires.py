@@ -92,7 +92,6 @@ class WireMixin:
     _non_serializable_attributes = ['primitive_to_index',
                                     'basis_primitives']
 
-
     def _data_hash(self):
         return sum(hash(e) for e in self.primitives) + len(self.primitives)
 
@@ -1578,7 +1577,6 @@ class Contour2D(ContourMixin, Wire2D):
 
     def __hash__(self):
         return sum(hash(e) for e in self.primitives)
-
 
     def __eq__(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:
@@ -3687,7 +3685,7 @@ class Triangle2D(ClosedPolygon2D):
 
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
                  point3: volmdlr.Point2D, name: str = ''):
-        # TODO: This seems buggy. Is it still used? 
+        # TODO: This seems buggy. Is it still used?
         # self.point1 = point1
         # self.point2 = point2
         # self.point3 = point3
@@ -5287,7 +5285,7 @@ class Ellipse3D(Contour3D):
             angle = (theta1 + theta2) / 2
 
         p3 = frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(angle),
-                                                   self.minor_axis * math.sin(angle), 0))
+                                                               self.minor_axis * math.sin(angle), 0))
 
         return volmdlr.edges.ArcEllipse3D(point1, p3, point2, self.center,
                                           self.major_dir)

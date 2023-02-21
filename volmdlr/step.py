@@ -106,6 +106,7 @@ def length_measure_with_unit(arguments, object_dict):
     length_si_unit = object_dict[arguments[1]]
     return length_measure * length_si_unit
 
+
 def conversion_based_unit_named_unit_plane_angle_unit(arguments, object_dict):
     """
     Gets the conversion based plane unit angle.
@@ -116,6 +117,7 @@ def conversion_based_unit_named_unit_plane_angle_unit(arguments, object_dict):
     """
     return object_dict[arguments[1]]
 
+
 def named_unit_plane_angle_unit_si_unit(arguments, object_dict):
     """
     Returns the dimension of plane angle measure.
@@ -125,6 +127,8 @@ def named_unit_plane_angle_unit_si_unit(arguments, object_dict):
     :return: SI unit dimension.
     """
     return SI_PREFIX[arguments[1]]
+
+
 def plane_angle_measure_with_unit(arguments, object_dict):
     """
     Returns the angle plane measure with the rigth unit.
@@ -136,6 +140,7 @@ def plane_angle_measure_with_unit(arguments, object_dict):
     angle_measure = float(arguments[0].split('(')[1][:-1])
     angle_si_unit = object_dict[arguments[1]]
     return angle_measure * angle_si_unit
+
 
 def length_unit_named_unit_si_unit(arguments, object_dict):
     """
