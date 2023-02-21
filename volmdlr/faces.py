@@ -2752,8 +2752,8 @@ class ConicalSurface3D(PeriodicalSurface):
             return [vme.LineSegment2D(start, end)]
         try:
             return [vme.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
-        except Exception:
-            raise ValueError("There is some inconsistency, the start and end points must be different")
+        except NotImplementedError:
+            raise NotImplementedError("There is some inconsistency, the start and end points must be different")
 
     def circle3d_to_2d(self, circle3d):
         """
