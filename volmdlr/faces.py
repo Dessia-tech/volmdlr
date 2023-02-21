@@ -2750,10 +2750,8 @@ class ConicalSurface3D(PeriodicalSurface):
         #     end = volmdlr.Point2D(start.x, end.y)
         if not start.is_close(end):
             return [vme.LineSegment2D(start, end)]
-        try:
-            return [vme.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
-        except NotImplementedError:
-            raise NotImplementedError("There is some inconsistency, the start and end points must be different")
+        return [vme.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
+
 
     def circle3d_to_2d(self, circle3d):
         """
