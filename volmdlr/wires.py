@@ -5142,7 +5142,7 @@ class Circle3D(Contour3D):
         return False
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        if not self.point_belongs(point1) or not self.point_belongs(point2):
+        if not self.point_belongs(point1, 1e-4) or not self.point_belongs(point2, 1e-4):
             ax = self.plot()
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')

@@ -102,7 +102,10 @@ def length_measure_with_unit(arguments, object_dict):
     :param object_dict: dictionary containing already instantiated objects.
     :return: si unit conversion factor.
     """
-    length_measure = float(arguments[0].split('(')[1][:-1])
+    if "(" in arguments[0]:
+        length_measure = float(arguments[0].split('(')[1][:-1])
+    else:
+        length_measure = float(arguments[0])
     length_si_unit = object_dict[arguments[1]]
     return length_measure * length_si_unit
 
