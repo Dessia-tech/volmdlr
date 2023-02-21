@@ -4537,7 +4537,7 @@ class BSplineCurve3D(BSplineCurve):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
 
-        if 10 in range(len(arguments)):
+        if 9 in range(len(arguments)):
             weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
         else:
             weight_data = None
@@ -4728,7 +4728,8 @@ class BSplineCurve3D(BSplineCurve):
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=4e-3):
             return self
-        # if math.isclose(parameter, 1, abs_tol=4e-3):
+        if math.isclose(parameter, 1, abs_tol=1e-6):
+            return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
         curves = operations.split_curve(self.curve, parameter)
@@ -4736,10 +4737,11 @@ class BSplineCurve3D(BSplineCurve):
 
     def cut_after(self, parameter: float):
         # Is a value of parameter below 4e-3 a real need for precision ?
-        # if math.isclose(parameter, 0, abs_tol=4e-3):
+        if math.isclose(parameter, 0, abs_tol=1e-6):
         #     # raise ValueError('Nothing will be left from the BSplineCurve3D')
         #     curves = operations.split_curve(operations.refine_knotvector(self.curve, [4]), parameter)
         #     return self.from_geomdl_curve(curves[0])
+            return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
         curves = operations.split_curve(self.curve, parameter)

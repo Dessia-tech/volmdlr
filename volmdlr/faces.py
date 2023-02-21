@@ -2744,11 +2744,16 @@ class ConicalSurface3D(PeriodicalSurface):
         end = self.point3d_to_2d(linesegment3d.end)
         if start.x != end.x and start == volmdlr.Point2D(0, 0):
             start = volmdlr.Point2D(end.x, 0)
-        elif start.x != end.x:
-            end = volmdlr.Point2D(start.x, end.y)
-        if start != end:
+        elif start.x != end.x and end == volmdlr.Point2D(0, 0):
+            end = volmdlr.Point2D(start.x, 0)
+        # elif start.x != end.x:
+        #     end = volmdlr.Point2D(start.x, end.y)
+        if not start.is_close(end):
             return [vme.LineSegment2D(start, end)]
-        raise ValueError("There is some inconsistency, the start and end points must be different")
+        try:
+            return [vme.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
+        except Exception:
+            raise ValueError("There is some inconsistency, the start and end points must be different")
 
     def circle3d_to_2d(self, circle3d):
         """
@@ -2944,7 +2949,6 @@ class SphericalSurface3D(Surface3D):
         :return: The corresponding SphericalSurface3D object.
         :rtype: :class:`volmdlr.faces.SphericalSurface3D`
         """
-
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
         frame3d = object_dict[arguments[1]]
@@ -3483,7 +3487,17 @@ class RevolutionSurface3D(PeriodicalSurface):
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
+        """
+        Converts a step primitive to a RevolutionSurface3D.
 
+        :param arguments: The arguments of the step primitive.
+        :type arguments: list
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated.
+        :type object_dict: dict
+        :return: The corresponding RevolutionSurface3D object.
+        :rtype: :class:`volmdlr.faces.RevolutionSurface3D`
+        """
         name = arguments[0][1:-1]
         contour3d = object_dict[arguments[1]]
         axis_point, axis = object_dict[arguments[2]]
@@ -4339,7 +4353,7 @@ class BSplineSurface3D(Surface3D):
         v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
         knot_spec = arguments[12]
 
-        if 13 in range(len(arguments[:-1])):
+        if 13 in range(len(arguments)):
             weight_data = [
                 float(i) for i in
                 arguments[13][1:-1].replace("(", "").replace(")", "").split(",")
