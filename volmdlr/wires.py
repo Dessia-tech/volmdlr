@@ -4386,9 +4386,7 @@ class Contour3D(ContourMixin, Wire3D):
         :return: The corresponding Contour3D object.
         :rtype: :class:`volmdlr.wires.Contour3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
-        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
+
         name = arguments[0][1:-1]
         raw_edges = []
         # edge_ends = {}
@@ -4964,9 +4962,8 @@ class Circle3D(Contour3D):
         :return: The corresponding Circle3D object.
         :rtype: :class:`volmdlr.wires.Circle3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
         center = object_dict[arguments[1]].origin
         radius = float(arguments[2]) * length_conversion_factor
@@ -5375,9 +5372,8 @@ class Ellipse3D(Contour3D):
         :return: The corresponding Ellipse3D object.
         :rtype: :class:`volmdlr.wires.Ellipse3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
         center = object_dict[arguments[1]].origin
         normal = object_dict[arguments[1]].u  # ancien w

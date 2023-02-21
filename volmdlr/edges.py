@@ -143,9 +143,7 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
-        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
+
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
@@ -3768,9 +3766,7 @@ class Line3D(Line):
         :return: The corresponding Line3D object
         :rtype: :class:`volmdlr.edges.Line3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
-        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
+
         point1 = object_dict[arguments[1]]
         direction = object_dict[arguments[2]]
         point2 = point1 + direction
@@ -4492,9 +4488,7 @@ class BSplineCurve3D(BSplineCurve):
         :return: The corresponding BSplineCurve3D.
         :rtype: :class:`volmdlr.edges.BSplineCurve3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
-        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
+
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]

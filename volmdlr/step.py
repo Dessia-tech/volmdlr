@@ -906,13 +906,19 @@ class Step(dc.DessiaObject):
         not_shell_nodes = []
         assembly_nodes = []
         for node in self.graph.nodes:
-            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
+            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, ' \
+                                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
+                                                             'SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
             if node != '#0' and (self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]):
                 shell_nodes.append(node)
-            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_SHAPE_REPRESENTATION_RELATIONSHIP':
+            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_' \
+                                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_' \
+                                                             'SHAPE_REPRESENTATION_RELATIONSHIP':
                 assembly_nodes.append(node)
-            if node != "#0" and self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
+            if node != "#0" and self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
+                                                             'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
+                                                             'GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
                 geometric_representation_context_node = node
 
             # if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':

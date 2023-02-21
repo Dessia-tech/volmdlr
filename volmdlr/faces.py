@@ -1190,9 +1190,7 @@ class Plane3D(Surface3D):
         :return: The corresponding Plane3D object.
         :rtype: :class:`volmdlr.faces.Plane3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
-        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
+
         frame3d = object_dict[arguments[1]]
         frame3d.normalize()
         frame = volmdlr.Frame3D(frame3d.origin,
@@ -1936,9 +1934,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         :return: The corresponding CylindricalSurface3D object.
         :rtype: :class:`volmdlr.faces.CylindricalSurface3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, -frame3d.u
         U.normalize()
@@ -2299,9 +2296,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         :return: The corresponding ToroidalSurface3D object.
         :rtype: :class:`volmdlr.faces.ToroidalSurface3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, -frame3d.u
@@ -2643,7 +2639,7 @@ class ConicalSurface3D(PeriodicalSurface):
         :return: The corresponding ConicalSurface3D object.
         :rtype: :class:`volmdlr.faces.ConicalSurface3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
         angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
@@ -2750,10 +2746,9 @@ class ConicalSurface3D(PeriodicalSurface):
             start = volmdlr.Point2D(end.x, 0)
         elif start.x != end.x:
             end = volmdlr.Point2D(start.x, end.y)
-        try:
+        if start != end:
             return [vme.LineSegment2D(start, end)]
-        except Exception:
-            print("debug")
+        raise ValueError("There is some inconsistency, the start and end points must be different")
 
     def circle3d_to_2d(self, circle3d):
         """
@@ -2949,9 +2944,8 @@ class SphericalSurface3D(Surface3D):
         :return: The corresponding SphericalSurface3D object.
         :rtype: :class:`volmdlr.faces.SphericalSurface3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, frame3d.u
@@ -3489,9 +3483,6 @@ class RevolutionSurface3D(PeriodicalSurface):
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
-        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
         name = arguments[0][1:-1]
         contour3d = object_dict[arguments[1]]
@@ -4313,9 +4304,6 @@ class BSplineSurface3D(Surface3D):
         :return: The corresponding BSplineSurface3D object.
         :rtype: :class:`volmdlr.faces.BSplineSurface3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
-        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
         name = arguments[0][1:-1]
         degree_u = int(arguments[1])
@@ -5798,9 +5786,6 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: The corresponding Face3D object.
         :rtype: :class:`volmdlr.faces.Face3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
-        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
         name = arguments[0][1:-1]
         contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
@@ -8894,9 +8879,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :return: The corresponding OpenShell3D object.
         :rtype: :class:`volmdlr.faces.OpenShell3D`
         """
-        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
-        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
         faces = []
         for face in arguments[1]:
