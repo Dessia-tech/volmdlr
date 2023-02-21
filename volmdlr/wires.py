@@ -4377,17 +4377,20 @@ class Contour3D(ContourMixin, Wire3D):
         return ClosedPolygon3D(points)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a Contour3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding Contour3D object.
         :rtype: :class:`volmdlr.wires.Contour3D`
         """
+        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
         name = arguments[0][1:-1]
         raw_edges = []
         # edge_ends = {}
@@ -4952,20 +4955,23 @@ class Circle3D(Contour3D):
         return intersections
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a Circle3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding Circle3D object.
         :rtype: :class:`volmdlr.wires.Circle3D`
         """
-        unit_conversion_factor = arguments[-1]
+        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
+
         center = object_dict[arguments[1]].origin
-        radius = float(arguments[2]) * unit_conversion_factor
+        radius = float(arguments[2]) * length_conversion_factor
         if object_dict[arguments[1]].u is not None:
             normal = object_dict[arguments[1]].u
             other_vec = object_dict[arguments[1]].v
@@ -5360,23 +5366,26 @@ class Ellipse3D(Contour3D):
         return ax
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a Ellipse3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding Ellipse3D object.
         :rtype: :class:`volmdlr.wires.Ellipse3D`
         """
-        unit_conversion_factor = arguments[-1]
+        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
+
         center = object_dict[arguments[1]].origin
         normal = object_dict[arguments[1]].u  # ancien w
         major_dir = object_dict[arguments[1]].v  # ancien u
-        major_axis = float(arguments[2]) * unit_conversion_factor
-        minor_axis = float(arguments[3]) * unit_conversion_factor
+        major_axis = float(arguments[2]) * length_conversion_factor
+        minor_axis = float(arguments[3]) * length_conversion_factor
         return cls(major_axis, minor_axis, center, normal, major_dir,
                    arguments[0][1:-1])
 

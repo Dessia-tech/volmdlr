@@ -1760,11 +1760,11 @@ class Vector3D(Vector):
         return Point3D(self.x, self.y, self.z)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional vector to a Vector3D.
 
-        :param arguments: The arguments of the step primitive. The last arguments represents the unit_conversion_factor
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instanciated
@@ -1772,10 +1772,12 @@ class Vector3D(Vector):
         :return: The corresponding Vector3D object
         :rtype: :class:`volmdlr.Vector3D`
         """
+        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
         if type(arguments[1]) is int:
             # VECTOR
-            unit_conversion_factor = arguments[-1]
-            new_vector = unit_conversion_factor*float(arguments[2])*object_dict[arguments[1]]
+            new_vector = length_conversion_factor * float(arguments[2])*object_dict[arguments[1]]
             new_vector.name = arguments[0][1:-1]
             return new_vector
         else:
@@ -1974,7 +1976,7 @@ class Point3D(Vector3D):
     #     return Point2D(x2d, y2d)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional point to a Point3D.
 
@@ -1986,8 +1988,11 @@ class Point3D(Vector3D):
         :return: The corresponding Point3D object
         :rtype: :class:`volmdlr.Point3D`
         """
-        unit_conversion_factor = arguments[-1]
-        return cls(*[float(i) * unit_conversion_factor for i in arguments[1][1:-1].split(",")],
+        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
+
+        return cls(*[float(i) * length_conversion_factor for i in arguments[1][1:-1].split(",")],
                    arguments[0][1:-1])
 
     def to_vector(self):
@@ -3618,7 +3623,7 @@ class Frame3D(Basis3D):
         return ax
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional point to a Frame3D.
 
@@ -3630,6 +3635,9 @@ class Frame3D(Basis3D):
         :return: The corresponding Frame3D object
         :rtype: :class:`volmdlr.Frame3D`
         """
+        global_uncertainty = kwargs.get("global_uncertainty", 1e-6)
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
         origin = object_dict[arguments[1]]
         if arguments[2] == "$":
             u = None
