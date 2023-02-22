@@ -5,10 +5,11 @@
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
+
+import numpy as npy
 
 import volmdlr as vm
-import numpy as npy
 from volmdlr.models import bspline_surfaces
 
 #%%  BSpline-surface definition

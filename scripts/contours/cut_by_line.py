@@ -1,8 +1,9 @@
-import volmdlr
-import volmdlr.wires as vmw
-import volmdlr.edges as vme
 import matplotlib.pyplot as plt
 import numpy as np
+
+import volmdlr
+import volmdlr.edges as vme
+import volmdlr.wires as vmw
 
 line_seg1 = vme.LineSegment2D(volmdlr.Point2D(-0.5, -0.2), volmdlr.O2D)
 line_seg2 = vme.LineSegment2D(volmdlr.O2D, volmdlr.Point2D(0.3, 1))
@@ -46,7 +47,7 @@ assert len(cut_contour_by_line1) == 2
 
 
 cut_contour_by_line2 = contour2.cut_by_line(infinit_line2)
-assert len(cut_contour_by_line2) == 2
+assert len(cut_contour_by_line2) == 3
 
 cut_contour_by_line3 = contour2.cut_by_line(infinit_line3)
 assert len(cut_contour_by_line3) == 2

@@ -6,35 +6,48 @@ Module containing grid and relative objects
 """
 
 from typing import List
+
 import numpy as npy
-from dessia_common import DessiaObject
+
+from dessia_common.core import DessiaObject  # isort: skip
+
 import volmdlr
 import volmdlr.wires
 
 
 class Grid2D(DessiaObject):
+    """
+    A class defined with a list of list of points and characterized with a chosen direction.
+
+    :param lists_points: A list of a list of points
+    :type lists_points: List[List[volmdlr.Point2D]]
+    :param direction: A direction
+    :type direction: List[str]
+    """
 
     def __init__(self, lists_points: List[List[volmdlr.Point2D]],
                  direction: List[str],
                  name: str = ''):
+
         self.lists_points = lists_points
         self.direction = direction
         DessiaObject.__init__(self, name=name)
 
     def displacement_compared_to(self, initial_grid2d):
         """
-        compute the deformation/displacement (dx,dy) of a grid2d based on an another grid2d
+        Computes the deformation/displacement (dx,dy) of a grid2d based on
+        another grid2d.
 
-        Parameters
-        ----------
-        grid2d : Grid2D
-
+        :param initial_grid2d: A 2 dimensional grid
+        :type initial_grid2d: :class:`volmdlr.grid.Grid2D`
+        :return: The displacement of the 2 dimensional grid
+        :rtype:
         """
-
         points_2d = initial_grid2d.points
         points_2d_deformed = self.points
 
-        displacement = npy.ones(shape=(len(points_2d), 2))  # Grid2D points displacement
+        # Grid2D points displacement
+        displacement = npy.ones(shape=(len(points_2d), 2))
         for i in range(0, len(displacement)):
             displacement[i][0] = points_2d_deformed[i][0] - points_2d[i][0]
             displacement[i][1] = points_2d_deformed[i][1] - points_2d[i][1]
@@ -43,17 +56,12 @@ class Grid2D(DessiaObject):
 
     def find_direction_index(self, direction_axis: str):
         """
-        find the index of a given direction_axis
+        Finds the index of a given direction_axis.
 
-        Parameters
-        ----------
-        direction_axis : str
-            'x' OR 'y'
-
-        Returns
-        -------
-        index : int
-
+        :param direction_axis: 'x' or 'y'
+        :type direction_axis: str
+        :return: The direction index
+        :rtype: int
         """
 
         try:
@@ -66,14 +74,17 @@ class Grid2D(DessiaObject):
     @classmethod
     def from_points(cls, points, points_dim_1, direction):
         """
-        define a Grid2D given a list of points, number of points along the 1st dimension, and a direction
+        Defines a Grid2D given a list of points, number of points along
+        the 1st dimension, and a direction.
 
-        Parameters
-        ----------
-        points : list[volmdlr.Point2D]
-        points_dim1 : int
-        direction : List[str]
-
+        :param points:
+        :type points: List[:class:`volmdlr.Point2D`]
+        :param points_dim_1:
+        :type points_dim_1: int
+        :param direction:
+        :type direction: List[str]
+        :return:
+        :rtype:
         """
 
         lists_points = [points[i:i + points_dim_1] for i in range(0, len(points), points_dim_1)]
@@ -82,126 +93,57 @@ class Grid2D(DessiaObject):
 
     @classmethod
     def from_properties(cls, x_limits, y_limits, points_nbr,
-                        direction=['+x', '+y']):
+                        direction=None):
         """
-        Define Grid2d based on the given properties
+        Defines Grid2d based on the given properties.
 
-        Parameters
-        ----------
-        x_limits : tuple(float, float)
-            (x_min, x_max)
-        y_limits : tuple(float, float)
-            (y_min, y_max)
-        points_nbr : tuple(int, int)
-            number of points along x-axis and y-axis
-        direction : list[str]
-            it is used to order the generated points
-
-        Returns
-        -------
-        Grid2d
-
+        :param x_limits: x_min and x_max
+        :type x_limits: Tuple[float, float]
+        :param y_limits: y_min and y_max
+        :type y_limits: Tuple[float, float]
+        :param points_nbr: Number of points along the x-axis and the y-axis
+        :type points_nbr: Tuple[int, int]
+        :param direction: Used for ordering the generated points
+        :type direction: List[str]
+        :return: The 2 dimensional grid
+        :rtype: :class:`volmdlr.grid.Grid2D`
         """
+        if direction is None:
+            direction = ['+x', '+y']
 
         xmin, xmax = x_limits
         ymin, ymax = y_limits
         points_x, points_y = points_nbr
 
-        # points_2d = []
+        directions_properties = {
+            ('+x', '+y'): (xmin, xmax, ymin, ymax),
+            ('-x', '+y'): (xmax, xmin, ymin, ymax),
+            ('+y', '+x'): (xmin, xmax, ymin, ymax),
+            ('-y', '+x'): (xmin, xmax, ymax, ymin),
+            ('+x', '-y'): (xmin, xmax, ymax, ymin),
+            ('-x', '-y'): (xmax, xmin, ymax, ymin),
+            ('+y', '-x'): (xmax, xmin, ymin, ymax),
+            ('-y', '-x'): (xmax, xmin, ymax, ymin)
+        }
+
         grid2d = []
         points = []
 
-        if direction == ['+x', '+y']:
-            x = npy.linspace(xmin, xmax, points_x)
-            y = npy.linspace(ymin, ymax, points_y)
+        xmin, xmax, ymin, ymax = directions_properties[tuple(direction)]
+        x = npy.linspace(xmin, xmax, points_x)
+        y = npy.linspace(ymin, ymax, points_y)
 
+        if direction in [['+x', '+y'], ['-x', '+y'], ['+x', '-y'], ['-x', '-y']]:
             for yi in y:
                 for xi in x:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
                     points.append(volmdlr.Point2D(xi, yi))
 
                 grid2d.append(points)
                 points = []
 
-        elif direction == ['-x', '+y']:
-            x = npy.linspace(xmax, xmin, points_x)
-            y = npy.linspace(ymin, ymax, points_y)
-
-            for yi in y:
-                for xi in x:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['+y', '+x']:
-            x = npy.linspace(xmin, xmax, points_x)
-            y = npy.linspace(ymin, ymax, points_y)
-
+        elif direction in [['+y', '+x'], ['-y', '+x'], ['+y', '-x'], ['-y', '-x']]:
             for xi in x:
                 for yi in y:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['-y', '+x']:
-            x = npy.linspace(xmin, xmax, points_x)
-            y = npy.linspace(ymax, ymin, points_y)
-
-            for xi in x:
-                for yi in y:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['+x', '-y']:
-            x = npy.linspace(xmin, xmax, points_x)
-            y = npy.linspace(ymax, ymin, points_y)
-
-            for yi in y:
-                for xi in x:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['-x', '-y']:
-            x = npy.linspace(xmax, xmin, points_x)
-            y = npy.linspace(ymax, ymin, points_y)
-
-            for yi in y:
-                for xi in x:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['+y', '-x']:
-            x = npy.linspace(xmax, xmin, points_x)
-            y = npy.linspace(ymin, ymax, points_y)
-
-            for xi in x:
-                for yi in y:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['-y', '-x']:
-            x = npy.linspace(xmax, xmin, points_x)
-            y = npy.linspace(ymax, ymin, points_y)
-
-            for xi in x:
-                for yi in y:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
                     points.append(volmdlr.Point2D(xi, yi))
 
                 grid2d.append(points)
@@ -211,12 +153,10 @@ class Grid2D(DessiaObject):
 
     def grid_pattern(self):
         """
-        define a list of quadrilateral polygons defined based on Grid2d points
+        Defines a list of quadrilateral polygons defined based on Grid2d points.
 
-        Returns
-        -------
-        quadrilateral_polygons : list[volmdlr.wires.ClosedPolygon2D]
-
+        :return: The list of quadrilateral polygons
+        :rtype: List[volmdlr.wires.ClosedPolygon2D]
         """
 
         quadrilateral_polygons = []
@@ -234,7 +174,10 @@ class Grid2D(DessiaObject):
     @property
     def limits_xy(self):
         """
-        find the limits (min, max) of points along x & y direction_axis
+        Finds the limits (min, max) of points along x & y direction_axis.
+
+        :return:
+        :rtype:
         """
 
         x_limits = (self.lists_points[0][0].x, self.lists_points[-1][-1].x)
@@ -269,12 +212,10 @@ class Grid2D(DessiaObject):
     @property
     def points(self):
         """
-        return all the points in lists_points in just one list
+        Returns all the points in lists_points in just one list.
 
-        Returns
-        -------
-        points: list[volmdlr.Point2D]
-
+        :return: The flattened list of points
+        :rtype: List[:class:`volmdlr.Point2D`]
         """
 
         points = []
@@ -285,7 +226,11 @@ class Grid2D(DessiaObject):
     @property
     def points_xy(self):
         """
-        find how many points there are along x & y direction_axis
+        Finds how many points there are along x & y direction_axis.
+
+        :return: Two counts, one for the x direction_axis and another one for
+            the y direction_axis
+        :rtype: Tuple[int, int]
         """
 
         index = self.find_direction_index(direction_axis='x')

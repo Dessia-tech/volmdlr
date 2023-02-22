@@ -9,7 +9,8 @@ Created on Wed Jun 15 2022
 import volmdlr
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
-import gmsh
+
+# import gmsh
 
 # %% Extrusion
 
@@ -44,7 +45,11 @@ model.to_geo(file_name = 'model_1_geo',
 
 # %% DIRECT: gmsh file generation
 
+<<<<<<< HEAD
 model.to_msh(file_name = 'model_1',
+=======
+model.to_msh(file_name = '',
+>>>>>>> dev
              mesh_dimension = 2,
              factor = 1,
              curvature_mesh_size = 0,

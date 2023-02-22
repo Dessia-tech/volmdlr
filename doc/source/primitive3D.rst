@@ -25,4 +25,3 @@
 
 .. autoclass:: volmdlr.primitives3d.Sweep
   :members:
-

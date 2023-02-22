@@ -6,8 +6,8 @@ Created on Mon Aug 16 12:36:10 2021
 @author: dasilva
 """
 import volmdlr as vm
-import volmdlr.wires as wires
 import volmdlr.edges as edges
+import volmdlr.wires as wires
 
 points_poly1 = [vm.Point3D(-0.02785286331176758, 0.14365164184570312, 0.16285931396484374),
 vm.Point3D(-0.039570194244384765, 0.14255133056640626, 0.16285931396484374),

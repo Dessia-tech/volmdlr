@@ -7,9 +7,11 @@ Created on Fri May 31 12:05:03 2019
 """
 
 
-import volmdlr as vm
 import math
+
 import matplotlib.pyplot as plt
+
+import volmdlr as vm
 
 
 def circle_3_segments(segment1, segment2, segment3):
@@ -178,7 +180,7 @@ def rolling_circle_in_polygon(polygon, interpoints_distance=0.001):
                     seg1 = vm.LineSegment2D(segment1[0], segment1[-1])
                     seg2 = vm.LineSegment2D(segment2[0], segment2[-1])
                     
-                    circle1, circle2  = seg2.CreateTangentCircle(point1, seg1)
+                    circle1, circle2  = seg2.create_tangent_circle(point1, seg1)
                     
                     polygon_mesh_modified = polygon_mesh[:]
                     polygon_mesh_modified.pop(index1)
@@ -195,7 +197,7 @@ def rolling_circle_in_polygon(polygon, interpoints_distance=0.001):
                     seg1 = vm.LineSegment2D(segment1[0], segment1[-1])
                     seg2 = vm.LineSegment2D(segment2[0], segment2[-1])
                     
-                    circle1, circle2  = seg1.CreateTangentCircle(point2, seg2)
+                    circle1, circle2  = seg1.create_tangent_circle(point2, seg2)
                     
                     polygon_mesh_modified = polygon_mesh[:]
                     polygon_mesh_modified.pop(index2)
@@ -273,20 +275,3 @@ min_seg1.MPLPlot(axe, style='r')
 min_seg2.MPLPlot(axe, style='r')
 min_point.MPLPlot(axe)
 min_circle.MPLPlot(axe)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

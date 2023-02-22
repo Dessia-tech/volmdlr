@@ -5,10 +5,11 @@
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
+
+import matplotlib.patches as mpatches
 
 import volmdlr as vm
-import matplotlib.patches as mpatches
 from volmdlr.models import bspline_surfaces
 
 #%%  BSpline-surface definition 

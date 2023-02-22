@@ -7,11 +7,12 @@ Created on Tue Oct  9 10:50:18 2018
 """
 
 import math
+
 import numpy as np
+
 import volmdlr as vm
 import volmdlr.primitives2d as primitives2d
 import volmdlr.primitives3d as primitives3d
-
 
 # Ajout commentaire juste pour tester
 # =============================================================================

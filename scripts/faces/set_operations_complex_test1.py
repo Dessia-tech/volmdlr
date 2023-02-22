@@ -1,7 +1,8 @@
-import volmdlr as vm
-import volmdlr.primitives3d as primitives3D
-import volmdlr.faces as vmf
 import math
+
+import volmdlr as vm
+import volmdlr.faces as vmf
+import volmdlr.primitives3d as primitives3D
 import volmdlr.wires as vmw
 
 poly1_vol1 = vmw.ClosedPolygon3D([vm.Point3D(-0.1, -0.05, 0),
@@ -74,4 +75,3 @@ for new_box in [union_box, subtraction_box, subtraction_closedbox, intersection_
         shell.color = (1, 0.1, 0.1)
         shell.alpha = 0.6
     vm.core.VolumeModel(new_box + [shell1, shell2]).babylonjs()
-

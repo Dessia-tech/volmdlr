@@ -6,11 +6,13 @@ Created on Thu Apr  2 10:51:54 2020
 """
 
 
-import volmdlr as vm
-import volmdlr.step
-import volmdlr.primitives3d as primitives3d
 import math
+
 import matplotlib.pyplot as plt
+
+import volmdlr as vm
+import volmdlr.primitives3d as primitives3d
+import volmdlr.step
 
 radius = 5e-3 #Choose the radius
 center = vm.Point3D(0,0,0) #Choose the coordinate of the center

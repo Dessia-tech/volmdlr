@@ -1,10 +1,10 @@
 
 import os
 from string import Template
+
 import pkg_resources
 
-
-babylon_unpacker_cdn_header = '''
+BABYLON_UNPACKER_CDN_HEADER = '''
 <!doctype html>
 <html>
 <head>
@@ -32,7 +32,7 @@ babylon_unpacker_cdn_header = '''
 </head>
 '''
 
-babylon_unpacker_embedded_header = '''
+BABYLON_UNPACKER_EMBEDDED_HEADER = '''
 <!doctype html>
 <html>
 <head>
@@ -59,15 +59,15 @@ for filename in ['babylon.js', 'babylonjs.loaders.min.js', 'earcut.min.js', 'pep
     with pkg_resources.resource_stream(
             pkg_resources.Requirement('volmdlr'),
             os.path.join('volmdlr/assets/js/', filename)) as fjs:
-        babylon_unpacker_embedded_header += fjs.read().decode('utf-8')
+        BABYLON_UNPACKER_EMBEDDED_HEADER += fjs.read().decode('utf-8')
 
-babylon_unpacker_embedded_header += '''
+BABYLON_UNPACKER_EMBEDDED_HEADER += '''
       </script>
 </head>
 '''
 
 
-babylon_unpacker_body_template = Template(
+BABYLON_UNPACKER_BODY_TEMPLATE = Template(
     '''
 <body>
    <canvas id="renderCanvas"></canvas>
@@ -108,15 +108,15 @@ babylon_unpacker_body_template = Template(
         scene.lastEdgewidthUpdate = Date.now();
 
 
-        camera.onViewMatrixChangedObservable.add(() => {
-            if ((Date.now() - scene.lastEdgewidthUpdate) > 1000){
-                scene.lastEdgewidthUpdate = Date.now();
-                for (mesh of scene.meshes){
-                    var dist = BABYLON.Vector3.Distance(camera.position, mesh.position);
-                    mesh.edgesWidth = dist*0.1;
-                }
-            }
-         })
+        //camera.onViewMatrixChangedObservable.add(() => {
+        //    if ((Date.now() - scene.lastEdgewidthUpdate) > 1000){
+        //        scene.lastEdgewidthUpdate = Date.now();
+        //        for (mesh of scene.meshes){
+        //            var dist = BABYLON.Vector3.Distance(camera.position, mesh.position);
+        //            mesh.edgesWidth = dist*0.1;
+        //        }
+        //    }
+        // })
 
       	var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(-1, -1, -1), scene);
       	light1.intensity=0.5;
@@ -187,18 +187,25 @@ babylon_unpacker_body_template = Template(
                 vertexData.normals = normals;
                 vertexData.applyToMesh(mesh);
                 mesh.enableEdgesRendering(0.9);
-                mesh.edgesWidth = max_length*0.1;
-                mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);
+                mesh.edgesWidth = max_length*0.025;
+                if ('edges_color' in mesh_data) {
+                        mesh.edgesColor = new BABYLON.Color4(mesh_data['edges_color'][0],
+                                                             mesh_data['edges_color'][1],
+                                                             mesh_data['edges_color'][2],
+                                                             mesh_data['alpha']);
+                        }
+                else {mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6)};
                 var mat = new BABYLON.StandardMaterial("material", scene);
                 // mat.diffuseColor = BABYLON.Color3.Green();
                 // mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);
                 // mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
                 // mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
                 mat.backFaceCulling = false;
+                mat.twoSidedLighting = true;
                 mesh.material = mat;
                 mat.diffuseColor = new BABYLON.Color3(mesh_data['color'][0],
-                                                        mesh_data['color'][1],
-                                                        mesh_data['color'][2]);
+                                                      mesh_data['color'][1],
+                                                      mesh_data['color'][2]);
                 mat.alpha = mesh_data['alpha'];
 
                 }

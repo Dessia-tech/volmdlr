@@ -5,15 +5,26 @@ Common abstract primitives
 """
 
 import math
+import warnings
 from typing import Dict, List
+
 from numpy import zeros
 from scipy.optimize import linprog
+
 # import dessia_common as dc
 import volmdlr
+import volmdlr.edges
 
 
 class RoundedLineSegments:
+    """
+    Rounded Line Segments class.
+
+    """
     _non_serializable_attributes = ['line_class', 'arc_class', 'basis_primitives', 'primitives']
+
+    line_class = volmdlr.edges.LineSegment
+    arc_class = volmdlr.edges.Arc
 
     def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
                  closed: bool = False, adapt_radius: bool = False, name: str = ''):
@@ -27,7 +38,8 @@ class RoundedLineSegments:
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new RoundedLineSegments
+        Changes frame_mapping and return a new RoundedLineSegments.
+
         side = 'old' or 'new'
         """
         return self.__class__([point.frame_mapping(frame, side)
@@ -37,11 +49,17 @@ class RoundedLineSegments:
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.frame_mapping_inplace(frame, side)
+
+    def arc_features(self, point_index: int):
+        raise NotImplementedError('The method arc_features should be overloaded.')
 
     def _primitives(self):
         alpha = {}
@@ -60,17 +78,17 @@ class RoundedLineSegments:
 
             for i in rounded_points_indices[1:]:
                 # Computing the arc
-                ps2, pi2, pe2, dist2, alpha2 = self.arc_features(i)
+                _, pi2, _, dist2, alpha2 = self.arc_features(i)
                 dist[i] = dist2
                 alpha[i] = alpha2
                 if i - 1 in self.radius:
                     p1 = self.points[i - 1]
                     p2 = self.points[i]
-                    l = (p2 - p1).norm()
-                    lines_length[i - 1] = l
+                    length = (p2 - p1).norm()
+                    lines_length[i - 1] = length
                     dist1 = dist[i - 1]
 
-                    if dist1 + dist2 <= l:
+                    if dist1 + dist2 <= length:
                         groups.append(group)
                         group = [i]
                     else:
@@ -135,7 +153,7 @@ class RoundedLineSegments:
                         neq_ub += lg - 1
 
                 # Constructing simplex problem
-                # Concstructing C
+                # C matrix:
                 if ndof > 0:
                     C = zeros(ndof)
                     for j, i in dof.items():

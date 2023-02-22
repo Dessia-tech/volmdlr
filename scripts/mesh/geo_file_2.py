@@ -8,9 +8,10 @@ Created on Thu Jun 16 2022
 
 import volmdlr
 import volmdlr as vm
-import volmdlr.primitives3d as primitives3d
 import volmdlr.edges
-import gmsh
+import volmdlr.primitives3d as primitives3d
+
+# import gmsh
 
 # %% Extrusion
 

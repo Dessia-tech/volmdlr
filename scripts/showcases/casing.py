@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Script checking offset and Curvilinear absissa of roundedline2D
+Script to show volmdlr capabilities on extrusions
 """
 
-import plot_data
-from volmdlr.models import casing
+import math
 
+import plot_data
+
+from volmdlr.models import casing
+from volmdlr.primitives3d import Block
 
 casing._check_platform()
 
 bottom, sides, belt = casing.primitives
 
-ax = belt.outer_contour2d.plot()
-# outer_contour.plot(a)
+bbox = casing.bounding_box
 
-ax = belt.outer_contour3d.plot()
-l = belt.outer_contour3d.length()
-for i in range(100):
-    p = belt.outer_contour3d.point_at_abscissa(i*l/100)
-    p.plot(ax=ax)
+assert bbox.zmin == -0.005
+assert math.isclose(bbox.xmax, 0.3407, abs_tol=1e-5)
 
-ax = belt.outer_contour3d.plot()
-
-
+box = Block.from_bounding_box(bbox)
+box.alpha = 0.3
+casing.primitives.append(box)
 casing.babylonjs()
+
 casing.to_step('casing')
 casing.to_stl('casing')
 
@@ -32,5 +32,3 @@ casing.to_stl('casing')
 contour = belt.outer_contour2d.plot_data()
 primitive_group = plot_data.PrimitiveGroup(primitives=[contour])
 plot_data.plot_canvas(plot_data_object=primitive_group, debug_mode=True)
-
-
