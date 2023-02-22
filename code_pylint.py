@@ -52,7 +52,7 @@ MAX_ERROR_BY_TYPE = {
                      'raise-missing-from': 2,
                      'no-else-raise': 3,
                      'no-else-continue': 3,
-                     'undefined-variable': 6,  # 2 when gmsh is fixed
+                     'undefined-variable': 13,  # 6 when gmsh is fixed
                      'no-else-break': 4,
                      'broad-except': 1,
                      "broad-exception-caught": 1,

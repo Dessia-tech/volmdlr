@@ -2292,7 +2292,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def union(self, contour2: 'Contour2D'):
         """
-        Union two contours, if they adjacent, or overlap somehow
+        Union two contours, if they adjacent, or overlap somehow.
         """
         if self.is_inside(contour2):
             return [self]
