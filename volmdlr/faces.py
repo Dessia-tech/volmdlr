@@ -3399,7 +3399,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         Transform a 3D Cartesian point (x, y, z) into a parametric (u, v) point.
         """
-        x, y, z = self.frame.global_to_local_coordinates(point3d)
+        x, y, _ = self.frame.global_to_local_coordinates(point3d)
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
@@ -3858,7 +3858,8 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment3d_to_2d(self, linesegment3d):
         """
-        A line segment on a BSplineSurface3D will be in any case a line in 2D?
+        A line segment on a BSplineSurface3D will be in any case a line in 2D?.
+
         """
         x_perio = self.x_periodicity if self.x_periodicity is not None else 1.
         y_perio = self.y_periodicity if self.y_periodicity is not None else 1.
@@ -6008,7 +6009,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def geo_lines(self):  # , mesh_size_list=None):
         """
-        Gets the lines that define a Face3D in a .geo file
+        Gets the lines that define a Face3D in a .geo file.
+
         """
 
         i, p = None, None
@@ -6582,6 +6584,8 @@ class Face3D(volmdlr.core.Primitive3D):
     def inner_contours_recalculation(self, inner_contour, splitting_points, splitting_points_and_cutting_contour,
                                      connectig_to_outer_contour):
         """
+        Recalculates inner contours if a cutting contour is connected to an inner contour at two ends.
+
         Verifies if there is a cutting contours from face intersections connected to an inner contour at the two ends,
         if true this inner contour is updated with this cutting contour.
 
@@ -7311,29 +7315,24 @@ class Triangle3D(PlaneFace3D):
             return self.points
 
         pos_length_max = lengths.index(max_length)
-        point0 = self.points[-3 + pos_length_max]
-        point1 = self.points[-3 + pos_length_max + 1]
-        point2 = self.points[-3 + pos_length_max + 2]
+        new_points = [self.points[-3 + pos_length_max + k] for k in range(3)]
 
-        vector_0_1 = point0 - point1
-        vector_0_1.normalize()
+        vector = new_points[0] - new_points[1]
+        vector.normalize()
         points_0_1 = []
 
         for k in range(int(max_length / resolution) + 2):
             if k == 0:
-                points_0_1.append(point1)
-            distance_to_point = min(k * resolution, max_length)
-            points_0_1.append(point1 + vector_0_1 * distance_to_point)
+                points_0_1.append(new_points[1])
+            points_0_1.append(new_points[1] + vector * min(k * resolution, max_length))
 
-        vector_2_1, length_2_1 = point2 - point1, point2.point_distance(point1)
-        vector_2_1.normalize()
+        vector, length_2_1 = new_points[2] - new_points[1], new_points[2].point_distance(new_points[1])
+        vector.normalize()
         points_in = []
 
-        for k, p0_1 in enumerate(points_0_1):
-            if k == 0:
-                point_on_2_1 = point1
-            distance_to_point = min(points_0_1[0].point_distance(p0_1) * length_2_1 / max_length, length_2_1)
-            point_on_2_1 = point1 + vector_2_1 * distance_to_point
+        for p0_1 in points_0_1:
+            point_on_2_1 = new_points[1] + vector * min(points_0_1[0].point_distance(p0_1) * length_2_1 / max_length,
+                                                        length_2_1)
 
             length_2_0 = point_on_2_1.point_distance(p0_1)
             nb_int = int(length_2_0 / resolution) + 2
@@ -7344,9 +7343,8 @@ class Triangle3D(PlaneFace3D):
                 vector_2_0.normalize()
                 step_in = length_2_0 / (nb_int - 1)
                 for i in range(nb_int):
-                    distance_to_point = min(i * step_in, length_2_0)
-                    if distance_to_point != 0:
-                        points_in.append(p0_1 + vector_2_0 * distance_to_point)
+                    if min(i * step_in, length_2_0) != 0:
+                        points_in.append(p0_1 + vector_2_0 * min(i * step_in, length_2_0))
 
         return npy.unique(points_0_1 + points_in).tolist()
 
@@ -7467,7 +7465,8 @@ class CylindricalFace3D(Face3D):
 
     def point_belongs(self, point3d: volmdlr.Point3D):
         """
-        Tells you if a point is on the 3D Cylindrical face and inside its contour
+        Tells you if a point is on the 3D Cylindrical face and inside its contour.
+
         """
         point2d = self.surface3d.point3d_to_2d(point3d)
         point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
@@ -8914,7 +8913,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Shell3D rotation. Object is updated inplace
+        Shell3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -9510,7 +9510,7 @@ class ClosedShell3D(OpenShell3D):
             count = 0
             ray_intersection = []
             is_inside = True
-            for face, point_inters in self.linesegment_intersections(ray):
+            for _, point_inters in self.linesegment_intersections(ray):
                 count += len(point_inters)
             if count % 2 == 0:
                 is_inside = False
@@ -10085,7 +10085,7 @@ class OpenTriangleShell3D(OpenShell3D):
 
     def to_dict(self):
         dict_ = self.base_dict()
-        dict_['triangles'] = [t.to_dict() for t in self.triangles]
+        dict_['faces'] = [t.to_dict() for t in self.faces]
         dict_['alpha'] = self.alpha
         dict_['color'] = self.color
         return dict_
