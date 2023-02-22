@@ -1782,6 +1782,7 @@ class Contour2D(ContourMixin, Wire2D):
             p = volmdlr.Point2D.random(x_min, x_max, y_min, y_max)
             if self.point_belongs(p, include_edge_points):
                 return p
+        print(True)
         raise ValueError('Could not find a point inside')
 
     def order_contour(self):
@@ -4448,7 +4449,6 @@ class Contour3D(ContourMixin, Wire3D):
                          raw_edge.end.point_distance(last_edge.end)]
             index = distances.index(min(distances))
             if min(distances) > 6e-4:
-                arc = object_dict[int(edge_id[1:])]
                 # Green color : well-placed and well-read
                 ax = last_edge.plot(color='g')
                 for re in raw_edges[:2 + i]:
@@ -5139,7 +5139,7 @@ class Circle3D(Contour3D):
         return False
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        if not self.point_belongs(point1, abs_tol=1e-4) or not self.point_belongs(point2, abs_tol=1e-4):
+        if not self.point_belongs(point1, 1e-4) or not self.point_belongs(point2, 1e-4):
             ax = self.plot()
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')
