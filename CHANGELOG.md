@@ -5,8 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.10.0 [Unreleased yet]
 
-## v0.9.0 [Unreleased yet]
+### New Features
+
+* Write .msh file (with stream)
+
+### Fixed
+
+### Removed
+
+### Performance improvements
+
+### Refactorings
+
+
+## v0.9.0 [Testing]
 
 ### New Features
 
@@ -20,7 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
 * WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
-* Write .msh file (with stream)
 
 
 ### Fixed
