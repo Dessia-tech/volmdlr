@@ -672,25 +672,14 @@ class Step(dc.DessiaObject):
                 self.functions[id1].arg.append('#{}'.format(id2))
 
             elif function.name in STEP_TO_VOLMDLR:
-                G.add_node(function.id,
-                           color='rgb(0, 0, 0)',
-                           shape='.',
-                           name=str(function.id))
-                F.add_node(function.id,
-                           color='rgb(0, 0, 0)',
-                           shape='.',
-                           name=str(function.id))
-                labels[function.id] = str(function.id) + ' ' + function.name
+                func_id = function.id
+                G.add_node(func_id, color='rgb(0, 0, 0)', shape='.', name=str(func_id))
+                F.add_node(func_id, color='rgb(0, 0, 0)', shape='.', name=str(func_id))
+                labels[func_id] = f"{func_id} {function.name}"
 
-        # Delete connection if node not found
-        node_list = list(F.nodes())
-        delete_connection = []
-        for connection in self.all_connections:
-            if connection[0] not in node_list \
-                    or connection[1] not in node_list:
-                delete_connection.append(connection)
-        for delete in delete_connection:
-            self.all_connections.remove(delete)
+        # Delete connections if nodes not found
+        node_set = set(F.nodes())
+        self.all_connections = [c for c in self.all_connections if c[0] in node_set and c[1] in node_set]
 
         # Create graph connections
         G.add_edges_from(self.all_connections)
