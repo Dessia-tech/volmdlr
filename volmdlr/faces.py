@@ -944,16 +944,9 @@ class Surface3D(DessiaObject):
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
             inner_contours2d = []
         elif lc3d > 1:
-            area = -1
-            inner_contours2d = []
-            for contour3d in contours3d:
-                contour2d = self.contour3d_to_2d(contour3d)
-                inner_contours2d.append(contour2d)
-                contour_area = contour2d.area()
-                if contour_area > area:
-                    area = contour_area
-                    outer_contour2d = contour2d
-            inner_contours2d.remove(outer_contour2d)
+            outer_contour2d = max((self.contour3d_to_2d(contour3d) for contour3d in contours3d), key=lambda c: c.area())
+            inner_contours2d = [self.contour3d_to_2d(contour3d) for contour3d in contours3d if
+                                contour3d != outer_contour2d]
         else:
             raise ValueError('Must have at least one contour')
 
@@ -962,8 +955,7 @@ class Surface3D(DessiaObject):
         else:
             class_ = self.face_class
 
-        surface2d = Surface2D(outer_contour=outer_contour2d,
-                              inner_contours=inner_contours2d)
+        surface2d = Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
 
     def repair_primitives_periodicity(self, primitives2d):
