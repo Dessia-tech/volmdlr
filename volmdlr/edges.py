@@ -2260,7 +2260,24 @@ class Arc(Edge):
             str(center_point_tag) + ', ' + str(end_point_tag) + '};'
 
     def get_geo_points(self):
+        """
+        Gets the points that define an Arc to use them in a .geo file.
+
+        :return: A list of caracteristic arc points
+        :rtype: List
+
+        """
         return [self.start, self.center, self.end]
+
+    def reverse(self):
+        """
+        Gets the reverse version of an arc.
+
+        :return: An arc
+        :rtype: Arc
+        """
+
+        return self.__class__(start=self.end, interior=self.interior, end=self.start)
 
 
 class Arc2D(Arc):

@@ -1154,15 +1154,15 @@ class Point2D(Vector2D):
         return point_symmetry
 
     def coordinates(self):
-        '''
-        gets x,y coordinates of a point2d
-        '''
+        """
+        Gets x,y coordinates of a point2d.
+        """
 
         return (self.x, self.y)
 
     def get_geo_lines(self, tag: int, point_mesh_size: float = None):
-        '''
-        gets the lines that define a Point2D in a .geo file
+        """
+        Gets the lines that define a Point2D in a .geo file.
 
         :param tag: The point index
         :type tag: int
@@ -1171,7 +1171,7 @@ class Point2D(Vector2D):
 
         :return: A line
         :rtype: str
-        '''
+        """
 
         if point_mesh_size:
             return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
@@ -2093,7 +2093,7 @@ class Point3D(Vector3D):
 
     def get_geo_lines(self, tag: int, point_mesh_size: float = None):
         """
-        gets the lines that define a Point3D in a .geo file
+        Gets the lines that define a Point3D in a .geo file.
 
         :param tag: The point index
         :type tag: int
