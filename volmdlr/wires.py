@@ -3683,15 +3683,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
 
 class Triangle(ClosedPolygonMixin):
-    def __init_(self, point1, point2,
-                point3, name: str = ''):
-
-
-class Triangle(ClosedPolygonMixin):
     """
     Defines a triangle from 3 points. It is a Super Class for Triangle2D and Triangle3D,
     storing their main attribute and methods.
-
 
     """
 
