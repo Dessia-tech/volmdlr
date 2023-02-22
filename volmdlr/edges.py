@@ -2805,7 +2805,7 @@ class Arc2D(Arc):
                               end=points_symmetry[2])
 
     def reverse(self):
-        return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(), name=self.name)
+        return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(), self.name)
 
 
 class FullArc2D(Arc2D):
@@ -4693,21 +4693,19 @@ class BSplineCurve3D(BSplineCurve):
 
     def cut_before(self, parameter: float):
         # Is a value of parameter below 4e-3 a real need for precision ?
-        if math.isclose(parameter, 0, abs_tol=4e-3):
+        if math.isclose(parameter, 0, abs_tol=5e-6):
             return self
-        elif math.isclose(parameter, 1, abs_tol=4e-3):
+        if math.isclose(parameter, 1, abs_tol=4e-3):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
-        try:
-            curves = operations.split_curve(self.curve, parameter)
-        except Exception:
-            print(True)
+
+        curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
         # Is a value of parameter below 4e-3 a real need for precision ?
-        if math.isclose(parameter, 0, abs_tol=4e-3):
+        if math.isclose(parameter, 0, abs_tol=5e-6):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
-        if math.isclose(parameter, 1, abs_tol=4e-3):
+        if math.isclose(parameter, 1, abs_tol=5e-6):
             return self
         curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[0])
@@ -5839,8 +5837,8 @@ class ArcEllipse3D(Edge):
         self.major_dir = major_dir  # Vector for Gradius
         # self.extra = extra
         self._bbox = None
-        u1 = (self.interior - self.start)
-        u2 = (self.interior - self.end)
+        u1 = self.interior - self.start
+        u2 = self.interior - self.end
         u1.normalize()
         u2.normalize()
         if u1 == u2:
@@ -5984,33 +5982,6 @@ class ArcEllipse3D(Edge):
     def _get_points(self):
         return self.discretization_points(number_points=20)
     points = property(_get_points)
-
-    @property
-    def bounding_box(self):
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bounding_box):
-        self._bbox = new_bounding_box
-
-    def get_bounding_box(self):
-        """
-        Calculates the bounding box of the Arc3D.
-
-        :return: a volmdlr.core.BoundingBox object.
-        """
-        # TODO: implement exact calculation
-
-        points = self.discretization_points(angle_resolution=10)
-        xmin = min(point.x for point in points)
-        xmax = max(point.x for point in points)
-        ymin = min(point.y for point in points)
-        ymax = max(point.y for point in points)
-        zmin = min(point.z for point in points)
-        zmax = max(point.z for point in points)
-        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def to_2d(self, plane_origin, x, y):
         """

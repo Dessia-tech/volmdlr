@@ -5,9 +5,11 @@ Common primitives 3D
 """
 
 import math
+import warnings
 from random import uniform
 from typing import Dict, List, Tuple
 
+import dessia_common
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -86,18 +88,18 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 
         l1 = volmdlr.edges.Line3D(p3, p3 + v1)
         l2 = volmdlr.edges.Line3D(p4, p4 + v2)
-        c, _ = l1.minimum_distance_points(l2)
 
         u3 = u1 + u2  # mean of v1 and v2
         u3 /= u3.norm()
 
-        interior = c - u3 * radius
+        interior = l1.minimum_distance_points(l2)[0] - u3 * radius
         return p3, interior, p4, dist, alpha
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        OpenRoundedLineSegments3D rotation
+        OpenRoundedLineSegments3D rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -111,17 +113,21 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
                          axis: volmdlr.Vector3D,
                          angle: float):
         """
-        OpenRoundedLineSegments3D rotation. Object is updated inplace
+        OpenRoundedLineSegments3D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        OpenRoundedLineSegments3D translation
+        OpenRoundedLineSegments3D translation.
+
         :param offset: translation vector
         :return: A new translated OpenRoundedLineSegments3D
         """
@@ -132,8 +138,11 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
         OpenRoundedLineSegments3D translation. Object is updated inplace
+
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.translation_inplace(offset)
 
@@ -141,6 +150,8 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
                                   OpenRoundedLineSegments3D):
     """
+    Defines a closed rounded line segment in 3D.
+
     :param points: Points used to draw the wire
     :type points: List of Point3D
     :param radius: Radius used to connect different parts of the wire
@@ -157,7 +168,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
                 'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
                 name='')
 
-        volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
+        volmdlr.wires.Contour3D.__init__(self, primitives=self._primitives(), name=name)
 
 
 class Block(volmdlr.faces.ClosedShell3D):
@@ -184,7 +195,7 @@ class Block(volmdlr.faces.ClosedShell3D):
         faces = self.shell_faces()
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """
         Custom to_dict for performance
         """
@@ -213,6 +224,7 @@ class Block(volmdlr.faces.ClosedShell3D):
         return cls(frame=frame)
 
     def vertices(self):
+        """Computes the vertices of the block."""
         return [self.frame.origin - 0.5 * self.frame.u - 0.5 * self.frame.v - 0.5 * self.frame.w,
                 self.frame.origin - 0.5 * self.frame.u + 0.5 * self.frame.v - 0.5 * self.frame.w,
                 self.frame.origin + 0.5 * self.frame.u + 0.5 * self.frame.v - 0.5 * self.frame.w,
@@ -223,6 +235,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 self.frame.origin + 0.5 * self.frame.u - 0.5 * self.frame.v + 0.5 * self.frame.w]
 
     def edges(self):
+        """Computes the edges of the block."""
         p1, p2, p3, p4, p5, p6, p7, p8 = self.vertices()
         return [volmdlr.edges.LineSegment3D(p1.copy(), p2.copy()),
                 volmdlr.edges.LineSegment3D(p2.copy(), p3.copy()),
@@ -259,6 +272,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 volmdlr.wires.Contour3D([e4.copy(), e9.copy(), e8_switch.copy(), e12_switch.copy()])]
 
     def shell_faces(self):
+        """Computes the faces of the block."""
         hlx = 0.5 * self.frame.u.norm()
         hly = 0.5 * self.frame.v.norm()
         hlz = 0.5 * self.frame.w.norm()
@@ -293,7 +307,7 @@ class Block(volmdlr.faces.ClosedShell3D):
         return [xm_face, xp_face, ym_face, yp_face, zm_face, zp_face]
 
     def faces_center(self):
-        # c0_x, c1_x, c0_y, c1_y, c0_z, c1_z
+        """Computes the faces center of the block."""
         return [self.frame.origin - 0.5 * self.frame.u,
                 self.frame.origin + 0.5 * self.frame.u,
                 self.frame.origin - 0.5 * self.frame.v,
@@ -304,7 +318,8 @@ class Block(volmdlr.faces.ClosedShell3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Block rotation
+        Block rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -318,16 +333,20 @@ class Block(volmdlr.faces.ClosedShell3D):
                          angle: float):
         """
         Block rotation. Object is updated inplace
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.rotation_inplace(center, axis, angle)
         self.faces = self.shell_faces()
 
     def translation(self, offset: volmdlr.Vector3D):
         """
         Block translation
+
         :param offset: translation vector
         :return: A new translated Block
         """
@@ -338,8 +357,11 @@ class Block(volmdlr.faces.ClosedShell3D):
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
         Block translation. Object is updated inplace
+
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.frame.translation_inplace(offset)
         self.faces = self.shell_faces()
 
@@ -390,8 +412,9 @@ class Block(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Frame3D
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new Frame3D.
+
+        :param side: 'old' or 'new'
         """
         new_frame = self.frame_mapping_parametres(frame, side)
         return Block(new_frame, color=self.color,
@@ -399,9 +422,12 @@ class Block(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_frame = self.frame_mapping_parametres(frame, side)
         self.frame = new_frame
         self.faces = self.shell_faces()
@@ -422,8 +448,8 @@ class Block(volmdlr.faces.ClosedShell3D):
     def plot_data(self, x3d, y3d, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
         lines = []
-        for edge3D in self.edges():
-            lines.append(edge3D.plot_data(x3d, y3d, marker, color,
+        for edge3d in self.edges():
+            lines.append(edge3d.plot_data(x3d, y3d, marker, color,
                                           stroke_width, dash, opacity, arrow))
 
         return lines
@@ -485,7 +511,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """
         Serialize the ExtrudedProfile.
 
@@ -550,34 +576,6 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     #     ax.margins(0.1)
     #     return ax
 
-    def FreeCADExport(self, ip):
-        name = 'primitive' + str(ip)
-        s = 'Wo = []\n'
-        s += 'Eo = []\n'
-        for prim_index, primitive in enumerate(self.outer_contour3d.primitives):
-            s += primitive.FreeCADExport('L{}'.format(prim_index))
-            s += 'Eo.append(Part.Edge(L{}))\n'.format(ip)
-        s += 'Wo.append(Part.Wire(Eo[:]))\n'
-        s += 'Fo = Part.Face(Wo)\n'
-
-        s += 'Fi = []\n'
-        s += 'W = []\n'
-        for ic, contour in enumerate(self.inner_contours3d):
-            s += 'E = []\n'
-            for primitive_index, primitive in enumerate(contour.primitives):
-                s += primitive.FreeCADExport('L{}_{}'.format(ic, primitive_index))
-                s += 'E.append(Part.Edge(L{}_{}))\n'.format(ic, primitive_index)
-            s += 'Wi = Part.Wire(E[:])\n'
-            s += 'Fi.append(Part.Face(Wi))\n'
-
-        if len(self.inner_contours3d) != 0:
-            s += 'Fo = Fo.cut(Fi)\n'
-        e1, e2, e3 = round(1000 * self.extrusion_vector, 6)
-
-        s += '{} = Fo.extrude(fc.Vector({}, {}, {}))\n'.format(name, e1,
-                                                               e2, e3)
-        return s
-
     def area(self):
         areas = self.outer_contour2d.area()
         areas -= sum([contour.area() for contour in self.inner_contours2d])
@@ -598,13 +596,13 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                                  side: str):
         basis = frame.basis()
         if side == 'old':
-            extrusion_vector = basis.old_coordinates(self.extrusion_vector)
-            x = basis.old_coordinates(self.x)
-            y = basis.old_coordinates(self.y)
+            extrusion_vector = basis.local_to_global_coordinates(self.extrusion_vector)
+            x = basis.local_to_global_coordinates(self.x)
+            y = basis.local_to_global_coordinates(self.y)
         elif side == 'new':
-            extrusion_vector = basis.new_coordinates(self.extrusion_vector)
-            x = basis.new_coordinates(self.x)
-            y = basis.new_coordinates(self.y)
+            extrusion_vector = basis.global_to_local_coordinates(self.extrusion_vector)
+            x = basis.global_to_local_coordinates(self.x)
+            y = basis.global_to_local_coordinates(self.y)
         else:
             raise ValueError('side must be either old or new')
         return extrusion_vector, x, y
@@ -628,6 +626,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
         :param side: = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.extrusion_vector, self.x, self.y =\
             self.frame_mapping_parameters(frame, side)
         self.plane_origin.frame_mapping_inplace(frame, side)
@@ -661,6 +661,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(volmdlr.O3D, axis, angle)
@@ -688,6 +689,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.plane_origin.translation_inplace(offset)
 
 
@@ -719,7 +722,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """
         Custom to dict for performance.
         """
@@ -772,30 +775,9 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
         return faces
 
-    def FreeCADExport(self, ip, ndigits=3):
-        name = 'primitive' + str(ip)
-        s = 'W=[]\n'
-#        for ic, contour in enumerate(self.contours3D):
-        s += 'L=[]\n'
-        for ibp, basis_primitive in enumerate(self.contour3d.edges):
-            s += basis_primitive.FreeCADExport('L{}_{}'.format(1, ibp), 8)
-            s += 'L.append(L{}_{})\n'.format(1, ibp)
-        s += 'S = Part.Shape(L)\n'
-        s += 'W.append(Part.Wire(S.Edges))\n'
-        s += 'F=Part.Face(W)\n'
-        a1, a2, a3 = self.axis.vector
-        ap1, ap2, ap3 = self.axis_point.vector
-        ap1 = round(ap1 * 1000, ndigits)
-        ap2 = round(ap2 * 1000, ndigits)
-        ap3 = round(ap3 * 1000, ndigits)
-        angle = self.angle / math.pi * 180
-        s += '{} = F.revolve(fc.Vector({},{},{}), fc.Vector({},{},{}),{})\n'.format(name,
-                                                                                    ap1, ap2, ap3, a1, a2, a3, angle)
-        return s
-
     def volume(self):
         """
-        Volume from guldin formulae.
+        Volume from Guldin formulae.
         """
         p1 = self.axis_point.PlaneProjection3D(self.plane_origin,
                                                self.x, self.y)
@@ -847,6 +829,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         :param angle: rotation angle.
         :type angle: float.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.plane_origin.rotation_inplace(center, axis, angle)
         self.x.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
         self.y.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
@@ -874,6 +858,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.plane_origin.translation_inplace(offset)
         self.axis_point.translation_inplace(offset)
 
@@ -881,13 +867,13 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
                                  side: str):
         basis = frame.Basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
-            x = basis.old_coordinates(self.x)
-            y = basis.old_coordinates(self.y)
+            axis = basis.local_to_global_coordinates(self.axis)
+            x = basis.local_to_global_coordinates(self.x)
+            y = basis.local_to_global_coordinates(self.y)
         elif side == 'new':
-            axis = basis.new_coordinates(self.axis)
-            x = basis.new_coordinates(self.x)
-            y = basis.new_coordinates(self.y)
+            axis = basis.global_to_local_coordinates(self.axis)
+            x = basis.global_to_local_coordinates(self.x)
+            y = basis.global_to_local_coordinates(self.y)
         else:
             raise ValueError('side must be either old or new')
 
@@ -912,6 +898,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.axis, self.x, self.y = self.frame_mapping_parameters(frame, side)
         self.plane_origin.frame_mapping_inplace(frame, side)
         self.axis_point.frame_mapping_inplace(frame, side)
@@ -929,8 +917,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
                    color=color, alpha=alpha, name=name)
 class Cylinder(RevolvedProfile):
     """
-    Creates a full cylinder with the position, the axis of revolution,
-    the radius and the length.
+    Creates a full cylinder with the position, the axis of revolution the radius and the length.
     """
 
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -966,7 +953,7 @@ class Cylinder(RevolvedProfile):
         :return: The BoundingBox
         :rtype: :class:`volmdlr.core.BoundingBox`
         """
-        # This was copied for HollowCylinder. Inheritence removed to avoid problems
+        # This was copied for HollowCylinder. Inheritance removed to avoid problems
         radius = self.radius
 
         point_a = self.position - self.length / 2 * self.axis
@@ -998,6 +985,7 @@ class Cylinder(RevolvedProfile):
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def volume(self):
+        """Computes the volume of the cylinder."""
         return self.length * math.pi * self.radius**2
 
     @classmethod
@@ -1012,30 +1000,11 @@ class Cylinder(RevolvedProfile):
         return cls(position, axis, radius, length=length,
                    color=color, alpha=alpha, name=name)
 
-    def FreeCADExport(self, ip):
-        if self.radius > 0:
-            name = 'primitive' + str(ip)
-            e = str(1000 * self.length)
-            r = str(1000 * self.radius)
-            position = 1000 * (self.position - self.axis * self.length / 2.)
-            x, y, z = position
-            x = str(x)
-            y = str(y)
-            z = str(z)
-
-            ax, ay, az = self.axis
-            ax = str(ax)
-            ay = str(ay)
-            az = str(az)
-            return name + '=Part.makeCylinder(' + r + ',' + e + ',fc.Vector(' + x + ',' + y + \
-                ',' + z + '),fc.Vector(' + ax + ',' + ay + ',' + az + '),360)\n'
-        else:
-            return ''
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Cylinder rotation
+        Cylinder rotation.
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: angle rotation
@@ -1050,16 +1019,20 @@ class Cylinder(RevolvedProfile):
                          angle: float):
         """
         Cylinder rotation. Object is updated inplace
+
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.rotation_inplace(center, axis, angle)
         self.axis.rotation_inplace(volmdlr.O3D, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Cylinder translation
+        Cylinder translation.
+
         :param offset: translation vector
         :return: A new translated Cylinder
         """
@@ -1069,21 +1042,25 @@ class Cylinder(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Cylinder translation. Object is updated inplace
+        Cylinder translation. Object is updated inplace.
+
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Frame3D
+        Changes frame_mapping and return a new Frame3D.
+
         side = 'old' or 'new'
         """
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
-            axis = basis.new_coordinates(self.axis)
+            axis = basis.global_to_local_coordinates(self.axis)
         else:
             raise ValueError('side must be either old or new')
         return Cylinder(self.position.frame_mapping(frame, side),
@@ -1092,23 +1069,31 @@ class Cylinder(RevolvedProfile):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
-            axis = basis.new_coordinates(self.axis)
+            axis = basis.global_to_local_coordinates(self.axis)
         else:
             raise ValueError('side must be either old or new')
         self.position.frame_mapping_inplace(frame, side)
         self.axis = axis
 
+    def to_dict(self, use_pointers: bool = False, memo: bool = None, path: str = '#'):
+        """
+        Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class RevolvedProfile.
+        """
+        return dessia_common.DessiaObject.to_dict(self, use_pointers, memo, path)
+
     def copy(self, deep=True, memo=None):
         """
         Creates a copy of Cylinder.
-
         """
         new_position = self.position.copy()
         new_axis = self.axis.copy()
@@ -1117,10 +1102,15 @@ class Cylinder(RevolvedProfile):
 
     def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder') -> float:
         """
-        Compute the minimal distance between two volmdlr cylinders
+        Compute the minimal distance between two volmdlr cylinders.
+
         :param other_cylinder: volmdlr Cylinder
         :return: minimal distance between two 3D cylinders
         """
+        # Basic check
+        if self.point_belongs(other_cylinder.position) or other_cylinder.point_belongs(self.position):
+            return 0.
+
         # Local frames of cylinders
         frame0 = volmdlr.Frame3D.from_point_and_vector(
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
@@ -1136,7 +1126,7 @@ class Cylinder(RevolvedProfile):
         matrix1 = frame1.transfer_matrix()
         x1, y1, z1 = frame1.origin.x, frame1.origin.y, frame1.origin.z
 
-        # Euclidian distance
+        # Euclidean distance
         def dist(p0, p1):
             return math.sqrt(
                 (p0[0] - p1[0]) ** 2 + (p0[1] - p1[1]) ** 2 + (p0[2] - p1[2]) ** 2
@@ -1327,7 +1317,7 @@ class Cylinder(RevolvedProfile):
             self, other_cylinder: "Cylinder", n_points: int = 1000
     ) -> float:
         """
-        Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method)
+        Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method).
 
         :param other_cylinder: volmdlr Cylinder
         :param n_points: optional parameter used for the number of random point used to discretize the cylinder
@@ -1436,6 +1426,8 @@ class Cone(RevolvedProfile):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.translation_inplace(offset)
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -1462,6 +1454,8 @@ class Cone(RevolvedProfile):
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.rotation_inplace(center, axis, angle)
         self.axis.rotation_inplace(center, axis, angle)
 
@@ -1564,40 +1558,10 @@ class HollowCylinder(RevolvedProfile):
         return cls(position, axis, inner_radius=inner_radius, outer_radius=outer_radius, length=length,
                    color=color, alpha=alpha, name=name)
 
-    def FreeCADExport(self, ip):
-        if self.outer_radius > 0.:
-            name = 'primitive' + str(ip)
-            re = round(1000 * self.outer_radius, 6)
-            ri = round(1000 * self.inner_radius, 6)
-            x, y, z = round((1000 * (self.position - self.axis * self.length / 2)),
-                            6)
-            ax, ay, az = npy.round(self.axis.vector, 6)
-
-            s = 'C2 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(
-                re, x, y, z, ax, ay, az)
-            s += 'W2 = Part.Wire(C2.Edges)\n'
-            s += 'F2 = Part.Face(W2)\n'
-
-            if self.inner_radius != 0.:
-                s += 'C1 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(
-                    ri, x, y, z, ax, ay, az)
-                s += 'W1 = Part.Wire(C1.Edges)\n'
-                s += 'F1 = Part.Face(W1)\n'
-                s += 'F2 = F2.cut(F1)\n'
-
-            vx, vy, vz = round(self.axis * self.length * 1000, 6)
-
-            s += '{} = F2.extrude(fc.Vector({}, {}, {}))\n'.format(name, vx,
-                                                                   vy, vz)
-            return s
-
-        else:
-            return ''
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        Hollow  Cylinder rotation.
+        Hollow cylinder rotation.
 
         :param center: rotation center.
         :type center: volmdlr.Point3D
@@ -1617,18 +1581,20 @@ class HollowCylinder(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Hollow Cylinder rotation. Object is updated inplace.
+        Hollow cylinder rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.rotation_inplace(center, axis, angle)
         self.axis.rotation_inplace(volmdlr.O3D, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Translation for HollowCylinder.
+        Hollow cylinder translation.
 
         :param offset: translation vector.
         :return: A new translated HollowCylinder.
@@ -1640,10 +1606,12 @@ class HollowCylinder(RevolvedProfile):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Translation for HollowCylinder. Object is updated inplace.
+        Hollow cylinder translation. Object is updated in-place.
 
         :param offset: translation vector.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.position.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -1654,9 +1622,9 @@ class HollowCylinder(RevolvedProfile):
         """
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
-            axis = basis.new_coordinates(self.axis)
+            axis = basis.global_to_local_coordinates(self.axis)
         else:
             raise ValueError('side must be either old or new')
 
@@ -1671,11 +1639,13 @@ class HollowCylinder(RevolvedProfile):
 
         side = 'old' or 'new'.
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         basis = frame.basis()
         if side == 'old':
-            axis = basis.old_coordinates(self.axis)
+            axis = basis.local_to_global_coordinates(self.axis)
         elif side == 'new':
-            axis = basis.new_coordinates(self.axis)
+            axis = basis.global_to_local_coordinates(self.axis)
         else:
             raise ValueError('side must be either old or new')
         self.position.frame_mapping_inplace(frame, side)
@@ -1700,10 +1670,8 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
-        """
-        Custom to dict for perf
-        """
+    def to_dict(self, *args, **kwargs):
+        """Custom serialization for performance."""
         dict_ = dc.DessiaObject.base_dict(self)
         dict_.update({'color': self.color,
                       'alpha': self.alpha,
@@ -1715,7 +1683,9 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
     def shell_faces(self):
         """
-        For now it does not take into account rotation of sections
+        Generates the shell faces.
+
+        For now it does not take into account rotation of sections.
         """
 
         # End  planar faces
@@ -1826,8 +1796,9 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Sweep
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new Sweep.
+
+        :param side: 'old' or 'new'
         """
         new_wire = self.wire3d.frame_mapping(frame, side)
         return Sweep(self.contour2d, new_wire, color=self.color,
@@ -1835,18 +1806,18 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        :param side: 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.wire3d.frame_mapping_inplace(frame, side)
         for face in self.faces:
             face.frame_mapping_inplace(frame, side)
 
     def copy(self, deep=True, memo=None):
-        """
-        Creates a copy of Sweep.
-
-        """
+        """Creates a copy of the Sweep."""
         new_contour2d = self.contour2d.copy()
         new_wire3d = self.wire3d.copy()
         return Sweep(new_contour2d, new_wire3d, color=self.color,
@@ -1872,10 +1843,6 @@ class Sphere(RevolvedProfile):
         i = volmdlr.Point2D(0, 1.01 * self.radius)
         e = volmdlr.Point2D(self.radius, 0.01 * self.radius)  # Not coherent but it works at first, to change !!
 
-        # s = volmdlr.Point2D((-self.radius, 0))
-        # i = volmdlr.Point2D(((math.sqrt(2)/2)*self.radius,(math.sqrt(2)/2)*self.radius))
-        # e = volmdlr.Point2D(((-math.sqrt(2)/2)*self.radius,(-math.sqrt(2)/2)*self.radius))
-
         contour = volmdlr.wires.Contour2D([
             volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
 
@@ -1887,17 +1854,10 @@ class Sphere(RevolvedProfile):
     def volume(self):
         return 4 / 3 * math.pi * self.radius**3
 
-    def FreeCADExport(self, ip, ndigits=3):
-        name = 'primitive' + str(ip)
-        r = 1000 * self.radius
-        x, y, z = round(1000 * self.center, ndigits)
-        return '{} = Part.makeSphere({}, fc.Vector({}, {}, {}))\n'.format(
-            name, r, x, y, z)
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Sphere
-        side = 'old' or 'new'
+        :param side: 'old' or 'new'
         """
         return Sphere(self.center.frame_mapping(frame, side), self.radius)
 
@@ -1906,6 +1866,8 @@ class Sphere(RevolvedProfile):
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.center.frame_mapping_inplace(frame, side)
 
     def to_point_skin(self, resolution: float = 1e-3):
@@ -1966,7 +1928,7 @@ class Sphere(RevolvedProfile):
         return in_points
 
 
-class Measure3D(volmdlr.edges.Line3D):
+class Measure3D:
     """
     Used to create a measure between two points in 3D.
     """
@@ -2008,8 +1970,8 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
-            that have already been instanciated.
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated.
         :type object_dict: dict
         :return: The corresponding BSplineExtrusion object.
         :rtype: :class:`volmdlr.primitives3d.BSplineExtrusion`

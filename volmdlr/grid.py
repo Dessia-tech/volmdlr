@@ -17,7 +17,7 @@ import volmdlr.wires
 
 class Grid2D(DessiaObject):
     """
-    A class defined with a list of list of points and characterized with a choosen direction.
+    A class defined with a list of list of points and characterized with a chosen direction.
 
     :param lists_points: A list of a list of points
     :type lists_points: List[List[volmdlr.Point2D]]
@@ -48,7 +48,7 @@ class Grid2D(DessiaObject):
 
         # Grid2D points displacement
         displacement = npy.ones(shape=(len(points_2d), 2))
-        for i in range(0, len(displacement)):
+        for i, _ in enumerate(displacement):
             displacement[i][0] = points_2d_deformed[i][0] - points_2d[i][0]
             displacement[i][1] = points_2d_deformed[i][1] - points_2d[i][1]
 

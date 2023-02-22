@@ -4,6 +4,7 @@
 Gmsh and related objects
 """
 from dessia_common.core import DessiaObject  # isort: skip
+from dessia_common.files import BinaryFile
 
 import volmdlr
 import volmdlr.mesh
@@ -54,12 +55,12 @@ class GmshParser(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
     @classmethod
-    def from_file(cls, file_path: str):
+    def from_file(cls, file_stream: BinaryFile):
         """
         Defines a gmsh object from .msh file.
         """
 
-        file_data = GmshParser.read_file(file_path)
+        file_data = GmshParser.read_file(file_stream)
         mesh_format = GmshParser.from_file_mesh_format(file_data['MeshFormat'])
         physical_names = GmshParser.from_file_physical_names(file_data['PhysicalNames'])
         entities = GmshParser.from_file_entities(file_data['Entities'])
@@ -492,16 +493,6 @@ class GmshParser(DessiaObject):
 
         return partitioned_entities
 
-    # $Periodic
-    #   numPeriodicLinks(size_t)
-    #   entityDim(int) entityTag(int) entityTagMaster(int)
-    #   numAffine(size_t) value(double) ...
-    #   numCorrespondingNodes(size_t)
-    #     nodeTag(size_t) nodeTagMaster(size_t)
-    #     ...
-    #   ...
-    # $EndPeriodic
-
     @staticmethod
     def from_file_periodic(lines):
         """
@@ -526,7 +517,7 @@ class GmshParser(DessiaObject):
 
         physical_names = {}
         for i in range(1, int(lines[0].split()[0]) + 1):
-            physical_dim = (lines[i].split()[0])
+            physical_dim = lines[i].split()[0]
             try:
                 physical_names['physical_dim_' + physical_dim]
             except KeyError:

@@ -60,7 +60,7 @@ def repair_start_end_angle_periodicity(angle, ref_angle):
 
 def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, angle3d, periodicity):
     """
-    Repairs Arc3D continuity after convertion of points to parametric 2D space.
+    Repairs Arc3D continuity after conversion of points to parametric 2D space.
     """
     ref_low = angle_start - angle3d
     ref_up = angle_start + angle3d
@@ -142,7 +142,7 @@ def array_range_search(x, xmin, xmax):
     """
     Find the indices of the elements in the sorted list `x` that fall within the specified range.
 
-    This function use bisect pyhton builtin module, which uses binary search and has a time complexity of O(log(n)).
+    This function use bisect python builtin module, which uses binary search and has a time complexity of O(log(n)).
     Where n is the array length.
 
     :param x: A sorted list of values.

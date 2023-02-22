@@ -643,7 +643,7 @@ class Step(dc.DessiaObject):
         Step functions graph
         :return:
         """
-        # G = nx.Graph()
+        G = nx.Graph()
         F = nx.DiGraph()
         labels = {}
 
@@ -661,10 +661,10 @@ class Step(dc.DessiaObject):
                 self.functions[id1].arg.append('#{}'.format(id2))
 
             elif function.name in STEP_TO_VOLMDLR:
-                # G.add_node(function.id,
-                #            color='rgb(0, 0, 0)',
-                #            shape='.',
-                #            name=str(function.id))
+                G.add_node(function.id,
+                           color='rgb(0, 0, 0)',
+                           shape='.',
+                           name=str(function.id))
                 F.add_node(function.id,
                            color='rgb(0, 0, 0)',
                            shape='.',
@@ -682,7 +682,7 @@ class Step(dc.DessiaObject):
             self.all_connections.remove(delete)
 
         # Create graph connections
-        # G.add_edges_from(self.all_connections)
+        G.add_edges_from(self.all_connections)
         F.add_edges_from(self.all_connections)
 
         # Remove single nodes
@@ -692,7 +692,7 @@ class Step(dc.DessiaObject):
                 delete_nodes.append(node)
         for node in delete_nodes:
             F.remove_node(node)
-            # G.remove_node(node)
+            G.remove_node(node)
 
         # if draw:
         #     # ----------------PLOT----------------
@@ -819,7 +819,7 @@ class Step(dc.DessiaObject):
                 argument.append(arg_id)
                 arguments[i] = argument
 
-    def instanciate(self, name, arguments, object_dict, error_handler: bool = False):
+    def instanciate(self, name, arguments, object_dict):
         """
         Gives the volmdlr object related to the step function.
         """
@@ -827,36 +827,19 @@ class Step(dc.DessiaObject):
 
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
-        volmdlr_object = []
-        if not error_handler:
-            if hasattr(volmdlr.step, fun_name):
-                volmdlr_object = getattr(volmdlr.step, fun_name)(arguments,
-                                                                 object_dict)
+        if hasattr(volmdlr.step, fun_name):
+            volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
 
-            elif name in STEP_TO_VOLMDLR and hasattr(
-                    STEP_TO_VOLMDLR[name], "from_step"):
-                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
-                    arguments, object_dict)
+        elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
+            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict)
 
-            else:
-                raise NotImplementedError(
-                    'Dont know how to interpret {} with args {}'.format(name,
-                                                                        arguments))
         else:
-            try:
-                if hasattr(volmdlr.step, fun_name):
-                    volmdlr_object = getattr(volmdlr.step, fun_name)(arguments,
-                                                                     object_dict)
-
-                elif name in STEP_TO_VOLMDLR and hasattr(
-                        STEP_TO_VOLMDLR[name], "from_step"):
-                    volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
-                        arguments, object_dict)
-            except Exception:
-                return None
+            raise NotImplementedError(
+                'Dont know how to interpret {} with args {}'.format(name,
+                                                                    arguments))
         return volmdlr_object
 
-    def to_volume_model(self, show_times: bool = False, error_handler: bool = False):
+    def to_volume_model(self, show_times: bool = False):
         """
         show_times=True displays the numer of times a given class has been
         instanciated and the totatl time of all the instanciations of this
@@ -920,7 +903,6 @@ class Step(dc.DessiaObject):
         # nodes = dessia_common.graph.explore_tree_from_leaves(self.graph)
 
         times = {}
-        errors = {}
         for i, node in enumerate([length_global_uncertainty_node] + nodes[::-1]):
             # instanciate_ids = [edge[1]]
             if node is None:
@@ -934,12 +916,8 @@ class Step(dc.DessiaObject):
                         arguments = self.functions[instanciate_id].arg[:]
                         volmdlr_object = self.instanciate(
                             self.functions[instanciate_id].name,
-                            self.functions[instanciate_id].arg[:] + [self.unit_conversion_factor], object_dict,
-                            error_handler=error_handler)
+                            self.functions[instanciate_id].arg[:] + [self.unit_conversion_factor], object_dict)
                         t = time.time() - t
-                        if not volmdlr_object:
-                            errors[instanciate_id] = object_dict
-                            # continue
                         object_dict[instanciate_id] = volmdlr_object
                         if show_times:
                             if volmdlr_object.__class__ not in times:
@@ -965,16 +943,14 @@ class Step(dc.DessiaObject):
         shells = []
         if frame_mapping_nodes:
             for node in frame_mapping_nodes:
-                # if object_dict[node]:
                 shells.extend(object_dict[node])
         if not shells:
             for node in shell_nodes_copy:
-                # if object_dict[node]:
                 if isinstance(object_dict[node], list):
                     shells.extend(object_dict[node])
                 else:
                     shells.append(object_dict[node])
-        volume_model = volmdlr.core.VolumeModel(shells, errors=errors)
+        volume_model = volmdlr.core.VolumeModel(shells)
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)
         return volume_model
@@ -1015,29 +991,29 @@ STEP_TO_VOLMDLR = {
     'DIRECTION': volmdlr.Vector3D,
     'VECTOR': volmdlr.Vector3D,
 
-    # 'AXIS1_PLACEMENT': None,
-    # 'AXIS2_PLACEMENT_2D': None,  # ??????????????????
+    'AXIS1_PLACEMENT': None,
+    'AXIS2_PLACEMENT_2D': None,  # ??????????????????
     'AXIS2_PLACEMENT_3D': volmdlr.Frame3D,
 
     'LINE': volmdlr.edges.Line3D,  # LineSegment3D,
     'CIRCLE': volmdlr.wires.Circle3D,
     'ELLIPSE': volmdlr.wires.Ellipse3D,
-    # 'PARABOLA': None,
-    # 'HYPERBOLA': None,
-    # # 'PCURVE': None,
-    # 'CURVE_REPLICA': None,
-    # 'OFFSET_CURVE_3D': None,
-    # 'TRIMMED_CURVE': None,  # BSplineCurve3D cannot be trimmed on FreeCAD
+    'PARABOLA': None,
+    'HYPERBOLA': None,
+    # 'PCURVE': None,
+    'CURVE_REPLICA': None,
+    'OFFSET_CURVE_3D': None,
+    'TRIMMED_CURVE': None,  # BSplineCurve3D cannot be trimmed on FreeCAD
     'B_SPLINE_CURVE': volmdlr.edges.BSplineCurve3D,
     'B_SPLINE_CURVE_WITH_KNOTS': volmdlr.edges.BSplineCurve3D,
     'BEZIER_CURVE': volmdlr.edges.BSplineCurve3D,
     'RATIONAL_B_SPLINE_CURVE': volmdlr.edges.BSplineCurve3D,
     'UNIFORM_CURVE': volmdlr.edges.BSplineCurve3D,
     'QUASI_UNIFORM_CURVE': volmdlr.edges.BSplineCurve3D,
-    # 'SURFACE_CURVE': None,  # TOPOLOGICAL EDGE
-    # 'SEAM_CURVE': None,
-    # # LineSegment3D, # TOPOLOGICAL EDGE ############################
-    # 'COMPOSITE_CURVE_SEGMENT': None,  # TOPOLOGICAL EDGE
+    'SURFACE_CURVE': None,  # TOPOLOGICAL EDGE
+    'SEAM_CURVE': None,
+    # LineSegment3D, # TOPOLOGICAL EDGE ############################
+    'COMPOSITE_CURVE_SEGMENT': None,  # TOPOLOGICAL EDGE
     'COMPOSITE_CURVE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
     'COMPOSITE_CURVE_ON_SURFACE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
     'BOUNDARY_CURVE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
@@ -1047,17 +1023,17 @@ STEP_TO_VOLMDLR = {
     'CONICAL_SURFACE': volmdlr.faces.ConicalSurface3D,
     'SPHERICAL_SURFACE': volmdlr.faces.SphericalSurface3D,
     'TOROIDAL_SURFACE': volmdlr.faces.ToroidalSurface3D,
-    # 'DEGENERATE_TOROIDAL_SURFACE': None,
+    'DEGENERATE_TOROIDAL_SURFACE': None,
     'B_SPLINE_SURFACE_WITH_KNOTS': volmdlr.faces.BSplineSurface3D,
     'B_SPLINE_SURFACE': volmdlr.faces.BSplineSurface3D,
     'BEZIER_SURFACE': volmdlr.faces.BSplineSurface3D,
-    # 'OFFSET_SURFACE': None,
-    # 'SURFACE_REPLICA': None,
+    'OFFSET_SURFACE': None,
+    'SURFACE_REPLICA': None,
     'RATIONAL_B_SPLINE_SURFACE': volmdlr.faces.BSplineSurface3D,
-    # 'RECTANGULAR_TRIMMED_SURFACE': None,
+    'RECTANGULAR_TRIMMED_SURFACE': None,
     'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.primitives3d.BSplineExtrusion,
     # CAN BE A BSplineSurface3D
-    # 'SURFACE_OF_REVOLUTION': None,
+    'SURFACE_OF_REVOLUTION': volmdlr.faces.RevolutionSurface3D,
     'UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
     'QUASI_UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
     'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
@@ -1067,20 +1043,20 @@ STEP_TO_VOLMDLR = {
     'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
 
     # TOPOLOGICAL ENTITIES
-    # 'VERTEX_POINT': None,
+    'VERTEX_POINT': None,
 
     'EDGE_CURVE': volmdlr.edges.Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
-    # 'ORIENTED_EDGE': None,  # TOPOLOGICAL EDGE
+    'ORIENTED_EDGE': None,  # TOPOLOGICAL EDGE
     # The one above can influence the direction with their last argument
     # TODO : maybe take them into consideration
 
-    # 'FACE_BOUND': None,  # TOPOLOGICAL WIRE
-    # 'FACE_OUTER_BOUND': None,  # TOPOLOGICAL WIRE
+    'FACE_BOUND': None,  # TOPOLOGICAL WIRE
+    'FACE_OUTER_BOUND': None,  # TOPOLOGICAL WIRE
     # Both above can influence the direction with their last argument
     # TODO : maybe take them into consideration
     'EDGE_LOOP': volmdlr.wires.Contour3D,  # TOPOLOGICAL WIRE
     'POLY_LOOP': volmdlr.wires.Contour3D,  # TOPOLOGICAL WIRE
-    # 'VERTEX_LOOP': None,  # TOPOLOGICAL WIRE
+    'VERTEX_LOOP': None,  # TOPOLOGICAL WIRE
 
     'ADVANCED_FACE': volmdlr.faces.Face3D,
     'FACE_SURFACE': volmdlr.faces.Face3D,
@@ -1089,23 +1065,23 @@ STEP_TO_VOLMDLR = {
     'OPEN_SHELL': volmdlr.faces.OpenShell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
     'CONNECTED_FACE_SET': volmdlr.faces.OpenShell3D,
-    # 'GEOMETRIC_CURVE_SET': None,
+    'GEOMETRIC_CURVE_SET': None,
 
     # step subfunctions
-    # 'UNCERTAINTY_MEASURE_WITH_UNIT': None,
-    # 'CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT': None,
-    # 'LENGTH_MEASURE_WITH_UNIT': None,
-    # 'LENGTH_UNIT, NAMED_UNIT, SI_UNIT': None,
-    # 'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT': None,
+    'UNCERTAINTY_MEASURE_WITH_UNIT': None,
+    'CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT': None,
+    'LENGTH_MEASURE_WITH_UNIT': None,
+    'LENGTH_UNIT, NAMED_UNIT, SI_UNIT': None,
+    'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT': None,
     'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': volmdlr.faces.OpenShell3D.translation,
-    # 'SHELL_BASED_SURFACE_MODEL': None,
-    # 'MANIFOLD_SURFACE_SHAPE_REPRESENTATION': None,
-    # 'MANIFOLD_SOLID_BREP': None,
-    # 'BREP_WITH_VOIDS': None,
-    # 'SHAPE_REPRESENTATION': None,
-    # 'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
-    # 'ITEM_DEFINED_TRANSFORMATION': None,
-    # 'SHAPE_REPRESENTATION_RELATIONSHIP': None,
+    'SHELL_BASED_SURFACE_MODEL': None,
+    'MANIFOLD_SURFACE_SHAPE_REPRESENTATION': None,
+    'MANIFOLD_SOLID_BREP': None,
+    'BREP_WITH_VOIDS': None,
+    'SHAPE_REPRESENTATION': None,
+    'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
+    'ITEM_DEFINED_TRANSFORMATION': None,
+    'SHAPE_REPRESENTATION_RELATIONSHIP': None,
 
     'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM': volmdlr.edges.BSplineCurve3D
 }

@@ -1,48 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Module containing mesh and relative objects
+Module containing mesh and relative objects.
 """
 
 import math
 from itertools import combinations
-from typing import List  # TypeVar, Tuple, Dict
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as npy
 
 from dessia_common.core import DessiaObject  # isort: skip
 
-# import volmdlr.core_compiled
 import volmdlr as vm
 import volmdlr.edges as vme
 import volmdlr.gmsh_vm
 import volmdlr.wires as vmw
 
 
-# from volmdlr.core_compiled import Matrix33
-
-# from itertools import combinations
-# import numpy as npy
-# import volmdlr.wires
-# import volmdlr.faces
-# from volmdlr.core_compiled import Matrix33
-# import matplotlib
-# import random
-# from itertools import product
-# from matplotlib.colors import LinearSegmentedColormap
-
-# cdict = {'red':  [(0.0, 0.0, 0.0),
-#                    (1.0, 1.0, 1.0)],
-#          'green': [(0.0, 0.0, 0.0),
-#                    (1.0, 0.0, 0.0)],
-#          'blue':  [(0.0, 1.0, 1.0),
-#                    (1.0, 0.0, 0.0)]}
-# blue_red = LinearSegmentedColormap('BLueRed', cdict)
-
-
 class FlatElementError(Exception):
-    pass
+    """An error in case an element is flat."""
 
 # def find_duplicate_linear_element(linear_elements1, linear_elements2):
 #     duplicates = []
@@ -53,7 +31,10 @@ class FlatElementError(Exception):
 
 
 class Node2D(vm.Point2D):
-    """ A node is a Point2D with some hash capabilities for perfomance used for Mesh. """
+    """
+    A node is a Point2D with some hash capabilities for performance used for Mesh.
+
+    """
 
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
@@ -80,7 +61,9 @@ class Node2D(vm.Point2D):
 
 
 class Node3D(vm.Point3D):
-    """ A node is a Point3D with some hash capabilities for perfomance used for Mesh. """
+    """
+    A node is a Point3D with some hash capabilities for performance used for Mesh.
+    """
 
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))
@@ -734,6 +717,8 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
 
 
 class ElementsGroup(DessiaObject):
+    """Defines a group of elements."""
+
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -757,6 +742,15 @@ class ElementsGroup(DessiaObject):
         return nodes
 
     def point_to_element(self, point):
+        """
+        Checks if a point belongs to an element.
+
+        :param point: A point2d/3d
+        :type point: Point2D/Point3D
+
+        :return: The input Element OR None
+        """
+
         for element in self.elements:
             if element.point_belongs(point):
                 return element
@@ -794,6 +788,10 @@ class ElementsGroup(DessiaObject):
     #             elem.translation(offset, copy=False)
 
     def plot(self, ax=None, color='k'):  # , fill=False):
+        """
+        Plot an ElementGroup.
+        """
+
         if ax is None:
             _, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -803,6 +801,8 @@ class ElementsGroup(DessiaObject):
 
 
 class Mesh(DessiaObject):
+    """Defines a mesh."""
+
     _standalone_in_db = True
     _non_serializable_attributes = ['node_to_index']
     _non_eq_attributes = ['name']
