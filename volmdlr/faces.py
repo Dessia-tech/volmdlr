@@ -3399,7 +3399,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         Transform a 3D Cartesian point (x, y, z) into a parametric (u, v) point.
         """
-        x, y, z = self.frame.global_to_local_coordinates(point3d)
+        x, y, _ = self.frame.global_to_local_coordinates(point3d)
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
