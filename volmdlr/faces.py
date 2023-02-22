@@ -1823,6 +1823,15 @@ class CylindricalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, name=name)
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        """
+        Computes the point3d from a point2d based on the surface.
+
+        :param point2d: A point2d
+        :type point2d: volmdlr.Point2D
+        :return: A point3d
+        :rtype: volmdlr.Point3D
+        """
+
         p = volmdlr.Point3D(self.radius * math.cos(point2d.x),
                             self.radius * math.sin(point2d.x),
                             point2d.y)
