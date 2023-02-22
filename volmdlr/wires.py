@@ -3681,9 +3681,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         return self.__class__(points=axial_points)
 
+
 class Triangle(ClosedPolygonMixin):
     def __init_(self, point1, point2,
-            point3, name: str = ''):
+                point3, name: str = ''):
+
 
 class Triangle(ClosedPolygonMixin):
     """
