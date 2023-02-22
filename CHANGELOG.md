@@ -5,8 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.10.0 [Unreleased yet]
 
-## v0.9.0 [Unreleased yet]
+### New Features
+
+* Write .msh file (with stream)
+
+### Fixed
+
+### Removed
+
+### Performance improvements
+
+### Refactorings
+
+
+## v0.9.0 [Testing]
 
 ### New Features
 
@@ -47,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * edges: remove attributes points from lines & linesegments for performance purpose
 
+
 ### Performance improvements
 
 * wires.py's 2D objects: chache bounding_rectangle results
@@ -58,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D.is_inside(): verify first if the area of the contour2 is not smaller that contour 1.
 * Disabling pointer in to_dict for most primitives
 * Better hash for shells, contours & wires 
+
 
 ### Refactorings
 - Remove usage of deprecated method old_coordinates and new_coordinates
@@ -161,6 +177,7 @@ time we have to verify if a point is inside
 * Custom serialization for BsplineCurves
 
 ### Refactorings
+
 * Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated.
 local_to_global_coordinates and global_to_local_coordinates are the new more explicit ones.
 * Line3D: intersections

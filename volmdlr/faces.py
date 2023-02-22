@@ -3447,7 +3447,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         Transform a 3D Cartesian point (x, y, z) into a parametric (u, v) point.
         """
-        x, y, z = self.frame.global_to_local_coordinates(point3d)
+        x, y, _ = self.frame.global_to_local_coordinates(point3d)
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
@@ -9578,7 +9578,7 @@ class ClosedShell3D(OpenShell3D):
             count = 0
             ray_intersection = []
             is_inside = True
-            for face, point_inters in self.linesegment_intersections(ray):
+            for _, point_inters in self.linesegment_intersections(ray):
                 count += len(point_inters)
             if count % 2 == 0:
                 is_inside = False

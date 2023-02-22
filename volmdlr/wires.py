@@ -2267,7 +2267,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def union(self, contour2: 'Contour2D'):
         """
-        Union two contours, if they adjacent, or overlap somehow
+        Union two contours, if they adjacent, or overlap somehow.
         """
         if self.is_inside(contour2):
             return [self]
@@ -2309,7 +2309,7 @@ class Contour2D(ContourMixin, Wire2D):
         if not intersections or len(intersections) < 2:
             return [self]
         points_intersections = []
-        for intersection, prim in intersections:
+        for intersection, _ in intersections:
             if intersection not in points_intersections:
                 points_intersections.append(intersection)
         if len(points_intersections) % 2 != 0:
