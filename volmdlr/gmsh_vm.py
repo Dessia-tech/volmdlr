@@ -5,7 +5,9 @@ Gmsh and related objects
 """
 from dessia_common.core import DessiaObject  # isort: skip
 from typing import Dict
+
 from dessia_common.files import BinaryFile
+
 import volmdlr
 import volmdlr.mesh
 
