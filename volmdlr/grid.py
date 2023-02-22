@@ -17,7 +17,7 @@ import volmdlr.wires
 
 class Grid2D(DessiaObject):
     """
-    A class defined with a list of list of points and characterized with a choosen direction.
+    A class defined with a list of list of points and characterized with a chosen direction.
 
     :param lists_points: A list of a list of points
     :type lists_points: List[List[volmdlr.Point2D]]

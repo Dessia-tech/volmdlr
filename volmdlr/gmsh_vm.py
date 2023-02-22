@@ -493,16 +493,6 @@ class GmshParser(DessiaObject):
 
         return partitioned_entities
 
-    # $Periodic
-    #   numPeriodicLinks(size_t)
-    #   entityDim(int) entityTag(int) entityTagMaster(int)
-    #   numAffine(size_t) value(double) ...
-    #   numCorrespondingNodes(size_t)
-    #     nodeTag(size_t) nodeTagMaster(size_t)
-    #     ...
-    #   ...
-    # $EndPeriodic
-
     @staticmethod
     def from_file_periodic(lines):
         """
@@ -527,7 +517,7 @@ class GmshParser(DessiaObject):
 
         physical_names = {}
         for i in range(1, int(lines[0].split()[0]) + 1):
-            physical_dim = (lines[i].split()[0])
+            physical_dim = lines[i].split()[0]
             try:
                 physical_names['physical_dim_' + physical_dim]
             except KeyError:

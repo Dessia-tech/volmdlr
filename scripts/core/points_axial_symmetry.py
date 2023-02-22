@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
- 
+
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 import matplotlib.pyplot as plt
 

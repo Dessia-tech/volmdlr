@@ -6,7 +6,7 @@ Created on Thu Mar 3 2022
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 import volmdlr.edges
 
