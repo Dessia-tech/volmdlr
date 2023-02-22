@@ -48,7 +48,7 @@ class Grid2D(DessiaObject):
 
         # Grid2D points displacement
         displacement = npy.ones(shape=(len(points_2d), 2))
-        for i in range(0, len(displacement)):
+        for i, _ in enumerate(displacement):
             displacement[i][0] = points_2d_deformed[i][0] - points_2d[i][0]
             displacement[i][1] = points_2d_deformed[i][1] - points_2d[i][1]
 

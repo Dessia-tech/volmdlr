@@ -616,7 +616,7 @@ class BSplineCurve(Edge):
     @classmethod
     def from_geomdl_curve(cls, curve):
         """
-        # TODO: to be completed
+        # TODO: to be completed.
 
         :param curve:
         :type curve:
