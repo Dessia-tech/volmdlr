@@ -258,7 +258,7 @@ class Stl(dc.DessiaObject):
     # TODO: decide which algorithm to be used (no _BIS)
     def extract_points_BIS(self, min_distance: float = 0.001):
         points = []
-        for i, t in enumerate(self.triangles):
+        for _, t in enumerate(self.triangles):
             distance12 = t.point1.point_distance(t.point2)
             distance13 = t.point1.point_distance(t.point3)
             distance23 = t.point2.point_distance(t.point3)

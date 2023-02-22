@@ -2335,7 +2335,7 @@ class Contour2D(ContourMixin, Wire2D):
         if not intersections or len(intersections) < 2:
             return [self]
         points_intersections = []
-        for intersection, prim in intersections:
+        for intersection, _ in intersections:
             if intersection not in points_intersections:
                 points_intersections.append(intersection)
         if len(points_intersections) % 2 != 0:

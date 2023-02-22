@@ -5746,7 +5746,6 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def to_step(self, current_id):
         xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
-
         subsurfaces2d = [self.surface2d]
         line_x = None
         if self.surface3d.x_periodicity and (xmax - xmin) >= 0.45 * self.surface3d.x_periodicity:
@@ -5778,13 +5777,13 @@ class Face3D(volmdlr.core.Primitive3D):
             for subsurface2d in subsurfaces2d:
                 face = self.__class__(self.surface3d, subsurface2d)
                 face_content, face_id = face.to_step_without_splitting(
-                    current_id, sens)
+                    current_id)
                 face_ids.append(face_id[0])
                 content += face_content
                 current_id = face_id[0] + 1
             return content, face_ids
         else:
-            return self.to_step_without_splitting(current_id, sens)
+            return self.to_step_without_splitting(current_id)
 
     def to_step_without_splitting(self, current_id, sens: str = 'T'):
         content, surface3d_ids = self.surface3d.to_step(current_id)
@@ -7077,13 +7076,6 @@ class PlaneFace3D(Face3D):
 
         return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
-    def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
-        '''
-        gets the lines that define a PlaneFace3D in a .geo file
-        '''
-
-        return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
-
 
 class Triangle3D(PlaneFace3D):
     """
@@ -7848,13 +7840,6 @@ class CylindricalFace3D(Face3D):
     def planeface_intersections(self, planeface: PlaneFace3D):
         planeface_intersections = planeface.cylindricalface_intersections(self)
         return planeface_intersections
-
-    def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
-        '''
-        gets the lines that define a CylindricalFace3D in a .geo file
-        '''
-
-        return 'Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
 
 class ToroidalFace3D(Face3D):
