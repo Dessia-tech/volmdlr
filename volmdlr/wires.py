@@ -240,14 +240,11 @@ class WireMixin:
         raise ValueError('Point is not on wire')
 
     def sort_points_along_wire(self, points):
-
+        """ Sort given points along the wire with respect to the abscissa. """
         return sorted(points, key=lambda point: self.abscissa(point))
 
     def is_ordered(self, tol=1e-6):
-        """
-        Check if the wire's primitives are ordered or not.
-
-        """
+        """ Check if the wire's primitives are ordered or not. """
 
         for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
             if primitive_1.end.point_distance(primitive_2.start) > tol:
@@ -255,10 +252,7 @@ class WireMixin:
         return True
 
     def order_wire(self, tol=1e-6):
-        """
-        Order wire's primitives.
-
-        """
+        """ Order wire's primitives. """
 
         if self.is_ordered(tol=tol):
             return self.__class__(self.primitives[:])

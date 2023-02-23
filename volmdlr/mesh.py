@@ -582,6 +582,7 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
     #             pt.translation(offset, copy=False)
 
     def axial_symmetry(self, line):
+        """ Returns a symmetric new element with respect to the given line. """
         new_points = []
         for point in self.points:
             new_points.append(point.axial_symmetry(line))
