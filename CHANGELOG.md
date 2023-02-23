@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fix some pydocstyle errors
 * Script/step/workflow: Update Workflow, use last version of dessia_common
 * fix f string usage
-
+* some typings
 
 ### Removed
 
