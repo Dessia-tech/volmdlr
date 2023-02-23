@@ -1823,7 +1823,7 @@ class MovingVolumeModel(VolumeModel):
 
     """
 
-    def __init__(self, primitives: List[Primitive3D], step_frames, name: str = ''):
+    def __init__(self, primitives: List[Primitive3D], step_frames: List[List[volmdlr.Frame3D]], name: str = ''):
         VolumeModel.__init__(self, primitives=primitives, name=name)
         self.step_frames = step_frames
 
@@ -1837,7 +1837,7 @@ class MovingVolumeModel(VolumeModel):
                 return False
         return True
 
-    def step_volume_model(self, istep):
+    def step_volume_model(self, istep: int):
         primitives = []
         for primitive, frame in zip(self.primitives, self.step_frames[istep]):
             primitives.append(

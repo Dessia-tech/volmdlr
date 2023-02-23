@@ -279,9 +279,9 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
     _non_hash_attributes = ['name']
     _generic_eq = True
 
-    def __init__(self, points, point1, point2, point3, name: str = ''):
-        super().__init__(points, point1, point2, point3)
-        self.points = points
+    def __init__(self, points, name: str = ''):
+        super().__init__(points)
+        # self.points = points
         self.name = name
         self.linear_elements = self._to_linear_elements()
         self.form_functions = self._form_functions()
@@ -392,7 +392,7 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         new_points = []
         for point in self.points:
             new_points.append(point.axial_symmetry(line))
-        return self.__class__(*new_points)
+        return self.__class__(new_points)
 
     # def plot(self, ax=None, color='k', width=None,
     #           plot_points=False, fill=False):
