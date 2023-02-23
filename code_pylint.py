@@ -41,7 +41,7 @@ MAX_ERROR_BY_TYPE = {
                      'non-parent-init-called': 3,
                      'too-many-public-methods': 11,
                      'use-implicit-booleaness-not-comparison': 8,
-                     'too-many-instance-attributes': 11,
+                     'too-many-instance-attributes': 10,
                      'protected-access': 4,
                      'undefined-loop-variable': 4,
                      'unspecified-encoding': 1,

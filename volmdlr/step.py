@@ -567,15 +567,14 @@ class Step(dc.DessiaObject):
     Defines the Step class.
 
     """
-
+    global_uncertainty = 1e-6
+    length_conversion_factor = 1
+    angle_conversion_factor = 1
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines
         self.functions, self.all_connections = self.read_lines()
         self._utd_graph = False
         self._graph = None
-        self.global_uncertainty = 1e-6
-        self.length_conversion_factor = 1
-        self.angle_conversion_factor = 1
         self.read_diagnostics = {}
         dc.DessiaObject.__init__(self, name=name)
 
