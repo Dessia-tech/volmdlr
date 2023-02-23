@@ -3350,6 +3350,86 @@ class RuledSurface3D(Surface3D):
         return volmdlr.faces.RuledFace3D(self, surface2d, name)
 
 
+class ExtrusionSurface3D(Surface3D):
+    """
+    Defines a surface of revolution.
+
+    :param wire: Wire.
+    :type wire: Union[:class:`vmw.Wire3D`, :class:`vmw.Contour3D`]
+    :param axis_point: Axis placement
+    :type axis_point: :class:`volmdlr.Point3D`
+    :param axis: Axis of revolution
+    :type axis: :class:`volmdlr.Vector3D`
+    """
+    face_class = 'ExtrusionFace3D'
+    x_periodicity = None
+    y_periodicity = None
+
+    def __init__(self, wire: Union[volmdlr.wires.Wire3D, volmdlr.wires.Contour3D],
+                 direction: volmdlr.Vector3D, name: str = ''):
+        self.wire = wire
+        self.direction = direction
+        self.frame = volmdlr.Frame3D.from_point_and_vector(wire.point_at_abscissa(0), direction, volmdlr.Z3D)
+
+        Surface3D.__init__(self, name=name)
+
+    def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        """
+        Transform a parametric (u, v) point into a 3D Cartesian point (x, y, z).
+
+        u = [0, 1] and v = z
+        """
+        u, v = point2d
+        point_at_curve_global = self.wire.point_at_abscissa(u * self.wire.length())
+        point_at_curve_local = self.frame.global_to_local_coordinates(point_at_curve_global)
+        x, y, z = point_at_curve_local
+        point_local = point_at_curve_local.translation(volmdlr.Point3D(x, y, u) - volmdlr.Point3D(x, y, z))
+        return self.frame.local_to_global_coordinates(point_local)
+
+    def point3d_to_2d(self, point3d):
+        """
+        Transform a 3D Cartesian point (x, y, z) into a parametric (u, v) point.
+        """
+        point_local = self.frame.global_to_local_coordinates(point3d)
+        x, y, z = point_local
+        v = z
+        point_at_curve = volmdlr.Point3D(x, y, 0)
+        u = self.wire.abscissa(point_at_curve) / self.wire.length()
+        return volmdlr.Point2D(u, v)
+
+    def rectangular_cut(self, x1: float, x2: float,
+                        y1: float, y2: float, name: str = ''):
+        """
+        Cut a rectangular piece of the RevolutionSurface3D object and return a RevolutionFace3D object.
+
+        """
+        p1 = volmdlr.Point2D(x1, y1)
+        p2 = volmdlr.Point2D(x2, y1)
+        p3 = volmdlr.Point2D(x2, y2)
+        p4 = volmdlr.Point2D(x1, y2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
+        surface2d = Surface2D(outer_contour, [])
+        return volmdlr.faces.ExtrusionFace3D(self, surface2d, name)
+
+    def plot(self, ax=None, color='grey', alpha=0.5, z: float = 0.5):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        for i in range(21):
+            step = i / 20. * 0.5
+            wire = self.wire.translation(step * self.frame.w)
+            wire.plot(ax=ax, color=color, alpha=alpha)
+
+        return ax
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        name = arguments[0][1:-1]
+        wire = object_dict[arguments[1]]
+        direction = object_dict[arguments[2]]
+        return cls(wire=wire, direction=direction, name=name)
+
+
 class RevolutionSurface3D(PeriodicalSurface):
     """
     Defines a surface of revolution.
@@ -3471,7 +3551,6 @@ class RevolutionSurface3D(PeriodicalSurface):
         elif theta1 < theta3:
             p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
         return [vme.LineSegment2D(p1, p2)]
-
 
 class BSplineSurface3D(Surface3D):
     """
@@ -8269,6 +8348,64 @@ class RuledFace3D(Face3D):
         number_points_x = int(delta_x * angle_resolution)
 
         number_points_y = 0
+
+        return number_points_x, number_points_y
+
+
+class ExtrusionFace3D(Face3D):
+    """
+    A 3D face with a ruled surface.
+
+    This class represents a 3D face with a ruled surface, which is a surface
+    formed by straight lines connecting two input curves. It is a subclass of
+    the `Face3D` class and inherits all of its attributes and methods.
+
+
+    :param surface3d: The 3D ruled surface of the face.
+    :type surface3d: `RuledSurface3D`
+    :param surface2d: The 2D projection of the face onto the parametric domain (u, v).
+    :type surface2d: `Surface2D`
+    :param name: The name of the face.
+    :type name: str
+    """
+    min_x_density = 50
+    min_y_density = 1
+
+    def __init__(self,
+                 surface3d: RuledSurface3D,
+                 surface2d: Surface2D,
+                 name: str = ''):
+        Face3D.__init__(self, surface3d=surface3d,
+                        surface2d=surface2d,
+                        name=name)
+        self._bbox = None
+
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bouding_box):
+        self._bbox = new_bouding_box
+
+    def get_bounding_box(self):
+        # To be enhanced by restricting wires to cut
+        points = self.outer_contour3d.discretization_points(number_points=25)
+
+        return volmdlr.core.BoundingBox.from_points(points)
+
+    def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
+        angle_resolution = 10
+        xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
+        delta_x = xmax - xmin
+        number_points_x = int(delta_x * angle_resolution)
+
+        number_points_y = number_points_x
 
         return number_points_x, number_points_y
 

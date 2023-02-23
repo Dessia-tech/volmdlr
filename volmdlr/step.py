@@ -1042,7 +1042,7 @@ STEP_TO_VOLMDLR = {
     'SURFACE_REPLICA': None,
     'RATIONAL_B_SPLINE_SURFACE': volmdlr.faces.BSplineSurface3D,
     'RECTANGULAR_TRIMMED_SURFACE': None,
-    'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.primitives3d.BSplineExtrusion,
+    'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.faces.ExtrusionSurface3D,
     # CAN BE A BSplineSurface3D
     'SURFACE_OF_REVOLUTION': volmdlr.faces.RevolutionSurface3D,
     'UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
