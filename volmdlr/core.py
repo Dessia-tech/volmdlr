@@ -894,10 +894,9 @@ class VolumeModel(dc.PhysicalObject):
                                  'faces']
     _dessia_methods = ['to_stl_model']
 
-    def __init__(self, primitives: List[Primitive3D], errors: dict = {}, name: str = ''):
+    def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives
         self.name = name
-        self.errors = errors
         self.shells = []
         self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)

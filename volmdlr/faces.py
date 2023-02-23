@@ -3984,13 +3984,16 @@ class BSplineSurface3D(Surface3D):
         """
         # TODO: enhance this, it is a non exact method!
         # TODO: bsplinecurve can be periodic but not around the bsplinesurface
-        bsc_linesegment = vme.LineSegment3D(bspline_curve3d.points[0],
-                                            bspline_curve3d.points[-1])
-        flag = True
-        for pt in bspline_curve3d.points:
-            if not bsc_linesegment.point_belongs(pt):
-                flag = False
-                break
+        start = bspline_curve3d.points[0]
+        end = bspline_curve3d.points[-1]
+        flag = False
+        if start != end:
+            bsc_linesegment = vme.LineSegment3D(start, end)
+            flag = True
+            for pt in bspline_curve3d.points:
+                if not bsc_linesegment.point_belongs(pt):
+                    flag = False
+                    break
 
         if self.x_periodicity and not self.y_periodicity \
                 and bspline_curve3d.periodic:
