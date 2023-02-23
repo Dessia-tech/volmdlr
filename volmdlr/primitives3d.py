@@ -910,11 +910,13 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
                        color: Tuple[float, float, float] = None, alpha: float = 1,
                        name: str = ''
                        ):
-        #TODO: THIS METHOD IS NOT RIGHT
+        # TODO: THIS METHOD IS NOT RIGHT
         frame = contour3d.frame
         contour2d = contour3d.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
         return cls(frame.origin, frame.u, frame.v, contour2d, axis_point, axis, angle,
                    color=color, alpha=alpha, name=name)
+
+
 class Cylinder(RevolvedProfile):
     """
     Creates a full cylinder with the position, the axis of revolution the radius and the length.

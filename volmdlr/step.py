@@ -179,6 +179,13 @@ def vertex_point(arguments, object_dict):
     return object_dict[arguments[1]]
 
 
+def axis1_placement(arguments, object_dict):
+    """
+    Returns the data in case of a AXIS1_PLACEMENT.
+    """
+    return object_dict[arguments[1]], object_dict[arguments[2]]
+
+
 def oriented_edge(arguments, object_dict):
     """
     Returns the data in case of an ORIENTED_EDGE.
@@ -569,6 +576,7 @@ class Step(dc.DessiaObject):
         self.global_uncertainty = 1e-6
         self.length_conversion_factor = 1
         self.angle_conversion_factor = 1
+        self.read_diagnostics = {}
         dc.DessiaObject.__init__(self, name=name)
 
     @property
@@ -859,7 +867,7 @@ class Step(dc.DessiaObject):
                 argument.append(arg_id)
                 arguments[i] = argument
 
-    def instanciate(self, name, arguments, object_dict):
+    def instanciate(self, name, arguments, object_dict, step_id):
         """
         Gives the volmdlr object related to the step function.
         """
@@ -872,19 +880,26 @@ class Step(dc.DessiaObject):
 
         elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict,
+                                                             name=name,
+                                                             step_id=step_id,
                                                              global_uncertainty=self.global_uncertainty,
                                                              length_conversion_factor=self.length_conversion_factor,
                                                              angle_conversion_factor=self.angle_conversion_factor)
 
         else:
-            raise NotImplementedError(f'Dont know how to interpret {name} with args {arguments}')
+            raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
         """
-        show_times=True displays the numer of times a given class has been
-        instanciated and the totatl time of all the instanciations of this
-        given class.
+        Translate a step file into a volmdlr object.
+
+        :param show_times: if True, displays how many times a given class has been
+            instanciated and the total time of all the instanciations of this
+            given class.
+        :type show_times: bool
+        :return: A volmdlr solid object.
+        :rtype: :class:`volmdlr.core.VolumeModel`
         """
 
         object_dict = {}
@@ -946,6 +961,7 @@ class Step(dc.DessiaObject):
         # nodes = dessia_common.graph.explore_tree_from_leaves(self.graph)
 
         times = {}
+        errors = set()
         for i, node in enumerate([geometric_representation_context_node] + nodes[::-1]):
             # instanciate_ids = [edge[1]]
             if node is None:
@@ -959,7 +975,7 @@ class Step(dc.DessiaObject):
                         arguments = self.functions[instanciate_id].arg[:]
                         volmdlr_object = self.instanciate(
                             self.functions[instanciate_id].name,
-                            self.functions[instanciate_id].arg[:], object_dict)
+                            self.functions[instanciate_id].arg[:], object_dict, instanciate_id)
                         t = time.time() - t
                         object_dict[instanciate_id] = volmdlr_object
                         if show_times:
@@ -973,6 +989,11 @@ class Step(dc.DessiaObject):
                     # Sometimes the bfs search don't instanciate the nodes of a
                     # depth in the right order, leading to error
                     instanciate_ids.append(key.args[0])
+                # else:
+                #     volmdlr_object = None
+                #     object_dict[node] = volmdlr_object
+            if not object_dict[node]:
+                errors.add(node)
             if i == 0:
                 self.parse_arguments(arguments[1])
                 self.global_uncertainty = float(object_dict[arguments[1][0]])
@@ -987,15 +1008,23 @@ class Step(dc.DessiaObject):
             print()
 
         shells = []
+        step_number_faces = 0
+        faces_read = 0
         if frame_mapping_nodes:
             for node in frame_mapping_nodes:
                 shells.extend(object_dict[node])
         if not shells:
             for node in shell_nodes_copy:
-                if isinstance(object_dict[node], list):
+                volmdlr_object = object_dict[node]
+                if isinstance(volmdlr_object, list):
                     shells.extend(object_dict[node])
                 else:
-                    shells.append(object_dict[node])
+                    shells.append(volmdlr_object)
+                    faces_read += len(volmdlr_object.faces)
+                    step_number_faces += len(self.functions[node].arg[1])
+        self.read_diagnostics["Total Number of Faces"] = step_number_faces
+        self.read_diagnostics["Faces read"] = faces_read
+        self.read_diagnostics["Sucess"] = faces_read / step_number_faces
         volume_model = volmdlr.core.VolumeModel(shells)
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)
