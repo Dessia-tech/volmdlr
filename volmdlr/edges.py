@@ -4055,11 +4055,9 @@ class LineSegment3D(LineSegment):
         edge2D.plot(ax=ax, color=color, width=width)
         return ax
 
-    def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
-                  dash=False, opacity=1, arrow=False):
+    def plot_data(self, x_3D, y_3D, edge_style=None):
         edge2D = self.plane_projection2d(volmdlr.O3D, x_3D, y_3D)
-        return edge2D.plot_data(marker, color, stroke_width,
-                                dash, opacity, arrow)
+        return edge2D.plot_data(edge_style=edge_style)
 
     def to_line(self):
         return Line3D(self.start, self.end)

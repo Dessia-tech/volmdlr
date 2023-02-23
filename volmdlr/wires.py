@@ -3361,7 +3361,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         barycenter = self.barycenter()
         if not self.point_belongs(barycenter):
             barycenter1_2d = self.point_in_polygon()
-            self.translation(-barycenter1_2d, False)
+            self.translation_inplace(-barycenter1_2d)
             way_back = barycenter1_2d.to_3d(volmdlr.O3D, x, y)
         else:
             inters = self.linesegment_intersections(linex)
