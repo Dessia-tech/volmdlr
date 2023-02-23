@@ -616,9 +616,9 @@ class GmshParser(DessiaObject):
                                                                             points[triangle[1]],
                                                                             points[triangle[2]]]))
                 else:
-                    triangles_mesh.append(volmdlr.mesh.TriangularElement2D(points[triangle[0]],
-                                                                           points[triangle[1]],
-                                                                           points[triangle[2]]))
+                    triangles_mesh.append(volmdlr.mesh.TriangularElement2D([points[triangle[0]],
+                                                                            points[triangle[1]],
+                                                                            points[triangle[2]]]))
             element_groups.append(volmdlr.mesh.ElementsGroup(triangles_mesh, name=''))
 
         mesh = volmdlr.mesh.Mesh(element_groups)
