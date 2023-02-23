@@ -874,19 +874,24 @@ class Step(dc.DessiaObject):
 
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
-        if hasattr(volmdlr.step, fun_name):
-            volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
+        try:
+            if hasattr(volmdlr.step, fun_name):
+                volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
 
-        elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
-            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict,
-                                                             name=name,
-                                                             step_id=step_id,
-                                                             global_uncertainty=self.global_uncertainty,
-                                                             length_conversion_factor=self.length_conversion_factor,
-                                                             angle_conversion_factor=self.angle_conversion_factor)
+            elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
+                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict,
+                                                                 name=name,
+                                                                 step_id=step_id,
+                                                                 global_uncertainty=self.global_uncertainty,
+                                                                 length_conversion_factor=self.length_conversion_factor,
+                                                                 angle_conversion_factor=self.angle_conversion_factor)
 
-        else:
-            raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
+            else:
+                raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
+        except (ValueError, NotImplementedError) as error:
+            print(type(error))
+            print(error)
+            raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})")
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
