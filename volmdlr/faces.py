@@ -8896,7 +8896,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :return: The corresponding OpenShell3D object.
         :rtype: :class:`volmdlr.faces.OpenShell3D`
         """
-        faces = [object_dict[int(face[1:])] for face in arguments[1] if face is not None]
+        faces = [object_dict[int(face[1:])] for face in arguments[1] if object_dict[int(face[1:])] is not None]
         return cls(faces, name=arguments[0][1:-1])
 
     def to_step(self, current_id):
