@@ -250,7 +250,7 @@ class TriangularElement(vmw.Triangle):
         new_points = []
         for point in self.points:
             new_points.append(point.axial_symmetry(line))
-        return self.__class__(new_points)
+        return self.__class__(*new_points)
 
     # def axial_symmetry(self, line, copy=True):
     #     p1, p2 = line.points
@@ -393,7 +393,7 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         new_points = []
         for point in self.points:
             new_points.append(point.axial_symmetry(line))
-        return self.__class__(new_points)
+        return self.__class__(*new_points)
 
     # def plot(self, ax=None, color='k', width=None,
     #           plot_points=False, fill=False):
