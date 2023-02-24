@@ -10,7 +10,7 @@ import math
 import random
 import warnings
 # from __future__ import annotations
-from typing import Any, Dict, List, Text, Tuple
+from typing import List, Text, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -1331,8 +1331,8 @@ class Vector3D(Vector):
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
         dict_ = {"object_class": "volmdlr.Vector3D",
-                "x": self.x, "y": self.y, "z": self.z}
-        
+                 "x": self.x, "y": self.y, "z": self.z}
+
         if self.name:
             dict_["name"] = self.name
         return dict_
