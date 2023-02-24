@@ -72,7 +72,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         p4 = pti + u2 * point_distance
 
         w = u1 + u2
-        if w != volmdlr.Vector2D(0, 0):
+        if not w.is_close(volmdlr.Vector2D(0, 0)):
             w.normalize()
 
         v1 = u1.deterministic_unit_normal_vector()
@@ -159,7 +159,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
             check = False
             ni = vectors[2 * i - 1] + vectors[2 * i]
-            if ni == volmdlr.Vector2D(0, 0):
+            if ni.is_close(volmdlr.Vector2D(0, 0)):
                 ni = vectors[2 * i]
                 ni = ni.normalVector()
                 offset_vectors.append(ni)

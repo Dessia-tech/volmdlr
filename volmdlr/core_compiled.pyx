@@ -8,6 +8,7 @@ Cython functions
 """
 import math
 import random
+import sys
 import warnings
 # from __future__ import annotations
 from typing import Any, Dict, List, Text, Tuple
@@ -432,18 +433,17 @@ class Vector2D(Vector):
                         self.y / value)
 
     def __round__(self, ndigits: int = 6):
-        return self.__class__(round(self.x, ndigits),
-                              round(self.y, ndigits))
+        return self.__class__(round(self.x, ndigits), round(self.y, ndigits))
 
     def __hash__(self):
-        """
-        hash returns 0 because points are difficult to hash if they are meant
-        to be equalized at a given tolerance
-        """
-        return 0
+        """Return a hash value for the vector."""
+        return hash(("vector", self.x, self.y))
 
-    def __eq__(self, other_vector):
-        return self.is_close(other_vector)
+    def __eq__(self, other):
+        """Return True if the other point has the same x and y coordinates, False otherwise."""
+        if isinstance(other, self.__class__):
+            return self.x == other.x and self.y == other.y
+        return False
 
     def is_close(self, other_vector: "Vector2D", tol: float = 1e-6):
         """
@@ -868,7 +868,7 @@ class Point2D(Vector2D):
         return Point2D(-self.x, -self.y)
 
     def __sub__(self, other_vector):
-        return Point2D(*Csub2D(self.x, self.y,
+        return Vector2D(*Csub2D(self.x, self.y,
                                other_vector.x, other_vector.y))
 
     def __mul__(self, value: float):
@@ -879,6 +879,10 @@ class Point2D(Vector2D):
             raise ZeroDivisionError
         return Point2D(self.x / value,
                        self.y / value)
+
+    def __hash__(self):
+        """Return a hash value for the point 2d."""
+        return hash(("point", self.x, self.y))
 
     def to_dict(self, *args, **kwargs):
         """
@@ -1256,15 +1260,14 @@ class Vector3D(Vector):
                               round(self.z, ndigits))
 
     def __hash__(self):
-        """
-        hash returns 0 because points are difficult to hash if they are meant
-        to be equalized at a given tolerance
-        """
+        """Return a hash value for the vector 3d."""
+        return hash(("vector", self.x, self.y, self.z))
 
-        return 0
-
-    def __eq__(self, other_vector: "Vector3D"):
-        return self.is_close(other_vector)
+    def __eq__(self, other):
+        """Return True if the other point has the same x, y and z coordinates, False otherwise."""
+        if isinstance(other, self.__class__):
+            return self.x == other.x and self.y == other.y and self.z == other.z
+        return False
 
     def is_close(self, other_vector, tol=1e-6):
         """
@@ -1683,7 +1686,8 @@ class Vector3D(Vector):
         """
         x2d = self.dot(x) - plane_origin.dot(x)
         y2d = self.dot(y) - plane_origin.dot(y)
-        return Point2D(x2d, y2d)
+        class_name = self.__class__.__name__[:-2] + '2D'
+        return getattr(sys.modules[__name__], class_name)(x2d, y2d)
 
     def random_unit_normal_vector(self):
         """
@@ -1880,8 +1884,8 @@ class Point3D(Vector3D):
         return Point3D(-self.x, -self.y, -self.z)
 
     def __sub__(self, other_vector):
-        return Point3D(*Csub3D(self.x, self.y, self.z,
-                               other_vector.x, other_vector.y, other_vector.z))
+        return Vector3D(*Csub3D(self.x, self.y, self.z,
+                                other_vector.x, other_vector.y, other_vector.z))
 
     def __mul__(self, value):
         return Point3D(*Cmul3D(self.x, self.y, self.z, value))
@@ -1892,6 +1896,10 @@ class Point3D(Vector3D):
         return Point3D(self.x / value,
                        self.y / value,
                        self.z / value)
+
+    def __hash__(self):
+        """Return a hash value for the point 3d."""
+        return hash(("point", self.x, self.y, self.z))
 
     def to_dict(self, *args, **kwargs):
         """
@@ -3274,7 +3282,7 @@ class Frame3D(Basis3D):
         hash returns 0 because points are difficult to hash if they are meant
         to be equalized at a given tolerance
         """
-        return 0
+        return hash((self.origin, self.u, self.v, self.w))
 
     def __eq__(self, other_frame):
         if other_frame.__class__.__name__ != self.__class__.__name__:
@@ -3321,12 +3329,6 @@ class Frame3D(Basis3D):
                               round(self.v, ndigits),
                               round(self.w, ndigits))
 
-    def __hash__(self):
-        """
-        hash returns 0 because points are difficult to hash if they are meant
-        to be equalized at a given tolerance
-        """
-        return 0
 
     def to_dict(self, *args, **kwargs):
         """
