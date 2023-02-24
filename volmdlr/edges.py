@@ -2928,9 +2928,6 @@ class Arc2D(Arc):
                               interior=points_symmetry[1],
                               end=points_symmetry[2])
 
-    def reverse(self):
-        return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(), self.name)
-
 
 class FullArc2D(Arc2D):
     """ An edge that starts at start_end, ends at the same point after having described a circle. """
