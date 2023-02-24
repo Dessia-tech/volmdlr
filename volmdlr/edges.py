@@ -131,11 +131,11 @@ class Edge(dc.DessiaObject):
         return self.discretization_points(discretization_resolution)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to an Edge type object.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated
@@ -143,6 +143,7 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
+
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
@@ -3784,11 +3785,11 @@ class Line3D(Line):
         return Line3D(*[p.copy() for p in [self.point1, self.point2]])
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to an Line3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated
@@ -3796,6 +3797,7 @@ class Line3D(Line):
         :return: The corresponding Line3D object
         :rtype: :class:`volmdlr.edges.Line3D`
         """
+
         point1 = object_dict[arguments[1]]
         direction = object_dict[arguments[2]]
         point2 = point1 + direction
@@ -3939,8 +3941,9 @@ class LineSegment3D(LineSegment):
         :param angle: angle rotation
         :return: a new rotated LineSegment3D
         """
-        return LineSegment3D(
-            *[point.rotation(center, axis, angle) for point in self.points])
+        start = self.start.rotation(center, axis, angle)
+        end = self.end.rotation(center, axis, angle)
+        return LineSegment3D(start, end)
 
     def rotation_inplace(self, center: volmdlr.Point3D,
                          axis: volmdlr.Vector3D, angle: float):
@@ -4504,11 +4507,11 @@ class BSplineCurve3D(BSplineCurve):
         return res.x[0]
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a BSplineCurve3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated
@@ -4516,6 +4519,7 @@ class BSplineCurve3D(BSplineCurve):
         :return: The corresponding BSplineCurve3D.
         :rtype: :class:`volmdlr.edges.BSplineCurve3D`
         """
+
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
@@ -4539,7 +4543,7 @@ class BSplineCurve3D(BSplineCurve):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
 
-        if 10 in range(len(arguments)):
+        if 9 in range(len(arguments)):
             weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
         else:
             weight_data = None
@@ -4730,16 +4734,20 @@ class BSplineCurve3D(BSplineCurve):
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=4e-3):
             return self
-        if math.isclose(parameter, 1, abs_tol=4e-3):
-            raise ValueError('Nothing will be left from the BSplineCurve3D')
+        if math.isclose(parameter, 1, abs_tol=1e-6):
+            return self.reverse()
+        #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
         curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
         # Is a value of parameter below 4e-3 a real need for precision ?
-        if math.isclose(parameter, 0, abs_tol=4e-3):
-            raise ValueError('Nothing will be left from the BSplineCurve3D')
+        if math.isclose(parameter, 0, abs_tol=1e-6):
+        #     # raise ValueError('Nothing will be left from the BSplineCurve3D')
+        #     curves = operations.split_curve(operations.refine_knotvector(self.curve, [4]), parameter)
+        #     return self.from_geomdl_curve(curves[0])
+            return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
         curves = operations.split_curve(self.curve, parameter)
@@ -4959,7 +4967,6 @@ class Arc3D(Arc):
             u1.normalize()
             u2.normalize()
         except ZeroDivisionError:
-            print(True)
             raise ValueError(
                 'Start, end and interior points of an arc must be distincts') from ZeroDivisionError
 
