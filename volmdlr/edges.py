@@ -2262,7 +2262,24 @@ class Arc(Edge):
             str(center_point_tag) + ', ' + str(end_point_tag) + '};'
 
     def get_geo_points(self):
+        """
+        Gets the points that define an Arc to use them in a .geo file.
+
+        :return: A list of caracteristic arc points
+        :rtype: List
+
+        """
         return [self.start, self.center, self.end]
+
+    def reverse(self):
+        """
+        Gets the reverse version of an arc.
+
+        :return: An arc
+        :rtype: Arc
+        """
+
+        return self.__class__(start=self.end, interior=self.interior, end=self.start)
 
 
 class Arc2D(Arc):
@@ -2849,6 +2866,12 @@ class Arc2D(Arc):
                      self.end.copy())
 
     def split(self, split_point: volmdlr.Point2D):
+        """
+        Splits arc at a given point.
+
+        :param split_point: spliting point.
+        :return: list of two Arc2D.
+        """
         abscissa = self.abscissa(split_point)
 
         return [Arc2D(self.start,
@@ -2912,9 +2935,6 @@ class Arc2D(Arc):
         return self.__class__(start=points_symmetry[0],
                               interior=points_symmetry[1],
                               end=points_symmetry[2])
-
-    def reverse(self):
-        return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(), self.name)
 
 
 class FullArc2D(Arc2D):
