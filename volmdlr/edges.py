@@ -2865,6 +2865,12 @@ class Arc2D(Arc):
                      self.end.copy())
 
     def split(self, split_point: volmdlr.Point2D):
+        """
+        Splits arc at a given point.
+
+        :param split_point: spliting point.
+        :return: list of two Arc2D.
+        """
         abscissa = self.abscissa(split_point)
 
         return [Arc2D(self.start,

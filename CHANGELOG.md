@@ -100,6 +100,8 @@ is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_t
 ### CI
 - add spell check to pylint with pyenchant
 - make code_pydocstyle more explicit
+- upload html coverage to cdn.dessia.tech
+
 
 ## v0.8.0 [Released 26/01/2023]
 

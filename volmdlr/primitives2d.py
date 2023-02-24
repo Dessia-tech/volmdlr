@@ -467,13 +467,13 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         distance = self.end.point_distance(self.start)
 
         if self.label != '':
-            label = '{}: '.format(self.label)
+            label = f'{self.label}: '
         else:
             label = ''
         if self.unit == 'mm':
-            label += '{} mm'.format(round(distance * 1000, ndigits))
+            label += f'{round(distance * 1000, ndigits)} mm'
         else:
-            label += '{} m'.format(round(distance, ndigits))
+            label += f'{round(distance, ndigits)} m'
 
         if self.type_ == 'distance':
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
