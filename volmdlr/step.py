@@ -889,9 +889,7 @@ class Step(dc.DessiaObject):
             else:
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
         except (ValueError, NotImplementedError) as error:
-            print(type(error))
-            print(error)
-            raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})")
+            raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
