@@ -742,6 +742,15 @@ class ElementsGroup(DessiaObject):
         return nodes
 
     def point_to_element(self, point):
+        """
+        Checks if a point belongs to an element.
+
+        :param point: A point2d/3d
+        :type point: Point2D/Point3D
+
+        :return: The input Element OR None
+        """
+
         for element in self.elements:
             if element.point_belongs(point):
                 return element
@@ -779,6 +788,10 @@ class ElementsGroup(DessiaObject):
     #             elem.translation(offset, copy=False)
 
     def plot(self, ax=None, color='k'):  # , fill=False):
+        """
+        Plot an ElementGroup.
+        """
+
         if ax is None:
             _, ax = plt.subplots()
             ax.set_aspect('equal')
