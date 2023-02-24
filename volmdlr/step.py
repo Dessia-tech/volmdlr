@@ -1024,9 +1024,11 @@ class Step(dc.DessiaObject):
                     shells.append(volmdlr_object)
                     faces_read += len(volmdlr_object.faces)
                     step_number_faces += len(self.functions[node].arg[1])
-        self.read_diagnostics["Total Number of Faces"] = step_number_faces
-        self.read_diagnostics["Faces read"] = faces_read
-        self.read_diagnostics["Sucess"] = faces_read / step_number_faces
+            if step_number_faces and faces_read:
+                self.read_diagnostics["Total Number of Faces"] = step_number_faces
+                self.read_diagnostics["Faces read"] = faces_read
+                self.read_diagnostics["Sucess rate"] = faces_read / step_number_faces
+
         volume_model = volmdlr.core.VolumeModel(shells)
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)
