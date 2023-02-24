@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 * Write .msh file (with stream)
+* Arc: reverse
 
 ### Fixed
 
@@ -18,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Performance improvements
 
 ### Refactorings
+
+* ContourMixin: to_polygon (for both 2D and 3D)
 
 
 ## v0.9.0 [Testing]
