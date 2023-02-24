@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 * Write .msh file (with stream)
+* Arc: reverse
 
 ### Fixed
 
@@ -21,7 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactorings
 
-### Unittests
+* ContourMixin: to_polygon (for both 2D and 3D)
+
+## Unittests
 * Unittests for Vector2D
 * Unittests for Point2D
 * Unittests for Vector3D
@@ -41,7 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Create .geo and .msh files (Mesh geometries with GMSH)
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
-* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
+* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D.
+* ConicalSurface3D, CylindricalSurface3D: plot method
 
 
 ### Fixed
@@ -60,8 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Step_assemblies: consider when no transformation is needed.
 * fix some pydocstyle errors
 * Script/step/workflow: Update Workflow, use last version of dessia_common
+* LineSegment3D: Rotation method update due to points attribute deletion
+* ConicalSurface3D: fix from_step class method by adding the angle convertion factor
 * fix f string usage
-
 
 ### Removed
 
@@ -103,6 +108,8 @@ is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_t
 ### CI
 - add spell check to pylint with pyenchant
 - make code_pydocstyle more explicit
+- upload html coverage to cdn.dessia.tech
+
 
 ## v0.8.0 [Released 26/01/2023]
 

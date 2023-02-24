@@ -1158,15 +1158,15 @@ class Point2D(Vector2D):
         return point_symmetry
 
     def coordinates(self):
-        '''
-        gets x,y coordinates of a point2d
-        '''
+        """
+        Gets x,y coordinates of a point2d.
+        """
 
         return (self.x, self.y)
 
     def get_geo_lines(self, tag: int, point_mesh_size: float = None):
-        '''
-        gets the lines that define a Point2D in a .geo file
+        """
+        Gets the lines that define a Point2D in a .geo file.
 
         :param tag: The point index
         :type tag: int
@@ -1175,7 +1175,7 @@ class Point2D(Vector2D):
 
         :return: A line
         :rtype: str
-        '''
+        """
 
         if point_mesh_size:
             return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
@@ -1764,11 +1764,11 @@ class Vector3D(Vector):
         return Point3D(self.x, self.y, self.z)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional vector to a Vector3D.
 
-        :param arguments: The arguments of the step primitive. The last arguments represents the unit_conversion_factor
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instanciated
@@ -1776,10 +1776,11 @@ class Vector3D(Vector):
         :return: The corresponding Vector3D object
         :rtype: :class:`volmdlr.Vector3D`
         """
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+
         if type(arguments[1]) is int:
             # VECTOR
-            unit_conversion_factor = arguments[-1]
-            new_vector = unit_conversion_factor*float(arguments[2])*object_dict[arguments[1]]
+            new_vector = length_conversion_factor * float(arguments[2])*object_dict[arguments[1]]
             new_vector.name = arguments[0][1:-1]
             return new_vector
         else:
@@ -1982,7 +1983,7 @@ class Point3D(Vector3D):
     #     return Point2D(x2d, y2d)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional point to a Point3D.
 
@@ -1994,8 +1995,9 @@ class Point3D(Vector3D):
         :return: The corresponding Point3D object
         :rtype: :class:`volmdlr.Point3D`
         """
-        unit_conversion_factor = arguments[-1]
-        return cls(*[float(i) * unit_conversion_factor for i in arguments[1][1:-1].split(",")],
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+
+        return cls(*[float(i) * length_conversion_factor for i in arguments[1][1:-1].split(",")],
                    arguments[0][1:-1])
 
     def to_vector(self):
@@ -2101,7 +2103,7 @@ class Point3D(Vector3D):
 
     def get_geo_lines(self, tag: int, point_mesh_size: float = None):
         """
-        gets the lines that define a Point3D in a .geo file
+        Gets the lines that define a Point3D in a .geo file.
 
         :param tag: The point index
         :type tag: int
@@ -3619,7 +3621,7 @@ class Frame3D(Basis3D):
         return ax
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional point to a Frame3D.
 
