@@ -1954,7 +1954,7 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a BSplineExtrusion.
 
