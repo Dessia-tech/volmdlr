@@ -4007,7 +4007,7 @@ class BSplineSurface3D(Surface3D):
         start = bspline_curve3d.points[0]
         end = bspline_curve3d.points[-1]
         flag = False
-        if start != end:
+        if not start.is_close(end):
             bsc_linesegment = vme.LineSegment3D(start, end)
             flag = True
             for pt in bspline_curve3d.points:
