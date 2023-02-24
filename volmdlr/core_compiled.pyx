@@ -1885,7 +1885,7 @@ class Point3D(Vector3D):
 
     def __sub__(self, other_vector):
         return Point3D(*Csub3D(self.x, self.y, self.z,
-                                other_vector.x, other_vector.y, other_vector.z))
+                               other_vector.x, other_vector.y, other_vector.z))
 
     def __mul__(self, value):
         return Point3D(*Cmul3D(self.x, self.y, self.z, value))
@@ -3328,7 +3328,6 @@ class Frame3D(Basis3D):
                               round(self.u, ndigits),
                               round(self.v, ndigits),
                               round(self.w, ndigits))
-
 
     def to_dict(self, *args, **kwargs):
         """
