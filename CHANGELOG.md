@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Write .msh file (with stream)
 * Arc: reverse
+* BSplineCurve2D: offset
 
 ### Fixed
 
@@ -22,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * ContourMixin: to_polygon (for both 2D and 3D)
 
+### Unittests
+BSplineCurve2D: offset
 
 ## v0.9.0 [Testing]
 
