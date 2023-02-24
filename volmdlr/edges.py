@@ -5921,7 +5921,7 @@ class ArcEllipse3D(Edge):
         u2.normalize()
 
         if u1.is_close(u2):
-            u2 = (self.interior - self.extra)
+            u2 = self.interior - self.extra
             u2.normalize()
 
         n = u2.cross(u1)
