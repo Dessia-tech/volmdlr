@@ -1858,6 +1858,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :param point2d: Point at the ToroidalSuface3D
         :type point2d: `volmdlr.`Point2D`
         """
+
         p = volmdlr.Point3D(self.radius * math.cos(point2d.x),
                             self.radius * math.sin(point2d.x),
                             point2d.y)
