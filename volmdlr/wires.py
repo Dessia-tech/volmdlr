@@ -1572,8 +1572,7 @@ class ContourMixin(WireMixin):
 
         if isinstance(self, Contour2D):
             return ClosedPolygon2D(polygon_points)
-        else:
-            return ClosedPolygon3D(polygon_points)
+        return ClosedPolygon3D(polygon_points)
 
 
 class Contour2D(ContourMixin, Wire2D):
@@ -2017,27 +2016,6 @@ class Contour2D(ContourMixin, Wire2D):
     def triangulation(self):
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
-
-    def to_polygon(self, angle_resolution, discretize_line: bool = False):
-        """
-        Transform the contour to a polygon.
-
-        :param angle_resolution: Number of points per radians.
-        :type angle_resolution: float
-        :param discretize_line: Boolean indicating whether the line segments should be discretized or not.
-        :type discretize_line: bool
-        :return: The discretized version of the contour.
-        :rtype: ClosedPolygon2D
-        """
-
-        polygon_points = []
-
-        for primitive in self.primitives:
-            if isinstance(primitive, volmdlr.edges.LineSegment2D) and not discretize_line:
-                polygon_points.append(primitive.start)
-            else:
-                polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
-        return ClosedPolygon2D(polygon_points)
 
     def grid_triangulation(self, x_density: float = None,
                            y_density: float = None,
