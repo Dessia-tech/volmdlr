@@ -1654,6 +1654,12 @@ class BSplineCurve2D(BSplineCurve):
                               periodic=self.periodic)
 
     def point_distance(self, point):
+        """
+        Calculates the distance from a given point to a BSplineCurve2D.
+
+        :param point: point 2d.
+        :return: distance.
+        """
         best_distance = math.inf
         distance_changing_significantly = True
         abscissa1 = 0
@@ -1661,7 +1667,7 @@ class BSplineCurve2D(BSplineCurve):
         distance = best_distance
         while distance_changing_significantly:
             discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
-                                              in npy.linspace(abscissa1, abscissa2, num=5)]
+                                              in npy.linspace(abscissa1, abscissa2, num=8)]
             distance = point.point_distance(discretized_points_between_1_2[0])
             for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
                 line = LineSegment2D(point1, point2)
