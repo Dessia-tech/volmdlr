@@ -17,12 +17,13 @@ import plot_data.core as plot_data
 import scipy as scp
 import scipy.integrate as scipy_integrate
 import scipy.optimize
-from geomdl import NURBS, BSpline, fitting, operations, utilities
+from geomdl import NURBS, BSpline, operations, utilities
 from geomdl.operations import length_curve, split_curve
 from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
 
+import volmdlr.bspline_fitting as fitting
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
