@@ -1686,7 +1686,7 @@ class Vector3D(Vector):
         """
         x2d = self.dot(x) - plane_origin.dot(x)
         y2d = self.dot(y) - plane_origin.dot(y)
-        class_name = self.__class__.__name__[:-2] + '2D'
+        class_name = self.__class__.__name__[:-2] + "2D"
         return getattr(sys.modules[__name__], class_name)(x2d, y2d)
 
     def random_unit_normal_vector(self):
