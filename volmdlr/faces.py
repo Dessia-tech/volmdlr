@@ -1,5 +1,5 @@
 """
-Surfaces & faces
+Surfaces & faces.
 """
 
 import math
@@ -1178,11 +1178,11 @@ class Plane3D(Surface3D):
         return self.frame == other_plane.frame
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a Plane3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated
@@ -1190,6 +1190,7 @@ class Plane3D(Surface3D):
         :return: The corresponding Plane3D object.
         :rtype: :class:`volmdlr.faces.Plane3D`
         """
+
         frame3d = object_dict[arguments[1]]
         frame3d.normalize()
         frame = volmdlr.Frame3D(frame3d.origin,
@@ -1751,6 +1752,7 @@ class PeriodicalSurface(Surface3D):
         """
         length = bspline_curve3d.length()
         n = len(bspline_curve3d.control_points)
+        # n = 10
         points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
@@ -1783,6 +1785,9 @@ class PeriodicalSurface(Surface3D):
                                                              periodic=bspline_curve3d.periodic)]
 
     def linesegment2d_to_3d(self, linesegment2d):
+        """
+        Converts a BREP line segment 2D onto a 3D primitive on the surface.
+        """
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
         if math.isclose(theta1, theta2, abs_tol=1e-4):
@@ -1820,7 +1825,41 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.radius = radius
         PeriodicalSurface.__init__(self, name=name)
 
+    def plot(self, ax=None, color: str = "grey", alpha: float = 0.5, z: float = 0.5):
+        """
+        Plot the cylindrical surface in the local frame normal direction.
+
+        :param ax: Matplotlib Axes3D object to plot on. If None, create a new figure.
+        :type ax: Axes3D or None
+        :param color: color of the wireframe plot. Default is 'grey'.
+        :type color: str
+        :param alpha: transparency of the wireframe plot. Default is 0.5.
+        :type alpha: float
+        :param z: additional keyword arguments to pass the value of z to cut the surface.
+        :type z: float
+        :return: Matplotlib Axes3D object containing the plotted wireframe.
+        :rtype: Axes3D
+        """
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        x = self.radius
+        point1 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, 0))
+        point2 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, z))
+        generatrix = vme.LineSegment3D(point1, point2)
+        for i in range(37):
+            theta = i / 36. * volmdlr.TWO_PI
+            wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
+            wire.plot(ax=ax, color=color, alpha=alpha)
+        return ax
+
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        """
+        Coverts a parametric coordinate on the surface into a 3D spatial point (x, y, z).
+
+        :param point2d: Point at the ToroidalSuface3D
+        :type point2d: `volmdlr.`Point2D`
+        """
         p = volmdlr.Point3D(self.radius * math.cos(point2d.x),
                             self.radius * math.sin(point2d.x),
                             point2d.y)
@@ -1902,11 +1941,11 @@ class CylindricalSurface3D(PeriodicalSurface):
         raise NotImplementedError
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a CylindricalSurface3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated
@@ -1914,14 +1953,15 @@ class CylindricalSurface3D(PeriodicalSurface):
         :return: The corresponding CylindricalSurface3D object.
         :rtype: :class:`volmdlr.faces.CylindricalSurface3D`
         """
-        unit_conversion_factor = arguments[-1]
+
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, -frame3d.u
         U.normalize()
         W.normalize()
         V = W.cross(U)
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
-        radius = float(arguments[2]) * unit_conversion_factor
+        radius = float(arguments[2]) * length_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -2263,11 +2303,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         return volmdlr.Point2D(theta, phi)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a ToroidalSurface3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated.
@@ -2275,15 +2315,17 @@ class ToroidalSurface3D(PeriodicalSurface):
         :return: The corresponding ToroidalSurface3D object.
         :rtype: :class:`volmdlr.faces.ToroidalSurface3D`
         """
-        unit_conversion_factor = arguments[-1]
+
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, -frame3d.u
         U.normalize()
         W.normalize()
         V = W.cross(U)
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
-        rcenter = float(arguments[2]) * unit_conversion_factor
-        rcircle = float(arguments[3]) * unit_conversion_factor
+        rcenter = float(arguments[2]) * length_conversion_factor
+        rcircle = float(arguments[3]) * length_conversion_factor
         return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -2587,12 +2629,28 @@ class ConicalSurface3D(PeriodicalSurface):
         self.semi_angle = semi_angle
         PeriodicalSurface.__init__(self, name=name)
 
+    def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
+        z = kwargs.get("z", 0.5)
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        x = z / math.sin(self.semi_angle)
+        # point1 = self.frame.local_to_global_coordinates(volmdlr.Point3D(-x, 0, -z))
+        point1 = self.frame.origin
+        point2 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, z))
+        generatrix = vme.LineSegment3D(point1, point2)
+        for i in range(37):
+            theta = i / 36. * volmdlr.TWO_PI
+            wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
+            wire.plot(ax=ax, color=color, alpha=alpha)
+        return ax
+
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a ConicalSurface3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated.
@@ -2600,14 +2658,17 @@ class ConicalSurface3D(PeriodicalSurface):
         :return: The corresponding ConicalSurface3D object.
         :rtype: :class:`volmdlr.faces.ConicalSurface3D`
         """
-        unit_conversion_factor = arguments[-1]
+
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+        angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
+
         frame3d = object_dict[arguments[1]]
         u, w = frame3d.v, frame3d.u
         u.normalize()
         w.normalize()
         v = w.cross(u)
-        radius = float(arguments[2]) * unit_conversion_factor
-        semi_angle = float(arguments[3])
+        radius = float(arguments[2]) * length_conversion_factor
+        semi_angle = float(arguments[3]) * angle_conversion_factor
         origin = frame3d.origin - radius / math.tan(semi_angle) * w
         frame_direct = volmdlr.Frame3D(origin, u, v, w)
         return cls(frame_direct, semi_angle, arguments[0][1:-1])
@@ -2702,9 +2763,14 @@ class ConicalSurface3D(PeriodicalSurface):
         end = self.point3d_to_2d(linesegment3d.end)
         if start.x != end.x and start == volmdlr.Point2D(0, 0):
             start = volmdlr.Point2D(end.x, 0)
-        elif start.x != end.x:
-            end = volmdlr.Point2D(start.x, end.y)
-        return [vme.LineSegment2D(start, end)]
+        elif start.x != end.x and end == volmdlr.Point2D(0, 0):
+            end = volmdlr.Point2D(start.x, 0)
+        # elif start.x != end.x:
+        #     end = volmdlr.Point2D(start.x, end.y)
+        if not start.is_close(end):
+            return [vme.LineSegment2D(start, end)]
+        return [vme.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
+
 
     def circle3d_to_2d(self, circle3d):
         """
@@ -2888,11 +2954,11 @@ class SphericalSurface3D(Surface3D):
         return volmdlr.wires.Contour3D(primitives3d)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a SphericalSurface3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated.
@@ -2900,14 +2966,15 @@ class SphericalSurface3D(Surface3D):
         :return: The corresponding SphericalSurface3D object.
         :rtype: :class:`volmdlr.faces.SphericalSurface3D`
         """
-        unit_conversion_factor = arguments[-1]
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, frame3d.u
         U.normalize()
         W.normalize()
         V = W.cross(U)
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
-        radius = float(arguments[2]) * unit_conversion_factor
+        radius = float(arguments[2]) * length_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
     def point2d_to_3d(self, point2d):
@@ -3436,7 +3503,18 @@ class RevolutionSurface3D(PeriodicalSurface):
         return ax
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
+        """
+        Converts a step primitive to a RevolutionSurface3D.
+
+        :param arguments: The arguments of the step primitive.
+        :type arguments: list
+        :param object_dict: The dictionary containing all the step primitives
+            that have already been instantiated.
+        :type object_dict: dict
+        :return: The corresponding RevolutionSurface3D object.
+        :rtype: :class:`volmdlr.faces.RevolutionSurface3D`
+        """
         name = arguments[0][1:-1]
         contour3d = object_dict[arguments[1]]
         axis_point, axis = object_dict[arguments[2]]
@@ -3784,7 +3862,7 @@ class BSplineSurface3D(Surface3D):
         def fun(x):
             S = self.derivatives(x[0], x[1], 1)
             r = S[0][0] - point3d
-            f = r.norm() + 1e-32
+            f = r.norm() + 1e-18
             jac = npy.array([r.dot(S[1][0]) / f, r.dot(S[0][1]) / f])
             return f, jac
 
@@ -3794,6 +3872,12 @@ class BSplineSurface3D(Surface3D):
         delta_bound_x = max_bound_x - min_bound_x
         delta_bound_y = max_bound_y - min_bound_y
         x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
+               ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
+               ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
+               ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
+               (max_bound_x - delta_bound_x / 4, min_bound_y + delta_bound_y / 10),
+               ((min_bound_x + max_bound_x) / 4, max_bound_y - delta_bound_y / 10),
+               (max_bound_x - delta_bound_x / 4, max_bound_y - delta_bound_y / 10),
                (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
                (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
                (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
@@ -4240,11 +4324,11 @@ class BSplineSurface3D(Surface3D):
         return self
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a BSplineSurface3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated.
@@ -4252,6 +4336,7 @@ class BSplineSurface3D(Surface3D):
         :return: The corresponding BSplineSurface3D object.
         :rtype: :class:`volmdlr.faces.BSplineSurface3D`
         """
+
         name = arguments[0][1:-1]
         degree_u = int(arguments[1])
         degree_v = int(arguments[2])
@@ -4285,7 +4370,7 @@ class BSplineSurface3D(Surface3D):
         v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
         knot_spec = arguments[12]
 
-        if 13 in range(len(arguments[:-1])):
+        if 13 in range(len(arguments)):
             weight_data = [
                 float(i) for i in
                 arguments[13][1:-1].replace("(", "").replace(")", "").split(",")
@@ -5705,7 +5790,9 @@ class Face3D(volmdlr.core.Primitive3D):
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
-        """Sets the bounding box to a new value"""
+        """
+        Sets the bounding box to a new value.
+        """
         raise NotImplementedError(
             f"bounding_box setter method must be"
             f"overloaded by {self.__class__.__name__}")
@@ -5719,11 +5806,11 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.surface2d.area()
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a Face3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated.
@@ -5731,6 +5818,7 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: The corresponding Face3D object.
         :rtype: :class:`volmdlr.faces.Face3D`
         """
+
         name = arguments[0][1:-1]
         contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
         surface = object_dict[int(arguments[2])]
@@ -6308,8 +6396,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def get_open_contour_divided_faces_inner_contours(self, new_faces_contours):
         """
-        If there is any inner contour, verifies which ones belong to the new divided faces from
-        an open cutting contour.
+        If there is any inner contour, verifies which ones belong to the new divided faces.
 
         :param new_faces_contours: new faces outer contour.
         :return: valid_new_faces_contours, valid_new_faces_contours.
@@ -7466,7 +7553,6 @@ class CylindricalFace3D(Face3D):
     def point_belongs(self, point3d: volmdlr.Point3D):
         """
         Tells you if a point is on the 3D Cylindrical face and inside its contour.
-
         """
         point2d = self.surface3d.point3d_to_2d(point3d)
         point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
@@ -8810,11 +8896,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return dict_
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a OpenShell3D.
 
-        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instantiated.
@@ -8822,6 +8908,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :return: The corresponding OpenShell3D object.
         :rtype: :class:`volmdlr.faces.OpenShell3D`
         """
+
         faces = []
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
