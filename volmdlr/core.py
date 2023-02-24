@@ -62,7 +62,7 @@ def point_in_list(point, list_points, tol: float = 1e-6):
     return False
 
 
-def get_point_index_in_list(point, list_points, tol):
+def get_point_index_in_list(point, list_points, tol: float = 1e-6):
     """
     Gets the index a point inside a list of points, considering a certain tolerance.
 

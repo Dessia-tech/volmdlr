@@ -868,7 +868,7 @@ class Point2D(Vector2D):
         return Point2D(-self.x, -self.y)
 
     def __sub__(self, other_vector):
-        return Vector2D(*Csub2D(self.x, self.y,
+        return Point2D(*Csub2D(self.x, self.y,
                                other_vector.x, other_vector.y))
 
     def __mul__(self, value: float):
@@ -1884,7 +1884,7 @@ class Point3D(Vector3D):
         return Point3D(-self.x, -self.y, -self.z)
 
     def __sub__(self, other_vector):
-        return Vector3D(*Csub3D(self.x, self.y, self.z,
+        return Point3D(*Csub3D(self.x, self.y, self.z,
                                 other_vector.x, other_vector.y, other_vector.z))
 
     def __mul__(self, value):

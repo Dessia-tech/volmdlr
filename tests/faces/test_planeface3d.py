@@ -69,6 +69,8 @@ class TestPlaneFace3D(unittest.TestCase):
         for inter in face_intersections:
             self.assertIsInstance(inter.primitives[0], edges.ArcEllipse3D)
         self.assertEqual(face_intersections[0].primitives[0].center, volmdlr.O3D)
+        self.assertEqual(face_intersections[0].primitives[0].major_dir, volmdlr.Point3D(
+            2.6567716615652136e-17, 0.4338837391180807, -0.9009688679021675))
         self.assertAlmostEqual(face_intersections[0].primitives[0].Gradius, 0.3457147306439571)
         list_expected_points = [[volmdlr.Point3D(0.08947272158306664, 0.12039365470206077, -0.25),
                                  volmdlr.Point3D(0.13401661881546628, 0.0673761521702598, -0.13990802160005056),
