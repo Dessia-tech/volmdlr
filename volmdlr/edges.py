@@ -1248,37 +1248,26 @@ class Line2D(Line):
             return [point_projection1]
         return []
 
-    def create_tangent_circle(self, point, other_line):
-        """
-        Computes the two circles that are tangent to 2 lines and intersect a point located on one of the two lines.
-
-        """
-
-        # point will be called I(x_I, y_I)
-        # self will be (AB)
-        # line will be (CD)
-
-        if math.isclose(self.point_distance(point), 0, abs_tol=1e-10):
+    @staticmethod
+    def _compute_data_create_tangent_circle(line, point, other_line):
+        if math.isclose(line.point_distance(point), 0, abs_tol=1e-10):
             I = volmdlr.Vector2D(point.x, point.y)
-            A = volmdlr.Vector2D(self.point1.x, self.point1.y)
-            B = volmdlr.Vector2D(self.point2.x, self.point2.y)
-            C = volmdlr.Vector2D(other_line.point1.x,
-                                 other_line.point1.y)
-            D = volmdlr.Vector2D(other_line.point2.x,
-                                 other_line.point2.y)
-
+            A = volmdlr.Vector2D(line.point1.x, line.point1.y)
+            B = volmdlr.Vector2D(line.point2.x, line.point2.y)
+            C = volmdlr.Vector2D(other_line.point1.x, other_line.point1.y)
+            D = volmdlr.Vector2D(other_line.point2.x, other_line.point2.y)
         elif math.isclose(other_line.point_distance(point), 0, abs_tol=1e-10):
-            I = volmdlr.Vector2D(point.x, point.y)
-            C = volmdlr.Vector2D(self.point1.x, self.point1.y)
-            D = volmdlr.Vector2D(self.point2.x, self.point2.y)
-            A = volmdlr.Vector2D(other_line.point1.x,
-                                 other_line.point1.y)
-            B = volmdlr.Vector2D(other_line.point2.x,
-                                 other_line.point2.y)
+            I = volmdlr.Vector2D(line.x, point.y)
+            C = volmdlr.Vector2D(line.point1.x, line.point1.y)
+            D = volmdlr.Vector2D(line.point2.x, line.point2.y)
+            A = volmdlr.Vector2D(other_line.point1.x, other_line.point1.y)
+            B = volmdlr.Vector2D(other_line.point2.x, other_line.point2.y)
         else:
             raise AttributeError("The point isn't on any of the two lines")
+        return I, A, B, C, D
 
-        # CHANGEMENT DE REPAIRE
+    @staticmethod
+    def _change_reference_frame(I, A, B, C, D):
         new_u = volmdlr.Vector2D((B - A))
         new_u.normalize()
         new_v = new_u.unit_normal_vector()
@@ -1289,6 +1278,44 @@ class Line2D(Line):
         new_c = new_basis.global_to_local_coordinates(C)
         new_d = new_basis.global_to_local_coordinates(D)
 
+        return new_basis, new_a, new_b, new_c, new_d
+
+    @staticmethod
+    def compute_tangent_circle_for_parallel_segments(new_basis, new_a, new_c):
+        segments_distance = abs(new_c[1] - new_a[1])
+        r = segments_distance / 2
+        new_circle_center = volmdlr.Point2D((0, npy.sign(new_c[1] - new_a[1]) * r))
+        circle_center = new_basis.local_to_global_coordinates(new_circle_center)
+        circle = volmdlr.wires.Circle2D(circle_center, r)
+        return circle, None
+
+    @staticmethod
+    def compute_tangent_circles_for_perpendicular_segments(new_basis, new_a, new_b, new_c, new_d):
+        line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
+        line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
+        new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
+
+        r = abs(new_pt_k[0])
+        new_circle_center1 = volmdlr.Point2D((0, r))
+        new_circle_center2 = volmdlr.Point2D((0, -r))
+        circle_center1 = new_basis.local_to_global_coordinates(new_circle_center1)
+        circle_center2 = new_basis.local_to_global_coordinates(new_circle_center2)
+        circle1 = volmdlr.wires.Circle2D(circle_center1, r)
+        circle2 = volmdlr.wires.Circle2D(circle_center2, r)
+
+        return circle1, circle2
+
+    def create_tangent_circle(self, point, other_line):
+        """
+        Computes the two circles that are tangent to 2 lines and intersect a point located on one of the two lines.
+        """
+        # point will be called I(x_I, y_I)
+        # self will be (AB)
+        # line will be (CD)
+        I, A, B, C, D = self._compute_data_create_tangent_circle(self, point, other_line)
+        # CHANGEMENT DE REPAIRE
+        new_basis, new_a, new_b, new_c, new_d = self._change_reference_frame(I, A, B, C, D)
+
         if new_c[1] == 0 and new_d[1] == 0:
             # Segments are on the same line: no solution
             return None, None
@@ -1296,32 +1323,12 @@ class Line2D(Line):
         if math.isclose(self.unit_direction_vector().dot(
                 other_line.unit_normal_vector()), 0, abs_tol=1e-06):
             # Parallel segments: one solution
-
-            segments_distance = abs(new_c[1] - new_a[1])
-            r = segments_distance / 2
-            new_circle_center = volmdlr.Point2D(
-                (0, npy.sign(new_c[1] - new_a[1]) * r))
-            circle_center = new_basis.local_to_global_coordinates(new_circle_center)
-            circle = volmdlr.wires.Circle2D(circle_center, r)
-
-            return circle, None
+            return self.compute_tangent_circle_for_parallel_segments(new_basis, new_a, new_c)
 
         if math.isclose(self.unit_direction_vector().dot(
                 other_line.unit_direction_vector()), 0, abs_tol=1e-06):
             # Perpendicular segments: 2 solution
-            line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
-            line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
-            new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
-
-            r = abs(new_pt_k[0])
-            new_circle_center1 = volmdlr.Point2D((0, r))
-            new_circle_center2 = volmdlr.Point2D((0, -r))
-            circle_center1 = new_basis.local_to_global_coordinates(new_circle_center1)
-            circle_center2 = new_basis.local_to_global_coordinates(new_circle_center2)
-            circle1 = volmdlr.wires.Circle2D(circle_center1, r)
-            circle2 = volmdlr.wires.Circle2D(circle_center2, r)
-
-            return circle1, circle2
+            return self.compute_tangent_circles_for_perpendicular_segments(new_basis, new_a, new_b, new_c, new_d)
 
         # =============================================================================
         # LES SEGMENTS SONT QUELCONQUES
@@ -1342,8 +1349,6 @@ class Line2D(Line):
         new_v2 = new_u2.normal_vector(unit=True)
         new_basis2 = volmdlr.Frame2D(I, new_u2, new_v2)
 
-        new_a = new_basis2.global_to_local_coordinates(A)
-        new_b = new_basis2.global_to_local_coordinates(B)
         new_c = new_basis2.global_to_local_coordinates(C)
         new_d = new_basis2.global_to_local_coordinates(D)
         new_pt_k = new_basis2.global_to_local_coordinates(pt_K)
@@ -4711,9 +4716,9 @@ class BSplineCurve3D(BSplineCurve):
         if math.isclose(parameter1, 0, abs_tol=1e-7) \
                 and math.isclose(parameter2, 1, abs_tol=1e-7):
             return self
-        elif math.isclose(parameter1, 0, abs_tol=1e-7):
+        if math.isclose(parameter1, 0, abs_tol=1e-7):
             return self.cut_after(parameter2)
-        elif math.isclose(parameter2, 1, abs_tol=1e-7):
+        if math.isclose(parameter2, 1, abs_tol=1e-7):
             return self.cut_before(parameter1)
 
         # Cut before
