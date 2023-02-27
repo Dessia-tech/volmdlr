@@ -20,6 +20,7 @@ import numpy as npy
 
 import volmdlr
 import volmdlr.templates
+from dataclasses import dataclass
 
 npy.seterr(divide='raise')
 
@@ -88,6 +89,21 @@ def step_ids_to_str(ids):
     :rtype: str
     """
     return ','.join([f"#{i}" for i in ids])
+
+
+@dataclass
+class EdgeStyle:
+    color: str = 'k'
+    alpha: float = 1
+    edge_ends: bool = False
+    edge_direction: bool = False
+    width: float = None
+    arrow: bool = False
+    plot_points: bool = False
+    dashed: bool = True
+    linestyle: str = '-'
+    linewidth: float = 1
+    equal_aspect: bool = True
 
 
 class CompositePrimitive(dc.PhysicalObject):
@@ -235,17 +251,16 @@ class CompositePrimitive2D(CompositePrimitive):
         self.primitives = primitives
         self.update_basis_primitives()
 
-    def plot(self, ax=None, color='k', alpha=1,
-             plot_points=False, equal_aspect=False):
+    def plot(self, ax=None, edge_style=EdgeStyle()):
 
         if ax is None:
             _, ax = plt.subplots()
 
-        if equal_aspect:
+        if edge_style.equal_aspect:
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color, alpha=alpha)  # , plot_points=plot_points)
+            element.plot(ax=ax, edge_style=EdgeStyle(color=edge_style.color, alpha=edge_style.alpha)) # , plot_points=plot_points)
 
         ax.margins(0.1)
         plt.show()
@@ -332,12 +347,12 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
         Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
         self._utd_primitives_to_index = False
 
-    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
         for primitive in self.primitives:
-            primitive.plot(ax=ax, color=color, alpha=alpha)
+            primitive.plot(ax=ax, edge_style=edge_style)
         return ax
 
     def babylon_points(self):

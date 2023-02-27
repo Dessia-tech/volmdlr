@@ -30,6 +30,7 @@ import volmdlr.display as vmd
 import volmdlr.edges
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core_compiled import polygon_point_belongs
+from volmdlr.core import EdgeStyle
 
 
 def argmax(list_of_float):
@@ -362,13 +363,13 @@ class EdgeCollection3D(WireMixin):
         self._bbox = None
         self.name = name
 
-    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """ Plot edges with matplolib, not tested. """
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
         for primitive in self.primitives:
-            primitive.plot(ax=ax, color=color, alpha=alpha)
+            primitive.plot(ax=ax, color=edge_style.color, alpha=edge_style.alpha)
         return ax
 
     def _bounding_box(self):
@@ -3082,9 +3083,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         points3d = [point.to_3d(plane_origin, x, y) for point in self.points]
         return ClosedPolygon3D(points3d)
 
-    def plot(self, ax=None, color='k', alpha=1,
-             plot_points=False, point_numbering=False, arrow=False,
-             fill=False, fill_color='w', equal_aspect=True):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), point_numbering=False,
+             fill=False, fill_color='w'):
         if ax is None:
             _, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -3093,18 +3093,18 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             ax.fill([p[0] for p in self.points], [p[1] for p in self.points],
                     facecolor=fill_color)
         for line_segment in self.line_segments:
-            line_segment.plot(ax=ax, color=color, alpha=alpha, arrow=arrow)
+            line_segment.plot(ax=ax, edge_style=edge_style)
 
-        if plot_points or point_numbering:
+        if edge_style.plot_points or point_numbering:
             for point in self.points:
-                point.plot(ax=ax, color=color, alpha=alpha)
+                point.plot(ax=ax, color=edge_style.color, alpha=edge_style.alpha)
 
         if point_numbering:
             for ip, point in enumerate(self.points):
                 ax.text(*point, 'point {}'.format(ip + 1),
                         ha='center', va='top')
 
-        if equal_aspect:
+        if edge_style.equal_aspect:
             ax.set_aspect('equal')
         else:
             ax.set_aspect('auto')
@@ -3905,8 +3905,7 @@ class Circle2D(Contour2D):
 
         return volmdlr.TWO_PI * self.radius
 
-    def plot(self, ax=None, color='k', alpha=1,
-             plot_points=False, equal_aspect=True, linestyle='-', linewidth=1):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             _, ax = plt.subplots()
         # else:
@@ -3918,11 +3917,11 @@ class Circle2D(Contour2D):
                                                 angle=0,
                                                 theta1=0,
                                                 theta2=360,
-                                                color=color,
-                                                alpha=alpha,
-                                                linestyle=linestyle,
-                                                linewidth=linewidth))
-        if equal_aspect:
+                                                color=edge_style.color,
+                                                alpha=edge_style.alpha,
+                                                linestyle=edge_style.linestyle,
+                                                linewidth=edge_style.linewidth))
+        if edge_style.equal_aspect:
             ax.set_aspect('equal')
         return ax
 
@@ -4254,7 +4253,7 @@ class Ellipse2D(Contour2D):
         angle_abscissa = volmdlr.geometry.clockwise_angle(center2d_point2d, self.major_dir)
         return angle_abscissa
 
-    def plot(self, ax=None, color='k', alpha=1, plot_points=False, equal_aspect=True):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
         Matplotlib plot for an ellipse.
 
@@ -4266,8 +4265,8 @@ class Ellipse2D(Contour2D):
         for point_x, point_y in self.discretization_points(number_points=50):
             x.append(point_x)
             y.append(point_y)
-        plt.plot(x, y, color=color, alpha=alpha)
-        if equal_aspect:
+        plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
+        if edge_style.equal_aspect:
             ax.set_aspect('equal')
         return ax
 
@@ -4642,15 +4641,14 @@ class Contour3D(ContourMixin, Wire3D):
         #     new_point_inside_contour = None
         return Contour3D(new_edges, self.name)
 
-    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             # ax = Axes3D(plt.figure())
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
         for edge in self.primitives:
-            edge.plot(ax=ax, color=color, alpha=alpha,
-                      edge_ends=edge_details, edge_direction=edge_details)
+            edge.plot(ax=ax, edge_style=edge_style)
 
         return ax
 
@@ -4902,7 +4900,7 @@ class Circle3D(Contour3D):
 
         self.frame.translation_inplace(offset)
 
-    def plot(self, ax=None, color='k', alpha=1., edge_details=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4919,7 +4917,7 @@ class Circle3D(Contour3D):
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])
-        ax.plot(x, y, z, color=color, alpha=alpha)
+        ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
         return ax
 
     def point_at_abscissa(self, curvilinear_abscissa):
@@ -5332,7 +5330,7 @@ class Ellipse3D(Contour3D):
         self.normal.translation_inplace(offset)
         self.major_dir.translation_inplace(offset)
 
-    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -5349,7 +5347,7 @@ class Ellipse3D(Contour3D):
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])
-        ax.plot(x, y, z, color)
+        ax.plot(x, y, z, edge_style.color)
         return ax
 
     @classmethod
@@ -5413,10 +5411,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             equal = (equal and point == other_point)
         return equal
 
-    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         for line_segment in self.line_segments:
-            ax = line_segment.plot(ax=ax, color=color, alpha=alpha,
-                                   edge_ends=True, edge_direction=edge_details)
+            ax = line_segment.plot(ax=ax, edge_style=edge_style)
         return ax
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,

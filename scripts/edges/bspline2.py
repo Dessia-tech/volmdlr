@@ -32,10 +32,10 @@ for absc in l:
     else:
         pt.plot(ax=ax, color='g')
 trimmed_bspline = bspline_curve3d.trim_between_evaluations(0.5, 0.9)
-trimmed_bspline.plot(ax=ax, color='r')
+trimmed_bspline.plot(ax=ax, edge_style=vme.EdgeStyle(color='r'))
 
 cut_bspline = bspline_curve3d.cut_after(0.5)
-cut_bspline.plot(ax=ax, color='b')
+cut_bspline.plot(ax=ax, edge_style=vme.EdgeStyle(color='b'))
 
 cut_bspline2 = bspline_curve3d.cut_before(0.9)
-cut_bspline2.plot(ax=ax, color='g')
+cut_bspline2.plot(ax=ax, edge_style=vme.EdgeStyle(color='g'))

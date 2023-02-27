@@ -44,8 +44,8 @@ ax = bspline_surfaces.bspline_face_1.surface2d.plot()
 for p in points2d: 
     p.plot(ax=ax, color ='k')
     
-bspline_curve2d_approximated.plot(ax=ax, color='g')
-bspline_curve2d_interpolated.plot(ax=ax, color='r')
+bspline_curve2d_approximated.plot(ax=ax, edge_style=vm.edges.EdgeStyle(color='g'))
+bspline_curve2d_interpolated.plot(ax=ax, edge_style=vm.edges.EdgeStyle(color='r'))
 
 ax.legend(handles=[mpatches.Patch(color='green', label='Approximation'),
                    mpatches.Patch(color='red', label='Interpolation')])
@@ -61,8 +61,8 @@ bspline_curve3d_interpolated.color = 'r'
 # %%% Display
 
 ax = bspline_surfaces.bspline_face_1.plot()
-bspline_curve3d_approximated.plot(ax=ax, color=bspline_curve3d_approximated.color)
-bspline_curve3d_interpolated.plot(ax=ax, color=bspline_curve3d_interpolated.color)
+bspline_curve3d_approximated.plot(ax=ax, edge_style=vm.edges.EdgeStyle(color=bspline_curve3d_approximated.color))
+bspline_curve3d_interpolated.plot(ax=ax, edge_style=vm.edges.EdgeStyle(color=bspline_curve3d_interpolated.color))
 
 ax.legend(handles=[mpatches.Patch(color='green', label='Approximation'),
                    mpatches.Patch(color='red', label='Interpolation')])

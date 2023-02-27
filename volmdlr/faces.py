@@ -24,6 +24,7 @@ from dessia_common.core import DessiaObject  # isort: skip
 
 import volmdlr.bspline_compiled
 import volmdlr.core
+from volmdlr.core import EdgeStyle
 import volmdlr.core_compiled
 import volmdlr.display as vmd
 import volmdlr.edges as vme
@@ -645,11 +646,11 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         if ax is None:
             _, ax = plt.subplots()
-        self.outer_contour.plot(ax=ax, color=color, alpha=alpha,
-                                equal_aspect=equal_aspect)
+        self.outer_contour.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
+                                equal_aspect=equal_aspect))
         for inner_contour in self.inner_contours:
-            inner_contour.plot(ax=ax, color=color, alpha=alpha,
-                               equal_aspect=equal_aspect)
+            inner_contour.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
+                               equal_aspect=equal_aspect))
 
         if equal_aspect:
             ax.set_aspect('equal')
@@ -1849,7 +1850,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         for i in range(37):
             theta = i / 36. * volmdlr.TWO_PI
             wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
-            wire.plot(ax=ax, color=color, alpha=alpha)
+            wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
         return ax
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
@@ -2639,7 +2640,7 @@ class ConicalSurface3D(PeriodicalSurface):
         for i in range(37):
             theta = i / 36. * volmdlr.TWO_PI
             wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
-            wire.plot(ax=ax, color=color, alpha=alpha)
+            wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
         return ax
 
     @classmethod
@@ -3243,7 +3244,7 @@ class SphericalSurface3D(Surface3D):
             for j in range(20):
                 phi = j / 20. * volmdlr.TWO_PI
                 t_points.append(self.point2d_to_3d(volmdlr.Point2D(theta, phi)))
-            ax = volmdlr.wires.ClosedPolygon3D(t_points).plot(ax=ax, color=color, alpha=alpha)
+            ax = volmdlr.wires.ClosedPolygon3D(t_points).plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
 
         return ax
 
@@ -3494,7 +3495,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         for i in range(21):
             theta = i / 20. * volmdlr.TWO_PI
             wire = self.wire.rotation(self.axis_point, self.axis, theta)
-            wire.plot(ax=ax, color=color, alpha=alpha)
+            wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
 
         return ax
 
@@ -4299,9 +4300,9 @@ class BSplineSurface3D(Surface3D):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         for u in u_curves:
-            u.plot(ax=ax, color=color, alpha=alpha)
+            u.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
         for v in v_curves:
-            v.plot(ax=ax, color=color, alpha=alpha)
+            v.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
         for p in self.control_points:
             p.plot(ax, color=color, alpha=alpha)
         return ax
@@ -6066,11 +6067,11 @@ class Face3D(volmdlr.core.Primitive3D):
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if not ax:
             ax = plt.figure().add_subplot(111, projection='3d')
-        self.outer_contour3d.plot(ax=ax, color=color, alpha=alpha,
-                                  edge_details=edge_details)
+        self.outer_contour3d.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
+                                  edge_ends=edge_details, edge_direction=edge_details))
         for contour3d in self.inner_contours3d:
-            contour3d.plot(ax=ax, color=color, alpha=alpha,
-                           edge_details=edge_details)
+            contour3d.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
+                                                       edge_ends=edge_details, edge_direction=edge_details))
         return ax
 
     def random_point_inside(self):

@@ -27,7 +27,7 @@ import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
 import volmdlr.utils.intersections as vm_utils_intersections
-
+from volmdlr.core import EdgeStyle
 
 def standardize_knot_vector(knot_vector):
     """
@@ -1171,17 +1171,14 @@ class Line2D(Line):
         """
         return Line2D(*[point.frame_mapping(frame, side) for point in [self.point1, self.point2]])
 
-    def plot(self, ax=None, color='k', dashed=True):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
         Plot the line.
 
         :param ax: Matplotlib axis on which to plot the line. If none,
             a new figure is created.
         :type ax: matplotlib.axes._subplots.AxesSubplot, optional
-        :param color: Color of the line.
-        :type color: str, optional
-        :param dashed: Whether the line is dashed or not.
-        :type dashed: bool, optional
+        :param edge_style: data class instance, containing all parameters needed to plot Line 2D.
         :return: The matplotlib axis.
         :rtype: matplotlib.axes._subplots.AxesSubplot
         """
@@ -1189,24 +1186,24 @@ class Line2D(Line):
             _, ax = plt.subplots()
 
         if version.parse(_mpl_version) >= version.parse('3.3.2'):
-            if dashed:
+            if edge_style.dashed:
                 ax.axline((self.point1.x, self.point1.y),
                           (self.point2.x, self.point2.y),
                           dashes=[30, 5, 10, 5],
-                          color=color)
+                          color=edge_style.color)
             else:
                 ax.axline((self.point1.x, self.point1.y),
                           (self.point2.x, self.point2.y),
-                          color=color)
+                          color=edge_style.color)
         else:
             direction_vector = self.direction_vector()
             point3 = self.point1 - 3 * direction_vector
             point4 = self.point2 + 4 * direction_vector
-            if dashed:
-                ax.plot([point3[0], point4[0]], [point3[1], point4[1]], color=color,
+            if edge_style.dashed:
+                ax.plot([point3[0], point4[0]], [point3[1], point4[1]], color=edge_style.color,
                         dashes=[30, 5, 10, 5])
             else:
-                ax.plot([point3[0], point4[0]], [point3[1], point4[1]], color=color)
+                ax.plot([point3[0], point4[0]], [point3[1], point4[1]], color=edge_style.color)
 
         return ax
 
@@ -1556,7 +1553,7 @@ class BSplineCurve2D(BSplineCurve):
         cog = cog / len(polygon_points)
         return cog
 
-    def plot(self, ax=None, color='k', alpha=1, plot_points=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             _, ax = plt.subplots()
 
@@ -1564,10 +1561,10 @@ class BSplineCurve2D(BSplineCurve):
 
         x_points = [p.x for p in points]
         y_points = [p.y for p in points]
-        ax.plot(x_points, y_points, color=color, alpha=alpha)
-        if plot_points:
+        ax.plot(x_points, y_points, color=edge_style.color, alpha=edge_style.alpha)
+        if edge_style.plot_points:
             for point in points:
-                point.plot(ax, color=color)
+                point.plot(ax, color=edge_style.color)
         return ax
 
     def to_3d(self, plane_origin, x1, x2):
@@ -1906,25 +1903,23 @@ class LineSegment2D(LineSegment):
             return []
         return self.linesegment_intersections(linesegment)
 
-    def plot(self, ax=None, color='k', alpha=1, **kwargs):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
         Plots the Linesegment2D.
         """
-        arrow = kwargs.get("arrow", False)
-        width = kwargs.get("width", None)
-        plot_points = kwargs.get("plot_points", False)
+        width = edge_style.width
 
         if ax is None:
             _, ax = plt.subplots()
 
         p1, p2 = self.start, self.end
-        if arrow:
-            if plot_points:
-                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color,
-                        alpha=alpha, style='o-')
+        if edge_style.arrow:
+            if edge_style.plot_points:
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=edge_style.color,
+                        alpha=edge_style.alpha, style='o-')
             else:
-                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color,
-                        alpha=alpha)
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=edge_style.color,
+                        alpha=edge_style.alpha)
 
             length = ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** 0.5
             if width is None:
@@ -1942,12 +1937,12 @@ class LineSegment2D(LineSegment):
         else:
             if width is None:
                 width = 1
-            if plot_points:
-                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color,
-                        marker='o', linewidth=width, alpha=alpha)
+            if edge_style.plot_points:
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=edge_style.color,
+                        marker='o', linewidth=width, alpha=edge_style.alpha)
             else:
-                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color,
-                        linewidth=width, alpha=alpha)
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=edge_style.color,
+                        linewidth=width, alpha=edge_style.alpha)
         return ax
 
     def to_3d(self, plane_origin, x1, x2):
@@ -2724,20 +2719,20 @@ class Arc2D(Arc):
                     return True
         return False
 
-    def plot(self, ax=None, color='k', alpha=1, plot_points=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             _, ax = plt.subplots()
 
-        if plot_points:
+        if edge_style.plot_points:
             for point in [self.center, self.start, self.interior, self.end]:
-                point.plot(ax=ax, color=color, alpha=alpha)
+                point.plot(ax=ax, color=edge_style.color, alpha=edge_style.alpha)
 
         ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y), 2 * self.radius,
                                             2 * self.radius, angle=0,
                                             theta1=self.angle1 * 0.5 / math.pi * 360,
                                             theta2=self.angle2 * 0.5 / math.pi * 360,
-                                            color=color,
-                                            alpha=alpha))
+                                            color=edge_style.color,
+                                            alpha=edge_style.alpha))
         return ax
 
     def to_3d(self, plane_origin, x, y):
@@ -3088,8 +3083,7 @@ class FullArc2D(Arc2D):
     def polygonization(self):
         return volmdlr.wires.ClosedPolygon2D(self.discretization_points(angle_resolution=15))
 
-    def plot(self, ax=None, color='k', alpha=1, plot_points=False,
-             linestyle='-', linewidth=1):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             _, ax = plt.subplots()
 
@@ -3100,12 +3094,12 @@ class FullArc2D(Arc2D):
                                                 angle=0,
                                                 theta1=0,
                                                 theta2=360,
-                                                color=color,
-                                                linestyle=linestyle,
-                                                linewidth=linewidth))
-        if plot_points:
+                                                color=edge_style.color,
+                                                linestyle=edge_style.linestyle,
+                                                linewidth=edge_style.linewidth))
+        if edge_style.plot_points:
             ax.plot([self.start.x], [self.start.y], 'o',
-                    color=color, alpha=alpha)
+                    color=edge_style.color, alpha=edge_style.alpha)
         return ax
 
     def cut_between_two_points(self, point1, point2):
@@ -3474,7 +3468,7 @@ class ArcEllipse2D(Edge):
         return ArcEllipse3D(point_start3d, point_interior3d, point_end3d,
                             point_center3d, new_major_dir, name=self.name)
 
-    def plot(self, ax=None, color='k', alpha=1):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             _, ax = plt.subplots()
 
@@ -3489,7 +3483,7 @@ class ArcEllipse2D(Edge):
             x.append(px)
             y.append(py)
 
-        plt.plot(x, y, color=color, alpha=alpha)
+        plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
         return ax
 
     def normal_vector(self, abscissa):
@@ -4051,8 +4045,7 @@ class LineSegment3D(LineSegment):
     def copy(self, *args, **kwargs):
         return LineSegment3D(self.start.copy(), self.end.copy())
 
-    def plot(self, ax=None, color='k', alpha=1,
-             edge_ends=False, edge_direction=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4063,16 +4056,16 @@ class LineSegment3D(LineSegment):
         x = [p.x for p in points]
         y = [p.y for p in points]
         z = [p.z for p in points]
-        if edge_ends:
-            ax.plot(x, y, z, color=color, alpha=alpha, marker='o')
+        if edge_style.edge_ends:
+            ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha, marker='o')
         else:
-            ax.plot(x, y, z, color=color, alpha=alpha)
-        if edge_direction:
+            ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
+        if edge_style.edge_direction:
             x, y, z = self.point_at_abscissa(0.5 * self.length())
             u, v, w = 0.05 * self.direction_vector()
             ax.quiver(x, y, z, u, v, w, length=self.length() / 100,
                       arrow_length_ratio=5, normalize=True,
-                      pivot='tip', color=color)
+                      pivot='tip', color=edge_style.color)
         return ax
 
     def plot2d(self, x_3D, y_3D, ax=None, color='k', width=None):
@@ -4797,7 +4790,7 @@ class BSplineCurve3D(BSplineCurve):
         return self.from_geomdl_curve(modified_curve)
 
     # Copy paste du LineSegment3D
-    def plot(self, ax=None, color='k', alpha=1, edge_ends=False, edge_direction=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4807,9 +4800,9 @@ class BSplineCurve3D(BSplineCurve):
         x = [p.x for p in self.points]
         y = [p.y for p in self.points]
         z = [p.z for p in self.points]
-        ax.plot(x, y, z, color=color, alpha=alpha)
-        if edge_ends:
-            ax.plot(x, y, z, 'o', color=color, alpha=alpha)
+        ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
+        if edge_style.edge_ends:
+            ax.plot(x, y, z, 'o', color=edge_style.color, alpha=edge_style.alpha)
         return ax
 
     def to_2d(self, plane_origin, x, y):
@@ -5242,8 +5235,7 @@ class Arc3D(Arc):
         self.end.translation_inplace(offset)
         self._bbox = None
 
-    def plot(self, ax=None, color='k', alpha=1,
-             edge_ends=False, edge_direction=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         # if plot_points:
@@ -5261,17 +5253,17 @@ class Arc3D(Arc):
             y.append(pointy)
             z.append(pointz)
 
-        ax.plot(x, y, z, color=color, alpha=alpha)
-        if edge_ends:
+        ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
+        if edge_style.edge_ends:
             self.start.plot(ax=ax)
             self.end.plot(ax=ax)
 
-        if edge_direction:
+        if edge_style.edge_direction:
             x, y, z = self.point_at_abscissa(0.5 * self.length())
             u, v, w = 0.05 * self.unit_direction_vector(0.5 * self.length())
             ax.quiver(x, y, z, u, v, w, length=self.length() / 100,
                       arrow_length_ratio=5, normalize=True,
-                      pivot='tip', color=color)
+                      pivot='tip', color=edge_style.color)
         return ax
 
     def plot2d(self, center: volmdlr.Point3D = volmdlr.O3D,
@@ -5792,8 +5784,7 @@ class FullArc3D(Arc3D):
         # return content, [arc1_id, arc2_id, arc3_id, arc4_id]
         return content, [edge_curve]
 
-    def plot(self, ax=None, color='k', alpha=1., edge_ends=False,
-             edge_direction=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             ax = Axes3D(plt.figure())
 
@@ -5807,13 +5798,13 @@ class FullArc3D(Arc3D):
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])
-        ax.plot(x, y, z, color=color, alpha=alpha)
+        ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
 
-        if edge_ends:
+        if edge_style.edge_ends:
             self.start.plot(ax=ax)
             self.end.plot(ax=ax)
 
-        if edge_direction:
+        if edge_style.edge_direction:
             s = 0.5 * self.length()
             x, y, z = self.point_at_abscissa(s)
             tangent = self.unit_direction_vector(s)
@@ -6103,7 +6094,7 @@ class ArcEllipse3D(Edge):
                               self.major_dir.copy(),
                               self.name)
 
-    def plot(self, ax=None, color: str = 'k', alpha=1.0, edge_ends=False, edge_direction=False):
+    def plot(self, ax=None,  edge_style: EdgeStyle = EdgeStyle()):
         """Plot the arc ellipse."""
         if ax is None:
             fig = plt.figure()
@@ -6125,8 +6116,8 @@ class ArcEllipse3D(Edge):
             y.append(py)
             z.append(pz)
 
-        ax.plot(x, y, z, color, alpha=alpha)
-        if edge_ends:
+        ax.plot(x, y, z, edge_style.color, alpha=edge_style.alpha)
+        if edge_style.edge_ends:
             self.start.plot(ax)
             self.end.plot(ax)
         return ax
