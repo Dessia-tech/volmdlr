@@ -2772,7 +2772,6 @@ class ConicalSurface3D(PeriodicalSurface):
             return [vme.LineSegment2D(start, end)]
         return [vme.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
 
-
     def circle3d_to_2d(self, circle3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.

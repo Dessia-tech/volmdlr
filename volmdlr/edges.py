@@ -1721,6 +1721,23 @@ class BSplineCurve2D(BSplineCurve):
                               weights=self.weights,
                               periodic=self.periodic)
 
+    def point_belongs(self, point: volmdlr.Point2D, abs_tol: float = 1e-7):
+        """
+        Checks if a 2D point belongs to the B-spline curve 2D or not. It uses the point_distance.
+
+        :param point: The point to be checked
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param abs_tol: The precision in terms of distance.
+            Default value is 1e-7
+        :type abs_tol: float, optional
+        :return: `True` if the point belongs to the B-spline curve, `False`
+            otherwise
+        :rtype: bool
+        """
+        if self.point_distance(point) < abs_tol:
+            return True
+        return False
+
 
 class BezierCurve2D(BSplineCurve2D):
     """
@@ -4780,9 +4797,9 @@ class BSplineCurve3D(BSplineCurve):
     def cut_after(self, parameter: float):
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=1e-6):
-        #     # raise ValueError('Nothing will be left from the BSplineCurve3D')
-        #     curves = operations.split_curve(operations.refine_knotvector(self.curve, [4]), parameter)
-        #     return self.from_geomdl_curve(curves[0])
+            #     # raise ValueError('Nothing will be left from the BSplineCurve3D')
+            #     curves = operations.split_curve(operations.refine_knotvector(self.curve, [4]), parameter)
+            #     return self.from_geomdl_curve(curves[0])
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
