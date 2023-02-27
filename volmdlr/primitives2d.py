@@ -5,6 +5,7 @@ Extended primitives 2D classes.
 """
 
 import math
+import warnings
 
 import matplotlib.patches
 
@@ -16,8 +17,12 @@ from volmdlr.primitives import RoundedLineSegments
 
 class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     """
-    Defines a OpenedRoundedLineSegments2D.
+    Opened Rounded LineSegment2D class.
 
+    :param points: Points used to draw the wire.
+    :type points: List of Point2D.
+    :param radius: Radius used to connect different parts of the wire.
+    :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}.
     """
     closed = False
     line_class = volmdlr.edges.LineSegment2D
@@ -66,7 +71,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         p3 = pti + u1 * point_distance
         p4 = pti + u2 * point_distance
 
-        w = (u1 + u2)
+        w = u1 + u2
         if w != volmdlr.Vector2D(0, 0):
             w.normalize()
 
@@ -81,7 +86,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        OpenedRoundedLineSegments2D rotation
+        OpenedRoundedLineSegments2D rotation.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotationed OpenedRoundedLineSegments2D
@@ -94,10 +100,13 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        OpenedRoundedLineSegments2D rotation. Object is updated inplace
+        OpenedRoundedLineSegments2D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.rotation_inplace(center, angle)
 
@@ -118,6 +127,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.translation_inplace(offset)
 
@@ -278,10 +289,10 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         if not dont_add_last_point and not self.closed:
             new_linesegment2D_points.append(self.points[-1])
 
-        rls2D = self.__class__(new_linesegment2D_points, self.radius,
-                               self.closed, adapt_radius=self.adapt_radius)
+        rls_2d = self.__class__(new_linesegment2D_points, self.radius,
+                                self.closed, adapt_radius=self.adapt_radius)
 
-        return rls2D
+        return rls_2d
 
     def offset_lines(self, line_indexes, offset):
         """
@@ -400,21 +411,23 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         # =============================================================================
         # CREATE THE NEW POINTS' LIST
         # =============================================================================
-        for i in range(len(self.points)):
+        for i, _ in enumerate(self.points):
             if i in new_points:
                 new_linesegment2D_points.append(new_points[i])
             else:
                 new_linesegment2D_points.append(self.points[i])
 
-        rls2D = self.__class__(new_linesegment2D_points, self.radius,
-                               adapt_radius=self.adapt_radius)
+        rls_2d = self.__class__(new_linesegment2D_points, self.radius,
+                                adapt_radius=self.adapt_radius)
 
-        return rls2D
+        return rls_2d
 
 
 class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
                                   volmdlr.wires.Contour2D):
     """
+    Defines a polygon with some rounded corners.
+
     :param points: Points used to draw the wire
     :type points: List of Point2D
     :param radius: Radius used to connect different parts of the wire
@@ -431,6 +444,11 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
 
 
 class Measure2D(volmdlr.edges.LineSegment2D):
+    """
+    Measure 2D class.
+
+    """
+
     def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
         """
         :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
@@ -449,13 +467,13 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         distance = self.end.point_distance(self.start)
 
         if self.label != '':
-            label = '{}: '.format(self.label)
+            label = f'{self.label}: '
         else:
             label = ''
         if self.unit == 'mm':
-            label += '{} mm'.format(round(distance * 1000, ndigits))
+            label += f'{round(distance * 1000, ndigits)} mm'
         else:
-            label += '{} m'.format(round(distance, ndigits))
+            label += f'{round(distance, ndigits)} m'
 
         if self.type_ == 'distance':
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),

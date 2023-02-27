@@ -5,14 +5,12 @@ STL reader & writer.
 
 https://en.wikipedia.org/wiki/STL_(file_format)
 """
-# from binaryornot.check import is_binary
+
 import struct
 import warnings
-# from typing import BinaryIO
 from typing import List
 
 from binaryornot.check import is_binary
-# import kaitaistruct
 from kaitaistruct import KaitaiStream
 
 import dessia_common.core as dc  # isort: skip
@@ -23,17 +21,13 @@ import volmdlr.core as vmc
 import volmdlr.faces as vmf
 
 
-# from kaitaistruct import KaitaiStream
-
-
 class Stl(dc.DessiaObject):
     """
-    STL files are used to represent simple 3D models,
-    defined using triangular 3D faces.
+    STL files are used to represent simple 3D models, defined using triangular 3D faces.
 
     Initially it was introduced as native format for 3D Systems
-    Stereolithography CAD system, but due to its extreme simplicity, it
-    was adopted by a wide range of 3D modelling, CAD, rapid prototyping
+    Stereo-lithography CAD system, but due to its extreme simplicity, it
+    was adopted by a wide range of 3D modeling, CAD, rapid prototyping
     and 3D printing applications as the simplest 3D model exchange
     format.
 
@@ -264,7 +258,7 @@ class Stl(dc.DessiaObject):
     # TODO: decide which algorithm to be used (no _BIS)
     def extract_points_BIS(self, min_distance: float = 0.001):
         points = []
-        for i, t in enumerate(self.triangles):
+        for t in self.triangles:
             distance12 = t.point1.point_distance(t.point2)
             distance13 = t.point1.point_distance(t.point3)
             distance23 = t.point2.point_distance(t.point3)

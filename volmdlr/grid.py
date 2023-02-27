@@ -17,7 +17,7 @@ import volmdlr.wires
 
 class Grid2D(DessiaObject):
     """
-    A class defined with a list of list of points and characterized with a choosen direction.
+    A class defined with a list of list of points and characterized with a chosen direction.
 
     :param lists_points: A list of a list of points
     :type lists_points: List[List[volmdlr.Point2D]]
@@ -48,7 +48,7 @@ class Grid2D(DessiaObject):
 
         # Grid2D points displacement
         displacement = npy.ones(shape=(len(points_2d), 2))
-        for i in range(0, len(displacement)):
+        for i, _ in enumerate(displacement):
             displacement[i][0] = points_2d_deformed[i][0] - points_2d[i][0]
             displacement[i][1] = points_2d_deformed[i][1] - points_2d[i][1]
 
@@ -115,101 +115,35 @@ class Grid2D(DessiaObject):
         ymin, ymax = y_limits
         points_x, points_y = points_nbr
 
-        # points_2d = []
+        directions_properties = {
+            ('+x', '+y'): (xmin, xmax, ymin, ymax),
+            ('-x', '+y'): (xmax, xmin, ymin, ymax),
+            ('+y', '+x'): (xmin, xmax, ymin, ymax),
+            ('-y', '+x'): (xmin, xmax, ymax, ymin),
+            ('+x', '-y'): (xmin, xmax, ymax, ymin),
+            ('-x', '-y'): (xmax, xmin, ymax, ymin),
+            ('+y', '-x'): (xmax, xmin, ymin, ymax),
+            ('-y', '-x'): (xmax, xmin, ymax, ymin)
+        }
+
         grid2d = []
         points = []
 
-        if direction == ['+x', '+y']:
-            x = npy.linspace(xmin, xmax, points_x)
-            y = npy.linspace(ymin, ymax, points_y)
+        xmin, xmax, ymin, ymax = directions_properties[tuple(direction)]
+        x = npy.linspace(xmin, xmax, points_x)
+        y = npy.linspace(ymin, ymax, points_y)
 
+        if direction in [['+x', '+y'], ['-x', '+y'], ['+x', '-y'], ['-x', '-y']]:
             for yi in y:
                 for xi in x:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
                     points.append(volmdlr.Point2D(xi, yi))
 
                 grid2d.append(points)
                 points = []
 
-        elif direction == ['-x', '+y']:
-            x = npy.linspace(xmax, xmin, points_x)
-            y = npy.linspace(ymin, ymax, points_y)
-
-            for yi in y:
-                for xi in x:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['+y', '+x']:
-            x = npy.linspace(xmin, xmax, points_x)
-            y = npy.linspace(ymin, ymax, points_y)
-
+        elif direction in [['+y', '+x'], ['-y', '+x'], ['+y', '-x'], ['-y', '-x']]:
             for xi in x:
                 for yi in y:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['-y', '+x']:
-            x = npy.linspace(xmin, xmax, points_x)
-            y = npy.linspace(ymax, ymin, points_y)
-
-            for xi in x:
-                for yi in y:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['+x', '-y']:
-            x = npy.linspace(xmin, xmax, points_x)
-            y = npy.linspace(ymax, ymin, points_y)
-
-            for yi in y:
-                for xi in x:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['-x', '-y']:
-            x = npy.linspace(xmax, xmin, points_x)
-            y = npy.linspace(ymax, ymin, points_y)
-
-            for yi in y:
-                for xi in x:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['+y', '-x']:
-            x = npy.linspace(xmax, xmin, points_x)
-            y = npy.linspace(ymin, ymax, points_y)
-
-            for xi in x:
-                for yi in y:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-
-                grid2d.append(points)
-                points = []
-
-        elif direction == ['-y', '-x']:
-            x = npy.linspace(xmax, xmin, points_x)
-            y = npy.linspace(ymax, ymin, points_y)
-
-            for xi in x:
-                for yi in y:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
                     points.append(volmdlr.Point2D(xi, yi))
 
                 grid2d.append(points)

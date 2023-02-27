@@ -314,20 +314,22 @@ class Vector(DessiaObject):
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector: "Vector"):
+    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
         """
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.
 
         :param other_vector: A vector-like object
         :type other_vector: :class:`volmdlr.Vector`
+        :param abs_tol: Absolute tolerance to consider colinear
+        :type abs_tol: float
         :return: `True` if the two vectors are colinear, `False` otherwise
         :rtype: bool
         """
         try:
             return math.isclose(abs(self.dot(other_vector)) / self.norm() / other_vector.norm(),
                                 1,
-                                abs_tol=1e-5)
+                                abs_tol=abs_tol)
 
         except ZeroDivisionError:
             return False
@@ -350,6 +352,14 @@ class Vector(DessiaObject):
             n += 1
         point /= n
         return point
+
+    def vector_projection(self, other_vector):
+        """
+        Projects the vector onto other_vector.
+
+        :param other_vector: Vector to project self.
+        """
+        return (self.dot(other_vector) / other_vector.dot(other_vector)) * other_vector
 
     @classmethod
     def remove_duplicate(cls, points: List["Vector"]):
@@ -446,7 +456,7 @@ class Vector2D(Vector):
         :param tol: The tolerance under which the euclidean distance is
             considered equal to 0
         :type tol: float
-        :return: `True` if the two Vector2D-like objects are close enought
+        :return: `True` if the two Vector2D-like objects are close enough
             to each other, `False` otherwise
         :rtype: bool
         """
@@ -456,7 +466,7 @@ class Vector2D(Vector):
 
     def approx_hash(self):
         """
-        Computes an approximative hash value based on the coordiantes.
+        Computes an approximative hash value based on the coordinates.
 
         :return: An approximative hash value
         :rtype: int
@@ -465,7 +475,7 @@ class Vector2D(Vector):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 2 dimensional vector into a dictionary.
+        Serializes a 2 dimensional vector into a dictionary.
 
         :return: A serialized version of the Vector2D
         :rtype: dict
@@ -592,6 +602,8 @@ class Vector2D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         v2x, v2y = self.rotation_parameters(center, angle)
         self.x = v2x
         self.y = v2y
@@ -618,6 +630,8 @@ class Vector2D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         v2x = self.x + offset[0]
         v2y = self.y + offset[1]
         self.x = v2x
@@ -640,9 +654,9 @@ class Vector2D(Vector):
         :rtype: :class:`volmdlr.Vector2D`
         """
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
     def frame_mapping_inplace(self, frame: "Frame2D", side: str):
@@ -656,10 +670,12 @@ class Vector2D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         self.x = new_vector.x
         self.y = new_vector.y
 
@@ -725,7 +741,7 @@ class Vector2D(Vector):
     @classmethod
     def random(cls, xmin: float, xmax: float, ymin: float, ymax: float):
         """
-        Retunrs a random 2 dimensional point.
+        Returns a random 2 dimensional point.
 
         :param xmin: The minimal abscissa
         :type xmin: float
@@ -866,7 +882,7 @@ class Point2D(Vector2D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 2 dimensional point into a dictionary.
+        Serializes a 2 dimensional point into a dictionary.
 
         :return: A serialized version of the Point2D
         :rtype: dict
@@ -932,7 +948,7 @@ class Point2D(Vector2D):
         :type ax: :class:`matplotlib.axes.Axes`, optional
         :param color: The color of the arrow
         :type color: str, optional
-        :param alpha: The transparency of the point from 0 to 1. 0 beeing
+        :param alpha: The transparency of the point from 0 to 1. 0 being
             fully transparent
         :type alpha: float, optional
         :param plot_points: # TODO: delete this attribute
@@ -962,7 +978,7 @@ class Point2D(Vector2D):
                           line2: "volmdlr.edges.Line2D",
                           curvilinear_abscissa: bool = False):
         """
-        Returns a Point2D based on the intersection between two infinte lines.
+        Returns a Point2D based on the intersection between two infinite lines.
 
         :param line1: The first line
         :type line1: :class:`volmdlr.edges.Line2D`
@@ -1137,6 +1153,31 @@ class Point2D(Vector2D):
 
         return point_symmetry
 
+    def coordinates(self):
+        """
+        Gets x,y coordinates of a point2d.
+        """
+
+        return (self.x, self.y)
+
+    def get_geo_lines(self, tag: int, point_mesh_size: float = None):
+        """
+        Gets the lines that define a Point2D in a .geo file.
+
+        :param tag: The point index
+        :type tag: int
+        :param mesh_size: The target mesh size close to the point, defaults to None
+        :type mesh_size: float, optional
+
+        :return: A line
+        :rtype: str
+        """
+
+        if point_mesh_size:
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
+        else:
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+"};"
+
 
 O2D = Point2D(0, 0)
 
@@ -1236,7 +1277,7 @@ class Vector3D(Vector):
         :param tol: The tolerance under which the euclidean distance is
             considered equal to 0
         :type tol: float
-        :return: `True` if the two Vector3D-like objects are close enought
+        :return: `True` if the two Vector3D-like objects are close enough
             to each other, `False` otherwise
         :rtype: bool
         """
@@ -1249,7 +1290,7 @@ class Vector3D(Vector):
 
     def approx_hash(self):
         """
-        Computes an approximative hash value based on the coordiantes.
+        Computes an approximative hash value based on the coordinates.
 
         :return: An approximative hash value
         :rtype: int
@@ -1258,7 +1299,7 @@ class Vector3D(Vector):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 3 dimensional vector into a dictionary.
+        Serializes a 3 dimensional vector into a dictionary.
 
         :return: A serialized version of the Vector3D
         :rtype: dict
@@ -1400,6 +1441,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         vector2 = vector3D_rotation(self, center, axis, angle)
         self.x = vector2[0]
         self.y = vector2[1]
@@ -1450,6 +1493,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         y1, z1 = self.axis_rotation_parameters(self.y, self.z, angle)
         self.y = y1
         self.z = z1
@@ -1476,6 +1521,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         z1, x1 = self.axis_rotation_parameters(self.z, self.x, angle)
         self.x = x1
         self.z = z1
@@ -1502,6 +1549,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         x1, y1 = self.axis_rotation_parameters(self.x, self.y, angle)
         self.x = x1
         self.y = y1
@@ -1526,6 +1575,8 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.x += offset[0]
         self.y += offset[1]
         self.z += offset[2]
@@ -1547,10 +1598,10 @@ class Vector3D(Vector):
         :rtype: :class:`volmdlr.Vector3D`
         """
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
 
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
     def frame_mapping_inplace(self, frame: "Frame3D", side: str):
@@ -1564,11 +1615,13 @@ class Vector3D(Vector):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         if side == "old":
-            new_vector = frame.old_coordinates(self)
+            new_vector = frame.local_to_global_coordinates(self)
 
         if side == "new":
-            new_vector = frame.new_coordinates(self)
+            new_vector = frame.global_to_local_coordinates(self)
         self.x = new_vector.x
         self.y = new_vector.y
         self.z = new_vector.z
@@ -1676,7 +1729,7 @@ class Vector3D(Vector):
     def random(cls, xmin: float, xmax: float, ymin: float, ymax: float,
                zmin: float, zmax: float):
         """
-        Retunrs a random 2 dimensional point.
+        Returns a random 2 dimensional point.
 
         :param xmin: The minimal abscissa
         :type xmin: float
@@ -1707,21 +1760,25 @@ class Vector3D(Vector):
         return Point3D(self.x, self.y, self.z)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional vector to a Vector3D.
 
-        :param arguments: The arguments of the step primitive
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
+        :param object_dict: The dictionary containing all the step primitives
             that have already been instanciated
         :type object_dict: dict
         :return: The corresponding Vector3D object
         :rtype: :class:`volmdlr.Vector3D`
         """
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+
         if type(arguments[1]) is int:
             # VECTOR
-            return cls(*object_dict[arguments[1]], arguments[0][1:-1])
+            new_vector = length_conversion_factor * float(arguments[2])*object_dict[arguments[1]]
+            new_vector.name = arguments[0][1:-1]
+            return new_vector
         else:
             # DIRECTION
             # return cls(*[float(i)/1000 for i in arguments[1][1:-1].split(",")],
@@ -1839,7 +1896,7 @@ class Point3D(Vector3D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 3 dimensional point into a dictionary.
+        Serializes a 3 dimensional point into a dictionary.
 
         :return: A serialized version of the Point3D
         :rtype: dict
@@ -1918,19 +1975,21 @@ class Point3D(Vector3D):
     #     return Point2D(x2d, y2d)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional point to a Point3D.
 
         :param arguments: The arguments of the step primitive
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
+        :param object_dict: The dictionary containing all the step primitives
             that have already been instanciated
         :type object_dict: dict
         :return: The corresponding Point3D object
         :rtype: :class:`volmdlr.Point3D`
         """
-        return cls(*[float(i) / 1000 for i in arguments[1][1:-1].split(",")],
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+
+        return cls(*[float(i) * length_conversion_factor for i in arguments[1][1:-1].split(",")],
                    arguments[0][1:-1])
 
     def to_vector(self):
@@ -2026,13 +2085,31 @@ class Point3D(Vector3D):
 
     def coordinates(self):
         """
-        Returns the coordiantes of a Point3D as a tuple of values.
+        Returns the coordinates of a Point3D as a tuple of values.
 
         :return: A tuple containing the abscissan, the ordiante and the
             applicate of the Point3D
         :rtype: tuple
         """
         return self.x, self.y, self.z
+
+    def get_geo_lines(self, tag: int, point_mesh_size: float = None):
+        """
+        Gets the lines that define a Point3D in a .geo file.
+
+        :param tag: The point index
+        :type tag: int
+        :param mesh_size: The target mesh size close to the point, defaults to None
+        :type mesh_size: float, optional
+
+        :return: A line
+        :rtype: str
+        """
+
+        if point_mesh_size:
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
+        else:
+            return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+"};"
 
 
 O3D = Point3D(0, 0, 0)
@@ -2047,7 +2124,7 @@ class Matrix22:
     Class representing a 2x2 matrix.
 
     :param M11: The first line, first column value
-    :type M11: flaot
+    :type M11: float
     :param M12: The first line, second column value
     :type M12: float
     :param M21: The second line, first column value
@@ -2124,7 +2201,7 @@ class Matrix33:
         Class representing a 3x3 matrix.
 
         :param M11: The first line, first column value
-        :type M11: flaot
+        :type M11: float
         :param M12: The first line, second column value
         :type M12: float
         :param M13: The first line, third column value
@@ -2133,13 +2210,13 @@ class Matrix33:
         :type M21: float
         :param M22: The second line, second column value
         :type M22: float
-        :param M23: The second line, thrid column value
+        :param M23: The second line, third column value
         :type M23: float
         :param M31: The third line, first column value
         :type M31: float
         :param M32: The third line, second column value
         :type M32: float
-        :param M33: The third line, thrid column value
+        :param M33: The third line, third column value
         :type M33: float
         """
 
@@ -2339,7 +2416,7 @@ class Basis2D(Basis):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 2 dimensional basis into a dictionary.
+        Serializes a 2 dimensional basis into a dictionary.
 
         :return: A serialized version of the Basis2D
         :rtype: dict
@@ -2468,6 +2545,8 @@ class Basis2D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         center = O2D
         new_u = self.u.rotation(center, angle)
         new_v = self.v.rotation(center, angle)
@@ -2570,7 +2649,7 @@ class Basis3D(Basis):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 3 dimensional basis into a dictionary.
+        Serializes a 3 dimensional basis into a dictionary.
 
         :return: A serialized version of the Basis3D
         :rtype: dict
@@ -2649,6 +2728,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         center = O3D
         new_u = self.u.rotation(center, axis, angle)
         new_v = self.v.rotation(center, axis, angle)
@@ -2682,6 +2763,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.u = self.u.x_rotation(angle)
         self.v = self.v.x_rotation(angle)
         self.w = self.w.x_rotation(angle)
@@ -2711,6 +2794,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.u = self.u.y_rotation(angle)
         self.v = self.v.y_rotation(angle)
         self.w = self.w.y_rotation(angle)
@@ -2740,6 +2825,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.u = self.u.z_rotation(angle)
         self.v = self.v.z_rotation(angle)
         self.w = self.w.z_rotation(angle)
@@ -2824,6 +2911,8 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         vect_u, vect_v, vect_w = self.euler_rotation_parameters(angles)
         self.u = vect_u
         self.v = vect_v
@@ -2983,7 +3072,7 @@ class Frame2D(Basis2D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 2 dimensional frame into a dictionary.
+        Serializes a 2 dimensional frame into a dictionary.
 
         :return: A serialized version of the Frame2D
         :rtype: dict
@@ -3069,13 +3158,13 @@ class Frame2D(Basis2D):
     def frame_mapping(self, frame: "Frame2D", side: str):
         basis = frame.basis()
         if side == "new":
-            new_origin = frame.new_coordinates(self.origin)
-            new_u = basis.new_coordinates(self.u)
-            new_v = basis.new_coordinates(self.v)
+            new_origin = frame.global_to_local_coordinates(self.origin)
+            new_u = basis.global_to_local_coordinates(self.u)
+            new_v = basis.global_to_local_coordinates(self.v)
         elif side == "old":
-            new_origin = frame.old_coordinates(self.origin)
-            new_u = basis.old_coordinates(self.u)
-            new_v = basis.old_coordinates(self.v)
+            new_origin = frame.local_to_global_coordinates(self.origin)
+            new_u = basis.local_to_global_coordinates(self.u)
+            new_v = basis.local_to_global_coordinates(self.v)
         else:
             raise ValueError("side value not valid, please specify a correct value: \'old\' or \'new\'")
         return Frame2D(new_origin, new_u, new_v)
@@ -3101,6 +3190,8 @@ class Frame2D(Basis2D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.origin = self.origin.translation(vector)
 
     def rotation(self, angle):
@@ -3124,6 +3215,8 @@ class Frame2D(Basis2D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_base = Basis2D.rotation(self, angle)
         self.u = new_base.u
         self.v = new_base.v
@@ -3239,7 +3332,7 @@ class Frame3D(Basis3D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Seralizes a 3 dimensional frame into a dictionary.
+        Serializes a 3 dimensional frame into a dictionary.
 
         :return: A serialized version of the Frame3D
         :rtype: dict
@@ -3335,16 +3428,16 @@ class Frame3D(Basis3D):
     def frame_mapping(self, frame: "Frame3D", side: str):
         basis = frame.basis()
         if side == "new":
-            new_origin = frame.new_coordinates(self.origin)
-            new_u = basis.new_coordinates(self.u)
-            new_v = basis.new_coordinates(self.v)
-            new_w = basis.new_coordinates(self.w)
+            new_origin = frame.global_to_local_coordinates(self.origin)
+            new_u = basis.global_to_local_coordinates(self.u)
+            new_v = basis.global_to_local_coordinates(self.v)
+            new_w = basis.global_to_local_coordinates(self.w)
 
         elif side == "old":
-            new_origin = frame.old_coordinates(self.origin)
-            new_u = basis.old_coordinates(self.u)
-            new_v = basis.old_coordinates(self.v)
-            new_w = basis.old_coordinates(self.w)
+            new_origin = frame.local_to_global_coordinates(self.origin)
+            new_u = basis.local_to_global_coordinates(self.u)
+            new_v = basis.local_to_global_coordinates(self.v)
+            new_w = basis.local_to_global_coordinates(self.w)
         else:
             raise ValueError("side value not valid, please specify"
                              'a correct value: \'old\' or \'new\'')
@@ -3384,6 +3477,8 @@ class Frame3D(Basis3D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         new_base = Basis3D.rotation(self, axis, angle)
         new_origin = self.origin.rotation(center, axis, angle)
         self.origin = new_origin
@@ -3412,6 +3507,8 @@ class Frame3D(Basis3D):
         :return: None
         :rtype: None
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         self.origin.translation_inplace(offset)
 
     def copy(self, deep=True, memo=None):
@@ -3523,13 +3620,13 @@ class Frame3D(Basis3D):
         return ax
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional point to a Frame3D.
 
-        :param arguments: The arguments of the step primitive
+        :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
-        :param object_dict: The dictionnary containing all the step primitives
+        :param object_dict: The dictionary containing all the step primitives
             that have already been instanciated
         :type object_dict: dict
         :return: The corresponding Frame3D object
