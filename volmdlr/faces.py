@@ -146,6 +146,28 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return point_inside_outer_contour
 
+    @staticmethod
+    def triangulation_without_holes(vertices, segments, points_grid, tri_opt):
+        """
+        Triangulates a surface without holes.
+
+        :param vertices: vectices of the surface.
+        :param segments: segments defined as tuples of vertices.
+        :param points_grid: to do.
+        :param tri_opt: triangulation option: "p"
+        :return:
+        """
+        vertices_grid = [(p.x, p.y) for p in points_grid]
+        vertices.extend(vertices_grid)
+        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+               'segments': npy.array(segments).reshape((-1, 2)),
+               }
+        t = triangle_lib.triangulate(tri, tri_opt)
+        triangles = t['triangles'].tolist()
+        np = t['vertices'].shape[0]
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
+        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+
     def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
         Triangulates the Surface2D using the Triangle library.
@@ -178,16 +200,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         segments.append((n - 1, 0))
 
         if not self.inner_contours:  # No holes
-            vertices_grid = [(p.x, p.y) for p in points_grid]
-            vertices.extend(vertices_grid)
-            tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-                   'segments': npy.array(segments).reshape((-1, 2)),
-                   }
-            t = triangle_lib.triangulate(tri, tri_opt)
-            triangles = t['triangles'].tolist()
-            np = t['vertices'].shape[0]
-            points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-            return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+            return self.triangulation_without_holes(vertices, segments, points_grid, tri_opt)
 
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
