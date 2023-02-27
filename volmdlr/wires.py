@@ -4114,6 +4114,13 @@ class Circle2D(Contour2D):
                 volmdlr.Point3D(-self.radius, self.center.y, 0)]
 
     def bsplinecurve_intersections(self, bspline: volmdlr.edges.BSplineCurve2D, abs_tol: float = 1e-7):
+        """
+        Caculates the intersections between a circle 2d and a BSpline Curve 2D.
+
+        :param bspline: bspline to search for intersections.
+        :param abs_tol: tolerance to be considered while validating an intersection.
+        :return: a list with all intersections between circle and bspline.
+        """
         circle_bounding_rectangle = self.bounding_rectangle
         bspline_discretized_points = bspline.discretization_points(number_points=10)
         param_intersections = []
