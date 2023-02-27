@@ -137,7 +137,6 @@ class PointCloud3D(dc.DessiaObject):
 
         return self.generate_shell(polygon3d, normal, vec1, vec2)
 
-
     @classmethod
     def generate_shell(cls, polygon3d: List[vm.wires.ClosedPolygon3D],
                        normal: vm.Vector3D, vec1: vm.Vector3D, vec2: vm.Vector3D):
@@ -149,9 +148,6 @@ class PointCloud3D(dc.DessiaObject):
             poly1 = polygon3d[n]
             poly1_simplified = cls._helper_simplify_polygon(poly1, position_plane[n], normal, vec1, vec2)
 
-            if 1 - poly1_simplified.area() / poly1.area() > 0.3:
-                poly1_simplified = poly1
-
             if n in (resolution - 1, 0):
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2)
                 surf2d = cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2)
@@ -160,9 +156,6 @@ class PointCloud3D(dc.DessiaObject):
             if n != resolution - 1:
                 poly2 = polygon3d[n + 1]
                 poly2_simplified = cls._helper_simplify_polygon(poly2, position_plane[n + 1], normal, vec1, vec2)
-
-                if 1 - poly2_simplified.area() / poly2.area() > 0.3:
-                    poly2_simplified = poly2
 
                 list_triangles_points = cls._helper_sew_polygons(poly1_simplified, poly2_simplified, vec1, vec2)
                 list_faces = [vmf.Triangle3D(*triangle_points, alpha=0.9, color=(1, 0.1, 0.1))
@@ -174,6 +167,8 @@ class PointCloud3D(dc.DessiaObject):
     def _helper_simplify_polygon(polygon, position_plane, normal, vec1, vec2):
         poly_2d = polygon.to_2d(position_plane * normal, vec1, vec2)
         poly_2d_simplified = poly_2d.simplify_polygon(0.01, 1)
+        if 1 - poly_2d_simplified.area() / poly_2d.area() > 0.3:
+            poly_2d_simplified = poly_2d
         return poly_2d_simplified.to_3d(position_plane * normal, vec1, vec2)
 
     @staticmethod
