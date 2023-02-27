@@ -4634,14 +4634,6 @@ class BSplineCurve3D(BSplineCurve):
             distances.append(pt1.point_distance(point))
         return min(distances)
 
-    # def point_belongs(self, point):
-    #     polygon_points = self.polygon_points()
-    #     for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-    #         line = LineSegment3D(p1, p2)
-    #         if line.point_belongs(point):
-    #             return True
-    #     return False
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         BSplineCurve3D rotation.
