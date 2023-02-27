@@ -8,19 +8,19 @@ import os
 import tempfile
 import warnings
 import webbrowser
+from dataclasses import dataclass
 from datetime import datetime
-from typing import List
 from functools import lru_cache
+from typing import List
 
-import dessia_common.core as dc
-import dessia_common.files as dcf
 # import gmsh
 import matplotlib.pyplot as plt
 import numpy as npy
 
+import dessia_common.core as dc
+import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
-from dataclasses import dataclass
 
 npy.seterr(divide='raise')
 

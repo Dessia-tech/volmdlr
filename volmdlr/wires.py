@@ -369,7 +369,7 @@ class EdgeCollection3D(WireMixin):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
         for primitive in self.primitives:
-            primitive.plot(ax=ax, color=edge_style.color, alpha=edge_style.alpha)
+            primitive.plot(ax=ax, edge_style=edge_style)
         return ax
 
     def _bounding_box(self):

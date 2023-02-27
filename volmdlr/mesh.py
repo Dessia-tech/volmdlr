@@ -17,6 +17,7 @@ import volmdlr as vm
 import volmdlr.edges as vme
 import volmdlr.gmsh_vm
 import volmdlr.wires as vmw
+from volmdlr.core import EdgeStyle
 
 
 class FlatElementError(Exception):
@@ -419,8 +420,8 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
     #     points = self.points
     #     return volmdlr.wires.ClosedPolygon2D(points)
 
-    def plot(self, ax=None, color='k', width=None,
-             plot_points=False, fill=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), point_numbering=False,
+             fill=False, fill_color='w'):
         if ax is None:
             _, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -428,18 +429,21 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         if fill:
             x = [p[0] for p in self.points]
             y = [p[1] for p in self.points]
-            plt.fill(x, y, facecolor=color, edgecolor="k")
+            plt.fill(x, y, facecolor=fill_color, edgecolor="k")
             return ax
-
+        if point_numbering:
+            for ip, point in enumerate(self.points):
+                ax.text(*point, 'point {}'.format(ip + 1),
+                        ha='center', va='top')
         for p1, p2 in zip(self.points, self.points[1:] + [self.points[0]]):
-            if width is None:
-                width = 1
-            if plot_points:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-                        marker='o', linewidth=width)
+            if edge_style.width is None:
+                edge_style.width = 1
+            if edge_style.plot_points:
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=edge_style.color,
+                        marker='o', linewidth=edge_style.linewidth)
             else:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-                        linewidth=width)
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=edge_style.color,
+                        linewidth=edge_style.linewidth)
         return ax
 
 
@@ -647,13 +651,13 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
 
         return triangular_elements
 
-    def plot(self, ax=None, color='k'):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             ax = plt.figure().add_subplot(projection='3d')
         for point in self.points:
             point.plot(ax=ax)
         for triangle in self.triangular_elements:
-            triangle.plot(ax=ax)
+            triangle.plot(ax=ax, edge_style=edge_style)
         return ax
 
     def _volume(self):
