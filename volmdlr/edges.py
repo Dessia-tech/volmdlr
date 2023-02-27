@@ -1249,37 +1249,26 @@ class Line2D(Line):
             return [point_projection1]
         return []
 
-    def create_tangent_circle(self, point, other_line):
-        """
-        Computes the two circles that are tangent to 2 lines and intersect a point located on one of the two lines.
-
-        """
-
-        # point will be called I(x_I, y_I)
-        # self will be (AB)
-        # line will be (CD)
-
-        if math.isclose(self.point_distance(point), 0, abs_tol=1e-10):
+    @staticmethod
+    def _compute_data_create_tangent_circle(line, point, other_line):
+        if math.isclose(line.point_distance(point), 0, abs_tol=1e-10):
             I = volmdlr.Vector2D(point.x, point.y)
-            A = volmdlr.Vector2D(self.point1.x, self.point1.y)
-            B = volmdlr.Vector2D(self.point2.x, self.point2.y)
-            C = volmdlr.Vector2D(other_line.point1.x,
-                                 other_line.point1.y)
-            D = volmdlr.Vector2D(other_line.point2.x,
-                                 other_line.point2.y)
-
+            A = volmdlr.Vector2D(line.point1.x, line.point1.y)
+            B = volmdlr.Vector2D(line.point2.x, line.point2.y)
+            C = volmdlr.Vector2D(other_line.point1.x, other_line.point1.y)
+            D = volmdlr.Vector2D(other_line.point2.x, other_line.point2.y)
         elif math.isclose(other_line.point_distance(point), 0, abs_tol=1e-10):
-            I = volmdlr.Vector2D(point.x, point.y)
-            C = volmdlr.Vector2D(self.point1.x, self.point1.y)
-            D = volmdlr.Vector2D(self.point2.x, self.point2.y)
-            A = volmdlr.Vector2D(other_line.point1.x,
-                                 other_line.point1.y)
-            B = volmdlr.Vector2D(other_line.point2.x,
-                                 other_line.point2.y)
+            I = volmdlr.Vector2D(line.x, point.y)
+            C = volmdlr.Vector2D(line.point1.x, line.point1.y)
+            D = volmdlr.Vector2D(line.point2.x, line.point2.y)
+            A = volmdlr.Vector2D(other_line.point1.x, other_line.point1.y)
+            B = volmdlr.Vector2D(other_line.point2.x, other_line.point2.y)
         else:
             raise AttributeError("The point isn't on any of the two lines")
+        return I, A, B, C, D
 
-        # CHANGEMENT DE REPAIRE
+    @staticmethod
+    def _change_reference_frame(I, A, B, C, D):
         new_u = volmdlr.Vector2D((B - A))
         new_u.normalize()
         new_v = new_u.unit_normal_vector()
@@ -1290,6 +1279,44 @@ class Line2D(Line):
         new_c = new_basis.global_to_local_coordinates(C)
         new_d = new_basis.global_to_local_coordinates(D)
 
+        return new_basis, new_a, new_b, new_c, new_d
+
+    @staticmethod
+    def compute_tangent_circle_for_parallel_segments(new_basis, new_a, new_c):
+        segments_distance = abs(new_c[1] - new_a[1])
+        r = segments_distance / 2
+        new_circle_center = volmdlr.Point2D((0, npy.sign(new_c[1] - new_a[1]) * r))
+        circle_center = new_basis.local_to_global_coordinates(new_circle_center)
+        circle = volmdlr.wires.Circle2D(circle_center, r)
+        return circle, None
+
+    @staticmethod
+    def compute_tangent_circles_for_perpendicular_segments(new_basis, new_a, new_b, new_c, new_d):
+        line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
+        line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
+        new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
+
+        r = abs(new_pt_k[0])
+        new_circle_center1 = volmdlr.Point2D((0, r))
+        new_circle_center2 = volmdlr.Point2D((0, -r))
+        circle_center1 = new_basis.local_to_global_coordinates(new_circle_center1)
+        circle_center2 = new_basis.local_to_global_coordinates(new_circle_center2)
+        circle1 = volmdlr.wires.Circle2D(circle_center1, r)
+        circle2 = volmdlr.wires.Circle2D(circle_center2, r)
+
+        return circle1, circle2
+
+    def create_tangent_circle(self, point, other_line):
+        """
+        Computes the two circles that are tangent to 2 lines and intersect a point located on one of the two lines.
+        """
+        # point will be called I(x_I, y_I)
+        # self will be (AB)
+        # line will be (CD)
+        I, A, B, C, D = self._compute_data_create_tangent_circle(self, point, other_line)
+        # CHANGEMENT DE REPAIRE
+        new_basis, new_a, new_b, new_c, new_d = self._change_reference_frame(I, A, B, C, D)
+
         if new_c[1] == 0 and new_d[1] == 0:
             # Segments are on the same line: no solution
             return None, None
@@ -1297,32 +1324,12 @@ class Line2D(Line):
         if math.isclose(self.unit_direction_vector().dot(
                 other_line.unit_normal_vector()), 0, abs_tol=1e-06):
             # Parallel segments: one solution
-
-            segments_distance = abs(new_c[1] - new_a[1])
-            r = segments_distance / 2
-            new_circle_center = volmdlr.Point2D(
-                (0, npy.sign(new_c[1] - new_a[1]) * r))
-            circle_center = new_basis.local_to_global_coordinates(new_circle_center)
-            circle = volmdlr.wires.Circle2D(circle_center, r)
-
-            return circle, None
+            return self.compute_tangent_circle_for_parallel_segments(new_basis, new_a, new_c)
 
         if math.isclose(self.unit_direction_vector().dot(
                 other_line.unit_direction_vector()), 0, abs_tol=1e-06):
             # Perpendicular segments: 2 solution
-            line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
-            line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
-            new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
-
-            r = abs(new_pt_k[0])
-            new_circle_center1 = volmdlr.Point2D((0, r))
-            new_circle_center2 = volmdlr.Point2D((0, -r))
-            circle_center1 = new_basis.local_to_global_coordinates(new_circle_center1)
-            circle_center2 = new_basis.local_to_global_coordinates(new_circle_center2)
-            circle1 = volmdlr.wires.Circle2D(circle_center1, r)
-            circle2 = volmdlr.wires.Circle2D(circle_center2, r)
-
-            return circle1, circle2
+            return self.compute_tangent_circles_for_perpendicular_segments(new_basis, new_a, new_b, new_c, new_d)
 
         # =============================================================================
         # LES SEGMENTS SONT QUELCONQUES
@@ -1343,8 +1350,6 @@ class Line2D(Line):
         new_v2 = new_u2.normal_vector(unit=True)
         new_basis2 = volmdlr.Frame2D(I, new_u2, new_v2)
 
-        new_a = new_basis2.global_to_local_coordinates(A)
-        new_b = new_basis2.global_to_local_coordinates(B)
         new_c = new_basis2.global_to_local_coordinates(C)
         new_d = new_basis2.global_to_local_coordinates(D)
         new_pt_k = new_basis2.global_to_local_coordinates(pt_K)
@@ -1902,11 +1907,14 @@ class LineSegment2D(LineSegment):
             return []
         return self.linesegment_intersections(linesegment)
 
-    def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
-             plot_points=False):
+    def plot(self, ax=None, color='k', alpha=1, **kwargs):
         """
         Plots the Linesegment2D.
         """
+        arrow = kwargs.get("arrow", False)
+        width = kwargs.get("width", None)
+        plot_points = kwargs.get("plot_points", False)
+
         if ax is None:
             _, ax = plt.subplots()
 
@@ -2681,18 +2689,6 @@ class Arc2D(Arc):
                 self.center_of_mass() * self.area() + triangle_area * triangle_cog) / abs(
                 self.straight_line_area())
 
-        # ax = self.plot()
-        # bissec.plot(ax=ax, color='grey')
-        # self.center.plot(ax=ax)
-        # string.plot(ax=ax, color='grey')
-        # triangle_cog.plot(ax=ax, color='green')
-        # self.center_of_mass().plot(ax=ax, color='red')
-        #
-        # cog_line = Line2D(volmdlr.O2D, self.center_of_mass()*self.area()-triangle_area*triangle_cog)
-        # cog_line.plot(ax=ax)
-        #
-        # cog.plot(ax=ax, color='b')
-        # ax.set_aspect('equal')
         return cog
 
     def straight_line_point_belongs(self, point):
@@ -4243,7 +4239,42 @@ class LineSegment3D(LineSegment):
         plane = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.start, u, v, w))
         return [plane.rectangular_cut(0, l1, 0, l2)]
 
+    def _revolution_conical(self, params):
+        axis, u, p1_proj, d1, d2, angle = params
+        v = axis.cross(u)
+        dv = self.direction_vector()
+        dv.normalize()
+
+        semi_angle = math.atan2(dv.dot(u), dv.dot(axis))
+        cone_origin = p1_proj - d1 / math.tan(semi_angle) * axis
+        if semi_angle > 0.5 * math.pi:
+            semi_angle = math.pi - semi_angle
+
+            cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
+            angle2 = - angle
+        else:
+            angle2 = angle
+            cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
+
+        surface = volmdlr.faces.ConicalSurface3D(cone_frame,
+                                                 semi_angle)
+        z1 = d1 / math.tan(semi_angle)
+        z2 = d2 / math.tan(semi_angle)
+        return [surface.rectangular_cut(0, angle2, z1, z2)]
+
+    def _cylindrical_revolution(self, params):
+        axis, u, p1_proj, d1, d2, angle = params
+        v = axis.cross(u)
+        surface = volmdlr.faces.CylindricalSurface3D(
+            volmdlr.Frame3D(p1_proj, u, v, axis), d1)
+        return [surface.rectangular_cut(0, angle,
+                                        0,
+                                        (self.end - self.start).dot(axis))]
+
     def revolution(self, axis_point, axis, angle):
+        """
+        Returns the face generated by the revolution of the line segments."
+        """
         axis_line3d = Line3D(axis_point, axis_point + axis)
         if axis_line3d.point_belongs(self.start) and axis_line3d.point_belongs(
                 self.end):
@@ -4313,36 +4344,13 @@ class LineSegment3D(LineSegment):
                                                   outer_contour2d,
                                                   inner_contours2d))]
 
-        elif not math.isclose(d1, d2, abs_tol=1e-9):
+        if not math.isclose(d1, d2, abs_tol=1e-9):
             # Conical
-            v = axis.cross(u)
-            dv = self.direction_vector()
-            dv.normalize()
+            return self._revolution_conical([axis, u, p1_proj, d1, d2, angle])
 
-            semi_angle = math.atan2(dv.dot(u), dv.dot(axis))
-            cone_origin = p1_proj - d1 / math.tan(semi_angle) * axis
-            if semi_angle > 0.5 * math.pi:
-                semi_angle = math.pi - semi_angle
+        # Cylindrical face
+        return self._cylindrical_revolution([axis, u, p1_proj, d1, d2, angle])
 
-                cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
-                angle2 = -angle
-            else:
-                angle2 = angle
-                cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
-
-            surface = volmdlr.faces.ConicalSurface3D(cone_frame,
-                                                     semi_angle)
-            z1 = d1 / math.tan(semi_angle)
-            z2 = d2 / math.tan(semi_angle)
-            return [surface.rectangular_cut(0, angle2, z1, z2)]
-        else:
-            # Cylindrical face
-            v = axis.cross(u)
-            surface = volmdlr.faces.CylindricalSurface3D(
-                volmdlr.Frame3D(p1_proj, u, v, axis), d1)
-            return [surface.rectangular_cut(0, angle,
-                                            0,
-                                            (self.end - self.start).dot(axis))]
 
     def to_step(self, current_id, surface_id=None):
         line = self.to_line()
@@ -4627,14 +4635,6 @@ class BSplineCurve3D(BSplineCurve):
             distances.append(pt1.point_distance(point))
         return min(distances)
 
-    # def point_belongs(self, point):
-    #     polygon_points = self.polygon_points()
-    #     for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-    #         line = LineSegment3D(p1, p2)
-    #         if line.point_belongs(point):
-    #             return True
-    #     return False
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         BSplineCurve3D rotation.
@@ -4712,9 +4712,9 @@ class BSplineCurve3D(BSplineCurve):
         if math.isclose(parameter1, 0, abs_tol=1e-7) \
                 and math.isclose(parameter2, 1, abs_tol=1e-7):
             return self
-        elif math.isclose(parameter1, 0, abs_tol=1e-7):
+        if math.isclose(parameter1, 0, abs_tol=1e-7):
             return self.cut_after(parameter2)
-        elif math.isclose(parameter2, 1, abs_tol=1e-7):
+        if math.isclose(parameter2, 1, abs_tol=1e-7):
             return self.cut_before(parameter1)
 
         # Cut before
@@ -5411,16 +5411,7 @@ class Arc3D(Arc):
 
         return p1, p2
 
-    def minimum_distance_points_line(self, other_line):
-
-        u = other_line.direction_vector()
-        k = self.start - self.center
-        k.normalize()
-        w = self.center - other_line.start
-        v = self.normal.cross(k)
-
-        r = self.radius
-
+    def distance_squared(self, x, u, v, k, w):
         a = u.dot(u)
         b = u.dot(v)
         c = u.dot(k)
@@ -5432,26 +5423,44 @@ class Arc3D(Arc):
         i = w.dot(k)
         j = w.dot(w)
 
-        # x = (s, theta)
-        def distance_squared(x):
-            return (a * x[0] ** 2 + j + d * (
-                    (math.sin(x[1])) ** 2) * r ** 2 + f * (
-                (math.cos(x[1])) ** 2) * r ** 2
+        r = self.radius
+        return (a * x[0] ** 2 + j + d * (
+                (math.sin(x[1])) ** 2) * r ** 2 + f * (
+                        (math.cos(x[1])) ** 2) * r ** 2
                 - 2 * x[0] * g - 2 * x[0] * r * math.sin(x[1]) * b - 2 * x[
-                        0] * r * math.cos(x[1]) * c
+                    0] * r * math.cos(x[1]) * c
                 + 2 * r * math.sin(x[1]) * h + 2 * r * math.cos(x[1]) * i
                 + math.sin(2 * x[1]) * e * r ** 2)
+
+    def minimum_distance_points_line(self, other_line):
+        u = other_line.direction_vector()
+        k = self.start - self.center
+        k.normalize()
+        w = self.center - other_line.start
+        v = self.normal.cross(k)
+
+        r = self.radius
+
+        # x = (s, theta)
+        # def distance_squared(x):
+        #     return (a * x[0] ** 2 + j + d * (
+        #             (math.sin(x[1])) ** 2) * r ** 2 + f * (
+        #         (math.cos(x[1])) ** 2) * r ** 2
+        #         - 2 * x[0] * g - 2 * x[0] * r * math.sin(x[1]) * b - 2 * x[
+        #                 0] * r * math.cos(x[1]) * c
+        #         + 2 * r * math.sin(x[1]) * h + 2 * r * math.cos(x[1]) * i
+        #         + math.sin(2 * x[1]) * e * r ** 2)
 
         x01 = npy.array([0.5, self.angle / 2])
         x02 = npy.array([0.5, 0])
         x03 = npy.array([0.5, self.angle])
 
-        res1 = scp.optimize.least_squares(distance_squared, x01,
-                                          bounds=[(0, 0), (1, self.angle)])
-        res2 = scp.optimize.least_squares(distance_squared, x02,
-                                          bounds=[(0, 0), (1, self.angle)])
-        res3 = scp.optimize.least_squares(distance_squared, x03,
-                                          bounds=[(0, 0), (1, self.angle)])
+        res1 = scp.optimize.least_squares(self.distance_squared, x01,
+                                          bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
+        res2 = scp.optimize.least_squares(self.distance_squared, x02,
+                                          bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
+        res3 = scp.optimize.least_squares(self.distance_squared, x03,
+                                          bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
 
         p1 = other_line.point_at_abscissa(
             res1.x[0] * other_line.length())
@@ -5463,7 +5472,7 @@ class Arc3D(Arc):
                 couple.x[0] * other_line.length())
             ptest2 = self.point_at_abscissa(couple.x[1] * r)
             dtest = ptest1.point_distance(ptest2)
-            if dtest < d:
+            if dtest < v.dot(v):
                 p1, p2 = ptest1, ptest2
 
         return p1, p2

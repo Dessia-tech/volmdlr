@@ -40,10 +40,9 @@ def argmax(list_of_float):
     for pos, fl in enumerate(list_of_float):
         if pos == 0:
             continue
-        else:
-            if fl > max_float:
-                max_float = fl
-                pos_max = pos
+        if fl > max_float:
+            max_float = fl
+            pos_max = pos
     return max_float, pos_max
 
 
@@ -55,10 +54,9 @@ def argmin(list_of_float):
     for pos, fl in enumerate(list_of_float):
         if pos == 0:
             continue
-        else:
-            if fl < min_float:
-                min_float = fl
-                pos_min = pos
+        if fl < min_float:
+            min_float = fl
+            pos_min = pos
     return min_float, pos_min
 
 
@@ -1503,7 +1501,7 @@ class ContourMixin(WireMixin):
             if len(pts) == 1:
                 points.append(pts[0])
                 break
-            elif len(pts) > 1:
+            if len(pts) > 1:
                 points.append(primitives[i].start.nearest_point(pts))
                 break
 
@@ -1979,7 +1977,7 @@ class Contour2D(ContourMixin, Wire2D):
             extracted_innerpoints_contour1 = \
                 volmdlr.wires.Contour2D.extract_contours(self, intersections[0], self.primitives[0].end, True)[0]
             return extracted_outerpoints_contour1, extracted_innerpoints_contour1
-        elif len(intersections) == 2:
+        if len(intersections) == 2:
             extracted_outerpoints_contour1 = \
                 volmdlr.wires.Contour2D.extract_contours(self, intersections[0], intersections[1], True)[0]
             extracted_innerpoints_contour1 = \
@@ -2032,12 +2030,8 @@ class Contour2D(ContourMixin, Wire2D):
         dy = bounding_rectangle[3] - bounding_rectangle[2]  # ymax - ymin
         if number_points_x is None:
             n = max(math.ceil(x_density * dx), min_points_x)
-        else:
-            n = number_points_x
         if number_points_y is None:
             m = max(math.ceil(y_density * dy), min_points_y)
-        else:
-            m = number_points_y
         x = [bounding_rectangle[0] + i * dx / n for i in range(n + 1)]
         y = [bounding_rectangle[2] + i * dy / m for i in range(m + 1)]
 
@@ -2666,16 +2660,16 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                   'polygon might turn over. Offset must be greater than',
                   -max_offset_len)
             raise ValueError('inadapted offset')
-        else:
-            nb = len(self.points)
-            vectors = []
-            for i in range(nb - 1):
-                v1 = self.points[i + 1] - self.points[i]
-                v2 = self.points[i] - self.points[i + 1]
-                v1.normalize()
-                v2.normalize()
-                vectors.append(v1)
-                vectors.append(v2)
+
+        nb = len(self.points)
+        vectors = []
+        for i in range(nb - 1):
+            v1 = self.points[i + 1] - self.points[i]
+            v2 = self.points[i] - self.points[i + 1]
+            v1.normalize()
+            v2.normalize()
+            vectors.append(v1)
+            vectors.append(v2)
 
         v1 = self.points[0] - self.points[-1]
         v2 = self.points[-1] - self.points[0]
@@ -2816,7 +2810,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     @classmethod
     def points_convex_hull(cls, points):
         if len(points) < 3:
-            return
+            return None
 
         points_hull = [pt.copy() for pt in points]
 
@@ -2870,8 +2864,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
                 if total_angle > 2 * math.pi:
                     break
-                else:
-                    initial_vector = vec_next_point
+                initial_vector = vec_next_point
 
                 hull.append(next_point)
 
@@ -2922,10 +2915,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                     point.x == line.end.x and point.y == line.end.y)):
                         point_x_rel_pos = int(point.x / scale_factor)
                         point_y_rel_pos = int(point.y / scale_factor)
-                        if point_x_rel_pos >= boundary[
-                                0] and point_x_rel_pos <= boundary[
-                                1] and point_y_rel_pos >= boundary[
-                                2] and point_y_rel_pos <= boundary[3]:
+                        if boundary[0] <= point_x_rel_pos <= boundary[1] \
+                                and point_y_rel_pos >= boundary[2]\
+                                and point_y_rel_pos <= boundary[3]:
                             nearby_points.append(point)
 
                 scale_factor *= 4 / 3
@@ -3019,7 +3011,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 if p1 == points[-1] and p2 not in points:
                     points.append(p2)
                     break
-                elif p2 == points[-1] and p1 not in points:
+                if p2 == points[-1] and p1 not in points:
                     points.append(p1)
                     break
             polygon_points.remove((p1, p2))
@@ -3052,7 +3044,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 if p1 == points_hull[-1]:
                     points_hull.append(p2)
                     break
-                elif p2 == points_hull[-1]:
+                if p2 == points_hull[-1]:
                     points_hull.append(p1)
                     break
             polygon_points.remove((p1, p2))
@@ -3879,16 +3871,15 @@ class Circle2D(Contour2D):
         # coincident circles
         if d == 0 and self.radius == circle.radius:
             return []
-        else:
-            a = (self.radius ** 2 - circle.radius ** 2 + d ** 2) / (2 * d)
-            h = math.sqrt(self.radius ** 2 - a ** 2)
-            x2 = x0 + a * (x1 - x0) / d
-            y2 = y0 + a * (y1 - y0) / d
-            x3 = x2 + h * (y1 - y0) / d
-            y3 = y2 - h * (x1 - x0) / d
+        a = (self.radius ** 2 - circle.radius ** 2 + d ** 2) / (2 * d)
+        h = math.sqrt(self.radius ** 2 - a ** 2)
+        x2 = x0 + a * (x1 - x0) / d
+        y2 = y0 + a * (y1 - y0) / d
+        x3 = x2 + h * (y1 - y0) / d
+        y3 = y2 - h * (x1 - x0) / d
 
-            x4 = x2 - h * (y1 - y0) / d
-            y4 = y2 + h * (x1 - x0) / d
+        x4 = x2 - h * (y1 - y0) / d
+        y4 = y2 + h * (x1 - x0) / d
 
         return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]
 
@@ -3996,11 +3987,10 @@ class Circle2D(Contour2D):
         if side == 'old':
             return Circle2D(frame.local_to_global_coordinates(self.center),
                             self.radius)
-        elif side == 'new':
+        if side == 'new':
             return Circle2D(frame.global_to_local_coordinates(self.center),
                             self.radius)
-        else:
-            raise ValueError('Side should be \'new\' \'old\'')
+        raise ValueError('Side should be \'new\' \'old\'')
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -4744,16 +4734,14 @@ class Contour3D(ContourMixin, Wire3D):
 
         if len(points) < 3:
             raise ValueError('contour is defined at least with three points')
-        else:
-            edges = []
-            for i in range(0, len(points) - 1):
-                edges.append(volmdlr.edges.LineSegment3D(points[i], points[i + 1]))
+        edges = []
+        for i in range(0, len(points) - 1):
+            edges.append(volmdlr.edges.LineSegment3D(points[i], points[i + 1]))
 
-            edges.append(volmdlr.edges.LineSegment3D(points[-1], points[0]))
+        edges.append(volmdlr.edges.LineSegment3D(points[-1], points[0]))
+        contour = cls(edges)
 
-            contour = cls(edges)
-
-            return contour
+        return contour
 
     def clean_primitives(self):
         """
@@ -5107,10 +5095,10 @@ class Circle3D(Contour3D):
                 volmdlr.Frame3D(self.center, u, v, w), self.radius)
             return [cylinder.rectangular_cut(0, volmdlr.TWO_PI,
                                              0, extrusion_vector.norm())]
-        else:
-            raise NotImplementedError(
-                'Extrusion along vector not colinar to normal for circle not handled yet: dot={}'.format(
-                    self.normal.dot(extrusion_vector)))
+
+        raise NotImplementedError(
+            'Extrusion along vector not colinar to normal for circle not handled yet: dot={}'.format(
+                self.normal.dot(extrusion_vector)))
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
                    angle: float):
@@ -5770,48 +5758,44 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                                        list_closing_point_indexes,
                                        passed_by_zero_index,
                                        ratio_denominator, polygons_points_ratio):
-        if closing_point_index == list_closing_point_indexes[-1]:
+        last_index = list_closing_point_indexes[-1]
+
+        if closing_point_index == last_index:
             return closing_point_index, [], passed_by_zero_index
 
         list_remove_closing_points = []
-        ratio = (list_closing_point_indexes[-1] - closing_point_index) / ratio_denominator
+        ratio = (last_index - closing_point_index) / ratio_denominator
+
         if not ClosedPolygon3D.is_sewing_forward(closing_point_index, list_closing_point_indexes):
-            if closing_point_index > list_closing_point_indexes[-1] - 10 and\
-                    closing_point_index != list_closing_point_indexes[-1] - 1:
-                if closing_point_index - 1 in list_closing_point_indexes and\
-                        closing_point_index + 1 in list_closing_point_indexes:
-                    closing_point_index = list_closing_point_indexes[-1]
+            if closing_point_index > last_index - 10 and closing_point_index != last_index - 1:
+                if closing_point_index - 1 in list_closing_point_indexes and closing_point_index + 1 in list_closing_point_indexes:
+                    closing_point_index = last_index
                     return closing_point_index, list_remove_closing_points, passed_by_zero_index
 
                 list_remove_closing_points = ClosedPolygon3D.sewing_closing_points_to_remove(
                     closing_point_index, list_closing_point_indexes, passed_by_zero_index)
 
             elif closing_point_index in list_closing_point_indexes:
-                closing_point_index = list_closing_point_indexes[-1]
+                closing_point_index = last_index
             elif math.isclose(ratio, 0, abs_tol=0.3):
-                closing_point_index = list_closing_point_indexes[-1]
+                closing_point_index = last_index
             else:
                 closing_point_index, passed_by_zero_index = ClosedPolygon3D.sewing_closing_point_past_point0(
                     closing_point_index, list_closing_point_indexes, passed_by_zero_index, ratio_denominator)
 
         elif closing_point_index in list_closing_point_indexes:
-            closing_point_index = list_closing_point_indexes[-1]
-        elif len(list_closing_point_indexes) > 2 and \
-                list_closing_point_indexes[0] < closing_point_index < \
-                list_closing_point_indexes[-1]:
-            closing_point_index = list_closing_point_indexes[-1]
-        elif passed_by_zero_index and closing_point_index > \
-                list_closing_point_indexes[0]:
-            closing_point_index = list_closing_point_indexes[-1]
-        elif list_closing_point_indexes[0] == 0 and math.isclose(ratio, -1,
-                                                                 abs_tol=0.3):
-            closing_point_index = list_closing_point_indexes[-1]
+            closing_point_index = last_index
+        elif len(list_closing_point_indexes) > 2 and list_closing_point_indexes[0] < closing_point_index < last_index:
+            closing_point_index = last_index
+        elif passed_by_zero_index and closing_point_index > list_closing_point_indexes[0]:
+            closing_point_index = last_index
+        elif list_closing_point_indexes[0] == 0 and math.isclose(ratio, -1, abs_tol=0.3):
+            closing_point_index = last_index
         elif math.isclose(ratio, -1, abs_tol=0.3):
-            closing_point_index = list_closing_point_indexes[-1]
-        elif closing_point_index - list_closing_point_indexes[-1] > 5 and \
-            list_closing_point_indexes[-1] + 4 <= ratio_denominator - 1 and\
-                polygons_points_ratio > 0.95:
-            closing_point_index = list_closing_point_indexes[-1] + 4
+            closing_point_index = last_index
+        elif closing_point_index - last_index > 5 and list_closing_point_indexes[
+            -1] + 4 <= ratio_denominator - 1 and polygons_points_ratio > 0.95:
+            closing_point_index = last_index + 4
 
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
 
