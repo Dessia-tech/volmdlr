@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Performance improvements
+* BSplineCurve: compilation of functions used by from_points_interpolation classmethod.
 
 ### Refactorings
 
