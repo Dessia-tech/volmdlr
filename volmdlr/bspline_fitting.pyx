@@ -33,7 +33,6 @@ def interpolate_curve(list points, int degree, bint centripetal: bool = False):
     # Compute knot vector
     kv = compute_knot_vector(degree, num_points, uk)
 
-
     matrix_a = _build_coeff_matrix(degree, kv, uk, points)
     # Compute the LU decomposition of the coefficient matrix A
     LU, piv = lu_factor(np.asarray(matrix_a))
@@ -49,7 +48,7 @@ def interpolate_curve(list points, int degree, bint centripetal: bool = False):
 
 
 cdef compute_params_curve(list points, bint centripetal: bool = False):
-    """ 
+    """
     Computes :math:`\\overline{u}_{k}` for curves.
 
     Please refer to the Equations 9.4 and 9.5 for chord length parametrization, and Equation 9.6 for centripetal method
@@ -98,7 +97,7 @@ cdef compute_knot_vector(int degree, int num_points, list params):
     Computes a knot vector from the parameter list using averaging method.
 
     Please refer to the Equation 9.8 on The NURBS Book (2nd Edition), pp.365 for details.
-    
+
     :param degree: degree
     :type degree: int
     :param num_points: number of data points
@@ -127,7 +126,7 @@ cdef compute_knot_vector(int degree, int num_points, list params):
 
 
 cdef _build_coeff_matrix(int degree, list knotvector, list params, list points):
-    """ 
+    """
     Builds the coefficient matrix for global interpolation.
 
     This function only uses data points to build the coefficient matrix. Please refer to The NURBS Book (2nd Edition),
