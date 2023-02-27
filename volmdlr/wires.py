@@ -4144,15 +4144,16 @@ class Circle2D(Contour2D):
                     line_seg = volmdlr.edges.LineSegment2D(point1, point2)
                     if line_seg.bounding_rectangle.b_rectangle_intersection(circle_bounding_rectangle):
                         intersection = self.linesegment_intersections(line_seg, 1e-12)
-                        if intersection:
-                            if bsplinecurve.point_distance(intersection[0]) > abs_tol:
-                                param_intersections.insert(0, (bsplinecurve.abscissa(point1),
-                                                               bsplinecurve.abscissa(point2)))
-                            else:
-                                intersections.append(intersection[0])
-                            param_intersections.remove((abscissa1, abscissa2))
-                            break_flag = True
-                            break
+                        if not intersection:
+                            continue
+                        if bsplinecurve.point_distance(intersection[0]) > abs_tol:
+                            param_intersections.insert(0, (bsplinecurve.abscissa(point1),
+                                                           bsplinecurve.abscissa(point2)))
+                        else:
+                            intersections.append(intersection[0])
+                        param_intersections.remove((abscissa1, abscissa2))
+                        break_flag = True
+                        break
                 if break_flag:
                     break
         return intersections
