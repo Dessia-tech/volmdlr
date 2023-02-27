@@ -2683,18 +2683,6 @@ class Arc2D(Arc):
                 self.center_of_mass() * self.area() + triangle_area * triangle_cog) / abs(
                 self.straight_line_area())
 
-        # ax = self.plot()
-        # bissec.plot(ax=ax, color='grey')
-        # self.center.plot(ax=ax)
-        # string.plot(ax=ax, color='grey')
-        # triangle_cog.plot(ax=ax, color='green')
-        # self.center_of_mass().plot(ax=ax, color='red')
-        #
-        # cog_line = Line2D(volmdlr.O2D, self.center_of_mass()*self.area()-triangle_area*triangle_cog)
-        # cog_line.plot(ax=ax)
-        #
-        # cog.plot(ax=ax, color='b')
-        # ax.set_aspect('equal')
         return cog
 
     def straight_line_point_belongs(self, point):
@@ -4348,12 +4336,12 @@ class LineSegment3D(LineSegment):
                                                   outer_contour2d,
                                                   inner_contours2d))]
 
-        elif not math.isclose(d1, d2, abs_tol=1e-9):
+        if not math.isclose(d1, d2, abs_tol=1e-9):
             # Conical
             return self._revolution_conical([axis, u, p1_proj, d1, d2, angle])
-        else:
-            # Cylindrical face
-            return self._cylindrical_revolution([axis, u, p1_proj, d1, d2, angle])
+
+        # Cylindrical face
+        return self._cylindrical_revolution([axis, u, p1_proj, d1, d2, angle])
 
 
     def to_step(self, current_id, surface_id=None):
@@ -4638,14 +4626,6 @@ class BSplineCurve3D(BSplineCurve):
             #            vmpt = Point3D((point[1], point[2], point[3]))
             distances.append(pt1.point_distance(point))
         return min(distances)
-
-    # def point_belongs(self, point):
-    #     polygon_points = self.polygon_points()
-    #     for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-    #         line = LineSegment3D(p1, p2)
-    #         if line.point_belongs(point):
-    #             return True
-    #     return False
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -5422,16 +5402,7 @@ class Arc3D(Arc):
 
         return p1, p2
 
-    def minimum_distance_points_line(self, other_line):
-
-        u = other_line.direction_vector()
-        k = self.start - self.center
-        k.normalize()
-        w = self.center - other_line.start
-        v = self.normal.cross(k)
-
-        r = self.radius
-
+    def distance_squared(self, x, u, v, k, w):
         a = u.dot(u)
         b = u.dot(v)
         c = u.dot(k)
@@ -5443,26 +5414,44 @@ class Arc3D(Arc):
         i = w.dot(k)
         j = w.dot(w)
 
-        # x = (s, theta)
-        def distance_squared(x):
-            return (a * x[0] ** 2 + j + d * (
-                    (math.sin(x[1])) ** 2) * r ** 2 + f * (
-                (math.cos(x[1])) ** 2) * r ** 2
+        r = self.radius
+        return (a * x[0] ** 2 + j + d * (
+                (math.sin(x[1])) ** 2) * r ** 2 + f * (
+                        (math.cos(x[1])) ** 2) * r ** 2
                 - 2 * x[0] * g - 2 * x[0] * r * math.sin(x[1]) * b - 2 * x[
-                        0] * r * math.cos(x[1]) * c
+                    0] * r * math.cos(x[1]) * c
                 + 2 * r * math.sin(x[1]) * h + 2 * r * math.cos(x[1]) * i
                 + math.sin(2 * x[1]) * e * r ** 2)
+
+    def minimum_distance_points_line(self, other_line):
+        u = other_line.direction_vector()
+        k = self.start - self.center
+        k.normalize()
+        w = self.center - other_line.start
+        v = self.normal.cross(k)
+
+        r = self.radius
+
+        # x = (s, theta)
+        # def distance_squared(x):
+        #     return (a * x[0] ** 2 + j + d * (
+        #             (math.sin(x[1])) ** 2) * r ** 2 + f * (
+        #         (math.cos(x[1])) ** 2) * r ** 2
+        #         - 2 * x[0] * g - 2 * x[0] * r * math.sin(x[1]) * b - 2 * x[
+        #                 0] * r * math.cos(x[1]) * c
+        #         + 2 * r * math.sin(x[1]) * h + 2 * r * math.cos(x[1]) * i
+        #         + math.sin(2 * x[1]) * e * r ** 2)
 
         x01 = npy.array([0.5, self.angle / 2])
         x02 = npy.array([0.5, 0])
         x03 = npy.array([0.5, self.angle])
 
-        res1 = scp.optimize.least_squares(distance_squared, x01,
-                                          bounds=[(0, 0), (1, self.angle)])
-        res2 = scp.optimize.least_squares(distance_squared, x02,
-                                          bounds=[(0, 0), (1, self.angle)])
-        res3 = scp.optimize.least_squares(distance_squared, x03,
-                                          bounds=[(0, 0), (1, self.angle)])
+        res1 = scp.optimize.least_squares(self.distance_squared, x01,
+                                          bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
+        res2 = scp.optimize.least_squares(self.distance_squared, x02,
+                                          bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
+        res3 = scp.optimize.least_squares(self.distance_squared, x03,
+                                          bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
 
         p1 = other_line.point_at_abscissa(
             res1.x[0] * other_line.length())
@@ -5474,7 +5463,7 @@ class Arc3D(Arc):
                 couple.x[0] * other_line.length())
             ptest2 = self.point_at_abscissa(couple.x[1] * r)
             dtest = ptest1.point_distance(ptest2)
-            if dtest < d:
+            if dtest < v.dot(v):
                 p1, p2 = ptest1, ptest2
 
         return p1, p2
