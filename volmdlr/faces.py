@@ -5330,8 +5330,7 @@ class BSplineSurface3D(Surface3D):
             edge2d_dim = getattr(self, method_name)(edge3d, grid2d)
             if edge2d_dim:
                 return edge2d_dim
-            else:
-                raise NotImplementedError
+            raise NotImplementedError
 
         raise NotImplementedError(
                 # 'Class {} does not implement {}'.format(self.__class__.__name__,
@@ -6944,7 +6943,6 @@ class PlaneFace3D(Face3D):
             if return_points:
                 return p1.point_distance(p2), p1, p2
             return p1.point_distance(p2)
-
         raise NotImplementedError
 
     def is_adjacent(self, face2: Face3D):

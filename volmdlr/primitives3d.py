@@ -789,8 +789,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         if com is not False:
             rg = axis_2D.point_distance(com)
             return self.angle * rg * self.contour2d.area()
-        else:
-            return 0
+
+        return 0
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):

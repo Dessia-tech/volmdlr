@@ -4343,12 +4343,12 @@ class LineSegment3D(LineSegment):
                                                   outer_contour2d,
                                                   inner_contours2d))]
 
-        elif not math.isclose(d1, d2, abs_tol=1e-9):
+        if not math.isclose(d1, d2, abs_tol=1e-9):
             # Conical
             return self._revolution_conical([axis, u, p1_proj, d1, d2, angle])
-        else:
-            # Cylindrical face
-            return self._cylindrical_revolution([axis, u, p1_proj, d1, d2, angle])
+
+        # Cylindrical face
+        return self._cylindrical_revolution([axis, u, p1_proj, d1, d2, angle])
 
 
     def to_step(self, current_id, surface_id=None):

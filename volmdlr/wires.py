@@ -2915,10 +2915,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                     point.x == line.end.x and point.y == line.end.y)):
                         point_x_rel_pos = int(point.x / scale_factor)
                         point_y_rel_pos = int(point.y / scale_factor)
-                        if point_x_rel_pos >= boundary[
-                                0] and point_x_rel_pos <= boundary[
-                                1] and point_y_rel_pos >= boundary[
-                                2] and point_y_rel_pos <= boundary[3]:
+                        if boundary[0] <= point_x_rel_pos <= boundary[1] \
+                                and point_y_rel_pos >= boundary[2]\
+                                and point_y_rel_pos <= boundary[3]:
                             nearby_points.append(point)
 
                 scale_factor *= 4 / 3
