@@ -5471,7 +5471,7 @@ class Arc3D(Arc):
                 couple.x[0] * other_line.length())
             ptest2 = self.point_at_abscissa(couple.x[1] * r)
             dtest = ptest1.point_distance(ptest2)
-            if dtest < d:
+            if dtest < v.dot(v):
                 p1, p2 = ptest1, ptest2
 
         return p1, p2
