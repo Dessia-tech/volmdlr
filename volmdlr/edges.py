@@ -1656,13 +1656,35 @@ class BSplineCurve2D(BSplineCurve):
                               periodic=self.periodic)
 
     def point_distance(self, point):
-        distance = math.inf
-        polygon_points = self.points
-        for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-            line = LineSegment2D(p1, p2)
-            dist = line.point_distance(point)
-            if dist < distance:
-                distance = dist
+        """
+        Calculates the distance from a given point to a BSplineCurve2D.
+
+        :param point: point 2d.
+        :return: distance.
+        """
+        best_distance = math.inf
+        distance_changing_significantly = True
+        abscissa1 = 0
+        abscissa2 = self.abscissa(self.end)
+        distance = best_distance
+        while distance_changing_significantly:
+            discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
+                                              in npy.linspace(abscissa1, abscissa2, num=8)]
+            distance = point.point_distance(discretized_points_between_1_2[0])
+            for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
+                line = LineSegment2D(point1, point2)
+                dist = line.point_distance(point)
+                if dist < distance:
+                    point1_ = point1
+                    point2_ = point2
+                    distance = dist
+                    # todo break?
+            if math.isclose(distance, best_distance, abs_tol=1e-6):
+                distance_changing_significantly = False
+                continue
+            abscissa1 = self.abscissa(point1_)
+            abscissa2 = self.abscissa(point2_)
+            best_distance = distance
         return distance
 
     def nearest_point_to(self, point):
