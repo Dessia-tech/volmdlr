@@ -10,7 +10,7 @@ import math
 import random
 import warnings
 # from __future__ import annotations
-from typing import Any, Dict, List, Text, Tuple
+from typing import List, Text, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -490,6 +490,24 @@ class Vector2D(Vector):
                 "x": self.x, "y": self.y,
                 "name": self.name}
 
+    @classmethod
+    def dict_to_object(cls, dict_, *args, **kwargs):
+        """
+        Deserializes a dictionary to a 3 dimensional point.
+
+        :param dict_: The dictionary of a serialized Point3D
+        :type dict_: dict
+        :return:
+        :rtype: :class:`volmdlr.Point3D`
+
+        .. seealso::
+            How `serialization and deserialization`_ works in dessia_common
+
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        """
+        return cls(dict_["x"], dict_["y"], dict_.get("name", ""))
+
     def copy(self, deep=True, memo=None):
         """
         Creates a copy of a 2 dimensional vector.
@@ -893,9 +911,11 @@ class Point2D(Vector2D):
         .. _serialization and deserialization:
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {"object_class": "volmdlr.Point2D",
-                "x": self.x, "y": self.y,
-                "name": self.name}
+        dict_ = {"object_class": "volmdlr.Point2D",
+                 "x": self.x, "y": self.y}
+        if self.name:
+            dict_["name"] = self.name
+        return dict_
 
     def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
         """
@@ -1154,15 +1174,15 @@ class Point2D(Vector2D):
         return point_symmetry
 
     def coordinates(self):
-        '''
-        gets x,y coordinates of a point2d
-        '''
+        """
+        Gets x,y coordinates of a point2d.
+        """
 
         return (self.x, self.y)
 
     def get_geo_lines(self, tag: int, point_mesh_size: float = None):
-        '''
-        gets the lines that define a Point2D in a .geo file
+        """
+        Gets the lines that define a Point2D in a .geo file.
 
         :param tag: The point index
         :type tag: int
@@ -1171,7 +1191,7 @@ class Point2D(Vector2D):
 
         :return: A line
         :rtype: str
-        '''
+        """
 
         if point_mesh_size:
             return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
@@ -1310,13 +1330,15 @@ class Vector3D(Vector):
         .. _serialization and deserialization:
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {"object_class": "volmdlr.Vector3D",
-                "x": self.x, "y": self.y, "z": self.z,
-                "name": self.name}
+        dict_ = {"object_class": "volmdlr.Vector3D",
+                 "x": self.x, "y": self.y, "z": self.z}
+
+        if self.name:
+            dict_["name"] = self.name
+        return dict_
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = "#"):
+    def dict_to_object(cls, dict_, *args, **kwargs):
         """
         Deserializes a dictionary to a 3 dimensional vector.
 
@@ -1341,7 +1363,7 @@ class Vector3D(Vector):
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
 
-        return Vector3D(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
+        return cls(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
 
     def dot(self, other_vector):
         """
@@ -1760,11 +1782,11 @@ class Vector3D(Vector):
         return Point3D(self.x, self.y, self.z)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional vector to a Vector3D.
 
-        :param arguments: The arguments of the step primitive. The last arguments represents the unit_conversion_factor
+        :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
             that have already been instanciated
@@ -1772,10 +1794,11 @@ class Vector3D(Vector):
         :return: The corresponding Vector3D object
         :rtype: :class:`volmdlr.Vector3D`
         """
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+
         if type(arguments[1]) is int:
             # VECTOR
-            unit_conversion_factor = arguments[-1]
-            new_vector = unit_conversion_factor*float(arguments[2])*object_dict[arguments[1]]
+            new_vector = length_conversion_factor * float(arguments[2])*object_dict[arguments[1]]
             new_vector.name = arguments[0][1:-1]
             return new_vector
         else:
@@ -1906,37 +1929,11 @@ class Point3D(Vector3D):
         .. _serialization and deserialization:
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {"object_class": "volmdlr.Point3D",
-                "x": self.x, "y": self.y, "z": self.z,
-                "name": self.name}
-
-    @classmethod
-    def dict_to_object(cls, dict_, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = "#"):
-        """
-        Deserializes a dictionary to a 3 dimensional point.
-
-        :param dict_: The dictionary of a serialized Point3D
-        :type dict_: dict
-        :param global_dict: The global dictionary. Default value is None
-        :type global_dict: dict, optional
-        :param pointers_memo: A dictionary from path to python object of
-            already serialized values. Default value is None
-        :type pointers_memo: dict, optional
-        :param path: The path in the global object. In most cases, append
-            ‘/attribute_name’ to given path for your attributes.
-            Default value is '#'
-        :type path: str, optional
-        :return:
-        :rtype: :class:`volmdlr.Point3D`
-
-        .. seealso::
-            How `serialization and deserialization`_ works in dessia_common
-
-        .. _serialization and deserialization:
-            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
-        """
-        return Point3D(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
+        dict_ = {"object_class": "volmdlr.Point3D",
+                 "x": self.x, "y": self.y, "z": self.z}
+        if self.name:
+            dict_["name"] = self.name
+        return dict_
 
     def plot(self, ax=None, color="k", alpha=1, marker="o"):
         """
@@ -1974,7 +1971,7 @@ class Point3D(Vector3D):
     #     return Point2D(x2d, y2d)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional point to a Point3D.
 
@@ -1986,8 +1983,9 @@ class Point3D(Vector3D):
         :return: The corresponding Point3D object
         :rtype: :class:`volmdlr.Point3D`
         """
-        unit_conversion_factor = arguments[-1]
-        return cls(*[float(i) * unit_conversion_factor for i in arguments[1][1:-1].split(",")],
+        length_conversion_factor = kwargs.get("length_conversion_factor", 1)
+
+        return cls(*[float(i) * length_conversion_factor for i in arguments[1][1:-1].split(",")],
                    arguments[0][1:-1])
 
     def to_vector(self):
@@ -2093,7 +2091,7 @@ class Point3D(Vector3D):
 
     def get_geo_lines(self, tag: int, point_mesh_size: float = None):
         """
-        gets the lines that define a Point3D in a .geo file
+        Gets the lines that define a Point3D in a .geo file.
 
         :param tag: The point index
         :type tag: int
@@ -3349,15 +3347,6 @@ class Frame3D(Basis3D):
                 "w": self.w.to_dict()
                 }
 
-    # @classmethod
-    # def dict_to_object(cls, dict_, global_dict=None,
-    #                    pointers_memo: Dict[str, Any] = None, path: str = '#'):
-    #     return Frame3D(Point3D.dict_to_object(dict_['origin']),
-    #                    Vector3D.dict_to_object(dict_['u']),
-    #                    Vector3D.dict_to_object(dict_['v']),
-    #                    Vector3D.dict_to_object(dict_['w']),
-    #                    dict_.get('name', ''))
-
     def basis(self):
         """
         Returns the 3 dimensional basis oriented the same way as the Frame3D.
@@ -3618,7 +3607,7 @@ class Frame3D(Basis3D):
         return ax
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive from a 3 dimensional point to a Frame3D.
 

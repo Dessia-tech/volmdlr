@@ -14,6 +14,7 @@ import matplotlib.patches
 import volmdlr
 import volmdlr.edges
 import volmdlr.wires
+from volmdlr.core import EdgeStyle
 from volmdlr.primitives import RoundedLineSegments
 
 
@@ -413,7 +414,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         # =============================================================================
         # CREATE THE NEW POINTS' LIST
         # =============================================================================
-        for i in range(len(self.points)):
+        for i, _ in enumerate(self.points):
             if i in new_points:
                 new_linesegment2D_points.append(new_points[i])
             else:
@@ -462,31 +463,32 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         self.unit = unit
         self.type_ = type_
 
-    def plot(self, ax, ndigits=6):
+    def plot(self, ax, edge_style: EdgeStyle()):
+        ndigits = 6
         x1, y1 = self.start
         x2, y2 = self.end
         xm, ym = 0.5 * (self.start + self.end)
         distance = self.end.point_distance(self.start)
 
         if self.label != '':
-            label = '{}: '.format(self.label)
+            label = f'{self.label}: '
         else:
             label = ''
         if self.unit == 'mm':
-            label += '{} mm'.format(round(distance * 1000, ndigits))
+            label += f'{round(distance * 1000, ndigits)} mm'
         else:
-            label += '{} m'.format(round(distance, ndigits))
+            label += f'{round(distance, ndigits)} m'
 
         if self.type_ == 'distance':
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
                                                        arrowstyle='<|-|>,head_length=10,head_width=5',
                                                        shrinkA=0, shrinkB=0,
-                                                       color='k')
+                                                       color=edge_style.color)
         elif self.type_ == 'radius':
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
                                                        arrowstyle='-|>,head_length=10,head_width=5',
                                                        shrinkA=0, shrinkB=0,
-                                                       color='k')
+                                                       color=edge_style.color)
 
         ax.add_patch(arrow)
         if x2 - x1 == 0.:

@@ -83,7 +83,7 @@ class PointCloud3D(dc.DessiaObject):
         for n, poly in enumerate(initial_polygon2d):
             if (poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1])):
                 continue
-            elif poly.area() < avg_area / 10:
+            if poly.area() < avg_area / 10:
                 new_poly = vmw.ClosedPolygon2D.concave_hull(poly.points, -1, 0.000005)
                 new_polygon = new_poly.to_3d(position_plane[n] * normal, vec1,
                                              vec2)
@@ -144,38 +144,40 @@ class PointCloud3D(dc.DessiaObject):
         resolution = len(polygon3d)
 
         faces = []
-
         for n in range(resolution):
             poly1 = polygon3d[n]
-            poly1_2d = poly1.to_2d(position_plane[n] * normal, vec1, vec2)
-            poly1_2d_simplified = poly1_2d.simplify_polygon(0.01, 1)
-            poly1_simplified = poly1_2d_simplified.to_3d(position_plane[n] * normal, vec1, vec2)
-
-            if 1 - poly1_2d_simplified.area() / poly1_2d.area() > 0.3:
-                poly1_simplified = poly1
+            poly1_simplified = cls._helper_simplify_polygon(poly1, position_plane[n], normal, vec1, vec2)
 
             if n in (resolution - 1, 0):
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2)
-                surf2d = vmf.Surface2D(poly1_simplified.to_2d(position_plane[n] * normal, vec1, vec2), [])
-
+                surf2d = cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2)
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
+
             if n != resolution - 1:
                 poly2 = polygon3d[n + 1]
+                poly2_simplified = cls._helper_simplify_polygon(poly2, position_plane[n + 1], normal, vec1, vec2)
 
-                poly2_2d = poly2.to_2d(position_plane[n + 1] * normal, vec1, vec2)
-                poly2_2d_simplified = poly2_2d.simplify_polygon(0.01, 1)
-                poly2_simplified = poly2_2d_simplified.to_3d(
-                    position_plane[n + 1] * normal, vec1, vec2)
-
-                if 1 - poly2_2d_simplified.area() / poly2_2d.area() > 0.3:
-                    poly2_simplified = poly2
-                list_triangles_points = poly1_simplified.sewing(poly2_simplified,
-                                                                vec1, vec2)
-                list_faces = [vmf.Triangle3D(*triangle_points, alpha=0.9,
-                                             color=(1, 0.1, 0.1))
+                list_triangles_points = cls._helper_sew_polygons(poly1_simplified, poly2_simplified, vec1, vec2)
+                list_faces = [vmf.Triangle3D(*triangle_points, alpha=0.9, color=(1, 0.1, 0.1))
                               for triangle_points in list_triangles_points]
                 faces.extend(list_faces)
         return vmf.ClosedShell3D(faces)
+
+    @staticmethod
+    def _helper_simplify_polygon(polygon, position_plane, normal, vec1, vec2):
+        poly_2d = polygon.to_2d(position_plane * normal, vec1, vec2)
+        poly_2d_simplified = poly_2d.simplify_polygon(0.01, 1)
+        if 1 - poly_2d_simplified.area() / poly_2d.area() > 0.3:
+            poly_2d_simplified = poly_2d
+        return poly_2d_simplified.to_3d(position_plane * normal, vec1, vec2)
+
+    @staticmethod
+    def _poly_to_surf2d(polygon, position_plane, normal, vec1, vec2):
+        return vmf.Surface2D(polygon.to_2d(position_plane * normal, vec1, vec2), [])
+
+    @staticmethod
+    def _helper_sew_polygons(poly1, poly2, vec1, vec2):
+        return poly1.sewing(poly2, vec1, vec2)
 
     def shell_distances(self, shells: vmf.OpenTriangleShell3D) -> Tuple['PointCloud3D', List[float], List[int]]:
         """
@@ -324,8 +326,8 @@ class PointCloud2D(dc.DessiaObject):
 
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol=1e-6):
             return None
-        else:
-            return polygon
+
+        return polygon
 
     def bounding_rectangle(self):
         x_list, y_list = [p.x for p in self.points], [p.y for p in self.points]

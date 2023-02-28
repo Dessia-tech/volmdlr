@@ -10,15 +10,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 * Write .msh file (with stream)
+* Arc: reverse
+* BSplineCurve2D: offset
+* Circle2D: bsplinecurve_intersections, point_distance
 
 ### Fixed
 
 ### Removed
 
 ### Performance improvements
+* BSplinecurve2D: point_belongs
+* lighten some dicts with optional name
 
 ### Refactorings
 
+* ContourMixin: to_polygon (for both 2D and 3D)
+* BSplineCurve2D.point_distance
+* new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
+
+### Unittests
+* BSplineCurve2D: offset, point_distance, point_belongs
+* Circle2D: bspline_intersections, point_distance
 
 ## v0.9.0 [Testing]
 
@@ -33,7 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Create .geo and .msh files (Mesh geometries with GMSH)
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
-* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
+* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D.
+* ConicalSurface3D, CylindricalSurface3D: plot method
 
 
 ### Fixed
@@ -52,8 +65,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Step_assemblies: consider when no transformation is needed.
 * fix some pydocstyle errors
 * Script/step/workflow: Update Workflow, use last version of dessia_common
+* LineSegment3D: Rotation method update due to points attribute deletion
+* ConicalSurface3D: fix from_step class method by adding the angle convertion factor
 * fix f string usage
-* some typings
+* Add some typings
 
 ### Removed
 
@@ -95,6 +110,8 @@ is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_t
 ### CI
 - add spell check to pylint with pyenchant
 - make code_pydocstyle more explicit
+- upload html coverage to cdn.dessia.tech
+
 
 ## v0.8.0 [Released 26/01/2023]
 
