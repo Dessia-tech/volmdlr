@@ -2218,7 +2218,7 @@ class Arc(Edge):
         """
         Calculates the length of the Arc, with its radius and it arc angle.
 
-        :return: the length fo the Arc.
+        :return: the length of the Arc.
         """
         return self.radius * abs(self.angle)
 
@@ -2324,7 +2324,7 @@ class Arc(Edge):
         """
         Gets the points that define an Arc to use them in a .geo file.
 
-        :return: A list of caracteristic arc points
+        :return: A list of characteristic arc points
         :rtype: List
 
         """
@@ -2895,8 +2895,8 @@ class Arc2D(Arc):
         """
         list_node = self.discretization_points(number_points=20)
         data = []
-        for nd in list_node:
-            data.append({'x': nd.x, 'y': nd.y})
+        for node in list_node:
+            data.append({'x': node.x, 'y': node.y})
         return plot_data.Arc2D(cx=self.center.x,
                                cy=self.center.y,
                                r=self.radius,
@@ -2916,7 +2916,7 @@ class Arc2D(Arc):
         """
         Splits arc at a given point.
 
-        :param split_point: spliting point.
+        :param split_point: splitting point.
         :return: list of two Arc2D.
         """
         abscissa = self.abscissa(split_point)
@@ -4480,7 +4480,7 @@ class BSplineCurve3D(BSplineCurve):
         """
         Creates a table of equivalence between the parameter t (eval. of the BSplineCurve) and the cumulative distance.
 
-        :param resolution: The precision of the table. Autoadjusted by the
+        :param resolution: The precision of the table. Auto-adjusted by the
             algorithm. Default value set to 20
         :type resolution: int, optional
         :param start_parameter: First parameter evaluated in the table.
@@ -5976,7 +5976,9 @@ class ArcEllipse3D(Edge):
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
 
         def theta_A_B(s, i, e, c):
-            # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
+            """
+            Theta is the tilt angle of the ellipse with the horizontal line clockwise. A is the major axis, B the minor
+            """
             xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
                 1] - c[1], e[0] - c[0], e[1] - c[1]
             A = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],
