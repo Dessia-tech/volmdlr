@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Write .msh file (with stream)
 * Arc: reverse
+* Circle2D: bsplinecurve_intersections, point_distance
 
 ### Fixed
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance improvements
 * BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
+* BSplinecurve2D: point_belongs
 * lighten some dicts with optional name
 
 ### Refactorings
@@ -25,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ContourMixin: to_polygon (for both 2D and 3D)
 * BSplineCurve2D.point_distance
 * new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
+
+### Unittests
+
+* BSplineCurve2D: point_distance, point_belongs
+* Circle2D: bspline_intersections, point_distance
 
 ## v0.9.0 [Testing]
 

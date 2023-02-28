@@ -1663,11 +1663,12 @@ class BSplineCurve2D(BSplineCurve):
         :return: distance.
         """
         best_distance = math.inf
-        distance_changing_significantly = True
         abscissa1 = 0
         abscissa2 = self.abscissa(self.end)
         distance = best_distance
-        while distance_changing_significantly:
+        point1_ = None
+        point2_ = None
+        while True:
             discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
                                               in npy.linspace(abscissa1, abscissa2, num=8)]
             distance = point.point_distance(discretized_points_between_1_2[0])
@@ -1678,13 +1679,13 @@ class BSplineCurve2D(BSplineCurve):
                     point1_ = point1
                     point2_ = point2
                     distance = dist
-                    # todo break?
-            if math.isclose(distance, best_distance, abs_tol=1e-6):
-                distance_changing_significantly = False
-                continue
+            if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-6):
+                break
             abscissa1 = self.abscissa(point1_)
             abscissa2 = self.abscissa(point2_)
             best_distance = distance
+            if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
+                break
         return distance
 
     def nearest_point_to(self, point):
@@ -1722,6 +1723,23 @@ class BSplineCurve2D(BSplineCurve):
                               knots=self.knots[::-1],
                               weights=self.weights,
                               periodic=self.periodic)
+
+    def point_belongs(self, point: volmdlr.Point2D, abs_tol: float = 1e-7):
+        """
+        Checks if a 2D point belongs to the B-spline curve 2D or not. It uses the point_distance.
+
+        :param point: The point to be checked
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param abs_tol: The precision in terms of distance.
+            Default value is 1e-7
+        :type abs_tol: float, optional
+        :return: `True` if the point belongs to the B-spline curve, `False`
+            otherwise
+        :rtype: bool
+        """
+        if self.point_distance(point) < abs_tol:
+            return True
+        return False
 
 
 class BezierCurve2D(BSplineCurve2D):
