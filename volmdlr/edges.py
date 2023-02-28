@@ -2183,7 +2183,7 @@ class Arc(Edge):
         """
         Calculates the length of the Arc, with its radius and it arc angle.
 
-        :return: the length fo the Arc.
+        :return: the length of the Arc.
         """
         return self.radius * abs(self.angle)
 
@@ -2860,8 +2860,8 @@ class Arc2D(Arc):
         """
         list_node = self.discretization_points(number_points=20)
         data = []
-        for nd in list_node:
-            data.append({'x': nd.x, 'y': nd.y})
+        for node in list_node:
+            data.append({'x': node.x, 'y': node.y})
         return plot_data.Arc2D(cx=self.center.x,
                                cy=self.center.y,
                                r=self.radius,
