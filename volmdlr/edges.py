@@ -231,6 +231,23 @@ class Edge(dc.DessiaObject):
                     touching_points.append(point)
         return touching_points
 
+    def edge_intersections(self, edge2: 'Edge'):
+        if not self.bounding_rectangle.b_rectangle_intersection(edge2.bounding_rectangle):
+            return []
+        intersections = []
+        method_name = f'{edge2.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(self, method_name):
+            intersections = getattr(self, method_name)(edge2)
+            return intersections
+        method_name = f'{self.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(edge2, method_name):
+            intersections = getattr(edge2, method_name)(self)
+            return intersections
+        raise NotImplementedError
+
+    def edge_crossings(self):
+        pass
+
 
 class Line(dc.DessiaObject):
     """
@@ -1506,7 +1523,7 @@ class BSplineCurve2D(BSplineCurve):
 
         :param abscissa: defines where in the BSplineCurve2D the
         direction vector is to be calculated.
-        :return: The direction vector vector of the BSplineCurve2D
+        :return: The direction vector of the BSplineCurve2D
         """
         return self.tangent(abscissa)
 
@@ -1700,6 +1717,9 @@ class BSplineCurve2D(BSplineCurve):
                               knots=self.knots[::-1],
                               weights=self.weights,
                               periodic=self.periodic)
+
+    def arc_crossings(self, arc: 'Arc2D'):
+        return arc.bsplinecurve_intersections(arc)
 
 
 class BezierCurve2D(BSplineCurve2D):
@@ -2476,6 +2496,27 @@ class Arc2D(Arc):
             if self.point_belongs(pt):
                 intersection_points.append(pt)
         return intersection_points
+
+    def bsplinecurve_intersections(self, bspline):
+        linesegments = bspline.to_wire(1000).primitives
+        intersections = []
+        for linesegment in linesegments:
+            intersection = self.linesegment_intersections(linesegment)
+            if intersection:
+                intersections.extend(intersection)
+        return intersections
+
+    def bsplinecurve_crossings(self, bspline: BSplineCurve2D):
+        intersections = self.bsplinecurve_intersections(bspline)
+        valid_crossings = []
+        for intersection in intersections:
+            if intersection not in [self.start, self.end, bspline.start, bspline.end]:
+                tangent1 = self.unit_direction_vector(self.abscissa(intersection))
+                tangent2 = bspline.unit_direction_vector(bspline.abscissa(intersection))
+                if math.isclose(abs(tangent1.dot(tangent2)), 1, abs_tol=1e-6):
+                    continue
+                valid_crossings.append(intersection)
+        return intersections
 
     def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
         """

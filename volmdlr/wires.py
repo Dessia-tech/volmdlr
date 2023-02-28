@@ -854,9 +854,30 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         intersections_points = []
         for linesegment in linesegments:
             intersections_linesegments = self.linesegment_intersections(linesegment)
-            if intersections_linesegments != []:
+            if intersections_linesegments:
                 intersections_points.extend(intersections_linesegments)
         return intersections_points
+
+    def arc_crossings(self, arc: volmdlr.edges.Arc2D):
+        # return self.bsplinecurve_crossings(arc)
+        intersections_points = []
+        for primitive in self.primitives:
+            intersections = primitive.edge_intersections(arc)
+            if intersections:
+                intersections_points.extend(intersections)
+        return intersections_points
+
+    def edge_crossings(self, edge):
+        method_name = edge.__class__.__name__[:-2].lower()+'_crossings'
+        edge_crossings = []
+        for primitive in self.primitives:
+            if hasattr(primitive.__class__, method_name):
+                crossings = getattr(primitive, method_name)(edge)
+                if crossings:
+                    edge_crossings.extend(crossings)
+            else:
+                raise NotImplementedError(f'{primitive.__class__} does not implement {method_name} yet')
+        return edge_crossings
 
     @property
     def bounding_rectangle(self):
