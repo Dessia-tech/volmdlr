@@ -800,7 +800,7 @@ class ElementsGroup(DessiaObject):
             _, ax = plt.subplots()
             ax.set_aspect('equal')
         for element in self.elements:
-            element.plot(ax=ax, color=color)  # fill=fill
+            element.plot(ax=ax, edge_style=EdgeStyle(color=color))  # fill=fill
         return ax
 
 

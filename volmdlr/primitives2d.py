@@ -461,7 +461,8 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         self.unit = unit
         self.type_ = type_
 
-    def plot(self, ax, edge_style: EdgeStyle(), ndigits=6):
+    def plot(self, ax, edge_style: EdgeStyle()):
+        ndigits = 6
         x1, y1 = self.start
         x2, y2 = self.end
         xm, ym = 0.5 * (self.start + self.end)
