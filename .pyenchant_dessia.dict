@@ -24,6 +24,8 @@ freecad
 gmsh
 .geo
 .msh
+geo
+msh
 euler
 txt
 discretization
@@ -34,3 +36,9 @@ getter
 Matplotlib
 babylonjs
 geo
+tol
+BSpline
+BSplineCurve
+bsplinecurve
+discretize
+discretized

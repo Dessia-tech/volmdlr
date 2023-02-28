@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Write .msh file (with stream)
 * Arc: reverse
+* Circle2D: bsplinecurve_intersections, point_distance
 
 ### Fixed
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance improvements
 * eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
+* BSplinecurve2D: point_belongs
 * lighten some dicts with optional name
 
 ### Refactorings
@@ -27,12 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D.point_distance
 * new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
-## Unittests
+### Unittests
+
+* BSplineCurve2D: point_distance, point_belongs
+* Circle2D: bspline_intersections, point_distance
 * Unittests for Vector2D
 * Unittests for Point2D
 * Unittests for Vector3D
 * Unittests for Point3D
-
 
 ## v0.9.0 [Testing]
 

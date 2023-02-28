@@ -150,6 +150,28 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return point_inside_outer_contour
 
+    @staticmethod
+    def triangulation_without_holes(vertices, segments, points_grid, tri_opt):
+        """
+        Triangulates a surface without holes.
+
+        :param vertices: vectices of the surface.
+        :param segments: segments defined as tuples of vertices.
+        :param points_grid: to do.
+        :param tri_opt: triangulation option: "p"
+        :return:
+        """
+        vertices_grid = [(p.x, p.y) for p in points_grid]
+        vertices.extend(vertices_grid)
+        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+               'segments': npy.array(segments).reshape((-1, 2)),
+               }
+        t = triangle_lib.triangulate(tri, tri_opt)
+        triangles = t['triangles'].tolist()
+        np = t['vertices'].shape[0]
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
+        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+
     def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
         Triangulates the Surface2D using the Triangle library.
@@ -182,16 +204,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         segments.append((n - 1, 0))
 
         if not self.inner_contours:  # No holes
-            vertices_grid = [(p.x, p.y) for p in points_grid]
-            vertices.extend(vertices_grid)
-            tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-                   'segments': npy.array(segments).reshape((-1, 2)),
-                   }
-            t = triangle_lib.triangulate(tri, tri_opt)
-            triangles = t['triangles'].tolist()
-            np = t['vertices'].shape[0]
-            points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-            return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+            return self.triangulation_without_holes(vertices, segments, points_grid, tri_opt)
 
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
@@ -1342,7 +1355,7 @@ class Plane3D(Surface3D):
         """
         Calculates the intersections between a Plane 3D and a FullArc 3D.
 
-        :param fullarc: fullarc to verify intersections.
+        :param fullarc: full arc to verify intersections.
         :return: list of intersections: List[volmdlr.Point3D].
         """
         fullarc_plane = Plane3D(fullarc.frame)
@@ -1844,7 +1857,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :type ax: Axes3D or None
         :param color: color of the wireframe plot. Default is 'grey'.
         :type color: str
-        :param alpha: transparency of the wireframe plot. Default is 0.5.
+        :param alpha: transparency of the wire frame plot. Default is 0.5.
         :type alpha: float
         :param z: additional keyword arguments to pass the value of z to cut the surface.
         :type z: float
@@ -2784,7 +2797,6 @@ class ConicalSurface3D(PeriodicalSurface):
         if not start.is_close(end):
             return [vme.LineSegment2D(start, end)]
         return [vme.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
-
 
     def circle3d_to_2d(self, circle3d):
         """
@@ -4679,11 +4691,9 @@ class BSplineSurface3D(Surface3D):
             for j in range(0, points_y):
                 index_points.update({(j, i): p})
                 p = p + 1
-
-        finite_elements_points = []  # 2D grid points index that define one element
-        for j in range(0, points_y - 1):
-            for i in range(0, points_x - 1):
-                finite_elements_points.append(((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1)))
+        # 2D grid points index that define one element
+        finite_elements_points = [((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1))
+                                  for j in range(0, points_y - 1) for i in range(0, points_x - 1)]
         finite_elements = []  # finite elements defined with closed polygon  DEFORMED
         for i in range(0, len(finite_elements_points)):
             finite_elements.append(
@@ -6828,9 +6838,9 @@ class PlaneFace3D(Face3D):
 
     def minimum_distance_points_plane(self, other_plane_face, return_points=False):
         """
-        Given two planefaces, calculates the points which corresponds to the minimal distance between these two faces.
+        Given two plane faces, calculates the points which corresponds to the minimal distance between these two faces.
 
-        :param other_plane_face: second planeface.
+        :param other_plane_face: second plane face.
         :param return_points: boolean to return corresponding points or not.
         :return: minimal distance.
         """
