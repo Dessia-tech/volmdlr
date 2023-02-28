@@ -23,11 +23,11 @@ from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
 
-import volmdlr.bspline_fitting as bspline_fitting
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
 import volmdlr.utils.intersections as vm_utils_intersections
+from volmdlr import bspline_fitting
 
 
 def standardize_knot_vector(knot_vector):
@@ -1314,7 +1314,7 @@ class Line2D(Line):
         # self will be (AB)
         # line will be (CD)
         I, A, B, C, D = self._compute_data_create_tangent_circle(self, point, other_line)
-        # CHANGEMENT DE REPAIRE
+        # Basis change
         new_basis, new_a, new_b, new_c, new_d = self._change_reference_frame(I, A, B, C, D)
 
         if new_c[1] == 0 and new_d[1] == 0:
@@ -4351,7 +4351,6 @@ class LineSegment3D(LineSegment):
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, d1, d2, angle])
 
-
     def to_step(self, current_id, surface_id=None):
         line = self.to_line()
         content, line_id = line.to_step(current_id)
@@ -4759,9 +4758,9 @@ class BSplineCurve3D(BSplineCurve):
     def cut_after(self, parameter: float):
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=1e-6):
-        #     # raise ValueError('Nothing will be left from the BSplineCurve3D')
-        #     curves = operations.split_curve(operations.refine_knotvector(self.curve, [4]), parameter)
-        #     return self.from_geomdl_curve(curves[0])
+            #     # raise ValueError('Nothing will be left from the BSplineCurve3D')
+            #     curves = operations.split_curve(operations.refine_knotvector(self.curve, [4]), parameter)
+            #     return self.from_geomdl_curve(curves[0])
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self

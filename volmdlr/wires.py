@@ -5794,7 +5794,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         elif math.isclose(ratio, -1, abs_tol=0.3):
             closing_point_index = last_index
         elif closing_point_index - last_index > 5 and list_closing_point_indexes[
-            -1] + 4 <= ratio_denominator - 1 and polygons_points_ratio > 0.95:
+                -1] + 4 <= ratio_denominator - 1 and polygons_points_ratio > 0.95:
             closing_point_index = last_index + 4
 
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
