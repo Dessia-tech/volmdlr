@@ -904,18 +904,6 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         self.plane_origin.frame_mapping_inplace(frame, side)
         self.axis_point.frame_mapping_inplace(frame, side)
 
-    @classmethod
-    def from_contour3d(cls, contour3d, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                       angle: float = 2 * math.pi, *,
-                       color: Tuple[float, float, float] = None, alpha: float = 1,
-                       name: str = ''
-                       ):
-        # TODO: THIS METHOD IS NOT RIGHT
-        frame = contour3d.frame
-        contour2d = contour3d.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
-        return cls(frame.origin, frame.u, frame.v, contour2d, axis_point, axis, angle,
-                   color=color, alpha=alpha, name=name)
-
 
 class Cylinder(RevolvedProfile):
     """

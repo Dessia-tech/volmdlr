@@ -1092,11 +1092,10 @@ class VolumeModel(dc.PhysicalObject):
         meshes = []
         lines = []
         for primitive in self.primitives:
-            if primitive:
-                if hasattr(primitive, 'babylon_meshes'):
-                    meshes.extend(primitive.babylon_meshes())
-                if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+            if hasattr(primitive, 'babylon_meshes'):
+                meshes.extend(primitive.babylon_meshes())
+            if hasattr(primitive, 'babylon_curves'):
+                lines.append(primitive.babylon_curves())
 
         bbox = self.bounding_box
         center = bbox.center

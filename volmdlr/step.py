@@ -7,6 +7,7 @@ ISO STEP reader/writer.
 import time
 from typing import List
 import numpy as npy
+from dataclasses import dataclass, field
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -40,8 +41,8 @@ def set_to_list(step_set):
 
 def step_split_arguments(function_arg):
     """
-    Split the arguments of a function that doesn't start with '(' but end with
-    ')'
+    Split the arguments of a function that doesn't start with '(' but end with ')'.
+
     ex: IN: '#123,#124,#125)'
        OUT: ['#123', '#124', '#125']
     """
@@ -76,7 +77,7 @@ def uncertainty_measure_with_unit(arguments, object_dict):
     Gets the global length uncertainty.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: Global length uncertainty.
     """
     length_measure = float(arguments[0].split('(')[1][:-1])
@@ -88,7 +89,7 @@ def conversion_based_unit_length_unit_named_unit(arguments, object_dict):
     Gets the conversion based unit length.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: conversion based unit length.
     """
     return object_dict[arguments[1]]
@@ -99,7 +100,7 @@ def length_measure_with_unit(arguments, object_dict):
     Calculates the step file's si unit conversion factor.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: si unit conversion factor.
     """
     if "(" in arguments[0]:
@@ -150,7 +151,7 @@ def length_unit_named_unit_si_unit(arguments, object_dict):
     Gets the length si unit.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: length si unit
     """
     si_unit_length = SI_PREFIX[arguments[1]]
@@ -163,7 +164,7 @@ def geometric_representation_context_global_uncertainty_assigned_context_global_
     Gets the global length uncertainty.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionnary containing already instanciated objects.
+    :param object_dict: dictionary containing already instantiated objects.
     :return: Global length uncertainty.
     """
     length_global_uncertainty = object_dict[int(arguments[1][0][1:])]
@@ -567,15 +568,16 @@ class Step(dc.DessiaObject):
     Defines the Step class.
 
     """
-    global_uncertainty = 1e-6
-    length_conversion_factor = 1
-    angle_conversion_factor = 1
+
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines
         self.functions, self.all_connections = self.read_lines()
         self._utd_graph = False
         self._graph = None
-        self.read_diagnostics = {}
+        self.global_uncertainty = 1e-6
+        self.length_conversion_factor = 1
+        self.angle_conversion_factor = 1
+        self.read_diagnostic = StepReaderReport
         dc.DessiaObject.__init__(self, name=name)
 
     @property
@@ -1025,10 +1027,8 @@ class Step(dc.DessiaObject):
                     faces_read += len(volmdlr_object.faces)
                     step_number_faces += len(self.functions[node].arg[1])
             if step_number_faces and faces_read:
-                self.read_diagnostics["Total Number of Faces"] = step_number_faces
-                self.read_diagnostics["Faces read"] = faces_read
-                self.read_diagnostics["Sucess rate"] = faces_read / step_number_faces
-
+                self.read_diagnostic = StepReaderReport(self.name, step_number_faces, faces_read, faces_read/step_number_faces,
+                                                         list(errors))
         volume_model = volmdlr.core.VolumeModel(shells)
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)
@@ -1062,6 +1062,15 @@ class Step(dc.DessiaObject):
                                  in self.functions.values()
                                  if stepfunction.name in ['CARTESIAN_POINT', 'DIRECTION']])
         return [plot_data.graph.NetworkxGraph(graph=graph)]
+
+
+@dataclass
+class StepReaderReport:
+    step_name: str = " "
+    total_number_of_faces: int = 0
+    faces_read: int = 0
+    sucess_rate: float = 0.0
+    errors: list[int] = field(default_factory=list)
 
 
 STEP_TO_VOLMDLR = {
