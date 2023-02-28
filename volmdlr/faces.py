@@ -152,7 +152,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         Triangulates a surface without holes.
 
-        :param vertices: vectices of the surface.
+        :param vertices: vertices of the surface.
         :param segments: segments defined as tuples of vertices.
         :param points_grid: to do.
         :param tri_opt: triangulation option: "p"
