@@ -22,13 +22,11 @@ def interpolate_curve(list points, int degree, bint centripetal: bool = False):
     :return: interpolated B-Spline curve
     :rtype: BSpline.Curve
     """
-    use_centripetal = centripetal
-
     # Number of control points
     cdef int num_points = len(points)
-
+    cdef list uk, kv, matrix_a
     # Get uk
-    uk = compute_params_curve(points, use_centripetal)
+    uk = compute_params_curve(points, centripetal)
 
     # Compute knot vector
     kv = compute_knot_vector(degree, num_points, uk)
