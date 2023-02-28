@@ -6,8 +6,8 @@ ISO STEP reader/writer.
 
 import time
 from typing import List
-import numpy as npy
 from dataclasses import dataclass, field
+import numpy as npy
 
 import matplotlib.pyplot as plt
 import networkx as nx
