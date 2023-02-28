@@ -12,6 +12,11 @@ from volmdlr.models import bspline_curves
 
 
 class TestBSplineCurve2D(unittest.TestCase):
+    degree = 3
+    points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
+    knotvector = utilities.generate_knot_vector(degree, len(points))
+    knot_multiplicity = [1] * len(knotvector)
+    bspline = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
 
     def test_abscissa(self):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
@@ -22,7 +27,7 @@ class TestBSplineCurve2D(unittest.TestCase):
     def test_line_intersections(self):
         bspline_curve2d = DessiaObject.load_from_file('edges/bsplinecurve2d_1.json')
         line = vme.Line2D(volmdlr.Point2D(1.263163105753452, -0.002645572020392778),
-                            volmdlr.Point2D(1.263163105753452, -0.001820963841291406))
+                          volmdlr.Point2D(1.263163105753452, -0.001820963841291406))
 
         line_intersections = bspline_curve2d.line_intersections(line)
         self.assertEqual(len(line_intersections), 1)
@@ -72,16 +77,28 @@ class TestBSplineCurve2D(unittest.TestCase):
         points = bspline_curve2d.discretization_points(angle_resolution=10)
         self.assertEqual(len(points), 31)
 
+    def test_offset(self):
+        offseted_bspline = bspline.offset(-0.2)
+        expected_distances = [0.2, 0.20000160183808904, 0.20053651951715856, 0.20372900125730523, 0.21044118400720574,
+                              0.2192581584663399, 0.22774528008118392, 0.2340440381875313, 0.23739001591364056,
+                              0.2379018126594174, 0.2362014374337063, 0.23307773295678147, 0.22924032294583793,
+                              0.22517329538697972, 0.22109005047384114, 0.21697594011450796, 0.21267059325565962,
+                              0.2079610665048543, 0.20299372351359257, 0.19999999999999987]
+        for i, (p1, p2) in enumerate(zip(bspline.discretization_points(number_points=20),
+                                         offseted_bspline.discretization_points(number_points=20))):
+            self.assertAlmostEqual(p1.point_distance(p2), expected_distances[i], 6)
+
     def test_point_distance(self):
-        degree = 3
-        points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
-        knotvector = utilities.generate_knot_vector(degree, len(points))
-        knot_multiplicity = [1] * len(knotvector)
-        bspline = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
         point = volmdlr.Point2D(1.5, 0.1)
-        self.assertAlmostEqual(bspline.point_distance(point), 0.08945546033235202)
-        point2 = bspline.point_at_abscissa(0.4)
-        self.assertEqual(bspline.point_distance(point2), 8.41148791769493e-08)
+        self.assertAlmostEqual(self.bspline.point_distance(point), 0.08945546033235202)
+        point2 = self.bspline.point_at_abscissa(0.4)
+        self.assertAlmostEqual(self.bspline.point_distance(point2), 0.0, 8)
+
+    def test_point_belongs(self):
+        point = volmdlr.Point2D(1.5, 0.1)
+        self.assertFalse(self.bspline.point_belongs(point))
+        point2 = self.bspline.point_at_abscissa(0.4)
+        self.assertTrue(self.bspline.point_belongs(point2))
 
 
 class TestBSplineCurve3D(unittest.TestCase):
