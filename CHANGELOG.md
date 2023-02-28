@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance improvements
 * BSplinecurve2D: point_belongs
+* lighten some dicts with optional name
 
 ### Refactorings
 
@@ -27,8 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
 ### Unittests
-*BSplineCurve2D: point_distance, point_belongs
-Circle2D: bspline_intersections, point_distance
+
+* BSplineCurve2D: point_distance, point_belongs
+* Circle2D: bspline_intersections, point_distance
 
 ## v0.9.0 [Testing]
 
