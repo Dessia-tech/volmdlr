@@ -18,13 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Performance improvements
+- lighten some dicts with optional name
 
 ### Refactorings
 
 * ContourMixin: to_polygon (for both 2D and 3D)
+* new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
 ### Unittests
-BSplineCurve2D: offset
+
+* BSplineCurve2D: offset
+
 
 ## v0.9.0 [Testing]
 
