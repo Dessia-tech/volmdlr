@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Performance improvements
-
+* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
 ### Refactorings
 
 * ContourMixin: to_polygon (for both 2D and 3D)

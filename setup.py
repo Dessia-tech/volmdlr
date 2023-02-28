@@ -145,6 +145,8 @@ setup(
     classifiers=["Topic :: Scientific/Engineering",
                  "Topic :: Multimedia :: Graphics :: 3D Modeling",
                  "Development Status :: 5 - Production/Stable"],
-    ext_modules=cythonize(["volmdlr/core_compiled.pyx", "volmdlr/bspline_compiled.pyx"]),
+    ext_modules=cythonize(["volmdlr/core_compiled.pyx",
+                           "volmdlr/bspline_compiled.pyx",
+                           "volmdlr/bspline_evaluators.pyx"]),
     python_requires=">=3.7",
 )
