@@ -1027,8 +1027,8 @@ class Step(dc.DessiaObject):
                     faces_read += len(volmdlr_object.faces)
                     step_number_faces += len(self.functions[node].arg[1])
             if step_number_faces and faces_read:
-                self.read_diagnostic = StepReaderReport(self.name, step_number_faces, faces_read, faces_read/step_number_faces,
-                                                         list(errors))
+                self.read_diagnostic = StepReaderReport(self.name, step_number_faces, faces_read,
+                                                        faces_read/step_number_faces, list(errors))
         volume_model = volmdlr.core.VolumeModel(shells)
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)
