@@ -132,6 +132,15 @@ def named_unit_plane_angle_unit_si_unit(arguments, object_dict):
     """
     return SI_PREFIX[arguments[1]]
 
+def named_unit_si_unit_solid_angle_unit(arguments, object_dict):
+    """
+    Returns the dimension of solid angle measure.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionary containing already instantiated objects.
+    :return: SI unit dimension.
+    """
+    return SI_PREFIX[arguments[1]]
 
 def plane_angle_measure_with_unit(arguments, object_dict):
     """
@@ -526,6 +535,20 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
                            'REPRESENTATION_ITEM, SURFACE'].from_step(
         modified_arguments, object_dict)
 
+def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometric_representation_item_rational_b_spline_surface_representation_item(
+        arguments, object_dict):
+    """
+    Bounded b spline surface with knots curve geometric representation item. To clarify.
+    """
+    modified_arguments = [''] + arguments
+    if modified_arguments[-1] == "''":
+        modified_arguments.pop()
+    return STEP_TO_VOLMDLR['BOUNDED_SURFACE, B_SPLINE_SURFACE, '
+                           'B_SPLINE_SURFACE_WITH_KNOTS, '
+                           'GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_SURFACE, '
+                           'REPRESENTATION_ITEM, SURFACE'].from_step(
+        modified_arguments, object_dict)
 
 class StepFunction(dc.DessiaObject):
     """
@@ -977,7 +1000,7 @@ class Step(dc.DessiaObject):
                     for instanciate_id in instanciate_ids[::-1]:
                         t = time.time()
                         arguments = self.functions[instanciate_id].arg[:]
-                        volmdlr_object = self.instantiate(
+                        volmdlr_object = self.instanciate(
                             self.functions[instanciate_id].name,
                             self.functions[instanciate_id].arg[:], object_dict, instanciate_id)
                         t = time.time() - t
@@ -999,11 +1022,9 @@ class Step(dc.DessiaObject):
             if not object_dict[node]:
                 errors.add(node)
             if i == 0:
-                self.parse_arguments(arguments[1])
-                self.global_uncertainty = float(object_dict[arguments[1][0]])
-                self.parse_arguments(arguments[2])
-                self.length_conversion_factor = float(object_dict[arguments[2][0]])
-                self.angle_conversion_factor = float(object_dict[arguments[2][1]])
+                self.global_uncertainty = object_dict[int(arguments[1][0][1:])]
+                self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
+                self.angle_conversion_factor = object_dict[int(arguments[2][1][1:])]
 
         if show_times:
             print()
@@ -1129,7 +1150,7 @@ STEP_TO_VOLMDLR = {
 
     # Bsplines
     'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
-
+    "BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, SURFACE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM": volmdlr.faces.BSplineSurface3D,
     # TOPOLOGICAL ENTITIES
     'VERTEX_POINT': None,
 
