@@ -62,6 +62,9 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         volmdlr.core.Primitive2D.__init__(self, name=name)
 
+    def __hash__(self):
+        return hash((self.outer_contour, tuple(self.inner_contours)))
+
     def copy(self):
         """
         Copies the surface2d.
@@ -182,7 +185,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
-        if area == 0.:
+        if math.isclose(self.area(), 0., abs_tol=1e-6):
             return vmd.DisplayMesh2D([], triangles=[])
 
         triangulates_with_grid = number_points_x > 0 or number_points_y > 0
@@ -1193,7 +1196,7 @@ class Plane3D(Surface3D):
         Surface3D.__init__(self, name=name)
 
     def __hash__(self):
-        return hash(self.frame)
+        return hash(('plane 3d', self.frame))
 
     def __eq__(self, other_plane):
         if other_plane.__class__.__name__ != self.__class__.__name__:
@@ -1278,7 +1281,7 @@ class Plane3D(Surface3D):
         points = [p.copy() for p in points]
         indexes_to_del = []
         for i, point in enumerate(points[1:]):
-            if point == points[0]:
+            if point.is_close(points[0]):
                 indexes_to_del.append(i)
         for index in indexes_to_del[::-1]:
             del points[index + 1]
@@ -1296,8 +1299,7 @@ class Plane3D(Surface3D):
             if dot < dot_min:
                 vector2_min = vector2
                 dot_min = dot
-        return cls.from_3_points(origin, vector1 + origin,
-                                 vector2_min + origin)
+        return cls.from_3_points(origin, vector1 + origin, vector2_min + origin)
 
     def point_on_surface(self, point):
         """
@@ -2784,7 +2786,7 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(linesegment3d.start)
         end = self.point3d_to_2d(linesegment3d.end)
-        if start.x != end.x and start == volmdlr.Point2D(0, 0):
+        if start.x != end.x and start.is_close(volmdlr.Point2D(0, 0)):
             start = volmdlr.Point2D(end.x, 0)
         elif start.x != end.x and end == volmdlr.Point2D(0, 0):
             end = volmdlr.Point2D(start.x, 0)
@@ -2906,7 +2908,7 @@ class ConicalSurface3D(PeriodicalSurface):
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
-        if primitives2d[0].start != primitives2d[-1].end \
+        if not primitives2d[0].start.is_close(primitives2d[-1].end) \
                 and primitives2d[0].start.y == 0.0 and primitives2d[-1].end.y == 0.0:
             primitives2d.append(vme.LineSegment2D(primitives2d[-1].end, primitives2d[0].start))
 
@@ -3048,7 +3050,7 @@ class SphericalSurface3D(Surface3D):
         start = self.point2d_to_3d(linesegment2d.start)
         interior = self.point2d_to_3d(0.5 * (linesegment2d.start + linesegment2d.end))
         end = self.point2d_to_3d(linesegment2d.end)
-        if start == end or linesegment2d.length() == 2 * math.pi:
+        if start.is_close(end) or linesegment2d.length() == 2 * math.pi:
             u_vector = start - self.frame.origin
             u_vector.normalize()
             v_vector = interior - self.frame.origin
@@ -4091,7 +4093,7 @@ class BSplineSurface3D(Surface3D):
             p1 = self.point3d_to_2d(bspline_curve3d.points[0])
             p2 = self.point3d_to_2d(bspline_curve3d.points[-1])
 
-            if p1 == p2:
+            if p1.is_close(p2):
                 print('BSplineCruve3D skipped because it is too small')
                 linesegments = None
             else:
@@ -4112,7 +4114,7 @@ class BSplineSurface3D(Surface3D):
             if lth > 1e-5:
                 n = len(bspline_curve3d.control_points)
                 points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
-                if points[0] != points[-1]:
+                if not points[0].is_close(points[-1]):
                     linesegment = vme.LineSegment2D(points[0], points[-1])
                     flag_line = True
                     for pt in points:
@@ -4163,7 +4165,7 @@ class BSplineSurface3D(Surface3D):
             points = self._repair_periodic_boundary_points(arc3d, [start, end], 'y')
             start = points[0]
             end = points[1]
-            if start == end:
+            if start.is_close(end):
                 if math.isclose(start.y, min_bound_y, abs_tol=1e-4):
                     end.y = max_bound_y
                 else:
@@ -6341,7 +6343,7 @@ class Face3D(volmdlr.core.Primitive3D):
         list_open_cutting_contours = []
         list_closed_cutting_contours = []
         for cutting_contour in list_cutting_contours:
-            if cutting_contour.primitives[0].start != cutting_contour.primitives[-1].end:
+            if not cutting_contour.primitives[0].start.is_close(cutting_contour.primitives[-1].end):
                 list_open_cutting_contours.append(cutting_contour)
                 continue
             list_closed_cutting_contours.append(cutting_contour)
@@ -6631,10 +6633,12 @@ class Face3D(volmdlr.core.Primitive3D):
         :param cutting_contour: first cutting contour being used to cut inner contour.
         :return: point1, point2
         """
-        if cutting_contour.primitives[0].start in inner_contour_splitting_points:
-            index_point1 = inner_contour_splitting_points.index(cutting_contour.primitives[0].start)
+        if volmdlr.core.point_in_list(cutting_contour.primitives[0].start, inner_contour_splitting_points):
+            index_point1 = volmdlr.core.get_point_index_in_list(cutting_contour.primitives[0].start,
+                                                                inner_contour_splitting_points)
         else:
-            index_point1 = inner_contour_splitting_points.index(cutting_contour.primitives[-1].end)
+            index_point1 = volmdlr.core.get_point_index_in_list(cutting_contour.primitives[-1].end,
+                                                                inner_contour_splitting_points)
         if index_point1 != len(inner_contour_splitting_points) - 1:
             index_point2 = index_point1 + 1
         else:
@@ -6654,20 +6658,20 @@ class Face3D(volmdlr.core.Primitive3D):
         :param inner_contour_splitting_points2: splitting points for contour1.
         :return:
         """
-        if (cutting_contour.primitives[0].start != inner_contour_splitting_points1[-1] and
-            cutting_contour.primitives[-1].end != inner_contour_splitting_points2[-1]) or \
-                (cutting_contour.primitives[0].start != inner_contour_splitting_points2[-1] and
-                 cutting_contour.primitives[-1].end != inner_contour_splitting_points2[-1]):
+        if (not cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
+            not cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])) or \
+                (not cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points2[-1]) and
+                 not cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])):
             is_inside1 = True
             is_inside2 = False
-        elif (cutting_contour.primitives[0].start == inner_contour_splitting_points1[-1] and
-              cutting_contour.primitives[-1].end == inner_contour_splitting_points2[-1]):
+        elif (cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
+              cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])):
             is_inside1 = True
             is_inside2 = False
-        elif (cutting_contour.primitives[0].start != inner_contour_splitting_points1[-1] and
-              cutting_contour.primitives[-1].end == inner_contour_splitting_points2[-1]) or \
-                (cutting_contour.primitives[0].start == inner_contour_splitting_points1[-1] and
-                 cutting_contour.primitives[-1].end != inner_contour_splitting_points2[-1]):
+        elif (not cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
+              cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])) or \
+                (cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
+                 not cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])):
             is_inside1 = True
             is_inside2 = True
         else:
@@ -6891,7 +6895,7 @@ class PlaneFace3D(Face3D):
         for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d +\
                 planeface.inner_contours3d:
             for intersection in contour.line_intersections(face2_plane_interections[0]):
-                if intersection and intersection not in points_intersections:
+                if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
                     points_intersections.append(intersection)
         points_intersections = face2_plane_interections[0].sort_points_along_line(points_intersections)
         planeface_intersections = []
@@ -7229,8 +7233,8 @@ class Triangle3D(PlaneFace3D):
     def _data_eq(self, other_object):
         if other_object.__class__.__name__ != self.__class__.__name__:
             return False
-        self_set = set([self.point1, self.point2, self.point3])
-        other_set = set([other_object.point1, other_object.point2, other_object.point3])
+        self_set = {self.point1, self.point2, self.point3}
+        other_set = {other_object.point1, other_object.point2, other_object.point3}
         if self_set != other_set:
             return False
         return True
@@ -8457,16 +8461,16 @@ class BSplineFace3D(Face3D):
             else:
                 index1 = dis.index(dis_sorted[0])
                 index2 = dis.index(dis_sorted[1])
-            if ((p1.start == points1[index1] and p1.end == points1[index2])
+            if ((p1.start.is_close(points1[index1]) and p1.end.is_close(points1[index2]))
                     or
-                    (p1.end == points1[index1] and p1.start == points1[index2])):
+                    (p1.end.is_close(points1[index1]) and p1.start.is_close(points1[index2]))):
                 shared.append(p1)
                 i = k
 
         for k, p2 in enumerate(contour2.primitives):
-            if ((p2.start == points2[ind[index1]] and p2.end == points2[ind[index2]])
+            if ((p2.start.is_close(points2[ind[index1]]) and p2.end.is_close(points2[ind[index2]]))
                     or
-                    (p2.end == points2[ind[index1]] and p2.start == points2[ind[index2]])):
+                    (p2.end.is_close(points2[ind[index1]]) and p2.start.is_close(points2[ind[index2]]))):
                 shared.append(p2)
                 j = k
 
@@ -9875,7 +9879,7 @@ class ClosedShell3D(OpenShell3D):
         face_combinations = self.intersecting_faces_combinations(shell2, list_coincident_faces, tol)
         intersecting_combinations = self.dict_intersecting_combinations(face_combinations, tol)
 
-        if len(intersecting_combinations) == 0:
+        if not intersecting_combinations:
             return [self, shell2]
 
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
