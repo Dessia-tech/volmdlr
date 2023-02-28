@@ -26,7 +26,7 @@ p2_ray = vm.Point3D(0.009855980224206917, 0.6250574317556334, -0.140714209041350
 ray = vm.edges.LineSegment3D(p1_ray, p2_ray)
 
 
-ax = ray.plot(color='b')
+ax = ray.plot(edge_style=vm.edges.EdgeStyle(color='b'))
 p1_ray.plot(ax=ax, color='b')
 p2_ray.plot(ax=ax, color='b')
 box_red.plot(ax=ax, color='r')

@@ -24,6 +24,7 @@ from dessia_common.core import DessiaObject  # isort: skip
 
 import volmdlr.bspline_compiled
 import volmdlr.core
+from volmdlr.core import EdgeStyle
 import volmdlr.core_compiled
 import volmdlr.display as vmd
 import volmdlr.edges as vme
@@ -637,6 +638,15 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     @classmethod
     def from_contours(cls, outer_contour, inner_contours):
+        """
+        Create a Surface2D object from an outer contour and a list of inner contours.
+
+        :param outer_contour: The outer contour that bounds the surface.
+        :type outer_contour: volmdlr.wires.Contour2D
+        :param inner_contours: The list of inner contours that define the holes of the surface.
+        :type inner_contours : List[volmdlr.wires.Contour2D]
+        :return: Surface2D defined by the given contours.
+        """
         surface2d_inner_contours = []
         surface2d_outer_contour = outer_contour
         for inner_contour in inner_contours:
@@ -658,11 +668,11 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         if ax is None:
             _, ax = plt.subplots()
-        self.outer_contour.plot(ax=ax, color=color, alpha=alpha,
-                                equal_aspect=equal_aspect)
+        self.outer_contour.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
+                                equal_aspect=equal_aspect))
         for inner_contour in self.inner_contours:
-            inner_contour.plot(ax=ax, color=color, alpha=alpha,
-                               equal_aspect=equal_aspect)
+            inner_contour.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
+                               equal_aspect=equal_aspect))
 
         if equal_aspect:
             ax.set_aspect('equal')
@@ -1262,34 +1272,33 @@ class Plane3D(Surface3D):
         """
         if len(points) < 3:
             raise ValueError
-        elif len(points) == 3:
+        if len(points) == 3:
             return cls.from_3_points(volmdlr.Point3D(points[0].vector),
                                      volmdlr.Vector3D(points[1].vector),
                                      volmdlr.Vector3D(points[2].vector))
-        else:
-            points = [p.copy() for p in points]
-            indexes_to_del = []
-            for i, point in enumerate(points[1:]):
-                if point == points[0]:
-                    indexes_to_del.append(i)
-            for index in indexes_to_del[::-1]:
-                del points[index + 1]
+        points = [p.copy() for p in points]
+        indexes_to_del = []
+        for i, point in enumerate(points[1:]):
+            if point == points[0]:
+                indexes_to_del.append(i)
+        for index in indexes_to_del[::-1]:
+            del points[index + 1]
 
-            origin = points[0]
-            vector1 = points[1] - origin
-            vector1.normalize()
-            vector2_min = points[2] - origin
-            vector2_min.normalize()
-            dot_min = abs(vector1.dot(vector2_min))
-            for point in points[3:]:
-                vector2 = point - origin
-                vector2.normalize()
-                dot = abs(vector1.dot(vector2))
-                if dot < dot_min:
-                    vector2_min = vector2
-                    dot_min = dot
-            return cls.from_3_points(origin, vector1 + origin,
-                                     vector2_min + origin)
+        origin = points[0]
+        vector1 = points[1] - origin
+        vector1.normalize()
+        vector2_min = points[2] - origin
+        vector2_min.normalize()
+        dot_min = abs(vector1.dot(vector2_min))
+        for point in points[3:]:
+            vector2 = point - origin
+            vector2.normalize()
+            dot = abs(vector1.dot(vector2))
+            if dot < dot_min:
+                vector2_min = vector2
+                dot_min = dot
+        return cls.from_3_points(origin, vector1 + origin,
+                                 vector2_min + origin)
 
     def point_on_surface(self, point):
         """
@@ -1750,13 +1759,13 @@ class PeriodicalSurface(Surface3D):
             elif theta1 < theta3:
                 p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
             return [vme.LineSegment2D(p1, p2)]
+
+        if z1 > z3:
+            p1 = volmdlr.Point2D(theta1, 1)
+            p2 = volmdlr.Point2D(theta1, 0)
         else:
-            if z1 > z3:
-                p1 = volmdlr.Point2D(theta1, 1)
-                p2 = volmdlr.Point2D(theta1, 0)
-            else:
-                p1 = volmdlr.Point2D(theta1, 0)
-                p2 = volmdlr.Point2D(theta1, 1)
+            p1 = volmdlr.Point2D(theta1, 0)
+            p2 = volmdlr.Point2D(theta1, 1)
         return [vme.LineSegment2D(p1, p2)]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
@@ -1863,7 +1872,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         for i in range(37):
             theta = i / 36. * volmdlr.TWO_PI
             wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
-            wire.plot(ax=ax, color=color, alpha=alpha)
+            wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
         return ax
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
@@ -2423,27 +2432,24 @@ class ToroidalSurface3D(PeriodicalSurface):
                 return [vme.FullArc3D(center=center,
                                       start_end=center + self.r * u_vector,
                                       normal=v_vector)]
-            else:
-                return [vme.Arc3D(
-                    self.point2d_to_3d(linesegment2d.start),
-                    self.point2d_to_3d(volmdlr.Point2D(theta1, 0.5 * (phi1 + phi2))),
-                    self.point2d_to_3d(linesegment2d.end),
-                )]
-        elif math.isclose(phi1, phi2, abs_tol=1e-4):
+            return [vme.Arc3D(
+                self.point2d_to_3d(linesegment2d.start),
+                self.point2d_to_3d(volmdlr.Point2D(theta1, 0.5 * (phi1 + phi2))),
+                self.point2d_to_3d(linesegment2d.end),
+            )]
+        if math.isclose(phi1, phi2, abs_tol=1e-4):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
                 center = self.frame.origin + self.r * math.sin(phi1) * self.frame.w
                 start_end = center + self.frame.u * (self.r + self.R)
                 return [vme.FullArc3D(center=center,
                                       start_end=start_end,
                                       normal=self.frame.w)]
-            else:
-                return [vme.Arc3D(
-                    self.point2d_to_3d(linesegment2d.start),
-                    self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), phi1)),
-                    self.point2d_to_3d(linesegment2d.end),
-                )]
-        else:
-            raise NotImplementedError('Ellipse?')
+            return [vme.Arc3D(
+                self.point2d_to_3d(linesegment2d.start),
+                self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), phi1)),
+                self.point2d_to_3d(linesegment2d.end),
+            )]
+        raise NotImplementedError('Ellipse?')
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
@@ -2471,13 +2477,13 @@ class ToroidalSurface3D(PeriodicalSurface):
             elif theta1 < theta3:
                 p2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi1)
             return [vme.LineSegment2D(p1, p2)]
-        else:
-            p1 = start
-            if phi1 > phi3:
-                p2 = volmdlr.Point2D(theta1, phi1 - volmdlr.TWO_PI)
-            elif phi1 < phi3:
-                p2 = volmdlr.Point2D(theta1, phi1 + volmdlr.TWO_PI)
-            return [vme.LineSegment2D(p1, p2)]
+
+        p1 = start
+        if phi1 > phi3:
+            p2 = volmdlr.Point2D(theta1, phi1 - volmdlr.TWO_PI)
+        elif phi1 < phi3:
+            p2 = volmdlr.Point2D(theta1, phi1 + volmdlr.TWO_PI)
+        return [vme.LineSegment2D(p1, p2)]
         # else:
         #     raise ValueError('Impossible!')
 
@@ -2576,6 +2582,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         return [vme.BSplineCurve2D.from_points_interpolation(points=points, degree=3, periodic=True)]
 
     def triangulation(self):
+        """
+        Triangulation.
+
+        :rtype: vmd.DisplayMesh3D
+        """
         face = self.rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
         return face.triangulation()
 
@@ -2656,7 +2667,7 @@ class ConicalSurface3D(PeriodicalSurface):
         for i in range(37):
             theta = i / 36. * volmdlr.TWO_PI
             wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
-            wire.plot(ax=ax, color=color, alpha=alpha)
+            wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
         return ax
 
     @classmethod
@@ -2815,8 +2826,7 @@ class ConicalSurface3D(PeriodicalSurface):
                     volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
                 self.point2d_to_3d(linesegment2d.end))
             ]
-        else:
-            raise NotImplementedError('Ellipse?')
+        raise NotImplementedError('Ellipse?')
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -3147,7 +3157,7 @@ class SphericalSurface3D(Surface3D):
                     vme.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
                     ]
 
-        elif (positive_singularity or negative_singularity) and \
+        if (positive_singularity or negative_singularity) and \
                 math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
             if abs(phi1) == 0.5 * math.pi:
                 return [vme.LineSegment2D(volmdlr.Point2D(theta3, phi1), volmdlr.Point2D(theta2, phi2))]
@@ -3260,7 +3270,7 @@ class SphericalSurface3D(Surface3D):
             for j in range(20):
                 phi = j / 20. * volmdlr.TWO_PI
                 t_points.append(self.point2d_to_3d(volmdlr.Point2D(theta, phi)))
-            ax = volmdlr.wires.ClosedPolygon3D(t_points).plot(ax=ax, color=color, alpha=alpha)
+            ax = volmdlr.wires.ClosedPolygon3D(t_points).plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
 
         return ax
 
@@ -3511,7 +3521,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         for i in range(21):
             theta = i / 20. * volmdlr.TWO_PI
             wire = self.wire.rotation(self.axis_point, self.axis, theta)
-            wire.plot(ax=ax, color=color, alpha=alpha)
+            wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
 
         return ax
 
@@ -4120,7 +4130,7 @@ class BSplineSurface3D(Surface3D):
                 return [vme.BSplineCurve2D.from_points_interpolation(
                     points=points, degree=bspline_curve3d.degree)]
 
-            elif 1e-6 < lth <= 1e-5:
+            if 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
                     self.point3d_to_2d(bspline_curve3d.start),
                     self.point3d_to_2d(bspline_curve3d.end))]
@@ -4316,9 +4326,9 @@ class BSplineSurface3D(Surface3D):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         for u in u_curves:
-            u.plot(ax=ax, color=color, alpha=alpha)
+            u.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
         for v in v_curves:
-            v.plot(ax=ax, color=color, alpha=alpha)
+            v.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
         for p in self.control_points:
             p.plot(ax, color=color, alpha=alpha)
         return ax
@@ -5345,10 +5355,9 @@ class BSplineSurface3D(Surface3D):
             edge2d_dim = getattr(self, method_name)(edge3d, grid2d)
             if edge2d_dim:
                 return edge2d_dim
-            else:
-                raise NotImplementedError
-        else:
-            raise NotImplementedError(
+            raise NotImplementedError
+
+        raise NotImplementedError(
                 # 'Class {} does not implement {}'.format(self.__class__.__name__,
                 #                                         method_name))
                 f'Class {self.__class__.__name__} does not implement {method_name}')
@@ -5879,8 +5888,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 content += face_content
                 current_id = face_id[0] + 1
             return content, face_ids
-        else:
-            return self.to_step_without_splitting(current_id)
+        return self.to_step_without_splitting(current_id)
 
     def to_step_without_splitting(self, current_id):
         content, surface3d_ids = self.surface3d.to_step(current_id)
@@ -6082,11 +6090,11 @@ class Face3D(volmdlr.core.Primitive3D):
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if not ax:
             ax = plt.figure().add_subplot(111, projection='3d')
-        self.outer_contour3d.plot(ax=ax, color=color, alpha=alpha,
-                                  edge_details=edge_details)
+        self.outer_contour3d.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
+                                  edge_ends=edge_details, edge_direction=edge_details))
         for contour3d in self.inner_contours3d:
-            contour3d.plot(ax=ax, color=color, alpha=alpha,
-                           edge_details=edge_details)
+            contour3d.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
+                                                       edge_ends=edge_details, edge_direction=edge_details))
         return ax
 
     def random_point_inside(self):
@@ -6960,7 +6968,6 @@ class PlaneFace3D(Face3D):
             if return_points:
                 return p1.point_distance(p2), p1, p2
             return p1.point_distance(p2)
-
         raise NotImplementedError
 
     def is_adjacent(self, face2: Face3D):
