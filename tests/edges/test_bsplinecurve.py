@@ -12,6 +12,11 @@ from volmdlr.models import bspline_curves
 
 
 class TestBSplineCurve2D(unittest.TestCase):
+    degree = 3
+    points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
+    knotvector = utilities.generate_knot_vector(degree, len(points))
+    knot_multiplicity = [1] * len(knotvector)
+    bspline = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
 
     def test_abscissa(self):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
@@ -84,15 +89,16 @@ class TestBSplineCurve2D(unittest.TestCase):
             self.assertAlmostEqual(p1.point_distance(p2), expected_distances[i], 6)
 
     def test_point_distance(self):
-        degree = 3
-        points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
-        knotvector = utilities.generate_knot_vector(degree, len(points))
-        knot_multiplicity = [1] * len(knotvector)
-        bspline = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
         point = volmdlr.Point2D(1.5, 0.1)
-        self.assertAlmostEqual(bspline.point_distance(point), 0.08945546033235202)
-        point2 = bspline.point_at_abscissa(0.4)
-        self.assertEqual(bspline.point_distance(point2), 8.41148791769493e-08)
+        self.assertAlmostEqual(self.bspline.point_distance(point), 0.08945546033235202)
+        point2 = self.bspline.point_at_abscissa(0.4)
+        self.assertAlmostEqual(self.bspline.point_distance(point2), 0.0, 8)
+
+    def test_point_belongs(self):
+        point = volmdlr.Point2D(1.5, 0.1)
+        self.assertFalse(self.bspline.point_belongs(point))
+        point2 = self.bspline.point_at_abscissa(0.4)
+        self.assertTrue(self.bspline.point_belongs(point2))
 
 
 class TestBSplineCurve3D(unittest.TestCase):
