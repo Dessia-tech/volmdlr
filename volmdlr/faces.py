@@ -62,6 +62,9 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         volmdlr.core.Primitive2D.__init__(self, name=name)
 
+    def __hash__(self):
+        return hash((self.outer_contour, tuple(self.inner_contours)))
+
     def copy(self):
         """
         Copies the surface2d.
@@ -147,6 +150,28 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return point_inside_outer_contour
 
+    @staticmethod
+    def triangulation_without_holes(vertices, segments, points_grid, tri_opt):
+        """
+        Triangulates a surface without holes.
+
+        :param vertices: vertices of the surface.
+        :param segments: segments defined as tuples of vertices.
+        :param points_grid: to do.
+        :param tri_opt: triangulation option: "p"
+        :return:
+        """
+        vertices_grid = [(p.x, p.y) for p in points_grid]
+        vertices.extend(vertices_grid)
+        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+               'segments': npy.array(segments).reshape((-1, 2)),
+               }
+        t = triangle_lib.triangulate(tri, tri_opt)
+        triangles = t['triangles'].tolist()
+        np = t['vertices'].shape[0]
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
+        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+
     def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
         Triangulates the Surface2D using the Triangle library.
@@ -160,7 +185,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
-        if area == 0.:
+        if math.isclose(self.area(), 0., abs_tol=1e-6):
             return vmd.DisplayMesh2D([], triangles=[])
 
         triangulates_with_grid = number_points_x > 0 or number_points_y > 0
@@ -179,16 +204,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         segments.append((n - 1, 0))
 
         if not self.inner_contours:  # No holes
-            vertices_grid = [(p.x, p.y) for p in points_grid]
-            vertices.extend(vertices_grid)
-            tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-                   'segments': npy.array(segments).reshape((-1, 2)),
-                   }
-            t = triangle_lib.triangulate(tri, tri_opt)
-            triangles = t['triangles'].tolist()
-            np = t['vertices'].shape[0]
-            points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-            return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+            return self.triangulation_without_holes(vertices, segments, points_grid, tri_opt)
 
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
@@ -241,7 +257,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def split_by_lines(self, lines):
         """
-        Returns a list of cutted surfaces given by the lines provided as argument.
+        Returns a list of cut surfaces given by the lines provided as argument.
         """
         cutted_surfaces = []
         iteration_surfaces = self.cut_by_line(lines[0])
@@ -277,7 +293,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def cut_by_line(self, line: vme.Line2D):
         """
-        Returns a list of cutted Surface2D by the given line.
+        Returns a list of cut Surface2D by the given line.
 
         :param line: The line to cut the Surface2D with.
         :type line: :class:`volmdlr.edges.Line2D`
@@ -1180,7 +1196,7 @@ class Plane3D(Surface3D):
         Surface3D.__init__(self, name=name)
 
     def __hash__(self):
-        return hash(self.frame)
+        return hash(('plane 3d', self.frame))
 
     def __eq__(self, other_plane):
         if other_plane.__class__.__name__ != self.__class__.__name__:
@@ -1266,7 +1282,7 @@ class Plane3D(Surface3D):
         points = [p.copy() for p in points]
         indexes_to_del = []
         for i, point in enumerate(points[1:]):
-            if point == points[0]:
+            if point.is_close(points[0]):
                 indexes_to_del.append(i)
         for index in indexes_to_del[::-1]:
             del points[index + 1]
@@ -1284,8 +1300,7 @@ class Plane3D(Surface3D):
             if dot < dot_min:
                 vector2_min = vector2
                 dot_min = dot
-        return cls.from_3_points(origin, vector1 + origin,
-                                 vector2_min + origin)
+        return cls.from_3_points(origin, vector1 + origin, vector2_min + origin)
 
     def point_on_surface(self, point):
         """
@@ -1340,7 +1355,7 @@ class Plane3D(Surface3D):
         """
         Calculates the intersections between a Plane 3D and a FullArc 3D.
 
-        :param fullarc: fullarc to verify intersections.
+        :param fullarc: full arc to verify intersections.
         :return: list of intersections: List[volmdlr.Point3D].
         """
         fullarc_plane = Plane3D(fullarc.frame)
@@ -1842,7 +1857,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :type ax: Axes3D or None
         :param color: color of the wireframe plot. Default is 'grey'.
         :type color: str
-        :param alpha: transparency of the wireframe plot. Default is 0.5.
+        :param alpha: transparency of the wire frame plot. Default is 0.5.
         :type alpha: float
         :param z: additional keyword arguments to pass the value of z to cut the surface.
         :type z: float
@@ -2276,7 +2291,7 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     def point3d_to_2d(self, point3d):
         """
-        Tansform a 3D spatial point (x, y, z) into a 2D spherical parametric point (theta, phi).
+        Transform a 3D spatial point (x, y, z) into a 2D spherical parametric point (theta, phi).
         """
         x, y, z = self.frame.global_to_local_coordinates(point3d)
         z = min(self.r, max(-self.r, z))
@@ -2773,7 +2788,7 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(linesegment3d.start)
         end = self.point3d_to_2d(linesegment3d.end)
-        if start.x != end.x and start == volmdlr.Point2D(0, 0):
+        if start.x != end.x and start.is_close(volmdlr.Point2D(0, 0)):
             start = volmdlr.Point2D(end.x, 0)
         elif start.x != end.x and end == volmdlr.Point2D(0, 0):
             end = volmdlr.Point2D(start.x, 0)
@@ -2782,7 +2797,6 @@ class ConicalSurface3D(PeriodicalSurface):
         if not start.is_close(end):
             return [vme.LineSegment2D(start, end)]
         return [vme.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
-
 
     def circle3d_to_2d(self, circle3d):
         """
@@ -2896,7 +2910,7 @@ class ConicalSurface3D(PeriodicalSurface):
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
-        if primitives2d[0].start != primitives2d[-1].end \
+        if not primitives2d[0].start.is_close(primitives2d[-1].end) \
                 and primitives2d[0].start.y == 0.0 and primitives2d[-1].end.y == 0.0:
             primitives2d.append(vme.LineSegment2D(primitives2d[-1].end, primitives2d[0].start))
 
@@ -3038,7 +3052,7 @@ class SphericalSurface3D(Surface3D):
         start = self.point2d_to_3d(linesegment2d.start)
         interior = self.point2d_to_3d(0.5 * (linesegment2d.start + linesegment2d.end))
         end = self.point2d_to_3d(linesegment2d.end)
-        if start == end or linesegment2d.length() == 2 * math.pi:
+        if start.is_close(end) or linesegment2d.length() == 2 * math.pi:
             u_vector = start - self.frame.origin
             u_vector.normalize()
             v_vector = interior - self.frame.origin
@@ -4078,7 +4092,7 @@ class BSplineSurface3D(Surface3D):
             p1 = self.point3d_to_2d(bspline_curve3d.points[0])
             p2 = self.point3d_to_2d(bspline_curve3d.points[-1])
 
-            if p1 == p2:
+            if p1.is_close(p2):
                 print('BSplineCruve3D skipped because it is too small')
                 linesegments = None
             else:
@@ -4099,7 +4113,7 @@ class BSplineSurface3D(Surface3D):
             if lth > 1e-5:
                 n = len(bspline_curve3d.control_points)
                 points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
-                if points[0] != points[-1]:
+                if not points[0].is_close(points[-1]):
                     linesegment = vme.LineSegment2D(points[0], points[-1])
                     flag_line = True
                     for pt in points:
@@ -4150,7 +4164,7 @@ class BSplineSurface3D(Surface3D):
             points = self._repair_periodic_boundary_points(arc3d, [start, end], 'y')
             start = points[0]
             end = points[1]
-            if start == end:
+            if start.is_close(end):
                 if math.isclose(start.y, min_bound_y, abs_tol=1e-4):
                     end.y = max_bound_y
                 else:
@@ -4677,11 +4691,9 @@ class BSplineSurface3D(Surface3D):
             for j in range(0, points_y):
                 index_points.update({(j, i): p})
                 p = p + 1
-
-        finite_elements_points = []  # 2D grid points index that define one element
-        for j in range(0, points_y - 1):
-            for i in range(0, points_x - 1):
-                finite_elements_points.append(((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1)))
+        # 2D grid points index that define one element
+        finite_elements_points = [((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1))
+                                  for j in range(0, points_y - 1) for i in range(0, points_x - 1)]
         finite_elements = []  # finite elements defined with closed polygon  DEFORMED
         for i in range(0, len(finite_elements_points)):
             finite_elements.append(
@@ -5378,7 +5390,7 @@ class BSplineSurface3D(Surface3D):
 
         :param u: Parametric coordinate u chosen between 0 and 1
         :type u: float
-        :return: Two splitted surfaces
+        :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
 
@@ -5395,7 +5407,7 @@ class BSplineSurface3D(Surface3D):
 
         :param v: Parametric coordinate v chosen between 0 and 1
         :type v: float
-        :return: Two splitted surfaces
+        :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
 
@@ -5412,7 +5424,7 @@ class BSplineSurface3D(Surface3D):
 
         :param bspline_curve3d: A BSplineCurve3d used for cutting
         :type bspline_curve3d: :class:`vme.BSplineCurve3D`
-        :return: Two splitted surfaces
+        :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
 
@@ -6323,7 +6335,7 @@ class Face3D(volmdlr.core.Primitive3D):
         list_open_cutting_contours = []
         list_closed_cutting_contours = []
         for cutting_contour in list_cutting_contours:
-            if cutting_contour.primitives[0].start != cutting_contour.primitives[-1].end:
+            if not cutting_contour.primitives[0].start.is_close(cutting_contour.primitives[-1].end):
                 list_open_cutting_contours.append(cutting_contour)
                 continue
             list_closed_cutting_contours.append(cutting_contour)
@@ -6607,16 +6619,18 @@ class Face3D(volmdlr.core.Primitive3D):
     @staticmethod
     def inner_contour_cutting_points(inner_contour_splitting_points, cutting_contour):
         """
-        Searches the inner contour points where it must be cutted.
+        Searches the inner contour points where it must be cut.
 
         :param inner_contour_splitting_points: all points os intersection with this inner contour.
         :param cutting_contour: first cutting contour being used to cut inner contour.
         :return: point1, point2
         """
-        if cutting_contour.primitives[0].start in inner_contour_splitting_points:
-            index_point1 = inner_contour_splitting_points.index(cutting_contour.primitives[0].start)
+        if volmdlr.core.point_in_list(cutting_contour.primitives[0].start, inner_contour_splitting_points):
+            index_point1 = volmdlr.core.get_point_index_in_list(cutting_contour.primitives[0].start,
+                                                                inner_contour_splitting_points)
         else:
-            index_point1 = inner_contour_splitting_points.index(cutting_contour.primitives[-1].end)
+            index_point1 = volmdlr.core.get_point_index_in_list(cutting_contour.primitives[-1].end,
+                                                                inner_contour_splitting_points)
         if index_point1 != len(inner_contour_splitting_points) - 1:
             index_point2 = index_point1 + 1
         else:
@@ -6636,20 +6650,20 @@ class Face3D(volmdlr.core.Primitive3D):
         :param inner_contour_splitting_points2: splitting points for contour1.
         :return:
         """
-        if (cutting_contour.primitives[0].start != inner_contour_splitting_points1[-1] and
-            cutting_contour.primitives[-1].end != inner_contour_splitting_points2[-1]) or \
-                (cutting_contour.primitives[0].start != inner_contour_splitting_points2[-1] and
-                 cutting_contour.primitives[-1].end != inner_contour_splitting_points2[-1]):
+        if (not cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
+            not cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])) or \
+                (not cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points2[-1]) and
+                 not cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])):
             is_inside1 = True
             is_inside2 = False
-        elif (cutting_contour.primitives[0].start == inner_contour_splitting_points1[-1] and
-              cutting_contour.primitives[-1].end == inner_contour_splitting_points2[-1]):
+        elif (cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
+              cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])):
             is_inside1 = True
             is_inside2 = False
-        elif (cutting_contour.primitives[0].start != inner_contour_splitting_points1[-1] and
-              cutting_contour.primitives[-1].end == inner_contour_splitting_points2[-1]) or \
-                (cutting_contour.primitives[0].start == inner_contour_splitting_points1[-1] and
-                 cutting_contour.primitives[-1].end != inner_contour_splitting_points2[-1]):
+        elif (not cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
+              cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])) or \
+                (cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
+                 not cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])):
             is_inside1 = True
             is_inside2 = True
         else:
@@ -6824,9 +6838,9 @@ class PlaneFace3D(Face3D):
 
     def minimum_distance_points_plane(self, other_plane_face, return_points=False):
         """
-        Given two planefaces, calculates the points which corresponds to the minimal distance between these two faces.
+        Given two plane faces, calculates the points which corresponds to the minimal distance between these two faces.
 
-        :param other_plane_face: second planeface.
+        :param other_plane_face: second plane face.
         :param return_points: boolean to return corresponding points or not.
         :return: minimal distance.
         """
@@ -6873,7 +6887,7 @@ class PlaneFace3D(Face3D):
         for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d +\
                 planeface.inner_contours3d:
             for intersection in contour.line_intersections(face2_plane_interections[0]):
-                if intersection and intersection not in points_intersections:
+                if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
                     points_intersections.append(intersection)
         points_intersections = face2_plane_interections[0].sort_points_along_line(points_intersections)
         planeface_intersections = []
@@ -7211,8 +7225,8 @@ class Triangle3D(PlaneFace3D):
     def _data_eq(self, other_object):
         if other_object.__class__.__name__ != self.__class__.__name__:
             return False
-        self_set = set([self.point1, self.point2, self.point3])
-        other_set = set([other_object.point1, other_object.point2, other_object.point3])
+        self_set = {self.point1, self.point2, self.point3}
+        other_set = {other_object.point1, other_object.point2, other_object.point3}
         if self_set != other_set:
             return False
         return True
@@ -7257,18 +7271,20 @@ class Triangle3D(PlaneFace3D):
         return self._surface2d
 
     def to_dict(self, *args, **kwargs):
-        return {'object_class': 'volmdlr.faces.Triangle3D',
-                'point1': self.point1.to_dict(),
-                'point2': self.point2.to_dict(),
-                'point3': self.point3.to_dict(),
-                'name': self.name}
+        dict_ = {'object_class': 'volmdlr.faces.Triangle3D',
+                 'point1': self.point1.to_dict(),
+                 'point2': self.point2.to_dict(),
+                 'point3': self.point3.to_dict()}
+        if self.name:
+            dict_['name'] = self.name
+        return dict_
 
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
         point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
         point2 = volmdlr.Point3D.dict_to_object(dict_['point2'])
         point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
-        return cls(point1, point2, point3, dict_['name'])
+        return cls(point1, point2, point3, dict_.get('name', ""))
 
     def area(self) -> float:
         """
@@ -7583,279 +7599,6 @@ class CylindricalFace3D(Face3D):
         number_points_y = 0
 
         return number_points_x, number_points_y
-
-    # def range_closest(self, list_points):
-    #     """
-    #     Needs a docstring.
-
-    #     :param list_points:
-    #     :type list_points:
-    #     :return:
-    #     :rtype:
-    #     """
-    #     points_set = volmdlr.core.delete_double_point(list_points)
-    #     points_set3D = CylindricalFace3D.points2d_to3d(None, [points_set],
-    #                                                    self.radius, self.surface3d.frame)
-
-    #     points_3dint = [points_set3D[0]]
-    #     points_2dint = [points_set[0]]
-    #     s = 1
-    #     for k in range(1, len(points_set)):
-    #         closest = points_set3D[s]
-    #         while closest is None:
-    #             s += 1
-    #             closest = points_set3D[s]
-    #         dist_min = (points_3dint[-1] - closest).norm()
-    #         pos = s
-    #         for i in range(s + 1, len(points_set3D)):
-    #             close_test = points_set3D[i]
-    #             if close_test is None:
-    #                 continue
-    #             else:
-    #                 dist_test = (points_3dint[-1] - close_test).norm()
-    #                 if dist_test <= dist_min:
-    #                     dist_min = dist_test
-    #                     closest = close_test
-    #                     pos = i
-    #         points_2dint.append(points_set[pos])
-    #         points_set3D[pos] = None
-
-    #     return points_2dint
-
-    # def minimum_maximum(self, contour2d, radius):
-    #     """"""
-    #     points = contour2d.tessel_points
-    #     min_h, min_theta = min(pt[1] for pt in points), min(pt[0] for pt in points)
-    #     max_h, max_theta = max(pt[1] for pt in points), max(pt[0] for pt in points)
-
-    #     return min_h, min_theta, max_h, max_theta
-
-    # Seems buggy
-    # def minimum_distance_points_cyl(self, other_cyl):
-    #     r1, r2 = self.radius, other_cyl.radius
-    #     min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum(
-    #         self.contours2d[0], r1)
-
-    #     n1 = self.normal
-    #     u1 = self.cylindricalsurface3d.frame.u
-    #     v1 = self.cylindricalsurface3d.frame.v
-    #     frame1 = volmdlr.Frame3D(self.center, u1, v1, n1)
-
-    #     min_h2, min_theta2, max_h2, max_theta2 = self.minimum_maximum(
-    #         other_cyl.contours2d[0], r2)
-
-    #     n2 = other_cyl.normal
-    #     u2 = other_cyl.cylindricalsurface3d.frame.u
-    #     v2 = other_cyl.cylindricalsurface3d.frame.v
-    #     frame2 = volmdlr.Frame3D(other_cyl.center, u2, v2, n2)
-    #     # st2 = volmdlr.Point3D((r2*math.cos(min_theta2), r2*math.sin(min_theta2), min_h2))
-    #     # start2 = frame2.local_to_global_coordinates(st2)
-
-    #     w = other_cyl.center - self.center
-
-    #     n1n1, n1u1, n1v1, n1n2, n1u2, n1v2 = n1.dot(n1), n1.dot(u1), n1.dot(
-    #         v1), n1.dot(n2), n1.dot(u2), n1.dot(v2)
-    #     u1u1, u1v1, u1n2, u1u2, u1v2 = u1.dot(u1), u1.dot(v1), u1.dot(
-    #         n2), u1.dot(u2), u1.dot(v2)
-    #     v1v1, v1n2, v1u2, v1v2 = v1.dot(v1), v1.dot(n2), v1.dot(u2), v1.dot(v2)
-    #     n2n2, n2u2, n2v2 = n2.dot(n2), n2.dot(u2), n2.dot(v2)
-    #     u2u2, u2v2, v2v2 = u2.dot(u2), u2.dot(v2), v2.dot(v2)
-
-    #     w2, wn1, wu1, wv1, wn2, wu2, wv2 = w.dot(w), w.dot(n1), w.dot(
-    #         u1), w.dot(v1), w.dot(n2), w.dot(u2), w.dot(v2)
-
-    #     # x = (theta1, h1, theta2, h2)
-    #     def distance_squared(x):
-    #         return (n1n1 * (x[1] ** 2) + u1u1 * ((math.cos(x[0])) ** 2) * (
-    #                 r1 ** 2) + v1v1 * ((math.sin(x[0])) ** 2) * (r1 ** 2)
-    #                 + w2 + n2n2 * (x[3] ** 2) + u2u2 * (
-    #                         (math.cos(x[2])) ** 2) * (r2 ** 2) + v2v2 * (
-    #                         (math.sin(x[2])) ** 2) * (r2 ** 2)
-    #                 + 2 * x[1] * r1 * math.cos(x[0]) * n1u1 + 2 * x[
-    #                     1] * r1 * math.sin(x[0]) * n1v1 - 2 * x[1] * wn1
-    #                 - 2 * x[1] * x[3] * n1n2 - 2 * x[1] * r2 * math.cos(
-    #                     x[2]) * n1u2 - 2 * x[1] * r2 * math.sin(x[2]) * n1v2
-    #                 + 2 * math.cos(x[0]) * math.sin(x[0]) * u1v1 * (
-    #                         r1 ** 2) - 2 * r1 * math.cos(x[0]) * wu1
-    #                 - 2 * r1 * x[3] * math.cos(
-    #                     x[0]) * u1n2 - 2 * r1 * r2 * math.cos(x[0]) * math.cos(
-    #                     x[2]) * u1u2
-    #                 - 2 * r1 * r2 * math.cos(x[0]) * math.sin(
-    #                     x[2]) * u1v2 - 2 * r1 * math.sin(x[0]) * wv1
-    #                 - 2 * r1 * x[3] * math.sin(
-    #                     x[0]) * v1n2 - 2 * r1 * r2 * math.sin(x[0]) * math.cos(
-    #                     x[2]) * v1u2
-    #                 - 2 * r1 * r2 * math.sin(x[0]) * math.sin(
-    #                     x[2]) * v1v2 + 2 * x[3] * wn2 + 2 * r2 * math.cos(
-    #                     x[2]) * wu2
-    #                 + 2 * r2 * math.sin(x[2]) * wv2 + 2 * x[3] * r2 * math.cos(
-    #                     x[2]) * n2u2 + 2 * x[3] * r2 * math.sin(x[2]) * n2v2
-    #                 + 2 * math.cos(x[2]) * math.sin(x[2]) * u2v2 * (r2 ** 2))
-
-    #     x01 = npy.array([(min_theta1 + max_theta1) / 2, (min_h1 + max_h1) / 2,
-    #                      (min_theta2 + max_theta2) / 2, (min_h2 + max_h2) / 2])
-    #     x02 = npy.array([min_theta1, (min_h1 + max_h1) / 2,
-    #                      min_theta2, (min_h2 + max_h2) / 2])
-    #     x03 = npy.array([max_theta1, (min_h1 + max_h1) / 2,
-    #                      max_theta2, (min_h2 + max_h2) / 2])
-
-    #     minimax = [(min_theta1, min_h1, min_theta2, min_h2),
-    #                (max_theta1, max_h1, max_theta2, max_h2)]
-
-    #     res1 = scp.optimize.least_squares(distance_squared, x01,
-    #                                       bounds=minimax)
-    #     res2 = scp.optimize.least_squares(distance_squared, x02,
-    #                                       bounds=minimax)
-    #     res3 = scp.optimize.least_squares(distance_squared, x03,
-    #                                       bounds=minimax)
-
-    #     pt1 = volmdlr.Point3D(
-    #         (r1 * math.cos(res1.x[0]), r1 * math.sin(res1.x[0]), res1.x[1]))
-    #     p1 = frame1.local_to_global_coordinates(pt1)
-    #     pt2 = volmdlr.Point3D(
-    #         (r2 * math.cos(res1.x[2]), r2 * math.sin(res1.x[2]), res1.x[3]))
-    #     p2 = frame2.local_to_global_coordinates(pt2)
-    #     d = p1.point_distance(p2)
-    #     result = res1
-
-    #     res = [res2, res3]
-    #     for couple in res:
-    #         pttest1 = volmdlr.Point3D((r1 * math.cos(couple.x[0]),
-    #                                    r1 * math.sin(couple.x[0]),
-    #                                    couple.x[1]))
-    #         pttest2 = volmdlr.Point3D((r2 * math.cos(couple.x[2]),
-    #                                    r2 * math.sin(couple.x[2]),
-    #                                    couple.x[3]))
-    #         ptest1 = frame1.local_to_global_coordinates(pttest1)
-    #         ptest2 = frame2.local_to_global_coordinates(pttest2)
-    #         dtest = ptest1.point_distance(ptest2)
-    #         if dtest < d:
-    #             result = couple
-    #             p1, p2 = ptest1, ptest2
-
-    #     pt1_2d, pt2_2d = volmdlr.Point2D(
-    #         (result.x[0], result.x[1])), volmdlr.Point2D(
-    #         (result.x[2], result.x[3]))
-
-    #     if not self.contours2d[0].point_belongs(pt1_2d):
-    #         # Find the closest one
-    #         points_contours1 = self.contours2d[0].tessel_points
-
-    #         poly1 = volmdlr.wires.ClosedPolygon2D(points_contours1)
-    #         d1, new_pt1_2d = poly1.point_border_distance(pt1_2d, return_other_point=True)
-    #         pt1 = volmdlr.Point3D((r1 * math.cos(new_pt1_2d.vector[0]),
-    #                                r1 * math.sin(new_pt1_2d.vector[0]),
-    #                                new_pt1_2d.vector[1]))
-    #         p1 = frame1.local_to_global_coordinates(pt1)
-
-    #     if not other_cyl.contours2d[0].point_belongs(pt2_2d):
-    #         # Find the closest one
-    #         points_contours2 = other_cyl.contours2d[0].tessel_points
-
-    #         poly2 = volmdlr.wires.ClosedPolygon2D(points_contours2)
-    #         d2, new_pt2_2d = poly2.point_border_distance(pt2_2d, return_other_point=True)
-    #         pt2 = volmdlr.Point3D((r2 * math.cos(new_pt2_2d.vector[0]),
-    #                                r2 * math.sin(new_pt2_2d.vector[0]),
-    #                                new_pt2_2d.vector[1]))
-    #         p2 = frame2.local_to_global_coordinates(pt2)
-
-    #     return p1, p2
-
-    # Seems buggy
-    # def minimum_distance_points_plane(self,
-    #                                   planeface):  # Planeface with contour2D
-    #     # ADD THE FACT THAT PLANEFACE.CONTOURS : [0] = contours totale, le reste = trous
-    #     r = self.radius
-    #     min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum(
-    #         self.contours2d[0], r)
-
-    #     n1 = self.normal
-    #     u1 = self.cylindricalsurface3d.frame.u
-    #     v1 = self.cylindricalsurface3d.frame.v
-    #     frame1 = volmdlr.Frame3D(self.center, u1, v1, n1)
-    #     # st1 = volmdlr.Point3D((r*math.cos(min_theta1), r*math.sin(min_theta1), min_h1))
-    #     # start1 = frame1.local_to_global_coordinates(st1)
-
-    #     poly2d = planeface.polygon2D
-    #     pfpoints = poly2d.points
-    #     xmin, ymin = min(pt[0] for pt in pfpoints), min(pt[1] for pt in pfpoints)
-    #     xmax, ymax = max(pt[0] for pt in pfpoints), max(pt[1] for pt in pfpoints)
-    #     origin, vx, vy = planeface.plane.origin, planeface.plane.vectors[0], \
-    #         planeface.plane.vectors[1]
-    #     pf1_2d, pf2_2d = volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D(
-    #         (xmin, ymax))
-    #     pf3_2d, pf4_2d = volmdlr.Point2D((xmax, ymin)), volmdlr.Point2D(
-    #         (xmax, ymax))
-    #     pf1, pf2 = pf1_2d.to_3d(origin, vx, vy), pf2_2d.to_3d(origin, vx, vy)
-    #     pf3, _ = pf3_2d.to_3d(origin, vx, vy), pf4_2d.to_3d(origin, vx, vy)
-
-    #     u, v = (pf3 - pf1), (pf2 - pf1)
-    #     u.normalize()
-    #     v.normalize()
-
-    #     w = pf1 - self.center
-
-    #     n1n1, n1u1, n1v1, n1u, n1v = n1.dot(n1), n1.dot(u1), n1.dot(
-    #         v1), n1.dot(u), n1.dot(v)
-    #     u1u1, u1v1, u1u, u1v = u1.dot(u1), u1.dot(v1), u1.dot(u), u1.dot(v)
-    #     v1v1, v1u, v1v = v1.dot(v1), v1.dot(u), v1.dot(v)
-    #     uu, uv, vv = u.dot(u), u.dot(v), v.dot(v)
-
-    #     w2, wn1, wu1, wv1, wu, wv = w.dot(w), w.dot(n1), w.dot(u1), w.dot(
-    #         v1), w.dot(u), w.dot(v)
-
-    #     # x = (h, theta, x, y)
-    #     def distance_squared(x):
-    #         return (n1n1 * (x[0] ** 2) + ((math.cos(x[1])) ** 2) * u1u1 * (
-    #                 r ** 2) + ((math.sin(x[1])) ** 2) * v1v1 * (r ** 2)
-    #                 + w2 + uu * (x[2] ** 2) + vv * (x[3] ** 2) + 2 * x[
-    #                     0] * math.cos(x[1]) * r * n1u1
-    #                 + 2 * x[0] * math.sin(x[1]) * r * n1v1 - 2 * x[
-    #                     0] * wn1 - 2 * x[0] * x[2] * n1u
-    #                 - 2 * x[0] * x[3] * n1v + 2 * math.sin(x[1]) * math.cos(
-    #                     x[1]) * u1v1 * (r ** 2)
-    #                 - 2 * r * math.cos(x[1]) * wu1 - 2 * r * x[2] * math.cos(
-    #                     x[1]) * u1u
-    #                 - 2 * r * x[3] * math.sin(x[1]) * u1v - 2 * r * math.sin(
-    #                     x[1]) * wv1
-    #                 - 2 * r * x[2] * math.sin(x[1]) * v1u - 2 * r * x[
-    #                     3] * math.sin(x[1]) * v1v
-    #                 + 2 * x[2] * wu + 2 * x[3] * wv + 2 * x[2] * x[3] * uv)
-
-    #     x01 = npy.array([(min_h1 + max_h1) / 2, (min_theta1 + max_theta1) / 2,
-    #                      (xmax - xmin) / 2, (ymax - ymin) / 2])
-
-    #     minimax = [(min_h1, min_theta1, 0, 0),
-    #                (max_h1, max_theta1, xmax - xmin, ymax - ymin)]
-
-    #     res1 = scp.optimize.least_squares(distance_squared, x01,
-    #                                       bounds=minimax)
-
-    #     pt1 = volmdlr.Point3D(
-    #         (r * math.cos(res1.x[1]), r * math.sin(res1.x[1]), res1.x[0]))
-    #     p1 = frame1.local_to_global_coordinates(pt1)
-    #     p2 = pf1 + res1.x[2] * u + res1.x[3] * v
-    #     pt1_2d = volmdlr.Point2D((res1.x[1], res1.x[0]))
-    #     pt2_2d = p2.to_2d(pf1, u, v)
-
-    #     if not self.contours2d[0].point_belongs(pt1_2d):
-    #         # Find the closest one
-    #         points_contours1 = self.contours2d[0].tessel_points
-
-    #         poly1 = volmdlr.wires.ClosedPolygon2D(points_contours1)
-    #         _, new_pt1_2d = poly1.point_border_distance(pt1_2d, return_other_point=True)
-    #         pt1 = volmdlr.Point3D((r * math.cos(new_pt1_2d.vector[0]),
-    #                                r * math.sin(new_pt1_2d.vector[0]),
-    #                                new_pt1_2d.vector[1]))
-    #         p1 = frame1.local_to_global_coordinates(pt1)
-
-    #     if not planeface.contours[0].point_belongs(pt2_2d):
-    #         # Find the closest one
-    #         _, new_pt2_2d = planeface.polygon2D.point_border_distance(pt2_2d, return_other_point=True)
-
-    #         p2 = new_pt2_2d.to_3d(pf1, u, v)
-
-    #     return p1, p2
 
     def minimum_distance(self, other_face, return_points=False):
         if other_face.__class__ is CylindricalFace3D:
@@ -8710,16 +8453,16 @@ class BSplineFace3D(Face3D):
             else:
                 index1 = dis.index(dis_sorted[0])
                 index2 = dis.index(dis_sorted[1])
-            if ((p1.start == points1[index1] and p1.end == points1[index2])
+            if ((p1.start.is_close(points1[index1]) and p1.end.is_close(points1[index2]))
                     or
-                    (p1.end == points1[index1] and p1.start == points1[index2])):
+                    (p1.end.is_close(points1[index1]) and p1.start.is_close(points1[index2]))):
                 shared.append(p1)
                 i = k
 
         for k, p2 in enumerate(contour2.primitives):
-            if ((p2.start == points2[ind[index1]] and p2.end == points2[ind[index2]])
+            if ((p2.start.is_close(points2[ind[index1]]) and p2.end.is_close(points2[ind[index2]]))
                     or
-                    (p2.end == points2[ind[index1]] and p2.start == points2[ind[index2]])):
+                    (p2.end.is_close(points2[ind[index1]]) and p2.start.is_close(points2[ind[index2]]))):
                 shared.append(p2)
                 j = k
 
@@ -10131,7 +9874,7 @@ class ClosedShell3D(OpenShell3D):
         face_combinations = self.intersecting_faces_combinations(shell2, list_coincident_faces, tol)
         intersecting_combinations = self.dict_intersecting_combinations(face_combinations, tol)
 
-        if len(intersecting_combinations) == 0:
+        if not intersecting_combinations:
             return [self, shell2]
 
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)

@@ -23,8 +23,8 @@ class TestCylindricalSurface3D(unittest.TestCase):
         line3d = edges.Line3D(volmdlr.O3D, volmdlr.Point3D(0.3, 0.3, .3))
         line_inters = self.cylindrical_surface.line_intersections(line3d)
         self.assertEqual(len(line_inters), 2)
-        self.assertEqual(line_inters[0], volmdlr.Point3D(0.22627416, 0.22627416, 0.22627416))
-        self.assertEqual(line_inters[1], volmdlr.Point3D(-0.22627416, -0.22627416, -0.22627416))
+        self.assertTrue(line_inters[0].is_close(volmdlr.Point3D(0.22627416, 0.22627416, 0.22627416)))
+        self.assertTrue(line_inters[1].is_close(volmdlr.Point3D(-0.22627416, -0.22627416, -0.22627416)))
 
     def test_plane_intersections(self):
         plane_surface = faces.Plane3D(volmdlr.OZXY)
@@ -113,7 +113,10 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
         # Verifies the inversion operation
         self.assertIsInstance(inv_prof, edges.Arc3D)
-        self.assertEqual(inv_prof, arc4)
+        # self.assertEqual(inv_prof, arc4)
+        self.assertTrue(inv_prof.start.is_close(arc4.start))
+        self.assertTrue(inv_prof.interior.is_close(arc4.interior))
+        self.assertTrue(inv_prof.end.is_close(arc4.end))
 
     def test_contour3d_to_2d(self):
         primitives_cylinder = [edges.LineSegment3D(Point3D(0.03, 0, 0.003), Point3D(0.03, 0, 0.013)),

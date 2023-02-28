@@ -3,15 +3,20 @@ Unit tests for volmdlr.faces.BSplineCurve
 """
 import unittest
 
-import dessia_common
-from geomdl import BSpline
+from dessia_common.core import DessiaObject
+from geomdl import BSpline, utilities
 
 import volmdlr
 import volmdlr.edges as vme
 from volmdlr.models import bspline_curves
 
 
-class TestBSplineCurve(unittest.TestCase):
+class TestBSplineCurve2D(unittest.TestCase):
+    degree = 3
+    points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
+    knotvector = utilities.generate_knot_vector(degree, len(points))
+    knot_multiplicity = [1] * len(knotvector)
+    bspline = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
 
     def test_abscissa(self):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
@@ -20,13 +25,14 @@ class TestBSplineCurve(unittest.TestCase):
         self.assertAlmostEqual(bspline_curve2d.abscissa(point), 7.747599410268476)
 
     def test_line_intersections(self):
-        bspline_curve2d = dessia_common.DessiaObject.load_from_file('edges/bsplinecurve2d_1.json')
+        bspline_curve2d = DessiaObject.load_from_file('edges/bsplinecurve2d_1.json')
         line = vme.Line2D(volmdlr.Point2D(1.263163105753452, -0.002645572020392778),
-                            volmdlr.Point2D(1.263163105753452, -0.001820963841291406))
+                          volmdlr.Point2D(1.263163105753452, -0.001820963841291406))
 
         line_intersections = bspline_curve2d.line_intersections(line)
         self.assertEqual(len(line_intersections), 1)
         self.assertEqual(line_intersections[0], volmdlr.Point2D(1.2631631057526727, -0.0026450894385881708))
+
     def test_discretization_points(self):
         control_points_2d = [volmdlr.Point2D(1.5707963267948966, 2.3),
                              volmdlr.Point2D(1.680890866936472, 2.256043878001211),
@@ -52,7 +58,7 @@ class TestBSplineCurve(unittest.TestCase):
         bspline_curve3d = vme.BSplineCurve3D.from_geomdl_curve(curve)
         # Test discretization with default number of points (20)
         points = bspline_curve3d.discretization_points()
-        self.assertEqual(len(points), 20)
+        self.assertEqual(len(points), 100)
 
         # Test accuracy of first 5 discretized points
         expected_points = [volmdlr.Point3D(0.0, 0.0, 0.0),
@@ -70,6 +76,29 @@ class TestBSplineCurve(unittest.TestCase):
         # Test discretization with angle resolution
         points = bspline_curve2d.discretization_points(angle_resolution=10)
         self.assertEqual(len(points), 31)
+
+    def test_offset(self):
+        offseted_bspline = bspline.offset(-0.2)
+        expected_distances = [0.2, 0.20000160183808904, 0.20053651951715856, 0.20372900125730523, 0.21044118400720574,
+                              0.2192581584663399, 0.22774528008118392, 0.2340440381875313, 0.23739001591364056,
+                              0.2379018126594174, 0.2362014374337063, 0.23307773295678147, 0.22924032294583793,
+                              0.22517329538697972, 0.22109005047384114, 0.21697594011450796, 0.21267059325565962,
+                              0.2079610665048543, 0.20299372351359257, 0.19999999999999987]
+        for i, (p1, p2) in enumerate(zip(bspline.discretization_points(number_points=20),
+                                         offseted_bspline.discretization_points(number_points=20))):
+            self.assertAlmostEqual(p1.point_distance(p2), expected_distances[i], 6)
+
+    def test_point_distance(self):
+        point = volmdlr.Point2D(1.5, 0.1)
+        self.assertAlmostEqual(self.bspline.point_distance(point), 0.08945546033235202)
+        point2 = self.bspline.point_at_abscissa(0.4)
+        self.assertAlmostEqual(self.bspline.point_distance(point2), 0.0, 8)
+
+    def test_point_belongs(self):
+        point = volmdlr.Point2D(1.5, 0.1)
+        self.assertFalse(self.bspline.point_belongs(point))
+        point2 = self.bspline.point_at_abscissa(0.4)
+        self.assertTrue(self.bspline.point_belongs(point2))
 
 
 class TestBSplineCurve3D(unittest.TestCase):

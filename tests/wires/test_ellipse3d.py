@@ -25,7 +25,7 @@ class TestEllipse3D(unittest.TestCase):
                            volmdlr.Point3D(-4, 0, 0),
                            volmdlr.Point3D(0, 3, 0)]
         for expected_point, point in zip(expected_points, discretization_points):
-            self.assertEqual(expected_point, point)
+            self.assertTrue(expected_point.is_close(point))
 
     def test_to_2d(self):
         vector_2 = self.ellipse.normal.cross(self.ellipse.major_dir)

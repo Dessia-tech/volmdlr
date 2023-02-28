@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Common primitives 3D
+Common primitives 3D.
 """
 
 import math
@@ -455,6 +455,10 @@ class Block(volmdlr.faces.ClosedShell3D):
         return lines
 
     def plot2d(self, x3d, y3d, ax=None):
+        """
+        Plot 2d with matplotlib.
+
+        """
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
