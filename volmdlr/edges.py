@@ -1740,6 +1740,22 @@ class BSplineCurve2D(BSplineCurve):
                               weights=self.weights,
                               periodic=self.periodic)
 
+    def offset(self, offset_length: volmdlr.Vector2D):
+        """
+        Offsets a BSplineCurve2D in one of its normal direction.
+
+        :param offset_length: the length taken to offset the BSpline. if positive, the offset is in the normal
+            direction of the curve. if negetive, in the opposite direction of the normal.
+        :return: returns an offseted bsplinecurve2D, created with from_points_interpolation.
+        """
+        unit_normal_vectors = [self.unit_normal_vector(
+            self.abscissa(point)) for point in self.points]
+        offseted_points = [point.translation(normal_vector * offset_length) for point, normal_vector
+                           in zip(self.points, unit_normal_vectors)]
+        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree,
+                                                                    self.periodic)
+        return offseted_bspline
+
     def point_belongs(self, point: volmdlr.Point2D, abs_tol: float = 1e-7):
         """
         Checks if a 2D point belongs to the B-spline curve 2D or not. It uses the point_distance.
