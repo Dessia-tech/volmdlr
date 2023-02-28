@@ -93,6 +93,10 @@ def step_ids_to_str(ids):
 
 @dataclass
 class EdgeStyle:
+    """
+    Data class for styling edges matplotlib plots.
+
+    """
     color: str = 'k'
     alpha: float = 1
     edge_ends: bool = False
