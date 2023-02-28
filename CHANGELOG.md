@@ -18,10 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance improvements
 * BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
+* lighten some dicts with optional name
+
 ### Refactorings
 
 * ContourMixin: to_polygon (for both 2D and 3D)
-
+* BSplineCurve2D.point_distance
+* new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
 ## v0.9.0 [Testing]
 
