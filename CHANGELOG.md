@@ -19,10 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance improvements
 * eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
+* lighten some dicts with optional name
 
 ### Refactorings
 
 * ContourMixin: to_polygon (for both 2D and 3D)
+* new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
 ## Unittests
 * Unittests for Vector2D

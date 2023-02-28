@@ -793,8 +793,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         if com is not False:
             rg = axis_2D.point_distance(com)
             return self.angle * rg * self.contour2d.area()
-        else:
-            return 0
+
+        return 0
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
@@ -1874,12 +1874,11 @@ class Sphere(RevolvedProfile):
         rota_theta = [n * theta for n in range(nb_floor)]
 
         p1 = self.center + volmdlr.X3D * self.radius
-        rota_axis = volmdlr.Y3D
 
         skin_points = []
 
         for t in rota_theta:
-            pt_floor_init = p1.rotation(self.center, rota_axis, t)
+            pt_floor_init = p1.rotation(center=self.center, axis=volmdlr.Y3D, angle=t)
 
             if math.isclose(t, 0, abs_tol=1e-6) or math.isclose(t, math.pi, abs_tol=1e-6):
                 skin_points.append(pt_floor_init)
@@ -1892,8 +1891,7 @@ class Sphere(RevolvedProfile):
                 r_floor = center_floor.point_distance(pt_floor_init)
                 theta_floor = resolution / r_floor
 
-                nb_points_floor = int(2 * math.pi / theta_floor) + 1
-                rota_theta_floor = [n * theta_floor for n in range(nb_points_floor)]
+                rota_theta_floor = [n * theta_floor for n in range(int(2 * math.pi / theta_floor) + 1)]
 
                 if (2 * math.pi - rota_theta_floor[-1]) / theta_floor <= 0.1:
                     rota_theta_floor.pop()

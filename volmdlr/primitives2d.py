@@ -12,6 +12,7 @@ import matplotlib.patches
 import volmdlr
 import volmdlr.edges
 import volmdlr.wires
+from volmdlr.core import EdgeStyle
 from volmdlr.primitives import RoundedLineSegments
 
 
@@ -460,7 +461,8 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         self.unit = unit
         self.type_ = type_
 
-    def plot(self, ax, ndigits=6):
+    def plot(self, ax, edge_style: EdgeStyle()):
+        ndigits = 6
         x1, y1 = self.start
         x2, y2 = self.end
         xm, ym = 0.5 * (self.start + self.end)
@@ -479,12 +481,12 @@ class Measure2D(volmdlr.edges.LineSegment2D):
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
                                                        arrowstyle='<|-|>,head_length=10,head_width=5',
                                                        shrinkA=0, shrinkB=0,
-                                                       color='k')
+                                                       color=edge_style.color)
         elif self.type_ == 'radius':
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
                                                        arrowstyle='-|>,head_length=10,head_width=5',
                                                        shrinkA=0, shrinkB=0,
-                                                       color='k')
+                                                       color=edge_style.color)
 
         ax.add_patch(arrow)
         if x2 - x1 == 0.:

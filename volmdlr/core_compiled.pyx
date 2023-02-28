@@ -11,7 +11,7 @@ import random
 import sys
 import warnings
 # from __future__ import annotations
-from typing import Any, Dict, List, Text, Tuple
+from typing import List, Text, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -490,6 +490,24 @@ class Vector2D(Vector):
                 "x": self.x, "y": self.y,
                 "name": self.name}
 
+    @classmethod
+    def dict_to_object(cls, dict_, *args, **kwargs):
+        """
+        Deserializes a dictionary to a 3 dimensional point.
+
+        :param dict_: The dictionary of a serialized Point3D
+        :type dict_: dict
+        :return:
+        :rtype: :class:`volmdlr.Point3D`
+
+        .. seealso::
+            How `serialization and deserialization`_ works in dessia_common
+
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        """
+        return cls(dict_["x"], dict_["y"], dict_.get("name", ""))
+
     def copy(self, deep=True, memo=None):
         """
         Creates a copy of a 2 dimensional vector.
@@ -897,9 +915,11 @@ class Point2D(Vector2D):
         .. _serialization and deserialization:
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {"object_class": "volmdlr.Point2D",
-                "x": self.x, "y": self.y,
-                "name": self.name}
+        dict_ = {"object_class": "volmdlr.Point2D",
+                 "x": self.x, "y": self.y}
+        if self.name:
+            dict_["name"] = self.name
+        return dict_
 
     def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
         """
@@ -1313,13 +1333,15 @@ class Vector3D(Vector):
         .. _serialization and deserialization:
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {"object_class": "volmdlr.Vector3D",
-                "x": self.x, "y": self.y, "z": self.z,
-                "name": self.name}
+        dict_ = {"object_class": "volmdlr.Vector3D",
+                 "x": self.x, "y": self.y, "z": self.z}
+
+        if self.name:
+            dict_["name"] = self.name
+        return dict_
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = "#"):
+    def dict_to_object(cls, dict_, *args, **kwargs):
         """
         Deserializes a dictionary to a 3 dimensional vector.
 
@@ -1344,7 +1366,7 @@ class Vector3D(Vector):
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
 
-        return Vector3D(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
+        return cls(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
 
     def dot(self, other_vector):
         """
@@ -1915,37 +1937,11 @@ class Point3D(Vector3D):
         .. _serialization and deserialization:
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {"object_class": "volmdlr.Point3D",
-                "x": self.x, "y": self.y, "z": self.z,
-                "name": self.name}
-
-    @classmethod
-    def dict_to_object(cls, dict_, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = "#"):
-        """
-        Deserializes a dictionary to a 3 dimensional point.
-
-        :param dict_: The dictionary of a serialized Point3D
-        :type dict_: dict
-        :param global_dict: The global dictionary. Default value is None
-        :type global_dict: dict, optional
-        :param pointers_memo: A dictionary from path to python object of
-            already serialized values. Default value is None
-        :type pointers_memo: dict, optional
-        :param path: The path in the global object. In most cases, append
-            ‘/attribute_name’ to given path for your attributes.
-            Default value is '#'
-        :type path: str, optional
-        :return:
-        :rtype: :class:`volmdlr.Point3D`
-
-        .. seealso::
-            How `serialization and deserialization`_ works in dessia_common
-
-        .. _serialization and deserialization:
-            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
-        """
-        return Point3D(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
+        dict_ = {"object_class": "volmdlr.Point3D",
+                 "x": self.x, "y": self.y, "z": self.z}
+        if self.name:
+            dict_["name"] = self.name
+        return dict_
 
     def plot(self, ax=None, color="k", alpha=1, marker="o"):
         """
@@ -3351,15 +3347,6 @@ class Frame3D(Basis3D):
                 "v": self.v.to_dict(),
                 "w": self.w.to_dict()
                 }
-
-    # @classmethod
-    # def dict_to_object(cls, dict_, global_dict=None,
-    #                    pointers_memo: Dict[str, Any] = None, path: str = '#'):
-    #     return Frame3D(Point3D.dict_to_object(dict_['origin']),
-    #                    Vector3D.dict_to_object(dict_['u']),
-    #                    Vector3D.dict_to_object(dict_['v']),
-    #                    Vector3D.dict_to_object(dict_['w']),
-    #                    dict_.get('name', ''))
 
     def basis(self):
         """

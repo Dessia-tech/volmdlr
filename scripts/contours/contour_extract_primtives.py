@@ -65,5 +65,5 @@ for i in range(len(axs)):
     point1.plot(ax=axs[i])
     point2.plot(ax=axs[i])
     for prim in extracted_primitives[i]:
-        prim.plot(ax=axs[i], color=colors[i])
+        prim.plot(ax=axs[i], edge_style=volmdlr.edges.EdgeStyle(color=colors[i]))
     axs[i].set_title(titles[i])
