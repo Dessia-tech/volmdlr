@@ -455,6 +455,10 @@ class Block(volmdlr.faces.ClosedShell3D):
         return lines
 
     def plot2d(self, x3d, y3d, ax=None):
+        """
+        Plot 2d with matplotlib.
+
+        """
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')

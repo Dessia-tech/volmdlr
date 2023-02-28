@@ -16,7 +16,7 @@ class TestPlane3D(unittest.TestCase):
     def test_plane_intersections(self):
         plane_intersections = self.plane1.plane_intersection(self.plane2)
         self.assertEqual(len(plane_intersections), 1)
-        self.assertEqual(plane_intersections[0], edges.Line3D(volmdlr.O3D, volmdlr.Point3D(0, 0.707106781, 0)))
+        self.assertEqual(plane_intersections[0], edges.Line3D(volmdlr.O3D, volmdlr.Point3D(0, 0.7071067811865476, 0)))
         no_plane_intersections = self.plane1.plane_intersection(self.plane3)
         self.assertFalse(no_plane_intersections)
 
@@ -36,8 +36,8 @@ class TestPlane3D(unittest.TestCase):
                                    self.plane3.frame.u * 3, self.plane3.frame.w)
         fullarc_intersections = self.plane1.fullarc_intersections(fullarc1)
         self.assertEqual(len(fullarc_intersections), 2)
-        self.assertEqual(fullarc_intersections[0], volmdlr.Point3D(0, 4.645751311, 0))
-        self.assertEqual(fullarc_intersections[1], volmdlr.Point3D(0, -0.645751311, 0))
+        self.assertTrue(fullarc_intersections[0].is_close(volmdlr.Point3D(0, 4.645751311, 0)))
+        self.assertTrue(fullarc_intersections[1].is_close(volmdlr.Point3D(0, -0.645751311, 0)))
         fullarc_intersections2 = self.plane1.fullarc_intersections(fullarc2)
         self.assertFalse(fullarc_intersections2)
 
