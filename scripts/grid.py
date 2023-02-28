@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 import volmdlr
 import volmdlr.grid
+from volmdlr.core import EdgeStyle
 
 # %% Grid2D
 
@@ -42,4 +43,4 @@ for i, ax in enumerate(axs):
     ax.set_title(titles[i])
     if i == 1:
         for pattern in patterns:
-            pattern.plot(ax=ax, color='b')    
+            pattern.plot(ax=ax, edge_style=EdgeStyle(color='b'))

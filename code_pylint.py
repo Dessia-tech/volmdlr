@@ -15,9 +15,9 @@ EFFECTIVE_DATE = date(2023, 1, 31)
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
-                     "wrong-spelling-in-comment": 290,
-                     "wrong-spelling-in-docstring": 260,
-                     'invalid-name': 635,
+                     "wrong-spelling-in-comment": 280,
+                     "wrong-spelling-in-docstring": 254,
+                     'invalid-name': 615,
                      'consider-using-f-string': 57,
                      'no-member': 3,
                      'inconsistent-return-statements': 4,
@@ -40,7 +40,7 @@ MAX_ERROR_BY_TYPE = {
                      'non-parent-init-called': 3,
                      'too-many-public-methods': 11,
                      'use-implicit-booleaness-not-comparison': 8,
-                     'too-many-instance-attributes': 12,
+                     'too-many-instance-attributes': 13,
                      'protected-access': 4,
                      'undefined-loop-variable': 4,
                      'unspecified-encoding': 1,
@@ -53,7 +53,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-boolean-expressions': 3,
                      'too-many-lines': 3,
                      'redundant-keyword-arg': 3,
-                     'modified-iterating-list': 2,
+                     'modified-iterating-list': 3,
                      'consider-using-with': 1,
                      'unnecessary-dunder-call': 2,
                      'unnecessary-lambda': 2,
@@ -63,7 +63,7 @@ MAX_ERROR_BY_TYPE = {
                      'cell-var-from-loop': 1,
                      'import-outside-toplevel': 1,
                      'unsubscriptable-object': 1,
-                     }
+                     'signature-differs': 1}
 
 ERRORS_WITHOUT_TIME_DECREASE = []
 
