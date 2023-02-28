@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+### Changed
+
+- argument convexe in volmdlr.cloud has been renamed to convex
+
 ### Performance improvements
 * BSplinecurve2D: point_belongs
 * lighten some dicts with optional name
