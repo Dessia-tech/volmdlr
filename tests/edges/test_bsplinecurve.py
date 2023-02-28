@@ -11,7 +11,7 @@ import volmdlr.edges as vme
 from volmdlr.models import bspline_curves
 
 
-class TestBSplineCurve(unittest.TestCase):
+class TestBSplineCurve2D(unittest.TestCase):
 
     def test_abscissa(self):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
@@ -73,11 +73,6 @@ class TestBSplineCurve(unittest.TestCase):
         self.assertEqual(len(points), 31)
 
     def test_offset(self):
-        degree = 3
-        points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
-        knotvector = utilities.generate_knot_vector(degree, len(points))
-        knot_multiplicity = [1] * len(knotvector)
-        bspline = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
         offseted_bspline = bspline.offset(-0.2)
         expected_distances = [0.2, 0.20000160183808904, 0.20053651951715856, 0.20372900125730523, 0.21044118400720574,
                               0.2192581584663399, 0.22774528008118392, 0.2340440381875313, 0.23739001591364056,
@@ -87,6 +82,17 @@ class TestBSplineCurve(unittest.TestCase):
         for i, (p1, p2) in enumerate(zip(bspline.discretization_points(number_points=20),
                                          offseted_bspline.discretization_points(number_points=20))):
             self.assertAlmostEqual(p1.point_distance(p2), expected_distances[i], 6)
+
+    def test_point_distance(self):
+        degree = 3
+        points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
+        knotvector = utilities.generate_knot_vector(degree, len(points))
+        knot_multiplicity = [1] * len(knotvector)
+        bspline = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
+        point = volmdlr.Point2D(1.5, 0.1)
+        self.assertAlmostEqual(bspline.point_distance(point), 0.08945546033235202)
+        point2 = bspline.point_at_abscissa(0.4)
+        self.assertEqual(bspline.point_distance(point2), 8.41148791769493e-08)
 
 
 class TestBSplineCurve3D(unittest.TestCase):
