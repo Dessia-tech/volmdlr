@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Write .msh file (with stream)
 * Arc: reverse
+* BSplineCurve2D: offset
 * Circle2D: bsplinecurve_intersections, point_distance
 
 ### Fixed
@@ -28,8 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
 ### Unittests
-
-* BSplineCurve2D: point_distance, point_belongs
+* BSplineCurve2D: offset, point_distance, point_belongs
 * Circle2D: bspline_intersections, point_distance
 
 ## v0.9.0 [Testing]

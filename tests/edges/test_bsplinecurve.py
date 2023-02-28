@@ -27,7 +27,7 @@ class TestBSplineCurve2D(unittest.TestCase):
     def test_line_intersections(self):
         bspline_curve2d = DessiaObject.load_from_file('edges/bsplinecurve2d_1.json')
         line = vme.Line2D(volmdlr.Point2D(1.263163105753452, -0.002645572020392778),
-                            volmdlr.Point2D(1.263163105753452, -0.001820963841291406))
+                          volmdlr.Point2D(1.263163105753452, -0.001820963841291406))
 
         line_intersections = bspline_curve2d.line_intersections(line)
         self.assertEqual(len(line_intersections), 1)
@@ -76,6 +76,17 @@ class TestBSplineCurve2D(unittest.TestCase):
         # Test discretization with angle resolution
         points = bspline_curve2d.discretization_points(angle_resolution=10)
         self.assertEqual(len(points), 31)
+
+    def test_offset(self):
+        offseted_bspline = bspline.offset(-0.2)
+        expected_distances = [0.2, 0.20000160183808904, 0.20053651951715856, 0.20372900125730523, 0.21044118400720574,
+                              0.2192581584663399, 0.22774528008118392, 0.2340440381875313, 0.23739001591364056,
+                              0.2379018126594174, 0.2362014374337063, 0.23307773295678147, 0.22924032294583793,
+                              0.22517329538697972, 0.22109005047384114, 0.21697594011450796, 0.21267059325565962,
+                              0.2079610665048543, 0.20299372351359257, 0.19999999999999987]
+        for i, (p1, p2) in enumerate(zip(bspline.discretization_points(number_points=20),
+                                         offseted_bspline.discretization_points(number_points=20))):
+            self.assertAlmostEqual(p1.point_distance(p2), expected_distances[i], 6)
 
     def test_point_distance(self):
         point = volmdlr.Point2D(1.5, 0.1)
