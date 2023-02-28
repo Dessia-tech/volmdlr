@@ -126,7 +126,7 @@ class PointCloud3D(dc.DessiaObject):
 
         # Offsetting
         if offset != 0:
-            initial_polygon2d = [cloud2d.to_polygon(convexe=True) for cloud2d in subcloud2d]
+            initial_polygon2d = [cloud2d.to_polygon(convex=True) for cloud2d in subcloud2d]
             position_plane, initial_polygon2d = self.offset_to_shell(position_plane, initial_polygon2d, offset)
         else:
             initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
@@ -314,12 +314,12 @@ class PointCloud2D(dc.DessiaObject):
             point.plot(ax=ax, color=color)
         return ax
 
-    def to_polygon(self, convexe=False):
+    def to_polygon(self, convex=False):
         if not self.points:
             return None
 
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
-        if convexe:
+        if convex:
             polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
         else:
             polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.2, 0.000005)
