@@ -1353,7 +1353,7 @@ class Plane3D(Surface3D):
         """
         Calculates the intersections between a Plane 3D and a FullArc 3D.
 
-        :param fullarc: fullarc to verify intersections.
+        :param fullarc: full arc to verify intersections.
         :return: list of intersections: List[volmdlr.Point3D].
         """
         fullarc_plane = Plane3D(fullarc.frame)
@@ -1855,7 +1855,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :type ax: Axes3D or None
         :param color: color of the wireframe plot. Default is 'grey'.
         :type color: str
-        :param alpha: transparency of the wireframe plot. Default is 0.5.
+        :param alpha: transparency of the wire frame plot. Default is 0.5.
         :type alpha: float
         :param z: additional keyword arguments to pass the value of z to cut the surface.
         :type z: float
@@ -6834,9 +6834,9 @@ class PlaneFace3D(Face3D):
 
     def minimum_distance_points_plane(self, other_plane_face, return_points=False):
         """
-        Given two planefaces, calculates the points which corresponds to the minimal distance between these two faces.
+        Given two plane faces, calculates the points which corresponds to the minimal distance between these two faces.
 
-        :param other_plane_face: second planeface.
+        :param other_plane_face: second plane face.
         :param return_points: boolean to return corresponding points or not.
         :return: minimal distance.
         """
