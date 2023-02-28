@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Write .msh file (with stream)
 * Arc: reverse
 * BSplineCurve2D: offset
-* Circle2D: bsplinecurve_intersections, point_distance
+* Circle2D: bsplinecurve_intersections, point_distance.
 
 ### Fixed
 
