@@ -4100,7 +4100,7 @@ class Circle2D(Contour2D):
 
     def bsplinecurve_intersections(self, bsplinecurve: volmdlr.edges.BSplineCurve2D, abs_tol: float = 1e-7):
         """
-        Caculates the intersections between a circle 2d and a BSpline Curve 2D.
+        Calculates the intersections between a circle 2d and a BSpline Curve 2D.
 
         :param bsplinecurve: bsplinecurve to search for intersections.
         :param abs_tol: tolerance to be considered while validating an intersection.

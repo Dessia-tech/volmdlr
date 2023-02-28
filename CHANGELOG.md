@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+### Changed
+
+- argument convexe in volmdlr.cloud has been renamed to convex
+
 ### Performance improvements
 * eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
 * BSplinecurve2D: point_belongs
