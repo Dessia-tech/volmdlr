@@ -4063,8 +4063,8 @@ class LineSegment3D(LineSegment):
         else:
             fig = ax.figure
 
-        edge2D = self.plane_projection2d(volmdlr.O3D, x_3D, y_3D)
-        edge2D.plot(ax=ax, edge_style=EdgeStyle(color=color, width=width))
+        edge2d = self.plane_projection2d(volmdlr.O3D, x_3D, y_3D)
+        edge2d.plot(ax=ax, edge_style=EdgeStyle(color=color, width=width))
         return ax
 
     def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,

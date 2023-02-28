@@ -3562,8 +3562,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                             line_segment2])
         if ax is not None:
             middle_point.plot(ax=ax, color='r')
-            line_segment1.plot(ax=ax, color='y')
-            line_segment2.plot(ax=ax, color='b')
+            line_segment1.plot(ax=ax, edge_style=EdgeStyle(color='y'))
+            line_segment2.plot(ax=ax, edge_style=EdgeStyle(color='b'))
             closing_point.plot(ax=ax)
             raise NotImplementedError('There should not be a plot inside this method')
 
@@ -5765,7 +5765,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
         if not ClosedPolygon3D.is_sewing_forward(closing_point_index, list_closing_point_indexes):
             if closing_point_index > last_index - 10 and closing_point_index != last_index - 1:
-                if closing_point_index - 1 in list_closing_point_indexes and closing_point_index + 1 in list_closing_point_indexes:
+                if closing_point_index - 1 in list_closing_point_indexes and\
+                        closing_point_index + 1 in list_closing_point_indexes:
                     closing_point_index = last_index
                     return closing_point_index, list_remove_closing_points, passed_by_zero_index
 
