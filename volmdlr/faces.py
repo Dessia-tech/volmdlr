@@ -241,7 +241,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def split_by_lines(self, lines):
         """
-        Returns a list of cutted surfaces given by the lines provided as argument.
+        Returns a list of cut surfaces given by the lines provided as argument.
         """
         cutted_surfaces = []
         iteration_surfaces = self.cut_by_line(lines[0])
@@ -277,7 +277,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def cut_by_line(self, line: vme.Line2D):
         """
-        Returns a list of cutted Surface2D by the given line.
+        Returns a list of cut Surface2D by the given line.
 
         :param line: The line to cut the Surface2D with.
         :type line: :class:`volmdlr.edges.Line2D`
@@ -5378,7 +5378,7 @@ class BSplineSurface3D(Surface3D):
 
         :param u: Parametric coordinate u chosen between 0 and 1
         :type u: float
-        :return: Two splitted surfaces
+        :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
 
@@ -5395,7 +5395,7 @@ class BSplineSurface3D(Surface3D):
 
         :param v: Parametric coordinate v chosen between 0 and 1
         :type v: float
-        :return: Two splitted surfaces
+        :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
 
@@ -5412,7 +5412,7 @@ class BSplineSurface3D(Surface3D):
 
         :param bspline_curve3d: A BSplineCurve3d used for cutting
         :type bspline_curve3d: :class:`vme.BSplineCurve3D`
-        :return: Two splitted surfaces
+        :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
 
@@ -6607,7 +6607,7 @@ class Face3D(volmdlr.core.Primitive3D):
     @staticmethod
     def inner_contour_cutting_points(inner_contour_splitting_points, cutting_contour):
         """
-        Searches the inner contour points where it must be cutted.
+        Searches the inner contour points where it must be cut.
 
         :param inner_contour_splitting_points: all points os intersection with this inner contour.
         :param cutting_contour: first cutting contour being used to cut inner contour.

@@ -2289,7 +2289,7 @@ class Arc(Edge):
         """
         Gets the points that define an Arc to use them in a .geo file.
 
-        :return: A list of caracteristic arc points
+        :return: A list of characteristic arc points
         :rtype: List
 
         """
@@ -2881,7 +2881,7 @@ class Arc2D(Arc):
         """
         Splits arc at a given point.
 
-        :param split_point: spliting point.
+        :param split_point: splitting point.
         :return: list of two Arc2D.
         """
         abscissa = self.abscissa(split_point)
