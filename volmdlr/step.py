@@ -1094,7 +1094,7 @@ class StepReaderReport:
     total_number_of_faces: int = 0
     faces_read: int = 0
     sucess_rate: float = 0.0
-    errors: list[int] = field(default_factory=list)
+    errors: list = field(default_factory=list)
 
 
 STEP_TO_VOLMDLR = {
