@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc: reverse
 * BSplineCurve2D: offset
 * Circle2D: bsplinecurve_intersections, point_distance
+* Add dimensionned surface3D
 
 ### Fixed
 
@@ -57,7 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * RevolutionFace3D
 * WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D.
 * ConicalSurface3D, CylindricalSurface3D: plot method
-
 
 ### Fixed
 
