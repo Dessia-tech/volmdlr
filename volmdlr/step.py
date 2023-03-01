@@ -1087,6 +1087,9 @@ class Step(dc.DessiaObject):
 
 @dataclass
 class StepReaderReport:
+    """
+    Data class to save a report after translating a step file to volmdlr object.
+    """
     step_name: str = " "
     total_number_of_faces: int = 0
     faces_read: int = 0
