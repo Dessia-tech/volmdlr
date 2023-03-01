@@ -134,7 +134,7 @@ def named_unit_plane_angle_unit_si_unit(arguments, object_dict):
 
 def plane_angle_measure_with_unit(arguments, object_dict):
     """
-    Returns the angle plane measure with the rigth unit.
+    Returns the angle plane measure with the right unit.
 
     :param arguments: step primitive arguments
     :param object_dict: dictionary containing already instantiated objects.
@@ -871,7 +871,7 @@ class Step(dc.DessiaObject):
                 argument.append(arg_id)
                 arguments[i] = argument
 
-    def instanciate(self, name, arguments, object_dict):
+    def instantiate(self, name, arguments, object_dict):
         """
         Gives the volmdlr object related to the step function.
         """
@@ -969,7 +969,7 @@ class Step(dc.DessiaObject):
                     for instanciate_id in instanciate_ids[::-1]:
                         t = time.time()
                         arguments = self.functions[instanciate_id].arg[:]
-                        volmdlr_object = self.instanciate(
+                        volmdlr_object = self.instantiate(
                             self.functions[instanciate_id].name,
                             self.functions[instanciate_id].arg[:], object_dict)
                         t = time.time() - t

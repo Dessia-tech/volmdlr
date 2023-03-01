@@ -49,6 +49,36 @@ END-ISO-10303-21;
 '''
 
 
+def point_in_list(point, list_points, tol: float = 1e-6):
+    """
+    Verifies if a point is inside a list  of points, considering a certain tolerance.
+
+    :param point: Point to be verified inside list.
+    :param list_points: List of points to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: True if there is a point inside the list close to the point to given tolerance.
+    """
+    for point_i in list_points:
+        if point.is_close(point_i, tol):
+            return True
+    return False
+
+
+def get_point_index_in_list(point, list_points, tol: float = 1e-6):
+    """
+    Gets the index a point inside a list of points, considering a certain tolerance.
+
+    :param point: Point to be verified inside list.
+    :param list_points: List of points to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: The point index.
+    """
+    for i, point_i in enumerate(list_points):
+        if point_i.is_close(point):
+            return i
+    raise ValueError(f'{point} is not in list')
+
+
 def determinant(vec1, vec2, vec3):
     """
     Calculates the determinant for a three vector matrix.
