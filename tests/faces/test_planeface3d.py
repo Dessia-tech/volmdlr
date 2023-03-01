@@ -46,9 +46,8 @@ class TestPlaneFace3D(unittest.TestCase):
         R = 0.15
         cylindricalsurface = volmdlr.faces.CylindricalSurface3D(volmdlr.OXYZ, R)
         face = cylindricalsurface.rectangular_cut(0, volmdlr.TWO_PI, -.25, .25)
-        plane = volmdlr.faces.Plane3D(volmdlr.OZXY)
         """ ========== CIRCLE3D ========="""
-        plane_face_3 = self.plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi/2)
+        plane_face_3 = self.plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2)
         face_intersections = plane_face_3.face_intersections(face)
         self.assertEqual(len(face_intersections), 1)
         self.assertIsInstance(face_intersections[0], wires.Circle3D)
@@ -61,29 +60,32 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertIsInstance(face_intersections[0].primitives[0], wires.Ellipse3D)
         self.assertEqual(face_intersections[0].primitives[0].center, volmdlr.O3D)
         self.assertAlmostEqual(face_intersections[0].primitives[0].major_axis, 0.21213203435596426)
-        self.assertEqual(face_intersections[0].primitives[0].major_dir, volmdlr.Vector3D(0, 0.7071067811865475, -0.7071067811865475))
+        self.assertTrue(face_intersections[0].primitives[0].major_dir.is_close(volmdlr.Vector3D(0, 0.7071067811865475,
+                                                                                                -0.7071067811865475)))
         """ ========== THREE ARC ELLIPSES ========="""
-        plane_face_3 = self.plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi/7)
+        plane_face_3 = self.plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 7)
         face_intersections = plane_face_3.face_intersections(face)
         self.assertEqual(len(face_intersections), 3)
         for inter in face_intersections:
             self.assertIsInstance(inter.primitives[0], edges.ArcEllipse3D)
         self.assertEqual(face_intersections[0].primitives[0].center, volmdlr.O3D)
-        self.assertAlmostEqual(face_intersections[0].primitives[0].Gradius,0.3457147306439571)
+        self.assertEqual(face_intersections[0].primitives[0].major_dir, volmdlr.Point3D(
+            2.6567716615652136e-17, 0.4338837391180807, -0.9009688679021675))
+        self.assertAlmostEqual(face_intersections[0].primitives[0].Gradius, 0.3457147306439571)
         list_expected_points = [[volmdlr.Point3D(0.08947272158306664, 0.12039365470206077, -0.25),
-                            volmdlr.Point3D(0.13401661881546628, 0.0673761521702598, -0.13990802160005056),
-                            volmdlr.Point3D(0.15, 0.0, 0.0)],
-                           [volmdlr.Point3D(0.15, 0.0, 0.0),
-                            volmdlr.Point3D(0.1340166188154663, -0.0673761521702598, 0.13990802160005056),
-                            volmdlr.Point3D(0.08947272158306664, -0.12039365470206077, 0.25)],
-                           [volmdlr.Point3D(-0.08947272158306664, -0.12039365470206077, 0.25),
-                            volmdlr.Point3D(-0.15, 0.0, 0.0),
-                            volmdlr.Point3D(-0.08947272158306664, 0.12039365470206077, -0.25)]]
+                                 volmdlr.Point3D(0.13401661881546628, 0.0673761521702598, -0.13990802160005056),
+                                 volmdlr.Point3D(0.15, 0.0, 0.0)],
+                                [volmdlr.Point3D(0.15, 0.0, 0.0),
+                                 volmdlr.Point3D(0.1340166188154663, -0.0673761521702598, 0.13990802160005056),
+                                 volmdlr.Point3D(0.08947272158306664, -0.12039365470206077, 0.25)],
+                                [volmdlr.Point3D(-0.08947272158306664, -0.12039365470206077, 0.25),
+                                 volmdlr.Point3D(-0.15, 0.0, 0.0),
+                                 volmdlr.Point3D(-0.08947272158306664, 0.12039365470206077, -0.25)]]
         for expected_points, wire in zip(list_expected_points, face_intersections):
             arcellipse = wire.primitives[0]
-            self.assertEqual(expected_points[0], arcellipse.start)
-            self.assertEqual(expected_points[1], arcellipse.interior)
-            self.assertEqual(expected_points[2], arcellipse.end)
+            self.assertTrue(expected_points[0].is_close(arcellipse.start))
+            self.assertTrue(expected_points[1].is_close(arcellipse.interior))
+            self.assertTrue(expected_points[2].is_close(arcellipse.end))
         """ ========== TWO PARALLEL LINES ========="""
         plane_face_3 = self.plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi)
         face_intersections = plane_face_3.face_intersections(face)
@@ -96,6 +98,7 @@ class TestPlaneFace3D(unittest.TestCase):
         face_intersections = plane_face_3.face_intersections(face)
         self.assertEqual(face_intersections[0].primitives[0], edges.LineSegment3D(volmdlr.Point3D(0.0, 0.15, -0.25),
                                                                                   volmdlr.Point3D(0.0, 0.15, 0.25)))
+
     def test_linesegment_inside(self):
         lineseg = volmdlr.edges.LineSegment3D(volmdlr.Point3D(0.2, 0, -0.2), volmdlr.Point3D(0.1, 0.0, 0.2))
         self.assertTrue(self.plane_face_cylindricalface_intersec.linesegment_inside(lineseg))

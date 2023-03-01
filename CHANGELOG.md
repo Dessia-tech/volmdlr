@@ -5,8 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.10.0 [Unreleased yet]
 
-## v0.9.0 [Unreleased yet]
+### New Features
+
+* Write .msh file (with stream)
+* Arc: reverse
+* BSplineCurve2D: offset
+* Circle2D: bsplinecurve_intersections, point_distance
+* Add dimensionned surface3D
+
+### Fixed
+
+
+### Removed
+
+### Changed
+
+- argument convexe in volmdlr.cloud has been renamed to convex
+
+### Performance improvements
+* eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
+* BSplinecurve2D: point_belongs
+* lighten some dicts with optional name
+
+### Refactorings
+
+* ContourMixin: to_polygon (for both 2D and 3D)
+* BSplineCurve2D.point_distance
+* new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
+
+### Unittests
+* BSplineCurve2D: offset, point_distance, point_belongs
+* Circle2D: bspline_intersections, point_distance
+* Unittests for Vector2D
+* Unittests for Point2D
+* Unittests for Vector3D
+* Unittests for Point3D
+
+## v0.9.0 [Testing]
 
 ### New Features
 
@@ -19,7 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Create .geo and .msh files (Mesh geometries with GMSH)
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
-* Add dimensionned surface3D
+* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D.
+* ConicalSurface3D, CylindricalSurface3D: plot method
 
 ### Fixed
 
@@ -32,28 +70,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Parametric operations with BSpline curves.
 * OpenTriangleShell3D: fix from_mesh_data method.
 * PeriodicalSurface: fix face from contours.
+* LineSegment2D.line_intersections: verify if colinear first.
 * Cylinder: to_dict, min_distance_to_other_cylinder.
+* Step_assemblies: consider when no transformation is needed.
+* fix some pydocstyle errors
+* Script/step/workflow: Update Workflow, use last version of dessia_common
+* LineSegment3D: Rotation method update due to points attribute deletion
+* ConicalSurface3D: fix from_step class method by adding the angle convertion factor
+* fix f string usage
 
 ### Removed
 
+* edges: remove attributes points from lines & linesegments for performance purpose
+
 
 ### Performance improvements
+
 * wires.py's 2D objects: chache bounding_rectangle results
 * faces.py's Triangle3D objects: subdescription points and triangles
 * EdgeCollection3D: new object for displaying series of edges
 * BSplineSurface3D: compile BSplineSurface3D.derivatives
+* Contour2D.area(): save area in a cache variable.
+* Contour2D.__eq__(): verify contour length first, when verify if two contours are the same.
+* Contour2D.is_inside(): verify first if the area of the contour2 is not smaller that contour 1.
+* Disabling pointer in to_dict for most primitives
+* Better hash for shells, contours & wires 
+
 
 ### Refactorings
+- Remove usage of deprecated method old_coordinates and new_coordinates
+- Indicate 'inplace' methods as deprecated
+
 
 ### Documentation
 - BoundingBox docstrings
 
 ### Unittests
-ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
+* ConicalSurface3D: face_from_contours, bsplinecurve3d_to_2d.
+* CompositePrimitive2D: rotation, translation, frame_mapping
+* core.py: delete_double_point, step_ids_to_str
+* CompositePrimitive3D: plot
+* BoundingRectangle: bounds, plot, area, center, b_rectangle_intersection, is_inside_b_rectangle, point_belongs,
+intersection_area, distance_to_b_rectangle, distance_to_point
+* BoundingBox: center, add, to_dict, points, from_bounding_boxes, from_points, to_frame, volume, bbox_intersection,
+is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_to_point, plot
+* VolumeModel: eq, volume, rotation, translation, frame_mapping, bounding_box, plot
 
-## CI
+### CI
 - add spell check to pylint with pyenchant
 - make code_pydocstyle more explicit
+- upload html coverage to cdn.dessia.tech
+
 
 ## v0.8.0 [Released 26/01/2023]
 
@@ -129,9 +196,12 @@ abscissa(), point_angle_with_major_dir(), area(), rotation(), tranlation(), fram
 * cache variable self._polygon_point_belongs_100, to avoid recalculating each
 time we have to verify if a point is inside
 * Improvements in BSplineSurface3D.point3d_to_2d performance
-
+* Triangle3D serialization speed-up
+* Serialization without memo for faces
+* Custom serialization for BsplineCurves
 
 ### Refactorings
+
 * Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated.
 local_to_global_coordinates and global_to_local_coordinates are the new more explicit ones.
 * Line3D: intersections

@@ -46,20 +46,20 @@ class TestClosedShell3D(unittest.TestCase):
 
         box_red = primitives3d.Block(
             volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(0.4, 0, 0),
-                       volmdlr.Vector3D(0, 0.4, 0), volmdlr.Vector3D(0, 0, 0.4)),
+                            volmdlr.Vector3D(0, 0.4, 0), volmdlr.Vector3D(0, 0, 0.4)),
             color=(0.2, 1, 0.4), alpha=0.6)
         box_green = box_red.frame_mapping(volmdlr.Frame3D(volmdlr.Point3D(-0.4, 0, -0.1), volmdlr.Vector3D(1, 0, 0),
-                                                     volmdlr.Vector3D(0, 1, 0), volmdlr.Vector3D(0, 0, 1)), 'new')
+                                                          volmdlr.Vector3D(0, 1, 0), volmdlr.Vector3D(0, 0, 1)), 'new')
         union_red_green_boxes = box_red.union(box_green)[0]
         union_red_green_boxes.merge_faces()
         self.assertEqual(len(union_red_green_boxes.faces), 10)
 
         box_blue = primitives3d.Block(
             volmdlr.Frame3D(volmdlr.Point3D(0.1, 0, 0), volmdlr.Vector3D(0.2, 0, 0),
-                       volmdlr.Vector3D(0, 0.1, 0), volmdlr.Vector3D(0, 0, 1)),
+                            volmdlr.Vector3D(0, 0.1, 0), volmdlr.Vector3D(0, 0, 1)),
             alpha=0.6)
         box_blue2 = box_blue.frame_mapping(volmdlr.Frame3D(volmdlr.Point3D(0.2, 0, 0), volmdlr.Vector3D(1, 0, 0),
-                                                      volmdlr.Vector3D(0, 1.8, 0), volmdlr.Vector3D(0, 0, 1)), 'old')
+                                                           volmdlr.Vector3D(0, 1.8, 0), volmdlr.Vector3D(0, 0, 1)), 'old')
         union_blue_blue2_boxes = box_blue.union(box_blue2)[0]
         union_blue_blue2_boxes.merge_faces()
         self.assertEqual(len(union_blue_blue2_boxes.faces), 10)

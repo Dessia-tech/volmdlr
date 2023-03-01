@@ -4,7 +4,7 @@ from string import Template
 
 import pkg_resources
 
-babylon_unpacker_cdn_header = '''
+BABYLON_UNPACKER_CDN_HEADER = '''
 <!doctype html>
 <html>
 <head>
@@ -32,7 +32,7 @@ babylon_unpacker_cdn_header = '''
 </head>
 '''
 
-babylon_unpacker_embedded_header = '''
+BABYLON_UNPACKER_EMBEDDED_HEADER = '''
 <!doctype html>
 <html>
 <head>
@@ -59,15 +59,15 @@ for filename in ['babylon.js', 'babylonjs.loaders.min.js', 'earcut.min.js', 'pep
     with pkg_resources.resource_stream(
             pkg_resources.Requirement('volmdlr'),
             os.path.join('volmdlr/assets/js/', filename)) as fjs:
-        babylon_unpacker_embedded_header += fjs.read().decode('utf-8')
+        BABYLON_UNPACKER_EMBEDDED_HEADER += fjs.read().decode('utf-8')
 
-babylon_unpacker_embedded_header += '''
+BABYLON_UNPACKER_EMBEDDED_HEADER += '''
       </script>
 </head>
 '''
 
 
-babylon_unpacker_body_template = Template(
+BABYLON_UNPACKER_BODY_TEMPLATE = Template(
     '''
 <body>
    <canvas id="renderCanvas"></canvas>

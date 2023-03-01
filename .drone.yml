@@ -9,7 +9,6 @@ steps:
   when:
     event: push
     branch: master
-  failure: ignore
   commands:
   - cd /tmp
   - git clone $DRONE_GIT_HTTP_URL
@@ -25,7 +24,6 @@ steps:
   when:
     event: push
     branch: testing
-  failure: ignore
   commands:
   - cd /tmp
   - git clone $DRONE_GIT_HTTP_URL
@@ -111,6 +109,7 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
+
 - name: generate sdist
   image: python:3.8
   commands:
@@ -147,6 +146,20 @@ steps:
     username: drone
     password:
       from_secret: ssh_drone_password
+
+- name: upload coverage
+  image: appleboy/drone-scp
+  when:
+    event: push
+  settings:
+    host: magenta.dessia.tech
+    target: /var/www/cdn/volmdlr/coverage/${DRONE_BRANCH}
+    source: htmlcov/*
+    strip_components: 1
+    username: drone
+    password:
+      from_secret: ssh_drone_password
+
 
 
 volumes:

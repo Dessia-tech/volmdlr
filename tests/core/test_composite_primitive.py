@@ -1,16 +1,17 @@
 import unittest
 import volmdlr
 import volmdlr.edges
-import volmdlr.core
+from volmdlr.core import CompositePrimitive
 
 
 class TestCompositePrimitive(unittest.TestCase):
     def setUp(self):
-        self.primitive1 =volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.Point2D(volmdlr.TWO_PI, 0))
-        self.primitive2 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(volmdlr.TWO_PI, 0),
-                                                      volmdlr.Point2D(volmdlr.TWO_PI, 0.003))
+        self.primitive1 = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.Point2D(volmdlr.TWO_PI, 0.0))
+        self.primitive2 = volmdlr.edges.LineSegment2D(
+            volmdlr.Point2D(volmdlr.TWO_PI, 0.0), volmdlr.Point2D(volmdlr.TWO_PI, 0.003)
+        )
         self.primitives = [self.primitive1, self.primitive2]
-        self.composite = volmdlr.core.CompositePrimitive(self.primitives, name='Composite')
+        self.composite = CompositePrimitive(self.primitives, name="Composite")
 
     def test_primitive_to_index(self):
         self.assertEqual(self.composite.primitive_to_index(self.primitive1), 0)
@@ -21,5 +22,5 @@ class TestCompositePrimitive(unittest.TestCase):
         self.assertListEqual(self.composite.basis_primitives, self.primitives)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -19,15 +19,15 @@ primitives = [
     volmdlr.edges.LineSegment2D(volmdlr.Point2D(0.001, 0.014),
                                 volmdlr.Point2D(0.001, 0.0125)),
 
-    volmdlr.edges.Arc2D(volmdlr.Point2D(0.001, 0.0125), 
+    volmdlr.edges.Arc2D(volmdlr.Point2D(0.001, 0.0125),
                         volmdlr.Point2D(0.009862829911410362, 0.007744326060968065),
                         volmdlr.Point2D(0.012539936203984454, 0.0)),
 
-    volmdlr.edges.Arc2D(volmdlr.Point2D(0.012539936203984454, 0.0), 
+    volmdlr.edges.Arc2D(volmdlr.Point2D(0.012539936203984454, 0.0),
                         volmdlr.Point2D(0.0, -0.012539936203984454),
                         volmdlr.Point2D(-0.012539936203984454, 0.0)),
 
-    volmdlr.edges.Arc2D(volmdlr.Point2D(-0.012539936203984454, 0.0), 
+    volmdlr.edges.Arc2D(volmdlr.Point2D(-0.012539936203984454, 0.0),
                         volmdlr.Point2D(-0.00921384654213387, 0.008506176103162205),
                         volmdlr.Point2D(-0.001, 0.0125)),
 
@@ -36,7 +36,7 @@ primitives = [
 
     volmdlr.edges.LineSegment2D(volmdlr.Point2D(-0.001, 0.014),
                                 volmdlr.Point2D(0.001, 0.014))
-    ]
+]
 contour2d = volmdlr.wires.Contour2D(primitives)
 
 point1 = volmdlr.Point2D(-0.007116025403784438, 0.010325317547305484)
@@ -65,5 +65,5 @@ for i in range(len(axs)):
     point1.plot(ax=axs[i])
     point2.plot(ax=axs[i])
     for prim in extracted_primitives[i]:
-        prim.plot(ax=axs[i], color=colors[i])
+        prim.plot(ax=axs[i], edge_style=volmdlr.edges.EdgeStyle(color=colors[i]))
     axs[i].set_title(titles[i])

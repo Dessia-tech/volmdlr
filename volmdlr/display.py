@@ -11,8 +11,6 @@ import dessia_common.core as dc
 
 import volmdlr.edges
 
-# import volmdlr.faces as vmf
-
 
 class Node2D(volmdlr.Point2D):
     """
@@ -66,8 +64,10 @@ class DisplayMesh(dc.DessiaObject):
 
         self.points = points
         self.triangles = triangles
-        dc.DessiaObject.__init__(self, name=name)
-        self._utd_point_index = False
+        # Avoiding calling dessia object init because its inefficiency
+        # dc.DessiaObject.__init__(self, name=name)
+        self.name = name
+        self._point_index = None
 
     def check(self):
         npoints = len(self.points)
@@ -78,9 +78,8 @@ class DisplayMesh(dc.DessiaObject):
 
     @property
     def point_index(self):
-        if not self._utd_point_index:
+        if self._point_index is None:
             self._point_index = {p: i for i, p in enumerate(self.points)}
-            self._utd_point_index = True
         return self._point_index
 
     @classmethod
@@ -119,7 +118,7 @@ class DisplayMesh(dc.DessiaObject):
         # point_index
         # t1 = time.time()
         for point in other_mesh.points:
-            if not point in self.point_index:
+            if point not in self.point_index:
                 self.point_index[point] = ip
                 ip += 1
                 self.points.append(point)
@@ -146,7 +145,7 @@ class DisplayMesh(dc.DessiaObject):
         new_point_index = self.point_index.copy()
         ip = len(new_points)
         for point in other_mesh.points:
-            if not point in new_point_index:
+            if point not in new_point_index:
                 new_point_index[point] = ip
                 ip += 1
                 new_points.append(point)
@@ -163,6 +162,7 @@ class DisplayMesh(dc.DessiaObject):
         return self.__class__(new_points, new_triangles)
 
     def plot(self, ax=None, numbering=False):
+        """Plots the mesh with matplotlib."""
         for ip, point in enumerate(self.points):
             ax = point.plot(ax=ax)
             if numbering:
@@ -173,11 +173,11 @@ class DisplayMesh(dc.DessiaObject):
             point1 = self.points[i1]
             point2 = self.points[i2]
             point3 = self.points[i3]
-            if point1 != point2:
+            if not point1.is_close(point2):
                 self._linesegment_class(point1, point2).plot(ax=ax)
-            if point2 != point3:
+            if not point2.is_close(point3):
                 self._linesegment_class(point2, point3).plot(ax=ax)
-            if point1 != point3:
+            if not point1.is_close(point3):
                 self._linesegment_class(point1, point3).plot(ax=ax)
 
         return ax
@@ -222,17 +222,19 @@ class DisplayMesh3D(DisplayMesh):
 
     def __init__(self, points: List[volmdlr.Point3D],
                  triangles: List[Tuple[int, int, int]], name=''):
-        DisplayMesh.__init__(self, points, triangles)
+        DisplayMesh.__init__(self, points, triangles, name=name)
 
     def to_babylon(self):
         """
-        Returns mesh in babylon format.
+        Returns mesh in babylonjs format.
 
         https://doc.babylonjs.com/how_to/custom
         """
         positions = []
         for p in self.points:
-            positions.extend(list(round(p, 6)))
+            # positions.extend(list(round(p, 6)))
+            # Not using round for performance
+            positions.extend([int(1e6 * p.x) / 1e6, int(1e6 * p.y) / 1e6, int(1e6 * p.z) / 1e6])
 
         flatten_indices = []
         for i in self.triangles:

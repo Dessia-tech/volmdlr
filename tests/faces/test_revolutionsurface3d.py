@@ -22,9 +22,9 @@ class TestRevolutionSurface3D(unittest.TestCase):
 
         self.assertEqual(surface.x_periodicity, volmdlr.TWO_PI)
         self.assertEqual(surface.y_periodicity, None)
-        self.assertEqual(surface.frame.origin, self.axis_point)
-        self.assertEqual(surface.axis_point, self.axis_point)
-        self.assertEqual(surface.axis, self.axis)
+        self.assertTrue(surface.frame.origin.is_close(self.axis_point))
+        self.assertTrue(surface.axis_point.is_close(self.axis_point))
+        self.assertTrue(surface.axis.is_close(self.axis))
 
     def test_point2d_to_3d(self):
         surface = volmdlr.faces.RevolutionSurface3D(self.wire, self.axis_point, self.axis)
@@ -33,7 +33,7 @@ class TestRevolutionSurface3D(unittest.TestCase):
         point3d = surface.point2d_to_3d(point2d)
         expected_point3d = volmdlr.Point3D(-0.5, 0, 0.5)
 
-        self.assertEqual(point3d, expected_point3d)
+        self.assertTrue(point3d.is_close(expected_point3d))
 
     def test_point3d_to_2d(self):
         surface = volmdlr.faces.RevolutionSurface3D(self.wire, self.axis_point, self.axis)
@@ -42,7 +42,7 @@ class TestRevolutionSurface3D(unittest.TestCase):
         point2d = surface.point3d_to_2d(point3d)
         expected_point2d = volmdlr.Point2D(math.pi, 0.7047817224492219)
 
-        self.assertEqual(point2d, expected_point2d)
+        self.assertTrue(point2d.is_close(expected_point2d))
 
     def test_rectangular_cut(self):
         surface = volmdlr.faces.RevolutionSurface3D(wire=self.wire, axis_point=self.axis_point, axis=self.axis)

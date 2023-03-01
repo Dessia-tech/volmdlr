@@ -5,6 +5,7 @@ Common abstract primitives
 """
 
 import math
+import warnings
 from typing import Dict, List
 
 from numpy import zeros
@@ -37,7 +38,7 @@ class RoundedLineSegments:
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new RoundedLineSegments
+        Changes frame_mapping and return a new RoundedLineSegments.
 
         side = 'old' or 'new'
         """
@@ -48,10 +49,12 @@ class RoundedLineSegments:
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
 
         side = 'old' or 'new'
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.frame_mapping_inplace(frame, side)
 
@@ -75,7 +78,7 @@ class RoundedLineSegments:
 
             for i in rounded_points_indices[1:]:
                 # Computing the arc
-                ps2, pi2, pe2, dist2, alpha2 = self.arc_features(i)
+                _, pi2, _, dist2, alpha2 = self.arc_features(i)
                 dist[i] = dist2
                 alpha[i] = alpha2
                 if i - 1 in self.radius:
@@ -150,7 +153,7 @@ class RoundedLineSegments:
                         neq_ub += lg - 1
 
                 # Constructing simplex problem
-                # Concstructing C
+                # C matrix:
                 if ndof > 0:
                     C = zeros(ndof)
                     for j, i in dof.items():
