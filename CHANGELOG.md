@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+
 ### Removed
 
 ### Changed
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance improvements
 * BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.
+* eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
 * BSplinecurve2D: point_belongs
 * lighten some dicts with optional name
 
@@ -35,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 * BSplineCurve2D: offset, point_distance, point_belongs
 * Circle2D: bspline_intersections, point_distance
+* Unittests for Vector2D
+* Unittests for Point2D
+* Unittests for Vector3D
+* Unittests for Point3D
 
 ## v0.9.0 [Testing]
 
