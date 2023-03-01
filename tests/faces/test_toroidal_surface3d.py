@@ -23,8 +23,8 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertIsInstance(test1, edges.LineSegment2D)
 
         # Assert that the returned object is right on the parametric domain (take into account periodicity)
-        self.assertEqual(test1.start, volmdlr.Point2D(0, 0.75 * math.pi))
-        self.assertEqual(test1.end, volmdlr.Point2D(0, 1.25 * math.pi))
+        self.assertTrue(test1.start.is_close(volmdlr.Point2D(0, 0.75 * math.pi)))
+        self.assertTrue(test1.end.is_close(volmdlr.Point2D(0, 1.25 * math.pi)))
 
     def test_bsplinecurve3d_to_2d(self):
         control_points = [volmdlr.Point3D(-0.006429000000000001, 0.000765110438227, -0.0002349369830163),
@@ -43,10 +43,10 @@ class TestToroidalSurface3D(unittest.TestCase):
         test = self.toroidal_surface2.bsplinecurve3d_to_2d(bspline_curve3d)[0]
         inv_prof = self.toroidal_surface2.bsplinecurve2d_to_3d(test)[0]
 
-        self.assertEqual(test.start, volmdlr.Point2D(0.8489211153847066, math.pi))
-        self.assertEqual(test.end, volmdlr.Point2D(1.4449243890313308, 1.5707974196708867))
+        self.assertTrue(test.start.is_close(volmdlr.Point2D(0.8489211153847066, math.pi)))
+        self.assertTrue(test.end.is_close(volmdlr.Point2D(1.4449243890313308, 1.5707974196708867)))
 
-        self.assertEqual(inv_prof.end, bspline_curve3d.end)
+        self.assertTrue(inv_prof.end.is_close(bspline_curve3d.end))
 
 
 if __name__ == '__main__':
