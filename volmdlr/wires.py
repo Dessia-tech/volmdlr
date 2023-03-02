@@ -867,15 +867,12 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         return intersections_points
 
     def edge_crossings(self, edge):
-        method_name = edge.__class__.__name__[:-2].lower()+'_crossings'
+        # method_name = edge.__class__.__name__[:-2].lower()+'_crossings'
         edge_crossings = []
         for primitive in self.primitives:
-            if hasattr(primitive.__class__, method_name):
-                crossings = getattr(primitive, method_name)(edge)
-                if crossings:
-                    edge_crossings.extend(crossings)
-            else:
-                raise NotImplementedError(f'{primitive.__class__} does not implement {method_name} yet')
+            crossings = primitive.crossings(edge)
+            if crossings:
+                edge_crossings.extend(crossings)
         return edge_crossings
 
     @property

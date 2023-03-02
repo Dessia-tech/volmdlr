@@ -231,10 +231,9 @@ class Edge(dc.DessiaObject):
                     touching_points.append(point)
         return touching_points
 
-    def edge_intersections(self, edge2: 'Edge'):
+    def intersections(self, edge2: 'Edge'):
         if not self.bounding_rectangle.b_rectangle_intersection(edge2.bounding_rectangle):
             return []
-        intersections = []
         method_name = f'{edge2.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(self, method_name):
             intersections = getattr(self, method_name)(edge2)
@@ -243,10 +242,25 @@ class Edge(dc.DessiaObject):
         if hasattr(edge2, method_name):
             intersections = getattr(edge2, method_name)(self)
             return intersections
-        raise NotImplementedError
+        raise NotImplementedError(f'There is no method to calculate the intersectios between'
+                                  f' a {self.__class__.__name__} and a {edge2.__class__.__name__}')
 
-    def edge_crossings(self):
-        pass
+    def validate_crossings(self, edge, intersection):
+        if intersection not in [self.start, self.end, edge.start, edge.end]:
+            tangent1 = self.unit_direction_vector(self.abscissa(intersection))
+            tangent2 = edge.unit_direction_vector(edge.abscissa(intersection))
+            if math.isclose(abs(tangent1.dot(tangent2)), 1, abs_tol=1e-6):
+                return None
+        return intersection
+
+    def crossings(self, edge):
+        valid_crossings = []
+        intersections = self.intersections(edge)
+        for intersection in intersections:
+            crossing = self.validate_crossings(edge, intersection)
+            if crossing:
+                valid_crossings.append(crossing)
+        return valid_crossings
 
 
 class Line(dc.DessiaObject):
@@ -1056,7 +1070,6 @@ class BSplineCurve(Edge):
             linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
             linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
             intersections = linesegment.line_intersections(line)
-
             if intersections and intersections[0] not in list_intersections:
                 abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
                 if initial_abscissa < length * 0.1:
@@ -1730,7 +1743,7 @@ class BSplineCurve2D(BSplineCurve):
         points = self.discretization_points(number_points=500)
         return point.nearest_point(points)
 
-    def linesegment_intersections(self, linesegment2d):
+    def linesegment_intersections(self, linesegment2d, abs_tol=1e-6):
         """
         Calculates intersections between a BSplineCurve2D and a LineSegment2D.
 
@@ -1739,7 +1752,23 @@ class BSplineCurve2D(BSplineCurve):
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
-        intersections_points = self.get_linesegment_intersections(linesegment2d)
+        # intersections_points = self.get_linesegment_intersections(linesegment2d)
+        if all(linesegment2d.point_distance(pt) > 1e-2 for pt in self.points):
+            return []
+        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(
+            linesegment2d, self, abs_tol=abs_tol)
+        return intersections_points
+
+    def arc_intersections(self, arc):
+        if not self.bounding_rectangle.b_rectangle_intersection(arc.bounding_rectangle):
+            return []
+        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(arc, self)
+        return intersections_points
+
+    def bsplinecurve_intersections(self, bspline):
+        if not self.bounding_rectangle.b_rectangle_intersection(bspline.bounding_rectangle):
+            return []
+        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(bspline, self)
         return intersections_points
 
     def axial_symmetry(self, line):
@@ -1963,11 +1992,13 @@ class LineSegment2D(LineSegment):
             return [self.end]
         return []
 
-    def linesegment_intersections(self, linesegment2d: 'LineSegment2D'):
+    def linesegment_intersections(self, linesegment2d: 'LineSegment2D', abs_tol=1e-6):
         """
         Touching linesegments does not intersect.
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+            return []
+        if self.direction_vector().is_colinear_to(linesegment2d.direction_vector()):
             return []
         point = volmdlr.Point2D.line_intersection(self, linesegment2d)
         # TODO: May be these commented conditions should be used for linesegment_crossings
@@ -1992,14 +2023,12 @@ class LineSegment2D(LineSegment):
             return []
         return line_intersection
 
-    def linesegment_crossings(self, linesegment: 'LineSegment2D'):
-        """
-        Gives the crossings with a linesegment.
-        """
-        if self.direction_vector().is_colinear_to(
-                linesegment.direction_vector()):
-            return []
-        return self.linesegment_intersections(linesegment)
+    # def linesegment_crossings(self, linesegment: 'LineSegment2D'):
+    #     """
+    #     Gives the crossings with a linesegment.
+    #     """
+    #
+    #     return self.linesegment_intersections(linesegment)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
@@ -2568,7 +2597,7 @@ class Arc2D(Arc):
                 intersection_points.append(pt)
         return intersection_points
 
-    def linesegment_intersections(self, linesegment2d: LineSegment2D):
+    def linesegment_intersections(self, linesegment2d: LineSegment2D, abs_tol=1e-6):
         """
         Calculates the intersection between a LineSegment2D and an Arc2D.
 
@@ -2595,37 +2624,66 @@ class Arc2D(Arc):
                 intersections.extend(intersection)
         return intersections
 
-    def bsplinecurve_crossings(self, bspline: BSplineCurve2D):
-        intersections = self.bsplinecurve_intersections(bspline)
-        valid_crossings = []
-        for intersection in intersections:
-            if intersection not in [self.start, self.end, bspline.start, bspline.end]:
-                tangent1 = self.unit_direction_vector(self.abscissa(intersection))
-                tangent2 = bspline.unit_direction_vector(bspline.abscissa(intersection))
-                if math.isclose(abs(tangent1.dot(tangent2)), 1, abs_tol=1e-6):
-                    continue
-                valid_crossings.append(intersection)
+    def arc_intersections(self, arc):
+        circle_intersections = vm_utils_intersections.get_circle_intersections(self, arc)
+        arc_intersections = [inter for inter in circle_intersections if self.point_belongs(inter)]
+        return arc_intersections
+
+    def arcellipse_intersections(self, arcellipse):
+        if not self.bounding_rectangle.b_rectangle_intersection(arcellipse.bounding_rectangle):
+            return []
+        intersections = vm_utils_intersections.get_bsplinecurve_intersections(self, arcellipse)
         return intersections
+
+    # def linesegment_crossings(self, linesegment: LineSegment2D):
+    #     linesegment_intersections = self.linesegment_intersections(linesegment)
+    #     valid_crossings = []
+    #     for intersection in linesegment_intersections:
+    #         crossing = self.validate_crossings(linesegment, intersection)
+    #         if crossing:
+    #             valid_crossings.append(crossing)
+    #     return valid_crossings
+    #
+    # def bsplinecurve_crossings(self, bspline: BSplineCurve2D):
+    #     intersections = self.bsplinecurve_intersections(bspline)
+    #     valid_crossings = []
+    #     for intersection in intersections:
+    #         crossing = self.validate_crossings(bspline, intersection)
+    #         if crossing:
+    #             valid_crossings.append(crossing)
+    #     return valid_crossings
+    #
+    # def arc_crossings(self, arc):
+    #     arc_intersections = self.arc_intersections(arc)
+    #     valid_crossings = []
+    #     for intersection in arc_intersections:
+    #         crossing = self.validate_crossings(arc, intersection)
+    #         if crossing:
+    #             valid_crossings.append(crossing)
+    #     return valid_crossings
 
     def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
         """
-        Returns the abscissa of a given point2d.
+        Returns the abscissa of a given point 2d.
         """
         if point2d.point_distance(self.start) < tol:
             return 0
         if point2d.point_distance(self.end) < tol:
             return self.length()
 
-        p = point2d - self.center
-        u = self.start - self.center
-        u.normalize()
-        if self.is_trigo:
-            v = u.normal_vector()
-        else:
-            v = -u.normal_vector()
-
-        x, y = p.dot(u), p.dot(v)
-        theta = math.atan2(y, x)
+        # p = point2d - self.center
+        # u = self.start - self.center
+        # # u.normalize()
+        # if self.is_trigo:
+        #     v = u.normal_vector()
+        # else:
+        #     v = -u.normal_vector()
+        #
+        # x, y = p.dot(u), p.dot(v)
+        # theta = math.atan2(y, x)
+        radius_point2d = point2d - self.center
+        theta_point2d = math.atan2(radius_point2d.y, radius_point2d.x)
+        theta = theta_point2d - self.angle1
         if theta < -tol or theta > self.angle + tol:
             raise ValueError('Point not in arc')
 
@@ -3637,7 +3695,7 @@ class ArcEllipse2D(Edge):
                 linesegment_intersections.append(inter)
         return linesegment_intersections
 
-    def linesegment_intersections(self, linesegment2d: LineSegment2D):
+    def linesegment_intersections(self, linesegment2d: LineSegment2D, abs_tol=1e-6):
         """
         Intersections between an ArcEllipse2D and a LineSegment2D.
 
@@ -3646,12 +3704,18 @@ class ArcEllipse2D(Edge):
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
-        intersections = self.line_intersections(linesegment2d)
+        intersections = self.line_intersections(linesegment2d.to_line())
         linesegment_intersections = []
         for inter in intersections:
             if linesegment2d.point_belongs(inter):
                 linesegment_intersections.append(inter)
         return linesegment_intersections
+
+    def bsplinecurve_intersections(self, bspline):
+        if not self.bounding_rectangle.b_rectangle_intersection(bspline.bounding_rectangle):
+            return []
+        intersections = vm_utils_intersections.get_bsplinecurve_intersections(self, bspline)
+        return intersections
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -3675,6 +3739,46 @@ class ArcEllipse2D(Edge):
                                 frame.global_to_local_coordinates(self.center),
                                 major_dir)
         raise ValueError('Side should be \'new\' \'old\'')
+
+    def translation(self, offset: volmdlr.Vector2D):
+        new_start = self.start.translation(offset)
+        new_end = self.end.translation(offset)
+        new_interior = self.interior.translation(offset)
+        new_center = self.center.translation(offset)
+        return ArcEllipse2D(new_start, new_interior, new_end, new_center, self.major_dir)
+
+    def point_distance(self, point):
+        """
+        Calculates the distance from a given point to a BSplineCurve2D.
+
+        :param point: point 2d.
+        :return: distance.
+        """
+        best_distance = math.inf
+        abscissa1 = 0
+        abscissa2 = self.abscissa(self.end)
+        distance = best_distance
+        point1_ = None
+        point2_ = None
+        while True:
+            discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
+                                              in npy.linspace(abscissa1, abscissa2, num=8)]
+            distance = point.point_distance(discretized_points_between_1_2[0])
+            for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
+                line = LineSegment2D(point1, point2)
+                dist = line.point_distance(point)
+                if dist < distance:
+                    point1_ = point1
+                    point2_ = point2
+                    distance = dist
+            if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-6):
+                break
+            abscissa1 = self.abscissa(point1_)
+            abscissa2 = self.abscissa(point2_)
+            best_distance = distance
+            if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
+                break
+        return distance
 
 
 class Line3D(Line):

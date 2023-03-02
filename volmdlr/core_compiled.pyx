@@ -1020,7 +1020,7 @@ class Point2D(Vector2D):
         (x3, y3), (x4, y4) = line2
 
         denominateur = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-        if math.isclose(denominateur, 0, abs_tol=1e-6):
+        if math.isclose(denominateur, 0, abs_tol=1e-12):
             if not curvilinear_abscissa:
                 return None
             else:
@@ -1063,7 +1063,7 @@ class Point2D(Vector2D):
         (x3, y3), (x4, y4) = segment2
 
         denominateur = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-        if math.isclose(denominateur, 0, abs_tol=1e-6):
+        if math.isclose(denominateur, 0, abs_tol=1e-12):
             if not curvilinear_abscissa:
                 return None
             else:

@@ -4,7 +4,8 @@ volmdlr utils for calculating curves intersections
 import math
 
 import volmdlr
-
+from volmdlr import edges
+import numpy as npy
 
 def circle_3d_line_intersections(circle_3d, line):
     """
@@ -96,3 +97,87 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
     if point1 == point2:
         return [point1]
     return [point1, point2]
+
+
+def get_circle_intersections(circle1, circle2):
+    x0, y0 = circle1.center
+    x1, y1 = circle2.center
+
+    d = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
+
+    # non-intersecting
+    if d > circle1.radius + circle2.radius:
+        return []
+    # One circle within other
+    if d < abs(circle1.radius - circle2.radius):
+        return []
+    # coincident circles
+    if d == 0 and circle1.radius == circle2.radius:
+        return []
+    a = (circle1.radius ** 2 - circle2.radius ** 2 + d ** 2) / (2 * d)
+    h = math.sqrt(circle1.radius ** 2 - a ** 2)
+    x2 = x0 + a * (x1 - x0) / d
+    y2 = y0 + a * (y1 - y0) / d
+    x3 = x2 + h * (y1 - y0) / d
+    y3 = y2 - h * (x1 - x0) / d
+
+    x4 = x2 - h * (y1 - y0) / d
+    y4 = y2 + h * (x1 - x0) / d
+
+    return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]
+
+
+def get_bsplinecurve_intersections(edge2d, bsplinecurve2d, abs_tol: float = 1e-7):
+
+    """
+    Calculates the intersections between a circle 2d and a BSpline Curve 2D.
+
+    :param bsplinecurve2d: bsplinecurve2d to search for intersections.
+    :param abs_tol: tolerance to be considered while validating an intersection.
+    :return: a list with all intersections between circle and bsplinecurve2d.
+    """
+    circle_bounding_rectangle = edge2d.bounding_rectangle
+    bspline_discretized_points = bsplinecurve2d.discretization_points(number_points=10)
+    param_intersections = []
+    for point1, point2 in zip(bspline_discretized_points[:-1], bspline_discretized_points[1:]):
+        line_seg = volmdlr.edges.LineSegment2D(point1, point2)
+        if line_seg.bounding_rectangle.b_rectangle_intersection(circle_bounding_rectangle):
+            abscissa1 = bsplinecurve2d.abscissa(point1)
+            abscissa2 = bsplinecurve2d.abscissa(point2)
+            intersection = edge2d.linesegment_intersections(line_seg)
+            if intersection:
+                param_intersections.append((abscissa1, abscissa2))
+            else:
+                dist1 = bsplinecurve2d.point_distance(edge2d.end)
+                dist2 = bsplinecurve2d.point_distance(edge2d.start)
+                distance_mid = bsplinecurve2d.point_distance(line_seg.middle_point())
+                if dist1 < distance_mid or dist2 < distance_mid:
+                    param_intersections.append((abscissa1, abscissa2))
+
+    intersections = []
+    while True:
+        if not param_intersections:
+            break
+        abscissa1, abscissa2 = param_intersections[0]
+        # for abscissa1, abscissa2 in :
+        discretized_points_between_1_2 = [bsplinecurve2d.point_at_abscissa(abscissa) for abscissa
+                                          in npy.linspace(abscissa1, abscissa2, num=10)]
+        break_flag = True
+        for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
+            line_seg = volmdlr.edges.LineSegment2D(point1, point2)
+            if line_seg.bounding_rectangle.b_rectangle_intersection(circle_bounding_rectangle):
+                intersection = edge2d.linesegment_intersections(line_seg, 1e-6)
+                if not intersection:
+                    continue
+                if bsplinecurve2d.point_distance(intersection[0]) > abs_tol:
+                    param_intersections.insert(0, (bsplinecurve2d.abscissa(point1),
+                                                   bsplinecurve2d.abscissa(point2)))
+                else:
+                    intersections.append(intersection[0])
+                param_intersections.remove((abscissa1, abscissa2))
+                break_flag = False
+                break
+        if break_flag:
+            break
+
+    return intersections
