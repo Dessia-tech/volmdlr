@@ -15,7 +15,7 @@ untracked_modules = ['volmdlr/templates.py',
                      'volmdlr/code_aster.py',
                      'volmdlr/core_compiled.py',
                      'volmdlr/bspline_compiled.py',
-                     "volmdlr/bspline_evaluators.py"
+                     "volmdlr/bspline_evaluators.pyx"
                      'volmdlr/mesh.py',
                      'volmdlr/gmsh_vm.py',
                      'models/__init__.py',
