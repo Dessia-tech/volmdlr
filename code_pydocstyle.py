@@ -34,9 +34,8 @@ MAX_ERROR_BY_TYPE = {
 
 error_detected = False
 error_over_ratchet_limit = False
-ratchet_limit = 9
 EFFECTIVE_DATE = date(2022, 11, 28)
-
+DAYS_TIME_EFFECT_LIMITING = 21
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
@@ -53,6 +52,7 @@ if limit_time_effect:
 today = date.today()
 weekly_decrease = 5
 time_decrease = int((today - EFFECTIVE_DATE).days / 7.0 * weekly_decrease)
+ratchet_limit = 5 + int(DAYS_TIME_EFFECT_LIMITING / 7.0 * weekly_decrease)
 
 
 code_to_errors = {}
