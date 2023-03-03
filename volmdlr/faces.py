@@ -1217,7 +1217,6 @@ class Plane3D(Surface3D):
         :return: The corresponding Plane3D object.
         :rtype: :class:`volmdlr.faces.Plane3D`
         """
-
         frame3d = object_dict[arguments[1]]
         frame3d.normalize()
         frame = volmdlr.Frame3D(frame3d.origin,
@@ -1777,7 +1776,6 @@ class PeriodicalSurface(Surface3D):
         """
         length = bspline_curve3d.length()
         n = len(bspline_curve3d.control_points)
-        # n = 10
         points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
@@ -4035,13 +4033,16 @@ class BSplineSurface3D(Surface3D):
         """
         # TODO: enhance this, it is a non exact method!
         # TODO: bsplinecurve can be periodic but not around the bsplinesurface
-        bsc_linesegment = vme.LineSegment3D(bspline_curve3d.points[0],
-                                            bspline_curve3d.points[-1])
-        flag = True
-        for pt in bspline_curve3d.points:
-            if not bsc_linesegment.point_belongs(pt):
-                flag = False
-                break
+        start = bspline_curve3d.points[0]
+        end = bspline_curve3d.points[-1]
+        flag = False
+        if not start.is_close(end):
+            bsc_linesegment = vme.LineSegment3D(start, end)
+            flag = True
+            for pt in bspline_curve3d.points:
+                if not bsc_linesegment.point_belongs(pt):
+                    flag = False
+                    break
 
         if self.x_periodicity and not self.y_periodicity \
                 and bspline_curve3d.periodic:
@@ -4365,7 +4366,6 @@ class BSplineSurface3D(Surface3D):
         :return: The corresponding BSplineSurface3D object.
         :rtype: :class:`volmdlr.faces.BSplineSurface3D`
         """
-
         name = arguments[0][1:-1]
         degree_u = int(arguments[1])
         degree_v = int(arguments[2])
@@ -5844,15 +5844,23 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: The corresponding Face3D object.
         :rtype: :class:`volmdlr.faces.Face3D`
         """
-
+        step_id = kwargs.get("step_id", "#UNKNOW_ID")
+        step_name = kwargs.get("name", "ADVANCED_FACE")
         name = arguments[0][1:-1]
         contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
+        if any(contour is None for contour in contours):
+            warnings.warn(f"Could not instantiate #{step_id} = {step_name}({arguments})"
+                          f" because some of the contours are NoneType."
+                          "See Face3D.from_step method")
+            return None
         surface = object_dict[int(arguments[2])]
         if hasattr(surface, 'face_from_contours3d'):
             if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
                 return surface
-
+            # try:
             return surface.face_from_contours3d(contours, name)
+            # except Exception:
+            #     return None
         raise NotImplementedError(
             'Not implemented :face_from_contours3d in {}'.format(surface))
 
@@ -8663,10 +8671,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :return: The corresponding OpenShell3D object.
         :rtype: :class:`volmdlr.faces.OpenShell3D`
         """
-
-        faces = []
-        for face in arguments[1]:
-            faces.append(object_dict[int(face[1:])])
+        faces = [object_dict[int(face[1:])] for face in arguments[1] if object_dict[int(face[1:])] is not None]
         return cls(faces, name=arguments[0][1:-1])
 
     def to_step(self, current_id):
