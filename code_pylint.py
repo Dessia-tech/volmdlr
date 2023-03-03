@@ -76,7 +76,7 @@ ERRORS_WITHOUT_TIME_DECREASE = []
 
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
     EFFECTIVE_DATE += timedelta(days=21)
-
+    print("Limiting time effect of 21 days as we are on {os.environ['DRONE_BRANCH']")
 
 print("pylint version: ", __version__)
 
