@@ -939,11 +939,17 @@ class Step(dc.DessiaObject):
         # sr_nodes = []
         not_shell_nodes = []
         assembly_nodes = []
+        frame_mapped_shell_node = []
         for node in self.graph.nodes:
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, ' \
                                                              'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
                                                              'SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
+                # arguments = self.functions[node].arg
+                # id_shape_representation = int(arguments[3][1:])
+                # id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
+                # id_solid_entity =  int(self.functions[id_representation_entity].arg[1][0][1:])
+                # frame_mapped_shell_node.append(int(self.functions[id_solid_entity].arg[1][1:]))
             if node != '#0' and (self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]):
                 shell_nodes.append(node)
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_' \
