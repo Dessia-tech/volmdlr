@@ -926,7 +926,6 @@ class Step(dc.DessiaObject):
         :return:
         """
         # Initialize data structures
-        node_list = []
         visited = []
         # index = 0
         # i = 0

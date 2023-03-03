@@ -33,6 +33,7 @@ import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
 from volmdlr.utils.parametric import array_range_search
+from volmdlr.bspline_evaluators import evaluate_single
 
 
 def knots_vector_inv(knots_vector):
@@ -3860,11 +3861,14 @@ class BSplineSurface3D(Surface3D):
         return blending_mat
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
-        x, y = point2d
-        x = min(max(x, 0), 1)
-        y = min(max(y, 0), 1)
+        u, v = point2d
+        u = min(max(u, 0), 1)
+        v = min(max(v, 0), 1)
+        return volmdlr.Point3D(*evaluate_single((u, v), self.surface.data,
+                                                self.surface.rational,
+                                                self.surface.evaluator._span_func))
         # uses derivatives for performance because it's already compiled
-        return volmdlr.Point3D(*self.derivatives(x, y, 0)[0][0])
+        # return volmdlr.Point3D(*self.derivatives(x, y, 0)[0][0])
         # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-5):
