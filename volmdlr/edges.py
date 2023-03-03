@@ -1032,7 +1032,10 @@ class BSplineCurve(Edge):
         :param line: line to verify intersections
         :return: list of intersections
         """
-        polygon_points = self.points
+        polygon_points = []
+        for point in self.points:
+            if not volmdlr.core.point_in_list(point, polygon_points):
+                polygon_points.append(point)
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
@@ -1686,8 +1689,13 @@ class BSplineCurve2D(BSplineCurve):
         point1_ = None
         point2_ = None
         while True:
-            discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
-                                              in npy.linspace(abscissa1, abscissa2, num=8)]
+            discretized_points_between_1_2 = []
+            for abscissa in npy.linspace(abscissa1, abscissa2, num=8):
+                abscissa_point = self.point_at_abscissa(abscissa)
+                if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+                    discretized_points_between_1_2.append(abscissa_point)
+            if not discretized_points_between_1_2:
+                break
             distance = point.point_distance(discretized_points_between_1_2[0])
             for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
                 line = LineSegment2D(point1, point2)
