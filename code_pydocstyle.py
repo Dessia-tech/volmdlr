@@ -1,6 +1,6 @@
 import os
 import random
-from datetime import date
+from datetime import date, timedelta
 from glob import glob
 
 import pydocstyle
@@ -35,10 +35,24 @@ MAX_ERROR_BY_TYPE = {
 error_detected = False
 error_over_ratchet_limit = False
 ratchet_limit = 9
-effective_date = date(2022, 11, 28)
+EFFECTIVE_DATE = date(2022, 11, 28)
+
+
+limit_time_effect = False
+if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
+    limit_time_effect = True
+    print(f"Limiting time effect of 21 days as we are on {os.environ['DRONE_BRANCH']}")
+
+if os.environ.get('DRONE_TARGET_BRANCH', '') in ['master', 'testing']:
+    limit_time_effect = True
+    print(f"Limiting time effect of 21 days as we are targetting {os.environ['DRONE_TARGET_BRANCH']}")
+
+if limit_time_effect:
+    EFFECTIVE_DATE += timedelta(days=21)
+
 today = date.today()
 weekly_decrease = 5
-time_decrease = int((today - effective_date).days / 7.0 * weekly_decrease)
+time_decrease = int((today - EFFECTIVE_DATE).days / 7.0 * weekly_decrease)
 
 
 code_to_errors = {}
