@@ -143,7 +143,6 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
-
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
@@ -462,10 +461,10 @@ class LineSegment(Edge):
         p1, p2 = self.start, self.end
         vector = p2 - p1
         norm_u = vector.norm()
-        t = (point - p1).dot(vector) / norm_u ** 2
-        projection = p1 + t * vector
+        projection_parameter = (point - p1).dot(vector) / norm_u ** 2
+        projection = p1 + projection_parameter * vector
 
-        return projection, t * norm_u
+        return projection, projection_parameter * norm_u
 
     def split(self, split_point):
         """
@@ -814,7 +813,7 @@ class BSplineCurve(Edge):
         """
         point_dimension = f'Point{self.__class__.__name__[-2::]}'
 
-        def f(x):
+        def fun(x):
             return (point - getattr(volmdlr, point_dimension)(*self.curve.evaluate_single(x))).norm()
 
         x = npy.linspace(0, 1, 5)
@@ -823,7 +822,7 @@ class BSplineCurve(Edge):
             x_init.append(xi)
 
         for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
+            z = scp.optimize.least_squares(fun, x0=x0, bounds=([0, 1]))
             if z.fun < abs_tol:
                 return True
         return False
@@ -1329,7 +1328,7 @@ class Line2D(Line):
         # self will be (AB)
         # line will be (CD)
         I, A, B, C, D = self._compute_data_create_tangent_circle(self, point, other_line)
-        # CHANGEMENT DE REPAIRE
+        # Basis change
         new_basis, new_a, new_b, new_c, new_d = self._change_reference_frame(I, A, B, C, D)
 
         if new_c[1] == 0 and new_d[1] == 0:
@@ -3901,7 +3900,6 @@ class Line3D(Line):
         :return: The corresponding Line3D object
         :rtype: :class:`volmdlr.edges.Line3D`
         """
-
         point1 = object_dict[arguments[1]]
         direction = object_dict[arguments[2]]
         point2 = point1 + direction
@@ -4332,13 +4330,13 @@ class LineSegment3D(LineSegment):
         return [plane.rectangular_cut(0, l1, 0, l2)]
 
     def _revolution_conical(self, params):
-        axis, u, p1_proj, d1, d2, angle = params
+        axis, u, p1_proj, dist1, dist2, angle = params
         v = axis.cross(u)
         dv = self.direction_vector()
         dv.normalize()
 
         semi_angle = math.atan2(dv.dot(u), dv.dot(axis))
-        cone_origin = p1_proj - d1 / math.tan(semi_angle) * axis
+        cone_origin = p1_proj - dist1 / math.tan(semi_angle) * axis
         if semi_angle > 0.5 * math.pi:
             semi_angle = math.pi - semi_angle
 
@@ -4348,20 +4346,14 @@ class LineSegment3D(LineSegment):
             angle2 = angle
             cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
 
-        surface = volmdlr.faces.ConicalSurface3D(cone_frame,
-                                                 semi_angle)
-        # z1 = d1 / math.tan(semi_angle)
-        # z2 = d2 / math.tan(semi_angle)
-        return [surface.rectangular_cut(0, angle2, d1 / math.tan(semi_angle), d2 / math.tan(semi_angle))]
+        surface = volmdlr.faces.ConicalSurface3D(cone_frame, semi_angle)
+        return [surface.rectangular_cut(0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
-        axis, u, p1_proj, d1, d2, angle = params
+        axis, u, p1_proj, dist1, dist2, angle = params
         v = axis.cross(u)
-        surface = volmdlr.faces.CylindricalSurface3D(
-            volmdlr.Frame3D(p1_proj, u, v, axis), d1)
-        return [surface.rectangular_cut(0, angle,
-                                        0,
-                                        (self.end - self.start).dot(axis))]
+        surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), dist1)
+        return [surface.rectangular_cut(0, angle, 0, (self.end - self.start).dot(axis))]
 
     def revolution(self, axis_point, axis, angle):
         """
@@ -4374,12 +4366,12 @@ class LineSegment3D(LineSegment):
 
         p1_proj, _ = axis_line3d.point_projection(self.start)
         p2_proj, _ = axis_line3d.point_projection(self.end)
-        d1 = self.start.point_distance(p1_proj)
-        d2 = self.end.point_distance(p2_proj)
-        if not math.isclose(d1, 0., abs_tol=1e-9):
+        dist1 = self.start.point_distance(p1_proj)
+        dist2 = self.end.point_distance(p2_proj)
+        if not math.isclose(dist1, 0., abs_tol=1e-9):
             u = self.start - p1_proj  # Unit vector from p1_proj to p1
             u.normalize()
-        elif not math.isclose(d2, 0., abs_tol=1e-9):
+        elif not math.isclose(dist2, 0., abs_tol=1e-9):
             u = self.end - p2_proj  # Unit vector from p1_proj to p1
             u.normalize()
         else:
@@ -4389,7 +4381,7 @@ class LineSegment3D(LineSegment):
             v = axis.cross(u)
             surface = volmdlr.faces.Plane3D(
                 volmdlr.Frame3D(p1_proj, u, v, axis))
-            r, R = sorted([d1, d2])
+            r, R = sorted([dist1, dist2])
             if angle == volmdlr.TWO_PI:
                 # Only 2 circles as contours
                 outer_contour2d = volmdlr.wires.Circle2D(volmdlr.O2D, R)
@@ -4436,13 +4428,12 @@ class LineSegment3D(LineSegment):
                                                   outer_contour2d,
                                                   inner_contours2d))]
 
-        if not math.isclose(d1, d2, abs_tol=1e-9):
+        if not math.isclose(dist1, dist2, abs_tol=1e-9):
             # Conical
-            return self._revolution_conical([axis, u, p1_proj, d1, d2, angle])
+            return self._revolution_conical([axis, u, p1_proj, dist1, dist2, angle])
 
         # Cylindrical face
-        return self._cylindrical_revolution([axis, u, p1_proj, d1, d2, angle])
-
+        return self._cylindrical_revolution([axis, u, p1_proj, dist1, dist2, angle])
 
     def to_step(self, current_id, surface_id=None):
         line = self.to_line()
@@ -4634,7 +4625,6 @@ class BSplineCurve3D(BSplineCurve):
         :return: The corresponding BSplineCurve3D.
         :rtype: :class:`volmdlr.edges.BSplineCurve3D`
         """
-
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
@@ -4841,7 +4831,7 @@ class BSplineCurve3D(BSplineCurve):
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=4e-3):
             return self
-        if math.isclose(parameter, 1, abs_tol=1e-6):
+        if math.isclose(parameter, 1, abs_tol=4e-3):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 

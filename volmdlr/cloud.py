@@ -149,9 +149,9 @@ class PointCloud3D(dc.DessiaObject):
             poly1_simplified = cls._helper_simplify_polygon(poly1, position_plane[n], normal, vec1, vec2)
 
             if n in (resolution - 1, 0):
-                plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2)
-                surf2d = cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2)
-                faces.append(vmf.PlaneFace3D(plane3d, surf2d))
+                faces.append(
+                    vmf.PlaneFace3D(surface3d=vmf.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2),
+                            surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2)))
 
             if n != resolution - 1:
                 poly2 = polygon3d[n + 1]
