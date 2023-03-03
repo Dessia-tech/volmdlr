@@ -27,6 +27,7 @@ import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
 import volmdlr.utils.intersections as vm_utils_intersections
+from volmdlr import bspline_fitting
 from volmdlr.core import EdgeStyle
 
 def standardize_knot_vector(knot_vector):
@@ -942,7 +943,7 @@ class BSplineCurve(Edge):
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
-        curve = fitting.interpolate_curve([[*point] for point in points], degree, centripetal=True)
+        curve = bspline_fitting.interpolate_curve([[*point] for point in points], degree, centripetal=True)
 
         bsplinecurve = cls.from_geomdl_curve(curve)
         if not periodic:
