@@ -1,7 +1,7 @@
 import os
 import random
 import sys
-from datetime import date
+from datetime import date, timedelta
 import math
 
 from pylint import __version__
@@ -12,6 +12,7 @@ MIN_NOTE = 8.20
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
 EFFECTIVE_DATE = date(2023, 1, 31)
+
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
@@ -73,6 +74,10 @@ MAX_ERROR_BY_TYPE = {
 
 ERRORS_WITHOUT_TIME_DECREASE = []
 
+if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
+    EFFECTIVE_DATE += timedelta(days=21)
+
+
 print("pylint version: ", __version__)
 
 time_decrease_coeff = 1 - (date.today() - EFFECTIVE_DATE).days / 7.0 * WEEKLY_DECREASE
@@ -106,6 +111,8 @@ if PYLINT_OBJECT_STATS:
     stats_by_msg = results.linter.stats.by_msg
 else:
     stats_by_msg = results.linter.stats["by_msg"]
+
+print(f'Errors / Allowed errors: {sum(stats_by_msg.values())} / {sum(MAX_ERROR_BY_TYPE.values())})')
 
 for error_type, number_errors in stats_by_msg.items():
     if error_type not in UNWATCHED_ERRORS:
