@@ -1,14 +1,18 @@
 """
 This module contains functions for working with Non-Uniform Rational B-Splines (NURBs).
-Some of the functions in this module are either partially or totally copied from the geomdl open source library,
-which is distributed under the MIT license.
-The original source code is credited to the geomdl authors, and their work can be found at https://github.com/orbingol/NURBS-Python.
+Some of the functions in this module are either partially or totally copied from the geomdl open
+source library, which is distributed under the MIT license.
+The original source code is credited to the geomdl authors, and their work can be found at
+https://github.com/orbingol/NURBS-Python.
 
 Note that this module is also distributed under the MIT license.
-Any modifications made to the original geomdl code will be clearly marked in the source code and will be subject to the same license terms.
+Any modifications made to the original geomdl code will be clearly marked in the source code and
+will be subject to the same license terms.
 
-For more information on NURBs and their use in geometric modeling, please refer to the literature in the field.
-The authors of this module make no warranty or guarantee as to the accuracy or suitability of this code for any particular purpose.
+For more information on NURBs and their use in geometric modeling, please refer to the literature
+in the field.
+The authors of this module make no warranty or guarantee as to the accuracy or suitability of this
+code for any particular purpose.
 """
 from volmdlr.bspline_compiled import find_spans, basis_functions
 
@@ -16,7 +20,8 @@ cdef linspace(double start, double stop, int num, int decimals=18):
     """
     Returns a list of evenly spaced numbers over a specified interval.
 
-    Inspired from Numpy's linspace function: https://github.com/numpy/numpy/blob/master/numpy/core/function_base.py
+    Inspired from Numpy's linspace function:
+    https://github.com/numpy/numpy/blob/master/numpy/core/function_base.py
 
     :param start: starting value
     :type start: float
@@ -82,7 +87,7 @@ cdef evaluate(dict datadict, span_func, tuple start, tuple stop):
         basis[idx] = basis_functions(degree[idx], knotvector[idx], spans[idx], knots)
 
     cdef list eval_points = []
-    cdef int i, j, k, l
+    cdef int i, j, k, m
     cdef int idx_u, idx_v
     cdef list spt, temp
     for i in range(len(spans[0])):
@@ -92,9 +97,9 @@ cdef evaluate(dict datadict, span_func, tuple start, tuple stop):
             spt = [0.0 for _ in range(dimension)]
             for k in range(0, degree[0] + 1):
                 temp = [0.0 for _ in range(dimension)]
-                for l in range(0, degree[1] + 1):
-                    temp[:] = [tmp + (basis[1][j][l] * cp) for tmp, cp in
-                               zip(temp, ctrlpts[idx_v + l + (size[1] * (idx_u + k))])]
+                for m in range(0, degree[1] + 1):
+                    temp[:] = [tmp + (basis[1][j][m] * cp) for tmp, cp in
+                               zip(temp, ctrlpts[idx_v + m + (size[1] * (idx_u + k))])]
                 spt[:] = [pt + (basis[0][i][k] * tmp) for pt, tmp in zip(spt, temp)]
 
             eval_points.append(spt)
@@ -123,19 +128,20 @@ cdef evaluate_rational(dict datadict, span_func, tuple start, tuple stop):
         cpt = [float(c / pt[-1]) for c in pt[0:(dimension - 1)]]
         eval_points.append(cpt)
     return eval_points
-    
-def evaluate_single(tuple param, dict data, bint rational, span_func):
-   """ Evaluates the surface at the input (u, v) parameter pair.
 
-   :param param: parameter pair (u, v)
-   :type param: list, tuple
-   :return: evaluated surface point at the given parameter pair
-   :rtype: list
-   """
-   cdef list pt
-   if rational:
-       pt = evaluate_rational(datadict=data, span_func=span_func, start=param, stop=param)
-       return pt[0]
-   # Evaluate the surface point
-   pt = evaluate(data, span_func=span_func, start=param, stop=param)
-   return pt[0]
+
+def evaluate_single(tuple param, dict data, bint rational, span_func):
+    """ Evaluates the surface at the input (u, v) parameter pair.
+
+    :param param: parameter pair (u, v)
+    :type param: list, tuple
+    :return: evaluated surface point at the given parameter pair
+    :rtype: list
+    """
+    cdef list pt
+    if rational:
+        pt = evaluate_rational(datadict=data, span_func=span_func, start=param, stop=param)
+        return pt[0]
+    # Evaluate the surface point
+    pt = evaluate(data, span_func=span_func, start=param, stop=param)
+    return pt[0]
