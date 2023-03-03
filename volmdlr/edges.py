@@ -144,7 +144,6 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
-
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
@@ -3902,7 +3901,6 @@ class Line3D(Line):
         :return: The corresponding Line3D object
         :rtype: :class:`volmdlr.edges.Line3D`
         """
-
         point1 = object_dict[arguments[1]]
         direction = object_dict[arguments[2]]
         point2 = point1 + direction
@@ -4628,7 +4626,6 @@ class BSplineCurve3D(BSplineCurve):
         :return: The corresponding BSplineCurve3D.
         :rtype: :class:`volmdlr.edges.BSplineCurve3D`
         """
-
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
@@ -4835,7 +4832,7 @@ class BSplineCurve3D(BSplineCurve):
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=4e-3):
             return self
-        if math.isclose(parameter, 1, abs_tol=1e-6):
+        if math.isclose(parameter, 1, abs_tol=4e-3):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
