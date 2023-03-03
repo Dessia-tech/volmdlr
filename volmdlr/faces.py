@@ -1981,11 +1981,11 @@ class CylindricalSurface3D(PeriodicalSurface):
 
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
         frame3d = object_dict[arguments[1]]
-        U, W = frame3d.v, -frame3d.u
-        U.normalize()
-        W.normalize()
-        V = W.cross(U)
-        frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
+        u, w = frame3d.v, -frame3d.u
+        u.normalize()
+        w.normalize()
+        v = w.cross(u)
+        frame_direct = volmdlr.Frame3D(frame3d.origin, u, v, w)
         radius = float(arguments[2]) * length_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
