@@ -385,7 +385,7 @@ def shape_representation(arguments, object_dict):
     # does it have the extra argument comming from
     # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
     # them
-    if len(arguments[:-1]) == 4:
+    if len(arguments) == 4:
         shells = object_dict[int(arguments[3])]
         return shells
     shells = []
@@ -594,21 +594,22 @@ class Step(dc.DessiaObject):
 
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines
-        self.functions, self.all_connections = self.read_lines()
+        self.functions, self.all_connections, self.connections = self.read_lines()
         self._utd_graph = False
         self._graph = None
         self.global_uncertainty = 1e-6
         self.length_conversion_factor = 1
         self.angle_conversion_factor = 1
         self.read_diagnostic = StepReaderReport
+
         dc.DessiaObject.__init__(self, name=name)
 
-    @property
-    def graph(self):
-        if not self._utd_graph:
-            self._graph = self.create_graph()
-            self._utd_graph = True
-        return self._graph
+    # @property
+    # def graph(self):
+    #     if not self._utd_graph:
+    #         self._graph = self.create_graph()
+    #         self._utd_graph = True
+    #     return self._graph
 
     @classmethod
     def from_stream(cls, stream: BinaryFile = None):
@@ -630,7 +631,7 @@ class Step(dc.DessiaObject):
 
     def read_lines(self):
         all_connections = []
-
+        dict_connections = {}
         previous_line = ""
         functions = {}
 
@@ -660,16 +661,18 @@ class Step(dc.DessiaObject):
             function_name = function_name_arg[0]
             function_arg = function_name_arg[1].split("#")
             function_connections = []
+            connections = []
             # print(function_id, function_name)
             for connec in function_arg[1:]:
                 connec = connec.split(",")
                 connec = connec[0].split(")")
                 if connec[0][-1] != "'":
                     function_connection = int(connec[0])
+                    connections.append(function_connection)
                     function_connections.append(
                         (function_id, function_connection))
             # print(function_connections)
-
+            dict_connections[function_id] = connections
             all_connections.extend(function_connections)
 
             previous_line = str()
@@ -701,7 +704,7 @@ class Step(dc.DessiaObject):
             function = StepFunction(function_id, function_name, arguments)
             functions[function_id] = function
 
-        return functions, all_connections
+        return functions, all_connections, dict_connections
 
     def not_implemented(self):
         not_implemented = []
@@ -917,6 +920,52 @@ class Step(dc.DessiaObject):
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
         return volmdlr_object
 
+    def create_node_list(self, stack):
+        """
+        Step functions graph as a list of nodes
+        :return:
+        """
+        # Initialize data structures
+        node_list = []
+        visited = []
+        # index = 0
+        # i = 0
+        # # Process each function in the Step file
+        # for function in self.functions.values():
+        #     if function.name == "SHAPE_DEFINITION_REPRESENTATION":
+        #         index =  i
+        #     if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
+        #         # Create shortcut from id1 to id2 to bypass unnecessary instantiations
+        #         id1 = int(function.arg[2][1:])
+        #         id2 = int(function.arg[3][1:])
+        #         elem1 = (function.id, id1)
+        #         elem2 = (function.id, id2)
+        #         self.all_connections.remove(elem1)
+        #         self.all_connections.remove(elem2)
+        #         self.all_connections.append((elem1[1], elem2[1]))
+        #
+        #         self.functions[id1].arg.append('#{}'.format(id2))
+        #     elif function.name in STEP_TO_VOLMDLR:
+        #         node_list.append(function.id)
+        #         i += 1
+                # labels[function.id] = str(function.id) + ' ' + function.name
+
+        # Process connections
+        stack = stack
+        visited_set =set()
+        while stack:
+            node = stack.pop()
+            if node not in visited_set:
+                visited.append(node)
+                visited_set.add(node)
+                # for connection in self.all_connections:
+                #     if connection[0] == node:
+                #         stack.append(connection[1])
+                for c in self.connections[node]:
+                    if c not in visited_set:
+                        stack.append(c)
+        return visited
+
     def to_volume_model(self, show_times: bool = False):
         """
         Translate a step file into a volmdlr object.
@@ -931,25 +980,37 @@ class Step(dc.DessiaObject):
 
         object_dict = {}
         arguments = []
-        self.graph.add_node("#0")
+        # self.graph.add_node("#0")
         frame_mapping_nodes = []
         shell_nodes = []
         geometric_representation_context_node = None
+        for function in self.functions.values():
+            if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
+                # Create short cut from id1 to id2
+                id1 = int(function.arg[2][1:])
+                id2 = int(function.arg[3][1:])
+                elem1 = (function.id, id1)
+                elem2 = (function.id, id2)
+                self.all_connections.remove(elem1)
+                self.all_connections.remove(elem2)
+                self.all_connections.append((elem1[1], elem2[1]))
 
+                self.functions[id1].arg.append('#{}'.format(id2))
         # sr_nodes = []
         not_shell_nodes = []
         assembly_nodes = []
         frame_mapped_shell_node = []
-        for node in self.graph.nodes:
+        # for node in self.graph.nodes:
+        for node in list(self.functions.keys()):
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, ' \
                                                              'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
                                                              'SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
-                # arguments = self.functions[node].arg
-                # id_shape_representation = int(arguments[3][1:])
-                # id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
-                # id_solid_entity =  int(self.functions[id_representation_entity].arg[1][0][1:])
-                # frame_mapped_shell_node.append(int(self.functions[id_solid_entity].arg[1][1:]))
+                arguments = self.functions[node].arg
+                id_shape_representation = int(arguments[3][1:])
+                id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
+                id_solid_entity =  int(self.functions[id_representation_entity].arg[1][0][1:])
+                frame_mapped_shell_node.append(int(self.functions[id_solid_entity].arg[1][1:]))
             if node != '#0' and (self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]):
                 shell_nodes.append(node)
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_' \
@@ -967,32 +1028,32 @@ class Step(dc.DessiaObject):
             if node != '#0' and self.functions[node].name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(node)
                 not_shell_nodes.append(int(self.functions[node].arg[1][1:]))
-        frame_mapped_shell_node = []
-        for s_node in shell_nodes:
-            for fm_node in frame_mapping_nodes:
-                if nx.has_path(self.graph, source=fm_node, target=s_node):
-                    frame_mapped_shell_node.append(s_node)
-                    break
+        # frame_mapped_shell_node = []
+        # for s_node in shell_nodes:
+        #     for fm_node in frame_mapping_nodes:
+        #         if nx.has_path(self.graph, source=fm_node, target=s_node):
+        #             frame_mapped_shell_node.append(s_node)
+        #             break
         shell_nodes_copy = shell_nodes.copy()
         remove_nodes = list(set(frame_mapped_shell_node + not_shell_nodes))
         for node in remove_nodes:
             shell_nodes.remove(node)
 
-        for node in shell_nodes + frame_mapping_nodes:
-            self.graph.add_edge('#0', node)
+        # for node in shell_nodes + frame_mapping_nodes:
+        #     self.graph.add_edge('#0', node)
 
         # self.draw_graph(self.graph, reduced=True)
 
-        nodes = []
-        i = 1
-        new_nodes = True
-        while new_nodes:
-            new_nodes = list(nx.descendants_at_distance(self.graph, '#0', i))[::-1]
-            nodes.extend(new_nodes)
-            i += 1
+        # nodes = []
+        # i = 1
+        # new_nodes = True
+        # while new_nodes:
+        #     new_nodes = list(nx.descendants_at_distance(self.graph, '#0', i))[::-1]
+        #     nodes.extend(new_nodes)
+        #     i += 1
 
         # nodes = dessia_common.graph.explore_tree_from_leaves(self.graph)
-
+        nodes = self.create_node_list(shell_nodes + frame_mapping_nodes)
         times = {}
         errors = set()
         for i, node in enumerate([geometric_representation_context_node] + nodes[::-1]):
