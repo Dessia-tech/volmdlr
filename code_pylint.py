@@ -73,7 +73,7 @@ MAX_ERROR_BY_TYPE = {
                      }
 
 ERRORS_WITHOUT_TIME_DECREASE = []
-
+print(os.environ)
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
     EFFECTIVE_DATE += timedelta(days=21)
     print("Limiting time effect of 21 days as we are on {os.environ['DRONE_BRANCH']")
