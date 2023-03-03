@@ -891,7 +891,7 @@ class Step(dc.DessiaObject):
                 argument.append(arg_id)
                 arguments[i] = argument
 
-    def instanciate(self, name, arguments, object_dict, step_id):
+    def instantiate(self, name, arguments, object_dict, step_id):
         """
         Gives the volmdlr object related to the step function.
         """
@@ -1000,7 +1000,7 @@ class Step(dc.DessiaObject):
                     for instanciate_id in instanciate_ids[::-1]:
                         t = time.time()
                         arguments = self.functions[instanciate_id].arg[:]
-                        volmdlr_object = self.instanciate(
+                        volmdlr_object = self.instantiate(
                             self.functions[instanciate_id].name,
                             self.functions[instanciate_id].arg[:], object_dict, instanciate_id)
                         t = time.time() - t
@@ -1060,7 +1060,7 @@ class Step(dc.DessiaObject):
         points3d = []
         for stepfunction in self.functions.values():
             if stepfunction.name == 'CARTESIAN_POINT':
-                # INSTANCIATION
+                # INSTANTIATION
                 name = self.functions[stepfunction.id].name
                 arguments = self.functions[stepfunction.id].arg[:]
                 self.parse_arguments(arguments)
