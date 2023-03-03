@@ -4156,21 +4156,21 @@ class LineSegment3D(LineSegment):
                       pivot='tip', color=edge_style.color)
         return ax
 
-    def plot2d(self, x_3D, y_3D, ax=None, color='k', width=None):
+    def plot2d(self, x_3d, y_3d, ax=None, color='k', width=None):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
         else:
             fig = ax.figure
 
-        edge2d = self.plane_projection2d(volmdlr.O3D, x_3D, y_3D)
+        edge2d = self.plane_projection2d(volmdlr.O3D, x_3d, y_3d)
         edge2d.plot(ax=ax, edge_style=EdgeStyle(color=color, width=width))
         return ax
 
-    def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
+    def plot_data(self, x_3d, y_3d, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
-        edge2D = self.plane_projection2d(volmdlr.O3D, x_3D, y_3D)
-        return edge2D.plot_data(marker, color, stroke_width,
+        edge2d = self.plane_projection2d(volmdlr.O3D, x_3d, y_3d)
+        return edge2d.plot_data(marker, color, stroke_width,
                                 dash, opacity, arrow)
 
     def to_line(self):
@@ -4350,9 +4350,9 @@ class LineSegment3D(LineSegment):
 
         surface = volmdlr.faces.ConicalSurface3D(cone_frame,
                                                  semi_angle)
-        z1 = d1 / math.tan(semi_angle)
-        z2 = d2 / math.tan(semi_angle)
-        return [surface.rectangular_cut(0, angle2, z1, z2)]
+        # z1 = d1 / math.tan(semi_angle)
+        # z2 = d2 / math.tan(semi_angle)
+        return [surface.rectangular_cut(0, angle2, d1 / math.tan(semi_angle), d2 / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
         axis, u, p1_proj, d1, d2, angle = params
