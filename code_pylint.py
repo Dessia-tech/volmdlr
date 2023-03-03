@@ -78,6 +78,11 @@ if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
     EFFECTIVE_DATE += timedelta(days=21)
     print("Limiting time effect of 21 days as we are on {os.environ['DRONE_BRANCH']")
 
+if os.environ.get('DRONE_TARGET_BRANCH', '') in ['master', 'testing']:
+    EFFECTIVE_DATE += timedelta(days=21)
+    print("Limiting time effect of 21 days as we are targetting {os.environ['DRONE_TARGET_BRANCH']")
+
+
 print("pylint version: ", __version__)
 
 time_decrease_coeff = 1 - (date.today() - EFFECTIVE_DATE).days / 7.0 * WEEKLY_DECREASE
