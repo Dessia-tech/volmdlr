@@ -6,6 +6,7 @@ ISO STEP reader/writer.
 
 import time
 from typing import List
+from dataclasses import dataclass, field
 import numpy as npy
 
 import matplotlib.pyplot as plt
@@ -102,9 +103,56 @@ def length_measure_with_unit(arguments, object_dict):
     :param object_dict: dictionary containing already instantiated objects.
     :return: si unit conversion factor.
     """
-    length_measure = float(arguments[0].split('(')[1][:-1])
+    if "(" in arguments[0]:
+        length_measure = float(arguments[0].split('(')[1][:-1])
+    else:
+        length_measure = float(arguments[0])
     length_si_unit = object_dict[arguments[1]]
     return length_measure * length_si_unit
+
+
+def conversion_based_unit_named_unit_plane_angle_unit(arguments, object_dict):
+    """
+    Gets the conversion based plane unit angle.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionary containing already instantiated objects.
+    :return: conversion based unit length.
+    """
+    return object_dict[arguments[1]]
+
+
+def named_unit_plane_angle_unit_si_unit(arguments, object_dict):
+    """
+    Returns the dimension of plane angle measure.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionary containing already instantiated objects.
+    :return: SI unit dimension.
+    """
+    return SI_PREFIX[arguments[1]]
+
+def named_unit_si_unit_solid_angle_unit(arguments, object_dict):
+    """
+    Returns the dimension of solid angle measure.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionary containing already instantiated objects.
+    :return: SI unit dimension.
+    """
+    return SI_PREFIX[arguments[1]]
+
+def plane_angle_measure_with_unit(arguments, object_dict):
+    """
+    Returns the angle plane measure with the right unit.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionary containing already instantiated objects.
+    :return: angle measure in SI unit.
+    """
+    angle_measure = float(arguments[0].split('(')[1][:-1])
+    angle_si_unit = object_dict[arguments[1]]
+    return angle_measure * angle_si_unit
 
 
 def length_unit_named_unit_si_unit(arguments, object_dict):
@@ -128,9 +176,10 @@ def geometric_representation_context_global_uncertainty_assigned_context_global_
     :param object_dict: dictionary containing already instantiated objects.
     :return: Global length uncertainty.
     """
-    global_unit_uncertainty_ref = int(arguments[2][0][1:])
-    length_global_uncertainty = object_dict[global_unit_uncertainty_ref]
-    return length_global_uncertainty
+    length_global_uncertainty = object_dict[int(arguments[1][0][1:])]
+    length_conversion_factor = object_dict[int(arguments[2][0][1:])]
+    angle_conversion_factor = object_dict[int(arguments[2][1][1:])]
+    return length_global_uncertainty, length_conversion_factor, angle_conversion_factor
 
 
 def vertex_point(arguments, object_dict):
@@ -185,8 +234,6 @@ def face_bound(arguments, object_dict):
 
     """
     return object_dict[arguments[1]]
-
-# def surface_of_revolution(arguments, object_dict):
 
 
 def surface_curve(arguments, object_dict):
@@ -335,9 +382,9 @@ def shape_representation(arguments, object_dict):
     :rtype: TYPE
 
     """
-    # does it have the extra argument coming from
-    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this case
-    # return them
+    # does it have the extra argument comming from
+    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
+    # them
     if len(arguments[:-1]) == 4:
         shells = object_dict[int(arguments[3])]
         return shells
@@ -356,9 +403,7 @@ def shape_representation(arguments, object_dict):
                 isinstance(object_dict[int(arg[1:])],
                            volmdlr.Frame3D):
             # TODO: Is there something to read here ?
-            frame = object_dict[int(arg[1:])]
-            if not all(component is None for component in [frame.u, frame.u, frame.w]):
-                frames.append(frame)
+            frames.append(object_dict[int(arg[1:])])
         elif int(arg[1:]) in object_dict and \
                 isinstance(object_dict[int(arg[1:])],
                            volmdlr.edges.Arc3D):
@@ -371,6 +416,8 @@ def shape_representation(arguments, object_dict):
             pass
     if not shells and frames:
         return frames
+    if shells and frames:
+        raise NotImplementedError
     return shells
 
 
@@ -406,8 +453,6 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
     :rtype: TYPE
 
     """
-    if item_defined_transformation_frames[0] == item_defined_transformation_frames[1]:
-        return closed_shells
     if shape_representation_frames[0].origin == volmdlr.O3D:
         global_frame = shape_representation_frames[0]
     else:
@@ -449,7 +494,7 @@ def representation_relationship_representation_relationship_with_transformation_
                 return frame_map_closed_shell(object_dict[arguments[2]],
                                               object_dict[arguments[4]], object_dict[arguments[3]])
 
-            elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
+            if object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
                     not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
                 return frame_map_closed_shell(object_dict[arguments[3]],
                                               object_dict[arguments[4]], object_dict[arguments[2]])
@@ -490,6 +535,20 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
                            'REPRESENTATION_ITEM, SURFACE'].from_step(
         modified_arguments, object_dict)
 
+def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometric_representation_item_rational_b_spline_surface_representation_item(
+        arguments, object_dict):
+    """
+    Bounded b spline surface with knots curve geometric representation item. To clarify.
+    """
+    modified_arguments = [''] + arguments
+    if modified_arguments[-1] == "''":
+        modified_arguments.pop()
+    return STEP_TO_VOLMDLR['BOUNDED_SURFACE, B_SPLINE_SURFACE, '
+                           'B_SPLINE_SURFACE_WITH_KNOTS, '
+                           'GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_SURFACE, '
+                           'REPRESENTATION_ITEM, SURFACE'].from_step(
+        modified_arguments, object_dict)
 
 class StepFunction(dc.DessiaObject):
     """
@@ -539,7 +598,9 @@ class Step(dc.DessiaObject):
         self._utd_graph = False
         self._graph = None
         self.global_uncertainty = 1e-6
-        self.unit_conversion_factor = 1
+        self.length_conversion_factor = 1
+        self.angle_conversion_factor = 1
+        self.read_diagnostic = StepReaderReport
         dc.DessiaObject.__init__(self, name=name)
 
     @property
@@ -830,7 +891,7 @@ class Step(dc.DessiaObject):
                 argument.append(arg_id)
                 arguments[i] = argument
 
-    def instanciate(self, name, arguments, object_dict):
+    def instantiate(self, name, arguments, object_dict, step_id):
         """
         Gives the volmdlr object related to the step function.
         """
@@ -838,49 +899,62 @@ class Step(dc.DessiaObject):
 
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
-        if hasattr(volmdlr.step, fun_name):
-            volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
+        try:
+            if hasattr(volmdlr.step, fun_name):
+                volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
 
-        elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
-            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict)
+            elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
+                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict,
+                                                                 name=name,
+                                                                 step_id=step_id,
+                                                                 global_uncertainty=self.global_uncertainty,
+                                                                 length_conversion_factor=self.length_conversion_factor,
+                                                                 angle_conversion_factor=self.angle_conversion_factor)
 
-        else:
-            raise NotImplementedError(
-                'Dont know how to interpret {} with args {}'.format(name,
-                                                                    arguments))
+            else:
+                raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
+        except (ValueError, NotImplementedError) as error:
+            raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
         """
-        show_times=True displays the number of times a given class has been
-        instantiated and the total time of all the instantiations of this
-        given class.
+        Translate a step file into a volmdlr object.
+
+        :param show_times: if True, displays how many times a given class has been
+            instanciated and the total time of all the instanciations of this
+            given class.
+        :type show_times: bool
+        :return: A volmdlr solid object.
+        :rtype: :class:`volmdlr.core.VolumeModel`
         """
 
         object_dict = {}
-
+        arguments = []
         self.graph.add_node("#0")
         frame_mapping_nodes = []
         shell_nodes = []
-        unit_measure_nodes = []
-        length_global_uncertainty_node = None
-        conversion_factor_node = None
+        geometric_representation_context_node = None
+
         # sr_nodes = []
         not_shell_nodes = []
         assembly_nodes = []
         for node in self.graph.nodes:
-            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
+            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, ' \
+                                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
+                                                             'SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
             if node != '#0' and (self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]):
                 shell_nodes.append(node)
-            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_SHAPE_REPRESENTATION_RELATIONSHIP':
+            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_' \
+                                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_' \
+                                                             'SHAPE_REPRESENTATION_RELATIONSHIP':
                 assembly_nodes.append(node)
-            # if node != '#0' and self.functions[node].name in [
-            #     'UNCERTAINTY_MEASURE_WITH_UNIT', 'LENGTH_UNIT, NAMED_UNIT, SI_UNIT']:
-            #     unit_measure_nodes.append(node)
-            if node != '#0' and not length_global_uncertainty_node and self.functions[node].name ==\
-                    'UNCERTAINTY_MEASURE_WITH_UNIT':
-                length_global_uncertainty_node = node
+            if node != "#0" and self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
+                                                             'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
+                                                             'GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
+                geometric_representation_context_node = node
+
             # if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
             #     # Really a shell node ?
             #     sr_nodes.append(node)
@@ -914,7 +988,8 @@ class Step(dc.DessiaObject):
         # nodes = dessia_common.graph.explore_tree_from_leaves(self.graph)
 
         times = {}
-        for i, node in enumerate([length_global_uncertainty_node] + nodes[::-1]):
+        errors = set()
+        for i, node in enumerate([geometric_representation_context_node] + nodes[::-1]):
             # instanciate_ids = [edge[1]]
             if node is None:
                 continue
@@ -925,9 +1000,9 @@ class Step(dc.DessiaObject):
                     for instanciate_id in instanciate_ids[::-1]:
                         t = time.time()
                         arguments = self.functions[instanciate_id].arg[:]
-                        volmdlr_object = self.instanciate(
+                        volmdlr_object = self.instantiate(
                             self.functions[instanciate_id].name,
-                            self.functions[instanciate_id].arg[:] + [self.unit_conversion_factor], object_dict)
+                            self.functions[instanciate_id].arg[:], object_dict, instanciate_id)
                         t = time.time() - t
                         object_dict[instanciate_id] = volmdlr_object
                         if show_times:
@@ -938,12 +1013,18 @@ class Step(dc.DessiaObject):
                                 times[volmdlr_object.__class__][1] += t
                     error = False
                 except KeyError as key:
-                    # Sometimes the bfs search don't instantiate the nodes of a
+                    # Sometimes the bfs search don't instanciate the nodes of a
                     # depth in the right order, leading to error
                     instanciate_ids.append(key.args[0])
+                # else:
+                #     volmdlr_object = None
+                #     object_dict[node] = volmdlr_object
+            if not object_dict[node]:
+                errors.add(node)
             if i == 0:
-                self.global_uncertainty = volmdlr_object
-                self.unit_conversion_factor = object_dict[int(arguments[1][1:])]
+                self.global_uncertainty = object_dict[int(arguments[1][0][1:])]
+                self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
+                self.angle_conversion_factor = object_dict[int(arguments[2][1][1:])]
 
         if show_times:
             print()
@@ -952,15 +1033,23 @@ class Step(dc.DessiaObject):
             print()
 
         shells = []
+        step_number_faces = 0
+        faces_read = 0
         if frame_mapping_nodes:
             for node in frame_mapping_nodes:
                 shells.extend(object_dict[node])
         if not shells:
             for node in shell_nodes_copy:
-                if isinstance(object_dict[node], list):
+                volmdlr_object = object_dict[node]
+                if isinstance(volmdlr_object, list):
                     shells.extend(object_dict[node])
                 else:
-                    shells.append(object_dict[node])
+                    shells.append(volmdlr_object)
+                    faces_read += len(volmdlr_object.faces)
+                    step_number_faces += len(self.functions[node].arg[1])
+            if step_number_faces and faces_read:
+                self.read_diagnostic = StepReaderReport(self.name, step_number_faces, faces_read,
+                                                        faces_read/step_number_faces, list(errors))
         volume_model = volmdlr.core.VolumeModel(shells)
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)
@@ -994,6 +1083,18 @@ class Step(dc.DessiaObject):
                                  in self.functions.values()
                                  if stepfunction.name in ['CARTESIAN_POINT', 'DIRECTION']])
         return [plot_data.graph.NetworkxGraph(graph=graph)]
+
+
+@dataclass
+class StepReaderReport:
+    """
+    Data class to save a report after translating a step file to volmdlr object.
+    """
+    step_name: str = " "
+    total_number_of_faces: int = 0
+    faces_read: int = 0
+    sucess_rate: float = 0.0
+    errors: list = field(default_factory=list)
 
 
 STEP_TO_VOLMDLR = {
@@ -1051,8 +1152,10 @@ STEP_TO_VOLMDLR = {
     'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
 
     # Bsplines
-    'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
-
+    'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM,'
+    ' RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
+    "BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, SURFACE, GEOMETRIC_REPRESENTATION_ITEM,"
+    " RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM": volmdlr.faces.BSplineSurface3D,
     # TOPOLOGICAL ENTITIES
     'VERTEX_POINT': None,
 
@@ -1083,6 +1186,9 @@ STEP_TO_VOLMDLR = {
     'CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT': None,
     'LENGTH_MEASURE_WITH_UNIT': None,
     'LENGTH_UNIT, NAMED_UNIT, SI_UNIT': None,
+    'PLANE_ANGLE_MEASURE_WITH_UNIT': None,
+    'NAMED_UNIT, PLANE_ANGLE_UNIT, SI_UNIT': None,
+    'CONVERSION_BASED_UNIT, NAMED_UNIT, PLANE_ANGLE_UNIT': None,
     'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT': None,
     'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': volmdlr.faces.OpenShell3D.translation,
     'SHELL_BASED_SURFACE_MODEL': None,

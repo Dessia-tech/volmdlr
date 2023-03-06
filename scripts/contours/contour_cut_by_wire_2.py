@@ -11,6 +11,7 @@ Created on Tue Oct 18 2022
 import matplotlib.pyplot as plt
 
 import volmdlr as vm
+from volmdlr.core import EdgeStyle
 import volmdlr.wires
 
 # %% Function -plot-
@@ -27,14 +28,14 @@ def plot_cutted_contours2d(contour1, contour2, contours):
             if i == j and i == 0:
                 contour1.plot(ax=axs[i][j])
                 for prim in contour2.primitives:
-                    prim.plot(ax=axs[i][j], width=2, color='r')
+                    prim.plot(ax=axs[i][j], edge_style=EdgeStyle(width=2, color='r'))
                 axs[i][j].set_title("Contour2d 1 + Contour2d 2")
 
             else:
                 contour1.plot(ax=axs[i][j])
-                contour2.plot(ax=axs[i][j], color='r')
+                contour2.plot(ax=axs[i][j], edge_style=EdgeStyle(color='r'))
                 for p in contours[count].primitives:
-                    p.plot(ax=axs[i][j], width=2, color='b')
+                    p.plot(ax=axs[i][j], edge_style=EdgeStyle(width=2, color='b'))
                     axs[i][j].set_title("Cutted Contour2d n° "+str(count+1))
                 count += 1
 
