@@ -4222,17 +4222,20 @@ class LineSegment3D(LineSegment):
         w = other_line.start - self.start
 
         a11 = u.dot(u)
-        a12 = -u.dot(v)
+        a12 = u.dot(v)
         a22 = v.dot(v)
-
-        A = npy.array([[a11, a12],
-                       [a12, a22]])
-        B = npy.array([w.dot(u), -w.dot(v)])
-
-        res = scp.optimize.lsq_linear(A, B, bounds=(0, 1))
-        p1 = self.point_at_abscissa(res.x[0] * self.length())
-        p2 = other_line.point_at_abscissa(
-            res.x[1] * other_line.length())
+        t = (v.dot(w) * a12 - u.dot(w) * a22) / (a22**2 - a11 * a22)
+        s = (u.dot(w) + a12*t) / a11
+        if t < 0:
+            t = 0
+        elif t > 1:
+            t = 1
+        if s < 0:
+            s = 0
+        elif s > 1:
+            s = 1
+        p1 = self.start + u * s
+        p2 = other_line.start + v * t
         return p1, p2
 
     def parallel_distance(self, other_linesegment):
@@ -4310,6 +4313,44 @@ class LineSegment3D(LineSegment):
             return dist_min
 
         raise NotImplementedError
+
+    def linesegment_max_distance_points(self, linesegment):
+        u = self.direction_vector()
+        v = linesegment.direction_vector()
+        w = linesegment.start - self.start
+
+        a11 = u.dot(u)
+        a12 = u.dot(v)
+        a22 = v.dot(v)
+        t = (v.dot(w) * a12 - u.dot(w) * a22) / (a22 ** 2 - a11 * a22)
+        s = (u.dot(w) + a12 * t) / a11
+        s = npy.clip(s, 0, 1)
+        t = npy.clip(t, 0, 1)
+        p1 = self.start + u * s
+        p2 = linesegment.start + v * t
+        # if s < 0 or s > 1 or t < 0 or t > 1:
+            # return p2.distance_points(p1)
+        max_distance = 0
+        for lineseg, point in zip([self, linesegment], [p2, p1]):
+            dist1 = lineseg.start.point_distance(point)
+            dist2 = lineseg.end.point_distance(point)
+            if dist1 > max_distance:
+                max_distance = dist1
+                point1 = lineseg.start
+                point2 = point
+            if dist2 > max_distance:
+                max_distance = dist2
+                point1 = lineseg.end
+                point2 = point
+        # dist1 = self.start.point_distance(p2)
+        # dist2 = self.end.point_distance(p2)
+        # dist3 = linesegment.start.point_distance(p1)
+        # dist4 = linesegment.end.point_distance(p1)
+        # return max(dist1, dist2, dist3, dist4)
+        return max_distance, point1, point2
+
+    def maximum_distance(self, element, return_points=False):
+        pass
 
     def extrusion(self, extrusion_vector):
         u = self.unit_direction_vector()
@@ -4962,6 +5003,30 @@ class BSplineCurve3D(BSplineCurve):
             return []
         intersections_points = self.get_linesegment_intersections(linesegment3d)
         return intersections_points
+
+    def minimum_distance(self, element, return_points=False):
+        points = []
+        for point in self.points:
+            if not volmdlr.core.point_in_list(point, points):
+                points.append(point)
+        discretization_primitves1 = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        discretization_points2 = element.discretization_points(number_points=100)
+        points = []
+        for point in discretization_points2:
+            if not volmdlr.core.point_in_list(point, points):
+                points.append(point)
+        discretization_primitves2 = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        minimum_distance = math.inf
+        points = None
+        for prim1 in discretization_primitves1:
+            for prim2 in discretization_primitves2:
+                distance, point1, point2 = prim1.minimum_distance(prim2, return_points=True)
+                if distance < minimum_distance:
+                    minimum_distance = distance
+                    points = (point1, point2)
+        if return_points:
+            return minimum_distance, points[0], points[1]
+        return minimum_distance
 
 
 class BezierCurve3D(BSplineCurve3D):

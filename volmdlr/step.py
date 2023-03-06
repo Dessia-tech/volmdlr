@@ -377,7 +377,7 @@ def shape_representation(arguments, object_dict):
     # does it have the extra argument coming from
     # SHAPE_REPRESENTATION_RELATIONSHIP ? In this case
     # return them
-    if len(arguments[:-1]) == 4:
+    if len(arguments) == 4:
         shells = object_dict[int(arguments[3])]
         return shells
     shells = []
@@ -447,10 +447,10 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
     """
     if item_defined_transformation_frames[0] == item_defined_transformation_frames[1]:
         return closed_shells
-    if shape_representation_frames[0].origin == volmdlr.O3D:
+    if shape_representation_frames[0].origin.is_close(volmdlr.O3D):
         global_frame = shape_representation_frames[0]
     else:
-        global_frame = [frame for frame in item_defined_transformation_frames if frame.origin == volmdlr.O3D][0]
+        global_frame = [frame for frame in item_defined_transformation_frames if frame.origin.is_close(volmdlr.O3D)][0]
     transformed_frame = [frame for frame in item_defined_transformation_frames if frame != global_frame][0]
     new_closedshells = []
 
@@ -467,9 +467,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector,
-                                    v_vector,
-                                    w_vector)
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
         new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
         new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
         new_closedshells.append(new_closed_shell3d)
@@ -985,11 +983,14 @@ class Step(dc.DessiaObject):
                     # depth in the right order, leading to error
                     instanciate_ids.append(key.args[0])
             if i == 0:
-                self.parse_arguments(arguments[1])
-                self.global_uncertainty = float(object_dict[arguments[1][0]])
-                self.parse_arguments(arguments[2])
-                self.length_conversion_factor = float(object_dict[arguments[2][0]])
-                self.angle_conversion_factor = float(object_dict[arguments[2][1]])
+                self.global_uncertainty = object_dict[int(arguments[1][0][1:])]
+                self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
+                self.angle_conversion_factor = object_dict[int(arguments[2][1][1:])]
+                # self.parse_arguments(arguments[1])
+                # self.global_uncertainty = float(object_dict[arguments[1][0]])
+                # self.parse_arguments(arguments[2])
+                # self.length_conversion_factor = float(object_dict[arguments[2][0]])
+                # self.angle_conversion_factor = float(object_dict[arguments[2][1]])
 
         if show_times:
             print()
