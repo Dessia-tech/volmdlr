@@ -132,6 +132,7 @@ def named_unit_plane_angle_unit_si_unit(arguments, object_dict):
     """
     return SI_PREFIX[arguments[1]]
 
+
 def named_unit_si_unit_solid_angle_unit(arguments, object_dict):
     """
     Returns the dimension of solid angle measure.
@@ -141,6 +142,7 @@ def named_unit_si_unit_solid_angle_unit(arguments, object_dict):
     :return: SI unit dimension.
     """
     return SI_PREFIX[arguments[1]]
+
 
 def plane_angle_measure_with_unit(arguments, object_dict):
     """
@@ -489,12 +491,12 @@ def representation_relationship_representation_relationship_with_transformation_
     """
     if arguments[2] in object_dict:
         if isinstance(object_dict[arguments[2]], list):  # arguments = {, , [], [], item_....}
-            if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D)\
-                          and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
+            if object_dict[arguments[2]] and not isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) \
+                    and isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
                 return frame_map_closed_shell(object_dict[arguments[2]],
                                               object_dict[arguments[4]], object_dict[arguments[3]])
 
-            if object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
+            if object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and \
                     not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
                 return frame_map_closed_shell(object_dict[arguments[3]],
                                               object_dict[arguments[4]], object_dict[arguments[2]])
@@ -535,6 +537,7 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
                            'REPRESENTATION_ITEM, SURFACE'].from_step(
         modified_arguments, object_dict)
 
+
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometric_representation_item_rational_b_spline_surface_representation_item(
         arguments, object_dict):
     """
@@ -549,6 +552,7 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometr
                            'RATIONAL_B_SPLINE_SURFACE, '
                            'REPRESENTATION_ITEM, SURFACE'].from_step(
         modified_arguments, object_dict)
+
 
 class StepFunction(dc.DessiaObject):
     """
@@ -925,44 +929,19 @@ class Step(dc.DessiaObject):
         Step functions graph as a list of nodes
         :return:
         """
-        # Initialize data structures
         visited = []
-        # index = 0
-        # i = 0
-        # # Process each function in the Step file
-        # for function in self.functions.values():
-        #     if function.name == "SHAPE_DEFINITION_REPRESENTATION":
-        #         index =  i
-        #     if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
-        #         # Create shortcut from id1 to id2 to bypass unnecessary instantiations
-        #         id1 = int(function.arg[2][1:])
-        #         id2 = int(function.arg[3][1:])
-        #         elem1 = (function.id, id1)
-        #         elem2 = (function.id, id2)
-        #         self.all_connections.remove(elem1)
-        #         self.all_connections.remove(elem2)
-        #         self.all_connections.append((elem1[1], elem2[1]))
-        #
-        #         self.functions[id1].arg.append('#{}'.format(id2))
-        #     elif function.name in STEP_TO_VOLMDLR:
-        #         node_list.append(function.id)
-        #         i += 1
-                # labels[function.id] = str(function.id) + ' ' + function.name
-
-        # Process connections
         stack = stack
-        visited_set =set()
+        visited_set = set()
         while stack:
             node = stack.pop()
-            if node not in visited_set:
+            name = self.functions[node].name
+            if node not in visited_set and name in STEP_TO_VOLMDLR:
                 visited.append(node)
                 visited_set.add(node)
-                # for connection in self.all_connections:
-                #     if connection[0] == node:
-                #         stack.append(connection[1])
-                for c in self.connections[node]:
-                    if c not in visited_set:
-                        stack.append(c)
+                if self.connections[node]:
+                    for c in self.connections[node]:
+                        if c not in visited_set:
+                            stack.append(c)
         return visited
 
     def to_volume_model(self, show_times: bool = False):
@@ -988,75 +967,54 @@ class Step(dc.DessiaObject):
                 # Create short cut from id1 to id2
                 id1 = int(function.arg[2][1:])
                 id2 = int(function.arg[3][1:])
-                elem1 = (function.id, id1)
-                elem2 = (function.id, id2)
-                self.all_connections.remove(elem1)
-                self.all_connections.remove(elem2)
-                self.all_connections.append((elem1[1], elem2[1]))
+                old_connections = self.connections[id1]
+                self.connections[id1] = old_connections.append(id2)
 
-                self.functions[id1].arg.append('#{}'.format(id2))
+                self.functions[id1].arg.append(f'#{id2}')
         # sr_nodes = []
         not_shell_nodes = []
         assembly_nodes = []
         frame_mapped_shell_node = []
         # for node in self.graph.nodes:
         for node in list(self.functions.keys()):
-            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, ' \
-                                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
-                                                             'SHAPE_REPRESENTATION_RELATIONSHIP':
+            if self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, ' \
+                                            'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
+                                            'SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
                 arguments = self.functions[node].arg
                 id_shape_representation = int(arguments[3][1:])
-                id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
-                id_solid_entity =  int(self.functions[id_representation_entity].arg[1][0][1:])
-                frame_mapped_shell_node.append(int(self.functions[id_solid_entity].arg[1][1:]))
-            if node != '#0' and (self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]):
+                if len(self.functions[id_shape_representation].arg) == 4:
+                    id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
+                    id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
+                    frame_mapped_shell_node.append(int(self.functions[id_solid_entity].arg[1][1:]))
+            if self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]:
                 shell_nodes.append(node)
-            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_' \
-                                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_' \
-                                                             'SHAPE_REPRESENTATION_RELATIONSHIP':
+            if self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_' \
+                                            'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_' \
+                                            'SHAPE_REPRESENTATION_RELATIONSHIP':
                 assembly_nodes.append(node)
-            if node != "#0" and self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
-                                                             'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
-                                                             'GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
+            if self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
+                                            'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
+                                            'GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
                 geometric_representation_context_node = node
 
             # if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
             #     # Really a shell node ?
             #     sr_nodes.append(node)
-            if node != '#0' and self.functions[node].name == 'BREP_WITH_VOIDS':
+            if self.functions[node].name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(node)
                 not_shell_nodes.append(int(self.functions[node].arg[1][1:]))
-        # frame_mapped_shell_node = []
-        # for s_node in shell_nodes:
-        #     for fm_node in frame_mapping_nodes:
-        #         if nx.has_path(self.graph, source=fm_node, target=s_node):
-        #             frame_mapped_shell_node.append(s_node)
-        #             break
+
         shell_nodes_copy = shell_nodes.copy()
         remove_nodes = list(set(frame_mapped_shell_node + not_shell_nodes))
         for node in remove_nodes:
             shell_nodes.remove(node)
 
-        # for node in shell_nodes + frame_mapping_nodes:
-        #     self.graph.add_edge('#0', node)
-
-        # self.draw_graph(self.graph, reduced=True)
-
-        # nodes = []
-        # i = 1
-        # new_nodes = True
-        # while new_nodes:
-        #     new_nodes = list(nx.descendants_at_distance(self.graph, '#0', i))[::-1]
-        #     nodes.extend(new_nodes)
-        #     i += 1
-
-        # nodes = dessia_common.graph.explore_tree_from_leaves(self.graph)
         nodes = self.create_node_list(shell_nodes + frame_mapping_nodes)
         times = {}
         errors = set()
         for i, node in enumerate([geometric_representation_context_node] + nodes[::-1]):
-            # instanciate_ids = [edge[1]]
+
             if node is None:
                 continue
             instanciate_ids = [node]
@@ -1115,7 +1073,7 @@ class Step(dc.DessiaObject):
                     step_number_faces += len(self.functions[node].arg[1])
             if step_number_faces and faces_read:
                 self.read_diagnostic = StepReaderReport(self.name, step_number_faces, faces_read,
-                                                        faces_read/step_number_faces, list(errors))
+                                                        faces_read / step_number_faces, list(errors))
         volume_model = volmdlr.core.VolumeModel(shells)
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)

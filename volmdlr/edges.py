@@ -4865,8 +4865,6 @@ class BSplineCurve3D(BSplineCurve):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig = ax.figure
 
         x = [p.x for p in self.points]
         y = [p.y for p in self.points]

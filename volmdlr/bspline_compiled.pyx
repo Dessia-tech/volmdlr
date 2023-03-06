@@ -61,8 +61,6 @@ def find_span_linear(int degree, list knot_vector, int num_ctrlpts, double knot)
     return span - 1
 
 
-<<<<<<< HEAD
-=======
 def find_spans(int degree, list knot_vector, int num_ctrlpts, list knots, func=find_span_linear):
     """
     Finds spans of a list of knots over the knot vector.
@@ -91,7 +89,6 @@ def find_spans(int degree, list knot_vector, int num_ctrlpts, list knots, func=f
     return spans
 
 
->>>>>>> bspline_evaluate_performance
 cpdef basis_function(int degree, list knot_vector, int span, double knot):
 
     cdef list left = [0.0] * (degree + 1)
@@ -113,8 +110,6 @@ cpdef basis_function(int degree, list knot_vector, int span, double knot):
     return N
 
 
-<<<<<<< HEAD
-=======
 def basis_functions(degree, knot_vector, spans, knots):
     """ Computes the non-vanishing basis functions for a list of parameters.
 
@@ -139,7 +134,6 @@ def basis_functions(degree, knot_vector, spans, knots):
     return basis
 
 
->>>>>>> bspline_evaluate_performance
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef basis_function_ders(int degree, list knot_vector, int span, double knot, int order):

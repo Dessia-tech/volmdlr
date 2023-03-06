@@ -1709,7 +1709,9 @@ class PeriodicalSurface(Surface3D):
         end = self.point3d_to_2d(linesegment3d.end)
         if start.x != end.x:
             end = volmdlr.Point2D(start.x, end.y)
-        return [vme.LineSegment2D(start, end)]
+        if not start.is_close(end):
+            return [vme.LineSegment2D(start, end)]
+        return None
 
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
@@ -4410,7 +4412,8 @@ class BSplineSurface3D(Surface3D):
         bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
                              u_multiplicities, v_multiplicities, u_knots,
                              v_knots, weight_data, name)
-        bsplinesurface = bsplinesurface.simplify_surface()
+        # if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
+        #     bsplinesurface = bsplinesurface.simplify_surface()
         # if u_closed:
         #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
         # if v_closed:
