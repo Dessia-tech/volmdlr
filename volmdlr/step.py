@@ -931,20 +931,24 @@ class Step(dc.DessiaObject):
         Step functions graph as a list of nodes
         :return:
         """
-        visited = []
+        list_head = []
+        list_nodes = []
         stack = stack
         visited_set = set()
         while stack:
             node = stack.pop()
             name = self.functions[node].name
             if node not in visited_set and name in STEP_TO_VOLMDLR:
-                visited.append(node)
                 visited_set.add(node)
                 if self.connections[node]:
+                    list_nodes.append(node)
                     for c in self.connections[node]:
                         if c not in visited_set:
                             stack.append(c)
-        return visited
+                else:
+                    # Entities without connections should be instatiated first
+                    list_head.append(node)
+        return list_head + list_nodes[::-1]
 
     def get_frame_mapped_shell_node(self, node):
         arguments = self.functions[node].arg
@@ -1023,7 +1027,7 @@ class Step(dc.DessiaObject):
         nodes = self.create_node_list(shell_nodes + frame_mapping_nodes)
         times = {}
         errors = set()
-        for i, node in enumerate([geometric_representation_context_node] + nodes[::-1]):
+        for i, node in enumerate([geometric_representation_context_node] + nodes):
 
             if node is None:
                 continue
