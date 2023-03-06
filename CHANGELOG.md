@@ -24,12 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - argument convexe in volmdlr.cloud has been renamed to convex
 
 ### Performance improvements
+* BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.
 * eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
 * BSplinecurve2D: point_belongs
 * lighten some dicts with optional name
 
 ### Refactorings
-
 * ContourMixin: to_polygon (for both 2D and 3D)
 * BSplineCurve2D.point_distance 
 * new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.

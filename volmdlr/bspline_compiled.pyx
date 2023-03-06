@@ -61,6 +61,27 @@ cpdef int find_span_linear(int degree, list knot_vector, int num_ctrlpts, double
     return span - 1
 
 
+cpdef basis_function(int degree, list knot_vector, int span, double knot):
+
+    cdef list left = [0.0] * (degree + 1)
+    cdef list right = [0.0] * (degree + 1)
+    cdef list N = [1.0] * (degree + 1)
+
+    cdef int j, r
+    cdef double temp, saved
+    for j in range(1, degree + 1):
+        left[j] = knot - knot_vector[span + 1 - j]
+        right[j] = knot_vector[span + j] - knot
+        saved = 0.0
+        for r in range(0, j):
+            temp = N[r] / (right[r + 1] + left[j - r])
+            N[r] = saved + right[r + 1] * temp
+            saved = left[j - r] * temp
+        N[j] = saved
+
+    return N
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef basis_function_ders(int degree, list knot_vector, int span, double knot, int order):
