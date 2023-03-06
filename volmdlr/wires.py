@@ -2799,10 +2799,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                         p, a, b = volmdlr.Point2D.line_intersection(line1,
                                                                     line2,
                                                                     True)
-                        if p is not None:
-                            if 0 + epsilon <= a <= 1 - epsilon \
-                                    and 0 + epsilon <= b <= 1 - epsilon:
-                                return True, line1, line2
+                        if p is not None and 0 + epsilon <= a <= 1 - epsilon \
+                                and 0 + epsilon <= b <= 1 - epsilon:
+                            return True, line1, line2
 
         return False, None, None
 

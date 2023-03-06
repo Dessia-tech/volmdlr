@@ -3,12 +3,14 @@ babylonjs
 Bezier
 bool
 Bspline
+bsplinecurve
 cosinus
 dataset
 dbscan
 dectree
 dessia
 discretization
+discretized
 dof
 euler
 freecad
@@ -36,3 +38,4 @@ toroidal
 trigo
 txt
 volmdlr
+tol

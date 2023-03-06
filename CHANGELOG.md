@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Write .msh file (with stream)
 * Arc: reverse
 * BSplineCurve2D: offset
-* Circle2D: bsplinecurve_intersections, point_distance.
-
+* Circle2D: bsplinecurve_intersections, point_distance
+* ConicalSurface3D, CylindricalSurface3D: plot method
 ### Fixed
 
 
@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unittests for Vector3D
 * Unittests for Point3D
 
-## v0.9.0 [Testing]
+## v0.9.0 [Released 06/03/2023]
 
 ### New Features
 
@@ -55,8 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Create .geo and .msh files (Mesh geometries with GMSH)
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
-* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D.
-* ConicalSurface3D, CylindricalSurface3D: plot method
+* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
 
 
 ### Fixed
@@ -121,7 +120,7 @@ is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_t
 - add spell check to pylint with pyenchant
 - make code_pydocstyle more explicit
 - upload html coverage to cdn.dessia.tech
-
+- limit time effect on master & testing
 
 ## v0.8.0 [Released 26/01/2023]
 
