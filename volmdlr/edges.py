@@ -95,7 +95,7 @@ class Edge(dc.DessiaObject):
 
     def point_at_abscissa(self, abscissa):
         """
-        Calcultes the point at given abscissa.
+        Calculates the point at given abscissa.
         """
         raise NotImplementedError(f'point_at_abscissa method not implemented by {self.__class__.__name__}')
 
@@ -1952,7 +1952,7 @@ class LineSegment2D(LineSegment):
 
     def linesegment_intersections(self, linesegment2d: 'LineSegment2D'):
         """
-        Touching linesegments does not intersect.
+        Touching line segments does not intersect.
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
