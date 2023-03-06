@@ -3978,7 +3978,7 @@ class BSplineSurface3D(Surface3D):
         y_perio = self.y_periodicity if self.y_periodicity is not None else 1.
         start = self.point3d_to_2d(linesegment3d.start)
         end = self.point3d_to_2d(linesegment3d.end)
-        if start == end:
+        if start.is_close(end):
             return None
         return [vme.LineSegment2D(start, end)]
 

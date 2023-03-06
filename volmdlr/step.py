@@ -447,10 +447,12 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
     """
     Frame maps a closed shell in an assembly to its good position.
 
-    :param arguments: DESCRIPTION
-    :type arguments: TYPE
-    :param object_dict: DESCRIPTION
-    :type object_dict: TYPE
+    :param closed_shells: DESCRIPTION
+    :type closed_shells: volmdlr.faces.OpenShell3D
+    :param item_defined_transformation_frames: DESCRIPTION
+    :type item_defined_transformation_frames: TYPE
+    :param shape_representation_frames: DESCRIPTION
+    :type shape_representation_frames: TYPE
     :return: DESCRIPTION
     :rtype: TYPE
 
@@ -944,6 +946,24 @@ class Step(dc.DessiaObject):
                             stack.append(c)
         return visited
 
+    def get_frame_mapped_shell_node(self, node):
+        arguments = self.functions[node].arg
+        id_shape_representation = int(arguments[3][1:])
+        # The shape_representation can be a list of frames, if it's a list of frames
+        # (len(self.functions[id_shape_representation].arg) != 4, I'm not sure if this is always true)
+        # we should use the 3rd arg
+        if len(self.functions[id_shape_representation].arg) != 4:
+            id_shape_representation = int(arguments[2][1:])
+        if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION":
+            id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
+            id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
+            return int(self.functions[id_solid_entity].arg[1][1:])
+        id_representation_entity = int(self.functions[id_shape_representation].arg[1][1][1:])
+        id_shell = self.functions[id_representation_entity].arg[1]
+        if isinstance(id_shell, list):
+            return int(id_shell[0][1:])
+        return int(id_shell[1:])
+
     def to_volume_model(self, show_times: bool = False):
         """
         Translate a step file into a volmdlr object.
@@ -967,9 +987,7 @@ class Step(dc.DessiaObject):
                 # Create short cut from id1 to id2
                 id1 = int(function.arg[2][1:])
                 id2 = int(function.arg[3][1:])
-                old_connections = self.connections[id1]
-                self.connections[id1] = old_connections.append(id2)
-
+                self.connections[id1].append(id2)
                 self.functions[id1].arg.append(f'#{id2}')
         # sr_nodes = []
         not_shell_nodes = []
@@ -981,27 +999,19 @@ class Step(dc.DessiaObject):
                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
                                             'SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
-                arguments = self.functions[node].arg
-                id_shape_representation = int(arguments[3][1:])
-                if len(self.functions[id_shape_representation].arg) == 4:
-                    id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
-                    id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
-                    frame_mapped_shell_node.append(int(self.functions[id_solid_entity].arg[1][1:]))
-            if self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]:
+                frame_mapped_shell_node.append(self.get_frame_mapped_shell_node(node))
+            elif self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]:
                 shell_nodes.append(node)
-            if self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_' \
-                                            'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_' \
-                                            'SHAPE_REPRESENTATION_RELATIONSHIP':
+            elif self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_' \
+                                              'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_' \
+                                              'SHAPE_REPRESENTATION_RELATIONSHIP':
                 assembly_nodes.append(node)
-            if self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
-                                            'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
-                                            'GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
+            elif self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
+                                              'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
+                                              'GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
                 geometric_representation_context_node = node
 
-            # if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
-            #     # Really a shell node ?
-            #     sr_nodes.append(node)
-            if self.functions[node].name == 'BREP_WITH_VOIDS':
+            elif self.functions[node].name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(node)
                 not_shell_nodes.append(int(self.functions[node].arg[1][1:]))
 
