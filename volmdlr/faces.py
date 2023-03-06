@@ -1162,7 +1162,7 @@ class Surface3D(DessiaObject):
     def geodesic_distance_from_points2d(self, point1_2d: volmdlr.Point2D,
                                         point2_2d: volmdlr.Point2D, number_points: int = 50):
         """
-        Approximation of geodesic distance via linesegments length sum in 3D.
+        Approximation of geodesic distance via line segments length sum in 3D.
         """
         # points = [point1_2d]
         current_point3d = self.point2d_to_3d(point1_2d)
@@ -6452,8 +6452,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def get_closed_contour_divided_faces_inner_contours(self, list_faces, new_contour):
         """
-        If there is any inner contour, verifies which ones belong to the new divided faces from
-        a closed cutting contour.
+        If there is any inner contour, verifies which ones belong to the new divided faces.
 
         :param list_faces: list of new faces.
         :param new_contour: current new face outer contour.
@@ -7055,12 +7054,12 @@ class PlaneFace3D(Face3D):
 
     def cut_by_coincident_face(self, face):
         """
-        Cuts face1 with another coincident face2
+        Cuts face1 with another coincident face2.
 
-        :param face: a face3d
-        :type face: Face3D
-        :return: a list of faces3d
-        :rtype: List[Face3D]
+        :param face: a face 3d.
+        :type face: Face3D.
+        :return: a list of faces 3d.
+        :rtype: List[Face3D].
         """
 
         if not self.surface3d.is_coincident(face.surface3d):
@@ -7509,6 +7508,7 @@ class Triangle3D(PlaneFace3D):
 
     def normal(self):
         """
+        Get the normal vector to the face.
 
         Returns
         -------
@@ -8802,7 +8802,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new OpenShell3D
+        Changes frame_mapping and return a new OpenShell3D.
+
         side = 'old' or 'new'
         """
         new_faces = [face.frame_mapping(frame, side) for face in
@@ -8811,7 +8812,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
@@ -9068,7 +9070,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def project_coincident_faces_of(self, shell):
         """
-        Divides self's faces based on coincident shell's faces
+        Divides self's faces based on coincident shell's faces.
+
         """
 
         list_faces = []
@@ -9378,9 +9381,9 @@ class ClosedShell3D(OpenShell3D):
 
     def is_inside_shell(self, shell2, resolution: float):
         """
-        Returns True if all the points of self are inside shell2 and no face \
-        are intersecting
-        This method is not exact
+        Returns True if all the points of self are inside shell2 and no face are intersecting.
+
+        This method is not exact.
         """
         bbox1 = self.bounding_box
         bbox2 = shell2.bounding_box
@@ -9716,8 +9719,7 @@ class ClosedShell3D(OpenShell3D):
 
     def is_clean(self):
         """
-        Verifies if closed shell\'s faces are clean or
-        if it is needed to be cleaned.
+        Verifies if closed shell\'s faces are clean or if it is needed to be cleaned.
 
         :return: True if clean and False Otherwise
         """
@@ -9871,8 +9873,7 @@ class ClosedShell3D(OpenShell3D):
 
     def intersection(self, shell2, tol=1e-8):
         """
-        Given two ClosedShell3D, it returns the new object resulting
-        from the intersection of the two.
+        Given two ClosedShell3D, it returns the new object resulting from the intersection of the two.
 
         """
         validate_set_operation = self.validate_set_operation(

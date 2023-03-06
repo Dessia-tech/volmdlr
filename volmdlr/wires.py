@@ -2799,10 +2799,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                         p, a, b = volmdlr.Point2D.line_intersection(line1,
                                                                     line2,
                                                                     True)
-                        if p is not None:
-                            if 0 + epsilon <= a <= 1 - epsilon \
-                                    and 0 + epsilon <= b <= 1 - epsilon:
-                                return True, line1, line2
+                        if p is not None and 0 + epsilon <= a <= 1 - epsilon \
+                                and 0 + epsilon <= b <= 1 - epsilon:
+                            return True, line1, line2
 
         return False, None, None
 
@@ -4455,10 +4454,11 @@ class Contour3D(ContourMixin, Wire3D):
         index = distances.index(min(distances))
         if min(distances) > 6e-4:
             # Green color : well-placed and well-read
-            ax = raw_edges[0].plot(color='g')
+            ax = raw_edges[0].plot(edge_style=EdgeStyle(color='g'))
             ax.set_title(f"Step ID: #{step_id}")
+
             # Red color : can't be connected to green edge
-            raw_edges[1].plot(ax=ax, color='r')
+            raw_edges[1].plot(ax=ax, edge_style=EdgeStyle(color='r'))
             # Black color : to be placed
             for re in raw_edges[2:]:
                 re.plot(ax=ax)
@@ -4495,15 +4495,16 @@ class Contour3D(ContourMixin, Wire3D):
             index = distances.index(min(distances))
             if min(distances) > 6e-4:
                 # Green color : well-placed and well-read
-                ax = last_edge.plot(color='g')
+                ax = last_edge.plot(EdgeStyle(color='g'))
                 ax.set_title(f"Step ID: #{step_id}")
+
                 for re in raw_edges[:2 + i]:
-                    re.plot(ax=ax, color='g')
-                    re.start.plot(ax=ax, color='g')
-                    re.end.plot(ax=ax, color='g')
-                last_edge.end.plot(ax=ax, color='r')
+                    re.plot(ax=ax, edge_style=EdgeStyle(color='g'))
+                    re.start.plot(ax=ax, edge_style=EdgeStyle(color='g'))
+                    re.end.plot(ax=ax, edge_style=EdgeStyle(color='g'))
+                last_edge.end.plot(ax=ax, edge_style=EdgeStyle(color='g'))
                 # Red color : can't be connected to red dot
-                raw_edge.plot(ax=ax, color='r')
+                raw_edge.plot(ax=ax, edge_style=EdgeStyle(color='g'))
                 # Black color : to be placed
                 for re in raw_edges[2 + i + 1:]:
                     re.plot(ax=ax)
@@ -5837,7 +5838,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         elif math.isclose(ratio, -1, abs_tol=0.3):
             closing_point_index = last_index
         elif closing_point_index - last_index > 5 and list_closing_point_indexes[
-            -1] + 4 <= ratio_denominator - 1 and polygons_points_ratio > 0.95:
+                -1] + 4 <= ratio_denominator - 1 and polygons_points_ratio > 0.95:
             closing_point_index = last_index + 4
 
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
