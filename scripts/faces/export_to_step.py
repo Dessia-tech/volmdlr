@@ -8,9 +8,9 @@ Created on Mon Feb 14 2022
 
 # %% Libraries
 
-from volmdlr.models import bspline_surfaces
 import volmdlr.core
 import volmdlr.step
+from volmdlr.models import bspline_surfaces
 
 # %% BsplineFaces3D
 

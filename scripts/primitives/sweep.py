@@ -7,6 +7,7 @@ Created on Tue Sep 11 15:16:33 2018
 """
 
 import random
+
 import matplotlib.pyplot as plt
 
 import volmdlr as vm
@@ -27,7 +28,7 @@ current_point = p5
 for i in range(6):
     current_point += vm.Point3D.random(-0.1, 0.3, -0.1, 0.3, -0.1, 0.3)
     points.append(current_point)
-    radius[4+i] = 0.01 + 0.03 * random.random()
+    radius[4 + i] = 0.01 + 0.03 * random.random()
 
 contour = wires.Circle2D(vm.O2D, 0.008)
 
@@ -48,7 +49,7 @@ c2 = vm.wires.Circle2D.dict_to_object(c1)
 sweep = primitives3d.Sweep(contour, rl, name='Random pipe')
 
 model = vm.core.VolumeModel([sweep])
+model._check_platform()
 model.babylonjs()
-
 
 model.to_step('sweep.step')

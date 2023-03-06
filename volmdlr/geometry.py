@@ -32,9 +32,9 @@ def euler_angles_to_transfer_matrix(psi, theta, phi):
 
 def transfer_matrix_to_euler_angles(R):
     """
-    Returns the euler angle from a transfer matrix.
+    Returns the Euler angle from a transfer matrix.
     """
-    if ((R[2, 2] != 1) and (R[2, 2] != -1)):
+    if (R[2, 2] != 1) and (R[2, 2] != -1):
         theta = math.acos(R[2, 2])
         psi = math.atan2(R[2, 0] / math.sin(theta), R[2, 1] / math.sin(theta))
         phi = math.atan2(R[0, 2] / math.sin(theta), -R[1, 2] / math.sin(theta))
@@ -173,7 +173,7 @@ def posangle_arc(start, end, radius, frame=None):
     if frame is None:
         p1_new, p2_new = start, end
     else:
-        p1_new, p2_new = frame.new_coordinates(start), frame.new_coordinates(end)
+        p1_new, p2_new = frame.global_to_local_coordinates(start), frame.global_to_local_coordinates(end)
     # Angle pour le p1
     u1, u2 = p1_new.x / radius, p1_new.y / radius
     theta1 = sin_cos_angle(u1, u2)
@@ -245,7 +245,7 @@ def angle_principal_measure(angle, min_angle=-math.pi):
     Returns angle between O and 2 pi.
     """
     max_angle = min_angle + vm.TWO_PI
-    angle = angle % (vm.TWO_PI)
+    angle = angle % vm.TWO_PI
 
     if math.isclose(angle, min_angle, abs_tol=1e-9):
         return min_angle

@@ -1,6 +1,7 @@
 import unittest
+
 import volmdlr
-from volmdlr import wires, edges
+from volmdlr import edges, wires
 
 
 class TestCircle3D(unittest.TestCase):

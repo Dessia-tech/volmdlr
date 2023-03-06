@@ -5,7 +5,7 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import wires, edges
+from volmdlr import edges, wires
 
 
 class TestEllipse2D(unittest.TestCase):
@@ -54,22 +54,22 @@ class TestEllipse2D(unittest.TestCase):
     def test_rotation(self):
         rotationed_ellipse = self.ellipse2d.rotation(volmdlr.O2D, math.pi / 4)
         rotationed_major_axis_point = rotationed_ellipse.center +\
-                                      rotationed_ellipse.major_axis * rotationed_ellipse.major_dir
+            rotationed_ellipse.major_axis * rotationed_ellipse.major_dir
         self.assertEqual(rotationed_major_axis_point, volmdlr.Point2D(0.0, 4.0))
 
     def test_translation(self):
         translated_ellipse = self.ellipse2d.translation(volmdlr.Vector2D(1, 0))
         translated_ellipse_major_axis_point = translated_ellipse.center +\
-                                              translated_ellipse.major_axis * translated_ellipse.major_dir
+            translated_ellipse.major_axis * translated_ellipse.major_dir
         self.assertEqual(translated_ellipse_major_axis_point, volmdlr.Point2D(3.8284271247461903, 2.8284271247461903))
 
     def test_frame_mapping(self):
         frame_mapped_ellipse = self.ellipse2d.frame_mapping(
             volmdlr.Frame2D(volmdlr.Point2D(1, 1), self.ellipse2d.major_dir, self.ellipse2d.minor_dir), 'new')
         frame_mapped_ellipse_major_axis_point = frame_mapped_ellipse.center +\
-                                                frame_mapped_ellipse.major_axis * frame_mapped_ellipse.major_dir
+            frame_mapped_ellipse.major_axis * frame_mapped_ellipse.major_dir
         self.assertEqual(frame_mapped_ellipse_major_axis_point, volmdlr.Point2D(2.585786437626905, 0.0))
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=0)

@@ -6,13 +6,15 @@ Created on Thu Jul 23 16:14:08 2020
 @author: joly
 """
 
-import numpy as npy
-import volmdlr as vm
-import volmdlr.primitives3D as primitives3D
-import volmdlr.primitives2D as primitives2D
-import matplotlib.pyplot as plt
-import random
 import math
+import random
+
+import matplotlib.pyplot as plt
+import numpy as npy
+
+import volmdlr as vm
+import volmdlr.primitives2D as primitives2D
+import volmdlr.primitives3D as primitives3D
 
 with_borders = False
 

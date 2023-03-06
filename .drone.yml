@@ -36,6 +36,10 @@ steps:
 
 - name: notify by email
   when:
+    event: push
+    branch:
+      - master
+      - dev
     status:
     - failure
   image: drillster/drone-email
@@ -47,17 +51,17 @@ steps:
     from: technical@dessia.tech
 
 - name: check code complexity
-  image: python:3.9
+  image: dessia/python-ci:3.9
   commands:
-  - pip install radon pylint pydocstyle
-  - ./code_quality.sh
+  - pip install pylint==2.16.1 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
   - python code_pylint.py
   - python code_pydocstyle.py
+  - pre-commit run -a
 
   volumes:
     # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
+    - name: cache
+      path: /root/.cache
 
 
 - name: check pep8 formatting
@@ -97,6 +101,7 @@ steps:
   - coverage combine scripts/.coverage tests/.coverage tutorials/.coverage
   - coverage json
   - coverage report
+  - coverage html
   - python coverage.py
 
   volumes:
@@ -146,3 +151,6 @@ volumes:
   - name: pip_cache
     host:
       path: /tmp/cache/drone/pip
+  - name: cache
+    host:
+      path: /tmp/cache/drone

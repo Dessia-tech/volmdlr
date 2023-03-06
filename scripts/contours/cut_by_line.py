@@ -1,8 +1,9 @@
-import volmdlr
-import volmdlr.wires as vmw
-import volmdlr.edges as vme
 import matplotlib.pyplot as plt
 import numpy as np
+
+import volmdlr
+import volmdlr.edges as vme
+import volmdlr.wires as vmw
 
 line_seg1 = vme.LineSegment2D(volmdlr.Point2D(-0.5, -0.2), volmdlr.O2D)
 line_seg2 = vme.LineSegment2D(volmdlr.O2D, volmdlr.Point2D(0.3, 1))

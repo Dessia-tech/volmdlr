@@ -1,6 +1,6 @@
 import unittest
-import volmdlr
 
+import volmdlr
 from volmdlr.primitives3d import Cylinder
 
 

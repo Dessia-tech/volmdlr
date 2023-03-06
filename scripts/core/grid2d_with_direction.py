@@ -7,8 +7,9 @@
 
 # %% Libraries
 
-import volmdlr.grid
 import matplotlib.pyplot as plt
+
+import volmdlr.grid
 
 # %% Grid2d definition 'with direction'
 

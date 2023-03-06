@@ -47,10 +47,10 @@ scripts = [
             'faces/BSplineSurface/bspline_surface_definition.py',
             'faces/BSplineSurface/bspline_surfaces_grid3d.py',
             # 'faces/faces_with_inner_contours.py', #TO BE USED WHEN HOLES IS MERGED
-            
+
             # Shells
             'shells/operations.py',
-            
+
             # Cloud
             'cloud/sewing_two_polygons.py',
             'cloud/sewing_stl.py',
@@ -70,8 +70,14 @@ scripts = [
             # Showcases
             'showcases/simple_shapes.py',
             'showcases/casing.py',
-            'grid.py',
-            'mesh/read_msh_file.py'
+            # Mesh
+            'mesh/read_msh_file.py',
+            # 'mesh/geo_file_1.py',
+            # 'mesh/geo_file_2.py',
+            # 'mesh/geo_file_3.py',
+
+            # Others
+            'grid.py'
             ]
 
 # Maximum time for a script

@@ -1,18 +1,21 @@
+"""
+Unit tests for CylindriSurface3D
+"""
 import math
 import unittest
 
+import dessia_common.core
 import volmdlr
-from volmdlr import faces, edges, wires
-from volmdlr import Point3D, OXYZ, Point2D, Z3D
+from volmdlr import OXYZ, Z3D, Point2D, Point3D, edges, faces, wires
 
 
 class TestCylindricalSurface3D(unittest.TestCase):
     cylindrical_surface = faces.CylindricalSurface3D(volmdlr.OXYZ, 0.32)
     cylindrical_surface2 = faces.CylindricalSurface3D(volmdlr.OXYZ, 1.0)
-    frame = volmdlr.Frame3D(
-        volmdlr.Point3D(-0.005829, 0.000765110438227, -0.0002349369830163),
-        volmdlr.Vector3D(-0.6607898454031987, 0.562158151695499, -0.4973278523210991),
-        volmdlr.Vector3D(-0.7505709694705869, -0.4949144228333324, 0.43783893597935386), volmdlr.Vector3D(-0.0, 0.6625993710787045, 0.748974013865705))
+    frame = volmdlr.Frame3D(volmdlr.Point3D(-0.005829, 0.000765110438227, -0.0002349369830163),
+                            volmdlr.Vector3D(-0.6607898454031987, 0.562158151695499, -0.4973278523210991),
+                            volmdlr.Vector3D(-0.7505709694705869, -0.4949144228333324, 0.43783893597935386),
+                            volmdlr.Vector3D(-0.0, 0.6625993710787045, 0.748974013865705))
     cylindrical_surface3 = faces.CylindricalSurface3D(frame, 0.003)
     cylindrical_surface4 = faces.CylindricalSurface3D(OXYZ, radius=0.03)
 
@@ -127,10 +130,31 @@ class TestCylindricalSurface3D(unittest.TestCase):
         linesegment2d = contour2d_cylinder.primitives[2]
 
         self.assertEqual(area, 0.02*math.pi)
-        self.assertEqual(fullarc2d.start, Point2D(2*math.pi, 0.003))
+        self.assertEqual(fullarc2d.start, Point2D(-2*math.pi, 0.003))
         self.assertEqual(fullarc2d.end, Point2D(0, 0.003))
-        self.assertEqual(linesegment2d.start, Point2D(2*math.pi, 0.013))
-        self.assertEqual(linesegment2d.end, Point2D(2*math.pi, 0.003))
+        self.assertEqual(linesegment2d.start, Point2D(-2*math.pi, 0.013))
+        self.assertEqual(linesegment2d.end, Point2D(-2*math.pi, 0.003))
+
+    def test_face_from_contours3d(self):
+        surface = dessia_common.core.DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/surface3d_1.json')
+        contour0 = dessia_common.core.DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/contour_1_0.json')
+        contour1 = dessia_common.core.DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/contour_1_1.json')
+
+        face = surface.face_from_contours3d([contour0, contour1])
+
+        self.assertEqual(face.surface2d.area(), 0.00077*2*math.pi)
+
+        frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
+        cylindrical = faces.CylindricalSurface3D(frame, 0.2)
+        fullarc1 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(0.2, 0.0, 0.0), normal=volmdlr.Z3D)
+        fullarc2 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(-0.2, 0.0, 0.2), normal=volmdlr.Z3D)
+        contour1 = wires.Contour3D([fullarc1])
+        contour2 = wires.Contour3D([fullarc2])
+        face = cylindrical.face_from_contours3d([contour1, contour2])
+        self.assertEqual(face.surface2d.area(), 0.2*2*math.pi)
 
 
 if __name__ == '__main__':

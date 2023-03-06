@@ -8,9 +8,10 @@ Created on Wed Mar 2 2022
 
 # %% Libraries
 
+import matplotlib.pyplot as plt
+
 import volmdlr
 import volmdlr.grid
-import matplotlib.pyplot as plt
 
 # %% Grid2D
 
