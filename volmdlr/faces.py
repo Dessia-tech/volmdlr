@@ -1392,7 +1392,7 @@ class Plane3D(Surface3D):
 
         a1, b1, c1, d1 = self.equation_coefficients()
         a2, b2, c2, d2 = other_plane.equation_coefficients()
-        if a1 * b2 - a2 * b1 != 0.:
+        if not math.isclose(a1 * b2 - a2 * b1, 0.0, abs_tol=1e-10):
             x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
             y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
             point1 = volmdlr.Point3D(x0, y0, 0)
