@@ -3685,6 +3685,17 @@ class BSplineSurface3D(Surface3D):
         self._y_periodicity = False
 
     @property
+    def surface(self):
+        return self._surface
+
+    @surface.setter
+    def surface(self, value):  # check_surface
+        if not isinstance(value, BSpline.Surface):
+            raise ValueError('Not a bspline')
+        else:
+            self._surface = value
+
+    @property
     def x_periodicity(self):
         if self._x_periodicity is False:
             u = self.curves['u']
@@ -3861,6 +3872,10 @@ class BSplineSurface3D(Surface3D):
         return blending_mat
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        if not isinstance(self._surface,
+                          BSpline.Surface):
+            raise ValueError('In BSplineSurface3D.point2d_to_3d: \
+                                     Not a geomdl bspline. It is a: ', self._surface)
         u, v = point2d
         u = min(max(u, 0), 1)
         v = min(max(v, 0), 1)
