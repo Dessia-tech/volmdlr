@@ -1302,6 +1302,16 @@ class Plane3D(Surface3D):
                 dot_min = dot
         return cls.from_3_points(origin, vector1 + origin, vector2_min + origin)
 
+    def angle_between_planes(self, plane2):
+        """
+        Get angle between 2 planes.
+
+        :param plane2: the second plane.
+        :return: the angle between the two planes.
+        """
+        angle = math.acos(self.frame.w.dot(plane2.frame.w))
+        return angle
+
     def point_on_surface(self, point):
         """
         Return if the point belongs to the plane at a tolerance of 1e-6.
@@ -1429,6 +1439,23 @@ class Plane3D(Surface3D):
         if self.frame.w.is_colinear_to(plane2.frame.w):
             return True
         return False
+
+    @classmethod
+    def plane_betweeen_two_planes(cls, plane1, plane2):
+        new_plane_normal_vector = plane1.frame.w.cross(plane2.frame.w)
+        plane1_plane2_intersection = plane1.plane_intersection(plane2)[0]
+        u = plane1_plane2_intersection.unit_direction_vector()
+        v = plane1.frame.w + plane2.frame.w
+        v.normalize()
+        w = u.cross(v)
+        plane1_plane2_intersection = plane1.plane_intersection(plane2)[0]
+        point = (plane1_plane2_intersection.point1 + plane1_plane2_intersection.point2) / 2
+        # d1 = plane1.frame.w.cross(plane2.frame.w)
+        # d2 = plane2.frame.w.cross(d1)
+        # point = plane1.frame.origin + (plane2.frame.origin - plane1.frame.origin).dot(d1) / d2.dot(d1) * d2
+        # normal = d1.cross(d2)
+        return cls(volmdlr.Frame3D(point, u, v, w))
+
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
