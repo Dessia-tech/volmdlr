@@ -1020,10 +1020,12 @@ class Mesh(DessiaObject):
 
         groups.insert(reference_index, self.elements_groups[reference_index])
 
+        return self._helper_create_mesh(groups)
+
+    def _helper_create_mesh(self, groups):
         mesh = self.__class__(groups)
         mesh.gmsh = self.gmsh
         mesh.set_nodes_correction(self.get_nodes_correction())
-
         return mesh
 
     def get_nodes_correction(self):
