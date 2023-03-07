@@ -2569,9 +2569,9 @@ class Arc2D(Arc):
         fa2d_intersection_points = full_arc_2d.linesegment_intersections(
             linesegment2d)
         intersection_points = []
-        for pt in fa2d_intersection_points:
-            if self.point_belongs(pt):
-                intersection_points.append(pt)
+        for point in fa2d_intersection_points:
+            if self.point_belongs(point):
+                intersection_points.append(point)
         return intersection_points
 
     def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
@@ -2714,20 +2714,10 @@ class Arc2D(Arc):
         angle1 = self.angle1
 
         # Full arc section
-        Ix1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
-            math.sin(2 * angle1) - math.sin(2 * angle2)))
-        Iy1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
-            math.sin(2 * angle2) - math.sin(2 * angle1)))
-        Ixy1 = self.radius ** 4 / 8 * (
-            math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
+        Ix1, Iy1, Ixy1 = self._full_arc_moment_inertia(angle1, angle2)
 
         # Triangle
-        xi, yi = self.start - self.center
-        xj, yj = self.end - self.center
-        Ix2 = (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi) / 12.
-        Iy2 = (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi) / 12.
-        Ixy2 = (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
-            xi * yj - xj * yi) / 24.
+        Ix2, Iy2, Ixy2 = self._triangle_moment_inertia()
         if Ix2 < 0.:
             Ix2, Iy2, Ixy2 = -Ix2, -Iy2, -Ixy2
         if self.angle < math.pi:
@@ -2754,6 +2744,24 @@ class Arc2D(Arc):
                                           self.straight_line_area(),
                                           self.center,
                                           point)
+
+    def _full_arc_moment_inertia(self, angle1, angle2):
+        Ix1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+            math.sin(2 * angle1) - math.sin(2 * angle2)))
+        Iy1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+            math.sin(2 * angle2) - math.sin(2 * angle1)))
+        Ixy1 = self.radius ** 4 / 8 * (
+            math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
+        return Ix1, Iy1, Ixy1
+
+    def _triangle_moment_inertia(self):
+        xi, yi = self.start - self.center
+        xj, yj = self.end - self.center
+        Ix2 = (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi) / 12.
+        Iy2 = (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi) / 12.
+        Ixy2 = (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
+            xi * yj - xj * yi) / 24.
+        return Ix2, Iy2, Ixy2
 
     def straight_line_center_of_mass(self):
         if self.angle == math.pi:
