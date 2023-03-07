@@ -1271,20 +1271,20 @@ class Line2D(Line):
         Static helper method to compute some data used in create_tangent_circle method.
         """
         if math.isclose(line.point_distance(point), 0, abs_tol=1e-10):
-            i = volmdlr.Vector2D(point.x, point.y)
-            a = volmdlr.Vector2D(line.point1.x, line.point1.y)
-            b = volmdlr.Vector2D(line.point2.x, line.point2.y)
-            c = volmdlr.Vector2D(other_line.point1.x, other_line.point1.y)
-            d = volmdlr.Vector2D(other_line.point2.x, other_line.point2.y)
+            vector_i = volmdlr.Vector2D(point.x, point.y)
+            vector_a = volmdlr.Vector2D(line.point1.x, line.point1.y)
+            vector_b = volmdlr.Vector2D(line.point2.x, line.point2.y)
+            vector_c = volmdlr.Vector2D(other_line.point1.x, other_line.point1.y)
+            vector_d = volmdlr.Vector2D(other_line.point2.x, other_line.point2.y)
         elif math.isclose(other_line.point_distance(point), 0, abs_tol=1e-10):
-            i = volmdlr.Vector2D(line.x, point.y)
-            c = volmdlr.Vector2D(line.point1.x, line.point1.y)
-            d = volmdlr.Vector2D(line.point2.x, line.point2.y)
-            a = volmdlr.Vector2D(other_line.point1.x, other_line.point1.y)
-            b = volmdlr.Vector2D(other_line.point2.x, other_line.point2.y)
+            vector_i = volmdlr.Vector2D(line.x, point.y)
+            vector_c = volmdlr.Vector2D(line.point1.x, line.point1.y)
+            vector_d = volmdlr.Vector2D(line.point2.x, line.point2.y)
+            vector_a = volmdlr.Vector2D(other_line.point1.x, other_line.point1.y)
+            vector_b = volmdlr.Vector2D(other_line.point2.x, other_line.point2.y)
         else:
             raise AttributeError("The point isn't on any of the two lines")
-        return i, a, b, c, d
+        return vector_i, vector_a, vector_b, vector_c, vector_d
 
     @staticmethod
     def _change_reference_frame(I, A, B, C, D):
