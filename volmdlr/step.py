@@ -929,7 +929,10 @@ class Step(dc.DessiaObject):
         if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION":
             id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
             id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
-            return int(self.functions[id_solid_entity].arg[1][1:])
+            id_shell = self.functions[id_solid_entity].arg[1]
+            if isinstance(id_shell, list):
+                return int(id_shell[0][1:])
+            return int(id_shell[1:])
         id_representation_entity = int(self.functions[id_shape_representation].arg[1][1][1:])
         id_shell = self.functions[id_representation_entity].arg[1]
         if isinstance(id_shell, list):
@@ -947,7 +950,6 @@ class Step(dc.DessiaObject):
         :return: A volmdlr solid object.
         :rtype: :class:`volmdlr.core.VolumeModel`
         """
-        key_errors_count = 0
         object_dict = {}
         arguments = []
         # self.graph.add_node("#0")
@@ -1019,7 +1021,6 @@ class Step(dc.DessiaObject):
                                 times[volmdlr_object.__class__][1] += t
                     error = False
                 except KeyError as key:
-                    key_errors_count += 1
                     # Sometimes the bfs search don't instanciate the nodes of a
                     # depth in the right order, leading to error
                     instanciate_ids.append(key.args[0])
@@ -1038,9 +1039,6 @@ class Step(dc.DessiaObject):
             for key, value in times.items():
                 print(f'| {key} : {value}')
             print()
-        print("--------------------------------------------")
-        print(f"Total number of key errors :{key_errors_count}")
-        print("--------------------------------------------")
         shells = []
         step_number_faces = 0
         faces_read = 0
