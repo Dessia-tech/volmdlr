@@ -6,6 +6,7 @@ ISO STEP reader/writer.
 
 import time
 from typing import List
+from dataclasses import dataclass, field
 import numpy as npy
 
 import matplotlib.pyplot as plt
@@ -131,6 +132,15 @@ def named_unit_plane_angle_unit_si_unit(arguments, object_dict):
     """
     return SI_PREFIX[arguments[1]]
 
+def named_unit_si_unit_solid_angle_unit(arguments, object_dict):
+    """
+    Returns the dimension of solid angle measure.
+
+    :param arguments: step primitive arguments
+    :param object_dict: dictionary containing already instantiated objects.
+    :return: SI unit dimension.
+    """
+    return SI_PREFIX[arguments[1]]
 
 def plane_angle_measure_with_unit(arguments, object_dict):
     """
@@ -224,8 +234,6 @@ def face_bound(arguments, object_dict):
 
     """
     return object_dict[arguments[1]]
-
-# def surface_of_revolution(arguments, object_dict):
 
 
 def surface_curve(arguments, object_dict):
@@ -374,9 +382,9 @@ def shape_representation(arguments, object_dict):
     :rtype: TYPE
 
     """
-    # does it have the extra argument coming from
-    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this case
-    # return them
+    # does it have the extra argument comming from
+    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
+    # them
     if len(arguments) == 4:
         shells = object_dict[int(arguments[3])]
         return shells
@@ -391,9 +399,7 @@ def shape_representation(arguments, object_dict):
                 isinstance(object_dict[int(arg[1:])],
                            volmdlr.faces.OpenShell3D):
             shells.append(object_dict[int(arg[1:])])
-        elif int(arg[1:]) in object_dict and \
-                isinstance(object_dict[int(arg[1:])],
-                           volmdlr.Frame3D):
+        elif int(arg[1:]) in object_dict and isinstance(object_dict[int(arg[1:])], volmdlr.Frame3D):
             # TODO: Is there something to read here ?
             frame = object_dict[int(arg[1:])]
             if not all(component is None for component in [frame.u, frame.u, frame.w]):
@@ -527,6 +533,20 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
                            'REPRESENTATION_ITEM, SURFACE'].from_step(
         modified_arguments, object_dict)
 
+def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometric_representation_item_rational_b_spline_surface_representation_item(
+        arguments, object_dict):
+    """
+    Bounded b spline surface with knots curve geometric representation item. To clarify.
+    """
+    modified_arguments = [''] + arguments
+    if modified_arguments[-1] == "''":
+        modified_arguments.pop()
+    return STEP_TO_VOLMDLR['BOUNDED_SURFACE, B_SPLINE_SURFACE, '
+                           'B_SPLINE_SURFACE_WITH_KNOTS, '
+                           'GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_SURFACE, '
+                           'REPRESENTATION_ITEM, SURFACE'].from_step(
+        modified_arguments, object_dict)
 
 class StepFunction(dc.DessiaObject):
     """
@@ -578,6 +598,7 @@ class Step(dc.DessiaObject):
         self.global_uncertainty = 1e-6
         self.length_conversion_factor = 1
         self.angle_conversion_factor = 1
+        self.read_diagnostic = StepReaderReport
         dc.DessiaObject.__init__(self, name=name)
 
     @property
@@ -868,7 +889,7 @@ class Step(dc.DessiaObject):
                 argument.append(arg_id)
                 arguments[i] = argument
 
-    def instantiate(self, name, arguments, object_dict):
+    def instantiate(self, name, arguments, object_dict, step_id):
         """
         Gives the volmdlr object related to the step function.
         """
@@ -876,24 +897,34 @@ class Step(dc.DessiaObject):
 
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
-        if hasattr(volmdlr.step, fun_name):
-            volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
+        try:
+            if hasattr(volmdlr.step, fun_name):
+                volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
 
-        elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
-            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict,
-                                                             global_uncertainty=self.global_uncertainty,
-                                                             length_conversion_factor=self.length_conversion_factor,
-                                                             angle_conversion_factor=self.angle_conversion_factor)
+            elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
+                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict,
+                                                                 name=name,
+                                                                 step_id=step_id,
+                                                                 global_uncertainty=self.global_uncertainty,
+                                                                 length_conversion_factor=self.length_conversion_factor,
+                                                                 angle_conversion_factor=self.angle_conversion_factor)
 
-        else:
-            raise NotImplementedError(f'Dont know how to interpret {name} with args {arguments}')
+            else:
+                raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
+        except (ValueError, NotImplementedError) as error:
+            raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
         """
-        show_times=True displays the number of times a given class has been
-        instantiated and the total time of all the instantiations of this
-        given class.
+        Translate a step file into a volmdlr object.
+
+        :param show_times: if True, displays how many times a given class has been
+            instanciated and the total time of all the instanciations of this
+            given class.
+        :type show_times: bool
+        :return: A volmdlr solid object.
+        :rtype: :class:`volmdlr.core.VolumeModel`
         """
 
         object_dict = {}
@@ -955,6 +986,7 @@ class Step(dc.DessiaObject):
         # nodes = dessia_common.graph.explore_tree_from_leaves(self.graph)
 
         times = {}
+        errors = set()
         for i, node in enumerate([geometric_representation_context_node] + nodes[::-1]):
             # instanciate_ids = [edge[1]]
             if node is None:
@@ -968,7 +1000,7 @@ class Step(dc.DessiaObject):
                         arguments = self.functions[instanciate_id].arg[:]
                         volmdlr_object = self.instantiate(
                             self.functions[instanciate_id].name,
-                            self.functions[instanciate_id].arg[:], object_dict)
+                            self.functions[instanciate_id].arg[:], object_dict, instanciate_id)
                         t = time.time() - t
                         object_dict[instanciate_id] = volmdlr_object
                         if show_times:
@@ -979,18 +1011,18 @@ class Step(dc.DessiaObject):
                                 times[volmdlr_object.__class__][1] += t
                     error = False
                 except KeyError as key:
-                    # Sometimes the bfs search don't instantiate the nodes of a
+                    # Sometimes the bfs search don't instanciate the nodes of a
                     # depth in the right order, leading to error
                     instanciate_ids.append(key.args[0])
+                # else:
+                #     volmdlr_object = None
+                #     object_dict[node] = volmdlr_object
+            if not object_dict[node]:
+                errors.add(node)
             if i == 0:
                 self.global_uncertainty = object_dict[int(arguments[1][0][1:])]
                 self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
                 self.angle_conversion_factor = object_dict[int(arguments[2][1][1:])]
-                # self.parse_arguments(arguments[1])
-                # self.global_uncertainty = float(object_dict[arguments[1][0]])
-                # self.parse_arguments(arguments[2])
-                # self.length_conversion_factor = float(object_dict[arguments[2][0]])
-                # self.angle_conversion_factor = float(object_dict[arguments[2][1]])
 
         if show_times:
             print()
@@ -999,15 +1031,23 @@ class Step(dc.DessiaObject):
             print()
 
         shells = []
+        step_number_faces = 0
+        faces_read = 0
         if frame_mapping_nodes:
             for node in frame_mapping_nodes:
                 shells.extend(object_dict[node])
         if not shells:
             for node in shell_nodes_copy:
-                if isinstance(object_dict[node], list):
+                volmdlr_object = object_dict[node]
+                if isinstance(volmdlr_object, list):
                     shells.extend(object_dict[node])
                 else:
-                    shells.append(object_dict[node])
+                    shells.append(volmdlr_object)
+                    faces_read += len(volmdlr_object.faces)
+                    step_number_faces += len(self.functions[node].arg[1])
+            if step_number_faces and faces_read:
+                self.read_diagnostic = StepReaderReport(self.name, step_number_faces, faces_read,
+                                                        faces_read/step_number_faces, list(errors))
         volume_model = volmdlr.core.VolumeModel(shells)
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)
@@ -1041,6 +1081,18 @@ class Step(dc.DessiaObject):
                                  in self.functions.values()
                                  if stepfunction.name in ['CARTESIAN_POINT', 'DIRECTION']])
         return [plot_data.graph.NetworkxGraph(graph=graph)]
+
+
+@dataclass
+class StepReaderReport:
+    """
+    Data class to save a report after translating a step file to volmdlr object.
+    """
+    step_name: str = " "
+    total_number_of_faces: int = 0
+    faces_read: int = 0
+    sucess_rate: float = 0.0
+    errors: list = field(default_factory=list)
 
 
 STEP_TO_VOLMDLR = {
@@ -1098,8 +1150,10 @@ STEP_TO_VOLMDLR = {
     'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
 
     # Bsplines
-    'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
-
+    'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM,'
+    ' RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
+    "BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, SURFACE, GEOMETRIC_REPRESENTATION_ITEM,"
+    " RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM": volmdlr.faces.BSplineSurface3D,
     # TOPOLOGICAL ENTITIES
     'VERTEX_POINT': None,
 

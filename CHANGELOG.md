@@ -13,9 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc: reverse
 * BSplineCurve2D: offset
 * Circle2D: bsplinecurve_intersections, point_distance
-
+* ConicalSurface3D, CylindricalSurface3D: plot method
 ### Fixed
-
+* Plane3D: plane_intersections
+* fixes to step assemblies
 
 ### Removed
 
@@ -24,14 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - argument convexe in volmdlr.cloud has been renamed to convex
 
 ### Performance improvements
+* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
+* BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.
 * eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
 * BSplinecurve2D: point_belongs
 * lighten some dicts with optional name
 
 ### Refactorings
-
 * ContourMixin: to_polygon (for both 2D and 3D)
-* BSplineCurve2D.point_distance
+* BSplineCurve2D.point_distance 
 * new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
 ### Unittests
@@ -42,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unittests for Vector3D
 * Unittests for Point3D
 
-## v0.9.0 [Testing]
+## v0.9.0 [Released 06/03/2023]
 
 ### New Features
 
@@ -55,8 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Create .geo and .msh files (Mesh geometries with GMSH)
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
-* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D.
-* ConicalSurface3D, CylindricalSurface3D: plot method
+* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
 
 
 ### Fixed
@@ -78,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment3D: Rotation method update due to points attribute deletion
 * ConicalSurface3D: fix from_step class method by adding the angle convertion factor
 * fix f string usage
+* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
 
 ### Removed
 
@@ -120,7 +122,7 @@ is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_t
 - add spell check to pylint with pyenchant
 - make code_pydocstyle more explicit
 - upload html coverage to cdn.dessia.tech
-
+- limit time effect on master & testing
 
 ## v0.8.0 [Released 26/01/2023]
 
