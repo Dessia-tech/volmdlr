@@ -549,7 +549,7 @@ class BSplineCurve(Edge):
     def __init__(self,
                  degree: int,
                  control_points: Union[List[volmdlr.Point2D],
-                 List[volmdlr.Point3D]],
+                                       List[volmdlr.Point3D]],
                  knot_multiplicities: List[int],
                  knots: List[float],
                  weights: List[float] = None,
@@ -784,7 +784,7 @@ class BSplineCurve(Edge):
                               self.weights, self.periodic)
 
     def translation_inplace(self, offset: Union[volmdlr.Vector2D,
-    volmdlr.Vector3D]):
+                                                volmdlr.Vector3D]):
         """
         Translates the B-spline curve and its parameters are modified inplace.
 
@@ -881,7 +881,7 @@ class BSplineCurve(Edge):
 
     @classmethod
     def from_points_approximation(cls, points: Union[List[volmdlr.Point2D],
-    List[volmdlr.Point3D]],
+                                                     List[volmdlr.Point3D]],
                                   degree: int, **kwargs):
         """
         Creates a B-spline curve approximation using least squares method with fixed number of control points.
@@ -925,7 +925,7 @@ class BSplineCurve(Edge):
 
     @classmethod
     def from_points_interpolation(cls, points: Union[List[volmdlr.Point2D],
-    List[volmdlr.Point3D]],
+                                                     List[volmdlr.Point3D]],
                                   degree: int, periodic: bool = False):
         """
         Creates a B-spline curve interpolation through the data points.
@@ -1611,10 +1611,10 @@ class BSplineCurve2D(BSplineCurve):
         content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
                    ".UNSPECIFIED.,.F.,.F.,{},{}," \
                    ".UNSPECIFIED.);\n".format(
-            point_id, self.name, self.degree,
-            volmdlr.core.step_ids_to_str(points_ids),
-            tuple(self.knot_multiplicities),
-            tuple(self.knots))
+                       point_id, self.name, self.degree,
+                       volmdlr.core.step_ids_to_str(points_ids),
+                       tuple(self.knot_multiplicities),
+                       tuple(self.knots))
         return content, point_id + 1
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
@@ -4689,10 +4689,10 @@ class BSplineCurve3D(BSplineCurve):
         content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
                    ".UNSPECIFIED.,.F.,.F.,{},{}," \
                    ".UNSPECIFIED.);\n".format(
-            curve_id, self.name, self.degree,
-            volmdlr.core.step_ids_to_str(points_ids),
-            tuple(self.knot_multiplicities),
-            tuple(self.knots))
+                       curve_id, self.name, self.degree,
+                       volmdlr.core.step_ids_to_str(points_ids),
+                       tuple(self.knot_multiplicities),
+                       tuple(self.knots))
 
         if surface_id:
             content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{curve_id + 2}),.PCURVE_S1.);\n"
@@ -5967,7 +5967,7 @@ class FullArc3D(Arc3D):
         if linesegment.start.z == linesegment.end.z == self.frame.origin.z:
             quadratic_equation_a = 1 + (direction_vector.y ** 2 / direction_vector.x ** 2)
             quadratic_equation_b = -2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x + \
-                                   2 * (direction_vector.y / direction_vector.x) * linesegment.start.y
+                2 * (direction_vector.y / direction_vector.x) * linesegment.start.y
             quadratic_equation_c = (linesegment.start.y - (direction_vector.y / direction_vector.x) *
                                     linesegment.start.x) ** 2 - self.radius ** 2
             delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c

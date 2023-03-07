@@ -951,11 +951,9 @@ class Step(dc.DessiaObject):
         :rtype: :class:`volmdlr.core.VolumeModel`
         """
         object_dict = {}
-        arguments = []
-        # self.graph.add_node("#0")
+        times = {}
         frame_mapping_nodes = []
         shell_nodes = []
-        geometric_representation_context_nodes = []
         for function in self.functions.values():
             if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
                 # Create short cut from id1 to id2
@@ -978,8 +976,11 @@ class Step(dc.DessiaObject):
             elif self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
                                               'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
                                               'GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
-                geometric_representation_context_nodes = self.connections[node] + [node]
-                pos = len(self.connections[node])
+                object_dict, times = self.helper_instantiate(node, object_dict, times, show_times)
+                arguments = self.functions[node].arg[:]
+                self.global_uncertainty = object_dict[int(arguments[1][0][1:])]
+                self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
+                self.angle_conversion_factor = object_dict[int(arguments[2][1][1:])]
 
             elif self.functions[node].name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(node)
@@ -991,44 +992,15 @@ class Step(dc.DessiaObject):
             shell_nodes.remove(node)
 
         nodes = self.create_node_list(shell_nodes + frame_mapping_nodes)
-        times = {}
         errors = set()
-        for i, node in enumerate(geometric_representation_context_nodes + nodes):
+        for i, node in enumerate(nodes):
 
             if node is None:
                 continue
-            instanciate_ids = [node]
-            error = True
-            while error:
-                try:
-                    for instanciate_id in instanciate_ids[::-1]:
-                        t = time.time()
-                        arguments = self.functions[instanciate_id].arg[:]
-                        volmdlr_object = self.instantiate(
-                            self.functions[instanciate_id].name,
-                            self.functions[instanciate_id].arg[:], object_dict, instanciate_id)
-                        t = time.time() - t
-                        object_dict[instanciate_id] = volmdlr_object
-                        if show_times:
-                            if volmdlr_object.__class__ not in times:
-                                times[volmdlr_object.__class__] = [1, t]
-                            else:
-                                times[volmdlr_object.__class__][0] += 1
-                                times[volmdlr_object.__class__][1] += t
-                    error = False
-                except KeyError as key:
-                    # Sometimes the bfs search don't instanciate the nodes of a
-                    # depth in the right order, leading to error
-                    instanciate_ids.append(key.args[0])
-                # else:
-                #     volmdlr_object = None
-                #     object_dict[node] = volmdlr_object
+            object_dict, times = self.helper_instantiate(node, object_dict, times, show_times)
+
             if not object_dict[node]:
                 errors.add(node)
-            if i == pos:
-                self.global_uncertainty = object_dict[int(arguments[1][0][1:])]
-                self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
-                self.angle_conversion_factor = object_dict[int(arguments[2][1][1:])]
 
         if show_times:
             print()
@@ -1057,6 +1029,36 @@ class Step(dc.DessiaObject):
         # bounding_box = volume_model.bounding_box
         # volume_model = volume_model.translation(-bounding_box.center)
         return volume_model
+
+    def helper_instantiate(self, node, object_dict, times, show_times):
+        """
+        Helper method to translate step entities into volmdlr objects.
+        """
+        instanciate_ids = [node]
+        error = True
+        while error:
+            try:
+                for instanciate_id in instanciate_ids[::-1]:
+                    t = time.time()
+
+                    volmdlr_object = self.instantiate(
+                        self.functions[instanciate_id].name,
+                        self.functions[instanciate_id].arg[:], object_dict, instanciate_id)
+                    t = time.time() - t
+                    object_dict[instanciate_id] = volmdlr_object
+                    if show_times:
+                        if volmdlr_object.__class__ not in times:
+                            times[volmdlr_object.__class__] = [1, t]
+                        else:
+                            times[volmdlr_object.__class__][0] += 1
+                            times[volmdlr_object.__class__][1] += t
+                error = False
+            except KeyError as key:
+                # Sometimes the bfs search don't instanciate the nodes of a
+                # depth in the right order, leading to error
+                instanciate_ids.append(key.args[0])
+
+        return object_dict, times
 
     def to_points(self):
         object_dict = {}
