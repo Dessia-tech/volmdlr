@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ConicalSurface3D, CylindricalSurface3D: plot method
 ### Fixed
 * Plane3D: plane_intersections
+* fixes to step assemblies
 
 ### Removed
 
