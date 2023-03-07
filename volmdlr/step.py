@@ -955,7 +955,7 @@ class Step(dc.DessiaObject):
         # self.graph.add_node("#0")
         frame_mapping_nodes = []
         shell_nodes = []
-        geometric_representation_context_node = None
+        geometric_representation_context_nodes = []
         for function in self.functions.values():
             if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
                 # Create short cut from id1 to id2
@@ -965,7 +965,6 @@ class Step(dc.DessiaObject):
                 self.functions[id1].arg.append(f'#{id2}')
         # sr_nodes = []
         not_shell_nodes = []
-        assembly_nodes = []
         frame_mapped_shell_node = []
         # for node in self.graph.nodes:
         for node in list(self.functions.keys()):
@@ -976,14 +975,11 @@ class Step(dc.DessiaObject):
                 frame_mapped_shell_node.append(self.get_frame_mapped_shell_node(node))
             elif self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]:
                 shell_nodes.append(node)
-            elif self.functions[node].name == 'REPRESENTATION_RELATIONSHIP_' \
-                                              'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION_' \
-                                              'SHAPE_REPRESENTATION_RELATIONSHIP':
-                assembly_nodes.append(node)
             elif self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
                                               'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
                                               'GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
-                geometric_representation_context_node = node
+                geometric_representation_context_nodes = self.connections[node] + [node]
+                pos = len(self.connections[node])
 
             elif self.functions[node].name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(node)
@@ -997,7 +993,7 @@ class Step(dc.DessiaObject):
         nodes = self.create_node_list(shell_nodes + frame_mapping_nodes)
         times = {}
         errors = set()
-        for i, node in enumerate([geometric_representation_context_node] + nodes):
+        for i, node in enumerate(geometric_representation_context_nodes + nodes):
 
             if node is None:
                 continue
@@ -1029,7 +1025,7 @@ class Step(dc.DessiaObject):
                 #     object_dict[node] = volmdlr_object
             if not object_dict[node]:
                 errors.add(node)
-            if i == 0:
+            if i == pos:
                 self.global_uncertainty = object_dict[int(arguments[1][0][1:])]
                 self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
                 self.angle_conversion_factor = object_dict[int(arguments[2][1][1:])]
