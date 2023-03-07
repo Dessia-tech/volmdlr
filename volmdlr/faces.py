@@ -1442,6 +1442,13 @@ class Plane3D(Surface3D):
 
     @classmethod
     def plane_betweeen_two_planes(cls, plane1, plane2):
+        """
+        Calculates a plane between two other planes.
+
+        :param plane1: plane1.
+        :param plane2: plane2.
+        :return: resulting plane.
+        """
         plane1_plane2_intersection = plane1.plane_intersection(plane2)[0]
         u = plane1_plane2_intersection.unit_direction_vector()
         v = plane1.frame.w + plane2.frame.w
