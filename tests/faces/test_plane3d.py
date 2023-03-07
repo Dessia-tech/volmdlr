@@ -19,6 +19,23 @@ class TestPlane3D(unittest.TestCase):
         self.assertEqual(plane_intersections[0], edges.Line3D(volmdlr.O3D, volmdlr.Point3D(0, 0.7071067811865476, 0)))
         no_plane_intersections = self.plane1.plane_intersection(self.plane3)
         self.assertFalse(no_plane_intersections)
+        plane1 = faces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(2.47172762684, 0.709056119825, 0.533657243895),
+                                               volmdlr.Vector3D(0.08730196938518492, 0.9961818941044193, 0.0),
+                                               volmdlr.Vector3D(-0.36467438001762453, 0.031958813694844,
+                                                                -0.9305864982826579),
+                                               volmdlr.Vector3D(-0.9270334204872172, 0.08124203398333905,
+                                                                0.3660720819920861)))
+        plane2 = faces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(2.535691031746372, 0.7426189496471666,
+                                                               0.6712946669810791),
+                                               volmdlr.Vector3D(0.08730196938518722, 0.9961818941044189, 0.0),
+                                               volmdlr.Vector3D(0.9270334204872168, -0.08124203398334119,
+                                                                -0.36607208199208596),
+                                               volmdlr.Vector3D(-0.3646743800176244, 0.03195881369484484,
+                                                                -0.9305864982826579)))
+        expected_line = edges.Line3D(volmdlr.Point3D(2.4648333822539743, 0.0, 0.6735585604963772),
+                                     volmdlr.Point3D(2.377531412868789, -0.9961818941044192, 0.6735585604963764))
+        plane_intersections2 = plane1.plane_intersection(plane2)
+        self.assertEqual(expected_line, plane_intersections2[0])
 
     def test_is_parallel(self):
         self.assertTrue(self.plane1.is_parallel(self.plane3))
