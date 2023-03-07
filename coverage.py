@@ -15,13 +15,8 @@ untracked_modules = ['volmdlr/templates.py',
                      'volmdlr/code_aster.py',
                      'volmdlr/core_compiled.py',
                      'volmdlr/bspline_compiled.py',
-<<<<<<< HEAD
                      "volmdlr/bspline_fitting.py",
                      "volmdlr/bspline_evaluators.py",
-=======
-                     "volmdlr/bspline_evaluators.py",
-                     "volmdlr/bspline_fitting.py",
->>>>>>> origin/fix_step_ass
                      'volmdlr/mesh.py',
                      'volmdlr/gmsh_vm.py',
                      'models/__init__.py',
