@@ -601,7 +601,6 @@ class Step(dc.DessiaObject):
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines
         self.functions, self.all_connections, self.connections = self.read_lines()
-        self._utd_graph = False
         self._graph = None
         self.global_uncertainty = 1e-6
         self.length_conversion_factor = 1
@@ -610,12 +609,10 @@ class Step(dc.DessiaObject):
 
         dc.DessiaObject.__init__(self, name=name)
 
-    # @property
-    # def graph(self):
-    #     if not self._utd_graph:
-    #         self._graph = self.create_graph()
-    #         self._utd_graph = True
-    #     return self._graph
+    def graph(self):
+        if not self._graph:
+            self._graph = self.create_graph()
+        return self._graph
 
     @classmethod
     def from_stream(cls, stream: BinaryFile = None):
@@ -724,7 +721,7 @@ class Step(dc.DessiaObject):
         Step functions graph
         :return:
         """
-        G = nx.Graph()
+        # G = nx.Graph()
         F = nx.DiGraph()
         labels = {}
 
@@ -742,10 +739,10 @@ class Step(dc.DessiaObject):
                 self.functions[id1].arg.append('#{}'.format(id2))
 
             elif function.name in STEP_TO_VOLMDLR:
-                G.add_node(function.id,
-                           color='rgb(0, 0, 0)',
-                           shape='.',
-                           name=str(function.id))
+                # G.add_node(function.id,
+                #            color='rgb(0, 0, 0)',
+                #            shape='.',
+                #            name=str(function.id))
                 F.add_node(function.id,
                            color='rgb(0, 0, 0)',
                            shape='.',
@@ -763,7 +760,7 @@ class Step(dc.DessiaObject):
             self.all_connections.remove(delete)
 
         # Create graph connections
-        G.add_edges_from(self.all_connections)
+        # G.add_edges_from(self.all_connections)
         F.add_edges_from(self.all_connections)
 
         # Remove single nodes
@@ -773,46 +770,7 @@ class Step(dc.DessiaObject):
                 delete_nodes.append(node)
         for node in delete_nodes:
             F.remove_node(node)
-            G.remove_node(node)
-
-        # if draw:
-        #     # ----------------PLOT----------------
-        #     pos = nx.kamada_kawai_layout(G)
-        #     plt.figure()
-        #     nx.draw_networkx_nodes(F, pos)
-        #     nx.draw_networkx_edges(F, pos)
-        #     nx.draw_networkx_labels(F, pos, labels)
-        #     # ------------------------------------
-        #
-        # if html:
-        #
-        #     env = Environment(
-        #         loader=PackageLoader('powertransmission', 'templates'),
-        #         autoescape=select_autoescape(['html', 'xml']))
-        #     template = env.get_template('graph_visJS.html')
-        #
-        #     nodes = []
-        #     edges = []
-        #     for label in list(labels.values()):
-        #         nodes.append({'name': label, 'shape': 'circular'})
-        #
-        #     for edge in G.edges:
-        #         edge_dict = {'inode1': int(edge[0]) - 1,
-        #                      'inode2': int(edge[1]) - 1}
-        #         edges.append(edge_dict)
-        #
-        #     options = {}
-        #     s = template.render(
-        #         name=self.stepfile,
-        #         nodes=nodes,
-        #         edges=edges,
-        #         options=options)
-        #
-        #     with open('graph_visJS.html', 'wb') as file:
-        #         file.write(s.encode('utf-8'))
-        #
-        #     webbrowser.open('file://' + os.path.realpath('graph_visJS.html'))
-
+            # G.remove_node(node)
         return F
 
     def draw_graph(self, graph=None, reduced=False):
@@ -955,6 +913,12 @@ class Step(dc.DessiaObject):
         return list_head + list_nodes[::-1]
 
     def get_frame_mapped_shell_node(self, node):
+        """
+        Find the shells nodes in the assembly.
+
+        :param node: Assembly step entity node.
+        :type node: int
+        """
         arguments = self.functions[node].arg
         id_shape_representation = int(arguments[3][1:])
         # The shape_representation can be a list of frames, if it's a list of frames

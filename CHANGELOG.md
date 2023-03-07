@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
 * BSplinecurve2D: point_belongs
 * lighten some dicts with optional name
+* Step reader: refactor to_volume_model. Remove the dependency of the method of creating a graph.
 
 ### Refactorings
 * ContourMixin: to_polygon (for both 2D and 3D)
