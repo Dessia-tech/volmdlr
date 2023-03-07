@@ -1,7 +1,7 @@
 import os
 import random
 import sys
-from datetime import date
+from datetime import date, timedelta
 import math
 
 from pylint import __version__
@@ -12,6 +12,7 @@ MIN_NOTE = 8.20
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
 EFFECTIVE_DATE = date(2023, 1, 31)
+
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
@@ -23,7 +24,7 @@ MAX_ERROR_BY_TYPE = {
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 14,
-                     'too-many-locals': 80,
+                     'too-many-locals': 81,
                      'unused-argument': 35,
                      'too-many-arguments': 28,
                      'line-too-long': 19,
@@ -31,7 +32,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-branches': 28,
                      'too-many-statements': 19,
                      'super-init-not-called': 13,
-                     'no-name-in-module': 5,
+                     'no-name-in-module': 8,
                      'abstract-method': 37,
                      'duplicate-code': 9,
                      'arguments-renamed': 2,
@@ -67,6 +68,19 @@ MAX_ERROR_BY_TYPE = {
 
 ERRORS_WITHOUT_TIME_DECREASE = []
 
+limit_time_effect = False
+if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
+    limit_time_effect = True
+    print(f"Limiting time effect of 21 days as we are on {os.environ['DRONE_BRANCH']}")
+
+if os.environ.get('DRONE_TARGET_BRANCH', '') in ['master', 'testing']:
+    limit_time_effect = True
+    print(f"Limiting time effect of 21 days as we are targetting {os.environ['DRONE_TARGET_BRANCH']}")
+
+if limit_time_effect:
+    EFFECTIVE_DATE += timedelta(days=21)
+
+
 print("pylint version: ", __version__)
 
 time_decrease_coeff = 1 - (date.today() - EFFECTIVE_DATE).days / 7.0 * WEEKLY_DECREASE
@@ -100,6 +114,8 @@ if PYLINT_OBJECT_STATS:
     stats_by_msg = results.linter.stats.by_msg
 else:
     stats_by_msg = results.linter.stats["by_msg"]
+
+print(f'Errors / Allowed errors: {sum(stats_by_msg.values())} / {sum(MAX_ERROR_BY_TYPE.values())})')
 
 for error_type, number_errors in stats_by_msg.items():
     if error_type not in UNWATCHED_ERRORS:

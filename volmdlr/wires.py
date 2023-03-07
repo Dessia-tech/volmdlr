@@ -2258,7 +2258,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def union(self, contour2: 'Contour2D'):
         """
-        Union two contours, if they adjacent, or overlap somehow.
+        Union two contours, if they adjacent, or overlap somehow
         """
         if self.is_inside(contour2):
             return [self]
@@ -2793,10 +2793,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                         p, a, b = volmdlr.Point2D.line_intersection(line1,
                                                                     line2,
                                                                     True)
-                        if p is not None:
-                            if 0 + epsilon <= a <= 1 - epsilon \
-                                    and 0 + epsilon <= b <= 1 - epsilon:
-                                return True, line1, line2
+                        if p is not None and 0 + epsilon <= a <= 1 - epsilon \
+                                and 0 + epsilon <= b <= 1 - epsilon:
+                            return True, line1, line2
 
         return False, None, None
 
@@ -4422,7 +4421,8 @@ class Contour3D(ContourMixin, Wire3D):
         :return: The corresponding Contour3D object.
         :rtype: :class:`volmdlr.wires.Contour3D`
         """
-
+        step_id = kwargs.get("step_id", "#UNKNOW_ID")
+        step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
         # edge_ends = {}
@@ -4435,9 +4435,12 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
 
-        # Making things right for first 2 primitives
         if any(edge is None for edge in raw_edges):
-            raise ValueError
+            warnings.warn(f"Could not instantiate #{step_id} = {step_name}({arguments})"
+                          f" because some of the edges are NoneType."
+                          "See Contour3D.from_step method")
+            return None
+        # Making things right for first 2 primitives
         distances = [raw_edges[0].end.point_distance(raw_edges[1].start),
                      raw_edges[0].start.point_distance(raw_edges[1].start),
                      raw_edges[0].end.point_distance(raw_edges[1].end),
@@ -4445,28 +4448,27 @@ class Contour3D(ContourMixin, Wire3D):
         index = distances.index(min(distances))
         if min(distances) > 6e-4:
             # Green color : well-placed and well-read
-            ax = raw_edges[0].plot(color='g')
+            ax = raw_edges[0].plot(edge_style=EdgeStyle(color='g'))
+            ax.set_title(f"Step ID: #{step_id}")
+
             # Red color : can't be connected to green edge
-            raw_edges[1].plot(ax=ax, color='r')
+            raw_edges[1].plot(ax=ax, edge_style=EdgeStyle(color='r'))
             # Black color : to be placed
             for re in raw_edges[2:]:
                 re.plot(ax=ax)
-            # deltax1 = abs(raw_edges[0].start.x - raw_edges[1].end.x)
-            # deltax2 = abs(raw_edges[0].end.x - raw_edges[1].end.x)
-            # deltay1 = abs(raw_edges[0].start.y - raw_edges[1].end.y)
-            # deltay2 = abs(raw_edges[0].end.y - raw_edges[1].end.y)
-            # deltaz1 = abs(raw_edges[0].start.z - raw_edges[1].end.z)
-            # deltaz2 = abs(raw_edges[0].end.z - raw_edges[1].end.z)
-            raise NotImplementedError(
-                f'Number of edges: {len(raw_edges)}',
-                'First 2 edges of contour not following each other',
-                f'delta_x = {abs(raw_edges[0].start.x - raw_edges[1].end.x)},'
-                f' {abs(raw_edges[0].end.x - raw_edges[1].end.x)}',
-                f'delta_y = {abs(raw_edges[0].start.y - raw_edges[1].end.y)},'
-                f' {abs(raw_edges[0].end.y - raw_edges[1].end.y)}',
-                f'delta_z = {abs(raw_edges[0].start.z - raw_edges[1].end.z)},'
-                f' {abs(raw_edges[0].end.z - raw_edges[1].end.z)}',
+
+            warnings.warn(
+                f"Could not instantiate #{step_id} = {step_name}({arguments})"
+                "because the first 2 edges of contour not following each other.\n"
+                f'Number of edges: {len(raw_edges)}.\n'
+                f'delta_x = {abs(raw_edges[0].start.x - raw_edges[1].end.x)}, '
+                f' {abs(raw_edges[0].end.x - raw_edges[1].end.x)}.\n'
+                f'delta_y = {abs(raw_edges[0].start.y - raw_edges[1].end.y)} ,'
+                f' {abs(raw_edges[0].end.y - raw_edges[1].end.y)}.\n'
+                f'delta_z = {abs(raw_edges[0].start.z - raw_edges[1].end.z)}, '
+                f' {abs(raw_edges[0].end.z - raw_edges[1].end.z)}.\n'
                 f'distance = {min(distances)}')
+            return None
 
         if index == 0:
             edges = [raw_edges[0], raw_edges[1]]
@@ -4487,35 +4489,34 @@ class Contour3D(ContourMixin, Wire3D):
             index = distances.index(min(distances))
             if min(distances) > 6e-4:
                 # Green color : well-placed and well-read
-                ax = last_edge.plot(color='g')
+                ax = last_edge.plot(EdgeStyle(color='g'))
+                ax.set_title(f"Step ID: #{step_id}")
+
                 for re in raw_edges[:2 + i]:
-                    re.plot(ax=ax, color='g')
-                    re.start.plot(ax=ax, color='g')
-                    re.end.plot(ax=ax, color='g')
-                last_edge.end.plot(ax=ax, color='r')
+                    re.plot(ax=ax, edge_style=EdgeStyle(color='g'))
+                    re.start.plot(ax=ax, edge_style=EdgeStyle(color='g'))
+                    re.end.plot(ax=ax, edge_style=EdgeStyle(color='g'))
+                last_edge.end.plot(ax=ax, edge_style=EdgeStyle(color='g'))
                 # Red color : can't be connected to red dot
-                raw_edge.plot(ax=ax, color='r')
+                raw_edge.plot(ax=ax, edge_style=EdgeStyle(color='g'))
                 # Black color : to be placed
                 for re in raw_edges[2 + i + 1:]:
                     re.plot(ax=ax)
                     re.start.plot(ax=ax)
                     re.end.plot(ax=ax)
-                # deltax1 = abs(raw_edge.start.x - last_edge.end.x)
-                # deltax2 = abs(raw_edge.end.x - last_edge.end.x)
-                # deltay1 = abs(raw_edge.start.y - last_edge.end.y)
-                # deltay2 = abs(raw_edge.end.y - last_edge.end.y)
-                # deltaz1 = abs(raw_edge.start.z - last_edge.end.z)
-                # deltaz2 = abs(raw_edge.end.z - last_edge.end.z)
-                raise NotImplementedError(
-                    f'Number of edges: {len(raw_edges)}',
-                    'Edges of contour not following each other',
-                    f'delta_x = {abs(raw_edge.start.x - last_edge.end.x)},'
-                    f' {abs(raw_edge.end.x - last_edge.end.x)}',
-                    f'delta_y = {abs(raw_edge.start.y - last_edge.end.y)},'
-                    f' {abs(raw_edge.end.y - last_edge.end.y)}',
-                    f'delta_z = {abs(raw_edge.start.z - last_edge.end.z)},'
-                    f' {abs(raw_edge.end.z - last_edge.end.z)}',
+
+                warnings.warn(
+                    f"Could not instantiate #{step_id} = {step_name}({arguments})"
+                    "because some Edges of contour are not following each other.\n"
+                    f'Number of edges: {len(raw_edges)}.\n'
+                    f'delta_x = {abs(raw_edge.start.x - last_edge.end.x)}, '
+                    f' {abs(raw_edge.end.x - last_edge.end.x)}.\n'
+                    f'delta_y = {abs(raw_edge.start.y - last_edge.end.y)}, '
+                    f' {abs(raw_edge.end.y - last_edge.end.y)}.\n'
+                    f'delta_z = {abs(raw_edge.start.z - last_edge.end.z)}, '
+                    f' {abs(raw_edge.end.z - last_edge.end.z)}.\n'
                     f'distance = {min(distances)}')
+                return None
             if index == 0:
                 last_edge = raw_edge
             elif index == 1:
@@ -4995,7 +4996,6 @@ class Circle3D(Contour3D):
         :return: The corresponding Circle3D object.
         :rtype: :class:`volmdlr.wires.Circle3D`
         """
-
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
         center = object_dict[arguments[1]].origin
@@ -5406,7 +5406,6 @@ class Ellipse3D(Contour3D):
         :return: The corresponding Ellipse3D object.
         :rtype: :class:`volmdlr.wires.Ellipse3D`
         """
-
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
         center = object_dict[arguments[1]].origin
@@ -5833,7 +5832,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         elif math.isclose(ratio, -1, abs_tol=0.3):
             closing_point_index = last_index
         elif closing_point_index - last_index > 5 and list_closing_point_indexes[
-            -1] + 4 <= ratio_denominator - 1 and polygons_points_ratio > 0.95:
+                -1] + 4 <= ratio_denominator - 1 and polygons_points_ratio > 0.95:
             closing_point_index = last_index + 4
 
         return closing_point_index, list_remove_closing_points, passed_by_zero_index

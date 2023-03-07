@@ -32,7 +32,13 @@ class PointCloud3D(dc.DessiaObject):
 
     @classmethod
     def from_stl(cls, file_path):
-        list_points = vmstl.Stl.load_from_file(file_path).extract_points_BIS()
+        """
+        Creates a point cloud 3d from an stl file.
+
+        :param file_path: path to stl file.
+        :return: point cloud 3d object.
+        """
+        list_points = vmstl.Stl.from_file(file_path).extract_points_BIS()
 
         return cls(list_points, name='from_stl')
 
@@ -140,6 +146,15 @@ class PointCloud3D(dc.DessiaObject):
     @classmethod
     def generate_shell(cls, polygon3d: List[vm.wires.ClosedPolygon3D],
                        normal: vm.Vector3D, vec1: vm.Vector3D, vec2: vm.Vector3D):
+        """
+        Generates a shell from a list of polygon 3d, using a sewing algorithm.
+
+        :param polygon3d: list of polygon 3d to be sewed.
+        :param normal: normal to the sewing plane.
+        :param vec1: u vector in the sewing plane.
+        :param vec2: v vector in the sewing plane.
+        :return: returun a shell.
+        """
         position_plane = [p.points[0].dot(normal) for p in polygon3d]
         resolution = len(polygon3d)
 
@@ -149,9 +164,9 @@ class PointCloud3D(dc.DessiaObject):
             poly1_simplified = cls._helper_simplify_polygon(poly1, position_plane[n], normal, vec1, vec2)
 
             if n in (resolution - 1, 0):
-                plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2)
-                surf2d = cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2)
-                faces.append(vmf.PlaneFace3D(plane3d, surf2d))
+                faces.append(
+                    vmf.PlaneFace3D(surface3d=vmf.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2),
+                            surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2)))
 
             if n != resolution - 1:
                 poly2 = polygon3d[n + 1]
@@ -257,6 +272,10 @@ class PointCloud3D(dc.DessiaObject):
         return cls(points)
 
     def plot(self, ax=None, color='k'):
+        """
+        Plot the cloud 3d.
+
+        """
         ax = self.points[0].plot(ax=ax)
         for point in self.points[1::100]:
             point.plot(ax=ax, color=color)
