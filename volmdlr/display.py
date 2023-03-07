@@ -173,11 +173,11 @@ class DisplayMesh(dc.DessiaObject):
             point1 = self.points[i1]
             point2 = self.points[i2]
             point3 = self.points[i3]
-            if point1 != point2:
+            if not point1.is_close(point2):
                 self._linesegment_class(point1, point2).plot(ax=ax)
-            if point2 != point3:
+            if not point2.is_close(point3):
                 self._linesegment_class(point2, point3).plot(ax=ax)
-            if point1 != point3:
+            if not point1.is_close(point3):
                 self._linesegment_class(point1, point3).plot(ax=ax)
 
         return ax
@@ -226,7 +226,7 @@ class DisplayMesh3D(DisplayMesh):
 
     def to_babylon(self):
         """
-        Returns mesh in babylon format.
+        Returns mesh in babylonjs format.
 
         https://doc.babylonjs.com/how_to/custom
         """

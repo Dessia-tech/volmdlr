@@ -8,9 +8,10 @@ Cython functions
 """
 import math
 import random
+import sys
 import warnings
 # from __future__ import annotations
-from typing import Any, Dict, List, Text, Tuple
+from typing import List, Text, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -432,18 +433,17 @@ class Vector2D(Vector):
                         self.y / value)
 
     def __round__(self, ndigits: int = 6):
-        return self.__class__(round(self.x, ndigits),
-                              round(self.y, ndigits))
+        return self.__class__(round(self.x, ndigits), round(self.y, ndigits))
 
     def __hash__(self):
-        """
-        hash returns 0 because points are difficult to hash if they are meant
-        to be equalized at a given tolerance
-        """
-        return 0
+        """Return a hash value for the vector."""
+        return hash(("vector", self.x, self.y))
 
-    def __eq__(self, other_vector):
-        return self.is_close(other_vector)
+    def __eq__(self, other):
+        """Return True if the other point has the same x and y coordinates, False otherwise."""
+        if isinstance(other, self.__class__):
+            return self.x == other.x and self.y == other.y
+        return False
 
     def is_close(self, other_vector: "Vector2D", tol: float = 1e-6):
         """
@@ -489,6 +489,24 @@ class Vector2D(Vector):
         return {"object_class": "volmdlr.Vector2D",
                 "x": self.x, "y": self.y,
                 "name": self.name}
+
+    @classmethod
+    def dict_to_object(cls, dict_, *args, **kwargs):
+        """
+        Deserializes a dictionary to a 3 dimensional point.
+
+        :param dict_: The dictionary of a serialized Point3D
+        :type dict_: dict
+        :return:
+        :rtype: :class:`volmdlr.Point3D`
+
+        .. seealso::
+            How `serialization and deserialization`_ works in dessia_common
+
+        .. _serialization and deserialization:
+            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
+        """
+        return cls(dict_["x"], dict_["y"], dict_.get("name", ""))
 
     def copy(self, deep=True, memo=None):
         """
@@ -880,6 +898,10 @@ class Point2D(Vector2D):
         return Point2D(self.x / value,
                        self.y / value)
 
+    def __hash__(self):
+        """Return a hash value for the point 2d."""
+        return hash(("point", self.x, self.y))
+
     def to_dict(self, *args, **kwargs):
         """
         Serializes a 2 dimensional point into a dictionary.
@@ -893,9 +915,11 @@ class Point2D(Vector2D):
         .. _serialization and deserialization:
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {"object_class": "volmdlr.Point2D",
-                "x": self.x, "y": self.y,
-                "name": self.name}
+        dict_ = {"object_class": "volmdlr.Point2D",
+                 "x": self.x, "y": self.y}
+        if self.name:
+            dict_["name"] = self.name
+        return dict_
 
     def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
         """
@@ -1154,15 +1178,15 @@ class Point2D(Vector2D):
         return point_symmetry
 
     def coordinates(self):
-        '''
-        gets x,y coordinates of a point2d
-        '''
+        """
+        Gets x,y coordinates of a point2d.
+        """
 
         return (self.x, self.y)
 
     def get_geo_lines(self, tag: int, point_mesh_size: float = None):
-        '''
-        gets the lines that define a Point2D in a .geo file
+        """
+        Gets the lines that define a Point2D in a .geo file.
 
         :param tag: The point index
         :type tag: int
@@ -1171,7 +1195,7 @@ class Point2D(Vector2D):
 
         :return: A line
         :rtype: str
-        '''
+        """
 
         if point_mesh_size:
             return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
@@ -1256,15 +1280,14 @@ class Vector3D(Vector):
                               round(self.z, ndigits))
 
     def __hash__(self):
-        """
-        hash returns 0 because points are difficult to hash if they are meant
-        to be equalized at a given tolerance
-        """
+        """Return a hash value for the vector 3d."""
+        return hash(("vector", self.x, self.y, self.z))
 
-        return 0
-
-    def __eq__(self, other_vector: "Vector3D"):
-        return self.is_close(other_vector)
+    def __eq__(self, other):
+        """Return True if the other point has the same x, y and z coordinates, False otherwise."""
+        if isinstance(other, self.__class__):
+            return self.x == other.x and self.y == other.y and self.z == other.z
+        return False
 
     def is_close(self, other_vector, tol=1e-6):
         """
@@ -1310,13 +1333,15 @@ class Vector3D(Vector):
         .. _serialization and deserialization:
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {"object_class": "volmdlr.Vector3D",
-                "x": self.x, "y": self.y, "z": self.z,
-                "name": self.name}
+        dict_ = {"object_class": "volmdlr.Vector3D",
+                 "x": self.x, "y": self.y, "z": self.z}
+
+        if self.name:
+            dict_["name"] = self.name
+        return dict_
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = "#"):
+    def dict_to_object(cls, dict_, *args, **kwargs):
         """
         Deserializes a dictionary to a 3 dimensional vector.
 
@@ -1341,7 +1366,7 @@ class Vector3D(Vector):
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
 
-        return Vector3D(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
+        return cls(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
 
     def dot(self, other_vector):
         """
@@ -1683,7 +1708,8 @@ class Vector3D(Vector):
         """
         x2d = self.dot(x) - plane_origin.dot(x)
         y2d = self.dot(y) - plane_origin.dot(y)
-        return Point2D(x2d, y2d)
+        class_name = self.__class__.__name__[:-2] + "2D"
+        return getattr(sys.modules[__name__], class_name)(x2d, y2d)
 
     def random_unit_normal_vector(self):
         """
@@ -1894,6 +1920,10 @@ class Point3D(Vector3D):
                        self.y / value,
                        self.z / value)
 
+    def __hash__(self):
+        """Return a hash value for the point 3d."""
+        return hash(("point", self.x, self.y, self.z))
+
     def to_dict(self, *args, **kwargs):
         """
         Serializes a 3 dimensional point into a dictionary.
@@ -1907,37 +1937,11 @@ class Point3D(Vector3D):
         .. _serialization and deserialization:
             https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
         """
-        return {"object_class": "volmdlr.Point3D",
-                "x": self.x, "y": self.y, "z": self.z,
-                "name": self.name}
-
-    @classmethod
-    def dict_to_object(cls, dict_, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = "#"):
-        """
-        Deserializes a dictionary to a 3 dimensional point.
-
-        :param dict_: The dictionary of a serialized Point3D
-        :type dict_: dict
-        :param global_dict: The global dictionary. Default value is None
-        :type global_dict: dict, optional
-        :param pointers_memo: A dictionary from path to python object of
-            already serialized values. Default value is None
-        :type pointers_memo: dict, optional
-        :param path: The path in the global object. In most cases, append
-            ‘/attribute_name’ to given path for your attributes.
-            Default value is '#'
-        :type path: str, optional
-        :return:
-        :rtype: :class:`volmdlr.Point3D`
-
-        .. seealso::
-            How `serialization and deserialization`_ works in dessia_common
-
-        .. _serialization and deserialization:
-            https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
-        """
-        return Point3D(dict_["x"], dict_["y"], dict_["z"], dict_.get("name", ""))
+        dict_ = {"object_class": "volmdlr.Point3D",
+                 "x": self.x, "y": self.y, "z": self.z}
+        if self.name:
+            dict_["name"] = self.name
+        return dict_
 
     def plot(self, ax=None, color="k", alpha=1, marker="o"):
         """
@@ -2095,7 +2099,7 @@ class Point3D(Vector3D):
 
     def get_geo_lines(self, tag: int, point_mesh_size: float = None):
         """
-        gets the lines that define a Point3D in a .geo file
+        Gets the lines that define a Point3D in a .geo file.
 
         :param tag: The point index
         :type tag: int
@@ -3276,7 +3280,7 @@ class Frame3D(Basis3D):
         hash returns 0 because points are difficult to hash if they are meant
         to be equalized at a given tolerance
         """
-        return 0
+        return hash((self.origin, self.u, self.v, self.w))
 
     def __eq__(self, other_frame):
         if other_frame.__class__.__name__ != self.__class__.__name__:
@@ -3323,13 +3327,6 @@ class Frame3D(Basis3D):
                               round(self.v, ndigits),
                               round(self.w, ndigits))
 
-    def __hash__(self):
-        """
-        hash returns 0 because points are difficult to hash if they are meant
-        to be equalized at a given tolerance
-        """
-        return 0
-
     def to_dict(self, *args, **kwargs):
         """
         Serializes a 3 dimensional frame into a dictionary.
@@ -3350,15 +3347,6 @@ class Frame3D(Basis3D):
                 "v": self.v.to_dict(),
                 "w": self.w.to_dict()
                 }
-
-    # @classmethod
-    # def dict_to_object(cls, dict_, global_dict=None,
-    #                    pointers_memo: Dict[str, Any] = None, path: str = '#'):
-    #     return Frame3D(Point3D.dict_to_object(dict_['origin']),
-    #                    Vector3D.dict_to_object(dict_['u']),
-    #                    Vector3D.dict_to_object(dict_['v']),
-    #                    Vector3D.dict_to_object(dict_['w']),
-    #                    dict_.get('name', ''))
 
     def basis(self):
         """

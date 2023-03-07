@@ -8,16 +8,17 @@ import os
 import tempfile
 import warnings
 import webbrowser
+from dataclasses import dataclass
 from datetime import datetime
-from typing import List
 from functools import lru_cache
+from typing import List
 
-import dessia_common.core as dc
-import dessia_common.files as dcf
 # import gmsh
 import matplotlib.pyplot as plt
 import numpy as npy
 
+import dessia_common.core as dc
+import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 
@@ -45,6 +46,36 @@ DATA;
 STEP_FOOTER = '''ENDSEC;
 END-ISO-10303-21;
 '''
+
+
+def point_in_list(point, list_points, tol: float = 1e-6):
+    """
+    Verifies if a point is inside a list  of points, considering a certain tolerance.
+
+    :param point: Point to be verified inside list.
+    :param list_points: List of points to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: True if there is a point inside the list close to the point to given tolerance.
+    """
+    for point_i in list_points:
+        if point.is_close(point_i, tol):
+            return True
+    return False
+
+
+def get_point_index_in_list(point, list_points, tol: float = 1e-6):
+    """
+    Gets the index a point inside a list of points, considering a certain tolerance.
+
+    :param point: Point to be verified inside list.
+    :param list_points: List of points to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: The point index.
+    """
+    for i, point_i in enumerate(list_points):
+        if point_i.is_close(point):
+            return i
+    raise ValueError(f'{point} is not in list')
 
 
 def determinant(vec1, vec2, vec3):
@@ -88,6 +119,25 @@ def step_ids_to_str(ids):
     :rtype: str
     """
     return ','.join([f"#{i}" for i in ids])
+
+
+@dataclass
+class EdgeStyle:
+    """
+    Data class for styling edges matplotlib plots.
+
+    """
+    color: str = 'k'
+    alpha: float = 1
+    edge_ends: bool = False
+    edge_direction: bool = False
+    width: float = None
+    arrow: bool = False
+    plot_points: bool = False
+    dashed: bool = True
+    linestyle: str = '-'
+    linewidth: float = 1
+    equal_aspect: bool = True
 
 
 class CompositePrimitive(dc.PhysicalObject):
@@ -235,17 +285,16 @@ class CompositePrimitive2D(CompositePrimitive):
         self.primitives = primitives
         self.update_basis_primitives()
 
-    def plot(self, ax=None, color='k', alpha=1,
-             plot_points=False, equal_aspect=False):
+    def plot(self, ax=None, edge_style=EdgeStyle()):
 
         if ax is None:
             _, ax = plt.subplots()
 
-        if equal_aspect:
+        if edge_style.equal_aspect:
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color, alpha=alpha)  # , plot_points=plot_points)
+            element.plot(ax=ax, edge_style=EdgeStyle(color=edge_style.color, alpha=edge_style.alpha)) # , plot_points=plot_points)
 
         ax.margins(0.1)
         plt.show()
@@ -332,12 +381,12 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
         Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
         self._utd_primitives_to_index = False
 
-    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
         for primitive in self.primitives:
-            primitive.plot(ax=ax, color=color, alpha=alpha)
+            primitive.plot(ax=ax, edge_style=edge_style)
         return ax
 
     def babylon_points(self):
