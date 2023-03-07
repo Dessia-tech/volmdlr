@@ -5077,6 +5077,13 @@ class BSplineCurve3D(BSplineCurve):
         return intersections_points
 
     def minimum_distance(self, element, return_points=False):
+        """
+        Gets the minimum distance between the bspline and another edge.
+
+        :param element: another edge.
+        :param return_points: weather also to return the corresponding points.
+        :return: minimum distance.
+        """
         points = []
         for point in self.points:
             if not volmdlr.core.point_in_list(point, points):
