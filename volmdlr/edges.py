@@ -4219,21 +4219,118 @@ class LineSegment3D(LineSegment):
     def matrix_distance(self, other_line):
         u = self.direction_vector()
         v = other_line.direction_vector()
-        w = other_line.start - self.start
+        w = self.start - other_line.start
+        a = u.dot(u)
+        b = u.dot(v)
+        c = v.dot(v)
+        d = u.dot(w)
+        e = v.dot(w)
+        determinant = a*c - b*c
+        if determinant > 0.0 - 1e-6:
+            b_times_e = b*e
+            c_times_d = c*d
+            if b_times_e <= c_times_d:
+                s = 0
+                if e <= 0:
+                    t = 0
+                    negative_d = -d
+                    if negative_d >= a:
+                        s = 1
+                    elif negative_d > 0.0:
+                        s = negative_d / a
+                elif e < c:
+                    t = e / c
+                else:
+                    t = 1
+                    b_minus_d = b - d
+                    if b_minus_d >= a:
+                        s = 1
+                    elif b_minus_d > 0:
+                        s = b_minus_d / a
+            else:
+                s = b_times_e - c_times_d
+                if s >= determinant:
+                    s = 1
+                    b_plus_e = b + e
+                    if b_plus_e <= 0.0:
+                        t = 0
+                        negative_d = -d
+                        if negative_d <= 0.0:
+                            s = 0
+                        elif negative_d < a:
+                            s = negative_d / a
+                    elif b_plus_e < c:
+                        t = b_plus_e / c
+                    else:
+                        t = 1
+                        b_minus_d = b - d
+                        if b_minus_d <= 0.0:
+                            s = 0
+                        elif b_minus_d < a:
+                            s = b_minus_d / a
+                else:
+                    a_times_e = a * e
+                    b_times_d = a * d
+                    if a_times_e <= b_times_d:
+                        t = 0
+                        negative_d = -d
+                        if negative_d <= 0.0:
+                            s = 0
+                        elif negative_d >= a:
+                            s = 1
+                        else:
+                            s = negative_d / a
+                    else:
+                        t = a_times_e - b_times_d
+                        if t >= determinant:
+                            t = 1
+                            b_minus_d = b - d
+                            if b_minus_d <= 0.0:
+                                s = 0.0
+                            elif b_minus_d >= a:
+                                s = 1
+                            else:
+                                s = b_minus_d / a
+                        else:
+                            s /= determinant
+                            t /= determinant
+        else:
+            if e <= 0.0:
+                t = 0.0
+                negative_d = -d
+                if negative_d <= 0.0:
+                    s = 0.0
+                elif negative_d >= a:
+                    s = 1
+                else:
+                    s = negative_d / a
+            elif e >= c:
+                t = 1
+                b_minus_d = b - d
+                if b_minus_d <= 0:
+                    s = 0.0
+                elif b_minus_d >= a:
+                    s = 1
+                else:
+                    s = b_minus_d / a
+            else:
+                s = 0
+                t = e / c
+            # raise NotImplementedError
 
-        a11 = u.dot(u)
-        a12 = u.dot(v)
-        a22 = v.dot(v)
-        t = (v.dot(w) * a12 - u.dot(w) * a22) / (a22**2 - a11 * a22)
-        s = (u.dot(w) + a12*t) / a11
-        if t < 0:
-            t = 0
-        elif t > 1:
-            t = 1
-        if s < 0:
-            s = 0
-        elif s > 1:
-            s = 1
+        # a11 = u.dot(u)
+        # a12 = u.dot(v)
+        # a22 = v.dot(v)
+        # t = (v.dot(w) * a12 - u.dot(w) * a22) / (a22**2 - a11 * a22)
+        # s = (u.dot(w) + a12*t) / a11
+        # if t < 0:
+        #     t = 0
+        # elif t > 1:
+        #     t = 1
+        # if s < 0:
+        #     s = 0
+        # elif s > 1:
+        #     s = 1
         p1 = self.start + u * s
         p2 = other_line.start + v * t
         return p1, p2

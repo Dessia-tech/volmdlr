@@ -27,6 +27,13 @@ class TestLineSegment3D(unittest.TestCase):
         self.assertEqual(self.linesegment1.linesegment_intersection(self.linesegment5),
                          volmdlr.Point3D(-0.2, -0.2, 0.125))
 
+    def test_matrix_distance(self):
+        edge1 = volmdlr.edges.LineSegment3D(volmdlr.Point3D(1, 1, 1), volmdlr.Point3D(2, 4, 5))
+        edge2 = volmdlr.edges.LineSegment3D(volmdlr.Point3D(1, -1, 1), volmdlr.Point3D(3, -2, 7))
+        matrix_distance = edge1.matrix_distance(edge2)
+        self.assertEqual(matrix_distance[0], volmdlr.Point3D(1, 1, 1))
+        self.assertEqual(matrix_distance[1], volmdlr.Point3D(1, -1, 1))
+
 
 if __name__ == '__main__':
     unittest.main()
