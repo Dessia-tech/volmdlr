@@ -4335,21 +4335,6 @@ class LineSegment3D(LineSegment):
             else:
                 s = 0
                 t = e / c
-            # raise NotImplementedError
-
-        # a11 = u.dot(u)
-        # a12 = u.dot(v)
-        # a22 = v.dot(v)
-        # t = (v.dot(w) * a12 - u.dot(w) * a22) / (a22**2 - a11 * a22)
-        # s = (u.dot(w) + a12*t) / a11
-        # if t < 0:
-        #     t = 0
-        # elif t > 1:
-        #     t = 1
-        # if s < 0:
-        #     s = 0
-        # elif s > 1:
-        #     s = 1
         p1 = self.start + u * s
         p2 = other_line.start + v * t
         return p1, p2
