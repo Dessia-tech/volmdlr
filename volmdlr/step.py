@@ -933,10 +933,14 @@ class Step(dc.DessiaObject):
         """
         list_head = []
         list_nodes = []
-        stack = stack
+        # shell_nodes = stack
+        # initial_stack = []
+        # for node in shell_nodes:
+        #     initial_stack.extend(self.connections[node])
+        # stack = initial_stack
         visited_set = set()
         while stack:
-            node = stack.pop()
+            node = stack.pop(0)
             name = self.functions[node].name
             if node not in visited_set and name in STEP_TO_VOLMDLR:
                 visited_set.add(node)
@@ -979,7 +983,7 @@ class Step(dc.DessiaObject):
         :return: A volmdlr solid object.
         :rtype: :class:`volmdlr.core.VolumeModel`
         """
-
+        key_errors_count = 0
         object_dict = {}
         arguments = []
         # self.graph.add_node("#0")
@@ -1051,6 +1055,7 @@ class Step(dc.DessiaObject):
                                 times[volmdlr_object.__class__][1] += t
                     error = False
                 except KeyError as key:
+                    key_errors_count += 1
                     # Sometimes the bfs search don't instanciate the nodes of a
                     # depth in the right order, leading to error
                     instanciate_ids.append(key.args[0])
@@ -1069,7 +1074,9 @@ class Step(dc.DessiaObject):
             for key, value in times.items():
                 print(f'| {key} : {value}')
             print()
-
+        print("--------------------------------------------")
+        print(f"Total number of key errors :{key_errors_count}")
+        print("--------------------------------------------")
         shells = []
         step_number_faces = 0
         faces_read = 0
