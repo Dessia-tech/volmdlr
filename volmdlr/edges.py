@@ -4411,44 +4411,6 @@ class LineSegment3D(LineSegment):
 
         raise NotImplementedError
 
-    def linesegment_max_distance_points(self, linesegment):
-        u = self.direction_vector()
-        v = linesegment.direction_vector()
-        w = linesegment.start - self.start
-
-        a11 = u.dot(u)
-        a12 = u.dot(v)
-        a22 = v.dot(v)
-        t = (v.dot(w) * a12 - u.dot(w) * a22) / (a22 ** 2 - a11 * a22)
-        s = (u.dot(w) + a12 * t) / a11
-        s = npy.clip(s, 0, 1)
-        t = npy.clip(t, 0, 1)
-        p1 = self.start + u * s
-        p2 = linesegment.start + v * t
-        # if s < 0 or s > 1 or t < 0 or t > 1:
-            # return p2.distance_points(p1)
-        max_distance = 0
-        for lineseg, point in zip([self, linesegment], [p2, p1]):
-            dist1 = lineseg.start.point_distance(point)
-            dist2 = lineseg.end.point_distance(point)
-            if dist1 > max_distance:
-                max_distance = dist1
-                point1 = lineseg.start
-                point2 = point
-            if dist2 > max_distance:
-                max_distance = dist2
-                point1 = lineseg.end
-                point2 = point
-        # dist1 = self.start.point_distance(p2)
-        # dist2 = self.end.point_distance(p2)
-        # dist3 = linesegment.start.point_distance(p1)
-        # dist4 = linesegment.end.point_distance(p1)
-        # return max(dist1, dist2, dist3, dist4)
-        return max_distance, point1, point2
-
-    def maximum_distance(self, element, return_points=False):
-        pass
-
     def extrusion(self, extrusion_vector):
         u = self.unit_direction_vector()
         v = extrusion_vector.copy()

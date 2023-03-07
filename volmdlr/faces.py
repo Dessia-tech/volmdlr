@@ -6978,44 +6978,6 @@ class PlaneFace3D(Face3D):
             return p1.point_distance(p2)
         raise NotImplementedError
 
-    def planeface_maximum_distance(self, planeface, return_points=False):
-        """
-        Given two plane faces, calculates the points which corresponds to the maximal distance between these two faces.
-
-        :param planeface: second plane face.
-        :param return_points: boolean to return corresponding points or not.
-        :return: minimal distance.
-        """
-
-        max_distance = 0
-        for edge1 in self.outer_contour3d.primitives:
-            for edge2 in planeface.outer_contour3d.primitives:
-                if hasattr(edge1, 'maximum_distance'):
-                    dist = edge1.maximum_distance(edge2, return_points=return_points)
-                elif hasattr(edge2, 'maximum_distance'):
-                    dist = edge2.maximum_distance(edge1, return_points=return_points)
-                else:
-                    raise AttributeError(f'Neither {edge1} nor {edge2} has a maximum_distance method.')
-                if return_points:
-                    if dist[0] > max_distance:
-                        max_distance = dist[0]
-                        p1, p2 = dist[1], dist[2]
-                else:
-                    if dist < max_distance:
-                        max_distance = dist
-        if return_points:
-            return max_distance, p1, p2
-        return max_distance
-
-    def maximum_distance(self, other_face, return_points=False):
-        method_name = other_face.__class__.__name__[:-2].lower()+'_maximum_distance'
-        if hasattr(self, method_name):
-            return getattr(self, method_name)(other_face, return_points)
-        elif hasattr(other_face, method_name):
-            return getattr(other_face, method_name)(self, return_points)
-        raise NotImplementedError(f'There is not method to calculate the maximum distance between a'
-                                  f'{self.__class__.__name__} a {other_face.__class__.__name__}')
-
     def is_adjacent(self, face2: Face3D):
         contour1 = self.outer_contour3d.to_2d(
             self.surface3d.frame.origin,
