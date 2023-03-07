@@ -1518,7 +1518,7 @@ class BSplineCurve2D(BSplineCurve):
         :return: A 2 dimensional point representing the tangent
         :rtype: :class:`volmdlr.Point2D`
         """
-        _, tangent = operations.tangent(self.curve, position / self.length(),
+        _, tangent = operations.tangent(self.curve, position,
                                         normalize=True)
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
@@ -1531,7 +1531,7 @@ class BSplineCurve2D(BSplineCurve):
         direction vector is to be calculated.
         :return: The direction vector vector of the BSplineCurve2D
         """
-        return self.tangent(abscissa)
+        return self.tangent(abscissa / self.length())
 
     def normal_vector(self, abscissa: float):
         """
@@ -1541,7 +1541,7 @@ class BSplineCurve2D(BSplineCurve):
         normal vector is to be calculated
         :return: The normal vector of the BSplineCurve2D
         """
-        tangent_vector = self.tangent(abscissa)
+        tangent_vector = self.tangent(abscissa / self.length())
         normal_vector = tangent_vector.normal_vector()
         return normal_vector
 
