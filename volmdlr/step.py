@@ -382,9 +382,9 @@ def shape_representation(arguments, object_dict):
     :rtype: TYPE
 
     """
-    # does it have the extra argument coming from
-    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this case
-    # return them
+    # does it have the extra argument comming from
+    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
+    # them
     if len(arguments) == 4:
         shells = object_dict[int(arguments[3])]
         return shells
@@ -399,11 +399,11 @@ def shape_representation(arguments, object_dict):
                 isinstance(object_dict[int(arg[1:])],
                            volmdlr.faces.OpenShell3D):
             shells.append(object_dict[int(arg[1:])])
-        elif int(arg[1:]) in object_dict and \
-                isinstance(object_dict[int(arg[1:])],
-                           volmdlr.Frame3D):
+        elif int(arg[1:]) in object_dict and isinstance(object_dict[int(arg[1:])], volmdlr.Frame3D):
             # TODO: Is there something to read here ?
-            frames.append(object_dict[int(arg[1:])])
+            frame = object_dict[int(arg[1:])]
+            if not all(component is None for component in [frame.u, frame.u, frame.w]):
+                frames.append(frame)
         elif int(arg[1:]) in object_dict and \
                 isinstance(object_dict[int(arg[1:])],
                            volmdlr.edges.Arc3D):
@@ -416,8 +416,6 @@ def shape_representation(arguments, object_dict):
             pass
     if not shells and frames:
         return frames
-    if shells and frames:
-        raise NotImplementedError
     return shells
 
 
