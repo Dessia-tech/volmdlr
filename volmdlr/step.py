@@ -382,10 +382,10 @@ def shape_representation(arguments, object_dict):
     :rtype: TYPE
 
     """
-    # does it have the extra argument comming from
-    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
-    # them
-    if len(arguments[:-1]) == 4:
+    # does it have the extra argument coming from
+    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this case
+    # return them
+    if len(arguments) == 4:
         shells = object_dict[int(arguments[3])]
         return shells
     shells = []
@@ -453,10 +453,12 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
     :rtype: TYPE
 
     """
-    if shape_representation_frames[0].origin == volmdlr.O3D:
+    if item_defined_transformation_frames[0] == item_defined_transformation_frames[1]:
+        return closed_shells
+    if shape_representation_frames[0].origin.is_close(volmdlr.O3D):
         global_frame = shape_representation_frames[0]
     else:
-        global_frame = [frame for frame in item_defined_transformation_frames if frame.origin == volmdlr.O3D][0]
+        global_frame = [frame for frame in item_defined_transformation_frames if frame.origin.is_close(volmdlr.O3D)][0]
     transformed_frame = [frame for frame in item_defined_transformation_frames if frame != global_frame][0]
     new_closedshells = []
 
@@ -473,9 +475,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector,
-                                    v_vector,
-                                    w_vector)
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
         new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
         new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
         new_closedshells.append(new_closed_shell3d)

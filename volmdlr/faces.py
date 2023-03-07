@@ -1442,20 +1442,13 @@ class Plane3D(Surface3D):
 
     @classmethod
     def plane_betweeen_two_planes(cls, plane1, plane2):
-        new_plane_normal_vector = plane1.frame.w.cross(plane2.frame.w)
         plane1_plane2_intersection = plane1.plane_intersection(plane2)[0]
         u = plane1_plane2_intersection.unit_direction_vector()
         v = plane1.frame.w + plane2.frame.w
         v.normalize()
         w = u.cross(v)
-        plane1_plane2_intersection = plane1.plane_intersection(plane2)[0]
-        point = (plane1_plane2_intersection.point1 + plane1_plane2_intersection.point2) / 2
-        # d1 = plane1.frame.w.cross(plane2.frame.w)
-        # d2 = plane2.frame.w.cross(d1)
-        # point = plane1.frame.origin + (plane2.frame.origin - plane1.frame.origin).dot(d1) / d2.dot(d1) * d2
-        # normal = d1.cross(d2)
-        return cls(volmdlr.Frame3D(point, u, v, w))
-
+        point = (plane1.frame.origin + plane2.frame.origin) / 2
+        return cls(volmdlr.Frame3D(point, u, w, v))
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -6886,8 +6879,12 @@ class PlaneFace3D(Face3D):
         min_distance = math.inf
         for edge1 in self.outer_contour3d.primitives:
             for edge2 in other_plane_face.outer_contour3d.primitives:
-                dist = edge1.minimum_distance(edge2,
-                                              return_points=return_points)
+                if hasattr(edge1, 'minimum_distance'):
+                    dist = edge1.minimum_distance(edge2, return_points=return_points)
+                elif hasattr(edge2, 'minimum_distance'):
+                    dist = edge2.minimum_distance(edge1, return_points=return_points)
+                else:
+                    raise AttributeError(f'Neither {edge1} nor {edge2} has a minimum_distance method.')
                 if return_points:
                     if dist[0] < min_distance:
                         min_distance = dist[0]

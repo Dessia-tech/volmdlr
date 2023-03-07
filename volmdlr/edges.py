@@ -4238,20 +4238,120 @@ class LineSegment3D(LineSegment):
     def matrix_distance(self, other_line):
         u = self.direction_vector()
         v = other_line.direction_vector()
-        w = other_line.start - self.start
+        w = self.start - other_line.start
+        a = u.dot(u)
+        b = u.dot(v)
+        c = v.dot(v)
+        d = u.dot(w)
+        e = v.dot(w)
+        determinant = a*c - b*c
+        if determinant > 0.0 - 1e-6:
+            b_times_e = b*e
+            c_times_d = c*d
+            if b_times_e <= c_times_d:
+                s = 0
+                if e <= 0:
+                    t = 0
+                    negative_d = -d
+                    if negative_d >= a:
+                        s = 1
+                    elif negative_d > 0.0:
+                        s = negative_d / a
+                elif e < c:
+                    t = e / c
+                else:
+                    t = 1
+                    b_minus_d = b - d
+                    if b_minus_d >= a:
+                        s = 1
+                    elif b_minus_d > 0:
+                        s = b_minus_d / a
+            else:
+                s = b_times_e - c_times_d
+                if s >= determinant:
+                    s = 1
+                    b_plus_e = b + e
+                    if b_plus_e <= 0.0:
+                        t = 0
+                        negative_d = -d
+                        if negative_d <= 0.0:
+                            s = 0
+                        elif negative_d < a:
+                            s = negative_d / a
+                    elif b_plus_e < c:
+                        t = b_plus_e / c
+                    else:
+                        t = 1
+                        b_minus_d = b - d
+                        if b_minus_d <= 0.0:
+                            s = 0
+                        elif b_minus_d < a:
+                            s = b_minus_d / a
+                else:
+                    a_times_e = a * e
+                    b_times_d = a * d
+                    if a_times_e <= b_times_d:
+                        t = 0
+                        negative_d = -d
+                        if negative_d <= 0.0:
+                            s = 0
+                        elif negative_d >= a:
+                            s = 1
+                        else:
+                            s = negative_d / a
+                    else:
+                        t = a_times_e - b_times_d
+                        if t >= determinant:
+                            t = 1
+                            b_minus_d = b - d
+                            if b_minus_d <= 0.0:
+                                s = 0.0
+                            elif b_minus_d >= a:
+                                s = 1
+                            else:
+                                s = b_minus_d / a
+                        else:
+                            s /= determinant
+                            t /= determinant
+        else:
+            if e <= 0.0:
+                t = 0.0
+                negative_d = -d
+                if negative_d <= 0.0:
+                    s = 0.0
+                elif negative_d >= a:
+                    s = 1
+                else:
+                    s = negative_d / a
+            elif e >= c:
+                t = 1
+                b_minus_d = b - d
+                if b_minus_d <= 0:
+                    s = 0.0
+                elif b_minus_d >= a:
+                    s = 1
+                else:
+                    s = b_minus_d / a
+            else:
+                s = 0
+                t = e / c
+            # raise NotImplementedError
 
-        a11 = u.dot(u)
-        a12 = -u.dot(v)
-        a22 = v.dot(v)
-
-        A = npy.array([[a11, a12],
-                       [a12, a22]])
-        B = npy.array([w.dot(u), -w.dot(v)])
-
-        res = scp.optimize.lsq_linear(A, B, bounds=(0, 1))
-        p1 = self.point_at_abscissa(res.x[0] * self.length())
-        p2 = other_line.point_at_abscissa(
-            res.x[1] * other_line.length())
+        # a11 = u.dot(u)
+        # a12 = u.dot(v)
+        # a22 = v.dot(v)
+        # t = (v.dot(w) * a12 - u.dot(w) * a22) / (a22**2 - a11 * a22)
+        # s = (u.dot(w) + a12*t) / a11
+        # if t < 0:
+        #     t = 0
+        # elif t > 1:
+        #     t = 1
+        # if s < 0:
+        #     s = 0
+        # elif s > 1:
+        #     s = 1
+        p1 = self.start + u * s
+        p2 = other_line.start + v * t
         return p1, p2
 
     def parallel_distance(self, other_linesegment):
@@ -4975,6 +5075,30 @@ class BSplineCurve3D(BSplineCurve):
             return []
         intersections_points = self.get_linesegment_intersections(linesegment3d)
         return intersections_points
+
+    def minimum_distance(self, element, return_points=False):
+        points = []
+        for point in self.points:
+            if not volmdlr.core.point_in_list(point, points):
+                points.append(point)
+        discretization_primitves1 = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        discretization_points2 = element.discretization_points(number_points=100)
+        points = []
+        for point in discretization_points2:
+            if not volmdlr.core.point_in_list(point, points):
+                points.append(point)
+        discretization_primitves2 = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        minimum_distance = math.inf
+        points = None
+        for prim1 in discretization_primitves1:
+            for prim2 in discretization_primitves2:
+                distance, point1, point2 = prim1.minimum_distance(prim2, return_points=True)
+                if distance < minimum_distance:
+                    minimum_distance = distance
+                    points = (point1, point2)
+        if return_points:
+            return minimum_distance, points[0], points[1]
+        return minimum_distance
 
 
 class BezierCurve3D(BSplineCurve3D):
