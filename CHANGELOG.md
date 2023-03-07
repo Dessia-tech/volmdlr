@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - argument convexe in volmdlr.cloud has been renamed to convex
 
 ### Performance improvements
+* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
 * BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.
 * eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
 * BSplinecurve2D: point_belongs
