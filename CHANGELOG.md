@@ -14,9 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: offset
 * Circle2D: bsplinecurve_intersections, point_distance
 * ConicalSurface3D, CylindricalSurface3D: plot method
+* BSplineCurve3D: minimum distance
+
 ### Fixed
 * Plane3D: plane_intersections
 * fixes to step assemblies
+* LineSegment3D: matrix_distance
 
 ### Removed
 
@@ -43,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unittests for Point2D
 * Unittests for Vector3D
 * Unittests for Point3D
+* LineSegment3D: test_matrix_distance
 
 ## v0.9.0 [Released 06/03/2023]
 
