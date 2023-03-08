@@ -594,8 +594,7 @@ class Step(dc.DessiaObject):
     _standalone_in_db = True
 
     def __init__(self, lines: List[str], name: str = ''):
-        self.lines = lines
-        self.functions, self.all_connections = self.read_lines()
+        self.functions, self.all_connections = self.read_lines(lines)
         self._utd_graph = False
         self._graph = None
         self.global_uncertainty = 1e-6
@@ -629,13 +628,13 @@ class Step(dc.DessiaObject):
                 lines.append(line)
         return cls(lines)
 
-    def read_lines(self):
+    def read_lines(self, lines):
         all_connections = []
 
         previous_line = ""
         functions = {}
 
-        for line in self.lines:
+        for line in lines:
             line = line.replace(" ", "")
             line = line.replace("\n", "")
 
