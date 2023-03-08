@@ -4245,69 +4245,69 @@ class LineSegment3D(LineSegment):
         d = u.dot(w)
         e = v.dot(w)
         determinant = a*c - b*c
-        if determinant > 0.0 - 1e-6:
+        if determinant > - 1e-6:
             b_times_e = b*e
             c_times_d = c*d
             if b_times_e <= c_times_d:
-                s_parameter = 0
-                if e <= 0:
-                    t_parameter = 0
+                s_parameter = 0.0
+                if e <= 0.0:
+                    t_parameter = 0.0
                     negative_d = -d
                     if negative_d >= a:
-                        s_parameter = 1
+                        s_parameter = 1.0
                     elif negative_d > 0.0:
                         s_parameter = negative_d / a
                 elif e < c:
                     t_parameter = e / c
                 else:
-                    t_parameter = 1
+                    t_parameter = 1.0
                     b_minus_d = b - d
                     if b_minus_d >= a:
-                        s_parameter = 1
-                    elif b_minus_d > 0:
+                        s_parameter = 1.0
+                    elif b_minus_d > 0.0:
                         s_parameter = b_minus_d / a
             else:
                 s_parameter = b_times_e - c_times_d
                 if s_parameter >= determinant:
-                    s_parameter = 1
+                    s_parameter = 1.0
                     b_plus_e = b + e
                     if b_plus_e <= 0.0:
-                        t_parameter = 0
+                        t_parameter = 0.0
                         negative_d = -d
                         if negative_d <= 0.0:
-                            s_parameter = 0
+                            s_parameter = 0.0
                         elif negative_d < a:
                             s_parameter = negative_d / a
                     elif b_plus_e < c:
                         t_parameter = b_plus_e / c
                     else:
-                        t_parameter = 1
+                        t_parameter = 1.0
                         b_minus_d = b - d
                         if b_minus_d <= 0.0:
-                            s_parameter = 0
+                            s_parameter = 0.0
                         elif b_minus_d < a:
                             s_parameter = b_minus_d / a
                 else:
                     a_times_e = a * e
                     b_times_d = a * d
                     if a_times_e <= b_times_d:
-                        t_parameter = 0
+                        t_parameter = 0.0
                         negative_d = -d
                         if negative_d <= 0.0:
-                            s_parameter = 0
+                            s_parameter = 0.0
                         elif negative_d >= a:
-                            s_parameter = 1
+                            s_parameter = 1.0
                         else:
                             s_parameter = negative_d / a
                     else:
                         t_parameter = a_times_e - b_times_d
                         if t_parameter >= determinant:
-                            t_parameter = 1
+                            t_parameter = 1.0
                             b_minus_d = b - d
                             if b_minus_d <= 0.0:
                                 s_parameter = 0.0
                             elif b_minus_d >= a:
-                                s_parameter = 1
+                                s_parameter = 1.0
                             else:
                                 s_parameter = b_minus_d / a
                         else:
@@ -4320,20 +4320,20 @@ class LineSegment3D(LineSegment):
                 if negative_d <= 0.0:
                     s_parameter = 0.0
                 elif negative_d >= a:
-                    s_parameter = 1
+                    s_parameter = 1.0
                 else:
                     s_parameter = negative_d / a
             elif e >= c:
-                t_parameter = 1
+                t_parameter = 1.0
                 b_minus_d = b - d
-                if b_minus_d <= 0:
+                if b_minus_d <= 0.0:
                     s_parameter = 0.0
                 elif b_minus_d >= a:
-                    s_parameter = 1
+                    s_parameter = 1.0
                 else:
                     s_parameter = b_minus_d / a
             else:
-                s_parameter = 0
+                s_parameter = 0.0
                 t_parameter = e / c
         p1 = self.start + u * s_parameter
         p2 = other_line.start + v * t_parameter
