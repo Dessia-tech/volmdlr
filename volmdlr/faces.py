@@ -3683,6 +3683,10 @@ class BSplineSurface3D(Surface3D):
 
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
+        self._surface = surface
+
+        if not isinstance(self._surface, BSpline.Surface):
+            raise ValueError('Not a geomdl bspline. It is a: ', self._surface)
 
     @property
     def surface(self):
