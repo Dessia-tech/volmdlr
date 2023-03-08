@@ -5,6 +5,8 @@ Extended primitives 2D classes.
 """
 
 import math
+from typing import List
+
 import warnings
 
 import matplotlib.patches
@@ -29,7 +31,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     line_class = volmdlr.edges.LineSegment2D
     arc_class = volmdlr.edges.Arc2D
 
-    def __init__(self, points, radius, adapt_radius=False, name=''):
+    def __init__(self, points: List[volmdlr.Point2D], radius: float, adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      closed=False,
                                      adapt_radius=adapt_radius,
@@ -189,7 +191,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                offset_vectors[i - (not self.closed)]
+                           offset_vectors[i - (not self.closed)]
             offset_points.append(offset_point)
 
         if not self.closed:
@@ -436,7 +438,7 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
     """
     closed = True
 
-    def __init__(self, points, radius, adapt_radius=False, name=''):
+    def __init__(self, points: List[volmdlr.Point2D], radius: float, adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      closed=True,
                                      adapt_radius=adapt_radius, name='')
@@ -450,7 +452,7 @@ class Measure2D(volmdlr.edges.LineSegment2D):
 
     """
 
-    def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
+    def __init__(self, point1, point2, label='', unit: str = 'mm', type_: str = 'distance'):
         """
         :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
 
