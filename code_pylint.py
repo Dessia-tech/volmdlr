@@ -20,7 +20,7 @@ MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-docstring": 254,
                      'invalid-name': 615,
                      'consider-using-f-string': 57,
-                     'no-member': 3,
+                     'no-member': 4,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 14,

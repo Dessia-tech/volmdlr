@@ -4489,14 +4489,14 @@ class Contour3D(ContourMixin, Wire3D):
             index = distances.index(min(distances))
             if min(distances) > 6e-4:
                 # Green color : well-placed and well-read
-                ax = last_edge.plot(EdgeStyle(color='g'))
+                ax = last_edge.plot(edge_style=EdgeStyle(color='g'))
                 ax.set_title(f"Step ID: #{step_id}")
 
                 for re in raw_edges[:2 + i]:
                     re.plot(ax=ax, edge_style=EdgeStyle(color='g'))
-                    re.start.plot(ax=ax, edge_style=EdgeStyle(color='g'))
-                    re.end.plot(ax=ax, edge_style=EdgeStyle(color='g'))
-                last_edge.end.plot(ax=ax, edge_style=EdgeStyle(color='g'))
+                    re.start.plot(ax=ax, color='g')
+                    re.end.plot(ax=ax, color='g')
+                last_edge.end.plot(ax=ax, color='g')
                 # Red color : can't be connected to red dot
                 raw_edge.plot(ax=ax, edge_style=EdgeStyle(color='g'))
                 # Black color : to be placed
