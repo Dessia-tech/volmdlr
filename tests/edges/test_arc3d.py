@@ -36,7 +36,7 @@ class TestArc3D(unittest.TestCase):
         self.assertEqual(inters1[0], expected_point)
         self.assertFalse(inters2)
         self.assertEqual(len(inters3), 1)
-        self.assertEqual(inters3[0], expected_point)
+        self.assertTrue(inters3[0].is_close(expected_point))
         lineseg = edges.LineSegment3D(volmdlr.Point3D(-1, 0, -2), volmdlr.Point3D(2, 0, 1))
         arc3d_lineseg_inters = self.arc3d_2.linesegment_intersections(lineseg)
         self.assertEqual(arc3d_lineseg_inters[0], volmdlr.Point3D(1.0, 0.0, 0.0))
@@ -51,6 +51,19 @@ class TestArc3D(unittest.TestCase):
                             lineseg.length() * 0.6 * lineseg.unit_direction_vector())
         arc3d_line_inters = self.arc3d_2.line_intersections(line)
         self.assertEqual(arc3d_line_inters[0], volmdlr.Point3D(1.0, 0.0, 0.0))
+
+    def test_split(self):
+        split1 = self.arc3d.split(self.arc3d.start)
+        self.assertIsNone(split1[0])
+        self.assertEqual(split1[1], self.arc3d)
+        split2 = self.arc3d.split(self.arc3d.end)
+        self.assertEqual(split2[0], self.arc3d)
+        self.assertIsNone(split2[1])
+        split3 = self.arc3d.split(self.arc3d.interior)
+        self.assertTrue(split3[0].start.is_close(self.arc3d.start))
+        self.assertTrue(split3[0].end.is_close(self.arc3d.interior))
+        self.assertTrue(split3[1].start.is_close(self.arc3d.interior))
+        self.assertTrue(split3[1].end.is_close(self.arc3d.end))
 
 
 if __name__ == '__main__':
