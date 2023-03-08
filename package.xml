@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
   <name>Volmdlr Workbench</name> <!-- What the Addon Manager displays to users -->
-  <description>Volmdlr a computations-oriented python VOLume MoDeLeR with STEP support for import and export.</description>
-  <version>1.0.1</version> <!-- Semantic versioning (1.2.3-beta) or CalVer-based, (2022.01.07), don't omit or non-git installations won't see your updates -->
-  <date>2022-01-07</date> <!-- Date of the last update to the version number -->
+  <description>A computations-oriented python VOLume MoDeLeR with STEP support for import and export.</description>
+  <version>0.9.0</version> <!-- Semantic versioning (1.2.3-beta) or CalVer-based, (2022.01.07), don't omit or non-git installations won't see your updates -->
+  <date>2023-03-06</date> <!-- Date of the last update to the version number -->
   <maintainer email="your_address@null.com">Your Name</maintainer>
   <license file="LICENSE">GPL-3</license> <!-- Make sure you actually have this file in your Addon repo if the license requires it -->
   <url type="repository" branch="master">https://github.com/Dessia-tech/volmdlr</url> <!-- Don't forget to update the branch name here -->
