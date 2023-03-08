@@ -595,7 +595,6 @@ class Step(dc.DessiaObject):
 
     def __init__(self, lines: List[str], name: str = ''):
         self.functions, self.all_connections = self.read_lines(lines)
-        self._utd_graph = False
         self._graph = None
         self.global_uncertainty = 1e-6
         self.length_conversion_factor = 1
@@ -605,9 +604,8 @@ class Step(dc.DessiaObject):
 
     @property
     def graph(self):
-        if not self._utd_graph:
+        if not self._graph:
             self._graph = self.create_graph()
-            self._utd_graph = True
         return self._graph
 
     @classmethod
