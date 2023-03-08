@@ -1845,7 +1845,7 @@ class CylindricalSurface3D(PeriodicalSurface):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = None
 
-    def __init__(self, frame, radius, name=''):
+    def __init__(self, frame, radius: float, name: str=''):
         self.frame = frame
         self.radius = radius
         PeriodicalSurface.__init__(self, name=name)
@@ -3619,9 +3619,9 @@ class BSplineSurface3D(Surface3D):
     face_class = "BSplineFace3D"
     _non_serializable_attributes = ["surface", "curves"]
 
-    def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v,
-                 u_multiplicities, v_multiplicities, u_knots, v_knots,
-                 weights=None, name=''):
+    def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
+                 u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
+                 weights: List[float] = None, name: str = ''):
         self.control_points = control_points
         self.degree_u = degree_u
         self.degree_v = degree_v

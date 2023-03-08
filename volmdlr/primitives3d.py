@@ -162,7 +162,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
 
-    def __init__(self, points, radius, adapt_radius=False, name=''):
+    def __init__(self, points: List[volmdlr.Point3D], radius: float, adapt_radius: bool = False, name: str = ''):
         volmdlr.primitives.RoundedLineSegments.__init__(
                 self, points, radius, 'volmdlr.edges.LineSegment3D',
                 'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
@@ -1825,7 +1825,7 @@ class Sphere(RevolvedProfile):
 
     """
 
-    def __init__(self, center, radius,
+    def __init__(self, center: volmdlr.Point3D, radius: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
         self.center = center
