@@ -10,9 +10,8 @@ import warnings
 import webbrowser
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Tuple
 from functools import lru_cache
-from typing import List
+from typing import List, Tuple
 
 # import gmsh
 import matplotlib.pyplot as plt
