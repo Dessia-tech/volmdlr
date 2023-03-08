@@ -12,6 +12,7 @@ import dessia_common.core as dc
 import volmdlr.edges
 
 
+
 class Node2D(volmdlr.Point2D):
     """
     A node is a point with some hash capabilities for performance.
@@ -25,7 +26,7 @@ class Node2D(volmdlr.Point2D):
                                                  'Node2D']:
             return False
         return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-06)
+               and math.isclose(self.y, other_node.y, abs_tol=1e-06)
 
     @classmethod
     def from_point(cls, point2d):
@@ -45,8 +46,8 @@ class Node3D(volmdlr.Point3D):
                                                  'Node3D']:
             return False
         return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-06) \
-            and math.isclose(self.z, other_node.z, abs_tol=1e-06)
+               and math.isclose(self.y, other_node.y, abs_tol=1e-06) \
+               and math.isclose(self.z, other_node.z, abs_tol=1e-06)
 
     @classmethod
     def from_point(cls, point3d):
@@ -60,7 +61,7 @@ class DisplayMesh(dc.DessiaObject):
     """
     _linesegment_class = volmdlr.edges.LineSegment
 
-    def __init__(self, points, triangles, name=''):
+    def __init__(self, points, triangles, name: str = ''):
 
         self.points = points
         self.triangles = triangles
