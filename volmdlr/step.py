@@ -555,7 +555,6 @@ class StepFunction(dc.DessiaObject):
     """
 
     def __init__(self, function_id, function_name, function_arg):
-        dc.DessiaObject.__init__(self)
         self.id = function_id
         self.name = function_name
         self.arg = function_arg
@@ -590,10 +589,10 @@ class Step(dc.DessiaObject):
 
     """
 
+    _standalone_in_db = True
+
     def __init__(self, lines: List[str], name: str = ''):
-        self.lines = lines
-        self.functions, self.all_connections = self.read_lines()
-        self._utd_graph = False
+        self.functions, self.all_connections = self.read_lines(lines)
         self._graph = None
         self.global_uncertainty = 1e-6
         self.length_conversion_factor = 1
@@ -603,9 +602,8 @@ class Step(dc.DessiaObject):
 
     @property
     def graph(self):
-        if not self._utd_graph:
+        if not self._graph:
             self._graph = self.create_graph()
-            self._utd_graph = True
         return self._graph
 
     @classmethod
@@ -626,13 +624,13 @@ class Step(dc.DessiaObject):
                 lines.append(line)
         return cls(lines)
 
-    def read_lines(self):
+    def read_lines(self, lines):
         all_connections = []
 
         previous_line = ""
         functions = {}
 
-        for line in self.lines:
+        for line in lines:
             line = line.replace(" ", "")
             line = line.replace("\n", "")
 
