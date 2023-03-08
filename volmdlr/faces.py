@@ -3692,8 +3692,7 @@ class BSplineSurface3D(Surface3D):
     def surface(self, value):  # check_surface
         if not isinstance(value, BSpline.Surface):
             raise ValueError('Not a bspline')
-        else:
-            self._surface = value
+        self._surface = value
 
     @property
     def x_periodicity(self):
