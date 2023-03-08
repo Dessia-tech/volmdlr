@@ -1064,23 +1064,15 @@ class BSplineCurve(Edge):
         """
         polygon_points = self.points
         list_intersections = []
-        length = self.length()
         initial_abscissa = 0
         for points in zip(polygon_points[:-1], polygon_points[1:]):
             linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
             linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
             intersections = linesegment.line_intersections(line)
             if intersections and intersections[0] not in list_intersections:
-                abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
-                if initial_abscissa < length * 0.1:
-                    number_points = int(linesegment.length() / 1e-6)
-                    list_abscissas = list(
-                        n for n in npy.linspace(initial_abscissa, initial_abscissa + linesegment.length(),
-                                                number_points))
-                else:
-                    distance_from_point_to_search = 0.0001 / 2
-                    list_abscissas = list(new_abscissa for new_abscissa in npy.linspace(
-                        abscissa - distance_from_point_to_search, abscissa + distance_from_point_to_search, 1000))
+                abs1 = self.abscissa(linesegment.start)
+                abs2 = self.abscissa(linesegment.end)
+                list_abscissas = list(new_abscissa for new_abscissa in npy.linspace(abs1, abs2, 1000))
                 intersection = self.select_intersection_point(list_abscissas, intersections)
                 list_intersections.append(intersection)
             initial_abscissa += linesegment.length()
