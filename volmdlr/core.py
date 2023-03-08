@@ -585,6 +585,22 @@ class BoundingRectangle(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2) ** 0.5
 
+    @classmethod
+    def from_points(cls, points: List[volmdlr.Point2D]) -> "BoundingRectangle":
+        """
+        Initializes a bounding rectangle from a list of points.
+
+        :param points: The list of points to create the bounding rectangle from.
+        :type points: List[volmdlr.Point2D]
+        :return: The bounding rectangle initialized from the list of points.
+        :rtype: BoundingRectangle
+        """
+        xmin = min(pt.x for pt in points)
+        xmax = max(pt.x for pt in points)
+        ymin = min(pt.y for pt in points)
+        ymax = max(pt.y for pt in points)
+        return cls(xmin, xmax, ymin, ymax)
+
 
 class BoundingBox(dc.DessiaObject):
     """
