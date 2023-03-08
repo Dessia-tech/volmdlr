@@ -1043,7 +1043,9 @@ class BSplineCurve(Edge):
             linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
             linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
             intersections = linesegment.line_intersections(line)
-
+            if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
+                if line.point_distance(linesegment.middle_point()) < 1e-8:
+                    list_intersections.append(linesegment.middle_point())
             if intersections and intersections[0] not in list_intersections:
                 abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
                 if initial_abscissa < length * 0.1:
@@ -1504,9 +1506,7 @@ class BSplineCurve2D(BSplineCurve):
         :rtype: :class:`volmdlr.core.BoundingRectangle`
         """
         if not self._bounding_rectangle:
-            bbox = self.curve.bbox
-            self._bounding_rectangle = volmdlr.core.BoundingRectangle(bbox[0][0], bbox[1][0],
-                                                                      bbox[0][1], bbox[1][1])
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle.from_points(self.points)
         return self._bounding_rectangle
 
     def tangent(self, position: float = 0.0):
@@ -1518,7 +1518,7 @@ class BSplineCurve2D(BSplineCurve):
         :return: A 2 dimensional point representing the tangent
         :rtype: :class:`volmdlr.Point2D`
         """
-        _, tangent = operations.tangent(self.curve, position / self.length(),
+        _, tangent = operations.tangent(self.curve, position,
                                         normalize=True)
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
@@ -1531,7 +1531,7 @@ class BSplineCurve2D(BSplineCurve):
         direction vector is to be calculated.
         :return: The direction vector vector of the BSplineCurve2D
         """
-        return self.tangent(abscissa)
+        return self.tangent(abscissa / self.length())
 
     def normal_vector(self, abscissa: float):
         """
@@ -1541,7 +1541,7 @@ class BSplineCurve2D(BSplineCurve):
         normal vector is to be calculated
         :return: The normal vector of the BSplineCurve2D
         """
-        tangent_vector = self.tangent(abscissa)
+        tangent_vector = self.tangent(abscissa / self.length())
         normal_vector = tangent_vector.normal_vector()
         return normal_vector
 
