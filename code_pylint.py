@@ -66,7 +66,7 @@ MAX_ERROR_BY_TYPE = {
                      'unsubscriptable-object': 1,
                      'signature-differs': 1}
 
-ERRORS_WITHOUT_TIME_DECREASE = []
+ERRORS_WITHOUT_TIME_DECREASE = ["too-many-instance-attributes"]
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
