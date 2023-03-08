@@ -216,9 +216,9 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         Rotates the CompositePrimitive2D.
 
-        :param center: rotation center
-        :param angle: angle rotation
-        :return: a new rotated CompositePrimitive2D
+        :param center: rotation center.
+        :param angle: angle rotation.
+        :return: a new rotated CompositePrimitive2D.
         """
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
@@ -227,8 +227,8 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         Rotates the CompositePrimitive2D. Object is updated in-place.
 
-        :param center: rotation center
-        :param angle: rotation angle
+        :param center: rotation center.
+        :param angle: rotation angle.
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
@@ -585,6 +585,22 @@ class BoundingRectangle(dc.DessiaObject):
             dy = 0
 
         return (dx ** 2 + dy ** 2) ** 0.5
+
+    @classmethod
+    def from_points(cls, points: List[volmdlr.Point2D]) -> "BoundingRectangle":
+        """
+        Initializes a bounding rectangle from a list of points.
+
+        :param points: The list of points to create the bounding rectangle from.
+        :type points: List[volmdlr.Point2D]
+        :return: The bounding rectangle initialized from the list of points.
+        :rtype: BoundingRectangle
+        """
+        xmin = min(pt.x for pt in points)
+        xmax = max(pt.x for pt in points)
+        ymin = min(pt.y for pt in points)
+        ymax = max(pt.y for pt in points)
+        return cls(xmin, xmax, ymin, ymax)
 
 
 class BoundingBox(dc.DessiaObject):
