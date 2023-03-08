@@ -1043,7 +1043,9 @@ class BSplineCurve(Edge):
             linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
             linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
             intersections = linesegment.line_intersections(line)
-
+            if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
+                if line.point_distance(linesegment.middle_point()) < 1e-8:
+                    list_intersections.append(linesegment.middle_point())
             if intersections and intersections[0] not in list_intersections:
                 abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
                 if initial_abscissa < length * 0.1:
@@ -1504,9 +1506,7 @@ class BSplineCurve2D(BSplineCurve):
         :rtype: :class:`volmdlr.core.BoundingRectangle`
         """
         if not self._bounding_rectangle:
-            bbox = self.curve.bbox
-            self._bounding_rectangle = volmdlr.core.BoundingRectangle(bbox[0][0], bbox[1][0],
-                                                                      bbox[0][1], bbox[1][1])
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle.from_points(self.points)
         return self._bounding_rectangle
 
     def tangent(self, position: float = 0.0):
@@ -1518,7 +1518,7 @@ class BSplineCurve2D(BSplineCurve):
         :return: A 2 dimensional point representing the tangent
         :rtype: :class:`volmdlr.Point2D`
         """
-        _, tangent = operations.tangent(self.curve, position / self.length(),
+        _, tangent = operations.tangent(self.curve, position,
                                         normalize=True)
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
@@ -1531,7 +1531,7 @@ class BSplineCurve2D(BSplineCurve):
         direction vector is to be calculated.
         :return: The direction vector vector of the BSplineCurve2D
         """
-        return self.tangent(abscissa)
+        return self.tangent(abscissa / self.length())
 
     def normal_vector(self, abscissa: float):
         """
@@ -1541,7 +1541,7 @@ class BSplineCurve2D(BSplineCurve):
         normal vector is to be calculated
         :return: The normal vector of the BSplineCurve2D
         """
-        tangent_vector = self.tangent(abscissa)
+        tangent_vector = self.tangent(abscissa / self.length())
         normal_vector = tangent_vector.normal_vector()
         return normal_vector
 
@@ -2373,6 +2373,22 @@ class Arc(Edge):
 
         return self.__class__(start=self.end, interior=self.interior, end=self.start)
 
+    def split(self, split_point):
+        """
+        Splits arc at a given point.
+
+        :param split_point: splitting point.
+        :return: list of two Arc.
+        """
+        if split_point.is_close(self.start, 1e-6):
+            return [None, self.copy()]
+        if split_point.is_close(self.end, 1e-6):
+            return [self.copy(), None]
+        abscissa = self.abscissa(split_point)
+        return [self.__class__(self.start, self.point_at_abscissa(0.5 * abscissa), split_point),
+                self.__class__(split_point, self.point_at_abscissa((self.abscissa(self.end) -
+                                                                    abscissa) * 0.5 + abscissa), self.end)]
+
 
 class Arc2D(Arc):
     """
@@ -2963,24 +2979,6 @@ class Arc2D(Arc):
         return Arc2D(self.start.copy(),
                      self.interior.copy(),
                      self.end.copy())
-
-    def split(self, split_point: volmdlr.Point2D):
-        """
-        Splits arc at a given point.
-
-        :param split_point: splitting point.
-        :return: list of two Arc2D.
-        """
-        abscissa = self.abscissa(split_point)
-
-        return [Arc2D(self.start,
-                      self.point_at_abscissa(0.5 * abscissa),
-                      split_point),
-                Arc2D(split_point,
-                      self.point_at_abscissa((self.abscissa(self.end)
-                                              - abscissa) * 0.5 + abscissa),
-                      self.end)
-                ]
 
     def cut_between_two_points(self, point1, point2):
         """
@@ -5438,23 +5436,6 @@ class Arc3D(Arc):
 
         return self.radius * abs(theta)
 
-    def split(self, split_point: volmdlr.Point3D):
-        """
-        Splits the Arc2D in two at a given point.
-
-        :param split_point: splitting point
-        :return: two Arc2D.
-        """
-        abscissa = self.abscissa(split_point)
-
-        return [Arc3D(self.start,
-                      self.point_at_abscissa(0.5 * abscissa),
-                      split_point),
-                Arc3D(split_point,
-                      self.point_at_abscissa(1.5 * abscissa),
-                      self.end)
-                ]
-
     def to_2d(self, plane_origin, x, y):
         """
         Transforms a Arc3D into an Arc2D, given an plane origin and a u and v plane vector.
@@ -5755,7 +5736,7 @@ class Arc3D(Arc):
         :return: list with intersections points between linesegment and Arc3D.
         """
         linesegment_intersections = []
-        intersections = self.line_intersections(linesegment3d)
+        intersections = self.line_intersections(linesegment3d.to_line())
         for intersection in intersections:
             if linesegment3d.point_belongs(intersection):
                 linesegment_intersections.append(intersection)
