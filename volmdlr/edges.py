@@ -1043,7 +1043,9 @@ class BSplineCurve(Edge):
             linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
             linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
             intersections = linesegment.line_intersections(line)
-
+            if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
+                if line.point_distance(linesegment.middle_point()) < 1e-8:
+                    list_intersections.append(linesegment.middle_point())
             if intersections and intersections[0] not in list_intersections:
                 abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
                 if initial_abscissa < length * 0.1:
