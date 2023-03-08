@@ -3870,7 +3870,7 @@ class BSplineSurface3D(Surface3D):
                                                 self.surface.rational,
                                                 self.surface.evaluator._span_func))
         # uses derivatives for performance because it's already compiled
-        # return volmdlr.Point3D(*self.derivatives(x, y, 0)[0][0])
+        # return volmdlr.Point3D(*self.derivatives(u, v, 0)[0][0])
         # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-5):
