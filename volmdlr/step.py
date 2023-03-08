@@ -601,7 +601,7 @@ class Step(dc.DessiaObject):
 
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines
-        self.functions, self.all_connections, self.connections = self.read_lines()
+        self.functions, self.all_connections, self.connections = self.read_lines(lines)
         self._graph = None
         self.global_uncertainty = 1e-6
         self.length_conversion_factor = 1
