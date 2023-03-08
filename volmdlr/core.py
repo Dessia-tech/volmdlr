@@ -216,9 +216,9 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         Rotates the CompositePrimitive2D.
 
-        :param center: rotation center
-        :param angle: angle rotation
-        :return: a new rotated CompositePrimitive2D
+        :param center: rotation center.
+        :param angle: angle rotation.
+        :return: a new rotated CompositePrimitive2D.
         """
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
@@ -227,8 +227,8 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         Rotates the CompositePrimitive2D. Object is updated in-place.
 
-        :param center: rotation center
-        :param angle: rotation angle
+        :param center: rotation center.
+        :param angle: rotation angle.
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
