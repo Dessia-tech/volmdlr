@@ -8,6 +8,7 @@ import time
 from typing import List
 from dataclasses import dataclass, field
 import numpy as npy
+import warnings
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -202,6 +203,9 @@ def oriented_edge(arguments, object_dict):
     """
     Returns the data in case of an ORIENTED_EDGE.
     """
+    if not object_dict[arguments[3]]:
+        #This can happen when the is too small
+        return None
     edge_orientation = arguments[4]
     if edge_orientation == '.T.':
         return object_dict[arguments[3]]

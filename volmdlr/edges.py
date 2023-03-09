@@ -5981,27 +5981,28 @@ class ArcEllipse3D(Edge):
 
     """
 
-    def __init__(self, start, interior, end, center, major_dir,
-                 name=''):  # , extra=None):
+    def __init__(self, start, interior, end, center, major_dir, normal=None, extra=None,
+                 name=''):
         Edge.__init__(self, start=start, end=end, name=name)
         self.interior = interior
         self.center = center
         major_dir.normalize()
         self.major_dir = major_dir  # Vector for Gradius
-        # self.extra = extra
-
-        u1 = self.interior - self.start
-        u2 = self.interior - self.end
-        u1.normalize()
-        u2.normalize()
-
-        if u1.is_close(u2):
-            u2 = self.interior - self.extra
+        self.normal = normal
+        self.extra = extra
+        if not normal:
+            u1 = self.interior - self.start
+            u2 = self.interior - self.end
+            u1.normalize()
             u2.normalize()
 
-        n = u2.cross(u1)
-        n.normalize()
-        self.normal = n
+            if u1.is_close(u2):
+                u2 = self.interior - self.extra
+                u2.normalize()
+
+            n = u2.cross(u1)
+            n.normalize()
+            self.normal = n
 
         self.minor_dir = self.normal.cross(self.major_dir)
 
@@ -6036,12 +6037,21 @@ class ArcEllipse3D(Edge):
             return theta, gdaxe, ptax
 
         if start.is_close(end):
-            extra_new = frame.global_to_local_coordinates(self.interior)
-            theta, A, B = theta_A_B(start_new, extra_new, interior_new,
+            extra_new = frame.global_to_local_coordinates(self.extra)
+            theta, A, B = theta_A_B(start_new, interior_new, extra_new,
                                     center_new)
+
         else:
-            theta, A, B = theta_A_B(start_new, interior_new, end_new,
+            # try:
+            if not self.extra:
+                theta, A, B = theta_A_B(start_new, interior_new, end_new,
                                     center_new)
+            else:
+                extra_new = frame.global_to_local_coordinates(self.extra)
+                theta, A, B = theta_A_B(start_new, interior_new, extra_new,
+                                        center_new)
+            # except Exception:
+            #     print(True)
 
         self.Gradius = A
         self.Sradius = B
@@ -6176,11 +6186,19 @@ class ArcEllipse3D(Edge):
         raise NotImplementedError
 
     def reverse(self):
+        normal = None
+        extra = None
+        if self.normal:
+            normal = self.normal.copy()
+        if self.extra:
+            extra = self.extra.copy()
         return self.__class__(self.end.copy(),
                               self.interior.copy(),
                               self.start.copy(),
                               self.center.copy(),
                               self.major_dir.copy(),
+                              normal,
+                              extra,
                               self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
@@ -6260,3 +6278,21 @@ class ArcEllipse3D(Edge):
         zmin = min(point.z for point in points)
         zmax = max(point.z for point in points)
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+
+class FullArcEllipse3D(ArcEllipse3D):
+    """
+    Defines a ellipse.
+    """
+    def __init__(self, start_end: volmdlr.Point3D, interior, center, major_dir, normal, extra=None, name: str = ""):
+        self.start_end = start_end
+        ArcEllipse3D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
+                              major_dir=major_dir, normal=normal, extra=extra, name=name)
+
+
+    def reverse(self):
+        """
+        Defines a new FullArcEllipse3D, identical to self, but in the opposite direction.
+
+        """
+        return self
