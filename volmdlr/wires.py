@@ -511,7 +511,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                 else:
                     end = self.primitives[i].end
                     if intersections[0].point_distance(end) > intersections[
-                        1].point_distance(end):
+                            1].point_distance(end):
                         intersections.reverse()
                     offset_intersections.append(intersections[0])
 
@@ -2102,7 +2102,7 @@ class Contour2D(ContourMixin, Wire2D):
         if extracted_outerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[0].start):
             cutting_contour_new = closing_contour.invert()
             primitives1 = cutting_contour_new.primitives + \
-                          extracted_outerpoints_contour1.primitives
+                extracted_outerpoints_contour1.primitives
         elif extracted_outerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[-1].end):
             primitives1 = closing_contour.primitives + \
                           extracted_outerpoints_contour1.primitives
@@ -2111,7 +2111,7 @@ class Contour2D(ContourMixin, Wire2D):
             cutting_contour_new = \
                 closing_contour.invert()
             primitives2 = cutting_contour_new.primitives + \
-                          extracted_innerpoints_contour1.primitives
+                extracted_innerpoints_contour1.primitives
         elif extracted_innerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[-1].end):
             primitives2 = closing_contour.primitives + \
                           extracted_innerpoints_contour1.primitives
@@ -2697,7 +2697,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                           (-offset_vectors[i])
+                (-offset_vectors[i])
 
             # ax=self.plot()
             # offset_point.plot(ax=ax, color='g')
@@ -2941,7 +2941,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                     new_line_b = volmdlr.edges.LineSegment2D(start=middle_point, end=line.end)
                     if not (line_colides_with_hull(line=new_line_a,
                                                    concave_hull=hull_concave_edges) and line_colides_with_hull(
-                        line=new_line_b, concave_hull=hull_concave_edges)):
+                            line=new_line_b, concave_hull=hull_concave_edges)):
                         ok_middle_points.append(middle_point)
                         list_cossines.append(cos)
             if len(ok_middle_points) > 0:
@@ -3288,8 +3288,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         # point_intersection.plot(ax=ax2d)
 
         if point_intersection.point_distance(
-                line_segment.start) < point_intersection.point_distance(
-            line_segment.end):
+                    line_segment.start) < point_intersection.point_distance(
+                line_segment.end):
             closing_point = line_segment.start
         else:
             closing_point = line_segment.end
@@ -3544,7 +3544,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                     line_segment1])
 
                 elif possible_sewing_closing_points_in_linesegment[
-                    line_segment2]:
+                        line_segment2]:
                     closing_point = self.select_closest_sewing_closing_point(
                         line_segment2, primitive,
                         possible_sewing_closing_points_in_linesegment[
@@ -5216,6 +5216,7 @@ class Ellipse3D(Contour3D):
         self.normal = normal
         major_dir.normalize()
         self.major_dir = major_dir
+        self.minor_dir = normal.cross(normal)
         self._frame = None
         Contour3D.__init__(self, [self], name=name)
 
@@ -5267,10 +5268,9 @@ class Ellipse3D(Contour3D):
             angle_resolution = number_points
         discretization_points_3d = [
                                        self.center + self.major_axis * math.cos(
-                                           teta) * self.major_dir
+                                           theta) * self.major_dir
                                        + self.minor_axis * math.sin(
-                                           teta) * self.major_dir.cross(
-                                           self.normal) for teta in
+                                           theta) * self.minor_dir for theta in
                                        npy.linspace(0, volmdlr.TWO_PI,
                                                     angle_resolution + 1)][:-1]
         return discretization_points_3d
@@ -5301,10 +5301,11 @@ class Ellipse3D(Contour3D):
         return ellipse_2d.abscissa(point2d)
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        if point1.is_close(point2) or math.isclose(point1.point_distance(point2), self.major_axis, abs_tol=1e-4):
-            discretization_points = self.discretization_points(angle_resolution=8)
-            return volmdlr.edges.FullArcEllipse3D(point1, discretization_points[1], self.center,
-                                                  self.major_dir, self.normal, discretization_points[2], self.name)
+        if point1.is_close(point2):
+            print(self.major_axis)
+            print(self.minor_axis)
+            return volmdlr.edges.FullArcEllipse3D(point1, self.major_axis, self.minor_axis, self.center, self.normal,
+                                                  self.major_dir, self.name)
 
         p1_new, p2_new = self.frame.global_to_local_coordinates(point1), self.frame.global_to_local_coordinates(point2)
 
@@ -5318,11 +5319,11 @@ class Ellipse3D(Contour3D):
             angle = (theta1 + theta2) / 2
 
         p3 = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(angle),
-                                                               self.minor_axis * math.sin(angle), 0))
+                                                                    self.minor_axis * math.sin(angle), 0))
         extra = None
         if math.isclose(angle % math.pi, 0.0, abs_tol=1e-6):
             extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.125 * angle),
-                                                                       self.minor_axis * math.sin(0.125 * angle), 0))
+                                                                           self.minor_axis * math.sin(0.125 * angle), 0))
         return volmdlr.edges.ArcEllipse3D(point1, p3, point2, self.center,
                                           self.major_dir, extra=extra)
 
@@ -5541,7 +5542,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle.bounds(), \
             other_poly2d.bounding_rectangle.bounds()
         position = [abs(value) for value in bbox_self2d] \
-                   + [abs(value) for value in bbox_other2d]
+            + [abs(value) for value in bbox_other2d]
         max_scale = 2 * max(position)
 
         lines = [volmdlr.edges.LineSegment2D(volmdlr.O2D, max_scale * (
@@ -5574,7 +5575,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         triangles = []
         for point1, point2, other_point in zip(new_poly1.points,
                                                new_poly1.points[
-                                               1:] + new_poly1.points[:1],
+                                                   1:] + new_poly1.points[:1],
                                                new_poly2.points):
             triangles.append([point1, point2, other_point])
 
@@ -5622,7 +5623,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             if i != 0:
                 mean_point2d = 0.5 * (
                         new_polygon1_2d_points[i] + new_polygon1_2d_points[
-                    i - 1])
+                            i - 1])
                 closing_point = new_polygon2_2d.line_intersecting_closing_point(
                     mean_point2d)
                 closing_point_index = new_polygon2_2d.points.index(
@@ -5838,7 +5839,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         elif math.isclose(ratio, -1, abs_tol=0.3):
             closing_point_index = last_index
         elif closing_point_index - last_index > 5 and list_closing_point_indexes[
-            -1] + 4 <= ratio_denominator - 1 and polygons_points_ratio > 0.95:
+                -1] + 4 <= ratio_denominator - 1 and polygons_points_ratio > 0.95:
             closing_point_index = last_index + 4
 
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
@@ -5885,8 +5886,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             else:
                 closing_point_index, list_remove_closing_points, \
                     passed_by_zero_index = self.validate_concave_closing_point(
-                    closing_point_index, list_closing_point_indexes,
-                    passed_by_zero_index, ratio_denom, polygons_points_ratio)
+                        closing_point_index, list_closing_point_indexes,
+                        passed_by_zero_index, ratio_denom, polygons_points_ratio)
 
             if list_remove_closing_points:
                 new_list_closing_point_indexes = list(

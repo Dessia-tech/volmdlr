@@ -204,7 +204,7 @@ def oriented_edge(arguments, object_dict):
     Returns the data in case of an ORIENTED_EDGE.
     """
     if not object_dict[arguments[3]]:
-        #This can happen when the is too small
+        # This can happen when the is too small
         return None
     edge_orientation = arguments[4]
     if edge_orientation == '.T.':

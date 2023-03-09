@@ -6026,7 +6026,10 @@ class ArcEllipse3D(Edge):
             A = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],
                            [xi ** 2, yi ** 2, 2 * xi * yi],
                            [xe ** 2, ye ** 2, 2 * xe * ye]))
-            invA = npy.linalg.inv(A)
+            try:
+                invA = npy.linalg.inv(A)
+            except Exception:
+                print(True)
             identity = npy.array(([1], [1], [1]))
             r1, r2, r3 = npy.dot(invA, identity)  # 3 item column matrix
             theta = 0.5 * math.atan(2 * r3 / (r2 - r1))
@@ -6045,7 +6048,7 @@ class ArcEllipse3D(Edge):
             # try:
             if not self.extra:
                 theta, A, B = theta_A_B(start_new, interior_new, end_new,
-                                    center_new)
+                                        center_new)
             else:
                 extra_new = frame.global_to_local_coordinates(self.extra)
                 theta, A, B = theta_A_B(start_new, interior_new, extra_new,
@@ -6282,13 +6285,30 @@ class ArcEllipse3D(Edge):
 
 class FullArcEllipse3D(ArcEllipse3D):
     """
-    Defines a ellipse.
+    Defines a FullArcEllipse3D.
     """
-    def __init__(self, start_end: volmdlr.Point3D, interior, center, major_dir, normal, extra=None, name: str = ""):
+
+    def __init__(self, start_end: volmdlr.Point3D, major_axis: float, minor_axis: float,
+                 center: volmdlr.Point3D, normal: volmdlr.Vector3D, major_dir: volmdlr.Vector3D, name: str = ''):
         self.start_end = start_end
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
+        self.center = center
+        normal.normalize()
+        self.normal = normal
+        major_dir.normalize()
+        self.major_dir = major_dir
+        self.minor_dir = normal.cross(major_dir)
+        self.frame = volmdlr.Frame3D(center, major_dir, self.minor_dir, normal)
+
+        interior = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.25 * math.pi),
+                                                                          self.minor_axis * math.sin(0.25 * math.pi),
+                                                                          0.0))
+        extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.5 * math.pi),
+                                                                       self.minor_axis * math.sin(0.5 * math.pi),
+                                                                       0.0))
         ArcEllipse3D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
                               major_dir=major_dir, normal=normal, extra=extra, name=name)
-
 
     def reverse(self):
         """
