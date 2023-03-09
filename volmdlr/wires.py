@@ -137,7 +137,10 @@ class WireMixin:
         primitives = []
 
         ip1 = self.primitive_to_index(primitive1)
-        ip2 = self.primitive_to_index(primitive2)
+        try:
+            ip2 = self.primitive_to_index(primitive2)
+        except KeyError:
+            print(True)
 
         if ip1 < ip2:
             pass
@@ -1422,8 +1425,10 @@ class ContourMixin(WireMixin):
 
         points = self.shared_primitives_extremities(contour)
         for i in range(0, len(points), 2):
-            point1, point2 = points[i], points[i + 1]
-
+            try:
+                point1, point2 = points[i], points[i + 1]
+            except IndexError:
+                print(True)
             shared_primitives_prim = self.extract_without_primitives(point1, point2, False)
             if any(not contour.point_over_contour(prim.middle_point(), 1e-4) for prim in shared_primitives_prim):
                 shared_primitives_1.extend(self.extract_without_primitives(point1, point2, True))

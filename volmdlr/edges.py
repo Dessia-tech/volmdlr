@@ -4455,9 +4455,7 @@ class LineSegment3D(LineSegment):
         end_content, end_id = self.end.to_step(current_id + 1, vertex=True)
         content += start_content + end_content
         current_id = end_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
-            current_id, self.name,
-            start_id, end_id, line_id)
+        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
         return content, [current_id]
 
 
