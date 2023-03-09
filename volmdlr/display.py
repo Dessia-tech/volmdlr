@@ -167,8 +167,8 @@ class DisplayMesh(dc.DessiaObject):
         for ip, point in enumerate(self.points):
             ax = point.plot(ax=ax)
             if numbering:
-                ax.text(*point, 'node {}'.format(ip + 1),
-                        ha='center', va='center')
+                ax.text(*point, f"node {ip + 1}",
+                        ha="center", va="center")
 
         for i1, i2, i3 in self.triangles:
             point1 = self.points[i1]

@@ -3337,7 +3337,8 @@ class ArcEllipse2D(Edge):
 
         def theta_A_B(s, i, e, c):
             """
-            From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given.
+            From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-
+            points-on-it-are-given.
             theta= ellipse's inclination angle related to the horizontal
             (clockwise),A=semi major axis, B=semi minor axis.
 
@@ -4684,13 +4685,10 @@ class BSplineCurve3D(BSplineCurve):
             point_id += 1
 
         curve_id = point_id
-        content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
-                   ".UNSPECIFIED.,.F.,.F.,{},{}," \
-                   ".UNSPECIFIED.);\n".format(
-                       curve_id, self.name, self.degree,
-                       volmdlr.core.step_ids_to_str(points_ids),
-                       tuple(self.knot_multiplicities),
-                       tuple(self.knots))
+        content += f"#{curve_id} = B_SPLINE_CURVE_WITH_KNOTS('{self.name}',{self.degree}," \
+                   f"({volmdlr.core.step_ids_to_str(points_ids)})," \
+                   f".UNSPECIFIED.,.F.,.F.,{tuple(self.knot_multiplicities)},{tuple(self.knots)}," \
+                   ".UNSPECIFIED.);\n"
 
         if surface_id:
             content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{curve_id + 2}),.PCURVE_S1.);\n"
@@ -4718,9 +4716,7 @@ class BSplineCurve3D(BSplineCurve):
                 current_id, self.name,
                 start_id, end_id, curve_id + 1)
         else:
-            content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
-                current_id, self.name,
-                start_id, end_id, curve_id)
+            content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
         return content, [current_id]
 
     def point_distance(self, pt1):
@@ -5673,8 +5669,7 @@ class Arc3D(Arc):
                                                                )
 
         if surface_id:
-            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                curve_id + 1, curve_id, surface_id)
+            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
             curve_id += 1
 
         current_id = curve_id + 1
@@ -5682,9 +5677,7 @@ class Arc3D(Arc):
         end_content, end_id = self.end.to_step(start_id + 1, vertex=True)
         content += start_content + end_content
         current_id = end_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
-            current_id, self.name,
-            start_id, end_id, curve_id)
+        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
         return content, [current_id]
 
     def point_belongs(self, point3d, abs_tol: float = 1e-6):
@@ -5825,8 +5818,7 @@ class FullArc3D(Arc3D):
                                                              )
 
         if surface_id:
-            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                curve_id + 1, curve_id, surface_id)
+            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
             curve_id += 1
 
         p1 = (self.center + u * self.radius).to_point()

@@ -1114,10 +1114,7 @@ class Surface3D(DessiaObject):
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
                           f'with {primitive2d.__class__.__name__}')
             else:
-                raise NotImplementedError(
-                    'Class {} does not implement {}'.format(
-                        self.__class__.__name__,
-                        method_name))
+                raise NotImplementedError(f"Class {self.__class__.__name__} does not implement {method_name}")
 
         return volmdlr.wires.Contour3D(primitives3d)
 
@@ -1228,8 +1225,7 @@ class Plane3D(Surface3D):
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
         plane_id = frame_id + 1
-        content += "#{} = PLANE('{}',#{});\n".format(plane_id, self.name,
-                                                     frame_id)
+        content += f"#{plane_id} = PLANE('{self.name}',#{frame_id});\n"
         return content, [plane_id]
 
     @classmethod
@@ -2706,10 +2702,7 @@ class ConicalSurface3D(PeriodicalSurface):
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
-        content += "#{} = CONICAL_SURFACE('{}',#{},{},{});\n" \
-            .format(current_id, self.name, frame_id,
-                    0.,
-                    round(self.semi_angle, 3))
+        content += f"#{current_id} = CONICAL_SURFACE('{self.name}',#{frame_id},{0.0},{round(self.semi_angle, 3)});\n"
         return content, [current_id]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
