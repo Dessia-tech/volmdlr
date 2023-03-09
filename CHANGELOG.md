@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: offset
 * Circle2D: bsplinecurve_intersections, point_distance
 * ConicalSurface3D, CylindricalSurface3D: plot method
+* Wire2: hash
+* Contour3D: hash
+
 ### Fixed
 * Plane3D: plane_intersections
 * fixes to step assemblies

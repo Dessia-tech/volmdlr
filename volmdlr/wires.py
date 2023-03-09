@@ -442,6 +442,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         self._bounding_rectangle = None
         volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
 
+    def __hash__(self):
+        return hash(('wire2d', tuple(self.primitives)))
+
     def to_3d(self, plane_origin, x, y):
         """
         Transforms a Wire2D into an Wire3D, given a plane origin and an u and v plane vector.
@@ -1401,7 +1404,7 @@ class ContourMixin(WireMixin):
         if len(list_p) == 2:
             return list_p
 
-        contours = self.__class__.contours_from_edges(edges1)
+        contours = self.__class__.contours_from_edges(list(edges1))
         points = []
         for contour_i in contours:
             points.extend(contour_i.extremities_points(list_p))
@@ -4383,6 +4386,9 @@ class Contour3D(ContourMixin, Wire3D):
         Wire3D.__init__(self, primitives=primitives, name=name)
         self._edge_polygon = None
         self._utd_bounding_box = False
+
+    def __hash__(self):
+        return hash(tuple(self.primitives))
 
     def __eq__(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:
