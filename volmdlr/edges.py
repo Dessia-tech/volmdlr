@@ -6026,10 +6026,7 @@ class ArcEllipse3D(Edge):
             A = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],
                            [xi ** 2, yi ** 2, 2 * xi * yi],
                            [xe ** 2, ye ** 2, 2 * xe * ye]))
-            try:
-                invA = npy.linalg.inv(A)
-            except Exception:
-                print(True)
+            invA = npy.linalg.inv(A)
             identity = npy.array(([1], [1], [1]))
             r1, r2, r3 = npy.dot(invA, identity)  # 3 item column matrix
             theta = 0.5 * math.atan(2 * r3 / (r2 - r1))
