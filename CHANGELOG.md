@@ -10,17 +10,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 * Write .msh file (with stream)
+* Arc: reverse
+* BSplineCurve2D: offset
+* Circle2D: bsplinecurve_intersections, point_distance
+* ConicalSurface3D, CylindricalSurface3D: plot method
+* volmdlr.edge: FullArcEllipse
 
 ### Fixed
+* Plane3D: plane_intersections
+* fixes to step assemblies
+* fixes to wire
+* Arc: split. Case when spliting point is the start or end point.
+* BplineCurve2D: tangent, vector_direction, normal_vector
 
 ### Removed
 
+### Changed
+
+- argument convexe in volmdlr.cloud has been renamed to convex
+
 ### Performance improvements
+* BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.
+* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
+* eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
+* BSplinecurve2D: point_belongs
+* lighten some dicts with optional name
+* Step reader: refactor to_volume_model. Remove the dependency of the method of creating a graph.
 
 ### Refactorings
+* ContourMixin: to_polygon (for both 2D and 3D)
+* BSplineCurve2D.point_distance 
+* new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
+### Unittests
+* BSplineCurve2D: offset, point_distance, point_belongs
+* Circle2D: bspline_intersections, point_distance
+* Unittests for Vector2D
+* Unittests for Point2D
+* Unittests for Vector3D
+* Unittests for Point3D
 
-## v0.9.0 [Testing]
+## v0.9.0 [Released 06/03/2023]
 
 ### New Features
 
@@ -52,8 +82,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Step_assemblies: consider when no transformation is needed.
 * fix some pydocstyle errors
 * Script/step/workflow: Update Workflow, use last version of dessia_common
+* LineSegment3D: Rotation method update due to points attribute deletion
+* ConicalSurface3D: fix from_step class method by adding the angle convertion factor
 * fix f string usage
-
+* Add some typings
+* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
 
 ### Removed
 
@@ -95,6 +128,8 @@ is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_t
 ### CI
 - add spell check to pylint with pyenchant
 - make code_pydocstyle more explicit
+- upload html coverage to cdn.dessia.tech
+- limit time effect on master & testing
 
 ## v0.8.0 [Released 26/01/2023]
 

@@ -11,6 +11,7 @@ import math
 import numpy as np
 
 import volmdlr as vm
+from volmdlr.core import EdgeStyle
 import volmdlr.primitives2d as primitives2d
 import volmdlr.primitives3d as primitives3d
 
@@ -67,7 +68,7 @@ rl2D_c2.plot(ax=ax2)
 com = rl2D_c2.center_of_mass()
 cut_line = vm.edges.Line2D(com, com+ vm.Point2D.random(-1, 1, 0, 1))
 ax3 = rl2D_c2.plot()
-cut_line.plot(ax=ax3, color='red')
+cut_line.plot(ax=ax3, edge_style=EdgeStyle(color='red'))
 com.plot(color='b', ax=ax3)
 
 cutted_contours = rl2D_c2.cut_by_line(cut_line)
@@ -80,7 +81,7 @@ sign = -1
 for contour in cutted_contours:
     r, g, b = np.random.random(), np.random.random(), np.random.random()
     color = (r, g, b)
-    contour.translation(sign*0.05*u1).plot(ax=ax3, color=color)
+    contour.translation(sign*0.05*u1).plot(ax=ax3, edge_style=EdgeStyle(color=color))
     sign *= -1
 
 # assert math.isclose(cutted_contours[0].area()+cutted_contours[1].area(),
