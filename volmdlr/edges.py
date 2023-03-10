@@ -3675,12 +3675,10 @@ class FullArcEllipse2D(ArcEllipse2D):
         self.frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
 
         interior = self.frame.local_to_global_coordinates(
-            volmdlr.Point3D(self.major_axis * math.cos(0.25 * math.pi),
-                            self.minor_axis * math.sin(0.25 * math.pi),
-                            0.0))
-        extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.5 * math.pi),
-                                                                       self.minor_axis * math.sin(0.5 * math.pi),
-                                                                       0.0))
+                    volmdlr.Point2D(self.major_axis * math.cos(0.25 * math.pi),
+                                    self.minor_axis * math.sin(0.25 * math.pi)))
+        extra = self.frame.local_to_global_coordinates(volmdlr.Point2D(self.major_axis * math.cos(0.5 * math.pi),
+                                                                       self.minor_axis * math.sin(0.5 * math.pi)))
 
         ArcEllipse3D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
                               major_dir=major_dir, extra=extra, name=name)
@@ -6104,10 +6102,7 @@ class ArcEllipse3D(Edge):
             A = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],
                            [xi ** 2, yi ** 2, 2 * xi * yi],
                            [xe ** 2, ye ** 2, 2 * xe * ye]))
-            try:
-                invA = npy.linalg.inv(A)
-            except Exception:
-                print(True)
+            invA = npy.linalg.inv(A)
             identity = npy.array(([1], [1], [1]))
             r1, r2, r3 = npy.dot(invA, identity)  # 3 item column matrix
             theta = 0.5 * math.atan(2 * r3 / (r2 - r1))
