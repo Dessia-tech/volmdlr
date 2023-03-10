@@ -1655,6 +1655,7 @@ class BSplineCurve2D(BSplineCurve):
                               periodic=self.periodic)
 
     def point_distance(self, point):
+        """Returns the minimal distance to a point."""
         distance = math.inf
         polygon_points = self.points
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
@@ -2213,6 +2214,7 @@ class Arc(Edge):
         return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
+        """Returns the minimal distance to a point."""
         points = self.discretization_points(angle_resolution=100)
         return point.point_distance(point.nearest_point(points))
 
@@ -3581,6 +3583,7 @@ class Line3D(Line):
         return self.direction_vector().is_colinear_to(point3d - self.point1)
 
     def point_distance(self, point):
+        """Returns the minimal distance to a point."""
         vector1 = point - self.point1
         vector1.to_vector()
         vector2 = self.point2 - self.point1
@@ -3900,6 +3903,7 @@ class LineSegment3D(LineSegment):
     #     return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
+        """Returns the minimal distance to a point."""
         distance, point = volmdlr.LineSegment3DPointDistance(
             [(self.start.x, self.start.y, self.start.z),
              (self.end.x, self.end.y, self.end.z)],
@@ -4603,6 +4607,7 @@ class BSplineCurve3D(BSplineCurve):
         return content, [current_id]
 
     def point_distance(self, pt1):
+        """Returns the minimal distance to a point."""
         distances = []
         for point in self.points:
             #            vmpt = Point3D((point[1], point[2], point[3]))
