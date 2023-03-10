@@ -3319,8 +3319,8 @@ class ArcEllipse2D(Edge):
 
     def __init__(self, start: volmdlr.Point2D, interior: volmdlr.Point2D,
                  end: volmdlr.Point2D, center: volmdlr.Point2D,
-                 major_dir: volmdlr.Vector2D, name: str = '',
-                 extra: volmdlr.Point2D = None):
+                 major_dir: volmdlr.Vector2D, extra: volmdlr.Point2D = None, name: str = '',
+                 ):
         Edge.__init__(self, start, end, name)
         self.interior = interior
         self.center = center
@@ -3566,8 +3566,9 @@ class ArcEllipse2D(Edge):
         a_max3d = a_max2d.to_3d(plane_origin, x, y)
         new_major_dir = a_max3d - point_center3d
         new_major_dir.normalize()
+        extra3d = self.extra.to_3d(plane_origin, x, y)
         return ArcEllipse3D(point_start3d, point_interior3d, point_end3d,
-                            point_center3d, new_major_dir, name=self.name)
+                            point_center3d, new_major_dir, extra3d, name=self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
@@ -3647,7 +3648,7 @@ class ArcEllipse2D(Edge):
                                 self.major_dir)
         if side == 'new':
             point_major_dir = self.center + self.major_dir * self.major_axis
-            major_dir = frame.global_to_local_coordinates(point_major_dir)
+            major_dir = frame.global_to_local_coordinates(point_major_dir).to_vector()
             major_dir.normalize()
             return ArcEllipse2D(frame.global_to_local_coordinates(self.start),
                                 frame.global_to_local_coordinates(self.interior),
@@ -3655,6 +3656,79 @@ class ArcEllipse2D(Edge):
                                 frame.global_to_local_coordinates(self.center),
                                 major_dir)
         raise ValueError('Side should be \'new\' \'old\'')
+
+
+class FullArcEllipse2D(ArcEllipse2D):
+    """
+    Defines a FullArcEllipse2D.
+    """
+
+    def __init__(self, start_end: volmdlr.Point2D, major_axis: float, minor_axis: float,
+                 center: volmdlr.Point2D, major_dir: volmdlr.Vector2D, name: str = ''):
+        self.start_end = start_end
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
+        self.center = center
+        major_dir.normalize()
+        self.major_dir = major_dir
+        self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
+        self.frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
+
+        interior = self.frame.local_to_global_coordinates(
+            volmdlr.Point3D(self.major_axis * math.cos(0.25 * math.pi),
+                            self.minor_axis * math.sin(0.25 * math.pi),
+                            0.0))
+        extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.5 * math.pi),
+                                                                       self.minor_axis * math.sin(0.5 * math.pi),
+                                                                       0.0))
+
+        ArcEllipse3D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
+                              major_dir=major_dir, extra=extra, name=name)
+
+    def to_3d(self, plane_origin, x, y):
+        point_start_end3d = self.start_end.to_3d(plane_origin, x, y)
+        point_center3d = self.center.to_3d(plane_origin, x, y)
+
+        a_max2d = self.center + self.major_dir * self.major_axis
+        a_max3d = a_max2d.to_3d(plane_origin, x, y)
+        new_major_dir = a_max3d - point_center3d
+        new_major_dir.normalize()
+        return FullArcEllipse3D(point_start_end3d, self.major_axis, self.minor_axis,
+                                point_center3d, new_major_dir, name=self.name)
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and return a new FullArcEllipse2D.
+
+        :param frame: Local coordinate system.
+        :type frame: volmdlr.Frame2D
+        :param side: 'old' will perform a tranformation from local to global coordinates. 'new' will
+            perform a tranformation from global to local coordinates.
+        :type side: str
+        :return: A new transformed FulLArcEllipse2D.
+        :rtype: FullArcEllipse2D
+        """
+        if side == 'old':
+            return FullArcEllipse2D(frame.local_to_global_coordinates(self.start_end),
+                                    self.major_axis, self.minor_axis,
+                                    frame.local_to_global_coordinates(self.center),
+                                    self.major_dir, self.name)
+        if side == 'new':
+            point_major_dir = self.center + self.major_dir * self.major_axis
+            major_dir = frame.global_to_local_coordinates(point_major_dir)
+            major_dir.normalize()
+            return FullArcEllipse2D(frame.global_to_local_coordinates(self.start_end),
+                                    self.major_axis, self.minor_axis,
+                                    frame.global_to_local_coordinates(self.center),
+                                    major_dir, self.name)
+        raise ValueError('Side should be \'new\' \'old\'')
+
+    def reverse(self):
+        """
+        Defines a new FullArcEllipse3D, identical to self, but in the opposite direction.
+
+        """
+        return self
 
 
 class Line3D(Line):
@@ -5984,8 +6058,9 @@ class ArcEllipse3D(Edge):
 
     """
 
-    def __init__(self, start, interior, end, center, major_dir, normal=None, extra=None,
-                 name=''):
+    def __init__(self, start: volmdlr.Point3D, interior: volmdlr.Point3D, end: volmdlr.Point3D,
+                 center: volmdlr.Point3D, major_dir: volmdlr.Vector3D, normal: volmdlr.Vector3D = None,
+                 extra: volmdlr.Point3D = None, name=''):
         Edge.__init__(self, start=start, end=end, name=name)
         self.interior = interior
         self.center = center
@@ -6029,7 +6104,10 @@ class ArcEllipse3D(Edge):
             A = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],
                            [xi ** 2, yi ** 2, 2 * xi * yi],
                            [xe ** 2, ye ** 2, 2 * xe * ye]))
-            invA = npy.linalg.inv(A)
+            try:
+                invA = npy.linalg.inv(A)
+            except Exception:
+                print(True)
             identity = npy.array(([1], [1], [1]))
             r1, r2, r3 = npy.dot(invA, identity)  # 3 item column matrix
             theta = 0.5 * math.atan(2 * r3 / (r2 - r1))
@@ -6169,9 +6247,9 @@ class ArcEllipse3D(Edge):
         point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
         vector_major_dir_2d = point_major_dir_2d - center
         vector_major_dir_2d.normalize()
-        extra = self.extra.to_2d(plane_origin, x, y)
-        return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, name=self.name,
-                            extra=extra)
+        extra2d = self.extra.to_2d(plane_origin, x, y)
+        return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, extra2d,
+                            name=self.name)
 
     def length(self):
         """Computes the length."""
@@ -6301,16 +6379,62 @@ class FullArcEllipse3D(ArcEllipse3D):
         major_dir.normalize()
         self.major_dir = major_dir
         self.minor_dir = normal.cross(major_dir)
-        self.frame = volmdlr.Frame3D(center, major_dir, self.minor_dir, normal)
+        frame = volmdlr.Frame3D(center, major_dir, self.minor_dir, normal)
+        self.frame = frame
 
-        interior = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.25 * math.pi),
+        interior = frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.25 * math.pi),
                                                                           self.minor_axis * math.sin(0.25 * math.pi),
                                                                           0.0))
-        extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.5 * math.pi),
+        extra = frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.5 * math.pi),
                                                                        self.minor_axis * math.sin(0.5 * math.pi),
                                                                        0.0))
         ArcEllipse3D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
                               major_dir=major_dir, normal=normal, extra=extra, name=name)
+
+    def to_2d(self, plane_origin, x, y):
+        """
+        Transforms a FullArcEllipse3D into an FullArcEllipse2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: ArcEllipse2D.
+        """
+        point_start_end2d = self.start_end.to_2d(plane_origin, x, y)
+        center2d = self.center.to_2d(plane_origin, x, y)
+        point_major_dir = self.center + self.Gradius * self.major_dir
+        point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
+        vector_major_dir_2d = point_major_dir_2d - center2d
+        vector_major_dir_2d.normalize()
+        return FullArcEllipse2D(point_start_end2d, self.major_axis, self.minor_axis, center2d,
+                                vector_major_dir_2d, name=self.name)
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new FullArcEllipse3D.
+
+        :param frame: Local coordinate system.
+        :type frame: volmdlr.Frame3D
+        :param side: 'old' will perform a tranformation from local to global coordinates. 'new' will
+            perform a tranformation from global to local coordinates.
+        :type side: str
+        :return: A new transformed FulLArcEllipse3D.
+        :rtype: FullArcEllipse3D
+        """
+        if side == 'old':
+            return FullArcEllipse3D(frame.local_to_global_coordinates(self.start_end),
+                                    self.major_axis, self.minor_axis,
+                                    frame.local_to_global_coordinates(self.center),
+                                    frame.local_to_global_coordinates(self.normal), self.major_dir, self.name)
+        if side == 'new':
+            point_major_dir = self.center + self.major_dir * self.major_axis
+            major_dir = frame.global_to_local_coordinates(point_major_dir).to_vector()
+            major_dir.normalize()
+            return FullArcEllipse3D(frame.global_to_local_coordinates(self.start_end),
+                                    self.major_axis, self.minor_axis,
+                                    frame.global_to_local_coordinates(self.center),
+                                    frame.global_to_local_coordinates(self.normal), major_dir, self.name)
+        raise ValueError('Side should be \'new\' \'old\'')
 
     def reverse(self):
         """

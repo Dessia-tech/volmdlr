@@ -20,6 +20,13 @@ class TestFullArcEllipse3D(unittest.TestCase):
     def test_reverse(self):
         self.assertEqual(self.ellipse, self.ellipse.reverse())
 
+    def test_frame_mapping(self):
+        new_frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.X3D, -volmdlr.Y3D)
+        new_ellipse = self.ellipse.frame_mapping(new_frame, 'new')
+        self.assertEqual(new_ellipse.major_dir, volmdlr.Vector3D(0.0, 1.0, 0.0))
+        self.assertEqual(new_ellipse.minor_dir, volmdlr.Vector3D(0.0, 0.0, 1.0))
+        self.assertEqual(new_ellipse.normal, volmdlr.Vector3D(1.0, 0.0, 0.0))
+
 
 if __name__ == '__main__':
     unittest.main()
