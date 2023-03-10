@@ -72,7 +72,8 @@ MAX_ERROR_BY_TYPE = {
                      'unsubscriptable-object': 1,
                      }
 
-ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-many-arguments", "too-many-statements"]
+ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-many-arguments", "too-many-statements",
+                                "too-many-nested-blocks", "too-many-instance-attributes"]
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
