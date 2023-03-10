@@ -5314,8 +5314,6 @@ class Ellipse3D(Contour3D):
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if point1.is_close(point2):
-            print(self.major_axis)
-            print(self.minor_axis)
             return volmdlr.edges.FullArcEllipse3D(point1, self.major_axis, self.minor_axis, self.center, self.normal,
                                                   self.major_dir, self.name)
 

@@ -3487,7 +3487,10 @@ class ExtrusionSurface3D(Surface3D):
         x, y, z = point_local
         v = z
         point_at_curve = volmdlr.Point3D(x, y, 0)
-        u = self.wire.abscissa(point_at_curve) / self.wire.length()
+        try:
+            u = self.wire.abscissa(point_at_curve) / self.wire.length()
+        except Exception:
+            print(True)
         return volmdlr.Point2D(u, v)
 
     def rectangular_cut(self, x1: float, x2: float,
@@ -3516,12 +3519,22 @@ class ExtrusionSurface3D(Surface3D):
         return ax
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         name = arguments[0][1:-1]
         wire = object_dict[arguments[1]]
         direction = object_dict[arguments[2]]
         return cls(wire=wire, direction=direction, name=name)
 
+    def arcellipse3d_to_2d(self, arcellipse3d):
+        """
+        Transformation of an arcellipse3d to 2d, in a cylindrical surface.
+
+        """
+        points = [self.point3d_to_2d(p)
+                  for p in arcellipse3d.discretization_points(number_points=15)]
+
+        bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points, degree=2)
+        return [bsplinecurve2d]
 
 class RevolutionSurface3D(PeriodicalSurface):
     """

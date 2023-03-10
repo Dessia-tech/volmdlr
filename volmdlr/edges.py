@@ -3360,7 +3360,10 @@ class ArcEllipse2D(Edge):
             return theta, gdaxe, ptax
 
         if start.is_close(end):
-            extra_new = frame.global_to_local_coordinates(self.extra)
+            try:
+                extra_new = frame.global_to_local_coordinates(self.extra)
+            except Exception:
+                print(True)
             theta, major_axis, minor_axis = theta_A_B(start_new, extra_new, interior_new,
                                                       center_new)
         else:
@@ -6166,7 +6169,9 @@ class ArcEllipse3D(Edge):
         point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
         vector_major_dir_2d = point_major_dir_2d - center
         vector_major_dir_2d.normalize()
-        return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, name=self.name)
+        extra = self.extra.to_2d(plane_origin, x, y)
+        return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, name=self.name,
+                            extra=extra)
 
     def length(self):
         """Computes the length."""
