@@ -891,11 +891,6 @@ class Step(dc.DessiaObject):
         """
         list_head = []
         list_nodes = []
-        # shell_nodes = stack
-        # initial_stack = []
-        # for node in shell_nodes:
-        #     initial_stack.extend(self.connections[node])
-        # stack = initial_stack
         visited_set = set()
         while stack:
             node = stack.pop(0)
@@ -961,10 +956,8 @@ class Step(dc.DessiaObject):
                 id2 = int(function.arg[3][1:])
                 self.connections[id1].append(id2)
                 self.functions[id1].arg.append(f'#{id2}')
-        # sr_nodes = []
         not_shell_nodes = []
         frame_mapped_shell_node = []
-        # for node in self.graph.nodes:
         for node in list(self.functions.keys()):
             if self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, ' \
                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
@@ -1026,8 +1019,6 @@ class Step(dc.DessiaObject):
                 self.read_diagnostic = StepReaderReport(self.name, step_number_faces, faces_read,
                                                         faces_read / step_number_faces, list(errors))
         volume_model = volmdlr.core.VolumeModel(shells)
-        # bounding_box = volume_model.bounding_box
-        # volume_model = volume_model.translation(-bounding_box.center)
         return volume_model
 
     def helper_instantiate(self, node, object_dict, times, show_times):
