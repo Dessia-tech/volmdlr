@@ -313,16 +313,28 @@ class WireMixin:
         return self.primitives[-1].end.point_distance(wire_2.primitives[0].start) < tol
 
     def point_over_wire(self, point, abs_tol=1e-6):
+        """
+        Verifies if point is over wire.
 
-        belongs = False
+        :param point: point to be verified.
+        :param abs_tol: tolerance to be considered.
+        :return: True or False
+        """
         for primitive in self.primitives:
             if primitive.point_belongs(point, abs_tol):
-                belongs = True
-        return belongs
+                return True
+        return False
 
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
+        """
+        Verifies if point is over wire.
+
+        :param primitive: point to be verified.
+        :param tol: tolerance to be considered.
+        :return: True or False
+        """
         points = primitive.discretization_points(number_points=10)
-        if all(self.point_over_contour(point, tol) for point in points):
+        if all(self.point_over_wire(point, tol) for point in points):
             return True
         return False
 

@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Plane3D: plane_intersections
 * fixes to step assemblies
 * LineSegment3D: matrix_distance
+* fixes to wire
+* Arc: split. Case when spliting point is the start or end point.
+* BplineCurve2D: tangent, vector_direction, normal_vector
 
 ### Removed
 
