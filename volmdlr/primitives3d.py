@@ -31,6 +31,7 @@ npy.seterr(divide='raise')
 class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
                                 volmdlr.primitives.RoundedLineSegments):
     """
+    Defines an open rounded line segments.
 
     :param points: Points used to draw the wire.
     :type points: List of Point3D.
@@ -789,8 +790,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         if com is not False:
             rg = axis_2D.point_distance(com)
             return self.angle * rg * self.contour2d.area()
-        else:
-            return 0
+        return 0.
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
@@ -1257,6 +1257,8 @@ class Cylinder(RevolvedProfile):
 
     def lhs_points_inside(self, n_points: int) -> List[volmdlr.Point3D]:
         """
+        Returns some points inside the cylinder from a LHS samplings.
+
         :param n_points: number of points
         :return: Latin hypercube sampling points inside the cylinder
         """
@@ -1290,6 +1292,8 @@ class Cylinder(RevolvedProfile):
 
     def point_belongs(self, point3d: volmdlr.Point3D, **kwargs) -> bool:
         """
+        Returns if the point belongs to the cylinder.
+
         :param point3d: volmdlr Point3D
         :return: True if the given point is inside the cylinder, False otherwise
         """
@@ -1459,8 +1463,7 @@ class Cone(RevolvedProfile):
 
 class HollowCylinder(RevolvedProfile):
     """
-    Creates a hollow cylinder with the position, the axis of revolution,
-    the inner and outer radius and the length.
+    Creates a hollow cylinder with the position, the axis of revolution the inner and outer radius and the length.
 
     """
 
@@ -1778,9 +1781,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                 faces.append(bsface3d)
 
             else:
-                raise NotImplementedError(
-                    'Unimplemented primitive for sweep: {}'
-                    .format(wire_primitive.__class__.__name__))
+                raise NotImplementedError(f'Unimplemented primitive for sweep: {wire_primitive.__class__.__name__}')
 
         return faces
 
@@ -1846,14 +1847,16 @@ class Sphere(RevolvedProfile):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Sphere
+        Changes frame_mapping and return a new Sphere.
+
         :param side: 'old' or 'new'
         """
         return Sphere(self.center.frame_mapping(frame, side), self.radius)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)

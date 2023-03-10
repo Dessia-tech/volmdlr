@@ -1201,8 +1201,7 @@ class Plane3D(Surface3D):
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
         plane_id = frame_id + 1
-        content += "#{} = PLANE('{}',#{});\n".format(plane_id, self.name,
-                                                     frame_id)
+        content += f"#{plane_id} = PLANE('{self.name}',#{frame_id});\n"
         return content, [plane_id]
 
     @classmethod
@@ -2880,10 +2879,7 @@ class SphericalSurface3D(Surface3D):
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
                           f'with {primitive2d.__class__.__name__}')
             else:
-                raise NotImplementedError(
-                    'Class {} does not implement {}'.format(
-                        self.__class__.__name__,
-                        method_name))
+                raise NotImplementedError(f'Class {self.__class__.__name__} does not implement {method_name}')
 
         return volmdlr.wires.Contour3D(primitives3d)
 
@@ -3649,9 +3645,9 @@ class BSplineSurface3D(Surface3D):
         multiplicities = self.u_multiplicities
 
         knots_vec = []
-        for i in range(0, len(knots)):
+        for i, knot in enumerate(knots):
             for _ in range(0, multiplicities[i]):
-                knots_vec.append(knots[i])
+                knots_vec.append(knot)
         return knots_vec
 
     def knots_vector_v(self):
@@ -3664,9 +3660,9 @@ class BSplineSurface3D(Surface3D):
         multiplicities = self.v_multiplicities
 
         knots_vec = []
-        for i in range(0, len(knots)):
+        for i, knot in enumerate(knots):
             for _ in range(0, multiplicities[i]):
-                knots_vec.append(knots[i])
+                knots_vec.append(knot)
         return knots_vec
 
     def basis_functions_u(self, u, k, i):
@@ -4084,33 +4080,6 @@ class BSplineSurface3D(Surface3D):
         outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         surface = Surface2D(outer_contour, [])
         return BSplineFace3D(self, surface, name)  # PlaneFace3D
-
-    def FreeCADExport(self, ip, ndigits=3):
-        name = 'primitive{}'.format(ip)
-        script = ""
-        points = '['
-        for pts_row in self.control_points_table:
-            pts = '['
-            for pt in pts_row:
-                point = 'fc.Vector({},{},{}),'.format(pt[0], pt[1], pt[2])
-                pts += point
-            pts = pts[:-1] + '],'
-            points += pts
-        points = points[:-1] + ']'
-
-        script += '{} = Part.BSplineSurface()\n'.format(name)
-        if self.weights is None:
-            script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={})\n'.format(
-                name, points, self.u_multiplicities, self.v_multiplicities,
-                self.degree_u, self.degree_v, self.u_knots, self.v_knots)
-        else:
-            script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={}, \
-                vknots={},weights={})\n'.format(
-                name, points, self.u_multiplicities, self.v_multiplicities,
-                self.degree_u, self.degree_v, self.u_knots, self.v_knots,
-                self.weights)
-
-        return script
 
     def rotation(self, center: volmdlr.Vector3D,
                  axis: volmdlr.Vector3D, angle: float):

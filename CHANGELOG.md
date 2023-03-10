@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - build: manifest was not shipping bspline_compiled
 
-## v0.9.0 [released ]
+## v0.9.0 [released 03/26/2023]
 
 ### New Features
 
