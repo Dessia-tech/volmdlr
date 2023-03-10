@@ -1410,7 +1410,10 @@ class ContourMixin(WireMixin):
         contours = self.__class__.contours_from_edges(list(edges1))
         points = []
         for contour_i in contours:
-            points.extend(contour_i.extremities_points(list_p))
+            points_ = contour_i.extremities_points(list_p)
+            for point in points_:
+                if not volmdlr.core.point_in_list(point, points):
+                    points.append(point)
 
         return points
 
@@ -1420,10 +1423,13 @@ class ContourMixin(WireMixin):
 
         """
 
+        points = self.shared_primitives_extremities(contour)
+        if not points:
+            return [[], []]
+
         shared_primitives_1 = []
         shared_primitives_2 = []
 
-        points = self.shared_primitives_extremities(contour)
         for i in range(0, len(points), 2):
             try:
                 point1, point2 = points[i], points[i + 1]
