@@ -1543,6 +1543,7 @@ class BSplineCurve2D(BSplineCurve):
                          - sum(i * j for i, j in zip(y, x1)))
 
     def straight_line_center_of_mass(self):
+        """Straight line center of mass."""
         polygon_points = self.discretization_points(number_points=100)
         cog = volmdlr.O2D
         for point in polygon_points:
@@ -1572,6 +1573,7 @@ class BSplineCurve2D(BSplineCurve):
                               self.weights, self.periodic)
 
     def to_step(self, current_id, surface_id=None):
+        """Exports to STEP format."""
         points_ids = []
         content = ''
         point_id = current_id
@@ -1799,6 +1801,7 @@ class LineSegment2D(LineSegment):
         return 0, 0, 0
 
     def straight_line_center_of_mass(self):
+        """Straight line center of mass."""
         return 0.5 * (self.start + self.end)
 
     def straight_line_point_belongs(self, point):
@@ -2638,6 +2641,7 @@ class Arc2D(Arc):
                                           point)
 
     def straight_line_center_of_mass(self):
+        """Straight line center of mass."""
         if self.angle == math.pi:
             return self.center_of_mass()
 
@@ -2988,6 +2992,7 @@ class FullArc2D(Arc2D):
         return self.center
 
     def straight_line_center_of_mass(self):
+        """Straight line center of mass."""
         return self.center_of_mass()
 
     def straight_line_point_belongs(self, point):
@@ -3796,6 +3801,7 @@ class Line3D(Line):
         return cls(point1, point2, arguments[0][1:-1])
 
     def to_step(self, current_id, surface_id=None):
+        """Exports to STEP format."""
         p1_content, p1_id = self.point1.to_step(current_id)
         # p2_content, p2_id = self.point2.to_step(current_id+1)
         current_id = p1_id + 1
@@ -4321,6 +4327,7 @@ class LineSegment3D(LineSegment):
                                             (self.end - self.start).dot(axis))]
 
     def to_step(self, current_id, surface_id=None):
+        """Exports to STEP format."""
         line = self.to_line()
         content, line_id = line.to_step(current_id)
         current_id = line_id + 1
@@ -4544,7 +4551,7 @@ class BSplineCurve3D(BSplineCurve):
                    closed_curve, name)
 
     def to_step(self, current_id, surface_id=None, curve2d=None):
-
+        """Exports to STEP format."""
         points_ids = []
         content = ''
         point_id = current_id
@@ -5522,6 +5529,7 @@ class Arc3D(Arc):
                                         arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
+        """Exports to STEP format."""
         if self.angle >= math.pi:
             l = self.length()
             arc1, arc2 = self.split(self.point_at_abscissa(0.33 * l))
@@ -5687,6 +5695,7 @@ class FullArc3D(Arc3D):
         return FullArc2D(center, start_end)
 
     def to_step(self, current_id, surface_id=None):
+        """Exports to STEP format."""
         # Not calling Circle3D.to_step because of circular imports
         u = self.start - self.center
         u.normalize()
