@@ -3672,14 +3672,12 @@ class FullArcEllipse2D(ArcEllipse2D):
         self.frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
 
         interior = self.frame.local_to_global_coordinates(
-            volmdlr.Point3D(self.major_axis * math.cos(0.25 * math.pi),
-                            self.minor_axis * math.sin(0.25 * math.pi),
-                            0.0))
-        extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.5 * math.pi),
-                                                                       self.minor_axis * math.sin(0.5 * math.pi),
-                                                                       0.0))
+            volmdlr.Point2D(self.major_axis * math.cos(0.25 * math.pi),
+                            self.minor_axis * math.sin(0.25 * math.pi)))
+        extra = self.frame.local_to_global_coordinates(volmdlr.Point2D(self.major_axis * math.cos(0.5 * math.pi),
+                                                                       self.minor_axis * math.sin(0.5 * math.pi)))
 
-        ArcEllipse3D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
+        ArcEllipse2D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
                               major_dir=major_dir, extra=extra, name=name)
 
     def to_3d(self, plane_origin, x, y):
@@ -3712,7 +3710,7 @@ class FullArcEllipse2D(ArcEllipse2D):
                                     self.major_dir, self.name)
         if side == 'new':
             point_major_dir = self.center + self.major_dir * self.major_axis
-            major_dir = frame.global_to_local_coordinates(point_major_dir)
+            major_dir = frame.global_to_local_coordinates(point_major_dir).to_vector()
             major_dir.normalize()
             return FullArcEllipse2D(frame.global_to_local_coordinates(self.start_end),
                                     self.major_axis, self.minor_axis,
@@ -6358,6 +6356,35 @@ class ArcEllipse3D(Edge):
         zmin = min(point.z for point in points)
         zmax = max(point.z for point in points)
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new ArcEllipse3D.
+
+        :param frame: Local coordinate system.
+        :type frame: volmdlr.Frame3D
+        :param side: 'old' will perform a tranformation from local to global coordinates. 'new' will
+            perform a tranformation from global to local coordinates.
+        :type side: str
+        :return: A new transformed ArcEllipse3D.
+        :rtype: ArcEllipse3D
+        """
+        if side == 'old':
+            return ArcEllipse3D(frame.local_to_global_coordinates(self.start),
+                                frame.local_to_global_coordinates(self.interior),
+                                frame.local_to_global_coordinates(self.end),
+                                frame.local_to_global_coordinates(self.center),
+                                self.major_dir)
+        if side == 'new':
+            point_major_dir = self.center + self.major_dir * self.major_axis
+            major_dir = frame.global_to_local_coordinates(point_major_dir).to_vector()
+            major_dir.normalize()
+            return ArcEllipse3D(frame.global_to_local_coordinates(self.start),
+                                frame.global_to_local_coordinates(self.interior),
+                                frame.global_to_local_coordinates(self.end),
+                                frame.global_to_local_coordinates(self.center),
+                                major_dir)
+        raise ValueError('Side should be \'new\' \'old\'')
 
 
 class FullArcEllipse3D(ArcEllipse3D):
