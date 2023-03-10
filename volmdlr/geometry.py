@@ -15,6 +15,7 @@ import volmdlr as vm
 def euler_angles_to_transfer_matrix(psi, theta, phi):
     """
     Give Transition Matrix from euler angles.
+
     Angles in radians
     """
 
@@ -31,9 +32,7 @@ def euler_angles_to_transfer_matrix(psi, theta, phi):
 
 
 def transfer_matrix_to_euler_angles(R):
-    """
-    Returns the Euler angle from a transfer matrix.
-    """
+    """Returns the Euler angle from a transfer matrix."""
     if (R[2, 2] != 1) and (R[2, 2] != -1):
         theta = math.acos(R[2, 2])
         psi = math.atan2(R[2, 0] / math.sin(theta), R[2, 1] / math.sin(theta))
