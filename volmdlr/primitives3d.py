@@ -789,8 +789,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         if com is not False:
             rg = axis_2D.point_distance(com)
             return self.angle * rg * self.contour2d.area()
-        else:
-            return 0
+        return 0.
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
@@ -1778,9 +1777,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                 faces.append(bsface3d)
 
             else:
-                raise NotImplementedError(
-                    'Unimplemented primitive for sweep: {}'
-                    .format(wire_primitive.__class__.__name__))
+                raise NotImplementedError(f'Unimplemented primitive for sweep: {wire_primitive.__class__.__name__}')
 
         return faces
 

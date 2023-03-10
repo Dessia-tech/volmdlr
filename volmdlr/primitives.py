@@ -78,7 +78,7 @@ class RoundedLineSegments:
 
             for i in rounded_points_indices[1:]:
                 # Computing the arc
-                _, pi2, _, dist2, alpha2 = self.arc_features(i)
+                _, _, _, dist2, alpha2 = self.arc_features(i)
                 dist[i] = dist2
                 alpha[i] = alpha2
                 if i - 1 in self.radius:
@@ -96,10 +96,10 @@ class RoundedLineSegments:
                             raise ValueError
                         group.append(i)
                 else:
-                    if group != []:
+                    if group:
                         groups.append(group)
                     group = [i]
-            if group != []:
+            if group:
                 groups.append(group)
             if self.adapt_radius:
                 if self.closed:

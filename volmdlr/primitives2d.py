@@ -411,11 +411,11 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         # =============================================================================
         # CREATE THE NEW POINTS' LIST
         # =============================================================================
-        for i in range(len(self.points)):
+        for i, point in enumerate(self.points):
             if i in new_points:
                 new_linesegment2D_points.append(new_points[i])
             else:
-                new_linesegment2D_points.append(self.points[i])
+                new_linesegment2D_points.append(point)
 
         rls_2d = self.__class__(new_linesegment2D_points, self.radius,
                                 adapt_radius=self.adapt_radius)
@@ -471,9 +471,9 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         else:
             label = ''
         if self.unit == 'mm':
-            label += '{} mm'.format(round(distance * 1000, ndigits))
+            label += f'{round(distance * 1000, ndigits)} mm'
         else:
-            label += '{} m'.format(round(distance, ndigits))
+            label += f'{round(distance, ndigits)} m'
 
         if self.type_ == 'distance':
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),

@@ -25,13 +25,13 @@ MAX_ERROR_BY_TYPE = {
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 14,
-                     'too-many-locals': 75,
+                     'too-many-locals': 69,
                      'unused-argument': 35,
-                     'too-many-arguments': 28,
+                     'too-many-arguments': 26,
                      'line-too-long': 19,
                      'consider-using-enumerate': 22,
-                     'too-many-branches': 28,
-                     'too-many-statements': 19,
+                     'too-many-branches': 26,
+                     'too-many-statements': 18,
                      'super-init-not-called': 13,
                      'no-name-in-module': 5,
                      'abstract-method': 37,
@@ -72,7 +72,7 @@ MAX_ERROR_BY_TYPE = {
                      'unsubscriptable-object': 1,
                      }
 
-ERRORS_WITHOUT_TIME_DECREASE = []
+ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-many-arguments", "too-many-statements"]
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
