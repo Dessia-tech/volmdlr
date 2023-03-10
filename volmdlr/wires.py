@@ -474,11 +474,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def infinite_intersections(self, infinite_primitives):
         """
-        Returns a list that contains:
+        Returns a list that contains the intersections between a succession of infinite primitives.
 
-        the intersections between a succession of infinite primitives (line,
-        circle). There must be a method implemented to intersect the two
-        infinite primitives.
+        There must be a method implemented to intersect the two infinite primitives.
         """
         offset_intersections = []
 
@@ -568,9 +566,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def line_intersections(self, line: 'volmdlr.edges.Line2D'):
         """
-        Returns a list of intersection in the form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        Returns a list of intersection of the wire primitives intersecting with the line.
 
+        :returns: a tuple (point, primitive)
         """
         intersection_points = []
         for primitive in self.primitives:
@@ -581,9 +579,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_intersections(self,
                                   linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of intersection in the form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        Returns a list of intersection of the wire primitives intersecting with the linesegment.
 
+        :returns: a tuple (point, primitive)
         """
         intersection_points = []
         for primitive in self.primitives:
@@ -594,6 +592,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def is_start_end_crossings_valid(self, line, intersections, primitive):
         """
+        Returns if the crossings are valid.
+
         :param line: crossing line
         :param intersections: intersections results
          for primitive line intersections
@@ -3575,7 +3575,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return closing_point
 
     def get_valid_sewing_polygon_primitive(self, polygon2_2d):
-        """Get valid primitive to start sewing two polygons"""
+        """Get valid primitive to start sewing two polygons."""
         for primitive1 in self.line_segments:
             middle_point = primitive1.middle_point()
             normal_vector = primitive1.unit_normal_vector()
@@ -4001,7 +4001,8 @@ class Circle2D(Contour2D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated inplace.
+
         side = 'old' or 'new'
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
@@ -4017,9 +4018,7 @@ class Circle2D(Contour2D):
         return math.pi * self.radius ** 2
 
     def second_moment_area(self, point):
-        """
-        Second moment area of part of disk
-        """
+        """Second moment area of part of disk."""
         sma = math.pi * self.radius ** 4 / 4
         return volmdlr.geometry.huygens2d(sma, sma, 0, self.area(), self.center, point)
 
@@ -4781,6 +4780,7 @@ class Circle3D(Contour3D):
     """
     Defines a Circle in three dimensions, with a center and a radius.
 
+    frame.u, frame.v define the plane, frame.w the normal
     """
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
     _non_eq_attributes = ['name']
@@ -4789,9 +4789,6 @@ class Circle3D(Contour3D):
 
     def __init__(self, frame: volmdlr.Frame3D, radius: float,
                  name: str = ''):
-        """
-        frame.u, frame.v define the plane, frame.w the normal
-        """
         self.radius = radius
         self.frame = frame
         self.angle = volmdlr.TWO_PI
@@ -5682,9 +5679,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                                               closing_point_index,
                                               passed_by_zero_index):
         """
-        Cleans the dictionary containing the sewing closing pairs information
-        in case it needs to be recalculated due to changing closing points.
+        Cleans the dictionary containing the sewing closing pairs information.
 
+        In case it needs to be recalculated due to changing closing points.
         """
         dict_closing_pairs_values = list(dict_closing_pairs.values())
         dict_closing_pairs_keys = list(dict_closing_pairs.keys())

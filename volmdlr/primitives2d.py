@@ -207,6 +207,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def offset_single_line(self, line_index, offset):
         """
+        Offsets a single line.
+
         :param line_index: 0 being the 1st line
         """
         new_linesegment2D_points = []
@@ -447,13 +449,10 @@ class Measure2D(volmdlr.edges.LineSegment2D):
     """
     Measure 2D class.
 
+    :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
     """
 
     def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
-        """
-        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
-
-        """
         # TODO: offset parameter
         volmdlr.edges.LineSegment2D.__init__(self, point1, point2)
         self.label = label
