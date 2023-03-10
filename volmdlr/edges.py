@@ -3319,8 +3319,8 @@ class ArcEllipse2D(Edge):
 
     def __init__(self, start: volmdlr.Point2D, interior: volmdlr.Point2D,
                  end: volmdlr.Point2D, center: volmdlr.Point2D,
-                 major_dir: volmdlr.Vector2D, name: str = '',
-                 extra: volmdlr.Point2D = None):
+                 major_dir: volmdlr.Vector2D, extra: volmdlr.Point2D = None, name: str = '',
+                 ):
         Edge.__init__(self, start, end, name)
         self.interior = interior
         self.center = center
@@ -3652,6 +3652,40 @@ class ArcEllipse2D(Edge):
                                 frame.global_to_local_coordinates(self.center),
                                 major_dir)
         raise ValueError('Side should be \'new\' \'old\'')
+
+
+class FullArcEllipse2D(ArcEllipse2D):
+    """
+    Defines a FullArcEllipse2D.
+    """
+
+    def __init__(self, start_end: volmdlr.Point2D, major_axis: float, minor_axis: float,
+                 center: volmdlr.Point2D, major_dir: volmdlr.Vector2D, name: str = ''):
+        self.start_end = start_end
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
+        self.center = center
+        major_dir.normalize()
+        self.major_dir = major_dir
+        self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
+        self.frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
+
+        interior = self.frame.local_to_global_coordinates(
+            volmdlr.Point3D(self.major_axis * math.cos(0.25 * math.pi),
+                            self.minor_axis * math.sin(0.25 * math.pi),
+                            0.0))
+        extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.5 * math.pi),
+                                                                       self.minor_axis * math.sin(0.5 * math.pi),
+                                                                       0.0))
+        ArcEllipse3D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
+                              major_dir=major_dir, extra=extra, name=name)
+
+    def reverse(self):
+        """
+        Defines a new FullArcEllipse3D, identical to self, but in the opposite direction.
+
+        """
+        return self
 
 
 class Line3D(Line):
@@ -5981,8 +6015,9 @@ class ArcEllipse3D(Edge):
 
     """
 
-    def __init__(self, start, interior, end, center, major_dir, normal=None, extra=None,
-                 name=''):
+    def __init__(self, start: volmdlr.Point3D, interior: volmdlr.Point3D, end: volmdlr.Point3D,
+                 center: volmdlr.Point3D, major_dir: volmdlr.Vector3D, normal: volmdlr.Vector3D = None,
+                 extra: volmdlr.Point3D = None, name=''):
         Edge.__init__(self, start=start, end=end, name=name)
         self.interior = interior
         self.center = center
@@ -6306,6 +6341,24 @@ class FullArcEllipse3D(ArcEllipse3D):
                                                                        0.0))
         ArcEllipse3D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
                               major_dir=major_dir, normal=normal, extra=extra, name=name)
+
+    def to_2d(self, plane_origin, x, y):
+        """
+        Transforms a FullArcEllipse3D into an FullArcEllipse2D, given an plane origin and a u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: ArcEllipse2D.
+        """
+        point_start_end2d = self.start_end.to_2d(plane_origin, x, y)
+        center2d = self.center.to_2d(plane_origin, x, y)
+        point_major_dir = self.center + self.Gradius * self.major_dir
+        point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
+        vector_major_dir_2d = point_major_dir_2d - center2d
+        vector_major_dir_2d.normalize()
+        return FullArcEllipse2D(point_start_end2d, self.major_axis, self.minor_axis, center2d,
+                                vector_major_dir_2d, name=self.name)
 
     def reverse(self):
         """
