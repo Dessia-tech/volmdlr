@@ -3523,7 +3523,7 @@ class ArcEllipse2D(Edge):
             if not angle_resolution:
                 number_points = 2
             else:
-                number_points = math.ceil(angle_resolution * abs(0.5 * self.angle / math.pi))
+                number_points = math.ceil(angle_resolution * abs(self.angle / math.pi)) + 2
         is_trigo = True
         if self.angle_start > self.angle_end:
             if self.angle_start >= self.angle_interior >= self.angle_end:
