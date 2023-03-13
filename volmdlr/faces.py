@@ -186,7 +186,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             triangles = t['triangles'].tolist()
             np = t['vertices'].shape[0]
             points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-            return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+            return vmd.DisplayMesh2D(points, triangles=triangles)
 
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
@@ -235,7 +235,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+        return vmd.DisplayMesh2D(points, triangles=triangles)
 
     def split_by_lines(self, lines):
         """
@@ -2900,7 +2900,7 @@ class SphericalSurface3D(Surface3D):
         """
         Coverts a parametric coordinate on the surface into a 3D spatial point (x, y, z).
 
-        source: mathcurve.com/surfaces/sphere
+        source: https://mathcurve.com/surfaces/sphere
         # -pi<theta<pi, -pi/2<phi<pi/2
 
         :param point2d: Point at the CylindricalSuface3D.
@@ -9855,7 +9855,7 @@ class ClosedShell3D(OpenShell3D):
 
     def merge_faces(self):
         """
-        Merges all shells' adjancents faces into one.
+        Merges all shells' adjancent faces into one.
 
         """
         union_faces = self.faces

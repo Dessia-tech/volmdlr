@@ -735,7 +735,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def to_wire_with_linesegments(self):
         """
-        Convert a wire with different primitives to a wire with just linesegments.
+        Convert a wire with different primitives to a wire with just line segments.
         """
 
         wires = []
@@ -835,7 +835,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         crossings_points = []
         for linesegment in linesegments:
             crossings_linesegment = self.linesegment_crossings(linesegment)
-            if crossings_linesegment != []:
+            if crossings_linesegment:
                 crossings_points.extend(crossings_linesegment)
         return crossings_points
 
@@ -851,7 +851,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         intersections_points = []
         for linesegment in linesegments:
             intersections_linesegments = self.linesegment_intersections(linesegment)
-            if intersections_linesegments != []:
+            if intersections_linesegments:
                 intersections_points.extend(intersections_linesegments)
         return intersections_points
 
@@ -2208,7 +2208,7 @@ class Contour2D(ContourMixin, Wire2D):
     @classmethod
     def from_bounding_rectangle(cls, x_min, x_max, y_min, y_max):
         """
-        Create a contour2d with bounding_box parameters, using linesegments2d.
+        Create a contour 2d with bounding_box parameters, using line segments 2d.
         """
 
         edge0 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_min))
@@ -2443,7 +2443,7 @@ class ClosedPolygonMixin:
 
 class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     """
-    A collection of points, connected by linesegments, following each other.
+    A collection of points, connected by line segments, following each other.
 
     """
     _non_serializable_attributes = ['line_segments', 'primitives',
@@ -3137,7 +3137,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+        return vmd.DisplayMesh2D(points, triangles=triangles)
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
         """
@@ -4133,7 +4133,7 @@ class Ellipse2D(Contour2D):
 
     def area(self):
         """
-        Calculates the ellipe's area.
+        Calculates the ellipse's area.
 
         :return: ellipe's area, float.
         """
@@ -5362,7 +5362,7 @@ class Ellipse3D(Contour3D):
 
 class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     """
-    A collection of points, connected by linesegments, following each other.
+    A collection of points, connected by line segments, following each other.
 
     """
     _non_serializable_attributes = ['line_segments', 'primitives']

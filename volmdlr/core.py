@@ -1658,29 +1658,29 @@ class VolumeModel(dc.PhysicalObject):
 
         # gmsh.finalize()
 
-    @staticmethod
-    def generate_msh_file(file_name, mesh_dimension):
-        """
-        Generates a mesh written in a .msh file using GMSH library.
-
-        :param file_name: DESCRIPTION
-        :type file_name: TYPE
-        :param mesh_dimension: DESCRIPTION
-        :type mesh_dimension: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
-
-        """
-
-        gmsh.initialize()
-        gmsh.open(file_name + ".geo")
-
-        gmsh.model.geo.synchronize()
-        gmsh.model.mesh.generate(mesh_dimension)
-
-        gmsh.write(file_name + ".msh")
-
-        gmsh.finalize()
+    # @staticmethod
+    # def generate_msh_file(file_name, mesh_dimension):
+    #     """
+    #     Generates a mesh written in a .msh file using GMSH library.
+    #
+    #     :param file_name: DESCRIPTION
+    #     :type file_name: TYPE
+    #     :param mesh_dimension: DESCRIPTION
+    #     :type mesh_dimension: TYPE
+    #     :return: DESCRIPTION
+    #     :rtype: TYPE
+    #
+    #     """
+    #
+    #     gmsh.initialize()
+    #     gmsh.open(file_name + ".geo")
+    #
+    #     gmsh.model.geo.synchronize()
+    #     gmsh.model.mesh.generate(mesh_dimension)
+    #
+    #     gmsh.write(file_name + ".msh")
+    #
+    #     gmsh.finalize()
 
 
 class MovingVolumeModel(VolumeModel):
@@ -1714,7 +1714,7 @@ class MovingVolumeModel(VolumeModel):
         """
         Get babylonjs data.
 
-        :return: Dictionary with babylon data.
+        :return: Dictionary with babylonjs data.
         """
         meshes = []
         primitives_to_meshes = []

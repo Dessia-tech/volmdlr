@@ -14,7 +14,6 @@ import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as npy
 import plot_data.core as plot_data
-import scipy as scp
 import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares, minimize, lsq_linear
 from geomdl import NURBS, BSpline, fitting, operations, utilities
@@ -3377,7 +3376,7 @@ class ArcEllipse2D(Edge):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
-        Discretize an Edge to have "n" points.
+        Discretization of an Edge to have "n" points.
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned.
@@ -4892,7 +4891,7 @@ class Arc3D(Arc):
         """
         Calculates the bounding box of the Arc3D.
 
-        :return: a volmdlr.core.BoundingBox object.
+        :return: Bounding Box object.
         """
         # TODO: implement exact calculation
 
@@ -5910,7 +5909,7 @@ class ArcEllipse3D(Edge):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        Discretize a Contour to have "n" points.
+        Discretization of a Contour to have "n" points.
 
         :param number_points: the number of points (including start and end points)
              if unset, only start and end will be returned
