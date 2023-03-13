@@ -632,7 +632,7 @@ class BSplineCurve(Edge):
             periodic=self.periodic)
 
     @classmethod
-    def from_geomdl_curve(cls, curve):
+    def from_geomdl_curve(cls, curve, name: str = ""):
         """
         # TODO: to be completed.
 
@@ -650,7 +650,8 @@ class BSplineCurve(Edge):
                    control_points=[getattr(volmdlr, point_dimension)(*p)
                                    for p in curve.ctrlpts],
                    knots=knots,
-                   knot_multiplicities=knot_multiplicities)
+                   knot_multiplicities=knot_multiplicities,
+                   name=name)
 
     def length(self):
         """
@@ -926,7 +927,7 @@ class BSplineCurve(Edge):
     @classmethod
     def from_points_interpolation(cls, points: Union[List[volmdlr.Point2D],
                                                      List[volmdlr.Point3D]],
-                                  degree: int, periodic: bool = False):
+                                  degree: int, periodic: bool = False, name: str = ""):
         """
         Creates a B-spline curve interpolation through the data points.
 
@@ -946,7 +947,7 @@ class BSplineCurve(Edge):
         """
         curve = bspline_fitting.interpolate_curve([[*point] for point in points], degree, centripetal=True)
 
-        bsplinecurve = cls.from_geomdl_curve(curve)
+        bsplinecurve = cls.from_geomdl_curve(curve, name=name)
         if not periodic:
             return bsplinecurve
         bsplinecurve.periodic = True
@@ -3523,7 +3524,7 @@ class ArcEllipse2D(Edge):
             if not angle_resolution:
                 number_points = 2
             else:
-                number_points = math.ceil(angle_resolution * abs(0.5 * self.angle / math.pi))
+                number_points = math.ceil(angle_resolution * abs(self.angle / math.pi)) + 2
         is_trigo = True
         if self.angle_start > self.angle_end:
             if self.angle_start >= self.angle_interior >= self.angle_end:
@@ -3688,8 +3689,9 @@ class FullArcEllipse2D(ArcEllipse2D):
         a_max3d = a_max2d.to_3d(plane_origin, x, y)
         new_major_dir = a_max3d - point_center3d
         new_major_dir.normalize()
+        normal = x.cross(y)
         return FullArcEllipse3D(point_start_end3d, self.major_axis, self.minor_axis,
-                                point_center3d, new_major_dir, name=self.name)
+                                point_center3d, normal, new_major_dir, name=self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
