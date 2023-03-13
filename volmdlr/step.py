@@ -721,7 +721,6 @@ class Step(dc.DessiaObject):
         Step functions graph
         :return:
         """
-        # G = nx.Graph()
         F = nx.DiGraph()
         labels = {}
 
@@ -739,10 +738,6 @@ class Step(dc.DessiaObject):
                 self.functions[id1].arg.append('#{}'.format(id2))
 
             elif function.name in STEP_TO_VOLMDLR:
-                # G.add_node(function.id,
-                #            color='rgb(0, 0, 0)',
-                #            shape='.',
-                #            name=str(function.id))
                 F.add_node(function.id,
                            color='rgb(0, 0, 0)',
                            shape='.',
@@ -760,7 +755,6 @@ class Step(dc.DessiaObject):
             self.all_connections.remove(delete)
 
         # Create graph connections
-        # G.add_edges_from(self.all_connections)
         F.add_edges_from(self.all_connections)
 
         # Remove single nodes
