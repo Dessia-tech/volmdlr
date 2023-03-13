@@ -276,25 +276,29 @@ BABYLON_UNPACKER_BODY_TEMPLATE = Template(
           var first_step_button = BABYLON.GUI.Button.CreateSimpleButton("animation", "First step");
           first_step_button.width = ""+buttonWidthInPixels+"px";
           first_step_button.height = ""+buttonHeightInPixels+"px";
-          first_step_button.onPointerUpObservable.add(function(){animation_stopped=true; iframe=0; showStep(Math.floor(0))});
+          first_step_button.onPointerUpObservable.add(function(){
+            animation_stopped=true; iframe=0; showStep(Math.floor(0))});
           buttonsContainer.addControl(first_step_button);
 
           var previous_step_button = BABYLON.GUI.Button.CreateSimpleButton("animation", "Previous step");
           previous_step_button.width = ""+buttonWidthInPixels+"px";
           previous_step_button.height = ""+buttonHeightInPixels+"px";
-          previous_step_button.onPointerUpObservable.add(function(){animation_stopped=true; iframe-=10; showStep(Math.floor(iframe/10))});
+          previous_step_button.onPointerUpObservable.add(function(){
+            animation_stopped=true; iframe-=10; showStep(Math.floor(iframe/10))});
           buttonsContainer.addControl(previous_step_button);
 
           var next_step_button = BABYLON.GUI.Button.CreateSimpleButton("animation", "Next step");
           next_step_button.width = ""+buttonWidthInPixels+"px";
           next_step_button.height = ""+buttonHeightInPixels+"px";
-          next_step_button.onPointerUpObservable.add(function(){animation_stopped=true; iframe+=10; showStep(Math.floor(iframe/10))});
+            next_step_button.onPointerUpObservable.add(function(){
+          animation_stopped=true; iframe+=10; showStep(Math.floor(iframe/10))});
           buttonsContainer.addControl(next_step_button);
 
           var last_step_button = BABYLON.GUI.Button.CreateSimpleButton("animation", "Last step");
           last_step_button.width = ""+buttonWidthInPixels+"px";
           last_step_button.height = ""+buttonHeightInPixels+"px";
-          last_step_button.onPointerUpObservable.add(function(){animation_stopped=true; iframe=10*(n_steps-1); showStep(Math.floor(iframe/10))});
+          last_step_button.onPointerUpObservable.add(function(){
+            animation_stopped=true; iframe=10*(n_steps-1); showStep(Math.floor(iframe/10))});
           buttonsContainer.addControl(last_step_button);
 
           var step_label = new BABYLON.GUI.TextBlock();

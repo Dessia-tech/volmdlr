@@ -669,7 +669,7 @@ class Step(dc.DessiaObject):
                 self.all_connections.remove(elem2)
                 self.all_connections.append((elem1[1], elem2[1]))
 
-                self.functions[id1].arg.append('#{}'.format(id2))
+                self.functions[id1].arg.append(f'#{id2}')
 
             elif function.name in STEP_TO_VOLMDLR:
                 G.add_node(function.id,
@@ -846,8 +846,7 @@ class Step(dc.DessiaObject):
 
         else:
             raise NotImplementedError(
-                'Dont know how to interpret {} with args {}'.format(name,
-                                                                    arguments))
+                f'Dont know how to interpret {name} with args {arguments}')
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):

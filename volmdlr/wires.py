@@ -404,7 +404,7 @@ class EdgeCollection3D(WireMixin):
 
     def babylon_points(self):
         """ Get list of points coordinates. """
-        return [[p.x, p.y, p.z] for p in self.points()]
+        return [[point.x, point.y, point.z] for point in self.points()]
 
     def to_babylon(self):
         """ Generate a mesh from all edges for performance when drawing. """
@@ -487,9 +487,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             # k = infinite_primitives.index(primitive_2)
 
             primitive_name = primitive_1.__class__.__name__.lower().replace('2d', '')
-            intersection_method_name = '{}_intersections'.format(primitive_name)
+            intersection_method_name = f'{primitive_name}_intersections'
             next_primitive_name = primitive_2.__class__.__name__.lower().replace('2d', '')
-            next_intersection_method_name = '{}_intersections'.format(next_primitive_name)
+            next_intersection_method_name = f'{next_primitive_name}_intersections'
 
             if hasattr(primitive_1, next_intersection_method_name):
                 intersections = getattr(primitive_1, next_intersection_method_name)(
@@ -522,14 +522,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
             else:
                 raise NotImplementedError(
-                    'No intersection method between {} and {}. Define {} on {} or {} on {}'.format(
-                        primitive_1.__class__.__name__,
-                        primitive_2.__class__.__name__,
-                        next_intersection_method_name,
-                        primitive_1.__class__.__name__,
-                        intersection_method_name,
-                        primitive_2.__class__.__name__
-                    ))
+                    f'No intersection method between {primitive_1.__class__.__name__} and'
+                    f'{primitive_2.__class__.__name__}. Define {next_intersection_method_name} on '
+                    f'{primitive_1.__class__.__name__} or {intersection_method_name} on'
+                    f'{primitive_2.__class__.__name__}')
 
         return offset_intersections
 
@@ -1155,7 +1151,7 @@ class ContourMixin(WireMixin):
         :return: returns the edge if true, and None if not connected.
         """
         edge_connected = None
-        points = [p for prim in contour_primitives for p in prim]
+        points = [point for prim in contour_primitives for point in prim]
         if (edge.start in points or edge.end in points) and edge not in contour_primitives:
             edge_connected = edge
             return edge_connected
@@ -1343,7 +1339,7 @@ class ContourMixin(WireMixin):
                     if edge1.point_belongs(point, 1e-6):
                         # list_p.append(point)
                         # instead of point not in list_p (due to errors)
-                        if list_p == []:
+                        if not list_p:
                             list_p.append(point)
                         if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
                             list_p.append(point)
@@ -1666,10 +1662,10 @@ class Contour2D(ContourMixin, Wire2D):
         for primitive in self.primitives:
             if hasattr(primitive, 'discretization_points'):
                 points.extend(primitive.discretization_points(number_points=10))
-        x_min = min(p[0] for p in points)
-        x_max = max(p[0] for p in points)
-        y_min = min(p[1] for p in points)
-        y_max = max(p[1] for p in points)
+        x_min = min(point[0] for point in points)
+        x_max = max(point[0] for point in points)
+        y_min = min(point[1] for point in points)
+        y_max = max(point[1] for point in points)
         return (volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_max))
 
     def area(self):
@@ -1712,19 +1708,20 @@ class Contour2D(ContourMixin, Wire2D):
 
     def second_moment_area(self, point):
 
-        Ix, Iy, Ixy = self.edge_polygon.second_moment_area(point)
+        second_moment_area_x, second_moment_area_y, second_moment_area_xy = self.edge_polygon.second_moment_area(point)
         for edge in self.primitives:
-            Ix_e, Iy_e, Ixy_e = edge.straight_line_second_moment_area(point)
+            second_moment_area_x_e, second_moment_area_y_e, second_moment_area_xy_e =\
+                edge.straight_line_second_moment_area(point)
             if self.edge_polygon.is_trigo:
-                Ix += Ix_e
-                Iy += Iy_e
-                Ixy += Ixy_e
+                second_moment_area_x += second_moment_area_x_e
+                second_moment_area_y += second_moment_area_y_e
+                second_moment_area_xy += second_moment_area_xy_e
             else:
-                Ix -= Ix_e
-                Iy -= Iy_e
-                Ixy -= Ixy_e
+                second_moment_area_x -= second_moment_area_x_e
+                second_moment_area_y -= second_moment_area_y_e
+                second_moment_area_xy -= second_moment_area_xy_e
 
-        return Ix, Iy, Ixy
+        return second_moment_area_x, second_moment_area_y, second_moment_area_xy
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   surface_style: plot_data.SurfaceStyle = None):
@@ -1779,9 +1776,9 @@ class Contour2D(ContourMixin, Wire2D):
         """
         x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
         for _ in range(2000):
-            p = volmdlr.Point2D.random(x_min, x_max, y_min, y_max)
-            if self.point_belongs(p, include_edge_points):
-                return p
+            point = volmdlr.Point2D.random(x_min, x_max, y_min, y_max)
+            if self.point_belongs(point, include_edge_points):
+                return point
         print(True)
         raise ValueError('Could not find a point inside')
 
@@ -2057,9 +2054,9 @@ class Contour2D(ContourMixin, Wire2D):
                 p3 = volmdlr.Point2D(x[i + 1], y[j + 1])
                 p4 = volmdlr.Point2D(x[i], y[j + 1])
                 points_in = []
-                for p in [p1, p2, p3, p4]:
-                    if p in point_index:
-                        points_in.append(p)
+                for point in [p1, p2, p3, p4]:
+                    if point in point_index:
+                        points_in.append(point)
                 if len(points_in) == 4:
                     triangles.append(
                         [point_index[p1], point_index[p2], point_index[p3]])
@@ -2067,7 +2064,7 @@ class Contour2D(ContourMixin, Wire2D):
                         [point_index[p1], point_index[p3], point_index[p4]])
 
                 elif len(points_in) == 3:
-                    triangles.append([point_index[p] for p in points_in])
+                    triangles.append([point_index[point] for point in points_in])
 
         return vmd.DisplayMesh2D(points, triangles)
 
@@ -2239,9 +2236,9 @@ class Contour2D(ContourMixin, Wire2D):
         """
 
         new_primitives = []
-        for p in self.primitives:
-            if p.start != p.end:
-                new_primitives.append(p)
+        for prim in self.primitives:
+            if prim.start != prim.end:
+                new_primitives.append(prim)
 
         return Contour2D(new_primitives)
 
@@ -2459,11 +2456,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         Contour2D.__init__(self, self.line_segments, name)
 
     def copy(self, *args, **kwargs):
-        points = [p.copy() for p in self.points]
+        points = [point.copy() for point in self.points]
         return ClosedPolygon2D(points, self.name)
 
     def __hash__(self):
-        return sum(hash(p) for p in self.points)
+        return sum(hash(point) for point in self.points)
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
@@ -2505,12 +2502,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         xi_yi1 = npy.multiply(x, npy.roll(y, -1))
         xi1_yi = npy.multiply(npy.roll(x, -1), y)
 
-        a = 0.5 * npy.sum(xi_yi1 - xi1_yi)  # signed area!
-        # print('a :', a)
-        #        a=self.area()
-        if not math.isclose(a, 0, abs_tol=1e-08):
-            cx = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / a
-            cy = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / a
+        signed_area = 0.5 * npy.sum(xi_yi1 - xi1_yi)  # signed area!
+        if not math.isclose(signed_area, 0, abs_tol=1e-08):
+            cx = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
+            cy = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
             return volmdlr.Point2D(cx, cy)
 
         self.plot()
@@ -2531,23 +2526,23 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         """
         Ray casting algorithm copied from internet.
         """
-        return polygon_point_belongs((point.x, point.y),
-                                     [(p.x, p.y) for p in self.points], include_edge_points=include_edge_points)
+        return polygon_point_belongs((point.x, point.y), [(point_.x, point_.y) for point_ in self.points],
+                                     include_edge_points=include_edge_points)
 
     def second_moment_area(self, point):
-        Ix, Iy, Ixy = 0., 0., 0.
-        for pi, pj in zip(self.points, self.points[1:] + [self.points[0]]):
-            xi, yi = pi - point
-            xj, yj = pj - point
-            Ix += (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi)
-            Iy += (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi)
-            Ixy += (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
+        second_moment_area_x, second_moment_area_y, second_moment_area_xy = 0., 0., 0.
+        for point_i, point_j in zip(self.points, self.points[1:] + [self.points[0]]):
+            xi, yi = point_i - point
+            xj, yj = point_j - point
+            second_moment_area_x += (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi)
+            second_moment_area_y += (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi)
+            second_moment_area_xy += (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
                     xi * yj - xj * yi)
-        if Ix < 0:
-            Ix = - Ix
-            Iy = - Iy
-            Ixy = - Ixy
-        return Ix / 12., Iy / 12., Ixy / 24.
+        if second_moment_area_x < 0:
+            second_moment_area_x = - second_moment_area_x
+            second_moment_area_y = - second_moment_area_y
+            second_moment_area_xy = - second_moment_area_xy
+        return second_moment_area_x / 12., second_moment_area_y / 12., second_moment_area_xy / 24.
 
     def get_line_segments(self):
         lines = []
@@ -2612,13 +2607,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             point.frame_mapping_inplace(frame, side)
 
     def polygon_distance(self,
-                         polygon: 'volmdlr.wires.ClosedPolygon2D'):
-        p = self.points[0]
-        d = []
+                         polygon: 'ClosedPolygon2D'):
+        point_zero = self.points[0]
+        distance = []
         for point in polygon.points:
-            d.append(p.point_distance(point))
-        index = d.index(min(d))
-        return d[index]
+            distance.append(point_zero.point_distance(point))
+        index = distance.index(min(distance))
+        return distance[index]
 
     @cached_property
     def is_trigo(self):
@@ -2800,12 +2795,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                             self.points[segment2[0]],
                             self.points[segment2[1]])
 
-                        p, a, b = volmdlr.Point2D.line_intersection(line1,
-                                                                    line2,
-                                                                    True)
-                        if p is not None:
-                            if 0 + epsilon <= a <= 1 - epsilon \
-                                    and 0 + epsilon <= b <= 1 - epsilon:
+                        point, param_a, param_b = volmdlr.Point2D.line_intersection(line1, line2, True)
+                        if point is not None:
+                            if 0 + epsilon <= param_a <= 1 - epsilon \
+                                    and 0 + epsilon <= param_b <= 1 - epsilon:
                                 return True, line1, line2
 
         return False, None, None
@@ -2881,7 +2874,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     @classmethod
     def concave_hull(cls, points, concavity, scale_factor):
         """
-        Calculates the concave hull from a cloud of points, i.e., it Unites all points under the smallest possible area.
+        Calculates the concave hull from a cloud of points.
+
+        i.e., it Unites all points under the smallest possible area.
 
         :param points: list of points corresponding to the cloud of points
         :type points: class: 'volmdlr.Point2D'
@@ -3034,7 +3029,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         points_hull = [pt.copy() for pt in points]
 
-        numpy_points = npy.array([(p.x, p.y) for p in points_hull])
+        numpy_points = npy.array([(point.x, point.y) for point in points_hull])
         hull = ConvexHull(numpy_points)
         polygon_points = []
         for simplex in hull.simplices:
@@ -3094,7 +3089,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             ax.set_aspect('equal')
 
         if fill:
-            ax.fill([p[0] for p in self.points], [p[1] for p in self.points],
+            ax.fill([point[0] for point in self.points], [point[1] for point in self.points],
                     facecolor=fill_color)
         for line_segment in self.line_segments:
             line_segment.plot(ax=ax, color=color, alpha=alpha, arrow=arrow)
@@ -3105,8 +3100,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         if point_numbering:
             for ip, point in enumerate(self.points):
-                ax.text(*point, 'point {}'.format(ip + 1),
-                        ha='center', va='top')
+                ax.text(*point, f'point {ip + 1}', ha='center', va='top')
 
         if equal_aspect:
             ax.set_aspect('equal')
@@ -3130,8 +3124,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         :rtype: :class:`vmd.DisplayMesh2D`
         """
         # Converting points to nodes for performance
-        nodes = [vmd.Node2D.from_point(p) for p in self.points]
-        vertices = [(p.x, p.y) for p in nodes]
+        nodes = [vmd.Node2D.from_point(point) for point in self.points]
+        vertices = [(point.x, point.y) for point in nodes]
         n = len(nodes)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
@@ -3166,7 +3160,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         grid_point_index = {}
 
-        polygon_points = {vmd.Node2D.from_point(p) for p in self.points}
+        polygon_points = {vmd.Node2D.from_point(point) for point in self.points}
         points = []
         for i, xi in enumerate(x):
             for j, yi in enumerate(y):
@@ -3183,9 +3177,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         Note: triangles have been inverted for a better rendering in babylonjs
         """
         # Converting to nodes for performance
-        nodes = [vmd.Node2D.from_point(p) for p in self.points]
+        nodes = [vmd.Node2D.from_point(point) for point in self.points]
 
-        initial_point_to_index = {p: i for i, p in enumerate(nodes)}
+        initial_point_to_index = {point: i for i, point in enumerate(nodes)}
         triangles = []
 
         remaining_points = nodes[:]
@@ -3704,16 +3698,16 @@ class Triangle2D(ClosedPolygon2D):
         return abs(u.cross(v)) / 2
 
     def incircle_radius(self):
-        a = self.point1.point_distance(self.point2)
-        b = self.point1.point_distance(self.point3)
-        c = self.point2.point_distance(self.point3)
-        return 2 * self.area() / (a + b + c)
+        param_a = self.point1.point_distance(self.point2)
+        param_b = self.point1.point_distance(self.point3)
+        param_c = self.point2.point_distance(self.point3)
+        return 2 * self.area() / (param_a + param_b + param_c)
 
     def circumcircle_radius(self):
-        a = self.point1.point_distance(self.point2)
-        b = self.point1.point_distance(self.point3)
-        c = self.point2.point_distance(self.point3)
-        return a * b * c / (self.area() * 4.0)
+        param_a = self.point1.point_distance(self.point2)
+        param_b = self.point1.point_distance(self.point3)
+        param_c = self.point2.point_distance(self.point3)
+        return param_a * param_b * param_c / (self.area() * 4.0)
 
     def ratio_circumr_length(self):
         return self.circumcircle_radius() / self.length()
@@ -3722,18 +3716,19 @@ class Triangle2D(ClosedPolygon2D):
         return self.incircle_radius() / self.length()
 
     def aspect_ratio(self):
-        a = self.point1.point_distance(self.point2)
-        b = self.point1.point_distance(self.point3)
-        c = self.point2.point_distance(self.point3)
-        s = 0.5 * (a + b + c)
+        param_a = self.point1.point_distance(self.point2)
+        param_b = self.point1.point_distance(self.point3)
+        param_c = self.point2.point_distance(self.point3)
+        param_s = 0.5 * (param_a + param_b + param_c)
         try:
-            return 0.125 * a * b * c / (s - a) / (s - b) / (s - c)
+            return (0.125 * param_a * param_b * param_c / (param_s -
+                                                           param_a) / (param_s - param_b) / (param_s - param_c))
         except ZeroDivisionError:
             return 1000000.
 
     def axial_symmetry(self, line):
         """
-        Finds out the symmetric triangle2d according to a line.
+        Finds out the symmetric triangle 2d according to a line.
 
         """
 
@@ -3859,7 +3854,7 @@ class Circle2D(Contour2D):
             return [contour1, contour2]
         raise ValueError
 
-    def circle_intersections(self, circle: 'volmdlr.wires.Circle2D'):
+    def circle_intersections(self, circle: 'Circle2D'):
         x0, y0 = self.center
         x1, y1 = circle.center
         # r0 = self.radius
@@ -4118,7 +4113,7 @@ class Ellipse2D(Contour2D):
     :type major_dir: volmdlr.Vector3D
 
     :Example:
-    >>> ellipse2d = wires.Ellipse2D(4, 2, volmdlr.O2D, volmdlr.Vector2D(1, 1))
+    >>> ellipse2d = Ellipse2D(4, 2, volmdlr.O2D, volmdlr.Vector2D(1, 1))
     """
 
     def __init__(self, major_axis, minor_axis, center, major_dir, name=''):
@@ -4506,16 +4501,12 @@ class Contour3D(ContourMixin, Wire3D):
             content += primitive_content
             current_id = primitive_ids[-1] + 1
             for primitive_id in primitive_ids:
-                content += "#{} = ORIENTED_EDGE('{}',*,*,#{},.T.);\n".format(
-                    current_id,
-                    primitive.name,
-                    primitive_id)
+                content += f"#{current_id} = ORIENTED_EDGE('{primitive.name}',*,*,#{primitive_id},.T.);\n"
                 edge_ids.append(current_id)
 
                 current_id += 1
 
-        content += "#{} = EDGE_LOOP('{}',({}));\n".format(
-            current_id, self.name, volmdlr.core.step_ids_to_str(edge_ids))
+        content += f"#{current_id} = EDGE_LOOP('{self.name}',({volmdlr.core.step_ids_to_str(edge_ids)}));\n"
         return content, current_id
 
     def average_center_point(self):
@@ -4663,7 +4654,7 @@ class Contour3D(ContourMixin, Wire3D):
         Computes the bounding box of the contour3D.
 
         """
-        return volmdlr.core.BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+        return volmdlr.core.BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
 
     @property
     def bounding_box(self):
@@ -4977,12 +4968,10 @@ class Circle3D(Contour3D):
                                        self.frame.v)
         content, frame_id = circle_frame.to_step(current_id)
         curve_id = frame_id + 1
-        content += "#{} = CIRCLE('{}',#{},{});\n".format(
-            curve_id, self.name, frame_id, round(self.radius * 1000, 3))
+        content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{round(self.radius * 1000, 3)});\n"
 
         if surface_id:
-            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                curve_id + 1, curve_id, surface_id)
+            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
             curve_id += 1
 
         p1 = self.frame.origin + self.frame.u * self.radius
@@ -4997,22 +4986,17 @@ class Circle3D(Contour3D):
         content += p1_content + p3_content
 
         arc1_id = p3_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
-            arc1_id, self.name, p1_id, p3_id, curve_id)
+        content += f"#{arc1_id} = EDGE_CURVE('{self.name}',#{p1_id},#{p3_id},#{curve_id},.T.);\n"
         oriented_edge1_id = arc1_id + 1
-        content += "#{} = ORIENTED_EDGE('',*,*,#{},.T.);\n".format(
-            oriented_edge1_id, arc1_id)
+        content += f"#{oriented_edge1_id} = ORIENTED_EDGE('',*,*,#{arc1_id},.T.);\n"
 
         arc2_id = oriented_edge1_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
-            arc2_id, self.name, p3_id, p1_id, curve_id)
+        content += f"#{arc2_id} = EDGE_CURVE('{self.name}',#{p3_id},#{p1_id},#{curve_id},.T.);\n"
         oriented_edge2_id = arc2_id + 1
-        content += "#{} = ORIENTED_EDGE('',*,*,#{},.T.);\n".format(
-            oriented_edge2_id, arc2_id)
+        content += f"#{oriented_edge2_id} = ORIENTED_EDGE('',*,*,#{arc2_id},.T.);\n"
 
         current_id = oriented_edge2_id + 1
-        content += "#{} = EDGE_LOOP('{}',(#{},#{}));\n".format(
-            current_id, self.name, oriented_edge1_id, oriented_edge2_id)
+        content += f"#{current_id} = EDGE_LOOP('{self.name}',(#{oriented_edge1_id},#{oriented_edge2_id}));\n"
 
         return content, current_id
 
@@ -5100,8 +5084,8 @@ class Circle3D(Contour3D):
                                              0, extrusion_vector.norm())]
         else:
             raise NotImplementedError(
-                'Extrusion along vector not colinar to normal for circle not handled yet: dot={}'.format(
-                    self.normal.dot(extrusion_vector)))
+                f'Extrusion along vector not colinar to normal for circle not '
+                f'handled yet: dot={self.normal.dot(extrusion_vector)}')
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
                    angle: float):
@@ -5117,10 +5101,10 @@ class Circle3D(Contour3D):
             raise NotImplementedError(
                 'Outside of plane revolution not supported')
 
-        R = tore_center.point_distance(self.center)
+        tore_radius = tore_center.point_distance(self.center)
         surface = volmdlr.faces.ToroidalSurface3D(
             volmdlr.Frame3D(tore_center, u, v, axis),
-            R, self.radius)
+            tore_radius, self.radius)
         return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
@@ -5344,10 +5328,10 @@ class Ellipse3D(Contour3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points():
-            x.append(px)
-            y.append(py)
-            z.append(pz)
+        for point_x, point_y, point_z in self.discretization_points():
+            x.append(point_x)
+            y.append(point_y)
+            z.append(point_z)
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])

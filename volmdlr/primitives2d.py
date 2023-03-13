@@ -466,7 +466,7 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         distance = self.end.point_distance(self.start)
 
         if self.label != '':
-            label = '{}: '.format(self.label)
+            label = f'{l}: '
         else:
             label = ''
         if self.unit == 'mm':

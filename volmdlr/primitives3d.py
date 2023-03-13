@@ -782,13 +782,13 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         """
         p1 = self.axis_point.PlaneProjection3D(self.plane_origin,
                                                self.x, self.y)
-        p1_2D = p1.To2D(self.axis_point, self.x, self.y)
-        p2_3D = self.axis_point + volmdlr.Point3D(self.axis.vector)
-        p2_2D = p2_3D.To2D(self.plane_origin, self.x, self.y)
-        axis_2D = volmdlr.edges.Line2D(p1_2D, p2_2D)
+        p1_2d = p1.To2D(self.axis_point, self.x, self.y)
+        p2_3d = self.axis_point + volmdlr.Point3D(self.axis.vector)
+        p2_2d = p2_3d.To2D(self.plane_origin, self.x, self.y)
+        axis_2d = volmdlr.edges.Line2D(p1_2d, p2_2d)
         com = self.contour2d.center_of_mass()
         if com is not False:
-            rg = axis_2D.point_distance(com)
+            rg = axis_2d.point_distance(com)
             return self.angle * rg * self.contour2d.area()
         return 0.
 
@@ -927,11 +927,11 @@ class Cylinder(RevolvedProfile):
         p2 = volmdlr.Point2D(0.5 * self.length, 0.)
         p3 = volmdlr.Point2D(0.5 * self.length, self.radius)
         p4 = volmdlr.Point2D(-0.5 * self.length, self.radius)
-        l1 = volmdlr.edges.LineSegment2D(p1, p2)
-        l2 = volmdlr.edges.LineSegment2D(p2, p3)
-        l3 = volmdlr.edges.LineSegment2D(p3, p4)
-        l4 = volmdlr.edges.LineSegment2D(p4, p1)
-        contour = volmdlr.wires.Contour2D([l1, l2, l3, l4])
+        line_seg1 = volmdlr.edges.LineSegment2D(p1, p2)
+        line_seg2 = volmdlr.edges.LineSegment2D(p2, p3)
+        line_seg3 = volmdlr.edges.LineSegment2D(p3, p4)
+        line_seg4 = volmdlr.edges.LineSegment2D(p4, p1)
+        contour = volmdlr.wires.Contour2D([line_seg1, line_seg2, line_seg3, line_seg4])
         y = axis.random_unit_normal_vector()
         RevolvedProfile.__init__(self, position, axis, y, contour, position,
                                  axis, color=color, alpha=alpha, name=name)
@@ -1483,11 +1483,11 @@ class HollowCylinder(RevolvedProfile):
         p2 = volmdlr.Point2D(0.5 * self.length, self.inner_radius)
         p3 = volmdlr.Point2D(0.5 * self.length, self.outer_radius)
         p4 = volmdlr.Point2D(-0.5 * self.length, self.outer_radius)
-        l1 = volmdlr.edges.LineSegment2D(p1, p2)
-        l2 = volmdlr.edges.LineSegment2D(p2, p3)
-        l3 = volmdlr.edges.LineSegment2D(p3, p4)
-        l4 = volmdlr.edges.LineSegment2D(p4, p1)
-        contour = volmdlr.wires.Contour2D([l1, l2, l3, l4])
+        line_seg1 = volmdlr.edges.LineSegment2D(p1, p2)
+        line_seg2 = volmdlr.edges.LineSegment2D(p2, p3)
+        line_seg3 = volmdlr.edges.LineSegment2D(p3, p4)
+        line_seg4 = volmdlr.edges.LineSegment2D(p4, p1)
+        contour = volmdlr.wires.Contour2D([line_seg1, line_seg2, line_seg3, line_seg4])
         y = axis.random_unit_normal_vector()
         # contour.plot()
         RevolvedProfile.__init__(self, position, axis, y, contour, position,

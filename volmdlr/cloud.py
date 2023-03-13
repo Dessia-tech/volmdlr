@@ -81,7 +81,7 @@ class PointCloud3D(dc.DessiaObject):
 
         polygon2d, polygon3d = [], []
         for n, poly in enumerate(initial_polygon2d):
-            if (poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1])):
+            if poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1]):
                 continue
             elif poly.area() < avg_area / 10:
                 new_poly = vmw.ClosedPolygon2D.concave_hull(poly.points, -1, 0.000005)

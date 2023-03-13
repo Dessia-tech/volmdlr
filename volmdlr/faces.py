@@ -10,8 +10,7 @@ from typing import List, Tuple, Union
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as npy
-import scipy as scp
-import scipy.optimize as opt
+from scipy.optimize import least_squares, minimize
 import triangle as triangle_lib
 
 from geomdl import NURBS, BSpline, utilities
@@ -36,7 +35,7 @@ from volmdlr.utils.parametric import array_range_search
 
 def knots_vector_inv(knots_vector):
     """
-    Compute knot elements and multiplicities based on the global knot vector.
+    Compute knot-elements and multiplicities based on the global knot vector.
 
     """
 
@@ -341,15 +340,15 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
 
         cutted_contours = []
-        c1 = self.inner_contours[0].center_of_mass()
-        c2 = self.inner_contours[1].center_of_mass()
-        cut_line = vme.Line2D(c1, c2)
+        center_of_mass1 = self.inner_contours[0].center_of_mass()
+        center_of_mass2 = self.inner_contours[1].center_of_mass()
+        cut_line = vme.Line2D(center_of_mass1, center_of_mass2)
 
         iteration_contours2 = []
 
-        sc = self.cut_by_line(cut_line)
+        surface_cut = self.cut_by_line(cut_line)
 
-        iteration_contours2.extend(sc)
+        iteration_contours2.extend(surface_cut)
 
         iteration_contours = iteration_contours2[:]
         cutted_contours.extend(iteration_contours)
@@ -437,9 +436,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             else:
                 raise NotImplementedError(
                     'Non convex contour not supported yet')
-                # raise NotImplementedError(
-                #     '{} intersections not supported yet'.format(
-                #         len(intersections)))
+
 
         return all_contours
 
@@ -659,7 +656,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def axial_symmetry(self, line):
         """
-        Finds out the symmetric surface2d according to a line.
+        Finds out the symmetric surface 2d according to a line.
 
         """
 
@@ -1088,9 +1085,7 @@ class Surface3D(DessiaObject):
                           f'with {primitive2d.__class__.__name__}')
             else:
                 raise NotImplementedError(
-                    'Class {} does not implement {}'.format(
-                        self.__class__.__name__,
-                        method_name))
+                    f'Class {self.__class__.__name__} does not implement {method_name}')
 
         return volmdlr.wires.Contour3D(primitives3d)
 
@@ -1126,7 +1121,7 @@ class Surface3D(DessiaObject):
 
     def normal_from_point3d(self, point3d):
         """
-        Evaluates the normal vector of the bspline surface at this point3d.
+        Evaluates the normal vector of the bspline surface at this point 3d.
 
         """
 
@@ -1141,7 +1136,7 @@ class Surface3D(DessiaObject):
         current_point3d = self.point2d_to_3d(point1_2d)
         distance = 0.
         for i in range(number_points):
-            next_point3d = self.point2d_to_3d(point1_2d + (i + 1) / (number_points) * (point2_2d - point1_2d))
+            next_point3d = self.point2d_to_3d(point1_2d + (i + 1) / number_points * (point2_2d - point1_2d))
             distance += next_point3d.point_distance(current_point3d)
             current_point3d = next_point3d
         return distance
@@ -1241,7 +1236,7 @@ class Plane3D(Surface3D):
     @classmethod
     def from_points(cls, points):
         """
-        Returns the plane3d that goes through the 3 first points on the list.
+        Returns the plane 3d that goes through the 3 first points on the list.
 
         Why for more than 3 points we only do some check and never raise error?
         """
@@ -1351,7 +1346,7 @@ class Plane3D(Surface3D):
         """
         a, b, c = self.frame.w
         d = -self.frame.origin.dot(self.frame.w)
-        return (round(a, 12), round(b, 12), round(c, 12), round(d, 12))
+        return round(a, 12), round(b, 12), round(c, 12), round(d, 12)
 
     def plane_intersection(self, other_plane):
         """
@@ -1820,10 +1815,9 @@ class CylindricalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, name=name)
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
-        p = volmdlr.Point3D(self.radius * math.cos(point2d.x),
-                            self.radius * math.sin(point2d.x),
-                            point2d.y)
-        return self.frame.local_to_global_coordinates(p)
+        point = volmdlr.Point3D(self.radius * math.cos(point2d.x),
+                                self.radius * math.sin(point2d.x), point2d.y)
+        return self.frame.local_to_global_coordinates(point)
 
     def point3d_to_2d(self, point3d):
         """
@@ -1847,14 +1841,14 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def circle3d_to_2d(self, circle3d):
         """
-        Transformation of an circle3d to 2d, in a cylindrical surface.
+        Transformation of a circle 3d to 2d, in a cylindrical surface.
 
         """
         return []
 
     def arcellipse3d_to_2d(self, arcellipse3d):
         """
-        Transformation of an arcellipse3d to 2d, in a cylindrical surface.
+        Transformation of an arcellipse 3d to 2d, in a cylindrical surface.
 
         """
         points = [self.point3d_to_2d(p)
@@ -1915,11 +1909,11 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
         unit_conversion_factor = arguments[-1]
         frame3d = object_dict[arguments[1]]
-        U, W = frame3d.v, -frame3d.u
-        U.normalize()
-        W.normalize()
-        V = W.cross(U)
-        frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
+        u_vector, w_vector = frame3d.v, -frame3d.u
+        u_vector.normalize()
+        w_vector.normalize()
+        v_vector = w_vector.cross(u_vector)
+        frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
         radius = float(arguments[2]) * unit_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
@@ -2170,7 +2164,7 @@ class ToroidalSurface3D(PeriodicalSurface):
     Theta is the angle around the big (R) circle and phi around the small (r).
 
     :param frame: Tore's frame: origin is the center, u is pointing at theta=0
-    :param R: Tore's radius
+    :param tore_radius: Tore's radius
     :param r: Circle to revolute radius
 
     :See Also:
@@ -2181,10 +2175,9 @@ class ToroidalSurface3D(PeriodicalSurface):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = volmdlr.TWO_PI
 
-    def __init__(self, frame: volmdlr.Frame3D,
-                 R: float, r: float, name: str = ''):
+    def __init__(self, frame: volmdlr.Frame3D, tore_radius: float, r: float, name: str = ''):
         self.frame = frame
-        self.R = R
+        self.tore_radius = tore_radius
         self.r = r
         PeriodicalSurface.__init__(self, name=name)
 
@@ -2197,18 +2190,18 @@ class ToroidalSurface3D(PeriodicalSurface):
         return self._bbox
 
     def _bounding_box(self):
-        d = self.R + self.r
-        p1 = self.frame.origin + self.frame.u * d + self.frame.v * d + self.frame.w * self.r
-        p2 = self.frame.origin + self.frame.u * d + self.frame.v * d - self.frame.w * self.r
-        p3 = self.frame.origin + self.frame.u * d - self.frame.v * d + self.frame.w * self.r
-        p4 = self.frame.origin + self.frame.u * d - self.frame.v * d - self.frame.w * self.r
-        p5 = self.frame.origin - self.frame.u * d + self.frame.v * d + self.frame.w * self.r
-        p6 = self.frame.origin - self.frame.u * d + self.frame.v * d - self.frame.w * self.r
-        p7 = self.frame.origin - self.frame.u * d - self.frame.v * d + self.frame.w * self.r
-        p8 = self.frame.origin - self.frame.u * d - self.frame.v * d - self.frame.w * self.r
+        distance = self.tore_radius + self.r
+        point1 = self.frame.origin + self.frame.u * distance + self.frame.v * distance + self.frame.w * self.r
+        point2 = self.frame.origin + self.frame.u * distance + self.frame.v * distance - self.frame.w * self.r
+        point3 = self.frame.origin + self.frame.u * distance - self.frame.v * distance + self.frame.w * self.r
+        point4 = self.frame.origin + self.frame.u * distance - self.frame.v * distance - self.frame.w * self.r
+        point5 = self.frame.origin - self.frame.u * distance + self.frame.v * distance + self.frame.w * self.r
+        point6 = self.frame.origin - self.frame.u * distance + self.frame.v * distance - self.frame.w * self.r
+        point7 = self.frame.origin - self.frame.u * distance - self.frame.v * distance + self.frame.w * self.r
+        point8 = self.frame.origin - self.frame.u * distance - self.frame.v * distance - self.frame.w * self.r
 
         return volmdlr.core.BoundingBox.from_points(
-            [p1, p2, p3, p4, p5, p6, p7, p8])
+            [point1, point2, point3, point4, point5, point6, point7, point8])
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """
@@ -2218,8 +2211,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         :type point2d: `volmdlr.`Point2D`
         """
         theta, phi = point2d
-        x = (self.R + self.r * math.cos(phi)) * math.cos(theta)
-        y = (self.R + self.r * math.cos(phi)) * math.sin(theta)
+        x = (self.tore_radius + self.r * math.cos(phi)) * math.cos(theta)
+        y = (self.tore_radius + self.r * math.cos(phi)) * math.sin(theta)
         z = self.r * math.sin(phi)
         return self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, z))
 
@@ -2243,11 +2236,12 @@ class ToroidalSurface3D(PeriodicalSurface):
         if abs(phi) < 1e-9:
             phi = 0
 
-        u = self.R + math.sqrt((self.r ** 2) - (z ** 2))
+        u = self.tore_radius + math.sqrt((self.r ** 2) - (z ** 2))
         u1, u2 = round(x / u, 5), round(y / u, 5)
         theta = math.atan2(u2, u1)
 
-        vector_to_tube_center = volmdlr.Vector3D(self.R * math.cos(theta), self.R * math.sin(theta), 0)
+        vector_to_tube_center = volmdlr.Vector3D(self.tore_radius * math.cos(theta),
+                                                 self.tore_radius * math.sin(theta), 0)
         vector_from_tube_center_to_point = volmdlr.Vector3D(x, y, z) - vector_to_tube_center
         phi2 = volmdlr.geometry.vectors3d_angle(vector_to_tube_center, vector_from_tube_center_to_point)
 
@@ -2276,11 +2270,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         unit_conversion_factor = arguments[-1]
         frame3d = object_dict[arguments[1]]
-        U, W = frame3d.v, -frame3d.u
-        U.normalize()
-        W.normalize()
-        V = W.cross(U)
-        frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
+        u_vector, w_vector = frame3d.v, -frame3d.u
+        u_vector.normalize()
+        w_vector.normalize()
+        v_vector = w_vector.cross(u_vector)
+        frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
         rcenter = float(arguments[2]) * unit_conversion_factor
         rcircle = float(arguments[3]) * unit_conversion_factor
         return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
@@ -2291,7 +2285,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = TOROIDAL_SURFACE('{self.name}',#{frame_id}," \
-                   f"{round(1000 * self.R, 3)},{round(1000 * self.r, 3)});\n"
+                   f"{round(1000 * self.tore_radius, 3)},{round(1000 * self.r, 3)});\n"
         return content, [current_id]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -2305,7 +2299,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :type side: str
         """
         new_frame = self.frame.frame_mapping(frame, side)
-        return ToroidalSurface3D(new_frame, self.R, self.r, name=self.name)
+        return ToroidalSurface3D(new_frame, self.tore_radius, self.r, name=self.name)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -2362,7 +2356,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             if math.isclose(phi1 - phi2, volmdlr.TWO_PI, abs_tol=1e-4):
                 u_vector = self.frame.u.rotation(self.frame.origin, self.frame.w, angle=theta1)
                 v_vector = self.frame.u.rotation(self.frame.origin, self.frame.w, angle=theta1)
-                center = self.frame.origin + self.R * u_vector
+                center = self.frame.origin + self.tore_radius * u_vector
                 return [vme.FullArc3D(center=center,
                                       start_end=center + self.r * u_vector,
                                       normal=v_vector)]
@@ -2375,7 +2369,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         elif math.isclose(phi1, phi2, abs_tol=1e-4):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
                 center = self.frame.origin + self.r * math.sin(phi1) * self.frame.w
-                start_end = center + self.frame.u * (self.r + self.R)
+                start_end = center + self.frame.u * (self.r + self.tore_radius)
                 return [vme.FullArc3D(center=center,
                                       start_end=start_end,
                                       normal=self.frame.w)]
@@ -2530,7 +2524,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :return: A new translated ToroidalSurface3D
         """
         return ToroidalSurface3D(self.frame.translation(
-            offset), self.R, self.r)
+            offset), self.tore_radius, self.r)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
@@ -2553,7 +2547,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         new_frame = self.frame.rotation(center=center, axis=axis,
                                         angle=angle)
-        return self.__class__(new_frame, self.R, self.r)
+        return self.__class__(new_frame, self.tore_radius, self.r)
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -2572,9 +2566,8 @@ class ConicalSurface3D(PeriodicalSurface):
     """
     The local plane is defined by (theta, z).
 
-    :param frame: Cone's frame to position it: frame.w is axis of cone
-                    frame.origin is at the angle of the cone
-    :param semi_angle: Cone's semi-angle
+    :param frame: Cone's frame to position it: frame.w is axis of cone frame.origin is at the angle of the cone.
+    :param semi_angle: cone's semi-angle.
     """
     face_class = 'ConicalFace3D'
     x_periodicity = volmdlr.TWO_PI
@@ -2616,10 +2609,7 @@ class ConicalSurface3D(PeriodicalSurface):
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
-        content += "#{} = CONICAL_SURFACE('{}',#{},{},{});\n" \
-            .format(current_id, self.name, frame_id,
-                    0.,
-                    round(self.semi_angle, 3))
+        content += f"#{current_id} = CONICAL_SURFACE('{self.name}',#{frame_id},{0.},{round(self.semi_angle, 3)});\n"
         return content, [current_id]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -2898,11 +2888,11 @@ class SphericalSurface3D(Surface3D):
         """
         unit_conversion_factor = arguments[-1]
         frame3d = object_dict[arguments[1]]
-        U, W = frame3d.v, frame3d.u
-        U.normalize()
-        W.normalize()
-        V = W.cross(U)
-        frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
+        u_vector, w_vector = frame3d.v, frame3d.u
+        u_vector.normalize()
+        w_vector.normalize()
+        v_vector = w_vector.cross(u_vector)
+        frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
         radius = float(arguments[2]) * unit_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
@@ -3541,18 +3531,16 @@ class BSplineSurface3D(Surface3D):
                 i += 1
         if weights is None:
             surface = BSpline.Surface()
-            P = [(control_points[i][0], control_points[i][1],
-                  control_points[i][2]) for i in range(len(control_points))]
+            points = [(control_points[i][0], control_points[i][1],
+                       control_points[i][2]) for i in range(len(control_points))]
 
         else:
             surface = NURBS.Surface()
-            P = [(control_points[i][0] * weights[i],
-                  control_points[i][1] * weights[i],
-                  control_points[i][2] * weights[i],
-                  weights[i]) for i in range(len(control_points))]
+            points = [(control_points[i][0] * weights[i], control_points[i][1] * weights[i],
+                       control_points[i][2] * weights[i], weights[i]) for i in range(len(control_points))]
         surface.degree_u = degree_u
         surface.degree_v = degree_v
-        surface.set_ctrlpts(P, nb_u, nb_v)
+        surface.set_ctrlpts(points, nb_u, nb_v)
         knot_vector_u = []
         for i, u_knot in enumerate(u_knots):
             knot_vector_u.extend([u_knot] * u_multiplicities[i])
@@ -3628,11 +3616,11 @@ class BSplineSurface3D(Surface3D):
 
         """
 
-        P = npy.empty((self.nb_u, self.nb_v))
+        points = npy.empty((self.nb_u, self.nb_v))
         for i in range(0, self.nb_u):
             for j in range(0, self.nb_v):
-                P[i][j] = self.control_points_table[i][j][coordinates]
-        return P
+                points[i][j] = self.control_points_table[i][j][coordinates]
+        return points
 
     # Knots_vector
     def knots_vector_u(self):
@@ -3677,14 +3665,14 @@ class BSplineSurface3D(Surface3D):
         if k == 0:
             return 1.0 if t[i] <= u < t[i + 1] else 0.0
         if t[i + k] == t[i]:
-            c1 = 0.0
+            param_c1 = 0.0
         else:
-            c1 = (u - t[i]) / (t[i + k] - t[i]) * self.basis_functions_u(u, k - 1, i)
+            param_c1 = (u - t[i]) / (t[i + k] - t[i]) * self.basis_functions_u(u, k - 1, i)
         if t[i + k + 1] == t[i + 1]:
-            c2 = 0.0
+            param_c2 = 0.0
         else:
-            c2 = (t[i + k + 1] - u) / (t[i + k + 1] - t[i + 1]) * self.basis_functions_u(u, k - 1, i + 1)
-        return c1 + c2
+            param_c2 = (t[i + k + 1] - u) / (t[i + k + 1] - t[i + 1]) * self.basis_functions_u(u, k - 1, i + 1)
+        return param_c1 + param_c2
 
     def basis_functions_v(self, v, k, i):
         """
@@ -3698,14 +3686,14 @@ class BSplineSurface3D(Surface3D):
         if k == 0:
             return 1.0 if t[i] <= v < t[i + 1] else 0.0
         if t[i + k] == t[i]:
-            c1 = 0.0
+            param_c1 = 0.0
         else:
-            c1 = (v - t[i]) / (t[i + k] - t[i]) * self.basis_functions_v(v, k - 1, i)
+            param_c1 = (v - t[i]) / (t[i + k] - t[i]) * self.basis_functions_v(v, k - 1, i)
         if t[i + k + 1] == t[i + 1]:
-            c2 = 0.0
+            param_c2 = 0.0
         else:
-            c2 = (t[i + k + 1] - v) / (t[i + k + 1] - t[i + 1]) * self.basis_functions_v(v, k - 1, i + 1)
-        return c1 + c2
+            param_c2 = (t[i + k + 1] - v) / (t[i + k + 1] - t[i + 1]) * self.basis_functions_v(v, k - 1, i + 1)
+        return param_c1 + param_c2
 
     def blending_vector_u(self, u):
         """
@@ -3778,11 +3766,11 @@ class BSplineSurface3D(Surface3D):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
 
         def fun(x):
-            S = self.derivatives(x[0], x[1], 1)
-            r = S[0][0] - point3d
-            f = r.norm() + 1e-32
-            jac = npy.array([r.dot(S[1][0]) / f, r.dot(S[0][1]) / f])
-            return f, jac
+            derivatives = self.derivatives(x[0], x[1], 1)
+            r = derivatives[0][0] - point3d
+            f_value = r.norm() + 1e-32
+            jacobian = npy.array([r.dot(derivatives[1][0]) / f, r.dot(derivatives[0][1]) / f])
+            return f_value, jacobian
 
         min_bound_x, max_bound_x = self.surface.domain[0]
         min_bound_y, max_bound_y = self.surface.domain[1]
@@ -3801,9 +3789,9 @@ class BSplineSurface3D(Surface3D):
         # Find the parametric coordinates of the point
         results = []
         for x0 in x0s:
-            res = scp.optimize.minimize(fun, x0=npy.array(x0), jac=True,
-                                        bounds=[(min_bound_x, max_bound_x),
-                                                (min_bound_y, max_bound_y)])
+            res = minimize(fun, x0=npy.array(x0), jac=True,
+                           bounds=[(min_bound_x, max_bound_x),
+                                   (min_bound_y, max_bound_y)])
             if res.fun <= tol:
                 return volmdlr.Point2D(*res.x)
 
@@ -4291,11 +4279,9 @@ class BSplineSurface3D(Surface3D):
         u_close = '.T.' if self.x_periodicity else '.F.'
         v_close = '.T.' if self.y_periodicity else '.F.'
 
-        content += "#{} = B_SPLINE_SURFACE_WITH_KNOTS('{}',{},{},{},.UNSPECIFIED.,{},{},.F.,{},{},{},{},.UNSPECIFIED.);\
-            \n".format(current_id, self.name, self.degree_u, self.degree_v,
-                       point_matrix_ids, u_close, v_close,
-                       tuple(self.u_multiplicities), tuple(self.v_multiplicities),
-                       tuple(self.u_knots), tuple(self.v_knots))
+        content += f"#{current_id} = B_SPLINE_SURFACE_WITH_KNOTS('{self.name}',{self.degree_u},{self.degree_v}," \
+                   f"{point_matrix_ids},.UNSPECIFIED.,{u_close},{v_close},.F.,{tuple(self.u_multiplicities)}," \
+                   f"{tuple(self.v_multiplicities)},{tuple(self.u_knots)},{tuple(self.v_knots)},.UNSPECIFIED.);\n"
         return content, [current_id]
 
     def grid3d(self, grid2d: volmdlr.grid.Grid2D):
@@ -4327,14 +4313,14 @@ class BSplineSurface3D(Surface3D):
         index_x = {}  # grid point position(i,j), x coordinates position in X(unknown variable)
         index_y = {}  # grid point position(i,j), y coordinates position in X(unknown variable)
         index_points = {}  # grid point position(j,i), point position in points_2d (or points_3d)
-        k, p = 0, 0
+        k_index, p_index = 0, 0
         for i in range(0, points_x):
             for j in range(0, points_y):
-                index_x.update({(j, i): k})
-                index_y.update({(j, i): k + 1})
-                index_points.update({(j, i): p})
-                k = k + 2
-                p = p + 1
+                index_x.update({(j, i): k_index})
+                index_y.update({(j, i): k_index + 1})
+                index_points.update({(j, i): p_index})
+                k_index = k_index + 2
+                p_index = p_index + 1
 
         equation_points = []  # points combination to compute distances between 2D and 3D grid points
         for i in range(0, points_y):  # row from (0,i)
@@ -4361,39 +4347,40 @@ class BSplineSurface3D(Surface3D):
             for j in range(1, points_y - 1):
                 equation_points.append(((i, j - 1), (i, j + 1)))
 
-        D = []  # geodesic distances between 3D grid points (based on points combination [equation_points])
+        # geodesic distances between 3D grid points (based on points combination [equation_points])
+        geodesic_distances = []
         for i in range(0, len(equation_points)):
-            D.append((self.geodesic_distance(
+            geodesic_distances.append((self.geodesic_distance(
                 points_3d[index_points[equation_points[i][0]]], points_3d[index_points[equation_points[i][1]]])) ** 2)
 
         # System of nonlinear equations
-        def non_linear_equations(X):
-            vector_F = npy.empty(len(equation_points) + 2)
+        def non_linear_equations(x):
+            vector_f = npy.empty(len(equation_points) + 2)
             for i in range(0, len(equation_points)):
-                vector_F[i] = abs((X[index_x[equation_points[i][0]]] ** 2 +
-                                   X[index_x[equation_points[i][1]]] ** 2 +
-                                   X[index_y[equation_points[i][0]]] ** 2 +
-                                   X[index_y[equation_points[i][1]]] ** 2 -
+                vector_f[i] = abs((x[index_x[equation_points[i][0]]] ** 2 +
+                                   x[index_x[equation_points[i][1]]] ** 2 +
+                                   x[index_y[equation_points[i][0]]] ** 2 +
+                                   x[index_y[equation_points[i][1]]] ** 2 -
                                    2 *
-                                   X[index_x[equation_points[i][0]]] *
-                                   X[index_x[equation_points[i][1]]] -
+                                   x[index_x[equation_points[i][0]]] *
+                                   x[index_x[equation_points[i][1]]] -
                                    2 *
-                                   X[index_y[equation_points[i][0]]] *
-                                   X[index_y[equation_points[i][1]]] -
-                                   D[i]) /
-                                  D[i])
+                                   x[index_y[equation_points[i][0]]] *
+                                   x[index_y[equation_points[i][1]]] -
+                                   geodesic_distances[i]) /
+                                  geodesic_distances[i])
 
-            vector_F[i + 1] = X[0] * 1000
-            vector_F[i + 2] = X[1] * 1000
+            vector_f[i + 1] = x[0] * 1000
+            vector_f[i + 2] = x[1] * 1000
 
-            return vector_F
+            return vector_f
 
         # Solution with "least_squares"
         x_init = []  # initial guess (2D grid points)
         for i in range(0, len(points_2d)):
             x_init.append(points_2d[i][0])
             x_init.append(points_2d[i][1])
-        z = opt.least_squares(non_linear_equations, x_init)
+        z = least_squares(non_linear_equations, x_init)
 
         points_2d_deformed = [volmdlr.Point2D(z.x[i], z.x[i + 1])
                               for i in range(0, len(z.x), 2)]  # deformed 2d grid points
@@ -4422,7 +4409,7 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, grid2d: volmdlr.grid.Grid2D):
         """
-        Convert a point2d from the parametric to the dimensioned frame.
+        Convert a point 2d from the parametric to the dimensioned frame.
 
         """
 
@@ -4451,20 +4438,20 @@ class BSplineSurface3D(Surface3D):
 
         # Parameters
         index_points = {}  # grid point position(j,i), point position in points_2d (or points_3d)
-        p = 0
+        p_index = 0
         for i in range(0, points_x):
             for j in range(0, points_y):
-                index_points.update({(j, i): p})
-                p = p + 1
+                index_points.update({(j, i): p_index})
+                p_index = p_index + 1
 
         # Form function "Finite Elements"
-        def form_function(s, t):
-            N = npy.empty(4)
-            N[0] = (1 - s) * (1 - t) / 4
-            N[1] = (1 + s) * (1 - t) / 4
-            N[2] = (1 + s) * (1 + t) / 4
-            N[3] = (1 - s) * (1 + t) / 4
-            return N
+        def form_function(s_param, t_param):
+            empty_n = npy.empty(4)
+            empty_n[0] = (1 - s_param) * (1 - t_param) / 4
+            empty_n[1] = (1 + s_param) * (1 - t_param) / 4
+            empty_n[2] = (1 + s_param) * (1 + t_param) / 4
+            empty_n[3] = (1 - s_param) * (1 + t_param) / 4
+            return empty_n
 
         finite_elements_points = []  # 2D grid points index that define one element
         for j in range(0, points_y - 1):
@@ -4505,7 +4492,7 @@ class BSplineSurface3D(Surface3D):
         s = 2 * ((x - x0) / (x1 - x0)) - 1
         t = 2 * ((y - y0) / (y2 - y0)) - 1
 
-        N = form_function(s, t)
+        n = form_function(s, t)
         dx = npy.array([displacement[index_points[finite_elements_points[k][0]]][0],
                         displacement[index_points[finite_elements_points[k][1]]][0],
                         displacement[index_points[finite_elements_points[k][2]]][0],
@@ -4515,7 +4502,7 @@ class BSplineSurface3D(Surface3D):
                         displacement[index_points[finite_elements_points[k][2]]][1],
                         displacement[index_points[finite_elements_points[k][3]]][1]])
 
-        return volmdlr.Point2D(point2d.x + npy.transpose(N).dot(dx), point2d.y + npy.transpose(N).dot(dy))
+        return volmdlr.Point2D(point2d.x + npy.transpose(n).dot(dx), point2d.y + npy.transpose(n).dot(dy))
 
     def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, grid2d: volmdlr.grid.Grid2D):
         """
@@ -4530,7 +4517,7 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_with_dimension_to_parametric_frame(self, point2d, grid2d: volmdlr.grid.Grid2D):
         """
-        Convert a point2d from the dimensioned to the parametric frame.
+        Convert a point 2d from the dimensioned to the parametric frame.
 
         """
 
@@ -4545,11 +4532,11 @@ class BSplineSurface3D(Surface3D):
 
         # Parameters
         index_points = {}  # grid point position(j,i), point position in points_2d (or points_3d)
-        p = 0
+        p_index = 0
         for i in range(0, points_x):
             for j in range(0, points_y):
-                index_points.update({(j, i): p})
-                p = p + 1
+                index_points.update({(j, i): p_index})
+                p_index = p_index + 1
 
         finite_elements_points = []  # 2D grid points index that define one element
         for j in range(0, points_y - 1):
@@ -4628,7 +4615,7 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_with_dimension_to_3d(self, point2d, grid2d: volmdlr.grid.Grid2D):
         """
-        Compute the point3d, on a Bspline surface, of a point2d define in the dimensioned frame.
+        Compute the point 3d, on a Bspline surface, of a point 2d define in the dimensioned frame.
 
         """
 
@@ -4754,7 +4741,7 @@ class BSplineSurface3D(Surface3D):
 
     def arc2d_parametric_to_dimension(self, arc2d, grid2d: volmdlr.grid.Grid2D):
         """
-        Convert a arc2d from the parametric to the dimensioned frame.
+        Convert an arc 2d from the parametric to the dimensioned frame.
 
         """
 
@@ -4768,7 +4755,7 @@ class BSplineSurface3D(Surface3D):
 
     def arc3d_to_2d_with_dimension(self, arc3d, grid2d: volmdlr.grid.Grid2D):
         """
-        Compute the arc2d of a arc3d, on a Bspline surface, in the dimensioned frame.
+        Compute the arc 2d of a arc 3d, on a Bspline surface, in the dimensioned frame.
 
         """
 
@@ -4779,22 +4766,21 @@ class BSplineSurface3D(Surface3D):
 
     def arc2d_with_dimension_to_parametric_frame(self, arc2d):
         """
-        Convert a arc2d from the dimensioned to the parametric frame.
+        Convert an arc 2d from the dimensioned to the parametric frame.
 
         """
 
         number_points = math.ceil(arc2d.angle * 7) + 1
-        l = arc2d.length()
+        length = arc2d.length()
 
         points = [self.point2d_with_dimension_to_parametric_frame(arc2d.point_at_abscissa(
-            i * l / (number_points - 1)), self._grids2d) for i in range(number_points)]
+            i * length / (number_points - 1)), self._grids2d) for i in range(number_points)]
 
-        return vme.BSplineCurve2D.from_points_interpolation(
-            points, max(self.degree_u, self.degree_v))
+        return vme.BSplineCurve2D.from_points_interpolation(points, max(self.degree_u, self.degree_v))
 
     def arc2d_with_dimension_to_3d(self, arc2d):
         """
-        Compute the  arc3d, on a Bspline surface, of a arc2d in the dimensioned frame.
+        Compute the arc 3d, on a Bspline surface, of an arc 2d in the dimensioned frame.
 
         """
 
@@ -4806,15 +4792,13 @@ class BSplineSurface3D(Surface3D):
     def contour2d_parametric_to_dimension(self, contour2d: volmdlr.wires.Contour2D,
                                           grid2d: volmdlr.grid.Grid2D):
         """
-        Convert a contour2d from the parametric to the dimensioned frame.
+        Convert a contour 2d from the parametric to the dimensioned frame.
 
         """
 
         primitives2d_dim = []
 
         for primitive2d in contour2d.primitives:
-            # method_name = '{}_parametric_to_dimension'.format(
-            #     primitive2d.__class__.__name__.lower())
             method_name = f'{primitive2d.__class__.__name__.lower()}_parametric_to_dimension'
 
             if hasattr(self, method_name):
@@ -4831,7 +4815,7 @@ class BSplineSurface3D(Surface3D):
     def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D,
                                        grid2d: volmdlr.grid.Grid2D):
         """
-        Compute the Contour2d of a Contour3d, on a Bspline surface, in the dimensioned frame.
+        Compute the Contour 2d of a Contour 3d, on a Bspline surface, in the dimensioned frame.
 
         """
 
@@ -4858,8 +4842,6 @@ class BSplineSurface3D(Surface3D):
 
             else:
                 raise NotImplementedError(
-                    # 'Class {} does not implement {}'.format(self.__class__.__name__,
-                    #                                         method_name))
                     f'Class {self.__class__.__name__} does not implement {method_name}')
 
         # #Avoid to have primitives with start=end
@@ -4893,8 +4875,8 @@ class BSplineSurface3D(Surface3D):
         for i in range(0, len(surface.ctrlpts)):
             control_points.append(volmdlr.Point3D(surface.ctrlpts[i][0], surface.ctrlpts[i][1], surface.ctrlpts[i][2]))
 
-        (u_knots, u_multiplicities) = knots_vector_inv((surface.knotvector_u))
-        (v_knots, v_multiplicities) = knots_vector_inv((surface.knotvector_v))
+        (u_knots, u_multiplicities) = knots_vector_inv(surface.knotvector_u)
+        (v_knots, v_multiplicities) = knots_vector_inv(surface.knotvector_v)
 
         bspline_surface = cls(degree_u=surface.degree_u,
                               degree_v=surface.degree_v,
@@ -5106,9 +5088,9 @@ class BSplineSurface3D(Surface3D):
         return u,v parameters for intersection points for both surfaces
         """
 
-        def f(X):
-            return (self.point2d_to_3d(volmdlr.Point2D(X[0], X[1])) -
-                    other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(X[2], X[3]))).norm()
+        def f(param):
+            return (self.point2d_to_3d(volmdlr.Point2D(param[0], param[1])) -
+                    other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(param[2], param[3]))).norm()
 
         x = npy.linspace(0, 1, 10)
         x_init = []
@@ -5119,7 +5101,7 @@ class BSplineSurface3D(Surface3D):
         u1, v1, u2, v2 = [], [], [], []
         solutions = []
         for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
+            z = least_squares(f, x0=x0, bounds=([0, 1]))
             # print(z.cost)
             if z.fun < 1e-5:
                 solution = z.x
@@ -5133,18 +5115,18 @@ class BSplineSurface3D(Surface3D):
         # uv1 = [[min(u1),max(u1)],[min(v1),max(v1)]]
         # uv2 = [[min(u2),max(u2)],[min(v2),max(v2)]]
 
-        return ((u1, v1), (u2, v2))  # (uv1, uv2)
+        return (u1, v1), (u2, v2)  # (uv1, uv2)
 
     def plane_intersection(self, plane3d):
         """
-        Compute intersection points between a Bspline surface and a plane3d.
+        Compute intersection points between a Bspline surface and a plane 3d.
 
         """
 
-        def f(X):
-            return ((self.surface.evaluate_single((X[0], X[1]))[0]) * plane3d.equation_coefficients()[0] +
-                    (self.surface.evaluate_single((X[0], X[1]))[1]) * plane3d.equation_coefficients()[1] +
-                    (self.surface.evaluate_single((X[0], X[1]))[2]) * plane3d.equation_coefficients()[2] +
+        def f(param):
+            return ((self.surface.evaluate_single((param[0], param[1]))[0]) * plane3d.equation_coefficients()[0] +
+                    (self.surface.evaluate_single((param[0], param[1]))[1]) * plane3d.equation_coefficients()[1] +
+                    (self.surface.evaluate_single((param[0], param[1]))[2]) * plane3d.equation_coefficients()[2] +
                     plane3d.equation_coefficients()[3])
 
         x = npy.linspace(0, 1, 20)
@@ -5156,7 +5138,7 @@ class BSplineSurface3D(Surface3D):
         intersection_points = []
 
         for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
+            z = least_squares(f, x0=x0, bounds=([0, 1]))
             if z.fun < 1e-20:
                 solution = z.x
                 intersection_points.append(volmdlr.Point3D(self.surface.evaluate_single((solution[0], solution[1]))[0],
@@ -5167,7 +5149,7 @@ class BSplineSurface3D(Surface3D):
 
     def error_with_point3d(self, point3d):
         """
-        Compute the error/distance between the Bspline surface and a point3d.
+        Compute the error/distance between the Bspline surface and a point 3d.
 
         """
 
@@ -5177,14 +5159,14 @@ class BSplineSurface3D(Surface3D):
         cost = []
 
         for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
+            z = least_squares(f, x0=x0, bounds=([0, 1]))
             cost.append(z.fun)
 
         return min(cost)
 
     def error_with_edge3d(self, edge3d):
         """
-        Compute the error/distance between the Bspline surface and an edge3d.
+        Compute the error/distance between the Bspline surface and an edge 3d.
 
         it's the mean of the start and end points errors'
         """
@@ -5193,7 +5175,7 @@ class BSplineSurface3D(Surface3D):
 
     def nearest_edges3d(self, contour3d, threshold: float):
         """
-        Compute the nearest edges of a contour3d to a Bspline_surface3d based on a threshold.
+        Compute the nearest edges of a contour 3d to a Bspline_surface3d based on a threshold.
 
         """
 
@@ -5207,11 +5189,9 @@ class BSplineSurface3D(Surface3D):
 
     def edge3d_to_2d_with_dimension(self, edge3d, grid2d: volmdlr.grid.Grid2D):
         """
-        Compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame.
+        Compute the edge 2d of a edge 3d, on a Bspline surface, in the dimensioned frame.
 
         """
-
-        # method_name = '{}_to_2d_with_dimension'.format(edge3d.__class__.__name__.lower())
         method_name = f'{edge3d.__class__.__name__.lower()}_to_2d_with_dimension'
 
         if hasattr(self, method_name):
@@ -5222,13 +5202,11 @@ class BSplineSurface3D(Surface3D):
                 raise NotImplementedError
         else:
             raise NotImplementedError(
-                # 'Class {} does not implement {}'.format(self.__class__.__name__,
-                #                                         method_name))
                 f'Class {self.__class__.__name__} does not implement {method_name}')
 
     def wire3d_to_2d(self, wire3d):
         """
-        Compute the 2d of a wire3d, on a Bspline surface.
+        Compute the 2d of a wire 3d, on a Bspline surface.
 
         """
 
@@ -5238,7 +5216,7 @@ class BSplineSurface3D(Surface3D):
 
     def wire3d_to_2d_with_dimension(self, wire3d):
         """
-        Compute the 2d of a wire3d, on a Bspline surface, in the dimensioned frame.
+        Compute the 2d of a wire 3d, on a Bspline surface, in the dimensioned frame.
 
         """
 
@@ -5252,7 +5230,7 @@ class BSplineSurface3D(Surface3D):
 
         :param u: Parametric coordinate u chosen between 0 and 1
         :type u: float
-        :return: Two splitted surfaces
+        :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
 
@@ -5269,7 +5247,7 @@ class BSplineSurface3D(Surface3D):
 
         :param v: Parametric coordinate v chosen between 0 and 1
         :type v: float
-        :return: Two splitted surfaces
+        :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
 
@@ -5286,7 +5264,7 @@ class BSplineSurface3D(Surface3D):
 
         :param bspline_curve3d: A BSplineCurve3d used for cutting
         :type bspline_curve3d: :class:`vme.BSplineCurve3D`
-        :return: Two splitted surfaces
+        :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
 
@@ -5362,12 +5340,12 @@ class BSplineSurface3D(Surface3D):
 
     def point_belongs(self, point3d):
         """
-        Check if a point3d belongs to the bspline_surface or not.
+        Check if a point 3d belongs to the bspline_surface or not.
 
         """
 
-        def f(x):
-            p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
+        def f(param):
+            p3d = self.point2d_to_3d(volmdlr.Point2D(param[0], param[1]))
             return point3d.point_distance(p3d)
 
         x = npy.linspace(0, 1, 5)
@@ -5377,7 +5355,7 @@ class BSplineSurface3D(Surface3D):
                 x_init.append((xi, yi))
 
         for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
+            z = least_squares(f, x0=x0, bounds=([0, 1]))
             if z.fun < 1e-10:
                 return True
         return False
@@ -5396,9 +5374,9 @@ class BSplineSurface3D(Surface3D):
         # else:
         #     return False
 
-        def f(X):
-            return (self.point2d_to_3d(volmdlr.Point2D(X[0], X[1])) -
-                    other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(X[2], X[3]))).norm()
+        def f(param):
+            return (self.point2d_to_3d(volmdlr.Point2D(param[0], param[1])) -
+                    other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(param[2], param[3]))).norm()
 
         x = npy.linspace(0, 1, 10)
         x_init = []
@@ -5408,7 +5386,7 @@ class BSplineSurface3D(Surface3D):
 
         i = 0
         for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
+            z = least_squares(f, x0=x0, bounds=([0, 1]))
             if z.fun < 1e-5:
                 i += 1
                 if i >= 50:
@@ -5709,7 +5687,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
             return surface.face_from_contours3d(contours, name)
         raise NotImplementedError(
-            'Not implemented :face_from_contours3d in {}'.format(surface))
+            f'Not implemented :face_from_contours3d in {surface}')
 
     def to_step(self, current_id):
         xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
@@ -5761,8 +5739,7 @@ class Face3D(volmdlr.core.Primitive3D):
         outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(
             current_id, surface_id=surface3d_ids[0], surface3d=self.surface3d)
         content += outer_contour_content
-        content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(
-            outer_contour_id + 1, self.name, outer_contour_id)
+        content += f"#{outer_contour_id + 1} = FACE_BOUND('{self.name}',#{outer_contour_id},.T.);\n"
         contours_ids = [outer_contour_id + 1]
         current_id = outer_contour_id + 2
         for inner_contour3d in self.inner_contours3d:
@@ -5771,16 +5748,12 @@ class Face3D(volmdlr.core.Primitive3D):
             # surface_id=surface3d_id)
             content += inner_contour_content
             face_bound_id = inner_contour_id + 1
-            content += "#{} = FACE_BOUND('',#{},.T.);\n".format(
-                face_bound_id, inner_contour_id)
+            content += f"#{face_bound_id} = FACE_BOUND('',#{inner_contour_id},.T.);\n"
             contours_ids.append(face_bound_id)
             current_id = face_bound_id + 1
 
-        content += "#{} = ADVANCED_FACE('{}',({}),#{},.T.);\n".format(
-            current_id,
-            self.name,
-            volmdlr.core.step_ids_to_str(contours_ids),
-            surface3d_ids[0])
+        content += f"#{current_id} = ADVANCED_FACE('{self.name}',({volmdlr.core.step_ids_to_str(contours_ids)})" \
+                   f",#{surface3d_ids[0]},.T.);\n"
         # TODO: create an ADVANCED_FACE for each surface3d_ids ?
         return content, [current_id]
 
@@ -5802,7 +5775,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def plot2d(self, ax=None, color='k', alpha=1):
         if ax is None:
             _, ax = plt.subplots()
-        self.surface2d.plot(ax=ax)
+        self.surface2d.plot(ax=ax, color=color, alpha=alpha)
 
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
@@ -5982,10 +5955,10 @@ class Face3D(volmdlr.core.Primitive3D):
 
         """
 
-        i, p = None, None
+        i_index, p_index = None, None
         lines, line_surface, lines_tags = [], [], []
         point_account, line_account, line_loop_account = 0, 0, 1
-        for c, contour in enumerate(list(chain(*[[self.outer_contour3d], self.inner_contours3d]))):
+        for c_index, contour in enumerate(list(chain(*[[self.outer_contour3d], self.inner_contours3d]))):
 
             if isinstance(contour, volmdlr.wires.Circle2D):
                 # point=[contour.radius, contour.center.y, 0]
@@ -6016,25 +5989,25 @@ class Face3D(volmdlr.core.Primitive3D):
             elif isinstance(contour, (volmdlr.wires.Contour3D, volmdlr.wires.ClosedPolygon3D)):
                 if not isinstance(contour, volmdlr.wires.ClosedPolygon3D):
                     contour = contour.to_polygon(1)
-                for i, point in enumerate(contour.points):
-                    lines.append(point.get_geo_lines(tag=point_account + i + 1,
+                for i_index, point in enumerate(contour.points):
+                    lines.append(point.get_geo_lines(tag=point_account + i_index + 1,
                                                      point_mesh_size=None))
 
-                for p, primitive in enumerate(contour.primitives):
-                    if p != len(contour.primitives) - 1:
-                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
-                                                             start_point_tag=point_account + p + 1,
-                                                             end_point_tag=point_account + p + 2))
+                for p_index, primitive in enumerate(contour.primitives):
+                    if p_index != len(contour.primitives) - 1:
+                        lines.append(primitive.get_geo_lines(tag=line_account + p_index + 1,
+                                                             start_point_tag=point_account + p_index + 1,
+                                                             end_point_tag=point_account + p_index + 2))
                     else:
-                        lines.append(primitive.get_geo_lines(tag=line_account + p + 1,
-                                                             start_point_tag=point_account + p + 1,
+                        lines.append(primitive.get_geo_lines(tag=line_account + p_index + 1,
+                                                             start_point_tag=point_account + p_index + 1,
                                                              end_point_tag=point_account + 1))
-                    lines_tags.append(line_account + p + 1)
+                    lines_tags.append(line_account + p_index + 1)
 
-                lines.append('Line Loop(' + str(c + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
+                lines.append('Line Loop(' + str(c_index + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
                 line_surface.append(line_loop_account)
-                point_account = point_account + i + 1
-                line_account, line_loop_account = line_account + p + 1, line_loop_account + 1
+                point_account = point_account + i_index + 1
+                line_account, line_loop_account = line_account + p_index + 1, line_loop_account + 1
                 lines_tags = []
 
         lines.append('Plane Surface(' + str(1) + ') = {' + str(line_surface)[1:-1] + '};')
@@ -6065,7 +6038,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def edge3d_inside(self, edge3d):
         """
-        Returns True if edge3d is coplanar to the face.
+        Returns True if edge 3d is coplanar to the face.
         """
         method_name = f'{edge3d.__class__.__name__.lower()[:-2]}_inside'
         if hasattr(self, method_name):
@@ -6634,8 +6607,6 @@ class PlaneFace3D(Face3D):
 
     def __init__(self, surface3d: Plane3D, surface2d: Surface2D,
                  name: str = ''):
-        # if not isinstance(outer_contour2d, volmdlr.Contour2D):
-        #     raise ValueError('Not a contour2D: {}'.format(outer_contour2d))
         self._bbox = None
         Face3D.__init__(self,
                         surface3d=surface3d,
@@ -6682,11 +6653,11 @@ class PlaneFace3D(Face3D):
                 return projection_distance, projected_pt
             return projection_distance
 
-        point_2D = point.to_2d(self.surface3d.frame.origin, self.surface3d.frame.u,
+        point_2d = point.to_2d(self.surface3d.frame.origin, self.surface3d.frame.u,
                                self.surface3d.frame.v)
 
-        polygon2D = self.surface2d.outer_contour.to_polygon(angle_resolution=10)
-        border_distance, other_point = polygon2D.point_border_distance(point_2D, return_other_point=True)
+        polygon2d = self.surface2d.outer_contour.to_polygon(angle_resolution=10)
+        border_distance, other_point = polygon2d.point_border_distance(point_2d, return_other_point=True)
 
         other_point = self.surface3d.point2d_to_3d(volmdlr.Point2D(*other_point))
 
@@ -6903,11 +6874,11 @@ class PlaneFace3D(Face3D):
 
     def cut_by_coincident_face(self, face):
         """
-        Cuts face1 with another coincident face2
+        Cuts face1 with another coincident face2.
 
-        :param face: a face3d
+        :param face: a face 3d.
         :type face: Face3D
-        :return: a list of faces3d
+        :return: a list of faces 3d.
         :rtype: List[Face3D]
         """
 
@@ -6946,12 +6917,12 @@ class PlaneFace3D(Face3D):
         c_inners_1 = self.surface2d.inner_contours
         c_inners_2 = [self.surface3d.contour3d_to_2d(inner) for inner in face.inner_contours3d]
         inside = set()
-        for c1 in c_inners_1:
-            for c2 in c_inners_2:
-                if c1.is_superposing(c2):
+        for inner_contour1 in c_inners_1:
+            for inner_contour2 in c_inners_2:
+                if inner_contour1.is_superposing(inner_contour2):
                     inside.add(False)
                 else:
-                    inside.add(c2.is_inside(c1))
+                    inside.add(inner_contour2.is_inside(inner_contour1))
         return inside
 
     @staticmethod
@@ -7169,7 +7140,7 @@ class Triangle3D(PlaneFace3D):
 
     def height(self):
         # Formula explained here: https://www.triangle-calculator.com/?what=vc
-        # Basis = vector point1 to point2d
+        # Basis = vector point1 to point 2d
         return 2 * self.area() / self.point1.point_distance(self.point2)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -7323,9 +7294,9 @@ class Triangle3D(PlaneFace3D):
 
         """
 
-        sub_triangles, done = [self.points], False
+        sub_triangles = [self.points]
 
-        while not done:
+        while True:
             triangles = []
             for subtri in sub_triangles:
                 lengths = [subtri[0].point_distance(subtri[1]),
@@ -7343,7 +7314,6 @@ class Triangle3D(PlaneFace3D):
                     triangles.append(subtri)
 
             if len(sub_triangles) == len(triangles):
-                done = True
                 break
 
             sub_triangles = triangles
@@ -7380,7 +7350,7 @@ class CylindricalFace3D(Face3D):
 
     :Example:
 
-        contours2d is rectangular and will create a classic cylinder with x= 2*pi*radius, y=h
+        contours 2d is rectangular and will create a classic cylinder with x= 2*pi*radius, y=h
     """
     min_x_density = 5
     min_y_density = 1
@@ -7417,7 +7387,7 @@ class CylindricalFace3D(Face3D):
 
     def get_bounding_box(self):
         """
-        Computes the bounding box using the contour3d. true in this case of cylindrical face (not general).
+        Computes the bounding box using the contour 3d. true in this case of cylindrical face (not general).
         """
         return self.outer_contour3d.bounding_box
 
@@ -7820,7 +7790,7 @@ class ToroidalFace3D(Face3D):
 
     :Example:
 
-    contours2d is rectangular and will create a classic tore with x:2*pi, y:2*pi
+    contours 2d is rectangular and will create a classic tore with x:2*pi, y:2*pi
     x is for exterior, and y for the circle to revolute
     points = [pi, 2*pi] for an half tore
     """
@@ -7966,27 +7936,24 @@ class ConicalFace3D(Face3D):
     def get_bounding_box(self):
         theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
 
-        xp = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-              + volmdlr.X3D.dot(
-                    self.surface3d.frame.v) * self.surface3d.frame.v)
+        x_vector = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
+                    + volmdlr.X3D.dot(self.surface3d.frame.v) * self.surface3d.frame.v)
         try:
-            xp.normalize()
+            x_vector.normalize()
         except ZeroDivisionError:
             pass
-        yp = (volmdlr.Y3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-              + volmdlr.Y3D.dot(
-                    self.surface3d.frame.v) * self.surface3d.frame.v)
+        y_vector = (volmdlr.Y3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
+                    + volmdlr.Y3D.dot(self.surface3d.frame.v) * self.surface3d.frame.v)
 
         try:
-            yp.normalize()
+            y_vector.normalize()
         except ZeroDivisionError:
             pass
 
-        zp = (volmdlr.Z3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-              + volmdlr.Z3D.dot(
-                    self.surface3d.frame.v) * self.surface3d.frame.v)
+        z_vector = (volmdlr.Z3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
+                    + volmdlr.Z3D.dot(self.surface3d.frame.v) * self.surface3d.frame.v)
         try:
-            zp.normalize()
+            z_vector.normalize()
         except ZeroDivisionError:
             pass
 
@@ -7995,18 +7962,18 @@ class ConicalFace3D(Face3D):
         lower_radius = math.tan(self.surface3d.semi_angle) * zmin
         upper_radius = math.tan(self.surface3d.semi_angle) * zmax
 
-        points = [lower_center - lower_radius * xp,
-                  lower_center + lower_radius * xp,
-                  lower_center - lower_radius * yp,
-                  lower_center + lower_radius * yp,
-                  lower_center - lower_radius * zp,
-                  lower_center + lower_radius * zp,
-                  upper_center - upper_radius * xp,
-                  upper_center + upper_radius * xp,
-                  upper_center - upper_radius * yp,
-                  upper_center + upper_radius * yp,
-                  upper_center - upper_radius * zp,
-                  upper_center + upper_radius * zp,
+        points = [lower_center - lower_radius * x_vector,
+                  lower_center + lower_radius * x_vector,
+                  lower_center - lower_radius * y_vector,
+                  lower_center + lower_radius * y_vector,
+                  lower_center - lower_radius * z_vector,
+                  lower_center + lower_radius * z_vector,
+                  upper_center - upper_radius * x_vector,
+                  upper_center + upper_radius * x_vector,
+                  upper_center - upper_radius * y_vector,
+                  upper_center + upper_radius * y_vector,
+                  upper_center - upper_radius * z_vector,
+                  upper_center + upper_radius * z_vector,
                   ]
 
         return volmdlr.core.BoundingBox.from_points(points)
@@ -8382,7 +8349,7 @@ class BSplineFace3D(Face3D):
     def pair_with(self, other_bspline_face3d):
         """
         Finds out how the uv parametric frames are located compared to
-        each other and also how grid3d can be defined respected to these
+        each other and also how grid 3d can be defined respected to these
         directions.
 
         :param other_bspline_face3d: BSplineFace3D
@@ -8429,22 +8396,22 @@ class BSplineFace3D(Face3D):
         v1 = nearest_start1[1]
         v2 = nearest_start2[1]
 
-        if (v1 == 0 and v2 == 0):
+        if v1 == 0 and v2 == 0:
             corresponding_directions.append(('+v', '-v'))
             grid2d_direction = [['+x', '-y'], ['+x', '+y']]
 
-        elif (v1 == 1 and v2 == 1):
+        elif v1 == 1 and v2 == 1:
             if corresponding_directions == [('+u', '-u')]:
                 grid2d_direction = [['+x', '+y'], ['-x', '-y']]
             else:
                 grid2d_direction = [['+x', '+y'], ['+x', '-y']]
             corresponding_directions.append(('+v', '-v'))
 
-        elif (v1 == 1 and v2 == 0):
+        elif v1 == 1 and v2 == 0:
             corresponding_directions.append(('+v', '+v'))
             grid2d_direction = [['+x', '+y'], ['+x', '+y']]
 
-        elif (v1 == 0 and v2 == 1):
+        elif v1 == 0 and v2 == 1:
             corresponding_directions.append(('+v', '+v'))
             grid2d_direction = [['+x', '-y'], ['+x', '-y']]
 
@@ -8466,19 +8433,19 @@ class BSplineFace3D(Face3D):
         u1 = nearest_start1[0]
         u2 = nearest_start2[0]
 
-        if (u1 == 0 and u2 == 0):
+        if u1 == 0 and u2 == 0:
             corresponding_directions.append(('+u', '-v'))
             grid2d_direction = [['-y', '-x'], ['-y', '+x']]
 
-        elif (u1 == 1 and u2 == 1):
+        elif u1 == 1 and u2 == 1:
             corresponding_directions.append(('+u', '-v'))
             grid2d_direction = [['+y', '+x'], ['+y', '-x']]
 
-        elif (u1 == 0 and u2 == 1):
+        elif u1 == 0 and u2 == 1:
             corresponding_directions.append(('+u', '+u'))
             grid2d_direction = [['+y', '-x'], ['+y', '-x']]
 
-        elif (u1 == 1 and u2 == 0):
+        elif u1 == 1 and u2 == 0:
             corresponding_directions.append(('+u', '+u'))
             grid2d_direction = [['+y', '+x'], ['+y', '+x']]
 
@@ -8500,19 +8467,19 @@ class BSplineFace3D(Face3D):
         v1 = nearest_start1[1]
         u2 = nearest_start2[0]
 
-        if (v1 == 1 and u2 == 0):
+        if v1 == 1 and u2 == 0:
             corresponding_directions.append(('+v', '+u'))
             grid2d_direction = [['+x', '+y'], ['+y', '+x']]
 
-        elif (v1 == 0 and u2 == 1):
+        elif v1 == 0 and u2 == 1:
             corresponding_directions.append(('+v', '+u'))
             grid2d_direction = [['-x', '-y'], ['-y', '-x']]
 
-        elif (v1 == 1 and u2 == 1):
+        elif v1 == 1 and u2 == 1:
             corresponding_directions.append(('+v', '-u'))
             grid2d_direction = [['+x', '+y'], ['-y', '-x']]
 
-        elif (v1 == 0 and u2 == 0):
+        elif v1 == 0 and u2 == 0:
             corresponding_directions.append(('+v', '-u'))
             grid2d_direction = [['-x', '-y'], ['-y', '+x']]
 
@@ -8534,19 +8501,19 @@ class BSplineFace3D(Face3D):
         u1 = nearest_start1[0]
         v2 = nearest_start2[1]
 
-        if (u1 == 1 and v2 == 0):
+        if u1 == 1 and v2 == 0:
             corresponding_directions.append(('+u', '+v'))
             grid2d_direction = [['+y', '+x'], ['+x', '+y']]
 
-        elif (u1 == 0 and v2 == 1):
+        elif u1 == 0 and v2 == 1:
             corresponding_directions.append(('+u', '+v'))
             grid2d_direction = [['-y', '-x'], ['+x', '-y']]
 
-        elif (u1 == 0 and v2 == 0):
+        elif u1 == 0 and v2 == 0:
             corresponding_directions.append(('+u', '-v'))
             grid2d_direction = [['+y', '-x'], ['+x', '+y']]
 
-        elif (u1 == 1 and v2 == 1):
+        elif u1 == 1 and v2 == 1:
             if corresponding_directions == [('+v', '-u')]:
                 grid2d_direction = [['+y', '+x'], ['-x', '-y']]
             else:
@@ -8810,24 +8777,15 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             current_id = max(face_sub_ids) + 1
 
         shell_id = current_id
-        step_content += "#{} = {}('{}',({}));\n".format(current_id,
-                                                        self.STEP_FUNCTION,
-                                                        self.name,
-                                                        volmdlr.core.step_ids_to_str(
-                                                            face_ids))
+        step_content += f"#{current_id} = {self.STEP_FUNCTION}('{self.name}'," \
+                        f"({volmdlr.core.step_ids_to_str(face_ids)}));\n"
         manifold_id = shell_id + 1
-        # step_content += "#{} = MANIFOLD_SOLID_BREP('{}',#{});\n".format(
-        #     manifold_id, self.name, shell_id)
-        step_content += "#{} = SHELL_BASED_SURFACE_MODEL('{}',(#{}));\n".format(
-            manifold_id, self.name, shell_id)
+        step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
 
         frame_content, frame_id = volmdlr.OXYZ.to_step(manifold_id + 1)
         step_content += frame_content
         brep_id = frame_id + 1
-        # step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
-        #     brep_id, frame_id, manifold_id)
-        step_content += "#{} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
-            brep_id, frame_id, manifold_id)
+        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id}),#7);\n"
 
         return step_content, brep_id
 
@@ -8845,35 +8803,27 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             current_id = max(face_sub_ids) + 1
 
         shell_id = current_id
-        step_content += "#{} = {}('{}',({}));\n".format(current_id,
-                                                        self.STEP_FUNCTION,
-                                                        self.name,
-                                                        volmdlr.core.step_ids_to_str(
-                                                            face_ids))
+        step_content += f"#{current_id} = {self.STEP_FUNCTION}('{self.name}'," \
+                        f"({volmdlr.core.step_ids_to_str(face_ids)}));\n"
         manifold_id = shell_id + 1
-        # step_content += "#{} = MANIFOLD_SOLID_BREP('{}',#{});\n".format(
-        #     manifold_id, self.name, shell_id)
-        step_content += "#{} = SHELL_BASED_SURFACE_MODEL('{}',(#{}));\n".format(
-            manifold_id, self.name, shell_id)
+        step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
 
         frame_content, frame_id = volmdlr.OXYZ.to_step(manifold_id + 1)
         step_content += frame_content
         brep_id = frame_id + 1
-        # step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
-        #     brep_id, frame_id, manifold_id)
-        step_content += "#{} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
-            brep_id, frame_id, manifold_id)
+        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id}),#7);\n"
 
         return step_content, brep_id, face_ids
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        OpenShell3D / ClosedShell3D rotation
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated OpenShell3D
+        OpenShell3D / ClosedShell3D rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated OpenShell3D.
         """
         new_faces = [face.rotation(center, axis, angle) for face
                      in self.faces]
@@ -9920,7 +9870,7 @@ class ClosedShell3D(OpenShell3D):
             for face in list_valid_coincident_faces:
                 union_faces.remove(face)
             count += 1
-            if (count >= len(self.faces) and not list_valid_coincident_faces):
+            if count >= len(self.faces) and not list_valid_coincident_faces:
                 finished = True
 
         list_new_faces = self.clean_faces(union_faces, list_new_faces)
