@@ -443,10 +443,16 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def __init__(self, primitives: List[volmdlr.core.Primitive2D],
                  name: str = ''):
         self._bounding_rectangle = None
+        self._length = None
         volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
 
     def __hash__(self):
         return hash(('wire2d', tuple(self.primitives)))
+
+    def length(self):
+        if not self._length:
+            self._length = WireMixin.length(self)
+        return self._length
 
     def to_3d(self, plane_origin, x, y):
         """
@@ -1625,6 +1631,8 @@ class Contour2D(ContourMixin, Wire2D):
         return hash(tuple(self.primitives))
 
     def __eq__(self, other_):
+        if id(self) == id(other_):
+            return True
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
         if len(self.primitives) != len(other_.primitives):
@@ -3732,12 +3740,12 @@ class Triangle2D(ClosedPolygon2D):
         return self.incircle_radius() / self.length()
 
     def aspect_ratio(self):
-        a = self.point1.point_distance(self.point2)
-        b = self.point1.point_distance(self.point3)
-        c = self.point2.point_distance(self.point3)
-        s = 0.5 * (a + b + c)
+        side_1 = self.point1.point_distance(self.point2)
+        side_2 = self.point1.point_distance(self.point3)
+        side_3 = self.point2.point_distance(self.point3)
+        s = 0.5 * (side_1 + side_2 + side_3)
         try:
-            return 0.125 * a * b * c / (s - a) / (s - b) / (s - c)
+            return 0.125 * side_1 * side_2 * side_3 / (s - side_1) / (s - side_2) / (s - side_3)
         except ZeroDivisionError:
             return 1000000.
 
