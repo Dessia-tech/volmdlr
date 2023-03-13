@@ -1023,6 +1023,12 @@ class ContourMixin(WireMixin):
     """
 
     def is_ordered(self, tol=1e-6):
+        """
+        Verifies if a contour is ordered (primitives following each other).
+
+        :param tol: tolerance to be considered.
+        :return: True if ordered, False if not.
+        """
         for prim1, prim2 in zip(
                 self.primitives, self.primitives[1:] + [self.primitives[0]]):
             if not prim1.end.is_close(prim2.start, tol):
@@ -1096,6 +1102,10 @@ class ContourMixin(WireMixin):
         return new_primitives
 
     def order_contour(self):
+        """
+        Verifies if the contours'primitives are ordered (one after the other). If not, it will order it.
+
+        """
         if self.is_ordered() or len(self.primitives) < 2:
             return self
         new_primitives = self.ordering_contour()
