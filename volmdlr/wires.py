@@ -135,12 +135,8 @@ class WireMixin:
         """
 
         primitives = []
-
-        ip1 = self.primitive_to_index(primitive1)
-        try:
-            ip2 = self.primitive_to_index(primitive2)
-        except KeyError:
-            print(True)
+        ip1 = self.primitives.index(primitive1)
+        ip2 = self.primitives.index(primitive2)
 
         if ip1 < ip2:
             pass
@@ -165,13 +161,13 @@ class WireMixin:
                 prim = primitive1.split(point1)[1]
                 if prim:
                     primitives.append(prim)
-                primitives.extend(self.primitives[self.primitive_to_index(
-                    primitive1) + 1:self.primitive_to_index(primitive2)])
+                primitives.extend(self.primitives[self.primitives.index(
+                    primitive1) + 1:self.primitives.index(primitive2)])
                 prim = primitive2.split(point2)[0]
                 if prim:
                     primitives.append(prim)
         else:
-            primitives.extend(self.primitives[0:self.primitive_to_index(primitive1)])
+            primitives.extend(self.primitives[0:self.primitives.index(primitive1)])
             if ip1 == ip2:
                 prim = primitive1.split(point1)
                 if prim[0]:
@@ -187,7 +183,7 @@ class WireMixin:
                 prim = primitive2.split(point2)[1]
                 if prim:
                     primitives.append(prim)
-            primitives.extend(self.primitives[self.primitive_to_index(primitive2) + 1::])
+            primitives.extend(self.primitives[self.primitives.index(primitive2) + 1::])
 
         return primitives
 
