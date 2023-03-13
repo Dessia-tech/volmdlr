@@ -1095,6 +1095,14 @@ class ContourMixin(WireMixin):
                     # raise NotImplementedError
         return new_primitives
 
+    def order_contour(self):
+        if self.is_ordered() or len(self.primitives) < 2:
+            return self
+        new_primitives = self.ordering_contour()
+        self.primitives = new_primitives
+
+        return self
+
     @staticmethod
     def touching_edges_pairs(edges):  # TO DO: move this to edges?
         touching_primitives = []
@@ -1816,14 +1824,6 @@ class Contour2D(ContourMixin, Wire2D):
                 return p
         print(True)
         raise ValueError('Could not find a point inside')
-
-    def order_contour(self):
-        if self.is_ordered() or len(self.primitives) < 2:
-            return self
-        new_primitives = self.ordering_contour()
-        self.primitives = new_primitives
-
-        return self
 
     @classmethod
     def extract_contours(cls, contour, point1: volmdlr.Point3D,
@@ -4630,41 +4630,6 @@ class Contour3D(ContourMixin, Wire3D):
 
         for edge in self.primitives:
             edge.translation_inplace(offset)
-
-    def order_contour(self):
-        # new_primitives = []
-        # points = self.ordering_contour()
-        # for p1, p2 in points:
-        #     new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
-        # self.primitives = new_primitives
-
-        initial_points = []
-        for primitive in self.primitives:
-            initial_points.append((primitive.start, primitive.end))
-
-        new_primitives = []
-        if self.is_ordered():
-            return self
-        points = self.ordering_contour()
-        for p1, p2 in points:
-            try:
-                index = initial_points.index((p1, p2))
-            except ValueError:
-                index = initial_points.index((p2, p1))
-
-            if isinstance(self.primitives[index], volmdlr.edges.LineSegment3D):
-                new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
-            elif isinstance(self.primitives[index], volmdlr.edges.Arc3D):
-                new_primitives.append(volmdlr.edges.Arc3D(p1, self.primitives[index].interior, p2))
-            elif isinstance(self.primitives[index], volmdlr.edges.BSplineCurve3D):
-                if (self.primitives[index].start.is_close(p1) and self.primitives[index].end.is_close(p2)):
-                    new_primitives.append(self.primitives[index])
-                else:
-                    new_primitives.append(self.primitives[index].reverse())
-
-        self.primitives = new_primitives
-
-        return self
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
