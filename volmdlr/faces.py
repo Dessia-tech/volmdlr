@@ -3769,7 +3769,7 @@ class BSplineSurface3D(Surface3D):
             derivatives = self.derivatives(x[0], x[1], 1)
             r = derivatives[0][0] - point3d
             f_value = r.norm() + 1e-32
-            jacobian = npy.array([r.dot(derivatives[1][0]) / f, r.dot(derivatives[0][1]) / f])
+            jacobian = npy.array([r.dot(derivatives[1][0]) / f_value, r.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
 
         min_bound_x, max_bound_x = self.surface.domain[0]
