@@ -60,7 +60,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-boolean-expressions': 3,
                      'too-many-lines': 3,
                      'redundant-keyword-arg': 3,
-                     'modified-iterating-list': 2,
+                     'modified-iterating-list': 0,
                      'consider-using-with': 1,
                      'unnecessary-dunder-call': 2,
                      'unnecessary-lambda': 2,

@@ -1491,16 +1491,16 @@ class ContourMixin(WireMixin):
         # TODO: rewrite this awfull code!
         points = []
         primitives = self.primitives
-        for i in range(0, len(primitives)):
+        for prim in primitives:
             pts = []
             for point in list_p:  # due to errors
-                if primitives[i].point_belongs(point):
+                if prim.point_belongs(point):
                     pts.append(point)
             if len(pts) == 1:
                 points.append(pts[0])
                 break
-            elif len(pts) > 1:
-                points.append(primitives[i].start.nearest_point(pts))
+            if len(pts) > 1:
+                points.append(prim.start.nearest_point(pts))
                 break
 
         for i in range(len(primitives) - 1, -1, -1):
@@ -2128,7 +2128,6 @@ class Contour2D(ContourMixin, Wire2D):
         return contour1, contour2
 
     def divide(self, contours, inside):
-        # TODO: This method has a modified-iterating-list pylint error to be fixed
         new_base_contours = [self]
         finished = False
         counter = 0
@@ -2152,7 +2151,7 @@ class Contour2D(ContourMixin, Wire2D):
                     contour1, contour2 = base_contour.get_divided_contours(
                         cutting_points[0], cutting_points[1], cutting_contour, inside)
 
-                    new_base_contours.remove(base_contour)
+                    new_base_contours_ = []
                     for cntr in [contour1, contour2]:
                         all_divided_contour = True
                         for cut_contour in list_cutting_contours:
@@ -2170,9 +2169,13 @@ class Contour2D(ContourMixin, Wire2D):
                         if all_divided_contour and cntr.area() != 0.0:
                             list_valid_contours.append(cntr)
                         else:
-                            new_base_contours.append(cntr)
+                            new_base_contours_.append(cntr)
                     contours.remove(cutting_contour)
                     break
+            else:
+                continue
+            new_base_contours.remove(base_contour)
+            new_base_contours.extend(new_base_contours_)
             if len(contours) == 0:
                 finished = True
                 continue
@@ -2988,6 +2991,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 unused_points.append(point)
 
         a_line_was_divided_in_the_iteration = True
+        line = None
+        divided_line = None
         while a_line_was_divided_in_the_iteration:
             a_line_was_divided_in_the_iteration = False
             for line in hull_concave_edges:
@@ -2998,21 +3003,15 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 if len(divided_line) > 0:
                     a_line_was_divided_in_the_iteration = True
                     unused_points.remove(divided_line[0].end)
-                    hull_concave_edges.remove(line)
-                    hull_concave_edges.extend(divided_line)
                     break
+            else:
+                continue
+            hull_concave_edges.remove(line)
+            hull_concave_edges.extend(divided_line)
 
             hull_concave_edges.sort(key=lambda x: x.length(), reverse=True)
 
-        # line  = hull_concave_edges[0]
-        # print('first line length :', line.length())
-        # nearby_points = get_nearby_points(line, unused_points, scale_factor)
-        # print('points next the first line in the end: ', nearby_points)
-        # divided_line = get_divided_line(line, nearby_points, hull_concave_edges, concavity)
-        # print('len divided line :', len(divided_line))
         polygon_points = [(line.start, line.end) for line in hull_concave_edges]
-        # polygon_points = [(line.start, line.end) for line in hull_concave_edges
-        #                   if line.length() != 0]
 
         points = [polygon_points[0][0], polygon_points[0][1]]
         polygon_points.remove((polygon_points[0][0], polygon_points[0][1]))

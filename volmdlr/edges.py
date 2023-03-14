@@ -4201,7 +4201,7 @@ class LineSegment3D(LineSegment):
         v.normalize()
         w = u.cross(v)
         length_1 = self.length()
-        lenght_2 = extrusion_vector.norm()
+        length_2 = extrusion_vector.norm()
         # outer_contour = Polygon2D([O2D, Point2D((l1, 0.)),
         #                            Point2D((l1, l2)), Point2D((0., l2))])
         plane = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.start, u, v, w))

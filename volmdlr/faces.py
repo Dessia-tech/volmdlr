@@ -19,7 +19,7 @@ from geomdl.fitting import approximate_surface, interpolate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 from trimesh import Trimesh
 
-from dessia_common.core import DessiaObject  # isort: skip
+from dessia_common.core import DessiaObject
 
 import volmdlr.bspline_compiled
 import volmdlr.core
@@ -436,7 +436,6 @@ class Surface2D(volmdlr.core.Primitive2D):
             else:
                 raise NotImplementedError(
                     'Non convex contour not supported yet')
-
 
         return all_contours
 
@@ -4354,24 +4353,25 @@ class BSplineSurface3D(Surface3D):
                 points_3d[index_points[point[0]]], points_3d[index_points[point[1]]])) ** 2)
 
         # System of nonlinear equations
-        def non_linear_equations(x):
+        def non_linear_equations(xparam):
             vector_f = npy.empty(len(equation_points) + 2)
+            idx = 0
             for idx, point_ in enumerate(equation_points):
-                vector_f[i] = abs((x[index_x[point_[0]]] ** 2 +
-                                   x[index_x[point_[1]]] ** 2 +
-                                   x[index_y[point_[0]]] ** 2 +
-                                   x[index_y[point_[1]]] ** 2 -
-                                   2 *
-                                   x[index_x[point_[0]]] *
-                                   x[index_x[point_[1]]] -
-                                   2 *
-                                   x[index_y[point_[0]]] *
-                                   x[index_y[point_[1]]] -
-                                   geodesic_distances[idx]) /
-                                  geodesic_distances[idx])
+                vector_f[idx] = abs((xparam[index_x[point_[0]]] ** 2 +
+                                     xparam[index_x[point_[1]]] ** 2 +
+                                     xparam[index_y[point_[0]]] ** 2 +
+                                     xparam[index_y[point_[1]]] ** 2 -
+                                     2 *
+                                     xparam[index_x[point_[0]]] *
+                                     xparam[index_x[point_[1]]] -
+                                     2 *
+                                     xparam[index_y[point_[0]]] *
+                                     xparam[index_y[point_[1]]] -
+                                     geodesic_distances[idx]) /
+                                    geodesic_distances[idx])
 
-            vector_f[idx + 1] = x[0] * 1000
-            vector_f[idx + 2] = x[1] * 1000
+            vector_f[idx + 1] = xparam[0] * 1000
+            vector_f[idx + 2] = xparam[1] * 1000
 
             return vector_f
 
@@ -4464,7 +4464,7 @@ class BSplineSurface3D(Surface3D):
                                                points_2d[index_points[point[1]]],
                                                points_2d[index_points[point[2]]],
                                                points_2d[index_points[point[3]]])))
-
+        k = 0
         for k, point in enumerate(finite_elements_points):
             if (volmdlr.wires.Contour2D(finite_elements[k].primitives).point_belongs(
                     point2d)  # finite_elements[k].point_belongs(point2d)
@@ -4474,7 +4474,7 @@ class BSplineSurface3D(Surface3D):
                         and point2d.y == points_2d[index_points[point[0]]][1])
                     or ((points_2d[index_points[point[1]]][1] < point2d.y <
                          points_2d[index_points[point[2]]][1])
-                        and point2d.x == points_2d[index_points[finite_elements_points[k][1]]][0])
+                        and point2d.x == points_2d[index_points[point[1]]][0])
                     or ((points_2d[index_points[point[3]]][0] < point2d.x <
                          points_2d[index_points[point[2]]][0])
                         and point2d.y == points_2d[index_points[point[1]]][1])
@@ -4557,7 +4557,7 @@ class BSplineSurface3D(Surface3D):
                                                points_2d[index_points[point[1]]],
                                                points_2d[index_points[point[2]]],
                                                points_2d[index_points[point[3]]])))
-
+        k = 0
         for k, point in enumerate(finite_elements_points):
             if (finite_elements[k].point_belongs(point2d)
                     or ((points_2d_deformed[index_points[point[0]]][0] < point2d.x <
@@ -5423,10 +5423,10 @@ class BSplineSurface3D(Surface3D):
             contour2 = other_bspline_face3d.outer_contour3d
 
             distances = []
-            for p1 in contour1.primitives:
+            for prim_1 in contour1.primitives:
                 dis = []
                 for p2 in contour2.primitives:
-                    point1 = (p1.start + p1.end) / 2
+                    point1 = (prim_1.start + prim_1.end) / 2
                     point2 = (p2.start + p2.end) / 2
                     dis.append(point1.point_distance(point2))
                 distances.append(dis)
@@ -5441,8 +5441,8 @@ class BSplineSurface3D(Surface3D):
                 surfaces = bspline.split_surface_with_bspline_curve(curves[i])
 
                 errors = []
-                for s in surfaces:
-                    errors.append(s.error_with_point3d(bsplines[i].point2d_to_3d(center[i])))
+                for surface in surfaces:
+                    errors.append(surface.error_with_point3d(bsplines[i].point2d_to_3d(center[i])))
 
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
@@ -5474,7 +5474,7 @@ class BSplineSurface3D(Surface3D):
             bsplines[0].degree_u, bsplines[1].degree_u), max(
             bsplines[0].degree_v, bsplines[1].degree_v)
 
-        merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(
+        merged_surface = BSplineSurface3D.points_fitting_into_bspline_surface(
             points3d, size_u, size_v, degree_u, degree_v)
 
         return merged_surface
