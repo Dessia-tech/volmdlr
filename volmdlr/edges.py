@@ -2287,22 +2287,22 @@ class Arc2D(Arc):
 
         :return: asc's center.
         """
-        xi, yi = self.interior.x, self.interior.y
-        xe, ye = self.end.x, self.end.y
-        xs, ys = self.start.x, self.start.y
+        x_interior, y_interior = self.interior.x, self.interior.y
+        x_end, y_end = self.end.x, self.end.y
+        x_start, y_start = self.start.x, self.start.y
         try:
-            matrix_a = volmdlr.Matrix22(2 * (xs - xi), 2 * (ys - yi),
-                                        2 * (xs - xe), 2 * (ys - ye))
-            b_vector = - volmdlr.Vector2D(xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
-                                          xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2)
+            matrix_a = volmdlr.Matrix22(2 * (x_start - x_interior), 2 * (y_start - y_interior),
+                                        2 * (x_start - x_end), 2 * (y_start - y_end))
+            b_vector = - volmdlr.Vector2D(x_interior ** 2 + y_interior ** 2 - x_start ** 2 - y_start ** 2,
+                                          x_end ** 2 + y_end ** 2 - x_start ** 2 - y_start ** 2)
             inv_matrix_a = matrix_a.inverse()
             x = inv_matrix_a.vector_multiplication(b_vector)
             center = volmdlr.Point2D(x.x, x.y)
         except ValueError:
-            matrix_a = npy.array([[2 * (xs - xi), 2 * (ys - yi)],
-                                  [2 * (xs - xe), 2 * (ys - ye)]])
-            b_vector = - npy.array([xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
-                                    xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2])
+            matrix_a = npy.array([[2 * (x_start - x_interior), 2 * (y_start - y_interior)],
+                                  [2 * (x_start - x_end), 2 * (y_start - y_end)]])
+            b_vector = - npy.array([x_interior ** 2 + y_interior ** 2 - x_start ** 2 - y_start ** 2,
+                                    x_end ** 2 + y_end ** 2 - x_start ** 2 - y_start ** 2])
             center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
         return center
 
@@ -3199,7 +3199,7 @@ class ArcEllipse2D(Edge):
         center_new = frame.global_to_local_coordinates(self.center)
         self._bounding_rectangle = None
 
-        def theta_a_b(s, i, e, c):
+        def theta_a_b(start_, iterior_, end_, center_):
             """
             From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a- \
             center-and-3-arbitrary-points-on-it-are-given.
@@ -3207,11 +3207,11 @@ class ArcEllipse2D(Edge):
             (clockwise),A=semi major axis, B=semi minor axis.
 
             """
-            xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
-                1] - c[1], e[0] - c[0], e[1] - c[1]
-            matrix_a = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],
-                                  [xi ** 2, yi ** 2, 2 * xi * yi],
-                                  [xe ** 2, ye ** 2, 2 * xe * ye]))
+            x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1],\
+                iterior_[0] - center_[0], iterior_[1] - center_[1], end_[0] - center_[0], end_[1] - center_[1]
+            matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
+                                  [x_interior ** 2, y_interior ** 2, 2 * x_interior * y_interior],
+                                  [x_end ** 2, y_end ** 2, 2 * x_end * y_end]))
             inv_matrix_a = npy.linalg.inv(matrix_a)
             matriz_one = npy.array(([1],
                                     [1],
@@ -4200,12 +4200,12 @@ class LineSegment3D(LineSegment):
         v = extrusion_vector.copy()
         v.normalize()
         w = u.cross(v)
-        l1 = self.length()
-        l2 = extrusion_vector.norm()
+        length_1 = self.length()
+        lenght_2 = extrusion_vector.norm()
         # outer_contour = Polygon2D([O2D, Point2D((l1, 0.)),
         #                            Point2D((l1, l2)), Point2D((0., l2))])
         plane = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.start, u, v, w))
-        return [plane.rectangular_cut(0, l1, 0, l2)]
+        return [plane.rectangular_cut(0, length_1, 0, length_2)]
 
     def revolution(self, axis_point, axis, angle):
         axis_line3d = Line3D(axis_point, axis_point + axis)
@@ -4215,12 +4215,12 @@ class LineSegment3D(LineSegment):
 
         p1_proj, _ = axis_line3d.point_projection(self.start)
         p2_proj, _ = axis_line3d.point_projection(self.end)
-        d1 = self.start.point_distance(p1_proj)
-        d2 = self.end.point_distance(p2_proj)
-        if not math.isclose(d1, 0., abs_tol=1e-9):
+        distance_1 = self.start.point_distance(p1_proj)
+        distance_2 = self.end.point_distance(p2_proj)
+        if not math.isclose(distance_1, 0., abs_tol=1e-9):
             u = self.start - p1_proj  # Unit vector from p1_proj to p1
             u.normalize()
-        elif not math.isclose(d2, 0., abs_tol=1e-9):
+        elif not math.isclose(distance_2, 0., abs_tol=1e-9):
             u = self.end - p2_proj  # Unit vector from p1_proj to p1
             u.normalize()
         else:
@@ -4230,7 +4230,7 @@ class LineSegment3D(LineSegment):
             v = axis.cross(u)
             surface = volmdlr.faces.Plane3D(
                 volmdlr.Frame3D(p1_proj, u, v, axis))
-            smaller_r, bigger_r = sorted([d1, d2])
+            smaller_r, bigger_r = sorted([distance_1, distance_2])
             if angle == volmdlr.TWO_PI:
                 # Only 2 circles as contours
                 outer_contour2d = volmdlr.wires.Circle2D(volmdlr.O2D, bigger_r)
@@ -4277,14 +4277,14 @@ class LineSegment3D(LineSegment):
                                                   outer_contour2d,
                                                   inner_contours2d))]
 
-        elif not math.isclose(d1, d2, abs_tol=1e-9):
+        elif not math.isclose(distance_1, distance_2, abs_tol=1e-9):
             # Conical
             v = axis.cross(u)
             dv = self.direction_vector()
             dv.normalize()
 
             semi_angle = math.atan2(dv.dot(u), dv.dot(axis))
-            cone_origin = p1_proj - d1 / math.tan(semi_angle) * axis
+            cone_origin = p1_proj - distance_1 / math.tan(semi_angle) * axis
             if semi_angle > 0.5 * math.pi:
                 semi_angle = math.pi - semi_angle
 
@@ -4296,14 +4296,14 @@ class LineSegment3D(LineSegment):
 
             surface = volmdlr.faces.ConicalSurface3D(cone_frame,
                                                      semi_angle)
-            z1 = d1 / math.tan(semi_angle)
-            z2 = d2 / math.tan(semi_angle)
+            z1 = distance_1 / math.tan(semi_angle)
+            z2 = distance_2 / math.tan(semi_angle)
             return [surface.rectangular_cut(0, angle2, z1, z2)]
         else:
             # Cylindrical face
             v = axis.cross(u)
             surface = volmdlr.faces.CylindricalSurface3D(
-                volmdlr.Frame3D(p1_proj, u, v, axis), d1)
+                volmdlr.Frame3D(p1_proj, u, v, axis), distance_1)
             return [surface.rectangular_cut(0, angle,
                                             0,
                                             (self.end - self.start).dot(axis))]
@@ -4951,25 +4951,25 @@ class Arc3D(Arc):
         return self._center
 
     def get_center(self):
-        u1 = self.interior - self.start
-        u2 = self.interior - self.end
-        if u1 == u2:
-            u2 = self.normal.cross(u1)
-            u2.normalize()
+        vector_u1 = self.interior - self.start
+        vector_u2 = self.interior - self.end
+        if vector_u1 == vector_u2:
+            vector_u2 = self.normal.cross(vector_u1)
+            vector_u2.normalize()
 
-        v1 = self.normal.cross(u1)  # v1 is normal, equal u2
-        v2 = self.normal.cross(u2)  # equal -u1
+        vector_v1 = self.normal.cross(vector_u1)  # v1 is normal, equal u2
+        vector_v2 = self.normal.cross(vector_u2)  # equal -u1
 
-        p11 = 0.5 * (self.start + self.interior)  # Mid-point of segment s,m
-        p12 = p11 + v1
-        p21 = 0.5 * (self.end + self.interior)  # Mid-point of segment s,m
-        p22 = p21 + v2
+        point11 = 0.5 * (self.start + self.interior)  # Mid-point of segment s,m
+        point12 = point11 + vector_v1
+        point21 = 0.5 * (self.end + self.interior)  # Mid-point of segment s,m
+        point22 = point21 + vector_v2
 
-        l1 = Line3D(p11, p12)
-        l2 = Line3D(p21, p22)
+        line_1 = Line3D(point11, point12)
+        line_2 = Line3D(point21, point22)
 
         try:
-            center, _ = l1.minimum_distance_points(l2)
+            center, _ = line_1.minimum_distance_points(line_2)
         except ZeroDivisionError:
             raise ValueError(
                 'Start, end and interior points  of an arc must be distincts') from ZeroDivisionError
@@ -5557,6 +5557,10 @@ class Arc3D(Arc):
         return False
 
     def triangulation(self):
+        """
+        Triangulation for an Arc3D.
+
+        """
         return None
 
     def middle_point(self):
@@ -5673,9 +5677,9 @@ class FullArc3D(Arc3D):
             content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
             curve_id += 1
 
-        p1 = (self.center + u * self.radius).to_point()
+        point1 = (self.center + u * self.radius).to_point()
 
-        p1_content, p1_id = p1.to_step(curve_id + 1, vertex=True)
+        p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
         content += p1_content
 
         edge_curve = p1_id + 1
@@ -5706,12 +5710,11 @@ class FullArc3D(Arc3D):
             self.end.plot(ax=ax)
 
         if edge_direction:
-            s = 0.5 * self.length()
-            x, y, z = self.point_at_abscissa(s)
-            tangent = self.unit_direction_vector(s)
-            arrow_length = 0.15 * s
-            ax.quiver(x, y, z, *arrow_length * tangent,
-                      pivot='tip')
+            half_length = 0.5 * self.length()
+            x, y, z = self.point_at_abscissa(half_length)
+            tangent = self.unit_direction_vector(half_length)
+            arrow_length = 0.15 * half_length
+            ax.quiver(x, y, z, *arrow_length * tangent, pivot='tip')
 
         return ax
 
@@ -5807,17 +5810,17 @@ class ArcEllipse3D(Edge):
         self.major_dir = major_dir  # Vector for Gradius
         # self.extra = extra
 
-        u1 = self.interior - self.start
-        u2 = self.interior - self.end
-        u1.normalize()
-        u2.normalize()
-        if u1 == u2:
+        vector_start_interior = self.interior - self.start
+        vector_end_interior = self.interior - self.end
+        vector_start_interior.normalize()
+        vector_end_interior.normalize()
+        if vector_start_interior == vector_end_interior:
             u2 = self.interior - self.interior
             u2.normalize()
 
-        n = u2.cross(u1)
-        n.normalize()
-        self.normal = n
+        normal = vector_end_interior.cross(vector_start_interior)
+        normal.normalize()
+        self.normal = normal
 
         self.minor_dir = self.normal.cross(self.major_dir)
 
@@ -5832,13 +5835,13 @@ class ArcEllipse3D(Edge):
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
 
-        def theta_a_b(s, i, e, c):
+        def theta_a_b(start_, iterior_, end_, center_):
             # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
-            xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
-                1] - c[1], e[0] - c[0], e[1] - c[1]
-            matrix_a = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],
-                                  [xi ** 2, yi ** 2, 2 * xi * yi],
-                                  [xe ** 2, ye ** 2, 2 * xe * ye]))
+            x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1], \
+                iterior_[0] - center_[0], iterior_[1] - center_[1], end_[0] - center_[0], end_[1] - center_[1]
+            matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
+                                  [x_interior ** 2, y_interior ** 2, 2 * x_interior * y_interior],
+                                  [x_end ** 2, y_end ** 2, 2 * x_end * y_end]))
             inv_matrix_a = npy.linalg.inv(matrix_a)
             identity = npy.array(([1], [1], [1]))
             r1, r2, r3 = npy.dot(inv_matrix_a, identity)  # 3 item column matrix
@@ -5860,16 +5863,16 @@ class ArcEllipse3D(Edge):
         self.theta = theta
 
         # Angle pour start
-        u1, u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
-        angle1 = volmdlr.geometry.sin_cos_angle(u1, u2)
+        start_u1, start_u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
+        angle1 = volmdlr.geometry.sin_cos_angle(start_u1, start_u2)
         self.angle_start = angle1
         # Angle pour end
-        u3, u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
-        angle2 = volmdlr.geometry.sin_cos_angle(u3, u4)
+        end_u3, end_u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
+        angle2 = volmdlr.geometry.sin_cos_angle(end_u3, end_u4)
         self.angle_end = angle2
         # Angle pour interior
-        u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
-        anglei = volmdlr.geometry.sin_cos_angle(u5, u6)
+        interior_u5, interior_u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
+        anglei = volmdlr.geometry.sin_cos_angle(interior_u5, interior_u6)
         self.angle_interior = anglei
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
@@ -5988,6 +5991,11 @@ class ArcEllipse3D(Edge):
         raise NotImplementedError
 
     def reverse(self):
+        """
+        Reverse the ArcEllipse 3D.
+
+        :return:
+        """
         return self.__class__(self.end.copy(),
                               self.interior.copy(),
                               self.start.copy(),
@@ -5996,7 +6004,10 @@ class ArcEllipse3D(Edge):
                               self.name)
 
     def plot(self, ax=None, color: str = 'k', alpha=1.0, edge_ends=False, edge_direction=False):
-        """Plot the arc ellipse."""
+        """
+        Plot the arc ellipse.
+
+        """
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -6025,6 +6036,10 @@ class ArcEllipse3D(Edge):
 
     def plot2d(self, x3d: volmdlr.Vector3D = volmdlr.X3D, y3d: volmdlr.Vector3D = volmdlr.Y3D,
                ax=None, color='k'):
+        """
+        Plot 2d for an arc ellipse 3d.
+
+        """
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -6044,16 +6059,30 @@ class ArcEllipse3D(Edge):
         return ax
 
     def triangulation(self):
+        """
+        Triangulation for an ArcEllipse3D.
+
+        """
         return None
 
     @property
     def bounding_box(self):
+        """
+        Getter Bounding Box for an arcellipse 3d.
+
+        :return: bounding box.
+        """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
+        """
+        Bounding Box setter.
+
+        :param new_bounding_box: new bounding box.
+        """
         self._bbox = new_bounding_box
 
     def get_bounding_box(self):

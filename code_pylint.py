@@ -16,9 +16,9 @@ EFFECTIVE_DATE = date(2023, 1, 31)
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
-                     "wrong-spelling-in-comment": 314,
-                     "wrong-spelling-in-docstring": 265,
-                     'invalid-name': 675,
+                     "wrong-spelling-in-comment": 250,
+                     "wrong-spelling-in-docstring": 173,
+                     'invalid-name': 500,
                      'no-else-return': 20,
                      'consider-using-f-string': 56,
                      'no-member': 3,
@@ -28,8 +28,8 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-locals': 69,
                      'unused-argument': 35,
                      'too-many-arguments': 26,
-                     'line-too-long': 19,
-                     'consider-using-enumerate': 22,
+                     'line-too-long': 12,
+                     'consider-using-enumerate': 0,
                      'too-many-branches': 26,
                      'too-many-statements': 18,
                      'super-init-not-called': 13,
@@ -41,7 +41,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-few-public-methods': 3,
                      'non-parent-init-called': 3,
                      'too-many-public-methods': 11,
-                     'use-implicit-booleaness-not-comparison': 8,
+                     'use-implicit-booleaness-not-comparison': 0,
                      'too-many-instance-attributes': 10,
                      'protected-access': 4,
                      'undefined-loop-variable': 4,
@@ -68,7 +68,7 @@ MAX_ERROR_BY_TYPE = {
                      'missing-module-docstring': 2,
                      'consider-using-generator': 1,
                      'cell-var-from-loop': 1,
-                     'import-outside-toplevel': 1,
+                     'import-outside-toplevel': 0,
                      'unsubscriptable-object': 1,
                      }
 
