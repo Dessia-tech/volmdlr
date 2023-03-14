@@ -4277,7 +4277,7 @@ class LineSegment3D(LineSegment):
                                                   outer_contour2d,
                                                   inner_contours2d))]
 
-        elif not math.isclose(distance_1, distance_2, abs_tol=1e-9):
+        if not math.isclose(distance_1, distance_2, abs_tol=1e-9):
             # Conical
             v = axis.cross(u)
             dv = self.direction_vector()
@@ -4299,14 +4299,13 @@ class LineSegment3D(LineSegment):
             z1 = distance_1 / math.tan(semi_angle)
             z2 = distance_2 / math.tan(semi_angle)
             return [surface.rectangular_cut(0, angle2, z1, z2)]
-        else:
-            # Cylindrical face
-            v = axis.cross(u)
-            surface = volmdlr.faces.CylindricalSurface3D(
-                volmdlr.Frame3D(p1_proj, u, v, axis), distance_1)
-            return [surface.rectangular_cut(0, angle,
-                                            0,
-                                            (self.end - self.start).dot(axis))]
+        # Cylindrical face
+        v = axis.cross(u)
+        surface = volmdlr.faces.CylindricalSurface3D(
+            volmdlr.Frame3D(p1_proj, u, v, axis), distance_1)
+        return [surface.rectangular_cut(0, angle,
+                                        0,
+                                        (self.end - self.start).dot(axis))]
 
     def to_step(self, current_id, surface_id=None):
         """Exports to STEP format."""
@@ -4669,9 +4668,9 @@ class BSplineCurve3D(BSplineCurve):
         if math.isclose(parameter1, 0, abs_tol=1e-7) \
                 and math.isclose(parameter2, 1, abs_tol=1e-7):
             return self
-        elif math.isclose(parameter1, 0, abs_tol=1e-7):
+        if math.isclose(parameter1, 0, abs_tol=1e-7):
             return self.cut_after(parameter2)
-        elif math.isclose(parameter2, 1, abs_tol=1e-7):
+        if math.isclose(parameter2, 1, abs_tol=1e-7):
             return self.cut_before(parameter1)
 
         # Cut before

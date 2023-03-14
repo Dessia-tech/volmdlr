@@ -449,7 +449,7 @@ def representation_relationship_representation_relationship_with_transformation_
                 return frame_map_closed_shell(object_dict[arguments[2]],
                                               object_dict[arguments[4]], object_dict[arguments[3]])
 
-            elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
+            if object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
                     not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
                 return frame_map_closed_shell(object_dict[arguments[3]],
                                               object_dict[arguments[4]], object_dict[arguments[2]])

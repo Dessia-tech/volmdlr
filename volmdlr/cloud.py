@@ -324,8 +324,7 @@ class PointCloud2D(dc.DessiaObject):
 
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol=1e-6):
             return None
-        else:
-            return polygon
+        return polygon
 
     def bounding_rectangle(self):
         x_list, y_list = [p.x for p in self.points], [p.y for p in self.points]
