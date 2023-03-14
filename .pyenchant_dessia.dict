@@ -30,6 +30,7 @@ euler
 txt
 discretization
 discretized
+discretize
 bool
 len
 isort
@@ -47,3 +48,4 @@ ymin
 ymax
 zmin
 zmax
+vtk

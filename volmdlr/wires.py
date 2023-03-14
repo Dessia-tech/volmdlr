@@ -620,9 +620,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     @staticmethod
     def is_crossing_start_end_point(intersections, primitive):
         """
-        Returns True if the crossings provided arestart or end of the Wire2D.
+        Returns True if the crossings provided are start or end of the Wire 2D.
 
-        :param intersections: intersections results
+        :param intersections: intersection results
          for primitive line intersections
         :param primitive: intersecting primitive
         :return: False if intersection not a start or
@@ -2017,7 +2017,7 @@ class Contour2D(ContourMixin, Wire2D):
                            number_points_x: int = None,
                            number_points_y: int = None):
         """
-        Compute a triangulation using a n-by-m grid to triangulize the contour.
+        Compute a triangulation using a n-by-m grid to triangulate the contour.
         """
         bounding_rectangle = self.bounding_rectangle
         # xmin, xmax, ymin, ymax = self.bounding_rectangle

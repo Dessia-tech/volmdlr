@@ -803,8 +803,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         :type axis: volmdlr.Vector3D
         :param angle: angle rotation
         :type angle: float
-        :return: a new rotated RevolvedProfile
-        :rtype: RevolvedProfile
+        :return: a new rotated Revolved Profile
+        :rtype: Revolved Profile
         """
         return self.__class__(
             plane_origin=self.plane_origin.rotation(center, axis, angle),
@@ -842,7 +842,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         Revolved Profile translation.
 
         :param offset: translation vector.
-        :return: A new translated RevolvedProfile.
+        :return: A new translated Revolved Profile.
         """
         return self.__class__(
             plane_origin=self.plane_origin.translation(offset),
@@ -1077,7 +1077,7 @@ class Cylinder(RevolvedProfile):
 
     def to_dict(self, use_pointers: bool = False, memo: bool = None, path: str = '#'):
         """
-        Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class RevolvedProfile.
+        Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class Revolved Profile.
         """
         return dessia_common.DessiaObject.to_dict(self, use_pointers, memo, path)
 

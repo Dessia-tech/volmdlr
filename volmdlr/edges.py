@@ -105,7 +105,7 @@ class Edge(dc.DessiaObject):
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
-        Discretizes an Edge to have "n" points.
+        Discretize an Edge to have "n" points.
 
         :param number_points: the number of points (including start and end
             points) if unset, only start and end will be returned
@@ -2233,7 +2233,7 @@ class Arc(Edge):
         :type start_point_tag: int
         :param center_point_tag: The linesegment' center point index
         :type center_point_tag: int
-        :param end_point_tag: The linesegment's end point index
+        :param end_point_tag: The line segment's end point index
         :type end_point_tag: int
 
         :return: A line
@@ -3288,14 +3288,14 @@ class ArcEllipse2D(Edge):
         """
         Calculates the length of the arcellipse 2d.
 
-        :return: arcellipse 2d's length
+        :return: arc ellipse 2d's length
         """
         length = self.abscissa(self.end)
         return length
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
         """
-        Verifies if a point belongs to the arcellipse 2d.
+        Verifies if a point belongs to the arc ellipse 2d.
 
         :param point: point to be verified
         :param abs_tol: tolerance applied during calculations
@@ -3320,7 +3320,7 @@ class ArcEllipse2D(Edge):
         Calculates the abscissa of a given point.
 
         :param point: point for calculating abscissa
-        :return: a float, between 0 and the arcellise 2d's length
+        :return: a float, between 0 and the arc ellipse 2d's length
         """
         if self.point_belongs(point):
             angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
@@ -3341,9 +3341,9 @@ class ArcEllipse2D(Edge):
     @property
     def bounding_rectangle(self):
         """
-        Calculates the bounding rectangle for the arcellipse2d.
+        Calculates the bounding rectangle for the arc ellipse 2d.
 
-        :return: volmdlr.core.BoudingRectangle object.
+        :return: Bouding Rectangle object.
         """
         if not self._bounding_rectangle:
             discretization_points = self.discretization_points(number_points=20)
@@ -3466,9 +3466,9 @@ class ArcEllipse2D(Edge):
 
     def line_intersections(self, line2d: Line2D):
         """
-        Intersections between an ArcEllipse2D and a Line2D.
+        Intersections between an Arc Ellipse 2D and a Line 2D.
 
-        :param line2d: Line2D to verify intersections
+        :param line2d: Line 2D to verify intersections
         :return: List with all intersections
         """
         ellipse2d_linesegment_intersections = vm_utils_intersections.ellipse2d_line_intersections(self, line2d)
@@ -3480,10 +3480,10 @@ class ArcEllipse2D(Edge):
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D):
         """
-        Intersections between an ArcEllipse2D and a LineSegment2D.
+        Intersections between an Arc Ellipse 2D and a Line Segment 2D.
 
-        :param linesegment2d: LineSegment2D to verify intersections
-        :return: List with all intersections
+        :param linesegment2d: LineSegment 2D to verify intersections.
+        :return: List with all intersections.
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
@@ -3496,7 +3496,7 @@ class ArcEllipse2D(Edge):
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
-        Changes frame_mapping and return a new ArcEllipse2D.
+        Changes frame_mapping and return a new Arc Ellipse 2D.
 
         side = 'old' or 'new'
         """
@@ -5950,7 +5950,7 @@ class ArcEllipse3D(Edge):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Transforms a ArcEllipse3D into an ArcEllipse2D, given a plane origin and an u and v plane vector.
+        Transforms an Arc Ellipse 3D into an Arc Ellipse 2D, given a plane origin and an u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -5986,7 +5986,7 @@ class ArcEllipse3D(Edge):
 
     def reverse(self):
         """
-        Reverse the ArcEllipse 3D.
+        Reverse the Arc Ellipse 3D.
 
         :return:
         """
@@ -6062,7 +6062,7 @@ class ArcEllipse3D(Edge):
     @property
     def bounding_box(self):
         """
-        Getter Bounding Box for an arcellipse 3d.
+        Getter Bounding Box for an arc ellipse 3d.
 
         :return: bounding box.
         """

@@ -2083,9 +2083,11 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
         Cylinder plane intersections when plane's normal is concurrent with the cylinder axis, but not orthogonal.
 
-        # Ellipse vector equation : < rcos(t), rsin(t), -(1 / c)*(d + arcos(t) + brsint(t)); d = - (ax_0 + by_0 + cz_0)
-        :param plane3d: intersecting plane
-        :return: list of intersecting curves
+        Ellipse vector equation : < r*cos(t), r*sin(t), -(1 / c)*(d + a*r*cos(t) +
+        b*r*sint(t)); d = - (ax_0 + by_0 + cz_0).
+
+        :param plane3d: intersecting plane.
+        :return: list of intersecting curves.
         """
         line = vme.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
         center3d_plane = plane3d.line_intersections(line)[0]
@@ -6654,10 +6656,10 @@ class PlaneFace3D(Face3D):
 
     def minimum_distance_points_plane(self, other_plane_face, return_points=False):
         """
-        Given two planefaces, calculates the points which corresponds to the minimal distance between these two faces.
+        Given two plane faces, calculates the points which corresponds to the minimal distance between these two faces.
 
-        :param other_plane_face: second planeface.
-        :param return_points: boolean to return corresponding points or not.
+        :param other_plane_face: Second plane face.
+        :param return_points: Boolean to return corresponding points or not.
         :return: minimal distance.
         """
 
@@ -9179,7 +9181,8 @@ class ClosedShell3D(OpenShell3D):
 
     def is_disjoint_from(self, shell2, tol=1e-8):
         """
-        Verifies and rerturns a bool if two shells are disjointed or not.
+        Verifies and returns a Boolean if two shells are disjointed or not.
+
         """
         disjoint = True
         if self.bounding_box.bbox_intersection(shell2.bounding_box) or \
