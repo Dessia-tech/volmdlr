@@ -1524,11 +1524,11 @@ class Plane3D(Surface3D):
         Cut a rectangular piece of the Plane3D object and return a PlaneFace3D object.
 
         """
-        p1 = volmdlr.Point2D(x1, y1)
-        p2 = volmdlr.Point2D(x2, y1)
-        p3 = volmdlr.Point2D(x2, y2)
-        p4 = volmdlr.Point2D(x1, y2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
+        point1 = volmdlr.Point2D(x1, y1)
+        point2 = volmdlr.Point2D(x2, y1)
+        point3 = volmdlr.Point2D(x2, y2)
+        point4 = volmdlr.Point2D(x1, y2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface = Surface2D(outer_contour, [])
         return PlaneFace3D(self, surface, name)
 
@@ -1722,19 +1722,19 @@ class PeriodicalSurface(Surface3D):
         theta2, z2 = end
 
         if self.frame.w.is_colinear_to(fullarc3d.normal):
-            p1 = volmdlr.Point2D(theta1, z1)
+            point1 = volmdlr.Point2D(theta1, z1)
             if theta1 > theta3:
-                p2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
+                point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
             elif theta1 < theta3:
-                p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
-            return [vme.LineSegment2D(p1, p2)]
+                point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
+            return [vme.LineSegment2D(point1, point2)]
         if z1 > z3:
-            p1 = volmdlr.Point2D(theta1, 1)
-            p2 = volmdlr.Point2D(theta1, 0)
+            point1 = volmdlr.Point2D(theta1, 1)
+            point2 = volmdlr.Point2D(theta1, 0)
         else:
-            p1 = volmdlr.Point2D(theta1, 0)
-            p2 = volmdlr.Point2D(theta1, 1)
-        return [vme.LineSegment2D(p1, p2)]
+            point1 = volmdlr.Point2D(theta1, 0)
+            point2 = volmdlr.Point2D(theta1, 1)
+        return [vme.LineSegment2D(point1, point2)]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
@@ -1956,11 +1956,11 @@ class CylindricalSurface3D(PeriodicalSurface):
         if theta1 == theta2:
             theta2 += volmdlr.TWO_PI
 
-        p1 = volmdlr.Point2D(theta1, z1)
-        p2 = volmdlr.Point2D(theta2, z1)
-        p3 = volmdlr.Point2D(theta2, z2)
-        p4 = volmdlr.Point2D(theta1, z2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
+        point1 = volmdlr.Point2D(theta1, z1)
+        point2 = volmdlr.Point2D(theta2, z1)
+        point3 = volmdlr.Point2D(theta2, z2)
+        point4 = volmdlr.Point2D(theta1, z2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.CylindricalFace3D(self, surface2d, name)
 
@@ -2334,11 +2334,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         elif theta2 < theta1:
             theta2 += volmdlr.TWO_PI
 
-        p1 = volmdlr.Point2D(theta1, phi1)
-        p2 = volmdlr.Point2D(theta2, phi1)
-        p3 = volmdlr.Point2D(theta2, phi2)
-        p4 = volmdlr.Point2D(theta1, phi2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
+        point1 = volmdlr.Point2D(theta1, phi1)
+        point2 = volmdlr.Point2D(theta2, phi1)
+        point3 = volmdlr.Point2D(theta2, phi2)
+        point4 = volmdlr.Point2D(theta1, phi2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         return ToroidalFace3D(self,
                               Surface2D(outer_contour, []),
                               name)
@@ -2669,11 +2669,11 @@ class ConicalSurface3D(PeriodicalSurface):
         if theta1 == theta2:
             theta2 += volmdlr.TWO_PI
 
-        p1 = volmdlr.Point2D(theta1, z1)
-        p2 = volmdlr.Point2D(theta2, z1)
-        p3 = volmdlr.Point2D(theta2, z2)
-        p4 = volmdlr.Point2D(theta1, z2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
+        point1 = volmdlr.Point2D(theta1, z1)
+        point2 = volmdlr.Point2D(theta2, z1)
+        point3 = volmdlr.Point2D(theta2, z2)
+        point4 = volmdlr.Point2D(theta1, z2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         return ConicalFace3D(self, Surface2D(outer_contour, []), name)
 
     def linesegment3d_to_2d(self, linesegment3d):
@@ -3109,12 +3109,12 @@ class SphericalSurface3D(Surface3D):
         theta4, _ = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
 
         if self.frame.w.is_colinear_to(fullarc3d.normal):
-            p1 = volmdlr.Point2D(theta1, phi1)
+            point1 = volmdlr.Point2D(theta1, phi1)
             if theta1 > theta3:
-                p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi2)
+                point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi2)
             elif theta1 < theta3:
-                p2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
-            return [vme.LineSegment2D(p1, p2)]
+                point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
+            return [vme.LineSegment2D(point1, point2)]
 
         if math.isclose(self.frame.w.dot(fullarc3d.normal), 0, abs_tol=1e-4):
             if theta1 > theta3:
@@ -3176,11 +3176,11 @@ class SphericalSurface3D(Surface3D):
         elif theta2 < theta1:
             theta2 += volmdlr.TWO_PI
 
-        p1 = volmdlr.Point2D(theta1, phi1)
-        p2 = volmdlr.Point2D(theta2, phi1)
-        p3 = volmdlr.Point2D(theta2, phi2)
-        p4 = volmdlr.Point2D(theta1, phi2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
+        point1 = volmdlr.Point2D(theta1, phi1)
+        point2 = volmdlr.Point2D(theta2, phi1)
+        point3 = volmdlr.Point2D(theta2, phi2)
+        point4 = volmdlr.Point2D(theta1, phi2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         return SphericalFace3D(self,
                                Surface2D(outer_contour, []),
                                name=name)
@@ -3319,11 +3319,11 @@ class RuledSurface3D(Surface3D):
         Cut a rectangular piece of the RuledSurface3D object and return a RuledFace3D object.
 
         """
-        p1 = volmdlr.Point2D(x1, y1)
-        p2 = volmdlr.Point2D(x2, y1)
-        p3 = volmdlr.Point2D(x2, y2)
-        p4 = volmdlr.Point2D(x1, y2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
+        point1 = volmdlr.Point2D(x1, y1)
+        point2 = volmdlr.Point2D(x2, y1)
+        point3 = volmdlr.Point2D(x2, y2)
+        point4 = volmdlr.Point2D(x1, y2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.RuledFace3D(self, surface2d, name)
 
@@ -3394,11 +3394,11 @@ class RevolutionSurface3D(PeriodicalSurface):
         Cut a rectangular piece of the RevolutionSurface3D object and return a RevolutionFace3D object.
 
         """
-        p1 = volmdlr.Point2D(x1, y1)
-        p2 = volmdlr.Point2D(x2, y1)
-        p3 = volmdlr.Point2D(x2, y2)
-        p4 = volmdlr.Point2D(x1, y2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
+        point1 = volmdlr.Point2D(x1, y1)
+        point2 = volmdlr.Point2D(x2, y1)
+        point3 = volmdlr.Point2D(x2, y2)
+        point4 = volmdlr.Point2D(x1, y2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.RevolutionFace3D(self, surface2d, name)
 
@@ -3443,12 +3443,12 @@ class RevolutionSurface3D(PeriodicalSurface):
         theta1, z1 = start
         _, z2 = end
 
-        p1 = volmdlr.Point2D(theta1, z1)
+        point1 = volmdlr.Point2D(theta1, z1)
         if theta1 > theta3:
-            p2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
+            point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
         elif theta1 < theta3:
-            p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
-        return [vme.LineSegment2D(p1, p2)]
+            point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
+        return [vme.LineSegment2D(point1, point2)]
 
 
 class BSplineSurface3D(Surface3D):
@@ -3908,9 +3908,9 @@ class BSplineSurface3D(Surface3D):
 
         if self.x_periodicity and not self.y_periodicity \
                 and bspline_curve3d.periodic:
-            p1 = self.point3d_to_2d(bspline_curve3d.points[0])
+            point1 = self.point3d_to_2d(bspline_curve3d.points[0])
             p1_sup = self.point3d_to_2d(bspline_curve3d.points[0])
-            new_x = p1.x - p1_sup.x + self.x_periodicity
+            new_x = point1.x - p1_sup.x + self.x_periodicity
             new_x = new_x if 0 <= new_x else 0
             reverse = False
             if new_x < 0:
@@ -3921,16 +3921,16 @@ class BSplineSurface3D(Surface3D):
 
             linesegments = [
                 vme.LineSegment2D(
-                    volmdlr.Point2D(new_x, p1.y),
-                    volmdlr.Point2D(self.x_periodicity, p1.y))]
+                    volmdlr.Point2D(new_x, point1.y),
+                    volmdlr.Point2D(self.x_periodicity, point1.y))]
             if reverse:
                 linesegments[0] = linesegments[0].reverse()
 
         elif self.y_periodicity and not self.x_periodicity \
                 and bspline_curve3d.periodic:
-            p1 = self.point3d_to_2d(bspline_curve3d.points[0])
+            point1 = self.point3d_to_2d(bspline_curve3d.points[0])
             p1_sup = self.point3d_to_2d(bspline_curve3d.points[0])
-            new_y = p1.y - p1_sup.y + self.y_periodicity
+            new_y = point1.y - p1_sup.y + self.y_periodicity
             new_y = new_y if 0 <= new_y else 0
             reverse = False
             if new_y < 0:
@@ -3941,8 +3941,8 @@ class BSplineSurface3D(Surface3D):
 
             linesegments = [
                 vme.LineSegment2D(
-                    volmdlr.Point2D(p1.x, new_y),
-                    volmdlr.Point2D(p1.x, self.y_periodicity))]
+                    volmdlr.Point2D(point1.x, new_y),
+                    volmdlr.Point2D(point1.x, self.y_periodicity))]
             if reverse:
                 linesegments[0] = linesegments[0].reverse()
 
@@ -3956,22 +3956,22 @@ class BSplineSurface3D(Surface3D):
             y_perio = self.y_periodicity if self.y_periodicity is not None \
                 else 1.
 
-            p1 = self.point3d_to_2d(bspline_curve3d.points[0])
-            p2 = self.point3d_to_2d(bspline_curve3d.points[-1])
+            point1 = self.point3d_to_2d(bspline_curve3d.points[0])
+            point2 = self.point3d_to_2d(bspline_curve3d.points[-1])
 
-            if p1 == p2:
+            if point1 == point2:
                 print('BSplineCruve3D skipped because it is too small')
                 linesegments = None
             else:
                 p1_sup = self.point3d_to_2d(bspline_curve3d.points[0])
                 p2_sup = self.point3d_to_2d(bspline_curve3d.points[-1])
-                if self.x_periodicity and p1.point_distance(p1_sup) > 1e-5:
-                    p1.x -= p1_sup.x - x_perio
-                    p2.x -= p2_sup.x - x_perio
-                if self.y_periodicity and p1.point_distance(p1_sup) > 1e-5:
-                    p1.y -= p1_sup.y - y_perio
-                    p2.y -= p2_sup.y - y_perio
-                linesegments = [vme.LineSegment2D(p1, p2)]
+                if self.x_periodicity and point1.point_distance(p1_sup) > 1e-5:
+                    point1.x -= p1_sup.x - x_perio
+                    point2.x -= p2_sup.x - x_perio
+                if self.y_periodicity and point1.point_distance(p1_sup) > 1e-5:
+                    point1.y -= p1_sup.y - y_perio
+                    point2.y -= p2_sup.y - y_perio
+                linesegments = [vme.LineSegment2D(point1, point2)]
             # How to check if end of surface overlaps start or the opposite ?
         else:
             lth = bspline_curve3d.length()
@@ -4053,11 +4053,11 @@ class BSplineSurface3D(Surface3D):
         Cut a rectangular piece of the BSplineSurface3D object and return a BSplineFace3D object.
 
         """
-        p1 = volmdlr.Point2D(u1, v1)
-        p2 = volmdlr.Point2D(u2, v1)
-        p3 = volmdlr.Point2D(u2, v2)
-        p4 = volmdlr.Point2D(u1, v2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
+        point1 = volmdlr.Point2D(u1, v1)
+        point2 = volmdlr.Point2D(u2, v1)
+        point3 = volmdlr.Point2D(u2, v2)
+        point4 = volmdlr.Point2D(u1, v2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface = Surface2D(outer_contour, [])
         return BSplineFace3D(self, surface, name)  # PlaneFace3D
 
@@ -5416,9 +5416,9 @@ class BSplineSurface3D(Surface3D):
             distances = []
             for prim_1 in contour1.primitives:
                 dis = []
-                for p2 in contour2.primitives:
+                for prim2 in contour2.primitives:
                     point1 = (prim_1.start + prim_1.end) / 2
-                    point2 = (p2.start + p2.end) / 2
+                    point2 = (prim2.start + prim2.end) / 2
                     dis.append(point1.point_distance(point2))
                 distances.append(dis)
 
@@ -6673,12 +6673,12 @@ class PlaneFace3D(Face3D):
                 if return_points:
                     if dist[0] < min_distance:
                         min_distance = dist[0]
-                        p1, p2 = dist[1], dist[2]
+                        point1, point2 = dist[1], dist[2]
                 else:
                     if dist < min_distance:
                         min_distance = dist
         if return_points:
-            return min_distance, p1, p2
+            return min_distance, point1, point2
         return min_distance
 
     def linesegment_inside(self, linesegment: vme.LineSegment3D):
@@ -6775,7 +6775,7 @@ class PlaneFace3D(Face3D):
         if other_face.__class__ is CylindricalFace3D:
             point1, point2 = other_face.minimum_distance_points_cyl(self)
             if return_points:
-                return point1.point_distance(point2), point1, p2
+                return point1.point_distance(point2), point1, point2
             return point1.point_distance(point2)
 
         if other_face.__class__ is PlaneFace3D:
@@ -7691,26 +7691,26 @@ class CylindricalFace3D(Face3D):
 
     #         p2 = new_pt2_2d.to_3d(pf1, u, v)
 
-    #     return p1, p2
+    #     return p1, point2
 
     def minimum_distance(self, other_face, return_points=False):
         if other_face.__class__ is CylindricalFace3D:
-            p1, p2 = self.minimum_distance_points_cyl(other_face)
+            point1, point2 = self.minimum_distance_points_cyl(other_face)
             if return_points:
-                return p1.point_distance(p2), p1, p2
-            return p1.point_distance(p2)
+                return point1.point_distance(point2), point1, point2
+            return point1.point_distance(point2)
 
         if other_face.__class__ is PlaneFace3D:
-            p1, p2 = self.minimum_distance_points_plane(other_face)
+            point1, point2 = self.minimum_distance_points_plane(other_face)
             if return_points:
-                return p1.point_distance(p2), p1, p2
-            return p1.point_distance(p2)
+                return point1.point_distance(point2), point1, point2
+            return point1.point_distance(point2)
 
         if other_face.__class__ is ToroidalFace3D:
-            p1, p2 = other_face.minimum_distance_points_cyl(self)
+            point1, point2 = other_face.minimum_distance_points_cyl(self)
             if return_points:
-                return p1.point_distance(p2), p1, p2
-            return p1.point_distance(p2)
+                return point1.point_distance(point2), point1, point2
+            return point1.point_distance(point2)
 
         return NotImplementedError
 
@@ -8535,7 +8535,7 @@ class BSplineFace3D(Face3D):
         dis_sorted = sorted(dis)
 
         shared = []
-        for k, p1 in enumerate(contour1.primitives):
+        for k, point1 in enumerate(contour1.primitives):
             if dis_sorted[0] == dis_sorted[1]:
                 indices = npy.where(npy.array(dis) == dis_sorted[0])[0]
                 index1 = indices[0]
@@ -8543,17 +8543,17 @@ class BSplineFace3D(Face3D):
             else:
                 index1 = dis.index(dis_sorted[0])
                 index2 = dis.index(dis_sorted[1])
-            if ((p1.start == points1[index1] and p1.end == points1[index2])
+            if ((point1.start == points1[index1] and point1.end == points1[index2])
                     or
-                    (p1.end == points1[index1] and p1.start == points1[index2])):
-                shared.append(p1)
+                    (point1.end == points1[index1] and point1.start == points1[index2])):
+                shared.append(point1)
                 i = k
 
-        for k, p2 in enumerate(contour2.primitives):
-            if ((p2.start == points2[ind[index1]] and p2.end == points2[ind[index2]])
+        for k, prim2 in enumerate(contour2.primitives):
+            if ((prim2.start == points2[ind[index1]] and prim2.end == points2[ind[index2]])
                     or
-                    (p2.end == points2[ind[index1]] and p2.start == points2[ind[index2]])):
-                shared.append(p2)
+                    (prim2.end == points2[ind[index1]] and prim2.start == points2[ind[index2]])):
+                shared.append(prim2)
                 j = k
 
         points = [contour2.primitives[j].start, contour2.primitives[j].end]
@@ -9016,8 +9016,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def distance_to_shell(self, other_shell: 'OpenShell3D', resolution: float):
         min_dist = self.minimum_distance_points(other_shell, resolution)
         if min_dist is not None:
-            p1, p2 = min_dist
-            return p1.point_distance(p2)
+            point1, point2 = min_dist
+            return point1.point_distance(point2)
         return 0
 
     def minimum_distance_point(self,
