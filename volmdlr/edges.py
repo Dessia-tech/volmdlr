@@ -6047,7 +6047,8 @@ class ArcEllipse3D(Edge):
         length = self.length()
         x = []
         y = []
-        for i in range(30):
+        number_points = 30
+        for i in range(number_points):
             point = self.point_at_abscissa(i / 29. * length)
             xi, yi = point.plane_projection2d(x3d, y3d)
             x.append(xi)
