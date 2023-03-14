@@ -6238,8 +6238,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def get_open_contour_divided_faces_inner_contours(self, new_faces_contours):
         """
-        If there is any inner contour, verifies which ones belong to the new divided faces from
-        an open cutting contour.
+        If there is any inner contour, verifies which ones belong to the new divided faces.
 
         :param new_faces_contours: new faces outer contour.
         :return: valid_new_faces_contours, valid_new_faces_contours.
@@ -6262,8 +6261,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def get_closed_contour_divided_faces_inner_contours(self, list_faces, new_contour):
         """
-        If there is any inner contour, verifies which ones belong to the new divided faces from
-        a closed cutting contour.
+        If there is any inner contour, verifies which ones belong to the new divided faces.
 
         :param list_faces: list of new faces.
         :param new_contour: current new face outer contour.
@@ -7314,16 +7312,10 @@ class Triangle3D(PlaneFace3D):
 
     def normal(self):
         """
-
-        Returns
-        -------
-        normal to the face
+        Normal to the face.
 
         """
         normal = self.surface3d.frame.w
-        # vec12 = self.point2 - self.point1
-        # vec13 = self.point3 - self.point1
-        # normal  = vec12.cross(vec13)
         normal.normalize()
         return normal
 
@@ -8064,9 +8056,9 @@ class BSplineFace3D(Face3D):
 
     def pair_with(self, other_bspline_face3d):
         """
-        Finds out how the uv parametric frames are located compared to
-        each other and also how grid 3d can be defined respected to these
-        directions.
+        Finds out how the uv parametric frames are located.
+
+        It does it by compaing to each other and also how grid 3d can be defined respected to these directions.
 
         :param other_bspline_face3d: BSplineFace3D
         :type other_bspline_face3d: :class:`volmdlr.faces.BSplineFace3D`
@@ -8464,7 +8456,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         """
-        Converts a step primitive to a OpenShell3D.
+        Converts a step primitive to a Open Shell 3D.
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
@@ -8534,7 +8526,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
-        OpenShell3D / ClosedShell3D rotation.
+        Open Shell 3D / Closed Shell 3D rotation.
 
         :param center: rotation center.
         :param axis: rotation axis.
@@ -8548,7 +8540,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Shell3D rotation. Object is updated inplace.
+        Shell 3D rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis
@@ -8563,9 +8555,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Shell3D translation
-        :param offset: translation vector
-        :return: A new translated OpenShell3D
+        Shell3D translation.
+
+        :param offset: translation vector.
+        :return: A new translated Open Shell 3D.
         """
         new_faces = [face.translation(offset) for face in
                      self.faces]
@@ -8574,12 +8567,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        OpenShell3D translation. Object is updated inplace.
+        Open Shell 3D translation. Object is updated inplace.
 
         :param offset: Translation vector.
-        :type offset: `volmdlr.Vector3D`
-        :return: Translate the OpenShell3D in place.
-        :rtype: None
+        :type offset: `volmdlr.Vector3D`.
+        :return: Translate the Open Shell 3D in place.
+        :rtype: None.
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
@@ -8590,8 +8583,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new OpenShell3D
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new OpenShell3D.
+
+        side = 'old' or 'new'.
         """
         new_faces = [face.frame_mapping(frame, side) for face in
                      self.faces]
@@ -8599,8 +8593,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
-        side = 'old' or 'new'
+        Changes frame_mapping and the object is updated inplace.
+
+        side = 'old' or 'new'.
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
@@ -9243,6 +9238,8 @@ class ClosedShell3D(OpenShell3D):
     @staticmethod
     def get_intersecting_faces(dict_intersecting_combinations):
         """
+        Gets intersecting faces.
+
         :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
         and as the values the resulting primitive from the two intersecting faces
 
@@ -9259,11 +9256,13 @@ class ClosedShell3D(OpenShell3D):
 
     def get_non_intersecting_faces(self, shell2, intersecting_faces, intersection_method=False):
         """
-        :param shell2: ClosedShell3D
+        Gets lists of faces that never intersect with any of the shell2's faces.
+
+        :param shell2: ClosedShell3D.
         :param intersecting_faces:
-        :param intersection_method: determines if running for intersection operation
+        :param intersection_method: determines if running for intersection operation.
         returns a list of all the faces that never intersect any
-        face of the other shell
+        face of the other shell.
         """
         non_intersecting_faces = []
 
@@ -9295,10 +9294,9 @@ class ClosedShell3D(OpenShell3D):
 
     def get_coincident_faces(self, shell2):
         """
-        Finds all pairs of faces that are coincidents faces, that is,
-        faces lying on the same plane
+        Finds all pairs of faces that are coincidents faces, that is, faces lying on the same plane.
 
-        returns a List of tuples with the face pairs
+        returns a List of tuples with the face pairs.
         """
         list_coincident_faces = []
         for face1 in self.faces:
@@ -9505,8 +9503,7 @@ class ClosedShell3D(OpenShell3D):
 
     def is_clean(self):
         """
-        Verifies if closed shell\'s faces are clean or
-        if it is needed to be cleaned.
+        Verifies if closed shell\'s faces are clean or if it is needed to be cleaned.
 
         :return: True if clean and False Otherwise
         """

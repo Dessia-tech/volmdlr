@@ -482,6 +482,7 @@ class LineSegment(Edge):
     def middle_point(self):
         """
         Calculates the middle point of a Line Segment.
+
         :return:
         """
         return 0.5 * (self.start + self.end)
@@ -3200,6 +3201,8 @@ class ArcEllipse2D(Edge):
 
         def theta_a_b(start_, iterior_, end_, center_):
             """
+            Calculates the major, minor and theta.
+
             From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a- \
             center-and-3-arbitrary-points-on-it-are-given.
             theta= ellipse's inclination angle related to the horizontal

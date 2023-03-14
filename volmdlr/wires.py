@@ -696,8 +696,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_crossings(self,
                               linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of crossings in the form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        Gets the wire primitives intersecting with the line.
+
+        Returns a list of crossings in the form of a tuple (point, primitive).
         """
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
@@ -824,9 +825,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def bsplinecurve_crossings(self,
                                bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
-        Returns a list of crossings in the form of a tuple (point,
-        primitive) of the wire primitives crossings with the bsplinecurve.
+        Gets the wire primitives crossings with the bsplinecurve.
 
+        Returns a list of crossings in the form of a tuple (point, primitive).
         """
 
         linesegments = bsplinecurve.to_wire(25).primitives
@@ -840,9 +841,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def bsplinecurve_intersections(self,
                                    bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
-        Returns a list of intersections in the form of a tuple (point,
-        primitive) of the wire primitives intersections with the bsplinecurve.
+        Gets the wire primitives intersections with the bsplinecurve.
 
+        Returns a list of intersections in the form of a tuple (point, primitive).
         """
 
         linesegments = bsplinecurve.to_wire(25).primitives
@@ -970,11 +971,12 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def get_primitives_2d(self, plane_origin, x, y):
         """
-        Pass primitives to 2d
-        :param plane_origin: plane origin
-        :param x: vector u
-        :param y: vector v
-        :return: list of 2d primitives
+        Pass primitives to 2d.
+
+        :param plane_origin: plane origin.
+        :param x: vector u.
+        :param y: vector v.
+        :return: list of 2d primitives.
         """
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
@@ -1456,7 +1458,7 @@ class ContourMixin(WireMixin):
 
     def edges_order_with_adjacent_contour(self, contour):
         """
-        Check if the shared edges between two adjacent contours are traversed with two
+        Check if the shared edges between two adjacent contours are traversed with two \
         different directions along each contour.
 
         """
@@ -2246,11 +2248,10 @@ class Contour2D(ContourMixin, Wire2D):
 
     def merge_with(self, contour2d):
         """
-        Merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours
-        (if there are any).
+        Merge two adjacent contours, and returns one outer contour and inner contours (if there are any).
 
-        :param contour2d: contour to merge with
-        :return: merged contours
+        :param contour2d: contour to merge with.
+        :return: merged contours.
         """
         is_sharing_primitive = self.is_sharing_primitives_with(contour2d)
         if self.is_inside(contour2d) and not is_sharing_primitive:
@@ -3031,8 +3032,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     @classmethod
     def convex_hull_points(cls, points):
         """
-        Uses the scipy method ConvexHull to calculate the convex hull from
-        a cloud of points
+        Uses the scipy method ConvexHull to calculate the convex hull from a cloud of points.
+
         """
 
         points_hull = [pt.copy() for pt in points]
@@ -3268,10 +3269,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def line_intersecting_closing_point(self, crossing_point):
         """
-        Finds closing point for the sewing method using intersection of lines
-        drawn from the barycenter.
+        Finds closing point for the sewing method using intersection of lines drawn from the barycenter.
 
-        returns the closing point
+        returns the closing point.
         """
         vec_dir = crossing_point.copy()
         vec_dir.normalize()
@@ -3476,8 +3476,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def search_farthest(self, interseting_point, possible_closing_points):
         """
-        While Sewing two Polygons, and searching a face\'s closing point, this
-        method verifies it chooses the closest of the farthest available
+        Chooses the closest of the farthest available.
+
+        While Sewing two Polygons, and searching a face\'s closing point, this method verifies it
         :return: True if to search the farthest of False if not
         """
         distance = math.inf
@@ -4608,8 +4609,9 @@ class Contour3D(ContourMixin, Wire3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Contour3D
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new Contour3D.
+
+        side = 'old' or 'new'.
         """
         new_edges = [edge.frame_mapping(frame, side) for edge in
                      self.primitives]
@@ -5290,9 +5292,10 @@ class Ellipse3D(Contour3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Ellipse3D translation
-        :param offset: translation vector
-        :return: A new translated Ellipse3D
+        Ellipse 3D translation.
+
+        :param offset: translation vector.
+        :return: A new translated Ellipse 3D.
         """
         new_center = self.center.translation(offset)
         new_normal = self.normal.translation(offset)

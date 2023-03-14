@@ -651,7 +651,8 @@ class Step(dc.DessiaObject):
 
     def create_graph(self):
         """
-        Step functions graph
+        Step functions graph.
+
         :return:
         """
         G = nx.Graph()

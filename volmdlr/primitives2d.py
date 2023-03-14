@@ -298,9 +298,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def offset_lines(self, line_indexes, offset):
         """
-        line_indexes is a list of consecutive line indexes
-        These line should all be aligned
-        line_indexes = 0 being the 1st line
+        line_indexes is a list of consecutive line indexes.
+
+        These line should all be aligned line_indexes = 0 being the 1st line.
 
         if self.close last line_index can be len(self.points)-1
         if not, last line_index can be len(self.points)-2

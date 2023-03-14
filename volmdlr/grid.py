@@ -35,8 +35,7 @@ class Grid2D(DessiaObject):
 
     def displacement_compared_to(self, initial_grid2d):
         """
-        Computes the deformation/displacement (dx,dy) of a grid2d based on
-        another grid2d.
+        Computes the deformation/displacement (dx,dy) of a grid2d based on another grid2d.
 
         :param initial_grid2d: A 2 dimensional grid
         :type initial_grid2d: :class:`volmdlr.grid.Grid2D`
