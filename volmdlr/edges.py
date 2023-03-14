@@ -1612,10 +1612,10 @@ class BSplineCurve2D(BSplineCurve):
 
         """
 
-        u = npy.linspace(0, 1, num=n + 1).tolist()
+        u_params = npy.linspace(0, 1, num=n + 1).tolist()
         points = []
-        for u0 in u:
-            point = self.curve.evaluate_single(u0)
+        for u_param in u_params:
+            point = self.curve.evaluate_single(u_param)
             points.append(volmdlr.Point2D(point[0], point[1]))
 
         return volmdlr.wires.Wire2D.from_points(points)
@@ -3096,22 +3096,22 @@ class FullArc2D(Arc2D):
             else:
                 pt1 = line2d.point1
                 vec = line2d.point2 - line2d.point1
-        a = vec.dot(vec)
-        b = 2 * vec.dot(pt1 - self.center)
-        c = pt1.dot(pt1) + self.center.dot(self.center) \
+        vector1 = vec.dot(vec)
+        vector2 = 2 * vec.dot(pt1 - self.center)
+        vector3 = pt1.dot(pt1) + self.center.dot(self.center) \
             - 2 * pt1.dot(self.center) - self.radius ** 2
 
-        disc = b ** 2 - 4 * a * c
+        disc = vector2 ** 2 - 4 * vector1 * vector3
         if math.isclose(disc, 0., abs_tol=tol):
-            t1 = -b / (2 * a)
-            return [pt1 + t1 * vec]
+            t_param = -vector2 / (2 * vector1)
+            return [pt1 + t_param * vec]
 
         if disc > 0:
             sqrt_disc = math.sqrt(disc)
-            t1 = (-b + sqrt_disc) / (2 * a)
-            t2 = (-b - sqrt_disc) / (2 * a)
-            return [pt1 + t1 * vec,
-                    pt1 + t2 * vec]
+            t_param = (-vector2 + sqrt_disc) / (2 * vector1)
+            s_param = (-vector2 - sqrt_disc) / (2 * vector1)
+            return [pt1 + t_param * vec,
+                    pt1 + s_param * vec]
 
         return []
 
@@ -3132,24 +3132,24 @@ class FullArc2D(Arc2D):
             else:
                 pt1 = linesegment2d.point1
                 vec = linesegment2d.point2 - linesegment2d.point1
-        a = vec.dot(vec)
-        b = 2 * vec.dot(pt1 - self.center)
-        c = pt1.dot(pt1) + self.center.dot(self.center) \
+        vector1 = vec.dot(vec)
+        vector2 = 2 * vec.dot(pt1 - self.center)
+        vector3 = pt1.dot(pt1) + self.center.dot(self.center) \
             - 2 * pt1.dot(self.center) - self.radius ** 2
 
-        disc = b ** 2 - 4 * a * c
+        disc = vector2 ** 2 - 4 * vector1 * vector3
         if math.isclose(disc, 0., abs_tol=tol):
-            t1 = -b / (2 * a)
-            points = [pt1 + t1 * vec]
+            t_param = -vector2 / (2 * vector1)
+            points = [pt1 + t_param * vec]
             if linesegment2d.point_belongs(points[0]):
                 return points
             return []
 
         if disc > 0:
             sqrt_disc = math.sqrt(disc)
-            t1 = (-b + sqrt_disc) / (2 * a)
-            t2 = (-b - sqrt_disc) / (2 * a)
-            points = [pt1 + t1 * vec, pt1 + t2 * vec]
+            t_param = (-vector2 + sqrt_disc) / (2 * vector1)
+            s_param = (-vector2 - sqrt_disc) / (2 * vector1)
+            points = [pt1 + t_param * vec, pt1 + s_param * vec]
             valid_points = [pt for pt in points if
                             linesegment2d.point_belongs(pt)]
             return valid_points
@@ -4088,17 +4088,17 @@ class LineSegment3D(LineSegment):
         u = self.end - self.start
         v = other_line.end - other_line.start
         w = self.start - other_line.start
-        a = u.dot(u)
-        b = u.dot(v)
-        c = v.dot(v)
-        d = u.dot(w)
-        e = v.dot(w)
-        if (a * c - b ** 2) != 0:
-            s = (b * e - c * d) / (a * c - b ** 2)
-            t = (a * e - b * d) / (a * c - b ** 2)
-            p1 = self.start + s * u
-            p2 = other_line.start + t * v
-            return p1, p2
+        u_dot_u = u.dot(u)
+        u_dot_v = u.dot(v)
+        v_dot_v = v.dot(v)
+        u_dot_w = u.dot(w)
+        v_dot_w = v.dot(w)
+        if (u_dot_u * v_dot_v - u_dot_v ** 2) != 0:
+            s_param = (u_dot_v * v_dot_w - v_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
+            t_param = (u_dot_u * v_dot_w - u_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
+            point1 = self.start + s_param * u
+            point2 = other_line.start + t_param * v
+            return point1, point2
         return self.start, other_line.start
 
     def matrix_distance(self, other_line):
@@ -4433,16 +4433,16 @@ class BSplineCurve3D(BSplineCurve):
             return self.start
         if math.isclose(abscissa, self.length(), abs_tol=1e-10):
             return self.end
-        lut = self.look_up_table(resolution=resolution)
+        look_up_table = self.look_up_table(resolution=resolution)
         if 0 < abscissa < self.length():
             last_param = 0
-            for t, dist in lut:
+            for param, dist in look_up_table:
                 if abscissa < dist:
-                    t1 = last_param
-                    t2 = t
+                    param_t1 = last_param
+                    param_t2 = param
                     return volmdlr.Point3D(
-                        *self.curve.evaluate_single((t1 + t2) / 2))
-                last_param = t
+                        *self.curve.evaluate_single((param_t1 + param_t2) / 2))
+                last_param = param
         raise ValueError('Curvilinear abscissa is bigger than length,'
                          ' or negative')
 
@@ -5370,7 +5370,7 @@ class Arc3D(Arc):
         w = self.center - other_line.start
         v = self.normal.cross(k)
 
-        r = self.radius
+        radius = self.radius
 
         a = u.dot(u)
         b = u.dot(v)
@@ -5386,12 +5386,12 @@ class Arc3D(Arc):
         # x = (s, theta)
         def distance_squared(x):
             return (a * x[0] ** 2 + j + d * (
-                    (math.sin(x[1])) ** 2) * r ** 2 + f * (
-                            (math.cos(x[1])) ** 2) * r ** 2
-                    - 2 * x[0] * g - 2 * x[0] * r * math.sin(x[1]) * b - 2 * x[
-                        0] * r * math.cos(x[1]) * c
-                    + 2 * r * math.sin(x[1]) * h + 2 * r * math.cos(x[1]) * i
-                    + math.sin(2 * x[1]) * e * r ** 2)
+                    (math.sin(x[1])) ** 2) * radius ** 2 + f * (
+                            (math.cos(x[1])) ** 2) * radius ** 2
+                    - 2 * x[0] * g - 2 * x[0] * radius * math.sin(x[1]) * b - 2 * x[
+                        0] * radius * math.cos(x[1]) * c
+                    + 2 * radius * math.sin(x[1]) * h + 2 * radius * math.cos(x[1]) * i
+                    + math.sin(2 * x[1]) * e * radius ** 2)
 
         x01 = npy.array([0.5, self.angle / 2])
         x02 = npy.array([0.5, 0])
@@ -5403,13 +5403,13 @@ class Arc3D(Arc):
 
         p1 = other_line.point_at_abscissa(
             res1.x[0] * other_line.length())
-        p2 = self.point_at_abscissa(res1.x[1] * r)
+        p2 = self.point_at_abscissa(res1.x[1] * radius)
 
         res = [res2, res3]
         for couple in res:
             ptest1 = other_line.point_at_abscissa(
                 couple.x[0] * other_line.length())
-            ptest2 = self.point_at_abscissa(couple.x[1] * r)
+            ptest2 = self.point_at_abscissa(couple.x[1] * radius)
             dtest = ptest1.point_distance(ptest2)
             if dtest < d:
                 p1, p2 = ptest1, ptest2

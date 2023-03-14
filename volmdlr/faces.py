@@ -3513,8 +3513,8 @@ class BSplineSurface3D(Surface3D):
         self.control_points_table = []
         points_row = []
         i = 1
-        for pt in control_points:
-            points_row.append(pt)
+        for point in control_points:
+            points_row.append(point)
             if i == nb_v:
                 self.control_points_table.append(points_row)
                 points_row = []
@@ -3800,13 +3800,13 @@ class BSplineSurface3D(Surface3D):
         linesegment = vme.LineSegment3D(points[0], points[-1])
         flag = True
         flag_arc = False
-        for pt in points:
-            if not linesegment.point_belongs(pt, abs_tol=1e-4):
+        for point in points:
+            if not linesegment.point_belongs(point, abs_tol=1e-4):
                 flag = False
                 break
         if not flag:
             arc = vme.Arc3D(points[0], points[10], points[-1])
-            flag_arc = all(arc.point_belongs(pt, abs_tol=1e-4) for pt in points)
+            flag_arc = all(arc.point_belongs(point, abs_tol=1e-4) for point in points)
 
         periodic = False
         if self.x_periodicity is not None and \
@@ -3901,8 +3901,8 @@ class BSplineSurface3D(Surface3D):
         bsc_linesegment = vme.LineSegment3D(bspline_curve3d.points[0],
                                             bspline_curve3d.points[-1])
         flag = True
-        for pt in bspline_curve3d.points:
-            if not bsc_linesegment.point_belongs(pt):
+        for point in bspline_curve3d.points:
+            if not bsc_linesegment.point_belongs(point):
                 flag = False
                 break
 
@@ -4947,7 +4947,7 @@ class BSplineSurface3D(Surface3D):
         num_cpts_u = kwargs.get('ctrlpts_size_u', size_u - 1)  # number of datapts, r + 1 > number of ctrlpts, n + 1
         num_cpts_v = kwargs.get('ctrlpts_size_v', size_v - 1)  # number of datapts, s + 1 > number of ctrlpts, m + 1
 
-        points = [tuple([*pt]) for pt in points_3d]
+        points = [tuple([*point]) for point in points_3d]
 
         surface = approximate_surface(points, size_u, size_v, degree_u, degree_v,
                                       ctrlpts_size_u=num_cpts_u, num_cpts_v=num_cpts_v)
@@ -5306,21 +5306,21 @@ class BSplineSurface3D(Surface3D):
             for line in lines:
                 inter = contour.line_intersections(line)
                 if inter:
-                    pt = set()
-                    for p in inter:
-                        pt.add(p[0])
+                    pt_ = set()
+                    for point_intersection in inter:
+                        pt_.add(point_intersection[0])
                 else:
                     raise NotImplementedError
 
-                pt = sorted(pt, key=lambda p: pt0.point_distance(p))
-                pt0 = pt[0]
-                edge = vme.LineSegment2D(pt[0], pt[1])
+                pt_ = sorted(pt_, key=pt0.point_distance())
+                pt0 = pt_[0]
+                edge = vme.LineSegment2D(pt_[0], pt_[1])
 
                 points.extend(edge.discretization_points(number_points=10))
 
             points3d = []
-            for p in points:
-                points3d.append(self.point2d_to_3d(p))
+            for point in points:
+                points3d.append(self.point2d_to_3d(point))
 
             size_u, size_v, degree_u, degree_v = 10, 10, self.degree_u, self.degree_v
             surfaces.append(
@@ -8527,10 +8527,10 @@ class BSplineFace3D(Face3D):
         points2 = [p.start for p in contour2.primitives]
 
         dis, ind = [], []
-        for p in points1:
-            pt = p.nearest_point(points2)
-            ind.append(points2.index(pt))
-            dis.append(p.point_distance(pt))
+        for point_ in points1:
+            point = point_.nearest_point(points2)
+            ind.append(points2.index(point))
+            dis.append(point_.point_distance(point))
 
         dis_sorted = sorted(dis)
 
