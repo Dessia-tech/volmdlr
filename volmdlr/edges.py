@@ -35,9 +35,9 @@ def standardize_knot_vector(knot_vector):
     first_knot = knot_vector[0]
     last_knot = knot_vector[-1]
     standard_u_knots = []
-    if first_knot_vector != 0 or last_knot_vector != 1:
-        x = 1 / (last_knot_vector - first_knot_vector)
-        y = first_knot_vector / (first_knot_vector - last_knot_vector)
+    if first_knot != 0 or last_knot != 1:
+        x = 1 / (last_knot - first_knot)
+        y = first_knot / (first_knot - last_knot)
         for u in knot_vector:
             standard_u_knots.append(u * x + y)
         return standard_u_knots

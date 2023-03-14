@@ -32,32 +32,34 @@ import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core_compiled import polygon_point_belongs
 
 
-def argmax(list_of_float):
+def argmax(list_of_numbers):
     """
     Returns the max value and the argmax.
+
     """
-    pos_max, max_float = 0, list_of_float[0]
-    for pos, float_ in enumerate(list_of_float):
+    pos_max, max_value = 0, list_of_numbers[0]
+    for pos, value in enumerate(list_of_numbers):
         if pos == 0:
             continue
-        if float_ > max_float:
-            max_float = float_
+        if value > max_value:
+            max_value = value
             pos_max = pos
-    return max_float, pos_max
+    return max_value, pos_max
 
 
-def argmin(list_of_float):
+def argmin(list_of_numbers):
     """
     Returns the minimum value from a list of numbers and its index.
+
     """
-    pos_min, min_float = 0, list_of_float[0]
-    for pos, float_ in enumerate(list_of_float):
+    pos_min, min_value = 0, list_of_numbers[0]
+    for pos, value in enumerate(list_of_numbers):
         if pos == 0:
             continue
-        if float_ < min_float:
-            min_float = float_
+        if value < min_value:
+            min_value = value
             pos_min = pos
-    return min_float, pos_min
+    return min_value, pos_min
 
 
 def bounding_rectangle_adjacent_contours(contours: List):
