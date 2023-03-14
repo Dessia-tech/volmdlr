@@ -32,7 +32,7 @@ def standardize_knot_vector(knot_vector):
     """
     Standardize a knot vector to range from 0 to 1.
     """
-    first_knot_vector = knot_vector[0]
+    first_knot = knot_vector[0]
     last_knot_vector = knot_vector[-1]
     standard_u_knots = []
     if first_knot_vector != 0 or last_knot_vector != 1:
