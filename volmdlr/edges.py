@@ -2888,7 +2888,7 @@ class Arc2D(Arc):
         return volmdlr.wires.Wire2D.from_points(self.discretization_points(angle_resolution=angle_resolution))
 
     def axial_symmetry(self, line):
-        """ Finds out the symmetric arc 2d according to a line. """
+        """ Finds out the symmetric arc 2D according to a line. """
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
 
         return self.__class__(start=points_symmetry[0],
