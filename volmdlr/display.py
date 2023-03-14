@@ -156,7 +156,7 @@ class DisplayMesh(dc.DessiaObject):
         for i_points, point in enumerate(self.points):
             ax = point.plot(ax=ax)
             if numbering:
-                ax.text(*point, 'node {}'.format(i_points + 1),
+                ax.text(*point, f'node {i_points + 1}',
                         ha='center', va='center')
 
         for vertex1, vertex2, vertex3 in self.triangles:

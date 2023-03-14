@@ -37,13 +37,12 @@ def argmax(list_of_float):
     Returns the max value and the argmax.
     """
     pos_max, max_float = 0, list_of_float[0]
-    for pos, fl in enumerate(list_of_float):
+    for pos, float_ in enumerate(list_of_float):
         if pos == 0:
             continue
-        else:
-            if fl > max_float:
-                max_float = fl
-                pos_max = pos
+        if float_ > max_float:
+            max_float = float_
+            pos_max = pos
     return max_float, pos_max
 
 
@@ -1953,7 +1952,7 @@ class Contour2D(ContourMixin, Wire2D):
             extracted_innerpoints_contour1 = \
                 volmdlr.wires.Contour2D.extract_contours(self, intersections[0], self.primitives[0].end, True)[0]
             return extracted_outerpoints_contour1, extracted_innerpoints_contour1
-        elif len(intersections) == 2:
+        if len(intersections) == 2:
             extracted_outerpoints_contour1 = \
                 volmdlr.wires.Contour2D.extract_contours(self, intersections[0], intersections[1], True)[0]
             extracted_innerpoints_contour1 = \
@@ -2566,7 +2565,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         lines = []
         if len(self.points) > 1:
             for point1, point2 in zip(self.points,
-                              list(self.points[1:]) + [self.points[0]]):
+                                      list(self.points[1:]) + [self.points[0]]):
                 if point1 != point2:
                     lines.append(volmdlr.edges.LineSegment2D(point1, point2))
         return lines
@@ -2676,16 +2675,15 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                   'polygon might turn over. Offset must be greater than',
                   -max_offset_len)
             raise ValueError('inadapted offset')
-        else:
-            nb = len(self.points)
-            vectors = []
-            for i in range(nb - 1):
-                v1 = self.points[i + 1] - self.points[i]
-                v2 = self.points[i] - self.points[i + 1]
-                v1.normalize()
-                v2.normalize()
-                vectors.append(v1)
-                vectors.append(v2)
+        nb_points = len(self.points)
+        vectors = []
+        for i in range(nb_points - 1):
+            v1 = self.points[i + 1] - self.points[i]
+            v2 = self.points[i] - self.points[i + 1]
+            v1.normalize()
+            v2.normalize()
+            vectors.append(v1)
+            vectors.append(v2)
 
         v1 = self.points[0] - self.points[-1]
         v2 = self.points[-1] - self.points[0]
@@ -2697,20 +2695,20 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         offset_vectors = []
         offset_points = []
 
-        for i in range(nb):
+        for i in range(nb_points):
 
             # check = False
-            ni = vectors[2 * i - 1] + vectors[2 * i]
-            if ni == volmdlr.Vector2D(0, 0):
-                ni = vectors[2 * i]
-                ni = ni.normal_vector()
-                offset_vectors.append(ni)
+            vector_i = vectors[2 * i - 1] + vectors[2 * i]
+            if vector_i == volmdlr.Vector2D(0, 0):
+                vector_i = vectors[2 * i]
+                vector_i = vector_i.normal_vector()
+                offset_vectors.append(vector_i)
             else:
-                ni.normalize()
-                if ni.dot(vectors[2 * i - 1].normal_vector()) > 0:
-                    ni = - ni
+                vector_i.normalize()
+                if vector_i.dot(vectors[2 * i - 1].normal_vector()) > 0:
+                    vector_i = - vector_i
                     # check = True
-                offset_vectors.append(ni)
+                offset_vectors.append(vector_i)
 
             normal_vector1 = - vectors[2 * i - 1].normal_vector()
             normal_vector2 = vectors[2 * i].normal_vector()
@@ -2743,10 +2741,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         d_min, other_point_min = self.line_segments[0].point_distance(
             point, return_other_point=True)
         for line in self.line_segments[1:]:
-            d, other_point = line.point_distance(
+            dist_, other_point = line.point_distance(
                 point, return_other_point=True)
-            if d < d_min:
-                d_min = d
+            if dist_ < d_min:
+                d_min = dist_
                 other_point_min = other_point
         if return_other_point:
             return d_min, other_point_min
@@ -3201,8 +3199,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
             found_ear = False
             for point1, point2, point3 in zip(remaining_points,
-                                  remaining_points[1:] + remaining_points[0:1],
-                                  remaining_points[2:] + remaining_points[0:2]):
+                                              remaining_points[1:] + remaining_points[0:1],
+                                              remaining_points[2:] + remaining_points[0:2]):
                 if point1 != point3:
                     line_segment = volmdlr.edges.LineSegment2D(point1, point3)
 
@@ -3243,8 +3241,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
                     found_flat_ear = False
                     for point1, point2, point3 in zip(remaining_points,
-                                          remaining_points[1:] + remaining_points[0:1],
-                                          remaining_points[2:] + remaining_points[0:2]):
+                                                      remaining_points[1:] + remaining_points[0:1],
+                                                      remaining_points[2:] + remaining_points[0:2]):
                         triangle = Triangle2D(point1, point2, point3)
                         if triangle.area() == 0:
                             remaining_points.remove(point2)
@@ -3882,16 +3880,15 @@ class Circle2D(Contour2D):
         # coincident circles
         if d == 0 and self.radius == circle.radius:
             return []
-        else:
-            a = (self.radius ** 2 - circle.radius ** 2 + d ** 2) / (2 * d)
-            h = math.sqrt(self.radius ** 2 - a ** 2)
-            x2 = x0 + a * (x1 - x0) / d
-            y2 = y0 + a * (y1 - y0) / d
-            x3 = x2 + h * (y1 - y0) / d
-            y3 = y2 - h * (x1 - x0) / d
+        a = (self.radius ** 2 - circle.radius ** 2 + d ** 2) / (2 * d)
+        h = math.sqrt(self.radius ** 2 - a ** 2)
+        x2 = x0 + a * (x1 - x0) / d
+        y2 = y0 + a * (y1 - y0) / d
+        x3 = x2 + h * (y1 - y0) / d
+        y3 = y2 - h * (x1 - x0) / d
 
-            x4 = x2 - h * (y1 - y0) / d
-            y4 = y2 + h * (x1 - x0) / d
+        x4 = x2 - h * (y1 - y0) / d
+        y4 = y2 + h * (x1 - x0) / d
 
         return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]
 
@@ -3999,11 +3996,10 @@ class Circle2D(Contour2D):
         if side == 'old':
             return Circle2D(frame.local_to_global_coordinates(self.center),
                             self.radius)
-        elif side == 'new':
+        if side == 'new':
             return Circle2D(frame.global_to_local_coordinates(self.center),
                             self.radius)
-        else:
-            raise ValueError('Side should be \'new\' \'old\'')
+        raise ValueError('Side should be \'new\' \'old\'')
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -4735,16 +4731,15 @@ class Contour3D(ContourMixin, Wire3D):
 
         if len(points) < 3:
             raise ValueError('contour is defined at least with three points')
-        else:
-            edges = []
-            for i in range(0, len(points) - 1):
-                edges.append(volmdlr.edges.LineSegment3D(points[i], points[i + 1]))
+        edges = []
+        for i in range(0, len(points) - 1):
+            edges.append(volmdlr.edges.LineSegment3D(points[i], points[i + 1]))
 
-            edges.append(volmdlr.edges.LineSegment3D(points[-1], points[0]))
+        edges.append(volmdlr.edges.LineSegment3D(points[-1], points[0]))
 
-            contour = cls(edges)
+        contour = cls(edges)
 
-            return contour
+        return contour
 
     def clean_primitives(self):
         """
@@ -5083,10 +5078,9 @@ class Circle3D(Contour3D):
                 volmdlr.Frame3D(self.center, u, v, w), self.radius)
             return [cylinder.rectangular_cut(0, volmdlr.TWO_PI,
                                              0, extrusion_vector.norm())]
-        else:
-            raise NotImplementedError(
-                f'Extrusion along vector not colinar to normal for circle not '
-                f'handled yet: dot={self.normal.dot(extrusion_vector)}')
+        raise NotImplementedError(
+            f'Extrusion along vector not colinar to normal for circle not '
+            f'handled yet: dot={self.normal.dot(extrusion_vector)}')
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
                    angle: float):
@@ -5379,7 +5373,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         lines = []
         if len(self.points) > 1:
             for point1, point2 in zip(self.points,
-                              list(self.points[1:]) + [self.points[0]]):
+                                      list(self.points[1:]) + [self.points[0]]):
                 lines.append(volmdlr.edges.LineSegment3D(point1, point2))
         return lines
 

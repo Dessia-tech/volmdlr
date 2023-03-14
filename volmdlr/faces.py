@@ -6781,7 +6781,7 @@ class PlaneFace3D(Face3D):
         if other_face.__class__ is PlaneFace3D:
             if return_points:
                 dist, point1, point2 = self.minimum_distance_points_plane(other_face,
-                                                                  return_points=return_points)
+                                                                          return_points=return_points)
                 return dist, point1, point2
             dist = self.minimum_distance_points_plane(other_face,
                                                       return_points=return_points)

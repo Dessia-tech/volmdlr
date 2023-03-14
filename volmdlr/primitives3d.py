@@ -781,7 +781,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         Volume from Guldin formulae.
         """
         point1 = self.axis_point.PlaneProjection3D(self.plane_origin,
-                                               self.x, self.y)
+                                                   self.x, self.y)
         p1_2d = point1.To2D(self.axis_point, self.x, self.y)
         p2_3d = self.axis_point + volmdlr.Point3D(self.axis.vector)
         p2_2d = p2_3d.To2D(self.plane_origin, self.x, self.y)

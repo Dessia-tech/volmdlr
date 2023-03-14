@@ -18,9 +18,8 @@ WEEKLY_DECREASE = 0.03
 MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 216,
                      "wrong-spelling-in-docstring": 143,
-                     'invalid-name': 433,
-                     'no-else-return': 20,
-                     'consider-using-f-string': 0,
+                     'invalid-name': 360,
+                     'no-else-return': 0,
                      'no-member': 3,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
@@ -49,9 +48,9 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-return-statements': 1,
                      'cyclic-import': 4,
                      'raise-missing-from': 2,
-                     'no-else-raise': 3,
-                     'no-else-continue': 3,
-                     'undefined-variable': 6,  # 2 when gmsh is fixed
+                     'no-else-raise': 0,
+                     'no-else-continue': 0,
+                     'undefined-variable': 0,  # 2 when gmsh is fixed
                      'broad-except': 1,
                      "broad-exception-caught": 1,
                      'too-many-boolean-expressions': 3,
