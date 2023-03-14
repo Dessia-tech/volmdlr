@@ -3725,9 +3725,9 @@ class BSplineSurface3D(Surface3D):
         """
 
         blending_mat = npy.empty((len(u), self.nb_u))
-        for i in range(0, len(u)):
-            for j in range(0, self.nb_u):
-                blending_mat[i][j] = self.basis_functions_u(u[i], self.degree_u, j)
+        for i, u_i in enumerate(u):
+            for j in range(self.nb_u):
+                blending_mat[i][j] = self.basis_functions_u(u_i, self.degree_u, j)
         return blending_mat
 
     def blending_matrix_v(self, v):
@@ -3737,9 +3737,9 @@ class BSplineSurface3D(Surface3D):
         """
 
         blending_mat = npy.empty((len(v), self.nb_v))
-        for i in range(0, len(v)):
-            for j in range(0, self.nb_v):
-                blending_mat[i][j] = self.basis_functions_v(v[i], self.degree_v, j)
+        for i, v_i in enumerate(v):
+            for j in range(self.nb_v):
+                blending_mat[i][j] = self.basis_functions_v(v_i, self.degree_v, j)
         return blending_mat
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
@@ -4349,37 +4349,37 @@ class BSplineSurface3D(Surface3D):
 
         # geodesic distances between 3D grid points (based on points combination [equation_points])
         geodesic_distances = []
-        for i in range(0, len(equation_points)):
+        for point in equation_points:
             geodesic_distances.append((self.geodesic_distance(
-                points_3d[index_points[equation_points[i][0]]], points_3d[index_points[equation_points[i][1]]])) ** 2)
+                points_3d[index_points[point[0]]], points_3d[index_points[point[1]]])) ** 2)
 
         # System of nonlinear equations
         def non_linear_equations(x):
             vector_f = npy.empty(len(equation_points) + 2)
-            for i in range(0, len(equation_points)):
-                vector_f[i] = abs((x[index_x[equation_points[i][0]]] ** 2 +
-                                   x[index_x[equation_points[i][1]]] ** 2 +
-                                   x[index_y[equation_points[i][0]]] ** 2 +
-                                   x[index_y[equation_points[i][1]]] ** 2 -
+            for idx, point_ in enumerate(equation_points):
+                vector_f[i] = abs((x[index_x[point_[0]]] ** 2 +
+                                   x[index_x[point_[1]]] ** 2 +
+                                   x[index_y[point_[0]]] ** 2 +
+                                   x[index_y[point_[1]]] ** 2 -
                                    2 *
-                                   x[index_x[equation_points[i][0]]] *
-                                   x[index_x[equation_points[i][1]]] -
+                                   x[index_x[point_[0]]] *
+                                   x[index_x[point_[1]]] -
                                    2 *
-                                   x[index_y[equation_points[i][0]]] *
-                                   x[index_y[equation_points[i][1]]] -
-                                   geodesic_distances[i]) /
-                                  geodesic_distances[i])
+                                   x[index_y[point_[0]]] *
+                                   x[index_y[point_[1]]] -
+                                   geodesic_distances[idx]) /
+                                  geodesic_distances[idx])
 
-            vector_f[i + 1] = x[0] * 1000
-            vector_f[i + 2] = x[1] * 1000
+            vector_f[idx + 1] = x[0] * 1000
+            vector_f[idx + 2] = x[1] * 1000
 
             return vector_f
 
         # Solution with "least_squares"
         x_init = []  # initial guess (2D grid points)
-        for i in range(0, len(points_2d)):
-            x_init.append(points_2d[i][0])
-            x_init.append(points_2d[i][1])
+        for point in points_2d:
+            x_init.append(point[0])
+            x_init.append(point[1])
         z = least_squares(non_linear_equations, x_init)
 
         points_2d_deformed = [volmdlr.Point2D(z.x[i], z.x[i + 1])
@@ -4458,29 +4458,29 @@ class BSplineSurface3D(Surface3D):
             for i in range(0, points_x - 1):
                 finite_elements_points.append(((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1)))
         finite_elements = []  # finite elements defined with closed polygon
-        for i in range(0, len(finite_elements_points)):
+        for point in finite_elements_points:
             finite_elements.append(
-                volmdlr.wires.ClosedPolygon2D((points_2d[index_points[finite_elements_points[i][0]]],
-                                               points_2d[index_points[finite_elements_points[i][1]]],
-                                               points_2d[index_points[finite_elements_points[i][2]]],
-                                               points_2d[index_points[finite_elements_points[i][3]]])))
+                volmdlr.wires.ClosedPolygon2D((points_2d[index_points[point[0]]],
+                                               points_2d[index_points[point[1]]],
+                                               points_2d[index_points[point[2]]],
+                                               points_2d[index_points[point[3]]])))
 
-        for k in range(0, len(finite_elements_points)):
+        for k, point in enumerate(finite_elements_points):
             if (volmdlr.wires.Contour2D(finite_elements[k].primitives).point_belongs(
                     point2d)  # finite_elements[k].point_belongs(point2d)
                     or volmdlr.wires.Contour2D(finite_elements[k].primitives).point_over_contour(point2d)
-                    or ((points_2d[index_points[finite_elements_points[k][0]]][0] < point2d.x <
-                         points_2d[index_points[finite_elements_points[k][1]]][0])
-                        and point2d.y == points_2d[index_points[finite_elements_points[k][0]]][1])
-                    or ((points_2d[index_points[finite_elements_points[k][1]]][1] < point2d.y <
-                         points_2d[index_points[finite_elements_points[k][2]]][1])
+                    or ((points_2d[index_points[point[0]]][0] < point2d.x <
+                         points_2d[index_points[point[1]]][0])
+                        and point2d.y == points_2d[index_points[point[0]]][1])
+                    or ((points_2d[index_points[point[1]]][1] < point2d.y <
+                         points_2d[index_points[point[2]]][1])
                         and point2d.x == points_2d[index_points[finite_elements_points[k][1]]][0])
-                    or ((points_2d[index_points[finite_elements_points[k][3]]][0] < point2d.x <
-                         points_2d[index_points[finite_elements_points[k][2]]][0])
-                        and point2d.y == points_2d[index_points[finite_elements_points[k][1]]][1])
-                    or ((points_2d[index_points[finite_elements_points[k][0]]][1] < point2d.y <
-                         points_2d[index_points[finite_elements_points[k][3]]][1])
-                        and point2d.x == points_2d[index_points[finite_elements_points[k][0]]][0])):
+                    or ((points_2d[index_points[point[3]]][0] < point2d.x <
+                         points_2d[index_points[point[2]]][0])
+                        and point2d.y == points_2d[index_points[point[1]]][1])
+                    or ((points_2d[index_points[point[0]]][1] < point2d.y <
+                         points_2d[index_points[point[3]]][1])
+                        and point2d.x == points_2d[index_points[point[0]]][0])):
                 break
 
         x0 = points_2d[index_points[finite_elements_points[k][0]]][0]
@@ -4543,35 +4543,35 @@ class BSplineSurface3D(Surface3D):
             for i in range(0, points_x - 1):
                 finite_elements_points.append(((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1)))
         finite_elements = []  # finite elements defined with closed polygon  DEFORMED
-        for i in range(0, len(finite_elements_points)):
+        for point in finite_elements_points:
             finite_elements.append(
-                volmdlr.wires.ClosedPolygon2D((points_2d_deformed[index_points[finite_elements_points[i][0]]],
-                                               points_2d_deformed[index_points[finite_elements_points[i][1]]],
-                                               points_2d_deformed[index_points[finite_elements_points[i][2]]],
-                                               points_2d_deformed[index_points[finite_elements_points[i][3]]])))
+                volmdlr.wires.ClosedPolygon2D((points_2d_deformed[index_points[point[0]]],
+                                               points_2d_deformed[index_points[point[1]]],
+                                               points_2d_deformed[index_points[point[2]]],
+                                               points_2d_deformed[index_points[point[3]]])))
 
         finite_elements_initial = []  # finite elements defined with closed polygon  INITIAL
-        for i in range(0, len(finite_elements_points)):
+        for point in finite_elements_points:
             finite_elements_initial.append(
-                volmdlr.wires.ClosedPolygon2D((points_2d[index_points[finite_elements_points[i][0]]],
-                                               points_2d[index_points[finite_elements_points[i][1]]],
-                                               points_2d[index_points[finite_elements_points[i][2]]],
-                                               points_2d[index_points[finite_elements_points[i][3]]])))
+                volmdlr.wires.ClosedPolygon2D((points_2d[index_points[point[0]]],
+                                               points_2d[index_points[point[1]]],
+                                               points_2d[index_points[point[2]]],
+                                               points_2d[index_points[point[3]]])))
 
-        for k in range(0, len(finite_elements_points)):
+        for k, point in enumerate(finite_elements_points):
             if (finite_elements[k].point_belongs(point2d)
-                    or ((points_2d_deformed[index_points[finite_elements_points[k][0]]][0] < point2d.x <
-                         points_2d_deformed[index_points[finite_elements_points[k][1]]][0])
-                        and point2d.y == points_2d_deformed[index_points[finite_elements_points[k][0]]][1])
+                    or ((points_2d_deformed[index_points[point[0]]][0] < point2d.x <
+                         points_2d_deformed[index_points[point[1]]][0])
+                        and point2d.y == points_2d_deformed[index_points[point[0]]][1])
                     or ((points_2d_deformed[index_points[finite_elements_points[k][1]]][1] < point2d.y <
                          points_2d_deformed[index_points[finite_elements_points[k][2]]][1])
-                        and point2d.x == points_2d_deformed[index_points[finite_elements_points[k][1]]][0])
-                    or ((points_2d_deformed[index_points[finite_elements_points[k][3]]][0] < point2d.x <
-                         points_2d_deformed[index_points[finite_elements_points[k][2]]][0])
-                        and point2d.y == points_2d_deformed[index_points[finite_elements_points[k][1]]][1])
-                    or ((points_2d_deformed[index_points[finite_elements_points[k][0]]][1] < point2d.y <
-                         points_2d_deformed[index_points[finite_elements_points[k][3]]][1])
-                        and point2d.x == points_2d_deformed[index_points[finite_elements_points[k][0]]][0])
+                        and point2d.x == points_2d_deformed[index_points[point[1]]][0])
+                    or ((points_2d_deformed[index_points[point[3]]][0] < point2d.x <
+                         points_2d_deformed[index_points[point[2]]][0])
+                        and point2d.y == points_2d_deformed[index_points[point[1]]][1])
+                    or ((points_2d_deformed[index_points[point[0]]][1] < point2d.y <
+                         points_2d_deformed[index_points[point[3]]][1])
+                        and point2d.x == points_2d_deformed[index_points[point[0]]][0])
                     or finite_elements[k].primitives[0].point_belongs(point2d) or finite_elements[k].primitives[
                         1].point_belongs(point2d)
                     or finite_elements[k].primitives[2].point_belongs(point2d) or finite_elements[k].primitives[
@@ -4872,8 +4872,8 @@ class BSplineSurface3D(Surface3D):
         """
 
         control_points = []
-        for i in range(0, len(surface.ctrlpts)):
-            control_points.append(volmdlr.Point3D(surface.ctrlpts[i][0], surface.ctrlpts[i][1], surface.ctrlpts[i][2]))
+        for point in surface.ctrlpts:
+            control_points.append(volmdlr.Point3D(point[0], point[1], point[2]))
 
         (u_knots, u_multiplicities) = knots_vector_inv(surface.knotvector_u)
         (v_knots, v_multiplicities) = knots_vector_inv(surface.knotvector_v)
@@ -4915,8 +4915,8 @@ class BSplineSurface3D(Surface3D):
         """
 
         points = []
-        for i in range(0, len(points_3d)):
-            points.append((points_3d[i].x, points_3d[i].y, points_3d[i].z))
+        for point in points_3d:
+            points.append((point.x, point.y, point.z))
 
         surface = interpolate_surface(points, size_u, size_v, degree_u, degree_v)
 

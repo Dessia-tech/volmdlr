@@ -1341,7 +1341,7 @@ class ContourMixin(WireMixin):
                         # instead of point not in list_p (due to errors)
                         if not list_p:
                             list_p.append(point)
-                        if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
+                        if list_p and point.point_distance(point.nearest_point(list_p)) > 1e-4:
                             list_p.append(point)
 
                     if len(list_p) == 2:
@@ -1374,7 +1374,7 @@ class ContourMixin(WireMixin):
                     if edge1.point_belongs(point, 1e-6):
                         if not list_p:
                             list_p.append(point)
-                        if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
+                        if list_p and point.point_distance(point.nearest_point(list_p)) > 1e-4:
                             list_p.append(point)
                         try:
                             self.primitive_to_index(edge1)
@@ -2360,23 +2360,37 @@ class ClosedPolygonMixin:
 
     """
 
-    def length(self):
+    def get_lengths(self):
+        """
+        Gets line segment lengths.
+
+        """
         list_ = []
-        for k in range(len(self.line_segments)):
-            list_.append(self.line_segments[k].length())
-        return sum(list_)
+        for line_segment in self.line_segments:
+            list_.append(line_segment.length())
+        return list_
+
+    def length(self):
+        """
+        Polygon length.
+
+        :return: polygon length.
+        """
+        return sum(self.get_lengths())
 
     def min_length(self):
-        list_ = []
-        for k in range(len(self.line_segments)):
-            list_.append(self.line_segments[k].length())
-        return min(list_)
+        """
+        Gets the minimal length for a line segment in the polygon.
+
+        """
+        return min(self.get_lengths())
 
     def max_length(self):
-        list_ = []
-        for k in range(len(self.line_segments)):
-            list_.append(self.line_segments[k].length())
-        return max(list_)
+        """
+        Gets the minimal length for a line segment in the polygon.
+
+        """
+        return max(self.get_lengths())
 
     def edge_statistics(self):
         distances = []
@@ -2976,9 +2990,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         a_line_was_divided_in_the_iteration = True
         while a_line_was_divided_in_the_iteration:
             a_line_was_divided_in_the_iteration = False
-            for line_position_hull in range(len(hull_concave_edges)):
-
-                line = hull_concave_edges[line_position_hull]
+            for line in hull_concave_edges:
                 nearby_points = get_nearby_points(line, unused_points,
                                                   scale_factor)
                 divided_line = get_divided_line(line, nearby_points,
