@@ -3958,13 +3958,13 @@ class BSplineSurface3D(Surface3D):
         new_x = [delta[0][0] + x[0], delta[1][0] + x[1]]
         new_x = self.check_bounds(new_x)
         residual = (new_x[0] - x[0]) * surface_derivatives[1][0] + (new_x[1] - x[1]) * surface_derivatives[0][1]
-        if residual.norm() <= 1e-8:
+        if residual.norm() <= 1e-6:
             return x
         x = new_x
         return self.point_invertion(x, point3d, maxiter=maxiter - 1)
 
     @staticmethod
-    def check_convergence(surf_derivatives, distance_vector, tol1: float = 1e-5, tol2: float = 1e-5):
+    def check_convergence(surf_derivatives, distance_vector, tol1: float = 1e-4, tol2: float = 1e-4):
 
         dist = distance_vector.norm()
         if dist == 0.0:
