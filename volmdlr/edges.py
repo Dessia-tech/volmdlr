@@ -6049,7 +6049,7 @@ class ArcEllipse3D(Edge):
         y = []
         number_points = 30
         for i in range(number_points):
-            point = self.point_at_abscissa(i / 29. * length)
+            point = self.point_at_abscissa(i / (number_points - 1) * length)
             xi, yi = point.plane_projection2d(x3d, y3d)
             x.append(xi)
             y.append(yi)
