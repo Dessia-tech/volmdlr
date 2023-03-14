@@ -727,22 +727,92 @@ class BSplineCurve(Edge):
         :rtype: float
         """
         length = self.length()
-        for x0 in [0, length * 0.25, length * 0.5, length * 0.75, length]:
-            res = scp.optimize.least_squares(
-                lambda u: (point - self.point_at_abscissa(u)).norm(),
-                x0=x0,
-                bounds=([0], [length])
-            )
-            if res.fun < tol:
-                return res.x[0]
+        initial_condition_list = [0, 0.25, 0.5, 0.75, 1]
 
-        print('distance =', res.cost)
-        print('res.fun:', res.fun)
-        # ax = self.plot()
-        # point.plot(ax=ax)
-        # best_point = self.point_at_abscissa(res.x)
-        # best_point.plot(ax=ax, color='r')
+        def evaluate_point_distance(abscissa):
+            return(point - self.point_at_abscissa(abscissa)).norm()
+        initial_condition_list.sort(key=evaluate_point_distance)
+
+        for u0 in initial_condition_list:
+            u = self.point_invertion(u0, point)
+            if u is None:  # sometimes we don't achieve convergence with a given inital guess
+                continue
+            abscissa = u*length
+            if evaluate_point_distance(abscissa) < tol:
+                return abscissa
+
         raise ValueError('abscissa not found')
+
+    def point_inversion_funcs(self, u, point):
+        """
+        Helper function to evaluate Newton-Rapshon terms.
+        """
+        curve_derivatives = self.derivatives(u, 2)
+        distance_vector = curve_derivatives[0] - point
+        func = curve_derivatives[1].dot(distance_vector)
+        func_first_derivative = curve_derivatives[2].dot(distance_vector) + curve_derivatives[1].norm() ** 2
+        return func, func_first_derivative, curve_derivatives, distance_vector
+
+    def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-5, tol2: float = 1e-5):
+        """
+        Finds the equivalent bspline curve parameter u to a given a point 3D or 2D using an initial guess u0.
+
+        :param u0: An initial guess between 0 and 1.
+        :type u0: float
+        :param point: Point to evaluation.
+        :type point: Union[volmdlr.Point2D, volmdlr.Point3D]
+        :param maxiter: Maximum number of iterations.
+        :type maxiter: int
+        :param tol1: Distance tolerance to stop.
+        :type tol1: float
+        :param tol2: Zero cos tolerance to stop.
+        :type tol2: float
+        :return: u paramenter
+        :rtype: int
+        """
+        if maxiter == 0:
+            return None
+        func, func_first_derivative, curve_derivatives, distance_vector = self.point_inversion_funcs(u0, point)
+        if self.check_convergence(curve_derivatives, distance_vector):
+            return u0
+        new_u = u0 - func / func_first_derivative
+        new_u = self.check_bounds(new_u)
+        residual = (new_u - u0) * curve_derivatives[1]
+        if residual.norm() <= 1e-6:
+            return u0
+        u0 = new_u
+        return self.point_invertion(u0, point, maxiter=maxiter - 1)
+
+    @staticmethod
+    def check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-5, tol2: float = 1e-5):
+        """
+        Helper function to check convergence of point_invertion method.
+        """
+        distance = distance_vector.norm()
+        if distance == 0.0:
+            return True
+        zero_cos = abs(curve_derivatives[1].dot(distance_vector)) / curve_derivatives[1].norm() * distance
+        if distance <= tol1 and zero_cos <= tol2:
+            return True
+        return False
+
+    def check_bounds(self, u):
+        """
+        Helper function to check if evaluated parameters in point_invertion method are contained in the bspline domain.
+        """
+        a, b = self.curve.domain
+        if self.periodic:
+            if u < a:
+                u = b - (a - u)
+            elif u > b:
+                u = a + (u - b)
+        else:
+            if u < a:
+                u = a
+
+            elif u > b:
+                u = b
+        return u
 
     def split(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
               tol: float = 1e-5):
@@ -1818,7 +1888,6 @@ class LineSegment2D(LineSegment):
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
         if start.is_close(end):
             raise NotImplementedError
-        # self.points = [start, end]
         self._bounding_rectangle = None
         LineSegment.__init__(self, start, end, name=name)
 
@@ -3429,7 +3498,7 @@ class ArcEllipse2D(Edge):
         length = self.abscissa(self.end)
         return length
 
-    def point_belongs(self, point, abs_tol: float = 1e-6):
+    def point_belongs(self, point, abs_tol: float = 1e-4):
         """
         Verifies if a point belongs to the arcellipse2d.
 
@@ -3680,6 +3749,18 @@ class FullArcEllipse2D(ArcEllipse2D):
         ArcEllipse2D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
                               major_dir=major_dir, extra=extra, name=name)
 
+    def length(self):
+        """
+        Calculates the length of the ellipse.
+
+        Ramanujan's approximation for the perimeter of the ellipse.
+        P = π (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
+        :return:
+        """
+        perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
+        return math.pi * (self.major_axis + self.minor_axis) * \
+            (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+
     def to_3d(self, plane_origin, x, y):
         point_start_end3d = self.start_end.to_3d(plane_origin, x, y)
         point_center3d = self.center.to_3d(plane_origin, x, y)
@@ -3725,6 +3806,38 @@ class FullArcEllipse2D(ArcEllipse2D):
 
         """
         return self
+
+    def point_belongs(self, point: volmdlr.Point2D, abs_tol: float = 1e-4):
+        """
+        Verifies if a given point lies on the Ellipse3D.
+
+        :param point: point to be verified.
+        :return: True is point lies on the Ellipse, False otherwise
+        """
+        new_point = self.frame.global_to_local_coordinates(point)
+        return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
+                            new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=abs_tol)
+
+    def abscissa(self, point: volmdlr.Point2D):
+        """
+        Calculates the abscissa of a given point.
+
+        :param point: point for calculating abscissa
+        :return: a float, between 0 and the arcellise2d's length
+        """
+        if self.point_belongs(point):
+            angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
+            angle_start = 0.0
+
+            if angle_abscissa == volmdlr.TWO_PI:
+                return self.length()
+            def arc_length(theta):
+                return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
+                                 (self.minor_axis ** 2) * math.cos(theta) ** 2)
+
+            res, _ = scipy_integrate.quad(arc_length, angle_start, angle_abscissa)
+            return res
+        raise ValueError(f'point {point} does not belong to ellipse')
 
 
 class Line3D(Line):
@@ -4022,7 +4135,6 @@ class LineSegment3D(LineSegment):
     Define a line segment limited by two points.
 
     """
-
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
                  name: str = ''):
         if start.is_close(end):
@@ -4164,7 +4276,7 @@ class LineSegment3D(LineSegment):
         :return: A new translated LineSegment3D
         """
         return LineSegment3D(
-            *[point.translation(offset) for point in self.points])
+            self.start.translation(offset), self.end.translation(offset))
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
@@ -4627,37 +4739,37 @@ class BSplineCurve3D(BSplineCurve):
                 distance += point1.point_distance(point2)
                 yield param2, distance
 
-    def point_at_abscissa(self, abscissa: float, resolution: int = 1000):
-        """
-        Returns the 3 dimensional point at a given curvilinear abscissa.
-
-        This is an approximation. Resolution parameter can be increased
-        for more accurate result.
-
-        :param abscissa: The distance on the BSplineCurve3D from its start
-        :type abscissa: float
-        :param resolution: The precision of the approximation. Default value
-            set to 1000
-        :type resolution: int, optional
-        :return: The Point3D at the given curvilinear abscissa.
-        :rtype: :class:`volmdlr.Point3D`
-        """
-        if math.isclose(abscissa, 0, abs_tol=1e-10):
-            return self.start
-        if math.isclose(abscissa, self.length(), abs_tol=1e-10):
-            return self.end
-        lut = self.look_up_table(resolution=resolution)
-        if 0 < abscissa < self.length():
-            last_param = 0
-            for t, dist in lut:
-                if abscissa < dist:
-                    t1 = last_param
-                    t2 = t
-                    return volmdlr.Point3D(
-                        *self.curve.evaluate_single((t1 + t2) / 2))
-                last_param = t
-        raise ValueError('Curvilinear abscissa is bigger than length,'
-                         ' or negative')
+    # def point_at_abscissa(self, abscissa: float, resolution: int = 1000):
+    #     """
+    #     Returns the 3 dimensional point at a given curvilinear abscissa.
+    #
+    #     This is an approximation. Resolution parameter can be increased
+    #     for more accurate result.
+    #
+    #     :param abscissa: The distance on the BSplineCurve3D from its start
+    #     :type abscissa: float
+    #     :param resolution: The precision of the approximation. Default value
+    #         set to 1000
+    #     :type resolution: int, optional
+    #     :return: The Point3D at the given curvilinear abscissa.
+    #     :rtype: :class:`volmdlr.Point3D`
+    #     """
+    #     if math.isclose(abscissa, 0, abs_tol=1e-10):
+    #         return self.start
+    #     if math.isclose(abscissa, self.length(), abs_tol=1e-10):
+    #         return self.end
+    #     lut = self.look_up_table(resolution=resolution)
+    #     if 0 < abscissa < self.length():
+    #         last_param = 0
+    #         for t, dist in lut:
+    #             if abscissa < dist:
+    #                 t1 = last_param
+    #                 t2 = t
+    #                 return volmdlr.Point3D(
+    #                     *self.curve.evaluate_single((t1 + t2) / 2))
+    #             last_param = t
+    #     raise ValueError('Curvilinear abscissa is bigger than length,'
+    #                      ' or negative')
 
     def normal(self, position: float = 0.0):
         _, normal = operations.normal(self.curve, position, normalize=True)
@@ -6240,8 +6352,10 @@ class ArcEllipse3D(Edge):
         point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
         vector_major_dir_2d = point_major_dir_2d - center
         vector_major_dir_2d.normalize()
-        extra2d = self.extra.to_2d(plane_origin, x, y)
-        return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, extra2d,
+        extra = self.extra
+        if extra:
+            extra = self.extra.to_2d(plane_origin, x, y)
+        return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, extra,
                             name=self.name)
 
     def length(self):
@@ -6261,6 +6375,17 @@ class ArcEllipse3D(Edge):
     def unit_direction_vector(self, abscissa):
         raise NotImplementedError
 
+    def abscissa(self, point: volmdlr.Point3D):
+        """
+        Calculates the abscissa a given point.
+
+        :param point: point to calculate abscissa.
+        :return: abscissa
+        """
+        vector_2 = self.normal.cross(self.major_dir)
+        ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
+        point2d = point.to_2d(self.center, self.major_dir, vector_2)
+        return ellipse_2d.abscissa(point2d)
     def reverse(self):
         normal = None
         extra = None
@@ -6384,6 +6509,17 @@ class ArcEllipse3D(Edge):
                                 major_dir)
         raise ValueError('Side should be \'new\' \'old\'')
 
+    def point_belongs(self, point):
+        """
+        Verifies if a given point lies on the Ellipse3D.
+
+        :param point: point to be verified.
+        :return: True is point lies on the Ellipse, False otherwise
+        """
+        new_point = self.frame.global_to_local_coordinates(point)
+        return math.isclose(new_point.x ** 2 / self.Gradius ** 2 +
+                            new_point.y ** 2 / self.Sradius ** 2, 1.0, abs_tol=1e-6)
+
 
 class FullArcEllipse3D(ArcEllipse3D):
     """
@@ -6412,6 +6548,18 @@ class FullArcEllipse3D(ArcEllipse3D):
                                                                        0.0))
         ArcEllipse3D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
                               major_dir=major_dir, normal=normal, extra=extra, name=name)
+
+    def length(self):
+        """
+        Calculates the length of the ellipse.
+
+        Ramanujan's approximation for the perimeter of the ellipse.
+        P = π (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
+        :return:
+        """
+        perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
+        return math.pi * (self.major_axis + self.minor_axis) * \
+            (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
 
     def to_2d(self, plane_origin, x, y):
         """
@@ -6464,3 +6612,37 @@ class FullArcEllipse3D(ArcEllipse3D):
 
         """
         return self
+
+    def point_at_abscissa(self, abscissa: float, resolution: int = 2500):
+        # TODO: enhance this method to a more precise method
+        points = self.discretization_points(number_points=resolution)
+        approx_abscissa = 0
+        last_point = None
+        for p1, p2 in zip(points[:-1], points[1:]):
+            if approx_abscissa <= abscissa:
+                approx_abscissa += p1.point_distance(p2)
+                last_point = p2
+            else:
+                break
+        return last_point
+
+    def point_belongs(self, point, abs_tol):
+        """
+        Verifies if a given point lies on the Ellipse3D.
+
+        :param point: point to be verified.
+        :return: True is point lies on the Ellipse, False otherwise
+        """
+        new_point = self.frame.global_to_local_coordinates(point)
+        return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
+                            new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=abs_tol)
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        FullArcEllipse3D translation.
+
+        :param offset: translation vector.
+        :return: A new translated Arc2D.
+        """
+        return FullArcEllipse3D(self.start_end.translation(offset), self.major_axis, self.minor_axis,
+                                self.center.translation(offset), self.normal, self.major_dir, self.name)

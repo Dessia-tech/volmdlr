@@ -4297,6 +4297,19 @@ class Ellipse2D(Contour2D):
             return res
         raise ValueError(f'point {point} does not belong to ellipse')
 
+    def point_at_abscissa(self, abscissa: float, resolution: int = 1000):
+        points = self.discretization_points(number_points=resolution)
+        approx_abscissa = 0
+        last_point = None
+        for p1, p2 in zip(points[:-1], points[1:]):
+            if approx_abscissa <= abscissa:
+                approx_abscissa += p1.point_distance(p2)
+                last_point = p2
+            else:
+                break
+        return last_point
+
+
     def point_angle_with_major_dir(self, point2d):
         """
         Given a point in the ellipse, calculates it angle with the major direction vector.
@@ -5252,7 +5265,7 @@ class Ellipse3D(Contour3D):
         """
         new_point = self.frame.global_to_local_coordinates(point)
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
-                            new_point.y ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
+                            new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=1e-6)
 
     def length(self):
         """
@@ -5311,6 +5324,19 @@ class Ellipse3D(Contour3D):
         ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
         return ellipse_2d.abscissa(point2d)
+
+    def point_at_abscissa(self, abscissa: float, resolution: int = 1000):
+        # TODO: enhance this method to a more precise method
+        points = self.discretization_points(number_points=resolution)
+        approx_abscissa = 0
+        last_point = None
+        for p1, p2 in zip(points, points[1:]+[points[0]]):
+            if approx_abscissa <= abscissa:
+                approx_abscissa += p1.point_distance(p2)
+                last_point = p2
+            else:
+                break
+        return last_point
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if point1.is_close(point2):
@@ -5374,7 +5400,8 @@ class Ellipse3D(Contour3D):
         :return: A new translated Ellipse3D
         """
         new_center = self.center.translation(offset)
-        new_normal = self.normal.translation(offset)
+        # new_normal = self.normal.translation(offset)
+        new_normal = self.normal
         new_major_dir = self.major_dir.translation(offset)
         return Ellipse3D(self.major_axis, self.minor_axis, new_center,
                          new_normal, new_major_dir, self.name)
