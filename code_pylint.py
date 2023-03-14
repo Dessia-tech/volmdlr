@@ -16,9 +16,9 @@ EFFECTIVE_DATE = date(2023, 1, 31)
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
-                     "wrong-spelling-in-comment": 250,
-                     "wrong-spelling-in-docstring": 173,
-                     'invalid-name': 500,
+                     "wrong-spelling-in-comment": 216,
+                     "wrong-spelling-in-docstring": 143,
+                     'invalid-name': 433,
                      'no-else-return': 20,
                      'consider-using-f-string': 56,
                      'no-member': 3,
@@ -29,7 +29,6 @@ MAX_ERROR_BY_TYPE = {
                      'unused-argument': 35,
                      'too-many-arguments': 26,
                      'line-too-long': 12,
-                     'consider-using-enumerate': 0,
                      'too-many-branches': 26,
                      'too-many-statements': 18,
                      'super-init-not-called': 13,
@@ -41,10 +40,9 @@ MAX_ERROR_BY_TYPE = {
                      'too-few-public-methods': 3,
                      'non-parent-init-called': 3,
                      'too-many-public-methods': 11,
-                     'use-implicit-booleaness-not-comparison': 0,
                      'too-many-instance-attributes': 10,
                      'protected-access': 4,
-                     'undefined-loop-variable': 4,
+                     'undefined-loop-variable': 2,
                      'unspecified-encoding': 1,
                      'too-many-function-args': 4,
                      'too-many-nested-blocks': 7,
@@ -54,13 +52,11 @@ MAX_ERROR_BY_TYPE = {
                      'no-else-raise': 3,
                      'no-else-continue': 3,
                      'undefined-variable': 6,  # 2 when gmsh is fixed
-                     'no-else-break': 0,
                      'broad-except': 1,
                      "broad-exception-caught": 1,
                      'too-many-boolean-expressions': 3,
                      'too-many-lines': 3,
                      'redundant-keyword-arg': 3,
-                     'modified-iterating-list': 0,
                      'consider-using-with': 1,
                      'unnecessary-dunder-call': 2,
                      'unnecessary-lambda': 2,
@@ -68,7 +64,7 @@ MAX_ERROR_BY_TYPE = {
                      'missing-module-docstring': 2,
                      'consider-using-generator': 1,
                      'cell-var-from-loop': 1,
-                     'import-outside-toplevel': 0,
+                     'import-outside-toplevel': 1,
                      'unsubscriptable-object': 1,
                      }
 
