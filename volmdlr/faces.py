@@ -1241,34 +1241,33 @@ class Plane3D(Surface3D):
         """
         if len(points) < 3:
             raise ValueError
-        elif len(points) == 3:
+        if len(points) == 3:
             return cls.from_3_points(volmdlr.Point3D(points[0].vector),
                                      volmdlr.Vector3D(points[1].vector),
                                      volmdlr.Vector3D(points[2].vector))
-        else:
-            points = [p.copy() for p in points]
-            indexes_to_del = []
-            for i, point in enumerate(points[1:]):
-                if point == points[0]:
-                    indexes_to_del.append(i)
-            for index in indexes_to_del[::-1]:
-                del points[index + 1]
+        points = [p.copy() for p in points]
+        indexes_to_del = []
+        for i, point in enumerate(points[1:]):
+            if point == points[0]:
+                indexes_to_del.append(i)
+        for index in indexes_to_del[::-1]:
+            del points[index + 1]
 
-            origin = points[0]
-            vector1 = points[1] - origin
-            vector1.normalize()
-            vector2_min = points[2] - origin
-            vector2_min.normalize()
-            dot_min = abs(vector1.dot(vector2_min))
-            for point in points[3:]:
-                vector2 = point - origin
-                vector2.normalize()
-                dot = abs(vector1.dot(vector2))
-                if dot < dot_min:
-                    vector2_min = vector2
-                    dot_min = dot
-            return cls.from_3_points(origin, vector1 + origin,
-                                     vector2_min + origin)
+        origin = points[0]
+        vector1 = points[1] - origin
+        vector1.normalize()
+        vector2_min = points[2] - origin
+        vector2_min.normalize()
+        dot_min = abs(vector1.dot(vector2_min))
+        for point in points[3:]:
+            vector2 = point - origin
+            vector2.normalize()
+            dot = abs(vector1.dot(vector2))
+            if dot < dot_min:
+                vector2_min = vector2
+                dot_min = dot
+        return cls.from_3_points(origin, vector1 + origin,
+                                 vector2_min + origin)
 
     def point_on_surface(self, point):
         """
@@ -1729,13 +1728,12 @@ class PeriodicalSurface(Surface3D):
             elif theta1 < theta3:
                 p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
             return [vme.LineSegment2D(p1, p2)]
+        if z1 > z3:
+            p1 = volmdlr.Point2D(theta1, 1)
+            p2 = volmdlr.Point2D(theta1, 0)
         else:
-            if z1 > z3:
-                p1 = volmdlr.Point2D(theta1, 1)
-                p2 = volmdlr.Point2D(theta1, 0)
-            else:
-                p1 = volmdlr.Point2D(theta1, 0)
-                p2 = volmdlr.Point2D(theta1, 1)
+            p1 = volmdlr.Point2D(theta1, 0)
+            p2 = volmdlr.Point2D(theta1, 1)
         return [vme.LineSegment2D(p1, p2)]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
@@ -2359,27 +2357,24 @@ class ToroidalSurface3D(PeriodicalSurface):
                 return [vme.FullArc3D(center=center,
                                       start_end=center + self.r * u_vector,
                                       normal=v_vector)]
-            else:
-                return [vme.Arc3D(
-                    self.point2d_to_3d(linesegment2d.start),
-                    self.point2d_to_3d(volmdlr.Point2D(theta1, 0.5 * (phi1 + phi2))),
-                    self.point2d_to_3d(linesegment2d.end),
-                )]
-        elif math.isclose(phi1, phi2, abs_tol=1e-4):
+            return [vme.Arc3D(
+                self.point2d_to_3d(linesegment2d.start),
+                self.point2d_to_3d(volmdlr.Point2D(theta1, 0.5 * (phi1 + phi2))),
+                self.point2d_to_3d(linesegment2d.end),
+            )]
+        if math.isclose(phi1, phi2, abs_tol=1e-4):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
                 center = self.frame.origin + self.r * math.sin(phi1) * self.frame.w
                 start_end = center + self.frame.u * (self.r + self.tore_radius)
                 return [vme.FullArc3D(center=center,
                                       start_end=start_end,
                                       normal=self.frame.w)]
-            else:
-                return [vme.Arc3D(
-                    self.point2d_to_3d(linesegment2d.start),
-                    self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), phi1)),
-                    self.point2d_to_3d(linesegment2d.end),
-                )]
-        else:
-            raise NotImplementedError('Ellipse?')
+            return [vme.Arc3D(
+                self.point2d_to_3d(linesegment2d.start),
+                self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), phi1)),
+                self.point2d_to_3d(linesegment2d.end),
+            )]
+        raise NotImplementedError('Ellipse?')
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
@@ -2401,19 +2396,18 @@ class ToroidalSurface3D(PeriodicalSurface):
         theta3, phi3 = point_after_start
         # theta4, phi4 = point_before_end
         if self.frame.w.is_colinear_to(fullarc3d.normal, abs_tol=1e-4):
-            p1 = start
+            point1 = start
             if theta1 > theta3:
-                p2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi1)
+                point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi1)
             elif theta1 < theta3:
-                p2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi1)
-            return [vme.LineSegment2D(p1, p2)]
-        else:
-            p1 = start
-            if phi1 > phi3:
-                p2 = volmdlr.Point2D(theta1, phi1 - volmdlr.TWO_PI)
-            elif phi1 < phi3:
-                p2 = volmdlr.Point2D(theta1, phi1 + volmdlr.TWO_PI)
-            return [vme.LineSegment2D(p1, p2)]
+                point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi1)
+            return [vme.LineSegment2D(point1, point2)]
+        point1 = start
+        if phi1 > phi3:
+            point2 = volmdlr.Point2D(theta1, phi1 - volmdlr.TWO_PI)
+        elif phi1 < phi3:
+            point2 = volmdlr.Point2D(theta1, phi1 + volmdlr.TWO_PI)
+        return [vme.LineSegment2D(point1, point2)]
         # else:
         #     raise ValueError('Impossible!')
 
@@ -2724,8 +2718,7 @@ class ConicalSurface3D(PeriodicalSurface):
                     volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
                 self.point2d_to_3d(linesegment2d.end))
             ]
-        else:
-            raise NotImplementedError('Ellipse?')
+        raise NotImplementedError('Ellipse?')
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -3052,7 +3045,7 @@ class SphericalSurface3D(Surface3D):
                     vme.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
                     ]
 
-        elif (positive_singularity or negative_singularity) and \
+        if (positive_singularity or negative_singularity) and \
                 math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
             if abs(phi1) == 0.5 * math.pi:
                 return [vme.LineSegment2D(volmdlr.Point2D(theta3, phi1), volmdlr.Point2D(theta2, phi2))]
@@ -3990,8 +3983,8 @@ class BSplineSurface3D(Surface3D):
                 if points[0] != points[-1]:
                     linesegment = vme.LineSegment2D(points[0], points[-1])
                     flag_line = True
-                    for pt in points:
-                        if not linesegment.point_belongs(pt, abs_tol=1e-4):
+                    for point in points:
+                        if not linesegment.point_belongs(point, abs_tol=1e-4):
                             flag_line = False
                             break
                     if flag_line:
@@ -4006,7 +3999,7 @@ class BSplineSurface3D(Surface3D):
                 return [vme.BSplineCurve2D.from_points_interpolation(
                     points=points, degree=bspline_curve3d.degree)]
 
-            elif 1e-6 < lth <= 1e-5:
+            if 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
                     self.point3d_to_2d(bspline_curve3d.start),
                     self.point3d_to_2d(bspline_curve3d.end))]
@@ -5198,11 +5191,9 @@ class BSplineSurface3D(Surface3D):
             edge2d_dim = getattr(self, method_name)(edge3d, grid2d)
             if edge2d_dim:
                 return edge2d_dim
-            else:
-                raise NotImplementedError
-        else:
-            raise NotImplementedError(
-                f'Class {self.__class__.__name__} does not implement {method_name}')
+            raise NotImplementedError
+        raise NotImplementedError(
+            f'Class {self.__class__.__name__} does not implement {method_name}')
 
     def wire3d_to_2d(self, wire3d):
         """
@@ -5727,8 +5718,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 content += face_content
                 current_id = face_id[0] + 1
             return content, face_ids
-        else:
-            return self.to_step_without_splitting(current_id)
+        return self.to_step_without_splitting(current_id)
 
     def to_step_without_splitting(self, current_id):
         content, surface3d_ids = self.surface3d.to_step(current_id)
@@ -6783,25 +6773,25 @@ class PlaneFace3D(Face3D):
         :rtype: float, Tuple[float, float, float]
         """
         if other_face.__class__ is CylindricalFace3D:
-            p1, p2 = other_face.minimum_distance_points_cyl(self)
+            point1, point2 = other_face.minimum_distance_points_cyl(self)
             if return_points:
-                return p1.point_distance(p2), p1, p2
-            return p1.point_distance(p2)
+                return point1.point_distance(point2), point1, p2
+            return point1.point_distance(point2)
 
         if other_face.__class__ is PlaneFace3D:
             if return_points:
-                dist, p1, p2 = self.minimum_distance_points_plane(other_face,
+                dist, point1, point2 = self.minimum_distance_points_plane(other_face,
                                                                   return_points=return_points)
-                return dist, p1, p2
+                return dist, point1, point2
             dist = self.minimum_distance_points_plane(other_face,
                                                       return_points=return_points)
             return dist
 
         if other_face.__class__ is ToroidalFace3D:
-            p1, p2 = other_face.minimum_distance_points_plane(self)
+            point1, point2 = other_face.minimum_distance_points_plane(self)
             if return_points:
-                return p1.point_distance(p2), p1, p2
-            return p1.point_distance(p2)
+                return point1.point_distance(point2), point1, point2
+            return point1.point_distance(point2)
 
         raise NotImplementedError
 
@@ -6816,6 +6806,7 @@ class PlaneFace3D(Face3D):
             self.surface3d.frame.v)
         if contour1.is_sharing_primitives_with(contour2, False):
             return True
+        return False
 
     @staticmethod
     def merge_faces(list_coincident_faces: List[Face3D]):

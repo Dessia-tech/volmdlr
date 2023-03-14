@@ -54,7 +54,7 @@ MAX_ERROR_BY_TYPE = {
                      'no-else-raise': 3,
                      'no-else-continue': 3,
                      'undefined-variable': 6,  # 2 when gmsh is fixed
-                     'no-else-break': 4,
+                     'no-else-break': 0,
                      'broad-except': 1,
                      "broad-exception-caught": 1,
                      'too-many-boolean-expressions': 3,

@@ -1266,7 +1266,7 @@ class Cylinder(RevolvedProfile):
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
         )
 
-        # sampling point in cartesian local coordinates
+        # sampling point in Cartesian local coordinates
         sampler = qmc.LatinHypercube(d=3, seed=0)
         sample = qmc.scale(
             sampler.random(n=n_points),

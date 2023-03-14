@@ -2877,8 +2877,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
                 if total_angle > 2 * math.pi:
                     break
-                else:
-                    initial_vector = vec_next_point
+                initial_vector = vec_next_point
 
                 hull.append(next_point)
 
@@ -3018,14 +3017,14 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         finished = False
 
         while not finished:
-            for p1, p2 in polygon_points:
-                if p1 == points[-1] and p2 not in points:
-                    points.append(p2)
+            for point1, point2 in polygon_points:
+                if point1 == points[-1] and point2 not in points:
+                    points.append(point2)
                     break
-                elif p2 == points[-1] and p1 not in points:
-                    points.append(p1)
+                if point2 == points[-1] and point1 not in points:
+                    points.append(point1)
                     break
-            polygon_points.remove((p1, p2))
+            polygon_points.remove((point1, point2))
             if len(polygon_points) == 0:
                 finished = True
 
@@ -3048,19 +3047,19 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         points_hull = [polygon_points[0][0], polygon_points[0][1]]
         polygon_points.remove((polygon_points[0][0], polygon_points[0][1]))
-        finished = False
 
-        while not finished:
-            for p1, p2 in polygon_points:
-                if p1 == points_hull[-1]:
-                    points_hull.append(p2)
+        while True:
+            if not polygon_points:
+                break
+            point1, point2 = None, None
+            for point1, point2 in polygon_points:
+                if point1 == points_hull[-1]:
+                    points_hull.append(point2)
                     break
-                elif p2 == points_hull[-1]:
-                    points_hull.append(p1)
+                if point2 == points_hull[-1]:
+                    points_hull.append(point1)
                     break
-            polygon_points.remove((p1, p2))
-            if len(polygon_points) == 0:
-                finished = True
+            polygon_points.remove((point1, point2))
 
         points_hull.pop(-1)
 
