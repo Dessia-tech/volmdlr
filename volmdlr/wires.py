@@ -51,13 +51,12 @@ def argmin(list_of_float):
     Returns the min value and the argmin.
     """
     pos_min, min_float = 0, list_of_float[0]
-    for pos, fl in enumerate(list_of_float):
+    for pos, float_ in enumerate(list_of_float):
         if pos == 0:
             continue
-        else:
-            if fl < min_float:
-                min_float = fl
-                pos_min = pos
+        if float_ < min_float:
+            min_float = float_
+            pos_min = pos
     return min_float, pos_min
 
 
