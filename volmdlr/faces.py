@@ -655,7 +655,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def axial_symmetry(self, line):
         """
-        Finds out the symmetric surface 2d according to a line.
+        Finds out the symmetric 2D surface according to a line.
 
         """
 
