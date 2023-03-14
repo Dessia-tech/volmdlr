@@ -1235,7 +1235,7 @@ class Plane3D(Surface3D):
     @classmethod
     def from_points(cls, points):
         """
-        Returns the plane 3d that goes through the 3 first points on the list.
+        Returns a 3D plane that goes through the 3 first points on the list.
 
         Why for more than 3 points we only do some check and never raise error?
         """
