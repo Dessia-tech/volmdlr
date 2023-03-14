@@ -2797,7 +2797,6 @@ class Arc2D(Arc):
                 math.sin(2 * angle2) - math.sin(2 * angle1)))
         moment_area_xy = self.radius ** 4 / 8 * (
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
-        # Ic = npy.array([[moment_area_x, moment_area_xy], [moment_area_xy, moment_area_y]])
 
         # Must be computed at center, so huygens related to center
         return volmdlr.geometry.huygens2d(moment_area_x, moment_area_y, moment_area_xy, self.area(),
@@ -2813,8 +2812,8 @@ class Arc2D(Arc):
         """
         list_node = self.discretization_points(number_points=20)
         data = []
-        for nd in list_node:
-            data.append({'x': nd.x, 'y': nd.y})
+        for node in list_node:
+            data.append({'x': node.x, 'y': node.y})
         return plot_data.Arc2D(cx=self.center.x,
                                cy=self.center.y,
                                r=self.radius,
@@ -4579,17 +4578,8 @@ class BSplineCurve3D(BSplineCurve):
         """Returns the minimal distance to a point."""
         distances = []
         for point in self.points:
-            #            vmpt = Point3D((point[1], point[2], point[3]))
             distances.append(pt1.point_distance(point))
         return min(distances)
-
-    # def point_belongs(self, point):
-    #     polygon_points = self.polygon_points()
-    #     for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-    #         line = LineSegment3D(p1, p2)
-    #         if line.point_belongs(point):
-    #             return True
-    #     return False
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -5835,7 +5825,12 @@ class ArcEllipse3D(Edge):
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
 
         def theta_a_b(start_, iterior_, end_, center_):
-            # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
+            """
+            center-and-3-arbitrary-points-on-it-are-given.
+            theta= ellipse's inclination angle related to the horizontal
+            (clockwise),A=semi major axis, B=semi minor axis.
+
+            """
             x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1], \
                 iterior_[0] - center_[0], iterior_[1] - center_[1], end_[0] - center_[0], end_[1] - center_[1]
             matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
