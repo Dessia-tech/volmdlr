@@ -2048,7 +2048,7 @@ class LineSegment2D(LineSegment):
 
     def to_wire(self, n: int):
         """
-        Convert a linesegment2d to a wire 2d defined with 'n' line_segments.
+        Convert a linesegment2d to a wire 2D defined with 'n' line_segments.
 
         """
 
