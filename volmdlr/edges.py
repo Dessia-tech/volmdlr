@@ -2555,7 +2555,7 @@ class Arc2D(Arc):
 
     def straight_line_area(self):
         """
-        Calculates the area of the arc 2d, with line drawn from start to end.
+        Calculates the area of the arc 2D, with line drawn from start to end.
 
         :return: straight_line_area.
         """
