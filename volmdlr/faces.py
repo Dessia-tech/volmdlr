@@ -5312,7 +5312,7 @@ class BSplineSurface3D(Surface3D):
                 else:
                     raise NotImplementedError
 
-                pt_ = sorted(pt_, key=pt0.point_distance())
+                pt_ = sorted(pt_, key=pt0.point_distance)
                 pt0 = pt_[0]
                 edge = vme.LineSegment2D(pt_[0], pt_[1])
 
