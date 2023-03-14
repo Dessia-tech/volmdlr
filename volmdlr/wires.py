@@ -48,7 +48,7 @@ def argmax(list_of_float):
 
 def argmin(list_of_float):
     """
-    Returns the min value and the argmin.
+    Returns the minimum value from a list of numbers and its index.
     """
     pos_min, min_float = 0, list_of_float[0]
     for pos, float_ in enumerate(list_of_float):
