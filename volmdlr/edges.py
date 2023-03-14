@@ -33,7 +33,7 @@ def standardize_knot_vector(knot_vector):
     Standardize a knot vector to range from 0 to 1.
     """
     first_knot = knot_vector[0]
-    last_knot_vector = knot_vector[-1]
+    last_knot = knot_vector[-1]
     standard_u_knots = []
     if first_knot_vector != 0 or last_knot_vector != 1:
         x = 1 / (last_knot_vector - first_knot_vector)
