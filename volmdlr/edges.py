@@ -1384,7 +1384,7 @@ class Line2D(Line):
 
     def point_belongs(self, point2d, abs_tol: float = 1e-6):
         """
-        Verifies if the point 2d belongs to the line.
+        Verifies if the point 2D belongs to the line.
 
         :param point2d: point to be verified.
         :param abs_tol: absolute tolerance to consider in calculus.
