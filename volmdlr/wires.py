@@ -64,7 +64,7 @@ def argmin(list_of_numbers):
 
 def bounding_rectangle_adjacent_contours(contours: List):
     """
-    Compute the bounding box of a list of adjacent contours2d.
+    Compute the bounding box of a list of adjacent contours 2d.
 
     :param contours: A list of adjacent contours
     :type contours: List[:class:`volmdlr.wires.Contour2D`]
@@ -241,7 +241,7 @@ class WireMixin:
 
     def sort_points_along_wire(self, points):
 
-        return sorted(points, key=lambda point: self.abscissa(point))
+        return sorted(points, key=self.abscissa)
 
     def is_ordered(self, tol=1e-6):
         """
@@ -575,7 +575,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_intersections(self,
                                   linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of intersection of the wire primitives intersecting with the linesegment.
+        Returns a list of intersection of the wire primitives intersecting with the line segment.
 
         :returns: a tuple (point, primitive)
         """
@@ -685,7 +685,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
         """
-        Define a wire based on points2d with line_segments2d.
+        Define a wire based on points 2d with line_segments 2d.
 
         :param points: points to define wire 2d.
         """
@@ -753,7 +753,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def extend(self, point):
         """
-        Extend a wire by adding a linesegment connecting the given point to nearest wire's extremities.
+        Extend a wire by adding a line segment connecting the given point to the nearest wire's extremities.
         """
 
         distances = [self.primitives[0].start.point_distance(point), self.primitives[-1].end.point_distance(point)]
@@ -792,7 +792,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def axial_symmetry(self, line):
         """
-        Finds out the symmetric wire2d according to a line.
+        Finds out the symmetric wire 2d according to a line.
 
         """
 
@@ -813,7 +813,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def is_symmetric(self, wire2d, line):
         """
-        Checks if the two wires2d are symmetric or not according to line.
+        Checks if the two wires 2d are symmetric or not according to line.
 
         """
 
@@ -925,11 +925,11 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace.
+        Changes frame_mapping and the object is updated in-place.
 
         :param side: 'old' or 'new'
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for primitive in self.primitives:
             primitive.frame_mapping_inplace(frame, side)
@@ -959,7 +959,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def to_bspline(self, discretization_parameter, degree):
         """
-        Convert a wire3d to a bspline curve3d.
+        Convert a wire 3d to a bspline curve 3d.
 
         """
 
@@ -1533,7 +1533,7 @@ class ContourMixin(WireMixin):
 
         :param tag: The contour index
         :type tag: int
-        :param primitives_tags: The contour' primitives index
+        :param primitives_tags: The contour's primitives index
         :type primitives_tags: List[int]
 
         :return: A line
@@ -1668,7 +1668,7 @@ class Contour2D(ContourMixin, Wire2D):
         x_max = max(point[0] for point in points)
         y_min = min(point[1] for point in points)
         y_max = max(point[1] for point in points)
-        return (volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_max))
+        return volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_max)
 
     def area(self):
         if not self._area:
@@ -1763,7 +1763,7 @@ class Contour2D(ContourMixin, Wire2D):
         return Contour2D(self.inverted_primitives())
 
     def invert_inplace(self):
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.primitives = self.inverted_primitives()
 
@@ -1801,11 +1801,6 @@ class Contour2D(ContourMixin, Wire2D):
         return contours
 
     def cut_by_linesegments(self, lines: List[volmdlr.edges.LineSegment2D]):
-        # for c in lines:
-        #     if not isinstance(c, volmdlr.edges.LineSegment2D):
-        #         raise KeyError(
-        #             'contour must be a list of LineSegment2D object')
-
         cut_lines = []
         for cut_ls in lines:
             cut_lines.append(cut_ls.to_line())
@@ -1897,15 +1892,6 @@ class Contour2D(ContourMixin, Wire2D):
 
             primitives.append(
                 volmdlr.edges.LineSegment2D(last_point, point_start))
-
-            # points = (volmdlr.edges.LineSegment2D(last_point, point_start)).discretise(5)
-            # line_segment=volmdlr.edges.LineSegment2D(last_point, point_start)
-            # for p in points[1:-1]:
-            #     r = line_segment.split(p)
-            #     primitives.append(r[0])
-            #     line_segment = r[1]
-            #     if p == points[-2]:
-            #         primitives.append(r[1])
 
             contour = Contour2D(primitives)
             contour.order_contour()
@@ -2021,7 +2007,7 @@ class Contour2D(ContourMixin, Wire2D):
                            number_points_x: int = None,
                            number_points_y: int = None):
         """
-        Compute a triangulation using a n-by-m grid to triangulate the contour.
+        Compute a triangulation using an n-by-m grid to triangulate the contour.
         """
         bounding_rectangle = self.bounding_rectangle
         # xmin, xmax, ymin, ymax = self.bounding_rectangle
@@ -2228,7 +2214,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
         """
-        Cut a contou2d with bspline_curve2d to define two different contours.
+        Cut a contour 2d with bspline_curve 2d to define two different contours.
         """
         # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
 
@@ -2311,7 +2297,7 @@ class Contour2D(ContourMixin, Wire2D):
         if not intersections or len(intersections) < 2:
             return [self]
         points_intersections = []
-        for intersection, prim in intersections:
+        for intersection, _ in intersections:
             if intersection not in points_intersections:
                 points_intersections.append(intersection)
         if len(points_intersections) % 2 != 0:
@@ -2585,12 +2571,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Line2D rotation, Object is updated inplace.
+        Line2D rotation, Object is updated in-place.
 
         :param center: rotation center
         :param angle: rotation angle
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for point in self.points:
             point.rotation_inplace(center, angle)
@@ -2607,11 +2593,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        ClosedPolygon2D translation. Object is updated inplace.
+        ClosedPolygon2D translation. Object is updated in-place.
 
         :param offset: translation vector
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for point in self.points:
             point.translation_inplace(offset)
@@ -2620,7 +2606,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return self.__class__([point.frame_mapping(frame, side) for point in self.points])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for point in self.points:
             point.frame_mapping_inplace(frame, side)
@@ -2833,8 +2819,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         hull = [point_start]
 
         barycenter = points_hull[0]
-        for pt in points_hull[1:]:
-            barycenter += pt
+        for point in points_hull[1:]:
+            barycenter += point
         barycenter = barycenter / (len(points_hull))
         # second point of hull
         theta = []
@@ -2842,8 +2828,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         del remaining_points[pos_ymax]
 
         vec1 = point_start - barycenter
-        for pt in remaining_points:
-            vec2 = pt - point_start
+        for point in remaining_points:
+            vec2 = point - point_start
             theta_i = -volmdlr.geometry.clockwise_angle(vec1, vec2)
             theta.append(theta_i)
 
@@ -2859,8 +2845,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         while next_point != point_start:
             vec1 = next_point - hull[-2]
             theta = []
-            for pt in remaining_points:
-                vec2 = pt - next_point
+            for point in remaining_points:
+                vec2 = point - next_point
                 theta_i = -volmdlr.geometry.clockwise_angle(vec1, vec2)
                 theta.append(theta_i)
 
@@ -2971,7 +2957,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                         ok_middle_points.append(middle_point)
                         list_cossines.append(cos)
             if len(ok_middle_points) > 0:
-                #  We want the middlepoint to be the one with widest angle (smallest cossine)
+                #  We want the middle-point to be the one with the widest angle (smallest cossine)
                 min_cossine_index = list_cossines.index(min(list_cossines))
                 divided_line.append(volmdlr.edges.LineSegment2D(line.start,
                                                                 ok_middle_points[
@@ -3015,9 +3001,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         points = [polygon_points[0][0], polygon_points[0][1]]
         polygon_points.remove((polygon_points[0][0], polygon_points[0][1]))
-        finished = False
 
-        while not finished:
+        while True:
+            if not polygon_points:
+                break
+            point1, point2 = None, None
             for point1, point2 in polygon_points:
                 if point1 == points[-1] and point2 not in points:
                     points.append(point2)
@@ -3026,8 +3014,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                     points.append(point1)
                     break
             polygon_points.remove((point1, point2))
-            if len(polygon_points) == 0:
-                finished = True
 
         return cls(points)  # , nearby_points
 
@@ -3152,7 +3138,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
         """
-        Use a n by m grid to triangulize the contour.
+        Use an n by m grid to triangulize the contour.
 
         :param number_points_x: Number of discretization points in x direction.
         :type number_points_x: int
@@ -3185,6 +3171,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def ear_clipping_triangulation(self):
         """
         Computes the triangulation of the polygon using ear clipping algorithm.
+
         Note: triangles have been inverted for a better rendering in babylonjs
         """
         # Converting to nodes for performance
@@ -3800,11 +3787,11 @@ class Circle2D(Contour2D):
 
     def point_belongs(self, point, include_edge_points: bool = False):
         """
-        Verifies if a point is inside the Circle2D.
+        Verifies if a point is inside the Circle 2D.
 
-        :param point: A 2D point to check if it is inside the Circle2D.
+        :param point: A 2D point to check if it is inside the Circle 2D.
         :type point: `volmdlr.Point2D`
-        :param include_edge_points: A boolean indicating whether points on the edge of the Circle2D
+        :param include_edge_points: A Boolean indicating whether points on the edge of the Circle 2D
             should be considered inside the circle.
         :type include_edge_points: bool
         :return: True if point inside the circle or false otherwise.
@@ -3838,11 +3825,11 @@ class Circle2D(Contour2D):
 
     def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment2D, tol=1e-9):
         """
-        Calculates the intersections between a circle 2D and LineSegment 2D.
+        Calculates the intersections between a circle 2D and line segment 2D.
 
-        :param linesegment: linesegment to calculate intersections
+        :param linesegment: line segment to calculate intersections
         :param tol: tolerance to consider in calculations.
-        :return: circle and linesegment intersections.
+        :return: circle and line segment intersections.
         """
         full_arc_2d = volmdlr.edges.FullArc2D(
             center=self.center, start_end=self.point_at_abscissa(0),
@@ -3873,7 +3860,7 @@ class Circle2D(Contour2D):
 
         d = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
 
-        # non intersecting
+        # non-intersecting
         if d > self.radius + circle.radius:
             return []
         # One circle within other
@@ -3962,12 +3949,12 @@ class Circle2D(Contour2D):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Circle2D rotation. Object is updated inplace.
+        Circle2D rotation. Object is updated in-place.
 
         :param center: rotation center
         :param angle: rotation angle
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.center.rotation_inplace(center, angle)
 
@@ -3982,11 +3969,11 @@ class Circle2D(Contour2D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Circle2D translation. Object is updated inplace.
+        Circle2D translation. Object is updated in-place.
 
         :param offset: translation vector
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.center.translation_inplace(offset)
 
@@ -4005,11 +3992,11 @@ class Circle2D(Contour2D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace.
+        Changes frame_mapping and the object is updated in-place.
 
         side = 'old' or 'new'
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         if side == 'old':
             self.center = frame.local_to_global_coordinates(self.center)
@@ -4073,7 +4060,7 @@ class Circle2D(Contour2D):
 
     def axial_symmetry(self, line):
         """
-        Finds out the symmetric circle2d according to a line.
+        Finds out the symmetric circle 2d according to a line.
         """
         return self.__class__(center=self.center.axial_symmetry(line),
                               radius=self.radius)
@@ -4208,9 +4195,9 @@ class Ellipse2D(Contour2D):
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Calculates the intersections between a linesegment and an ellipse.
+        Calculates the intersections between a line segment and an ellipse.
 
-        :param linesegment: linesegment to calculate intersections.
+        :param linesegment: line segment to calculate intersections.
         :return: list of points intersections, if there are any.
         """
         line_intersections = self.line_intersections(linesegment.to_line())
@@ -4225,7 +4212,7 @@ class Ellipse2D(Contour2D):
         Calculates the discretized points for the ellipse.
 
         :param number_points: number of point to have in the discretized points.
-        :param angle_resolution: the angle resolution to be used to discretise points.
+        :param angle_resolution: the angle resolution to be used to discretize points.
         :return: discretized points.
         """
         if number_points:
@@ -4300,7 +4287,7 @@ class Ellipse2D(Contour2D):
         Translation of ellipse from an offset vector.
 
         :param offset: corresponding translation vector.
-        :return: translated new ellipse2d.
+        :return: translated new ellipse 2d.
         """
         return Ellipse2D(self.major_axis, self.minor_axis, self.center.translation(offset), self.major_dir)
 
@@ -4547,13 +4534,13 @@ class Contour3D(ContourMixin, Wire3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Contour3D rotation. Object is updated inplace.
+        Contour3D rotation. Object is updated in-place.
 
         :param center: rotation center.
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for edge in self.primitives:
             edge.rotation_inplace(center, axis, angle)
@@ -4571,11 +4558,11 @@ class Contour3D(ContourMixin, Wire3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Contour3D translation. Object is updated inplace.
+        Contour3D translation. Object is updated in-place.
 
         :param offset: translation vector.
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for edge in self.primitives:
             edge.translation_inplace(offset)
@@ -4600,7 +4587,7 @@ class Contour3D(ContourMixin, Wire3D):
             elif isinstance(self.primitives[index], volmdlr.edges.Arc3D):
                 new_primitives.append(volmdlr.edges.Arc3D(point1, self.primitives[index].interior, point2))
             elif isinstance(self.primitives[index], volmdlr.edges.BSplineCurve3D):
-                if (self.primitives[index].start == point1 and self.primitives[index].end == point2):
+                if self.primitives[index].start == point1 and self.primitives[index].end == point2:
                     new_primitives.append(self.primitives[index])
                 else:
                     new_primitives.append(self.primitives[index].reverse())
@@ -4621,11 +4608,11 @@ class Contour3D(ContourMixin, Wire3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace.
+        Changes frame_mapping and the object is updated in-place.
 
         :param side: 'old' or 'new'
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for edge in self.primitives:
             edge.frame_mapping_inplace(frame, side)
@@ -4677,9 +4664,9 @@ class Contour3D(ContourMixin, Wire3D):
 
     def line_intersections(self, line: volmdlr.edges.Line3D):
         """
-        Calculates intersections between a contour3d and Line3d.
+        Calculates intersections between a contour 3d and Line 3d.
 
-        :param line: Line3D to verify intersections.
+        :param line: Line 3D to verify intersections.
         :return: list with the contour intersections with line
         """
         intersections = []
@@ -4693,9 +4680,9 @@ class Contour3D(ContourMixin, Wire3D):
 
     def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment3D):
         """
-        Calculates intersections between a contour 3d and LineSegment3D.
+        Calculates intersections between a contour 3d and line segment 3D.
 
-        :param linesegment: LineSegment3D to verify intersections.
+        :param linesegment: line segment 3D to verify intersections.
         :return: list with the contour intersections with line
         """
         intersections = []
@@ -4728,7 +4715,7 @@ class Contour3D(ContourMixin, Wire3D):
     @classmethod
     def from_points(cls, points: List[volmdlr.Point3D]):
         """
-        Create a contour3d from points with line_segments3D.
+        Create a contour 3d from points with line_segments3D.
 
         """
 
@@ -4871,13 +4858,13 @@ class Circle3D(Contour3D):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Circle3D rotation. Object is updated inplace.
+        Circle3D rotation. Object is updated in-place.
 
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.frame.rotation_inplace(center, axis, angle)
 
@@ -4892,11 +4879,11 @@ class Circle3D(Contour3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Circle3D translation. Object is updated inplace.
+        Circle3D translation. Object is updated in-place.
 
         :param offset: translation vector
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.frame.translation_inplace(offset)
 
@@ -4928,9 +4915,9 @@ class Circle3D(Contour3D):
 
     def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment3D):
         """
-        Calculates the intersections between the Circle3D and a LineSegment3D.
+        Calculates the intersections between the Circle3D and a line segment 3D.
 
-        :param linesegment: LineSegment3D to verify intersections
+        :param linesegment: line segment 3D to verify intersections
         :return: list of points intersecting Circle
         """
         intersections = []
@@ -5137,7 +5124,7 @@ class Ellipse3D(Contour3D):
 
     :param major_axis: Largest radius of the ellipse
     :type major_axis: float
-    :param minor_axis: Smallest radius of the ellipse
+    :param minor_axis: The Smallest radius of the ellipse
     :type minor_axis: float
     :param center: Ellipse's center
     :type center: Point3D
@@ -5280,13 +5267,13 @@ class Ellipse3D(Contour3D):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Ellipse3D rotation. Object is updated inplace.
+        Ellipse3D rotation. Object is updated in-place.
 
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.center.rotation_inplace(center, axis, angle)
         self.normal.rotation_inplace(center, axis, angle)
@@ -5307,11 +5294,11 @@ class Ellipse3D(Contour3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Ellipse3D translation. Object is updated inplace.
+        Ellipse3D translation. Object is updated in-place.
 
         :param offset: translation vector
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.center.translation_inplace(offset)
         self.normal.translation_inplace(offset)
@@ -5419,13 +5406,13 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        ClosedPolygon3D rotation. Object is updated inplace.
+        ClosedPolygon3D rotation. Object is updated in-place.
 
         :param center: rotation center.
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for point in self.points:
             point.rotation_inplace(center, axis, angle)
@@ -5443,11 +5430,11 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        ClosedPolygon3D translation. Object is updated inplace.
+        ClosedPolygon3D translation. Object is updated in-place.
 
         :param offset: translation vector.
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for point in self.points:
             point.translation_inplace(offset)
@@ -5524,7 +5511,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         """
-        Simplifies polygon3d.
+        Simplifies polygon 3d.
 
         :param min_distance: minimal allowed distance.
         :param max_distance: maximal allowed distance.
