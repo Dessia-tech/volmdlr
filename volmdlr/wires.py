@@ -1653,9 +1653,7 @@ class Contour2D(ContourMixin, Wire2D):
             return True
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
-        if len(self.primitives) != len(other_.primitives):
-            return False
-        if self.length() != other_.length():
+        if len(self.primitives) != len(other_.primitives) or self.length() != other_.length():
             return False
         equal = 0
         for prim1 in self.primitives:
