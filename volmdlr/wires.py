@@ -33,32 +33,34 @@ from volmdlr.core_compiled import polygon_point_belongs
 from volmdlr.core import EdgeStyle
 
 
-def argmax(list_of_float):
+def argmax(list_of_numbers):
     """
     Returns the max value and the argmax.
+
     """
-    pos_max, max_float = 0, list_of_float[0]
-    for pos, fl in enumerate(list_of_float):
+    pos_max, max_value = 0, list_of_numbers[0]
+    for pos, value in enumerate(list_of_numbers):
         if pos == 0:
             continue
-        if fl > max_float:
-            max_float = fl
+        if value > max_value:
+            max_value = value
             pos_max = pos
-    return max_float, pos_max
+    return max_value, pos_max
 
 
-def argmin(list_of_float):
+def argmin(list_of_numbers):
     """
-    Returns the min value and the argmin.
+    Returns the minimum value from a list of numbers and its index.
+
     """
-    pos_min, min_float = 0, list_of_float[0]
-    for pos, fl in enumerate(list_of_float):
+    pos_min, min_value = 0, list_of_numbers[0]
+    for pos, value in enumerate(list_of_numbers):
         if pos == 0:
             continue
-        if fl < min_float:
-            min_float = fl
+        if value < min_value:
+            min_value = value
             pos_min = pos
-    return min_float, pos_min
+    return min_value, pos_min
 
 
 def bounding_rectangle_adjacent_contours(contours: List):
@@ -205,7 +207,7 @@ class WireMixin:
 
         shared = list(set(indices[0]) & set(indices[1]))
         ind = []
-        if shared == []:
+        if not shared:
             ind.append(indices[0][0])
             if len(indices[1]) == 2:
                 ind.append(indices[1][1])
@@ -239,14 +241,11 @@ class WireMixin:
         raise ValueError('Point is not on wire')
 
     def sort_points_along_wire(self, points):
-
-        return sorted(points, key=lambda point: self.abscissa(point))
+        """ Sort given points along the wire with respect to the abscissa. """
+        return sorted(points, key=self.abscissa)
 
     def is_ordered(self, tol=1e-6):
-        """
-        Check if the wire's primitives are ordered or not.
-
-        """
+        """ Check if the wire's primitives are ordered or not. """
 
         for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
             if primitive_1.end.point_distance(primitive_2.start) > tol:
@@ -254,10 +253,7 @@ class WireMixin:
         return True
 
     def order_wire(self, tol=1e-6):
-        """
-        Order wire's primitives.
-
-        """
+        """ Order wire's primitives. """
 
         if self.is_ordered(tol=tol):
             return self.__class__(self.primitives[:])
@@ -319,16 +315,28 @@ class WireMixin:
         return self.primitives[-1].end.point_distance(wire_2.primitives[0].start) < tol
 
     def point_over_wire(self, point, abs_tol=1e-6):
+        """
+        Verifies if point is over wire.
 
-        belongs = False
+        :param point: point to be verified.
+        :param abs_tol: tolerance to be considered.
+        :return: True or False
+        """
         for primitive in self.primitives:
             if primitive.point_belongs(point, abs_tol):
-                belongs = True
-        return belongs
+                return True
+        return False
 
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
+        """
+        Verifies if point is over wire.
+
+        :param primitive: point to be verified.
+        :param tol: tolerance to be considered.
+        :return: True or False
+        """
         points = primitive.discretization_points(number_points=10)
-        if all(self.point_over_contour(point, tol) for point in points):
+        if all(self.point_over_wire(point, tol) for point in points):
             return True
         return False
 
@@ -403,7 +411,7 @@ class EdgeCollection3D(WireMixin):
 
     def babylon_points(self):
         """ Get list of points coordinates. """
-        return [[p.x, p.y, p.z] for p in self.points()]
+        return [[point.x, point.y, point.z] for point in self.points()]
 
     def to_babylon(self):
         """ Generate a mesh from all edges for performance when drawing. """
@@ -473,11 +481,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def infinite_intersections(self, infinite_primitives):
         """
-        Returns a list that contains:
+        Returns a list that contains the intersections between a succession of infinite primitives.
 
-        the intersections between a succession of infinite primitives (line,
-        circle). There must be a method implemented to intersect the two
-        infinite primitives.
+        There must be a method implemented to intersect the two infinite primitives.
         """
         offset_intersections = []
 
@@ -488,9 +494,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             # k = infinite_primitives.index(primitive_2)
 
             primitive_name = primitive_1.__class__.__name__.lower().replace('2d', '')
-            intersection_method_name = '{}_intersections'.format(primitive_name)
+            intersection_method_name = f'{primitive_name}_intersections'
             next_primitive_name = primitive_2.__class__.__name__.lower().replace('2d', '')
-            next_intersection_method_name = '{}_intersections'.format(next_primitive_name)
+            next_intersection_method_name = f'{next_primitive_name}_intersections'
 
             if hasattr(primitive_1, next_intersection_method_name):
                 intersections = getattr(primitive_1, next_intersection_method_name)(
@@ -523,14 +529,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
             else:
                 raise NotImplementedError(
-                    'No intersection method between {} and {}. Define {} on {} or {} on {}'.format(
-                        primitive_1.__class__.__name__,
-                        primitive_2.__class__.__name__,
-                        next_intersection_method_name,
-                        primitive_1.__class__.__name__,
-                        intersection_method_name,
-                        primitive_2.__class__.__name__
-                    ))
+                    f'No intersection method between {primitive_1.__class__.__name__} and'
+                    f'{primitive_2.__class__.__name__}. Define {next_intersection_method_name} on '
+                    f'{primitive_1.__class__.__name__} or {intersection_method_name} on'
+                    f'{primitive_2.__class__.__name__}')
 
         return offset_intersections
 
@@ -567,9 +569,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def line_intersections(self, line: 'volmdlr.edges.Line2D'):
         """
-        Returns a list of intersection in the form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        Returns a list of intersection of the wire primitives intersecting with the line.
 
+        :returns: a tuple (point, primitive)
         """
         intersection_points = []
         for primitive in self.primitives:
@@ -580,9 +582,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_intersections(self,
                                   linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of intersection in the form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        Returns a list of intersection of the wire primitives intersecting with the line segment.
 
+        :returns: a tuple (point, primitive)
         """
         intersection_points = []
         for primitive in self.primitives:
@@ -593,6 +595,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def is_start_end_crossings_valid(self, line, intersections, primitive):
         """
+        Returns if the crossings are valid.
+
         :param line: crossing line
         :param intersections: intersections results
          for primitive line intersections
@@ -624,7 +628,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     @staticmethod
     def is_crossing_start_end_point(intersections, primitive):
         """
-        Returns True if the crossings provided arestart or end of the Wire2D.
+        Returns True if the crossings provided are start or end of the Wire 2D.
 
         :param intersections: intersection results
          for primitive line intersections
@@ -687,7 +691,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
         """
-        Define a wire based on points 2d with line_segments2d.
+        Define a wire based on points 2d with line_segments 2d.
 
         :param points: points to define wire 2d.
         """
@@ -700,8 +704,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def linesegment_crossings(self,
                               linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Returns a list of crossings in the form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        Gets the wire primitives intersecting with the line.
+
+        Returns a list of crossings in the form of a tuple (point, primitive).
         """
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
@@ -737,7 +742,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def to_wire_with_linesegments(self):
         """
-        Convert a wire with different primitives to a wire with just linesegments.
+        Convert a wire with different primitives to a wire with just line segments.
         """
 
         wires = []
@@ -754,7 +759,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def extend(self, point):
         """
-        Extend a wire by adding a linesegment connecting the given point to the nearest wire's extremities.
+        Extend a wire by adding a line segment connecting the given point to the nearest wire's extremities.
         """
 
         distances = [self.primitives[0].start.point_distance(point), self.primitives[-1].end.point_distance(point)]
@@ -808,7 +813,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def symmetry(self, line):
         """
-        TODO: code this
+        TODO: code this.
         """
         raise NotImplementedError('Not coded yet')
 
@@ -828,9 +833,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def bsplinecurve_crossings(self,
                                bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
-        Returns a list of crossings in the form of a tuple (point,
-        primitive) of the wire primitives crossings with the bsplinecurve.
+        Gets the wire primitives crossings with the bsplinecurve.
 
+        Returns a list of crossings in the form of a tuple (point, primitive).
         """
 
         linesegments = bsplinecurve.to_wire(25).primitives
@@ -844,9 +849,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def bsplinecurve_intersections(self,
                                    bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
-        Returns a list of intersections in the form of a tuple (point,
-        primitive) of the wire primitives intersections with the bsplinecurve.
+        Gets the wire primitives intersections with the bsplinecurve.
 
+        Returns a list of intersections in the form of a tuple (point, primitive).
         """
 
         linesegments = bsplinecurve.to_wire(25).primitives
@@ -888,7 +893,8 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def _bounding_box(self):
         """
-        Flawed method, to be enforced by overloading
+        Flawed method, to be enforced by overloading.
+
         """
         n = 20
         points = []
@@ -926,11 +932,11 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace.
+        Changes frame_mapping and the object is updated in-place.
 
         :param side: 'old' or 'new'
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for primitive in self.primitives:
             primitive.frame_mapping_inplace(frame, side)
@@ -974,11 +980,12 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def get_primitives_2d(self, plane_origin, x, y):
         """
-        Pass primitives to 2d
-        :param plane_origin: plane origin
-        :param x: vector u
-        :param y: vector v
-        :return: list of 2d primitives
+        Pass primitives to 2d.
+
+        :param plane_origin: plane origin.
+        :param x: vector u.
+        :param y: vector v.
+        :return: list of 2d primitives.
         """
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
@@ -1041,30 +1048,30 @@ class ContourMixin(WireMixin):
         counter1 = 0
 
         while not finished:
-            for i, (p1, p2) in enumerate(list_point_pairs):
-                if p1.point_distance(p2) < tol:
-                    list_point_pairs.remove((p1, p2))
+            for i, (point1, point2) in enumerate(list_point_pairs):
+                if point1.point_distance(point2) < tol:
+                    list_point_pairs.remove((point1, point2))
                     primitives.remove(primitives[i])
-                elif p1.point_distance(points[-1][-1]) < tol:
-                    points.append((p1, p2))
+                elif point1.point_distance(points[-1][-1]) < tol:
+                    points.append((point1, point2))
                     new_primitives.append(primitives[i])
                     primitives.remove(primitives[i])
-                    list_point_pairs.remove((p1, p2))
-                elif p2.point_distance(points[-1][-1]) < tol:
-                    points.append((p2, p1))
+                    list_point_pairs.remove((point1, point2))
+                elif point2.point_distance(points[-1][-1]) < tol:
+                    points.append((point2, point1))
                     new_primitives.append(primitives[i].reverse())
                     primitives.remove(primitives[i])
-                    list_point_pairs.remove((p1, p2))
-                elif p1.point_distance(points[0][0]) < tol:
-                    points = [(p2, p1)] + points
+                    list_point_pairs.remove((point1, point2))
+                elif point1.point_distance(points[0][0]) < tol:
+                    points = [(point2, point1)] + points
                     new_primitives = [primitives[i].reverse()] + new_primitives
                     primitives.remove(primitives[i])
-                    list_point_pairs.remove((p1, p2))
-                elif p2.point_distance(points[0][0]) < tol:
-                    points = [(p1, p2)] + points
+                    list_point_pairs.remove((point1, point2))
+                elif point2.point_distance(points[0][0]) < tol:
+                    points = [(point1, point2)] + points
                     new_primitives = [primitives[i]] + new_primitives
                     primitives.remove(primitives[i])
-                    list_point_pairs.remove((p1, p2))
+                    list_point_pairs.remove((point1, point2))
             if len(list_point_pairs) == 0:
                 finished = True
             counter1 += 1
@@ -1157,7 +1164,7 @@ class ContourMixin(WireMixin):
         :return: returns the edge if true, and None if not connected.
         """
         edge_connected = None
-        points = [p for prim in contour_primitives for p in prim]
+        points = [point for prim in contour_primitives for point in prim]
         if (edge.start in points or edge.end in points) and edge not in contour_primitives:
             edge_connected = edge
             return edge_connected
@@ -1277,8 +1284,8 @@ class ContourMixin(WireMixin):
         for primitive in self.primitives:
             auto_nb_pts = min(number_points, max(2, int(primitive.length() / 1e-6)))
             points = primitive.discretization_points(number_points=auto_nb_pts)
-            for p1, p2 in zip(points[:-1], points[1:]):
-                edges.append(volmdlr.edges.LineSegment2D(p1, p2))
+            for point1, point2 in zip(points[:-1], points[1:]):
+                edges.append(volmdlr.edges.LineSegment2D(point1, point2))
         return edges
 
     def shares_primitives(self, contour):
@@ -1347,7 +1354,7 @@ class ContourMixin(WireMixin):
                         # instead of point not in list_p (due to errors)
                         if not list_p:
                             list_p.append(point)
-                        if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
+                        if list_p and point.point_distance(point.nearest_point(list_p)) > 1e-4:
                             list_p.append(point)
 
                     if len(list_p) == 2:
@@ -1363,7 +1370,8 @@ class ContourMixin(WireMixin):
 
     def shared_primitives_extremities(self, contour):
         """
-        #todo: is this description correct?
+        #todo: is this description correct?.
+
         Extract shared primitives extremities between two adjacent contours.
 
         """
@@ -1380,7 +1388,7 @@ class ContourMixin(WireMixin):
                     if edge1.point_belongs(point, 1e-6):
                         if not list_p:
                             list_p.append(point)
-                        if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
+                        if list_p and point.point_distance(point.nearest_point(list_p)) > 1e-4:
                             list_p.append(point)
                         try:
                             self.primitive_to_index(edge1)
@@ -1464,7 +1472,7 @@ class ContourMixin(WireMixin):
 
     def edges_order_with_adjacent_contour(self, contour):
         """
-        Check if the shared edges between two adjacent contours are traversed with two
+        Check if the shared edges between two adjacent contours are traversed with two \
         different directions along each contour.
 
         """
@@ -1497,16 +1505,16 @@ class ContourMixin(WireMixin):
         # TODO: rewrite this awfull code!
         points = []
         primitives = self.primitives
-        for i in range(0, len(primitives)):
+        for prim in primitives:
             pts = []
             for point in list_p:  # due to errors
-                if primitives[i].point_belongs(point):
+                if prim.point_belongs(point):
                     pts.append(point)
             if len(pts) == 1:
                 points.append(pts[0])
                 break
             if len(pts) > 1:
-                points.append(primitives[i].start.nearest_point(pts))
+                points.append(prim.start.nearest_point(pts))
                 break
 
         for i in range(len(primitives) - 1, -1, -1):
@@ -1692,10 +1700,10 @@ class Contour2D(ContourMixin, Wire2D):
         for primitive in self.primitives:
             if hasattr(primitive, 'discretization_points'):
                 points.extend(primitive.discretization_points(number_points=10))
-        x_min = min(p[0] for p in points)
-        x_max = max(p[0] for p in points)
-        y_min = min(p[1] for p in points)
-        y_max = max(p[1] for p in points)
+        x_min = min(point[0] for point in points)
+        x_max = max(point[0] for point in points)
+        y_min = min(point[1] for point in points)
+        y_max = max(point[1] for point in points)
         return volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_max)
 
     def area(self):
@@ -1738,19 +1746,20 @@ class Contour2D(ContourMixin, Wire2D):
 
     def second_moment_area(self, point):
 
-        Ix, Iy, Ixy = self.edge_polygon.second_moment_area(point)
+        second_moment_area_x, second_moment_area_y, second_moment_area_xy = self.edge_polygon.second_moment_area(point)
         for edge in self.primitives:
-            Ix_e, Iy_e, Ixy_e = edge.straight_line_second_moment_area(point)
+            second_moment_area_x_e, second_moment_area_y_e, second_moment_area_xy_e =\
+                edge.straight_line_second_moment_area(point)
             if self.edge_polygon.is_trigo:
-                Ix += Ix_e
-                Iy += Iy_e
-                Ixy += Ixy_e
+                second_moment_area_x += second_moment_area_x_e
+                second_moment_area_y += second_moment_area_y_e
+                second_moment_area_xy += second_moment_area_xy_e
             else:
-                Ix -= Ix_e
-                Iy -= Iy_e
-                Ixy -= Ixy_e
+                second_moment_area_x -= second_moment_area_x_e
+                second_moment_area_y -= second_moment_area_y_e
+                second_moment_area_xy -= second_moment_area_xy_e
 
-        return Ix, Iy, Ixy
+        return second_moment_area_x, second_moment_area_y, second_moment_area_xy
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   surface_style: plot_data.SurfaceStyle = None):
@@ -1790,7 +1799,7 @@ class Contour2D(ContourMixin, Wire2D):
         return Contour2D(self.inverted_primitives())
 
     def invert_inplace(self):
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.primitives = self.inverted_primitives()
 
@@ -1805,9 +1814,9 @@ class Contour2D(ContourMixin, Wire2D):
         """
         x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
         for _ in range(2000):
-            p = volmdlr.Point2D.random(x_min, x_max, y_min, y_max)
-            if self.point_belongs(p, include_edge_points):
-                return p
+            point = volmdlr.Point2D.random(x_min, x_max, y_min, y_max)
+            if self.point_belongs(point, include_edge_points):
+                return point
         print(True)
         raise ValueError('Could not find a point inside')
 
@@ -1828,11 +1837,6 @@ class Contour2D(ContourMixin, Wire2D):
         return contours
 
     def cut_by_linesegments(self, lines: List[volmdlr.edges.LineSegment2D]):
-        # for c in lines:
-        #     if not isinstance(c, volmdlr.edges.LineSegment2D):
-        #         raise KeyError(
-        #             'contour must be a list of LineSegment2D object')
-
         cut_lines = []
         for cut_ls in lines:
             cut_lines.append(cut_ls.to_line())
@@ -1841,22 +1845,25 @@ class Contour2D(ContourMixin, Wire2D):
         for line in cut_lines:
             new_contour_to_cut = []
             for contour in contour_to_cut:
-                cs = contour.cut_by_line(line)
-                new_contour_to_cut.extend(cs)
+                cutted_contour = contour.cut_by_line(line)
+                new_contour_to_cut.extend(cutted_contour)
             contour_to_cut.extend(new_contour_to_cut)
 
-        p1 = Contour2D(lines).center_of_mass()
+        point1 = Contour2D(lines).center_of_mass()
         dist_min = math.inf
+        c_opti = None
         for contour in contour_to_cut:
             if contour.area() > 1e-10:
-                p0 = contour.center_of_mass()
-                if p0.point_distance(p1) < dist_min:
+                point0 = contour.center_of_mass()
+                if point0.point_distance(point1) < dist_min:
                     c_opti = contour
-                    dist_min = p0.point_distance(p1)
+                    dist_min = point0.point_distance(point1)
         return c_opti
 
     def repair_cut_contour(self, n, intersections, line):
         """
+        Repair contour.
+
         Choose:
         n=0 for Side 1: opposite side of beginning of contour
         n=1 for Side 2: start of contour to first intersect (i=0) and
@@ -1923,15 +1930,6 @@ class Contour2D(ContourMixin, Wire2D):
 
             primitives.append(
                 volmdlr.edges.LineSegment2D(last_point, point_start))
-
-            # points = (volmdlr.edges.LineSegment2D(last_point, point_start)).discretise(5)
-            # line_segment=volmdlr.edges.LineSegment2D(last_point, point_start)
-            # for p in points[1:-1]:
-            #     r = line_segment.split(p)
-            #     primitives.append(r[0])
-            #     line_segment = r[1]
-            #     if p == points[-2]:
-            #         primitives.append(r[1])
 
             contour = Contour2D(primitives)
             contour.order_contour()
@@ -2026,7 +2024,7 @@ class Contour2D(ContourMixin, Wire2D):
                            number_points_x: int = None,
                            number_points_y: int = None):
         """
-        Compute a triangulation using an n-by-m grid to triangulize the contour.
+        Compute a triangulation using an n-by-m grid to triangulate the contour.
         """
         bounding_rectangle = self.bounding_rectangle
         # xmin, xmax, ymin, ymax = self.bounding_rectangle
@@ -2053,22 +2051,22 @@ class Contour2D(ContourMixin, Wire2D):
 
         for i in range(n):
             for j in range(m):
-                p1 = volmdlr.Point2D(x[i], y[j])
-                p2 = volmdlr.Point2D(x[i + 1], y[j])
-                p3 = volmdlr.Point2D(x[i + 1], y[j + 1])
-                p4 = volmdlr.Point2D(x[i], y[j + 1])
+                point1 = volmdlr.Point2D(x[i], y[j])
+                point2 = volmdlr.Point2D(x[i + 1], y[j])
+                point3 = volmdlr.Point2D(x[i + 1], y[j + 1])
+                point4 = volmdlr.Point2D(x[i], y[j + 1])
                 points_in = []
-                for p in [p1, p2, p3, p4]:
-                    if p in point_index:
-                        points_in.append(p)
+                for point in [point1, point2, point3, point4]:
+                    if point in point_index:
+                        points_in.append(point)
                 if len(points_in) == 4:
                     triangles.append(
-                        [point_index[p1], point_index[p2], point_index[p3]])
+                        [point_index[point1], point_index[point2], point_index[point3]])
                     triangles.append(
-                        [point_index[p1], point_index[p3], point_index[p4]])
+                        [point_index[point1], point_index[point3], point_index[point4]])
 
                 elif len(points_in) == 3:
-                    triangles.append([point_index[p] for p in points_in])
+                    triangles.append([point_index[point] for point in points_in])
 
         return vmd.DisplayMesh2D(points, triangles)
 
@@ -2128,7 +2126,6 @@ class Contour2D(ContourMixin, Wire2D):
         return contour1, contour2
 
     def divide(self, contours, inside):
-        # TODO: This method has a modified-iterating-list pylint error to be fixed
         new_base_contours = [self]
         finished = False
         counter = 0
@@ -2152,7 +2149,7 @@ class Contour2D(ContourMixin, Wire2D):
                     contour1, contour2 = base_contour.get_divided_contours(
                         cutting_points[0], cutting_points[1], cutting_contour, inside)
 
-                    new_base_contours.remove(base_contour)
+                    new_base_contours_ = []
                     for cntr in [contour1, contour2]:
                         all_divided_contour = True
                         for cut_contour in list_cutting_contours:
@@ -2170,9 +2167,13 @@ class Contour2D(ContourMixin, Wire2D):
                         if all_divided_contour and not math.isclose(cntr.area(), 0.0, abs_tol=1e-6):
                             list_valid_contours.append(cntr)
                         else:
-                            new_base_contours.append(cntr)
+                            new_base_contours_.append(cntr)
                     contours.remove(cutting_contour)
                     break
+            else:
+                continue
+            new_base_contours.remove(base_contour)
+            new_base_contours.extend(new_base_contours_)
             if len(contours) == 0:
                 finished = True
                 continue
@@ -2208,7 +2209,8 @@ class Contour2D(ContourMixin, Wire2D):
     @classmethod
     def from_bounding_rectangle(cls, x_min, x_max, y_min, y_max):
         """
-        Create a contour 2d with bounding_box parameters, using linesegments2d.
+        Create a contour 2d with bounding_box parameters, using line segments 2d.
+ 
         """
 
         edge0 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_min))
@@ -2222,7 +2224,8 @@ class Contour2D(ContourMixin, Wire2D):
 
     def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
         """
-        Cut a contour 2d with bspline_curve2d to define two different contours.
+        Cut a contour 2d with bspline_curve 2d to define two different contours.
+        
         """
         # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
 
@@ -2236,19 +2239,18 @@ class Contour2D(ContourMixin, Wire2D):
         """
 
         new_primitives = []
-        for p in self.primitives:
-            if not p.start.is_close(p.end):
-                new_primitives.append(p)
+        for prim in self.primitives:
+            if prim.start != prim.end:
+                new_primitives.append(prim)
 
         return Contour2D(new_primitives)
 
     def merge_with(self, contour2d):
         """
-        Merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours
-        (if there are any).
+        Merge two adjacent contours, and returns one outer contour and inner contours (if there are any).
 
-        :param contour2d: contour to merge with
-        :return: merged contours
+        :param contour2d: contour to merge with.
+        :return: merged contours.
         """
         is_sharing_primitive = self.is_sharing_primitives_with(contour2d)
         if self.is_inside(contour2d) and not is_sharing_primitive:
@@ -2264,7 +2266,8 @@ class Contour2D(ContourMixin, Wire2D):
 
     def union(self, contour2: 'Contour2D'):
         """
-        Union two contours, if they adjacent, or overlap somehow
+        Union two contours, if they adjacent, or overlap somehow.
+
         """
         if self.is_inside(contour2):
             return [self]
@@ -2360,23 +2363,37 @@ class ClosedPolygonMixin:
 
     """
 
-    def length(self):
+    def get_lengths(self):
+        """
+        Gets line segment lengths.
+
+        """
         list_ = []
-        for k in range(len(self.line_segments)):
-            list_.append(self.line_segments[k].length())
-        return sum(list_)
+        for line_segment in self.line_segments:
+            list_.append(line_segment.length())
+        return list_
+
+    def length(self):
+        """
+        Polygon length.
+
+        :return: polygon length.
+        """
+        return sum(self.get_lengths())
 
     def min_length(self):
-        list_ = []
-        for k in range(len(self.line_segments)):
-            list_.append(self.line_segments[k].length())
-        return min(list_)
+        """
+        Gets the minimal length for a line segment in the polygon.
+
+        """
+        return min(self.get_lengths())
 
     def max_length(self):
-        list_ = []
-        for k in range(len(self.line_segments)):
-            list_.append(self.line_segments[k].length())
-        return max(list_)
+        """
+        Gets the minimal length for a line segment in the polygon.
+
+        """
+        return max(self.get_lengths())
 
     def edge_statistics(self):
         distances = []
@@ -2443,7 +2460,7 @@ class ClosedPolygonMixin:
 
 class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     """
-    A collection of points, connected by linesegments, following each other.
+    A collection of points, connected by line segments, following each other.
 
     """
     _non_serializable_attributes = ['line_segments', 'primitives',
@@ -2456,11 +2473,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         Contour2D.__init__(self, self.line_segments, name)
 
     def copy(self, *args, **kwargs):
-        points = [p.copy() for p in self.points]
+        points = [point.copy() for point in self.points]
         return ClosedPolygon2D(points, self.name)
 
     def __hash__(self):
-        return sum(hash(p) for p in self.points)
+        return sum(hash(point) for point in self.points)
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
@@ -2502,12 +2519,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         xi_yi1 = npy.multiply(x, npy.roll(y, -1))
         xi1_yi = npy.multiply(npy.roll(x, -1), y)
 
-        a = 0.5 * npy.sum(xi_yi1 - xi1_yi)  # signed area!
-        # print('a :', a)
-        #        a=self.area()
-        if not math.isclose(a, 0, abs_tol=1e-08):
-            cx = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / a
-            cy = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / a
+        signed_area = 0.5 * npy.sum(xi_yi1 - xi1_yi)  # signed area!
+        if not math.isclose(signed_area, 0, abs_tol=1e-08):
+            cx = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
+            cy = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
             return volmdlr.Point2D(cx, cy)
 
         self.plot()
@@ -2528,31 +2543,31 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         """
         Ray casting algorithm copied from internet.
         """
-        return polygon_point_belongs((point.x, point.y),
-                                     [(p.x, p.y) for p in self.points], include_edge_points=include_edge_points)
+        return polygon_point_belongs((point.x, point.y), [(point_.x, point_.y) for point_ in self.points],
+                                     include_edge_points=include_edge_points)
 
     def second_moment_area(self, point):
-        Ix, Iy, Ixy = 0., 0., 0.
-        for pi, pj in zip(self.points, self.points[1:] + [self.points[0]]):
-            xi, yi = pi - point
-            xj, yj = pj - point
-            Ix += (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi)
-            Iy += (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi)
-            Ixy += (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
+        second_moment_area_x, second_moment_area_y, second_moment_area_xy = 0., 0., 0.
+        for point_i, point_j in zip(self.points, self.points[1:] + [self.points[0]]):
+            xi, yi = point_i - point
+            xj, yj = point_j - point
+            second_moment_area_x += (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi)
+            second_moment_area_y += (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi)
+            second_moment_area_xy += (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
                     xi * yj - xj * yi)
-        if Ix < 0:
-            Ix = - Ix
-            Iy = - Iy
-            Ixy = - Ixy
-        return Ix / 12., Iy / 12., Ixy / 24.
+        if second_moment_area_x < 0:
+            second_moment_area_x = - second_moment_area_x
+            second_moment_area_y = - second_moment_area_y
+            second_moment_area_xy = - second_moment_area_xy
+        return second_moment_area_x / 12., second_moment_area_y / 12., second_moment_area_xy / 24.
 
     def get_line_segments(self):
         lines = []
         if len(self.points) > 1:
-            for p1, p2 in zip(self.points,
-                              list(self.points[1:]) + [self.points[0]]):
-                if not p1.is_close(p2):
-                    lines.append(volmdlr.edges.LineSegment2D(p1, p2))
+            for point1, point2 in zip(self.points,
+                                      list(self.points[1:]) + [self.points[0]]):
+                if point1 != point2:
+                    lines.append(volmdlr.edges.LineSegment2D(point1, point2))
         return lines
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
@@ -2568,12 +2583,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Line2D rotation, Object is updated inplace.
+        Line2D rotation, Object is updated in-place.
 
         :param center: rotation center
         :param angle: rotation angle
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for point in self.points:
             point.rotation_inplace(center, angle)
@@ -2590,11 +2605,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        ClosedPolygon2D translation. Object is updated inplace.
+        ClosedPolygon2D translation. Object is updated in-place.
 
         :param offset: translation vector
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for point in self.points:
             point.translation_inplace(offset)
@@ -2603,19 +2618,19 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return self.__class__([point.frame_mapping(frame, side) for point in self.points])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for point in self.points:
             point.frame_mapping_inplace(frame, side)
 
     def polygon_distance(self,
-                         polygon: 'volmdlr.wires.ClosedPolygon2D'):
-        p = self.points[0]
-        d = []
+                         polygon: 'ClosedPolygon2D'):
+        point_zero = self.points[0]
+        distance = []
         for point in polygon.points:
-            d.append(p.point_distance(point))
-        index = d.index(min(d))
-        return d[index]
+            distance.append(point_zero.point_distance(point))
+        index = distance.index(min(distance))
+        return distance[index]
 
     @cached_property
     def is_trigo(self):
@@ -2660,10 +2675,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                   'polygon might turn over. Offset must be greater than',
                   -max_offset_len)
             raise ValueError('inadapted offset')
-
-        nb = len(self.points)
+        nb_points = len(self.points)
         vectors = []
-        for i in range(nb - 1):
+        for i in range(nb_points - 1):
             v1 = self.points[i + 1] - self.points[i]
             v2 = self.points[i] - self.points[i + 1]
             v1.normalize()
@@ -2681,20 +2695,20 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         offset_vectors = []
         offset_points = []
 
-        for i in range(nb):
+        for i in range(nb_points):
 
             # check = False
-            ni = vectors[2 * i - 1] + vectors[2 * i]
-            if ni == volmdlr.Vector2D(0, 0):
-                ni = vectors[2 * i]
-                ni = ni.normal_vector()
-                offset_vectors.append(ni)
+            vector_i = vectors[2 * i - 1] + vectors[2 * i]
+            if vector_i == volmdlr.Vector2D(0, 0):
+                vector_i = vectors[2 * i]
+                vector_i = vector_i.normal_vector()
+                offset_vectors.append(vector_i)
             else:
-                ni.normalize()
-                if ni.dot(vectors[2 * i - 1].normal_vector()) > 0:
-                    ni = - ni
+                vector_i.normalize()
+                if vector_i.dot(vectors[2 * i - 1].normal_vector()) > 0:
+                    vector_i = - vector_i
                     # check = True
-                offset_vectors.append(ni)
+                offset_vectors.append(vector_i)
 
             normal_vector1 = - vectors[2 * i - 1].normal_vector()
             normal_vector2 = vectors[2 * i].normal_vector()
@@ -2722,15 +2736,16 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def point_border_distance(self, point, return_other_point=False):
         """
         Compute the distance to the border distance of polygon.
+
         Output is always positive, even if the point belongs to the polygon.
         """
         d_min, other_point_min = self.line_segments[0].point_distance(
             point, return_other_point=True)
         for line in self.line_segments[1:]:
-            d, other_point = line.point_distance(
+            dist_, other_point = line.point_distance(
                 point, return_other_point=True)
-            if d < d_min:
-                d_min = d
+            if dist_ < d_min:
+                d_min = dist_
                 other_point_min = other_point
         if return_other_point:
             return d_min, other_point_min
@@ -2795,13 +2810,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                         line2 = volmdlr.edges.LineSegment2D(
                             self.points[segment2[0]],
                             self.points[segment2[1]])
-
-                        p, a, b = volmdlr.Point2D.line_intersection(line1,
-                                                                    line2,
-                                                                    True)
-                        if p is not None and 0 + epsilon <= a <= 1 - epsilon \
-                                and 0 + epsilon <= b <= 1 - epsilon:
-                            return True, line1, line2
+                        point, param_a, param_b = volmdlr.Point2D.line_intersection(line1, line2, True)
+                        if point is not None:
+                            if 0 + epsilon <= param_a <= 1 - epsilon \
+                                    and 0 + epsilon <= param_b <= 1 - epsilon:
+                                return True, line1, line2
 
         return False, None, None
 
@@ -2810,15 +2823,15 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         if len(points) < 3:
             return None
 
-        points_hull = [pt.copy() for pt in points]
+        points_hull = [point.copy() for point in points]
 
-        _, pos_ymax = argmax([pt.y for pt in points_hull])
+        _, pos_ymax = argmax([point.y for point in points_hull])
         point_start = points_hull[pos_ymax]
         hull = [point_start]
 
         barycenter = points_hull[0]
-        for pt in points_hull[1:]:
-            barycenter += pt
+        for point in points_hull[1:]:
+            barycenter += point
         barycenter = barycenter / (len(points_hull))
         # second point of hull
         theta = []
@@ -2826,8 +2839,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         del remaining_points[pos_ymax]
 
         vec1 = point_start - barycenter
-        for pt in remaining_points:
-            vec2 = pt - point_start
+        for point in remaining_points:
+            vec2 = point - point_start
             theta_i = -volmdlr.geometry.clockwise_angle(vec1, vec2)
             theta.append(theta_i)
 
@@ -2843,8 +2856,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         while not next_point.is_close(point_start):
             vec1 = next_point - hull[-2]
             theta = []
-            for pt in remaining_points:
-                vec2 = pt - next_point
+            for point in remaining_points:
+                vec2 = point - next_point
                 theta_i = -volmdlr.geometry.clockwise_angle(vec1, vec2)
                 theta.append(theta_i)
 
@@ -2875,7 +2888,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     @classmethod
     def concave_hull(cls, points, concavity, scale_factor):
         """
-        Calculates the concave hull from a cloud of points, i.e., it Unites all points under the smallest possible area.
+        Calculates the concave hull from a cloud of points.
+
+        i.e., it Unites all points under the smallest possible area.
 
         :param points: list of points corresponding to the cloud of points
         :type points: class: 'volmdlr.Point2D'
@@ -2892,7 +2907,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         """
 
         def get_nearby_points(line, points, scale_factor):
-            points_hull = [pt.copy() for pt in points]
+            points_hull = [point.copy() for point in points]
 
             # print('i enter here')
             nearby_points = []
@@ -2951,7 +2966,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                         ok_middle_points.append(middle_point)
                         list_cossines.append(cos)
             if len(ok_middle_points) > 0:
-                #  We want the middlepoint to be the one with the widest angle (smallest cossine)
+                #  We want the middle-point to be the one with the widest angle (smallest cossine)
                 min_cossine_index = list_cossines.index(min(list_cossines))
                 divided_line.append(volmdlr.edges.LineSegment2D(line.start,
                                                                 ok_middle_points[
@@ -2964,18 +2979,18 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         hull_convex_edges.sort(key=lambda x: x.length(), reverse=True)
         hull_concave_edges = []
         hull_concave_edges.extend(hull_convex_edges)
-        hull_points = list({pt for line in hull_concave_edges for pt in [line[0], line[1]]})
+        hull_points = list({point for line in hull_concave_edges for point in [line[0], line[1]]})
         unused_points = []
         for point in points:
             if not volmdlr.core.point_in_list(point, hull_points):
                 unused_points.append(point)
 
         a_line_was_divided_in_the_iteration = True
+        line = None
+        divided_line = None
         while a_line_was_divided_in_the_iteration:
             a_line_was_divided_in_the_iteration = False
-            for line_position_hull in range(len(hull_concave_edges)):
-
-                line = hull_concave_edges[line_position_hull]
+            for line in hull_concave_edges:
                 nearby_points = get_nearby_points(line, unused_points,
                                                   scale_factor)
                 divided_line = get_divided_line(line, nearby_points,
@@ -2983,50 +2998,43 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 if len(divided_line) > 0:
                     a_line_was_divided_in_the_iteration = True
                     unused_points.remove(divided_line[0].end)
-                    hull_concave_edges.remove(line)
-                    hull_concave_edges.extend(divided_line)
                     break
+            else:
+                continue
+            hull_concave_edges.remove(line)
+            hull_concave_edges.extend(divided_line)
 
             hull_concave_edges.sort(key=lambda x: x.length(), reverse=True)
 
-        # line  = hull_concave_edges[0]
-        # print('first line length :', line.length())
-        # nearby_points = get_nearby_points(line, unused_points, scale_factor)
-        # print('points next the first line in the end: ', nearby_points)
-        # divided_line = get_divided_line(line, nearby_points, hull_concave_edges, concavity)
-        # print('len divided line :', len(divided_line))
         polygon_points = [(line.start, line.end) for line in hull_concave_edges]
-        # polygon_points = [(line.start, line.end) for line in hull_concave_edges
-        #                   if line.length() != 0]
 
         points = [polygon_points[0][0], polygon_points[0][1]]
         polygon_points.remove((polygon_points[0][0], polygon_points[0][1]))
-        finished = False
-
-        while not finished:
-            for p1, p2 in polygon_points:
-                if p1.is_close(points[-1]) and not volmdlr.core.point_in_list(p2, points):
-                    points.append(p2)
+        while True:
+            if not polygon_points:
+                break
+            point1, point2 = None, None
+            for point1, point2 in polygon_points:
+                if point1 == points[-1] and point2 not in points:
+                    points.append(point2)
                     break
-                if p2.is_close(points[-1]) and not volmdlr.core.point_in_list(p1, points):
-                    points.append(p1)
+                if point2 == points[-1] and point1 not in points:
+                    points.append(point1)
                     break
-            polygon_points.remove((p1, p2))
-            if len(polygon_points) == 0:
-                finished = True
+            polygon_points.remove((point1, point2))
 
         return cls(points)  # , nearby_points
 
     @classmethod
     def convex_hull_points(cls, points):
         """
-        Uses the scipy method ConvexHull to calculate the convex hull from
-        a cloud of points
+        Uses the scipy method ConvexHull to calculate the convex hull from a cloud of points.
+
         """
 
-        points_hull = [pt.copy() for pt in points]
+        points_hull = [point.copy() for point in points]
 
-        numpy_points = npy.array([(p.x, p.y) for p in points_hull])
+        numpy_points = npy.array([(point.x, point.y) for point in points_hull])
         hull = ConvexHull(numpy_points)
         polygon_points = []
         for simplex in hull.simplices:
@@ -3034,19 +3042,19 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         points_hull = [polygon_points[0][0], polygon_points[0][1]]
         polygon_points.remove((polygon_points[0][0], polygon_points[0][1]))
-        finished = False
 
-        while not finished:
-            for p1, p2 in polygon_points:
-                if p1.is_close(points_hull[-1]):
-                    points_hull.append(p2)
+        while True:
+            if not polygon_points:
+                break
+            point1, point2 = None, None
+            for point1, point2 in polygon_points:
+                if point1 == points_hull[-1]:
+                    points_hull.append(point2)
                     break
-                if p2.is_close(points_hull[-1]):
-                    points_hull.append(p1)
+                if point2 == points_hull[-1]:
+                    points_hull.append(point1)
                     break
-            polygon_points.remove((p1, p2))
-            if len(polygon_points) == 0:
-                finished = True
+            polygon_points.remove((point1, point2))
 
         points_hull.pop(-1)
 
@@ -3085,7 +3093,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             ax.set_aspect('equal')
 
         if fill:
-            ax.fill([p[0] for p in self.points], [p[1] for p in self.points],
+            ax.fill([point[0] for point in self.points], [point[1] for point in self.points],
                     facecolor=fill_color)
         for line_segment in self.line_segments:
             line_segment.plot(ax=ax, edge_style=edge_style)
@@ -3096,8 +3104,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         if point_numbering:
             for ip, point in enumerate(self.points):
-                ax.text(*point, 'point {}'.format(ip + 1),
-                        ha='center', va='top')
+                ax.text(*point, f'point {ip + 1}', ha='center', va='top')
 
         if edge_style.equal_aspect:
             ax.set_aspect('equal')
@@ -3121,8 +3128,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         :rtype: :class:`vmd.DisplayMesh2D`
         """
         # Converting points to nodes for performance
-        nodes = [vmd.Node2D.from_point(p) for p in self.points]
-        vertices = [(p.x, p.y) for p in nodes]
+        nodes = [vmd.Node2D.from_point(point) for point in self.points]
+        vertices = [(point.x, point.y) for point in nodes]
         n = len(nodes)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
@@ -3134,7 +3141,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+        return vmd.DisplayMesh2D(points, triangles=triangles)
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
         """
@@ -3157,7 +3164,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         grid_point_index = {}
 
-        polygon_points = {vmd.Node2D.from_point(p) for p in self.points}
+        polygon_points = {vmd.Node2D.from_point(point) for point in self.points}
         points = []
         for i, xi in enumerate(x):
             for j, yi in enumerate(y):
@@ -3171,12 +3178,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def ear_clipping_triangulation(self):
         """
         Computes the triangulation of the polygon using ear clipping algorithm.
+
         Note: triangles have been inverted for a better rendering in babylonjs
         """
         # Converting to nodes for performance
-        nodes = [vmd.Node2D.from_point(p) for p in self.points]
+        nodes = [vmd.Node2D.from_point(point) for point in self.points]
 
-        initial_point_to_index = {p: i for i, p in enumerate(nodes)}
+        initial_point_to_index = {point: i for i, point in enumerate(nodes)}
         triangles = []
 
         remaining_points = nodes[:]
@@ -3186,11 +3194,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             current_polygon = ClosedPolygon2D(remaining_points)
 
             found_ear = False
-            for p1, p2, p3 in zip(remaining_points,
-                                  remaining_points[1:] + remaining_points[0:1],
-                                  remaining_points[2:] + remaining_points[0:2]):
-                if not p1.is_close(p3):
-                    line_segment = volmdlr.edges.LineSegment2D(p1, p3)
+            for point1, point2, point3 in zip(remaining_points,
+                                              remaining_points[1:] + remaining_points[0:1],
+                                              remaining_points[2:] + remaining_points[0:2]):
+                if not point1.is_close(point3):
+                    line_segment = volmdlr.edges.LineSegment2D(point1, point3)
 
                 # Checking if intersections does not contain the vertices
                 # of line_segment
@@ -3205,10 +3213,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 if not intersect:
                     if current_polygon.point_belongs(line_segment.middle_point()):
 
-                        triangles.append((initial_point_to_index[p1],
-                                          initial_point_to_index[p3],
-                                          initial_point_to_index[p2]))
-                        remaining_points.remove(p2)
+                        triangles.append((initial_point_to_index[point1],
+                                          initial_point_to_index[point3],
+                                          initial_point_to_index[point2]))
+                        remaining_points.remove(point2)
                         number_remaining_points -= 1
                         found_ear = True
 
@@ -3227,12 +3235,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                 if remaining_polygon.area() > 0.:
 
                     found_flat_ear = False
-                    for p1, p2, p3 in zip(remaining_points,
-                                          remaining_points[1:] + remaining_points[0:1],
-                                          remaining_points[2:] + remaining_points[0:2]):
-                        triangle = Triangle2D(p1, p2, p3)
+                    for point1, point2, point3 in zip(remaining_points,
+                                                      remaining_points[1:] + remaining_points[0:1],
+                                                      remaining_points[2:] + remaining_points[0:2]):
+                        triangle = Triangle2D(point1, point2, point3)
                         if math.isclose(triangle.area(), 0, abs_tol=1e-8):
-                            remaining_points.remove(p2)
+                            remaining_points.remove(point2)
                             found_flat_ear = True
                             break
 
@@ -3243,10 +3251,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                     return vmd.DisplayMesh2D(nodes, triangles)
 
         if len(remaining_points) == 3:
-            p1, p2, p3 = remaining_points
-            triangles.append((initial_point_to_index[p1],
-                              initial_point_to_index[p3],
-                              initial_point_to_index[p2]))
+            point1, point2, point3 = remaining_points
+            triangles.append((initial_point_to_index[point1],
+                              initial_point_to_index[point3],
+                              initial_point_to_index[point2]))
 
         return vmd.DisplayMesh2D(nodes, triangles)
 
@@ -3256,10 +3264,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def line_intersecting_closing_point(self, crossing_point):
         """
-        Finds closing point for the sewing method using intersection of lines
-        drawn from the barycenter.
+        Finds closing point for the sewing method using intersection of lines drawn from the barycenter.
 
-        returns the closing point
+        returns the closing point.
         """
         vec_dir = crossing_point.copy()
         vec_dir.normalize()
@@ -3304,8 +3311,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def point_in_polygon(self):
         """
-        In case the barycenter of the polygon is outside, this method
-        finds another point inside the polygon.
+        In case the barycenter of the polygon is outside, this method finds another point inside the polygon.
 
         """
         barycenter = self.barycenter()
@@ -3351,7 +3357,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         barycenter = self.barycenter()
         if not self.point_belongs(barycenter):
             barycenter1_2d = self.point_in_polygon()
-            self.translation(-barycenter1_2d, False)
+            self.translation_inplace(-barycenter1_2d)
             way_back = barycenter1_2d.to_3d(volmdlr.O3D, x, y)
         else:
             inters = self.linesegment_intersections(linex)
@@ -3368,7 +3374,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def get_possible_sewing_closing_points(self, polygon2, polygon_primitive,
                                            line_segment1: None, line_segment2: None):
         """
-        Searches all possibles closing points available for the given primitive
+        Searches all possibles closing points available for the given primitive.
+
         """
         middle_point = polygon_primitive.middle_point()
         if line_segment1 is None and line_segment2 is None:
@@ -3409,7 +3416,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                              polygon_primitive,
                                              possible_closing_points):
         """
-        Searches the closest sewing closing point available
+        Searches the closest sewing closing point available.
+
         """
         closing_point = volmdlr.O2D
         middle_point = polygon_primitive.middle_point()
@@ -3438,7 +3446,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                             polygon_primitive,
                                             possible_closing_points):
         """
-        Searches the closest sewing closing point available
+        Searches the closest sewing closing point available.
+
         """
         closing_point = volmdlr.O2D
         middle_point = polygon_primitive.middle_point()
@@ -3464,9 +3473,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def search_farthest(self, interseting_point, possible_closing_points):
         """
-        While Sewing two Polygons, and searching a face\'s closing point, this
-        method verifies it chooses the closest of the farthest available
-        :return: True if to search the farthest or False if not
+        Chooses the closest of the farthest available.
+
+        While Sewing two Polygons, and searching a face\'s closing point, this method verifies it
+        :return: True if to search the farthest of False if not
         """
         distance = math.inf
         target_prim = None
@@ -3480,7 +3490,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return False
 
     def get_closing_point(self, polygon2_2d, primitive, ax=None):
-        """Gets sewing closing points for given primitive points"""
+        """Gets sewing closing points for given primitive points."""
         closing_point = volmdlr.O2D
         middle_point = primitive.middle_point()
 
@@ -3565,7 +3575,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return closing_point
 
     def get_valid_sewing_polygon_primitive(self, polygon2_2d):
-        """Get valid primitive to start sewing two polygons"""
+        """Get valid primitive to start sewing two polygons."""
         for primitive1 in self.line_segments:
             middle_point = primitive1.middle_point()
             normal_vector = primitive1.unit_normal_vector()
@@ -3622,7 +3632,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def is_convex(self):
         """
-        Verifies if a polygon is convex or Not
+        Verifies if a polygon is convex or Not.
+
         """
         for prim1, prim2 in zip(self.line_segments, self.line_segments[1:] + [self.line_segments[0]]):
             vector1 = prim1.direction_vector()
@@ -3648,7 +3659,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
 class Triangle(ClosedPolygonMixin):
     """
-    Defines a triangle from 3 points. It is a Super Class for Triangle2D and Triangle3D,
+    Defines a triangle from 3 points.
+
+    It is a Super Class for Triangle2D and Triangle3D,
     storing their main attribute and methods.
 
 
@@ -3694,16 +3707,16 @@ class Triangle2D(ClosedPolygon2D):
         return abs(u.cross(v)) / 2
 
     def incircle_radius(self):
-        a = self.point1.point_distance(self.point2)
-        b = self.point1.point_distance(self.point3)
-        c = self.point2.point_distance(self.point3)
-        return 2 * self.area() / (a + b + c)
+        param_a = self.point1.point_distance(self.point2)
+        param_b = self.point1.point_distance(self.point3)
+        param_c = self.point2.point_distance(self.point3)
+        return 2 * self.area() / (param_a + param_b + param_c)
 
     def circumcircle_radius(self):
-        a = self.point1.point_distance(self.point2)
-        b = self.point1.point_distance(self.point3)
-        c = self.point2.point_distance(self.point3)
-        return a * b * c / (self.area() * 4.0)
+        param_a = self.point1.point_distance(self.point2)
+        param_b = self.point1.point_distance(self.point3)
+        param_c = self.point2.point_distance(self.point3)
+        return param_a * param_b * param_c / (self.area() * 4.0)
 
     def ratio_circumr_length(self):
         return self.circumcircle_radius() / self.length()
@@ -3712,12 +3725,13 @@ class Triangle2D(ClosedPolygon2D):
         return self.incircle_radius() / self.length()
 
     def aspect_ratio(self):
-        a = self.point1.point_distance(self.point2)
-        b = self.point1.point_distance(self.point3)
-        c = self.point2.point_distance(self.point3)
-        s = 0.5 * (a + b + c)
+        param_a = self.point1.point_distance(self.point2)
+        param_b = self.point1.point_distance(self.point3)
+        param_c = self.point2.point_distance(self.point3)
+        param_s = 0.5 * (param_a + param_b + param_c)
         try:
-            return 0.125 * a * b * c / (s - a) / (s - b) / (s - c)
+            return (0.125 * param_a * param_b * param_c / (param_s -
+                                                           param_a) / (param_s - param_b) / (param_s - param_c))
         except ZeroDivisionError:
             return 1000000.
 
@@ -3784,11 +3798,11 @@ class Circle2D(Contour2D):
 
     def point_belongs(self, point, include_edge_points: bool = False):
         """
-        Verifies if a point is inside the Circle2D.
+        Verifies if a point is inside the Circle 2D.
 
-        :param point: A 2D point to check if it is inside the Circle2D.
+        :param point: A 2D point to check if it is inside the Circle 2D.
         :type point: `volmdlr.Point2D`
-        :param include_edge_points: A boolean indicating whether points on the edge of the Circle2D
+        :param include_edge_points: A Boolean indicating whether points on the edge of the Circle 2D
             should be considered inside the circle.
         :type include_edge_points: bool
         :return: True if point inside the circle or false otherwise.
@@ -3831,11 +3845,11 @@ class Circle2D(Contour2D):
 
     def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment2D, tol=1e-9):
         """
-        Calculates the intersections between a circle 2D and LineSegment 2D.
+        Calculates the intersections between a circle 2D and line segment 2D.
 
-        :param linesegment: linesegment to calculate intersections
+        :param linesegment: line segment to calculate intersections
         :param tol: tolerance to consider in calculations.
-        :return: circle and linesegment intersections.
+        :return: circle and line segment intersections.
         """
         full_arc_2d = volmdlr.edges.FullArc2D(
             center=self.center, start_end=self.point_at_abscissa(0),
@@ -3858,32 +3872,32 @@ class Circle2D(Contour2D):
             return [contour1, contour2]
         raise ValueError
 
-    def circle_intersections(self, circle: 'volmdlr.wires.Circle2D'):
+    def circle_intersections(self, circle: 'Circle2D'):
         x0, y0 = self.center
         x1, y1 = circle.center
         # r0 = self.radius
         # r1 = circle.radius
 
-        d = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
+        distance = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
 
         # non-intersecting
-        if d > self.radius + circle.radius:
+        if distance > self.radius + circle.radius:
             return []
         # One circle within other
-        if d < abs(self.radius - circle.radius):
+        if distance < abs(self.radius - circle.radius):
             return []
         # coincident circles
-        if d == 0 and self.radius == circle.radius:
+        if distance == 0 and self.radius == circle.radius:
             return []
-        a = (self.radius ** 2 - circle.radius ** 2 + d ** 2) / (2 * d)
-        h = math.sqrt(self.radius ** 2 - a ** 2)
-        x2 = x0 + a * (x1 - x0) / d
-        y2 = y0 + a * (y1 - y0) / d
-        x3 = x2 + h * (y1 - y0) / d
-        y3 = y2 - h * (x1 - x0) / d
+        a_param = (self.radius ** 2 - circle.radius ** 2 + distance ** 2) / (2 * distance)
+        h_param = math.sqrt(self.radius ** 2 - a_param ** 2)
+        x2 = x0 + a_param * (x1 - x0) / distance
+        y2 = y0 + a_param * (y1 - y0) / distance
+        x3 = x2 + h_param * (y1 - y0) / distance
+        y3 = y2 - h_param * (x1 - x0) / distance
 
-        x4 = x2 - h * (y1 - y0) / d
-        y4 = y2 + h * (x1 - x0) / d
+        x4 = x2 - h_param * (y1 - y0) / distance
+        y4 = y2 + h_param * (x1 - x0) / distance
 
         return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]
 
@@ -3954,12 +3968,12 @@ class Circle2D(Contour2D):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        Circle2D rotation. Object is updated inplace.
+        Circle2D rotation. Object is updated in-place.
 
         :param center: rotation center
         :param angle: rotation angle
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.center.rotation_inplace(center, angle)
 
@@ -3974,17 +3988,18 @@ class Circle2D(Contour2D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Circle2D translation. Object is updated inplace.
+        Circle2D translation. Object is updated in-place.
 
         :param offset: translation vector
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.center.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Circle2D
+        Changes frame_mapping and return a new Circle2D.
+
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -3997,10 +4012,11 @@ class Circle2D(Contour2D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace
+        Changes frame_mapping and the object is updated in-place.
+
         side = 'old' or 'new'
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         if side == 'old':
             self.center = frame.local_to_global_coordinates(self.center)
@@ -4013,9 +4029,7 @@ class Circle2D(Contour2D):
         return math.pi * self.radius ** 2
 
     def second_moment_area(self, point):
-        """
-        Second moment area of part of disk
-        """
+        """Second moment area of part of disk."""
         sma = math.pi * self.radius ** 4 / 4
         return volmdlr.geometry.huygens2d(sma, sma, 0, self.area(), self.center, point)
 
@@ -4160,7 +4174,7 @@ class Ellipse2D(Contour2D):
     :type major_dir: volmdlr.Vector3D
 
     :Example:
-    >>> ellipse2d = wires.Ellipse2D(4, 2, volmdlr.O2D, volmdlr.Vector2D(1, 1))
+    >>> ellipse2d = Ellipse2D(4, 2, volmdlr.O2D, volmdlr.Vector2D(1, 1))
     """
 
     def __init__(self, major_axis, minor_axis, center, major_dir, name=''):
@@ -4180,9 +4194,9 @@ class Ellipse2D(Contour2D):
 
     def area(self):
         """
-        Calculates the ellipe's area.
+        Calculates the ellipse's area.
 
-        :return: ellipe's area, float.
+        :return: ellipse's area, float.
         """
         return math.pi * self.major_axis * self.minor_axis
 
@@ -4190,7 +4204,7 @@ class Ellipse2D(Contour2D):
         """
         Calculates the ellipse's length.
 
-        :return: ellipe's length.
+        :return: ellipse's length.
         """
         mid_point = self.center - self.major_axis * self.major_dir
         if self.theta != 0.0:
@@ -4246,9 +4260,9 @@ class Ellipse2D(Contour2D):
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D'):
         """
-        Calculates the intersections between a linesegment and an ellipse.
+        Calculates the intersections between a line segment and an ellipse.
 
-        :param linesegment: linesegment to calculate intersections.
+        :param linesegment: line segment to calculate intersections.
         :return: list of points intersections, if there are any.
         """
         line_intersections = self.line_intersections(linesegment.to_line())
@@ -4345,7 +4359,8 @@ class Ellipse2D(Contour2D):
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new Ellipse2D.
-        side = 'old' or 'new'
+
+        side = 'old' or 'new'.
         """
         if side == 'old':
             return Ellipse2D(self.major_axis, self.minor_axis, frame.local_to_global_coordinates(self.center),
@@ -4551,16 +4566,12 @@ class Contour3D(ContourMixin, Wire3D):
             content += primitive_content
             current_id = primitive_ids[-1] + 1
             for primitive_id in primitive_ids:
-                content += "#{} = ORIENTED_EDGE('{}',*,*,#{},.T.);\n".format(
-                    current_id,
-                    primitive.name,
-                    primitive_id)
+                content += f"#{current_id} = ORIENTED_EDGE('{primitive.name}',*,*,#{primitive_id},.T.);\n"
                 edge_ids.append(current_id)
 
                 current_id += 1
 
-        content += "#{} = EDGE_LOOP('{}',({}));\n".format(
-            current_id, self.name, volmdlr.core.step_ids_to_str(edge_ids))
+        content += f"#{current_id} = EDGE_LOOP('{self.name}',({volmdlr.core.step_ids_to_str(edge_ids)}));\n"
         return content, current_id
 
     def average_center_point(self):
@@ -4592,13 +4603,13 @@ class Contour3D(ContourMixin, Wire3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Contour3D rotation. Object is updated inplace.
+        Contour3D rotation. Object is updated in-place.
 
         :param center: rotation center.
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for edge in self.primitives:
             edge.rotation_inplace(center, axis, angle)
@@ -4616,22 +4627,16 @@ class Contour3D(ContourMixin, Wire3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Contour3D translation. Object is updated inplace.
+        Contour3D translation. Object is updated in-place.
 
         :param offset: translation vector.
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for edge in self.primitives:
             edge.translation_inplace(offset)
 
     def order_contour(self):
-        # new_primitives = []
-        # points = self.ordering_contour()
-        # for p1, p2 in points:
-        #     new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
-        # self.primitives = new_primitives
-
         initial_points = []
         for primitive in self.primitives:
             initial_points.append((primitive.start, primitive.end))
@@ -4640,18 +4645,18 @@ class Contour3D(ContourMixin, Wire3D):
         if self.is_ordered():
             return self
         points = self.ordering_contour()
-        for p1, p2 in points:
+        for point1, point2 in points:
             try:
-                index = initial_points.index((p1, p2))
+                index = initial_points.index((point1, point2))
             except ValueError:
-                index = initial_points.index((p2, p1))
+                index = initial_points.index((point2, point1))
 
             if isinstance(self.primitives[index], volmdlr.edges.LineSegment3D):
-                new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
+                new_primitives.append(volmdlr.edges.LineSegment3D(point1, point2))
             elif isinstance(self.primitives[index], volmdlr.edges.Arc3D):
-                new_primitives.append(volmdlr.edges.Arc3D(p1, self.primitives[index].interior, p2))
+                new_primitives.append(volmdlr.edges.Arc3D(point1, self.primitives[index].interior, point2))
             elif isinstance(self.primitives[index], volmdlr.edges.BSplineCurve3D):
-                if (self.primitives[index].start.is_close(p1) and self.primitives[index].end.is_close(p2)):
+                if self.primitives[index].start.is_close(point1) and self.primitives[index].end.is_close(point2):
                     new_primitives.append(self.primitives[index])
                 else:
                     new_primitives.append(self.primitives[index].reverse())
@@ -4662,8 +4667,9 @@ class Contour3D(ContourMixin, Wire3D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Contour3D
-        side = 'old' or 'new'
+        Changes frame_mapping and return a new Contour3D.
+
+        side = 'old' or 'new'.
         """
         new_edges = [edge.frame_mapping(frame, side) for edge in
                      self.primitives]
@@ -4671,11 +4677,11 @@ class Contour3D(ContourMixin, Wire3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace.
+        Changes frame_mapping and the object is updated in-place.
 
         :param side: 'old' or 'new'
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for edge in self.primitives:
             edge.frame_mapping_inplace(frame, side)
@@ -4707,7 +4713,7 @@ class Contour3D(ContourMixin, Wire3D):
         Computes the bounding box of the contour3D.
 
         """
-        return volmdlr.core.BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+        return volmdlr.core.BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
 
     @property
     def bounding_box(self):
@@ -4728,7 +4734,7 @@ class Contour3D(ContourMixin, Wire3D):
         """
         Calculates intersections between a contour 3d and Line 3d.
 
-        :param line: Line3D to verify intersections.
+        :param line: Line 3D to verify intersections.
         :return: list with the contour intersections with line
         """
         intersections = []
@@ -4742,9 +4748,9 @@ class Contour3D(ContourMixin, Wire3D):
 
     def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment3D):
         """
-        Calculates intersections between a contour 3d and LineSegment3D.
+        Calculates intersections between a contour 3d and line segment 3D.
 
-        :param linesegment: LineSegment3D to verify intersections.
+        :param linesegment: line segment 3D to verify intersections.
         :return: list with the contour intersections with line
         """
         intersections = []
@@ -4807,8 +4813,7 @@ class Contour3D(ContourMixin, Wire3D):
 
     def merge_with(self, contour3d):
         """
-        Merge two adjacent contours, sharing primitives, and returns one outer contour and inner
-        contours (if there are any),
+        Merge two adjacent contours, and returns one outer contour and inner contours (if there are any).
 
         """
 
@@ -4822,6 +4827,7 @@ class Circle3D(Contour3D):
     """
     Defines a Circle in three dimensions, with a center and a radius.
 
+    frame.u, frame.v define the plane, frame.w the normal
     """
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
     _non_eq_attributes = ['name']
@@ -4830,9 +4836,6 @@ class Circle3D(Contour3D):
 
     def __init__(self, frame: volmdlr.Frame3D, radius: float,
                  name: str = ''):
-        """
-        frame.u, frame.v define the plane, frame.w the normal
-        """
         self.radius = radius
         self.frame = frame
         self.angle = volmdlr.TWO_PI
@@ -4921,13 +4924,13 @@ class Circle3D(Contour3D):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Circle3D rotation. Object is updated inplace.
+        Circle3D rotation. Object is updated in-place.
 
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.frame.rotation_inplace(center, axis, angle)
 
@@ -4942,11 +4945,11 @@ class Circle3D(Contour3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Circle3D translation. Object is updated inplace.
+        Circle3D translation. Object is updated in-place.
 
         :param offset: translation vector
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.frame.translation_inplace(offset)
 
@@ -4978,9 +4981,9 @@ class Circle3D(Contour3D):
 
     def linesegment_intersections(self, linesegment: volmdlr.edges.LineSegment3D):
         """
-        Calculates the intersections between the Circle3D and a LineSegment3D.
+        Calculates the intersections between the Circle3D and a line segment 3D.
 
-        :param linesegment: LineSegment3D to verify intersections
+        :param linesegment: line segment 3D to verify intersections
         :return: list of points intersecting Circle
         """
         intersections = []
@@ -5022,42 +5025,31 @@ class Circle3D(Contour3D):
                                        self.frame.v)
         content, frame_id = circle_frame.to_step(current_id)
         curve_id = frame_id + 1
-        content += "#{} = CIRCLE('{}',#{},{});\n".format(
-            curve_id, self.name, frame_id, round(self.radius * 1000, 3))
+        content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{round(self.radius * 1000, 3)});\n"
 
         if surface_id:
-            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                curve_id + 1, curve_id, surface_id)
+            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
             curve_id += 1
 
-        p1 = self.frame.origin + self.frame.u * self.radius
-        # p2 = self.frame.origin + self.frame.v*self.radius
-        p3 = self.frame.origin - self.frame.u * self.radius
-        # p4 = self.frame.origin - self.frame.v*self.radius
+        point1 = self.frame.origin + self.frame.u * self.radius
+        point3 = self.frame.origin - self.frame.u * self.radius
 
-        p1_content, p1_id = p1.to_step(curve_id + 1, vertex=True)
-        # p2_content, p2_id = p2.to_step(p1_id+1, vertex=True)
-        p3_content, p3_id = p3.to_step(p1_id + 1, vertex=True)
-        # p4_content, p4_id = p4.to_step(p3_id+1, vertex=True)
+        p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
+        p3_content, p3_id = point3.to_step(p1_id + 1, vertex=True)
         content += p1_content + p3_content
 
         arc1_id = p3_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
-            arc1_id, self.name, p1_id, p3_id, curve_id)
+        content += f"#{arc1_id} = EDGE_CURVE('{self.name}',#{p1_id},#{p3_id},#{curve_id},.T.);\n"
         oriented_edge1_id = arc1_id + 1
-        content += "#{} = ORIENTED_EDGE('',*,*,#{},.T.);\n".format(
-            oriented_edge1_id, arc1_id)
+        content += f"#{oriented_edge1_id} = ORIENTED_EDGE('',*,*,#{arc1_id},.T.);\n"
 
         arc2_id = oriented_edge1_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
-            arc2_id, self.name, p3_id, p1_id, curve_id)
+        content += f"#{arc2_id} = EDGE_CURVE('{self.name}',#{p3_id},#{p1_id},#{curve_id},.T.);\n"
         oriented_edge2_id = arc2_id + 1
-        content += "#{} = ORIENTED_EDGE('',*,*,#{},.T.);\n".format(
-            oriented_edge2_id, arc2_id)
+        content += f"#{oriented_edge2_id} = ORIENTED_EDGE('',*,*,#{arc2_id},.T.);\n"
 
         current_id = oriented_edge2_id + 1
-        content += "#{} = EDGE_LOOP('{}',(#{},#{}));\n".format(
-            current_id, self.name, oriented_edge1_id, oriented_edge2_id)
+        content += f"#{current_id} = EDGE_LOOP('{self.name}',(#{oriented_edge1_id},#{oriented_edge2_id}));\n"
 
         return content, current_id
 
@@ -5095,39 +5087,39 @@ class Circle3D(Contour3D):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
-        u1 = point2 - point1
-        u2 = point2 - point3
+        vector_u1 = point2 - point1
+        vector_u2 = point2 - point3
         try:
-            u1.normalize()
-            u2.normalize()
+            vector_u1.normalize()
+            vector_u2.normalize()
         except ZeroDivisionError:
             raise ValueError(
                 'the 3 points must be distincts')
 
-        normal = u2.cross(u1)
+        normal = vector_u2.cross(vector_u1)
         normal.normalize()
 
-        if u1.is_close(u2):
-            u2 = normal.cross(u1)
-            u2.normalize()
+        if vector_u1.is_close(vector_u2):
+            vector_u2 = normal.cross(vector_u1)
+            vector_u2.normalize()
 
-        v1 = normal.cross(u1)  # v1 is normal, equal u2
-        v2 = normal.cross(u2)  # equal -u1
+        vector_v1 = normal.cross(vector_u1)  # v1 is normal, equal u2
+        vector_v2 = normal.cross(vector_u2)  # equal -u1
 
-        p11 = 0.5 * (point1 + point2)  # Mid-point of segment s,m
-        p21 = 0.5 * (point2 + point3)  # Mid-point of segment s,m
+        point11 = 0.5 * (point1 + point2)  # Mid-point of segment s,m
+        point21 = 0.5 * (point2 + point3)  # Mid-point of segment s,m
 
-        l1 = volmdlr.edges.Line3D(p11, p11 + v1)
-        l2 = volmdlr.edges.Line3D(p21, p21 + v2)
+        line1 = volmdlr.edges.Line3D(point11, point11 + vector_v1)
+        line2 = volmdlr.edges.Line3D(point21, point21 + vector_v2)
 
         try:
-            center, _ = l1.minimum_distance_points(l2)
+            center, _ = line1.minimum_distance_points(line2)
         except ZeroDivisionError:
             raise ValueError(
                 'Start, end and interior points  of an arc must be distincts')
 
         radius = (center - point1).norm()
-        return cls(frame=volmdlr.Frame3D(center, u1, normal.cross(u1), normal),
+        return cls(frame=volmdlr.Frame3D(center, vector_u1, normal.cross(vector_u1), normal),
                    radius=radius)
 
     def extrusion(self, extrusion_vector):
@@ -5143,10 +5135,9 @@ class Circle3D(Contour3D):
                 volmdlr.Frame3D(self.center, u, v, w), self.radius)
             return [cylinder.rectangular_cut(0, volmdlr.TWO_PI,
                                              0, extrusion_vector.norm())]
-
         raise NotImplementedError(
-            'Extrusion along vector not colinar to normal for circle not handled yet: dot={}'.format(
-                self.normal.dot(extrusion_vector)))
+            f'Extrusion along vector not colinar to normal for circle not '
+            f'handled yet: dot={self.normal.dot(extrusion_vector)}')
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
                    angle: float):
@@ -5162,10 +5153,10 @@ class Circle3D(Contour3D):
             raise NotImplementedError(
                 'Outside of plane revolution not supported')
 
-        R = tore_center.point_distance(self.center)
+        tore_radius = tore_center.point_distance(self.center)
         surface = volmdlr.faces.ToroidalSurface3D(
             volmdlr.Frame3D(tore_center, u, v, axis),
-            R, self.radius)
+            tore_radius, self.radius)
         return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
@@ -5343,13 +5334,13 @@ class Ellipse3D(Contour3D):
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Ellipse3D rotation. Object is updated inplace.
+        Ellipse3D rotation. Object is updated in-place.
 
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.center.rotation_inplace(center, axis, angle)
         self.normal.rotation_inplace(center, axis, angle)
@@ -5357,10 +5348,10 @@ class Ellipse3D(Contour3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Ellipse3D translation.
+        Ellipse 3D translation.
 
         :param offset: translation vector.
-        :return: A new translated Ellipse3D
+        :return: A new translated Ellipse 3D.
         """
         new_center = self.center.translation(offset)
         new_normal = self.normal.translation(offset)
@@ -5370,11 +5361,11 @@ class Ellipse3D(Contour3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Ellipse3D translation. Object is updated inplace.
+        Ellipse3D translation. Object is updated in-place.
 
         :param offset: translation vector
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.center.translation_inplace(offset)
         self.normal.translation_inplace(offset)
@@ -5390,10 +5381,10 @@ class Ellipse3D(Contour3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points():
-            x.append(px)
-            y.append(py)
-            z.append(pz)
+        for point_x, point_y, point_z in self.discretization_points():
+            x.append(point_x)
+            y.append(point_y)
+            z.append(point_z)
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])
@@ -5425,7 +5416,7 @@ class Ellipse3D(Contour3D):
 
 class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     """
-    A collection of points, connected by linesegments, following each other.
+    A collection of points, connected by line segments, following each other.
 
     """
     _non_serializable_attributes = ['line_segments', 'primitives']
@@ -5440,9 +5431,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     def get_line_segments(self):
         lines = []
         if len(self.points) > 1:
-            for p1, p2 in zip(self.points,
-                              list(self.points[1:]) + [self.points[0]]):
-                lines.append(volmdlr.edges.LineSegment3D(p1, p2))
+            for point1, point2 in zip(self.points,
+                                      list(self.points[1:]) + [self.points[0]]):
+                lines.append(volmdlr.edges.LineSegment3D(point1, point2))
         return lines
 
     def copy(self, *args, **kwargs):
@@ -5482,13 +5473,13 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        ClosedPolygon3D rotation. Object is updated inplace.
+        ClosedPolygon3D rotation. Object is updated in-place.
 
         :param center: rotation center.
         :param axis: rotation axis.
         :param angle: rotation angle.
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for point in self.points:
             point.rotation_inplace(center, axis, angle)
@@ -5506,11 +5497,11 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        ClosedPolygon3D translation. Object is updated inplace.
+        ClosedPolygon3D translation. Object is updated in-place.
 
         :param offset: translation vector.
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for point in self.points:
             point.translation_inplace(offset)
@@ -5721,9 +5712,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                                               closing_point_index,
                                               passed_by_zero_index):
         """
-        Cleans the dictionary containing the sewing closing pairs information
-        in case it needs to be recalculated due to changing closing points.
+        Cleans the dictionary containing the sewing closing pairs information.
 
+        In case it needs to be recalculated due to changing closing points.
         """
         dict_closing_pairs_values = list(dict_closing_pairs.values())
         dict_closing_pairs_keys = list(dict_closing_pairs.keys())

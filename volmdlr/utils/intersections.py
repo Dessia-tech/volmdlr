@@ -1,5 +1,6 @@
 """
-volmdlr utils for calculating curves intersections
+volmdlr utils for calculating curves intersections.
+
 """
 import math
 

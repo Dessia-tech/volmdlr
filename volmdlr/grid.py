@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Module containing grid and relative objects
+Module containing grid and relative objects.
+
 """
 
 from typing import List
@@ -17,7 +18,7 @@ import volmdlr.wires
 
 class Grid2D(DessiaObject):
     """
-    A class defined with a list of list of points and characterized with a chosen direction.
+    A class defined with a list of points and characterized with a chosen direction.
 
     :param lists_points: A list of a list of points
     :type lists_points: List[List[volmdlr.Point2D]]
@@ -35,8 +36,7 @@ class Grid2D(DessiaObject):
 
     def displacement_compared_to(self, initial_grid2d):
         """
-        Computes the deformation/displacement (dx,dy) of a grid2d based on
-        another grid2d.
+        Computes the deformation/displacement (dx,dy) of a grid2d based on another grid2d.
 
         :param initial_grid2d: A 2 dimensional grid
         :type initial_grid2d: :class:`volmdlr.grid.Grid2D`
@@ -48,9 +48,9 @@ class Grid2D(DessiaObject):
 
         # Grid2D points displacement
         displacement = npy.ones(shape=(len(points_2d), 2))
-        for i, _ in enumerate(displacement):
-            displacement[i][0] = points_2d_deformed[i][0] - points_2d[i][0]
-            displacement[i][1] = points_2d_deformed[i][1] - points_2d[i][1]
+        for i, displacement_i in enumerate(displacement):
+            displacement_i[0] = points_2d_deformed[i][0] - points_2d[i][0]
+            displacement_i[1] = points_2d_deformed[i][1] - points_2d[i][1]
 
         return displacement
 
@@ -74,8 +74,7 @@ class Grid2D(DessiaObject):
     @classmethod
     def from_points(cls, points, points_dim_1, direction):
         """
-        Defines a Grid2D given a list of points, number of points along
-        the 1st dimension, and a direction.
+        Defines a Grid2D given a list of points, number of points along the 1st dimension, and a direction.
 
         :param points:
         :type points: List[:class:`volmdlr.Point2D`]

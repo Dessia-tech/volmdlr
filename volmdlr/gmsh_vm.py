@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Gmsh and related objects
+Gmsh and related objects.
+
 """
+
+from typing import Dict
+
 from dessia_common.core import DessiaObject  # isort: skip
 from dessia_common.files import BinaryFile
 
@@ -22,10 +26,10 @@ class GmshParser(DessiaObject):
     _generic_eq = True
 
     def __init__(self,
-                 mesh_format: dict,
-                 nodes: dict,
-                 elements: dict,
-                 entities: dict,
+                 mesh_format: Dict[any, any],
+                 nodes: Dict[any, any],
+                 elements: Dict[any, any],
+                 entities: Dict[any, any],
                  physical_names=None,
                  partitioned_entities=None,
                  periodic=None,

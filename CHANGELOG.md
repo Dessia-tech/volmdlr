@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Plane3D: plane_intersections
 * fixes to step assemblies
+* fixes to wire
+* Arc: split. Case when spliting point is the start or end point.
+* BplineCurve2D: tangent, vector_direction, normal_vector
 
 ### Removed
 
@@ -44,6 +47,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unittests for Vector3D
 * Unittests for Point3D
 
+
+## v0.9.1
+
+### Fixed
+- build: manifest was not shipping bspline_compiled
+- fixed many pylint errors: 13/03/2023
 ## v0.9.0 [Released 06/03/2023]
 
 ### New Features
@@ -79,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment3D: Rotation method update due to points attribute deletion
 * ConicalSurface3D: fix from_step class method by adding the angle convertion factor
 * fix f string usage
+* Add some typings
 * Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
 
 ### Removed
