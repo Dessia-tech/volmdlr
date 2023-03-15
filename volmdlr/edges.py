@@ -779,7 +779,7 @@ class BSplineCurve(Edge):
         new_u = self.check_bounds(new_u)
         residual = (new_u - u0) * curve_derivatives[1]
         if residual.norm() <= 1e-6:
-            return u0, True
+            return u0, False
         u0 = new_u
         return self.point_invertion(u0, point, maxiter=maxiter - 1)
 
