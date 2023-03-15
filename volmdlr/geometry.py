@@ -88,7 +88,8 @@ def huygens2d(Ix, Iy, Ixy, area, point1, point2):
 
 def cos_image(x1: float, x2: float) -> Tuple[float, float]:
     """
-    Returns the interval image of cosinus function between two values
+    Returns the interval image of cosinus function between two values.
+
     """
     interval_min = x1 // math.pi
     interval_max = x2 // math.pi
@@ -106,7 +107,8 @@ def cos_image(x1: float, x2: float) -> Tuple[float, float]:
 
 def sin_image(x1: float, x2: float) -> Tuple[float, float]:
     """
-    Returns the interval image of sinus function between two values
+    Returns the interval image of sinus function between two values.
+
     """
     x1 = x1 - 0.5 * math.pi
     x2 = x2 - 0.5 * math.pi
@@ -167,7 +169,8 @@ def sin_cos_angle(u1, u2):
 
 def posangle_arc(start, end, radius, frame=None):
     """
-    Seems unused
+    Seems unused.
+
     """
     if frame is None:
         p1_new, p2_new = start, end

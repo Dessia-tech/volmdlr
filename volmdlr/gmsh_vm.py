@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Gmsh and related objects
+Gmsh and related objects.
+
 """
 from dessia_common.core import DessiaObject  # isort: skip
 

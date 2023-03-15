@@ -1190,10 +1190,8 @@ class VolumeModel(dc.PhysicalObject):
             step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
                             f"'',#{product_definition_id});\n"
             shape_definition_repr_id = product_definition_shape_id + 1
-            step_content += "#{} = SHAPE_DEFINITION_REPRESENTATION(#{},#{});\n".format(shape_definition_repr_id,
-                                                                                       product_definition_shape_id,
-                                                                                       primitive_id
-                                                                                       )
+            step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
+                            f"#{product_definition_shape_id},#{primitive_id});\n"
             product_related_category = shape_definition_repr_id + 1
             step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
                             f"'part',$,(#{product_id}));\n"
@@ -1637,8 +1635,8 @@ class VolumeModel(dc.PhysicalObject):
         #     initial_mesh_size = 5
 
         if file_name == '':
-            with tempfile.NamedTemporaryFile(delete=False) as f:
-                file_name = f.name
+            with tempfile.NamedTemporaryFile(delete=False) as file:
+                file_name = file.name
 
         self.to_geo(file_name=file_name,
                     factor=factor,
@@ -1658,29 +1656,29 @@ class VolumeModel(dc.PhysicalObject):
 
         # gmsh.finalize()
 
-    @staticmethod
-    def generate_msh_file(file_name, mesh_dimension):
-        """
-        Generates a mesh written in a .msh file using GMSH library.
-
-        :param file_name: DESCRIPTION
-        :type file_name: TYPE
-        :param mesh_dimension: DESCRIPTION
-        :type mesh_dimension: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
-
-        """
-
-        gmsh.initialize()
-        gmsh.open(file_name + ".geo")
-
-        gmsh.model.geo.synchronize()
-        gmsh.model.mesh.generate(mesh_dimension)
-
-        gmsh.write(file_name + ".msh")
-
-        gmsh.finalize()
+    # @staticmethod
+    # def generate_msh_file(file_name, mesh_dimension):
+    #     """
+    #     Generates a mesh written in a .msh file using GMSH library.
+    #
+    #     :param file_name: DESCRIPTION
+    #     :type file_name: TYPE
+    #     :param mesh_dimension: DESCRIPTION
+    #     :type mesh_dimension: TYPE
+    #     :return: DESCRIPTION
+    #     :rtype: TYPE
+    #
+    #     """
+    #
+    #     gmsh.initialize()
+    #     gmsh.open(file_name + ".geo")
+    #
+    #     gmsh.model.geo.synchronize()
+    #     gmsh.model.mesh.generate(mesh_dimension)
+    #
+    #     gmsh.write(file_name + ".msh")
+    #
+    #     gmsh.finalize()
 
 
 class MovingVolumeModel(VolumeModel):
@@ -1714,7 +1712,7 @@ class MovingVolumeModel(VolumeModel):
         """
         Get babylonjs data.
 
-        :return: Dictionary with babylon data.
+        :return: Dictionary with babylonjs data.
         """
         meshes = []
         primitives_to_meshes = []
