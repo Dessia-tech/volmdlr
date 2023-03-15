@@ -15,6 +15,7 @@ import volmdlr as vm
 def euler_angles_to_transfer_matrix(psi, theta, phi):
     """
     Give Transition Matrix from euler angles.
+
     Angles in radians
     """
 
@@ -31,9 +32,7 @@ def euler_angles_to_transfer_matrix(psi, theta, phi):
 
 
 def transfer_matrix_to_euler_angles(R):
-    """
-    Returns the Euler angle from a transfer matrix.
-    """
+    """Returns the Euler angle from a transfer matrix."""
     if (R[2, 2] != 1) and (R[2, 2] != -1):
         theta = math.acos(R[2, 2])
         psi = math.atan2(R[2, 0] / math.sin(theta), R[2, 1] / math.sin(theta))
@@ -89,7 +88,8 @@ def huygens2d(Ix, Iy, Ixy, area, point1, point2):
 
 def cos_image(x1: float, x2: float) -> Tuple[float, float]:
     """
-    Returns the interval image of cosinus function between two values
+    Returns the interval image of cosinus function between two values.
+
     """
     interval_min = x1 // math.pi
     interval_max = x2 // math.pi
@@ -107,7 +107,8 @@ def cos_image(x1: float, x2: float) -> Tuple[float, float]:
 
 def sin_image(x1: float, x2: float) -> Tuple[float, float]:
     """
-    Returns the interval image of sinus function between two values
+    Returns the interval image of sinus function between two values.
+
     """
     x1 = x1 - 0.5 * math.pi
     x2 = x2 - 0.5 * math.pi
@@ -168,7 +169,8 @@ def sin_cos_angle(u1, u2):
 
 def posangle_arc(start, end, radius, frame=None):
     """
-    Seems unused
+    Seems unused.
+
     """
     if frame is None:
         p1_new, p2_new = start, end
