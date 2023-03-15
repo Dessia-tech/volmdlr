@@ -3900,25 +3900,45 @@ class BSplineSurface3D(Surface3D):
 
         delta_bound_x = max_bound_x - min_bound_x
         delta_bound_y = max_bound_y - min_bound_y
-        x0s = [
-               ((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
-               ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
-               ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
-               ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 4, min_bound_y + delta_bound_y / 10),
-               ((min_bound_x + max_bound_x) / 4, max_bound_y - delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 4, max_bound_y - delta_bound_y / 10),
-               (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-               (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
+
+        x0s = [(min_bound_x, min_bound_y), (min_bound_x + 0.25 * delta_bound_x, min_bound_y),
+               (min_bound_x + 0.5 * delta_bound_x, min_bound_y), (min_bound_x + 0.75 * delta_bound_x, min_bound_y),
+               (max_bound_x, min_bound_y),
+               (max_bound_x, min_bound_y + 0.25 * delta_bound_y), (max_bound_x, min_bound_y + 0.5 * delta_bound_y),
+               (max_bound_x, min_bound_y + 0.75 * delta_bound_y), (max_bound_x, max_bound_y),
+               (min_bound_x + 0.75 * delta_bound_x, max_bound_y), (min_bound_x + 0.5 * delta_bound_x, max_bound_y),
+               (min_bound_x + 0.25 * delta_bound_x, max_bound_y), (min_bound_x + 0.13 * delta_bound_x, max_bound_y),
+               (min_bound_x, max_bound_y),
+               (min_bound_x, min_bound_y + 0.75 * delta_bound_y), (min_bound_x, min_bound_y + 0.5 * delta_bound_y),
+               (min_bound_x, min_bound_y + 0.25 * delta_bound_y),
+               (min_bound_x + 0.5 * delta_bound_x,  min_bound_y + 0.5 * delta_bound_y),
+               (min_bound_x + 0.25 * delta_bound_x,  min_bound_y + 0.25 * delta_bound_y),
+               (min_bound_x + 0.25 * delta_bound_x, min_bound_y + 0.75 * delta_bound_y),
+               (min_bound_x + 0.75 * delta_bound_x,  min_bound_y + 0.25 * delta_bound_y),
+               (min_bound_x + 0.75 * delta_bound_x, min_bound_y + 0.75 * delta_bound_y)
+               ]
+        # x0s = [(min_bound_x,  min_bound_y + delta_bound_y / 4),
+        #        (max_bound_x, min_bound_y + delta_bound_y / 4),
+        #        (min_bound_x + delta_bound_x/4, min_bound_y),
+        #        (min_bound_x + delta_bound_x / 4, max_bound_y),
+        #        ((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
+        #        ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
+        #        ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
+        #        ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 4, min_bound_y + delta_bound_y / 10),
+        #        ((min_bound_x + max_bound_x) / 4, max_bound_y - delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 4, max_bound_y - delta_bound_y / 10),
+        #        (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
+        #        (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
 
         # Sort the initial conditions
         x0s.sort(key=evaluate_point_distance)
 
         # # Find the parametric coordinates of the point
         results = []
-        for x0 in x0s:
+        for x0 in x0s[:3]:
 
             x, convergence_sucess = self.point_invertion(x0, point3d)
             if convergence_sucess:
@@ -3939,12 +3959,12 @@ class BSplineSurface3D(Surface3D):
         common_term = surface_derivatives[1][0].dot(surface_derivatives[0][1]) + \
                       distance_vector.dot(surface_derivatives[1][1])
         jacobian = npy.array(
-            [[surface_derivatives[1][0].norm() ** 2 + distance_vector.dot(surface_derivatives[2][0]),
+            [[surface_derivatives[1][0].norm()**2 + distance_vector.dot(surface_derivatives[2][0]),
               common_term],
              [common_term,
-              surface_derivatives[0][1].norm() ** 2 + distance_vector.dot(surface_derivatives[0][2])]])
+              surface_derivatives[0][1].norm()**2 + distance_vector.dot(surface_derivatives[0][2])]])
         k = npy.array(
-            [[-distance_vector.dot(surface_derivatives[1][0])], [-distance_vector.dot(surface_derivatives[0][1])]])
+            [[-(distance_vector.dot(surface_derivatives[1][0]))], [-(distance_vector.dot(surface_derivatives[0][1]))]])
 
         return jacobian, k, surface_derivatives, distance_vector
 
@@ -3959,20 +3979,21 @@ class BSplineSurface3D(Surface3D):
         new_x = [delta[0][0] + x[0], delta[1][0] + x[1]]
         new_x = self.check_bounds(new_x)
         residual = (new_x[0] - x[0]) * surface_derivatives[1][0] + (new_x[1] - x[1]) * surface_derivatives[0][1]
-        if residual.norm() <= 1e-6:
+        if residual.norm() <= 1e-8:
             return x, False
         x = new_x
         return self.point_invertion(x, point3d, maxiter=maxiter - 1)
 
     @staticmethod
-    def check_convergence(surf_derivatives, distance_vector, tol1: float = 1e-4, tol2: float = 1e-4):
+    def check_convergence(surf_derivatives, distance_vector, tol1: float = 1e-6, tol2: float = 1e-8):
 
         dist = distance_vector.norm()
-        if dist == 0.0:
+        if dist <= tol1:
             return True
-        zero_cos_u = abs(surf_derivatives[1][0].dot(distance_vector)) / ((surf_derivatives[1][0].norm()+1e-18) * dist)
-        zero_cos_v = abs(surf_derivatives[0][1].dot(distance_vector)) / ((surf_derivatives[0][1].norm()+1e-18) * dist)
-        if dist <= tol1 and zero_cos_u <= tol2 and zero_cos_v <= tol2:
+        zero_cos_u = abs(surf_derivatives[1][0].dot(distance_vector)) / ((surf_derivatives[1][0].norm() + 1e-12) * dist)
+        zero_cos_v = abs(surf_derivatives[0][1].dot(distance_vector)) / ((surf_derivatives[0][1].norm() + 1e-12) * dist)
+
+        if zero_cos_u <= tol2 and zero_cos_v <= tol2:
             return True
         return False
 
@@ -3983,30 +4004,30 @@ class BSplineSurface3D(Surface3D):
         x_periodicity = self.x_periodicity
         y_periodicity = self.y_periodicity
 
-        if x_periodicity:
-            if u < a:
-                u = b - (a - u)
-            elif u > b:
-                u = a + (u - b)
-        else:
-            if u < a:
-                u = a
+    # if x_periodicity:
+        if u < a:
+            u = b - (a - u)
+        elif u > b:
+            u = a + (u - b)
+        # else:
+        #     if u < a:
+        #         u = a
+        #
+        #     elif u > b:
+        #         u = b
 
-            elif u > b:
-                u = b
+        # if y_periodicity:
+        if v < c:
+            v = d - (c - v)
 
-        if y_periodicity:
-            if v < c:
-                v = d - (c - v)
-
-            elif v > d:
-                v = c + (v - d)
-        else:
-            if v < c:
-                v = c
-
-            elif v > d:
-                v = d
+        elif v > d:
+            v = c + (v - d)
+        # else:
+        #     if v < c:
+        #         v = c
+        #
+        #     elif v > d:
+        #         v = d
 
         x[0] = u
         x[1] = v
@@ -4205,6 +4226,10 @@ class BSplineSurface3D(Surface3D):
                 n = len(bspline_curve3d.control_points)
                 discretization_points = bspline_curve3d.discretization_points(number_points=n)
                 points = [self.point3d_to_2d(p) for p in discretization_points]
+                # ax = self.plot()
+                # for p in points:
+                #     p3d = self.point2d_to_3d(p)
+                #     p3d.plot(ax, color="r")
                 # test = [self.point2d_to_3d(p) for p in points]
                 # ax = self.plot()
                 # for pr, pt in zip(discretization_points, test):
@@ -4266,7 +4291,12 @@ class BSplineSurface3D(Surface3D):
                     end.y = max_bound_y
                 else:
                     end.y = min_bound_y
-
+        if start.is_close(end):
+            return None
+        try:
+            line = [vme.LineSegment2D(start, end)]
+        except Exception:
+            print(True)
         return [vme.LineSegment2D(start, end)]
 
     def arc2d_to_3d(self, arc2d):
