@@ -852,6 +852,8 @@ class Step(dc.DessiaObject):
 
     def to_volume_model(self, show_times: bool = False):
         """
+        Converts step file to a Volume Model.
+
         show_times=True displays the number of times a given class has been
         instantiated and the total time of all the instantiations of this
         given class.

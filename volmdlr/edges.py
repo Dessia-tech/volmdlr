@@ -5830,6 +5830,7 @@ class ArcEllipse3D(Edge):
         def theta_a_b(start_, iterior_, end_, center_):
             """
             center-and-3-arbitrary-points-on-it-are-given.
+
             theta= ellipse's inclination angle related to the horizontal
             (clockwise),A=semi major axis, B=semi minor axis.
 

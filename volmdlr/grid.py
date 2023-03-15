@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Module containing grid and relative objects
+Module containing grid and relative objects.
+
 """
 
 from typing import List

@@ -56,6 +56,7 @@ class Node3D(volmdlr.Point3D):
 class DisplayMesh(dc.DessiaObject):
     """
     A DisplayMesh is a list of points linked by triangles.
+
     This is an abstract class for 2D & 3D.
     """
     _linesegment_class = volmdlr.edges.LineSegment

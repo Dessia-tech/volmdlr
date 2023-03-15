@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Common primitives 3D
+Common primitives 3D.
+
 """
 
 import math
@@ -138,7 +139,7 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        OpenRoundedLineSegments3D translation. Object is updated inplace
+        OpenRoundedLineSegments3D translation. Object is updated inplace.
 
         :param offset: translation vector
         """
@@ -198,7 +199,8 @@ class Block(volmdlr.faces.ClosedShell3D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Custom to_dict for performance
+        Custom to_dict for performance.
+
         """
         dict_ = dc.DessiaObject.base_dict(self)
         dict_.update({'color': self.color,
@@ -333,7 +335,7 @@ class Block(volmdlr.faces.ClosedShell3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Block rotation. Object is updated inplace
+        Block rotation. Object is updated inplace.
 
         :param center: rotation center
         :param axis: rotation axis
@@ -357,9 +359,9 @@ class Block(volmdlr.faces.ClosedShell3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Block translation. Object is updated inplace
+        Block translation. Object is updated inplace.
 
-        :param offset: translation vector
+        :param offset: translation vector.
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
@@ -1231,6 +1233,8 @@ class Cylinder(RevolvedProfile):
 
     def is_intersecting_other_cylinder(self, other_cylinder: 'Cylinder') -> bool:
         """
+        Verifies if two cylinders are intersecting or not.
+
         :param other_cylinder: volmdlr Cylinder
         :return: boolean, True if cylinders are intersecting, False otherwise
         """
@@ -1240,6 +1244,8 @@ class Cylinder(RevolvedProfile):
 
     def random_point_inside(self) -> volmdlr.Point3D:
         """
+        Gets a random point inside a cylindier.
+
         :return: a random point inside the Cylinder
         """
         theta = uniform(0, 2 * math.pi)

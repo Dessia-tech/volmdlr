@@ -887,7 +887,8 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def _bounding_box(self):
         """
-        Flawed method, to be enforced by overloading
+        Flawed method, to be enforced by overloading.
+
         """
         n = 20
         points = []
@@ -2257,7 +2258,8 @@ class Contour2D(ContourMixin, Wire2D):
 
     def union(self, contour2: 'Contour2D'):
         """
-        Union two contours, if they adjacent, or overlap somehow
+        Union two contours, if they adjacent, or overlap somehow.
+
         """
         if self.is_inside(contour2):
             return [self]
@@ -3307,8 +3309,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def point_in_polygon(self):
         """
-        In case the barycenter of the polygon is outside, this method
-        finds another point inside the polygon.
+        In case the barycenter of the polygon is outside, this method finds another point inside the polygon.
 
         """
         barycenter = self.barycenter()
@@ -3413,7 +3414,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                              polygon_primitive,
                                              possible_closing_points):
         """
-        Searches the closest sewing closing point available
+        Searches the closest sewing closing point available.
+
         """
         closing_point = volmdlr.O2D
         middle_point = polygon_primitive.middle_point()

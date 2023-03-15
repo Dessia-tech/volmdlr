@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Cloud of points classes
+Cloud of points classes.
+
 """
 
 import math

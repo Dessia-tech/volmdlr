@@ -1,5 +1,6 @@
 """
-Surfaces & faces
+Surfaces & faces.
+
 """
 
 import math
@@ -6946,7 +6947,7 @@ class PlaneFace3D(Face3D):
 
     def project_faces(self, faces):
         """
-        Divide self based on the faces outer, and inner contours
+        Divide self based on the faces outer, and inner contours.
 
         :param faces: DESCRIPTION
         :type faces: TYPE
@@ -7036,15 +7037,16 @@ class Triangle3D(PlaneFace3D):
 
     def _data_hash(self):
         """
-        Using point approx hash to speed up
+        Using point approx hash to speed up.
+
         """
         return self.point1.approx_hash() + self.point2.approx_hash() + self.point3.approx_hash()
 
     def _data_eq(self, other_object):
         if other_object.__class__.__name__ != self.__class__.__name__:
             return False
-        self_set = set([self.point1, self.point2, self.point3])
-        other_set = set([other_object.point1, other_object.point2, other_object.point3])
+        self_set = {self.point1, self.point2, self.point3}
+        other_set = {other_object.point1, other_object.point2, other_object.point3}
         if self_set != other_set:
             return False
         return True
@@ -8432,6 +8434,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         """
         Serializes a 3 dimensional open shell into a dictionary.
+
         This method does not use pointers for faces as it has no sense
         to have duplicate faces.
 
@@ -8818,10 +8821,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def face_on_shell(self, face):
         """
-        Verifies if a face lies on the shell's surface
+        Verifies if a face lies on the shell's surface.
+
         """
-        for fc in self.faces:
-            if fc.face_inside(face):
+        for face_ in self.faces:
+            if face_.face_inside(face):
                 return True
         return False
 
@@ -8854,7 +8858,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def project_coincident_faces_of(self, shell):
         """
-        Divides self's faces based on coincident shell's faces
+        Divides self's faces based on coincident shell's faces.
+
         """
 
         list_faces = []
@@ -9056,7 +9061,8 @@ class ClosedShell3D(OpenShell3D):
 
     def shell_intersection(self, shell2: 'OpenShell3D', resolution: float):
         """
-        Return None if disjointed
+        Return None if disjointed.
+
         Return (1, 0) or (0, 1) if one is inside the other
         Return (n1, n2) if intersection
 
@@ -9109,7 +9115,8 @@ class ClosedShell3D(OpenShell3D):
 
     def point_belongs(self, point3d: volmdlr.Point3D, **kwargs):
         """
-        Ray Casting algorithm
+        Ray Casting algorithm.
+
         Returns True if the point is inside the Shell, False otherwise
         """
         nb_rays = kwargs.get("nb_rays", 1)  # TODO: remove nb_rays argument in the future as it shouldn't be necessary
@@ -9190,6 +9197,8 @@ class ClosedShell3D(OpenShell3D):
 
     def intersecting_faces_combinations(self, shell2, list_coincident_faces, tol=1e-8):
         """
+        Gets intersecting faces combinations.
+
         :param shell2: ClosedShell3D
             for two closed shells, it calculates and return a list of face
             combinations (list = [(face_shell1, face_shell2),...])
@@ -9211,6 +9220,8 @@ class ClosedShell3D(OpenShell3D):
     @staticmethod
     def dict_intersecting_combinations(intersecting_faces_combinations, tol=1e-8):
         """
+        Gets a Dictionary with the intersecting combinations.
+
         :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...])
         for intersecting faces.
         :type intersecting_faces_combinations: list of face objects combinaitons
@@ -9490,8 +9501,9 @@ class ClosedShell3D(OpenShell3D):
 
     def validate_set_operation(self, shell2, tol):
         """
-        Verifies if two shells are valid for union or subtractions operations,
-        that is, if they are disjointed or if one is totally inside the other.
+        Verifies if two shells are valid for union or subtractions operations.
+
+        Its Verfies if they are disjointed or if one is totally inside the other.
 
         If it returns an empty list, it means the two shells are valid to continue the
         operation.
@@ -9660,8 +9672,7 @@ class ClosedShell3D(OpenShell3D):
 
     def intersection(self, shell2, tol=1e-8):
         """
-        Given two ClosedShell3D, it returns the new object resulting
-        from the intersection of the two.
+        Given two ClosedShell3D, it returns the new object resulting from the intersection of the two.
 
         """
         validate_set_operation = self.validate_set_operation(

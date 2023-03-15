@@ -1,5 +1,6 @@
 """
-volmdlr utils for calculating 3D to surface parametric domain operationa
+volmdlr utils for calculating 3D to surface parametric domain operation.
+
 """
 import bisect
 import math
