@@ -18,7 +18,7 @@ WEEKLY_DECREASE = 0.03
 MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 216,
                      "wrong-spelling-in-docstring": 143,
-                     'invalid-name': 360,
+                     'invalid-name': 305,
                      'no-member': 3,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
@@ -55,11 +55,9 @@ MAX_ERROR_BY_TYPE = {
                      'redundant-keyword-arg': 3,
                      'consider-using-with': 1,
                      'unnecessary-dunder-call': 2,
-                     'unnecessary-lambda': 2,
                      'chained-comparison': 2,
                      'missing-module-docstring': 2,
                      'consider-using-generator': 1,
-                     'cell-var-from-loop': 1,
                      'import-outside-toplevel': 1,
                      'unsubscriptable-object': 1,
                      }
