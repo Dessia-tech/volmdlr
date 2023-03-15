@@ -729,16 +729,16 @@ class BSplineCurve(Edge):
         length = self.length()
         initial_condition_list = [0, 0.25, 0.5, 0.75, 1]
 
-        def evaluate_point_distance(abscissa):
-            return(point - self.point_at_abscissa(abscissa)).norm()
-        initial_condition_list.sort(key=evaluate_point_distance)
+        def evaluate_point_distance(u):
+            return(point - self.evaluate_single(u)).norm()
 
+        initial_condition_list.sort(key=evaluate_point_distance)
         for u0 in initial_condition_list:
-            u = self.point_invertion(u0, point)
-            if u is None:  # sometimes we don't achieve convergence with a given inital guess
-                continue
-            abscissa = u*length
-            if evaluate_point_distance(abscissa) < tol:
+            u, convergence_sucess = self.point_invertion(u0, point)
+            abscissa = u * length
+            if convergence_sucess:  # sometimes we don't achieve convergence with a given inital guess
+                return abscissa
+            if evaluate_point_distance(u) < tol:
                 return abscissa
 
         raise ValueError('abscissa not found')
@@ -767,19 +767,19 @@ class BSplineCurve(Edge):
         :type tol1: float
         :param tol2: Zero cos tolerance to stop.
         :type tol2: float
-        :return: u paramenter
-        :rtype: int
+        :return: u paramenter and convergence check
+        :rtype: int, bool
         """
         if maxiter == 0:
-            return None
+            return u0, False
         func, func_first_derivative, curve_derivatives, distance_vector = self.point_inversion_funcs(u0, point)
-        if self.check_convergence(curve_derivatives, distance_vector):
-            return u0
+        if self.check_convergence(curve_derivatives, distance_vector, tol1=tol1, tol2=tol2):
+            return u0, True
         new_u = u0 - func / func_first_derivative
         new_u = self.check_bounds(new_u)
         residual = (new_u - u0) * curve_derivatives[1]
         if residual.norm() <= 1e-6:
-            return u0
+            return u0, True
         u0 = new_u
         return self.point_invertion(u0, point, maxiter=maxiter - 1)
 
@@ -1177,6 +1177,18 @@ class BSplineCurve(Edge):
         adim_abs = max(min(abscissa / length, 1.), 0.)
         point_name = 'Point' + self.__class__.__name__[-2:]
         return getattr(volmdlr, point_name)(*self.curve.evaluate_single(adim_abs))
+
+    def evaluate_single(self, u):
+        """
+        Calculates a point in the BSplineCurve at a given parameter u.
+
+        :param u: Curve parameter. Must be a value between 0 and 1.
+        :type u: float
+        :return: Corresponding point.
+        :rtype: Union[volmdlr.Point2D, Union[volmdlr.Point3D]
+        """
+        point_name = 'Point' + self.__class__.__name__[-2:]
+        return getattr(volmdlr, point_name)(*self.curve.evaluate_single(u))
 
 
 class Line2D(Line):
