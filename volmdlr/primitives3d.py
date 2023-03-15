@@ -1376,6 +1376,7 @@ class Cone(RevolvedProfile):
     def _bounding_box(self):
         """
         A is the point at the basis.
+
         B is the top.
         """
         point_a = self.position - self.length / 2 * self.axis

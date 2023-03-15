@@ -1361,6 +1361,7 @@ class ContourMixin(WireMixin):
     def shared_primitives_extremities(self, contour):
         """
         #todo: is this description correct?.
+
         Extract shared primitives extremities between two adjacent contours.
 
         """
@@ -2728,6 +2729,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def point_border_distance(self, point, return_other_point=False):
         """
         Compute the distance to the border distance of polygon.
+
         Output is always positive, even if the point belongs to the polygon.
         """
         d_min, other_point_min = self.line_segments[0].point_distance(
@@ -4304,7 +4306,8 @@ class Ellipse2D(Contour2D):
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new Ellipse2D.
-        side = 'old' or 'new'
+
+        side = 'old' or 'new'.
         """
         if side == 'old':
             return Ellipse2D(self.major_axis, self.minor_axis, frame.local_to_global_coordinates(self.center),
