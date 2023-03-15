@@ -1,5 +1,5 @@
 recursive-include volmdlr/assets *.html *.js *ts *jpg *png
-include volmdlr/core_compiled.pyx
-exclude volmdlr/core_compiled.c
+include volmdlr/*.pyx
+exclude volmdlr/*.c
 prune .git
 include pyproject.toml
