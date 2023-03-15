@@ -818,7 +818,7 @@ class BSplineCurve(Edge):
             x_init.append(xi)
 
         for x0 in x_init:
-            z = least_squares(f, x0=x0, bounds=([0, 1]))
+            z = least_squares(fun, x0=x0, bounds=([0, 1]))
             if z.fun < abs_tol:
                 return True
         return False
@@ -1326,9 +1326,11 @@ class Line2D(Line):
         # point will be called I(x_I, y_I)
         # self will be (AB)
         # line will be (CD)
-        i, a, b, c, d = self._compute_data_create_tangent_circle(self, point, other_line)
+        vector_i, vector_a, vector_b, vector_c, vector_d = self._compute_data_create_tangent_circle(
+            self, point, other_line)
         # Basis change
-        new_basis, new_a, new_b, new_c, new_d = self._change_reference_frame(i, a, b, c, d)
+        new_basis, new_a, new_b, new_c, new_d = self._change_reference_frame(vector_i, vector_a, vector_b,
+                                                                             vector_c, vector_d)
 
         if new_c[1] == 0 and new_d[1] == 0:
             # Segments are on the same line: no solution
@@ -1578,7 +1580,7 @@ class BSplineCurve2D(BSplineCurve):
         x_points = [point.x for point in points]
         y_points = [point.y for point in points]
         ax.plot(x_points, y_points, color=edge_style.color, alpha=edge_style.alpha)
-        if plot_points:
+        if edge_style.plot_points:
             for point in points:
                 point.plot(ax, color=edge_style.color)
         return ax
@@ -2762,22 +2764,22 @@ class Arc2D(Arc):
                                           point)
 
     def _full_arc_moment_inertia(self, angle1, angle2):
-        Ix1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        moment_inertia_x1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle1) - math.sin(2 * angle2)))
-        Iy1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        moment_inertia_y1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle2) - math.sin(2 * angle1)))
-        Ixy1 = self.radius ** 4 / 8 * (
+        moment_inertia_xy1 = self.radius ** 4 / 8 * (
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
-        return Ix1, Iy1, Ixy1
+        return moment_inertia_x1, moment_inertia_y1, moment_inertia_xy1
 
     def _triangle_moment_inertia(self):
         xi, yi = self.start - self.center
         xj, yj = self.end - self.center
-        Ix2 = (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi) / 12.
-        Iy2 = (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi) / 12.
-        Ixy2 = (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
+        moment_inertia_x2 = (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi) / 12.
+        moment_inertia_y2 = (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi) / 12.
+        moment_inertia_xy2 = (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
                 xi * yj - xj * yi) / 24.
-        return Ix2, Iy2, Ixy2
+        return moment_inertia_x2, moment_inertia_y2, moment_inertia_xy2
 
     def straight_line_center_of_mass(self):
         """Straight line center of mass."""
@@ -3792,16 +3794,16 @@ class Line3D(Line):
         u = self.point2 - self.point1
         v = other_line.point2 - other_line.point1
         w = self.point1 - other_line.point1
-        a = u.dot(u)
-        b = u.dot(v)
-        c = v.dot(v)
-        d = u.dot(w)
-        e = v.dot(w)
+        u_dot_u = u.dot(u)
+        u_dot_v = u.dot(v)
+        v_dot_v = v.dot(v)
+        u_dot_w = u.dot(w)
+        v_dot_w = v.dot(w)
 
-        s = (b * e - c * d) / (a * c - b ** 2)
-        t = (a * e - b * d) / (a * c - b ** 2)
-        point1 = self.point1 + s * u
-        point2 = other_line.point1 + t * v
+        s_param = (u_dot_v * v_dot_w - v_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
+        t_param = (u_dot_u * v_dot_w - u_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
+        point1 = self.point1 + s_param * u
+        point2 = other_line.point1 + t_param * v
         return point1, point2
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -4442,7 +4444,7 @@ class LineSegment3D(LineSegment):
 
         if not math.isclose(distance_1, distance_2, abs_tol=1e-9):
             # Conical
-            return self._revolution_conical([axis, u, p1_proj, dist1, dist2, angle])
+            return self._revolution_conical([axis, u, p1_proj, distance_1, distance_2, angle])
 
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
