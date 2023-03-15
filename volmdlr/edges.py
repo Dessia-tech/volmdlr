@@ -143,21 +143,21 @@ class Edge(dc.DessiaObject):
         :rtype: :class:`volmdlr.edges.Edge`
         """
         obj = object_dict[arguments[3]]
-        p1 = object_dict[arguments[1]]
-        p2 = object_dict[arguments[2]]
+        point1 = object_dict[arguments[1]]
+        point2 = object_dict[arguments[2]]
         orientation = arguments[4]
         if orientation == '.F.':
-            p1, p2 = p2, p1
+            point1, point2 = point2, point1
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
-            if p1 != p2:
-                return LineSegment3D(p1, p2, arguments[0][1:-1])
+            if point1 != point2:
+                return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D':
-                p1, p2 = p2, p1
-            return obj.trim(p1, p2)
+                point1, point2 = point2, point1
+            return obj.trim(point1, point2)
 
         raise NotImplementedError(f'Unsupported: {object_dict[arguments[3]]}')
 
@@ -457,13 +457,13 @@ class LineSegment(Edge):
         :param point: point to be verified.
         :return: point projection.
         """
-        p1, p2 = self.start, self.end
-        vector = p2 - p1
+        point1, point2 = self.start, self.end
+        vector = point2 - point1
         norm_u = vector.norm()
-        t = (point - p1).dot(vector) / norm_u ** 2
-        projection = p1 + t * vector
+        t_param = (point - point1).dot(vector) / norm_u ** 2
+        projection = point1 + t_param * vector
 
-        return projection, t * norm_u
+        return projection, t_param * norm_u
 
     def split(self, split_point):
         """
@@ -2700,11 +2700,11 @@ class Arc2D(Arc):
         return ax
 
     def to_3d(self, plane_origin, x, y):
-        ps = self.start.to_3d(plane_origin, x, y)
-        pi = self.interior.to_3d(plane_origin, x, y)
-        pe = self.end.to_3d(plane_origin, x, y)
+        point_start = self.start.to_3d(plane_origin, x, y)
+        point_interior = self.interior.to_3d(plane_origin, x, y)
+        point_end = self.end.to_3d(plane_origin, x, y)
 
-        return Arc3D(ps, pi, pe, name=self.name)
+        return Arc3D(point_start, point_interior, point_end, name=self.name)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -3668,9 +3668,9 @@ class Line3D(Line):
 
         s = (b * e - c * d) / (a * c - b ** 2)
         t = (a * e - b * d) / (a * c - b ** 2)
-        p1 = self.point1 + s * u
-        p2 = other_line.point1 + t * v
-        return p1, p2
+        point1 = self.point1 + s * u
+        point2 = other_line.point1 + t * v
+        return point1, point2
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -4117,9 +4117,9 @@ class LineSegment3D(LineSegment):
         b_matrix = npy.array([w.dot(u), -w.dot(v)])
 
         res = lsq_linear(a_matrix, b_matrix, bounds=(0, 1))
-        p1 = self.point_at_abscissa(res.x[0] * self.length())
-        p2 = other_line.point_at_abscissa(res.x[1] * other_line.length())
-        return p1, p2
+        point1 = self.point_at_abscissa(res.x[0] * self.length())
+        point2 = other_line.point_at_abscissa(res.x[1] * other_line.length())
+        return point1, point2
 
     def parallel_distance(self, other_linesegment):
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
@@ -5305,10 +5305,10 @@ class Arc3D(Arc):
         :param y: plane v vector.
         :return: Arc2D.
         """
-        ps = self.start.to_2d(plane_origin, x, y)
-        pi = self.interior.to_2d(plane_origin, x, y)
-        pe = self.end.to_2d(plane_origin, x, y)
-        return Arc2D(ps, pi, pe, name=self.name)
+        point_start = self.start.to_2d(plane_origin, x, y)
+        point_interior = self.interior.to_2d(plane_origin, x, y)
+        point_end = self.end.to_2d(plane_origin, x, y)
+        return Arc2D(point_start, point_interior, point_end, name=self.name)
 
     def minimum_distance_points_arc(self, other_arc):
 
@@ -5350,10 +5350,10 @@ class Arc3D(Arc):
 
         res1 = least_squares(distance_squared, x01, bounds=[(0, 0), (self.angle, other_arc.angle)])
 
-        p1 = self.point_at_abscissa(res1.x[0] * r1)
-        p2 = other_arc.point_at_abscissa(res1.x[1] * r2)
+        point1 = self.point_at_abscissa(res1.x[0] * r1)
+        point2 = other_arc.point_at_abscissa(res1.x[1] * r2)
 
-        return p1, p2
+        return point1, point2
 
     def minimum_distance_points_line(self, other_line):
 
@@ -5394,9 +5394,9 @@ class Arc3D(Arc):
         res2 = least_squares(distance_squared, x02, bounds=[(0, 0), (1, self.angle)])
         res3 = least_squares(distance_squared, x03, bounds=[(0, 0), (1, self.angle)])
 
-        p1 = other_line.point_at_abscissa(
+        point1 = other_line.point_at_abscissa(
             res1.x[0] * other_line.length())
-        p2 = self.point_at_abscissa(res1.x[1] * radius)
+        point2 = self.point_at_abscissa(res1.x[1] * radius)
 
         res = [res2, res3]
         for couple in res:
@@ -5405,9 +5405,9 @@ class Arc3D(Arc):
             ptest2 = self.point_at_abscissa(couple.x[1] * radius)
             dtest = ptest1.point_distance(ptest2)
             if dtest < d:
-                p1, p2 = ptest1, ptest2
+                point1, point2 = ptest1, ptest2
 
-        return p1, p2
+        return point1, point2
 
     def minimum_distance(self, element, return_points=False):
         if element.__class__ is Arc3D or element.__class__.__name__ == 'Circle3D':

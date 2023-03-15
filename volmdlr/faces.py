@@ -171,14 +171,14 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
                                                                                       number_points_y=number_points_y)
-        points = [vmd.Node2D(*p) for p in outer_polygon.points]
-        vertices = [(p.x, p.y) for p in points]
+        points = [vmd.Node2D(*point) for point in outer_polygon.points]
+        vertices = [(point.x, point.y) for point in points]
         n = len(points)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
 
         if not self.inner_contours:  # No holes
-            vertices_grid = [(p.x, p.y) for p in points_grid]
+            vertices_grid = [(point.x, point.y) for point in points_grid]
             vertices.extend(vertices_grid)
             tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                    'segments': npy.array(segments).reshape((-1, 2)),
@@ -4171,8 +4171,8 @@ class BSplineSurface3D(Surface3D):
             u.plot(ax=ax, color=color, alpha=alpha)
         for v in v_curves:
             v.plot(ax=ax, color=color, alpha=alpha)
-        for p in self.control_points:
-            p.plot(ax, color=color, alpha=alpha)
+        for point in self.control_points:
+            point.plot(ax, color=color, alpha=alpha)
         return ax
 
     def simplify_surface(self):
@@ -4625,7 +4625,7 @@ class BSplineSurface3D(Surface3D):
         points = linesegment2d.discretization_points(number_points=20)
         points_dim = [
             self.point2d_parametric_to_dimension(
-                p, grid2d) for p in points]
+                point, grid2d) for point in points]
 
         return vme.BSplineCurve2D.from_points_interpolation(
             points_dim, max(self.degree_u, self.degree_v))
@@ -4679,8 +4679,8 @@ class BSplineSurface3D(Surface3D):
         points = bsplinecurve2d.control_points
         points_dim = []
 
-        for p in points:
-            points_dim.append(self.point2d_parametric_to_dimension(p, grid2d))
+        for point in points:
+            points_dim.append(self.point2d_parametric_to_dimension(point, grid2d))
 
         bsplinecurve2d_with_dimension = vme.BSplineCurve2D(bsplinecurve2d.degree, points_dim,
                                                            bsplinecurve2d.knot_multiplicities,
@@ -4710,9 +4710,9 @@ class BSplineSurface3D(Surface3D):
 
         points_dim = bsplinecurve2d.control_points
         points = []
-        for p in points_dim:
+        for point in points_dim:
             points.append(
-                self.point2d_with_dimension_to_parametric_frame(p, self._grids2d))
+                self.point2d_with_dimension_to_parametric_frame(point, self._grids2d))
 
         bsplinecurve2d = vme.BSplineCurve2D(bsplinecurve2d.degree, points,
                                             bsplinecurve2d.knot_multiplicities,
@@ -5759,7 +5759,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def triangulation(self):
         number_points_x, number_points_y = self.grid_size()
         mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
-        return vmd.DisplayMesh3D([vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in mesh2d.points],
+        return vmd.DisplayMesh3D([vmd.Node3D(*self.surface3d.point2d_to_3d(point)) for point in mesh2d.points],
                                  mesh2d.triangles)
 
     def plot2d(self, ax=None, color='k', alpha=1):
@@ -8243,8 +8243,8 @@ class BSplineFace3D(Face3D):
         contour1_2d = self.surface2d.outer_contour
         contour2_2d = other_bspline_face3d.surface2d.outer_contour
 
-        points1 = [p.start for p in contour1.primitives]
-        points2 = [p.start for p in contour2.primitives]
+        points1 = [prim.start for prim in contour1.primitives]
+        points2 = [prim.start for prim in contour2.primitives]
 
         dis, ind = [], []
         for point_ in points1:
@@ -8659,7 +8659,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self._bbox = new_bounding_box
 
     def get_bounding_box(self):
-        return volmdlr.core.BoundingBox.from_bounding_boxes([p.bounding_box for p in self.faces])
+        return volmdlr.core.BoundingBox.from_bounding_boxes([face.bounding_box for face in self.faces])
 
     def cut_by_plane(self, plane_3d: Plane3D):
         frame_block = self.bounding_box.to_frame()

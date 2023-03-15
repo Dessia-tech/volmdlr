@@ -1635,8 +1635,8 @@ class VolumeModel(dc.PhysicalObject):
         #     initial_mesh_size = 5
 
         if file_name == '':
-            with tempfile.NamedTemporaryFile(delete=False) as f:
-                file_name = f.name
+            with tempfile.NamedTemporaryFile(delete=False) as file:
+                file_name = file.name
 
         self.to_geo(file_name=file_name,
                     factor=factor,
