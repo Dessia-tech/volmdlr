@@ -2812,9 +2812,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         if len(points) < 3:
             return
 
-        points_hull = [pt.copy() for pt in points]
+        points_hull = [point.copy() for point in points]
 
-        _, pos_ymax = argmax([pt.y for pt in points_hull])
+        _, pos_ymax = argmax([point.y for point in points_hull])
         point_start = points_hull[pos_ymax]
         hull = [point_start]
 
@@ -2896,7 +2896,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         """
 
         def get_nearby_points(line, points, scale_factor):
-            points_hull = [pt.copy() for pt in points]
+            points_hull = [point.copy() for point in points]
 
             # print('i enter here')
             nearby_points = []
@@ -2970,7 +2970,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         hull_convex_edges.sort(key=lambda x: x.length(), reverse=True)
         hull_concave_edges = []
         hull_concave_edges.extend(hull_convex_edges)
-        hull_points = list({pt for line in hull_concave_edges for pt in [line[0], line[1]]})
+        hull_points = list({point for line in hull_concave_edges for point in [line[0], line[1]]})
         unused_points = []
         for point in points:
             if point not in hull_points:
@@ -3024,7 +3024,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         """
 
-        points_hull = [pt.copy() for pt in points]
+        points_hull = [point.copy() for point in points]
 
         numpy_points = npy.array([(point.x, point.y) for point in points_hull])
         hull = ConvexHull(numpy_points)
