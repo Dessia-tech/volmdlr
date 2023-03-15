@@ -12,6 +12,7 @@ import dessia_common.core as dc
 import volmdlr.edges
 
 
+
 class Node2D(volmdlr.Point2D):
     """
     A node is a point with some hash capabilities for performance.
@@ -25,7 +26,7 @@ class Node2D(volmdlr.Point2D):
                                                  'Node2D']:
             return False
         return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-06)
+               and math.isclose(self.y, other_node.y, abs_tol=1e-06)
 
     @classmethod
     def from_point(cls, point2d):
@@ -45,8 +46,8 @@ class Node3D(volmdlr.Point3D):
                                                  'Node3D']:
             return False
         return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-06) \
-            and math.isclose(self.z, other_node.z, abs_tol=1e-06)
+               and math.isclose(self.y, other_node.y, abs_tol=1e-06) \
+               and math.isclose(self.z, other_node.z, abs_tol=1e-06)
 
     @classmethod
     def from_point(cls, point3d):
@@ -61,7 +62,7 @@ class DisplayMesh(dc.DessiaObject):
     """
     _linesegment_class = volmdlr.edges.LineSegment
 
-    def __init__(self, points, triangles, name=''):
+    def __init__(self, points, triangles, name: str = ''):
 
         self.points = points
         self.triangles = triangles
@@ -164,11 +165,11 @@ class DisplayMesh(dc.DessiaObject):
             point1 = self.points[vertex1]
             point2 = self.points[vertex2]
             point3 = self.points[vertex3]
-            if point1 != point2:
+            if not point1.is_close(point2):
                 self._linesegment_class(point1, point2).plot(ax=ax)
-            if point2 != point3:
+            if not point2.is_close(point3):
                 self._linesegment_class(point2, point3).plot(ax=ax)
-            if point1 != point3:
+            if not point1.is_close(point3):
                 self._linesegment_class(point1, point3).plot(ax=ax)
 
         return ax
@@ -216,7 +217,7 @@ class DisplayMesh3D(DisplayMesh):
 
     def to_babylon(self):
         """
-        Returns mesh in babylon format.
+        Returns mesh in babylonjs format.
 
         https://doc.babylonjs.com/how_to/custom
         """

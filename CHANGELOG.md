@@ -5,14 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.10.0 [Unreleased yet]
+
+### New Features
+
+* Write .msh file (with stream)
+* Arc: reverse
+* BSplineCurve2D: offset
+* Circle2D: bsplinecurve_intersections, point_distance
+* ConicalSurface3D, CylindricalSurface3D: plot method
+### Fixed
+* Plane3D: plane_intersections
+* fixes to step assemblies
+* fixes to wire
+* Arc: split. Case when spliting point is the start or end point.
+* BplineCurve2D: tangent, vector_direction, normal_vector
+
+### Removed
+
+### Changed
+
+- argument convexe in volmdlr.cloud has been renamed to convex
+
+### Performance improvements
+* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
+* BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.
+* eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
+* BSplinecurve2D: point_belongs
+* lighten some dicts with optional name
+
+### Refactorings
+* ContourMixin: to_polygon (for both 2D and 3D)
+* BSplineCurve2D.point_distance 
+* new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
+
+### Unittests
+* BSplineCurve2D: offset, point_distance, point_belongs
+* Circle2D: bspline_intersections, point_distance
+* Unittests for Vector2D
+* Unittests for Point2D
+* Unittests for Vector3D
+* Unittests for Point3D
+
 
 ## v0.9.1
 
 ### Fixed
 - build: manifest was not shipping bspline_compiled
 - fixed many pylint errors: 13/03/2023
-
-## v0.9.0 [released 03/26/2023]
+## v0.9.0 [Released 06/03/2023]
 
 ### New Features
 
@@ -44,10 +85,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Step_assemblies: consider when no transformation is needed.
 * fix some pydocstyle errors
 * Script/step/workflow: Update Workflow, use last version of dessia_common
+* LineSegment3D: Rotation method update due to points attribute deletion
+* ConicalSurface3D: fix from_step class method by adding the angle convertion factor
 * fix f string usage
+* Add some typings
+* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
+
 ### Removed
 
 * edges: remove attributes points from lines & linesegments for performance purpose
+
 
 ### Performance improvements
 
@@ -60,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D.is_inside(): verify first if the area of the contour2 is not smaller that contour 1.
 * Disabling pointer in to_dict for most primitives
 * Better hash for shells, contours & wires 
+
 
 ### Refactorings
 - Remove usage of deprecated method old_coordinates and new_coordinates
@@ -83,6 +131,7 @@ is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_t
 ### CI
 - add spell check to pylint with pyenchant
 - make code_pydocstyle more explicit
+- upload html coverage to cdn.dessia.tech
 - limit time effect on master & testing
 
 ## v0.8.0 [Released 26/01/2023]
@@ -164,6 +213,7 @@ time we have to verify if a point is inside
 * Custom serialization for BsplineCurves
 
 ### Refactorings
+
 * Basis2D, Basis3D, Frame2D, Frame3D: old_coordinates and new_coordinates method are now deprecated.
 local_to_global_coordinates and global_to_local_coordinates are the new more explicit ones.
 * Line3D: intersections

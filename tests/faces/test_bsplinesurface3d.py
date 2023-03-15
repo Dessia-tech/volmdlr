@@ -44,8 +44,9 @@ class TestBSplineSurface3D(unittest.TestCase):
 
         # Verifies the inversion operation
         self.assertIsInstance(inv_prof, vme.Arc3D)
-        self.assertEqual(inv_prof.start, arc.start)
-        self.assertEqual(inv_prof.end, arc.end)
+        self.assertTrue(inv_prof.start.is_close(arc.start))
+        # self.assertTrue(inv_prof.interior.is_close(arc.interior))
+        self.assertTrue(inv_prof.end.is_close(arc.end))
 
     def test_bsplinecurve3d_to_2d(self):
         bspline_surface = bspline_surfaces.bspline_surface_4
