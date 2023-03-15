@@ -1,5 +1,6 @@
 """
-volmdlr utils for calculating 3D to surface parametric domain operationa
+volmdlr utils for calculating 3D to surface parametric domain operation.
+
 """
 import bisect
 import math
@@ -12,7 +13,7 @@ def repair_singularity(primitive, last_primitive):
     """
     Repairs the Contour2D of SphericalSurface3D and ConicalSurface3D parametric face representations.
 
-    Used when transforming from spatial to parametric coordinates when the surface contains a sigularity
+    Used when transforming from spatial to parametric coordinates when the surface contains a singularity
     """
     v1 = primitive.unit_direction_vector()
     v2 = last_primitive.unit_direction_vector()
