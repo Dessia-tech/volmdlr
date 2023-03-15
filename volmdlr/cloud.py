@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Cloud of points classes
+Cloud of points classes.
+
 """
 
 import math
@@ -87,7 +88,7 @@ class PointCloud3D(dc.DessiaObject):
 
         polygon2d, polygon3d = [], []
         for n, poly in enumerate(initial_polygon2d):
-            if (poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1])):
+            if poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1]):
                 continue
             if poly.area() < avg_area / 10:
                 new_poly = vmw.ClosedPolygon2D.concave_hull(poly.points, -1, 0.000005)
@@ -346,7 +347,6 @@ class PointCloud2D(dc.DessiaObject):
 
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol=1e-6):
             return None
-
         return polygon
 
     def bounding_rectangle(self):

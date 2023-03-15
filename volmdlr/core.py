@@ -1915,7 +1915,7 @@ class MovingVolumeModel(VolumeModel):
         """
         Get babylonjs data.
 
-        :return: Dictionary with babylon data.
+        :return: Dictionary with babylonjs data.
         """
         meshes = []
         primitives_to_meshes = []
