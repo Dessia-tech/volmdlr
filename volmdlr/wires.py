@@ -456,7 +456,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         primitives3d = []
         for edge in self.primitives:
             primitives3d.append(edge.to_3d(plane_origin, x, y))
-
         return Wire3D(primitives3d)
 
     def extract(self, point1, primitive1, point2, primitive2,
@@ -879,6 +878,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             y_max = max(y_max, ymax_edge)
         return volmdlr.core.BoundingRectangle(x_min, x_max, y_min, y_max)
 
+    def middle_point(self):
+        return self.point_at_abscissa(self.length() / 2)
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     """
@@ -1024,6 +1026,12 @@ class ContourMixin(WireMixin):
     """
 
     def is_ordered(self, tol=1e-6):
+        """
+        Verifies if a contour is ordered (primitives following each other).
+
+        :param tol: tolerance to be considered.
+        :return: True if ordered, False if not.
+        """
         for prim1, prim2 in zip(
                 self.primitives, self.primitives[1:] + [self.primitives[0]]):
             if not prim1.end.is_close(prim2.start, tol):
@@ -1095,6 +1103,18 @@ class ContourMixin(WireMixin):
                     #     point_pair[1].plot(ax=ax, color='r')
                     # raise NotImplementedError
         return new_primitives
+
+    def order_contour(self):
+        """
+        Verifies if the contours'primitives are ordered (one after the other). If not, it will order it.
+
+        """
+        if self.is_ordered() or len(self.primitives) < 2:
+            return self
+        new_primitives = self.ordering_contour()
+        self.primitives = new_primitives
+
+        return self
 
     @staticmethod
     def touching_edges_pairs(edges):  # TO DO: move this to edges?
@@ -1684,17 +1704,6 @@ class Contour2D(ContourMixin, Wire2D):
             return True
         return False
 
-    def middle_point(self):
-        return self.point_at_abscissa(self.length() / 2)
-
-    def point_distance(self, point):
-        min_distance = self.primitives[0].point_distance(point)
-        for primitive in self.primitives[1:]:
-            distance = primitive.point_distance(point)
-            if distance < min_distance:
-                min_distance = distance
-        return min_distance
-
     def bounding_points(self):
         points = self.edge_polygon.points[:]
         for primitive in self.primitives:
@@ -1798,11 +1807,6 @@ class Contour2D(ContourMixin, Wire2D):
     def invert(self):
         return Contour2D(self.inverted_primitives())
 
-    def invert_inplace(self):
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        self.primitives = self.inverted_primitives()
-
     def random_point_inside(self, include_edge_points: bool = False):
         """
         Finds a random point inside the polygon.
@@ -1819,14 +1823,6 @@ class Contour2D(ContourMixin, Wire2D):
                 return point
         print(True)
         raise ValueError('Could not find a point inside')
-
-    def order_contour(self):
-        if self.is_ordered() or len(self.primitives) < 2:
-            return self
-        new_primitives = self.ordering_contour()
-        self.primitives = new_primitives
-
-        return self
 
     @classmethod
     def extract_contours(cls, contour, point1: volmdlr.Point3D,
@@ -4149,11 +4145,13 @@ class Circle2D(Contour2D):
                                                            bsplinecurve.abscissa(point2)))
                         else:
                             intersections.append(intersection[0])
-                        param_intersections.remove((abscissa1, abscissa2))
                         break_flag = True
                         break
                 if break_flag:
                     break
+            else:
+                continue
+            param_intersections.remove((abscissa1, abscissa2))
         return intersections
 
 
@@ -4635,35 +4633,6 @@ class Contour3D(ContourMixin, Wire3D):
 
         for edge in self.primitives:
             edge.translation_inplace(offset)
-
-    def order_contour(self):
-        initial_points = []
-        for primitive in self.primitives:
-            initial_points.append((primitive.start, primitive.end))
-
-        new_primitives = []
-        if self.is_ordered():
-            return self
-        points = self.ordering_contour()
-        for point1, point2 in points:
-            try:
-                index = initial_points.index((point1, point2))
-            except ValueError:
-                index = initial_points.index((point2, point1))
-
-            if isinstance(self.primitives[index], volmdlr.edges.LineSegment3D):
-                new_primitives.append(volmdlr.edges.LineSegment3D(point1, point2))
-            elif isinstance(self.primitives[index], volmdlr.edges.Arc3D):
-                new_primitives.append(volmdlr.edges.Arc3D(point1, self.primitives[index].interior, point2))
-            elif isinstance(self.primitives[index], volmdlr.edges.BSplineCurve3D):
-                if self.primitives[index].start.is_close(point1) and self.primitives[index].end.is_close(point2):
-                    new_primitives.append(self.primitives[index])
-                else:
-                    new_primitives.append(self.primitives[index].reverse())
-
-        self.primitives = new_primitives
-
-        return self
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
