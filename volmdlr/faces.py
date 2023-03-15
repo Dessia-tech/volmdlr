@@ -2986,7 +2986,7 @@ class SphericalSurface3D(Surface3D):
         w_vector.normalize()
         v_vector = w_vector.cross(u_vector)
         frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
-        radius = float(arguments[2]) * unit_conversion_factor
+        radius = float(arguments[2]) * length_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
     def point2d_to_3d(self, point2d):
@@ -9206,9 +9206,7 @@ class ClosedShell3D(OpenShell3D):
             (1, 0) or (0, 1) with no face intersection  => 1
         """
         # Check if boundary boxes don't intersect
-        bbox1 = self.bounding_box
-        bbox2 = shell2.bounding_box
-        if not bbox1.bbox_intersection(bbox2):
+        if not self.bounding_box.bbox_intersection(shell2.bounding_box):
             # print("No intersection of shells' BBox")
             return None
 
