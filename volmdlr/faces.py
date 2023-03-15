@@ -3900,7 +3900,8 @@ class BSplineSurface3D(Surface3D):
 
         delta_bound_x = max_bound_x - min_bound_x
         delta_bound_y = max_bound_y - min_bound_y
-        x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
+        x0s = [
+               ((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
                ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
                ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
                ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
@@ -3919,9 +3920,9 @@ class BSplineSurface3D(Surface3D):
         results = []
         for x0 in x0s:
 
-            x = self.point_invertion(x0, point3d)
-            if x is None:
-                continue
+            x, convergence_sucess = self.point_invertion(x0, point3d)
+            if convergence_sucess:
+                return volmdlr.Point2D(*x)
 
             dist = evaluate_point_distance(x)
             if dist <= tol:
@@ -3949,17 +3950,17 @@ class BSplineSurface3D(Surface3D):
 
     def point_invertion(self, x, point3d, maxiter: int = 50):
         if maxiter == 0:
-            return None
+            return x, False
         jacobian, k, surface_derivatives, distance_vector = self.point_inversion_funcs(x, point3d)
         if self.check_convergence(surface_derivatives, distance_vector):
-            return x
+            return x, True
         lu, piv = scp.linalg.lu_factor(jacobian)
         delta = scp.linalg.lu_solve((lu, piv), k)
         new_x = [delta[0][0] + x[0], delta[1][0] + x[1]]
         new_x = self.check_bounds(new_x)
         residual = (new_x[0] - x[0]) * surface_derivatives[1][0] + (new_x[1] - x[1]) * surface_derivatives[0][1]
         if residual.norm() <= 1e-6:
-            return x
+            return x, False
         x = new_x
         return self.point_invertion(x, point3d, maxiter=maxiter - 1)
 
