@@ -456,8 +456,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         primitives3d = []
         for edge in self.primitives:
             primitives3d.append(edge.to_3d(plane_origin, x, y))
-        class_name_ = self.__class__.__name__[:-2]+'3D'
-        return getattr(sys.modules[__name__], class_name_)(primitives3d)
+        return Wire3D(primitives3d)
 
     def extract(self, point1, primitive1, point2, primitive2,
                 inside: bool = True):
@@ -1672,20 +1671,20 @@ class Contour2D(ContourMixin, Wire2D):
                 points.append(edge.start)
         return ClosedPolygon2D(points)
 
-    # def to_3d(self, plane_origin, x, y):
-    #     """
-    #     Transforms a Contour2D into an Contour3D, given a plane origin and an u and v plane vector.
-    #
-    #     :param plane_origin: plane origin.
-    #     :param x: plane u vector.
-    #     :param y: plane v vector.
-    #     :return: Contour3D.
-    #     """
-    #     p3d = []
-    #     for edge in self.primitives:
-    #         p3d.append(edge.to_3d(plane_origin, x, y))
-    #
-    #     return Contour3D(p3d)
+    def to_3d(self, plane_origin, x, y):
+        """
+        Transforms a Contour2D into an Contour3D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Contour3D.
+        """
+        p3d = []
+        for edge in self.primitives:
+            p3d.append(edge.to_3d(plane_origin, x, y))
+
+        return Contour3D(p3d)
 
     def point_belongs(self, point, include_edge_points: bool = False):
         # TODO: This is incomplete!!!
