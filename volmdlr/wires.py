@@ -3858,26 +3858,26 @@ class Circle2D(Contour2D):
         # r0 = self.radius
         # r1 = circle.radius
 
-        d = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
+        distance = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
 
         # non-intersecting
-        if d > self.radius + circle.radius:
+        if distance > self.radius + circle.radius:
             return []
         # One circle within other
-        if d < abs(self.radius - circle.radius):
+        if distance < abs(self.radius - circle.radius):
             return []
         # coincident circles
-        if d == 0 and self.radius == circle.radius:
+        if distance == 0 and self.radius == circle.radius:
             return []
-        a = (self.radius ** 2 - circle.radius ** 2 + d ** 2) / (2 * d)
-        h = math.sqrt(self.radius ** 2 - a ** 2)
-        x2 = x0 + a * (x1 - x0) / d
-        y2 = y0 + a * (y1 - y0) / d
-        x3 = x2 + h * (y1 - y0) / d
-        y3 = y2 - h * (x1 - x0) / d
+        a_param = (self.radius ** 2 - circle.radius ** 2 + distance ** 2) / (2 * distance)
+        h_param = math.sqrt(self.radius ** 2 - a_param ** 2)
+        x2 = x0 + a_param * (x1 - x0) / distance
+        y2 = y0 + a_param * (y1 - y0) / distance
+        x3 = x2 + h_param * (y1 - y0) / distance
+        y3 = y2 - h_param * (x1 - x0) / distance
 
-        x4 = x2 - h * (y1 - y0) / d
-        y4 = y2 + h * (x1 - x0) / d
+        x4 = x2 - h_param * (y1 - y0) / distance
+        y4 = y2 + h_param * (x1 - x0) / distance
 
         return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]
 
@@ -4131,7 +4131,7 @@ class Ellipse2D(Contour2D):
         """
         Calculates the ellipse's area.
 
-        :return: ellipe's area, float.
+        :return: ellipse's area, float.
         """
         return math.pi * self.major_axis * self.minor_axis
 
@@ -4139,7 +4139,7 @@ class Ellipse2D(Contour2D):
         """
         Calculates the ellipse's length.
 
-        :return: ellipe's length.
+        :return: ellipse's length.
         """
         mid_point = self.center - self.major_axis * self.major_dir
         if self.theta != 0.0:
