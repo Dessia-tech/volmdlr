@@ -456,8 +456,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         primitives3d = []
         for edge in self.primitives:
             primitives3d.append(edge.to_3d(plane_origin, x, y))
-
-        return Wire3D(primitives3d)
+        class_name_ = self.__class__.__name__[:-2]+'3D'
+        return getattr(sys.modules[__name__], class_name_)(primitives3d)
 
     def extract(self, point1, primitive1, point2, primitive2,
                 inside: bool = True):
@@ -878,6 +878,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             y_min = min(y_min, ymin_edge)
             y_max = max(y_max, ymax_edge)
         return volmdlr.core.BoundingRectangle(x_min, x_max, y_min, y_max)
+
+    def middle_point(self):
+        return self.point_at_abscissa(self.length() / 2)
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
@@ -1669,20 +1672,20 @@ class Contour2D(ContourMixin, Wire2D):
                 points.append(edge.start)
         return ClosedPolygon2D(points)
 
-    def to_3d(self, plane_origin, x, y):
-        """
-        Transforms a Contour2D into an Contour3D, given a plane origin and an u and v plane vector.
-
-        :param plane_origin: plane origin.
-        :param x: plane u vector.
-        :param y: plane v vector.
-        :return: Contour3D.
-        """
-        p3d = []
-        for edge in self.primitives:
-            p3d.append(edge.to_3d(plane_origin, x, y))
-
-        return Contour3D(p3d)
+    # def to_3d(self, plane_origin, x, y):
+    #     """
+    #     Transforms a Contour2D into an Contour3D, given a plane origin and an u and v plane vector.
+    #
+    #     :param plane_origin: plane origin.
+    #     :param x: plane u vector.
+    #     :param y: plane v vector.
+    #     :return: Contour3D.
+    #     """
+    #     p3d = []
+    #     for edge in self.primitives:
+    #         p3d.append(edge.to_3d(plane_origin, x, y))
+    #
+    #     return Contour3D(p3d)
 
     def point_belongs(self, point, include_edge_points: bool = False):
         # TODO: This is incomplete!!!
@@ -1701,17 +1704,6 @@ class Contour2D(ContourMixin, Wire2D):
         if self._polygon_100_points.point_belongs(point):
             return True
         return False
-
-    def middle_point(self):
-        return self.point_at_abscissa(self.length() / 2)
-
-    def point_distance(self, point):
-        min_distance = self.primitives[0].point_distance(point)
-        for primitive in self.primitives[1:]:
-            distance = primitive.point_distance(point)
-            if distance < min_distance:
-                min_distance = distance
-        return min_distance
 
     def bounding_points(self):
         points = self.edge_polygon.points[:]
@@ -4159,11 +4151,13 @@ class Circle2D(Contour2D):
                                                            bsplinecurve.abscissa(point2)))
                         else:
                             intersections.append(intersection[0])
-                        param_intersections.remove((abscissa1, abscissa2))
                         break_flag = True
                         break
                 if break_flag:
                     break
+            else:
+                continue
+            param_intersections.remove((abscissa1, abscissa2))
         return intersections
 
 
