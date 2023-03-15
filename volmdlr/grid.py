@@ -73,8 +73,7 @@ class Grid2D(DessiaObject):
     @classmethod
     def from_points(cls, points, points_dim_1, direction):
         """
-        Defines a Grid2D given a list of points, number of points along
-        the 1st dimension, and a direction.
+        Defines a Grid2D given a list of points, number of points along the 1st dimension, and a direction.
 
         :param points:
         :type points: List[:class:`volmdlr.Point2D`]

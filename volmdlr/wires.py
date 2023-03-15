@@ -807,7 +807,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def symmetry(self, line):
         """
-        TODO: code this
+        TODO: code this.
         """
         raise NotImplementedError('Not coded yet')
 
@@ -1359,7 +1359,7 @@ class ContourMixin(WireMixin):
 
     def shared_primitives_extremities(self, contour):
         """
-        #todo: is this description correct?
+        #todo: is this description correct?.
         Extract shared primitives extremities between two adjacent contours.
 
         """
@@ -1826,6 +1826,8 @@ class Contour2D(ContourMixin, Wire2D):
 
     def repair_cut_contour(self, n, intersections, line):
         """
+        Repair contour.
+
         Choose:
         n=0 for Side 1: opposite side of beginning of contour
         n=1 for Side 2: start of contour to first intersect (i=0) and
@@ -3369,7 +3371,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def get_possible_sewing_closing_points(self, polygon2, polygon_primitive,
                                            line_segment1: None, line_segment2: None):
         """
-        Searches all possibles closing points available for the given primitive
+        Searches all possibles closing points available for the given primitive.
+
         """
         middle_point = polygon_primitive.middle_point()
         if line_segment1 is None and line_segment2 is None:
@@ -3439,7 +3442,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
                                             polygon_primitive,
                                             possible_closing_points):
         """
-        Searches the closest sewing closing point available
+        Searches the closest sewing closing point available.
+
         """
         closing_point = volmdlr.O2D
         middle_point = polygon_primitive.middle_point()
@@ -3482,7 +3486,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return False
 
     def get_closing_point(self, polygon2_2d, primitive, ax=None):
-        """Gets sewing closing points for given primitive points"""
+        """Gets sewing closing points for given primitive points."""
         closing_point = volmdlr.O2D
         middle_point = primitive.middle_point()
 
@@ -3624,7 +3628,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def is_convex(self):
         """
-        Verifies if a polygon is convex or Not
+        Verifies if a polygon is convex or Not.
+
         """
         for prim1, prim2 in zip(self.line_segments, self.line_segments[1:] + [self.line_segments[0]]):
             vector1 = prim1.direction_vector()
@@ -3650,7 +3655,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
 class Triangle(ClosedPolygonMixin):
     """
-    Defines a triangle from 3 points. It is a Super Class for Triangle2D and Triangle3D,
+    Defines a triangle from 3 points.
+
+    It is a Super Class for Triangle2D and Triangle3D,
     storing their main attribute and methods.
 
 
@@ -3979,7 +3986,8 @@ class Circle2D(Contour2D):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new Circle2D
+        Changes frame_mapping and return a new Circle2D.
+
         side = 'old' or 'new'
         """
         if side == 'old':
@@ -4746,8 +4754,7 @@ class Contour3D(ContourMixin, Wire3D):
 
     def merge_with(self, contour3d):
         """
-        Merge two adjacent contours, sharing primitives, and returns one outer contour and inner
-        contours (if there are any),
+        Merge two adjacent contours, and returns one outer contour and inner contours (if there are any).
 
         """
 

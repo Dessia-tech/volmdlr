@@ -1090,7 +1090,8 @@ class Surface3D(DessiaObject):
 
     def linesegment3d_to_2d(self, linesegment3d):
         """
-        A line segment on a surface will be in any case a line in 2D?
+        A line segment on a surface will be in any case a line in 2D?.
+
         """
         return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start),
                                   self.point3d_to_2d(linesegment3d.end))]
@@ -5641,7 +5642,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
-        """Sets the bounding box to a new value"""
+        """Sets the bounding box to a new value."""
         raise NotImplementedError(
             f"bounding_box setter method must be"
             f"overloaded by {self.__class__.__name__}")
@@ -6460,8 +6461,7 @@ class Face3D(volmdlr.core.Primitive3D):
     @staticmethod
     def is_inside_portion(cutting_contour, inner_contour_splitting_points1, inner_contour_splitting_points2):
         """
-        For multiple inner contour intersections with cutting contours, defines if we get the inside or outside portion
-        of the inner contour pair.
+        For multiple inner contour intersections with cutting contours, defines if we get the inside or outside portion.
 
         :param cutting_contour: cutting_contour cutting the two inner contours.
         :param inner_contour_splitting_points1: splitting points for contour1.
@@ -7452,7 +7452,8 @@ class CylindricalFace3D(Face3D):
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
         """
-        Gets the lines that define a CylindricalFace3D in a .geo file
+        Gets the lines that define a CylindricalFace3D in a .geo file.
+
         """
 
         return 'Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
@@ -8617,7 +8618,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def volume(self):
         """
-        Does not consider holes
+        Does not consider holes.
+
         """
         volume = 0
         for face in self.faces:
@@ -8707,7 +8709,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def minimum_distance_points(self, shell2, resolution):
         """
-        Returns a Measure object if the distance is not zero, otherwise returns None
+        Returns a Measure object if the distance is not zero, otherwise returns None.
+
         """
         shell2_inter = self.shell_intersection(shell2, resolution)
         if shell2_inter is not None and shell2_inter != 1:
@@ -9161,9 +9164,9 @@ class ClosedShell3D(OpenShell3D):
 
     def is_inside_shell(self, shell2, resolution: float):
         """
-        Returns True if all the points of self are inside shell2 and no face \
-        are intersecting
-        This method is not exact
+        Returns True if all the points of self are inside shell2 and no face are intersecting.
+
+        This method is not exact.
         """
         bbox1 = self.bounding_box
         bbox2 = shell2.bounding_box

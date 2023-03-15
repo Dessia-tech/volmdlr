@@ -346,10 +346,10 @@ class Block(volmdlr.faces.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Block translation
+        Block translation.
 
-        :param offset: translation vector
-        :return: A new translated Block
+        :param offset: translation vector.
+        :return: A new translated Block.
         """
         new_frame = self.frame.translation(offset)
         return Block(new_frame, color=self.color,
@@ -1008,11 +1008,11 @@ class Cylinder(RevolvedProfile):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Cylinder rotation. Object is updated inplace
+        Cylinder rotation. Object is updated inplace.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: rotation angle.
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 

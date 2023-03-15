@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Common abstract primitives
+Common abstract primitives.
+
 """
 
 import math
