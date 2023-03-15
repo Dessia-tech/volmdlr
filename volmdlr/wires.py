@@ -1807,11 +1807,6 @@ class Contour2D(ContourMixin, Wire2D):
     def invert(self):
         return Contour2D(self.inverted_primitives())
 
-    def invert_inplace(self):
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        self.primitives = self.inverted_primitives()
-
     def random_point_inside(self, include_edge_points: bool = False):
         """
         Finds a random point inside the polygon.
