@@ -320,6 +320,17 @@ class Line(Edge):
         t = (point - self.point1).dot(vector) / norm_u
         return t
 
+    def point_at_abscissa(self, abscissa):
+        """
+        Returns the point that corresponds to the given abscissa.
+
+        :param abscissa: The abscissa
+        :type abscissa: float
+        :return: The point that correspods to the given abscissa.
+        :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        """
+        return self.point1 + (self.point2 - self.point1) * abscissa
+
     def sort_points_along_line(self, points):
         """
         Sort point along a line.
@@ -361,6 +372,23 @@ class Line(Edge):
         if line_segment.line_intersections(self):
             return True
         return False
+
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge.
+
+        :param point: Point to be verified
+        :return: Return True if the point belongs to this surface,
+            or False otherwise
+        """
+        raise NotImplementedError(f'the straight_line_point_belongs method must be'
+                                  f' overloaded by {self.__class__.__name__}')
+
+    def length(self):
+        """
+        A line is infinite by definition.
+        """
+        return math.inf
 
 
 class LineSegment(Edge):
@@ -3556,10 +3584,6 @@ class Line3D(Line):
         zmax = max([self.point1[2], self.point2[2]])
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
-
-    def point_at_abscissa(self, abscissa):
-        return self.point1 + (
-                self.point2 - self.point1) * abscissa
 
     def point_belongs(self, point3d):
         if point3d.is_close(self.point1):
