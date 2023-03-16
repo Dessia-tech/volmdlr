@@ -1269,10 +1269,8 @@ class VolumeModel(dc.PhysicalObject):
             step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
                             f"'',#{product_definition_id});\n"
             shape_definition_repr_id = product_definition_shape_id + 1
-            step_content += "#{} = SHAPE_DEFINITION_REPRESENTATION(#{},#{});\n".format(shape_definition_repr_id,
-                                                                                       product_definition_shape_id,
-                                                                                       primitive_id
-                                                                                       )
+            step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
+                            f"#{product_definition_shape_id},#{primitive_id});\n"
             product_related_category = shape_definition_repr_id + 1
             step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
                             f"'part',$,(#{product_id}));\n"
@@ -1917,7 +1915,7 @@ class MovingVolumeModel(VolumeModel):
         """
         Get babylonjs data.
 
-        :return: Dictionary with babylon data.
+        :return: Dictionary with babylonjs data.
         """
         meshes = []
         primitives_to_meshes = []

@@ -52,6 +52,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unittests for Vector3D
 * Unittests for Point3D
 
+
+## v0.9.1
+
+### Fixed
+- build: manifest was not shipping bspline_compiled
+- fixed many pylint errors: 13/03/2023
 ## v0.9.0 [Released 06/03/2023]
 
 ### New Features
