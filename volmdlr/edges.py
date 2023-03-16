@@ -231,7 +231,6 @@ class Edge(dc.DessiaObject):
                     touching_points.append(point)
         return touching_points
 
-
 class Line(dc.DessiaObject):
     """
     Abstract class representing a line.
@@ -1643,20 +1642,6 @@ class BSplineCurve2D(BSplineCurve):
             crossings.extend(linesegment.line_crossings(line2d))
         return crossings
 
-    def to_wire(self, n: int):
-        """
-        Convert a Bspline curve to a wire 2D defined with 'n' line_segments.
-
-        """
-
-        u_params = npy.linspace(0, 1, num=n + 1).tolist()
-        points = []
-        for u_param in u_params:
-            point = self.curve.evaluate_single(u_param)
-            points.append(volmdlr.Point2D(point[0], point[1]))
-
-        return volmdlr.wires.Wire2D.from_points(points)
-
     def reverse(self):
         """
         Reverse the Bspline's direction by reversing its start and end points.
@@ -1744,13 +1729,13 @@ class BSplineCurve2D(BSplineCurve):
                               weights=self.weights,
                               periodic=self.periodic)
 
-    def offset(self, offset_length: volmdlr.Vector2D):
+    def offset(self, offset_length: float):
         """
         Offsets a BSplineCurve2D in one of its normal direction.
 
         :param offset_length: the length taken to offset the BSpline. if positive, the offset is in the normal
-            direction of the curve. if negetive, in the opposite direction of the normal.
-        :return: returns an offseted bsplinecurve2D, created with from_points_interpolation.
+            direction of the curve. if negative, in the opposite direction of the normal.
+        :return: returns an offset bsplinecurve2D, created with from_points_interpolation.
         """
         unit_normal_vectors = [self.unit_normal_vector(
             self.abscissa(point)) for point in self.points]
@@ -2154,9 +2139,9 @@ class LineSegment2D(LineSegment):
         Convert a linesegment2d to a wire 2D defined with 'n' line_segments.
 
         """
-
-        points = self.discretization_points(number_points=n + 1)
-        return volmdlr.wires.Wire2D.from_points(points)
+        warnings.warn('To avoid Circular imports, a new method was created in Wire2D called from_edge.'
+                      'You can use it instead of to_wire.')
+        raise AttributeError
 
     def nearest_point_to(self, point):
         """
@@ -3018,10 +3003,6 @@ class Arc2D(Arc):
         interior = self.middle_point().rotation(self.center, math.pi)
         return Arc2D(self.start, interior, self.end)
 
-    def to_wire(self, angle_resolution: float = 10.):
-        """ Convert an arc to a wire 2d defined with line_segments. """
-        return volmdlr.wires.Wire2D.from_points(self.discretization_points(angle_resolution=angle_resolution))
-
     def axial_symmetry(self, line):
         """ Finds out the symmetric arc 2D according to a line. """
         points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
@@ -3624,7 +3605,7 @@ class ArcEllipse2D(Edge):
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
-        intersections = self.line_intersections(linesegment2d)
+        intersections = self.line_intersections(linesegment2d.to_line())
         linesegment_intersections = []
         for inter in intersections:
             if linesegment2d.point_belongs(inter):
