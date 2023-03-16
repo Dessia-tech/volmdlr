@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ConicalSurface3D, CylindricalSurface3D: plot method
 * volmdlr.edge: FullArcEllipse
 * BSplineCurve: evaluate_single
+* Wire2: hash
+* Contour3D: hash
 
 ### Fixed
 * Plane3D: plane_intersections
@@ -24,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
 * BSplineCurve: abscissa
+* Add some important fixes to unittests: missing two __init__py files.
 
 ### Removed
 
@@ -382,6 +385,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * Circle3D: to_step
 * ArcEllipse3D.to_2d()
 * infinite primitive offset of linesegment
+* Contour3D: order_contour.
 
 ### Performance improvements
 

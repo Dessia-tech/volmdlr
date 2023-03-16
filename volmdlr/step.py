@@ -604,7 +604,6 @@ class Step(dc.DessiaObject):
     _standalone_in_db = True
 
     def __init__(self, lines: List[str], name: str = ''):
-        self.lines = lines
         self.functions, self.all_connections, self.connections = self.read_lines(lines)
         self._graph = None
         self.global_uncertainty = 1e-6
@@ -725,9 +724,9 @@ class Step(dc.DessiaObject):
         """
         Step functions graph.
 
-        :return:
+        :return: A graph representation the step file structure.
+        :rtype: nx.DiGraph
         """
-        # G = nx.Graph()
         F = nx.DiGraph()
         labels = {}
 
@@ -745,10 +744,6 @@ class Step(dc.DessiaObject):
                 self.functions[id1].arg.append(f'#{id2}')
 
             elif function.name in STEP_TO_VOLMDLR:
-                # G.add_node(function.id,
-                #            color='rgb(0, 0, 0)',
-                #            shape='.',
-                #            name=str(function.id))
                 F.add_node(function.id,
                            color='rgb(0, 0, 0)',
                            shape='.',
@@ -766,7 +761,6 @@ class Step(dc.DessiaObject):
             self.all_connections.remove(delete)
 
         # Create graph connections
-        # G.add_edges_from(self.all_connections)
         F.add_edges_from(self.all_connections)
 
         # Remove single nodes
@@ -892,16 +886,15 @@ class Step(dc.DessiaObject):
 
     def create_node_list(self, stack):
         """
-        Step functions graph as a list of nodes
-        :return:
+        Step functions graph as a list of nodes.
+
+        :param stack: Initial list of shell nodes and assemblies entities.
+        :type stack: List[int]
+        :return: A list of nodes in the right order of dependency.
+        :rtype: List[int]
         """
         list_head = []
         list_nodes = []
-        # shell_nodes = stack
-        # initial_stack = []
-        # for node in shell_nodes:
-        #     initial_stack.extend(self.connections[node])
-        # stack = initial_stack
         visited_set = set()
         while stack:
             node = stack.pop(0)
@@ -969,10 +962,8 @@ class Step(dc.DessiaObject):
                 id2 = int(function.arg[3][1:])
                 self.connections[id1].append(id2)
                 self.functions[id1].arg.append(f'#{id2}')
-        # sr_nodes = []
         not_shell_nodes = []
         frame_mapped_shell_node = []
-        # for node in self.graph.nodes:
         for node in list(self.functions.keys()):
             if self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, ' \
                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
@@ -1036,8 +1027,6 @@ class Step(dc.DessiaObject):
                 self.read_diagnostic = StepReaderReport(self.name, step_number_faces, faces_read,
                                                         faces_read / step_number_faces, list(errors))
         volume_model = volmdlr.core.VolumeModel(shells)
-        # bounding_box = volume_model.bounding_box
-        # volume_model = volume_model.translation(-bounding_box.center)
         return volume_model
 
     def helper_instantiate(self, node, object_dict, times, show_times):
@@ -1092,7 +1081,7 @@ class Step(dc.DessiaObject):
         return points3d[1:]
 
     def plot_data(self):
-        graph = self.graph.copy()
+        graph = self.graph().copy()
 
         graph.remove_nodes_from([stepfunction.id for stepfunction
                                  in self.functions.values()

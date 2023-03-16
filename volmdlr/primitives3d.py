@@ -1753,7 +1753,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                     wire_primitive.__class__ is volmdlr.edges.BezierCurve3D:
 
                 tangents = []
-                for k, pt in enumerate(wire_primitive.points):
+                for k, _ in enumerate(wire_primitive.points):
                     position = k / (len(wire_primitive.points) - 1)
                     tangents.append(wire_primitive.tangent(position))
 
