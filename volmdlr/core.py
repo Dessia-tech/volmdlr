@@ -1820,7 +1820,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def to_msh_file(self, mesh_dimension: int,
                     factor: float, file_name: str = '', **kwargs):
-        """ Convert and write model to a .msh file """
+        """ Convert and write model to a .msh file. """
 
         for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
             if element[0] not in kwargs:
