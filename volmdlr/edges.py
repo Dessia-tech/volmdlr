@@ -178,15 +178,16 @@ class Edge(dc.DessiaObject):
         raise NotImplementedError('the normal_vector method must be'
                                   'overloaded by subclassing class')
 
-    def unit_normal_vector(self, abscissa):
+    def unit_normal_vector(self, abscissa: float = 0.0):
         """
         Calculates the unit normal vector the edge at given abscissa.
 
         :param abscissa: edge abscissa
         :return: unit normal vector
         """
-        raise NotImplementedError('the unit_normal_vector method must be'
-                                  'overloaded by subclassing class')
+        vector = self.normal_vector(abscissa)
+        vector.normalize()
+        return vector
 
     def direction_vector(self, abscissa):
         """
@@ -198,15 +199,16 @@ class Edge(dc.DessiaObject):
         raise NotImplementedError('the direction_vector method must be'
                                   'overloaded by subclassing class')
 
-    def unit_direction_vector(self, abscissa):
+    def unit_direction_vector(self, abscissa: float = 0.0):
         """
         Calculates the unit direction vector the edge at given abscissa.
 
         :param abscissa: edge abscissa
         :return: unit direction vector
         """
-        raise NotImplementedError('the unit_direction_vector method must be'
-                                  'overloaded by subclassing class')
+        vector = self.direction_vector(abscissa)
+        vector.normalize()
+        return vector
 
     def straight_line_point_belongs(self, point):
         """
@@ -265,17 +267,6 @@ class Line(dc.DessiaObject):
             return self.point2
         raise IndexError
 
-    def unit_direction_vector(self, *args, **kwargs):
-        """
-        Get the unit direction vector of the line.
-
-        :return: The unit direction vector of the line
-        :rtype:  Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
-        """
-        vector = self.direction_vector()
-        vector.normalize()
-        return vector
-
     def direction_vector(self, *args, **kwargs):
         """
         Get the direction vector of the line.
@@ -295,18 +286,6 @@ class Line(dc.DessiaObject):
         :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
         """
         return self.direction_vector().normal_vector()
-
-    def unit_normal_vector(self, abscissa=0.):
-        """
-        Get the unit normal vector of the line.
-
-        :param abscissa: The abscissa of the point from which to calculate
-            the normal vector
-        :type abscissa: float, optional
-        :return: The unit normal vector of the line
-        :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
-        """
-        return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
         """
@@ -414,18 +393,6 @@ class LineSegment(Edge):
             raise ValueError(f'Point is not on linesegment: abscissa={t}')
         return t
 
-    def unit_direction_vector(self, abscissa=0.):
-        """
-        Computes a unit direction vector for the line segment.
-
-        :param abscissa: defines where in the line segment the unit
-            direction vector is to be calculated.
-        :return: The unit direction vector of the LineSegment.
-        """
-        direction_vector = self.direction_vector()
-        direction_vector.normalize()
-        return direction_vector
-
     def direction_vector(self, abscissa=0.):
         """
         Returns a direction vector at a given abscissa, it is not normalized.
@@ -447,15 +414,6 @@ class LineSegment(Edge):
         :return: The normal vector of the LineSegment.
         """
         return self.direction_vector(abscissa).normal_vector()
-
-    def unit_normal_vector(self, abscissa=0.):
-        """
-        Returns the unit normal vector at a given abscissa.
-
-        :param abscissa: defines where in the line_segment unit normal vector is to be calculated.
-        :return: The unit normal vector of the LineSegment.
-        """
-        return self.unit_direction_vector(abscissa).normal_vector()
 
     def point_projection(self, point):
         """
@@ -667,47 +625,24 @@ class BSplineCurve(Edge):
             self._length = length_curve(self.curve)
         return self._length
 
-    def unit_direction_vector(self, abscissa: float):
-        """
-        Computes the 2D or 3D unit direction vector of B-spline curve at a given abscissa.
-
-        :param abscissa: The abscissa on the B-spline curve where the unit
-            direction vector will be computed
-        :type abscissa: float
-        :return: The unit direction vector of the B-spline curve
-        :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
-        """
-        direction_vector = self.direction_vector(abscissa)
-        direction_vector.normalize()
-        return direction_vector
-
     def normal_vector(self, abscissa):
         """
-        Calculates the normal vector the edge at given abscissa.
+        Calculates the normal vector to the BSpline curve at given abscissa.
 
         :return: the normal vector
         """
-        raise NotImplementedError('the normal_vector method must be'
-                                  'overloaded by child class')
-
-    def unit_normal_vector(self, abscissa):
-        """
-        Calculates the unit normal vector the edge at given abscissa.
-
-        :param abscissa: edge abscissa
-        :return: unit normal vector
-        """
-        raise NotImplementedError('the unit_normal_vector method must be'
-                                  'overloaded by child class')
+        return self.direction_vector(abscissa).normal_vector()
 
     def direction_vector(self, abscissa):
         """
-        Calculates the direction vector the edge at given abscissa.
+        Calculates the direction vector on the BSpline curve at given abscissa.
 
         :param abscissa: edge abscissa
         :return: direction vector
         """
-        raise NotImplementedError('the direction_vector method must be overloaded by child class')
+        u = abscissa/self.length()
+        derivatives = self.derivatives(u, 1)
+        return derivatives[1]
 
     def middle_point(self):
         """
@@ -1522,39 +1457,6 @@ class BSplineCurve2D(BSplineCurve):
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
 
-    def direction_vector(self, abscissa: float):
-        """
-        Get direction vector at abscissa.
-
-        :param abscissa: defines where in the BSplineCurve2D the
-        direction vector is to be calculated.
-        :return: The direction vector of the BSplineCurve2D
-        """
-        return self.tangent(abscissa / self.length())
-
-    def normal_vector(self, abscissa: float):
-        """
-        Get normal vector at abscissa.
-
-        :param abscissa: defines where in the BSplineCurve2D the
-        normal vector is to be calculated
-        :return: The normal vector of the BSplineCurve2D
-        """
-        tangent_vector = self.tangent(abscissa / self.length())
-        normal_vector = tangent_vector.normal_vector()
-        return normal_vector
-
-    def unit_normal_vector(self, abscissa: float):
-        """
-        Get unit normal vector at given abscissa.
-
-        :param abscissa: defines where in the BSplineCurve2D the unit normal vector is to be calculated.
-        :return: The unit normal vector of the BSplineCurve2D.
-        """
-        normal_vector = self.normal_vector(abscissa)
-        normal_vector.normalize()
-        return normal_vector
-
     def straight_line_area(self):
         """
         Uses shoelace algorithm for evaluating the area.
@@ -2252,6 +2154,28 @@ class Arc(Edge):
             return self.start.rotation(self.center, abscissa / self.radius)
         return self.start.rotation(self.center, -abscissa / self.radius)
 
+    def normal_vector(self, abscissa: float):
+        """
+        Get the normal vector of the Arc2D.
+
+        :param abscissa: defines where in the Arc2D the
+        normal vector is to be calculated
+        :return: The normal vector of the Arc2D
+        """
+        point = self.point_at_abscissa(abscissa)
+        normal_vector = self.center - point
+        return normal_vector
+
+    def direction_vector(self, abscissa: float):
+        """
+        Get direction vector of the Arc2D.
+
+        :param abscissa: defines where in the Arc2D the
+        direction vector is to be calculated
+        :return: The direction vector of the Arc2D
+        """
+        return -self.normal_vector(abscissa=abscissa).normal_vector()
+
     @staticmethod
     def get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i):
         """
@@ -2609,56 +2533,6 @@ class Arc2D(Arc):
             return self.angle * self.radius
 
         return self.radius * theta
-
-    def direction_vector(self, abscissa: float):
-        """
-        Get direction vector of the Arc2D.
-
-        :param abscissa: defines where in the Arc2D the
-        direction vector is to be calculated
-        :return: The direction vector of the Arc2D
-        """
-        return -self.normal_vector(abscissa=abscissa).normal_vector()
-
-    def unit_direction_vector(self, abscissa: float):
-        """
-        Get unit direction vector of the Arc2D.
-
-        :param abscissa: defines where in the Arc2D the
-        unit direction vector is to be calculated
-
-        :return: The unit direction vector of the Arc2D
-        """
-        direction_vector = self.direction_vector(abscissa)
-        direction_vector.normalize()
-        return direction_vector
-
-    def normal_vector(self, abscissa: float):
-        """
-        Get the normal vector of the Arc2D.
-
-        :param abscissa: defines where in the Arc2D the
-        normal vector is to be calculated
-        :return: The normal vector of the Arc2D
-        """
-        point = self.point_at_abscissa(abscissa)
-        # if self.is_trigo:
-        normal_vector = self.center - point
-        # else:
-        #     normal_vector = point - self.center
-        return normal_vector
-
-    def unit_normal_vector(self, abscissa: float):
-        """
-        Get the unit normal vector of the Arc2D.
-
-        :param abscissa: defines where in the Arc2D the
-        unit normal vector is to be calculated
-        :return: The unit normal vector of the Arc2D
-        """
-        normal_vector = self.normal_vector(abscissa)
-        normal_vector.normalize()
-        return normal_vector
 
     def area(self):
         """
@@ -3577,13 +3451,7 @@ class ArcEllipse2D(Edge):
     def normal_vector(self, abscissa):
         raise NotImplementedError
 
-    def unit_normal_vector(self, abscissa):
-        raise NotImplementedError
-
     def direction_vector(self, abscissa):
-        raise NotImplementedError
-
-    def unit_direction_vector(self, abscissa):
         raise NotImplementedError
 
     def reverse(self):
@@ -4582,25 +4450,6 @@ class BSplineCurve3D(BSplineCurve):
         normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
         return normal
 
-    def direction_vector(self, abscissa=0.):
-        length = self.length()
-        if abscissa >= length:
-            abscissa2 = length
-            abscissa = abscissa2 - 0.001 * length
-
-        else:
-            abscissa2 = min(abscissa + 0.001 * length, length)
-
-        tangent = self.point_at_abscissa(abscissa2) - self.point_at_abscissa(
-            abscissa)
-        return tangent
-
-    def normal_vector(self, abscissa):
-        return None
-
-    def unit_normal_vector(self, abscissa):
-        return None
-
     def point3d_to_parameter(self, point: volmdlr.Point3D):
         """
         Search for the value of the normalized evaluation parameter t (between 0 and 1).
@@ -5204,31 +5053,7 @@ class Arc3D(Arc):
         :param abscissa: abscissa where in the curve the point should be calculated.
         :return: Corresponding point.
         """
-        return self.start.rotation(self.center, self.normal,
-                                   abscissa / self.radius)
-
-    def normal_vector(self, abscissa):
-        """
-        Calculates a normal vector at a given abscissa of the Arc3D.
-
-        :param abscissa: abscissa where in the curve the normal vector should be calculated.
-        :return: Corresponding normal vector.
-        """
-        theta = abscissa / self.radius
-        n_0 = self.center - self.start
-        normal = n_0.rotation(self.center, self.normal, theta)
-        return normal
-
-    def unit_normal_vector(self, abscissa):
-        """
-        Calculates a unit normal vector at a given abscissa of the Arc3D.
-
-        :param abscissa: abscissa where in the curve the unit normal vector should be calculated.
-        :return: Corresponding unit normal vector.
-        """
-        normal_vector = self.normal_vector(abscissa)
-        normal_vector.normalize()
-        return normal_vector
+        return self.start.rotation(self.center, self.normal, abscissa / self.radius)
 
     def direction_vector(self, abscissa):
         """
@@ -5240,17 +5065,6 @@ class Arc3D(Arc):
         normal_vector = self.normal_vector(abscissa)
         tangent = normal_vector.cross(self.normal)
         return tangent
-
-    def unit_direction_vector(self, abscissa):
-        """
-        Calculates a unit direction vector at a given abscissa of the Arc3D.
-
-        :param abscissa: abscissa where in the curve the unit direction vector should be calculated.
-        :return: Corresponding unit direction vector.
-        """
-        direction_vector = self.direction_vector(abscissa)
-        direction_vector.normalize()
-        return direction_vector
 
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
@@ -6098,13 +5912,7 @@ class ArcEllipse3D(Edge):
     def normal_vector(self, abscissa):
         raise NotImplementedError
 
-    def unit_normal_vector(self, abscissa):
-        raise NotImplementedError
-
     def direction_vector(self, abscissa):
-        raise NotImplementedError
-
-    def unit_direction_vector(self, abscissa):
         raise NotImplementedError
 
     def reverse(self):
