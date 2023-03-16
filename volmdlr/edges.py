@@ -237,6 +237,27 @@ class Edge(dc.DessiaObject):
                     touching_points.append(point)
         return touching_points
 
+    def abscissa(self, point, tol: float = 1e-6):
+        """
+        Computes the abscissa of an Edge.
+
+        :param point: The point located on the edge.
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`].
+        :param tol: The precision in terms of distance. Default value is 1e-4.
+        :type tol: float, optional.
+        :return: The abscissa of the point.
+        :rtype: float
+        """
+        raise NotImplementedError(f'the abscissa method must be overloaded by {self.__class__.__name__}')
+
+    def local_discretization(self, point1, point2, number_points):
+        abscissa1 = self.abscissa(point1)
+        abscissa2 = self.abscissa(point2)
+        discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
+                                          in npy.linspace(abscissa1, abscissa2, num=number_points)]
+        return discretized_points_between_1_2
+
+
 class Line(dc.DessiaObject):
     """
     Abstract class representing a line.
