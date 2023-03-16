@@ -251,6 +251,14 @@ class Edge(dc.DessiaObject):
         raise NotImplementedError(f'the abscissa method must be overloaded by {self.__class__.__name__}')
 
     def local_discretization(self, point1, point2, number_points):
+        """
+        Gets n discretization points between two given points of the edge.
+
+        :param point1: point 1 on edge.
+        :param point2: point 2 on edge.
+        :param number_points: number of points to discretize locally.
+        :return: list of locally discretized points.
+        """
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
