@@ -352,6 +352,20 @@ class WireMixin:
         contour = cls(edges)
         return contour
 
+    @classmethod
+    def from_edge(cls, edge, number_segments: int):
+        """
+        Creates a Wire object from an edge.
+
+        :param edge: edge used to create Wire.
+        :param number_segments: number of segment for the wire to have.
+        :return: Wire object.
+        """
+        points = edge.discretization_points(number_points=number_segments + 1)
+        class_name_ = 'Wire'+edge.__class__.__name__[-2:]
+        class_ = getattr(sys.modules[__name__], class_name_)
+        return class_.from_points(points)
+
 
 class EdgeCollection3D(WireMixin):
     """
@@ -2241,7 +2255,7 @@ class Contour2D(ContourMixin, Wire2D):
         """
         # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
 
-        contours = self.cut_by_wire(bspline_curve2d.to_wire(20))
+        contours = self.cut_by_wire(Wire2D.from_edge(bspline_curve2d, 20))
 
         return contours
 
