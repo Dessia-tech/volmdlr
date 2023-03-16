@@ -137,9 +137,8 @@ class WireMixin:
         """
 
         primitives = []
-
-        ip1 = self.primitive_to_index(primitive1)
-        ip2 = self.primitive_to_index(primitive2)
+        ip1 = self.primitives.index(primitive1)
+        ip2 = self.primitives.index(primitive2)
 
         if ip1 < ip2:
             pass
@@ -164,13 +163,13 @@ class WireMixin:
                 prim = primitive1.split(point1)[1]
                 if prim:
                     primitives.append(prim)
-                primitives.extend(self.primitives[self.primitive_to_index(
-                    primitive1) + 1:self.primitive_to_index(primitive2)])
+                primitives.extend(self.primitives[self.primitives.index(
+                    primitive1) + 1:self.primitives.index(primitive2)])
                 prim = primitive2.split(point2)[0]
                 if prim:
                     primitives.append(prim)
         else:
-            primitives.extend(self.primitives[0:self.primitive_to_index(primitive1)])
+            primitives.extend(self.primitives[0:self.primitives.index(primitive1)])
             if ip1 == ip2:
                 prim = primitive1.split(point1)
                 if prim[0]:
@@ -186,7 +185,7 @@ class WireMixin:
                 prim = primitive2.split(point2)[1]
                 if prim:
                     primitives.append(prim)
-            primitives.extend(self.primitives[self.primitive_to_index(primitive2) + 1::])
+            primitives.extend(self.primitives[self.primitives.index(primitive2) + 1::])
 
         return primitives
 
@@ -442,7 +441,16 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def __init__(self, primitives: List[volmdlr.core.Primitive2D],
                  name: str = ''):
         self._bounding_rectangle = None
+        self._length = None
         volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
+
+    def __hash__(self):
+        return hash(('wire2d', tuple(self.primitives)))
+
+    def length(self):
+        if not self._length:
+            self._length = WireMixin.length(self)
+        return self._length
 
     def to_3d(self, plane_origin, x, y):
         """
@@ -1423,10 +1431,13 @@ class ContourMixin(WireMixin):
         if len(list_p) == 2:
             return list_p
 
-        contours = self.__class__.contours_from_edges(edges1)
+        contours = self.__class__.contours_from_edges(list(edges1))
         points = []
         for contour_i in contours:
-            points.extend(contour_i.extremities_points(list_p))
+            points_ = contour_i.extremities_points(list_p)
+            for point in points_:
+                if not volmdlr.core.point_in_list(point, points):
+                    points.append(point)
 
         return points
 
@@ -1436,13 +1447,18 @@ class ContourMixin(WireMixin):
 
         """
 
+        points = self.shared_primitives_extremities(contour)
+        if not points:
+            return [[], []]
+
         shared_primitives_1 = []
         shared_primitives_2 = []
 
-        points = self.shared_primitives_extremities(contour)
         for i in range(0, len(points), 2):
-            point1, point2 = points[i], points[i + 1]
-
+            try:
+                point1, point2 = points[i], points[i + 1]
+            except IndexError:
+                print(True)
             shared_primitives_prim = self.extract_without_primitives(point1, point2, False)
             if any(not contour.point_over_contour(prim.middle_point(), 1e-4) for prim in shared_primitives_prim):
                 shared_primitives_1.extend(self.extract_without_primitives(point1, point2, True))
@@ -1633,11 +1649,11 @@ class Contour2D(ContourMixin, Wire2D):
         return hash(tuple(self.primitives))
 
     def __eq__(self, other_):
+        if id(self) == id(other_):
+            return True
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
-        if len(self.primitives) != len(other_.primitives):
-            return False
-        if self.length() != other_.length():
+        if len(self.primitives) != len(other_.primitives) or self.length() != other_.length():
             return False
         equal = 0
         for prim1 in self.primitives:
@@ -4390,6 +4406,9 @@ class Contour3D(ContourMixin, Wire3D):
         Wire3D.__init__(self, primitives=primitives, name=name)
         self._edge_polygon = None
         self._utd_bounding_box = False
+
+    def __hash__(self):
+        return hash(tuple(self.primitives))
 
     def __eq__(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:
