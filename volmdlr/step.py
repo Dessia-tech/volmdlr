@@ -882,8 +882,12 @@ class Step(dc.DessiaObject):
 
     def create_node_list(self, stack):
         """
-        Step functions graph as a list of nodes
-        :return:
+        Step functions graph as a list of nodes.
+
+        :param stack: Initial list of shell nodes and assemblies entities.
+        :type stack: List[int]
+        :return: A list of nodes in the right order of dependency.
+        :rtype: List[int]
         """
         list_head = []
         list_nodes = []
