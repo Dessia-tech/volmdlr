@@ -97,10 +97,16 @@ class Edge(dc.DessiaObject):
     def point_at_abscissa(self, abscissa):
         """
         Calculates the point at given abscissa.
+
         """
         raise NotImplementedError(f'point_at_abscissa method not implemented by {self.__class__.__name__}')
 
     def middle_point(self):
+        """
+        Gets the middle point for an edge.
+
+        :return:
+        """
         half_length = self.length() / 2
         middle_point = self.point_at_abscissa(abscissa=half_length)
         return middle_point
@@ -1571,6 +1577,7 @@ class BSplineCurve2D(BSplineCurve):
         return cog
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Plot a BSpline curve 2D."""
         if ax is None:
             _, ax = plt.subplots()
 
@@ -1585,6 +1592,7 @@ class BSplineCurve2D(BSplineCurve):
         return ax
 
     def to_3d(self, plane_origin, x1, x2):
+        """Transforms a BSpline Curve 2D in 3D."""
         control_points3d = [point.to_3d(plane_origin, x1, x2) for point in
                             self.control_points]
         return BSplineCurve3D(self.degree, control_points3d,
