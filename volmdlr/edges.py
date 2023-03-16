@@ -240,7 +240,7 @@ class Edge(dc.DessiaObject):
         return touching_points
 
 
-class Line(dc.DessiaObject):
+class Line(Edge):
     """
     Abstract class representing a line.
 
@@ -1040,6 +1040,17 @@ class BSplineCurve(Edge):
         adim_abs = max(min(abscissa / length, 1.), 0.)
         point_name = 'Point' + self.__class__.__name__[-2:]
         return getattr(volmdlr, point_name)(*self.curve.evaluate_single(adim_abs))
+
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge.
+
+        :param point: Point to be verified
+        :return: Return True if the point belongs to this surface,
+            or False otherwise
+        """
+        raise NotImplementedError(f'the straight_line_point_belongs method must be'
+                                  f' overloaded by {self.__class__.__name__}')
 
 
 class Line2D(Line):
