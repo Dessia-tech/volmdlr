@@ -3644,7 +3644,9 @@ class ArcEllipse2D(Edge):
         a_max3d = a_max2d.to_3d(plane_origin, x, y)
         new_major_dir = a_max3d - point_center3d
         new_major_dir.normalize()
-        extra3d = self.extra.to_3d(plane_origin, x, y)
+        extra3d = self.extra
+        if extra3d:
+            extra3d = self.extra.to_3d(plane_origin, x, y)
         return ArcEllipse3D(point_start3d, point_interior3d, point_end3d,
                             point_center3d, new_major_dir, extra3d, name=self.name)
 

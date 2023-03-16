@@ -932,6 +932,8 @@ class Step(dc.DessiaObject):
         if len(self.functions[id_shape_representation].arg) != 4:
             id_shape_representation = int(arguments[2][1:])
         if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION":
+            if len(self.functions[id_shape_representation].arg) != 4:
+                return None
             id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
             id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
             id_shell = self.functions[id_solid_entity].arg[1]
@@ -975,7 +977,9 @@ class Step(dc.DessiaObject):
                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
                                             'SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
-                frame_mapped_shell_node.append(self.get_frame_mapped_shell_node(node))
+                shell_node = self.get_frame_mapped_shell_node(node)
+                if shell_node:
+                    frame_mapped_shell_node.append(shell_node)
             elif self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]:
                 shell_nodes.append(node)
             elif self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \

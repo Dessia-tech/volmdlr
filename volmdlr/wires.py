@@ -224,7 +224,7 @@ class WireMixin:
 
     def abscissa(self, point, tol=1e-6):
         """
-        Compute the curvilinear abscissa of a point on a wire.
+        Compute the curvilinear abscissa of a point on a edge.
 
         """
         if self.point_over_wire(point, tol):
@@ -236,14 +236,14 @@ class WireMixin:
                 length += primitive.length()
             return length
 
-        raise ValueError('Point is not on wire')
+        raise ValueError('Point is not on edge')
 
     def sort_points_along_wire(self, points):
-        """ Sort given points along the wire with respect to the abscissa. """
+        """ Sort given points along the edge with respect to the abscissa. """
         return sorted(points, key=lambda point: self.abscissa(point))
 
     def is_ordered(self, tol=1e-6):
-        """ Check if the wire's primitives are ordered or not. """
+        """ Check if the edge's primitives are ordered or not. """
 
         for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
             if primitive_1.end.point_distance(primitive_2.start) > tol:
@@ -251,7 +251,7 @@ class WireMixin:
         return True
 
     def order_wire(self, tol=1e-6):
-        """ Order wire's primitives. """
+        """ Order edge's primitives. """
 
         if self.is_ordered(tol=tol):
             return self.__class__(self.primitives[:])
@@ -280,7 +280,7 @@ class WireMixin:
     @classmethod
     def from_wires(cls, wires):
         """
-        Define a wire from successive wires.
+        Define a edge from successive wires.
 
         """
 
@@ -296,7 +296,7 @@ class WireMixin:
 
     def inverted_primitives(self):
         """
-        Invert wire's primitives.
+        Invert edge's primitives.
 
         """
 
@@ -307,14 +307,14 @@ class WireMixin:
 
     def is_followed_by(self, wire_2, tol=1e-6):
         """
-        Check if the wire is followed by wire_2.
+        Check if the edge is followed by wire_2.
 
         """
         return self.primitives[-1].end.point_distance(wire_2.primitives[0].start) < tol
 
     def point_over_wire(self, point, abs_tol=1e-6):
         """
-        Verifies if point is over wire.
+        Verifies if point is over edge.
 
         :param point: point to be verified.
         :param abs_tol: tolerance to be considered.
@@ -327,7 +327,7 @@ class WireMixin:
 
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
         """
-        Verifies if point is over wire.
+        Verifies if point is over edge.
 
         :param primitive: point to be verified.
         :param tol: tolerance to be considered.
@@ -433,7 +433,7 @@ class EdgeCollection3D(WireMixin):
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     """
-    A collection of simple primitives, following each other making a wire.
+    A collection of simple primitives, following each other making a edge.
 
     """
 
@@ -475,7 +475,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         """
         return self.extract_without_primitives(point1, point2, inside)
 
-        # TODO: method to check if it is a wire
+        # TODO: method to check if it is a edge
 
     def infinite_intersections(self, infinite_primitives):
         """
@@ -574,7 +574,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def line_intersections(self, line: 'volmdlr.edges.Line2D'):
         """
         Returns a list of intersection in the form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        primitive) of the edge primitives intersecting with the line.
 
         """
         intersection_points = []
@@ -587,7 +587,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                                   linesegment: 'volmdlr.edges.LineSegment2D'):
         """
         Returns a list of intersection in the form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        primitive) of the edge primitives intersecting with the line.
 
         """
         intersection_points = []
@@ -644,12 +644,12 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def line_crossings(self, line: volmdlr.edges.Line2D):
         """
-        Calculates valid crossing intersections of a wire and an infinite line.
+        Calculates valid crossing intersections of a edge and an infinite line.
 
-        :param line: line crossing the wire
+        :param line: line crossing the edge
         :type line: volmdlr.edges.Line2D
         returns a list of Tuples (point, primitive)
-        of the wire primitives intersecting with the line
+        of the edge primitives intersecting with the line
         """
         intersection_points = []
         intersection_points_primitives = []
@@ -667,7 +667,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def wire_intersections(self, wire):
         """
-        Compute intersections between two wire 2d.
+        Compute intersections between two edge 2d.
 
         :param wire : volmdlr.wires.Wire2D.
         :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
@@ -693,9 +693,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
         """
-        Define a wire based on points 2d with line_segments2d.
+        Define a edge based on points 2d with line_segments2d.
 
-        :param points: points to define wire 2d.
+        :param points: points to define edge 2d.
         """
         edges = []
         for i in range(0, len(points) - 1):
@@ -707,7 +707,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                               linesegment: 'volmdlr.edges.LineSegment2D'):
         """
         Returns a list of crossings in the form of a tuple (point,
-        primitive) of the wire primitives intersecting with the line.
+        primitive) of the edge primitives intersecting with the line.
         """
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
@@ -718,7 +718,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def wire_crossings(self, wire):
         """
-        Compute crossings between two wire 2d.
+        Compute crossings between two edge 2d.
 
         :param wire: volmdlr.wires.Wire2D
         :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
@@ -743,7 +743,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def to_wire_with_linesegments(self):
         """
-        Convert a wire with different primitives to a wire with just linesegments.
+        Convert a edge with different primitives to a edge with just linesegments.
         """
 
         wires = []
@@ -760,7 +760,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def extend(self, point):
         """
-        Extend a wire by adding a linesegment connecting the given point to the nearest wire's extremities.
+        Extend a edge by adding a linesegment connecting the given point to the nearest edge's extremities.
         """
 
         distances = [self.primitives[0].start.point_distance(point), self.primitives[-1].end.point_distance(point)]
@@ -799,7 +799,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def axial_symmetry(self, line):
         """
-        Finds out the symmetric wire 2d according to a line.
+        Finds out the symmetric edge 2d according to a line.
 
         """
 
@@ -835,7 +835,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                                bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
         Returns a list of crossings in the form of a tuple (point,
-        primitive) of the wire primitives crossings with the bsplinecurve.
+        primitive) of the edge primitives crossings with the bsplinecurve.
 
         """
 
@@ -851,7 +851,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                                    bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
         Returns a list of intersections in the form of a tuple (point,
-        primitive) of the wire primitives intersections with the bsplinecurve.
+        primitive) of the edge primitives intersections with the bsplinecurve.
 
         """
 
@@ -883,7 +883,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     """
-    A collection of simple primitives, following each other making a wire.
+    A collection of simple primitives, following each other making a edge.
 
     """
 
@@ -966,7 +966,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def to_bspline(self, discretization_parameter, degree):
         """
-        Convert a wire 3d to a bspline curve 3d.
+        Convert a edge 3d to a bspline curve 3d.
 
         """
 
@@ -2230,7 +2230,7 @@ class Contour2D(ContourMixin, Wire2D):
         """
         Cut a contour 2d with bspline_curve2d to define two different contours.
         """
-        # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
+        # TODO: BsplineCurve is descretized and defined with a edge. To be improved!
 
         contours = self.cut_by_wire(bspline_curve2d.to_wire(20))
 
@@ -2304,7 +2304,7 @@ class Contour2D(ContourMixin, Wire2D):
         :param wire: volmdlr.wires.Wire2D
         :rtype: list[volmdlr.wires.Contour2D]
 
-        :param wire: volmdlr.wires.Wire2D.
+        :param edge: volmdlr.wires.Wire2D.
         :return: contours2d : list[volmdlr.wires.Contour2D].
         """
 
