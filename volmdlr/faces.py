@@ -1707,7 +1707,9 @@ class PeriodicalSurface(Surface3D):
         end = self.point3d_to_2d(linesegment3d.end)
         if start.x != end.x:
             end = volmdlr.Point2D(start.x, end.y)
-        return [vme.LineSegment2D(start, end)]
+        if not start.is_close(end):
+            return [vme.LineSegment2D(start, end)]
+        return None
 
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
@@ -1840,7 +1842,7 @@ class CylindricalSurface3D(PeriodicalSurface):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = None
 
-    def __init__(self, frame, radius: float, name: str=''):
+    def __init__(self, frame, radius: float, name: str = ''):
         self.frame = frame
         self.radius = radius
         PeriodicalSurface.__init__(self, name=name)
@@ -1882,8 +1884,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
 
         point = volmdlr.Point3D(self.radius * math.cos(point2d.x),
-                            self.radius * math.sin(point2d.x),
-                            point2d.y)
+                                self.radius * math.sin(point2d.x),
+                                point2d.y)
         return self.frame.local_to_global_coordinates(point)
 
     def point3d_to_2d(self, point3d):
@@ -3857,7 +3859,7 @@ class BSplineSurface3D(Surface3D):
                                                 self.surface.rational,
                                                 self.surface.evaluator._span_func))
         # uses derivatives for performance because it's already compiled
-        # return volmdlr.Point3D(*self.derivatives(x, y, 0)[0][0])
+        # return volmdlr.Point3D(*self.derivatives(u, v, 0)[0][0])
         # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-5):
@@ -3961,7 +3963,7 @@ class BSplineSurface3D(Surface3D):
         """
         start = self.point3d_to_2d(linesegment3d.start)
         end = self.point3d_to_2d(linesegment3d.end)
-        if start == end:
+        if start.is_close(end):
             return None
         return [vme.LineSegment2D(start, end)]
 
@@ -4365,7 +4367,8 @@ class BSplineSurface3D(Surface3D):
         bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
                              u_multiplicities, v_multiplicities, u_knots,
                              v_knots, weight_data, name)
-        bsplinesurface = bsplinesurface.simplify_surface()
+        # if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
+        #     bsplinesurface = bsplinesurface.simplify_surface()
         # if u_closed:
         #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
         # if v_closed:

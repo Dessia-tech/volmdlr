@@ -3329,7 +3329,7 @@ class ArcEllipse2D(Edge):
             From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a- \
             center-and-3-arbitrary-points-on-it-are-given.
             theta= ellipse's inclination angle related to the horizontal
-            (clockwise),A=semi major axis, B=semi minor axis.
+            (clockwise), A=semi major axis, B=semi minor axis.
 
             """
             x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1],\
@@ -4860,8 +4860,6 @@ class BSplineCurve3D(BSplineCurve):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig = ax.figure
 
         x = [point.x for point in self.points]
         y = [point.y for point in self.points]
