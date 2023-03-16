@@ -720,7 +720,8 @@ class Step(dc.DessiaObject):
         """
         Step functions graph.
 
-        :return:
+        :return: A graph representation the step file structure.
+        :rtype: nx.DiGraph
         """
         F = nx.DiGraph()
         labels = {}
@@ -1068,7 +1069,7 @@ class Step(dc.DessiaObject):
         return points3d[1:]
 
     def plot_data(self):
-        graph = self.graph.copy()
+        graph = self.graph().copy()
 
         graph.remove_nodes_from([stepfunction.id for stepfunction
                                  in self.functions.values()

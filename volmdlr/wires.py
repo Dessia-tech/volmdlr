@@ -2222,7 +2222,7 @@ class Contour2D(ContourMixin, Wire2D):
     def from_bounding_rectangle(cls, x_min, x_max, y_min, y_max):
         """
         Create a contour 2d with bounding_box parameters, using line segments 2d.
- 
+
         """
 
         edge0 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_min))
@@ -2237,7 +2237,7 @@ class Contour2D(ContourMixin, Wire2D):
     def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
         """
         Cut a contour 2d with bspline_curve 2d to define two different contours.
-        
+
         """
         # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
 

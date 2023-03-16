@@ -191,7 +191,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                           offset_vectors[i - (not self.closed)]
+                offset_vectors[i - (not self.closed)]
             offset_points.append(offset_point)
 
         if not self.closed:

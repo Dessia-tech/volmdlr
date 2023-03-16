@@ -1842,7 +1842,7 @@ class CylindricalSurface3D(PeriodicalSurface):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = None
 
-    def __init__(self, frame, radius: float, name: str=''):
+    def __init__(self, frame, radius: float, name: str = ''):
         self.frame = frame
         self.radius = radius
         PeriodicalSurface.__init__(self, name=name)
@@ -1884,8 +1884,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
 
         point = volmdlr.Point3D(self.radius * math.cos(point2d.x),
-                            self.radius * math.sin(point2d.x),
-                            point2d.y)
+                                self.radius * math.sin(point2d.x),
+                                point2d.y)
         return self.frame.local_to_global_coordinates(point)
 
     def point3d_to_2d(self, point3d):
