@@ -8,7 +8,6 @@ import time
 from typing import List
 from dataclasses import dataclass, field
 import numpy as npy
-import warnings
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -962,7 +961,7 @@ class Step(dc.DessiaObject):
                 self.functions[id1].arg.append(f'#{id2}')
         not_shell_nodes = []
         frame_mapped_shell_node = []
-        
+
         for node in list(self.functions.keys()):
             if self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, ' \
                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
@@ -991,7 +990,7 @@ class Step(dc.DessiaObject):
 
         nodes = self.create_node_list(shell_nodes + frame_mapping_nodes)
         errors = set()
-        for i, node in enumerate(nodes):
+        for node in nodes:
 
             if node is None:
                 continue

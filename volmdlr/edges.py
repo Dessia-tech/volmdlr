@@ -3224,7 +3224,7 @@ class FullArc2D(Arc2D):
         vector1 = vec.dot(vec)
         vector2 = 2 * vec.dot(pt1 - self.center)
         vector3 = pt1.dot(pt1) + self.center.dot(self.center) \
-                  - 2 * pt1.dot(self.center) - self.radius ** 2
+            - 2 * pt1.dot(self.center) - self.radius ** 2
 
         disc = vector2 ** 2 - 4 * vector1 * vector3
         if math.isclose(disc, 0., abs_tol=tol):
@@ -3260,7 +3260,7 @@ class FullArc2D(Arc2D):
         vector1 = vec.dot(vec)
         vector2 = 2 * vec.dot(pt1 - self.center)
         vector3 = pt1.dot(pt1) + self.center.dot(self.center) \
-                  - 2 * pt1.dot(self.center) - self.radius ** 2
+            - 2 * pt1.dot(self.center) - self.radius ** 2
 
         disc = vector2 ** 2 - 4 * vector1 * vector3
         if math.isclose(disc, 0., abs_tol=tol):
@@ -3335,7 +3335,7 @@ class ArcEllipse2D(Edge):
 
             """
             x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1], \
-                                                                     iterior_[0] - center_[0], iterior_[1] - center_[
+                iterior_[0] - center_[0], iterior_[1] - center_[
                                                                          1], end_[0] - center_[0], end_[1] - center_[1]
             matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
                                   [x_interior ** 2, y_interior ** 2, 2 * x_interior * y_interior],
@@ -6094,7 +6094,7 @@ class ArcEllipse3D(Edge):
 
             """
             x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1], \
-                                                                     iterior_[0] - center_[0], iterior_[1] - center_[
+                iterior_[0] - center_[0], iterior_[1] - center_[
                                                                          1], end_[0] - center_[0], end_[1] - center_[1]
             matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
                                   [x_interior ** 2, y_interior ** 2, 2 * x_interior * y_interior],
