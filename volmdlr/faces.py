@@ -1924,8 +1924,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
 
         point = volmdlr.Point3D(self.radius * math.cos(point2d.x),
-                            self.radius * math.sin(point2d.x),
-                            point2d.y)
+                                self.radius * math.sin(point2d.x),
+                                point2d.y)
         return self.frame.local_to_global_coordinates(point)
 
     def point3d_to_2d(self, point3d):
