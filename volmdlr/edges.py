@@ -3780,15 +3780,20 @@ class FullArcEllipse2D(ArcEllipse2D):
                                 self.center.translation(offset), self.major_dir, self.name)
 
     def normal_vector(self, abscissa):
-        raise NotImplementedError
+        """
+        Calculates the normal vector the edge at given abscissa.
 
-    def unit_normal_vector(self, abscissa):
+        :return: the normal vector
+        """
         raise NotImplementedError
 
     def direction_vector(self, abscissa):
-        raise NotImplementedError
+        """
+        Calculates the direction vector the edge at given abscissa.
 
-    def unit_direction_vector(self, abscissa):
+        :param abscissa: edge abscissa
+        :return: direction vector
+        """
         raise NotImplementedError
 
 
@@ -6556,13 +6561,18 @@ class FullArcEllipse3D(ArcEllipse3D):
                                 self.center.translation(offset), self.normal, self.major_dir, self.name)
 
     def normal_vector(self, abscissa):
-        raise NotImplementedError
+        """
+        Calculates the normal vector the edge at given abscissa.
 
-    def unit_normal_vector(self, abscissa):
+        :return: the normal vector
+        """
         raise NotImplementedError
 
     def direction_vector(self, abscissa):
-        raise NotImplementedError
+        """
+        Calculates the direction vector the edge at given abscissa.
 
-    def unit_direction_vector(self, abscissa):
+        :param abscissa: edge abscissa
+        :return: direction vector
+        """
         raise NotImplementedError
