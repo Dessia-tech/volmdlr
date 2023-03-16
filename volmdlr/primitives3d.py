@@ -1759,6 +1759,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
                 circles = []
                 for pt, tan in zip(wire_primitive.points, tangents):
+                    # TODO: replace circle by real contour!
                     circles.append(volmdlr.wires.Circle3D.from_center_normal(center=pt,
                                                                              normal=tan,
                                                                              radius=self.contour2d.radius))
