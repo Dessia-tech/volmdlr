@@ -3779,6 +3779,18 @@ class FullArcEllipse2D(ArcEllipse2D):
         return FullArcEllipse2D(self.start_end.translation(offset), self.major_axis, self.minor_axis,
                                 self.center.translation(offset), self.major_dir, self.name)
 
+    def normal_vector(self, abscissa):
+        raise NotImplementedError
+
+    def unit_normal_vector(self, abscissa):
+        raise NotImplementedError
+
+    def direction_vector(self, abscissa):
+        raise NotImplementedError
+
+    def unit_direction_vector(self, abscissa):
+        raise NotImplementedError
+
 
 class Line3D(Line):
     """
@@ -6542,3 +6554,15 @@ class FullArcEllipse3D(ArcEllipse3D):
         """
         return FullArcEllipse3D(self.start_end.translation(offset), self.major_axis, self.minor_axis,
                                 self.center.translation(offset), self.normal, self.major_dir, self.name)
+
+    def normal_vector(self, abscissa):
+        raise NotImplementedError
+
+    def unit_normal_vector(self, abscissa):
+        raise NotImplementedError
+
+    def direction_vector(self, abscissa):
+        raise NotImplementedError
+
+    def unit_direction_vector(self, abscissa):
+        raise NotImplementedError
