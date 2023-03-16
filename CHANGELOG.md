@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle2D: bsplinecurve_intersections, point_distance
 * ConicalSurface3D, CylindricalSurface3D: plot method
 * volmdlr.edge: FullArcEllipse
+* Wire2: hash
+* Contour3D: hash
 
 ### Fixed
 * Plane3D: plane_intersections
@@ -22,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fixes to wire
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
+* Add some important fixes to unittests: missing two __init__py files.
 
 ### Removed
 
@@ -50,6 +53,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unittests for Vector3D
 * Unittests for Point3D
 
+
+## v0.9.1
+
+### Fixed
+- build: manifest was not shipping bspline_compiled
+- fixed many pylint errors: 13/03/2023
 ## v0.9.0 [Released 06/03/2023]
 
 ### New Features
@@ -374,6 +383,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * Circle3D: to_step
 * ArcEllipse3D.to_2d()
 * infinite primitive offset of linesegment
+* Contour3D: order_contour.
 
 ### Performance improvements
 

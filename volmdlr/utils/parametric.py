@@ -1,5 +1,6 @@
 """
-volmdlr utils for calculating 3D to surface parametric domain operationa
+volmdlr utils for calculating 3D to surface parametric domain operation.
+
 """
 import bisect
 import math
@@ -12,7 +13,7 @@ def repair_singularity(primitive, last_primitive):
     """
     Repairs the Contour2D of SphericalSurface3D and ConicalSurface3D parametric face representations.
 
-    Used when transforming from spatial to parametric coordinates when the surface contains a sigularity
+    Used when transforming from spatial to parametric coordinates when the surface contains a singularity
     """
     v1 = primitive.unit_direction_vector()
     v2 = last_primitive.unit_direction_vector()
@@ -132,10 +133,7 @@ def arc3d_to_spherical_verification(start, end, angle3d, reference_points, perio
     if math.isclose(theta1, theta2, abs_tol=1e-4):
         phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2, angle3d, y_periodicity)
 
-    start = volmdlr.Point2D(theta1, phi1)
-    end = volmdlr.Point2D(theta2, phi2)
-
-    return start, end
+    return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
 
 
 def array_range_search(x, xmin, xmax):

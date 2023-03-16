@@ -294,11 +294,7 @@ class CompositePrimitive2D(CompositePrimitive):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(
-                ax=ax,
-                edge_style=EdgeStyle(
-                    color=edge_style.color,
-                    alpha=edge_style.alpha))  # , plot_points=plot_points)
+            element.plot(ax=ax, edge_style=EdgeStyle(color=edge_style.color, alpha=edge_style.alpha))
 
         ax.margins(0.1)
         plt.show()
@@ -1269,10 +1265,8 @@ class VolumeModel(dc.PhysicalObject):
             step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
                             f"'',#{product_definition_id});\n"
             shape_definition_repr_id = product_definition_shape_id + 1
-            step_content += "#{} = SHAPE_DEFINITION_REPRESENTATION(#{},#{});\n".format(shape_definition_repr_id,
-                                                                                       product_definition_shape_id,
-                                                                                       primitive_id
-                                                                                       )
+            step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
+                            f"#{product_definition_shape_id},#{primitive_id});\n"
             product_related_category = shape_definition_repr_id + 1
             step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
                             f"'part',$,(#{product_id}));\n"
@@ -1826,7 +1820,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def to_msh_file(self, mesh_dimension: int,
                     factor: float, file_name: str = '', **kwargs):
-        """ Convert and write model to a .msh file """
+        """ Convert and write model to a .msh file. """
 
         for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
             if element[0] not in kwargs:
@@ -1917,7 +1911,7 @@ class MovingVolumeModel(VolumeModel):
         """
         Get babylonjs data.
 
-        :return: Dictionary with babylon data.
+        :return: Dictionary with babylonjs data.
         """
         meshes = []
         primitives_to_meshes = []
