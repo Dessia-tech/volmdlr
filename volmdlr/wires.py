@@ -362,7 +362,7 @@ class WireMixin:
         :return: Wire object.
         """
         points = edge.discretization_points(number_points=number_segments + 1)
-        class_name_ = 'Wire'+edge.__class__.__name__[-2:]
+        class_name_ = 'Wire' + edge.__class__.__name__[-2:]
         class_ = getattr(sys.modules[__name__], class_name_)
         return class_.from_points(points)
 

@@ -239,6 +239,7 @@ class Edge(dc.DessiaObject):
                     touching_points.append(point)
         return touching_points
 
+
 class Line(dc.DessiaObject):
     """
     Abstract class representing a line.
@@ -640,7 +641,7 @@ class BSplineCurve(Edge):
         :param abscissa: edge abscissa
         :return: direction vector
         """
-        u = abscissa/self.length()
+        u = abscissa / self.length()
         derivatives = self.derivatives(u, 1)
         return derivatives[1]
 
