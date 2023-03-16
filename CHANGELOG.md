@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: offset
 * Circle2D: bsplinecurve_intersections, point_distance
 * ConicalSurface3D, CylindricalSurface3D: plot method
+* Wire2: hash
+* Contour3D: hash
+
 ### Fixed
 * Plane3D: plane_intersections
 * fixes to step assemblies
@@ -378,6 +381,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * Circle3D: to_step
 * ArcEllipse3D.to_2d()
 * infinite primitive offset of linesegment
+* Contour3D: order_contour.
 
 ### Performance improvements
 
