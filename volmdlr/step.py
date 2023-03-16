@@ -609,7 +609,7 @@ class Step(dc.DessiaObject):
         return self._graph
 
     @classmethod
-    def from_stream(cls, stream: BinaryFile = None):
+    def from_stream(cls, stream: BinaryFile):
         stream.seek(0)
         lines = []
         for line in stream:
