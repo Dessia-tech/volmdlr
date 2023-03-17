@@ -1469,10 +1469,7 @@ class ContourMixin(WireMixin):
         shared_primitives_2 = []
 
         for i in range(0, len(points), 2):
-            try:
-                point1, point2 = points[i], points[i + 1]
-            except IndexError:
-                print(True)
+            point1, point2 = points[i], points[i + 1]
             shared_primitives_prim = self.extract_without_primitives(point1, point2, False)
             if any(not contour.point_over_contour(prim.middle_point(), 1e-4) for prim in shared_primitives_prim):
                 shared_primitives_1.extend(self.extract_without_primitives(point1, point2, True))
@@ -1760,10 +1757,7 @@ class Contour2D(ContourMixin, Wire2D):
                     self._area = abs(area)
             else:
                 polygon = self.to_polygon(angle_resolution=50)
-                try:
-                    self._area = polygon.triangulation().area()
-                except Exception:
-                    print(True)
+                self._area = polygon.triangulation().area()
         return self._area
 
     def center_of_mass(self):
@@ -1854,7 +1848,6 @@ class Contour2D(ContourMixin, Wire2D):
             point = volmdlr.Point2D.random(x_min, x_max, y_min, y_max)
             if self.point_belongs(point, include_edge_points):
                 return point
-        print(True)
         raise ValueError('Could not find a point inside')
 
     @classmethod
@@ -4498,7 +4491,6 @@ class Contour3D(ContourMixin, Wire3D):
 
         if (len(raw_edges)) == 1:
             if isinstance(raw_edges[0], cls):
-                print(True)
                 # Case of a circle, ellipse...
                 return raw_edges[0]
             return cls(raw_edges, name=name)

@@ -40,8 +40,8 @@ def angle_discontinuity(angle_list):
     theta_discontinuity = False
     if indexes_sign_changes:
         for index in indexes_sign_changes:
-            delta_theta = abs(angle_list[index] + angle_list[index - 1])
-            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta_theta):
+            delta = max(angle_list) - min(angle_list)
+            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta/len(angle_list)):
                 theta_discontinuity = True
                 break
     return theta_discontinuity

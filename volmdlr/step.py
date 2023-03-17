@@ -911,6 +911,32 @@ class Step(dc.DessiaObject):
                     list_head.append(node)
         return list_head + list_nodes[::-1]
 
+    def get_shell_node_from_representation_entity(self, id_representation_entity):
+        name_representation_entity = self.functions[id_representation_entity].name
+        arg = self.functions[id_representation_entity].arg[1]
+        if name_representation_entity == "MANIFOLD_SURFACE_SHAPE_REPRESENTATION":
+            if self.functions[int(arg[0][1:])].name == "AXIS2_PLACEMENT_3D":
+                id_solid_entity = int(arg[1][1:])
+            else:
+                id_solid_entity = int(arg[0][1:])
+            if self.functions[id_solid_entity].name in {"CLOSED_SHELL", "OPEN_SHELL"}:
+                id_shell = id_solid_entity
+                if isinstance(id_shell, list):
+                    return int(id_shell[0][1:])
+                return int(id_shell[1:])
+            id_shell = self.functions[id_solid_entity].arg[1]
+            if isinstance(id_shell, list):
+                return int(id_shell[0][1:])
+            return int(id_shell[1:])
+        if self.functions[int(arg[0][1:])].name == "AXIS2_PLACEMENT_3D":
+            id_solid_entity = int(arg[1][1:])
+        else:
+            id_solid_entity = int(arg[0][1:])
+        id_shell = self.functions[id_solid_entity].arg[1]
+        if isinstance(id_shell, list):
+            return int(id_shell[0][1:])
+        return int(id_shell[1:])
+
     def get_frame_mapped_shell_node(self, node):
         """
         Find the shells nodes in the assembly.
@@ -918,7 +944,16 @@ class Step(dc.DessiaObject):
         :param node: Assembly step entity node.
         :type node: int
         """
+        id_representation_entity = None
         arguments = self.functions[node].arg
+        name_arg1 = self.functions[int(arguments[2][1:])].name
+        name_arg2 = self.functions[int(arguments[3][1:])].name
+        if name_arg1 in STEP_REPRESENTATION_ENTITIES:
+            id_representation_entity = int(arguments[2][1:])
+        elif name_arg2 in STEP_REPRESENTATION_ENTITIES:
+            id_representation_entity = int(arguments[3][1:])
+        if id_representation_entity:
+            return self.get_shell_node_from_representation_entity(id_representation_entity)
         id_shape_representation = int(arguments[3][1:])
         # The shape_representation can be a list of frames, if it's a list of frames
         # (len(self.functions[id_shape_representation].arg) != 4, I'm not sure if this is always true)
@@ -972,7 +1007,7 @@ class Step(dc.DessiaObject):
                 shell_node = self.get_frame_mapped_shell_node(node)
                 if shell_node:
                     frame_mapped_shell_node.append(shell_node)
-            elif self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]:
+            elif self.functions[node].name in {"CLOSED_SHELL", "OPEN_SHELL"}:
                 shell_nodes.append(node)
             elif self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
                                               'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
@@ -1218,3 +1253,10 @@ for k, v in STEP_TO_VOLMDLR.items():
 SI_PREFIX = {'.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9, '.MEGA.': 1e6, '.KILO.': 1e3,
              '.HECTO.': 1e2, '.DECA.': 1e1, '$': 1, '.DECI.': 1e-1, '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6,
              '.NANO.': 1e-9, '.PICO.': 1e-12, '.FEMTO.': 1e-15, '.ATTO.': 1e-18}
+
+STEP_REPRESENTATION_ENTITIES = {"ADVANCED_BREP_SHAPE_REPRESENTATION", "FACETED_BREP_SHAPE_REPRESENTATION",
+                                   "MANIFOLD_SURFACE_SHAPE_REPRESENTATION",
+                                   "GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION",
+                                   "GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION",
+                                   "EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION"
+                                }

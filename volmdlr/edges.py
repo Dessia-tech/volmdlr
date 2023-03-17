@@ -6081,8 +6081,6 @@ class FullArc3D(Arc3D):
             y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment.start.x) + linesegment.start.y
             y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment.start.x) + linesegment.start.y
             return [volmdlr.Point3D(x1, y1, self.frame.origin.z), volmdlr.Point3D(x2, y2, self.frame.origin.z)]
-        if math.isclose(direction_vector.z, 0, abs_tol=1e-6):
-            print(True)
         constant = (self.frame.origin.z - linesegment.start.z) / direction_vector.z
         x_coordinate = constant * direction_vector.x + linesegment.start.x
         y_coordinate = constant * direction_vector.y + linesegment.start.y

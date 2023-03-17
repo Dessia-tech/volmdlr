@@ -1035,6 +1035,10 @@ class Surface3D(DessiaObject):
             if pos != 0:
                 primitives2d = primitives2d[pos:] + primitives2d[:pos]
         i = 1
+        if x_periodicity is None:
+            x_periodicity = -1
+        if y_periodicity is None:
+            y_periodicity = -1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
@@ -3554,8 +3558,8 @@ class ExtrusionSurface3D(Surface3D):
         if self._x_periodicity:
             return self._x_periodicity
         length = self.edge.length()
-        start = self.edge.point_at_abscissa(0)
-        end = self.edge.point_at_abscissa(length)
+        start = self.edge.start
+        end = self.edge.end
         if start.is_close(end, 1e-4):
             return 1
         return None
@@ -3596,12 +3600,9 @@ class ExtrusionSurface3D(Surface3D):
         v = z
         point_at_curve_local = volmdlr.Point3D(x, y, 0)
         point_at_curve_global = self.frame.local_to_global_coordinates(point_at_curve_local)
-        # try:
+
         u = self.edge.abscissa(point_at_curve_global) / self.edge.length()
-        # except Exception:
-        #     ax = self.edge.plot()
-        #     point_at_curve_global.plot(ax)
-            # print(True)
+
         if u > 1:
             u = 1.0
         return volmdlr.Point2D(u, v)
@@ -3638,7 +3639,7 @@ class ExtrusionSurface3D(Surface3D):
         if edge.__class__ is volmdlr.wires.Ellipse3D:
             fullarcellipse = vme.FullArcEllipse3D(edge.point_at_abscissa(0), edge.major_axis, edge.minor_axis,
                                                   edge.center, edge.normal, edge.major_dir, edge.name)
-            edge = volmdlr.wires.Contour3D([fullarcellipse])
+            edge = fullarcellipse
             direction = -object_dict[arguments[2]]
             surface = cls(edge=edge, direction=direction, name=name)
             surface.x_periodicity = 1
@@ -3712,7 +3713,12 @@ class ExtrusionSurface3D(Surface3D):
             if flag:
                 return [linesegment]
 
-        raise NotImplementedError
+        # Is this always True?
+        n = len(bspline_curve3d.control_points)
+        points = [self.point3d_to_2d(p)
+                  for p in bspline_curve3d.discretization_points(number_points=n)]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
+        # raise NotImplementedError
 
 
 
