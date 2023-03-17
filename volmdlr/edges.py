@@ -240,7 +240,7 @@ class Edge(dc.DessiaObject):
         return touching_points
 
 
-class Line(Edge):
+class Line(dc.DessiaObject):
     """
     Abstract class representing a line.
 
@@ -268,6 +268,17 @@ class Line(Edge):
             return self.point2
         raise IndexError
 
+    def unit_direction_vector(self, *args, **kwargs):
+        """
+        Get the unit direction vector of the line.
+
+        :return: The unit direction vector of the line
+        :rtype:  Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
+        """
+        vector = self.direction_vector()
+        vector.normalize()
+        return vector
+
     def direction_vector(self, *args, **kwargs):
         """
         Get the direction vector of the line.
@@ -287,6 +298,18 @@ class Line(Edge):
         :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
         """
         return self.direction_vector().normal_vector()
+
+    def unit_normal_vector(self, abscissa=0.):
+        """
+        Get the unit normal vector of the line.
+
+        :param abscissa: The abscissa of the point from which to calculate
+            the normal vector
+        :type abscissa: float, optional
+        :return: The unit normal vector of the line
+        :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
+        """
+        return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
         """
@@ -372,23 +395,6 @@ class Line(Edge):
         if line_segment.line_intersections(self):
             return True
         return False
-
-    def straight_line_point_belongs(self, point):
-        """
-        Verifies if a point belongs to the surface created by closing the edge.
-
-        :param point: Point to be verified
-        :return: Return True if the point belongs to this surface,
-            or False otherwise
-        """
-        raise NotImplementedError(f'the straight_line_point_belongs method must be'
-                                  f' overloaded by {self.__class__.__name__}')
-
-    def length(self):
-        """
-        A line is infinite by definition.
-        """
-        return math.inf
 
 
 class LineSegment(Edge):
