@@ -1760,7 +1760,10 @@ class Contour2D(ContourMixin, Wire2D):
                     self._area = abs(area)
             else:
                 polygon = self.to_polygon(angle_resolution=50)
-                self._area = polygon.triangulation().area()
+                try:
+                    self._area = polygon.triangulation().area()
+                except Exception:
+                    print(True)
         return self._area
 
     def center_of_mass(self):
@@ -2592,7 +2595,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         if len(self.points) > 1:
             for point1, point2 in zip(self.points,
                                       list(self.points[1:]) + [self.points[0]]):
-                if point1 != point2:
+                if not point1.is_close(point2):
                     lines.append(volmdlr.edges.LineSegment2D(point1, point2))
         return lines
 

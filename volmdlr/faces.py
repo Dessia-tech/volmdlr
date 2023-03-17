@@ -7,7 +7,6 @@ import math
 import warnings
 from itertools import chain, product
 from typing import List, Tuple, Union
-from functools import cached_property
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -33,7 +32,7 @@ import volmdlr.geometry
 import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
-from volmdlr.utils.parametric import array_range_search
+from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
 from volmdlr.bspline_evaluators import evaluate_single
 
 
@@ -1769,39 +1768,14 @@ class PeriodicalSurface(Surface3D):
             point2 = volmdlr.Point2D(theta1, 1)
         return [vme.LineSegment2D(point1, point2)]
 
-    @staticmethod
-    def find_sign_changes(lst):
-        """
-        Finds the position of sign changes in a list.
-
-        Args:
-            lst (list): The list to search for sign changes.
-
-        Returns:
-            list: A list of indices where the sign changes occur.
-        """
-        sign_changes = []
-        for i in range(1, len(lst)):
-            if lst[i] * lst[i - 1] < 0:
-                sign_changes.append(i)
-        return sign_changes
-
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         length = bspline_curve3d.length()
         n = len(bspline_curve3d.control_points)
-        points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
-
-        theta_list = [point.x for point in points]
-
-        indexes_sign_changes = self.find_sign_changes(theta_list)
-        theta_discontinuity = False
-        for index in indexes_sign_changes:
-            #TODO: enhance this
-            if math.isclose(abs(theta_list[index]), math.pi, abs_tol=volmdlr.TWO_PI/n):
-                theta_discontinuity = True
+        points3d = bspline_curve3d.discretization_points(number_points=n)
+        points = [self.point3d_to_2d(point) for point in points3d]
         theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
         theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
 
@@ -1812,16 +1786,19 @@ class PeriodicalSurface(Surface3D):
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         if abs(theta1) == math.pi:
-            theta1 = vm_parametric.repair_start_end_angle_periodicity(theta1, theta3)
+            theta1 = repair_start_end_angle_periodicity(theta1, theta3)
         if abs(theta2) == math.pi:
             theta4, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
             # make sure that the reference angle is not undefined
             if abs(theta4) == math.pi:
                 theta4, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.97 * length))
-            theta2 = vm_parametric.repair_start_end_angle_periodicity(theta2, theta4)
+            theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
         points[0] = volmdlr.Point2D(theta1, z1)
         points[-1] = volmdlr.Point2D(theta2, z2)
+
+        theta_list = [point.x for point in points]
+        theta_discontinuity = angle_discontinuity(theta_list)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
@@ -1841,7 +1818,7 @@ class PeriodicalSurface(Surface3D):
             return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
                                       self.point2d_to_3d(linesegment2d.end))]
         if math.isclose(z1, z2, abs_tol=1e-4):
-            if abs(theta1 - theta2) == volmdlr.TWO_PI:
+            if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
                 return [vme.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
                                       start_end=self.point2d_to_3d(linesegment2d.start),
                                       normal=self.frame.w)]
@@ -2492,7 +2469,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         theta1, phi1 = linesegment2d.start
         theta2, phi2 = linesegment2d.end
         if math.isclose(theta1, theta2, abs_tol=1e-4):
-            if math.isclose(phi1 - phi2, volmdlr.TWO_PI, abs_tol=1e-4):
+            if math.isclose(abs(phi1 - phi2), volmdlr.TWO_PI, abs_tol=1e-4):
                 u_vector = self.frame.u.rotation(self.frame.origin, self.frame.w, angle=theta1)
                 v_vector = self.frame.u.rotation(self.frame.origin, self.frame.w, angle=theta1)
                 center = self.frame.origin + self.tore_radius * u_vector
@@ -2505,7 +2482,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 self.point2d_to_3d(linesegment2d.end),
             )]
         if math.isclose(phi1, phi2, abs_tol=1e-4):
-            if abs(theta1 - theta2) == volmdlr.TWO_PI:
+            if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
                 center = self.frame.origin + self.r * math.sin(phi1) * self.frame.w
                 start_end = center + self.frame.u * (self.r + self.tore_radius)
                 return [vme.FullArc3D(center=center,
@@ -2588,27 +2565,32 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         if abs(theta1) == math.pi:
-            theta1 = vm_parametric.repair_start_end_angle_periodicity(theta1, theta3)
+            theta1 = repair_start_end_angle_periodicity(theta1, theta3)
         if abs(theta2) == math.pi:
-            theta2 = vm_parametric.repair_start_end_angle_periodicity(theta2, theta4)
+            theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
         # Verify if phi1 or phi2 point should be -pi because phi -> ]-pi, pi]
         if abs(phi1) == math.pi:
-            phi1 = vm_parametric.repair_start_end_angle_periodicity(phi1, phi3)
+            phi1 = repair_start_end_angle_periodicity(phi1, phi3)
         if abs(phi2) == math.pi:
-            phi2 = vm_parametric.repair_start_end_angle_periodicity(phi2, phi4)
+            phi2 = repair_start_end_angle_periodicity(phi2, phi4)
 
         points[0] = volmdlr.Point2D(theta1, phi1)
         points[-1] = volmdlr.Point2D(theta2, phi2)
 
-        if theta3 < theta1 < theta2:
+        theta_list = [point.x for point in points]
+        phi_list = [point.y for point in points]
+        theta_discontinuity = angle_discontinuity(theta_list)
+        phi_discontinuity = angle_discontinuity(phi_list)
+
+        if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
-        elif theta3 > theta1 > theta2:
+        elif theta3 > theta1 > theta2 and theta_discontinuity:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
 
-        if phi3 < phi1 < phi2:
+        if phi3 < phi1 < phi2 and phi_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y > 0 else p for p in points]
-        elif phi3 > phi1 > phi2:
+        elif phi3 > phi1 > phi2 and phi_discontinuity:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in points]
 
         return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
@@ -3247,6 +3229,46 @@ class SphericalSurface3D(Surface3D):
             points = [p + volmdlr.Point2D(self.x_periodicity, 0) if p.x < 0 else p for p in points]
 
         return [vme.BSplineCurve2D.from_points_interpolation(points, 2)]
+
+    def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        length = bspline_curve3d.length()
+        n = len(bspline_curve3d.control_points)
+        points3d = bspline_curve3d.discretization_points(number_points=n)
+        points = [self.point3d_to_2d(point) for point in points3d]
+        theta1, phi1 = self.point3d_to_2d(bspline_curve3d.start)
+        theta2, phi2 = self.point3d_to_2d(bspline_curve3d.end)
+
+        theta3, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
+        # make sure that the reference angle is not undefined
+        if abs(theta3) == math.pi:
+            theta3, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.002 * length))
+
+        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+        if abs(theta1) == math.pi:
+            theta1 = repair_start_end_angle_periodicity(theta1, theta3)
+        if abs(theta2) == math.pi:
+            theta4, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
+            # make sure that the reference angle is not undefined
+            if abs(theta4) == math.pi:
+                theta4, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.97 * length))
+            theta2 = repair_start_end_angle_periodicity(theta2, theta4)
+
+        points[0] = volmdlr.Point2D(theta1, phi1)
+        points[-1] = volmdlr.Point2D(theta2, phi2)
+
+        theta_list = [point.x for point in points]
+        theta_discontinuity = angle_discontinuity(theta_list)
+
+        if theta3 < theta1 < theta2 and theta_discontinuity:
+            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+        elif theta3 > theta1 > theta2 and theta_discontinuity:
+            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+
+        return [vme.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree,
+                                                             periodic=bspline_curve3d.periodic)]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         # TODO: this is incomplete, a bspline_curve2d can be also a bspline_curve3d
@@ -4279,13 +4301,15 @@ class BSplineSurface3D(Surface3D):
         """
         # TODO: enhance this, it is a non exact method!
         # TODO: bsplinecurve can be periodic but not around the bsplinesurface
-        bsc_linesegment = vme.LineSegment3D(bspline_curve3d.points[0],
-                                            bspline_curve3d.points[-1])
-        flag = True
-        for point in bspline_curve3d.points:
-            if not bsc_linesegment.point_belongs(point):
-                flag = False
-                break
+        flag = False
+        if not bspline_curve3d.points[0].is_close(bspline_curve3d.points[-1]):
+            bsc_linesegment = vme.LineSegment3D(bspline_curve3d.points[0],
+                                                bspline_curve3d.points[-1])
+            flag = True
+            for point in bspline_curve3d.points:
+                if not bsc_linesegment.point_belongs(point):
+                    flag = False
+                    break
 
         if self.x_periodicity and not self.y_periodicity \
                 and bspline_curve3d.periodic:

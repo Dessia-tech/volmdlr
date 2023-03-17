@@ -150,6 +150,7 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
+        # obj can be an instance of wires or edges.
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
@@ -236,6 +237,23 @@ class Edge(dc.DessiaObject):
                 if point not in touching_points and primitive.point_belongs(point):
                     touching_points.append(point)
         return touching_points
+
+    def local_discretization(self, point1, point2, number_points):
+        """
+        Gets n discretization points between two given points of the edge.
+
+        :param point1: point 1 on edge.
+        :param point2: point 2 on edge.
+        :param number_points: number of points to discretize locally.
+        :return: list of locally discretized points.
+        """
+        abscissa1 = self.abscissa(point1)
+        abscissa2 = self.abscissa(point2)
+        discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
+                                          in npy.linspace(abscissa1, abscissa2, num=number_points)]
+        return discretized_points_between_1_2
+
+
 
 class Line(dc.DessiaObject):
     """
@@ -735,16 +753,21 @@ class BSplineCurve(Edge):
 
         def evaluate_point_distance(u):
             return(point - self.evaluate_single(u)).norm()
-
+        results = []
         initial_condition_list.sort(key=evaluate_point_distance)
         for u0 in initial_condition_list:
             u, convergence_sucess = self.point_invertion(u0, point)
             abscissa = u * length
             if convergence_sucess:  # sometimes we don't achieve convergence with a given inital guess
                 return abscissa
-            if evaluate_point_distance(u) < tol:
+            dist = evaluate_point_distance(u)
+            if dist < tol:
                 return abscissa
-        raise ValueError('abscissa not found')
+        # print(True)
+            results.append((u, dist))
+        result = min(results, key=lambda r: r[1])[0]
+        return result
+        # raise ValueError('abscissa not found')
 
     def point_inversion_funcs(self, u, point):
         """
@@ -996,7 +1019,7 @@ class BSplineCurve(Edge):
 
     @classmethod
     def from_points_interpolation(cls, points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                                  degree: int, periodic: bool = False):
+                                  degree: int, periodic: bool = False, name: str = ""):
         """
         Creates a B-spline curve interpolation through the data points.
 
@@ -6144,17 +6167,14 @@ class ArcEllipse3D(Edge):
 
         if start.is_close(end):
             extra_new = frame.global_to_local_coordinates(self.extra)
-            theta, A, B = theta_A_B(start_new, interior_new, extra_new,
-                                    center_new)
+            theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, extra_new, center_new)
 
         else:
             if not self.extra:
-                theta, A, B = theta_A_B(start_new, interior_new, end_new,
-                                        center_new)
+                theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, end_new, center_new)
             else:
                 extra_new = frame.global_to_local_coordinates(self.extra)
-                theta, A, B = theta_A_B(start_new, interior_new, extra_new,
-                                        center_new)
+                theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, extra_new, center_new)
 
         self.Gradius = major_axis
         self.Sradius = minor_axis
