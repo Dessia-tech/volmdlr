@@ -3626,10 +3626,10 @@ class ExtrusionSurface3D(Surface3D):
         u = min(u, 1.0)
         return volmdlr.Point2D(u, v)
 
-    def rectangular_cut(self, x1: float, x2: float,
-                        y1: float, y2: float, name: str = ''):
+    def rectangular_cut(self, x1: float = 0.0, x2: float = 1.0,
+                        y1: float = 0.0, y2: float = 1.0, name: str = ''):
         """
-        Cut a rectangular piece of the RevolutionSurface3D object and return a RevolutionFace3D object.
+        Cut a rectangular piece of the ExtrusionSurface3D object and return a ExtrusionFace3D object.
 
         """
         p1 = volmdlr.Point2D(x1, y1)
