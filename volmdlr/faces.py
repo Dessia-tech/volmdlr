@@ -3557,7 +3557,6 @@ class ExtrusionSurface3D(Surface3D):
     def x_periodicity(self):
         if self._x_periodicity:
             return self._x_periodicity
-        length = self.edge.length()
         start = self.edge.start
         end = self.edge.end
         if start.is_close(end, 1e-4):

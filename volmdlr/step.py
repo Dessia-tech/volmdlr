@@ -8,7 +8,6 @@ import time
 from typing import List
 from dataclasses import dataclass, field
 import numpy as npy
-import warnings
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -920,10 +919,7 @@ class Step(dc.DessiaObject):
             else:
                 id_solid_entity = int(arg[0][1:])
             if self.functions[id_solid_entity].name in {"CLOSED_SHELL", "OPEN_SHELL"}:
-                id_shell = id_solid_entity
-                if isinstance(id_shell, list):
-                    return int(id_shell[0][1:])
-                return int(id_shell[1:])
+                return id_solid_entity
             id_shell = self.functions[id_solid_entity].arg[1]
             if isinstance(id_shell, list):
                 return int(id_shell[0][1:])
