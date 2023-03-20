@@ -1539,8 +1539,16 @@ class Plane3D(Surface3D):
             periodic=bspline_curve3d.periodic)]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
-        control_points = [self.point2d_to_3d(p)
-                          for p in bspline_curve2d.control_points]
+        """
+        Converts a 2D B-Spline in parametric domain into a 3D B-Spline in spatial domain.
+
+        :param bspline_curve2d: The B-Spline curve to perform the transformation.
+        :type bspline_curve2d: vme.BSplineCurve2D
+        :return: A 3D B-Spline.
+        :rtype: vme.BSplineCurve3D
+        """
+        control_points = [self.point2d_to_3d(point)
+                          for point in bspline_curve2d.control_points]
         return [vme.BSplineCurve3D(
             bspline_curve2d.degree,
             control_points=control_points,
@@ -3257,7 +3265,7 @@ class SphericalSurface3D(Surface3D):
         return [vme.BSplineCurve2D.from_points_interpolation(points, 2)]
 
     def plot(self, ax=None, color='grey', alpha=0.5):
-        # points = []
+        """Plot sphere arcs."""
         for i in range(20):
             theta = i / 20. * volmdlr.TWO_PI
             t_points = []
@@ -3508,12 +3516,18 @@ class RevolutionSurface3D(PeriodicalSurface):
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.RevolutionFace3D(self, surface2d, name)
 
-    def plot(self, ax=None, color='grey', alpha=0.5):
+    def plot(self, ax=None, color='grey', alpha=0.5, number_curves: int = 20):
+        """
+        Plot rotated Revolution surface generatrix.
+
+        :param number_curves: Number of curves to display.
+        :type number_curves: int
+        """
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        for i in range(21):
-            theta = i / 20. * volmdlr.TWO_PI
+        for i in range(number_curves+1):
+            theta = i / number_curves * volmdlr.TWO_PI
             wire = self.wire.rotation(self.axis_point, self.axis, theta)
             wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
 
@@ -3677,6 +3691,9 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def x_periodicity(self):
+        """
+        Evaluates the periodicity of the surface in u direction.
+        """
         if self._x_periodicity is False:
             u = self.curves['u']
             a, b = self.surface.domain[0]
@@ -3691,6 +3708,9 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def y_periodicity(self):
+        """
+        Evaluates the periodicity of the surface in v direction.
+        """
         if self._y_periodicity is False:
             v = self.curves['v']
             c, d = self.surface.domain[1]
@@ -6204,6 +6224,9 @@ class Face3D(volmdlr.core.Primitive3D):
         return False
 
     def face_intersections_outer_contour(self, face2):
+        """
+        Returns the intersections of the face outer contour with other given face.
+        """
         intersections_points = []
         for edge1 in self.outer_contour3d.primitives:
             intersection_points = face2.edge_intersections(edge1)
@@ -8615,6 +8638,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return cls(faces, name=arguments[0][1:-1])
 
     def to_step(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
         step_content = ''
         face_ids = []
         for face in self.faces:
@@ -8641,6 +8667,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return step_content, brep_id
 
     def to_step_face_ids(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
         step_content = ''
         face_ids = []
         for face in self.faces:
@@ -9299,7 +9328,14 @@ class ClosedShell3D(OpenShell3D):
         return tests[0]
 
     def point_in_shell_face(self, point: volmdlr.Point3D):
+        """
+        Verifies if a given point belongs to some shell face.
 
+        :param point: The point to check.
+        :type point: volmdlr.Point3D
+        :return: True if point belongs to some shell face. False otherwise.
+        :rtype: bool
+        """
         for face in self.faces:
             if (face.surface3d.point_on_surface(point) and face.point_belongs(point)) or \
                     face.outer_contour3d.point_over_contour(point, abs_tol=1e-7):

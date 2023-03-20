@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - argument convexe in volmdlr.cloud has been renamed to convex
+- Add some missing docstrings in volmdlr.faces
 
 ### Performance improvements
 * BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.
