@@ -988,10 +988,10 @@ class BSplineCurve(Edge):
         Assuming a curve self is defined on a parametric domain [0.0, 1.0].
         Let's take the curve derivative at the parametric position u = 0.35.
 
-        >>> ders = self.derivatives(u=0.35, order=2)
-        >>> ders[0]  # evaluated point, equal to crv.evaluate_single(0.35)
-        >>> ders[1]  # 1st derivative at u = 0.35
-        >>> ders[2]  # 2nd derivative at u = 0.35
+        >>> derivatives = self.derivatives(u=0.35, order=2)
+        >>> derivatives[0]  # evaluated point, equal to crv.evaluate_single(0.35)
+        >>> derivatives[1]  # 1st derivative at u = 0.35
+        >>> derivatives[2]  # 2nd derivative at u = 0.35
 
         :param u: parameter value
         :type u: float
@@ -2989,7 +2989,7 @@ class Arc2D(Arc):
 
     def cut_between_two_points(self, point1, point2):
         """
-        Cuts Arc between two points, and return the a new arc bwetween these two points.
+        Cuts Arc between two points, and return the a new arc between these two points.
 
         """
         if (point1.is_close(self.start) and point2.is_close(self.end)) or \
@@ -5312,9 +5312,9 @@ class Arc3D(Arc):
 
     def get_arc_direction(self):
         """
-        Verifies if arc is clockwise or trigowise.
+        Verifies if arc is clockwise or counterclockwise.
 
-        :return: True if clockwise, False if trigowise.
+        :return: True if clockwise, False if counterclockwise.
         """
         clockwise_path, trigowise_path = self.clockwise_and_trigowise_paths
         if clockwise_path > trigowise_path:
@@ -5370,7 +5370,7 @@ class Arc3D(Arc):
 
     def reverse(self):
         """
-        Defines a new Arc3D, odentical to self, but in the opposite direction.
+        Defines a new Arc3D, identical to self, but in the opposite direction.
 
         """
         return self.__class__(self.end.copy(),
