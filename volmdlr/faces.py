@@ -1872,10 +1872,10 @@ class PeriodicalSurface(Surface3D):
         points[-1] = volmdlr.Point2D(theta2, z2)
 
         if theta3 < theta1 < theta2:
-            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+            points = [point - volmdlr.Point2D(volmdlr.TWO_PI, 0) if point.x > 0 else point for point in points]
             points.append(volmdlr.Point2D(points[0].x - volmdlr.TWO_PI, points[0].y))
         elif theta3 > theta1 > theta2:
-            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+            points = [point + volmdlr.Point2D(volmdlr.TWO_PI, 0) if point.x < 0 else point for point in points]
             points.append(volmdlr.Point2D(points[0].x + volmdlr.TWO_PI, points[0].y))
 
         bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points, degree=2, periodic=True, name="ellipse")
