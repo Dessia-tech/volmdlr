@@ -14,9 +14,9 @@ class TestFullArcEllipse3D(unittest.TestCase):
     ellipse = vme.FullArcEllipse3D(start_end, major_axis, minor_axis, center, normal, major_dir)
 
     def test_init(self):
-        self.assertAlmostEqual(self.ellipse.Gradius, 0.0225, places=4)
-        self.assertEqual(self.ellipse.Sradius, 0.0075)
-        self.assertAlmostEqual(self.ellipse.angle, volmdlr.TWO_PI, places=4)
+        self.assertAlmostEqual(self.ellipse.major_axis, 0.0225, places=4)
+        self.assertEqual(self.ellipse.minor_axis, 0.0075)
+        self.assertAlmostEqual(self.ellipse.theta, 0, places=4)
 
     def test_length(self):
         self.assertAlmostEqual(self.ellipse.length(), 0.10023669584870037)

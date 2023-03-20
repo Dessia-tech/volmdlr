@@ -3705,43 +3705,105 @@ class ArcEllipse2D(Edge):
         raise ValueError('Side should be \'new\' \'old\'')
 
 
-class FullArcEllipse2D(ArcEllipse2D):
+class FullArcEllipse(Edge):
     """
-    Defines a FullArcEllipse2D.
+    Abstract class to define an ellipse.
     """
 
-    def __init__(self, start_end: volmdlr.Point2D, major_axis: float, minor_axis: float,
-                 center: volmdlr.Point2D, major_dir: volmdlr.Vector2D, name: str = ''):
+    def __init__(self, start_end: Union[volmdlr.Point2D, volmdlr.Point3D], major_axis: float, minor_axis: float,
+                 center: Union[volmdlr.Point2D, volmdlr.Point3D],
+                 major_dir: Union[volmdlr.Vector2D, volmdlr.Vector3D], name: str = ''):
         self.start_end = start_end
         self.major_axis = major_axis
         self.minor_axis = minor_axis
         self.center = center
-        major_dir.normalize()
         self.major_dir = major_dir
-        self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
-        self.frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
 
-        interior = self.frame.local_to_global_coordinates(
-            volmdlr.Point2D(self.major_axis * math.cos(0.25 * math.pi),
-                            self.minor_axis * math.sin(0.25 * math.pi)))
-        extra = self.frame.local_to_global_coordinates(volmdlr.Point2D(self.major_axis * math.cos(0.5 * math.pi),
-                                                                       self.minor_axis * math.sin(0.5 * math.pi)))
-
-        ArcEllipse2D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
-                              major_dir=major_dir, extra=extra, name=name)
+        Edge.__init__(self, start=start_end, end=start_end, name=name)
 
     def length(self):
         """
         Calculates the length of the ellipse.
 
         Ramanujan's approximation for the perimeter of the ellipse.
-        P = \u03C0 (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
+        P = math.pi * (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
         :return: Perimeter of the ellipse
         :rtype: float
         """
         perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
         return math.pi * (self.major_axis + self.minor_axis) * \
             (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
+        """
+        Calculates the discretized points for the ellipse.
+
+        :param number_points: number of point to have in the discretized points.
+        :param angle_resolution: the angle resolution to be used to discretize points.
+        :return: discretized points.
+        """
+        if number_points:
+            angle_resolution = number_points
+        discretization_points = [self.center + volmdlr.Point2D(self.major_axis * math.cos(theta),
+                                                               self.minor_axis * math.sin(theta))
+                                 for theta in npy.linspace(0, volmdlr.TWO_PI, angle_resolution + 1)]
+        discretization_points = [point.rotation(self.center, self.theta) for point in discretization_points]
+        return discretization_points
+
+    def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-6):
+        """
+        Verifies if a given point lies on the ellipse.
+
+        :param point: point to be verified.
+        :param abs_tol: Absolute tolerance to consider the point on the ellipse.
+        :return: True is point lies on the ellipse, False otherwise
+        """
+        new_point = self.frame.global_to_local_coordinates(point)
+        return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
+                            new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=abs_tol)
+
+    def point_at_abscissa(self, abscissa: float, resolution: int = 2500):
+        """
+        Calculates a point on the FullArcEllipse at a given abscissa.
+
+        :param abscissa: abscissa where in the curve the point should be calculated.
+        :return: Corresponding point.
+        """
+        # TODO: enhance this method to a more precise method
+        points = self.discretization_points(number_points=resolution)
+        approx_abscissa = 0
+        last_point = None
+        for p1, p2 in zip(points[:-1], points[1:]):
+            if approx_abscissa <= abscissa:
+                approx_abscissa += p1.point_distance(p2)
+                last_point = p2
+            else:
+                break
+        return last_point
+
+    def reverse(self):
+        """
+        Defines a new FullArcEllipse, identical to self, but in the opposite direction.
+
+        """
+        return self
+
+
+class FullArcEllipse2D(FullArcEllipse):
+    """
+    Defines a FullArcEllipse2D.
+    """
+
+    def __init__(self, start_end: volmdlr.Point2D, major_axis: float, minor_axis: float,
+                 center: volmdlr.Point2D, major_dir: volmdlr.Vector2D, name: str = ''):
+        major_dir.normalize()
+        self.minor_dir = major_dir.deterministic_unit_normal_vector()
+        self.frame = volmdlr.Frame2D(center, major_dir, self.minor_dir)
+        self.theta = volmdlr.geometry.clockwise_angle(major_dir, volmdlr.X2D)
+        if self.theta == math.pi * 2:
+            self.theta = 0.0
+
+        FullArcEllipse.__init__(self, start_end, major_axis, minor_axis, center, major_dir, name)
 
     def to_3d(self, plane_origin, x, y):
         point_start_end3d = self.start_end.to_3d(plane_origin, x, y)
@@ -3762,7 +3824,7 @@ class FullArcEllipse2D(ArcEllipse2D):
         :param frame: Local coordinate system.
         :type frame: volmdlr.Frame2D
         :param side: 'old' will perform a transformation from local to global coordinates. 'new' will
-            perform a tranformation from global to local coordinates.
+            perform a transformation from global to local coordinates.
         :type side: str
         :return: A new transformed FulLArcEllipse2D.
         :rtype: FullArcEllipse2D
@@ -3782,30 +3844,24 @@ class FullArcEllipse2D(ArcEllipse2D):
                                     major_dir, self.name)
         raise ValueError('Side should be \'new\' \'old\'')
 
-    def reverse(self):
+    def translation(self, offset: volmdlr.Vector2D):
         """
-        Defines a new FullArcEllipse3D, identical to self, but in the opposite direction.
+        FullArcEllipse2D translation.
 
+        :param offset: translation vector.
+        :type offset: volmdlr.Vector2D
+        :return: A new translated FullArcEllipse2D.
+        :rtype: FullArcEllipse2D
         """
-        return self
+        return FullArcEllipse2D(self.start_end.translation(offset), self.major_axis, self.minor_axis,
+                                self.center.translation(offset), self.major_dir, self.name)
 
-    def point_belongs(self, point: volmdlr.Point2D, abs_tol: float = 1e-4):
-        """
-        Verifies if a given point lies on the Ellipse3D.
-
-        :param point: point to be verified.
-        :return: True is point lies on the Ellipse, False otherwise
-        """
-        new_point = self.frame.global_to_local_coordinates(point)
-        return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
-                            new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=abs_tol)
-
-    def abscissa(self, point: volmdlr.Point2D):
+    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D]):
         """
         Calculates the abscissa of a given point.
 
         :param point: point for calculating abscissa
-        :return: a float, between 0 and the arcellise2d's length
+        :return: a float, between 0 and the ellipse's length
         """
         if self.point_belongs(point):
             angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
@@ -3821,18 +3877,6 @@ class FullArcEllipse2D(ArcEllipse2D):
             res, _ = scipy_integrate.quad(arc_length, angle_start, angle_abscissa)
             return res
         raise ValueError(f'point {point} does not belong to ellipse')
-
-    def translation(self, offset: volmdlr.Vector2D):
-        """
-        FullArcEllipse2D translation.
-
-        :param offset: translation vector.
-        :type offset: volmdlr.Vector2D
-        :return: A new translated FullArcEllipse2D.
-        :rtype: FullArcEllipse2D
-        """
-        return FullArcEllipse2D(self.start_end.translation(offset), self.major_axis, self.minor_axis,
-                                self.center.translation(offset), self.major_dir, self.name)
 
     def normal_vector(self, abscissa):
         """
@@ -6487,45 +6531,28 @@ class ArcEllipse3D(Edge):
         raise ValueError('Side should be \'new\' \'old\'')
 
 
-class FullArcEllipse3D(ArcEllipse3D):
+class FullArcEllipse3D(FullArcEllipse):
     """
     Defines a FullArcEllipse3D.
     """
 
     def __init__(self, start_end: volmdlr.Point3D, major_axis: float, minor_axis: float,
                  center: volmdlr.Point3D, normal: volmdlr.Vector3D, major_dir: volmdlr.Vector3D, name: str = ''):
-        self.start_end = start_end
-        self.major_axis = major_axis
-        self.minor_axis = minor_axis
-        self.center = center
         normal.normalize()
         self.normal = normal
         major_dir.normalize()
-        self.major_dir = major_dir
         self.minor_dir = normal.cross(major_dir)
         frame = volmdlr.Frame3D(center, major_dir, self.minor_dir, normal)
         self.frame = frame
+        center2d = center.to_2d(center, major_dir, self.minor_dir)
+        point_major_dir = center + major_axis * major_dir
+        point_major_dir_2d = point_major_dir.to_2d(center, major_dir, self.minor_dir)
+        vector_major_dir_2d = (point_major_dir_2d - center2d).to_vector()
+        self.theta = volmdlr.geometry.clockwise_angle(vector_major_dir_2d, volmdlr.X2D)
+        if self.theta == math.pi * 2:
+            self.theta = 0.0
 
-        interior = frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.25 * math.pi),
-                                                                     self.minor_axis * math.sin(0.25 * math.pi),
-                                                                     0.0))
-        extra = frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.5 * math.pi),
-                                                                  self.minor_axis * math.sin(0.5 * math.pi),
-                                                                  0.0))
-        ArcEllipse3D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
-                              major_dir=major_dir, normal=normal, extra=extra, name=name)
-
-    def length(self):
-        """
-        Calculates the length of the ellipse.
-
-        Ramanujan's approximation for the perimeter of the ellipse.
-        P = π (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
-        :return:
-        """
-        perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
-        return math.pi * (self.major_axis + self.minor_axis) * \
-            (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+        FullArcEllipse.__init__(self, start_end, major_axis, minor_axis, center, major_dir, name)
 
     def to_2d(self, plane_origin, x, y):
         """
@@ -6538,7 +6565,7 @@ class FullArcEllipse3D(ArcEllipse3D):
         """
         point_start_end2d = self.start_end.to_2d(plane_origin, x, y)
         center2d = self.center.to_2d(plane_origin, x, y)
-        point_major_dir = self.center + self.Gradius * self.major_dir
+        point_major_dir = self.center + self.major_axis * self.major_dir
         point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
         vector_major_dir_2d = (point_major_dir_2d - center2d).to_vector()
         vector_major_dir_2d.normalize()
@@ -6572,43 +6599,6 @@ class FullArcEllipse3D(ArcEllipse3D):
                                     frame.global_to_local_coordinates(self.normal), major_dir, self.name)
         raise ValueError('Side should be \'new\' \'old\'')
 
-    def reverse(self):
-        """
-        Defines a new FullArcEllipse3D, identical to self, but in the opposite direction.
-
-        """
-        return self
-
-    def point_at_abscissa(self, abscissa: float, resolution: int = 2500):
-        """
-        Calculates a point in the BSplineCurve at a given abscissa.
-
-        :param abscissa: abscissa where in the curve the point should be calculated.
-        :return: Corresponding point.
-        """
-        # TODO: enhance this method to a more precise method
-        points = self.discretization_points(number_points=resolution)
-        approx_abscissa = 0
-        last_point = None
-        for p1, p2 in zip(points[:-1], points[1:]):
-            if approx_abscissa <= abscissa:
-                approx_abscissa += p1.point_distance(p2)
-                last_point = p2
-            else:
-                break
-        return last_point
-
-    def point_belongs(self, point, abs_tol):
-        """
-        Verifies if a given point lies on the Ellipse3D.
-
-        :param point: point to be verified.
-        :return: True is point lies on the Ellipse, False otherwise
-        """
-        new_point = self.frame.global_to_local_coordinates(point)
-        return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
-                            new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=abs_tol)
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         FullArcEllipse3D translation.
@@ -6620,6 +6610,18 @@ class FullArcEllipse3D(ArcEllipse3D):
         """
         return FullArcEllipse3D(self.start_end.translation(offset), self.major_axis, self.minor_axis,
                                 self.center.translation(offset), self.normal, self.major_dir, self.name)
+
+    def abscissa(self, point: volmdlr.Point3D):
+        """
+        Calculates the abscissa a given point.
+
+        :param point: point to calculate abscissa.
+        :return: abscissa
+        """
+        vector_2 = self.normal.cross(self.major_dir)
+        ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
+        point2d = point.to_2d(self.center, self.major_dir, vector_2)
+        return ellipse_2d.abscissa(point2d)
 
     def normal_vector(self, abscissa):
         """

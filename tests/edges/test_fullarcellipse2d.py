@@ -14,7 +14,7 @@ class TestFullArcEllipse2D(unittest.TestCase):
     def test_init(self):
         self.assertAlmostEqual(self.ellipse.major_axis, 0.0225, places=4)
         self.assertAlmostEqual(self.ellipse.minor_axis, 0.0075, places=4)
-        self.assertAlmostEqual(self.ellipse.angle, volmdlr.TWO_PI, places=4)
+        self.assertEqual(self.ellipse.theta, 0.0)
 
     def test_length(self):
         self.assertAlmostEqual(self.ellipse.length(), 0.10023669584870037)
