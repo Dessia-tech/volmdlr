@@ -3691,9 +3691,8 @@ class ExtrusionSurface3D(Surface3D):
                 return [primitive]
                 # if primitive.__name__
                 # return [vme.FullArcEllipse3D()]
-            else:
-                # TODO: return self.edge translated and trimmed between u1 and u2
-                raise NotImplementedError
+            # TODO: return self.edge translated and trimmed between u1 and u2
+            raise NotImplementedError
         raise NotImplementedError
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):

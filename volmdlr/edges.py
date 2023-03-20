@@ -672,18 +672,7 @@ class BSplineCurve(Edge):
 
         :return: the normal vector
         """
-        raise NotImplementedError('the normal_vector method must be'
-                                  'overloaded by child class')
-
-    def unit_normal_vector(self, abscissa):
-        """
-        Calculates the unit normal vector the edge at given abscissa.
-
-        :param abscissa: edge abscissa
-        :return: unit normal vector
-        """
-        raise NotImplementedError('the unit_normal_vector method must be'
-                                  'overloaded by child class')
+        return self.direction_vector(abscissa).normal_vector()
 
     def direction_vector(self, abscissa):
         """
@@ -692,7 +681,9 @@ class BSplineCurve(Edge):
         :param abscissa: edge abscissa
         :return: direction vector
         """
-        raise NotImplementedError('the direction_vector method must be overloaded by child class')
+        u = abscissa / self.length()
+        derivatives = self.derivatives(u, 1)
+        return derivatives[1]
 
     def middle_point(self):
         """
@@ -760,7 +751,7 @@ class BSplineCurve(Edge):
         :type tol1: float
         :param tol2: Zero cos tolerance to stop.
         :type tol2: float
-        :return: u paramenter and convergence check
+        :return: u parameter and convergence check
         :rtype: int, bool
         """
         if maxiter == 0:
@@ -1597,39 +1588,6 @@ class BSplineCurve2D(BSplineCurve):
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
 
-    def direction_vector(self, abscissa: float):
-        """
-        Get direction vector at abscissa.
-
-        :param abscissa: defines where in the BSplineCurve2D the
-        direction vector is to be calculated.
-        :return: The direction vector of the BSplineCurve2D
-        """
-        return self.tangent(abscissa / self.length())
-
-    def normal_vector(self, abscissa: float):
-        """
-        Get normal vector at abscissa.
-
-        :param abscissa: defines where in the BSplineCurve2D the
-        normal vector is to be calculated
-        :return: The normal vector of the BSplineCurve2D
-        """
-        tangent_vector = self.tangent(abscissa / self.length())
-        normal_vector = tangent_vector.normal_vector()
-        return normal_vector
-
-    def unit_normal_vector(self, abscissa: float):
-        """
-        Get unit normal vector at given abscissa.
-
-        :param abscissa: defines where in the BSplineCurve2D the unit normal vector is to be calculated.
-        :return: The unit normal vector of the BSplineCurve2D.
-        """
-        normal_vector = self.normal_vector(abscissa)
-        normal_vector.normalize()
-        return normal_vector
-
     def straight_line_area(self):
         """
         Uses shoelace algorithm for evaluating the area.
@@ -1667,7 +1625,7 @@ class BSplineCurve2D(BSplineCurve):
         return ax
 
     def to_3d(self, plane_origin, x1, x2):
-        """Transforms a BSpline Curve 2D in 3D."""
+        """Transforms a B-Spline Curve 2D in 3D."""
         control_points3d = [point.to_3d(plane_origin, x1, x2) for point in
                             self.control_points]
         return BSplineCurve3D(self.degree, control_points3d,
@@ -2569,7 +2527,7 @@ class Arc2D(Arc):
         """
         Gets arc direction: clockwise or trigonometric.
 
-        :return: True if clockwise. trigowise if False.
+        :return: True if clockwise. False if counterclockwise.
         """
         clockwise_path, trigowise_path = \
             self.clockwise_and_trigowise_paths
@@ -3018,7 +2976,7 @@ class Arc2D(Arc):
 
     def cut_between_two_points(self, point1, point2):
         """
-        Cuts Arc between two points, and return the a new arc bwetween these two points.
+        Cuts Arc between two points, and return a new arc between these two points.
 
         """
         if (point1.is_close(self.start) and point2.is_close(self.end)) or \
@@ -3742,8 +3700,8 @@ class FullArcEllipse2D(ArcEllipse2D):
 
         :param frame: Local coordinate system.
         :type frame: volmdlr.Frame2D
-        :param side: 'old' will perform a tranformation from local to global coordinates. 'new' will
-            perform a tranformation from global to local coordinates.
+        :param side: 'old' will perform a transformation from local to global coordinates. 'new' will
+            perform a transformation from global to local coordinates.
         :type side: str
         :return: A new transformed FulLArcEllipse2D.
         :rtype: FullArcEllipse2D
