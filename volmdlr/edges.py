@@ -5950,9 +5950,9 @@ class FullArc3D(Arc3D):
 
     def linesegment_intersections(self, linesegment: LineSegment3D):
         """
-        Calculates the intersections between a fullarc 3d and a linesegment3d.
+        Calculates the intersections between a full arc 3d and a line segment 3d.
 
-        :param linesegment: linesegment3d to verify intersections.
+        :param linesegment: linesegment 3d to verify intersections.
         :return: list of points 3d, if there are any intersections, an empty list if otherwise.
         """
         distance_center_lineseg = linesegment.point_distance(self.frame.origin)
