@@ -5266,12 +5266,13 @@ class Ellipse3D(Contour3D):
         if number_points:
             angle_resolution = number_points
         discretization_points_3d = [
-                                       self.center + self.major_axis * math.cos(
-                                           theta) * self.major_dir
-                                       + self.minor_axis * math.sin(
-                                           theta) * self.minor_dir for theta in
-                                       npy.linspace(0, volmdlr.TWO_PI,
-                                                    angle_resolution + 1)][:-1]
+                                      self.center + self.major_axis * math.cos(
+                                          teta) * self.major_dir
+                                      + self.minor_axis * math.sin(
+                                          teta) * self.major_dir.cross(
+                                          self.normal) for teta in
+                                      npy.linspace(0, volmdlr.TWO_PI,
+                                                   angle_resolution + 1)][:-1]
         return discretization_points_3d
 
     def to_2d(self, plane_origin, x, y):
