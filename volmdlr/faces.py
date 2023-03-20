@@ -1235,10 +1235,11 @@ class Plane3D(Surface3D):
         return content, [plane_id]
 
     @classmethod
-    def from_3_points(cls, point1, point2, point3, *args):
+    def from_3_points(cls, *args):
         """
         Point 1 is used as origin of the plane.
         """
+        point1, point2, point3 = args
         vector1 = point2 - point1
         vector2 = point3 - point1
 
@@ -3602,8 +3603,7 @@ class ExtrusionSurface3D(Surface3D):
 
         u = self.edge.abscissa(point_at_curve_global) / self.edge.length()
 
-        if u > 1:
-            u = 1.0
+        u = min(u, 1.0)
         return volmdlr.Point2D(u, v)
 
     def rectangular_cut(self, x1: float, x2: float,

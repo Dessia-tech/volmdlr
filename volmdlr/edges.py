@@ -256,7 +256,6 @@ class Edge(dc.DessiaObject):
         return discretized_points_between_1_2
 
 
-
 class Line(dc.DessiaObject):
     """
     Abstract class representing a line.
@@ -521,6 +520,31 @@ class LineSegment(Edge):
 
     def get_geo_points(self):
         return [self.start, self.end]
+
+    def straight_line_point_belongs(self, point):
+        """
+        Closing straight line point belongs verification.
+
+        Verifies if a point belongs to the surface created by closing the edge with a
+        line between its start and end points.
+
+        :param point: Point to be verified.
+        :return: Return True if the point belongs to this surface, or False otherwise.
+        """
+        return self.point_belongs(point)
+
+    def point_belongs(self, point, abs_tol=1e-6):
+        point_distance = self.point_distance(point)
+        if math.isclose(point_distance, 0, abs_tol=abs_tol):
+            return True
+        return False
+
+    def point_distance(self, abscissa):
+        """
+        Abstract method.
+        """
+        raise NotImplementedError('the point_distance method must be'
+                                  'overloaded by subclassing class')
 
 
 class BSplineCurve(Edge):
@@ -1170,6 +1194,17 @@ class BSplineCurve(Edge):
         """
         point_name = 'Point' + self.__class__.__name__[-2:]
         return getattr(volmdlr, point_name)(*self.curve.evaluate_single(u))
+
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge.
+
+        :param point: Point to be verified
+        :return: Return True if the point belongs to this surface,
+            or False otherwise
+        """
+        raise NotImplementedError(f'the straight_line_point_belongs method must be'
+                                  f' overloaded by {self.__class__.__name__}')
 
 
 class Line2D(Line):
@@ -1882,12 +1917,6 @@ class LineSegment2D(LineSegment):
     # def point_at_abscissa(self, abscissa):
     #     return self.start + self.unit_direction_vector() * abscissa
 
-    def point_belongs(self, point, abs_tol=1e-6):
-        point_distance = self.point_distance(point)
-        if math.isclose(point_distance, 0, abs_tol=abs_tol):
-            return True
-        return False
-
     @property
     def bounding_rectangle(self):
         if not self._bounding_rectangle:
@@ -1910,18 +1939,6 @@ class LineSegment2D(LineSegment):
     def straight_line_center_of_mass(self):
         """Straight line center of mass."""
         return 0.5 * (self.start + self.end)
-
-    def straight_line_point_belongs(self, point):
-        """
-        Closing straight line point belongs verification.
-
-        Verifies if a point belongs to the surface created by closing the edge with a
-        line between its start and end points.
-
-        :param point: Point to be verified.
-        :return: Return True if the point belongs to this surface, or False otherwise.
-        """
-        return self.point_belongs(point)
 
     def point_distance(self, point, return_other_point=False):
         """
@@ -3644,6 +3661,17 @@ class ArcEllipse2D(Edge):
                                 major_dir)
         raise ValueError('Side should be \'new\' \'old\'')
 
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge.
+
+        :param point: Point to be verified
+        :return: Return True if the point belongs to this surface,
+            or False otherwise
+        """
+        raise NotImplementedError(f'the straight_line_point_belongs method must be'
+                                  f' overloaded by {self.__class__.__name__}')
+
 
 class FullArcEllipse2D(ArcEllipse2D):
     """
@@ -3759,6 +3787,17 @@ class FullArcEllipse2D(ArcEllipse2D):
             res, _ = scipy_integrate.quad(arc_length, angle_start, angle_abscissa)
             return res
         raise ValueError(f'point {point} does not belong to ellipse')
+
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge.
+
+        :param point: Point to be verified
+        :return: Return True if the point belongs to this surface,
+            or False otherwise
+        """
+        raise NotImplementedError(f'the straight_line_point_belongs method must be'
+                                  f' overloaded by {self.__class__.__name__}')
 
 
 class Line3D(Line):
@@ -4102,16 +4141,6 @@ class LineSegment3D(LineSegment):
                 'start': self.start.to_dict(),
                 'end': self.end.to_dict()
                 }
-
-    # def point_at_abscissa(self, abscissa):
-    #     return self.start + abscissa * (
-    #         self.end - self.start) / self.length()
-
-    def point_belongs(self, point, abs_tol=1e-7):
-        point_distance = self.point_distance(point)
-        if math.isclose(point_distance, 0, abs_tol=abs_tol):
-            return True
-        return False
 
     def normal_vector(self, abscissa=0.):
         return None
@@ -6462,3 +6491,14 @@ class FullArcEllipse3D(ArcEllipse3D):
         """
         return FullArcEllipse3D(self.start_end.translation(offset), self.major_axis, self.minor_axis,
                                 self.center.translation(offset), self.normal, self.major_dir, self.name)
+
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge.
+
+        :param point: Point to be verified
+        :return: Return True if the point belongs to this surface,
+            or False otherwise
+        """
+        raise NotImplementedError(f'the straight_line_point_belongs method must be'
+                                  f' overloaded by {self.__class__.__name__}')
