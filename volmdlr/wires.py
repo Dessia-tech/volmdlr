@@ -4329,12 +4329,12 @@ class Ellipse2D(Contour2D):
             return res
         raise ValueError(f'point {point} does not belong to ellipse')
 
-    def point_at_abscissa(self, abscissa: float, resolution: int = 1000):
+    def point_at_abscissa(self, curvilinear_abscissa: float, resolution: int = 1000):
         points = self.discretization_points(number_points=resolution)
         approx_abscissa = 0
         last_point = None
         for p1, p2 in zip(points[:-1], points[1:]):
-            if approx_abscissa <= abscissa:
+            if approx_abscissa <= curvilinear_abscissa:
                 approx_abscissa += p1.point_distance(p2)
                 last_point = p2
             else:
@@ -5307,13 +5307,13 @@ class Ellipse3D(Contour3D):
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
         return ellipse_2d.abscissa(point2d)
 
-    def point_at_abscissa(self, abscissa: float, resolution: int = 1000):
+    def point_at_abscissa(self, curvilinear_abscissa: float, resolution: int = 1000):
         # TODO: enhance this method to a more precise method
         points = self.discretization_points(number_points=resolution)
         approx_abscissa = 0
         last_point = None
         for p1, p2 in zip(points, points[1:]+[points[0]]):
-            if approx_abscissa <= abscissa:
+            if approx_abscissa <= curvilinear_abscissa:
                 approx_abscissa += p1.point_distance(p2)
                 last_point = p2
             else:

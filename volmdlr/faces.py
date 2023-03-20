@@ -34,6 +34,7 @@ import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
 from volmdlr.bspline_evaluators import evaluate_single
+from volmdlr.core import point_in_list
 
 
 def knots_vector_inv(knots_vector):
@@ -1234,7 +1235,7 @@ class Plane3D(Surface3D):
         return content, [plane_id]
 
     @classmethod
-    def from_3_points(cls, point1, point2, point3):
+    def from_3_points(cls, point1, point2, point3, *args):
         """
         Point 1 is used as origin of the plane.
         """
@@ -3530,7 +3531,7 @@ class ExtrusionSurface3D(Surface3D):
     Defines a surface of revolution.
 
     An extrusion surface is a sufarce that is a generic cylindrical surface genarated by the linear
-    extrusion of a curve, generally an Ellipse or a BSpline curve.
+    extrusion of a curve, generally an Ellipse or a B-Spline curve.
 
     :param edge: edge.
     :type edge: Union[:class:`vmw.Wire3D`, :class:`vmw.Contour3D`]
@@ -3540,7 +3541,6 @@ class ExtrusionSurface3D(Surface3D):
     :type axis: :class:`volmdlr.Vector3D`
     """
     face_class = 'ExtrusionFace3D'
-    x_periodicity = None
     y_periodicity = None
 
     def __init__(self, edge: Union[volmdlr.edges.FullArcEllipse3D, volmdlr.edges.BSplineCurve3D],
@@ -4590,14 +4590,11 @@ class BSplineSurface3D(Surface3D):
 
         :return: simplified surface if possible, otherwise, returns self.
         """
-        points = [self.control_points[0], self.control_points[-1]]
-        other_control_point = self.control_points[math.ceil(len(self.control_points) / 2)]
-        if other_control_point not in points:
-            points.append(other_control_point)
-        else:
-            for point in self.control_points:
-                if point not in points:
-                    points.append(point)
+        points = [self.control_points[0]]
+        for point in self.control_points:
+            if not point_in_list(point, points):
+                points.append(point)
+                if len(points) == 3:
                     break
         plane3d = Plane3D.from_3_points(*points)
         if all(plane3d.point_on_surface(point) for point in self.control_points):

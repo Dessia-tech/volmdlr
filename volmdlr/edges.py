@@ -4679,12 +4679,6 @@ class BSplineCurve3D(BSplineCurve):
             abscissa)
         return tangent
 
-    def normal_vector(self, abscissa):
-        return None
-
-    def unit_normal_vector(self, abscissa):
-        return None
-
     def point3d_to_parameter(self, point: volmdlr.Point3D):
         """
         Search for the value of the normalized evaluation parameter t (between 0 and 1).

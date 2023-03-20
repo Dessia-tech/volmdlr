@@ -147,8 +147,6 @@ def arc3d_to_spherical_verification(start, end, angle3d, reference_points, perio
     """
     point_after_start = reference_points[0]
     point_before_end = reference_points[1]
-    x_periodicity = periodicity[0]
-    y_periodicity = periodicity[1]
     theta1, phi1 = start
     theta2, phi2 = end
     theta3, phi3 = point_after_start
@@ -166,10 +164,12 @@ def arc3d_to_spherical_verification(start, end, angle3d, reference_points, perio
         phi2 = repair_start_end_angle_periodicity(phi2, phi4)
 
     if math.isclose(phi1, phi2, abs_tol=1e-4):
-        theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d, x_periodicity)
+        theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2,
+                                                       angle3d, periodicity[0])
 
     if math.isclose(theta1, theta2, abs_tol=1e-4):
-        phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2, angle3d, y_periodicity)
+        phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2,
+                                                   angle3d, periodicity[1])
 
     return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
 
