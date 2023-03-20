@@ -1860,6 +1860,9 @@ class LineSegment2D(LineSegment):
 
     @property
     def bounding_rectangle(self):
+        """
+        Evaluates the bounding rectangle of the Line segment.
+        """
         if not self._bounding_rectangle:
             self._bounding_rectangle = volmdlr.core.BoundingRectangle(
                 min(self.start.x, self.end.x), max(self.start.x, self.end.x),
@@ -2024,6 +2027,18 @@ class LineSegment2D(LineSegment):
         return ax
 
     def to_3d(self, plane_origin, x1, x2):
+        """
+        Transforms the Line segment 2D into a 3D line segment.
+
+        :param plane_origin: The origin of plane to draw the Line segment 3D.
+        :type plane_origin: volmdlr.Point3D
+        :param x1: First direction of the plane
+        :type x1: volmdlr.Vector3D
+        :param x2: Second direction of the plane.
+        :type x2: volmdlr.Vector3D
+        :return: A 3D line segment.
+        :rtype: LineSegment3D
+        """
         start = self.start.to_3d(plane_origin, x1, x2)
         end = self.end.to_3d(plane_origin, x1, x2)
         return LineSegment3D(start, end, name=self.name)
@@ -3547,6 +3562,18 @@ class ArcEllipse2D(Edge):
         return self.discretization_points(angle_resolution=discretization_resolution)
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Transforms the arc of ellipse 2D into a 3D arc of ellipse.
+
+        :param plane_origin: The origin of plane to draw the arc of ellipse 3D.
+        :type plane_origin: volmdlr.Point3D
+        :param x: First direction of the plane
+        :type x: volmdlr.Vector3D
+        :param y: Second direction of the plane.
+        :type y: volmdlr.Vector3D
+        :return: A 3D arc of ellipse.
+        :rtype: ArcEllipse3D
+        """
         point_start3d = self.start.to_3d(plane_origin, x, y)
         point_interior3d = self.interior.to_3d(plane_origin, x, y)
         point_end3d = self.end.to_3d(plane_origin, x, y)
@@ -6525,6 +6552,12 @@ class FullArcEllipse3D(ArcEllipse3D):
         return self
 
     def point_at_abscissa(self, abscissa: float, resolution: int = 2500):
+        """
+        Calculates a point in the BSplineCurve at a given abscissa.
+
+        :param abscissa: abscissa where in the curve the point should be calculated.
+        :return: Corresponding point.
+        """
         # TODO: enhance this method to a more precise method
         points = self.discretization_points(number_points=resolution)
         approx_abscissa = 0
