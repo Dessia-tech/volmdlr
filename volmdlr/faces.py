@@ -4592,8 +4592,15 @@ class BSplineSurface3D(Surface3D):
 
         :return: simplified surface if possible, otherwise, returns self.
         """
-        points = [self.control_points[0], self.control_points[math.ceil(len(self.control_points) / 2)],
-                  self.control_points[-1]]
+        points = [self.control_points[0], self.control_points[-1]]
+        other_control_point = self.control_points[math.ceil(len(self.control_points) / 2)]
+        if other_control_point not in points:
+            points.append(other_control_point)
+        else:
+            for point in self.control_points:
+                if point not in points:
+                    points.append(point)
+                    break
         plane3d = Plane3D.from_3_points(*points)
         if all(plane3d.point_on_surface(point) for point in self.control_points):
             return plane3d
@@ -4656,8 +4663,8 @@ class BSplineSurface3D(Surface3D):
         bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
                              u_multiplicities, v_multiplicities, u_knots,
                              v_knots, weight_data, name)
-        # if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
-        #     bsplinesurface = bsplinesurface.simplify_surface()
+        if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
+            bsplinesurface = bsplinesurface.simplify_surface()
         # if u_closed:
         #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
         # if v_closed:
