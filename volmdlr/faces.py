@@ -897,7 +897,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         :param file_name: The msh. file name
         :type file_name: str
-        :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+        :param mesh_dimension: The mesh dimension (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
         :type mesh_dimension: int
         :param factor: A float, between 0 and 1, that describes the mesh quality
         (1 for coarse mesh - 0 for fine mesh)
@@ -1963,7 +1963,7 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def arcellipse3d_to_2d(self, arcellipse3d):
         """
-        Transformation of an arcellipse 3d to 2d, in a cylindrical surface.
+        Transformation of a 3D arc of ellipse to a 2D primitive in a cylindrical surface.
 
         """
         points = [self.point3d_to_2d(p)
@@ -9715,7 +9715,7 @@ class ClosedShell3D(OpenShell3D):
 
         :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...])
         for intersecting faces.
-        :type intersecting_faces_combinations: list of face objects combinaitons
+        :type intersecting_faces_combinations: list of face objects combinatons
         :param tol: tolerance
         returns a dictionary containing as keys the combination of intersecting faces
         and as the values the resulting primitive from the two intersecting faces.
@@ -9799,7 +9799,7 @@ class ClosedShell3D(OpenShell3D):
 
     def get_coincident_faces(self, shell2):
         """
-        Finds all pairs of faces that are coincidents faces, that is, faces lying on the same plane.
+        Finds all pairs of faces that are coincident faces, that is, faces lying on the same plane.
 
         returns a List of tuples with the face pairs.
         """
@@ -10075,7 +10075,7 @@ class ClosedShell3D(OpenShell3D):
 
     def merge_faces(self):
         """
-        Merges all shells' adjancent faces into one.
+        Merges all shells' adjacent faces into one.
 
         """
         union_faces = self.faces

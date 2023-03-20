@@ -1124,7 +1124,7 @@ class BSplineCurve(Edge):
 
     def select_intersection_point(self, list_abscissas, intersections):
         """
-        Select closest point in curve to intersection point obtained with discretised linesegment.
+        Select closest point in curve to intersection point obtained with discretized linesegment.
 
         :param list_abscissas: list of abscissas to verify the closest point.
         :param intersections: intersection with discretised line.
@@ -1273,7 +1273,7 @@ class Line2D(Line):
             a new figure is created.
         :type ax: matplotlib.axes._subplots.AxesSubplot, optional
         :param edge_style: data class instance, containing all parameters needed to plot Line 2D.
-        :return: The matplotlib axis.
+        :return: The Matplotlib axis.
         :rtype: matplotlib.axes._subplots.AxesSubplot
         """
         if ax is None:
@@ -1652,7 +1652,7 @@ class BSplineCurve2D(BSplineCurve):
         return cog
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        """Plot a BSpline curve 2D."""
+        """Plot a B-Spline curve 2D."""
         if ax is None:
             _, ax = plt.subplots()
 
@@ -1848,9 +1848,9 @@ class BSplineCurve2D(BSplineCurve):
 
 class BezierCurve2D(BSplineCurve2D):
     """
-    A class for 2 dimensional Bézier curves.
+    A class for 2 dimensional Bezier curves.
 
-    :param degree: The degree of the Bézier curve
+    :param degree: The degree of the Bezier curve
     :type degree: int
     :param control_points: A list of 2 dimensional points
     :type control_points: List[:class:`volmdlr.Point2D`]
@@ -6350,7 +6350,7 @@ class ArcEllipse3D(Edge):
 
         :param frame: Local coordinate system.
         :type frame: volmdlr.Frame3D
-        :param side: 'old' will perform a tranformation from local to global coordinates. 'new' will
+        :param side: 'old' will perform a transformation from local to global coordinates. 'new' will
             perform a tranformation from global to local coordinates.
         :type side: str
         :return: A new transformed ArcEllipse3D.
