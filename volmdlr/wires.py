@@ -352,6 +352,20 @@ class WireMixin:
         contour = cls(edges)
         return contour
 
+    @classmethod
+    def from_edge(cls, edge, number_segments: int):
+        """
+        Creates a Wire object from an edge.
+
+        :param edge: edge used to create Wire.
+        :param number_segments: number of segment for the wire to have.
+        :return: Wire object.
+        """
+        points = edge.discretization_points(number_points=number_segments + 1)
+        class_name_ = 'Wire'+edge.__class__.__name__[-2:]
+        class_ = getattr(sys.modules[__name__], class_name_)
+        return class_.from_points(points)
+
 
 class EdgeCollection3D(WireMixin):
     """
@@ -2222,7 +2236,7 @@ class Contour2D(ContourMixin, Wire2D):
     def from_bounding_rectangle(cls, x_min, x_max, y_min, y_max):
         """
         Create a contour 2d with bounding_box parameters, using line segments 2d.
- 
+
         """
 
         edge0 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_min, y_min), volmdlr.Point2D(x_max, y_min))
@@ -2237,11 +2251,11 @@ class Contour2D(ContourMixin, Wire2D):
     def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
         """
         Cut a contour 2d with bspline_curve 2d to define two different contours.
-        
+
         """
         # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
 
-        contours = self.cut_by_wire(bspline_curve2d.to_wire(20))
+        contours = self.cut_by_wire(Wire2D.from_edge(bspline_curve2d, 20))
 
         return contours
 
@@ -4527,14 +4541,14 @@ class Contour3D(ContourMixin, Wire3D):
             index = distances.index(min(distances))
             if min(distances) > 6e-4:
                 # Green color : well-placed and well-read
-                ax = last_edge.plot(EdgeStyle(color='g'))
+                ax = last_edge.plot(edge_style=EdgeStyle(color='g'))
                 ax.set_title(f"Step ID: #{step_id}")
 
                 for re in raw_edges[:2 + i]:
                     re.plot(ax=ax, edge_style=EdgeStyle(color='g'))
-                    re.start.plot(ax=ax, edge_style=EdgeStyle(color='g'))
-                    re.end.plot(ax=ax, edge_style=EdgeStyle(color='g'))
-                last_edge.end.plot(ax=ax, edge_style=EdgeStyle(color='g'))
+                    re.start.plot(ax=ax, color='g')
+                    re.end.plot(ax=ax, color='g')
+                last_edge.end.plot(ax=ax, color='g')
                 # Red color : can't be connected to red dot
                 raw_edge.plot(ax=ax, edge_style=EdgeStyle(color='g'))
                 # Black color : to be placed

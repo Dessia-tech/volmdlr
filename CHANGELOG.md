@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fixes to wire
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
+* Add some important fixes to unittests: missing two __init__py files.
 
 ### Removed
 
@@ -31,11 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - argument convexe in volmdlr.cloud has been renamed to convex
 
 ### Performance improvements
-* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
 * BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.
+* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
 * eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
 * BSplinecurve2D: point_belongs
 * lighten some dicts with optional name
+* Step reader: refactor to_volume_model. Remove the dependency of the method of creating a graph.
 
 ### Refactorings
 * ContourMixin: to_polygon (for both 2D and 3D)

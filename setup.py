@@ -148,7 +148,7 @@ setup(
 
     ext_modules=cythonize(["volmdlr/core_compiled.pyx",
                            "volmdlr/bspline_compiled.pyx",
-                           "volmdlr/bspline_evaluators.pyx",
-                           "volmdlr/bspline_fitting.pyx"]),
+                           "volmdlr/bspline_fitting.pyx",
+                           "volmdlr/bspline_evaluators.pyx"]),
     python_requires=">=3.7",
 )
