@@ -854,13 +854,13 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         return intersections_points
 
     def arc_crossings(self, arc: volmdlr.edges.Arc2D):
-        # return self.bsplinecurve_crossings(arc)
-        intersections_points = []
-        for primitive in self.primitives:
-            intersections = primitive.edge_intersections(arc)
-            if intersections:
-                intersections_points.extend(intersections_linesegments)
-        return intersections_points
+        return self.bsplinecurve_intersections(arc)
+        # intersections_points = []
+        # for primitive in self.primitives:
+        #     intersections = primitive.edge_intersections(arc)
+        #     if intersections:
+        #         intersections_points.extend(intersections_linesegments)
+        # return intersections_points
 
     @property
     def bounding_rectangle(self):
