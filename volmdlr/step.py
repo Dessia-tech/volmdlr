@@ -1251,8 +1251,8 @@ SI_PREFIX = {'.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9, '.MEG
              '.NANO.': 1e-9, '.PICO.': 1e-12, '.FEMTO.': 1e-15, '.ATTO.': 1e-18}
 
 STEP_REPRESENTATION_ENTITIES = {"ADVANCED_BREP_SHAPE_REPRESENTATION", "FACETED_BREP_SHAPE_REPRESENTATION",
-                                   "MANIFOLD_SURFACE_SHAPE_REPRESENTATION",
-                                   "GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION",
-                                   "GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION",
-                                   "EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION"
+                                "MANIFOLD_SURFACE_SHAPE_REPRESENTATION",
+                                "GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION",
+                                "GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION",
+                                "EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION"
                                 }

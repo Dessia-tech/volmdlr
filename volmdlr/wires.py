@@ -362,7 +362,7 @@ class WireMixin:
         :return: Wire object.
         """
         points = edge.discretization_points(number_points=number_segments + 1)
-        class_name_ = 'Wire'+edge.__class__.__name__[-2:]
+        class_name_ = 'Wire' + edge.__class__.__name__[-2:]
         class_ = getattr(sys.modules[__name__], class_name_)
         return class_.from_points(points)
 
@@ -4341,7 +4341,6 @@ class Ellipse2D(Contour2D):
                 break
         return last_point
 
-
     def point_angle_with_major_dir(self, point2d):
         """
         Given a point in the ellipse, calculates it angle with the major direction vector.
@@ -5312,7 +5311,7 @@ class Ellipse3D(Contour3D):
         points = self.discretization_points(number_points=resolution)
         approx_abscissa = 0
         last_point = None
-        for p1, p2 in zip(points, points[1:]+[points[0]]):
+        for p1, p2 in zip(points, points[1:] + [points[0]]):
             if approx_abscissa <= curvilinear_abscissa:
                 approx_abscissa += p1.point_distance(p2)
                 last_point = p2

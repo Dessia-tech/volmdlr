@@ -539,7 +539,7 @@ class LineSegment(Edge):
             return True
         return False
 
-    def point_distance(self, abscissa):
+    def point_distance(self, point):
         """
         Abstract method.
         """
@@ -734,7 +734,7 @@ class BSplineCurve(Edge):
         initial_condition_list = [0, 0.25, 0.5, 0.75, 1]
 
         def evaluate_point_distance(u):
-            return(point - self.evaluate_single(u)).norm()
+            return (point - self.evaluate_single(u)).norm()
         results = []
         initial_condition_list.sort(key=evaluate_point_distance)
         for u0 in initial_condition_list:
@@ -763,7 +763,7 @@ class BSplineCurve(Edge):
 
     def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-5, tol2: float = 1e-5):
         """
-        Finds the equivalent bspline curve parameter u to a given a point 3D or 2D using an initial guess u0.
+        Finds the equivalent B-Spline curve parameter u to a given a point 3D or 2D using an initial guess u0.
 
         :param u0: An initial guess between 0 and 1.
         :type u0: float
@@ -781,10 +781,10 @@ class BSplineCurve(Edge):
         if maxiter == 0:
             return u0, False
         func, func_first_derivative, curve_derivatives, distance_vector = self.point_inversion_funcs(u0, point)
-        if self.check_convergence(curve_derivatives, distance_vector, tol1=tol1, tol2=tol2):
+        if self._check_convergence(curve_derivatives, distance_vector, tol1=tol1, tol2=tol2):
             return u0, True
         new_u = u0 - func / func_first_derivative
-        new_u = self.check_bounds(new_u)
+        new_u = self._check_bounds(new_u)
         residual = (new_u - u0) * curve_derivatives[1]
         if residual.norm() <= 1e-6:
             return u0, False
@@ -792,7 +792,7 @@ class BSplineCurve(Edge):
         return self.point_invertion(u0, point, maxiter=maxiter - 1)
 
     @staticmethod
-    def check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-5, tol2: float = 1e-5):
+    def _check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-5, tol2: float = 1e-5):
         """
         Helper function to check convergence of point_invertion method.
         """
@@ -804,7 +804,7 @@ class BSplineCurve(Edge):
             return True
         return False
 
-    def check_bounds(self, u):
+    def _check_bounds(self, u):
         """
         Helper function to check if evaluated parameters in point_invertion method are contained in the bspline domain.
         """
@@ -3780,6 +3780,7 @@ class FullArcEllipse2D(ArcEllipse2D):
 
             if angle_abscissa == volmdlr.TWO_PI:
                 return self.length()
+
             def arc_length(theta):
                 return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
                                  (self.minor_axis ** 2) * math.cos(theta) ** 2)
@@ -4097,6 +4098,7 @@ class LineSegment3D(LineSegment):
     Define a line segment limited by two points.
 
     """
+
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
                  name: str = ''):
         if start.is_close(end):
@@ -6207,6 +6209,7 @@ class ArcEllipse3D(Edge):
         ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
         return ellipse_2d.abscissa(point2d)
+
     def reverse(self):
         """
         Reverse the Arc Ellipse 3D.
@@ -6386,11 +6389,11 @@ class FullArcEllipse3D(ArcEllipse3D):
         self.frame = frame
 
         interior = frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.25 * math.pi),
-                                                                          self.minor_axis * math.sin(0.25 * math.pi),
-                                                                          0.0))
+                                                                     self.minor_axis * math.sin(0.25 * math.pi),
+                                                                     0.0))
         extra = frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.5 * math.pi),
-                                                                       self.minor_axis * math.sin(0.5 * math.pi),
-                                                                       0.0))
+                                                                  self.minor_axis * math.sin(0.5 * math.pi),
+                                                                  0.0))
         ArcEllipse3D.__init__(self, start=start_end, interior=interior, end=start_end, center=center,
                               major_dir=major_dir, normal=normal, extra=extra, name=name)
 

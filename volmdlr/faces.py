@@ -3719,7 +3719,6 @@ class ExtrusionSurface3D(Surface3D):
         # raise NotImplementedError
 
 
-
 class RevolutionSurface3D(PeriodicalSurface):
     """
     Defines a surface of revolution.
@@ -3852,6 +3851,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         elif theta1 < theta3:
             point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
         return [vme.LineSegment2D(point1, point2)]
+
 
 class BSplineSurface3D(Surface3D):
     """
