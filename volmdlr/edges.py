@@ -240,6 +240,19 @@ class Edge(dc.DessiaObject):
                     touching_points.append(point)
         return touching_points
 
+    def abscissa(self, point, tol: float = 1e-6):
+        """
+        Computes the abscissa of an Edge.
+
+        :param point: The point located on the edge.
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`].
+        :param tol: The precision in terms of distance. Default value is 1e-4.
+        :type tol: float, optional.
+        :return: The abscissa of the point.
+        :rtype: float
+        """
+        raise NotImplementedError(f'the abscissa method must be overloaded by {self.__class__.__name__}')
+
     def local_discretization(self, point1, point2, number_points):
         """
         Gets n discretization points between two given points of the edge.
@@ -2652,16 +2665,16 @@ class Arc2D(Arc):
                 intersection_points.append(point)
         return intersection_points
 
-    def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
+    def abscissa(self, point: volmdlr.Point2D, tol=1e-9):
         """
         Returns the abscissa of a given point 2d.
         """
-        if point2d.point_distance(self.start) < tol:
+        if point.point_distance(self.start) < tol:
             return 0
-        if point2d.point_distance(self.end) < tol:
+        if point.point_distance(self.end) < tol:
             return self.length()
 
-        point = point2d - self.center
+        point_ = point - self.center
         u = self.start - self.center
         u.normalize()
         if self.is_trigo:
@@ -2669,7 +2682,7 @@ class Arc2D(Arc):
         else:
             v = -u.normal_vector()
 
-        x, y = point.dot(u), point.dot(v)
+        x, y = point_.dot(u), point_.dot(v)
         theta = math.atan2(y, x)
         if theta < -tol or theta > self.angle + tol:
             raise ValueError('Point not in arc')
@@ -5948,36 +5961,38 @@ class FullArc3D(Arc3D):
         self.interior.translation(offset, False)
         self._bbox = None
 
-    def linesegment_intersections(self, linesegment: LineSegment3D):
+    def linesegment_intersections(self, linesegment3d: LineSegment3D):
         """
         Calculates the intersections between a fullarc 3d and a linesegment3d.
 
         :param linesegment: linesegment3d to verify intersections.
         :return: list of points 3d, if there are any intersections, an empty list if otherwise.
         """
-        distance_center_lineseg = linesegment.point_distance(self.frame.origin)
+        distance_center_lineseg = linesegment3d.point_distance(self.frame.origin)
         if distance_center_lineseg > self.radius:
             return []
-        direction_vector = linesegment.direction_vector()
+        direction_vector = linesegment3d.direction_vector()
         if math.isclose(self.frame.w.dot(direction_vector), 0, abs_tol=1e-6) and \
-                not math.isclose(linesegment.start.z - self.frame.origin.z, 0, abs_tol=1e-6):
+                not math.isclose(linesegment3d.start.z - self.frame.origin.z, 0, abs_tol=1e-6):
             return []
 
-        if linesegment.start.z == linesegment.end.z == self.frame.origin.z:
+        if linesegment3d.start.z == linesegment3d.end.z == self.frame.origin.z:
             quadratic_equation_a = 1 + (direction_vector.y ** 2 / direction_vector.x ** 2)
-            quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x +
-                                    2 * (direction_vector.y / direction_vector.x) * linesegment.start.y)
-            quadratic_equation_c = (linesegment.start.y - (direction_vector.y / direction_vector.x) *
-                                    linesegment.start.x) ** 2 - self.radius ** 2
+            quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment3d.start.x +
+                                    2 * (direction_vector.y / direction_vector.x) * linesegment3d.start.y)
+            quadratic_equation_c = (linesegment3d.start.y - (direction_vector.y / direction_vector.x) *
+                                    linesegment3d.start.x) ** 2 - self.radius ** 2
             delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c
             x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
             x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)
-            y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment.start.x) + linesegment.start.y
-            y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment.start.x) + linesegment.start.y
+            y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment3d.start.x) + linesegment3d.start.y
+            y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment3d.start.x) + linesegment3d.start.y
             return [volmdlr.Point3D(x1, y1, self.frame.origin.z), volmdlr.Point3D(x2, y2, self.frame.origin.z)]
+
         constant = (self.frame.origin.z - linesegment.start.z) / direction_vector.z
         x_coordinate = constant * direction_vector.x + linesegment.start.x
         y_coordinate = constant * direction_vector.y + linesegment.start.y
+
         if math.isclose((x_coordinate - self.frame.origin.x) ** 2 + (y_coordinate - self.frame.origin.y) ** 2,
                         self.radius ** 2, abs_tol=1e-6):
             return [volmdlr.Point3D(x_coordinate, y_coordinate, self.frame.origin.z)]
