@@ -8,16 +8,17 @@ import os
 import tempfile
 import warnings
 import webbrowser
+from dataclasses import dataclass
 from datetime import datetime
-from typing import List
 from functools import lru_cache
+from typing import List, Tuple
 
-import dessia_common.core as dc
-import dessia_common.files as dcf
 # import gmsh
 import matplotlib.pyplot as plt
 import numpy as npy
 
+import dessia_common.core as dc
+import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 
@@ -45,6 +46,36 @@ DATA;
 STEP_FOOTER = '''ENDSEC;
 END-ISO-10303-21;
 '''
+
+
+def point_in_list(point, list_points, tol: float = 1e-6):
+    """
+    Verifies if a point is inside a list  of points, considering a certain tolerance.
+
+    :param point: Point to be verified inside list.
+    :param list_points: List of points to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: True if there is a point inside the list close to the point to given tolerance.
+    """
+    for point_i in list_points:
+        if point.is_close(point_i, tol):
+            return True
+    return False
+
+
+def get_point_index_in_list(point, list_points, tol: float = 1e-6):
+    """
+    Gets the index a point inside a list of points, considering a certain tolerance.
+
+    :param point: Point to be verified inside list.
+    :param list_points: List of points to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: The point index.
+    """
+    for i, point_i in enumerate(list_points):
+        if point_i.is_close(point):
+            return i
+    raise ValueError(f'{point} is not in list')
 
 
 def determinant(vec1, vec2, vec3):
@@ -90,6 +121,25 @@ def step_ids_to_str(ids):
     return ','.join([f"#{i}" for i in ids])
 
 
+@dataclass
+class EdgeStyle:
+    """
+    Data class for styling edges matplotlib plots.
+
+    """
+    color: str = 'k'
+    alpha: float = 1
+    edge_ends: bool = False
+    edge_direction: bool = False
+    width: float = None
+    arrow: bool = False
+    plot_points: bool = False
+    dashed: bool = True
+    linestyle: str = '-'
+    linewidth: float = 1
+    equal_aspect: bool = True
+
+
 class CompositePrimitive(dc.PhysicalObject):
     """
     A collection of simple primitives.
@@ -98,7 +148,7 @@ class CompositePrimitive(dc.PhysicalObject):
     :type name: str
     """
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives, name: str = ''):
         self.primitives = primitives
         self.name = name
         self._primitives_to_index = None
@@ -137,7 +187,7 @@ class Primitive2D(dc.PhysicalObject):
     :type name: str
     """
 
-    def __init__(self, name=''):
+    def __init__(self, name: str = ''):
         self.name = name
 
         dc.PhysicalObject.__init__(self, name=name)
@@ -156,7 +206,7 @@ class CompositePrimitive2D(CompositePrimitive):
     _non_data_hash_attributes = ['name', '_utd_primitives_to_index',
                                  '_primitives_to_index']
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives: List[Primitive2D], name: str = ''):
         CompositePrimitive.__init__(self, primitives, name=name)
         self.update_basis_primitives()
 
@@ -166,9 +216,9 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         Rotates the CompositePrimitive2D.
 
-        :param center: rotation center
-        :param angle: angle rotation
-        :return: a new rotated CompositePrimitive2D
+        :param center: rotation center.
+        :param angle: angle rotation.
+        :return: a new rotated CompositePrimitive2D.
         """
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
@@ -177,8 +227,8 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         Rotates the CompositePrimitive2D. Object is updated in-place.
 
-        :param center: rotation center
-        :param angle: rotation angle
+        :param center: rotation center.
+        :param angle: rotation angle.
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
@@ -235,17 +285,16 @@ class CompositePrimitive2D(CompositePrimitive):
         self.primitives = primitives
         self.update_basis_primitives()
 
-    def plot(self, ax=None, color='k', alpha=1,
-             plot_points=False, equal_aspect=False):
+    def plot(self, ax=None, edge_style=EdgeStyle()):
 
         if ax is None:
             _, ax = plt.subplots()
 
-        if equal_aspect:
+        if edge_style.equal_aspect:
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color, alpha=alpha)  # , plot_points=plot_points)
+            element.plot(ax=ax, edge_style=edge_style)
 
         ax.margins(0.1)
         plt.show()
@@ -272,7 +321,7 @@ class Primitive3D(dc.PhysicalObject):
     Defines a Primitive3D.
     """
 
-    def __init__(self, color=None, alpha=1, name=''):
+    def __init__(self, color: Tuple[float, float, float] = None, alpha: int = 1, name: str = ''):
         self.color = color
         self.alpha = alpha
 
@@ -327,17 +376,18 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
     _non_data_eq_attributes = ['name', 'basis_primitives']
     _non_data_hash_attributes = []
 
-    def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
+    def __init__(self, primitives: List[Primitive3D], color: Tuple[float, float, float] = None, alpha: float = 1,
+                 name: str = ''):
         CompositePrimitive.__init__(self, primitives=primitives, name=name)
         Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
         self._utd_primitives_to_index = False
 
-    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
         for primitive in self.primitives:
-            primitive.plot(ax=ax, color=color, alpha=alpha)
+            primitive.plot(ax=ax, edge_style=edge_style)
         return ax
 
     def babylon_points(self):
@@ -535,6 +585,22 @@ class BoundingRectangle(dc.DessiaObject):
             dy = 0
 
         return (dx ** 2 + dy ** 2) ** 0.5
+
+    @classmethod
+    def from_points(cls, points: List[volmdlr.Point2D]) -> "BoundingRectangle":
+        """
+        Initializes a bounding rectangle from a list of points.
+
+        :param points: The list of points to create the bounding rectangle from.
+        :type points: List[volmdlr.Point2D]
+        :return: The bounding rectangle initialized from the list of points.
+        :rtype: BoundingRectangle
+        """
+        xmin = min(pt.x for pt in points)
+        xmax = max(pt.x for pt in points)
+        ymin = min(pt.y for pt in points)
+        ymax = max(pt.y for pt in points)
+        return cls(xmin, xmax, ymin, ymax)
 
 
 class BoundingBox(dc.DessiaObject):
@@ -1199,10 +1265,8 @@ class VolumeModel(dc.PhysicalObject):
             step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
                             f"'',#{product_definition_id});\n"
             shape_definition_repr_id = product_definition_shape_id + 1
-            step_content += "#{} = SHAPE_DEFINITION_REPRESENTATION(#{},#{});\n".format(shape_definition_repr_id,
-                                                                                       product_definition_shape_id,
-                                                                                       primitive_id
-                                                                                       )
+            step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
+                            f"#{product_definition_shape_id},#{primitive_id});\n"
             product_related_category = shape_definition_repr_id + 1
             step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
                             f"'part',$,(#{product_id}));\n"
@@ -1355,7 +1419,6 @@ class VolumeModel(dc.PhysicalObject):
                 # meshsizes_max.append(size)
 
                 if kwargs['min_points']:
-
                     lines.extend(primitive.get_mesh_lines_with_transfinite_curves(min_points=kwargs['min_points'],
                                                                                   size=size))
 
@@ -1669,94 +1732,95 @@ class VolumeModel(dc.PhysicalObject):
 
         # gmsh.finalize()
 
-    @staticmethod
-    def generate_msh_file(file_name, mesh_dimension):
-        """
-        Generates a mesh written in a .msh file using GMSH library.
-
-        :param file_name: DESCRIPTION
-        :type file_name: TYPE
-        :param mesh_dimension: DESCRIPTION
-        :type mesh_dimension: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
-
-        """
-
-        gmsh.initialize()
-        gmsh.open(file_name + ".geo")
-
-        gmsh.model.geo.synchronize()
-        gmsh.model.mesh.generate(mesh_dimension)
-
-        gmsh.write(file_name + ".msh")
-
-        gmsh.finalize()
-
-    def to_msh_stream(self, mesh_dimension: int,
-                      factor: float, stream: dcf.StringFile,
-                      file_name: str = '', **kwargs):
-        """
-        Gets .msh file for the VolumeModel generated by gmsh.
-
-        :param file_name: The msh. file name
-        :type file_name: str
-        :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
-        :type mesh_dimension: int
-        :param factor: A float, between 0 and 1, that describes the mesh quality
-        (1 for coarse mesh - 0 for fine mesh)
-        :type factor: float
-        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
-        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
-        :type curvature_mesh_size: int, optional
-        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
-        on that edge), defaults to None
-        :type min_points: int, optional
-        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
-        :type initial_mesh_size: float, optional
-
-        :return: A txt file
-        :rtype: .txt
-        """
-
-        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
-            if element[0] not in kwargs:
-                kwargs[element[0]] = element[1]
-
-        if file_name == '':
-            with tempfile.NamedTemporaryFile(delete=False) as file:
-                file_name = file.name
-
-        self.to_geo(file_name=file_name,
-                    factor=factor,
-                    curvature_mesh_size=kwargs['curvature_mesh_size'],
-                    min_points=kwargs['min_points'],
-                    initial_mesh_size=kwargs['initial_mesh_size'])
-
-        gmsh.initialize()
-        gmsh.open(file_name + ".geo")
-
-        gmsh.model.geo.synchronize()
-        gmsh.model.mesh.generate(mesh_dimension)
-
-        lines = []
-        lines.append('$MeshFormat')
-        lines.append('4.1 0 8')
-        lines.append('$EndMeshFormat')
-
-        lines.extend(self.get_nodes_lines(gmsh))
-        lines.extend(self.get_elements_lines(gmsh))
-
-        content = ''
-        for line in lines:
-            content += line + '\n'
-
-        stream.write(content)
-
-        # gmsh.finalize()
+    # @staticmethod
+    # def generate_msh_file(file_name, mesh_dimension):
+    #     """
+    #     Generates a mesh written in a .msh file using GMSH library.
+    #
+    #     :param file_name: DESCRIPTION
+    #     :type file_name: TYPE
+    #     :param mesh_dimension: DESCRIPTION
+    #     :type mesh_dimension: TYPE
+    #     :return: DESCRIPTION
+    #     :rtype: TYPE
+    #
+    #     """
+    #
+    #     gmsh.initialize()
+    #     gmsh.open(file_name + ".geo")
+    #
+    #     gmsh.model.geo.synchronize()
+    #     gmsh.model.mesh.generate(mesh_dimension)
+    #
+    #     gmsh.write(file_name + ".msh")
+    #
+    #     gmsh.finalize()
+    #
+    # def to_msh_stream(self, mesh_dimension: int,
+    #                   factor: float, stream: dcf.StringFile,
+    #                   file_name: str = '', **kwargs):
+    #     """
+    #     Gets .msh file for the VolumeModel generated by gmsh.
+    #
+    #     :param file_name: The msh. file name
+    #     :type file_name: str
+    #     :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+    #     :type mesh_dimension: int
+    #     :param factor: A float, between 0 and 1, that describes the mesh quality
+    #     (1 for coarse mesh - 0 for fine mesh)
+    #     :type factor: float
+    #     :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+    #     (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+    #     :type curvature_mesh_size: int, optional
+    #     :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+    #     on that edge), defaults to None
+    #     :type min_points: int, optional
+    #     :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+    #     :type initial_mesh_size: float, optional
+    #
+    #     :return: A txt file
+    #     :rtype: .txt
+    #     """
+    #
+    #     for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+    #         if element[0] not in kwargs:
+    #             kwargs[element[0]] = element[1]
+    #
+    #     if file_name == '':
+    #         with tempfile.NamedTemporaryFile(delete=False) as file:
+    #             file_name = file.name
+    #
+    #     self.to_geo(file_name=file_name,
+    #                 factor=factor,
+    #                 curvature_mesh_size=kwargs['curvature_mesh_size'],
+    #                 min_points=kwargs['min_points'],
+    #                 initial_mesh_size=kwargs['initial_mesh_size'])
+    #
+    #     gmsh.initialize()
+    #     gmsh.open(file_name + ".geo")
+    #
+    #     gmsh.model.geo.synchronize()
+    #     gmsh.model.mesh.generate(mesh_dimension)
+    #
+    #     lines = []
+    #     lines.append('$MeshFormat')
+    #     lines.append('4.1 0 8')
+    #     lines.append('$EndMeshFormat')
+    #
+    #     lines.extend(self.get_nodes_lines(gmsh))
+    #     lines.extend(self.get_elements_lines(gmsh))
+    #
+    #     content = ''
+    #     for line in lines:
+    #         content += line + '\n'
+    #
+    #     stream.write(content)
+    #
+    #     # gmsh.finalize()
 
     def to_msh_file(self, mesh_dimension: int,
                     factor: float, file_name: str = '', **kwargs):
+        """ Convert and write model to a .msh file. """
 
         for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
             if element[0] not in kwargs:
@@ -1822,7 +1886,7 @@ class MovingVolumeModel(VolumeModel):
 
     """
 
-    def __init__(self, primitives, step_frames, name=''):
+    def __init__(self, primitives: List[Primitive3D], step_frames: List[List[volmdlr.Frame3D]], name: str = ''):
         VolumeModel.__init__(self, primitives=primitives, name=name)
         self.step_frames = step_frames
 
@@ -1836,7 +1900,7 @@ class MovingVolumeModel(VolumeModel):
                 return False
         return True
 
-    def step_volume_model(self, istep):
+    def step_volume_model(self, istep: int):
         primitives = []
         for primitive, frame in zip(self.primitives, self.step_frames[istep]):
             primitives.append(
@@ -1847,7 +1911,7 @@ class MovingVolumeModel(VolumeModel):
         """
         Get babylonjs data.
 
-        :return: Dictionary with babylon data.
+        :return: Dictionary with babylonjs data.
         """
         meshes = []
         primitives_to_meshes = []

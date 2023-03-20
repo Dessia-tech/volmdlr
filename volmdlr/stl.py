@@ -292,8 +292,8 @@ class Stl(dc.DessiaObject):
 
     def get_normals(self):
         """
-        Returns
-        -------
+        Gets normals.
+
         points_normals : dictionary
             returns a diction
         """

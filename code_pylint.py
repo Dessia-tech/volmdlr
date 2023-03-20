@@ -1,7 +1,7 @@
 import os
 import random
 import sys
-from datetime import date
+from datetime import date, timedelta
 import math
 
 from pylint import __version__
@@ -12,27 +12,25 @@ MIN_NOTE = 8.20
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
 EFFECTIVE_DATE = date(2023, 1, 31)
+
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
-                     "wrong-spelling-in-comment": 314,
-                     "wrong-spelling-in-docstring": 265,
-                     'invalid-name': 675,
-                     'no-else-return': 20,
-                     'consider-using-f-string': 57,
+                     "wrong-spelling-in-comment": 216,
+                     "wrong-spelling-in-docstring": 143,
+                     'invalid-name': 305,
                      'no-member': 3,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 14,
-                     'too-many-locals': 76,
+                     'too-many-locals': 70,
                      'unused-argument': 35,
-                     'too-many-arguments': 28,
-                     'line-too-long': 19,
-                     'consider-using-enumerate': 22,
-                     'too-many-branches': 28,
-                     'too-many-statements': 19,
+                     'too-many-arguments': 26,
+                     'line-too-long': 12,
+                     'too-many-branches': 26,
+                     'too-many-statements': 18,
                      'super-init-not-called': 13,
-                     'no-name-in-module': 5,
+                     'no-name-in-module': 8,
                      'abstract-method': 37,
                      'duplicate-code': 9,
                      'arguments-renamed': 2,
@@ -40,38 +38,45 @@ MAX_ERROR_BY_TYPE = {
                      'too-few-public-methods': 3,
                      'non-parent-init-called': 3,
                      'too-many-public-methods': 11,
-                     'use-implicit-booleaness-not-comparison': 8,
                      'too-many-instance-attributes': 12,
                      'protected-access': 4,
-                     'undefined-loop-variable': 4,
+                     'undefined-loop-variable': 2,
                      'unspecified-encoding': 1,
                      'too-many-function-args': 4,
                      'too-many-nested-blocks': 7,
                      'too-many-return-statements': 1,
                      'cyclic-import': 4,
                      'raise-missing-from': 2,
-                     'no-else-raise': 3,
-                     'no-else-continue': 3,
-                     'undefined-variable': 13,  # 6 when gmsh is fixed
-                     'no-else-break': 4,
+                     'undefined-variable': 0,  # 2 when gmsh is fixed
                      'broad-except': 1,
                      "broad-exception-caught": 1,
                      'too-many-boolean-expressions': 3,
                      'too-many-lines': 3,
                      'redundant-keyword-arg': 3,
-                     'modified-iterating-list': 2,
                      'consider-using-with': 1,
                      'unnecessary-dunder-call': 2,
-                     'unnecessary-lambda': 2,
                      'chained-comparison': 2,
                      'missing-module-docstring': 2,
                      'consider-using-generator': 1,
-                     'cell-var-from-loop': 1,
                      'import-outside-toplevel': 1,
                      'unsubscriptable-object': 1,
-                     }
+                     'signature-differs': 1}
 
-ERRORS_WITHOUT_TIME_DECREASE = []
+ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-many-arguments", "too-many-statements",
+                                "too-many-nested-blocks", "too-many-instance-attributes"]
+
+limit_time_effect = False
+if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
+    limit_time_effect = True
+    print(f"Limiting time effect of 21 days as we are on {os.environ['DRONE_BRANCH']}")
+
+if os.environ.get('DRONE_TARGET_BRANCH', '') in ['master', 'testing']:
+    limit_time_effect = True
+    print(f"Limiting time effect of 21 days as we are targetting {os.environ['DRONE_TARGET_BRANCH']}")
+
+if limit_time_effect:
+    EFFECTIVE_DATE += timedelta(days=21)
+
 
 print("pylint version: ", __version__)
 
@@ -106,6 +111,8 @@ if PYLINT_OBJECT_STATS:
     stats_by_msg = results.linter.stats.by_msg
 else:
     stats_by_msg = results.linter.stats["by_msg"]
+
+print(f'Errors / Allowed errors: {sum(stats_by_msg.values())} / {sum(MAX_ERROR_BY_TYPE.values())})')
 
 for error_type, number_errors in stats_by_msg.items():
     if error_type not in UNWATCHED_ERRORS:

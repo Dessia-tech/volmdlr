@@ -5,6 +5,7 @@ import unittest
 
 import volmdlr
 from volmdlr.models import contours
+from volmdlr import edges, wires
 
 
 class TestWire(unittest.TestCase):
@@ -25,9 +26,9 @@ class TestWire(unittest.TestCase):
                                                               contours.contour2d_1.primitives[3],
                                                               inside=False)
 
-        self.assertAlmostEqual(volmdlr.wires.Wire2D(prim_true).length(),
+        self.assertAlmostEqual(wires.Wire2D(prim_true).length(),
                                0.002002125855992895)
-        self.assertAlmostEqual(volmdlr.wires.Wire2D(prims_false).length(),
+        self.assertAlmostEqual(wires.Wire2D(prims_false).length(),
                                0.0797864911978587)
         self.assertEqual(len(prim_true), 1)
         self.assertEqual(len(prims_false), 7)
@@ -45,6 +46,12 @@ class TestWire(unittest.TestCase):
                                0.0797864911978587)
         self.assertEqual(len(prim_true), 1)
         self.assertEqual(len(prims_false), 7)
+
+    def test_from_edge(self):
+        lns2d = edges.LineSegment2D(volmdlr.Point2D(0.2, 0.1),
+                                    volmdlr.Point2D(0.5, 0.8))
+        wire = wires.Wire2D.from_edge(lns2d, 2)
+        self.assertAlmostEqual(len(wire.primitives), 2)
 
 
 if __name__ == '__main__':

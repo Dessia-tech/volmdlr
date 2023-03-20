@@ -5,6 +5,8 @@ Extended primitives 2D classes.
 """
 
 import math
+from typing import List
+
 import warnings
 
 import matplotlib.patches
@@ -12,6 +14,7 @@ import matplotlib.patches
 import volmdlr
 import volmdlr.edges
 import volmdlr.wires
+from volmdlr.core import EdgeStyle
 from volmdlr.primitives import RoundedLineSegments
 
 
@@ -28,7 +31,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     line_class = volmdlr.edges.LineSegment2D
     arc_class = volmdlr.edges.Arc2D
 
-    def __init__(self, points, radius, adapt_radius=False, name=''):
+    def __init__(self, points: List[volmdlr.Point2D], radius: float, adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      closed=False,
                                      adapt_radius=adapt_radius,
@@ -72,7 +75,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         p4 = pti + u2 * point_distance
 
         w = u1 + u2
-        if w != volmdlr.Vector2D(0, 0):
+        if not w.is_close(volmdlr.Vector2D(0, 0)):
             w.normalize()
 
         v1 = u1.deterministic_unit_normal_vector()
@@ -159,7 +162,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
             check = False
             ni = vectors[2 * i - 1] + vectors[2 * i]
-            if ni == volmdlr.Vector2D(0, 0):
+            if ni.is_close(volmdlr.Vector2D(0, 0)):
                 ni = vectors[2 * i]
                 ni = ni.normalVector()
                 offset_vectors.append(ni)
@@ -207,6 +210,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def offset_single_line(self, line_index, offset):
         """
+        Offsets a single line.
+
         :param line_index: 0 being the 1st line
         """
         new_linesegment2D_points = []
@@ -296,9 +301,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def offset_lines(self, line_indexes, offset):
         """
-        line_indexes is a list of consecutive line indexes
-        These line should all be aligned
-        line_indexes = 0 being the 1st line
+        line_indexes is a list of consecutive line indexes.
+
+        These line should all be aligned line_indexes = 0 being the 1st line.
 
         if self.close last line_index can be len(self.points)-1
         if not, last line_index can be len(self.points)-2
@@ -411,11 +416,11 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         # =============================================================================
         # CREATE THE NEW POINTS' LIST
         # =============================================================================
-        for i, _ in enumerate(self.points):
+        for i, point in enumerate(self.points):
             if i in new_points:
                 new_linesegment2D_points.append(new_points[i])
             else:
-                new_linesegment2D_points.append(self.points[i])
+                new_linesegment2D_points.append(point)
 
         rls_2d = self.__class__(new_linesegment2D_points, self.radius,
                                 adapt_radius=self.adapt_radius)
@@ -435,7 +440,7 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
     """
     closed = True
 
-    def __init__(self, points, radius, adapt_radius=False, name=''):
+    def __init__(self, points: List[volmdlr.Point2D], radius: float, adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      closed=True,
                                      adapt_radius=adapt_radius, name='')
@@ -447,11 +452,12 @@ class Measure2D(volmdlr.edges.LineSegment2D):
     """
     Measure 2D class.
 
+    :param unit: 'mm', 'm' or None. If None, the distance won't be in the label.
     """
 
-    def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
+    def __init__(self, point1, point2, label='', unit: str = 'mm', type_: str = 'distance'):
         """
-        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
+        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label.
 
         """
         # TODO: offset parameter
@@ -460,7 +466,8 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         self.unit = unit
         self.type_ = type_
 
-    def plot(self, ax, ndigits=6):
+    def plot(self, ax, edge_style: EdgeStyle()):
+        ndigits = 6
         x1, y1 = self.start
         x2, y2 = self.end
         xm, ym = 0.5 * (self.start + self.end)
@@ -479,12 +486,12 @@ class Measure2D(volmdlr.edges.LineSegment2D):
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
                                                        arrowstyle='<|-|>,head_length=10,head_width=5',
                                                        shrinkA=0, shrinkB=0,
-                                                       color='k')
+                                                       color=edge_style.color)
         elif self.type_ == 'radius':
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
                                                        arrowstyle='-|>,head_length=10,head_width=5',
                                                        shrinkA=0, shrinkB=0,
-                                                       color='k')
+                                                       color=edge_style.color)
 
         ax.add_patch(arrow)
         if x2 - x1 == 0.:

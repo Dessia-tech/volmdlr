@@ -11,7 +11,7 @@ thickness = 0.005
 height = 0.080
 SCREW_HOLES_DIAMETER = 0.006
 SCREW_HOLES_CLEARANCE = 0.003
-n_screws = 25
+N_SCREWS = 25
 
 p1 = vm.Point2D(0, 0)
 p2 = vm.Point2D(0.3, 0)
@@ -36,8 +36,8 @@ bottom = primitives3d.ExtrudedProfile(vm.O3D, vm.X3D, vm.Y3D, outer_contour, [],
 screw_holes_rl = inner_contour.offset(-(thickness+SCREW_HOLES_CLEARANCE + 0.5 * SCREW_HOLES_DIAMETER))
 screw_holes = []
 length = screw_holes_rl.length()
-for i in range(n_screws):
-    s = i * length/n_screws
+for i in range(N_SCREWS):
+    s = i * length / N_SCREWS
     p = screw_holes_rl.point_at_abscissa(s)
     screw_holes.append(vm.wires.Circle2D(p, SCREW_HOLES_DIAMETER*0.5))
 
