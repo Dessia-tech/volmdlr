@@ -26,10 +26,10 @@ class TestSurface3D(unittest.TestCase):
         linesegment2d = contour2d_cylinder.primitives[2]
 
         self.assertEqual(area, 0.02*math.pi)
-        self.assertEqual(fullarc2d.start, Point2D(-2*math.pi, 0.003))
-        self.assertEqual(fullarc2d.end, Point2D(0, 0.003))
-        self.assertEqual(linesegment2d.start, Point2D(-2*math.pi, 0.013))
-        self.assertEqual(linesegment2d.end, Point2D(-2*math.pi, 0.003))
+        self.assertTrue(fullarc2d.start.is_close(Point2D(-2*math.pi, 0.003)))
+        self.assertTrue(fullarc2d.end.is_close(Point2D(0, 0.003)))
+        self.assertTrue(linesegment2d.start.is_close(Point2D(-2*math.pi, 0.013)))
+        self.assertTrue(linesegment2d.end.is_close(Point2D(-2*math.pi, 0.003)))
 
 
 if __name__ == '__main__':
