@@ -294,7 +294,7 @@ class CompositePrimitive2D(CompositePrimitive):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, edge_style=EdgeStyle(color=edge_style.color, alpha=edge_style.alpha)) # , plot_points=plot_points)
+            element.plot(ax=ax, edge_style=edge_style)
 
         ax.margins(0.1)
         plt.show()
@@ -1820,7 +1820,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def to_msh_file(self, mesh_dimension: int,
                     factor: float, file_name: str = '', **kwargs):
-        """ Convert and write model to a .msh file """
+        """ Convert and write model to a .msh file. """
 
         for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
             if element[0] not in kwargs:

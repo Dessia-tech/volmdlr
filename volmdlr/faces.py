@@ -66,6 +66,9 @@ class Surface2D(volmdlr.core.Primitive2D):
     def __hash__(self):
         return hash((self.outer_contour, tuple(self.inner_contours)))
 
+    def _data_hash(self):
+        return hash(self)
+
     def copy(self):
         """
         Copies the surface2d.
@@ -171,7 +174,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+        return vmd.DisplayMesh2D(points, triangles=triangles)
 
     def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
@@ -1704,7 +1707,9 @@ class PeriodicalSurface(Surface3D):
         end = self.point3d_to_2d(linesegment3d.end)
         if start.x != end.x:
             end = volmdlr.Point2D(start.x, end.y)
-        return [vme.LineSegment2D(start, end)]
+        if not start.is_close(end):
+            return [vme.LineSegment2D(start, end)]
+        return None
 
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
@@ -1837,7 +1842,7 @@ class CylindricalSurface3D(PeriodicalSurface):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = None
 
-    def __init__(self, frame, radius: float, name: str=''):
+    def __init__(self, frame, radius: float, name: str = ''):
         self.frame = frame
         self.radius = radius
         PeriodicalSurface.__init__(self, name=name)
@@ -1879,8 +1884,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
 
         point = volmdlr.Point3D(self.radius * math.cos(point2d.x),
-                            self.radius * math.sin(point2d.x),
-                            point2d.y)
+                                self.radius * math.sin(point2d.x),
+                                point2d.y)
         return self.frame.local_to_global_coordinates(point)
 
     def point3d_to_2d(self, point3d):
@@ -1979,7 +1984,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         w_vector.normalize()
         v_vector = w_vector.cross(u_vector)
         frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
-        radius = float(arguments[2]) * unit_conversion_factor
+        radius = float(arguments[2]) * length_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -2344,8 +2349,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         w_vector.normalize()
         v_vector = w_vector.cross(u_vector)
         frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
-        rcenter = float(arguments[2]) * unit_conversion_factor
-        rcircle = float(arguments[3]) * unit_conversion_factor
+        rcenter = float(arguments[2]) * length_conversion_factor
+        rcircle = float(arguments[3]) * length_conversion_factor
         return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -2986,7 +2991,7 @@ class SphericalSurface3D(Surface3D):
         w_vector.normalize()
         v_vector = w_vector.cross(u_vector)
         frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
-        radius = float(arguments[2]) * unit_conversion_factor
+        radius = float(arguments[2]) * length_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
     def point2d_to_3d(self, point2d):
@@ -3854,7 +3859,7 @@ class BSplineSurface3D(Surface3D):
                                                 self.surface.rational,
                                                 self.surface.evaluator._span_func))
         # uses derivatives for performance because it's already compiled
-        # return volmdlr.Point3D(*self.derivatives(x, y, 0)[0][0])
+        # return volmdlr.Point3D(*self.derivatives(u, v, 0)[0][0])
         # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-4):
@@ -3958,7 +3963,7 @@ class BSplineSurface3D(Surface3D):
         """
         start = self.point3d_to_2d(linesegment3d.start)
         end = self.point3d_to_2d(linesegment3d.end)
-        if start == end:
+        if start.is_close(end):
             return None
         return [vme.LineSegment2D(start, end)]
 
@@ -4362,7 +4367,8 @@ class BSplineSurface3D(Surface3D):
         bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
                              u_multiplicities, v_multiplicities, u_knots,
                              v_knots, weight_data, name)
-        bsplinesurface = bsplinesurface.simplify_surface()
+        # if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
+        #     bsplinesurface = bsplinesurface.simplify_surface()
         # if u_closed:
         #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
         # if v_closed:
@@ -9225,9 +9231,7 @@ class ClosedShell3D(OpenShell3D):
             (1, 0) or (0, 1) with no face intersection  => 1
         """
         # Check if boundary boxes don't intersect
-        bbox1 = self.bounding_box
-        bbox2 = shell2.bounding_box
-        if not bbox1.bbox_intersection(bbox2):
+        if not self.bounding_box.bbox_intersection(shell2.bounding_box):
             # print("No intersection of shells' BBox")
             return None
 

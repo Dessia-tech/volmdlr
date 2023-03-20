@@ -97,10 +97,16 @@ class Edge(dc.DessiaObject):
     def point_at_abscissa(self, abscissa):
         """
         Calculates the point at given abscissa.
+
         """
         raise NotImplementedError(f'point_at_abscissa method not implemented by {self.__class__.__name__}')
 
     def middle_point(self):
+        """
+        Gets the middle point for an edge.
+
+        :return:
+        """
         half_length = self.length() / 2
         middle_point = self.point_at_abscissa(abscissa=half_length)
         return middle_point
@@ -230,7 +236,6 @@ class Edge(dc.DessiaObject):
                 if point not in touching_points and primitive.point_belongs(point):
                     touching_points.append(point)
         return touching_points
-
 
 class Line(dc.DessiaObject):
     """
@@ -818,7 +823,7 @@ class BSplineCurve(Edge):
             x_init.append(xi)
 
         for x0 in x_init:
-            z = least_squares(f, x0=x0, bounds=([0, 1]))
+            z = least_squares(fun, x0=x0, bounds=([0, 1]))
             if z.fun < abs_tol:
                 return True
         return False
@@ -1326,9 +1331,11 @@ class Line2D(Line):
         # point will be called I(x_I, y_I)
         # self will be (AB)
         # line will be (CD)
-        i, a, b, c, d = self._compute_data_create_tangent_circle(self, point, other_line)
+        vector_i, vector_a, vector_b, vector_c, vector_d = self._compute_data_create_tangent_circle(
+            self, point, other_line)
         # Basis change
-        new_basis, new_a, new_b, new_c, new_d = self._change_reference_frame(i, a, b, c, d)
+        new_basis, new_a, new_b, new_c, new_d = self._change_reference_frame(vector_i, vector_a, vector_b,
+                                                                             vector_c, vector_d)
 
         if new_c[1] == 0 and new_d[1] == 0:
             # Segments are on the same line: no solution
@@ -1570,6 +1577,7 @@ class BSplineCurve2D(BSplineCurve):
         return cog
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Plot a BSpline curve 2D."""
         if ax is None:
             _, ax = plt.subplots()
 
@@ -1578,12 +1586,13 @@ class BSplineCurve2D(BSplineCurve):
         x_points = [point.x for point in points]
         y_points = [point.y for point in points]
         ax.plot(x_points, y_points, color=edge_style.color, alpha=edge_style.alpha)
-        if plot_points:
+        if edge_style.plot_points:
             for point in points:
                 point.plot(ax, color=edge_style.color)
         return ax
 
     def to_3d(self, plane_origin, x1, x2):
+        """Transforms a BSpline Curve 2D in 3D."""
         control_points3d = [point.to_3d(plane_origin, x1, x2) for point in
                             self.control_points]
         return BSplineCurve3D(self.degree, control_points3d,
@@ -1640,20 +1649,6 @@ class BSplineCurve2D(BSplineCurve):
             linesegment = LineSegment2D(p1, p2)
             crossings.extend(linesegment.line_crossings(line2d))
         return crossings
-
-    def to_wire(self, n: int):
-        """
-        Convert a Bspline curve to a wire 2D defined with 'n' line_segments.
-
-        """
-
-        u_params = npy.linspace(0, 1, num=n + 1).tolist()
-        points = []
-        for u_param in u_params:
-            point = self.curve.evaluate_single(u_param)
-            points.append(volmdlr.Point2D(point[0], point[1]))
-
-        return volmdlr.wires.Wire2D.from_points(points)
 
     def reverse(self):
         """
@@ -1742,13 +1737,13 @@ class BSplineCurve2D(BSplineCurve):
                               weights=self.weights,
                               periodic=self.periodic)
 
-    def offset(self, offset_length: volmdlr.Vector2D):
+    def offset(self, offset_length: float):
         """
         Offsets a BSplineCurve2D in one of its normal direction.
 
         :param offset_length: the length taken to offset the BSpline. if positive, the offset is in the normal
-            direction of the curve. if negetive, in the opposite direction of the normal.
-        :return: returns an offseted bsplinecurve2D, created with from_points_interpolation.
+            direction of the curve. if negative, in the opposite direction of the normal.
+        :return: returns an offset bsplinecurve2D, created with from_points_interpolation.
         """
         unit_normal_vectors = [self.unit_normal_vector(
             self.abscissa(point)) for point in self.points]
@@ -2152,9 +2147,9 @@ class LineSegment2D(LineSegment):
         Convert a linesegment2d to a wire 2D defined with 'n' line_segments.
 
         """
-
-        points = self.discretization_points(number_points=n + 1)
-        return volmdlr.wires.Wire2D.from_points(points)
+        warnings.warn('To avoid Circular imports, a new method was created in Wire2D called from_edge.'
+                      'You can use it instead of to_wire.')
+        raise AttributeError
 
     def nearest_point_to(self, point):
         """
@@ -2762,22 +2757,22 @@ class Arc2D(Arc):
                                           point)
 
     def _full_arc_moment_inertia(self, angle1, angle2):
-        Ix1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        moment_inertia_x1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle1) - math.sin(2 * angle2)))
-        Iy1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        moment_inertia_y1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle2) - math.sin(2 * angle1)))
-        Ixy1 = self.radius ** 4 / 8 * (
+        moment_inertia_xy1 = self.radius ** 4 / 8 * (
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
-        return Ix1, Iy1, Ixy1
+        return moment_inertia_x1, moment_inertia_y1, moment_inertia_xy1
 
     def _triangle_moment_inertia(self):
         xi, yi = self.start - self.center
         xj, yj = self.end - self.center
-        Ix2 = (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi) / 12.
-        Iy2 = (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi) / 12.
-        Ixy2 = (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
+        moment_inertia_x2 = (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi) / 12.
+        moment_inertia_y2 = (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi) / 12.
+        moment_inertia_xy2 = (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
                 xi * yj - xj * yi) / 24.
-        return Ix2, Iy2, Ixy2
+        return moment_inertia_x2, moment_inertia_y2, moment_inertia_xy2
 
     def straight_line_center_of_mass(self):
         """Straight line center of mass."""
@@ -3015,10 +3010,6 @@ class Arc2D(Arc):
 
         interior = self.middle_point().rotation(self.center, math.pi)
         return Arc2D(self.start, interior, self.end)
-
-    def to_wire(self, angle_resolution: float = 10.):
-        """ Convert an arc to a wire 2d defined with line_segments. """
-        return volmdlr.wires.Wire2D.from_points(self.discretization_points(angle_resolution=angle_resolution))
 
     def axial_symmetry(self, line):
         """ Finds out the symmetric arc 2D according to a line. """
@@ -3338,7 +3329,7 @@ class ArcEllipse2D(Edge):
             From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a- \
             center-and-3-arbitrary-points-on-it-are-given.
             theta= ellipse's inclination angle related to the horizontal
-            (clockwise),A=semi major axis, B=semi minor axis.
+            (clockwise), A=semi major axis, B=semi minor axis.
 
             """
             x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1],\
@@ -3622,7 +3613,7 @@ class ArcEllipse2D(Edge):
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
-        intersections = self.line_intersections(linesegment2d)
+        intersections = self.line_intersections(linesegment2d.to_line())
         linesegment_intersections = []
         for inter in intersections:
             if linesegment2d.point_belongs(inter):
@@ -3792,16 +3783,16 @@ class Line3D(Line):
         u = self.point2 - self.point1
         v = other_line.point2 - other_line.point1
         w = self.point1 - other_line.point1
-        a = u.dot(u)
-        b = u.dot(v)
-        c = v.dot(v)
-        d = u.dot(w)
-        e = v.dot(w)
+        u_dot_u = u.dot(u)
+        u_dot_v = u.dot(v)
+        v_dot_v = v.dot(v)
+        u_dot_w = u.dot(w)
+        v_dot_w = v.dot(w)
 
-        s = (b * e - c * d) / (a * c - b ** 2)
-        t = (a * e - b * d) / (a * c - b ** 2)
-        point1 = self.point1 + s * u
-        point2 = other_line.point1 + t * v
+        s_param = (u_dot_v * v_dot_w - v_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
+        t_param = (u_dot_u * v_dot_w - u_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
+        point1 = self.point1 + s_param * u
+        point2 = other_line.point1 + t_param * v
         return point1, point2
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -4442,7 +4433,7 @@ class LineSegment3D(LineSegment):
 
         if not math.isclose(distance_1, distance_2, abs_tol=1e-9):
             # Conical
-            return self._revolution_conical([axis, u, p1_proj, dist1, dist2, angle])
+            return self._revolution_conical([axis, u, p1_proj, distance_1, distance_2, angle])
 
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
@@ -4869,8 +4860,6 @@ class BSplineCurve3D(BSplineCurve):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig = ax.figure
 
         x = [point.x for point in self.points]
         y = [point.y for point in self.points]

@@ -191,7 +191,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                           offset_vectors[i - (not self.closed)]
+                offset_vectors[i - (not self.closed)]
             offset_points.append(offset_point)
 
         if not self.closed:
@@ -416,7 +416,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         # =============================================================================
         # CREATE THE NEW POINTS' LIST
         # =============================================================================
-        for i, _ in enumerate(self.points):
+        for i, point in enumerate(self.points):
             if i in new_points:
                 new_linesegment2D_points.append(new_points[i])
             else:
@@ -452,12 +452,12 @@ class Measure2D(volmdlr.edges.LineSegment2D):
     """
     Measure 2D class.
 
-    :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
+    :param unit: 'mm', 'm' or None. If None, the distance won't be in the label.
     """
 
     def __init__(self, point1, point2, label='', unit: str = 'mm', type_: str = 'distance'):
         """
-        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
+        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label.
 
         """
         # TODO: offset parameter
