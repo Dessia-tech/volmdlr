@@ -1828,6 +1828,26 @@ class PeriodicalSurface(Surface3D):
             )]
         return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start), self.point2d_to_3d(linesegment2d.end))]
 
+    def point2d_to_3d(self, point2d):
+        """
+        Abstract method. Convert a 2D parametric point into a 3D spatial point on the surface.
+
+        :param point2d: The 2D parametric point to convert, represented by 2 coordinates (u, v).
+        :type point2d: `volmdlr.Point2D`
+        :return: NotImplementedError: If the method is not implemented in the subclass.
+        """
+        raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
+
+    def point3d_to_2d(self, point3d):
+        """
+        Abstract method. Convert a 3D point to a 2D parametric point.
+
+        :param point3d: The 3D point to convert, represented by 3 coordinates (x, y, z).
+        :type point3d: `volmdlr.Point3D`
+        :return: NotImplementedError: If the method is not implemented in the subclass.
+        """
+        raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
+
 
 class CylindricalSurface3D(PeriodicalSurface):
     """
