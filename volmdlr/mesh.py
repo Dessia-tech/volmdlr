@@ -435,8 +435,7 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
             return ax
         if point_numbering:
             for ip, point in enumerate(self.points):
-                ax.text(*point, 'point {}'.format(ip + 1),
-                        ha='center', va='top')
+                ax.text(*point, f'point {ip + 1}', ha='center', va='top')
         for p1, p2 in zip(self.points, self.points[1:] + [self.points[0]]):
             if edge_style.width is None:
                 edge_style.width = 1

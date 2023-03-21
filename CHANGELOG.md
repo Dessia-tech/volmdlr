@@ -91,7 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ConicalSurface3D: fix from_step class method by adding the angle convertion factor
 * fix f string usage
 * Add some typings
-* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
+* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files 
 
 ### Removed
 

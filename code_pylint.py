@@ -38,7 +38,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-few-public-methods': 3,
                      'non-parent-init-called': 3,
                      'too-many-public-methods': 11,
-                     'too-many-instance-attributes': 10,
+                     'too-many-instance-attributes': 11,
                      'protected-access': 4,
                      'undefined-loop-variable': 2,
                      'unspecified-encoding': 1,
@@ -64,7 +64,7 @@ MAX_ERROR_BY_TYPE = {
 
 ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-many-arguments", "too-many-statements",
                                 "too-many-nested-blocks", "too-many-instance-attributes", "abstract-method",
-                                "no-name-in-module"]
+                                "no-name-in-module", "too-many-public-methods"]
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:

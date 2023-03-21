@@ -2565,7 +2565,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         if len(self.points) > 1:
             for point1, point2 in zip(self.points,
                                       list(self.points[1:]) + [self.points[0]]):
-                if point1 != point2:
+                if not point1.is_close(point2):
                     lines.append(volmdlr.edges.LineSegment2D(point1, point2))
         return lines
 
@@ -4148,11 +4148,13 @@ class Circle2D(Contour2D):
                                                            bsplinecurve.abscissa(point2)))
                         else:
                             intersections.append(intersection[0])
-                        param_intersections.remove((abscissa1, abscissa2))
                         break_flag = True
                         break
                 if break_flag:
                     break
+            else:
+                continue
+            param_intersections.remove((abscissa1, abscissa2))
         return intersections
 
 
