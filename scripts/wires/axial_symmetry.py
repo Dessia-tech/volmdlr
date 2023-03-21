@@ -32,5 +32,5 @@ ax.set_aspect('equal')
 
 line.plot(ax)
 
-contour.plot(ax=ax, color='r')
-axial_contour.plot(ax=ax, color='g')
+contour.plot(ax=ax, edge_style=EdgeStyle(color='r'))
+axial_contour.plot(ax=ax, edge_style=EdgeStyle(color='g'))
