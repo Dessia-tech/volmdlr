@@ -31,11 +31,9 @@ bspline_curve3d = vme.BSplineCurve3D(degree=degree,
                                      name='B Spline Curve 3D 1')
 
 
-
 contour = vmw.Circle2D(vm.O2D, 0.015)
 
 # rl = primitives3d.OpenRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
-
 
 
 sweep = primitives3d.Sweep(contour, vmw.Wire3D([bspline_curve3d]), name='Random pipe')
@@ -44,4 +42,4 @@ model = vm.core.VolumeModel([sweep])
 model._check_platform()
 model.babylonjs()
 
-model.to_step('sweep.step')
+model.to_step('bspline_sweep.step')
