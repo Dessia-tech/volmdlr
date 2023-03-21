@@ -457,7 +457,7 @@ class Measure2D(volmdlr.edges.LineSegment2D):
 
     def __init__(self, point1, point2, label='', unit: str = 'mm', type_: str = 'distance'):
         """
-        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
+        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label.
 
         """
         # TODO: offset parameter
