@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour3D: hash
 
 ### Fixed
+* Bspline in sweep
 * Plane3D: plane_intersections
 * fixes to step assemblies
 * fixes to wire
