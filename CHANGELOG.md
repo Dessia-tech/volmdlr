@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle2D: bsplinecurve_intersections, point_distance
 * ConicalSurface3D, CylindricalSurface3D: plot method
 * BSplineCurve3D: minimum distance
+* Wire2: hash
+* Contour3D: hash
 
 ### Fixed
 * Plane3D: plane_intersections
@@ -23,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fixes to wire
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
+* Add some important fixes to unittests: missing two __init__py files.
+* Edge: change unit_direction_vector and unit_normal_vector to concrete methods
 
 ### Removed
 
@@ -31,11 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - argument convexe in volmdlr.cloud has been renamed to convex
 
 ### Performance improvements
-* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
 * BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.
+* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
 * eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
 * BSplinecurve2D: point_belongs
 * lighten some dicts with optional name
+* Step reader: refactor to_volume_model. Remove the dependency of the method of creating a graph.
 
 ### Refactorings
 * ContourMixin: to_polygon (for both 2D and 3D)
@@ -51,6 +56,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unittests for Point3D
 * LineSegment3D: test_matrix_distance
 
+
+## v0.9.1
+
+### Fixed
+- build: manifest was not shipping bspline_compiled
+- fixed many pylint errors: 13/03/2023
 ## v0.9.0 [Released 06/03/2023]
 
 ### New Features
@@ -65,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
 * WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
-
+* Edge: local_discretization
 
 ### Fixed
 
@@ -375,6 +386,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * Circle3D: to_step
 * ArcEllipse3D.to_2d()
 * infinite primitive offset of linesegment
+* Contour3D: order_contour.
 
 ### Performance improvements
 
