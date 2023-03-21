@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Sep 11 15:16:33 2018
-
-@author: steven
+A sweep example.
 """
 
 import random
-
 import matplotlib.pyplot as plt
 
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
 import volmdlr.wires as wires
+
+random.seed(2)
+
 
 p1 = vm.Point3D(0, 0, 0)
 p2 = vm.Point3D(-0.150, 0, 0)

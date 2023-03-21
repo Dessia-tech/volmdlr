@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
 
 ### Fixed
+* Bspline in sweep
 * Plane3D: plane_intersections
 * fixes to step assemblies
 * fixes to wire
