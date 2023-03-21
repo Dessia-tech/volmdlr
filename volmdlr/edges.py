@@ -3753,22 +3753,6 @@ class FullArcEllipse(Edge):
         return math.pi * (self.major_axis + self.minor_axis) * \
             (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
 
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
-        """
-        Calculates the discretized points for the ellipse.
-
-        :param number_points: number of point to have in the discretized points.
-        :param angle_resolution: the angle resolution to be used to discretize points.
-        :return: discretized points.
-        """
-        if number_points:
-            angle_resolution = number_points
-        discretization_points = [self.center + volmdlr.Point2D(self.major_axis * math.cos(theta),
-                                                               self.minor_axis * math.sin(theta))
-                                 for theta in npy.linspace(0, volmdlr.TWO_PI, angle_resolution + 1)]
-        discretization_points = [point.rotation(self.center, self.theta) for point in discretization_points]
-        return discretization_points
-
     def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-6):
         """
         Verifies if a given point lies on the ellipse.
@@ -3807,8 +3791,36 @@ class FullArcEllipse(Edge):
         """
         return self
 
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge.
 
-class FullArcEllipse2D(FullArcEllipse):
+        :param point: Point to be verified
+        :return: Return True if the point belongs to this surface,
+            or False otherwise
+        """
+        raise NotImplementedError(f'the straight_line_point_belongs method must be'
+                                  f' overloaded by {self.__class__.__name__}')
+
+    def normal_vector(self, abscissa):
+        """
+        Calculates the normal vector the edge at given abscissa.
+
+        :return: the normal vector
+        """
+        raise NotImplementedError
+
+    def direction_vector(self, abscissa):
+        """
+        Calculates the direction vector the edge at given abscissa.
+
+        :param abscissa: edge abscissa
+        :return: direction vector
+        """
+        raise NotImplementedError
+
+
+class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
     """
     Defines a FullArcEllipse2D.
     """
@@ -3821,20 +3833,26 @@ class FullArcEllipse2D(FullArcEllipse):
         self.theta = volmdlr.geometry.clockwise_angle(major_dir, volmdlr.X2D)
         if self.theta == math.pi * 2:
             self.theta = 0.0
+        self._bounding_rectangle = None
 
         FullArcEllipse.__init__(self, start_end, major_axis, minor_axis, center, major_dir, name)
 
-    def length(self):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        Calculates the length of the ellipse.
+        Calculates the discretized points for the ellipse.
 
-        Ramanujan's approximation for the perimeter of the ellipse.
-        P = π (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
-        :return:
+        :param number_points: number of point to have in the discretized points.
+        :param angle_resolution: the angle resolution to be used to discretize points.
+        :return: discretized points.
         """
-        perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
-        return math.pi * (self.major_axis + self.minor_axis) * \
-            (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+        if not number_points:
+            number_points = math.ceil(volmdlr.TWO_PI * angle_resolution) + 2
+
+        discretization_points = [self.center + volmdlr.Point2D(self.major_axis * math.cos(theta),
+                                                               self.minor_axis * math.sin(theta))
+                                 for theta in npy.linspace(0, volmdlr.TWO_PI, number_points)]
+        discretization_points = [point.rotation(self.center, self.theta) for point in discretization_points]
+        return discretization_points
 
     def to_3d(self, plane_origin, x, y):
         point_start_end3d = self.start_end.to_3d(plane_origin, x, y)
@@ -3927,17 +3945,6 @@ class FullArcEllipse2D(FullArcEllipse):
         """
         raise NotImplementedError
 
-    def point_belongs(self, point: volmdlr.Point2D, abs_tol: float = 1e-4):
-        """
-        Verifies if a given point lies on the Ellipse3D.
-
-        :param point: point to be verified.
-        :return: True is point lies on the Ellipse, False otherwise
-        """
-        new_point = self.frame.global_to_local_coordinates(point)
-        return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
-                            new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=abs_tol)
-
     def abscissa(self, point: volmdlr.Point2D):
         """
         Calculates the abscissa of a given point.
@@ -3959,18 +3966,6 @@ class FullArcEllipse2D(FullArcEllipse):
             res, _ = scipy_integrate.quad(arc_length, angle_start, angle_abscissa)
             return res
         raise ValueError(f'point {point} does not belong to ellipse')
-
-    def straight_line_point_belongs(self, point):
-        """
-        Verifies if a point belongs to the surface created by closing the edge.
-
-        :param point: Point to be verified
-        :return: Return True if the point belongs to this surface,
-            or False otherwise
-        """
-        raise NotImplementedError(f'the straight_line_point_belongs method must be'
-                                  f' overloaded by {self.__class__.__name__}')
-
 
 class Line3D(Line):
     """
@@ -6526,7 +6521,7 @@ class ArcEllipse3D(Edge):
                             new_point.y ** 2 / self.Sradius ** 2, 1.0, abs_tol=1e-6)
 
 
-class FullArcEllipse3D(FullArcEllipse):
+class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
     """
     Defines a FullArcEllipse3D.
     """
@@ -6546,20 +6541,31 @@ class FullArcEllipse3D(FullArcEllipse):
         self.theta = volmdlr.geometry.clockwise_angle(vector_major_dir_2d, volmdlr.X2D)
         if self.theta == math.pi * 2:
             self.theta = 0.0
+        self._bbox = None
 
         FullArcEllipse.__init__(self, start_end, major_axis, minor_axis, center, major_dir, name)
 
-    def length(self):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
-        Calculates the length of the ellipse.
+        Discretize a Contour to have "n" points.
 
-        Ramanujan's approximation for the perimeter of the ellipse.
-        P = π (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
-        :return:
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned.
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
+            to mesh an arc.
+        :return: a list of sampled points.
         """
-        perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
-        return math.pi * (self.major_axis + self.minor_axis) * \
-            (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+        if not number_points:
+            number_points = math.ceil(volmdlr.TWO_PI * angle_resolution) + 2
+        discretization_points_3d = [
+                                       self.center + self.major_axis * math.cos(
+                                           teta) * self.major_dir
+                                       + self.minor_axis * math.sin(
+                                           teta) * self.major_dir.cross(
+                                           self.normal) for teta in
+                                       npy.linspace(0, volmdlr.TWO_PI,
+                                                   number_points)][:-1]
+        return discretization_points_3d
 
     def to_2d(self, plane_origin, x, y):
         """
