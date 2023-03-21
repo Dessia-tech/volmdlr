@@ -28,6 +28,7 @@ import volmdlr
 import volmdlr.core
 import volmdlr.display as vmd
 import volmdlr.edges
+import volmdlr.geometry
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core_compiled import polygon_point_belongs
 from volmdlr.core import EdgeStyle

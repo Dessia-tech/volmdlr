@@ -957,7 +957,7 @@ class Surface3D(DessiaObject):
         :type point3d: `volmdlr.Point3D`
         :return: NotImplementedError: If the method is not implemented in the subclass.
         """
-        raise NotImplementedError('point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
+        raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
 
     def face_from_contours3d(self, contours3d: List[volmdlr.wires.Contour3D], name: str = ''):
         """
@@ -1724,6 +1724,19 @@ class PeriodicalSurface(Surface3D):
         side = 1
         return overlapping_theta, outer_contour_side, side
 
+    def point2d_to_3d(self, point2d):
+        raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
+
+    def point3d_to_2d(self, point3d):
+        """
+        Abstract method. Convert a 3D point to a 2D parametric point.
+
+        :param point3d: The 3D point to convert, represented by 3 coordinates (x, y, z).
+        :type point3d: `volmdlr.Point3D`
+        :return: NotImplementedError: If the method is not implemented in the subclass.
+        """
+        raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
+
     def linesegment3d_to_2d(self, linesegment3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
@@ -1887,14 +1900,34 @@ class PeriodicalSurface(Surface3D):
         points[-1] = volmdlr.Point2D(theta2, z2)
 
         if theta3 < theta1 < theta2:
-            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+            points = [point - volmdlr.Point2D(volmdlr.TWO_PI, 0) if point.x > 0 else point for point in points]
             points.append(volmdlr.Point2D(points[0].x - volmdlr.TWO_PI, points[0].y))
         elif theta3 > theta1 > theta2:
-            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+            points = [point + volmdlr.Point2D(volmdlr.TWO_PI, 0) if point.x < 0 else point for point in points]
             points.append(volmdlr.Point2D(points[0].x + volmdlr.TWO_PI, points[0].y))
 
         bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points, degree=2, periodic=True, name="ellipse")
         return [bsplinecurve2d]
+
+    def point2d_to_3d(self, point2d):
+        """
+        Abstract method. Convert a 2D parametric point into a 3D spatial point on the surface.
+
+        :param point2d: The 2D parametric point to convert, represented by 2 coordinates (u, v).
+        :type point2d: `volmdlr.Point2D`
+        :return: NotImplementedError: If the method is not implemented in the subclass.
+        """
+        raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
+
+    def point3d_to_2d(self, point3d):
+        """
+        Abstract method. Convert a 3D point to a 2D parametric point.
+
+        :param point3d: The 3D point to convert, represented by 3 coordinates (x, y, z).
+        :type point3d: `volmdlr.Point3D`
+        :return: NotImplementedError: If the method is not implemented in the subclass.
+        """
+        raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
 
 
 class CylindricalSurface3D(PeriodicalSurface):

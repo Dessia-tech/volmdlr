@@ -1,3 +1,4 @@
+import math
 import unittest
 import volmdlr
 import volmdlr.edges as vme
@@ -13,9 +14,22 @@ class TestFullArcEllipse3D(unittest.TestCase):
     ellipse = vme.FullArcEllipse3D(start_end, major_axis, minor_axis, center, normal, major_dir)
 
     def test_init(self):
-        self.assertAlmostEqual(self.ellipse.Gradius, 0.0225, places=4)
-        self.assertEqual(self.ellipse.Sradius, 0.0075)
-        self.assertAlmostEqual(self.ellipse.angle, volmdlr.TWO_PI, places=4)
+        self.assertAlmostEqual(self.ellipse.major_axis, 0.0225, places=4)
+        self.assertEqual(self.ellipse.minor_axis, 0.0075)
+        self.assertAlmostEqual(self.ellipse.theta, 0, places=4)
+
+    def test_length(self):
+        self.assertAlmostEqual(self.ellipse.length(), 0.10023669584870037)
+
+    def test_to_2d(self):
+        plane_origin = volmdlr.Point3D(1, 1, 0)
+        x = volmdlr.Vector3D(0.5*math.sqrt(2), 0.5*math.sqrt(2), 0)
+        y = volmdlr.Vector3D(-0.5*math.sqrt(2), 0.5*math.sqrt(2), 0)
+        ellipse2d = self.ellipse.to_2d(plane_origin, x, y)
+        self.assertTrue(ellipse2d.major_dir.is_close(volmdlr.Vector2D(0.5*math.sqrt(2), -0.5*math.sqrt(2))))
+        self.assertTrue(ellipse2d.minor_dir.is_close(volmdlr.Vector2D(0.5*math.sqrt(2), 0.5*math.sqrt(2))))
+        self.assertAlmostEqual(ellipse2d.major_axis, 0.0225, places=4)
+        self.assertAlmostEqual(ellipse2d.minor_axis, 0.0075, places=4)
 
     def test_reverse(self):
         self.assertEqual(self.ellipse, self.ellipse.reverse())
@@ -26,6 +40,17 @@ class TestFullArcEllipse3D(unittest.TestCase):
         self.assertEqual(new_ellipse.major_dir, volmdlr.Vector3D(0.0, 1.0, 0.0))
         self.assertEqual(new_ellipse.minor_dir, volmdlr.Vector3D(0.0, 0.0, 1.0))
         self.assertEqual(new_ellipse.normal, volmdlr.Vector3D(1.0, 0.0, 0.0))
+
+    def test_abscissa(self):
+        point1 = volmdlr.Point3D(0, -0.0075, 0)
+        point2 = volmdlr.Point3D(0.0225, 0, 0)
+        self.assertAlmostEqual(self.ellipse.abscissa(point1), 0.75*self.ellipse.length())
+        self.assertAlmostEqual(self.ellipse.abscissa(point2), self.ellipse.length())
+
+    def test_translation(self):
+        translated_ellipse = self.ellipse.translation(volmdlr.X3D)
+        self.assertEqual(translated_ellipse.center, volmdlr.Point3D(1, 0, 0))
+        self.assertEqual(translated_ellipse.start_end, volmdlr.Point3D(1.0225, 0, 0))
 
 
 if __name__ == '__main__':
