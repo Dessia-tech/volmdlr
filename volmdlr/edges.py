@@ -178,15 +178,16 @@ class Edge(dc.DessiaObject):
         raise NotImplementedError('the normal_vector method must be'
                                   'overloaded by subclassing class')
 
-    def unit_normal_vector(self, abscissa):
+    def unit_normal_vector(self, abscissa: float = 0.0):
         """
         Calculates the unit normal vector the edge at given abscissa.
 
         :param abscissa: edge abscissa
         :return: unit normal vector
         """
-        raise NotImplementedError('the unit_normal_vector method must be'
-                                  'overloaded by subclassing class')
+        vector = self.normal_vector(abscissa)
+        vector.normalize()
+        return vector
 
     def direction_vector(self, abscissa):
         """
@@ -198,15 +199,16 @@ class Edge(dc.DessiaObject):
         raise NotImplementedError('the direction_vector method must be'
                                   'overloaded by subclassing class')
 
-    def unit_direction_vector(self, abscissa):
+    def unit_direction_vector(self, abscissa: float = 0.0):
         """
         Calculates the unit direction vector the edge at given abscissa.
 
         :param abscissa: edge abscissa
         :return: unit direction vector
         """
-        raise NotImplementedError('the unit_direction_vector method must be'
-                                  'overloaded by subclassing class')
+        vector = self.direction_vector(abscissa)
+        vector.normalize()
+        return vector
 
     def straight_line_point_belongs(self, point):
         """
@@ -236,6 +238,34 @@ class Edge(dc.DessiaObject):
                 if point not in touching_points and primitive.point_belongs(point):
                     touching_points.append(point)
         return touching_points
+
+    def abscissa(self, point, tol: float = 1e-6):
+        """
+        Computes the abscissa of an Edge.
+
+        :param point: The point located on the edge.
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`].
+        :param tol: The precision in terms of distance. Default value is 1e-4.
+        :type tol: float, optional.
+        :return: The abscissa of the point.
+        :rtype: float
+        """
+        raise NotImplementedError(f'the abscissa method must be overloaded by {self.__class__.__name__}')
+
+    def local_discretization(self, point1, point2, number_points):
+        """
+        Gets n discretization points between two given points of the edge.
+
+        :param point1: point 1 on edge.
+        :param point2: point 2 on edge.
+        :param number_points: number of points to discretize locally.
+        :return: list of locally discretized points.
+        """
+        abscissa1 = self.abscissa(point1)
+        abscissa2 = self.abscissa(point2)
+        discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
+                                          in npy.linspace(abscissa1, abscissa2, num=number_points)]
+        return discretized_points_between_1_2
 
 
 class Line(dc.DessiaObject):
@@ -341,6 +371,17 @@ class Line(dc.DessiaObject):
         t = (point - self.point1).dot(vector) / norm_u
         return t
 
+    def point_at_abscissa(self, abscissa):
+        """
+        Returns the point that corresponds to the given abscissa.
+
+        :param abscissa: The abscissa
+        :type abscissa: float
+        :return: The point that correspods to the given abscissa.
+        :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        """
+        return self.point1 + (self.point2 - self.point1) * abscissa
+
     def sort_points_along_line(self, points):
         """
         Sort point along a line.
@@ -426,18 +467,6 @@ class LineSegment(Edge):
             raise ValueError(f'Point is not on linesegment: abscissa={t}')
         return t
 
-    def unit_direction_vector(self, abscissa=0.):
-        """
-        Computes a unit direction vector for the line segment.
-
-        :param abscissa: defines where in the line segment the unit
-            direction vector is to be calculated.
-        :return: The unit direction vector of the LineSegment.
-        """
-        direction_vector = self.direction_vector()
-        direction_vector.normalize()
-        return direction_vector
-
     def direction_vector(self, abscissa=0.):
         """
         Returns a direction vector at a given abscissa, it is not normalized.
@@ -459,15 +488,6 @@ class LineSegment(Edge):
         :return: The normal vector of the LineSegment.
         """
         return self.direction_vector(abscissa).normal_vector()
-
-    def unit_normal_vector(self, abscissa=0.):
-        """
-        Returns the unit normal vector at a given abscissa.
-
-        :param abscissa: defines where in the line_segment unit normal vector is to be calculated.
-        :return: The unit normal vector of the LineSegment.
-        """
-        return self.unit_direction_vector(abscissa).normal_vector()
 
     def point_projection(self, point):
         """
@@ -692,47 +712,24 @@ class BSplineCurve(Edge):
             self._length = length_curve(self.curve)
         return self._length
 
-    def unit_direction_vector(self, abscissa: float):
-        """
-        Computes the 2D or 3D unit direction vector of B-spline curve at a given abscissa.
-
-        :param abscissa: The abscissa on the B-spline curve where the unit
-            direction vector will be computed
-        :type abscissa: float
-        :return: The unit direction vector of the B-spline curve
-        :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
-        """
-        direction_vector = self.direction_vector(abscissa)
-        direction_vector.normalize()
-        return direction_vector
-
     def normal_vector(self, abscissa):
         """
-        Calculates the normal vector the edge at given abscissa.
+        Calculates the normal vector to the BSpline curve at given abscissa.
 
         :return: the normal vector
         """
-        raise NotImplementedError('the normal_vector method must be'
-                                  'overloaded by child class')
-
-    def unit_normal_vector(self, abscissa):
-        """
-        Calculates the unit normal vector the edge at given abscissa.
-
-        :param abscissa: edge abscissa
-        :return: unit normal vector
-        """
-        raise NotImplementedError('the unit_normal_vector method must be'
-                                  'overloaded by child class')
+        return self.direction_vector(abscissa).normal_vector()
 
     def direction_vector(self, abscissa):
         """
-        Calculates the direction vector the edge at given abscissa.
+        Calculates the direction vector on the BSpline curve at given abscissa.
 
         :param abscissa: edge abscissa
         :return: direction vector
         """
-        raise NotImplementedError('the direction_vector method must be overloaded by child class')
+        u = abscissa / self.length()
+        derivatives = self.derivatives(u, 1)
+        return derivatives[1]
 
     def middle_point(self):
         """
@@ -1129,6 +1126,17 @@ class BSplineCurve(Edge):
         adim_abs = max(min(abscissa / length, 1.), 0.)
         point_name = 'Point' + self.__class__.__name__[-2:]
         return getattr(volmdlr, point_name)(*self.curve.evaluate_single(adim_abs))
+
+    def straight_line_point_belongs(self, point):
+        """
+        Verifies if a point belongs to the surface created by closing the edge.
+
+        :param point: Point to be verified
+        :return: Return True if the point belongs to this surface,
+            or False otherwise
+        """
+        raise NotImplementedError(f'the straight_line_point_belongs method must be'
+                                  f' overloaded by {self.__class__.__name__}')
 
 
 class Line2D(Line):
@@ -1546,39 +1554,6 @@ class BSplineCurve2D(BSplineCurve):
                                         normalize=True)
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
-
-    def direction_vector(self, abscissa: float):
-        """
-        Get direction vector at abscissa.
-
-        :param abscissa: defines where in the BSplineCurve2D the
-        direction vector is to be calculated.
-        :return: The direction vector of the BSplineCurve2D
-        """
-        return self.tangent(abscissa / self.length())
-
-    def normal_vector(self, abscissa: float):
-        """
-        Get normal vector at abscissa.
-
-        :param abscissa: defines where in the BSplineCurve2D the
-        normal vector is to be calculated
-        :return: The normal vector of the BSplineCurve2D
-        """
-        tangent_vector = self.tangent(abscissa / self.length())
-        normal_vector = tangent_vector.normal_vector()
-        return normal_vector
-
-    def unit_normal_vector(self, abscissa: float):
-        """
-        Get unit normal vector at given abscissa.
-
-        :param abscissa: defines where in the BSplineCurve2D the unit normal vector is to be calculated.
-        :return: The unit normal vector of the BSplineCurve2D.
-        """
-        normal_vector = self.normal_vector(abscissa)
-        normal_vector.normalize()
-        return normal_vector
 
     def straight_line_area(self):
         """
@@ -2277,6 +2252,28 @@ class Arc(Edge):
             return self.start.rotation(self.center, abscissa / self.radius)
         return self.start.rotation(self.center, -abscissa / self.radius)
 
+    def normal_vector(self, abscissa: float):
+        """
+        Get the normal vector of the Arc2D.
+
+        :param abscissa: defines where in the Arc2D the
+        normal vector is to be calculated
+        :return: The normal vector of the Arc2D
+        """
+        point = self.point_at_abscissa(abscissa)
+        normal_vector = self.center - point
+        return normal_vector
+
+    def direction_vector(self, abscissa: float):
+        """
+        Get direction vector of the Arc2D.
+
+        :param abscissa: defines where in the Arc2D the
+        direction vector is to be calculated
+        :return: The direction vector of the Arc2D
+        """
+        return -self.normal_vector(abscissa=abscissa).normal_vector()
+
     @staticmethod
     def get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i):
         """
@@ -2606,16 +2603,16 @@ class Arc2D(Arc):
                 intersection_points.append(point)
         return intersection_points
 
-    def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
+    def abscissa(self, point: volmdlr.Point2D, tol=1e-9):
         """
         Returns the abscissa of a given point 2d.
         """
-        if point2d.point_distance(self.start) < tol:
+        if point.point_distance(self.start) < tol:
             return 0
-        if point2d.point_distance(self.end) < tol:
+        if point.point_distance(self.end) < tol:
             return self.length()
 
-        point = point2d - self.center
+        point_ = point - self.center
         u = self.start - self.center
         u.normalize()
         if self.is_trigo:
@@ -2623,7 +2620,7 @@ class Arc2D(Arc):
         else:
             v = -u.normal_vector()
 
-        x, y = point.dot(u), point.dot(v)
+        x, y = point_.dot(u), point_.dot(v)
         theta = math.atan2(y, x)
         if theta < -tol or theta > self.angle + tol:
             raise ValueError('Point not in arc')
@@ -2634,56 +2631,6 @@ class Arc2D(Arc):
             return self.angle * self.radius
 
         return self.radius * theta
-
-    def direction_vector(self, abscissa: float):
-        """
-        Get direction vector of the Arc2D.
-
-        :param abscissa: defines where in the Arc2D the
-        direction vector is to be calculated
-        :return: The direction vector of the Arc2D
-        """
-        return -self.normal_vector(abscissa=abscissa).normal_vector()
-
-    def unit_direction_vector(self, abscissa: float):
-        """
-        Get unit direction vector of the Arc2D.
-
-        :param abscissa: defines where in the Arc2D the
-        unit direction vector is to be calculated
-
-        :return: The unit direction vector of the Arc2D
-        """
-        direction_vector = self.direction_vector(abscissa)
-        direction_vector.normalize()
-        return direction_vector
-
-    def normal_vector(self, abscissa: float):
-        """
-        Get the normal vector of the Arc2D.
-
-        :param abscissa: defines where in the Arc2D the
-        normal vector is to be calculated
-        :return: The normal vector of the Arc2D
-        """
-        point = self.point_at_abscissa(abscissa)
-        # if self.is_trigo:
-        normal_vector = self.center - point
-        # else:
-        #     normal_vector = point - self.center
-        return normal_vector
-
-    def unit_normal_vector(self, abscissa: float):
-        """
-        Get the unit normal vector of the Arc2D.
-
-        :param abscissa: defines where in the Arc2D the
-        unit normal vector is to be calculated
-        :return: The unit normal vector of the Arc2D
-        """
-        normal_vector = self.normal_vector(abscissa)
-        normal_vector.normalize()
-        return normal_vector
 
     def area(self):
         """
@@ -3602,13 +3549,7 @@ class ArcEllipse2D(Edge):
     def normal_vector(self, abscissa):
         raise NotImplementedError
 
-    def unit_normal_vector(self, abscissa):
-        raise NotImplementedError
-
     def direction_vector(self, abscissa):
-        raise NotImplementedError
-
-    def unit_direction_vector(self, abscissa):
         raise NotImplementedError
 
     def reverse(self):
@@ -3701,10 +3642,6 @@ class Line3D(Line):
         zmax = max([self.point1[2], self.point2[2]])
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
-
-    def point_at_abscissa(self, abscissa):
-        return self.point1 + (
-                self.point2 - self.point1) * abscissa
 
     def point_belongs(self, point3d):
         if point3d.is_close(self.point1):
@@ -4580,25 +4517,6 @@ class BSplineCurve3D(BSplineCurve):
         normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
         return normal
 
-    def direction_vector(self, abscissa=0.):
-        length = self.length()
-        if abscissa >= length:
-            abscissa2 = length
-            abscissa = abscissa2 - 0.001 * length
-
-        else:
-            abscissa2 = min(abscissa + 0.001 * length, length)
-
-        tangent = self.point_at_abscissa(abscissa2) - self.point_at_abscissa(
-            abscissa)
-        return tangent
-
-    def normal_vector(self, abscissa):
-        return None
-
-    def unit_normal_vector(self, abscissa):
-        return None
-
     def point3d_to_parameter(self, point: volmdlr.Point3D):
         """
         Search for the value of the normalized evaluation parameter t (between 0 and 1).
@@ -5202,31 +5120,7 @@ class Arc3D(Arc):
         :param abscissa: abscissa where in the curve the point should be calculated.
         :return: Corresponding point.
         """
-        return self.start.rotation(self.center, self.normal,
-                                   abscissa / self.radius)
-
-    def normal_vector(self, abscissa):
-        """
-        Calculates a normal vector at a given abscissa of the Arc3D.
-
-        :param abscissa: abscissa where in the curve the normal vector should be calculated.
-        :return: Corresponding normal vector.
-        """
-        theta = abscissa / self.radius
-        n_0 = self.center - self.start
-        normal = n_0.rotation(self.center, self.normal, theta)
-        return normal
-
-    def unit_normal_vector(self, abscissa):
-        """
-        Calculates a unit normal vector at a given abscissa of the Arc3D.
-
-        :param abscissa: abscissa where in the curve the unit normal vector should be calculated.
-        :return: Corresponding unit normal vector.
-        """
-        normal_vector = self.normal_vector(abscissa)
-        normal_vector.normalize()
-        return normal_vector
+        return self.start.rotation(self.center, self.normal, abscissa / self.radius)
 
     def direction_vector(self, abscissa):
         """
@@ -5238,17 +5132,6 @@ class Arc3D(Arc):
         normal_vector = self.normal_vector(abscissa)
         tangent = normal_vector.cross(self.normal)
         return tangent
-
-    def unit_direction_vector(self, abscissa):
-        """
-        Calculates a unit direction vector at a given abscissa of the Arc3D.
-
-        :param abscissa: abscissa where in the curve the unit direction vector should be calculated.
-        :return: Corresponding unit direction vector.
-        """
-        direction_vector = self.direction_vector(abscissa)
-        direction_vector.normalize()
-        return direction_vector
 
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
@@ -5859,38 +5742,38 @@ class FullArc3D(Arc3D):
         self.interior.translation(offset, False)
         self._bbox = None
 
-    def linesegment_intersections(self, linesegment: LineSegment3D):
+    def linesegment_intersections(self, linesegment3d: LineSegment3D):
         """
         Calculates the intersections between a fullarc 3d and a linesegment3d.
 
         :param linesegment: linesegment3d to verify intersections.
         :return: list of points 3d, if there are any intersections, an empty list if otherwise.
         """
-        distance_center_lineseg = linesegment.point_distance(self.frame.origin)
+        distance_center_lineseg = linesegment3d.point_distance(self.frame.origin)
         if distance_center_lineseg > self.radius:
             return []
-        direction_vector = linesegment.direction_vector()
+        direction_vector = linesegment3d.direction_vector()
         if math.isclose(self.frame.w.dot(direction_vector), 0, abs_tol=1e-6) and \
-                not math.isclose(linesegment.start.z - self.frame.origin.z, 0, abs_tol=1e-6):
+                not math.isclose(linesegment3d.start.z - self.frame.origin.z, 0, abs_tol=1e-6):
             return []
 
-        if linesegment.start.z == linesegment.end.z == self.frame.origin.z:
+        if linesegment3d.start.z == linesegment3d.end.z == self.frame.origin.z:
             quadratic_equation_a = 1 + (direction_vector.y ** 2 / direction_vector.x ** 2)
-            quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment.start.x +
-                                    2 * (direction_vector.y / direction_vector.x) * linesegment.start.y)
-            quadratic_equation_c = (linesegment.start.y - (direction_vector.y / direction_vector.x) *
-                                    linesegment.start.x) ** 2 - self.radius ** 2
+            quadratic_equation_b = (-2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * linesegment3d.start.x +
+                                    2 * (direction_vector.y / direction_vector.x) * linesegment3d.start.y)
+            quadratic_equation_c = (linesegment3d.start.y - (direction_vector.y / direction_vector.x) *
+                                    linesegment3d.start.x) ** 2 - self.radius ** 2
             delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c
             x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
             x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)
-            y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment.start.x) + linesegment.start.y
-            y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment.start.x) + linesegment.start.y
+            y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment3d.start.x) + linesegment3d.start.y
+            y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment3d.start.x) + linesegment3d.start.y
             return [volmdlr.Point3D(x1, y1, self.frame.origin.z), volmdlr.Point3D(x2, y2, self.frame.origin.z)]
         if math.isclose(direction_vector.z, 0, abs_tol=1e-6):
             print(True)
-        constant = (self.frame.origin.z - linesegment.start.z) / direction_vector.z
-        x_coordinate = constant * direction_vector.x + linesegment.start.x
-        y_coordinate = constant * direction_vector.y + linesegment.start.y
+        constant = (self.frame.origin.z - linesegment3d.start.z) / direction_vector.z
+        x_coordinate = constant * direction_vector.x + linesegment3d.start.x
+        y_coordinate = constant * direction_vector.y + linesegment3d.start.y
         if math.isclose((x_coordinate - self.frame.origin.x) ** 2 + (y_coordinate - self.frame.origin.y) ** 2,
                         self.radius ** 2, abs_tol=1e-6):
             return [volmdlr.Point3D(x_coordinate, y_coordinate, self.frame.origin.z)]
@@ -6096,13 +5979,7 @@ class ArcEllipse3D(Edge):
     def normal_vector(self, abscissa):
         raise NotImplementedError
 
-    def unit_normal_vector(self, abscissa):
-        raise NotImplementedError
-
     def direction_vector(self, abscissa):
-        raise NotImplementedError
-
-    def unit_direction_vector(self, abscissa):
         raise NotImplementedError
 
     def reverse(self):
