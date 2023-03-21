@@ -1009,7 +1009,7 @@ class Step(dc.DessiaObject):
             elif self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
                                               'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
                                               'GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
-                object_dict, times = self.helper_instantiate(node, object_dict, times, show_times)
+                object_dict, times = self._helper_instantiate(node, object_dict, times, show_times)
                 arguments = self.functions[node].arg[:]
                 self.global_uncertainty = object_dict[int(arguments[1][0][1:])]
                 self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
@@ -1030,7 +1030,7 @@ class Step(dc.DessiaObject):
 
             if node is None:
                 continue
-            object_dict, times = self.helper_instantiate(node, object_dict, times, show_times)
+            object_dict, times = self._helper_instantiate(node, object_dict, times, show_times)
 
             if not object_dict[node]:
                 errors.add(node)
@@ -1061,7 +1061,7 @@ class Step(dc.DessiaObject):
         volume_model = volmdlr.core.VolumeModel(shells)
         return volume_model
 
-    def helper_instantiate(self, node, object_dict, times, show_times):
+    def _helper_instantiate(self, node, object_dict, times, show_times):
         """
         Helper method to translate step entities into volmdlr objects.
         """
