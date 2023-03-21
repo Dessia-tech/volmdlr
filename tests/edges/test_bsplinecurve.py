@@ -143,6 +143,23 @@ class TestBSplineCurve2D(unittest.TestCase):
         remaining_section4 = self.bspline4.delete_shared_section(self.bspline3)
         self.assertEqual(remaining_section4, [self.bspline4])
 
+    def test_local_discretization(self):
+        expected_points = [volmdlr.Point2D(0.22902909156524637, 0.17924444819399216),
+                           volmdlr.Point2D(0.26974537451069974, 0.2013444443084787),
+                           volmdlr.Point2D(0.3104616574561531, 0.22072505985054805),
+                           volmdlr.Point2D(0.35117794040160644, 0.23747629494418182),
+                           volmdlr.Point2D(0.3918942233470598, 0.25168814971336145),
+                           volmdlr.Point2D(0.4326105062925132, 0.26345062428206867),
+                           volmdlr.Point2D(0.4733267892379665, 0.2728537187742847),
+                           volmdlr.Point2D(0.5140430721834197, 0.27998743331399134),
+                           volmdlr.Point2D(0.5547593551288732, 0.28494176802517024),
+                           volmdlr.Point2D(0.5954756380743265, 0.28780672303180266)]
+        point1 = self.bspline.point_at_abscissa(0.25)
+        point2 = self.bspline.point_at_abscissa(0.65)
+        local_discretization = self.bspline.local_discretization(point1, point2, 10)
+        for point1, point2 in zip(expected_points, local_discretization):
+            self.assertTrue(point1.is_close(point2))
+
 
 class TestBSplineCurve3D(unittest.TestCase):
     b_splinecurve3d = vme.BSplineCurve3D(degree=5, control_points=[
