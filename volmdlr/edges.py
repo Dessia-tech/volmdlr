@@ -424,6 +424,17 @@ class Line(dc.DessiaObject):
             return True
         return False
 
+    def to_step(self, current_id, surface_id=None):
+        """Exports to STEP format."""
+        p1_content, p1_id = self.point1.to_step(current_id)
+        # p2_content, p2_id = self.point2.to_step(current_id+1)
+        current_id = p1_id + 1
+        u_content, u_id = self.unit_direction_vector().to_step(current_id)
+        current_id = u_id + 1
+        content = p1_content + u_content
+        content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
+        return content, [current_id]
+
 
 class LineSegment(Edge):
     """
@@ -554,6 +565,19 @@ class LineSegment(Edge):
         """
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
+
+    def to_step(self, current_id, surface_id=None):
+        """Exports to STEP format."""
+        line = self.to_line()
+        content, (line_id,) = line.to_step(current_id)
+        current_id = line_id + 1
+        start_content, start_id = self.start.to_step(current_id, vertex=True)
+        current_id = start_id + 1
+        end_content, end_id = self.end.to_step(current_id + 1, vertex=True)
+        content += start_content + end_content
+        current_id = end_id + 1
+        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
+        return content, [current_id]
 
 
 class BSplineCurve(Edge):
@@ -706,7 +730,7 @@ class BSplineCurve(Edge):
 
         :return: the normal vector
         """
-        return self.direction_vector(abscissa).normal_vector()
+        return self.direction_vector(abscissa).deterministic_unit_normal_vector()
 
     def direction_vector(self, abscissa):
         """
@@ -1602,7 +1626,7 @@ class BSplineCurve2D(BSplineCurve):
         content += f"#{point_id} = B_SPLINE_CURVE_WITH_KNOTS('{self.name}',{self.degree}," \
                    f"({volmdlr.core.step_ids_to_str(points_ids)})," \
                    f".UNSPECIFIED.,.F.,.F.,{tuple(self.knot_multiplicities)},{tuple(self.knots)},.UNSPECIFIED.);\n"
-        return content, point_id + 1
+        return content, [point_id + 1]
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -4093,20 +4117,6 @@ class Line3D(Line):
         point2 = point1 + direction
         return cls(point1, point2, arguments[0][1:-1])
 
-    def to_step(self, current_id, surface_id=None):
-        """Exports to STEP format."""
-        p1_content, p1_id = self.point1.to_step(current_id)
-        # p2_content, p2_id = self.point2.to_step(current_id+1)
-        current_id = p1_id + 1
-        u_content, u_id = volmdlr.Vector3D.to_step(
-            self.unit_direction_vector(),
-            current_id,
-            vector=True)
-        current_id = u_id + 1
-        content = p1_content + u_content
-        content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
-        return content, current_id
-
     def to_2d(self, plane_origin, x, y):
         """
         Transforms a Line3D into an Line2D, given a plane origin and an u and v plane vector.
@@ -4624,19 +4634,6 @@ class LineSegment3D(LineSegment):
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
 
-    def to_step(self, current_id, surface_id=None):
-        """Exports to STEP format."""
-        line = self.to_line()
-        content, line_id = line.to_step(current_id)
-        current_id = line_id + 1
-        start_content, start_id = self.start.to_step(current_id, vertex=True)
-        current_id = start_id + 1
-        end_content, end_id = self.end.to_step(current_id + 1, vertex=True)
-        content += start_content + end_content
-        current_id = end_id + 1
-        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
-        return content, [current_id]
-
 
 class BSplineCurve3D(BSplineCurve):
     """
@@ -4851,11 +4848,11 @@ class BSplineCurve3D(BSplineCurve):
             content += f"#{curve_id + 2} = PCURVE('',#{surface_id},#{curve_id + 3});\n"
 
             # 2D parametric curve
-            curve2d_content, curve2d_id = curve2d.to_step(curve_id + 5)
+            curve2d_content, (curve2d_id,) = curve2d.to_step(curve_id + 3)  # 5
 
-            content += f"#{curve_id + 3} = DEFINITIONAL_REPRESENTATION('',(#{curve2d_id - 1}),#{curve_id + 4});\n"
-            content += f"#{curve_id + 4} = ( GEOMETRIC_REPRESENTATION_CONTEXT(2)" \
-                       f"PARAMETRIC_REPRESENTATION_CONTEXT() REPRESENTATION_CONTEXT('2D SPACE','') );\n"
+            # content += f"#{curve_id + 3} = DEFINITIONAL_REPRESENTATION('',(#{curve2d_id - 1}),#{curve_id + 4});\n"
+            # content += f"#{curve_id + 4} = ( GEOMETRIC_REPRESENTATION_CONTEXT(2)" \
+            #            f"PARAMETRIC_REPRESENTATION_CONTEXT() REPRESENTATION_CONTEXT('2D SPACE','') );\n"
 
             content += curve2d_content
             current_id = curve2d_id

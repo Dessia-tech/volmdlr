@@ -1733,6 +1733,7 @@ class Contour2D(ContourMixin, Wire2D):
         return False
 
     def bounding_points(self):
+        """Bounding points (x_min, y_min) (x_max, y_max)."""
         points = self.edge_polygon.points[:]
         for primitive in self.primitives:
             if hasattr(primitive, 'discretization_points'):
@@ -4591,6 +4592,7 @@ class Contour3D(ContourMixin, Wire3D):
                     current_id, surface_id=surface_id, curve2d=curve2d)
             else:
                 primitive_content, primitive_ids = primitive.to_step(current_id, surface_id=surface_id)
+
             content += primitive_content
             current_id = primitive_ids[-1] + 1
             for primitive_id in primitive_ids:
