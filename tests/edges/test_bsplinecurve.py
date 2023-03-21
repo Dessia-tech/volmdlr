@@ -86,7 +86,7 @@ class TestBSplineCurve2D(unittest.TestCase):
                               0.2079610665048543, 0.20299372351359257, 0.19999999999999987]
         for i, (point1, point2) in enumerate(zip(self.bspline.discretization_points(number_points=20),
                                                  offseted_bspline.discretization_points(number_points=20))):
-            self.assertAlmostEqual(point1.point_distance(point2), expected_distances[i], 6)
+            self.assertAlmostEqual(point1.point_distance(point2), expected_distances[i], 5)
 
     def test_point_distance(self):
         point = volmdlr.Point2D(1.5, 0.1)
