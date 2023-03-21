@@ -4656,9 +4656,13 @@ class BSplineSurface3D(Surface3D):
         :return: simplified surface if possible, otherwise, returns self.
         """
         points = [self.control_points[0]]
+        vector_list = []
         for point in self.control_points:
-            if not point_in_list(point, points):
+            vector = point - points[0]
+            is_colinear = any([vector.is_colinear_to(other_vector) for other_vector in vector_list])
+            if not point_in_list(point, points) and not is_colinear:
                 points.append(point)
+                vector_list.append(vector)
                 if len(points) == 3:
                     break
         plane3d = Plane3D.from_3_points(*points)
