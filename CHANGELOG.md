@@ -31,8 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve: abscissa
 * Add some important fixes to unittests: missing two __init__py files.
 * Edge: change unit_direction_vector and unit_normal_vector to concrete methods
+* stl: add _standalone_in_db to Stl class
 
 ### Removed
+* stl: remove default value in from_stream method
 
 ### Changed
 

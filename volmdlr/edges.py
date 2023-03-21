@@ -6103,7 +6103,6 @@ class FullArc3D(Arc3D):
             y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment3d.start.x) + linesegment3d.start.y
             y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment3d.start.x) + linesegment3d.start.y
             return [volmdlr.Point3D(x1, y1, self.frame.origin.z), volmdlr.Point3D(x2, y2, self.frame.origin.z)]
-
         constant = (self.frame.origin.z - linesegment3d.start.z) / direction_vector.z
         x_coordinate = constant * direction_vector.x + linesegment3d.start.x
         y_coordinate = constant * direction_vector.y + linesegment3d.start.y
