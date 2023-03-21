@@ -1205,16 +1205,16 @@ class BSplineCurve(Edge):
                 return []
         elif self.bounding_rectangle.distance_to_b_rectangle(bspline2.bounding_rectangle) > 1e-7:
                 return []
-        if not any(self.point_belongs(point, abs_tol=1e-7)
+        if not any(self.point_belongs(point, abs_tol=1e-6)
                    for point in bspline2.discretization_points(number_points=10)):
             return []
-        if all(self.point_belongs(point, abs_tol=1e-7) for point in bspline2.points):
+        if all(self.point_belongs(point, abs_tol=1e-6) for point in bspline2.points):
             return [bspline2]
-        if all(bspline2.point_belongs(point, abs_tol=1e-7) for point in self.points):
+        if all(bspline2.point_belongs(point, abs_tol=1e-6) for point in self.points):
             return [self]
-        if self.point_belongs(bspline2.start, abs_tol=1e-7):
+        if self.point_belongs(bspline2.start, abs_tol=1e-6):
             bspline1_, bspline2_ = self.split(bspline2.start)
-        elif self.point_belongs(bspline2.end, abs_tol=1e-7):
+        elif self.point_belongs(bspline2.end, abs_tol=1e-6):
             bspline1_, bspline2_ = self.split(bspline2.end)
         else:
             raise NotImplementedError
@@ -1243,7 +1243,7 @@ class BSplineCurve(Edge):
         new_arcs = []
         shared_section_middle_point = shared_section[0].point_at_abscissa(0.5*shared_section[0].length())
         for arc in split_bspline1 + split_bspline2:
-            if arc and not arc.point_belongs(shared_section_middle_point, abs_tol=1e-7):
+            if arc and not arc.point_belongs(shared_section_middle_point, abs_tol=1e-6):
                 new_arcs.append(arc)
         return new_arcs
 

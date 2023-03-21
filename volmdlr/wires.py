@@ -1382,8 +1382,6 @@ class ContourMixin(WireMixin):
         """
         Check if two contour are sharing primitives.
 
-        "all_points" is by default False. Turn it True if you need to get
-        points and edges used to find out shared primitives.
         """
 
         list_p = []
@@ -1469,71 +1467,14 @@ class ContourMixin(WireMixin):
                 if shared_section:
                     shared_primitives.extend(shared_section)
         return shared_primitives
-        # points = self.shared_primitives_extremities(contour)
-        # if not points:
-        #     return [[], []]
-        # shared_primitives_1 = []
-        # shared_primitives_2 = []
-        # for i in range(0, len(points), 2):
-        #     point1, point2 = points[i], points[i + 1]
-        #     shared_primitives_prim = self.extract_without_primitives(point1, point2, False)
-        #     if any(not contour.point_over_contour(prim.middle_point(), 1e-4) for prim in shared_primitives_prim):
-        #         shared_primitives_1.extend(self.extract_without_primitives(point1, point2, True))
-        #     else:
-        #         shared_primitives_1.extend(shared_primitives_prim)
-        #
-        #     shared_primitives_prim = contour.extract_without_primitives(point1, point2, False)
-        #     if any(not self.point_over_contour(prim.middle_point(), 1e-4) for prim in shared_primitives_prim):
-        #         shared_primitives_2.extend(contour.extract_without_primitives(point1, point2, True))
-        #     else:
-        #         shared_primitives_2.extend(shared_primitives_prim)
-        #
-        # return [shared_primitives_1, shared_primitives_2]
-
-    # def merge_primitives_with(self, contour):
-    #     """
-    #     Extract not shared primitives between two adjacent contours, to be merged.
-    #
-    #     """
-    #     contour1 = self
-    #     contour2 = contour
-    #     points = self.shared_primitives_extremities(contour)
-    #     points = self.sort_points_along_wire(points)
-    #     merge_primitives1 = []
-    #     merge_primitives2 = []
-    #     for point1, point2 in zip(points[:-1], points[1:]):
-    #         merge_primitives_prim1 = contour1.extract_without_primitives(point1, point2, False)
-    #         merge_primitives_prim2 = contour1.extract_without_primitives(point1, point2, True)
-    #         for prims in [merge_primitives_prim1, merge_primitives_prim2]:
-    #             if all(contour.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
-    #                 continue
-    #             if not all(not contour.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
-    #                 contour1 = getattr(sys.modules[__name__], 'Contour' + self.__class__.__name__[-2:])(prims)
-    #             elif all(not contour.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
-    #                 merge_primitives1.extend(prims)
-    #         merge_primitives_prim3 = contour2.extract_without_primitives(point1, point2, False)
-    #         merge_primitives_prim4 = contour2.extract_without_primitives(point1, point2, True)
-    #         for prims in [merge_primitives_prim3, merge_primitives_prim4]:
-    #             if all(self.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
-    #                 continue
-    #             if not all(not self.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
-    #                 contour2 = getattr(sys.modules[__name__], 'Contour' + self.__class__.__name__[-2:])(prims)
-    #             elif all(not self.point_over_contour(prim.middle_point(), 1e-4) for prim in prims):
-    #                 merge_primitives2.extend(prims)
-    #     merge_primitives = merge_primitives1 + merge_primitives2
-    #     return merge_primitives
-
-    # def delete_contour_section(self, wire):
-    #     extremity1 = wire.primitives[0].start
-    #     extremity2 = wire.primitives[-1].end
-    #     section1 = self.extract_without_primitives(extremity1, extremity2, True)
-    #     section2 = self.extract_without_primitives(extremity1, extremity2, False)
-    #     if not any(wire.primitive_over_wire(prim) for prim in section1):
-    #         return section1
-    #     return section2
 
     def delete_shared_contour_section(self, contour):
-        shared_primitives = []
+        """
+        Delete shared primitives between two adjacent contours.
+
+        :param contour: other contour.
+        :return: list of new primitives, without those shared by both contours.
+        """
         new_primitives_contour1 = self.primitives[:]
         new_primitives_contour2 = contour.primitives[:]
         for prim1 in self.primitives:
@@ -1549,65 +1490,17 @@ class ContourMixin(WireMixin):
                     new_primitives_contour1.extend(prim1_delete_shared_section)
                     new_primitives_contour2.extend(prim2_delete_shared_section)
 
-        # new_contour_primitives = []
-        # for prim in self.primitives:
-        #     for shared_primitive in shared_primitives_section:
-        #         new_section = prim.delete_shared_section(shared_primitive)
-        #         if new_section:
-        #             new_contour_primitives.extend(new_section)
-        #             break
         return new_primitives_contour1 + new_primitives_contour2
-        # extremity1 = wire.primitives[0].start
-        # extremity2 = wire.primitives[-1].end
-        # section1 = self.extract_without_primitives(extremity1, extremity2, True)
-        # section2 = self.extract_without_primitives(extremity1, extremity2, False)
-        # if not any(wire.primitive_over_wire(prim) for prim in section1):
-        #     return section1
-        # return section2
 
     def merge_primitives_with(self, contour):
-        # shared_primitives = self.shared_primitives_with(contour)
-        # shared_primitives_wires = Contour2D.contours_from_edges(shared_primitives)
+        """
+        Extract not shared primitives between two adjacent contours, to be merged.
+
+        :param contour:
+        :return:
+        """
         merge_primitives = self.delete_shared_contour_section(contour)
-        # primitives_to_merge = []
-        # contours_to_clean = [self, contour]
-        # while True:
-        #     for shared_contour_section in shared_primitives_wires:
-        #         for cntr in contours_to_clean:
-        #         primitives_to_merge.extend(self.delete_contour_section(shared_contour_section))
-        #         primitives_to_merge.extend(contour.delete_contour_section(shared_contour_section))
         return merge_primitives
-        # points = self.shared_primitives_extremities(contour)
-        # points = self.sort_points_along_wire(points)
-        # merge_primitives = set()
-        # shared_primitives1, shared_primitives2 = self.shared_primitives_with(contour)
-        # contour1 = self
-        # contour2 = contour
-        #
-        # for point1, point2 in zip(points[:-1], points[1:]):
-        #     ax = contour1.plot()
-        #     contour2.plot(ax)
-        #     for p in [point1, point2]:
-        #         p.plot(ax)
-        #
-        #     prims1 = contour1.extract_without_primitives(point1, point2, False)
-        #     prims2 = contour1.extract_without_primitives(point1, point2, True)
-        #
-        #     contour1 = getattr(sys.modules[__name__], 'Contour' + self.__class__.__name__[-2:])(prims1 + prims2)
-        #
-        #     prims1 = contour2.extract_without_primitives(point1, point2, False)
-        #     prims2 = contour2.extract_without_primitives(point1, point2, True)
-        #
-        #     contour2 = getattr(sys.modules[__name__], 'Contour' + self.__class__.__name__[-2:])(prims1 + prims2)
-        #
-        # for prim in contour1.primitives:
-        #     if prim not in shared_primitives1:
-        #         merge_primitives.add(prim)
-        # for prim in contour2.primitives:
-        #     if prim not in shared_primitives2:
-        #         merge_primitives.add(prim)
-        #
-        # return list(merge_primitives)
 
     def edges_order_with_adjacent_contour(self, contour):
         """
@@ -2373,7 +2266,7 @@ class Contour2D(ContourMixin, Wire2D):
         if contour2d.is_inside(self) and not is_sharing_primitive:
             return [contour2d]
 
-        merged_primitives = self.merge_primitives_with(contour2d)
+        merged_primitives = self.delete_shared_contour_section(contour2d)
         contours = Contour2D.contours_from_edges(merged_primitives)
         contours = sorted(contours, key=lambda contour: contour.area(),
                           reverse=True)
@@ -4908,7 +4801,7 @@ class Contour3D(ContourMixin, Wire3D):
 
         """
 
-        merged_primitives = self.merge_primitives_with(contour3d)
+        merged_primitives = self.delete_shared_contour_section(contour3d)
         contours = Contour3D.contours_from_edges(merged_primitives, tol=1e-6)
 
         return contours
