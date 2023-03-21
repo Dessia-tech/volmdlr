@@ -2133,6 +2133,8 @@ class Contour2D(ContourMixin, Wire2D):
         list_cutting_contours = contours[:]
         list_valid_contours = []
         while not finished:
+            if not contours:
+                break
             cutting_contour = contours[0]
             for base_contour in new_base_contours:
                 cutting_points = []
@@ -2174,9 +2176,6 @@ class Contour2D(ContourMixin, Wire2D):
                 continue
             new_base_contours.remove(base_contour)
             new_base_contours.extend(new_base_contours_)
-            if len(contours) == 0:
-                finished = True
-                continue
             if len(contours) == 1 and not new_base_contours:
                 finished = True
                 continue

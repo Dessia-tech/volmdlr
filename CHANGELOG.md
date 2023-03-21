@@ -53,6 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - build: manifest was not shipping bspline_compiled
 - fixed many pylint errors: 13/03/2023
+- fix contour2d: divide
+
 ## v0.9.0 [Released 06/03/2023]
 
 ### New Features
