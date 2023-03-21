@@ -6080,7 +6080,7 @@ class FullArc3D(Arc3D):
         """
         Calculates the intersections between a full arc 3d and a line segment 3d.
 
-        :param linesegment: linesegment 3d to verify intersections.
+        :param linesegment3d: linesegment 3d to verify intersections.
         :return: list of points 3d, if there are any intersections, an empty list if otherwise.
         """
         distance_center_lineseg = linesegment3d.point_distance(self.frame.origin)
@@ -6104,10 +6104,9 @@ class FullArc3D(Arc3D):
             y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment3d.start.x) + linesegment3d.start.y
             return [volmdlr.Point3D(x1, y1, self.frame.origin.z), volmdlr.Point3D(x2, y2, self.frame.origin.z)]
 
-        constant = (self.frame.origin.z - linesegment.start.z) / direction_vector.z
-        x_coordinate = constant * direction_vector.x + linesegment.start.x
-        y_coordinate = constant * direction_vector.y + linesegment.start.y
-
+        constant = (self.frame.origin.z - linesegment3d.start.z) / direction_vector.z
+        x_coordinate = constant * direction_vector.x + linesegment3d.start.x
+        y_coordinate = constant * direction_vector.y + linesegment3d.start.y
         if math.isclose((x_coordinate - self.frame.origin.x) ** 2 + (y_coordinate - self.frame.origin.y) ** 2,
                         self.radius ** 2, abs_tol=1e-6):
             return [volmdlr.Point3D(x_coordinate, y_coordinate, self.frame.origin.z)]
