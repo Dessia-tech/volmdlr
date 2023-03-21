@@ -4149,11 +4149,13 @@ class Circle2D(Contour2D):
                                                            bsplinecurve.abscissa(point2)))
                         else:
                             intersections.append(intersection[0])
-                        param_intersections.remove((abscissa1, abscissa2))
                         break_flag = True
                         break
                 if break_flag:
                     break
+            else:
+                continue
+            param_intersections.remove((abscissa1, abscissa2))
         return intersections
 
 
