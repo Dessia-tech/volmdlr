@@ -357,7 +357,7 @@ good-names=i,j,k,n,i1,i2,
            p1,p2,p3,p4,pi,pj,u1,u2,v1,v2,
            Ix,Iy,Ixy,
            ax,u,v,w,
-           stl,bsplines,Rapshon,maxiter,th,
+           stl,bsplines,Rapshon,maxiter,th,Bentley-Ottmann,
            _
 
 # Good variable names regexes, separated by a comma. If names match any regex,

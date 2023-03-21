@@ -2775,71 +2775,76 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return d_min
 
     def self_intersects(self):
+        """
+        Determines if a polygon self intersects using the Bentley-Ottmann algorithm.
+
+        :return:
+            - True if the polygon self intersects, False otherwise;
+            - If True, returns two intersecting line segments as LineSegment2D objects;
+            - If False, returns two None values;
+        :rtype: Tuple[bool, Union[volmdlr.edges.LineSegment2D, None], Union[volmdlr.edges.LineSegment2D, None]]
+        """
         epsilon = 0
-        # BENTLEY-OTTMANN ALGORITHM
+        segments = self._get_segments()
+
+        for segment1 in segments:
+            for segment2 in segments:
+                if segment1 == segment2:
+                    continue
+                if self._segments_intersect(segment1, segment2, epsilon):
+                    return True, segment1, segment2
+
+        return False, None, None
+
+    def _get_segments(self):
+        """
+        Helper function for self_intersects that generates segments for the Bentley-Ottmann algorithm.
+
+        :return: A list of tuples representing the segments between consecutive edges.
+        :rtype: List[Tuple[int, int]]
+        """
         # Sort the points along ascending x for the Sweep Line method
-        sorted_index = sorted(range(len(self.points)), key=lambda p: (
-            self.points[p][0], self.points[p][1]))
+        sorted_index = sorted(range(len(self.points)), key=lambda p: (self.points[p][0], self.points[p][1]))
         nb = len(sorted_index)
         segments = []
-        deleted = []
 
-        while len(sorted_index) != 0:  # While all the points haven't been swept
+        for i, index in enumerate(sorted_index):
             # Stock the segments between 2 consecutive edges
             # Ex: for the ABCDE polygon, if Sweep Line is on C, the segments
             #   will be (C,B) and (C,D)
-            if sorted_index[0] - 1 < 0:
-                segments.append((sorted_index[0], nb - 1))
+            if index - 1 < 0:
+                segments.append((index, nb - 1))
             else:
-                segments.append((sorted_index[0], sorted_index[0] - 1))
-            if sorted_index[0] >= len(self.points) - 1:
-                segments.append((sorted_index[0], 0))
+                segments.append((index, sorted_index[i - 1]))
+            if index >= len(self.points) - 1:
+                segments.append((index, 0))
             else:
-                segments.append((sorted_index[0], sorted_index[0] + 1))
+                segments.append((index, sorted_index[i + 1]))
 
-            # Once two edges linked by a segment have been swept, delete the
-            # segment from the list
-            to_del = []
-            for index in deleted:
-                if abs(index - sorted_index[0]) == 1 or abs(
-                        index - sorted_index[0]) == nb - 1:
-                    to_del.append((index, sorted_index[0]))
-                    to_del.append((sorted_index[0], index))
+        return segments
 
-            # Keep track of which edges have been swept
-            deleted.append(sorted_index[0])
-            sorted_index.pop(0)
+    def _segments_intersect(self, segment1, segment2, epsilon):
+        """
+        Helper function for self_intersects that determines if any segments in a list intersect.
 
-            # Delete the segments that have just been swept
-            index_to_del = []
-            for i, segment in enumerate(segments):
-                for seg_to_del in to_del:
-                    if segment == seg_to_del:
-                        index_to_del.append(i)
-            for index in index_to_del[::-1]:
-                segments.pop(index)
-
-            # Checks if two segments are intersecting each other, returns True
-            # if yes, otherwise the algorithm continues at WHILE
-            for segment1 in segments:
-                for segment2 in segments:
-                    if segment1[0] != segment2[0] and segment1[1] != segment2[
-                        1] and segment1[0] != segment2[1] and segment1[1] != \
-                            segment2[0]:
-
-                        line1 = volmdlr.edges.LineSegment2D(
-                            self.points[segment1[0]],
-                            self.points[segment1[1]])
-                        line2 = volmdlr.edges.LineSegment2D(
-                            self.points[segment2[0]],
-                            self.points[segment2[1]])
-                        point, param_a, param_b = volmdlr.Point2D.line_intersection(line1, line2, True)
-                        if point is not None:
-                            if 0 + epsilon <= param_a <= 1 - epsilon \
-                                    and 0 + epsilon <= param_b <= 1 - epsilon:
-                                return True, line1, line2
-
-        return False, None, None
+        :param segment1: A tuple representing the index of the start and end point of the segments.
+        :type segment1: Tuple[int, int]
+        :param segment2: A tuple representing the index of the start and end point of the segments.
+        :type segment2: Tuple[int, int]
+        :param epsilon: A small positive value for numerical stability.
+        :type epsilon: float
+        :return:
+            - True if any segments intersect, False otherwise.
+            - If True, returns two intersecting line segments as LineSegment2D objects.
+            - If False, returns two None values.
+        :rtype: Tuple[bool, Union[volmdlr.edges.LineSegment2D, None], Union[volmdlr.edges.LineSegment2D, None]]
+            """
+        line1 = volmdlr.edges.LineSegment2D(self.points[segment1[0]], self.points[segment1[1]])
+        line2 = volmdlr.edges.LineSegment2D(self.points[segment2[0]], self.points[segment2[1]])
+        point, param_a, param_b = volmdlr.Point2D.line_intersection(line1, line2, True)
+        if point is not None and 0 + epsilon <= param_a <= 1 - epsilon and 0 + epsilon <= param_b <= 1 - epsilon:
+            return True
+        return False
 
     @classmethod
     def points_convex_hull(cls, points):
