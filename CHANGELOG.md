@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
 * Add some important fixes to unittests: missing two __init__py files.
+* Edge: change unit_direction_vector and unit_normal_vector to concrete methods
 
 ### Removed
 
@@ -72,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
 * WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
-
+* Edge: local_discretization
 
 ### Fixed
 
