@@ -4488,7 +4488,8 @@ class Contour3D(ContourMixin, Wire3D):
         # edge_ends = {}
         for edge_id in arguments[1]:
             raw_edges.append(object_dict[int(edge_id[1:])])
-
+        if step_name == "POLY_LOOP":
+            return cls.from_points(raw_edges)
         if (len(raw_edges)) == 1:
             if isinstance(raw_edges[0], cls):
                 # Case of a circle, ellipse...
@@ -6004,6 +6005,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         if polygon1_2d.is_convex() and polygon2_2d.is_convex():
             return self.convex_sewing(polygon2, x, y)
         return self.concave_sewing(polygon2, x, y)
+
+
 
 
 class Triangle3D(Triangle):
