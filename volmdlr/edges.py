@@ -4879,7 +4879,8 @@ class BSplineCurve3D(BSplineCurve):
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
         lines = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:]) if not pt1.is_close(pt2)]
-        if lines:  # quick fix. Real problem: Tolerance too low (1e-6 m = 0.001mm)
+        if lines and not points[0].is_close(points[-1]):
+            # quick fix. Real problem: Tolerance too low (1e-6 m = 0.001mm)
             dir_vector = lines[0].unit_direction_vector()
             if all(line.unit_direction_vector() == dir_vector for line in lines):
                 return LineSegment3D(points[0], points[-1])
