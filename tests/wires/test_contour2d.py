@@ -31,8 +31,9 @@ class TestContour2D(unittest.TestCase):
 
     def test_order_contour(self):
         ordered_contour = self.not_ordered_contour.order_contour()
-        for expected_primitive, primitve in zip(self.ordered_contour.primitives, ordered_contour.primitives):
-            self.assertEqual(expected_primitive, primitve)
+        for previous_primitive, primitive in zip(ordered_contour.primitives, ordered_contour.primitives[1:] +
+                                                 [ordered_contour.primitives[0]]):
+            self.assertEqual(previous_primitive.end, primitive.start)
 
     def test_cut_by_wire(self):
         pass
