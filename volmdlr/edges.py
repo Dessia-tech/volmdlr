@@ -718,7 +718,7 @@ class BSplineCurve(Edge):
 
         :return: the normal vector
         """
-        return self.direction_vector(abscissa).normal_vector()
+        return self.direction_vector(abscissa).deterministic_unit_normal_vector()
 
     def direction_vector(self, abscissa):
         """
