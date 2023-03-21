@@ -3856,12 +3856,13 @@ class FullArcEllipse2D(FullArcEllipse):
         return FullArcEllipse2D(self.start_end.translation(offset), self.major_axis, self.minor_axis,
                                 self.center.translation(offset), self.major_dir, self.name)
 
-    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D]):
+    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], tol: float = 1e-6):
         """
         Calculates the abscissa of a given point.
 
-        :param point: point for calculating abscissa
-        :return: a float, between 0 and the ellipse's length
+        :param point: point for calculating abscissa.
+        :param tol: tolerance.
+        :return: a float, between 0 and the ellipse's length.
         """
         if self.point_belongs(point):
             angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
@@ -6611,7 +6612,7 @@ class FullArcEllipse3D(FullArcEllipse):
         return FullArcEllipse3D(self.start_end.translation(offset), self.major_axis, self.minor_axis,
                                 self.center.translation(offset), self.normal, self.major_dir, self.name)
 
-    def abscissa(self, point: volmdlr.Point3D):
+    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
         """
         Calculates the abscissa a given point.
 
