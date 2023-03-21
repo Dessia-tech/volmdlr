@@ -2778,10 +2778,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         """
         Determines if a polygon self intersects using the Bentley-Ottmann algorithm.
 
-        :return:
-            - True if the polygon self intersects, False otherwise;
-            - If True, returns two intersecting line segments as LineSegment2D objects;
-            - If False, returns two None values;
+        :return: True if the polygon self intersects, False otherwis. If True, returns two
+            intersecting line segments as LineSegment2D objects. If False, returns two None values;
         :rtype: Tuple[bool, Union[volmdlr.edges.LineSegment2D, None], Union[volmdlr.edges.LineSegment2D, None]]
         """
         epsilon = 0
@@ -2833,12 +2831,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         :type segment2: Tuple[int, int]
         :param epsilon: A small positive value for numerical stability.
         :type epsilon: float
-        :return:
-            - True if any segments intersect, False otherwise.
-            - If True, returns two intersecting line segments as LineSegment2D objects.
-            - If False, returns two None values.
-        :rtype: Tuple[bool, Union[volmdlr.edges.LineSegment2D, None], Union[volmdlr.edges.LineSegment2D, None]]
-            """
+        :return: True if any segments intersect, False otherwise.
+        :rtype: bool
+        """
         line1 = volmdlr.edges.LineSegment2D(self.points[segment1[0]], self.points[segment1[1]])
         line2 = volmdlr.edges.LineSegment2D(self.points[segment2[0]], self.points[segment2[1]])
         point, param_a, param_b = volmdlr.Point2D.line_intersection(line1, line2, True)
