@@ -1724,19 +1724,6 @@ class PeriodicalSurface(Surface3D):
         side = 1
         return overlapping_theta, outer_contour_side, side
 
-    def point2d_to_3d(self, point2d):
-        raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
-
-    def point3d_to_2d(self, point3d):
-        """
-        Abstract method. Convert a 3D point to a 2D parametric point.
-
-        :param point3d: The 3D point to convert, represented by 3 coordinates (x, y, z).
-        :type point3d: `volmdlr.Point3D`
-        :return: NotImplementedError: If the method is not implemented in the subclass.
-        """
-        raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
-
     def linesegment3d_to_2d(self, linesegment3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
@@ -1908,26 +1895,6 @@ class PeriodicalSurface(Surface3D):
 
         bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points, degree=2, periodic=True, name="ellipse")
         return [bsplinecurve2d]
-
-    def point2d_to_3d(self, point2d):
-        """
-        Abstract method. Convert a 2D parametric point into a 3D spatial point on the surface.
-
-        :param point2d: The 2D parametric point to convert, represented by 2 coordinates (u, v).
-        :type point2d: `volmdlr.Point2D`
-        :return: NotImplementedError: If the method is not implemented in the subclass.
-        """
-        raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
-
-    def point3d_to_2d(self, point3d):
-        """
-        Abstract method. Convert a 3D point to a 2D parametric point.
-
-        :param point3d: The 3D point to convert, represented by 3 coordinates (x, y, z).
-        :type point3d: `volmdlr.Point3D`
-        :return: NotImplementedError: If the method is not implemented in the subclass.
-        """
-        raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
 
 
 class CylindricalSurface3D(PeriodicalSurface):
@@ -4659,7 +4626,7 @@ class BSplineSurface3D(Surface3D):
         vector_list = []
         for point in self.control_points:
             vector = point - points[0]
-            is_colinear = any([vector.is_colinear_to(other_vector) for other_vector in vector_list])
+            is_colinear = any(vector.is_colinear_to(other_vector) for other_vector in vector_list)
             if not point_in_list(point, points) and not is_colinear:
                 points.append(point)
                 vector_list.append(vector)

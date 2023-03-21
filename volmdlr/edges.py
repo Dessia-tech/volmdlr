@@ -3945,27 +3945,6 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         """
         raise NotImplementedError
 
-    def abscissa(self, point: volmdlr.Point2D):
-        """
-        Calculates the abscissa of a given point.
-
-        :param point: point for calculating abscissa
-        :return: a float, between 0 and the arcellise2d's length
-        """
-        if self.point_belongs(point):
-            angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
-            angle_start = 0.0
-
-            if angle_abscissa == volmdlr.TWO_PI:
-                return self.length()
-
-            def arc_length(theta):
-                return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
-                                 (self.minor_axis ** 2) * math.cos(theta) ** 2)
-
-            res, _ = scipy_integrate.quad(arc_length, angle_start, angle_abscissa)
-            return res
-        raise ValueError(f'point {point} does not belong to ellipse')
 
 class Line3D(Line):
     """
