@@ -1759,11 +1759,12 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
                 circles = []
                 for pt, tan in zip(wire_primitive.points, tangents):
+                    # TODO: replace circle by real contour!
                     circles.append(volmdlr.wires.Circle3D.from_center_normal(center=pt,
                                                                              normal=tan,
                                                                              radius=self.contour2d.radius))
 
-                polys = [volmdlr.wires.ClosedPolygon3D(c.tessellation_points()) for c in circles]
+                polys = [volmdlr.wires.ClosedPolygon3D(c.discretization_points()) for c in circles]
 
                 size_v, size_u = len(polys[0].points) + 1, len(polys)
                 degree_u, degree_v = 3, 3
