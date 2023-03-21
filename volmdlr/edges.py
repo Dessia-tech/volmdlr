@@ -1578,7 +1578,7 @@ class BSplineCurve2D(BSplineCurve):
         x_points = [point.x for point in points]
         y_points = [point.y for point in points]
         ax.plot(x_points, y_points, color=edge_style.color, alpha=edge_style.alpha)
-        if plot_points:
+        if edge_style.plot_points:
             for point in points:
                 point.plot(ax, color=edge_style.color)
         return ax
@@ -4442,7 +4442,7 @@ class LineSegment3D(LineSegment):
 
         if not math.isclose(distance_1, distance_2, abs_tol=1e-9):
             # Conical
-            return self._revolution_conical([axis, u, p1_proj, dist1, dist2, angle])
+            return self._revolution_conical([axis, u, p1_proj, distance_1, distance_2, angle])
 
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])

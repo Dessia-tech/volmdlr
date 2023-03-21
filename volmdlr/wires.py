@@ -2566,7 +2566,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         if len(self.points) > 1:
             for point1, point2 in zip(self.points,
                                       list(self.points[1:]) + [self.points[0]]):
-                if point1 != point2:
+                if not point1.is_close(point2):
                     lines.append(volmdlr.edges.LineSegment2D(point1, point2))
         return lines
 

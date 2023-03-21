@@ -171,7 +171,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+        return vmd.DisplayMesh2D(points, triangles=triangles)
 
     def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
@@ -1979,7 +1979,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         w_vector.normalize()
         v_vector = w_vector.cross(u_vector)
         frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
-        radius = float(arguments[2]) * unit_conversion_factor
+        radius = float(arguments[2]) * length_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -2344,8 +2344,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         w_vector.normalize()
         v_vector = w_vector.cross(u_vector)
         frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
-        rcenter = float(arguments[2]) * unit_conversion_factor
-        rcircle = float(arguments[3]) * unit_conversion_factor
+        rcenter = float(arguments[2]) * length_conversion_factor
+        rcircle = float(arguments[3]) * length_conversion_factor
         return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -2986,7 +2986,7 @@ class SphericalSurface3D(Surface3D):
         w_vector.normalize()
         v_vector = w_vector.cross(u_vector)
         frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
-        radius = float(arguments[2]) * unit_conversion_factor
+        radius = float(arguments[2]) * length_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
     def point2d_to_3d(self, point2d):
