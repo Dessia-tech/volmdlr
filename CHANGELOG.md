@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle2D: bsplinecurve_intersections, point_distance
 * ConicalSurface3D, CylindricalSurface3D: plot method
 * volmdlr.edge: FullArcEllipse
+<<<<<<< HEAD
+* BSplineCurve: evaluate_single
+=======
+>>>>>>> fullarcellipse
 * Wire2: hash
 * Contour3D: hash
 
@@ -25,9 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fixes to wire
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
+* BSplineCurve: abscissa
 * Add some important fixes to unittests: missing two __init__py files.
 * Edge: change unit_direction_vector and unit_normal_vector to concrete methods
 * stl: add _standalone_in_db to Stl class
+* BSplineSurface3D: refactor bsplinecurve3d_to_2d to take into account periodic behavior
 
 ### Removed
 * stl: remove default value in from_stream method
@@ -35,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - argument convexe in volmdlr.cloud has been renamed to convex
+- Add some missing docstrings in volmdlr.faces
 
 ### Performance improvements
 * BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.

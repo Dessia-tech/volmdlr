@@ -22,9 +22,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     """
     Opened Rounded LineSegment2D class.
 
-    :param points: Points used to draw the wire.
+    :param points: Points used to draw the edge.
     :type points: List of Point2D.
-    :param radius: Radius used to connect different parts of the wire.
+    :param radius: Radius used to connect different parts of the edge.
     :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}.
     """
     closed = False
@@ -433,9 +433,9 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
     """
     Defines a polygon with some rounded corners.
 
-    :param points: Points used to draw the wire
+    :param points: Points used to draw the edge
     :type points: List of Point2D
-    :param radius: Radius used to connect different parts of the wire
+    :param radius: Radius used to connect different parts of the edge
     :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}
     """
     closed = True

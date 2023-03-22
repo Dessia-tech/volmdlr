@@ -226,7 +226,7 @@ class WireMixin:
 
     def abscissa(self, point, tol=1e-6):
         """
-        Compute the curvilinear abscissa of a point on a wire.
+        Compute the curvilinear abscissa of a point on a edge.
 
         """
         if self.point_over_wire(point, tol):
@@ -238,14 +238,14 @@ class WireMixin:
                 length += primitive.length()
             return length
 
-        raise ValueError('Point is not on wire')
+        raise ValueError('Point is not on edge')
 
     def sort_points_along_wire(self, points):
         """ Sort given points along the wire with respect to the abscissa. """
         return sorted(points, key=self.abscissa)
 
     def is_ordered(self, tol=1e-6):
-        """ Check if the wire's primitives are ordered or not. """
+        """ Check if the edge's primitives are ordered or not. """
 
         for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
             if primitive_1.end.point_distance(primitive_2.start) > tol:
@@ -253,7 +253,7 @@ class WireMixin:
         return True
 
     def order_wire(self, tol=1e-6):
-        """ Order wire's primitives. """
+        """ Order edge's primitives. """
 
         if self.is_ordered(tol=tol):
             return self.__class__(self.primitives[:])
@@ -282,7 +282,7 @@ class WireMixin:
     @classmethod
     def from_wires(cls, wires):
         """
-        Define a wire from successive wires.
+        Define a edge from successive wires.
 
         """
 
@@ -298,7 +298,7 @@ class WireMixin:
 
     def inverted_primitives(self):
         """
-        Invert wire's primitives.
+        Invert edge's primitives.
 
         """
 
@@ -309,14 +309,14 @@ class WireMixin:
 
     def is_followed_by(self, wire_2, tol=1e-6):
         """
-        Check if the wire is followed by wire_2.
+        Check if the edge is followed by wire_2.
 
         """
         return self.primitives[-1].end.point_distance(wire_2.primitives[0].start) < tol
 
     def point_over_wire(self, point, abs_tol=1e-6):
         """
-        Verifies if point is over wire.
+        Verifies if point is over edge.
 
         :param point: point to be verified.
         :param abs_tol: tolerance to be considered.
@@ -329,7 +329,7 @@ class WireMixin:
 
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
         """
-        Verifies if point is over wire.
+        Verifies if point is over edge.
 
         :param primitive: point to be verified.
         :param tol: tolerance to be considered.
@@ -449,7 +449,7 @@ class EdgeCollection3D(WireMixin):
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     """
-    A collection of simple primitives, following each other making a wire.
+    A collection of simple primitives, following each other making a edge.
 
     """
 
@@ -499,7 +499,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         """
         return self.extract_without_primitives(point1, point2, inside)
 
-        # TODO: method to check if it is a wire
+        # TODO: method to check if it is a edge
 
     def infinite_intersections(self, infinite_primitives):
         """
@@ -664,12 +664,12 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def line_crossings(self, line: volmdlr.edges.Line2D):
         """
-        Calculates valid crossing intersections of a wire and an infinite line.
+        Calculates valid crossing intersections of a edge and an infinite line.
 
-        :param line: line crossing the wire
+        :param line: line crossing the edge
         :type line: volmdlr.edges.Line2D
         returns a list of Tuples (point, primitive)
-        of the wire primitives intersecting with the line
+        of the edge primitives intersecting with the line
         """
         intersection_points = []
         intersection_points_primitives = []
@@ -687,7 +687,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def wire_intersections(self, wire):
         """
-        Compute intersections between two wire 2d.
+        Compute intersections between two edge 2d.
 
         :param wire : volmdlr.wires.Wire2D.
         :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
@@ -715,7 +715,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         """
         Define a wire based on points 2d with line_segments 2d.
 
-        :param points: points to define wire 2d.
+        :param points: points to define edge 2d.
         """
         edges = []
         for i in range(0, len(points) - 1):
@@ -739,7 +739,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def wire_crossings(self, wire):
         """
-        Compute crossings between two wire 2d.
+        Compute crossings between two edge 2d.
 
         :param wire: volmdlr.wires.Wire2D
         :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
@@ -820,7 +820,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def axial_symmetry(self, line):
         """
-        Finds out the symmetric wire 2d according to a line.
+        Finds out the symmetric edge 2d according to a line.
 
         """
 
@@ -907,7 +907,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     """
-    A collection of simple primitives, following each other making a wire.
+    A collection of simple primitives, following each other making a edge.
 
     """
 
@@ -991,7 +991,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def to_bspline(self, discretization_parameter, degree):
         """
-        Convert a wire 3d to a bspline curve 3d.
+        Convert a edge 3d to a bspline curve 3d.
 
         """
 
@@ -2251,7 +2251,7 @@ class Contour2D(ContourMixin, Wire2D):
         Cut a contour 2d with bspline_curve 2d to define two different contours.
 
         """
-        # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
+        # TODO: BsplineCurve is descretized and defined with a edge. To be improved!
 
         contours = self.cut_by_wire(Wire2D.from_edge(bspline_curve2d, 20))
 
@@ -2325,7 +2325,7 @@ class Contour2D(ContourMixin, Wire2D):
         :param wire: volmdlr.wires.Wire2D
         :rtype: list[volmdlr.wires.Contour2D]
 
-        :param wire: volmdlr.wires.Wire2D.
+        :param edge: volmdlr.wires.Wire2D.
         :return: contours2d : list[volmdlr.wires.Contour2D].
         """
 
@@ -2590,7 +2590,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         if len(self.points) > 1:
             for point1, point2 in zip(self.points,
                                       list(self.points[1:]) + [self.points[0]]):
-                if point1 != point2:
+                if not point1.is_close(point2):
                     lines.append(volmdlr.edges.LineSegment2D(point1, point2))
         return lines
 
@@ -2776,71 +2776,71 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return d_min
 
     def self_intersects(self):
+        """
+        Determines if a polygon self intersects using the Bentley-Ottmann algorithm.
+
+        :return: True if the polygon self intersects, False otherwis. If True, returns two
+            intersecting line segments as LineSegment2D objects. If False, returns two None values;
+        :rtype: Tuple[bool, Union[volmdlr.edges.LineSegment2D, None], Union[volmdlr.edges.LineSegment2D, None]]
+        """
         epsilon = 0
-        # BENTLEY-OTTMANN ALGORITHM
+        segments = self._get_segments()
+
+        for segment1 in segments:
+            for segment2 in segments:
+                if segment1 == segment2:
+                    continue
+                if self._segments_intersect(segment1, segment2, epsilon):
+                    return True, segment1, segment2
+
+        return False, None, None
+
+    def _get_segments(self):
+        """
+        Helper function for self_intersects that generates segments for the Bentley-Ottmann algorithm.
+
+        :return: A list of tuples representing the segments between consecutive edges.
+        :rtype: List[Tuple[int, int]]
+        """
         # Sort the points along ascending x for the Sweep Line method
-        sorted_index = sorted(range(len(self.points)), key=lambda p: (
-            self.points[p][0], self.points[p][1]))
+        sorted_index = sorted(range(len(self.points)), key=lambda p: (self.points[p][0], self.points[p][1]))
         nb = len(sorted_index)
         segments = []
-        deleted = []
 
-        while len(sorted_index) != 0:  # While all the points haven't been swept
+        for i, index in enumerate(sorted_index):
             # Stock the segments between 2 consecutive edges
             # Ex: for the ABCDE polygon, if Sweep Line is on C, the segments
             #   will be (C,B) and (C,D)
-            if sorted_index[0] - 1 < 0:
-                segments.append((sorted_index[0], nb - 1))
+            if index - 1 < 0:
+                segments.append((index, nb - 1))
             else:
-                segments.append((sorted_index[0], sorted_index[0] - 1))
-            if sorted_index[0] >= len(self.points) - 1:
-                segments.append((sorted_index[0], 0))
+                segments.append((index, sorted_index[i - 1]))
+            if index >= len(self.points) - 1:
+                segments.append((index, 0))
             else:
-                segments.append((sorted_index[0], sorted_index[0] + 1))
+                segments.append((index, sorted_index[i + 1]))
 
-            # Once two edges linked by a segment have been swept, delete the
-            # segment from the list
-            to_del = []
-            for index in deleted:
-                if abs(index - sorted_index[0]) == 1 or abs(
-                        index - sorted_index[0]) == nb - 1:
-                    to_del.append((index, sorted_index[0]))
-                    to_del.append((sorted_index[0], index))
+        return segments
 
-            # Keep track of which edges have been swept
-            deleted.append(sorted_index[0])
-            sorted_index.pop(0)
+    def _segments_intersect(self, segment1, segment2, epsilon):
+        """
+        Helper function for self_intersects that determines if any segments in a list intersect.
 
-            # Delete the segments that have just been swept
-            index_to_del = []
-            for i, segment in enumerate(segments):
-                for seg_to_del in to_del:
-                    if segment == seg_to_del:
-                        index_to_del.append(i)
-            for index in index_to_del[::-1]:
-                segments.pop(index)
-
-            # Checks if two segments are intersecting each other, returns True
-            # if yes, otherwise the algorithm continues at WHILE
-            for segment1 in segments:
-                for segment2 in segments:
-                    if segment1[0] != segment2[0] and segment1[1] != segment2[
-                        1] and segment1[0] != segment2[1] and segment1[1] != \
-                            segment2[0]:
-
-                        line1 = volmdlr.edges.LineSegment2D(
-                            self.points[segment1[0]],
-                            self.points[segment1[1]])
-                        line2 = volmdlr.edges.LineSegment2D(
-                            self.points[segment2[0]],
-                            self.points[segment2[1]])
-                        point, param_a, param_b = volmdlr.Point2D.line_intersection(line1, line2, True)
-                        if point is not None:
-                            if 0 + epsilon <= param_a <= 1 - epsilon \
-                                    and 0 + epsilon <= param_b <= 1 - epsilon:
-                                return True, line1, line2
-
-        return False, None, None
+        :param segment1: A tuple representing the index of the start and end point of the segments.
+        :type segment1: Tuple[int, int]
+        :param segment2: A tuple representing the index of the start and end point of the segments.
+        :type segment2: Tuple[int, int]
+        :param epsilon: A small positive value for numerical stability.
+        :type epsilon: float
+        :return: True if any segments intersect, False otherwise.
+        :rtype: bool
+        """
+        line1 = volmdlr.edges.LineSegment2D(self.points[segment1[0]], self.points[segment1[1]])
+        line2 = volmdlr.edges.LineSegment2D(self.points[segment2[0]], self.points[segment2[1]])
+        point, param_a, param_b = volmdlr.Point2D.line_intersection(line1, line2, True)
+        if point is not None and 0 + epsilon <= param_a <= 1 - epsilon and 0 + epsilon <= param_b <= 1 - epsilon:
+            return True
+        return False
 
     @classmethod
     def points_convex_hull(cls, points):
@@ -4331,6 +4331,18 @@ class Ellipse2D(Contour2D):
             return res
         raise ValueError(f'point {point} does not belong to ellipse')
 
+    def point_at_abscissa(self, curvilinear_abscissa: float, resolution: int = 1000):
+        points = self.discretization_points(number_points=resolution)
+        approx_abscissa = 0
+        last_point = None
+        for p1, p2 in zip(points[:-1], points[1:]):
+            if approx_abscissa <= curvilinear_abscissa:
+                approx_abscissa += p1.point_distance(p2)
+                last_point = p2
+            else:
+                break
+        return last_point
+
     def point_angle_with_major_dir(self, point2d):
         """
         Given a point in the ellipse, calculates it angle with the major direction vector.
@@ -4477,7 +4489,8 @@ class Contour3D(ContourMixin, Wire3D):
         # edge_ends = {}
         for edge_id in arguments[1]:
             raw_edges.append(object_dict[int(edge_id[1:])])
-
+        if step_name == "POLY_LOOP":
+            return cls.from_points(raw_edges)
         if (len(raw_edges)) == 1:
             if isinstance(raw_edges[0], cls):
                 # Case of a circle, ellipse...
@@ -5237,7 +5250,7 @@ class Ellipse3D(Contour3D):
         """
         new_point = self.frame.global_to_local_coordinates(point)
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
-                            new_point.y ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
+                            new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=1e-6)
 
     def length(self):
         """
@@ -5297,6 +5310,19 @@ class Ellipse3D(Contour3D):
         ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
         return ellipse_2d.abscissa(point2d)
+
+    def point_at_abscissa(self, curvilinear_abscissa: float, resolution: int = 1000):
+        # TODO: enhance this method to a more precise method
+        points = self.discretization_points(number_points=resolution)
+        approx_abscissa = 0
+        last_point = None
+        for p1, p2 in zip(points, points[1:] + [points[0]]):
+            if approx_abscissa <= curvilinear_abscissa:
+                approx_abscissa += p1.point_distance(p2)
+                last_point = p2
+            else:
+                break
+        return last_point
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if point1.is_close(point2):
@@ -5360,7 +5386,8 @@ class Ellipse3D(Contour3D):
         :return: A new translated Ellipse 3D.
         """
         new_center = self.center.translation(offset)
-        new_normal = self.normal.translation(offset)
+        # new_normal = self.normal.translation(offset)
+        new_normal = self.normal
         new_major_dir = self.major_dir.translation(offset)
         return Ellipse3D(self.major_axis, self.minor_axis, new_center,
                          new_normal, new_major_dir, self.name)
