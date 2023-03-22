@@ -1707,8 +1707,13 @@ class BSplineCurve2D(BSplineCurve):
         point1_ = None
         point2_ = None
         while True:
-            discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
-                                              in npy.linspace(abscissa1, abscissa2, num=8)]
+            discretized_points_between_1_2 = []
+            for abscissa in npy.linspace(abscissa1, abscissa2, num=8):
+                abscissa_point = self.point_at_abscissa(abscissa)
+                if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+                    discretized_points_between_1_2.append(abscissa_point)
+            if not discretized_points_between_1_2:
+                break
             distance = point.point_distance(discretized_points_between_1_2[0])
             for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
                 line = LineSegment2D(point1, point2)
@@ -1745,10 +1750,12 @@ class BSplineCurve2D(BSplineCurve):
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
         # intersections_points = self.get_linesegment_intersections(linesegment2d)
-        if all(linesegment2d.point_distance(pt) > 1e-2 for pt in self.points):
-            return []
+        # if all(linesegment2d.point_distance(pt) > 1e-2 for pt in self.points):
+        #     return []
         intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(
             linesegment2d, self, abs_tol=abs_tol)
+        if intersections_points:
+            intersections_points_ = self.get_linesegment_intersections(linesegment2d)
         return intersections_points
 
     def arc_intersections(self, arc):

@@ -137,7 +137,7 @@ def get_bsplinecurve_intersections(edge2d, bsplinecurve2d, abs_tol: float = 1e-7
     :return: a list with all intersections between circle and bsplinecurve2d.
     """
     circle_bounding_rectangle = edge2d.bounding_rectangle
-    bspline_discretized_points = bsplinecurve2d.discretization_points(number_points=10)
+    bspline_discretized_points = bsplinecurve2d.discretization_points(number_points=50)
     param_intersections = []
     for point1, point2 in zip(bspline_discretized_points[:-1], bspline_discretized_points[1:]):
         line_seg = volmdlr.edges.LineSegment2D(point1, point2)
@@ -159,10 +159,15 @@ def get_bsplinecurve_intersections(edge2d, bsplinecurve2d, abs_tol: float = 1e-7
         if not param_intersections:
             break
         abscissa1, abscissa2 = param_intersections[0]
-        # for abscissa1, abscissa2 in :
-        discretized_points_between_1_2 = [bsplinecurve2d.point_at_abscissa(abscissa) for abscissa
-                                          in npy.linspace(abscissa1, abscissa2, num=10)]
-        break_flag = True
+        if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
+            break
+        # discretized_points_between_1_2 = [bsplinecurve2d.point_at_abscissa(abscissa) for abscissa
+        #                                   in npy.linspace(abscissa1, abscissa2, num=10)]
+        discretized_points_between_1_2 = []
+        for abscissa in npy.linspace(abscissa1, abscissa2, num=10):
+            abscissa_point = bsplinecurve2d.point_at_abscissa(abscissa)
+            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+                discretized_points_between_1_2.append(abscissa_point)
         for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
             line_seg = volmdlr.edges.LineSegment2D(point1, point2)
             if line_seg.bounding_rectangle.b_rectangle_intersection(circle_bounding_rectangle):
@@ -174,10 +179,6 @@ def get_bsplinecurve_intersections(edge2d, bsplinecurve2d, abs_tol: float = 1e-7
                                                    bsplinecurve2d.abscissa(point2)))
                 else:
                     intersections.append(intersection[0])
-                param_intersections.remove((abscissa1, abscissa2))
-                break_flag = False
                 break
-        if break_flag:
-            break
-
+        param_intersections.remove((abscissa1, abscissa2))
     return intersections
