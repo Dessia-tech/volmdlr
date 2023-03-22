@@ -1385,30 +1385,11 @@ class ContourMixin(WireMixin):
 
         """
 
-        list_p = []
-
-        for edge_1, edge_2 in itertools.product(self.primitives,
-                                                contour.primitives):
-            edges = [edge_1, edge_2, edge_1]
-            for edge1, edge2 in zip(edges, edges[1:]):
-                for point in [edge2.start, edge2.end]:
-                    if edge1.point_belongs(point, 1e-6):
-                        # list_p.append(point)
-                        # instead of point not in list_p (due to errors)
-                        if not list_p:
-                            list_p.append(point)
-                        if list_p and point.point_distance(point.nearest_point(list_p)) > 1e-4:
-                            list_p.append(point)
-
-                    if len(list_p) == 2:
-                        if isinstance(self, Contour2D):
-                            linesegment = volmdlr.edges.LineSegment2D(list_p[0], list_p[1])
-                        else:
-                            linesegment = volmdlr.edges.LineSegment3D(list_p[0], list_p[1])
-                        if self.primitive_over_contour(linesegment) and \
-                                contour.primitive_over_contour(linesegment):
-                            return True
-                        return False
+        for prim1 in self.primitives:
+            for prim2 in contour.primitives:
+                shared_section = prim1.get_shared_section(prim2)
+                if shared_section:
+                    return True
         return False
 
     def shared_primitives_extremities(self, contour):
