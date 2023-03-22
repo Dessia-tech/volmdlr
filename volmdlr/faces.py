@@ -37,7 +37,6 @@ from volmdlr.bspline_evaluators import evaluate_single
 from volmdlr.core import point_in_list
 
 
-
 def knots_vector_inv(knots_vector):
     """
     Compute knot-elements and multiplicities based on the global knot vector.

@@ -5340,13 +5340,13 @@ class Ellipse3D(Contour3D):
         else:
             angle = (theta1 + theta2) / 2
 
-        p3 = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(angle),
-                                                                    self.minor_axis * math.sin(angle), 0))
+        point3 = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(angle),
+                                                                        self.minor_axis * math.sin(angle), 0))
         extra = None
         if math.isclose(angle % math.pi, 0.0, abs_tol=1e-6):
             extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.125 * angle),
                                                                            self.minor_axis * math.sin(0.125 * angle), 0))
-        return volmdlr.edges.ArcEllipse3D(point1, p3, point2, self.center,
+        return volmdlr.edges.ArcEllipse3D(point1, point3, point2, self.center,
                                           self.major_dir, extra=extra)
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -6007,8 +6007,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         if polygon1_2d.is_convex() and polygon2_2d.is_convex():
             return self.convex_sewing(polygon2, x, y)
         return self.concave_sewing(polygon2, x, y)
-
-
 
 
 class Triangle3D(Triangle):

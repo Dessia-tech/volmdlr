@@ -925,7 +925,7 @@ class BSplineCurve(Edge):
             point.translation_inplace(offset)
 
     def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
-                      abs_tol: float = 1e-10):
+                      abs_tol: float = 1e-6):
         """
         Checks if a 2D or 3D point belongs to the B-spline curve or not. It uses the least square method.
 
@@ -4879,7 +4879,8 @@ class BSplineCurve3D(BSplineCurve):
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
         lines = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:]) if not pt1.is_close(pt2)]
-        if lines:  # quick fix. Real problem: Tolerance too low (1e-6 m = 0.001mm)
+        if lines and not points[0].is_close(points[-1]):
+            # quick fix. Real problem: Tolerance too low (1e-6 m = 0.001mm)
             dir_vector = lines[0].unit_direction_vector()
             if all(line.unit_direction_vector() == dir_vector for line in lines):
                 return LineSegment3D(points[0], points[-1])
@@ -6100,7 +6101,6 @@ class FullArc3D(Arc3D):
             y1 = (direction_vector.y / direction_vector.x) * (x1 - linesegment3d.start.x) + linesegment3d.start.y
             y2 = (direction_vector.y / direction_vector.x) * (x2 - linesegment3d.start.x) + linesegment3d.start.y
             return [volmdlr.Point3D(x1, y1, self.frame.origin.z), volmdlr.Point3D(x2, y2, self.frame.origin.z)]
-
         constant = (self.frame.origin.z - linesegment3d.start.z) / direction_vector.z
         x_coordinate = constant * direction_vector.x + linesegment3d.start.x
         y_coordinate = constant * direction_vector.y + linesegment3d.start.y
