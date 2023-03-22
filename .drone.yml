@@ -68,6 +68,7 @@ steps:
   image: python:3.9
   commands:
     - git fetch --tags
+    - env
     - pip3 install -U pip autopep8==2.0.0
     - bash code_pep8.sh
 
