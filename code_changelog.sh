@@ -1,5 +1,5 @@
 #!/bin/bash
-
+env
 lines=$(git diff origin/"$DRONE_TARGET_BRANCH"..origin/"$DRONE_SOURCE_BRANCH" -- CHANGELOG.md README.md CONTRIBUTING.md --unified=0| wc -l)
 echo "$lines lines modified on CHANGELOG.md or other doc files in PR $DRONE_SOURCE_BRANCH -> $DRONE_TARGET_BRANCH"
 
