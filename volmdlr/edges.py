@@ -583,11 +583,11 @@ class LineSegment(Edge):
             return [self]
         new_linesegment_points = []
         for point in [self.start, self.end]:
-            if other_linesegment.point_belongs(point) and\
+            if other_linesegment.point_belongs(point, abs_tol=1e-6) and\
                     not volmdlr.core.point_in_list(point, new_linesegment_points):
                 new_linesegment_points.append(point)
         for point in [other_linesegment.start, other_linesegment.end]:
-            if self.point_belongs(point) and\
+            if self.point_belongs(point, abs_tol=1e-6) and\
                     not volmdlr.core.point_in_list(point, new_linesegment_points):
                 new_linesegment_points.append(point)
         if len(new_linesegment_points) == 1:
