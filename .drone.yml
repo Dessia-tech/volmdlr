@@ -91,6 +91,7 @@ steps:
   - python setup.py install
   - cd doc
   - make html
+  - cd ../
   - coverage run --source volmdlr -m unittest discover -v -s tests
   - coverage run --source volmdlr -a scripts/ci_scripts.py
   - coverage run --source volmdlr -a tutorials/ci_tutorials.py
