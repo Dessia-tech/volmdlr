@@ -154,7 +154,7 @@ class PointCloud3D(dc.DessiaObject):
         :param normal: normal to the sewing plane.
         :param vec1: u vector in the sewing plane.
         :param vec2: v vector in the sewing plane.
-        :return: returun a shell.
+        :return: return a shell.
         """
         position_plane = [p.points[0].dot(normal) for p in polygon3d]
         resolution = len(polygon3d)
