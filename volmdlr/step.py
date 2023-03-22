@@ -449,7 +449,7 @@ def representation_relationship_representation_relationship_with_transformation_
                 return frame_map_closed_shell(object_dict[arguments[2]],
                                               object_dict[arguments[4]], object_dict[arguments[3]])
 
-            elif object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
+            if object_dict[arguments[2]] and isinstance(object_dict[arguments[2]][0], volmdlr.Frame3D) and\
                     not isinstance(object_dict[arguments[3]][0], volmdlr.Frame3D):
                 return frame_map_closed_shell(object_dict[arguments[3]],
                                               object_dict[arguments[4]], object_dict[arguments[2]])
@@ -651,7 +651,8 @@ class Step(dc.DessiaObject):
 
     def create_graph(self):
         """
-        Step functions graph
+        Step functions graph.
+
         :return:
         """
         G = nx.Graph()
@@ -669,7 +670,7 @@ class Step(dc.DessiaObject):
                 self.all_connections.remove(elem2)
                 self.all_connections.append((elem1[1], elem2[1]))
 
-                self.functions[id1].arg.append('#{}'.format(id2))
+                self.functions[id1].arg.append(f'#{id2}')
 
             elif function.name in STEP_TO_VOLMDLR:
                 G.add_node(function.id,
@@ -846,12 +847,13 @@ class Step(dc.DessiaObject):
 
         else:
             raise NotImplementedError(
-                'Dont know how to interpret {} with args {}'.format(name,
-                                                                    arguments))
+                f'Dont know how to interpret {name} with args {arguments}')
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
         """
+        Converts step file to a Volume Model.
+
         show_times=True displays the number of times a given class has been
         instantiated and the total time of all the instantiations of this
         given class.
