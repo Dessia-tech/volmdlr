@@ -685,30 +685,30 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                         intersection_points_primitives.append((intersection, primitive))
         return intersection_points_primitives
 
-    def wire_intersections(self, wire):
-        """
-        Compute intersections between two wire 2d.
-
-        :param wire : volmdlr.wires.Wire2D.
-        :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
-        """
-        intersections, intersections_points = [], []
-        for primitive in wire.primitives:
-            method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_intersections'
-
-            if hasattr(self, method_name):
-                a_points = getattr(self, method_name)(primitive)
-                # a_points = self.linesegment_intersections(primitive)
-                if a_points:
-                    for point1, point2 in a_points:
-                        if not volmdlr.core.point_in_list(point1, intersections_points):
-                            intersections.append([point1, point2])
-                            intersections_points.append(point1)
-            else:
-                raise NotImplementedError(
-                    f'Class {self.__class__.__name__} does not implement {method_name}')
-
-        return intersections
+    # def wire_intersections(self, wire):
+    #     """
+    #     Compute intersections between two wire 2d.
+    #
+    #     :param wire : volmdlr.wires.Wire2D.
+    #     :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
+    #     """
+    #     intersections, intersections_points = [], []
+    #     for primitive in wire.primitives:
+    #         method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_intersections'
+    #
+    #         if hasattr(self, method_name):
+    #             a_points = getattr(self, method_name)(primitive)
+    #             # a_points = self.linesegment_intersections(primitive)
+    #             if a_points:
+    #                 for point1, point2 in a_points:
+    #                     if not volmdlr.core.point_in_list(point1, intersections_points):
+    #                         intersections.append([point1, point2])
+    #                         intersections_points.append(point1)
+    #         else:
+    #             raise NotImplementedError(
+    #                 f'Class {self.__class__.__name__} does not implement {method_name}')
+    #
+    #     return intersections
 
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
@@ -762,14 +762,45 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     #
     #     return crossings
 
+    def edge_intersections(self, edge):
+        edge_intersections = []
+        for primitive in self.primitives:
+            intersections = primitive.intersections(edge)
+            if intersections:
+                edge_intersections.extend(intersections)
+        return edge_intersections
+
+    def wire_intersections(self, wire):
+        """
+        Compute intersections between two wire 2d.
+
+        :param wire: volmdlr.wires.Wire2D
+        :type intersections_points: List[(volmdlr.Point2D)]
+        """
+        intersections_points = []
+        for primitive in wire.primitives:
+            edge_intersections = self.edge_intersections(primitive)
+            for crossing in edge_intersections:
+                if not volmdlr.core.point_in_list(crossing, intersections_points):
+                    intersections_points.append(crossing)
+        return intersections_points
+
+    def edge_crossings(self, edge):
+        edge_crossings = []
+        for primitive in self.primitives:
+            crossings = primitive.crossings(edge)
+            if crossings:
+                edge_crossings.extend(crossings)
+        return edge_crossings
+
     def wire_crossings(self, wire):
         """
         Compute crossings between two wire 2d.
 
         :param wire: volmdlr.wires.Wire2D
-        :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
+        :type crossings_points: List[(volmdlr.Point2D)]
         """
-        crossings, crossings_points = [], []
+        crossings_points = []
         for primitive in wire.primitives:
             edge_crossings = self.edge_crossings(primitive)
             for crossing in edge_crossings:
@@ -907,14 +938,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             if intersections:
                 intersections_points.extend(intersections)
         return intersections_points
-
-    def edge_crossings(self, edge):
-        edge_crossings = []
-        for primitive in self.primitives:
-            crossings = primitive.crossings(edge)
-            if crossings:
-                edge_crossings.extend(crossings)
-        return edge_crossings
 
     @property
     def bounding_rectangle(self):

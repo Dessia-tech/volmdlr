@@ -7,6 +7,7 @@ Edges related classes.
 import math
 import sys
 import warnings
+from itertools import product
 from typing import Any, Dict, List, Union
 
 import dessia_common.core as dc
@@ -298,6 +299,19 @@ class Edge(dc.DessiaObject):
         discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
                                           in npy.linspace(abscissa1, abscissa2, num=number_points)]
         return discretized_points_between_1_2
+
+    def split_between_two_points(self, point1, point2):
+        split1 = self.split(point1)
+        if split1[0] and split1[0].point_belongs(point2, abs_tol=1e-4):
+            split2 = split1[0].split(point2)
+        else:
+            split2 = split1[1].split(point2)
+        new_split_edge = None
+        for split_edge in split2:
+            if split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
+                new_split_edge = split_edge
+                break
+        return new_split_edge
 
 
 class Line(dc.DessiaObject):
@@ -841,7 +855,7 @@ class BSplineCurve(Edge):
             if dist < tol:
                 return abscissa
         # print(True)
-            results.append((u, dist))
+            results.append((abscissa, dist))
         result = min(results, key=lambda r: r[1])[0]
         return result
         # raise ValueError('abscissa not found')
@@ -1292,6 +1306,28 @@ class BSplineCurve(Edge):
         """
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
+
+    def get_intersection_sections(self, edge2):
+        lineseg_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
+        bspline_discretized_points1 = []
+        for point in self.discretization_points(number_points=30):
+            if not volmdlr.core.point_in_list(point, bspline_discretized_points1):
+                bspline_discretized_points1.append(point)
+        line_segments1 = [lineseg_class_(point1, point2) for point1, point2 in
+                          zip(bspline_discretized_points1[:-1], bspline_discretized_points1[1:])]
+        edge_discretized_points2 = []
+        for point in edge2.discretization_points(number_points=30):
+            if not volmdlr.core.point_in_list(point, edge_discretized_points2):
+                edge_discretized_points2.append(point)
+        line_segments2 = [lineseg_class_(point1, point2) for point1, point2 in
+                          zip(edge_discretized_points2[:-1], edge_discretized_points2[1:])]
+        intersection_section_pairs = []
+        for lineseg1, lineseg2 in product(line_segments1, line_segments2):
+            lineseg_inter = lineseg1.linesegment_intersections(lineseg2)
+            if lineseg_inter:
+                intersection_section_pairs.append((self.split_between_two_points(lineseg1.start, lineseg1.end),
+                                                   edge2.split_between_two_points(lineseg2.start, lineseg2.end)))
+        return intersection_section_pairs
 
 
 class Line2D(Line):
@@ -1865,6 +1901,15 @@ class BSplineCurve2D(BSplineCurve):
         points = self.discretization_points(number_points=500)
         return point.nearest_point(points)
 
+    def edge_intersections(self, edge, abs_tol=1e-6):
+        intersection_section_pairs = self.get_intersection_sections(edge)
+        intersections = []
+        for bspline, edge2 in intersection_section_pairs:
+            intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(
+                edge2, bspline, abs_tol=abs_tol)
+            intersections.extend(intersections_points)
+        return intersections
+
     def linesegment_intersections(self, linesegment2d, abs_tol=1e-6):
         """
         Calculates intersections between a BSplineCurve2D and a LineSegment2D.
@@ -1874,26 +1919,23 @@ class BSplineCurve2D(BSplineCurve):
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
-        # intersections_points = self.get_linesegment_intersections(linesegment2d)
-        # if all(linesegment2d.point_distance(pt) > 1e-2 for pt in self.points):
-        #     return []
         intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(
             linesegment2d, self, abs_tol=abs_tol)
-        if intersections_points:
-            intersections_points_ = self.get_linesegment_intersections(linesegment2d)
         return intersections_points
 
-    def arc_intersections(self, arc):
+    def arc_intersections(self, arc, abs_tol=1e-6):
         if not self.bounding_rectangle.b_rectangle_intersection(arc.bounding_rectangle):
             return []
-        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(arc, self)
-        return intersections_points
+        # intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(arc, self)
+        # return intersections_points
+        return self.edge_intersections(arc, abs_tol)
 
-    def bsplinecurve_intersections(self, bspline):
+    def bsplinecurve_intersections(self, bspline, abs_tol=1e-6):
         if not self.bounding_rectangle.b_rectangle_intersection(bspline.bounding_rectangle):
             return []
-        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(bspline, self)
-        return intersections_points
+        # intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(bspline, self)
+        # return intersections_points
+        return self.edge_intersections(bspline, abs_tol)
 
     def axial_symmetry(self, line):
         """
@@ -2776,12 +2818,7 @@ class Arc2D(Arc):
         return intersection_points
 
     def bsplinecurve_intersections(self, bspline):
-        linesegments = bspline.to_wire(1000).primitives
-        intersections = []
-        for linesegment in linesegments:
-            intersection = self.linesegment_intersections(linesegment)
-            if intersection:
-                intersections.extend(intersection)
+        intersections = bspline.arc_intersections(self)
         return intersections
 
     def arc_intersections(self, arc):
@@ -3820,11 +3857,12 @@ class ArcEllipse2D(Edge):
                 linesegment_intersections.append(inter)
         return linesegment_intersections
 
-    def bsplinecurve_intersections(self, bspline):
+    def bsplinecurve_intersections(self, bspline, abs_tol:float=1e-6):
         if not self.bounding_rectangle.b_rectangle_intersection(bspline.bounding_rectangle):
             return []
-        intersections = vm_utils_intersections.get_bsplinecurve_intersections(self, bspline)
-        return intersections
+        # intersections = vm_utils_intersections.get_bsplinecurve_intersections(self, bspline)
+        # return intersections
+        return bspline.edge_intersections(self, abs_tol)
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
