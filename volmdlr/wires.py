@@ -1055,8 +1055,7 @@ class ContourMixin(WireMixin):
         :param tol: tolerance to be considered.
         :return: True if ordered, False if not.
         """
-        for prim1, prim2 in zip(
-                self.primitives, self.primitives[1:] + [self.primitives[0]]):
+        for prim1, prim2 in zip(self.primitives, self.primitives[1:] + [self.primitives[0]]):
             if not prim1.end.is_close(prim2.start, tol):
                 return False
         return True

@@ -574,8 +574,9 @@ class LineSegment(Edge):
         if self.__class__ != other_linesegment.__class__:
             return []
         if not self.direction_vector().is_colinear_to(other_linesegment.direction_vector()) or \
-                (not any(self.point_belongs(point) for point in [other_linesegment.start, other_linesegment.end]) and
-                 not any(other_linesegment.point_belongs(point) for point in [self.start, self.end])):
+                (not any(self.point_belongs(point, 1e-6)
+                         for point in [other_linesegment.start, other_linesegment.end]) and
+                 not any(other_linesegment.point_belongs(point, 1e-6) for point in [self.start, self.end])):
             return []
         if all(self.point_belongs(point) for point in other_linesegment.discretization_points(number_points=5)):
             return [other_linesegment]
