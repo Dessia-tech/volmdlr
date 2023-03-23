@@ -22,7 +22,6 @@
       <depend>matplotlib</depend>
       <depend>numpy</depend>
       <depend>scipy</depend>
-      <depend>jsonschema</depend>
       <depend>networkx</depend>
       <depend version_lte="0.10.9">plot_data</depend>
       <depend>rtree</depend>
