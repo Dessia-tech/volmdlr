@@ -48,24 +48,38 @@ def angle_discontinuity(angle_list):
     return theta_discontinuity, indexes_theta_discontinuity
 
 
-def is_undefined_primitive(primitive):
+def is_undefined_primitive(primitive, periodicity):
     """
     2D primitives on parametric surface domain can be in wrong bound side due to periodic behavior of some faces.
+
+    :param primitive: primitive to perform verification.
+    :type primitive: vme.Edge
+    :param periodicity: list with periodicity in x and y direction
+    :type periodicity: list
     """
     start = primitive.start
     end = primitive.end
-    if abs(start.x) == math.pi and end.x == start.x:
+
+    if periodicity[0] and not periodicity[1]:
+        i = 0
+    elif not periodicity[0] and periodicity[1]:
+        i = 1
+    else:
+        if ((2 * start.x) % periodicity[0]) == 0 and ((2 * start.y) % periodicity[1]) == 0:
+            return True
+        return False
+    if ((2 * start[i]) % periodicity[i]) == 0 and end[i] == start[i]:
         return True
     return False
 
 
-def find_index_defined_initial_primitive(primitives2d):
+def find_index_defined_initial_primitive(primitives2d, periodicity):
     """
     Search for a primitive that can be used as reference for reparing periodicity.
     """
     pos = 0
     for i, primitive in enumerate(primitives2d):
-        if not is_undefined_primitive(primitive):
+        if not is_undefined_primitive(primitive, periodicity):
             return i
     return pos
 

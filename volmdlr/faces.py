@@ -974,6 +974,18 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
+            try:
+                area = outer_contour2d.area()
+            except Exception:
+                print(True)
+            # if isinstance(self, CylindricalSurface3D):
+            #     # global c
+            #     # c += 1
+            #     # if c == 37:
+            #     #     self.save_to_file(r"C:\Users\gabri\Documents\dessia\tests\conical_surface.json")
+            #     #     contours3d[0].save_to_file(r"C:\Users\gabri\Documents\dessia\tests\contour_conical.json")
+            #     #     outer_contour2d.plot().set_aspect("auto")
+            #     outer_contour2d.plot().set_aspect("auto")
             inner_contours2d = []
         elif lc3d > 1:
             area = -1
@@ -1008,37 +1020,13 @@ class Surface3D(DessiaObject):
         :rtype: list
         """
         # Search for a primitive that can be used as reference for repairing periodicity
-        pos = 0
         x_periodicity = self.x_periodicity
         y_periodicity = self.y_periodicity
-        if x_periodicity and not y_periodicity:
-            for i, primitive in enumerate(primitives2d):
-                start = primitive.start
-                end = primitive.end
-                if ((2 * start.x) % x_periodicity) != 0 and end.x != start.x:
-                    pos = i
-                    break
-            if pos != 0:
-                primitives2d = primitives2d[pos:] + primitives2d[:pos]
+        pos = vm_parametric.find_index_defined_initial_primitive(primitives2d, [x_periodicity,
+                                                                                y_periodicity])
+        if pos != 0:
+            primitives2d = primitives2d[pos:] + primitives2d[:pos]
 
-        elif not x_periodicity and y_periodicity:
-            for i, primitive in enumerate(primitives2d):
-                start = primitive.start
-                end = primitive.end
-                if (start.y % y_periodicity) != 0 and end.y != start.y:
-                    pos = i
-                    break
-            if pos != 0:
-                primitives2d = primitives2d[pos:] + primitives2d[:pos]
-
-        elif x_periodicity and y_periodicity:
-            for i, primitive in enumerate(primitives2d):
-                start = primitive.start
-                if ((2 * start.x) % x_periodicity) != 0 and ((2 * start.y) % y_periodicity) != 0:
-                    pos = i
-                    break
-            if pos != 0:
-                primitives2d = primitives2d[pos:] + primitives2d[:pos]
         i = 1
         if x_periodicity is None:
             x_periodicity = -1
@@ -3037,7 +3025,7 @@ class ConicalSurface3D(PeriodicalSurface):
         :rtype: list
         """
         # Search for a primitive that can be used as reference for reparing periodicity
-        pos = vm_parametric.find_index_defined_initial_primitive(primitives2d)
+        pos = vm_parametric.find_index_defined_initial_primitive(primitives2d, [self.x_periodicity, self.y_periodicity])
         if pos != 0:
             primitives2d = primitives2d[pos:] + primitives2d[:pos]
 
