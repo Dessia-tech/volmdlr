@@ -756,6 +756,10 @@ class BSplineCurve(Edge):
         :return: The abscissa of the point.
         :rtype: float
         """
+        if point.is_close(self.start):
+            return 0
+        if point.is_close(self.end):
+            return self.length()
         length = self.length()
         for x0 in [0, length * 0.25, length * 0.5, length * 0.75, length]:
             res = scp.optimize.least_squares(
@@ -1997,7 +2001,7 @@ class LineSegment2D(LineSegment):
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
             return []
-        if self.direction_vector().is_colinear_to(linesegment2d.direction_vector()):
+        if self.direction_vector().is_colinear_to(linesegment2d.direction_vector(), abs_tol=abs_tol):
             return []
         point = volmdlr.Point2D.line_intersection(self, linesegment2d)
         # TODO: May be these commented conditions should be used for linesegment_crossings

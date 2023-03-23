@@ -127,7 +127,7 @@ def get_circle_intersections(circle1, circle2):
     return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]
 
 
-def get_bsplinecurve_intersections(edge2d, bsplinecurve2d, abs_tol: float = 1e-7):
+def get_bsplinecurve_intersections(edge2d, bsplinecurve2d, abs_tol: float = 1e-6):
 
     """
     Calculates the intersections between a circle 2d and a BSpline Curve 2D.
@@ -147,20 +147,20 @@ def get_bsplinecurve_intersections(edge2d, bsplinecurve2d, abs_tol: float = 1e-7
             intersection = edge2d.linesegment_intersections(line_seg)
             if intersection:
                 param_intersections.append((abscissa1, abscissa2))
-            else:
-                dist1 = bsplinecurve2d.point_distance(edge2d.end)
-                dist2 = bsplinecurve2d.point_distance(edge2d.start)
-                distance_mid = bsplinecurve2d.point_distance(line_seg.middle_point())
-                if dist1 < distance_mid or dist2 < distance_mid:
-                    param_intersections.append((abscissa1, abscissa2))
+            # else:
+            #     dist1 = bsplinecurve2d.point_distance(edge2d.end)
+            #     dist2 = bsplinecurve2d.point_distance(edge2d.start)
+            #     distance_mid = bsplinecurve2d.point_distance(line_seg.middle_point())
+            #     if dist1 < distance_mid or dist2 < distance_mid:
+            #         param_intersections.append((abscissa1, abscissa2))
 
     intersections = []
     while True:
         if not param_intersections:
             break
         abscissa1, abscissa2 = param_intersections[0]
-        if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
-            break
+        # if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
+        #     break
         # discretized_points_between_1_2 = [bsplinecurve2d.point_at_abscissa(abscissa) for abscissa
         #                                   in npy.linspace(abscissa1, abscissa2, num=10)]
         discretized_points_between_1_2 = []
@@ -168,17 +168,52 @@ def get_bsplinecurve_intersections(edge2d, bsplinecurve2d, abs_tol: float = 1e-7
             abscissa_point = bsplinecurve2d.point_at_abscissa(abscissa)
             if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
                 discretized_points_between_1_2.append(abscissa_point)
+        almost_colinear_intersection = None
+        possible_intersections = []
         for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
             line_seg = volmdlr.edges.LineSegment2D(point1, point2)
             if line_seg.bounding_rectangle.b_rectangle_intersection(circle_bounding_rectangle):
                 intersection = edge2d.linesegment_intersections(line_seg, 1e-6)
                 if not intersection:
+                    if bsplinecurve2d.point_belongs(line_seg.start, 1e-7) and \
+                            bsplinecurve2d.point_belongs(line_seg.end, 1e-7) and \
+                        edge2d.point_belongs(line_seg.start, 1e-7) and \
+                            edge2d.point_belongs(line_seg.end, 1e-7):
+                        possible_intersections.extend([line_seg.start, line_seg.middle_point(), line_seg.end])
+                    # if line_seg.length() < 1e-5:
+                    #     if almost_colinear_intersection:
+                    #         if bsplinecurve2d.point_distance(line_seg.middle_point()) < bsplinecurve2d.point_distance(
+                    #             almost_colinear_intersection) and edge2d.point_distance(line_seg.middle_point()) <\
+                    #                 edge2d.point_distance(almost_colinear_intersection):
+                    #             almost_colinear_intersection = line_seg.middle_point()
+                    #     elif bsplinecurve2d.point_distance(line_seg.middle_point()) < 1e-7 and\
+                    #             edge2d.point_distance(line_seg.middle_point()) < 1e-7:
+                    #         almost_colinear_intersection = line_seg.middle_point()
+                        # for point in [line_seg.start, line_seg.middle_point(), line_seg.end]:
+                        #     if bsplinecurve2d.point_belongs(point, 1e-7) and\
+                        #             edge2d.point_belongs(point, 1e-7):
+                        #         intersections.append(point)
+                        #         break
+                        # else:
+                        #     continue
                     continue
                 if bsplinecurve2d.point_distance(intersection[0]) > abs_tol:
-                    param_intersections.insert(0, (bsplinecurve2d.abscissa(point1),
-                                                   bsplinecurve2d.abscissa(point2)))
+                    abscissa1_ = bsplinecurve2d.abscissa(point1)
+                    abscissa2_ = bsplinecurve2d.abscissa(point2)
+                    # if not math.isclose(abscissa1_, abscissa1, abs_tol=1e-8) and\
+                    #         not math.isclose(abscissa2_, abscissa2, abs_tol=1e-8):
+                    param_intersections.insert(0, (abscissa1_, abscissa2_))
                 else:
                     intersections.append(intersection[0])
                 break
         param_intersections.remove((abscissa1, abscissa2))
+        if possible_intersections:
+            dist_ = math.inf
+            intersection = None
+            for point in possible_intersections:
+                sum_dist = bsplinecurve2d.point_distance(point) + edge2d.point_distance(point)
+                if sum_dist < dist_:
+                    dist_ = sum_dist
+                    intersection = point
+            intersections.append(intersection)
     return intersections
