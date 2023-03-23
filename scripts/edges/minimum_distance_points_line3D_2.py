@@ -26,7 +26,7 @@ pt3 = volmdlr.Point3D(0.45, 0, -0.1)
 pt4 = volmdlr.Point3D(0.3, 0.04, -0.02)
 pts = [pt0, pt1, pt2, pt3, pt4]
 radius = {1: 0.03, 2: 0.01, 3: 0.07}
-rl = primitives3D.OpenRoundedLineSegments3D(pts, radius, adapt_radius=True, name='edge')
+rl = primitives3D.OpenRoundedLineSegments3D(pts, radius, adapt_radius=True, name='wire')
 sweep = primitives3D.Sweep(contour, rl, name='pipe')
 
 

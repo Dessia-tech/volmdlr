@@ -22,6 +22,31 @@ class TestBSplineCurve2D(unittest.TestCase):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
         point = volmdlr.Point2D(-0.31240117104573617, -2.8555856978321796)
 
+        bspline = vme.BSplineCurve2D.load_from_file("edges/bg_bspline5_.json")
+        point1 = bspline.points[25]
+        point2 = bspline.points[75]
+
+        abscissa1 = bspline.abscissa(point1)
+        abscissa2 = bspline.abscissa(point2)
+
+        test_point1 = bspline.point_at_abscissa(abscissa1)
+        test_point2 = bspline.point_at_abscissa(abscissa2)
+
+        self.assertTrue(point1.is_close(test_point1))
+        self.assertTrue(point2.is_close(test_point2))
+
+        abscissa3 = 0.00016294494116532595
+        abscissa4 = 0.00017682955170114393
+
+        point_at_abscissa3 = bspline.point_at_abscissa(abscissa3)
+        point_at_abscissa4 = bspline.point_at_abscissa(abscissa4)
+
+        test_abscissa3 = bspline.abscissa(point_at_abscissa3)
+        test_abscissa4 = bspline.abscissa(point_at_abscissa4)
+
+        self.assertAlmostEqual(abscissa3, test_abscissa3, 6)
+        self.assertAlmostEqual(abscissa4, test_abscissa4, 6)
+
         self.assertAlmostEqual(bspline_curve2d.abscissa(point), 7.747599410268476)
 
     def test_line_intersections(self):

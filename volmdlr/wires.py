@@ -226,7 +226,7 @@ class WireMixin:
 
     def abscissa(self, point, tol=1e-6):
         """
-        Compute the curvilinear abscissa of a point on a edge.
+        Compute the curvilinear abscissa of a point on a wire.
 
         """
         if self.point_over_wire(point, tol):
@@ -238,14 +238,14 @@ class WireMixin:
                 length += primitive.length()
             return length
 
-        raise ValueError('Point is not on edge')
+        raise ValueError('Point is not on wire')
 
     def sort_points_along_wire(self, points):
         """ Sort given points along the wire with respect to the abscissa. """
         return sorted(points, key=self.abscissa)
 
     def is_ordered(self, tol=1e-6):
-        """ Check if the edge's primitives are ordered or not. """
+        """ Check if the wire's primitives are ordered or not. """
 
         for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
             if primitive_1.end.point_distance(primitive_2.start) > tol:
@@ -253,7 +253,7 @@ class WireMixin:
         return True
 
     def order_wire(self, tol=1e-6):
-        """ Order edge's primitives. """
+        """ Order wire's primitives. """
 
         if self.is_ordered(tol=tol):
             return self.__class__(self.primitives[:])
@@ -282,7 +282,7 @@ class WireMixin:
     @classmethod
     def from_wires(cls, wires):
         """
-        Define a edge from successive wires.
+        Define a wire from successive wires.
 
         """
 
@@ -298,7 +298,7 @@ class WireMixin:
 
     def inverted_primitives(self):
         """
-        Invert edge's primitives.
+        Invert wire's primitives.
 
         """
 
@@ -309,14 +309,14 @@ class WireMixin:
 
     def is_followed_by(self, wire_2, tol=1e-6):
         """
-        Check if the edge is followed by wire_2.
+        Check if the wire is followed by wire_2.
 
         """
         return self.primitives[-1].end.point_distance(wire_2.primitives[0].start) < tol
 
     def point_over_wire(self, point, abs_tol=1e-6):
         """
-        Verifies if point is over edge.
+        Verifies if point is over wire.
 
         :param point: point to be verified.
         :param abs_tol: tolerance to be considered.
@@ -329,7 +329,7 @@ class WireMixin:
 
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
         """
-        Verifies if point is over edge.
+        Verifies if point is over wire.
 
         :param primitive: point to be verified.
         :param tol: tolerance to be considered.
@@ -449,7 +449,7 @@ class EdgeCollection3D(WireMixin):
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     """
-    A collection of simple primitives, following each other making a edge.
+    A collection of simple primitives, following each other making a wire.
 
     """
 
@@ -499,7 +499,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         """
         return self.extract_without_primitives(point1, point2, inside)
 
-        # TODO: method to check if it is a edge
+        # TODO: method to check if it is a wire
 
     def infinite_intersections(self, infinite_primitives):
         """
@@ -664,12 +664,12 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def line_crossings(self, line: volmdlr.edges.Line2D):
         """
-        Calculates valid crossing intersections of a edge and an infinite line.
+        Calculates valid crossing intersections of a wire and an infinite line.
 
-        :param line: line crossing the edge
+        :param line: line crossing the wire
         :type line: volmdlr.edges.Line2D
         returns a list of Tuples (point, primitive)
-        of the edge primitives intersecting with the line
+        of the wire primitives intersecting with the line
         """
         intersection_points = []
         intersection_points_primitives = []
@@ -687,7 +687,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def wire_intersections(self, wire):
         """
-        Compute intersections between two edge 2d.
+        Compute intersections between two wire 2d.
 
         :param wire : volmdlr.wires.Wire2D.
         :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
@@ -715,7 +715,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         """
         Define a wire based on points 2d with line_segments 2d.
 
-        :param points: points to define edge 2d.
+        :param points: points to define wire 2d.
         """
         edges = []
         for i in range(0, len(points) - 1):
@@ -739,7 +739,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def wire_crossings(self, wire):
         """
-        Compute crossings between two edge 2d.
+        Compute crossings between two wire 2d.
 
         :param wire: volmdlr.wires.Wire2D
         :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
@@ -820,7 +820,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def axial_symmetry(self, line):
         """
-        Finds out the symmetric edge 2d according to a line.
+        Finds out the symmetric wire 2d according to a line.
 
         """
 
@@ -907,7 +907,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     """
-    A collection of simple primitives, following each other making a edge.
+    A collection of simple primitives, following each other making a wire.
 
     """
 
@@ -991,7 +991,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def to_bspline(self, discretization_parameter, degree):
         """
-        Convert a edge 3d to a bspline curve 3d.
+        Convert a wire 3d to a bspline curve 3d.
 
         """
 
@@ -2251,7 +2251,7 @@ class Contour2D(ContourMixin, Wire2D):
         Cut a contour 2d with bspline_curve 2d to define two different contours.
 
         """
-        # TODO: BsplineCurve is descretized and defined with a edge. To be improved!
+        # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
 
         contours = self.cut_by_wire(Wire2D.from_edge(bspline_curve2d, 20))
 
@@ -2325,7 +2325,7 @@ class Contour2D(ContourMixin, Wire2D):
         :param wire: volmdlr.wires.Wire2D
         :rtype: list[volmdlr.wires.Contour2D]
 
-        :param edge: volmdlr.wires.Wire2D.
+        :param wire: volmdlr.wires.Wire2D.
         :return: contours2d : list[volmdlr.wires.Contour2D].
         """
 
@@ -4331,18 +4331,6 @@ class Ellipse2D(Contour2D):
             return res
         raise ValueError(f'point {point} does not belong to ellipse')
 
-    def point_at_abscissa(self, curvilinear_abscissa: float, resolution: int = 1000):
-        points = self.discretization_points(number_points=resolution)
-        approx_abscissa = 0
-        last_point = None
-        for p1, p2 in zip(points[:-1], points[1:]):
-            if approx_abscissa <= curvilinear_abscissa:
-                approx_abscissa += p1.point_distance(p2)
-                last_point = p2
-            else:
-                break
-        return last_point
-
     def point_angle_with_major_dir(self, point2d):
         """
         Given a point in the ellipse, calculates it angle with the major direction vector.
@@ -5309,19 +5297,6 @@ class Ellipse3D(Contour3D):
         ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
         return ellipse_2d.abscissa(point2d)
-
-    def point_at_abscissa(self, curvilinear_abscissa: float, resolution: int = 1000):
-        # TODO: enhance this method to a more precise method
-        points = self.discretization_points(number_points=resolution)
-        approx_abscissa = 0
-        last_point = None
-        for p1, p2 in zip(points, points[1:] + [points[0]]):
-            if approx_abscissa <= curvilinear_abscissa:
-                approx_abscissa += p1.point_distance(p2)
-                last_point = p2
-            else:
-                break
-        return last_point
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if point1.is_close(point2):

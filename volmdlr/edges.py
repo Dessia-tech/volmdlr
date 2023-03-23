@@ -799,7 +799,7 @@ class BSplineCurve(Edge):
         return result
         # raise ValueError('abscissa not found')
 
-    def point_inversion_funcs(self, u, point):
+    def _point_inversion_funcs(self, u, point):
         """
         Helper function to evaluate Newton-Rapshon terms.
         """
@@ -809,7 +809,7 @@ class BSplineCurve(Edge):
         func_first_derivative = curve_derivatives[2].dot(distance_vector) + curve_derivatives[1].norm() ** 2
         return func, func_first_derivative, curve_derivatives, distance_vector
 
-    def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-5, tol2: float = 1e-5):
+    def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-6, tol2: float = 1e-6):
         """
         Finds the equivalent B-Spline curve parameter u to a given a point 3D or 2D using an initial guess u0.
 
@@ -828,7 +828,7 @@ class BSplineCurve(Edge):
         """
         if maxiter == 0:
             return u0, False
-        func, func_first_derivative, curve_derivatives, distance_vector = self.point_inversion_funcs(u0, point)
+        func, func_first_derivative, curve_derivatives, distance_vector = self._point_inversion_funcs(u0, point)
         if self._check_convergence(curve_derivatives, distance_vector, tol1=tol1, tol2=tol2):
             return u0, True
         new_u = u0 - func / func_first_derivative
@@ -840,12 +840,12 @@ class BSplineCurve(Edge):
         return self.point_invertion(u0, point, maxiter=maxiter - 1)
 
     @staticmethod
-    def _check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-5, tol2: float = 1e-5):
+    def _check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-6, tol2: float = 1e-6):
         """
         Helper function to check convergence of point_invertion method.
         """
         distance = distance_vector.norm()
-        if distance == 0.0:
+        if distance <= tol1:
             return True
         zero_cos = abs(curve_derivatives[1].dot(distance_vector)) / curve_derivatives[1].norm() * distance
         if distance <= tol1 and zero_cos <= tol2:
@@ -1347,7 +1347,7 @@ class Line2D(Line):
             a new figure is created.
         :type ax: matplotlib.axes._subplots.AxesSubplot, optional
         :param edge_style: data class instance, containing all parameters needed to plot Line 2D.
-        :return: The Matplotlib axis.
+        :return: The matplotlib axis.
         :rtype: matplotlib.axes._subplots.AxesSubplot
         """
         if ax is None:
@@ -1891,7 +1891,7 @@ class BezierCurve2D(BSplineCurve2D):
     """
     A class for 2 dimensional Bezier curves.
 
-    :param degree: The degree of the Bezier curve
+    :param degree: The degree of the Bezier curve.
     :type degree: int
     :param control_points: A list of 2 dimensional points
     :type control_points: List[:class:`volmdlr.Point2D`]
@@ -3503,7 +3503,7 @@ class ArcEllipse2D(Edge):
         length = self.abscissa(self.end)
         return length
 
-    def point_belongs(self, point, abs_tol: float = 1e-4):
+    def point_belongs(self, point, abs_tol: float = 1e-6):
         """
         Verifies if a point belongs to the arc ellipse 2d.
 
@@ -6498,16 +6498,18 @@ class ArcEllipse3D(Edge):
                                 major_dir)
         raise ValueError('Side should be \'new\' \'old\'')
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol: float = 1e-6):
         """
-        Verifies if a given point lies on the Ellipse3D.
+        Verifies if a given point lies on the arc of ellipse 3D.
 
         :param point: point to be verified.
-        :return: True is point lies on the Ellipse, False otherwise
+        :param abs_tol: Absolute tolerance to consider the point on the curve.
+        :return: True is point lies on the arc of ellipse, False otherwise
         """
-        new_point = self.frame.global_to_local_coordinates(point)
-        return math.isclose(new_point.x ** 2 / self.Gradius ** 2 +
-                            new_point.y ** 2 / self.Sradius ** 2, 1.0, abs_tol=1e-6)
+        vector_2 = self.normal.cross(self.major_dir)
+        ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
+        point2d = point.to_2d(self.center, self.major_dir, vector_2)
+        return ellipse_2d.point_belongs(point2d, abs_tol=abs_tol)
 
 
 class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
