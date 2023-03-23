@@ -1247,7 +1247,7 @@ class Cylinder(RevolvedProfile):
 
     def random_point_inside(self) -> volmdlr.Point3D:
         """
-        Gets a random point inside a cylindier.
+        Gets a random point inside a cylinder.
 
         :return: a random point inside the Cylinder
         """
