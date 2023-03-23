@@ -33,9 +33,9 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
     """
     Defines an open rounded line segments.
 
-    :param points: Points used to draw the edge.
+    :param points: Points used to draw the wire.
     :type points: List of Point3D.
-    :param radius: Radius used to connect different parts of the edge.
+    :param radius: Radius used to connect different parts of the wire.
     :type radius: {position1(n): float which is the radius linked the n-1 and.
     n+1 points, position2(n+1):...}
     """
@@ -153,9 +153,9 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     """
     Defines a closed rounded line segment in 3D.
 
-    :param points: Points used to draw the edge
+    :param points: Points used to draw the wire
     :type points: List of Point3D
-    :param radius: Radius used to connect different parts of the edge
+    :param radius: Radius used to connect different parts of the wire
     :type radius: {position1(n): float which is the radius linked the n-1 and
     n+1 points, position2(n+1):...}
     """

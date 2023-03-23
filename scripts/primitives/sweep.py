@@ -32,7 +32,7 @@ for i in range(6):
 
 contour = wires.Circle2D(vm.O2D, 0.008)
 
-rl = primitives3d.OpenRoundedLineSegments3D(points, radius, adapt_radius=True, name='edge')
+rl = primitives3d.OpenRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
