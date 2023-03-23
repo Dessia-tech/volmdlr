@@ -2590,7 +2590,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         if len(self.points) > 1:
             for point1, point2 in zip(self.points,
                                       list(self.points[1:]) + [self.points[0]]):
-                if point1 != point2:
+                if not point1.is_close(point2):
                     lines.append(volmdlr.edges.LineSegment2D(point1, point2))
         return lines
 
@@ -5237,7 +5237,7 @@ class Ellipse3D(Contour3D):
         """
         new_point = self.frame.global_to_local_coordinates(point)
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
-                            new_point.y ** 2 / self.minor_axis ** 2, 1, abs_tol=1e-6)
+                            new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=1e-6)
 
     def length(self):
         """
@@ -5360,7 +5360,8 @@ class Ellipse3D(Contour3D):
         :return: A new translated Ellipse 3D.
         """
         new_center = self.center.translation(offset)
-        new_normal = self.normal.translation(offset)
+        # new_normal = self.normal.translation(offset)
+        new_normal = self.normal
         new_major_dir = self.major_dir.translation(offset)
         return Ellipse3D(self.major_axis, self.minor_axis, new_center,
                          new_normal, new_major_dir, self.name)
