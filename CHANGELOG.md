@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circle2D: bsplinecurve_intersections, point_distance
 * ConicalSurface3D, CylindricalSurface3D: plot method
 * volmdlr.edge: FullArcEllipse
+* BSplineCurve: evaluate_single
 * Wire2: hash
 * Contour3D: hash
 
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fixes to wire
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
+* BSplineCurve: abscissa
 * Add some important fixes to unittests: missing two __init__py files.
 * Edge: change unit_direction_vector and unit_normal_vector to concrete methods
 * stl: add _standalone_in_db to Stl class
