@@ -307,7 +307,7 @@ class CompositePrimitive2D(CompositePrimitive):
         plot_data = {}
         plot_data['fill'] = fill
         plot_data['name'] = name
-        plot_data['type'] = 'edge'
+        plot_data['type'] = 'wire'
         plot_data['plot_data'] = []
         for item in self.primitives:
             plot_data['plot_data'].append(item.plot_data(color=color,
@@ -1012,7 +1012,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Return the sum of volumes of the primitives.
 
-        It does not make any Boolean operation in case of overlapping.
+        It does not make any boolean operation in case of overlapping.
 
         """
         volume = 0

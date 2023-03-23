@@ -910,7 +910,15 @@ class Step(dc.DessiaObject):
                     list_head.append(node)
         return list_head + list_nodes[::-1]
 
-    def get_shell_node_from_representation_entity(self, id_representation_entity):
+    def get_shell_node_from_representation_entity(self, id_representation_entity: int):
+        """
+        Find the shell node ID related to a given representation entity.
+
+        :param id_representation_entity: Representation entity ID.
+        :type id_representation_entity: int
+        :return: Shell ID.
+        :rtype: int
+        """
         name_representation_entity = self.functions[id_representation_entity].name
         arg = self.functions[id_representation_entity].arg[1]
         if name_representation_entity == "MANIFOLD_SURFACE_SHAPE_REPRESENTATION":
@@ -933,12 +941,14 @@ class Step(dc.DessiaObject):
             return int(id_shell[0][1:])
         return int(id_shell[1:])
 
-    def get_frame_mapped_shell_node(self, node):
+    def get_frame_mapped_shell_node(self, node: int):
         """
-        Find the shells nodes in the assembly.
+        Find the shell node in the assembly.
 
         :param node: Assembly step entity node.
         :type node: int
+        :return: Shell ID.
+        :rtype: int
         """
         id_representation_entity = None
         arguments = self.functions[node].arg
@@ -976,7 +986,7 @@ class Step(dc.DessiaObject):
         Translate a step file into a volmdlr object.
 
         :param show_times: if True, displays how many times a given class has been
-            instanciated and the total time of all the instanciations of this
+            instantiated and the total time of all the instantiations of this
             given class.
         :type show_times: bool
         :return: A volmdlr solid object.
@@ -1009,7 +1019,7 @@ class Step(dc.DessiaObject):
             elif self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
                                               'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
                                               'GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
-                object_dict, times = self.helper_instantiate(node, object_dict, times, show_times)
+                object_dict, times = self._helper_instantiate(node, object_dict, times, show_times)
                 arguments = self.functions[node].arg[:]
                 self.global_uncertainty = object_dict[int(arguments[1][0][1:])]
                 self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
@@ -1030,7 +1040,7 @@ class Step(dc.DessiaObject):
 
             if node is None:
                 continue
-            object_dict, times = self.helper_instantiate(node, object_dict, times, show_times)
+            object_dict, times = self._helper_instantiate(node, object_dict, times, show_times)
 
             if not object_dict[node]:
                 errors.add(node)
@@ -1061,7 +1071,7 @@ class Step(dc.DessiaObject):
         volume_model = volmdlr.core.VolumeModel(shells)
         return volume_model
 
-    def helper_instantiate(self, node, object_dict, times, show_times):
+    def _helper_instantiate(self, node, object_dict, times, show_times):
         """
         Helper method to translate step entities into volmdlr objects.
         """
