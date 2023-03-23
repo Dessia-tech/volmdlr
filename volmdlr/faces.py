@@ -5566,6 +5566,7 @@ class BSplineSurface3D(Surface3D):
 
         :param other_bspline_surface3d: Other adjacent surface
         :type other_bspline_surface3d: :class:`volmdlr.faces.BSplineSurface3D`
+
         :return: Merged surface
         :rtype: :class:`volmdlr.faces.BSplineSurface3D`
         """
@@ -5580,20 +5581,21 @@ class BSplineSurface3D(Surface3D):
                   other_bspline_face3d.surface2d.outer_contour.center_of_mass()]
         grid2d_direction = (bspline_face3d.pair_with(other_bspline_face3d))[1]
 
-        # if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
-        #
-        #     xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
+        if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
 
-        if self.is_intersected_with(other_bspline_surface3d):
-            # find primitives to split with
+            # xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
+            pass
+
+        elif self.is_intersected_with(other_bspline_surface3d):
+            # find pimitives to split with
             contour1 = bspline_face3d.outer_contour3d
             contour2 = other_bspline_face3d.outer_contour3d
 
             distances = []
-            for prim_1 in contour1.primitives:
+            for prim1 in contour1.primitives:
                 dis = []
                 for prim2 in contour2.primitives:
-                    point1 = (prim_1.start + prim_1.end) / 2
+                    point1 = (prim1.start + prim1.end) / 2
                     point2 = (prim2.start + prim2.end) / 2
                     dis.append(point1.point_distance(point2))
                 distances.append(dis)
@@ -5613,33 +5615,32 @@ class BSplineSurface3D(Surface3D):
 
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
-            # xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-            #     len(bsplines_new), [1] * len(bsplines_new)
-
             grid2d_direction = (
                 bsplines_new[0].rectangular_cut(
                     0, 1, 0, 1).pair_with(
                     bsplines_new[1].rectangular_cut(
                         0, 1, 0, 1)))[1]
 
-        # else:
-        #     xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-        #                              len(bsplines_new), [1] * len(bsplines_new)
-
         # grid3d
+        nb = 10
         points3d = []
         for i, bspline in enumerate(bsplines_new):
             grid3d = bspline.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(0, 1),
                                                                         y_limits=(0, 1),
-                                                                        points_nbr=(50, 50),
+                                                                        points_nbr=(nb, nb),
                                                                         direction=grid2d_direction[i]))
 
-            points3d.extend(grid3d)
+            if (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
+                    or self.is_intersected_with(other_bspline_surface3d)):
+                if i == 0:
+                    points3d.extend(grid3d[0:nb * nb - nb])
+                else:
+                    points3d.extend(grid3d)
+            else:
+                points3d.extend(grid3d)
 
-            # fitting
-        size_u, size_v, degree_u, degree_v = 100, 50, max(
-            bsplines[0].degree_u, bsplines[1].degree_u), max(
-            bsplines[0].degree_v, bsplines[1].degree_v)
+        # fitting
+        size_u, size_v, degree_u, degree_v = (nb * 2) - 1, nb, 3, 3
 
         merged_surface = BSplineSurface3D.points_fitting_into_bspline_surface(
             points3d, size_u, size_v, degree_u, degree_v)
