@@ -5377,7 +5377,7 @@ class Arc3D(Arc):
             center, _ = line_1.minimum_distance_points(line_2)
         except ZeroDivisionError:
             raise ValueError(
-                'Start, end and interior points  of an arc must be distincts') from ZeroDivisionError
+                'Start, end and interior points of an arc must be distincts') from ZeroDivisionError
 
         return center
 

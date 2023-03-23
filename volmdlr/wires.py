@@ -4950,6 +4950,14 @@ class Circle3D(Contour3D):
 
         self.frame.translation_inplace(offset)
 
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Circle3D.
+
+        side = 'old' or 'new'.
+        """
+        return Circle3D(self.frame.frame_mapping(frame, side), self.radius)
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             fig = plt.figure()

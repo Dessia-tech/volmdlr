@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: evaluate_single
 - Wire2: hash
 - Contour3D: hash
+- Circle3D frame_mapping
 
 ### Fixed
 - primitives: ClosedRoundedLineSegment bug on rounding last corner
