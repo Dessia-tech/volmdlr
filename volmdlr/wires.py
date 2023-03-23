@@ -1850,6 +1850,7 @@ class Contour2D(ContourMixin, Wire2D):
             point = volmdlr.Point2D.random(x_min, x_max, y_min, y_max)
             if self.point_belongs(point, include_edge_points):
                 return point
+        print(True)
         raise ValueError('Could not find a point inside')
 
     @classmethod

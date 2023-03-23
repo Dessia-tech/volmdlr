@@ -38,13 +38,14 @@ def angle_discontinuity(angle_list):
     """
     indexes_sign_changes = find_sign_changes(angle_list)
     theta_discontinuity = False
+    indexes_theta_discontinuity = []
     if indexes_sign_changes:
         for index in indexes_sign_changes:
             delta = max(angle_list) - min(angle_list)
             if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta/len(angle_list)):
+                indexes_theta_discontinuity.append(index)
                 theta_discontinuity = True
-                break
-    return theta_discontinuity
+    return theta_discontinuity, indexes_theta_discontinuity
 
 
 def repair_singularity(primitive, last_primitive):

@@ -190,6 +190,10 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
+        try:
+            self.area()
+        except Exception:
+            print(True)
         if math.isclose(self.area(), 0., abs_tol=1e-6):
             return vmd.DisplayMesh2D([], triangles=[])
 
@@ -1090,10 +1094,12 @@ class Surface3D(DessiaObject):
                 primitives2d.extend(primitives)
             else:
                 raise NotImplementedError(f'Class {self.__class__.__name__} does not implement {method_name}')
-        wire2d = volmdlr.wires.Wire2D(primitives2d)
-        delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
-        if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
-            return volmdlr.wires.Contour2D(primitives2d)
+
+
+        # wire2d = volmdlr.wires.Wire2D(primitives2d)
+        # delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
+        # if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
+        #     return volmdlr.wires.Contour2D(primitives2d)
         # Fix contour
         if self.x_periodicity or self.y_periodicity:
             primitives2d = self.repair_primitives_periodicity(primitives2d)
@@ -1802,8 +1808,8 @@ class PeriodicalSurface(Surface3D):
         n = len(bspline_curve3d.control_points)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         points = [self.point3d_to_2d(point) for point in points3d]
-        theta1, z1 = self.point3d_to_2d(bspline_curve3d.start)
-        theta2, z2 = self.point3d_to_2d(bspline_curve3d.end)
+        theta1, z1 = points[0]
+        theta2, z2 = points[-1]
 
         theta3, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
         # make sure that the reference angle is not undefined
@@ -1824,12 +1830,23 @@ class PeriodicalSurface(Surface3D):
         points[-1] = volmdlr.Point2D(theta2, z2)
 
         theta_list = [point.x for point in points]
-        theta_discontinuity = angle_discontinuity(theta_list)
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+            if theta2 == 0.0:
+                points[-1] = volmdlr.Point2D(-volmdlr.TWO_PI, z2)
         elif theta3 > theta1 > theta2 and theta_discontinuity:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+            if theta2 == 0.0:
+                points[-1] = volmdlr.Point2D(volmdlr.TWO_PI, z2)
+        elif theta_discontinuity and len(indexes_theta_discontinuity) == 1:
+            index_theta_discontinuity = indexes_theta_discontinuity[0]
+            sign = points[index_theta_discontinuity - 1].x/abs(points[index_theta_discontinuity - 1].x)
+            points = [p + sign * volmdlr.Point2D(volmdlr.TWO_PI, 0) if i >= index_theta_discontinuity else p
+                      for i, p in enumerate(points)]
+        elif theta_discontinuity:
+            raise NotImplementedError
 
         return [vme.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree,
                                                              periodic=bspline_curve3d.periodic)]
@@ -2606,18 +2623,50 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         theta_list = [point.x for point in points]
         phi_list = [point.y for point in points]
-        theta_discontinuity = angle_discontinuity(theta_list)
-        phi_discontinuity = angle_discontinuity(phi_list)
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
+        phi_discontinuity, indexes_phi_discontinuity = angle_discontinuity(phi_list)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+            if theta2 == 0.0:
+                points[-1] = volmdlr.Point2D(-volmdlr.TWO_PI, phi2)
         elif theta3 > theta1 > theta2 and theta_discontinuity:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+            if theta2 == 0.0:
+                points[-1] = volmdlr.Point2D(volmdlr.TWO_PI, phi2)
+        elif theta_discontinuity and len(indexes_theta_discontinuity) == 1:
+            index_theta_discontinuity = indexes_theta_discontinuity[0]
+            sign = points[index_theta_discontinuity - 1].x/abs(points[index_theta_discontinuity - 1].x)
+            points = [p + sign * volmdlr.Point2D(volmdlr.TWO_PI, 0) if i >= index_theta_discontinuity else p
+                      for i, p in enumerate(points)]
+        elif theta_discontinuity:
+            raise NotImplementedError
 
         if phi3 < phi1 < phi2 and phi_discontinuity:
-            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y > 0 else p for p in points]
+            points = [p - volmdlr.Point2D(0, volmdlr.TWO_PI) if p.y > 0 else p for p in points]
+            if phi2 == 0.0:
+                points[-1] = volmdlr.Point2D(points[-1].x, -volmdlr.TWO_PI)
         elif phi3 > phi1 > phi2 and phi_discontinuity:
-            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in points]
+            points = [p + volmdlr.Point2D(0, volmdlr.TWO_PI) if p.y < 0 else p for p in points]
+            if phi2 == 0.0:
+                points[-1] = volmdlr.Point2D(points[-1].x, volmdlr.TWO_PI)
+        elif phi_discontinuity and len(indexes_phi_discontinuity) == 1:
+            index_phi_discontinuity = indexes_phi_discontinuity[0]
+            sign = points[index_phi_discontinuity - 1].y/abs(points[index_phi_discontinuity - 1].y)
+            points = [p + sign * volmdlr.Point2D(0, volmdlr.TWO_PI) if i >= index_phi_discontinuity else p
+                      for i, p in enumerate(points)]
+        elif phi_discontinuity:
+            raise NotImplementedError
+
+        # if theta3 < theta1 < theta2 and theta_discontinuity:
+        #     points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+        # elif theta3 > theta1 > theta2 and theta_discontinuity:
+        #     points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+
+        # if phi3 < phi1 < phi2 and phi_discontinuity:
+        #     points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y > 0 else p for p in points]
+        # elif phi3 > phi1 > phi2 and phi_discontinuity:
+        #     points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in points]
 
         return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
 
@@ -3264,8 +3313,8 @@ class SphericalSurface3D(Surface3D):
         n = len(bspline_curve3d.control_points)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         points = [self.point3d_to_2d(point) for point in points3d]
-        theta1, phi1 = self.point3d_to_2d(bspline_curve3d.start)
-        theta2, phi2 = self.point3d_to_2d(bspline_curve3d.end)
+        theta1, phi1 = points[0]
+        theta2, phi2 = points[-1]
 
         theta3, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
         # make sure that the reference angle is not undefined
@@ -3286,12 +3335,18 @@ class SphericalSurface3D(Surface3D):
         points[-1] = volmdlr.Point2D(theta2, phi2)
 
         theta_list = [point.x for point in points]
-        theta_discontinuity = angle_discontinuity(theta_list)
+        theta_discontinuity, indexes_theta_discontinuity  = angle_discontinuity(theta_list)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
+            if theta2 == 0.0:
+                points[-1] = volmdlr.Point2D(-volmdlr.TWO_PI, phi2)
         elif theta3 > theta1 > theta2 and theta_discontinuity:
             points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+            if theta2 == 0.0:
+                points[-1] = volmdlr.Point2D(volmdlr.TWO_PI, phi2)
+        elif theta_discontinuity:
+            raise NotImplementedError
 
         return [vme.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree,
                                                              periodic=bspline_curve3d.periodic)]
