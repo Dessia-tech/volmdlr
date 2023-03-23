@@ -767,13 +767,13 @@ class BSplineCurve(Edge):
         return self.point_at_abscissa(self.length() * 0.5)
 
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
-                 tol: float = 1e-4):
+                 tol: float = 1e-6):
         """
         Computes the abscissa of a 2D or 3D point using the least square method.
 
         :param point: The point located on the B-spline curve.
         :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`].
-        :param tol: The precision in terms of distance. Default value is 1e-4.
+        :param tol: The precision in terms of distance. Default value is 1e-6.
         :type tol: float, optional.
         :return: The abscissa of the point.
         :rtype: float
@@ -788,13 +788,13 @@ class BSplineCurve(Edge):
         for u0 in initial_condition_list:
             u, convergence_sucess = self.point_invertion(u0, point)
             abscissa = u * length
-            if convergence_sucess:  # sometimes we don't achieve convergence with a given inital guess
+            if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
                 return abscissa
             dist = evaluate_point_distance(u)
             if dist < tol:
                 return abscissa
         # print(True)
-            results.append((u, dist))
+            results.append((abscissa, dist))
         result = min(results, key=lambda r: r[1])[0]
         return result
         # raise ValueError('abscissa not found')

@@ -36,7 +36,7 @@ from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_
 from volmdlr.bspline_evaluators import evaluate_single
 from volmdlr.core import point_in_list
 
-
+c = 0
 def knots_vector_inv(knots_vector):
     """
     Compute knot-elements and multiplicities based on the global knot vector.
@@ -1096,10 +1096,10 @@ class Surface3D(DessiaObject):
                 raise NotImplementedError(f'Class {self.__class__.__name__} does not implement {method_name}')
 
 
-        # wire2d = volmdlr.wires.Wire2D(primitives2d)
-        # delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
-        # if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
-        #     return volmdlr.wires.Contour2D(primitives2d)
+        wire2d = volmdlr.wires.Wire2D(primitives2d)
+        delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
+        if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
+            return volmdlr.wires.Contour2D(primitives2d)
         # Fix contour
         if self.x_periodicity or self.y_periodicity:
             primitives2d = self.repair_primitives_periodicity(primitives2d)
@@ -2947,6 +2947,40 @@ class ConicalSurface3D(PeriodicalSurface):
             ]
         raise NotImplementedError('Ellipse?')
 
+    def contour3d_to_2d(self, contour3d):
+        """
+        Transforms a Contour3D into a Contour2D in the parametric domain of the surface.
+
+        :param contour3d: The contour to be transformed.
+        :type contour3d: :class:`volmdlr.wires.Contour3D`
+        :return: A 2D contour object.
+        :rtype: :class:`volmdlr.wires.Contour2D`
+        """
+        primitives2d = []
+
+        # Transform the contour's primitives to parametric domain
+        for primitive3d in contour3d.primitives:
+            method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
+            if hasattr(self, method_name):
+                primitives = getattr(self, method_name)(primitive3d)
+
+                if primitives is None:
+                    continue
+                primitives2d.extend(primitives)
+            else:
+                raise NotImplementedError(f'Class {self.__class__.__name__} does not implement {method_name}')
+
+
+        wire2d = volmdlr.wires.Wire2D(primitives2d)
+        delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
+        if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
+            points = wire2d.bounding_rectangle.bounding_points()
+            points.append(points[0])
+            return volmdlr.wires.Contour2D.from_points(points)
+        # Fix contour
+        primitives2d = self.repair_primitives_periodicity(primitives2d)
+        return volmdlr.wires.Contour2D(primitives2d)
+
     def translation(self, offset: volmdlr.Vector3D):
         """
         ConicalSurface3D translation.
@@ -3003,13 +3037,7 @@ class ConicalSurface3D(PeriodicalSurface):
         :rtype: list
         """
         # Search for a primitive that can be used as reference for reparing periodicity
-        pos = 0
-        for i, primitive in enumerate(primitives2d):
-            start = primitive.start
-            end = primitive.end
-            if abs(start.x) != math.pi and end.x != start.x:
-                pos = i
-                break
+        pos = vm_parametric.find_index_defined_initial_primitive(primitives2d)
         if pos != 0:
             primitives2d = primitives2d[pos:] + primitives2d[:pos]
 

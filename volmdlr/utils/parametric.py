@@ -48,6 +48,28 @@ def angle_discontinuity(angle_list):
     return theta_discontinuity, indexes_theta_discontinuity
 
 
+def is_undefined_primitive(primitive):
+    """
+    2D primitives on parametric surface domain can be in wrong bound side due to periodic behavior of some faces.
+    """
+    start = primitive.start
+    end = primitive.end
+    if abs(start.x) == math.pi and end.x == start.x:
+        return True
+    return False
+
+
+def find_index_defined_initial_primitive(primitives2d):
+    """
+    Search for a primitive that can be used as reference for reparing periodicity.
+    """
+    pos = 0
+    for i, primitive in enumerate(primitives2d):
+        if not is_undefined_primitive(primitive):
+            return i
+    return pos
+
+
 def repair_singularity(primitive, last_primitive):
     """
     Repairs the Contour2D of SphericalSurface3D and ConicalSurface3D parametric face representations.
