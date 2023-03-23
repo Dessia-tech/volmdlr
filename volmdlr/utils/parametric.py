@@ -1,5 +1,6 @@
 """
-volmdlr utils for calculating 3D to surface parametric domain operationa
+volmdlr utils for calculating 3D to surface parametric domain operation.
+
 """
 import bisect
 import math
@@ -8,11 +9,49 @@ import volmdlr
 import volmdlr.edges as vme
 
 
+def find_sign_changes(list_of_values):
+    """
+    Finds the position of sign changes in a list.
+
+    :param list_of_values: The list to search for sign changes.
+    :type list_of_values: list
+    :returns: A list of indices where the sign changes occur.
+    :rtype: list
+    """
+    sign_changes = []
+    for i in range(1, len(list_of_values)):
+        if list_of_values[i] * list_of_values[i - 1] < 0:
+            sign_changes.append(i)
+    return sign_changes
+
+
+def angle_discontinuity(angle_list):
+    """
+    Returns True if there is some angle discontinuity in the angle_list.
+
+    This discontinuity can occur when we transform some 3D primitive into the parametric domain of periodical surfaces.
+
+    :param angle_list: List with angle axis values of the primitive in parametric domain.
+    :type angle_list: List[float]
+    :return: Returns True if there is discontinuity, False otherwise.
+    :rtype: bool
+    """
+    indexes_sign_changes = find_sign_changes(angle_list)
+    theta_discontinuity = False
+    if indexes_sign_changes:
+        for index in indexes_sign_changes:
+            delta = max(angle_list) - min(angle_list)
+            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta/len(angle_list)):
+                theta_discontinuity = True
+                break
+    return theta_discontinuity
+
+
 def repair_singularity(primitive, last_primitive):
     """
     Repairs the Contour2D of SphericalSurface3D and ConicalSurface3D parametric face representations.
 
-    Used when transforming from spatial to parametric coordinates when the surface contains a sigularity
+    Used when transforming from spatial to parametric coordinates when the surface contains a singularity
     """
     v1 = primitive.unit_direction_vector()
     v2 = last_primitive.unit_direction_vector()
@@ -70,7 +109,7 @@ def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, ang
     if angle_after_start < angle_start and ref_low < -math.pi:
         angle_end = ref_low
 
-    # angle_after_start > angle_start --> angle coordinate axis going trigowise
+    # angle_after_start > angle_start --> angle coordinate axis going trigo wise
     #  ref_up > math.pi -> crossing lower bound of atan2  [-math.pi, math.pi]
     elif angle_after_start > angle_start and ref_up > math.pi:
         angle_end = ref_up
@@ -104,12 +143,10 @@ def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
 
 def arc3d_to_spherical_verification(start, end, angle3d, reference_points, periodicity):
     """
-    Verifies theta and phi from start and end of an arc3d after transformation from spatial to parametric coordinates.
+    Verifies theta and phi from start and end of an arc 3D after transformation from spatial to parametric coordinates.
     """
     point_after_start = reference_points[0]
     point_before_end = reference_points[1]
-    x_periodicity = periodicity[0]
-    y_periodicity = periodicity[1]
     theta1, phi1 = start
     theta2, phi2 = end
     theta3, phi3 = point_after_start
@@ -127,15 +164,14 @@ def arc3d_to_spherical_verification(start, end, angle3d, reference_points, perio
         phi2 = repair_start_end_angle_periodicity(phi2, phi4)
 
     if math.isclose(phi1, phi2, abs_tol=1e-4):
-        theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d, x_periodicity)
+        theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2,
+                                                       angle3d, periodicity[0])
 
     if math.isclose(theta1, theta2, abs_tol=1e-4):
-        phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2, angle3d, y_periodicity)
+        phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2,
+                                                   angle3d, periodicity[1])
 
-    start = volmdlr.Point2D(theta1, phi1)
-    end = volmdlr.Point2D(theta2, phi2)
-
-    return start, end
+    return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
 
 
 def array_range_search(x, xmin, xmax):

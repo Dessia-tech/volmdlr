@@ -859,6 +859,31 @@ class Vector2D(Vector):
 
         return ax
 
+    def to_step(self, current_id, vector=False, vertex=False):
+        """
+        Write a step primitive from a 2 dimensional vector.
+
+        :param current_id: The id of the last written primitive
+        :type current_id: int
+        :param vector: If 'True' creates a step VECTOR primitive. Otherwise,
+            only a DIRECTION primitive will be created. Default value set to
+            'False'
+        :type vector: bool, optional
+        :param vertex: If 'True' calls the to_step method of Point3D. Default
+            value set to 'False'
+        :type vertex: bool, optional
+        :return: A tuple containing the string representing the step primitive
+            and the new current id
+        :rtype: tuple
+        """
+        if vertex:
+            return self.to_point().to_step(current_id=current_id, vertex=True)
+        content = f"#{current_id} = DIRECTION('{self.name}',({self.x:.6f},{self.y:.6f}));\n"
+        if vector:
+            content += f"#{current_id + 1} = VECTOR('{self.name}',#{current_id},1.);\n"
+            current_id += 1
+        return content, current_id
+
 
 X2D = Vector2D(1, 0)
 Y2D = Vector2D(0, 1)

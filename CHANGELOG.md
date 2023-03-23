@@ -13,25 +13,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Arc: reverse
 * BSplineCurve2D: offset
 * Circle2D: bsplinecurve_intersections, point_distance
+* ConicalSurface3D, CylindricalSurface3D: plot method
+* volmdlr.edge: FullArcEllipse
+* BSplineCurve: evaluate_single
+* Wire2: hash
+* Contour3D: hash
 
 ### Fixed
-
+* Bspline in sweep
+* Plane3D: plane_intersections
+* fixes to step assemblies
+* fixes to wire
+* Arc: split. Case when spliting point is the start or end point.
+* BplineCurve2D: tangent, vector_direction, normal_vector
+* BSplineCurve: abscissa
+* Add some important fixes to unittests: missing two __init__py files.
+* Edge: change unit_direction_vector and unit_normal_vector to concrete methods
+* stl: add _standalone_in_db to Stl class
 
 ### Removed
+* stl: remove default value in from_stream method
 
 ### Changed
 
 - argument convexe in volmdlr.cloud has been renamed to convex
+- Add some missing docstrings in volmdlr.faces
 
 ### Performance improvements
+* BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.
+* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
 * eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
 * BSplinecurve2D: point_belongs
 * lighten some dicts with optional name
+* Step reader: refactor to_volume_model. Remove the dependency of the method of creating a graph.
 
 ### Refactorings
-
 * ContourMixin: to_polygon (for both 2D and 3D)
-* BSplineCurve2D.point_distance
+* BSplineCurve2D.point_distance 
 * new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
 ### Unittests
@@ -42,7 +60,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unittests for Vector3D
 * Unittests for Point3D
 
-## v0.9.0 [Testing]
+
+## v0.9.1
+
+### Fixed
+- build: manifest was not shipping bspline_compiled
+- fixed many pylint errors: 13/03/2023
+## v0.9.0 [Released 06/03/2023]
 
 ### New Features
 
@@ -55,9 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Create .geo and .msh files (Mesh geometries with GMSH)
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
-* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D.
-* ConicalSurface3D, CylindricalSurface3D: plot method
-
+* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
+* Edge: local_discretization
 
 ### Fixed
 
@@ -78,6 +101,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment3D: Rotation method update due to points attribute deletion
 * ConicalSurface3D: fix from_step class method by adding the angle convertion factor
 * fix f string usage
+* Add some typings
+* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
 
 ### Removed
 
@@ -120,7 +145,7 @@ is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_t
 - add spell check to pylint with pyenchant
 - make code_pydocstyle more explicit
 - upload html coverage to cdn.dessia.tech
-
+- limit time effect on master & testing
 
 ## v0.8.0 [Released 26/01/2023]
 
@@ -365,6 +390,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * Circle3D: to_step
 * ArcEllipse3D.to_2d()
 * infinite primitive offset of linesegment
+* Contour3D: order_contour.
 
 ### Performance improvements
 

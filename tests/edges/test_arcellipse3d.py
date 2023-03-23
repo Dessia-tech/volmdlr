@@ -19,7 +19,7 @@ class TestArcEllipse3D(unittest.TestCase):
                            volmdlr.Point3D(-0.09682458365510088, 0.11456439237385536, 0.07995211164153597),
                            volmdlr.Point3D(0.0, 0.15, 0.17677669529663684)]
         for expected_point, point in zip(expected_points, discretization_points):
-            self.assertEqual(expected_point, point)
+            self.assertTrue(expected_point.is_close(point))
 
 
 if __name__ == '__main__':

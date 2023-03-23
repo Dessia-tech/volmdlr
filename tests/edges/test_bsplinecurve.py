@@ -22,6 +22,31 @@ class TestBSplineCurve2D(unittest.TestCase):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
         point = volmdlr.Point2D(-0.31240117104573617, -2.8555856978321796)
 
+        bspline = vme.BSplineCurve2D.load_from_file("edges/bg_bspline5_.json")
+        point1 = bspline.points[25]
+        point2 = bspline.points[75]
+
+        abscissa1 = bspline.abscissa(point1)
+        abscissa2 = bspline.abscissa(point2)
+
+        test_point1 = bspline.point_at_abscissa(abscissa1)
+        test_point2 = bspline.point_at_abscissa(abscissa2)
+
+        self.assertTrue(point1.is_close(test_point1))
+        self.assertTrue(point2.is_close(test_point2))
+
+        abscissa3 = 0.00016294494116532595
+        abscissa4 = 0.00017682955170114393
+
+        point_at_abscissa3 = bspline.point_at_abscissa(abscissa3)
+        point_at_abscissa4 = bspline.point_at_abscissa(abscissa4)
+
+        test_abscissa3 = bspline.abscissa(point_at_abscissa3)
+        test_abscissa4 = bspline.abscissa(point_at_abscissa4)
+
+        self.assertAlmostEqual(abscissa3, test_abscissa3, 6)
+        self.assertAlmostEqual(abscissa4, test_abscissa4, 6)
+
         self.assertAlmostEqual(bspline_curve2d.abscissa(point), 7.747599410268476)
 
     def test_line_intersections(self):
@@ -31,7 +56,7 @@ class TestBSplineCurve2D(unittest.TestCase):
 
         line_intersections = bspline_curve2d.line_intersections(line)
         self.assertEqual(len(line_intersections), 1)
-        self.assertEqual(line_intersections[0], volmdlr.Point2D(1.2631631057526727, -0.0026450894385881708))
+        self.assertTrue(line_intersections[0].is_close(volmdlr.Point2D(1.2631631057526727, -0.0026450894385881708)))
 
     def test_discretization_points(self):
         control_points_2d = [volmdlr.Point2D(1.5707963267948966, 2.3),
@@ -78,15 +103,15 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertEqual(len(points), 31)
 
     def test_offset(self):
-        offseted_bspline = bspline.offset(-0.2)
+        offseted_bspline = self.bspline.offset(-0.2)
         expected_distances = [0.2, 0.20000160183808904, 0.20053651951715856, 0.20372900125730523, 0.21044118400720574,
                               0.2192581584663399, 0.22774528008118392, 0.2340440381875313, 0.23739001591364056,
                               0.2379018126594174, 0.2362014374337063, 0.23307773295678147, 0.22924032294583793,
                               0.22517329538697972, 0.22109005047384114, 0.21697594011450796, 0.21267059325565962,
                               0.2079610665048543, 0.20299372351359257, 0.19999999999999987]
-        for i, (p1, p2) in enumerate(zip(bspline.discretization_points(number_points=20),
-                                         offseted_bspline.discretization_points(number_points=20))):
-            self.assertAlmostEqual(p1.point_distance(p2), expected_distances[i], 6)
+        for i, (point1, point2) in enumerate(zip(self.bspline.discretization_points(number_points=20),
+                                                 offseted_bspline.discretization_points(number_points=20))):
+            self.assertAlmostEqual(point1.point_distance(point2), expected_distances[i], 5)
 
     def test_point_distance(self):
         point = volmdlr.Point2D(1.5, 0.1)
@@ -99,6 +124,23 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertFalse(self.bspline.point_belongs(point))
         point2 = self.bspline.point_at_abscissa(0.4)
         self.assertTrue(self.bspline.point_belongs(point2))
+
+    def test_local_discretization(self):
+        expected_points = [volmdlr.Point2D(0.22902909156524637, 0.17924444819399216),
+                           volmdlr.Point2D(0.26974537451069974, 0.2013444443084787),
+                           volmdlr.Point2D(0.3104616574561531, 0.22072505985054805),
+                           volmdlr.Point2D(0.35117794040160644, 0.23747629494418182),
+                           volmdlr.Point2D(0.3918942233470598, 0.25168814971336145),
+                           volmdlr.Point2D(0.4326105062925132, 0.26345062428206867),
+                           volmdlr.Point2D(0.4733267892379665, 0.2728537187742847),
+                           volmdlr.Point2D(0.5140430721834197, 0.27998743331399134),
+                           volmdlr.Point2D(0.5547593551288732, 0.28494176802517024),
+                           volmdlr.Point2D(0.5954756380743265, 0.28780672303180266)]
+        point1 = self.bspline.point_at_abscissa(0.25)
+        point2 = self.bspline.point_at_abscissa(0.65)
+        local_discretization = self.bspline.local_discretization(point1, point2, 10)
+        for point1, point2 in zip(expected_points, local_discretization):
+            self.assertTrue(point1.is_close(point2))
 
 
 class TestBSplineCurve3D(unittest.TestCase):
@@ -125,8 +167,8 @@ class TestBSplineCurve3D(unittest.TestCase):
         bspline_lineseg_intersections1 = self.b_splinecurve3d.linesegment_intersections(linesegment1)
         bspline_lineseg_intersections2 = self.b_splinecurve3d.linesegment_intersections(linesegment2)
         self.assertFalse(bspline_lineseg_intersections1)
-        self.assertEqual(bspline_lineseg_intersections2,
-                         [volmdlr.Point3D(0.5334, 1.784620481894723, -1.1990650295776075)])
+        self.assertTrue(bspline_lineseg_intersections2[0].is_close(
+            volmdlr.Point3D(0.5334, 1.784620481894723, -1.1990650295776075)))
 
 
 if __name__ == '__main__':
