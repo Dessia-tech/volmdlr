@@ -570,27 +570,11 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
             for p in inner_contour.primitives:
                 lateral_faces.extend(p.extrusion(self.extrusion_vector))
 
-        return [lower_face] + [upper_face] + lateral_faces
-
-    # def plot(self, ax=None, color:str='k', alpha:float=1):
-    #     if ax is None:
-    #         fig, ax = plt.subplots()
-    #         ax.set_aspect('equal')
-    #     for contour in [self.outer_contour2d]+self.inner_contours2d:
-    #         for primitive in contour.primitives:
-    #             primitive.plot(ax)
-    #     ax.margins(0.1)
-    #     return ax
+        return [lower_face, upper_face] + lateral_faces
 
     def area(self):
         areas = self.outer_contour2d.area()
         areas -= sum([contour.area() for contour in self.inner_contours2d])
-
-        # sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
-        # area=areas[sic[0]]
-
-        # for i in sic[1:]:
-        #     area-=self.contours2D[i].Area()
         return areas
 
     def volume(self):

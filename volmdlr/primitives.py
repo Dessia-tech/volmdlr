@@ -221,7 +221,7 @@ class RoundedLineSegments:
                     if not arc1.end.is_close(arc2.start):
                         primitives.append(self.line_class(arc1.end, arc2.start))
                 else:
-                    primitives.append(self.line_class(arc1.end, self.points[iline + 1]))
+                    primitives.append(self.line_class(arc1.end, self.points[0]))
             else:
                 p1 = self.points[self.npoints - 1]
                 if 0 in self.radius:
