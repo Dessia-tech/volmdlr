@@ -568,7 +568,19 @@ class LineSegment(Edge):
         """
         return self.point_belongs(point)
 
-    def point_belongs(self, point, abs_tol=1e-6):
+    def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-6):
+        """
+        Checks if a point belongs to the line segment. It uses the point_distance.
+
+        :param point: The point to be checked
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param abs_tol: The precision in terms of distance.
+            Default value is 1e-6
+        :type abs_tol: float, optional
+        :return: `True` if the point belongs to the B-spline curve, `False`
+            otherwise
+        :rtype: bool
+        """
         point_distance = self.point_distance(point)
         if math.isclose(point_distance, 0, abs_tol=abs_tol):
             return True
