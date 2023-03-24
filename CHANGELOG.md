@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve: evaluate_single
 * Wire2: hash
 * Contour3D: hash
+* LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
 
 ### Fixed
 * Bspline in sweep
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BplineCurve2D: tangent, vector_direction, normal_vector
 * BSplineCurve: abscissa
 * Add some important fixes to unittests: missing two __init__py files.
+* Contour2D, Contour3D: merge_with()
 * Edge: change unit_direction_vector and unit_normal_vector to concrete methods
 * stl: add _standalone_in_db to Stl class
 * BSplineSurface3D: merge_with
@@ -60,7 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unittests for Point2D
 * Unittests for Vector3D
 * Unittests for Point3D
-
+* LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
+* Contour3D: merge_with()
 
 ## v0.9.1
 
