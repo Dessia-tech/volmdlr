@@ -4956,7 +4956,13 @@ class Circle3D(Contour3D):
 
         side = 'old' or 'new'.
         """
-        return Circle3D(self.frame.frame_mapping(frame, side), self.radius)
+        # return Circle3D(self.frame.frame_mapping(frame, side), self.radius)
+
+        return Circle3D(volmdlr.Frame3D(self.frame.origin.frame_mapping(frame, side),
+                                        self.frame.u.frame_mapping(frame, side),
+                                        self.frame.v.frame_mapping(frame, side),
+                                        self.frame.w.frame_mapping(frame, side)),
+                        self.radius)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
