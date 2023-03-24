@@ -1508,16 +1508,34 @@ class Plane3D(Surface3D):
         new_frame = self.frame.copy(deep, memo)
         return Plane3D(new_frame, self.name)
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey'), length: float = 1.):
+        """
+        Plot the cylindrical surface in the local frame normal direction.
+
+        :param ax: Matplotlib Axes3D object to plot on. If None, create a new figure.
+        :type ax: Axes3D or None
+        :param color: color of the wireframe plot. Default is 'grey'.
+        :type color: str
+        :param alpha: transparency of the edge frame plot. Default is 0.5.
+        :type alpha: float
+        :param length: plotted length
+        :type length: float
+        :return: Matplotlib Axes3D object containing the plotted wireframe.
+        :rtype: Axes3D
+        """
+        grid_size = 10
+
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig = ax.figure
+            ax.axis('equal')
 
-        self.frame.origin.plot(ax)
-        self.frame.u.plot(ax, color='r')
-        self.frame.v.plot(ax, color='g')
+        self.frame.plot(ax=ax, color=edge_style.color)
+        for i in range(grid_size):
+            for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
+                start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i/(grid_size - 1)) * length * v2
+                end = self.frame.origin + 0.5 * length * v1 + (-0.5 + i/(grid_size - 1)) * length * v2
+                volmdlr.edges.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
         return ax
 
     def point2d_to_3d(self, point2d):
@@ -1915,7 +1933,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.radius = radius
         PeriodicalSurface.__init__(self, name=name)
 
-    def plot(self, ax=None, color: str = "grey", alpha: float = 0.5, z: float = 0.5):
+    def plot(self, ax=None, edge_style:EdgeStyle = EdgeStyle(color='grey', alpha=0.5), length: float = 1.):
         """
         Plot the cylindrical surface in the local frame normal direction.
 
@@ -1930,17 +1948,25 @@ class CylindricalSurface3D(PeriodicalSurface):
         :return: Matplotlib Axes3D object containing the plotted wireframe.
         :rtype: Axes3D
         """
+        ncircles = 10
+        nlines = 30
+        
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        x = self.radius
-        point1 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, 0))
-        point2 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, z))
-        generatrix = vme.LineSegment3D(point1, point2)
-        for i in range(37):
-            theta = i / 36. * volmdlr.TWO_PI
-            wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
-            wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+            
+        self.frame.plot(ax=ax)
+        for i in range(nlines):
+            theta = i / (nlines-1) * volmdlr.TWO_PI
+            start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5*length))
+            end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5*length))
+            vme.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
+
+        for j in range(ncircles):
+            circle_frame = self.frame.copy()
+            circle_frame.origin += (-0.5 + j/(ncircles-1)) * length * circle_frame.w
+            circle = volmdlr.wires.Circle3D(circle_frame, self.radius)
+            circle.plot(ax=ax, edge_style=edge_style)
         return ax
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
@@ -2295,6 +2321,16 @@ class CylindricalSurface3D(PeriodicalSurface):
         if math.isclose(new_point.x ** 2 + new_point.y ** 2, self.radius ** 2, abs_tol=1e-6):
             return True
         return False
+
+    def point_distance(self, point3d):
+        """
+        Calculates the distance of a point to plane.
+
+        :param point3d: point to verify distance.
+        :return: a float, point distance to plane.
+        """
+        proj_point = self.point2d_to_3d(self.point3d_to_2d(point3d))
+        return proj_point.point_distance(point3d)
 
 
 class ToroidalSurface3D(PeriodicalSurface):
@@ -6376,6 +6412,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if not ax:
             ax = plt.figure().add_subplot(111, projection='3d')
+
         self.outer_contour3d.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
                                   edge_ends=edge_details, edge_direction=edge_details))
         for contour3d in self.inner_contours3d:
@@ -7548,7 +7585,6 @@ class Triangle3D(PlaneFace3D):
             contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(self.point1, self.point2),
                                                  vme.LineSegment3D(self.point2, self.point3),
                                                  vme.LineSegment3D(self.point3, self.point1)])
-
             contour2d = contour3d.to_2d(plane3d.frame.origin,
                                         plane3d.frame.u, plane3d.frame.v)
 
