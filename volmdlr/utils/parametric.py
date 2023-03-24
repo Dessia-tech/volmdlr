@@ -25,7 +25,7 @@ def find_sign_changes(list_of_values):
     return sign_changes
 
 
-def angle_discontinuity(angle_list):
+def angle_discontinuity(angle_list, surface, primitive, points3d):
     """
     Returns True if there is some angle discontinuity in the angle_list.
 
@@ -37,15 +37,19 @@ def angle_discontinuity(angle_list):
     :rtype: bool
     """
     indexes_sign_changes = find_sign_changes(angle_list)
-    theta_discontinuity = False
+    discontinuity = False
     indexes_theta_discontinuity = []
     if indexes_sign_changes:
         for index in indexes_sign_changes:
             delta = max(angle_list) - min(angle_list)
-            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta/len(angle_list)):
+            # n = 10
+            # local_discretization = primitive.local_discretization(points3d[index - 1], points3d[index], n)
+            # point2d_to_verification = surface.point3d_to_2d(local_discretization[int(0.5*n)])
+            # if math.isclose(abs(point2d_to_verification.x), math.pi, abs_tol=delta/len(angle_list)):
+            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=1.1*(delta / len(angle_list))):
                 indexes_theta_discontinuity.append(index)
-                theta_discontinuity = True
-    return theta_discontinuity, indexes_theta_discontinuity
+                discontinuity = True
+    return discontinuity, indexes_theta_discontinuity
 
 
 def is_undefined_primitive(primitive, periodicity):

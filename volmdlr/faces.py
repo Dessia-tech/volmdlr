@@ -36,7 +36,7 @@ from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_
 from volmdlr.bspline_evaluators import evaluate_single
 from volmdlr.core import point_in_list
 
-c = 0
+
 def knots_vector_inv(knots_vector):
     """
     Compute knot-elements and multiplicities based on the global knot vector.
@@ -190,11 +190,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
-        try:
-            self.area()
-        except Exception:
-            print(True)
-        if math.isclose(self.area(), 0., abs_tol=1e-6):
+        if math.isclose(area, 0., abs_tol=1e-6):
             return vmd.DisplayMesh2D([], triangles=[])
 
         triangulates_with_grid = number_points_x > 0 or number_points_y > 0
@@ -974,18 +970,6 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
-            try:
-                area = outer_contour2d.area()
-            except Exception:
-                print(True)
-            # if isinstance(self, CylindricalSurface3D):
-            #     # global c
-            #     # c += 1
-            #     # if c == 37:
-            #     #     self.save_to_file(r"C:\Users\gabri\Documents\dessia\tests\conical_surface.json")
-            #     #     contours3d[0].save_to_file(r"C:\Users\gabri\Documents\dessia\tests\contour_conical.json")
-            #     #     outer_contour2d.plot().set_aspect("auto")
-            #     outer_contour2d.plot().set_aspect("auto")
             inner_contours2d = []
         elif lc3d > 1:
             area = -1
@@ -1046,14 +1030,14 @@ class Surface3D(DessiaObject):
             i += 1
         last_end = primitives2d[-1].end
         first_start = primitives2d[0].start
-        if not last_end.is_close(first_start, tol=1e-3):
+        if not last_end.is_close(first_start, tol=1e-5):
             deltax = first_start.x - last_end.x
             deltay = first_start.y - last_end.y
-            if x_periodicity and abs(deltax) % x_periodicity == 0:
+            if deltax and x_periodicity and abs(deltax) % x_periodicity == 0:
                 primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
                                                      volmdlr.Point2D(primitives2d[-1].end.x + deltax,
                                                                      primitives2d[-1].end.y))
-            elif y_periodicity and abs(deltax) % y_periodicity == 0:
+            elif deltay and y_periodicity and abs(deltay) % y_periodicity == 0:
                 primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
                                                      volmdlr.Point2D(primitives2d[-1].end.x,
                                                                      primitives2d[-1].end.y + deltay))
@@ -1818,7 +1802,8 @@ class PeriodicalSurface(Surface3D):
         points[-1] = volmdlr.Point2D(theta2, z2)
 
         theta_list = [point.x for point in points]
-        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list, self, bspline_curve3d,
+                                                                               points3d)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
@@ -2103,9 +2088,9 @@ class CylindricalSurface3D(PeriodicalSurface):
             theta2 += volmdlr.TWO_PI
 
         point1 = volmdlr.Point2D(theta1, z1)
-        point2 = volmdlr.Point2D(theta2, z1)
+        point2 = volmdlr.Point2D(theta1, z2)
         point3 = volmdlr.Point2D(theta2, z2)
-        point4 = volmdlr.Point2D(theta1, z2)
+        point4 = volmdlr.Point2D(theta2, z1)
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.CylindricalFace3D(self, surface2d, name)
@@ -2592,7 +2577,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         theta3, phi3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
         theta4, phi4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
         n = len(bspline_curve3d.control_points)
-        points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
+        points3d = bspline_curve3d.discretization_points(number_points=n)
+        points = [self.point3d_to_2d(p) for p in points3d]
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         if abs(theta1) == math.pi:
@@ -2611,8 +2597,9 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         theta_list = [point.x for point in points]
         phi_list = [point.y for point in points]
-        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
-        phi_discontinuity, indexes_phi_discontinuity = angle_discontinuity(phi_list)
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list, self, bspline_curve3d,
+                                                                               points3d)
+        phi_discontinuity, indexes_phi_discontinuity = angle_discontinuity(phi_list, self, bspline_curve3d, points3d)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
@@ -2962,9 +2949,11 @@ class ConicalSurface3D(PeriodicalSurface):
         wire2d = volmdlr.wires.Wire2D(primitives2d)
         delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
         if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
-            points = wire2d.bounding_rectangle.bounding_points()
-            points.append(points[0])
-            return volmdlr.wires.Contour2D.from_points(points)
+            if len(primitives2d) > 1:
+                points = wire2d.bounding_rectangle.bounding_points()
+                points.append(points[0])
+                return volmdlr.wires.Contour2D.from_points(points)
+            return volmdlr.wires.Contour2D(primitives2d)
         # Fix contour
         primitives2d = self.repair_primitives_periodicity(primitives2d)
         return volmdlr.wires.Contour2D(primitives2d)
@@ -3351,7 +3340,8 @@ class SphericalSurface3D(Surface3D):
         points[-1] = volmdlr.Point2D(theta2, phi2)
 
         theta_list = [point.x for point in points]
-        theta_discontinuity, indexes_theta_discontinuity  = angle_discontinuity(theta_list)
+        theta_discontinuity, indexes_theta_discontinuity  = angle_discontinuity(theta_list, self, bspline_curve3d,
+                                                                                points3d)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
@@ -4388,15 +4378,16 @@ class BSplineSurface3D(Surface3D):
         else:
             i = 1
         min_bound, max_bound = self.surface.domain[i]
+        delta = max_bound - min_bound
         if start[i] != end[i]:
-            if math.isclose(start[i], min_bound, abs_tol=1e-4) and pt_after_start[i] > pt_before_end[i]:
+            if math.isclose(start[i], min_bound, abs_tol=1e-4) and pt_after_start[i] > 0.5 * delta:
                 start[i] = max_bound
-            elif math.isclose(start[i], max_bound, abs_tol=1e-4) and pt_after_start[i] < pt_before_end[i]:
+            elif math.isclose(start[i], max_bound, abs_tol=1e-4) and pt_after_start[i] < 0.5 * delta:
                 start[i] = min_bound
 
-            if math.isclose(end[i], min_bound, abs_tol=1e-4) and pt_before_end[i] > pt_after_start[i]:
+            if math.isclose(end[i], min_bound, abs_tol=1e-4) and pt_before_end[i] > 0.5 * delta:
                 end[i] = max_bound
-            elif math.isclose(end[i], max_bound, abs_tol=1e-4) and pt_before_end[i] < pt_after_start[i]:
+            elif math.isclose(end[i], max_bound, abs_tol=1e-4) and pt_before_end[i] < 0.5 * delta:
                 end[i] = min_bound
 
         points[0] = start
@@ -7987,12 +7978,14 @@ class CylindricalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 3
-        theta_min, theta_max, _, _ = self.surface2d.bounding_rectangle().bounds()
+        angle_resolution = 11
+        z_resolution = 7
+        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         number_points_x = int(delta_theta * angle_resolution)
 
-        number_points_y = 0
+        delta_z = zmax - zmin
+        number_points_y = int(delta_z * z_resolution)
 
         return number_points_x, number_points_y
 
