@@ -141,7 +141,7 @@ class WireMixin:
         ip1 = self.primitives.index(primitive1)
         ip2 = self.primitives.index(primitive2)
 
-        if ip1 < ip2:
+        if ip1 < ip2 or (ip1 > ip2 and inside):
             pass
         elif ip1 == ip2:
             if primitive1.abscissa(point1) < primitive1.abscissa(point2):
@@ -1781,6 +1781,10 @@ class Contour2D(ContourMixin, Wire2D):
         #         if edge.straight_line_point_belongs(point):
         #             return True
         #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
+        if include_edge_points:
+            for primitive in self.primitives:
+                if primitive.point_belongs(point, 1e-6):
+                    return True
         if not self._polygon_100_points:
             self._polygon_100_points = self.to_polygon(100)
         if self._polygon_100_points.point_belongs(point):
@@ -1871,14 +1875,21 @@ class Contour2D(ContourMixin, Wire2D):
         if contour2.area() > self.area():
             return False
         points_contour2 = []
-        for prim in contour2.primitives:
-            if not volmdlr.core.point_in_list(prim.start, points_contour2):
-                points_contour2.append(prim.start)
-            if not volmdlr.core.point_in_list(prim.end, points_contour2):
-                points_contour2.append(prim.end)
-            points_contour2.extend(prim.discretization_points(number_points=10))
+        for i, prim in enumerate(contour2.primitives):
+            # if not volmdlr.core.point_in_list(prim.start, points_contour2):
+            #     points_contour2.append(prim.start)
+            # if not volmdlr.core.point_in_list(prim.end, points_contour2):
+            #     points_contour2.append(prim.end)
+            points = prim.discretization_points(number_points=10)
+            if i == 0:
+                points_contour2.extend(points[1:])
+            elif i == len(contour2.primitives) - 1:
+                points_contour2.extend(points[:-1])
+            else:
+                points_contour2.extend(points)
         for point in points_contour2:
-            if not self.point_belongs(point) and not self.point_over_contour(point, abs_tol=1e-7):
+            if not self.point_belongs(point, include_edge_points=True) and\
+                    not self.point_over_contour(point, abs_tol=1e-7):
                 return False
         return True
 
@@ -2435,6 +2446,46 @@ class Contour2D(ContourMixin, Wire2D):
 
         return list_contours
 
+    def intersection_contour_with(self, other_contour):
+        """
+        Gets the contour(s) resulting from the intersections of two other contours.
+        :param other_contour: other contour.
+        :return: list of resulting intersection contours.
+        """
+        contour_crossings = self.wire_crossings(other_contour)
+        sorted_points_contour1 = sorted(contour_crossings, key=self.abscissa)
+        sorted_points_contour2 = sorted(contour_crossings, key=other_contour.abscissa)
+        split_wires1 = []
+        for i, (point1, point2) in enumerate(
+                zip(sorted_points_contour1, sorted_points_contour1[1:] + [sorted_points_contour1[0]])):
+            if i == len(sorted_points_contour1) - 1:
+                if self.abscissa(point1) > self.abscissa(point2):
+                    split_wires1.extend(Contour2D.extract_contours(self, point1, point2, True))
+                else:
+                    split_wires1.extend(Contour2D.extract_contours(self, point1, point2, False))
+            else:
+                split_wires1.extend(Contour2D.extract_contours(self, point1, point2, True))
+
+        split_wires2 = []
+        for i, (point1, point2) in enumerate(
+                zip(sorted_points_contour2, sorted_points_contour2[1:] + [sorted_points_contour2[0]])):
+            if i == len(sorted_points_contour2) - 1:
+                if other_contour.abscissa(point1) > other_contour.abscissa(point2):
+                    split_wires2.extend(Contour2D.extract_contours(other_contour, point1, point2, True))
+                else:
+                    split_wires2.extend(Contour2D.extract_contours(other_contour, point1, point2, False))
+            else:
+                split_wires2.extend(Contour2D.extract_contours(other_contour, point1, point2, True))
+
+        intersection_contour_primitives = []
+        for section in split_wires1:
+            if other_contour.is_inside(section):
+                intersection_contour_primitives.append(section)
+
+        for section in split_wires2:
+            if self.is_inside(section):
+                intersection_contour_primitives.append(section)
+        return self.contours_from_edges(intersection_contour_primitives)
 
 class ClosedPolygonMixin:
     """
