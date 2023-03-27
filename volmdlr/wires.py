@@ -3911,24 +3911,6 @@ class Circle2D(Contour2D):
         return volmdlr.TWO_PI * self.radius
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        # if ax is None:
-        #     _, ax = plt.subplots()
-        # # else:
-        # #     fig = ax.figure
-        # if self.radius > 0:
-        #     ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y),
-        #                                         2 * self.radius,
-        #                                         2 * self.radius,
-        #                                         angle=0,
-        #                                         theta1=0,
-        #                                         theta2=360,
-        #                                         color=edge_style.color,
-        #                                         alpha=edge_style.alpha,
-        #                                         linestyle=edge_style.linestyle,
-        #                                         linewidth=edge_style.linewidth))
-        # if edge_style.equal_aspect:
-        #     ax.set_aspect('equal')
-        # return ax
         return vm_common_operations.plot_circle(self, ax, edge_style)
 
     def to_3d(self, plane_origin, x, y):

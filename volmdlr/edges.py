@@ -3448,23 +3448,6 @@ class FullArc2D(Arc2D):
         return volmdlr.wires.ClosedPolygon2D(self.discretization_points(angle_resolution=15))
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        # if ax is None:
-        #     _, ax = plt.subplots()
-        #
-        # if self.radius > 0:
-        #     ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y),
-        #                                         2 * self.radius,
-        #                                         2 * self.radius,
-        #                                         angle=0,
-        #                                         theta1=0,
-        #                                         theta2=360,
-        #                                         color=edge_style.color,
-        #                                         linestyle=edge_style.linestyle,
-        #                                         linewidth=edge_style.linewidth))
-        # if edge_style.plot_points:
-        #     ax.plot([self.start.x], [self.start.y], 'o',
-        #             color=edge_style.color, alpha=edge_style.alpha)
-        # return ax
         return vm_common_operations.plot_circle(self, ax, edge_style)
 
     def cut_between_two_points(self, point1, point2):
