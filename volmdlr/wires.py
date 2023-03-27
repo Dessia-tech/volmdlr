@@ -14,7 +14,6 @@ from functools import cached_property
 from statistics import mean
 from typing import List
 
-import matplotlib.patches
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as npy

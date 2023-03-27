@@ -2,9 +2,10 @@
 Concatenate common operation for two or more objects.
 
 """
-from volmdlr.core import EdgeStyle
-import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib.pyplot as plt
+
+from volmdlr.core import EdgeStyle
 
 
 def plot_circle(circle, ax=None, edge_style: EdgeStyle = EdgeStyle()):
