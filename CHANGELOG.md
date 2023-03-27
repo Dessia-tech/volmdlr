@@ -103,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fix f string usage
 * Add some typings
 * Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
+* Arc2d: point_belongs, abscissa. 
 
 ### Removed
 
@@ -140,6 +141,7 @@ intersection_area, distance_to_b_rectangle, distance_to_point
 * BoundingBox: center, add, to_dict, points, from_bounding_boxes, from_points, to_frame, volume, bbox_intersection,
 is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_to_point, plot
 * VolumeModel: eq, volume, rotation, translation, frame_mapping, bounding_box, plot
+* Arc2d: point_belongs, abscissa.
 
 ### CI
 - add spell check to pylint with pyenchant

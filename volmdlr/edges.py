@@ -2317,6 +2317,7 @@ class Arc(Edge):
         self._utd_clockwise_and_trigowise_paths = False
         self._clockwise_and_trigowise_paths = None
         self._radius = None
+        self._length = None
 
     @property
     def center(self):
@@ -2363,7 +2364,9 @@ class Arc(Edge):
 
         :return: the length of the Arc.
         """
-        return self.radius * abs(self.angle)
+        if not self._length:
+            self._length = self.radius * abs(self.angle)
+        return self._length
 
     def point_at_abscissa(self, abscissa):
         """
@@ -2668,7 +2671,7 @@ class Arc2D(Arc):
                 LineSegment2D(point, self.center).length() - self.radius)
         return min(LineSegment2D(point, self.start).length(), LineSegment2D(point, self.end).length())
 
-    def point_belongs(self, point2d, abs_tol=1e-10):
+    def point_belongs(self, point2d, abs_tol=1e-6):
         """
         Check if a Point2D belongs to the Arc2D.
 
@@ -2676,11 +2679,16 @@ class Arc2D(Arc):
         distance_point_to_center = point2d.point_distance(self.center)
         if not math.isclose(distance_point_to_center, self.radius, abs_tol=abs_tol):
             return False
-        try:
-            point_abscissa = self.abscissa(point2d)
-        except ValueError:
-            return False
-        if self.length() >= point_abscissa >= 0:
+        if point2d.is_close(self.start) or point2d.is_close(self.end):
+            return True
+        arc_trigo = self.reverse() if self.is_trigo else self
+        vector_start = arc_trigo.start - arc_trigo.center
+        vector_end = arc_trigo.end - arc_trigo.center
+        vector_point = point2d - arc_trigo.center
+        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
+        point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
+        point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
+        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=abs_tol):
             return True
         return False
 
@@ -2727,34 +2735,28 @@ class Arc2D(Arc):
                 intersection_points.append(point)
         return intersection_points
 
-    def abscissa(self, point: volmdlr.Point2D, tol=1e-9):
+    def abscissa(self, point: volmdlr.Point2D, tol=1e-6):
         """
         Returns the abscissa of a given point 2d.
         """
+        if not math.isclose(point.point_distance(self.center), self.radius, abs_tol=tol):
+            raise ValueError('Point not in arc')
         if point.point_distance(self.start) < tol:
             return 0
         if point.point_distance(self.end) < tol:
             return self.length()
-
-        point_ = point - self.center
-        u = self.start - self.center
-        u.normalize()
-        if self.is_trigo:
-            v = u.normal_vector()
-        else:
-            v = -u.normal_vector()
-
-        x, y = point_.dot(u), point_.dot(v)
-        theta = math.atan2(y, x)
-        if theta < -tol or theta > self.angle + tol:
-            raise ValueError('Point not in arc')
-
-        if theta < 0:
-            return 0.
-        if theta > self.angle:
-            return self.angle * self.radius
-
-        return self.radius * theta
+        arc_trigo = self.reverse() if self.is_trigo else self
+        vector_start = arc_trigo.start - arc_trigo.center
+        vector_end = arc_trigo.end - arc_trigo.center
+        vector_point = point - arc_trigo.center
+        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
+        point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
+        point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
+        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=tol):
+            if self.is_trigo:
+                return self.length() - self.radius * point_start_angle
+            return self.radius * point_start_angle
+        raise ValueError('Point not in arc')
 
     def area(self):
         """
