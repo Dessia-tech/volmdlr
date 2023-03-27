@@ -805,11 +805,9 @@ class BSplineCurve(Edge):
             dist = evaluate_point_distance(u)
             if dist < tol:
                 return abscissa
-        # print(True)
             results.append((abscissa, dist))
         result = min(results, key=lambda r: r[1])[0]
         return result
-        # raise ValueError('abscissa not found')
 
     def _point_inversion_funcs(self, u, point):
         """
@@ -1167,31 +1165,17 @@ class BSplineCurve(Edge):
         :param line: line to verify intersections
         :return: list of intersections
         """
-        polygon_points = []
-        for point in self.points:
-            if not volmdlr.core.point_in_list(point, polygon_points):
-                polygon_points.append(point)
+        polygon_points = self.points
         list_intersections = []
-        length = self.length()
         initial_abscissa = 0
         for points in zip(polygon_points[:-1], polygon_points[1:]):
             linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
             linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
             intersections = linesegment.line_intersections(line)
-            if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
-                if line.point_distance(linesegment.middle_point()) < 1e-8:
-                    list_intersections.append(linesegment.middle_point())
             if intersections and intersections[0] not in list_intersections:
-                abscissa = initial_abscissa + linesegment.abscissa(intersections[0])
-                if initial_abscissa < length * 0.1:
-                    number_points = int(linesegment.length() / 1e-6)
-                    list_abscissas = list(
-                        n for n in npy.linspace(initial_abscissa, initial_abscissa + linesegment.length(),
-                                                number_points))
-                else:
-                    distance_from_point_to_search = 0.0001 / 2
-                    list_abscissas = list(new_abscissa for new_abscissa in npy.linspace(
-                        abscissa - distance_from_point_to_search, abscissa + distance_from_point_to_search, 1000))
+                abs1 = self.abscissa(linesegment.start)
+                abs2 = self.abscissa(linesegment.end)
+                list_abscissas = list(new_abscissa for new_abscissa in npy.linspace(abs1, abs2, 1000))
                 intersection = self.select_intersection_point(list_abscissas, intersections)
                 list_intersections.append(intersection)
             initial_abscissa += linesegment.length()

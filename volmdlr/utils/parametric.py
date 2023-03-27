@@ -135,6 +135,10 @@ def repair_start_end_angle_periodicity(angle, ref_angle):
         angle = -math.pi
     elif math.isclose(angle, -math.pi, abs_tol=1e-6) and ref_angle > 0:
         angle = math.pi
+    elif math.isclose(angle, 0.5 * math.pi, abs_tol=1e-6) and ref_angle < 0:
+        angle = -0.5 * math.pi
+    elif math.isclose(angle, -0.5 * math.pi, abs_tol=1e-6) and ref_angle > 0:
+        angle = 0.5 * math.pi
     return angle
 
 
@@ -170,9 +174,9 @@ def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
     theta1, z1 = start
     theta2, z2 = end
 
-    if abs(theta1) == math.pi:
+    if abs(theta1) == math.pi or abs(theta1) == 0.5 * math.pi:
         theta1 = repair_start_end_angle_periodicity(theta1, theta3)
-    if abs(theta2) == math.pi:
+    if abs(theta2) == math.pi or abs(theta2) == 0.5 * math.pi:
         theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
     theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d, volmdlr.TWO_PI)
