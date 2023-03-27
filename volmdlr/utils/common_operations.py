@@ -10,7 +10,7 @@ from volmdlr.core import EdgeStyle
 
 def plot_circle(circle, ax=None, edge_style: EdgeStyle = EdgeStyle()):
     """
-    Create a matplotlib plot for a circle 2d or fullarc2d.
+    Create a matplotlib plot for a circle 2d or fullarc 2d.
 
     :param circle: circle to plot.
     :param ax: matplotlib plot axis.
