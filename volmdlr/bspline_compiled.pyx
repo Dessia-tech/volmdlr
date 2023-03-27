@@ -89,6 +89,8 @@ def find_spans(int degree, list knot_vector, int num_ctrlpts, list knots, func=f
     return spans
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef basis_function(int degree, list knot_vector, int span, double knot):
 
     cdef list left = [0.0] * (degree + 1)

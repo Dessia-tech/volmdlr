@@ -1247,7 +1247,7 @@ class Cylinder(RevolvedProfile):
 
     def random_point_inside(self) -> volmdlr.Point3D:
         """
-        Gets a random point inside a cylindier.
+        Gets a random point inside a cylinder.
 
         :return: a random point inside the Cylinder
         """
@@ -1753,17 +1753,18 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                     wire_primitive.__class__ is volmdlr.edges.BezierCurve3D:
 
                 tangents = []
-                for k, pt in enumerate(wire_primitive.points):
+                for k, _ in enumerate(wire_primitive.points):
                     position = k / (len(wire_primitive.points) - 1)
                     tangents.append(wire_primitive.tangent(position))
 
                 circles = []
                 for pt, tan in zip(wire_primitive.points, tangents):
+                    # TODO: replace circle by real contour!
                     circles.append(volmdlr.wires.Circle3D.from_center_normal(center=pt,
                                                                              normal=tan,
                                                                              radius=self.contour2d.radius))
 
-                polys = [volmdlr.wires.ClosedPolygon3D(c.tessellation_points()) for c in circles]
+                polys = [volmdlr.wires.ClosedPolygon3D(c.discretization_points()) for c in circles]
 
                 size_v, size_u = len(polys[0].points) + 1, len(polys)
                 degree_u, degree_v = 3, 3
