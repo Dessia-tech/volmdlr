@@ -2141,7 +2141,7 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def grid3d(self, grid2d: volmdlr.grid.Grid2D):
         """
-        Generate 3d grid points of a Cylindrical surface, based on a Grid2D.
+        Generate 3d grid points of a Cylindrical surface, based on a Grid2D
 
         """
 
