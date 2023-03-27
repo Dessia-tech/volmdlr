@@ -7908,7 +7908,7 @@ class CylindricalFace3D(Face3D):
                 return point1.point_distance(point2), point1, point2
             return point1.point_distance(point2)
 
-        return NotImplementedError
+        raise NotImplementedError
 
     def adjacent_direction(self, other_face3d):
         """

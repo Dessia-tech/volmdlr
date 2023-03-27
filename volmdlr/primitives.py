@@ -37,6 +37,24 @@ class RoundedLineSegments:
         self.name = name
         self.npoints = len(points)
 
+    def get_points(self, point_index):
+        """Gets points to calculate the arc features"""
+        if self.closed:
+            if point_index == 0:
+                pt1 = self.points[-1]
+            else:
+                pt1 = self.points[point_index - 1]
+            pti = self.points[point_index]
+            if point_index < self.npoints - 1:
+                pt2 = self.points[point_index + 1]
+            else:
+                pt2 = self.points[0]
+        else:
+            pt1 = self.points[point_index - 1]
+            pti = self.points[point_index]
+            pt2 = self.points[point_index + 1]
+        return pt1, pti, pt2
+
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new RoundedLineSegments.
