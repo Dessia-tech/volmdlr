@@ -6598,7 +6598,7 @@ class Face3D(volmdlr.core.Primitive3D):
                     self.surface2d.outer_contour.point_over_contour(cutting_contour.primitives[-1].end)) or \
                         cutting_contour.primitives[0].start == cutting_contour.primitives[-1].end:
                     valid_cutting_contours.append(cutting_contour)
-                if self.surface2d.outer_contour.contour_intersections(cutting_contour):
+                if self.surface2d.outer_contour.intersection_points(cutting_contour):
                     connectig_to_outer_contour.append(cutting_contour)
             if len(valid_cutting_contours) == len(list_cutting_contours):
                 return valid_cutting_contours
@@ -6877,7 +6877,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 inner_contour.invert_inplace()
             dict_inner_contour_intersections[inner_contour] = []
             for cutting_contour in list_cutting_contours:
-                inner_contour_intersections = inner_contour.contour_intersections(cutting_contour)
+                inner_contour_intersections = inner_contour.intersection_points(cutting_contour)
                 if inner_contour_intersections:
                     dict_inner_contour_intersections[inner_contour].extend(inner_contour_intersections)
                     if cutting_contour not in inner_contours_connected_cutting_contour:
@@ -7348,7 +7348,7 @@ class PlaneFace3D(Face3D):
         outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
 
         if (face.face_inside(self)
-                and not outer_contour_1.contour_intersections(outer_contour_2)):
+                and not outer_contour_1.intersection_points(outer_contour_2)):
             return self.divide_face(face.surface2d.inner_contours, True)
 
         inner_contours = self.surface2d.inner_contours
@@ -9862,7 +9862,7 @@ class ClosedShell3D(OpenShell3D):
                         face1.surface3d.frame.origin,
                         face1.surface3d.frame.u,
                         face1.surface3d.frame.v)
-                    inters = contour1.contour_intersections(contour2)
+                    inters = contour1.intersection_points(contour2)
                     if len(inters) >= 2:
                         list_coincident_faces.append((face1, face2))
 

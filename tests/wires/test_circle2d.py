@@ -43,6 +43,14 @@ class TestCircle2D(unittest.TestCase):
         for intersection, expected_intersection in zip(circle_intersections, expected_intersections):
             self.assertTrue(intersection.is_close(expected_intersection))
 
+    def test_circle_intersections(self):
+        circle1 = vmw.Circle2D(volmdlr.Point2D(0, 0), 1)
+        circle2 = vmw.Circle2D(volmdlr.Point2D(1, 1), 1)
+        circle_intersections = circle1.circle_intersections(circle2)
+        self.assertEqual(len(circle_intersections), 2)
+        self.assertTrue(circle_intersections[0].is_close(volmdlr.Point2D(1.0, 0.0)))
+        self.assertTrue(circle_intersections[1].is_close(0.0, 1.0))
+
 
 if __name__ == '__main__':
     unittest.main()

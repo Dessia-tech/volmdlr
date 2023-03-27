@@ -16,19 +16,19 @@ class TestArc2D(unittest.TestCase):
                  volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475))
     arc6 = arc4.complementary()
     arc7 = Arc2D(volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475), volmdlr.Point2D(0, 1),
-                       volmdlr.Point2D(0.7071067811865475, 0.7071067811865475))
+                 volmdlr.Point2D(0.7071067811865475, 0.7071067811865475))
     arc8 = arc7.complementary()
     arc9 = Arc2D(volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475), volmdlr.Point2D(0, 1),
-                       volmdlr.Point2D(0.7071067811865475, -0.7071067811865475))
+                 volmdlr.Point2D(0.7071067811865475, -0.7071067811865475))
     arc10 = arc9.complementary()
     list_points = [volmdlr.Point2D(1, 0),
-                                 volmdlr.Point2D(0.7071067811865475, -0.7071067811865475),
-                                 volmdlr.Point2D(0, -1),
-                                 volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475),
-                                 volmdlr.Point2D(-1, 0),
-                                 volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475),
-                                 volmdlr.Point2D(0, 1),
-                                 volmdlr.Point2D(0.7071067811865475, 0.7071067811865475)]
+                   volmdlr.Point2D(0.7071067811865475, -0.7071067811865475),
+                   volmdlr.Point2D(0, -1),
+                   volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475),
+                   volmdlr.Point2D(-1, 0),
+                   volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475),
+                   volmdlr.Point2D(0, 1),
+                   volmdlr.Point2D(0.7071067811865475, 0.7071067811865475)]
 
     def test_split(self):
         arc_split1 = self.arc2d.split(self.arc2d.start)
@@ -42,6 +42,13 @@ class TestArc2D(unittest.TestCase):
         self.assertTrue(arc_split3[0].end.is_close(self.arc2d.interior))
         self.assertTrue(arc_split3[1].start.is_close(self.arc2d.interior))
         self.assertTrue(arc_split3[1].end.is_close(self.arc2d.end))
+
+    def test_arc_intersections(self):
+        arc2 = Arc2D(volmdlr.Point2D(-1, 1.5), volmdlr.Point2D(0, 0.5), volmdlr.Point2D(1, 1.5))
+        arc_intersections = self.arc1.arc_intersections(arc2)
+        self.assertEqual(len(arc_intersections), 1)
+        self.assertTrue(arc_intersections[0].is_close(volmdlr.Point2D(0.6614378277661477, 0.75)))
+        self.assertFalse(self.arc5.arc_intersections(arc2))
 
     def test_abscissa(self):
         expected_abscissa_results = [[1.5707963267948966, 0.7853981633974483, 0, 3.141592653589793, 2.356194490192345],

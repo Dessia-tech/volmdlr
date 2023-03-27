@@ -49,6 +49,18 @@ class TestArcEllipse2D(unittest.TestCase):
         self.assertEqual(len(inters), 1)
         self.assertEqual(inters[0], volmdlr.Point2D(-0.04213625371737764, -0.022413786586250567))
 
+    def test_translation(self):
+        translated_ellipse = self.arc_ellipse2d.translation(volmdlr.Vector2D(1, 1))
+        self.assertTrue(translated_ellipse.start.is_close(volmdlr.Point2D(0.875, 0.9158349933667379)))
+        self.assertTrue(translated_ellipse.interior.is_close(volmdlr.Point2D(0.9645643923741395, 0.9880693606241676)))
+        self.assertTrue(translated_ellipse.end.is_close(volmdlr.Point2D(1.0, 1.125)))
+
+    def test_point_distance(self):
+        pass
+
+    def test_split(self):
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -685,31 +685,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                         intersection_points_primitives.append((intersection, primitive))
         return intersection_points_primitives
 
-    # def wire_intersections(self, wire):
-    #     """
-    #     Compute intersections between two wire 2d.
-    #
-    #     :param wire : volmdlr.wires.Wire2D.
-    #     :return: intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
-    #     """
-    #     intersections, intersections_points = [], []
-    #     for primitive in wire.primitives:
-    #         method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_intersections'
-    #
-    #         if hasattr(self, method_name):
-    #             a_points = getattr(self, method_name)(primitive)
-    #             # a_points = self.linesegment_intersections(primitive)
-    #             if a_points:
-    #                 for point1, point2 in a_points:
-    #                     if not volmdlr.core.point_in_list(point1, intersections_points):
-    #                         intersections.append([point1, point2])
-    #                         intersections_points.append(point1)
-    #         else:
-    #             raise NotImplementedError(
-    #                 f'Class {self.__class__.__name__} does not implement {method_name}')
-    #
-    #     return intersections
-
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
         """
@@ -723,8 +698,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         return cls(edges)
 
-    def linesegment_crossings(self,
-                              linesegment: 'volmdlr.edges.LineSegment2D'):
+    def linesegment_crossings(self, linesegment: 'volmdlr.edges.LineSegment2D'):
         """
         Gets the wire primitives intersecting with the line.
 
@@ -736,31 +710,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             if linesegment.point_belongs(result[0]):
                 crossings_points.append(result)
         return crossings_points
-
-    # def wire_crossings(self, wire):
-    #     """
-    #     Compute crossings between two wire 2d.
-    #
-    #     :param wire: volmdlr.wires.Wire2D
-    #     :type crossings: List[(volmdlr.Point2D, volmdlr.Primitive2D)]
-    #     """
-    #     crossings, crossings_points = [], []
-    #     for primitive in wire.primitives:
-    #         method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_crossings'
-    #
-    #         if hasattr(self, method_name):
-    #             a_points = getattr(self, method_name)(primitive)
-    #             # a_points = self.linesegment_crossings(primitive)
-    #             if a_points:
-    #                 for a in a_points:
-    #                     if not volmdlr.core.point_in_list(a[0], crossings_points):
-    #                         crossings.append([a[0], a[1]])
-    #                         crossings_points.append(a[0])
-    #         else:
-    #             raise NotImplementedError(
-    #                 f'Class {self.__class__.__name__} does not implement {method_name}')
-    #
-    #     return crossings
 
     def edge_intersections(self, edge):
         edge_intersections = []
@@ -798,7 +747,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         Compute crossings between two wire 2d.
 
         :param wire: volmdlr.wires.Wire2D
-        :type crossings_points: List[(volmdlr.Point2D)]
+        :return: crossing points: List[(volmdlr.Point2D)]
         """
         crossings_points = []
         for primitive in wire.primitives:
@@ -928,15 +877,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             intersections_linesegments = self.linesegment_intersections(linesegment)
             if intersections_linesegments:
                 intersections_points.extend(intersections_linesegments)
-        return intersections_points
-
-    def arc_crossings(self, arc: volmdlr.edges.Arc2D):
-        # return self.bsplinecurve_crossings(arc)
-        intersections_points = []
-        for primitive in self.primitives:
-            intersections = primitive.edge_intersections(arc)
-            if intersections:
-                intersections_points.extend(intersections)
         return intersections_points
 
     @property
@@ -1414,7 +1354,7 @@ class ContourMixin(WireMixin):
         """
 
         if not intersecting_points:
-            intersecting_points = self.contour_intersections(contour2)
+            intersecting_points = self.intersection_points(contour2)
 
         if len(intersecting_points) < 2:
             return False
@@ -1876,10 +1816,6 @@ class Contour2D(ContourMixin, Wire2D):
             return False
         points_contour2 = []
         for i, prim in enumerate(contour2.primitives):
-            # if not volmdlr.core.point_in_list(prim.start, points_contour2):
-            #     points_contour2.append(prim.start)
-            # if not volmdlr.core.point_in_list(prim.end, points_contour2):
-            #     points_contour2.append(prim.end)
             points = prim.discretization_points(number_points=10)
             if i == 0:
                 points_contour2.extend(points[1:])
@@ -2160,7 +2096,7 @@ class Contour2D(ContourMixin, Wire2D):
 
         return vmd.DisplayMesh2D(points, triangles)
 
-    def contour_intersections(self, contour2d):
+    def intersection_points(self, contour2d):
         intersecting_points = []
         for primitive1 in self.primitives:
             for primitive2 in contour2d.primitives:
@@ -2363,7 +2299,7 @@ class Contour2D(ContourMixin, Wire2D):
             return [self]
         if contour2.is_inside(self):
             return [contour2]
-        contours_intersections = self.contour_intersections(contour2)
+        contours_intersections = self.intersection_points(contour2)
         if not self.is_sharing_primitives_with(contour2) and contours_intersections:
             resulting_primitives = []
             primitives1_inside = self.extract_with_points(contours_intersections[0], contours_intersections[1], True)
@@ -4002,33 +3938,7 @@ class Circle2D(Contour2D):
         raise ValueError
 
     def circle_intersections(self, circle: 'Circle2D'):
-        x0, y0 = self.center
-        x1, y1 = circle.center
-        # r0 = self.radius
-        # r1 = circle.radius
-
-        distance = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
-
-        # non-intersecting
-        if distance > self.radius + circle.radius:
-            return []
-        # One circle within other
-        if distance < abs(self.radius - circle.radius):
-            return []
-        # coincident circles
-        if distance == 0 and self.radius == circle.radius:
-            return []
-        a_param = (self.radius ** 2 - circle.radius ** 2 + distance ** 2) / (2 * distance)
-        h_param = math.sqrt(self.radius ** 2 - a_param ** 2)
-        x2 = x0 + a_param * (x1 - x0) / distance
-        y2 = y0 + a_param * (y1 - y0) / distance
-        x3 = x2 + h_param * (y1 - y0) / distance
-        y3 = y2 - h_param * (x1 - x0) / distance
-
-        x4 = x2 - h_param * (y1 - y0) / distance
-        y4 = y2 + h_param * (x1 - x0) / distance
-
-        return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]
+        return vm_utils_intersections.get_circle_intersections(self, circle)
 
     def arc_intersections(self, arc2d: volmdlr.edges.Arc2D):
         circle = Circle2D(arc2d.center, arc2d.radius)
