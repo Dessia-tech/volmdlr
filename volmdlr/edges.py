@@ -1343,7 +1343,7 @@ class BSplineCurve(Edge):
             if self.bounding_box.distance_to_bbox(bspline2.bounding_box) > 1e-7:
                 return []
         elif self.bounding_rectangle.distance_to_b_rectangle(bspline2.bounding_rectangle) > 1e-7:
-                return []
+            return []
         if not any(self.point_belongs(point, abs_tol=1e-6)
                    for point in bspline2.discretization_points(number_points=10)):
             return []
