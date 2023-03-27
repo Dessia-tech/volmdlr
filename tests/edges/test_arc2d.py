@@ -54,12 +54,12 @@ class TestArc2D(unittest.TestCase):
                                                 volmdlr.Point2D(1.0, 0.0))])
         self.assertEqual(self.arc2.delete_shared_section(self.arc3), [self.arc2])
         remaining_arc2 = self.arc1.delete_shared_section(self.arc4)
-        self.assertEqual(remaining_arc2, [Arc2D(volmdlr.Point2D(0.0, -1.0),
-                                                volmdlr.Point2D(0.3826834323650898, -0.9238795325112867),
-                                                volmdlr.Point2D(0.7071067811865475, -0.7071067811865475)),
-                                          Arc2D(volmdlr.Point2D(0.7071067811865475, 0.7071067811865475),
-                                                volmdlr.Point2D(0.38268343236508984, 0.9238795325112867),
-                                                volmdlr.Point2D(0.0, 1.0))])
+        self.assertEqual(remaining_arc2[0], Arc2D(volmdlr.Point2D(0.0, -1.0),
+                                                  volmdlr.Point2D(0.3826834323650898, -0.9238795325112867),
+                                                  volmdlr.Point2D(0.7071067811865475, -0.7071067811865475)))
+        self.assertEqual(remaining_arc2[1], Arc2D(volmdlr.Point2D(0.7071067811865475, 0.7071067811865475),
+                                                  volmdlr.Point2D(0.38268343236508984, 0.9238795325112867),
+                                                  volmdlr.Point2D(0.0, 1.0)))
         self.assertFalse(self.arc4.delete_shared_section(self.arc1))
 
 
