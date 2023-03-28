@@ -292,7 +292,8 @@ def vertex_loop(arguments, object_dict):
     """
     Returns the data in case of a VERTEX_LOOP.
     """
-    return object_dict[arguments[1]]
+    return None
+    # return object_dict[arguments[1]]
 
 
 def pcurve(arguments, object_dict):

@@ -5324,8 +5324,8 @@ class Ellipse3D(Contour3D):
                                                                         self.minor_axis * math.sin(angle), 0))
         extra = None
         if math.isclose(angle % math.pi, 0.0, abs_tol=1e-6):
-            extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.75 * angle),
-                                                                           self.minor_axis * math.sin(0.75 * angle),
+            extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.125 * angle),
+                                                                           self.minor_axis * math.sin(0.125 * angle),
                                                                            0))
         return volmdlr.edges.ArcEllipse3D(point1, point3, point2, self.center,
                                           self.major_dir, extra=extra)

@@ -975,7 +975,10 @@ class Surface3D(DessiaObject):
         elif lc3d > 1:
             area = -1
             inner_contours2d = []
-            contours2d = [self.contour3d_to_2d(contour3d) for contour3d in contours3d]
+            try:
+                contours2d = [self.contour3d_to_2d(contour3d) for contour3d in contours3d]
+            except AttributeError:
+                print(True)
             check_contours = [not contour2d.is_ordered()
                               for contour2d in contours2d]
             if any(check_contours):
@@ -995,7 +998,8 @@ class Surface3D(DessiaObject):
             class_ = globals()[self.face_class]
         else:
             class_ = self.face_class
-
+        # if not outer_contour2d.is_ordered():
+        #     outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
