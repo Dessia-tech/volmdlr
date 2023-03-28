@@ -36,6 +36,7 @@ from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_
 from volmdlr.bspline_evaluators import evaluate_single
 from volmdlr.core import point_in_list
 
+c = 0
 
 def knots_vector_inv(knots_vector):
     """
@@ -975,13 +976,12 @@ class Surface3D(DessiaObject):
             area = -1
             inner_contours2d = []
             contours2d = [self.contour3d_to_2d(contour3d) for contour3d in contours3d]
-            check_contours = [not contour2d.primitives[0].start.is_close(contour2d.primitives[-1].end)
+            check_contours = [not contour2d.is_ordered()
                               for contour2d in contours2d]
             if any(check_contours):
                 outer_contour2d, inner_contours2d = self.repair_contours2d(contours2d[0], contours2d[1:])
             else:
                 for contour2d in contours2d:
-                    # contour2d = self.contour3d_to_2d(contour3d)
                     inner_contours2d.append(contour2d)
                     contour_area = contour2d.area()
                     if contour_area > area:
@@ -1089,6 +1089,7 @@ class Surface3D(DessiaObject):
         wire2d = volmdlr.wires.Wire2D(primitives2d)
         delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
         if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
+
             return volmdlr.wires.Contour2D(primitives2d)
         # Fix contour
         if self.x_periodicity or self.y_periodicity:
@@ -1109,7 +1110,10 @@ class Surface3D(DessiaObject):
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
             if hasattr(self, method_name):
                 try:
-                    primitives3d.extend(getattr(self, method_name)(primitive2d))
+                    primitives = getattr(self, method_name)(primitive2d)
+                    if primitives is None:
+                        continue
+                    primitives3d.extend(primitives)
                 except NotImplementedError:
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
                           f'with {primitive2d.__class__.__name__}')
@@ -1628,17 +1632,17 @@ class PeriodicalSurface(Surface3D):
                     old_innner_contour_positioned = inner_contour
 
                 else:
-                    overlapping_theta, outer_contour_side, side = self._get_overlapping_theta(outer_contour_theta,
-                                                                                              inner_contour_theta)
+                    overlapping_theta, outer_contour_side, inner_contour_side = self._get_overlapping_theta(outer_contour_theta,
+                                                                                                            inner_contour_theta)
                     line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
                                       volmdlr.Point2D(overlapping_theta, z3))
                     cutted_contours = inner_contour.split_by_line(line)
-
-                    if len(cutted_contours) == 2:
+                    number_contours = len(cutted_contours)
+                    if number_contours == 2:
                         contour1, contour2 = cutted_contours
                         increasing_theta = theta3 < theta4
-                        # side = 0 --> left  side = 1 --> right
-                        if (not side and increasing_theta) or (side and not increasing_theta):
+                        # inner_contour_side = 0 --> left  inner_contour_side = 1 --> right
+                        if (not inner_contour_side and increasing_theta) or (inner_contour_side and not increasing_theta):
                             theta_offset = outer_contour_theta[outer_contour_side] - contour2.primitives[0].start.x
                             translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour2_positionned = contour2.translation(offset=translation_vector)
@@ -1656,7 +1660,15 @@ class PeriodicalSurface(Surface3D):
                         old_innner_contour_positioned = volmdlr.wires.Contour2D(contour1_positionned.primitives +
                                                                                 contour2_positionned.primitives)
                         old_innner_contour_positioned.order_contour()
+                    elif number_contours == 1:
+                        contour = cutted_contours[0]
+                        theta_offset = outer_contour_theta[outer_contour_side] - \
+                                       inner_contour_theta[inner_contour_side]
+                        translation_vector = volmdlr.Vector2D(theta_offset, 0)
+                        old_innner_contour_positioned = contour.translation(offset=translation_vector)
+
                     else:
+                        print(True)
                         raise NotImplementedError
                 point1 = old_outer_contour_positioned.primitives[0].start
                 point2 = old_outer_contour_positioned.primitives[-1].end
@@ -1771,12 +1783,15 @@ class PeriodicalSurface(Surface3D):
         theta2, z2 = end
 
         if self.frame.w.is_colinear_to(fullarc3d.normal):
-            point1 = volmdlr.Point2D(theta1, z1)
-            if theta1 > theta3:
-                point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
-            elif theta1 < theta3:
-                point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
-            return [vme.LineSegment2D(point1, point2)]
+            if start.is_close(end):
+                point1 = volmdlr.Point2D(theta1, z1)
+                if theta1 > theta3:
+                    point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
+                elif theta1 < theta3:
+                    point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
+                return [vme.LineSegment2D(point1, point2)]
+            return [vme.LineSegment2D(start, end)]
+
         if z1 > z3:
             point1 = volmdlr.Point2D(theta1, 1)
             point2 = volmdlr.Point2D(theta1, 0)
@@ -2937,6 +2952,8 @@ class ConicalSurface3D(PeriodicalSurface):
         return []
 
     def linesegment2d_to_3d(self, linesegment2d):
+        if linesegment2d.name == "construction":
+            return None
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
 
@@ -2972,7 +2989,6 @@ class ConicalSurface3D(PeriodicalSurface):
         :rtype: :class:`volmdlr.wires.Contour2D`
         """
         primitives2d = []
-
         # Transform the contour's primitives to parametric domain
         for primitive3d in contour3d.primitives:
             method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
@@ -2990,9 +3006,8 @@ class ConicalSurface3D(PeriodicalSurface):
         delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
         if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
             if len(primitives2d) > 1:
-                points = wire2d.bounding_rectangle.bounding_points()
-                points.append(points[0])
-                return volmdlr.wires.Contour2D.from_points(points)
+                if primitives2d[-2].start.y == 0.0:
+                    primitives2d = self.repair_primitives_periodicity(primitives2d)
             return volmdlr.wires.Contour2D(primitives2d)
         # Fix contour
         primitives2d = self.repair_primitives_periodicity(primitives2d)
@@ -3063,14 +3078,24 @@ class ConicalSurface3D(PeriodicalSurface):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
             if not math.isclose(delta.norm(), 0, abs_tol=1e-5):
-                if primitives2d[i].end == primitives2d[i - 1].end and \
-                        primitives2d[i].length() == volmdlr.TWO_PI:
+                if primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-4) and \
+                        math.isclose(primitives2d[i].length(), volmdlr.TWO_PI, abs_tol=1e-4):
                     primitives2d[i] = primitives2d[i].reverse()
                 elif delta.norm() and math.isclose(abs(previous_primitive.end.y), 0, abs_tol=1e-6):
-                    primitives2d.insert(i, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start))
+                    primitives2d.insert(i, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+                                        name="construction"))
                     i += 1
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
+            elif math.isclose(primitives2d[i].start.y, 0.0, abs_tol=1e-6):
+                if primitives2d[i+1].end.x < primitives2d[i].end.x:
+                    primitives2d[i] = primitives2d[i].translation(volmdlr.Vector2D(volmdlr.TWO_PI, 0))
+                    primitives2d.insert(i-1, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+                                        name="construction"))
+                else:
+                    primitives2d[i] = primitives2d[i].translation(volmdlr.Vector2D(-volmdlr.TWO_PI, 0))
+                    primitives2d.insert(i-1, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+                                        name="construction"))
             i += 1
         if not primitives2d[0].start.is_close(primitives2d[-1].end) \
                 and primitives2d[0].start.y == 0.0 and primitives2d[-1].end.y == 0.0:

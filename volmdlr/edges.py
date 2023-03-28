@@ -6208,17 +6208,20 @@ class ArcEllipse3D(Edge):
         self.Sradius = minor_axis
         self.theta = theta
 
-        # Angle pour start
+        # Angle start
         start_u1, start_u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
-        angle1 = volmdlr.geometry.sin_cos_angle(start_u1, start_u2)
+        # angle1 = volmdlr.geometry.sin_cos_angle(start_u1, start_u2)
+        angle1 = math.atan2(start_u2, start_u1)
         self.angle_start = angle1
-        # Angle pour end
+        # Angle end
         end_u3, end_u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
-        angle2 = volmdlr.geometry.sin_cos_angle(end_u3, end_u4)
+        # angle2 = volmdlr.geometry.sin_cos_angle(end_u3, end_u4)
+        angle2 = math.atan2(end_u4, end_u3)
         self.angle_end = angle2
-        # Angle pour interior
+        # Angle interior
         interior_u5, interior_u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
-        anglei = volmdlr.geometry.sin_cos_angle(interior_u5, interior_u6)
+        # anglei = volmdlr.geometry.sin_cos_angle(interior_u5, interior_u6)
+        anglei = math.atan2(interior_u6, interior_u5)
         self.angle_interior = anglei
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
@@ -6271,19 +6274,20 @@ class ArcEllipse3D(Edge):
                 number_points = 2
             else:
                 number_points = math.ceil(angle_resolution * abs(0.5 * self.angle / math.pi)) + 1
-        if self.angle_start > self.angle_end:
-            if self.angle_start >= self.angle_interior >= self.angle_end:
-                angle_start = self.angle_end
-                angle_end = self.angle_start
-            else:
-                angle_end = self.angle_end + volmdlr.TWO_PI
-                angle_start = self.angle_start
+        angle_end = self.angle_end
+        angle_start = self.angle_start
+        if angle_start > self.angle_interior > angle_end or angle_start < self.angle_interior < angle_end:
+            angle_end = self.angle_end
+            angle_start = self.angle_start
         elif self.angle_start == self.angle_end:
             angle_start = 0
             angle_end = 2 * math.pi
         else:
-            angle_end = self.angle_end
-            angle_start = self.angle_start
+            if angle_end < angle_start:
+                angle_end = self.angle_end + volmdlr.TWO_PI
+            elif angle_start < angle_end:
+                angle_end = self.angle_end - volmdlr.TWO_PI
+
         discretization_points = [self.frame.local_to_global_coordinates(
             volmdlr.Point3D(self.Gradius * math.cos(angle), self.Sradius * math.sin(angle), 0))
             for angle in npy.linspace(angle_start, angle_end, number_points)]

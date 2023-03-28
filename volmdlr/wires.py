@@ -4474,9 +4474,9 @@ class Contour3D(ContourMixin, Wire3D):
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
-        # edge_ends = {}
         for edge_id in arguments[1]:
-            raw_edges.append(object_dict[int(edge_id[1:])])
+            if object_dict[int(edge_id[1:])]:
+                raw_edges.append(object_dict[int(edge_id[1:])])
         if step_name == "POLY_LOOP":
             return cls.from_points(raw_edges)
         if (len(raw_edges)) == 1:
@@ -4485,8 +4485,8 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
 
-        if any(edge is None for edge in raw_edges):
-            raw_edges = [edge for edge in raw_edges if edge is not None]
+        # if any(edge is None for edge in raw_edges):
+        #     raw_edges = [edge for edge in raw_edges if edge is not None]
             # warnings.warn(f"Could not instantiate #{step_id} = {step_name}({arguments})"
             #               f" because some of the edges are NoneType."
             #               "See Contour3D.from_step method")
@@ -5179,9 +5179,14 @@ class Circle3D(Contour3D):
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')
             raise ValueError('Point not on circle for trim method')
-        if point1.is_close(point2):
+        distance = point1.point_distance(point2)
+        if distance <= 1e-12:
             return volmdlr.edges.FullArc3D(self.frame.origin, point1,
                                            self.frame.w)
+        if distance < 1-5:
+            print("Arc skipped because it's too small")
+            return None
+
         interior = volmdlr.geometry.clockwise_interior_from_circle3d(
             point1, point2, self)
         return volmdlr.edges.Arc3D(point1, interior, point2)
@@ -5319,8 +5324,9 @@ class Ellipse3D(Contour3D):
                                                                         self.minor_axis * math.sin(angle), 0))
         extra = None
         if math.isclose(angle % math.pi, 0.0, abs_tol=1e-6):
-            extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.125 * angle),
-                                                                           self.minor_axis * math.sin(0.125 * angle), 0))
+            extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.75 * angle),
+                                                                           self.minor_axis * math.sin(0.75 * angle),
+                                                                           0))
         return volmdlr.edges.ArcEllipse3D(point1, point3, point2, self.center,
                                           self.major_dir, extra=extra)
 
