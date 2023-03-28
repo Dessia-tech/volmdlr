@@ -25,6 +25,7 @@ from packaging import version
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
+import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr import bspline_fitting
 from volmdlr.core import EdgeStyle
@@ -1330,18 +1331,6 @@ class BSplineCurve(Edge):
         point_name = 'Point' + self.__class__.__name__[-2:]
         return getattr(volmdlr, point_name)(*self.curve.evaluate_single(adim_abs))
 
-    def evaluate_single(self, u):
-        """
-        Calculates a point in the BSplineCurve at a given parameter u.
-
-        :param u: Curve parameter. Must be a value between 0 and 1.
-        :type u: float
-        :return: Corresponding point.
-        :rtype: Union[volmdlr.Point2D, Union[volmdlr.Point3D]
-        """
-        point_name = 'Point' + self.__class__.__name__[-2:]
-        return getattr(volmdlr, point_name)(*self.curve.evaluate_single(u))
-
     def get_shared_section(self, bspline2):
         """
         Gets the shared section between two BSpline curves.
@@ -1355,7 +1344,7 @@ class BSplineCurve(Edge):
             if self.bounding_box.distance_to_bbox(bspline2.bounding_box) > 1e-7:
                 return []
         elif self.bounding_rectangle.distance_to_b_rectangle(bspline2.bounding_rectangle) > 1e-7:
-                return []
+            return []
         if not any(self.point_belongs(point, abs_tol=1e-6)
                    for point in bspline2.discretization_points(number_points=10)):
             return []
@@ -1398,6 +1387,18 @@ class BSplineCurve(Edge):
                 new_arcs.append(arc)
         return new_arcs
  
+    def evaluate_single(self, u):
+        """
+        Calculates a point in the BSplineCurve at a given parameter u.
+
+        :param u: Curve parameter. Must be a value between 0 and 1.
+        :type u: float
+        :return: Corresponding point.
+        :rtype: Union[volmdlr.Point2D, Union[volmdlr.Point3D]
+        """
+        point_name = 'Point' + self.__class__.__name__[-2:]
+        return getattr(volmdlr, point_name)(*self.curve.evaluate_single(u))
+
     def straight_line_point_belongs(self, point):
         """
         Verifies if a point belongs to the surface created by closing the edge.
@@ -3447,23 +3448,7 @@ class FullArc2D(Arc2D):
         return volmdlr.wires.ClosedPolygon2D(self.discretization_points(angle_resolution=15))
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        if ax is None:
-            _, ax = plt.subplots()
-
-        if self.radius > 0:
-            ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y),
-                                                2 * self.radius,
-                                                2 * self.radius,
-                                                angle=0,
-                                                theta1=0,
-                                                theta2=360,
-                                                color=edge_style.color,
-                                                linestyle=edge_style.linestyle,
-                                                linewidth=edge_style.linewidth))
-        if edge_style.plot_points:
-            ax.plot([self.start.x], [self.start.y], 'o',
-                    color=edge_style.color, alpha=edge_style.alpha)
-        return ax
+        return vm_common_operations.plot_circle(self, ax, edge_style)
 
     def cut_between_two_points(self, point1, point2):
 

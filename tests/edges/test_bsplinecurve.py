@@ -179,9 +179,9 @@ class TestBSplineCurve2D(unittest.TestCase):
                            volmdlr.Point2D(0.5140430721834197, 0.27998743331399134),
                            volmdlr.Point2D(0.5547593551288732, 0.28494176802517024),
                            volmdlr.Point2D(0.5954756380743265, 0.28780672303180266)]
-        point1 = self.bspline.point_at_abscissa(0.25)
-        point2 = self.bspline.point_at_abscissa(0.65)
-        local_discretization = self.bspline.local_discretization(point1, point2, 10)
+        point1 = self.bspline1.point_at_abscissa(0.25)
+        point2 = self.bspline1.point_at_abscissa(0.65)
+        local_discretization = self.bspline1.local_discretization(point1, point2, 10)
         for point1, point2 in zip(expected_points, local_discretization):
             self.assertTrue(point1.is_close(point2))
 
