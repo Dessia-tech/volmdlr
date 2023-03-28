@@ -66,6 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - build: manifest was not shipping bspline_compiled
 - fixed many pylint errors: 13/03/2023
+- fix contour2d: divide
+
 ## v0.9.0 [Released 06/03/2023]
 
 ### New Features
@@ -80,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
 * WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
+* Added package.xml metadata in order to be listed in the FreeCAD Addon Manager 
 * Edge: local_discretization
 
 ### Fixed
@@ -102,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ConicalSurface3D: fix from_step class method by adding the angle convertion factor
 * fix f string usage
 * Add some typings
-* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
+* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files 
 
 ### Removed
 
