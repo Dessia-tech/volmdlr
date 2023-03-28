@@ -2681,10 +2681,10 @@ class Arc2D(Arc):
             return False
         if point2d.is_close(self.start) or point2d.is_close(self.end):
             return True
-        arc_trigo = self.reverse() if self.is_trigo else self
-        vector_start = arc_trigo.start - arc_trigo.center
-        vector_end = arc_trigo.end - arc_trigo.center
-        vector_point = point2d - arc_trigo.center
+        clockwise_arc = self.reverse() if self.is_trigo else self
+        vector_start = clockwise_arc.start - clockwise_arc.center
+        vector_end = clockwise_arc.end - clockwise_arc.center
+        vector_point = point2d - clockwise_arc.center
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
         point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
@@ -2745,10 +2745,10 @@ class Arc2D(Arc):
             return 0
         if point.point_distance(self.end) < tol:
             return self.length()
-        arc_trigo = self.reverse() if self.is_trigo else self
-        vector_start = arc_trigo.start - arc_trigo.center
-        vector_end = arc_trigo.end - arc_trigo.center
-        vector_point = point - arc_trigo.center
+        clockwise_arc = self.reverse() if self.is_trigo else self
+        vector_start = clockwise_arc.start - clockwise_arc.center
+        vector_end = clockwise_arc.end - clockwise_arc.center
+        vector_point = point - clockwise_arc.center
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
         point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
