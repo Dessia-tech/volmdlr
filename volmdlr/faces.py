@@ -4610,6 +4610,18 @@ class BSplineSurface3D(Surface3D):
                     if flag_line:
                         return [linesegment]
 
+                if self.x_periodicity:
+                    points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
+
+                if self.y_periodicity:
+                    points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
+                points_ = [points[0]]
+                for point in points[1:]:
+                    if not point.is_close(points[-1]):
+                        points_.append(point)
+                if len(points_) < 2:
+                    return []
+
                 return [vme.BSplineCurve2D.from_points_interpolation(
                     points=points, degree=bspline_curve3d.degree, periodic=bspline_curve3d.periodic)]
 
@@ -4650,7 +4662,8 @@ class BSplineSurface3D(Surface3D):
                     end.y = max_bound_y
                 else:
                     end.y = min_bound_y
-
+        if start.is_close(end):
+            return []
         return [vme.LineSegment2D(start, end)]
 
     def arc2d_to_3d(self, arc2d):
@@ -8077,7 +8090,7 @@ class CylindricalFace3D(Face3D):
                 return point1.point_distance(point2), point1, point2
             return point1.point_distance(point2)
 
-        return NotImplementedError
+        raise NotImplementedError
 
     def adjacent_direction(self, other_face3d):
         """

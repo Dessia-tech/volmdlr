@@ -16,7 +16,11 @@ class TestBSplineCurve2D(unittest.TestCase):
     points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
     knotvector = utilities.generate_knot_vector(degree, len(points))
     knot_multiplicity = [1] * len(knotvector)
-    bspline = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
+    bspline1 = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
+    bspline2, bspline3 = bspline1.split(volmdlr.Point2D(1.5, 0.0))
+    bspline4, bspline5 = bspline2.split(bspline2.point_at_abscissa(0.3 * bspline2.length()))
+    bspline6 = bspline1.split(bspline1.point_at_abscissa(0.7 * bspline1.length()))[0]
+    bspline7 = bspline1.split(bspline1.point_at_abscissa(0.3 * bspline1.length()))[1]
 
     def test_abscissa(self):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
@@ -103,27 +107,66 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertEqual(len(points), 31)
 
     def test_offset(self):
-        offseted_bspline = self.bspline.offset(-0.2)
+        offseted_bspline = self.bspline1.offset(-0.2)
         expected_distances = [0.2, 0.20000160183808904, 0.20053651951715856, 0.20372900125730523, 0.21044118400720574,
                               0.2192581584663399, 0.22774528008118392, 0.23404460706854788, 0.23739001591364056,
                               0.2379018126594174, 0.2362014374337063, 0.23307773295678147, 0.22924032294583793,
                               0.22517329538697972, 0.22109005047384114, 0.21697594011450796, 0.21267059325565962,
                               0.2079610665048543, 0.20299372351359257, 0.19999999999999987]
-        for i, (point1, point2) in enumerate(zip(self.bspline.discretization_points(number_points=20),
+        for i, (point1, point2) in enumerate(zip(self.bspline1.discretization_points(number_points=20),
                                                  offseted_bspline.discretization_points(number_points=20))):
             self.assertAlmostEqual(point1.point_distance(point2), expected_distances[i], 5)
 
     def test_point_distance(self):
         point = volmdlr.Point2D(1.5, 0.1)
-        self.assertAlmostEqual(self.bspline.point_distance(point), 0.08945546033235202)
-        point2 = self.bspline.point_at_abscissa(0.4)
-        self.assertAlmostEqual(self.bspline.point_distance(point2), 0.0, 8)
+        self.assertAlmostEqual(self.bspline1.point_distance(point), 0.08945546033235202)
+        point2 = self.bspline1.point_at_abscissa(0.4)
+        self.assertAlmostEqual(self.bspline1.point_distance(point2), 0.0, 8)
 
     def test_point_belongs(self):
         point = volmdlr.Point2D(1.5, 0.1)
-        self.assertFalse(self.bspline.point_belongs(point))
-        point2 = self.bspline.point_at_abscissa(0.4)
-        self.assertTrue(self.bspline.point_belongs(point2))
+        self.assertFalse(self.bspline1.point_belongs(point))
+        point2 = self.bspline1.point_at_abscissa(0.4)
+        self.assertTrue(self.bspline1.point_belongs(point2))
+
+    def test_get_shared_primitives(self):
+        shared_section1 = self.bspline1.get_shared_section(self.bspline2)
+        self.assertEqual(len(shared_section1), 1)
+        self.assertTrue(shared_section1[0].start.is_close(volmdlr.Point2D(0.0, 0.0)))
+        self.assertTrue(shared_section1[0].end.is_close(volmdlr.Point2D(1.5, 0.0)))
+        shared_section2 = self.bspline6.get_shared_section(self.bspline7)
+        self.assertEqual(len(shared_section2), 1)
+        self.assertTrue(shared_section2[0].start.is_close(volmdlr.Point2D(0.8999999, 0.252000000)))
+        self.assertTrue(shared_section2[0].end.is_close(volmdlr.Point2D(2.09999999, -0.251999999)))
+        self.assertAlmostEqual(shared_section2[0].length(), 1.3038324934975103)
+        shared_section3 = self.bspline1.get_shared_section(self.bspline5)
+        self.assertEqual(shared_section3, [self.bspline5])
+        shared_section4 = self.bspline5.get_shared_section(self.bspline1)
+        self.assertEqual(shared_section4, [self.bspline5])
+        self.assertFalse(self.bspline4.get_shared_section(self.bspline3))
+
+    def test_delete_shared_primitives(self):
+        remaining_section1 = self.bspline1.delete_shared_section(self.bspline2)
+        self.assertEqual(len(remaining_section1), 1)
+        self.assertTrue(remaining_section1[0].start.is_close(volmdlr.Point2D(1.5, 0.0)))
+        self.assertTrue(remaining_section1[0].end.is_close(volmdlr.Point2D(3.0, 0.0)))
+        self.assertAlmostEqual(remaining_section1[0].length(), 1.6373881438050524)
+        remaining_section2 = self.bspline6.delete_shared_section(self.bspline7)
+        self.assertEqual(len(remaining_section2), 1)
+        self.assertTrue(remaining_section2[0].start.is_close(volmdlr.Point2D(0.0, 0.0)))
+        self.assertTrue(remaining_section2[0].end.is_close(volmdlr.Point2D(0.8999999997498065, 0.25200000006505024)))
+        self.assertAlmostEqual(remaining_section2[0].length(), 0.9854029549808058)
+        remaining_section3 = self.bspline1.delete_shared_section(self.bspline5)
+        self.assertEqual(len(remaining_section3), 2)
+        self.assertTrue(remaining_section3[0].start.is_close(volmdlr.Point2D(0.0, 0.0)))
+        self.assertTrue(remaining_section3[0].end.is_close(volmdlr.Point2D(0.44999999682593295, 0.26774999925409426)))
+        self.assertAlmostEqual(remaining_section3[0].length(), 0.5305607215935024)
+        self.assertTrue(remaining_section3[1].start.is_close(volmdlr.Point2D(1.4999999878769186, 0.0)))
+        self.assertTrue(remaining_section3[1].end.is_close(volmdlr.Point2D(3.0, 0.0)))
+        self.assertAlmostEqual(remaining_section3[1].length(), 1.6373881438050524)
+        self.assertFalse(self.bspline5.delete_shared_section(self.bspline1))
+        remaining_section4 = self.bspline4.delete_shared_section(self.bspline3)
+        self.assertEqual(remaining_section4, [self.bspline4])
 
     def test_local_discretization(self):
         expected_points = [volmdlr.Point2D(0.22902909156524637, 0.17924444819399216),
@@ -136,9 +179,9 @@ class TestBSplineCurve2D(unittest.TestCase):
                            volmdlr.Point2D(0.5140430721834197, 0.27998743331399134),
                            volmdlr.Point2D(0.5547593551288732, 0.28494176802517024),
                            volmdlr.Point2D(0.5954756380743265, 0.28780672303180266)]
-        point1 = self.bspline.point_at_abscissa(0.25)
-        point2 = self.bspline.point_at_abscissa(0.65)
-        local_discretization = self.bspline.local_discretization(point1, point2, 10)
+        point1 = self.bspline1.point_at_abscissa(0.25)
+        point2 = self.bspline1.point_at_abscissa(0.65)
+        local_discretization = self.bspline1.local_discretization(point1, point2, 10)
         for point1, point2 in zip(expected_points, local_discretization):
             self.assertTrue(point1.is_close(point2))
 
