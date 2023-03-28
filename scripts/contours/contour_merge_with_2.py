@@ -70,8 +70,8 @@ title = ['shared primitives extremities  (contour1)', 'shared primitives extremi
 j = j + 1
 for i in range(0, 2):
     for prim in shared_primitives:
-        # for p in prim:
-        prim.plot(ax=axs[i][j], edge_style=EdgeStyle(color='r', width=4))
+        for p in prim:
+            p.plot(ax=axs[i][j], edge_style=EdgeStyle(color='r', width=4))
     axs[i][j].set_title(title[i])
 
 # %% merge_primitives_with
