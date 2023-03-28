@@ -441,7 +441,8 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
     """
     closed = True
 
-    def __init__(self, points: List[volmdlr.Point2D], radius: float, adapt_radius: bool = False, name: str = ''):
+    def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
+                 adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      closed=True,
                                      adapt_radius=adapt_radius, name='')
