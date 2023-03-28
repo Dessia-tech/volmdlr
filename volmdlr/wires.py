@@ -436,6 +436,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def extract_with_points(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D, inside: bool = True):
         """
+        Extract primitives between two given points.
+
         :param point1: extraction point 1.
         :param point2:extraction point2.
         :param inside: If True it'll Extract primitives from smaller point abscissa value
