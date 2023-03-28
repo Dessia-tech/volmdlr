@@ -1441,13 +1441,18 @@ class ContourMixin(WireMixin):
         Extract shared primitives between two adjacent contours.
 
         """
-        shared_primitives = []
+        shared_primitives_1 = []
+        shared_primitives_2 = []
+
         for prim1 in self.primitives:
             for prim2 in contour.primitives:
-                shared_section = prim1.get_shared_section(prim2)
-                if shared_section:
-                    shared_primitives.extend(shared_section)
-        return shared_primitives
+                shared_section_1 = prim1.get_shared_section(prim2)
+                shared_section_2 = prim2.get_shared_section(prim1)
+                if shared_section_1:
+                    shared_primitives_1.extend(shared_section_1)
+                if shared_section_2:
+                    shared_primitives_2.extend(shared_section_2)
+        return shared_primitives_1, shared_primitives_2
 
     def delete_shared_contour_section(self, contour):
         """
