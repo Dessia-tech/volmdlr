@@ -54,22 +54,9 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
         volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
 
     def arc_features(self, point_index: int):
+        # raise NotImplementedError
         radius = self.radius[point_index]
-        if self.closed:
-            if point_index == 0:
-                pt1 = self.points[-1]
-            else:
-                pt1 = self.points[point_index - 1]
-            pti = self.points[point_index]
-            if point_index < self.npoints - 1:
-                pt2 = self.points[point_index + 1]
-            else:
-                pt2 = self.points[0]
-        else:
-            pt1 = self.points[point_index - 1]
-            pti = self.points[point_index]
-            pt2 = self.points[point_index + 1]
-
+        pt1, pti, pt2 = self.get_points(point_index)
         dist1 = (pt1 - pti).norm()
         dist2 = (pt2 - pti).norm()
         dist3 = (pt1 - pt2).norm()
@@ -87,13 +74,13 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
         v1 = u1.cross(n)
         v2 = u2.cross(n)
 
-        l1 = volmdlr.edges.Line3D(p3, p3 + v1)
-        l2 = volmdlr.edges.Line3D(p4, p4 + v2)
+        line1 = volmdlr.edges.Line3D(p3, p3 + v1)
+        line2 = volmdlr.edges.Line3D(p4, p4 + v2)
 
-        u3 = u1 + u2  # mean of v1 and v2
-        u3 /= u3.norm()
+        w = u1 + u2  # mean of v1 and v2
+        w /= w.norm()
 
-        interior = l1.minimum_distance_points(l2)[0] - u3 * radius
+        interior = line1.minimum_distance_points(line2)[0] - w * radius
         return p3, interior, p4, dist, alpha
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,

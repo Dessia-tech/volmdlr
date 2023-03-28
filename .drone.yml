@@ -151,6 +151,7 @@ steps:
   image: appleboy/drone-scp
   when:
     event: push
+  failure: ignore
   settings:
     host: magenta.dessia.tech
     target: /var/www/cdn/volmdlr/coverage/${DRONE_BRANCH}

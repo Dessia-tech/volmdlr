@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wire2: hash
 - Contour3D: hash
 - Circle3D frame_mapping
+- LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
 
 ### Fixed
 - primitives: ClosedRoundedLineSegment bug on rounding last corner
@@ -62,13 +63,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unittests for Point2D
 - Unittests for Vector3D
 - Unittests for Point3D
-
+- LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
+- Contour3D: merge_with()
 
 ## v0.9.1
 
 ### Fixed
 - build: manifest was not shipping bspline_compiled
 - fixed many pylint errors: 13/03/2023
+- fix contour2d: divide
+
 ## v0.9.0 [Released 06/03/2023]
 
 ### New Features
