@@ -8677,12 +8677,15 @@ class BSplineFace3D(Face3D):
         u2 = nearest_start2[0]
 
         if u1 == 0 and u2 == 0:
-            corresponding_directions.append(('+u', '-v'))
+            corresponding_directions.append(('+u', '-u'))
             grid2d_direction = [['-y', '-x'], ['-y', '+x']]
 
         elif u1 == 1 and u2 == 1:
-            corresponding_directions.append(('+u', '-v'))
-            grid2d_direction = [['+y', '+x'], ['+y', '-x']]
+            if corresponding_directions == [('+v', '-v')]:
+                grid2d_direction = [['+y', '+x'], ['-y', '-x']]
+            else:
+                grid2d_direction = [['+y', '+x'], ['+y', '-x']]
+            corresponding_directions.append(('+u', '-u'))
 
         elif u1 == 0 and u2 == 1:
             corresponding_directions.append(('+u', '+u'))
