@@ -1331,49 +1331,49 @@ class BSplineCurve(Edge):
         point_name = 'Point' + self.__class__.__name__[-2:]
         return getattr(volmdlr, point_name)(*self.curve.evaluate_single(adim_abs))
 
-    def get_shared_section(self, bspline2):
+    def get_shared_section(self, other_bspline2):
         """
         Gets the shared section between two BSpline curves.
 
-        :param bspline2: other arc to verify for shared section.
+        :param other_bspline2: other arc to verify for shared section.
         :return: shared arc section.
         """
-        if self.__class__ != bspline2.__class__:
+        if self.__class__ != other_bspline2.__class__:
             return []
         if self.__class__.__name__[-2:] == '3D':
-            if self.bounding_box.distance_to_bbox(bspline2.bounding_box) > 1e-7:
+            if self.bounding_box.distance_to_bbox(other_bspline2.bounding_box) > 1e-7:
                 return []
-        elif self.bounding_rectangle.distance_to_b_rectangle(bspline2.bounding_rectangle) > 1e-7:
+        elif self.bounding_rectangle.distance_to_b_rectangle(other_bspline2.bounding_rectangle) > 1e-7:
             return []
         if not any(self.point_belongs(point, abs_tol=1e-6)
-                   for point in bspline2.discretization_points(number_points=10)):
+                   for point in other_bspline2.discretization_points(number_points=10)):
             return []
-        if all(self.point_belongs(point, abs_tol=1e-6) for point in bspline2.points):
-            return [bspline2]
-        if all(bspline2.point_belongs(point, abs_tol=1e-6) for point in self.points):
+        if all(self.point_belongs(point, abs_tol=1e-6) for point in other_bspline2.points):
+            return [other_bspline2]
+        if all(other_bspline2.point_belongs(point, abs_tol=1e-6) for point in self.points):
             return [self]
-        if self.point_belongs(bspline2.start, abs_tol=1e-6):
-            bspline1_, bspline2_ = self.split(bspline2.start)
-        elif self.point_belongs(bspline2.end, abs_tol=1e-6):
-            bspline1_, bspline2_ = self.split(bspline2.end)
+        if self.point_belongs(other_bspline2.start, abs_tol=1e-6):
+            bspline1_, bspline2_ = self.split(other_bspline2.start)
+        elif self.point_belongs(other_bspline2.end, abs_tol=1e-6):
+            bspline1_, bspline2_ = self.split(other_bspline2.end)
         else:
             raise NotImplementedError
         shared_bspline_section = []
         for bspline in [bspline1_, bspline2_]:
-            if bspline and all(bspline2.point_belongs(point)
+            if bspline and all(other_bspline2.point_belongs(point)
                                for point in bspline.discretization_points(number_points=10)):
                 shared_bspline_section.append(bspline)
                 break
         return shared_bspline_section
 
-    def delete_shared_section(self, bspline2):
+    def delete_shared_section(self, other_bspline2):
         """
         Deletes from self, the section shared with the other arc.
 
-        :param bspline2:
+        :param other_bspline2:
         :return:
         """
-        shared_section = self.get_shared_section(bspline2)
+        shared_section = self.get_shared_section(other_bspline2)
         if not shared_section:
             return [self]
         if shared_section == self:
@@ -2657,43 +2657,44 @@ class Arc(Edge):
                 self.__class__(split_point, self.point_at_abscissa((self.abscissa(self.end) -
                                                                     abscissa) * 0.5 + abscissa), self.end)]
 
-    def get_shared_section(self, arc2):
+    def get_shared_section(self, other_arc2):
         """
         Gets the shared section between two arcs.
 
         :param arc2: other arc to verify for shared section.
         :return: shared arc section.
         """
-        if self.__class__ != arc2.__class__:
+        if self.__class__ != other_arc2.__class__:
             return []
-        if not self.center.is_close(arc2.center) or self.radius != self.radius or \
-                not any(self.point_belongs(point) for point in [arc2.start, arc2.interior, arc2.end]):
+        if not self.center.is_close(other_arc2.center) or self.radius != self.radius or \
+                not any(self.point_belongs(point) for point in [other_arc2.start,
+                                                                other_arc2.interior, other_arc2.end]):
             return []
-        if all(self.point_belongs(point) for point in [arc2.start, arc2.interior, arc2.end]):
-            return [arc2]
-        if all(arc2.point_belongs(point) for point in [self.start, self.interior, self.end]):
+        if all(self.point_belongs(point) for point in [other_arc2.start, other_arc2.interior, other_arc2.end]):
+            return [other_arc2]
+        if all(other_arc2.point_belongs(point) for point in [self.start, self.interior, self.end]):
             return [self]
-        if self.point_belongs(arc2.start):
-            arc1_, arc2_ = self.split(arc2.start)
-        elif self.point_belongs(arc2.end):
-            arc1_, arc2_ = self.split(arc2.end)
+        if self.point_belongs(other_arc2.start):
+            arc1_, arc2_ = self.split(other_arc2.start)
+        elif self.point_belongs(other_arc2.end):
+            arc1_, arc2_ = self.split(other_arc2.end)
         else:
             raise NotImplementedError
         shared_arc_section = []
         for arc in [arc1_, arc2_]:
-            if arc and all(arc2.point_belongs(point) for point in [arc.start, arc.interior, arc.end]):
+            if arc and all(other_arc2.point_belongs(point) for point in [arc.start, arc.interior, arc.end]):
                 shared_arc_section.append(arc)
                 break
         return shared_arc_section
 
-    def delete_shared_section(self, arc2):
+    def delete_shared_section(self, other_arc2):
         """
         Deletes from self, the section shared with the other arc.
 
-        :param arc2:
+        :param other_arc2:
         :return:
         """
-        shared_section = self.get_shared_section(arc2)
+        shared_section = self.get_shared_section(other_arc2)
         if not shared_section:
             return [self]
         if shared_section == self:
