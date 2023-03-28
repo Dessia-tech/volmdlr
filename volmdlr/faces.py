@@ -4436,38 +4436,36 @@ class BSplineSurface3D(Surface3D):
 
                 if self.x_periodicity:
                     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
-                    if bspline_curve3d.periodic:
+                    if bspline_curve3d.periodic and points[0].is_close(points[-1]):
                         u_min, u_max = bspline_curve3d.curve.domain
-                        if points[0].is_close(points[-1]):
-                            if math.isclose(points[0].x, u_min, abs_tol=1e-6):
-                                should_be_umax = (u_max - points[1].x) < (points[1].x - u_min)
-                                if should_be_umax:
-                                    points[0] = volmdlr.Point2D(u_max, points[0].y)
-                                else:
-                                    points[-1] = volmdlr.Point2D(u_max, points[-1].y)
-                            elif math.isclose(points[0].x, u_max, abs_tol=1e-6):
-                                should_be_umin = (u_max - points[1].x) > (points[1].x - u_min)
-                                if should_be_umin:
-                                    points[0] = volmdlr.Point2D(u_min, points[0].y)
-                                else:
-                                    points[-1] = volmdlr.Point2D(u_min, points[-1].y)
+                        if math.isclose(points[0].x, u_min, abs_tol=1e-6):
+                            should_be_umax = (u_max - points[1].x) < (points[1].x - u_min)
+                            if should_be_umax:
+                                points[0] = volmdlr.Point2D(u_max, points[0].y)
+                            else:
+                                points[-1] = volmdlr.Point2D(u_max, points[-1].y)
+                        elif math.isclose(points[0].x, u_max, abs_tol=1e-6):
+                            should_be_umin = (u_max - points[1].x) > (points[1].x - u_min)
+                            if should_be_umin:
+                                points[0] = volmdlr.Point2D(u_min, points[0].y)
+                            else:
+                                points[-1] = volmdlr.Point2D(u_min, points[-1].y)
                 if self.y_periodicity:
                     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
-                    if bspline_curve3d.periodic:
+                    if bspline_curve3d.periodic and points[0].is_close(points[-1]):
                         u_min, u_max = bspline_curve3d.curve.domain
-                        if points[0].is_close(points[-1]):
-                            if math.isclose(points[0].y, u_min, abs_tol=1e-6):
-                                should_be_umax = (u_max - points[1].y) < (points[1].y - u_min)
-                                if should_be_umax:
-                                    points[0] = volmdlr.Point2D(points[0].x, u_max)
-                                else:
-                                    points[-1] = volmdlr.Point2D(points[-1].x, u_max)
-                            elif math.isclose(points[0].y, u_max, abs_tol=1e-6):
-                                should_be_umin = (u_max - points[1].y) > (points[1].y - u_min)
-                                if should_be_umin:
-                                    points[0] = volmdlr.Point2D(points[0].x, u_min)
-                                else:
-                                    points[-1] = volmdlr.Point2D(points[-1].x, u_min)
+                        if math.isclose(points[0].y, u_min, abs_tol=1e-6):
+                            should_be_umax = (u_max - points[1].y) < (points[1].y - u_min)
+                            if should_be_umax:
+                                points[0] = volmdlr.Point2D(points[0].x, u_max)
+                            else:
+                                points[-1] = volmdlr.Point2D(points[-1].x, u_max)
+                        elif math.isclose(points[0].y, u_max, abs_tol=1e-6):
+                            should_be_umin = (u_max - points[1].y) > (points[1].y - u_min)
+                            if should_be_umin:
+                                points[0] = volmdlr.Point2D(points[0].x, u_min)
+                            else:
+                                points[-1] = volmdlr.Point2D(points[-1].x, u_min)
 
                 if not points[0].is_close(points[-1]) and not bspline_curve3d.periodic:
                     linesegment = vme.LineSegment2D(points[0], points[-1])
