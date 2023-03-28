@@ -5835,25 +5835,13 @@ class Arc3D(Arc):
         return point1, point2
 
     def distance_squared(self, x, u, v, k, w):
-        a = u.dot(u)
-        b = u.dot(v)
-        c = u.dot(k)
-        d = v.dot(v)
-        e = v.dot(k)
-        f = k.dot(k)
-        g = w.dot(u)
-        h = w.dot(v)
-        i = w.dot(k)
-        j = w.dot(w)
-
-        r = self.radius
-        return (a * x[0] ** 2 + j + d * (
-                (math.sin(x[1])) ** 2) * r ** 2 + f * (
-                        (math.cos(x[1])) ** 2) * r ** 2
-                - 2 * x[0] * g - 2 * x[0] * r * math.sin(x[1]) * b - 2 * x[
-                    0] * r * math.cos(x[1]) * c
-                + 2 * r * math.sin(x[1]) * h + 2 * r * math.cos(x[1]) * i
-                + math.sin(2 * x[1]) * e * r ** 2)
+        radius = self.radius
+        return (u.dot(u) * x[0] ** 2 + w.dot(w) + v.dot(v) * (
+                (math.sin(x[1])) ** 2) * radius ** 2 + k.dot(k) * ((math.cos(x[1])) ** 2) * radius ** 2
+                - 2 * x[0] * w.dot(u) - 2 * x[0] * radius * math.sin(x[1]) * u.dot(v) - 2 * x[
+                    0] * radius * math.cos(x[1]) * u.dot(k)
+                + 2 * radius * math.sin(x[1]) * w.dot(v) + 2 * radius * math.cos(x[1]) * w.dot(k)
+                + math.sin(2 * x[1]) * v.dot(k) * radius ** 2)
 
     def minimum_distance_points_line(self, other_line):
         u = other_line.direction_vector()
