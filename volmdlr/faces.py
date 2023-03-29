@@ -996,6 +996,8 @@ class Surface3D(DessiaObject):
             class_ = globals()[self.face_class]
         else:
             class_ = self.face_class
+        if not outer_contour2d.is_ordered(1e-4):
+            outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
@@ -1009,13 +1011,14 @@ class Surface3D(DessiaObject):
         :return: A list of primitives.
         :rtype: list
         """
-        # Search for a primitive that can be used as reference for repairing periodicity
         x_periodicity = self.x_periodicity
         y_periodicity = self.y_periodicity
-        pos = vm_parametric.find_index_defined_initial_primitive(primitives2d, [x_periodicity,
-                                                                                y_periodicity])
-        if pos != 0:
-            primitives2d = primitives2d[pos:] + primitives2d[:pos]
+        # Search for a primitive that can be used as reference for repairing periodicity
+        if x_periodicity or y_periodicity:
+            pos = vm_parametric.find_index_defined_brep_primitive_on_periodical_surface(primitives2d,
+                                                                                        [x_periodicity, y_periodicity])
+            if pos != 0:
+                primitives2d = primitives2d[pos:] + primitives2d[:pos]
 
         i = 1
         if x_periodicity is None:

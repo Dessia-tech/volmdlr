@@ -52,9 +52,13 @@ def angle_discontinuity(angle_list):
     return discontinuity, indexes_theta_discontinuity
 
 
-def is_undefined_primitive(primitive, periodicity):
+def is_undefined_brep_primitive(primitive, periodicity):
     """
-    2D primitives on parametric surface domain can be in wrong bound side due to periodic behavior of some faces.
+    2D primitives on parametric surface domain can be in wrong bound side due to periodic behavior of some surfaces.
+
+    A B-Rep primitive can be undefined when it's not directly provided, but it's found by some 3D to 2D operation.
+    This can result in a primitive that is entirely contained on the periodical boundary, and we can only know its
+    right position when it's placed on the boundary representation, by analyzing the continuity of the 2D contour.
 
     :param primitive: primitive to perform verification.
     :type primitive: vme.Edge
@@ -77,13 +81,13 @@ def is_undefined_primitive(primitive, periodicity):
     return False
 
 
-def find_index_defined_initial_primitive(primitives2d, periodicity):
+def find_index_defined_brep_primitive_on_periodical_surface(primitives2d, periodicity):
     """
-    Search for a primitive that can be used as reference for reparing periodicity.
+    Search for a primitive on the boundary representation that can be used as reference for reparing the contour.
     """
     pos = 0
     for i, primitive in enumerate(primitives2d):
-        if not is_undefined_primitive(primitive, periodicity):
+        if not is_undefined_brep_primitive(primitive, periodicity):
             return i
     return pos
 

@@ -1144,27 +1144,30 @@ class BSplineCurve(Edge):
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
-        class_sufix = cls.__name__[-2:]
-        lineseg_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
-        lineseg = lineseg_class(points[0], points[-1])
-        if all(lineseg.point_belongs(pt) for pt in points):
-            return lineseg
-        colinear = True
-        previous_vec = None
-        points_ = [points[0]]
-        for i, (point1, point2) in enumerate(zip(points[:-1], points[1:])):
-            vec = point2 - point1
-            if i == 0:
-                previous_vec = vec
-            elif not vec.is_colinear_to(previous_vec):
-                colinear = False
-                points_.append(point2)
-            previous_vec = vec
-        if not colinear:
-            arc_class_ = getattr(sys.modules[__name__], 'Arc' + class_sufix)
-            try_arc = arc_class_(points_[0], points_[1], points_[2])
-            if all(try_arc.point_belongs(point, 1e-6) for point in points):
-                return try_arc
+        # class_sufix = cls.__name__[-2:]
+        # lineseg_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
+        # lineseg = lineseg_class(points[0], points[-1])
+        # if all(lineseg.point_belongs(pt) for pt in points):
+        #     return lineseg
+        # colinear = True
+        # previous_vec = None
+        # points_ = [points[0]]
+        # for i, (point1, point2) in enumerate(zip(points[:-1], points[1:])):
+        #     vec = point2 - point1
+        #     if i == 0:
+        #         previous_vec = vec
+        #     elif not vec.is_colinear_to(previous_vec):
+        #         colinear = False
+        #         points_.append(point2)
+        #     previous_vec = vec
+        # if not colinear:
+        #     arc_class_ = getattr(sys.modules[__name__], 'Arc' + class_sufix)
+        #     try:
+        #         try_arc = arc_class_(points_[0], points_[1], points_[2])
+        #     except Exception:
+        #         print(True)
+        #     if all(try_arc.point_belongs(point, 1e-6) for point in points):
+        #         return try_arc
         curve = bspline_fitting.interpolate_curve([[*point] for point in points], degree, centripetal=True)
 
         bsplinecurve = cls.from_geomdl_curve(curve, name=name)
