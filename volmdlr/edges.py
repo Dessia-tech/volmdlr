@@ -5401,6 +5401,23 @@ class BSplineCurve3D(BSplineCurve):
         intersections_points = self.get_linesegment_intersections(linesegment3d)
         return intersections_points
 
+    def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
+        """
+        Checks if a 3D point belongs to the B-spline curve 3D or not. It uses the point_distance.
+
+        :param point: The point to be checked
+        :type point: volmdlr.Point3D
+        :param abs_tol: The precision in terms of distance.
+            Default value is 1e-6
+        :type abs_tol: float, optional
+        :return: `True` if the point belongs to the B-spline curve, `False`
+            otherwise
+        :rtype: bool
+        """
+        if self.point_distance(point) < abs_tol:
+            return True
+        return False
+
 
 class BezierCurve3D(BSplineCurve3D):
     """
