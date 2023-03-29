@@ -5135,7 +5135,7 @@ class Circle3D(Contour3D):
         if distance <= 1e-12:
             return volmdlr.edges.FullArc3D(self.frame.origin, point1,
                                            self.frame.w)
-        if distance < 1-5:
+        if distance < 1 - 5:
             print("Arc skipped because it's too small")
             return None
 

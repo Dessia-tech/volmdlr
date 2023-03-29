@@ -1145,7 +1145,7 @@ class BSplineCurve(Edge):
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
         class_sufix = cls.__name__[-2:]
-        lineseg_class = getattr(sys.modules[__name__], 'LineSegment'+class_sufix)
+        lineseg_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
         lineseg = lineseg_class(points[0], points[-1])
         if all(lineseg.point_belongs(pt) for pt in points):
             return lineseg
@@ -1161,7 +1161,7 @@ class BSplineCurve(Edge):
                 points_.append(point2)
             previous_vec = vec
         if not colinear:
-            arc_class_ = getattr(sys.modules[__name__], 'Arc'+class_sufix)
+            arc_class_ = getattr(sys.modules[__name__], 'Arc' + class_sufix)
             try_arc = arc_class_(points_[0], points_[1], points_[2])
             if all(try_arc.point_belongs(point, 1e-6) for point in points):
                 return try_arc
@@ -1365,12 +1365,12 @@ class BSplineCurve(Edge):
         split_bspline1 = self.split(shared_section[0].start)
         split_bspline2 = self.split(shared_section[0].end)
         new_arcs = []
-        shared_section_middle_point = shared_section[0].point_at_abscissa(0.5*shared_section[0].length())
+        shared_section_middle_point = shared_section[0].point_at_abscissa(0.5 * shared_section[0].length())
         for arc in split_bspline1 + split_bspline2:
             if arc and not arc.point_belongs(shared_section_middle_point, abs_tol=1e-6):
                 new_arcs.append(arc)
         return new_arcs
- 
+
     def evaluate_single(self, u):
         """
         Calculates a point in the BSplineCurve at a given parameter u.
@@ -6713,7 +6713,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
                                            teta) * self.major_dir.cross(
                                            self.normal) for teta in
                                        npy.linspace(0, volmdlr.TWO_PI,
-                                                   number_points)][:-1]
+                                                    number_points)][:-1]
         return discretization_points_3d
 
     def to_2d(self, plane_origin, x, y):

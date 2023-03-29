@@ -36,7 +36,6 @@ from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_
 from volmdlr.bspline_evaluators import evaluate_single
 from volmdlr.core import point_in_list
 
-c = 0
 
 def knots_vector_inv(knots_vector):
     """
@@ -975,10 +974,9 @@ class Surface3D(DessiaObject):
         elif lc3d > 1:
             area = -1
             inner_contours2d = []
-            try:
-                contours2d = [self.contour3d_to_2d(contour3d) for contour3d in contours3d]
-            except AttributeError:
-                print(True)
+
+            contours2d = [self.contour3d_to_2d(contour3d) for contour3d in contours3d]
+
             check_contours = [not contour2d.is_ordered()
                               for contour2d in contours2d]
             if any(check_contours):
@@ -998,8 +996,6 @@ class Surface3D(DessiaObject):
             class_ = globals()[self.face_class]
         else:
             class_ = self.face_class
-        # if not outer_contour2d.is_ordered():
-        #     outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
@@ -1066,6 +1062,7 @@ class Surface3D(DessiaObject):
         """
         raise NotImplementedError(f'repair_contours2d is abstract and should be implemented in '
                                   f'{self.__class__.__name__}')
+
     def contour3d_to_2d(self, contour3d):
         """
         Transforms a Contour3D into a Contour2D in the parametric domain of the surface.
@@ -1088,7 +1085,6 @@ class Surface3D(DessiaObject):
                 primitives2d.extend(primitives)
             else:
                 raise NotImplementedError(f'Class {self.__class__.__name__} does not implement {method_name}')
-
 
         wire2d = volmdlr.wires.Wire2D(primitives2d)
         delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
@@ -1590,6 +1586,7 @@ class PeriodicalSurface(Surface3D):
     """
     Abstract class for surfaces with two-pi periodicity that creates some problems.
     """
+
     def point2d_to_3d(self, point2d):
         raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
 
@@ -1646,7 +1643,8 @@ class PeriodicalSurface(Surface3D):
                         contour1, contour2 = cutted_contours
                         increasing_theta = theta3 < theta4
                         # inner_contour_side = 0 --> left  inner_contour_side = 1 --> right
-                        if (not inner_contour_side and increasing_theta) or (inner_contour_side and not increasing_theta):
+                        if (not inner_contour_side and increasing_theta) or (
+                                inner_contour_side and not increasing_theta):
                             theta_offset = outer_contour_theta[outer_contour_side] - contour2.primitives[0].start.x
                             translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour2_positionned = contour2.translation(offset=translation_vector)
@@ -1667,7 +1665,7 @@ class PeriodicalSurface(Surface3D):
                     elif number_contours == 1:
                         contour = cutted_contours[0]
                         theta_offset = outer_contour_theta[outer_contour_side] - \
-                                       inner_contour_theta[inner_contour_side]
+                            inner_contour_theta[inner_contour_side]
                         translation_vector = volmdlr.Vector2D(theta_offset, 0)
                         old_innner_contour_positioned = contour.translation(offset=translation_vector)
 
@@ -1848,7 +1846,7 @@ class PeriodicalSurface(Surface3D):
                 points[-1] = volmdlr.Point2D(volmdlr.TWO_PI, z2)
         elif theta_discontinuity and len(indexes_theta_discontinuity) == 1:
             index_theta_discontinuity = indexes_theta_discontinuity[0]
-            sign = points[index_theta_discontinuity - 1].x/abs(points[index_theta_discontinuity - 1].x)
+            sign = points[index_theta_discontinuity - 1].x / abs(points[index_theta_discontinuity - 1].x)
             points = [p + sign * volmdlr.Point2D(volmdlr.TWO_PI, 0) if i >= index_theta_discontinuity else p
                       for i, p in enumerate(points)]
         elif theta_discontinuity:
@@ -2670,7 +2668,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 points[-1] = volmdlr.Point2D(volmdlr.TWO_PI, phi2)
         elif theta_discontinuity and len(indexes_theta_discontinuity) == 1:
             index_theta_discontinuity = indexes_theta_discontinuity[0]
-            sign = points[index_theta_discontinuity - 1].x/abs(points[index_theta_discontinuity - 1].x)
+            sign = points[index_theta_discontinuity - 1].x / abs(points[index_theta_discontinuity - 1].x)
             points = [p + sign * volmdlr.Point2D(volmdlr.TWO_PI, 0) if i >= index_theta_discontinuity else p
                       for i, p in enumerate(points)]
         elif theta_discontinuity:
@@ -2686,7 +2684,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 points[-1] = volmdlr.Point2D(points[-1].x, volmdlr.TWO_PI)
         elif phi_discontinuity and len(indexes_phi_discontinuity) == 1:
             index_phi_discontinuity = indexes_phi_discontinuity[0]
-            sign = points[index_phi_discontinuity - 1].y/abs(points[index_phi_discontinuity - 1].y)
+            sign = points[index_phi_discontinuity - 1].y / abs(points[index_phi_discontinuity - 1].y)
             points = [p + sign * volmdlr.Point2D(0, volmdlr.TWO_PI) if i >= index_phi_discontinuity else p
                       for i, p in enumerate(points)]
         elif phi_discontinuity:
@@ -3005,7 +3003,6 @@ class ConicalSurface3D(PeriodicalSurface):
             else:
                 raise NotImplementedError(f'Class {self.__class__.__name__} does not implement {method_name}')
 
-
         wire2d = volmdlr.wires.Wire2D(primitives2d)
         delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
         if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
@@ -3092,13 +3089,13 @@ class ConicalSurface3D(PeriodicalSurface):
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
             elif math.isclose(primitives2d[i].start.y, 0.0, abs_tol=1e-6):
-                if primitives2d[i+1].end.x < primitives2d[i].end.x:
+                if primitives2d[i + 1].end.x < primitives2d[i].end.x:
                     primitives2d[i] = primitives2d[i].translation(volmdlr.Vector2D(volmdlr.TWO_PI, 0))
-                    primitives2d.insert(i-1, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+                    primitives2d.insert(i - 1, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                         name="construction"))
                 else:
                     primitives2d[i] = primitives2d[i].translation(volmdlr.Vector2D(-volmdlr.TWO_PI, 0))
-                    primitives2d.insert(i-1, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+                    primitives2d.insert(i - 1, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                         name="construction"))
             i += 1
         if not primitives2d[0].start.is_close(primitives2d[-1].end) \
@@ -3409,8 +3406,8 @@ class SphericalSurface3D(Surface3D):
         points[-1] = volmdlr.Point2D(theta2, phi2)
 
         theta_list = [point.x for point in points]
-        theta_discontinuity, indexes_theta_discontinuity  = angle_discontinuity(theta_list, self, bspline_curve3d,
-                                                                                points3d)
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list, self, bspline_curve3d,
+                                                                               points3d)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
@@ -3953,7 +3950,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        for i in range(number_curves+1):
+        for i in range(number_curves + 1):
             theta = i / number_curves * volmdlr.TWO_PI
             wire = self.wire.rotation(self.axis_point, self.axis, theta)
             wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))

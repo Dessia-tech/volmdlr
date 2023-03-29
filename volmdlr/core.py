@@ -471,7 +471,7 @@ class BoundingRectangle(dc.DessiaObject):
         Return the bounds of the BoundingRectangle.
         """
         return [volmdlr.Point2D(self.xmin, self.ymin), volmdlr.Point2D(self.xmax, self.ymin),
-            volmdlr.Point2D(self.xmax, self.ymax), volmdlr.Point2D(self.xmin, self.ymax)]
+                volmdlr.Point2D(self.xmax, self.ymax), volmdlr.Point2D(self.xmin, self.ymax)]
 
     def plot(self, ax=None, color='k', linestyle='dotted'):
         """
