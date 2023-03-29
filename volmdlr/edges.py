@@ -1163,10 +1163,11 @@ class BSplineCurve(Edge):
                 points_.append(point2)
             previous_vec = vec
         if not colinear:
-            arc_class_ = getattr(sys.modules[__name__], 'Arc'+class_sufix)
-            try_arc = arc_class_(points_[0], points_[1], points_[2])
-            if all(try_arc.point_belongs(point, 1e-6) for point in points):
-                return try_arc
+            if len(points_) >= 3:
+                arc_class_ = getattr(sys.modules[__name__], 'Arc'+class_sufix)
+                try_arc = arc_class_(points_[0], points_[1], points_[2])
+                if all(try_arc.point_belongs(point, 1e-6) for point in points):
+                    return try_arc
         curve = bspline_fitting.interpolate_curve([[*point] for point in points], degree, centripetal=True)
 
         bsplinecurve = cls.from_geomdl_curve(curve, name=name)
