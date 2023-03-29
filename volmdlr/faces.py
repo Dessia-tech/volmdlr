@@ -1833,8 +1833,7 @@ class PeriodicalSurface(Surface3D):
         points[-1] = volmdlr.Point2D(theta2, z2)
 
         theta_list = [point.x for point in points]
-        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list, self, bspline_curve3d,
-                                                                               points3d)
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
@@ -1886,8 +1885,7 @@ class PeriodicalSurface(Surface3D):
         points[-1] = volmdlr.Point2D(theta2, z2)
 
         theta_list = [point.x for point in points]
-        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list, self, arcellipse3d,
-                                                                               points)
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
@@ -2061,22 +2059,6 @@ class CylindricalSurface3D(PeriodicalSurface):
 
         return volmdlr.Point2D(theta, z)
 
-    def circle3d_to_2d(self, circle3d):
-        """
-        Transformation of a circle 3d to 2d, in a cylindrical surface.
-
-        """
-        return []
-
-    def ellipse3d_to_2d(self, ellipse3d):
-        """
-        Transformation of an Ellipse3D to 2D, in a cylindrical surface.
-
-        """
-        # points3d = ellipse3d.discretization_points(number_points = 50)
-        # points2d = [self.point3d_to_2d(point) for point in points3d]
-        # return points2d
-        raise NotImplementedError
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
@@ -2600,14 +2582,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         elif phi1 < phi3:
             point2 = volmdlr.Point2D(theta1, phi1 + volmdlr.TWO_PI)
         return [vme.LineSegment2D(point1, point2)]
-        # else:
-        #     raise ValueError('Impossible!')
-
-    def circle3d_to_2d(self, circle3d):
-        """
-        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
-        """
-        return []
 
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
@@ -2654,9 +2628,8 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         theta_list = [point.x for point in points]
         phi_list = [point.y for point in points]
-        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list, self, bspline_curve3d,
-                                                                               points3d)
-        phi_discontinuity, indexes_phi_discontinuity = angle_discontinuity(phi_list, self, bspline_curve3d, points3d)
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
+        phi_discontinuity, indexes_phi_discontinuity = angle_discontinuity(phi_list)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
@@ -2946,12 +2919,6 @@ class ConicalSurface3D(PeriodicalSurface):
         if not start.is_close(end):
             return [vme.LineSegment2D(start, end)]
         return [vme.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
-
-    def circle3d_to_2d(self, circle3d):
-        """
-        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
-        """
-        return []
 
     def linesegment2d_to_3d(self, linesegment2d):
         if linesegment2d.name == "construction":
@@ -3406,8 +3373,7 @@ class SphericalSurface3D(Surface3D):
         points[-1] = volmdlr.Point2D(theta2, phi2)
 
         theta_list = [point.x for point in points]
-        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list, self, bspline_curve3d,
-                                                                               points3d)
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
 
         if theta3 < theta1 < theta2 and theta_discontinuity:
             points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]

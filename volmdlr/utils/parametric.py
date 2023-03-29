@@ -25,7 +25,7 @@ def find_sign_changes(list_of_values):
     return sign_changes
 
 
-def angle_discontinuity(angle_list, surface, primitive, points3d):
+def angle_discontinuity(angle_list):
     """
     Returns True if there is some angle discontinuity in the angle_list.
 
