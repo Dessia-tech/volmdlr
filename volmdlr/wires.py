@@ -1665,7 +1665,7 @@ class Contour2D(ContourMixin, Wire2D):
             if points:
                 if not edge.start.is_close(points[-1]):
                     points.append(edge.start)
-            else:
+            elif not volmdlr.core.point_in_list(edge.start, points):
                 points.append(edge.start)
         return ClosedPolygon2D(points)
 
@@ -4406,7 +4406,7 @@ class Contour3D(ContourMixin, Wire3D):
             if points:
                 if not edge.start.is_close(points[-1]):
                     points.append(edge.start)
-            else:
+            elif not volmdlr.core.point_in_list(edge.start, points):
                 points.append(edge.start)
         return ClosedPolygon3D(points)
 
@@ -5131,13 +5131,9 @@ class Circle3D(Contour3D):
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')
             raise ValueError('Point not on circle for trim method')
-        distance = point1.point_distance(point2)
-        if distance <= 1e-12:
-            return volmdlr.edges.FullArc3D(self.frame.origin, point1,
-                                           self.frame.w)
-        if distance < 1 - 5:
-            print("Arc skipped because it's too small")
-            return None
+
+        if point1.is_close(point2):
+            return volmdlr.edges.FullArc3D(self.frame.origin, point1, self.frame.w)
 
         interior = volmdlr.geometry.clockwise_interior_from_circle3d(
             point1, point2, self)

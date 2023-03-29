@@ -36,6 +36,7 @@ from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_
 from volmdlr.bspline_evaluators import evaluate_single
 from volmdlr.core import point_in_list
 
+c = 0
 
 def knots_vector_inv(knots_vector):
     """
@@ -977,8 +978,7 @@ class Surface3D(DessiaObject):
 
             contours2d = [self.contour3d_to_2d(contour3d) for contour3d in contours3d]
 
-            check_contours = [not contour2d.is_ordered()
-                              for contour2d in contours2d]
+            check_contours = [not contour2d.is_ordered() for contour2d in contours2d]
             if any(check_contours):
                 outer_contour2d, inner_contours2d = self.repair_contours2d(contours2d[0], contours2d[1:])
             else:
@@ -996,8 +996,6 @@ class Surface3D(DessiaObject):
             class_ = globals()[self.face_class]
         else:
             class_ = self.face_class
-        if not outer_contour2d.is_ordered(1e-4):
-            outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
@@ -1028,13 +1026,16 @@ class Surface3D(DessiaObject):
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
-
-            if not math.isclose(delta.norm(), 0, abs_tol=1e-5) and \
+            is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-5)
+            if not is_connected and \
                     primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
                     math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-5):
                 primitives2d[i] = primitives2d[i].reverse()
-
-            elif not math.isclose(delta.norm(), 0, abs_tol=1e-5):
+            elif not is_connected and \
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
+                    math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-5):
+                primitives2d[i] = primitives2d[i].reverse()
+            elif not is_connected:
                 primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
         last_end = primitives2d[-1].end
@@ -1092,7 +1093,6 @@ class Surface3D(DessiaObject):
         wire2d = volmdlr.wires.Wire2D(primitives2d)
         delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
         if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
-
             return volmdlr.wires.Contour2D(primitives2d)
         # Fix contour
         if self.x_periodicity or self.y_periodicity:
@@ -3041,7 +3041,8 @@ class ConicalSurface3D(PeriodicalSurface):
         :rtype: list
         """
         # Search for a primitive that can be used as reference for reparing periodicity
-        pos = vm_parametric.find_index_defined_initial_primitive(primitives2d, [self.x_periodicity, self.y_periodicity])
+        pos = vm_parametric.find_index_defined_brep_primitive_on_periodical_surface(primitives2d,
+                                                                        [self.x_periodicity, self.y_periodicity])
         if pos != 0:
             primitives2d = primitives2d[pos:] + primitives2d[:pos]
 
@@ -4092,9 +4093,9 @@ class BSplineSurface3D(Surface3D):
             u = self.curves['u']
             a, b = self.surface.domain[0]
             u0 = u[0]
-            p_a = u0.evaluate_single(a)
-            p_b = u0.evaluate_single(b)
-            if p_a == p_b:
+            point_at_a = u0.evaluate_single(a)
+            point_at_b = u0.evaluate_single(b)
+            if npy.linalg.norm(npy.array(point_at_b) - npy.array(point_at_a)) < 1e-6:
                 self._x_periodicity = self.surface.range[0]
             else:
                 self._x_periodicity = None
@@ -4109,9 +4110,9 @@ class BSplineSurface3D(Surface3D):
             v = self.curves['v']
             c, d = self.surface.domain[1]
             v0 = v[0]
-            p_c = v0.evaluate_single(c)
-            p_d = v0.evaluate_single(d)
-            if p_c == p_d:
+            point_at_c = v0.evaluate_single(c)
+            point_at_d = v0.evaluate_single(d)
+            if npy.linalg.norm(npy.array(point_at_d) - npy.array(point_at_c)) < 1e-6:
                 self._y_periodicity = self.surface.range[1]
             else:
                 self._y_periodicity = None
@@ -4398,33 +4399,35 @@ class BSplineSurface3D(Surface3D):
         Verifies points at boundary on a periodic BSplineSurface3D.
 
         :param points_2d: List of `volmdlr.Point2D` after transformation from 3D Cartesian coordinates
-        :type points_2d: volmdlr.Point2D
+        :type points_2d: List[volmdlr.Point2D]
         :param direction_periodicity: should be 'x' if x_periodicity or 'y' if y periodicity
         :type direction_periodicity: str
         """
         lth = curve3d.length()
-        start = self.point3d_to_2d(curve3d.start)
-        end = self.point3d_to_2d(curve3d.end)
-
-        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.01 * lth))
-        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.98 * lth))
+        start = points_2d[0]
+        end = points_2d[-1]
         points = points_2d
+        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.2 * lth))
+        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.8 * lth))
+        # pt_after_start = points[1]
+        # pt_before_end = points[-2]
+
         if direction_periodicity == 'x':
             i = 0
         else:
             i = 1
         min_bound, max_bound = self.surface.domain[i]
         delta = max_bound - min_bound
-        if start[i] != end[i]:
-            if math.isclose(start[i], min_bound, abs_tol=1e-4) and pt_after_start[i] > 0.5 * delta:
-                start[i] = max_bound
-            elif math.isclose(start[i], max_bound, abs_tol=1e-4) and pt_after_start[i] < 0.5 * delta:
-                start[i] = min_bound
 
-            if math.isclose(end[i], min_bound, abs_tol=1e-4) and pt_before_end[i] > 0.5 * delta:
-                end[i] = max_bound
-            elif math.isclose(end[i], max_bound, abs_tol=1e-4) and pt_before_end[i] < 0.5 * delta:
-                end[i] = min_bound
+        if math.isclose(start[i], min_bound, abs_tol=1e-4) and pt_after_start[i] > 0.5 * delta:
+            start[i] = max_bound
+        elif math.isclose(start[i], max_bound, abs_tol=1e-4) and pt_after_start[i] < 0.5 * delta:
+            start[i] = min_bound
+
+        if math.isclose(end[i], min_bound, abs_tol=1e-4) and pt_before_end[i] > 0.5 * delta:
+            end[i] = max_bound
+        elif math.isclose(end[i], max_bound, abs_tol=1e-4) and pt_before_end[i] < 0.5 * delta:
+            end[i] = min_bound
 
         points[0] = start
         points[-1] = end
@@ -4582,12 +4585,12 @@ class BSplineSurface3D(Surface3D):
 
                 if self.y_periodicity:
                     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
-                points_ = [points[0]]
-                for point in points[1:]:
-                    if not point.is_close(points[-1]):
-                        points_.append(point)
-                if len(points_) < 2:
-                    return []
+                # points_ = [points[0]]
+                # for point in points[1:]:
+                #     if not point.is_close(points[-1]):
+                #         points_.append(point)
+                # if len(points_) < 2:
+                #     return []
 
                 return [vme.BSplineCurve2D.from_points_interpolation(
                     points=points, degree=bspline_curve3d.degree, periodic=bspline_curve3d.periodic)]
@@ -4608,13 +4611,12 @@ class BSplineSurface3D(Surface3D):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-
         min_bound_x, max_bound_x = self.surface.domain[0]
         min_bound_y, max_bound_y = self.surface.domain[1]
         if self.x_periodicity:
             points = self._repair_periodic_boundary_points(arc3d, [start, end], 'x')
             start = points[0]
-            end = points[1]
+            end = points[-1]
             if start == end:
                 if math.isclose(start.x, min_bound_x, abs_tol=1e-4):
                     end.x = max_bound_x
@@ -4623,7 +4625,7 @@ class BSplineSurface3D(Surface3D):
         if self.y_periodicity:
             points = self._repair_periodic_boundary_points(arc3d, [start, end], 'y')
             start = points[0]
-            end = points[1]
+            end = points[-1]
             if start.is_close(end):
                 if math.isclose(start.y, min_bound_y, abs_tol=1e-4):
                     end.y = max_bound_y
