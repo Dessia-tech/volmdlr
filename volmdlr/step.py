@@ -291,6 +291,7 @@ def trimmed_curve(arguments, object_dict):
 def vertex_loop(arguments, object_dict):
     """
     Returns the data in case of a VERTEX_LOOP.
+
     #todo: this entity is used to define some faces but it returns only one point.
     """
     return object_dict[arguments[1]]

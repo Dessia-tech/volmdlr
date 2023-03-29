@@ -1910,6 +1910,7 @@ class PeriodicalSurface(Surface3D):
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
         Is this right?.
+
         #TODO: today ArcEllipse3D are also represented as bspline curves 2D.
         """
         n = len(bspline_curve2d.control_points)
