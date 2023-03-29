@@ -5152,12 +5152,50 @@ class BSplineCurve3D(BSplineCurve):
             content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
         return content, [current_id]
 
-    def point_distance(self, pt1):
-        """Returns the minimal distance to a point."""
-        distances = []
-        for point in self.points:
-            distances.append(pt1.point_distance(point))
-        return min(distances)
+    # def point_distance(self, pt1):
+    #     """Returns the minimal distance to a point."""
+    #     distances = []
+    #     for point in self.points:
+    #         distances.append(pt1.point_distance(point))
+    #     return min(distances)
+
+    def point_distance(self, point):
+        """
+        Calculates the distance from a given point to a BSplineCurve3D.
+
+        :param point: point 3d.
+        :return: distance.
+        """
+        best_distance = math.inf
+        abscissa1 = 0
+        abscissa2 = self.abscissa(self.end)
+        distance = best_distance
+        point1_ = None
+        point2_ = None
+        while True:
+            discretized_points_between_1_2 = []
+            for abscissa in npy.linspace(abscissa1, abscissa2, num=8):
+                abscissa_point = self.point_at_abscissa(abscissa)
+                if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+                    discretized_points_between_1_2.append(abscissa_point)
+            if not discretized_points_between_1_2:
+                break
+            distance = point.point_distance(discretized_points_between_1_2[0])
+            for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
+                line = LineSegment2D(point1, point2)
+                dist = line.point_distance(point)
+                if dist < distance:
+                    point1_ = point1
+                    point2_ = point2
+                    distance = dist
+            if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-6):
+                break
+            abscissa1 = self.abscissa(point1_)
+            abscissa2 = self.abscissa(point2_)
+            best_distance = distance
+            if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
+                break
+        return distance
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
