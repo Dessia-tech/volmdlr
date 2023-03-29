@@ -5900,18 +5900,17 @@ class BSplineSurface3D(Surface3D):
         # grid3d
         nb = 10
         points3d = []
+        is_true = (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
+                    or self.is_intersected_with(other_bspline_surface3d))
+
         for i, bspline in enumerate(bsplines_new):
             grid3d = bspline.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(0, 1),
                                                                         y_limits=(0, 1),
                                                                         points_nbr=(nb, nb),
                                                                         direction=grid2d_direction[i]))
 
-            if (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
-                    or self.is_intersected_with(other_bspline_surface3d)):
-                if i == 1:
-                    points3d.extend(grid3d[nb:nb * nb])
-                else:
-                    points3d.extend(grid3d)
+            if is_true and i == 1:
+                points3d.extend(grid3d[nb:nb * nb])
             else:
                 points3d.extend(grid3d)
 
