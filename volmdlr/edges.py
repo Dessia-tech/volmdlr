@@ -25,6 +25,7 @@ from packaging import version
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
+import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr import bspline_fitting
 from volmdlr.core import EdgeStyle
@@ -443,6 +444,15 @@ class LineSegment(Edge):
 
     """
 
+    def direction_independent_eq(self, linesegment2):
+        """
+        Verifies if two line segments are the same, not considering its direction.
+
+        """
+        if self.start.is_close(linesegment2.start) and self.end.is_close(linesegment2.end):
+            return True
+        return self.start.is_close(linesegment2.end) and self.end.is_close(linesegment2.start)
+
     def length(self):
         if not self._length:
             self._length = self.end.point_distance(self.start)
@@ -555,6 +565,63 @@ class LineSegment(Edge):
 
     def get_geo_points(self):
         return [self.start, self.end]
+
+    def get_shared_section(self, other_linesegment):
+        """
+        Gets the shared section between two line segments.
+
+        :param other_linesegment: other line segment to verify for shared section.
+        :return: shared line segment section.
+        """
+        if self.__class__ != other_linesegment.__class__:
+            return []
+        if not self.direction_vector().is_colinear_to(other_linesegment.direction_vector()) or \
+                (not any(self.point_belongs(point, 1e-6)
+                         for point in [other_linesegment.start, other_linesegment.end]) and
+                 not any(other_linesegment.point_belongs(point, 1e-6) for point in [self.start, self.end])):
+            return []
+        if all(self.point_belongs(point) for point in other_linesegment.discretization_points(number_points=5)):
+            return [other_linesegment]
+        if all(other_linesegment.point_belongs(point) for point in self.discretization_points(number_points=5)):
+            return [self]
+        new_linesegment_points = []
+        for point in [self.start, self.end]:
+            if other_linesegment.point_belongs(point, abs_tol=1e-6) and\
+                    not volmdlr.core.point_in_list(point, new_linesegment_points):
+                new_linesegment_points.append(point)
+        for point in [other_linesegment.start, other_linesegment.end]:
+            if self.point_belongs(point, abs_tol=1e-6) and\
+                    not volmdlr.core.point_in_list(point, new_linesegment_points):
+                new_linesegment_points.append(point)
+        if len(new_linesegment_points) == 1:
+            return []
+        if len(new_linesegment_points) != 2:
+            raise ValueError
+        class_ = self.__class__
+        return [class_(new_linesegment_points[0], new_linesegment_points[1])]
+
+    def delete_shared_section(self, other_linesegment):
+        """
+        Deletes from self, the section shared with the other line segment.
+
+        :param other_linesegment:
+        :return:
+        """
+        shared_section = self.get_shared_section(other_linesegment)
+        if not shared_section:
+            return [self]
+        points = []
+        for point in [self.start, self.end, shared_section[0].start, shared_section[0].end]:
+            if not volmdlr.core.point_in_list(point, points):
+                points.append(point)
+        points = sorted(points, key=self.start.point_distance)
+        new_line_segments = []
+        class_ = self.__class__
+        for point1, point2 in zip(points[:-1], points[1:]):
+            lineseg = class_(point1, point2)
+            if not lineseg.direction_independent_eq(shared_section[0]):
+                new_line_segments.append(lineseg)
+        return new_line_segments
 
     def straight_line_point_belongs(self, point):
         """
@@ -1079,6 +1146,27 @@ class BSplineCurve(Edge):
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
+        class_sufix = cls.__name__[-2:]
+        lineseg_class = getattr(sys.modules[__name__], 'LineSegment'+class_sufix)
+        lineseg = lineseg_class(points[0], points[-1])
+        if all(lineseg.point_belongs(pt) for pt in points):
+            return lineseg
+        colinear = True
+        previous_vec = None
+        points_ = [points[0]]
+        for i, (point1, point2) in enumerate(zip(points[:-1], points[1:])):
+            vec = point2 - point1
+            if i == 0:
+                previous_vec = vec
+            elif not vec.is_colinear_to(previous_vec):
+                colinear = False
+                points_.append(point2)
+            previous_vec = vec
+        if not colinear:
+            arc_class_ = getattr(sys.modules[__name__], 'Arc'+class_sufix)
+            try_arc = arc_class_(points_[0], points_[1], points_[2])
+            if all(try_arc.point_belongs(point, 1e-6) for point in points):
+                return try_arc
         curve = bspline_fitting.interpolate_curve([[*point] for point in points], degree, centripetal=True)
 
         bsplinecurve = cls.from_geomdl_curve(curve, name=name)
@@ -1243,6 +1331,62 @@ class BSplineCurve(Edge):
         point_name = 'Point' + self.__class__.__name__[-2:]
         return getattr(volmdlr, point_name)(*self.curve.evaluate_single(adim_abs))
 
+    def get_shared_section(self, other_bspline2):
+        """
+        Gets the shared section between two BSpline curves.
+
+        :param other_bspline2: other arc to verify for shared section.
+        :return: shared arc section.
+        """
+        if self.__class__ != other_bspline2.__class__:
+            return []
+        if self.__class__.__name__[-2:] == '3D':
+            if self.bounding_box.distance_to_bbox(other_bspline2.bounding_box) > 1e-7:
+                return []
+        elif self.bounding_rectangle.distance_to_b_rectangle(other_bspline2.bounding_rectangle) > 1e-7:
+            return []
+        if not any(self.point_belongs(point, abs_tol=1e-6)
+                   for point in other_bspline2.discretization_points(number_points=10)):
+            return []
+        if all(self.point_belongs(point, abs_tol=1e-6) for point in other_bspline2.points):
+            return [other_bspline2]
+        if all(other_bspline2.point_belongs(point, abs_tol=1e-6) for point in self.points):
+            return [self]
+        if self.point_belongs(other_bspline2.start, abs_tol=1e-6):
+            bspline1_, bspline2_ = self.split(other_bspline2.start)
+        elif self.point_belongs(other_bspline2.end, abs_tol=1e-6):
+            bspline1_, bspline2_ = self.split(other_bspline2.end)
+        else:
+            raise NotImplementedError
+        shared_bspline_section = []
+        for bspline in [bspline1_, bspline2_]:
+            if bspline and all(other_bspline2.point_belongs(point)
+                               for point in bspline.discretization_points(number_points=10)):
+                shared_bspline_section.append(bspline)
+                break
+        return shared_bspline_section
+
+    def delete_shared_section(self, other_bspline2):
+        """
+        Deletes from self, the section shared with the other arc.
+
+        :param other_bspline2:
+        :return:
+        """
+        shared_section = self.get_shared_section(other_bspline2)
+        if not shared_section:
+            return [self]
+        if shared_section == self:
+            return []
+        split_bspline1 = self.split(shared_section[0].start)
+        split_bspline2 = self.split(shared_section[0].end)
+        new_arcs = []
+        shared_section_middle_point = shared_section[0].point_at_abscissa(0.5*shared_section[0].length())
+        for arc in split_bspline1 + split_bspline2:
+            if arc and not arc.point_belongs(shared_section_middle_point, abs_tol=1e-6):
+                new_arcs.append(arc)
+        return new_arcs
+ 
     def evaluate_single(self, u):
         """
         Calculates a point in the BSplineCurve at a given parameter u.
@@ -1881,7 +2025,7 @@ class BSplineCurve2D(BSplineCurve):
                                                                     self.periodic)
         return offseted_bspline
 
-    def point_belongs(self, point: volmdlr.Point2D, abs_tol: float = 1e-7):
+    def point_belongs(self, point: volmdlr.Point2D, abs_tol: float = 1e-6):
         """
         Checks if a 2D point belongs to the B-spline curve 2D or not. It uses the point_distance.
 
@@ -1954,15 +2098,6 @@ class LineSegment2D(LineSegment):
         if self.__class__.__name__ != other_object.__class__.__name__:
             return False
         return self.start == other_object.start and self.end == other_object.end
-
-    def direction_independent_eq(self, linesegment2):
-        """
-        Verifies if two line segments are the same, not considering its direction.
-
-        """
-        if self == linesegment2:
-            return True
-        return self.start == linesegment2.end and self.end == linesegment2.start
 
     def to_dict(self, *args, **kwargs):
         return {'object_class': 'volmdlr.edges.LineSegment2D',
@@ -2317,6 +2452,7 @@ class Arc(Edge):
         self._utd_clockwise_and_trigowise_paths = False
         self._clockwise_and_trigowise_paths = None
         self._radius = None
+        self._length = None
 
     @property
     def center(self):
@@ -2363,7 +2499,9 @@ class Arc(Edge):
 
         :return: the length of the Arc.
         """
-        return self.radius * abs(self.angle)
+        if not self._length:
+            self._length = self.radius * abs(self.angle)
+        return self._length
 
     def point_at_abscissa(self, abscissa):
         """
@@ -2522,6 +2660,56 @@ class Arc(Edge):
                 self.__class__(split_point, self.point_at_abscissa((self.abscissa(self.end) -
                                                                     abscissa) * 0.5 + abscissa), self.end)]
 
+    def get_shared_section(self, other_arc2):
+        """
+        Gets the shared section between two arcs.
+
+        :param arc2: other arc to verify for shared section.
+        :return: shared arc section.
+        """
+        if self.__class__ != other_arc2.__class__:
+            return []
+        if not self.center.is_close(other_arc2.center) or self.radius != self.radius or \
+                not any(self.point_belongs(point) for point in [other_arc2.start,
+                                                                other_arc2.interior, other_arc2.end]):
+            return []
+        if all(self.point_belongs(point) for point in [other_arc2.start, other_arc2.interior, other_arc2.end]):
+            return [other_arc2]
+        if all(other_arc2.point_belongs(point) for point in [self.start, self.interior, self.end]):
+            return [self]
+        if self.point_belongs(other_arc2.start):
+            arc1_, arc2_ = self.split(other_arc2.start)
+        elif self.point_belongs(other_arc2.end):
+            arc1_, arc2_ = self.split(other_arc2.end)
+        else:
+            raise NotImplementedError
+        shared_arc_section = []
+        for arc in [arc1_, arc2_]:
+            if arc and all(other_arc2.point_belongs(point) for point in [arc.start, arc.interior, arc.end]):
+                shared_arc_section.append(arc)
+                break
+        return shared_arc_section
+
+    def delete_shared_section(self, other_arc2):
+        """
+        Deletes from self, the section shared with the other arc.
+
+        :param other_arc2:
+        :return:
+        """
+        shared_section = self.get_shared_section(other_arc2)
+        if not shared_section:
+            return [self]
+        if shared_section == self:
+            return []
+        split_arcs1 = self.split(shared_section[0].start)
+        split_arcs2 = self.split(shared_section[0].end)
+        new_arcs = []
+        for arc in split_arcs1 + split_arcs2:
+            if arc and not arc.point_belongs(shared_section[0].interior):
+                new_arcs.append(arc)
+        return new_arcs
+
 
 class Arc2D(Arc):
     """
@@ -2666,9 +2854,9 @@ class Arc2D(Arc):
         if point_angle <= arc_angle:
             return abs(
                 LineSegment2D(point, self.center).length() - self.radius)
-        return min(LineSegment2D(point, self.start).length(), LineSegment2D(point, self.end).length())
+        return min(point.point_distance(self.start), point.point_distance(self.end))
 
-    def point_belongs(self, point2d, abs_tol=1e-10):
+    def point_belongs(self, point2d, abs_tol=1e-6):
         """
         Check if a Point2D belongs to the Arc2D.
 
@@ -2676,11 +2864,16 @@ class Arc2D(Arc):
         distance_point_to_center = point2d.point_distance(self.center)
         if not math.isclose(distance_point_to_center, self.radius, abs_tol=abs_tol):
             return False
-        try:
-            point_abscissa = self.abscissa(point2d)
-        except ValueError:
-            return False
-        if self.length() >= point_abscissa >= 0:
+        if point2d.is_close(self.start) or point2d.is_close(self.end):
+            return True
+        clockwise_arc = self.reverse() if self.is_trigo else self
+        vector_start = clockwise_arc.start - clockwise_arc.center
+        vector_end = clockwise_arc.end - clockwise_arc.center
+        vector_point = point2d - clockwise_arc.center
+        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
+        point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
+        point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
+        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=abs_tol):
             return True
         return False
 
@@ -2727,34 +2920,28 @@ class Arc2D(Arc):
                 intersection_points.append(point)
         return intersection_points
 
-    def abscissa(self, point: volmdlr.Point2D, tol=1e-9):
+    def abscissa(self, point: volmdlr.Point2D, tol=1e-6):
         """
         Returns the abscissa of a given point 2d.
         """
+        if not math.isclose(point.point_distance(self.center), self.radius, abs_tol=tol):
+            raise ValueError('Point not in arc')
         if point.point_distance(self.start) < tol:
             return 0
         if point.point_distance(self.end) < tol:
             return self.length()
-
-        point_ = point - self.center
-        u = self.start - self.center
-        u.normalize()
-        if self.is_trigo:
-            v = u.normal_vector()
-        else:
-            v = -u.normal_vector()
-
-        x, y = point_.dot(u), point_.dot(v)
-        theta = math.atan2(y, x)
-        if theta < -tol or theta > self.angle + tol:
-            raise ValueError('Point not in arc')
-
-        if theta < 0:
-            return 0.
-        if theta > self.angle:
-            return self.angle * self.radius
-
-        return self.radius * theta
+        clockwise_arc = self.reverse() if self.is_trigo else self
+        vector_start = clockwise_arc.start - clockwise_arc.center
+        vector_end = clockwise_arc.end - clockwise_arc.center
+        vector_point = point - clockwise_arc.center
+        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
+        point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
+        point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
+        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=tol):
+            if self.is_trigo:
+                return self.length() - self.radius * point_start_angle
+            return self.radius * point_start_angle
+        raise ValueError('Point not in arc')
 
     def area(self):
         """
@@ -3264,23 +3451,7 @@ class FullArc2D(Arc2D):
         return volmdlr.wires.ClosedPolygon2D(self.discretization_points(angle_resolution=15))
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        if ax is None:
-            _, ax = plt.subplots()
-
-        if self.radius > 0:
-            ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y),
-                                                2 * self.radius,
-                                                2 * self.radius,
-                                                angle=0,
-                                                theta1=0,
-                                                theta2=360,
-                                                color=edge_style.color,
-                                                linestyle=edge_style.linestyle,
-                                                linewidth=edge_style.linewidth))
-        if edge_style.plot_points:
-            ax.plot([self.start.x], [self.start.y], 'o',
-                    color=edge_style.color, alpha=edge_style.alpha)
-        return ax
+        return vm_common_operations.plot_circle(self, ax, edge_style)
 
     def cut_between_two_points(self, point1, point2):
 
@@ -5718,25 +5889,13 @@ class Arc3D(Arc):
         return point1, point2
 
     def distance_squared(self, x, u, v, k, w):
-        a = u.dot(u)
-        b = u.dot(v)
-        c = u.dot(k)
-        d = v.dot(v)
-        e = v.dot(k)
-        f = k.dot(k)
-        g = w.dot(u)
-        h = w.dot(v)
-        i = w.dot(k)
-        j = w.dot(w)
-
-        r = self.radius
-        return (a * x[0] ** 2 + j + d * (
-                (math.sin(x[1])) ** 2) * r ** 2 + f * (
-                        (math.cos(x[1])) ** 2) * r ** 2
-                - 2 * x[0] * g - 2 * x[0] * r * math.sin(x[1]) * b - 2 * x[
-                    0] * r * math.cos(x[1]) * c
-                + 2 * r * math.sin(x[1]) * h + 2 * r * math.cos(x[1]) * i
-                + math.sin(2 * x[1]) * e * r ** 2)
+        radius = self.radius
+        return (u.dot(u) * x[0] ** 2 + w.dot(w) + v.dot(v) * (
+                (math.sin(x[1])) ** 2) * radius ** 2 + k.dot(k) * ((math.cos(x[1])) ** 2) * radius ** 2
+                - 2 * x[0] * w.dot(u) - 2 * x[0] * radius * math.sin(x[1]) * u.dot(v) - 2 * x[
+                    0] * radius * math.cos(x[1]) * u.dot(k)
+                + 2 * radius * math.sin(x[1]) * w.dot(v) + 2 * radius * math.cos(x[1]) * w.dot(k)
+                + math.sin(2 * x[1]) * v.dot(k) * radius ** 2)
 
     def minimum_distance_points_line(self, other_line):
         u = other_line.direction_vector()
