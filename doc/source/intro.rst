@@ -38,7 +38,7 @@ The volmdlr library is structured using a modular approach as follows:
 * **stl**: provides support for importing and exporting STL files;
 * **step**: provides support for importing and exporting STEP files;
 * **mesh**: provides tools for creating and manipulating triangular meshes;
-* **primitives3d**: provides tools for creating 3D primitives like extrusion, revolution and sweep;
+* **primitives3d**: provides tools for creating 3D primitives like extrusion, revolution and sweep.
 
 
 CAD 
