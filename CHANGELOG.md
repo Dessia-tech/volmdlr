@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Edge: change unit_direction_vector and unit_normal_vector to concrete methods
 * stl: add _standalone_in_db to Stl class
 * BSplineSurface3D: refactor bsplinecurve3d_to_2d to take into account periodic behavior
+* OpenedRoundedLineSegments2D/ClosedRoundedLineSegments2D: fix radius type
 
 ### Removed
 * stl: remove default value in from_stream method
