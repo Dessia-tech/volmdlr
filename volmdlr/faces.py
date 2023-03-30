@@ -3033,7 +3033,7 @@ class SphericalSurface3D(PeriodicalSurface):
     def __init__(self, frame, radius, name=''):
         self.frame = frame
         self.radius = radius
-        Surface3D.__init__(self, name=name)
+        PeriodicalSurface.__init__(self, name=name)
 
         # Hidden Attributes
         self._bbox = None
@@ -3188,7 +3188,7 @@ class SphericalSurface3D(PeriodicalSurface):
 
     def is_lat_long_curve(self, theta_list, phi_list):
         """
-        Checks if a curve defined in spherical coordinates is a latitude/longitude curve.
+        Checks if a curve defined on the sphere is a latitude/longitude curve.
         Returns True if it is, False otherwise.
         """
         # Check if curve is a longitude curve (phi is constant)
@@ -9485,10 +9485,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def triangulation(self):
         meshes = []
-        for i, face in enumerate(self.faces):
-            # print(i)
-            if i == 1050:
-                print(True)
+        for face in self.faces:
             face_mesh = face.triangulation()
             meshes.append(face_mesh)
         return vmd.DisplayMesh3D.merge_meshes(meshes)
