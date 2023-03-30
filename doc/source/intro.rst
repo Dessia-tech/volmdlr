@@ -27,7 +27,7 @@ shapes and to provide a rich set of operations for manipulating and analyzing th
 
 The volmdlr library is structured using a modular approach as follows:
 
-* **cloud**: provides algorithms to work with a cloud of points.
+* **cloud**: provides algorithms to work with a cloud of points;
 * **core_compiled**: provides fundamental objects and algorithms for B-Rep modeling, implemented in C++ for performance reasons
 * **core**: provides fundamental data structures and algorithms for B-Rep modeling;
 * **display**: provides tools for rendering and visualizing 3D models;
