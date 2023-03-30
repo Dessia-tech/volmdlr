@@ -171,7 +171,7 @@ def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, ang
     return angle_start, angle_end
 
 
-def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
+def arc3d_to_cylindrical_coordinates_verification(start, end, angle3d, theta3, theta4):
     """
     Verifies theta from start and end of an Arc3D after transformation from spatial to parametric coordinates.
     """
@@ -190,7 +190,7 @@ def arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4):
     return [start, end]
 
 
-def arc3d_to_spherical_verification(start, end, angle3d, reference_points, periodicity):
+def arc3d_to_spherical_coordinates_verification(start, end, angle3d, reference_points, periodicity):
     """
     Verifies theta and phi from start and end of an arc 3D after transformation from spatial to parametric coordinates.
     """

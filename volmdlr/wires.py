@@ -1665,10 +1665,10 @@ class Contour2D(ContourMixin, Wire2D):
             if points:
                 if not edge.start.is_close(points[-1]):
                     points.append(edge.start)
-            elif not volmdlr.core.point_in_list(edge.start, points):
+            else:
                 points.append(edge.start)
-        return ClosedPolygon2D(points)
-
+        closedpolygon = ClosedPolygon2D(points)
+        return closedpolygon
     def to_3d(self, plane_origin, x, y):
         """
         Transforms a Contour2D into an Contour3D, given a plane origin and an u and v plane vector.
@@ -4406,7 +4406,7 @@ class Contour3D(ContourMixin, Wire3D):
             if points:
                 if not edge.start.is_close(points[-1]):
                     points.append(edge.start)
-            elif not volmdlr.core.point_in_list(edge.start, points):
+            else:
                 points.append(edge.start)
         return ClosedPolygon3D(points)
 
@@ -5397,7 +5397,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         if len(self.points) > 1:
             for point1, point2 in zip(self.points,
                                       list(self.points[1:]) + [self.points[0]]):
-                lines.append(volmdlr.edges.LineSegment3D(point1, point2))
+                if not point1.is_close(point2):
+                    lines.append(volmdlr.edges.LineSegment3D(point1, point2))
         return lines
 
     def copy(self, *args, **kwargs):
