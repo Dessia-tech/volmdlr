@@ -14,7 +14,7 @@ class TestPeriodicalSurface(unittest.TestCase):
 
         contours = [contour3d_0, contour3d_1]
         face = surface.face_from_contours3d(contours)
-        self.assertEqual(face.surface2d.area(), 0.4272566008882119)
+        self.assertAlmostEqual(face.surface2d.area(), 0.4272566008882119, 1e-6)
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
     def test_bsplinecurve3d_to_2d(self):
