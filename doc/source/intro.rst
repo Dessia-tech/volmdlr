@@ -33,7 +33,7 @@ The volmdlr library is structured using a modular approach as follows:
 * **display**: provides tools for rendering and visualizing 3D models;
 * **geometry**: provides functions and tools for calculations and geometric operations with volmdlr geometric objects;
 * **edges**: a shape corresponding to a curve and bounded by a start and an end point;
-* **wires**:a sequence of edges connected by their vertices;
+* **wires**: a sequence of edges connected by their vertices;
 * **faces**: This module regroup surfaces, faces and shell objects. It's supposed to be divided into three different modules in future releases. A surface is defined by its mathematical equations. A face is defined by a surface and a boundary representation, that is called Suface2D in volmdlr. And a Shell is a collection of faces;
 * **stl**: provides support for importing and exporting STL files;
 * **step**: provides support for importing and exporting STEP files;
