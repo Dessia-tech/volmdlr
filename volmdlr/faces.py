@@ -36,7 +36,6 @@ from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_
 from volmdlr.bspline_evaluators import evaluate_single
 from volmdlr.core import point_in_list
 
-c = 0
 
 def knots_vector_inv(knots_vector):
     """
@@ -2667,16 +2666,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         elif phi_discontinuity:
             raise NotImplementedError
 
-        # if theta3 < theta1 < theta2 and theta_discontinuity:
-        #     points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
-        # elif theta3 > theta1 > theta2 and theta_discontinuity:
-        #     points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
-
-        # if phi3 < phi1 < phi2 and phi_discontinuity:
-        #     points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y > 0 else p for p in points]
-        # elif phi3 > phi1 > phi2 and phi_discontinuity:
-        #     points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.y < 0 else p for p in points]
-
         return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
@@ -4407,8 +4396,8 @@ class BSplineSurface3D(Surface3D):
         start = points_2d[0]
         end = points_2d[-1]
         points = points_2d
-        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.2 * lth))
-        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.8 * lth))
+        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.1 * lth))
+        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.9 * lth))
         # pt_after_start = points[1]
         # pt_before_end = points[-2]
 
@@ -4609,21 +4598,24 @@ class BSplineSurface3D(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        start = self.point3d_to_2d(arc3d.start)
-        end = self.point3d_to_2d(arc3d.end)
+        number_points = max(self.nb_u, self.nb_v)
+        degree = max(self.degree_u, self.degree_v)
+        points = [self.point3d_to_2d(point3d) for point3d in arc3d.discretization_points(number_points=number_points)]
+        start = points[0]
+        end = points[-1]
         min_bound_x, max_bound_x = self.surface.domain[0]
         min_bound_y, max_bound_y = self.surface.domain[1]
         if self.x_periodicity:
-            points = self._repair_periodic_boundary_points(arc3d, [start, end], 'x')
+            points = self._repair_periodic_boundary_points(arc3d, points, 'x')
             start = points[0]
             end = points[-1]
-            if start == end:
+            if start.is_close(end):
                 if math.isclose(start.x, min_bound_x, abs_tol=1e-4):
                     end.x = max_bound_x
                 else:
                     end.x = min_bound_x
         if self.y_periodicity:
-            points = self._repair_periodic_boundary_points(arc3d, [start, end], 'y')
+            points = self._repair_periodic_boundary_points(arc3d, points, 'y')
             start = points[0]
             end = points[-1]
             if start.is_close(end):
@@ -4633,7 +4625,15 @@ class BSplineSurface3D(Surface3D):
                     end.y = min_bound_y
         if start.is_close(end):
             return []
-        return [vme.LineSegment2D(start, end)]
+        linesegment = vme.LineSegment2D(start, end)
+        flag = True
+        for point in points:
+            if not linesegment.point_belongs(point):
+                flag = False
+                break
+        if flag:
+            return [linesegment]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, degree)]
 
     def arc2d_to_3d(self, arc2d):
         number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
@@ -9532,7 +9532,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def triangulation(self):
         meshes = []
-        for face in self.faces:
+        for i, face in enumerate(self.faces):
+            # print(i)
+            if i == 1050:
+                print(True)
             face_mesh = face.triangulation()
             meshes.append(face_mesh)
         return vmd.DisplayMesh3D.merge_meshes(meshes)

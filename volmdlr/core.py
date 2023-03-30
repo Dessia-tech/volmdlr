@@ -392,10 +392,6 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_points(self):
         points = []
-        try:
-            test = self.primitives[0]
-        except Exception:
-            print(True)
         if hasattr(self, 'primitives') and \
                 hasattr(self.primitives[0], 'start'):
             points = [[self.primitives[0].start.x,
