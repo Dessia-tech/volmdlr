@@ -3189,6 +3189,7 @@ class SphericalSurface3D(PeriodicalSurface):
     def is_lat_long_curve(self, theta_list, phi_list):
         """
         Checks if a curve defined on the sphere is a latitude/longitude curve.
+
         Returns True if it is, False otherwise.
         """
         # Check if curve is a longitude curve (phi is constant)
