@@ -1669,6 +1669,7 @@ class Contour2D(ContourMixin, Wire2D):
                 points.append(edge.start)
         closedpolygon = ClosedPolygon2D(points)
         return closedpolygon
+
     def to_3d(self, plane_origin, x, y):
         """
         Transforms a Contour2D into an Contour3D, given a plane origin and an u and v plane vector.
