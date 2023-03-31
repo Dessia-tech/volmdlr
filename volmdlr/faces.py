@@ -6249,7 +6249,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if hasattr(surface, 'face_from_contours3d'):
             if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
                 return surface
-            elif (len(contours) == 2) and isinstance(contours[1], volmdlr.Point3D):
+            if (len(contours) == 2) and isinstance(contours[1], volmdlr.Point3D):
                 raise NotImplementedError
             return surface.face_from_contours3d(contours, name)
             # except Exception:
