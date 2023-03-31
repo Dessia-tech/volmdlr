@@ -1621,7 +1621,7 @@ class Line2D(Line):
     def compute_tangent_circle_for_parallel_segments(new_basis, new_a, new_c):
         segments_distance = abs(new_c[1] - new_a[1])
         radius = segments_distance / 2
-        new_circle_center = volmdlr.Point2D((0, npy.sign(new_c[1] - new_a[1]) * r))
+        new_circle_center = volmdlr.Point2D((0, npy.sign(new_c[1] - new_a[1]) * radius))
         circle_center = new_basis.local_to_global_coordinates(new_circle_center)
         circle = volmdlr.wires.Circle2D(circle_center, radius)
         return circle, None
