@@ -73,9 +73,10 @@ def is_undefined_brep_primitive(primitive, periodicity):
     elif not periodicity[0] and periodicity[1]:
         i = 1
     else:
-        if ((2 * start.x) % periodicity[0]) == 0 and ((2 * start.y) % periodicity[1]) == 0:
-            return True
         return False
+    #     if ((2 * start.x) % periodicity[0]) == 0 and ((2 * start.y) % periodicity[1]) == 0:
+    #         return True
+    #     return False
     if ((2 * start[i]) % periodicity[i]) == 0 and end[i] == start[i]:
         return True
     return False

@@ -291,13 +291,8 @@ def trimmed_curve(arguments, object_dict):
 def vertex_loop(arguments, object_dict):
     """
     Returns the data in case of a VERTEX_LOOP.
-
-    #todo: this entity is used to define some faces but it returns only one point.
-    #todo: How a point is used in the construction of a face?
     """
-    if not isinstance(arguments[1], list):
-        return None
-    raise NotImplementedError("Missing vertex_loop implementation for this case.")
+    return object_dict[arguments[1]]
 
 
 def pcurve(arguments, object_dict):
