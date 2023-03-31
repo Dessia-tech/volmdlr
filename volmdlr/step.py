@@ -888,12 +888,10 @@ class Step(dc.DessiaObject):
                 volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
 
             elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
-                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict,
-                                                                 name=name,
-                                                                 step_id=step_id,
-                                                                 global_uncertainty=self.global_uncertainty,
-                                                                 length_conversion_factor=self.length_conversion_factor,
-                                                                 angle_conversion_factor=self.angle_conversion_factor)
+                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                    arguments, object_dict, name=name, step_id=step_id, global_uncertainty=self.global_uncertainty,
+                    length_conversion_factor=self.length_conversion_factor,
+                    angle_conversion_factor=self.angle_conversion_factor)
 
             else:
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
