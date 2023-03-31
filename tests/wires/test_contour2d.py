@@ -77,6 +77,14 @@ class TestContour2D(unittest.TestCase):
             self.assertEqual(len(outside_prims), list_expected_outside_params[i][0])
             self.assertAlmostEqual(sum(prim.length() for prim in outside_prims), list_expected_outside_params[i][1])
 
+    def test_split_by_line(self):
+        line = edges.Line2D(volmdlr.Point2D(volmdlr.TWO_PI, 0.1), volmdlr.Point2D(volmdlr.TWO_PI, -0.1))
+        contour = wires.Contour2D.load_from_file("wires/contour_to_split.json")
+        intersection = contour.line_intersections(line)[0][0]
+        contour1, contour2 = contour.split_by_line(line)
+        self.assertTrue(contour1.primitives[-1].end.is_close(intersection))
+        self.assertTrue(contour2.primitives[0].start.is_close(intersection))
+
 
 if __name__ == '__main__':
     unittest.main()
