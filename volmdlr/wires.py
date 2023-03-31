@@ -1667,7 +1667,8 @@ class Contour2D(ContourMixin, Wire2D):
                     points.append(edge.start)
             else:
                 points.append(edge.start)
-        return ClosedPolygon2D(points)
+        closedpolygon = ClosedPolygon2D(points)
+        return closedpolygon
 
     def to_3d(self, plane_origin, x, y):
         """
@@ -1971,7 +1972,7 @@ class Contour2D(ContourMixin, Wire2D):
             extracted_outerpoints_contour1 = \
                 volmdlr.wires.Contour2D.extract_contours(self, self.primitives[0].start, intersections[0], True)[0]
             extracted_innerpoints_contour1 = \
-                volmdlr.wires.Contour2D.extract_contours(self, intersections[0], self.primitives[0].end, True)[0]
+                volmdlr.wires.Contour2D.extract_contours(self, intersections[0], self.primitives[-1].end, True)[0]
             return extracted_outerpoints_contour1, extracted_innerpoints_contour1
         if len(intersections) == 2:
             extracted_outerpoints_contour1 = \
@@ -4426,9 +4427,11 @@ class Contour3D(ContourMixin, Wire3D):
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
-        # edge_ends = {}
         for edge_id in arguments[1]:
-            raw_edges.append(object_dict[int(edge_id[1:])])
+            edge = object_dict[int(edge_id[1:])]
+            if edge:
+                raw_edges.append(edge)
+
         if step_name == "POLY_LOOP":
             return cls.from_points(raw_edges)
         if (len(raw_edges)) == 1:
@@ -4437,8 +4440,8 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
 
-        if any(edge is None for edge in raw_edges):
-            raw_edges = [edge for edge in raw_edges if edge is not None]
+        # if any(edge is None for edge in raw_edges):
+        #     raw_edges = [edge for edge in raw_edges if edge is not None]
             # warnings.warn(f"Could not instantiate #{step_id} = {step_name}({arguments})"
             #               f" because some of the edges are NoneType."
             #               "See Contour3D.from_step method")
@@ -5131,9 +5134,10 @@ class Circle3D(Contour3D):
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')
             raise ValueError('Point not on circle for trim method')
+
         if point1.is_close(point2):
-            return volmdlr.edges.FullArc3D(self.frame.origin, point1,
-                                           self.frame.w)
+            return volmdlr.edges.FullArc3D(self.frame.origin, point1, self.frame.w)
+
         interior = volmdlr.geometry.clockwise_interior_from_circle3d(
             point1, point2, self)
         return volmdlr.edges.Arc3D(point1, interior, point2)
@@ -5272,7 +5276,8 @@ class Ellipse3D(Contour3D):
         extra = None
         if math.isclose(angle % math.pi, 0.0, abs_tol=1e-6):
             extra = self.frame.local_to_global_coordinates(volmdlr.Point3D(self.major_axis * math.cos(0.125 * angle),
-                                                                           self.minor_axis * math.sin(0.125 * angle), 0))
+                                                                           self.minor_axis * math.sin(0.125 * angle),
+                                                                           0))
         return volmdlr.edges.ArcEllipse3D(point1, point3, point2, self.center,
                                           self.major_dir, extra=extra)
 
@@ -5393,7 +5398,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         if len(self.points) > 1:
             for point1, point2 in zip(self.points,
                                       list(self.points[1:]) + [self.points[0]]):
-                lines.append(volmdlr.edges.LineSegment3D(point1, point2))
+                if not point1.is_close(point2):
+                    lines.append(volmdlr.edges.LineSegment3D(point1, point2))
         return lines
 
     def copy(self, *args, **kwargs):
