@@ -73,7 +73,7 @@ def get_point_index_in_list(point, list_points, tol: float = 1e-6):
     :return: The point index.
     """
     for i, point_i in enumerate(list_points):
-        if point_i.is_close(point):
+        if point_i.is_close(point, tol):
             return i
     raise ValueError(f'{point} is not in list')
 
@@ -294,7 +294,7 @@ class CompositePrimitive2D(CompositePrimitive):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, edge_style=EdgeStyle(color=edge_style.color, alpha=edge_style.alpha)) # , plot_points=plot_points)
+            element.plot(ax=ax, edge_style=edge_style)
 
         ax.margins(0.1)
         plt.show()
@@ -461,6 +461,13 @@ class BoundingRectangle(dc.DessiaObject):
         Return the bounds of the BoundingRectangle.
         """
         return self.xmin, self.xmax, self.ymin, self.ymax
+
+    def bounding_points(self):
+        """
+        Return the bounds of the BoundingRectangle.
+        """
+        return [volmdlr.Point2D(self.xmin, self.ymin), volmdlr.Point2D(self.xmax, self.ymin),
+                volmdlr.Point2D(self.xmax, self.ymax), volmdlr.Point2D(self.xmin, self.ymax)]
 
     def plot(self, ax=None, color='k', linestyle='dotted'):
         """
@@ -1845,13 +1852,13 @@ class VolumeModel(dc.PhysicalObject):
         tag = None
         entities = gmsh_model.model.getEntities()
         for dim, tag in entities:
-            nodeTags, nodeCoords, nodeParams = gmsh_model.model.mesh.getNodes(dim, tag)
+            node_tags, node_coords, _ = gmsh_model.model.mesh.getNodes(dim, tag)
 
-            lines_nodes.append(str(dim) + ' ' + str(tag) + ' ' + '0 ' + str(len(nodeTags)))
-            for tag in nodeTags:
+            lines_nodes.append(str(dim) + ' ' + str(tag) + ' ' + '0 ' + str(len(node_tags)))
+            for tag in node_tags:
                 lines_nodes.append(str(tag))
-            for n in range(0, len(nodeCoords), 3):
-                lines_nodes.append(str(nodeCoords[n:n + 3])[1:-1])
+            for n in range(0, len(node_coords), 3):
+                lines_nodes.append(str(node_coords[n:n + 3])[1:-1])
 
         lines_nodes.insert(1, str(len(entities)) + ' ' + str(tag) + ' 1 ' + str(tag))
         lines_nodes.append('$EndNodes')
@@ -1865,15 +1872,15 @@ class VolumeModel(dc.PhysicalObject):
 
         entities = gmsh_model.model.getEntities()
         for dim, tag in entities:
-            elemTypes, elemTags, elemNodeTags = gmsh_model.model.mesh.getElements(dim, tag)
+            elem_types, elem_tags, elem_node_tags = gmsh_model.model.mesh.getElements(dim, tag)
 
-            lines_elements.append(str(dim) + ' ' + str(tag) + ' ' + str(elemTypes[0]) + ' ' + str(len(elemTags[0])))
-            range_list = int(len(elemNodeTags[0]) / len(elemTags[0]))
-            for n in range(0, len(elemNodeTags[0]), range_list):
-                lines_elements.append(str(elemTags[0][int(n / range_list)]) + ' ' +
-                                      str(elemNodeTags[0][n:n + range_list])[1:-1])
+            lines_elements.append(str(dim) + ' ' + str(tag) + ' ' + str(elem_types[0]) + ' ' + str(len(elem_tags[0])))
+            range_list = int(len(elem_node_tags[0]) / len(elem_tags[0]))
+            for n in range(0, len(elem_node_tags[0]), range_list):
+                lines_elements.append(str(elem_tags[0][int(n / range_list)]) + ' ' +
+                                      str(elem_node_tags[0][n:n + range_list])[1:-1])
 
-        tag = str(elemTags[0][int(n / range_list)])
+        tag = str(elem_tags[0][int(n / range_list)])
         lines_elements.insert(1, str(len(entities)) + ' ' + tag + ' 1 ' + tag)
         lines_elements.append('$EndElements')
 

@@ -154,7 +154,7 @@ class PointCloud3D(dc.DessiaObject):
         :param normal: normal to the sewing plane.
         :param vec1: u vector in the sewing plane.
         :param vec2: v vector in the sewing plane.
-        :return: returun a shell.
+        :return: return a shell.
         """
         position_plane = [p.points[0].dot(normal) for p in polygon3d]
         resolution = len(polygon3d)
@@ -167,7 +167,8 @@ class PointCloud3D(dc.DessiaObject):
             if n in (resolution - 1, 0):
                 faces.append(
                     vmf.PlaneFace3D(surface3d=vmf.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2),
-                            surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2)))
+                                    surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n],
+                                                                  normal, vec1, vec2)))
 
             if n != resolution - 1:
                 poly2 = polygon3d[n + 1]

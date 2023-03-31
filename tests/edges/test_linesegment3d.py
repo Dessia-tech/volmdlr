@@ -23,9 +23,9 @@ class TestLineSegment3D(unittest.TestCase):
 
     def test_linesegment_intersection(self):
         for lineseg in [self.linesegment2, self.linesegment3, self.linesegment4]:
-            self.assertFalse(self.linesegment1.linesegment_intersection(lineseg))
-        self.assertEqual(self.linesegment1.linesegment_intersection(self.linesegment5),
-                         volmdlr.Point3D(-0.2, -0.2, 0.125))
+            self.assertFalse(self.linesegment1.linesegment_intersections(lineseg))
+        self.assertTrue(self.linesegment1.linesegment_intersections(self.linesegment5)[0].is_close(
+            volmdlr.Point3D(-0.2, -0.2, 0.125)))
 
 
 if __name__ == '__main__':

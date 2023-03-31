@@ -14,25 +14,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: offset
 * Circle2D: bsplinecurve_intersections, point_distance
 * ConicalSurface3D, CylindricalSurface3D: plot method
+* volmdlr.edge: FullArcEllipse
+* BSplineCurve: evaluate_single
+* Wire2: hash
+* Contour3D: hash
+* LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
+ 
 ### Fixed
+* Bspline in sweep
 * Plane3D: plane_intersections
 * fixes to step assemblies
 * fixes to wire
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
+* BSplineCurve: abscissa
+* Add some important fixes to unittests: missing two __init__py files.
+* Contour2D, Contour3D: merge_with()
+* Edge: change unit_direction_vector and unit_normal_vector to concrete methods
+* stl: add _standalone_in_db to Stl class
+* BSplineSurface3D: merge_with
+* Documentation: Add introduction to volmdlr technology
+* BSplineSurface3D: refactor bsplinecurve3d_to_2d to take into account periodic behavior
+* OpenedRoundedLineSegments2D/ClosedRoundedLineSegments2D: fix radius type
+* Surface3D: debug some special cases while using face_from_contours3d.
 
 ### Removed
+* stl: remove default value in from_stream method
 
 ### Changed
 
 - argument convexe in volmdlr.cloud has been renamed to convex
+- Add some missing docstrings in volmdlr.faces
 
 ### Performance improvements
-* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
 * BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.
+* BSplineSurface3D: compilation of some functions used in the evaluation of a parametric point.
 * eq & hash: Some eq and hash methods have been fixed. starting from clases Point and Vector.
 * BSplinecurve2D: point_belongs
 * lighten some dicts with optional name
+* Step reader: refactor to_volume_model. Remove the dependency of the method of creating a graph.
 
 ### Refactorings
 * ContourMixin: to_polygon (for both 2D and 3D)
@@ -46,7 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unittests for Point2D
 * Unittests for Vector3D
 * Unittests for Point3D
-
+* LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
+* Contour3D: merge_with()
 
 ## v0.9.1
 
@@ -70,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * RevolutionFace3D
 * WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
 * Added package.xml metadata in order to be listed in the FreeCAD Addon Manager 
+* Edge: local_discretization
 
 ### Fixed
 
@@ -91,7 +113,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ConicalSurface3D: fix from_step class method by adding the angle convertion factor
 * fix f string usage
 * Add some typings
-* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files 
+* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
+* Arc2d: point_belongs, abscissa. 
 
 ### Removed
 
@@ -114,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactorings
 - Remove usage of deprecated method old_coordinates and new_coordinates
 - Indicate 'inplace' methods as deprecated
-
+* Wire: extract_with_points
 
 ### Documentation
 - BoundingBox docstrings
@@ -129,6 +152,8 @@ intersection_area, distance_to_b_rectangle, distance_to_point
 * BoundingBox: center, add, to_dict, points, from_bounding_boxes, from_points, to_frame, volume, bbox_intersection,
 is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_to_point, plot
 * VolumeModel: eq, volume, rotation, translation, frame_mapping, bounding_box, plot
+* Wire: extract_with_points, split_with_two_points
+* Arc2d: point_belongs, abscissa.
 
 ### CI
 - add spell check to pylint with pyenchant
@@ -379,6 +404,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * Circle3D: to_step
 * ArcEllipse3D.to_2d()
 * infinite primitive offset of linesegment
+* Contour3D: order_contour.
 
 ### Performance improvements
 
