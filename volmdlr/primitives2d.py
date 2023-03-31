@@ -5,7 +5,7 @@ Extended primitives 2D classes.
 """
 
 import math
-from typing import List
+from typing import List, Dict
 
 import warnings
 
@@ -31,7 +31,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     line_class = volmdlr.edges.LineSegment2D
     arc_class = volmdlr.edges.Arc2D
 
-    def __init__(self, points: List[volmdlr.Point2D], radius: float, adapt_radius: bool = False, name: str = ''):
+    def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
+                 adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      closed=False,
                                      adapt_radius=adapt_radius,
@@ -427,7 +428,8 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
     """
     closed = True
 
-    def __init__(self, points: List[volmdlr.Point2D], radius: float, adapt_radius: bool = False, name: str = ''):
+    def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
+                 adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      closed=True,
                                      adapt_radius=adapt_radius, name='')
