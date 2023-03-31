@@ -1780,21 +1780,26 @@ class PeriodicalSurface(Surface3D):
 
         return theta1, theta2
 
-    def _fix_angle_discontinuity_on_discretization_points(self, points, indexes_theta_discontinuity):
-        # theta1, theta2, theta3 = theta_list
-        # if theta3 < theta1 < theta2:
+    def _fix_angle_discontinuity_on_discretization_points(self, points, indexes_angle_discontinuity, direction):
+        # angle1, angle2, angle3 = angle_list
+        # if angle3 < angle1 < angle2:
         #     points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
-        #     if theta2 == 0.0:
+        #     if angle2 == 0.0:
         #         points[-1] = volmdlr.Point2D(-volmdlr.TWO_PI, points[-1].y)
-        # elif theta3 > theta1 > theta2:
+        # elif angle3 > angle1 > angle2:
         #     points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
-        #     if theta2 == 0.0:
+        #     if angle2 == 0.0:
         #         points[-1] = volmdlr.Point2D(volmdlr.TWO_PI, points[-1].y)
-        if len(indexes_theta_discontinuity) == 1:
-            index_theta_discontinuity = indexes_theta_discontinuity[0]
-            sign = round(points[index_theta_discontinuity - 1].x / abs(points[index_theta_discontinuity - 1].x), 2)
-            points = [p + volmdlr.Point2D(sign * volmdlr.TWO_PI, 0) if i >= index_theta_discontinuity else p
-                      for i, p in enumerate(points)]
+        i = 0 if direction == "x" else 1
+        if len(indexes_angle_discontinuity) == 1:
+            index_angle_discontinuity = indexes_angle_discontinuity[0]
+            sign = round(points[index_angle_discontinuity - 1][i] / abs(points[index_angle_discontinuity - 1][i]), 2)
+            if i == 0:
+                points = [p + volmdlr.Point2D(sign * volmdlr.TWO_PI, 0) if i >= index_angle_discontinuity else p
+                          for i, p in enumerate(points)]
+            else:
+                points = [p + volmdlr.Point2D(0, sign * volmdlr.TWO_PI) if i >= index_angle_discontinuity else p
+                          for i, p in enumerate(points)]
         else:
             raise NotImplementedError
         return points
@@ -1876,7 +1881,7 @@ class PeriodicalSurface(Surface3D):
         theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
         if theta_discontinuity:
             points = self._fix_angle_discontinuity_on_discretization_points(points,
-                                                                            indexes_theta_discontinuity)
+                                                                            indexes_theta_discontinuity, "x")
 
         return [vme.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree,
                                                              periodic=bspline_curve3d.periodic)]
@@ -1900,7 +1905,7 @@ class PeriodicalSurface(Surface3D):
         theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
         if theta_discontinuity:
             points = self._fix_angle_discontinuity_on_discretization_points(points,
-                                                                            indexes_theta_discontinuity)
+                                                                            indexes_theta_discontinuity, "x")
 
         bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points, degree=2)
         return [bsplinecurve2d]
@@ -1923,7 +1928,7 @@ class PeriodicalSurface(Surface3D):
         theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
         if theta_discontinuity:
             points = self._fix_angle_discontinuity_on_discretization_points(points,
-                                                                            indexes_theta_discontinuity)
+                                                                            indexes_theta_discontinuity, "x")
 
         bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points, degree=2, periodic=True, name="ellipse")
         return [bsplinecurve2d]
@@ -2616,10 +2621,10 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         if theta_discontinuity:
             points = self._fix_angle_discontinuity_on_discretization_points(points,
-                                                                            indexes_theta_discontinuity)
+                                                                            indexes_theta_discontinuity, "x")
         if phi_discontinuity:
             points = self._fix_angle_discontinuity_on_discretization_points(points,
-                                                                            indexes_phi_discontinuity)
+                                                                            indexes_phi_discontinuity, "y")
 
         return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
 
@@ -2657,10 +2662,10 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         if theta_discontinuity:
             points = self._fix_angle_discontinuity_on_discretization_points(points,
-                                                                            indexes_theta_discontinuity)
+                                                                            indexes_theta_discontinuity, "x")
         if phi_discontinuity:
             points = self._fix_angle_discontinuity_on_discretization_points(points,
-                                                                            indexes_phi_discontinuity)
+                                                                            indexes_phi_discontinuity, "y")
 
         return [vme.BSplineCurve2D.from_points_interpolation(points=points, degree=3, periodic=True)]
 
@@ -3334,7 +3339,7 @@ class SphericalSurface3D(PeriodicalSurface):
         theta_list = [point.x for point in points]
         theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
         if theta_discontinuity:
-            points = self._fix_angle_discontinuity_on_discretization_points(points, indexes_theta_discontinuity)
+            points = self._fix_angle_discontinuity_on_discretization_points(points, indexes_theta_discontinuity, "x")
 
         return [vme.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree,
                                                              periodic=bspline_curve3d.periodic)]
