@@ -43,22 +43,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         """
         Returns the arc features for point at index.
         """
+        # raise NotImplementedError
         radius = self.radius[point_index]
-        if self.closed:
-            if point_index == 0:
-                pt1 = self.points[-1]
-            else:
-                pt1 = self.points[point_index - 1]
-            pti = self.points[point_index]
-            if point_index < self.npoints - 1:
-                pt2 = self.points[point_index + 1]
-            else:
-                pt2 = self.points[0]
-        else:
-            pt1 = self.points[point_index - 1]
-            pti = self.points[point_index]
-            pt2 = self.points[point_index + 1]
-
+        pt1, pti, pt2 = self.get_points(point_index)
         # TODO: change to point_distance ------> done
         point_distance1 = (pt1 - pti).norm()
         point_distance2 = (pt2 - pti).norm()
@@ -82,10 +69,10 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         if v1.dot(w) < 0:
             v1 = -v1
 
-        pc = p3 + v1 * radius
-        pm = pc - radius * w
+        point_curvature = p3 + v1 * radius
+        point_interior = point_curvature - radius * w
 
-        return p3, pm, p4, point_distance, alpha
+        return p3, point_interior, p4, point_distance, alpha
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
