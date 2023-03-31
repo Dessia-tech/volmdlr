@@ -1196,12 +1196,6 @@ class Surface3D(DessiaObject):
         point2_2d = self.point3d_to_2d(point2_3d)
         return self.geodesic_distance_from_points2d(point1_2d, point2_2d)
 
-    def concurrent_plane_intersection(self, plane3d):
-        """
-        Abstract method.
-        """
-        raise NotImplementedError(f"Method should be implemented in child class {self.__class__.__name__}")
-
 
 class Plane3D(Surface3D):
     """
