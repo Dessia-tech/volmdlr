@@ -2262,11 +2262,11 @@ class Contour2D(ContourMixin, Wire2D):
             point1 = sorted_points[cutting_points_counter]
             point2 = sorted_points[cutting_points_counter + 1]
 
-            closing_wire = wire.extract_without_primitives(point1, point2, True)
+            closing_wire = wire.extract_with_points(point1, point2, True)
 
             for point in points_intersections:
                 if point not in [point1, point2] and Wire2D(closing_wire).point_over_wire(point):
-                    closing_wire = wire.extract_without_primitives(point1, point2, False)
+                    closing_wire = wire.extract_with_points(point1, point2, False)
                     break
 
             closing_wire_prim = [closing_w for closing_w in closing_wire if closing_w]
