@@ -269,6 +269,26 @@ class Edge(dc.DessiaObject):
                                           in npy.linspace(abscissa1, abscissa2, num=number_points)]
         return discretized_points_between_1_2
 
+    def split_between_two_points(self, point1, point2):
+        """
+        Split edge between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge split.
+        """
+        split1 = self.split(point1)
+        if split1[0] and split1[0].point_belongs(point2, abs_tol=1e-6):
+            split2 = split1[0].split(point2)
+        else:
+            split2 = split1[1].split(point2)
+        new_split_edge = None
+        for split_edge in split2:
+            if split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
+                new_split_edge = split_edge
+                break
+        return new_split_edge
+
 
 class Line(dc.DessiaObject):
     """
