@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D, Contour3D: merge_with()
 * Edge: change unit_direction_vector and unit_normal_vector to concrete methods
 * stl: add _standalone_in_db to Stl class
+* Documentation: Add introduction to volmdlr technology
+* BSplineSurface3D: refactor bsplinecurve3d_to_2d to take into account periodic behavior
+* Surface3D: debug some special cases while using face_from_contours3d.
 
 ### Removed
 * stl: remove default value in from_stream method
@@ -108,7 +111,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ConicalSurface3D: fix from_step class method by adding the angle convertion factor
 * fix f string usage
 * Add some typings
-* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files 
+* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
+* Arc2d: point_belongs, abscissa. 
 
 ### Removed
 
@@ -146,6 +150,7 @@ intersection_area, distance_to_b_rectangle, distance_to_point
 * BoundingBox: center, add, to_dict, points, from_bounding_boxes, from_points, to_frame, volume, bbox_intersection,
 is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_to_point, plot
 * VolumeModel: eq, volume, rotation, translation, frame_mapping, bounding_box, plot
+* Arc2d: point_belongs, abscissa.
 
 ### CI
 - add spell check to pylint with pyenchant
