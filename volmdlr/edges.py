@@ -390,8 +390,8 @@ class Line(dc.DessiaObject):
         """
         vector = self.point2 - self.point1
         norm_u = vector.norm()
-        t = (point - self.point1).dot(vector) / norm_u
-        return t
+        t_param = (point - self.point1).dot(vector) / norm_u
+        return t_param
 
     def point_at_abscissa(self, abscissa):
         """
@@ -1622,10 +1622,10 @@ class Line2D(Line):
     @staticmethod
     def compute_tangent_circle_for_parallel_segments(new_basis, new_a, new_c):
         segments_distance = abs(new_c[1] - new_a[1])
-        r = segments_distance / 2
-        new_circle_center = volmdlr.Point2D((0, npy.sign(new_c[1] - new_a[1]) * r))
+        radius = segments_distance / 2
+        new_circle_center = volmdlr.Point2D((0, npy.sign(new_c[1] - new_a[1]) * radius))
         circle_center = new_basis.local_to_global_coordinates(new_circle_center)
-        circle = volmdlr.wires.Circle2D(circle_center, r)
+        circle = volmdlr.wires.Circle2D(circle_center, radius)
         return circle, None
 
     @staticmethod
@@ -1634,13 +1634,13 @@ class Line2D(Line):
         line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
         new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
 
-        r = abs(new_pt_k[0])
-        new_circle_center1 = volmdlr.Point2D((0, r))
-        new_circle_center2 = volmdlr.Point2D((0, -r))
+        radius = abs(new_pt_k[0])
+        new_circle_center1 = volmdlr.Point2D((0, radius))
+        new_circle_center2 = volmdlr.Point2D((0, -radius))
         circle_center1 = new_basis.local_to_global_coordinates(new_circle_center1)
         circle_center2 = new_basis.local_to_global_coordinates(new_circle_center2)
-        circle1 = volmdlr.wires.Circle2D(circle_center1, r)
-        circle2 = volmdlr.wires.Circle2D(circle_center2, r)
+        circle1 = volmdlr.wires.Circle2D(circle_center1, radius)
+        circle2 = volmdlr.wires.Circle2D(circle_center2, radius)
 
         return circle1, circle2
 
@@ -1713,21 +1713,21 @@ class Line2D(Line):
         else:
             teta = teta1
 
-        r1 = new_pt_k[0] * math.sin(teta) / (1 + math.cos(teta))
-        r2 = new_pt_k[0] * math.sin(teta) / (1 - math.cos(teta))
+        radius1 = new_pt_k[0] * math.sin(teta) / (1 + math.cos(teta))
+        radius2 = new_pt_k[0] * math.sin(teta) / (1 - math.cos(teta))
 
-        new_circle_center1 = volmdlr.Point2D(0, -r1)
-        new_circle_center2 = volmdlr.Point2D(0, r2)
+        new_circle_center1 = volmdlr.Point2D(0, -radius1)
+        new_circle_center2 = volmdlr.Point2D(0, radius2)
 
         circle_center1 = new_basis2.local_to_global_coordinates(new_circle_center1)
         circle_center2 = new_basis2.local_to_global_coordinates(new_circle_center2)
 
         if new_basis.global_to_local_coordinates(circle_center1)[1] > 0:
-            circle1 = volmdlr.wires.Circle2D(circle_center1, r1)
-            circle2 = volmdlr.wires.Circle2D(circle_center2, r2)
+            circle1 = volmdlr.wires.Circle2D(circle_center1, radius1)
+            circle2 = volmdlr.wires.Circle2D(circle_center2, radius2)
         else:
-            circle1 = volmdlr.wires.Circle2D(circle_center2, r2)
-            circle2 = volmdlr.wires.Circle2D(circle_center1, r1)
+            circle1 = volmdlr.wires.Circle2D(circle_center2, radius2)
+            circle2 = volmdlr.wires.Circle2D(circle_center1, radius1)
 
         return circle1, circle2
 
@@ -3972,9 +3972,9 @@ class ArcEllipse2D(Edge):
 
         x = []
         y = []
-        for px, py in self.discretization_points(number_points=100):
-            x.append(px)
-            y.append(py)
+        for x_component, y_component in self.discretization_points(number_points=100):
+            x.append(x_component)
+            y.append(y_component)
 
         plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
         return ax
@@ -5019,10 +5019,10 @@ class LineSegment3D(LineSegment):
     def _revolution_conical(self, params):
         axis, u, p1_proj, dist1, dist2, angle = params
         v = axis.cross(u)
-        dv = self.direction_vector()
-        dv.normalize()
+        direction_vector = self.direction_vector()
+        direction_vector.normalize()
 
-        semi_angle = math.atan2(dv.dot(u), dv.dot(axis))
+        semi_angle = math.atan2(direction_vector.dot(u), direction_vector.dot(axis))
         cone_origin = p1_proj - dist1 / math.tan(semi_angle) * axis
         if semi_angle > 0.5 * math.pi:
             semi_angle = math.pi - semi_angle
@@ -5241,11 +5241,11 @@ class BSplineCurve3D(BSplineCurve):
         :return: the given point when the BSplineCurve3D is evaluated at the t value.
         """
 
-        def f(param):
+        def fun(param):
             p3d = volmdlr.Point3D(*self.curve.evaluate_single(param))
             return point.point_distance(p3d)
 
-        res = minimize(fun=f, x0=0.5, bounds=[(0, 1)], tol=1e-9)
+        res = minimize(fun=fun, x0=0.5, bounds=[(0, 1)], tol=1e-9)
         return res.x[0]
 
     @classmethod
@@ -6395,10 +6395,10 @@ class FullArc3D(Arc3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points(number_points=20):
-            x.append(px)
-            y.append(py)
-            z.append(pz)
+        for x_component, y_component, z_component in self.discretization_points(number_points=20):
+            x.append(x_component)
+            y.append(y_component)
+            z.append(z_component)
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])
@@ -6753,10 +6753,10 @@ class ArcEllipse3D(Edge):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points(number_points=20):
-            x.append(px)
-            y.append(py)
-            z.append(pz)
+        for x_component, y_component, z_component in self.discretization_points(number_points=20):
+            x.append(x_component)
+            y.append(y_component)
+            z.append(z_component)
 
         ax.plot(x, y, z, edge_style.color, alpha=edge_style.alpha)
         if edge_style.edge_ends:
