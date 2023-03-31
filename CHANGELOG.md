@@ -136,7 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactorings
 - Remove usage of deprecated method old_coordinates and new_coordinates
 - Indicate 'inplace' methods as deprecated
-
+* Wire: extract_with_points
 
 ### Documentation
 - BoundingBox docstrings
@@ -151,6 +151,7 @@ intersection_area, distance_to_b_rectangle, distance_to_point
 * BoundingBox: center, add, to_dict, points, from_bounding_boxes, from_points, to_frame, volume, bbox_intersection,
 is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_to_point, plot
 * VolumeModel: eq, volume, rotation, translation, frame_mapping, bounding_box, plot
+* Wire: extract_with_points, split_with_two_points
 * Arc2d: point_belongs, abscissa.
 
 ### CI
