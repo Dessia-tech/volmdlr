@@ -1024,7 +1024,7 @@ class BSplineCurve(Edge):
             point.translation_inplace(offset)
 
     def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
-                      abs_tol: float = 1e-10):
+                      abs_tol: float = 1e-6):
         """
         Checks if a 2D or 3D point belongs to the B-spline curve or not. It uses the least square method.
 
