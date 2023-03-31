@@ -2753,7 +2753,7 @@ class Arc2D(Arc):
         """
         Calculates the center of the Arc.
 
-        :return: asc's center.
+        :return: arc's center.
         """
         x_interior, y_interior = self.interior.x, self.interior.y
         x_end, y_end = self.end.x, self.end.y
