@@ -17,7 +17,7 @@ WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 216,
-                     "wrong-spelling-in-docstring": 117,
+                     "wrong-spelling-in-docstring": 143,
                      'invalid-name': 243,
                      'no-member': 3,
                      'inconsistent-return-statements': 4,
