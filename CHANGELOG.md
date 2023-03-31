@@ -35,7 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * stl: add _standalone_in_db to Stl class
 * BsplineCurve3D: point_distance, point_belongs
 * BsplineCurve: from_points_interpolation
-
+* BSplineSurface3D: refactor bsplinecurve3d_to_2d to take into account periodic behavior
+* Surface3D: debug some special cases while using face_from_contours3d.
 
 ### Removed
 * stl: remove default value in from_stream method
