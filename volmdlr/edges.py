@@ -1339,12 +1339,12 @@ class BSplineCurve(Edge):
                 abs1 = self.abscissa(linesegment.start)
                 abs2 = self.abscissa(linesegment.end)
                 list_abscissas = list(new_abscissa for new_abscissa in npy.linspace(abs1, abs2, 1000))
-                intersection = self.select_intersection_point(list_abscissas, intersections)
+                intersection = self.select_intersection_point(list_abscissas, intersections, line)
                 list_intersections.append(intersection)
             initial_abscissa += linesegment.length()
         return list_intersections
 
-    def select_intersection_point(self, list_abscissas, intersections):
+    def select_intersection_point(self, list_abscissas, intersections, line, abs_tol: float = 1e-7):
         """
         Select closest point in curve to intersection point obtained with discretized linesegment.
 
@@ -1356,6 +1356,8 @@ class BSplineCurve(Edge):
         intersection = None
         for i_abscissa in list_abscissas:
             point_in_curve = BSplineCurve.point_at_abscissa(self, i_abscissa)
+            if line.point_distance(point_in_curve) <= abs_tol:
+                return point_in_curve
             dist = point_in_curve.point_distance(intersections[0])
             if dist < distance:
                 distance = dist
@@ -3737,46 +3739,76 @@ class ArcEllipse2D(Edge):
         interior_new = frame.global_to_local_coordinates(self.interior)
         center_new = frame.global_to_local_coordinates(self.center)
         self._bounding_rectangle = None
+        self._reverse = None
 
-        def theta_a_b(start_, iterior_, end_, center_):
-            """
-            Calculates the major, minor and theta.
-
-            From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a- \
-            center-and-3-arbitrary-points-on-it-are-given.
-            theta= ellipse's inclination angle related to the horizontal
-            (clockwise), A=semi major axis, B=semi minor axis.
-
-            """
-            x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1], \
-                iterior_[0] - center_[0], iterior_[1] - center_[
-                                                                         1], end_[0] - center_[0], end_[1] - center_[1]
-            matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
-                                  [x_interior ** 2, y_interior ** 2, 2 * x_interior * y_interior],
-                                  [x_end ** 2, y_end ** 2, 2 * x_end * y_end]))
-            inv_matrix_a = npy.linalg.inv(matrix_a)
-            matriz_one = npy.array(([1],
-                                    [1],
-                                    [1]))
-            vector_c = npy.dot(inv_matrix_a, matriz_one)
-            theta = 0.5 * math.atan(2 * vector_c[2] / (vector_c[1] - vector_c[0]))
-            c1 = vector_c[0] + vector_c[1]
-            c2 = (vector_c[1] - vector_c[0]) / math.cos(2 * theta)
-            gdaxe = math.sqrt((2 / (c1 - c2)))
-            ptax = math.sqrt((2 / (c1 + c2)))
-            return theta, gdaxe, ptax
-
-        if start.is_close(end):
-            extra_new = frame.global_to_local_coordinates(self.extra)
-            theta, major_axis, minor_axis = theta_a_b(start_new, extra_new, interior_new,
-                                                      center_new)
+        # vector_center_interior = interior_new - center_new
+        vector_center_start = start_new - center_new
+        vector_center_end = end_new - center_new
+        if vector_center_start.norm() >= vector_center_end.norm():
+            x1 = start_new.x - center_new.x
+            y1 = start_new.y - center_new.y
+            x2 = end_new.x - center_new.x
+            y2 = end_new.y - center_new.y
         else:
-            theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, end_new,
-                                                      center_new)
+            x2 = start_new.x - center_new.x
+            y2 = start_new.y - center_new.y
+            x1 = end_new.x - center_new.x
+            y1 = end_new.y - center_new.y
+        if vector_center_start.is_colinear_to(vector_center_end) or abs(x1) == abs(x2):
+            x2 = interior_new.x - center_new.x
+            y2 = interior_new.y - center_new.y
+            if abs(x1) == abs(x2):
+                raise ValueError(f"Interior point{interior} is not valid. Try specifying another interior point.")
+        B_ = math.sqrt((x1**2 * y2**2 - x2**2 * y1**2) / (x1**2 - x2**2))
+        if (1 - (y1 ** 2 / B_ ** 2)) == 0.0:
+            if abs(y1) != abs(y2) and abs(interior_new.y) != abs(y2):
+                x1 = interior_new.x - center_new.x
+                y1 = interior_new.y - center_new.y
+            else:
+                raise NotImplementedError
+        if (1 - (y1 ** 2 / B_ ** 2)) == 0.0:
+            print(True)
+        A_ = math.sqrt(x1 ** 2 / (1 - (y1 ** 2 / B_ ** 2)))
+        self.major_axis = A_
+        self.minor_axis = B_
 
-        self.major_axis = major_axis
-        self.minor_axis = minor_axis
-        self.theta = theta
+        # def theta_a_b(start_, iterior_, end_, center_):
+        #     """
+        #     Calculates the major, minor and theta.
+        #
+        #     From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a- \
+        #     center-and-3-arbitrary-points-on-it-are-given.
+        #     theta= ellipse's inclination angle related to the horizontal
+        #     (clockwise), A=semi major axis, B=semi minor axis.
+        #
+        #     """
+        #     x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1], \
+        #         iterior_[0] - center_[0], iterior_[1] - center_[1], end_[0] - center_[0], end_[1] - center_[1]
+        #     matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
+        #                           [x_interior ** 2, y_interior ** 2, 2 * x_interior * y_interior],
+        #                           [x_end ** 2, y_end ** 2, 2 * x_end * y_end]))
+        #     inv_matrix_a = npy.linalg.inv(matrix_a)
+        #     matriz_one = npy.array(([1],
+        #                             [1],
+        #                             [1]))
+        #     vector_c = npy.dot(inv_matrix_a, matriz_one)
+        #     theta = 0.5 * math.atan(2 * vector_c[2] / (vector_c[1] - vector_c[0]))
+        #     c1 = vector_c[0] + vector_c[1]
+        #     c2 = (vector_c[1] - vector_c[0]) / math.cos(2 * theta)
+        #     gdaxe = math.sqrt((2 / (c1 - c2)))
+        #     ptax = math.sqrt((2 / (c1 + c2)))
+        #     return theta, gdaxe, ptax
+        #
+        # if start.is_close(end):
+        #     extra_new = frame.global_to_local_coordinates(self.extra)
+        #     theta, major_axis, minor_axis = theta_a_b(start_new, extra_new, interior_new,
+        #                                               center_new)
+        # else:
+        #     theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, end_new,
+        #                                               center_new)
+        # self.major_axis = major_axis
+        # self.minor_axis = minor_axis
+        # self.theta = theta
 
         # Angle pour start
         u1, u2 = start_new.x / self.major_axis, start_new.y / self.minor_axis
@@ -3833,8 +3865,9 @@ class ArcEllipse2D(Edge):
 
         :return: arc ellipse 2d's length
         """
-        length = self.abscissa(self.end)
-        return length
+        if not self._length:
+            self._length = self.abscissa(self.end)
+        return self._length
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
         """
@@ -3844,19 +3877,81 @@ class ArcEllipse2D(Edge):
         :param abs_tol: tolerance applied during calculations
         :return: True if the point belongs, False otherwise
         """
+        if self.start.is_close(point, abs_tol) or self.end.is_close(point, abs_tol):
+            return True
         if not math.isclose((point.x - self.center.x) ** 2 / self.major_axis ** 2 +
                             (point.y - self.center.y) ** 2 / self.minor_axis ** 2, 1, abs_tol=abs_tol) and not \
                 math.isclose((point.x - self.center.x) ** 2 / self.minor_axis ** 2 +
                              (point.y - self.center.y) ** 2 / self.major_axis ** 2, 1, abs_tol=abs_tol):
             return False
-        new_point = self.frame.global_to_local_coordinates(point)
-        u1, u2 = new_point.x / self.major_axis, new_point.y / self.minor_axis
-        angle_new_point = volmdlr.geometry.sin_cos_angle(u1, u2)
-        if self.angle_start < self.angle_end and self.angle_end >= angle_new_point >= self.angle_start:
-            return True
-        if self.angle_start > self.angle_end and self.angle_end <= angle_new_point <= self.angle_start:
+        clockwise_arcellipse = self.reverse() if self.is_trigo else self
+        vector_start = clockwise_arcellipse.start - clockwise_arcellipse.center
+        vector_end = clockwise_arcellipse.end - clockwise_arcellipse.center
+        vector_point = point - clockwise_arcellipse.center
+        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
+        point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
+        point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
+        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=1e-5):
             return True
         return False
+
+    def valid_abscissa_start_end_angle(self, angle_abscissa):
+        angle_start = self.angle_start
+        angle_end = angle_abscissa
+        if self.angle_start > angle_abscissa >= self.angle_end:
+            if angle_abscissa >= 0.0:
+                angle_abscissa += 2 * math.pi
+                angle_end = angle_abscissa
+            else:
+                angle_start = angle_abscissa
+                angle_end = self.angle_start
+        elif self.angle_start > self.angle_end >= angle_abscissa:
+            angle_start = self.angle_start - 2 * math.pi
+        return angle_start, angle_end
+
+    def point_at_abscissa(self, abscissa):
+        if math.isclose(abscissa, 0.0, abs_tol=1e-6):
+            return self.start
+        if math.isclose(abscissa, self.length(), abs_tol=1e-6):
+            return self.end
+        if not self.is_trigo:
+            arc_ellipse_trigo = self.reverse()
+            new_abscissa = self.length() - abscissa
+            return arc_ellipse_trigo.point_at_abscissa(new_abscissa)
+        discretized_points = self.discretization_points(number_points=100)
+        aproximation_abscissa = 0
+        aproximation_point = None
+        for point1, point2 in zip(discretized_points[:-1], discretized_points[1:]):
+            dist1 = point1.point_distance(point2)
+            if aproximation_abscissa + dist1 > abscissa:
+                aproximation_point = point1
+                break
+            aproximation_abscissa += dist1
+        initial_point = self.frame.global_to_local_coordinates(aproximation_point)
+        u1, u2 = initial_point.x / self.major_axis, initial_point.y / self.minor_axis
+        initial_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        angle_start, initial_angle = self.valid_abscissa_start_end_angle(initial_angle)
+        def ellipse_arc_length(theta):
+            return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
+                             (self.minor_axis ** 2) * math.cos(theta) ** 2)
+        abscissa_angle = None
+        iter_counter = 0
+        increment_factor = 1e-5
+        while True:
+            res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
+            if math.isclose(res, abscissa, abs_tol=1e-5):
+                abscissa_angle = initial_angle
+                break
+            if res > abscissa:
+                if iter_counter == 0:
+                    increment_factor = -1e-5
+                else:
+                    raise NotImplementedError
+            initial_angle += increment_factor
+            iter_counter += 1
+        x = self.major_axis * math.cos(abscissa_angle)
+        y = self.minor_axis * math.sin(abscissa_angle)
+        return self.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
 
     def abscissa(self, point: volmdlr.Point2D):
         """
@@ -3865,19 +3960,30 @@ class ArcEllipse2D(Edge):
         :param point: point for calculating abscissa
         :return: a float, between 0 and the arc ellipse 2d's length
         """
-        if self.point_belongs(point):
-            angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
-            angle_start = self.angle_start
-            angle_end = angle_abscissa
-            if self.angle_start > angle_abscissa > self.angle_end:
-                angle_start = angle_abscissa
-                angle_end = self.angle_start
+        if self.start.is_close(point):
+            return 0.0
+        if self.end.is_close(point):
+            if self._length:
+                return self._length
+            if not self.is_trigo:
+                arc_ellipse_trigo = self.reverse()
+                abscissa_end = arc_ellipse_trigo.abscissa(self.start)
+                return abscissa_end
 
-            def arc_length(theta):
+        if self.point_belongs(point):
+            if not self.is_trigo:
+                arc_ellipse_trigo = self.reverse()
+                abscissa_point = arc_ellipse_trigo.abscissa(point)
+                return self.length() - abscissa_point
+            new_point = self.frame.global_to_local_coordinates(point)
+            u1, u2 = new_point.x / self.major_axis, new_point.y / self.minor_axis
+            angle_abscissa = volmdlr.geometry.sin_cos_angle(u1, u2)
+            angle_start, angle_end = self.valid_abscissa_start_end_angle(angle_abscissa)
+            def ellipse_arc_length(theta):
                 return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
                                  (self.minor_axis ** 2) * math.cos(theta) ** 2)
 
-            res, _ = scipy_integrate.quad(arc_length, angle_start, angle_end)
+            res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, angle_end)
             return res
         raise ValueError(f'point {point} does not belong to ellipse')
 
@@ -3943,6 +4049,10 @@ class ArcEllipse2D(Edge):
         elif self.angle_start == self.angle_end:
             angle_start = 0
             angle_end = 2 * math.pi
+        elif self.angle_end > self.angle_start and not self.is_trigo:
+            angle_start = self.angle_end - 2 * math.pi
+            angle_end = self.angle_start
+            is_trigo = False
         else:
             angle_end = self.angle_end
             angle_start = self.angle_start
@@ -4013,8 +4123,10 @@ class ArcEllipse2D(Edge):
         raise NotImplementedError
 
     def reverse(self):
-        return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(),
+        if not self._reverse:
+            self._reverse = self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(),
                               self.center.copy(), self.major_dir.copy(), self.name)
+        return self._reverse
 
     def line_intersections(self, line2d: Line2D):
         """
