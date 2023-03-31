@@ -1754,7 +1754,7 @@ class PeriodicalSurface(Surface3D):
 
         start, end = vm_parametric.arc3d_to_cylindrical_verification(start, end, angle3d, theta3, theta4)
 
-        return [vme.LineSegment2D(start, end)]
+        return [vme.LineSegment2D(start, end, name="arc")]
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
@@ -1840,10 +1840,10 @@ class PeriodicalSurface(Surface3D):
         """
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
-        if math.isclose(theta1, theta2, abs_tol=1e-4):
+        if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "linesegment":
             return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
                                       self.point2d_to_3d(linesegment2d.end))]
-        if math.isclose(z1, z2, abs_tol=1e-4):
+        if math.isclose(z1, z2, abs_tol=1e-4) or linesegment2d.name == "arc" or linesegment2d.name == "fullarc":
             if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
                 return [vme.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
                                       start_end=self.point2d_to_3d(linesegment2d.start),
@@ -1854,11 +1854,11 @@ class PeriodicalSurface(Surface3D):
                 self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
                 self.point2d_to_3d(linesegment2d.end)
             )]
-        return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start), self.point2d_to_3d(linesegment2d.end))]
+        raise NotImplementedError("This case is not yet treated")
 
     def fullarcellipse3d_to_2d(self, arcellipse3d):
         """
-        Transformation of an arcellipse3d to 2d, in a cylindrical surface.
+        Transformation of a 3D arc ellipse to 2D, in a cylindrical surface.
 
         """
         points = [self.point3d_to_2d(p)
