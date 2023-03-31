@@ -361,6 +361,26 @@ def manifold_surface_shape_representation(arguments, object_dict):
     return shells
 
 
+def faceted_brep(arguments, object_dict):
+    """
+    Returns the data in case of a faceted_brep entity, interpreted as shell3D.
+    """
+    return object_dict[arguments[1]]
+
+
+def faceted_brep_shape_representation(arguments, object_dict):
+    """
+    Returns the data in case of a faceted_brep_shape_representation, interpreted as shell3D.
+    """
+    shells = []
+    for arg in arguments[1]:
+        if isinstance(object_dict[int(arg[1:])],
+                      volmdlr.faces.OpenShell3D):
+            shell = object_dict[int(arg[1:])]
+            shells.append(shell)
+    return shells
+
+
 def manifold_solid_brep(arguments, object_dict):
     """
     Returns the data in case of a manifold_solid_brep with voids.
