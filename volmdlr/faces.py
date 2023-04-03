@@ -7280,8 +7280,12 @@ class PlaneFace3D(Face3D):
         min_distance = math.inf
         for edge1 in self.outer_contour3d.primitives:
             for edge2 in other_plane_face.outer_contour3d.primitives:
-                dist = edge1.minimum_distance(edge2,
-                                              return_points=return_points)
+                if hasattr(edge1, 'minimum_distance'):
+                    dist = edge1.minimum_distance(edge2, return_points=return_points)
+                elif hasattr(edge2, 'minimum_distance'):
+                    dist = edge2.minimum_distance(edge1, return_points=return_points)
+                else:
+                    raise AttributeError(f'Neither {edge1} nor {edge2} has a minimum_distance method.')
                 if return_points:
                     if dist[0] < min_distance:
                         min_distance = dist[0]
