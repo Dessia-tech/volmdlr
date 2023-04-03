@@ -1025,14 +1025,13 @@ class Surface3D(DessiaObject):
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
-            is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-5)
+            is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-3)
             if not is_connected and \
                     primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
                     math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-5):
                 primitives2d[i] = primitives2d[i].reverse()
             elif not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
-                    math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-5):
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3):
                 primitives2d[i] = primitives2d[i].reverse()
             elif not is_connected:
                 primitives2d[i] = primitives2d[i].translation(delta)
@@ -1893,7 +1892,22 @@ class PeriodicalSurface(Surface3D):
         theta1, z1 = points[0]
         theta2, z2 = points[-1]
 
-        theta1, theta2 = self._verify_start_end_angles(arcellipse3d, theta1, theta2)
+        # theta3, _ = self.point3d_to_2d(arcellipse3d.point_at_abscissa(0.001 * length))
+        theta3, _ = points[1]
+        # make sure that the reference angle is not undefined
+        if abs(theta3) == math.pi:
+            theta3, _ = points[1]
+
+        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+        if abs(theta1) == math.pi:
+            theta1 = vm_parametric.repair_start_end_angle_periodicity(theta1, theta3)
+        if abs(theta2) == math.pi:
+            theta4, _ = points[-2]
+            # make sure that the reference angle is not undefined
+            if abs(theta4) == math.pi:
+                theta4, _ = points[-3]
+            theta2 = vm_parametric.repair_start_end_angle_periodicity(theta2, theta4)
+
         points[0] = volmdlr.Point2D(theta1, z1)
         points[-1] = volmdlr.Point2D(theta2, z2)
 
@@ -1936,15 +1950,15 @@ class PeriodicalSurface(Surface3D):
         """
         if bspline_curve2d.name in ("parametric.arcellipse", "parametric.fullarcellipse"):
             start = self.point2d_to_3d(bspline_curve2d.start)
-            middle_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.5 * bspline_curve2d.length()))
+            middle_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.45 * bspline_curve2d.length()))
             if bspline_curve2d.name == "parametric.arcellipse":
-                end = self.point2d_to_3d(bspline_curve2d.start)
+                end = self.point2d_to_3d(bspline_curve2d.end)
                 plane3d = Plane3D.from_3_points(start, middle_point, end)
-                ellipse = self.concurrent_plane_intersection(plane3d)
+                ellipse = self.concurrent_plane_intersection(plane3d)[0]
                 return [vme.ArcEllipse3D(start, middle_point, end, ellipse.center, ellipse.major_dir, ellipse.normal)]
             extra_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.75 * bspline_curve2d.length()))
             plane3d = Plane3D.from_3_points(start, middle_point, extra_point)
-            ellipse = self.concurrent_plane_intersection(plane3d)
+            ellipse = self.concurrent_plane_intersection(plane3d)[0]
             return [vme.FullArcEllipse3D(start, ellipse.major_axis, ellipse.minor_axis, ellipse.center, ellipse.normal,
                                          ellipse.major_dir)]
         n = len(bspline_curve2d.control_points)
@@ -2984,15 +2998,24 @@ class ConicalSurface3D(PeriodicalSurface):
                     i += 1
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
-            elif math.isclose(primitives2d[i].start.y, 0.0, abs_tol=1e-6):
+            # treat very specific case of conical surfaces when the previous primitive and the primitive are a
+            # linesegment3d with singularity
+            elif math.isclose(primitives2d[i].start.y, 0.0, abs_tol=1e-6) and \
+                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-6) and \
+                        math.isclose(primitives2d[i].start.x, previous_primitive.end.x, abs_tol=1e-6):
                 if primitives2d[i + 1].end.x < primitives2d[i].end.x:
-                    primitives2d[i] = primitives2d[i].translation(volmdlr.Vector2D(volmdlr.TWO_PI, 0))
-                    primitives2d.insert(i - 1, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
-                                                                 name="construction"))
-                else:
-                    primitives2d[i] = primitives2d[i].translation(volmdlr.Vector2D(-volmdlr.TWO_PI, 0))
-                    primitives2d.insert(i - 1, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
-                                                                 name="construction"))
+                    theta_offset = volmdlr.TWO_PI
+                elif primitives2d[i + 1].end.x > primitives2d[i].end.x:
+                    theta_offset = -volmdlr.TWO_PI
+                primitive1 = vme.LineSegment2D(previous_primitive.end,
+                                               previous_primitive.end + volmdlr.Point2D(theta_offset, 0),
+                                               name="construction")
+                primitive2 = primitives2d[i].translation(volmdlr.Vector2D(theta_offset, 0))
+                primitive3 = primitives2d[i + 1].translation(volmdlr.Vector2D(theta_offset, 0))
+                primitives2d[i] = primitive1
+                primitives2d.insert(i + 1, primitive2)
+                primitives2d[i + 2] = primitive3
+                i += 1
             i += 1
         if not primitives2d[0].start.is_close(primitives2d[-1].end) \
                 and primitives2d[0].start.y == 0.0 and primitives2d[-1].end.y == 0.0:
@@ -6236,7 +6259,7 @@ class Face3D(volmdlr.core.Primitive3D):
             if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
                 return surface
             if (len(contours) == 2) and isinstance(contours[1], volmdlr.Point3D):
-                raise NotImplementedError
+                return surface.face_from_contours3d([contours[0]], name)
             return surface.face_from_contours3d(contours, name)
             # except Exception:
             #     return None
