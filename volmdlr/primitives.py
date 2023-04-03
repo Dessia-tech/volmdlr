@@ -210,25 +210,25 @@ class RoundedLineSegments:
     def primitives_from_arcs(self, arcs):
         primitives = []
         # Creating lines
-        for iline in range(self.npoints - 1):
-            if iline in self.radius:
-                arc1 = arcs[iline]
+        for index_line in range(self.npoints - 1):
+            if index_line in self.radius:
+                arc1 = arcs[index_line]
                 primitives.append(arc1)
-                if iline + 1 in self.radius:
-                    arc2 = arcs[iline + 1]
+                if index_line + 1 in self.radius:
+                    arc2 = arcs[index_line + 1]
                     if not arc1.end.is_close(arc2.start):
                         primitives.append(self.line_class(arc1.end, arc2.start))
                 else:
-                    if not arc1.end.is_close(self.points[iline + 1]):
-                        primitives.append(self.line_class(arc1.end, self.points[iline + 1]))
+                    if not arc1.end.is_close(self.points[index_line + 1]):
+                        primitives.append(self.line_class(arc1.end, self.points[index_line + 1]))
             else:
-                p1 = self.points[iline]
-                if iline + 1 in self.radius:
-                    arc2 = arcs[iline + 1]
+                p1 = self.points[index_line]
+                if index_line + 1 in self.radius:
+                    arc2 = arcs[index_line + 1]
                     if not p1.is_close(arc2.start):
                         primitives.append(self.line_class(p1, arc2.start))
                 else:
-                    primitives.append(self.line_class(p1, self.points[iline + 1]))
+                    primitives.append(self.line_class(p1, self.points[index_line + 1]))
 
         if self.closed:
             if self.npoints - 1 in self.radius:

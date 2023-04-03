@@ -361,6 +361,26 @@ def manifold_surface_shape_representation(arguments, object_dict):
     return shells
 
 
+def faceted_brep(arguments, object_dict):
+    """
+    Returns the data in case of a faceted_brep entity, interpreted as shell3D.
+    """
+    return object_dict[arguments[1]]
+
+
+def faceted_brep_shape_representation(arguments, object_dict):
+    """
+    Returns the data in case of a faceted_brep_shape_representation, interpreted as shell3D.
+    """
+    shells = []
+    for arg in arguments[1]:
+        if isinstance(object_dict[int(arg[1:])],
+                      volmdlr.faces.OpenShell3D):
+            shell = object_dict[int(arg[1:])]
+            shells.append(shell)
+    return shells
+
+
 def manifold_solid_brep(arguments, object_dict):
     """
     Returns the data in case of a manifold_solid_brep with voids.
@@ -870,12 +890,10 @@ class Step(dc.DessiaObject):
                 volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
 
             elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
-                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict,
-                                                                 name=name,
-                                                                 step_id=step_id,
-                                                                 global_uncertainty=self.global_uncertainty,
-                                                                 length_conversion_factor=self.length_conversion_factor,
-                                                                 angle_conversion_factor=self.angle_conversion_factor)
+                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                    arguments, object_dict, name=name, step_id=step_id, global_uncertainty=self.global_uncertainty,
+                    length_conversion_factor=self.length_conversion_factor,
+                    angle_conversion_factor=self.angle_conversion_factor)
 
             else:
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
