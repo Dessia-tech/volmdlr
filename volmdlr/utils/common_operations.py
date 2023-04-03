@@ -2,12 +2,8 @@
 Concatenate common operation for two or more objects.
 
 """
-import math
-import numpy as npy
 import matplotlib
 import matplotlib.pyplot as plt
-import volmdlr.core
-from volmdlr import edges
 
 from volmdlr.core import EdgeStyle
 
