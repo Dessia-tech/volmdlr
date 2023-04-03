@@ -93,7 +93,6 @@ total_time = time.time()
 # top_level_dir = os.getcwd()
 top_level_dir = os.sep.join(__file__.split(os.sep)[:-1])
 
-print('top_level_dir', top_level_dir)
 times = {}
 for script_name in scripts:
     if not os.path.isfile(os.path.join(top_level_dir, script_name)):
