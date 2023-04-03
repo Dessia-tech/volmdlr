@@ -3139,6 +3139,18 @@ class Arc2D(Arc):
         return ax
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Transforms the arc 2D into a 3D arc.
+
+        :param plane_origin: The origin of plane to draw the arc 3D.
+        :type plane_origin: volmdlr.Point3D
+        :param x: First direction of the plane
+        :type x: volmdlr.Vector3D
+        :param y: Second direction of the plane.
+        :type y: volmdlr.Vector3D
+        :return: A 3D arc.
+        :type: Arc3D.
+        """
         point_start = self.start.to_3d(plane_origin, x, y)
         point_interior = self.interior.to_3d(plane_origin, x, y)
         point_end = self.end.to_3d(plane_origin, x, y)
@@ -3408,6 +3420,18 @@ class FullArc2D(Arc2D):
         return False
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Transforms the full arc 2D into a 3D full arc.
+
+        :param plane_origin: The origin of plane to draw the full arc 3D.
+        :type plane_origin: volmdlr.Point3D
+        :param x: First direction of the plane
+        :type x: volmdlr.Vector3D
+        :param y: Second direction of the plane.
+        :type y: volmdlr.Vector3D
+        :return: A 3D full arc.
+        :type: Full Arc 3D.
+        """
         center = self.center.to_3d(plane_origin, x, y)
         start = self.start.to_3d(plane_origin, x, y)
         z = x.cross(y)
@@ -3944,7 +3968,7 @@ class ArcEllipse2D(Edge):
         :param y: Second direction of the plane.
         :type y: volmdlr.Vector3D
         :return: A 3D arc of ellipse.
-        :rtype: ArcEllipse3D
+        :type: ArcEllipse3D.
         """
         point_start3d = self.start.to_3d(plane_origin, x, y)
         point_interior3d = self.interior.to_3d(plane_origin, x, y)
@@ -3962,6 +3986,13 @@ class ArcEllipse2D(Edge):
                             point_center3d, new_major_dir, extra3d, name=self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """
+        Plot arc-ellipse 2d using matplotlob.
+
+        :param ax: matplotlib plot if there exists any.
+        :param edge_style: edge styles.
+        :return: matplotlib plot
+        """
         if ax is None:
             _, ax = plt.subplots()
 
@@ -4107,6 +4138,7 @@ class ArcEllipse2D(Edge):
     def split(self, split_point):
         """
         Splits arc-elipse at a given point.
+
         :param split_point: splitting point.
         :return: list of two Arc-Ellipse.
         """
@@ -4142,7 +4174,8 @@ class FullArcEllipse(Edge):
         Calculates the length of the ellipse.
 
         Ramanujan's approximation for the perimeter of the ellipse.
-        P = math.pi * (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
+        P = math.pi * (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2.
+
         :return: Perimeter of the ellipse
         :rtype: float
         """
@@ -4265,6 +4298,18 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         return discretization_points
 
     def to_3d(self, plane_origin, x, y):
+        """
+        Transforms the full arc of ellipse 2D into a 3D full arc of ellipse.
+
+        :param plane_origin: The origin of plane to draw the full arc of ellipse 3D.
+        :type plane_origin: volmdlr.Point3D
+        :param x: First direction of the plane
+        :type x: volmdlr.Vector3D
+        :param y: Second direction of the plane.
+        :type y: volmdlr.Vector3D
+        :return: A 3D full arc of ellipse.
+        :rtype: FullArcEllipse3D
+        """
         point_start_end3d = self.start_end.to_3d(plane_origin, x, y)
         point_center3d = self.center.to_3d(plane_origin, x, y)
 
@@ -4664,6 +4709,11 @@ class LineSegment3D(LineSegment):
                 and self.end == other_linesegment3d.end)
 
     def _bounding_box(self):
+        """
+        Calculates the bounding box for a line segment 3D.
+
+        :return: Bounding box for line segment 3d.
+        """
 
         xmin = min(self.start.x, self.end.x)
         xmax = max(self.start.x, self.end.x)
@@ -4699,12 +4749,26 @@ class LineSegment3D(LineSegment):
         return distance
 
     def plane_projection2d(self, center, x, y):
+        """
+        Calculates the projection of a line segment 3d on to a plane.
+
+        :param center: plane center.
+        :param x: plane u direction.
+        :param y: plane v direction.
+        :return: line segment 3d.
+        """
         start, end = self.start.plane_projection2d(center, x, y), self.end.plane_projection2d(center, x, y)
         if not start.is_close(end):
             return LineSegment2D(start, end)
         return None
 
     def line_intersections(self, line):
+        """
+        Gets the intersection between a line segment 3d and line3D.
+
+        :param line: other line.
+        :return: a list with the intersection points.
+        """
         line_self = self.to_line()
         if line_self.skew_to(line):
             return []
@@ -4714,6 +4778,12 @@ class LineSegment3D(LineSegment):
         return []
 
     def linesegment_intersections(self, linesegment):
+        """
+        Gets the intersection between a line segment 3d and another line segment 3D.
+
+        :param linesegment: other line segment.
+        :return: a list with the intersection points.
+        """
         line1 = self.to_line()
         line2 = linesegment.to_line()
         intersection = line1.intersection(line2)
