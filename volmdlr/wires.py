@@ -1201,7 +1201,7 @@ class ContourMixin(WireMixin):
         return contour_primitives, edges, finished_loop
 
     @classmethod
-    def contours_from_edges(cls, edges, tol=1e-7):
+    def contours_from_edges(cls, edges, tol=1e-6):
         if not edges:
             return []
         if len(edges) == 1:
@@ -2293,46 +2293,45 @@ class Contour2D(ContourMixin, Wire2D):
 
         return list_contours
 
-    def intersection_contour_with(self, other_contour):
+    def split_contour_with_sorted_points(self, sorted_points):
+        """
+        Split contour in various sections using a list of sorted points along the contour.
+
+        :param sorted_points: sorted list of points.
+        :return: list of Contour sections.
+        """
+        split_wires = []
+        len_sorted_points = len(sorted_points)
+        for i, (point1, point2) in enumerate(
+                zip(sorted_points, sorted_points[1:] + [sorted_points[0]])):
+            if i == len_sorted_points - 1:
+                split_wires.extend(Contour2D.extract_contours(self, point1, point2, False))
+            else:
+                split_wires.extend(Contour2D.extract_contours(self, point1, point2, True))
+        return split_wires
+
+    def intersection_contour_with(self, other_contour, abs_tol=1e-6):
         """
         Gets the contour(s) resulting from the intersections of two other contours.
+
         :param other_contour: other contour.
+        :param abs_tol: tolerance.
         :return: list of resulting intersection contours.
         """
         contour_crossings = self.wire_crossings(other_contour)
         sorted_points_contour1 = sorted(contour_crossings, key=self.abscissa)
         sorted_points_contour2 = sorted(contour_crossings, key=other_contour.abscissa)
-        split_wires1 = []
-        for i, (point1, point2) in enumerate(
-                zip(sorted_points_contour1, sorted_points_contour1[1:] + [sorted_points_contour1[0]])):
-            if i == len(sorted_points_contour1) - 1:
-                if self.abscissa(point1) > self.abscissa(point2):
-                    split_wires1.extend(Contour2D.extract_contours(self, point1, point2, True))
-                else:
-                    split_wires1.extend(Contour2D.extract_contours(self, point1, point2, False))
-            else:
-                split_wires1.extend(Contour2D.extract_contours(self, point1, point2, True))
-
-        split_wires2 = []
-        for i, (point1, point2) in enumerate(
-                zip(sorted_points_contour2, sorted_points_contour2[1:] + [sorted_points_contour2[0]])):
-            if i == len(sorted_points_contour2) - 1:
-                if other_contour.abscissa(point1) > other_contour.abscissa(point2):
-                    split_wires2.extend(Contour2D.extract_contours(other_contour, point1, point2, True))
-                else:
-                    split_wires2.extend(Contour2D.extract_contours(other_contour, point1, point2, False))
-            else:
-                split_wires2.extend(Contour2D.extract_contours(other_contour, point1, point2, True))
-
+        split_wires1 = self.split_contour_with_sorted_points(sorted_points_contour1)
+        split_wires2 = other_contour.split_contour_with_sorted_points(sorted_points_contour2)
         intersection_contour_primitives = []
         for section in split_wires1:
             if other_contour.is_inside(section):
-                intersection_contour_primitives.append(section)
-
+                intersection_contour_primitives.extend(section.primitives)
         for section in split_wires2:
             if self.is_inside(section):
-                intersection_contour_primitives.append(section)
-        return self.contours_from_edges(intersection_contour_primitives)
+                intersection_contour_primitives.extend(section.primitives)
+        return self.contours_from_edges(intersection_contour_primitives, abs_tol)
+
 
 class ClosedPolygonMixin:
     """
