@@ -13,7 +13,6 @@ class TestArcEllipse2D(unittest.TestCase):
     discretized_points = arc_ellipse2d.discretization_points(number_points=3)
 
     def test_init(self):
-
         list_points = [volmdlr.Point2D(2, 0), volmdlr.Point2D(1.4142135623730951, 0.7071067811865475), volmdlr.Point2D(0, 1),
                        volmdlr.Point2D(-1.4142135623730951, 0.7071067811865475), volmdlr.Point2D(-2, 0),
                        volmdlr.Point2D(-1.4142135623730951, -0.7071067811865475), volmdlr.Point2D(0, -1),
