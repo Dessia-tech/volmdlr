@@ -4078,6 +4078,7 @@ class ArcEllipse2D(Edge):
     def translation(self, offset: volmdlr.Vector2D):
         """
         Translates the Arc ellipse given an offset vector.
+
         :param offset: offset vector
         :return: new translated arc ellipse 2d.
         """
@@ -4090,6 +4091,7 @@ class ArcEllipse2D(Edge):
     def point_distance(self, point):
         """
         Calculates the distance from a given point to a BSplineCurve2D.
+
         :param point: point 2d.
         :return: distance.
         """
