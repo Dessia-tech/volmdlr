@@ -3646,56 +3646,16 @@ class ArcEllipse2D(Edge):
             y2 = interior_new.y - center_new.y
             if abs(x1) == abs(x2):
                 raise ValueError(f"Interior point{interior} is not valid. Try specifying another interior point.")
-        B_ = math.sqrt((x1**2 * y2**2 - x2**2 * y1**2) / (x1**2 - x2**2))
-        if (1 - (y1 ** 2 / B_ ** 2)) == 0.0:
+        minor_axis = math.sqrt((x1**2 * y2**2 - x2**2 * y1**2) / (x1**2 - x2**2))
+        if (1 - (y1 ** 2 / minor_axis ** 2)) == 0.0:
             if abs(y1) != abs(y2) and abs(interior_new.y) != abs(y2):
                 x1 = interior_new.x - center_new.x
                 y1 = interior_new.y - center_new.y
             else:
                 raise NotImplementedError
-        if (1 - (y1 ** 2 / B_ ** 2)) == 0.0:
-            print(True)
-        A_ = math.sqrt(x1 ** 2 / (1 - (y1 ** 2 / B_ ** 2)))
-        self.major_axis = A_
-        self.minor_axis = B_
-
-        # def theta_a_b(start_, iterior_, end_, center_):
-        #     """
-        #     Calculates the major, minor and theta.
-        #
-        #     From : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a- \
-        #     center-and-3-arbitrary-points-on-it-are-given.
-        #     theta= ellipse's inclination angle related to the horizontal
-        #     (clockwise), A=semi major axis, B=semi minor axis.
-        #
-        #     """
-        #     x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1], \
-        #         iterior_[0] - center_[0], iterior_[1] - center_[1], end_[0] - center_[0], end_[1] - center_[1]
-        #     matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
-        #                           [x_interior ** 2, y_interior ** 2, 2 * x_interior * y_interior],
-        #                           [x_end ** 2, y_end ** 2, 2 * x_end * y_end]))
-        #     inv_matrix_a = npy.linalg.inv(matrix_a)
-        #     matriz_one = npy.array(([1],
-        #                             [1],
-        #                             [1]))
-        #     vector_c = npy.dot(inv_matrix_a, matriz_one)
-        #     theta = 0.5 * math.atan(2 * vector_c[2] / (vector_c[1] - vector_c[0]))
-        #     c1 = vector_c[0] + vector_c[1]
-        #     c2 = (vector_c[1] - vector_c[0]) / math.cos(2 * theta)
-        #     gdaxe = math.sqrt((2 / (c1 - c2)))
-        #     ptax = math.sqrt((2 / (c1 + c2)))
-        #     return theta, gdaxe, ptax
-        #
-        # if start.is_close(end):
-        #     extra_new = frame.global_to_local_coordinates(self.extra)
-        #     theta, major_axis, minor_axis = theta_a_b(start_new, extra_new, interior_new,
-        #                                               center_new)
-        # else:
-        #     theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, end_new,
-        #                                               center_new)
-        # self.major_axis = major_axis
-        # self.minor_axis = minor_axis
-        # self.theta = theta
+        major_axis = math.sqrt(x1 ** 2 / (1 - (y1 ** 2 / minor_axis ** 2)))
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
 
         # Angle pour start
         u1, u2 = start_new.x / self.major_axis, start_new.y / self.minor_axis
