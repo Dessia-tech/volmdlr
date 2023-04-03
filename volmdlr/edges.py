@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as npy
 import plot_data.core as plot_data
 import scipy.integrate as scipy_integrate
-from scipy.optimize import least_squares, minimize, lsq_linear
+from scipy.optimize import least_squares, minimize
 from geomdl import NURBS, BSpline, fitting, operations, utilities
 from geomdl.operations import length_curve, split_curve
 from matplotlib import __version__ as _mpl_version
@@ -4985,20 +4985,106 @@ class LineSegment3D(LineSegment):
     def matrix_distance(self, other_line):
         u = self.direction_vector()
         v = other_line.direction_vector()
-        w = other_line.start - self.start
-
-        a11 = u.dot(u)
-        a12 = -u.dot(v)
-        a22 = v.dot(v)
-
-        a_matrix = npy.array([[a11, a12],
-                              [a12, a22]])
-        b_matrix = npy.array([w.dot(u), -w.dot(v)])
-
-        res = lsq_linear(a_matrix, b_matrix, bounds=(0, 1))
-        point1 = self.point_at_abscissa(res.x[0] * self.length())
-        point2 = other_line.point_at_abscissa(res.x[1] * other_line.length())
-        return point1, point2
+        w = self.start - other_line.start
+        a = u.dot(u)
+        b = u.dot(v)
+        c = v.dot(v)
+        d = u.dot(w)
+        e = v.dot(w)
+        determinant = a*c - b*c
+        if determinant > - 1e-6:
+            b_times_e = b*e
+            c_times_d = c*d
+            if b_times_e <= c_times_d:
+                s_parameter = 0.0
+                if e <= 0.0:
+                    t_parameter = 0.0
+                    negative_d = -d
+                    if negative_d >= a:
+                        s_parameter = 1.0
+                    elif negative_d > 0.0:
+                        s_parameter = negative_d / a
+                elif e < c:
+                    t_parameter = e / c
+                else:
+                    t_parameter = 1.0
+                    b_minus_d = b - d
+                    if b_minus_d >= a:
+                        s_parameter = 1.0
+                    elif b_minus_d > 0.0:
+                        s_parameter = b_minus_d / a
+            else:
+                s_parameter = b_times_e - c_times_d
+                if s_parameter >= determinant:
+                    s_parameter = 1.0
+                    b_plus_e = b + e
+                    if b_plus_e <= 0.0:
+                        t_parameter = 0.0
+                        negative_d = -d
+                        if negative_d <= 0.0:
+                            s_parameter = 0.0
+                        elif negative_d < a:
+                            s_parameter = negative_d / a
+                    elif b_plus_e < c:
+                        t_parameter = b_plus_e / c
+                    else:
+                        t_parameter = 1.0
+                        b_minus_d = b - d
+                        if b_minus_d <= 0.0:
+                            s_parameter = 0.0
+                        elif b_minus_d < a:
+                            s_parameter = b_minus_d / a
+                else:
+                    a_times_e = a * e
+                    b_times_d = a * d
+                    if a_times_e <= b_times_d:
+                        t_parameter = 0.0
+                        negative_d = -d
+                        if negative_d <= 0.0:
+                            s_parameter = 0.0
+                        elif negative_d >= a:
+                            s_parameter = 1.0
+                        else:
+                            s_parameter = negative_d / a
+                    else:
+                        t_parameter = a_times_e - b_times_d
+                        if t_parameter >= determinant:
+                            t_parameter = 1.0
+                            b_minus_d = b - d
+                            if b_minus_d <= 0.0:
+                                s_parameter = 0.0
+                            elif b_minus_d >= a:
+                                s_parameter = 1.0
+                            else:
+                                s_parameter = b_minus_d / a
+                        else:
+                            s_parameter /= determinant
+                            t_parameter /= determinant
+        else:
+            if e <= 0.0:
+                t_parameter = 0.0
+                negative_d = -d
+                if negative_d <= 0.0:
+                    s_parameter = 0.0
+                elif negative_d >= a:
+                    s_parameter = 1.0
+                else:
+                    s_parameter = negative_d / a
+            elif e >= c:
+                t_parameter = 1.0
+                b_minus_d = b - d
+                if b_minus_d <= 0.0:
+                    s_parameter = 0.0
+                elif b_minus_d >= a:
+                    s_parameter = 1.0
+                else:
+                    s_parameter = b_minus_d / a
+            else:
+                s_parameter = 0.0
+                t_parameter = e / c
+        p1 = self.start + u * s_parameter
+        p2 = other_line.start + v * t_parameter
+        return p1, p2
 
     def parallel_distance(self, other_linesegment):
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
@@ -5660,6 +5746,37 @@ class BSplineCurve3D(BSplineCurve):
             return []
         intersections_points = self.get_linesegment_intersections(linesegment3d)
         return intersections_points
+
+    def minimum_distance(self, element, return_points=False):
+        """
+        Gets the minimum distance between the bspline and another edge.
+
+        :param element: another edge.
+        :param return_points: weather also to return the corresponding points.
+        :return: minimum distance.
+        """
+        points = []
+        for point in self.points:
+            if not volmdlr.core.point_in_list(point, points):
+                points.append(point)
+        discretization_primitves1 = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        discretization_points2 = element.discretization_points(number_points=100)
+        points = []
+        for point in discretization_points2:
+            if not volmdlr.core.point_in_list(point, points):
+                points.append(point)
+        discretization_primitves2 = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        minimum_distance = math.inf
+        points = None
+        for prim1 in discretization_primitves1:
+            for prim2 in discretization_primitves2:
+                distance, point1, point2 = prim1.minimum_distance(prim2, return_points=True)
+                if distance < minimum_distance:
+                    minimum_distance = distance
+                    points = (point1, point2)
+        if return_points:
+            return minimum_distance, points[0], points[1]
+        return minimum_distance
 
 
 class BezierCurve3D(BSplineCurve3D):
