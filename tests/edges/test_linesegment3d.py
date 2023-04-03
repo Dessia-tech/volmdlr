@@ -23,9 +23,16 @@ class TestLineSegment3D(unittest.TestCase):
 
     def test_linesegment_intersection(self):
         for lineseg in [self.linesegment2, self.linesegment3, self.linesegment4]:
-            self.assertFalse(self.linesegment1.linesegment_intersection(lineseg))
-        self.assertEqual(self.linesegment1.linesegment_intersection(self.linesegment5),
-                         volmdlr.Point3D(-0.2, -0.2, 0.125))
+            self.assertFalse(self.linesegment1.linesegment_intersections(lineseg))
+        self.assertTrue(self.linesegment1.linesegment_intersections(self.linesegment5)[0].is_close(
+            volmdlr.Point3D(-0.2, -0.2, 0.125)))
+
+    def test_matrix_distance(self):
+        edge1 = volmdlr.edges.LineSegment3D(volmdlr.Point3D(1, 1, 1), volmdlr.Point3D(2, 4, 5))
+        edge2 = volmdlr.edges.LineSegment3D(volmdlr.Point3D(1, -1, 1), volmdlr.Point3D(3, -2, 7))
+        matrix_distance = edge1.matrix_distance(edge2)
+        self.assertEqual(matrix_distance[0], volmdlr.Point3D(1, 1, 1))
+        self.assertEqual(matrix_distance[1], volmdlr.Point3D(1, -1, 1))
 
     def test_matrix_distance(self):
         edge1 = volmdlr.edges.LineSegment3D(volmdlr.Point3D(1, 1, 1), volmdlr.Point3D(2, 4, 5))

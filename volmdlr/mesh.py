@@ -137,7 +137,8 @@ class TriangularElement(vmw.Triangle):
     _non_hash_attributes = ['name']
     _generic_eq = True
 
-    def __init__(self, points):
+    def __init__(self, points: List[volmdlr.Point2D]):
+        super().__init__(*points)
         self.points = points
         # self.linear_elements = self._to_linear_elements()
         # self.form_functions = self._form_functions()
@@ -280,7 +281,8 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
     _generic_eq = True
 
     def __init__(self, points, name: str = ''):
-        self.points = points
+        super().__init__(points)
+        # self.points = points
         self.name = name
         self.linear_elements = self._to_linear_elements()
         self.form_functions = self._form_functions()
@@ -433,8 +435,7 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
             return ax
         if point_numbering:
             for ip, point in enumerate(self.points):
-                ax.text(*point, 'point {}'.format(ip + 1),
-                        ha='center', va='top')
+                ax.text(*point, f'point {ip + 1}', ha='center', va='top')
         for p1, p2 in zip(self.points, self.points[1:] + [self.points[0]]):
             if edge_style.width is None:
                 edge_style.width = 1
@@ -456,7 +457,7 @@ class QuadrilateralElement2D(vmw.ClosedPolygon2D):
     _non_hash_attributes = ['name']
     _generic_eq = True
 
-    def __init__(self, points):
+    def __init__(self, points: List[volmdlr.Point2D]):
         self.points = points
         # self.linear_elements = self._to_linear_elements()
         # self.form_functions = self._form_functions()
@@ -584,6 +585,7 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
     #             pt.translation(offset, copy=False)
 
     def axial_symmetry(self, line):
+        """ Returns a symmetric new element with respect to the given line. """
         new_points = []
         for point in self.points:
             new_points.append(point.axial_symmetry(line))
