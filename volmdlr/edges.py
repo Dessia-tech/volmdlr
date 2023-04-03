@@ -289,6 +289,45 @@ class Edge(dc.DessiaObject):
                 break
         return new_split_edge
 
+    def point_distance_to_edge(self, point):
+        """
+        Calculates the distance from a given point to an edge.
+
+        :param point: point.
+        :return: distance to edge.
+        """
+        best_distance = math.inf
+        abscissa1 = 0
+        abscissa2 = self.abscissa(self.end)
+        distance = best_distance
+        point1_ = None
+        point2_ = None
+        linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
+        while True:
+            discretized_points_between_1_2 = []
+            for abscissa in npy.linspace(abscissa1, abscissa2, num=8):
+                abscissa_point = self.point_at_abscissa(abscissa)
+                if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+                    discretized_points_between_1_2.append(abscissa_point)
+            if not discretized_points_between_1_2:
+                break
+            distance = point.point_distance(discretized_points_between_1_2[0])
+            for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
+                line = linesegment_class_(point1, point2)
+                dist = line.point_distance(point)
+                if dist < distance:
+                    point1_ = point1
+                    point2_ = point2
+                    distance = dist
+            if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-6):
+                break
+            abscissa1 = self.abscissa(point1_)
+            abscissa2 = self.abscissa(point2_)
+            best_distance = distance
+            if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
+                break
+        return distance
+
 
 class Line(dc.DessiaObject):
     """
@@ -1957,7 +1996,7 @@ class BSplineCurve2D(BSplineCurve):
         :param point: point 2d.
         :return: distance.
         """
-        return vm_common_operations.point_distance_to_edge(self, point)
+        return self.point_distance_to_edge(point)
 
     def nearest_point_to(self, point):
         """
@@ -4021,12 +4060,12 @@ class ArcEllipse2D(Edge):
 
     def point_distance(self, point):
         """
-        Calculates the distance from a given point to a BSplineCurve2D.
+        Calculates the distance from a given point to an Arc Ellipse 2d.
 
         :param point: point 2d.
         :return: distance.
         """
-        return vm_common_operations.point_distance_to_edge(self, point)
+        return self.point_distance_to_edge(point)
 
     def straight_line_point_belongs(self, point):
         """
