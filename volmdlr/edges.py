@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as npy
 import plot_data.core as plot_data
 import scipy.integrate as scipy_integrate
-from scipy.optimize import least_squares, minimize, lsq_linear
+from scipy.optimize import least_squares, minimize
 from geomdl import NURBS, BSpline, fitting, operations, utilities
 from geomdl.operations import length_curve, split_curve
 from matplotlib import __version__ as _mpl_version
