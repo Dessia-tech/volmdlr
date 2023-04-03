@@ -12,6 +12,13 @@ class TestContour2D(unittest.TestCase):
     contour1 = wires.Contour2D([edges.FullArc2D(center=volmdlr.O2D, start_end=volmdlr.Point2D(0.029999999, 0))])
     not_ordered_contour = DessiaObject.load_from_file('wires/contour_not_ordered.json')
     ordered_contour = DessiaObject.load_from_file('wires/contour_ordered.json')
+    contour_to_extract_from = contour = wires.Contour2D.from_points(
+        [volmdlr.Point2D(-.15, .15), volmdlr.Point2D(-.15, -.15), volmdlr.Point2D(.15, -.15),
+         volmdlr.Point2D(.15, .15), volmdlr.Point2D(-.15, .15)])
+    point1_ = volmdlr.Point2D(0.12500000000000003, 0.15)
+    point2_ = volmdlr.Point2D(0.12500000000000003, -0.15)
+    point_to_extract_with = [(point1_, point2_), (volmdlr.Point2D(0.15, -0.05), volmdlr.Point2D(0.15, 0.05)),
+                       (volmdlr.Point2D(-0.15, 0.15), point2_), (volmdlr.Point2D(-0.15, 0.15), point1_)]
 
     def test_point_belongs(self):
         point1 = volmdlr.Point2D(0.0144822, 0.00595264)
@@ -71,6 +78,33 @@ class TestContour2D(unittest.TestCase):
         self.assertEqual(len(contour_crossings), len(expected_crossings))
         for crossing, expected_crossing in zip(contour_crossings, expected_crossings):
             self.assertTrue(crossing.is_close(expected_crossing))
+
+    def test_split_with_two_points(self):
+
+        expected_results = [(3, 0.3499999999999999, 3, 0.85),
+                            (1, 0.1, 5, 1.0999999999999999),
+                            (2, 0.575, 3, 0.625),
+                            (4, 0.9249999999999998, 1, 0.275)]
+        for i, (pt1, pt2) in enumerate(self.point_to_extract_with):
+            inside_prims, outside_prims = self.contour_to_extract_from.split_with_two_points(pt1, pt2)
+            expected_inside_ = expected_results[i][:2]
+            expected_outside_ = expected_results[i][2:]
+            self.assertEqual(len(inside_prims), expected_inside_[0])
+            self.assertAlmostEqual(sum(prim.length() for prim in inside_prims), expected_inside_[1])
+            self.assertEqual(len(outside_prims), expected_outside_[0])
+            self.assertAlmostEqual(sum(prim.length() for prim in outside_prims), expected_outside_[1])
+
+    def test_extract_with_points(self):
+        list_expected_outside_params = [(3, 0.85), (5, 1.0999999999999999), (3, 0.625), (1, 0.275)]
+        list_expected_inside_params = [(3, 0.3499999999999999), (1, 0.1), (2, 0.575), (4, 0.9249999999999998)]
+        for i, (pt1, pt2) in enumerate(self.point_to_extract_with):
+            inside_prims = self.contour_to_extract_from.extract_with_points(pt1, pt2, inside=True)
+            outside_prims = self.contour_to_extract_from.extract_with_points(pt1, pt2, inside=False)
+            self.assertEqual(len(inside_prims), list_expected_inside_params[i][0])
+            self.assertAlmostEqual(sum(prim.length() for prim in inside_prims), list_expected_inside_params[i][1])
+            self.assertEqual(len(outside_prims), list_expected_outside_params[i][0])
+            self.assertAlmostEqual(sum(prim.length() for prim in outside_prims), list_expected_outside_params[i][1])
+
     def test_split_by_line(self):
         line = edges.Line2D(volmdlr.Point2D(volmdlr.TWO_PI, 0.1), volmdlr.Point2D(volmdlr.TWO_PI, -0.1))
         contour = wires.Contour2D.load_from_file("wires/contour_to_split.json")

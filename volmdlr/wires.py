@@ -130,99 +130,52 @@ class WireMixin:
             return self.primitives[-1].end  # point_at_abscissa(primitive_length)
         raise ValueError('abscissa out of contour length')
 
-    def extract_primitives(self, point1, primitive1, point2, primitive2,
-                           inside: bool = True):
+    def split_with_two_points(self, point1, point2):
         """
+        Split a wire or contour in two points.
 
-        :param inside: extracted contour is between the two points if True and outside these points if False.
+        :param point1: spliting point1.
+        :param point2: spliting point2.
+        :return: List of primitives in between these two points, and another list with the remaining primitives.
         """
-
-        primitives = []
-        ip1 = self.primitives.index(primitive1)
-        ip2 = self.primitives.index(primitive2)
-
-        if ip1 < ip2 or (ip1 > ip2 and inside):
-            pass
-        elif ip1 == ip2:
-            if primitive1.abscissa(point1) < primitive1.abscissa(point2):
-                pass
-            else:
-                primitive1, primitive2 = primitive2, primitive1
-                point1, point2 = point2, point1
-        else:
-            primitive1, primitive2 = primitive2, primitive1
+        abscissa1 = self.abscissa(point1)
+        abscissa2 = self.abscissa(point2)
+        if abscissa1 > abscissa2:
             point1, point2 = point2, point1
-
-        if inside:
-            if ip1 == ip2:
-                prim = primitive1.split(point1)[1]
-                if prim:
-                    prim = prim.split(point2)[0]
-                    if prim:
-                        primitives.append(prim)
+            abscissa1, abscissa2 = abscissa2, abscissa1
+        current_abscissa = 0
+        primitives1 = []
+        primitives2 = []
+        for primitive in self.primitives:
+            if abscissa1 < current_abscissa and current_abscissa + primitive.length() < abscissa2:
+                primitives1.append(primitive)
+            elif current_abscissa > abscissa2 or current_abscissa + primitive.length() < abscissa1:
+                primitives2.append(primitive)
+            elif current_abscissa <= abscissa1 <= current_abscissa + primitive.length() and \
+                    current_abscissa <= abscissa2 <= current_abscissa + primitive.length():
+                split_primitives1 = primitive.split(point1)
+                if split_primitives1[0]:
+                    primitives2.append(split_primitives1[0])
+                split_primitives2 = primitive.split(point2)
+                if split_primitives2[1]:
+                    primitives2.append(split_primitives2[1])
+                primitives1.append(primitive.split_between_two_points(point1, point2))
+            elif current_abscissa <= abscissa1 <= current_abscissa + primitive.length():
+                split_primitives = primitive.split(point1)
+                if split_primitives[1]:
+                    primitives1.append(split_primitives[1])
+                if split_primitives[0]:
+                    primitives2.append(split_primitives[0])
+            elif current_abscissa <= abscissa2 <= current_abscissa + primitive.length():
+                split_primitives = primitive.split(point2)
+                if split_primitives[0]:
+                    primitives1.append(split_primitives[0])
+                if split_primitives[1]:
+                    primitives2.append(split_primitives[1])
             else:
-                prim = primitive1.split(point1)[1]
-                if prim:
-                    primitives.append(prim)
-                primitives.extend(self.primitives[self.primitives.index(
-                    primitive1) + 1:self.primitives.index(primitive2)])
-                prim = primitive2.split(point2)[0]
-                if prim:
-                    primitives.append(prim)
-        else:
-            primitives.extend(self.primitives[0:self.primitives.index(primitive1)])
-            if ip1 == ip2:
-                prim = primitive1.split(point1)
-                if prim[0]:
-                    primitives.append(prim[0])
-                if prim[1]:
-                    prim = prim[1].split(point2)[1]
-                    if prim:
-                        primitives.append(prim)
-            else:
-                prim = primitive1.split(point1)[0]
-                if prim:
-                    primitives.append(prim)
-                prim = primitive2.split(point2)[1]
-                if prim:
-                    primitives.append(prim)
-            primitives.extend(self.primitives[self.primitives.index(primitive2) + 1::])
-
-        return primitives
-
-    def extract_without_primitives(self, point1, point2, inside: bool = True):
-        """
-
-        :param inside: extracted contour is between the two points if True and outside these points if False.
-        """
-        primitives = self.primitives
-        indices = []
-
-        for i, point in enumerate([point1, point2]):
-            ind = []
-            for prim_index, primitive in enumerate(primitives):
-                if primitive.point_belongs(point, 1e-6):
-                    ind.append(prim_index)
-            indices.append(ind)
-
-        shared = list(set(indices[0]) & set(indices[1]))
-        ind = []
-        if not shared:
-            ind.append(indices[0][0])
-            if len(indices[1]) == 2:
-                ind.append(indices[1][1])
-            else:
-                ind.append(indices[1][0])
-        else:
-            for indice in indices:
-                if len(indice) == 1:
-                    ind.append(indice[0])
-                else:
-                    for i in indice:
-                        if i != shared[0]:
-                            ind.append(i)
-        return self.extract_primitives(point1, primitives[ind[0]], point2,
-                                       primitives[ind[1]], inside)
+                raise NotImplementedError
+            current_abscissa += primitive.length()
+        return primitives1, primitives2
 
     def abscissa(self, point, tol=1e-6):
         """
@@ -481,23 +434,20 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             primitives3d.append(edge.to_3d(plane_origin, x, y))
         return Wire3D(primitives3d)
 
-    def extract(self, point1, primitive1, point2, primitive2,
-                inside: bool = True):
+    def extract_with_points(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D, inside: bool = True):
         """
+        Extract primitives between two given points.
 
-        :param inside: extracted contour is between the two points if True and outside these points if False.
+        :param point1: extraction point 1.
+        :param point2:extraction point2.
+        :param inside: If True it'll Extract primitives from smaller point abscissa value
+        to greater point abscissa value. If False, it'll return the contour primitives going from
+        the greater point abscissa value to the smaller one.
         """
-        return Wire2D(
-            self.extract_primitives(point1, primitive1, point2, primitive2,
-                                    inside))
-
-    def extract_with_points(self, point1: volmdlr.Point2D,
-                            point2: volmdlr.Point2D, inside: bool = True):
-        """
-
-        :param inside: extracted contour is between the two points if True and outside these points if False.
-        """
-        return self.extract_without_primitives(point1, point2, inside)
+        inside_primitives, outside_primitives = self.split_with_two_points(point1, point2)
+        if inside:
+            return inside_primitives
+        return outside_primitives
 
         # TODO: method to check if it is a wire
 
@@ -930,14 +880,6 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
-
-    def extract(self, point1, primitive1, point2, primitive2):
-        return Wire3D(self.extract_primitives(self, point1, primitive1, point2,
-                                              primitive2))
-
-    def extract_with_points(self, point1: volmdlr.Point3D,
-                            point2: volmdlr.Point3D, inside):
-        return self.extract_without_primitives(point1, point2, inside)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1597,6 +1539,13 @@ class ContourMixin(WireMixin):
             return ClosedPolygon2D(polygon_points)
         return ClosedPolygon3D(polygon_points)
 
+    @classmethod
+    def extract_contours(cls, contour, point1, point2, inside=False):
+
+        new_primitives = contour.extract_with_points(point1, point2, inside)
+        contours = [cls(new_primitives)]
+        return contours
+
 
 class Contour2D(ContourMixin, Wire2D):
     """
@@ -1824,14 +1773,6 @@ class Contour2D(ContourMixin, Wire2D):
             if self.point_belongs(point, include_edge_points):
                 return point
         raise ValueError('Could not find a point inside')
-
-    @classmethod
-    def extract_contours(cls, contour, point1: volmdlr.Point3D,
-                         point2: volmdlr.Point3D, inside=False):
-
-        new_primitives = contour.extract_with_points(point1, point2, inside)
-        contours = [cls(new_primitives)]
-        return contours
 
     def cut_by_linesegments(self, lines: List[volmdlr.edges.LineSegment2D]):
         cut_lines = []
@@ -2323,11 +2264,11 @@ class Contour2D(ContourMixin, Wire2D):
             point1 = sorted_points[cutting_points_counter]
             point2 = sorted_points[cutting_points_counter + 1]
 
-            closing_wire = wire.extract_without_primitives(point1, point2, True)
+            closing_wire = wire.extract_with_points(point1, point2, True)
 
             for point in points_intersections:
                 if point not in [point1, point2] and Wire2D(closing_wire).point_over_wire(point):
-                    closing_wire = wire.extract_without_primitives(point1, point2, False)
+                    closing_wire = wire.extract_with_points(point1, point2, False)
                     break
 
             closing_wire_prim = [closing_w for closing_w in closing_wire if closing_w]
@@ -4694,14 +4635,6 @@ class Contour3D(ContourMixin, Wire3D):
             self._bbox = self._bounding_box()
             self._utd_bounding_box = True
         return self._bbox
-
-    @classmethod
-    def extract_contours(cls, contour, point1: volmdlr.Point3D,
-                         point2: volmdlr.Point3D, inside=False):
-
-        new_primitives = contour.extract_with_points(point1, point2, inside)
-        contours = [cls(new_primitives)]
-        return contours
 
     def line_intersections(self, line: volmdlr.edges.Line3D):
         """
