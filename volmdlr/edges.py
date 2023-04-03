@@ -1518,7 +1518,7 @@ class Line2D(Line):
             a new figure is created.
         :type ax: matplotlib.axes._subplots.AxesSubplot, optional
         :param edge_style: data class instance, containing all parameters needed to plot Line 2D.
-        :return: The matplotlib axis.
+        :return: The Matplotlib axis.
         :rtype: matplotlib.axes._subplots.AxesSubplot
         """
         if ax is None:
@@ -3989,9 +3989,9 @@ class ArcEllipse2D(Edge):
         """
         Plot arc-ellipse 2d using matplotlob.
 
-        :param ax: matplotlib plot if there exists any.
+        :param ax: Matplotlib plot if there exists any.
         :param edge_style: edge styles.
-        :return: matplotlib plot
+        :return: Matplotlib plot
         """
         if ax is None:
             _, ax = plt.subplots()

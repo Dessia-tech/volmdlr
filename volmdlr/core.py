@@ -124,7 +124,7 @@ def step_ids_to_str(ids):
 @dataclass
 class EdgeStyle:
     """
-    Data class for styling edges matplotlib plots.
+    Data class for styling edges Matplotlib plots.
 
     """
     color: str = 'k'
