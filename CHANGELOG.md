@@ -23,16 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineCurve2D: offset
 * Circle2D: bsplinecurve_intersections, point_distance
 * ConicalSurface3D, CylindricalSurface3D: plot method
+* BSplineCurve3D: minimum distance
 * volmdlr.edge: FullArcEllipse
 * BSplineCurve: evaluate_single
 * Wire2: hash
 * Contour3D: hash
 * LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
-
+ 
 ### Fixed
 * Bspline in sweep
 * Plane3D: plane_intersections
 * fixes to step assemblies
+* LineSegment3D: matrix_distance
 * fixes to wire
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
@@ -41,7 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D, Contour3D: merge_with()
 * Edge: change unit_direction_vector and unit_normal_vector to concrete methods
 * stl: add _standalone_in_db to Stl class
+* BSplineSurface3D: merge_with
+* Documentation: Add introduction to volmdlr technology
 * BSplineSurface3D: refactor bsplinecurve3d_to_2d to take into account periodic behavior
+* OpenedRoundedLineSegments2D/ClosedRoundedLineSegments2D: fix radius type
 * Surface3D: debug some special cases while using face_from_contours3d.
 
 ### Removed
@@ -72,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unittests for Point2D
 * Unittests for Vector3D
 * Unittests for Point3D
+* LineSegment3D: test_matrix_distance
 * LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
 * Contour3D: merge_with()
 
@@ -143,7 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactorings
 - Remove usage of deprecated method old_coordinates and new_coordinates
 - Indicate 'inplace' methods as deprecated
-
+* Wire: extract_with_points
 
 ### Documentation
 - BoundingBox docstrings
@@ -158,6 +164,7 @@ intersection_area, distance_to_b_rectangle, distance_to_point
 * BoundingBox: center, add, to_dict, points, from_bounding_boxes, from_points, to_frame, volume, bbox_intersection,
 is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_to_point, plot
 * VolumeModel: eq, volume, rotation, translation, frame_mapping, bounding_box, plot
+* Wire: extract_with_points, split_with_two_points
 * Arc2d: point_belongs, abscissa.
 
 ### CI

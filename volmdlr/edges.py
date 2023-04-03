@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as npy
 import plot_data.core as plot_data
 import scipy.integrate as scipy_integrate
-from scipy.optimize import least_squares, minimize, lsq_linear
+from scipy.optimize import least_squares, minimize
 from geomdl import NURBS, BSpline, fitting, operations, utilities
 from geomdl.operations import length_curve, split_curve
 from matplotlib import __version__ as _mpl_version
@@ -269,6 +269,26 @@ class Edge(dc.DessiaObject):
                                           in npy.linspace(abscissa1, abscissa2, num=number_points)]
         return discretized_points_between_1_2
 
+    def split_between_two_points(self, point1, point2):
+        """
+        Split edge between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge split.
+        """
+        split1 = self.split(point1)
+        if split1[0] and split1[0].point_belongs(point2, abs_tol=1e-6):
+            split2 = split1[0].split(point2)
+        else:
+            split2 = split1[1].split(point2)
+        new_split_edge = None
+        for split_edge in split2:
+            if split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
+                new_split_edge = split_edge
+                break
+        return new_split_edge
+
 
 class Line(dc.DessiaObject):
     """
@@ -370,8 +390,8 @@ class Line(dc.DessiaObject):
         """
         vector = self.point2 - self.point1
         norm_u = vector.norm()
-        t = (point - self.point1).dot(vector) / norm_u
-        return t
+        t_param = (point - self.point1).dot(vector) / norm_u
+        return t_param
 
     def point_at_abscissa(self, abscissa):
         """
@@ -1600,10 +1620,10 @@ class Line2D(Line):
     @staticmethod
     def compute_tangent_circle_for_parallel_segments(new_basis, new_a, new_c):
         segments_distance = abs(new_c[1] - new_a[1])
-        r = segments_distance / 2
-        new_circle_center = volmdlr.Point2D((0, npy.sign(new_c[1] - new_a[1]) * r))
+        radius = segments_distance / 2
+        new_circle_center = volmdlr.Point2D((0, npy.sign(new_c[1] - new_a[1]) * radius))
         circle_center = new_basis.local_to_global_coordinates(new_circle_center)
-        circle = volmdlr.wires.Circle2D(circle_center, r)
+        circle = volmdlr.wires.Circle2D(circle_center, radius)
         return circle, None
 
     @staticmethod
@@ -1612,13 +1632,13 @@ class Line2D(Line):
         line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
         new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
 
-        r = abs(new_pt_k[0])
-        new_circle_center1 = volmdlr.Point2D((0, r))
-        new_circle_center2 = volmdlr.Point2D((0, -r))
+        radius = abs(new_pt_k[0])
+        new_circle_center1 = volmdlr.Point2D((0, radius))
+        new_circle_center2 = volmdlr.Point2D((0, -radius))
         circle_center1 = new_basis.local_to_global_coordinates(new_circle_center1)
         circle_center2 = new_basis.local_to_global_coordinates(new_circle_center2)
-        circle1 = volmdlr.wires.Circle2D(circle_center1, r)
-        circle2 = volmdlr.wires.Circle2D(circle_center2, r)
+        circle1 = volmdlr.wires.Circle2D(circle_center1, radius)
+        circle2 = volmdlr.wires.Circle2D(circle_center2, radius)
 
         return circle1, circle2
 
@@ -1691,21 +1711,21 @@ class Line2D(Line):
         else:
             teta = teta1
 
-        r1 = new_pt_k[0] * math.sin(teta) / (1 + math.cos(teta))
-        r2 = new_pt_k[0] * math.sin(teta) / (1 - math.cos(teta))
+        radius1 = new_pt_k[0] * math.sin(teta) / (1 + math.cos(teta))
+        radius2 = new_pt_k[0] * math.sin(teta) / (1 - math.cos(teta))
 
-        new_circle_center1 = volmdlr.Point2D(0, -r1)
-        new_circle_center2 = volmdlr.Point2D(0, r2)
+        new_circle_center1 = volmdlr.Point2D(0, -radius1)
+        new_circle_center2 = volmdlr.Point2D(0, radius2)
 
         circle_center1 = new_basis2.local_to_global_coordinates(new_circle_center1)
         circle_center2 = new_basis2.local_to_global_coordinates(new_circle_center2)
 
         if new_basis.global_to_local_coordinates(circle_center1)[1] > 0:
-            circle1 = volmdlr.wires.Circle2D(circle_center1, r1)
-            circle2 = volmdlr.wires.Circle2D(circle_center2, r2)
+            circle1 = volmdlr.wires.Circle2D(circle_center1, radius1)
+            circle2 = volmdlr.wires.Circle2D(circle_center2, radius2)
         else:
-            circle1 = volmdlr.wires.Circle2D(circle_center2, r2)
-            circle2 = volmdlr.wires.Circle2D(circle_center1, r1)
+            circle1 = volmdlr.wires.Circle2D(circle_center2, radius2)
+            circle2 = volmdlr.wires.Circle2D(circle_center1, radius1)
 
         return circle1, circle2
 
@@ -3842,9 +3862,9 @@ class ArcEllipse2D(Edge):
 
         x = []
         y = []
-        for px, py in self.discretization_points(number_points=100):
-            x.append(px)
-            y.append(py)
+        for x_component, y_component in self.discretization_points(number_points=100):
+            x.append(x_component)
+            y.append(y_component)
 
         plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
         return ax
@@ -4716,20 +4736,106 @@ class LineSegment3D(LineSegment):
     def matrix_distance(self, other_line):
         u = self.direction_vector()
         v = other_line.direction_vector()
-        w = other_line.start - self.start
-
-        a11 = u.dot(u)
-        a12 = -u.dot(v)
-        a22 = v.dot(v)
-
-        a_matrix = npy.array([[a11, a12],
-                              [a12, a22]])
-        b_matrix = npy.array([w.dot(u), -w.dot(v)])
-
-        res = lsq_linear(a_matrix, b_matrix, bounds=(0, 1))
-        point1 = self.point_at_abscissa(res.x[0] * self.length())
-        point2 = other_line.point_at_abscissa(res.x[1] * other_line.length())
-        return point1, point2
+        w = self.start - other_line.start
+        a = u.dot(u)
+        b = u.dot(v)
+        c = v.dot(v)
+        d = u.dot(w)
+        e = v.dot(w)
+        determinant = a*c - b*c
+        if determinant > - 1e-6:
+            b_times_e = b*e
+            c_times_d = c*d
+            if b_times_e <= c_times_d:
+                s_parameter = 0.0
+                if e <= 0.0:
+                    t_parameter = 0.0
+                    negative_d = -d
+                    if negative_d >= a:
+                        s_parameter = 1.0
+                    elif negative_d > 0.0:
+                        s_parameter = negative_d / a
+                elif e < c:
+                    t_parameter = e / c
+                else:
+                    t_parameter = 1.0
+                    b_minus_d = b - d
+                    if b_minus_d >= a:
+                        s_parameter = 1.0
+                    elif b_minus_d > 0.0:
+                        s_parameter = b_minus_d / a
+            else:
+                s_parameter = b_times_e - c_times_d
+                if s_parameter >= determinant:
+                    s_parameter = 1.0
+                    b_plus_e = b + e
+                    if b_plus_e <= 0.0:
+                        t_parameter = 0.0
+                        negative_d = -d
+                        if negative_d <= 0.0:
+                            s_parameter = 0.0
+                        elif negative_d < a:
+                            s_parameter = negative_d / a
+                    elif b_plus_e < c:
+                        t_parameter = b_plus_e / c
+                    else:
+                        t_parameter = 1.0
+                        b_minus_d = b - d
+                        if b_minus_d <= 0.0:
+                            s_parameter = 0.0
+                        elif b_minus_d < a:
+                            s_parameter = b_minus_d / a
+                else:
+                    a_times_e = a * e
+                    b_times_d = a * d
+                    if a_times_e <= b_times_d:
+                        t_parameter = 0.0
+                        negative_d = -d
+                        if negative_d <= 0.0:
+                            s_parameter = 0.0
+                        elif negative_d >= a:
+                            s_parameter = 1.0
+                        else:
+                            s_parameter = negative_d / a
+                    else:
+                        t_parameter = a_times_e - b_times_d
+                        if t_parameter >= determinant:
+                            t_parameter = 1.0
+                            b_minus_d = b - d
+                            if b_minus_d <= 0.0:
+                                s_parameter = 0.0
+                            elif b_minus_d >= a:
+                                s_parameter = 1.0
+                            else:
+                                s_parameter = b_minus_d / a
+                        else:
+                            s_parameter /= determinant
+                            t_parameter /= determinant
+        else:
+            if e <= 0.0:
+                t_parameter = 0.0
+                negative_d = -d
+                if negative_d <= 0.0:
+                    s_parameter = 0.0
+                elif negative_d >= a:
+                    s_parameter = 1.0
+                else:
+                    s_parameter = negative_d / a
+            elif e >= c:
+                t_parameter = 1.0
+                b_minus_d = b - d
+                if b_minus_d <= 0.0:
+                    s_parameter = 0.0
+                elif b_minus_d >= a:
+                    s_parameter = 1.0
+                else:
+                    s_parameter = b_minus_d / a
+            else:
+                s_parameter = 0.0
+                t_parameter = e / c
+        p1 = self.start + u * s_parameter
+        p2 = other_line.start + v * t_parameter
+        return p1, p2
 
     def parallel_distance(self, other_linesegment):
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
@@ -4822,10 +4928,10 @@ class LineSegment3D(LineSegment):
     def _revolution_conical(self, params):
         axis, u, p1_proj, dist1, dist2, angle = params
         v = axis.cross(u)
-        dv = self.direction_vector()
-        dv.normalize()
+        direction_vector = self.direction_vector()
+        direction_vector.normalize()
 
-        semi_angle = math.atan2(dv.dot(u), dv.dot(axis))
+        semi_angle = math.atan2(direction_vector.dot(u), direction_vector.dot(axis))
         cone_origin = p1_proj - dist1 / math.tan(semi_angle) * axis
         if semi_angle > 0.5 * math.pi:
             semi_angle = math.pi - semi_angle
@@ -5044,11 +5150,11 @@ class BSplineCurve3D(BSplineCurve):
         :return: the given point when the BSplineCurve3D is evaluated at the t value.
         """
 
-        def f(param):
+        def fun(param):
             p3d = volmdlr.Point3D(*self.curve.evaluate_single(param))
             return point.point_distance(p3d)
 
-        res = minimize(fun=f, x0=0.5, bounds=[(0, 1)], tol=1e-9)
+        res = minimize(fun=fun, x0=0.5, bounds=[(0, 1)], tol=1e-9)
         return res.x[0]
 
     @classmethod
@@ -5391,6 +5497,37 @@ class BSplineCurve3D(BSplineCurve):
             return []
         intersections_points = self.get_linesegment_intersections(linesegment3d)
         return intersections_points
+
+    def minimum_distance(self, element, return_points=False):
+        """
+        Gets the minimum distance between the bspline and another edge.
+
+        :param element: another edge.
+        :param return_points: weather also to return the corresponding points.
+        :return: minimum distance.
+        """
+        points = []
+        for point in self.points:
+            if not volmdlr.core.point_in_list(point, points):
+                points.append(point)
+        discretization_primitves1 = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        discretization_points2 = element.discretization_points(number_points=100)
+        points = []
+        for point in discretization_points2:
+            if not volmdlr.core.point_in_list(point, points):
+                points.append(point)
+        discretization_primitves2 = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        minimum_distance = math.inf
+        points = None
+        for prim1 in discretization_primitves1:
+            for prim2 in discretization_primitves2:
+                distance, point1, point2 = prim1.minimum_distance(prim2, return_points=True)
+                if distance < minimum_distance:
+                    minimum_distance = distance
+                    points = (point1, point2)
+        if return_points:
+            return minimum_distance, points[0], points[1]
+        return minimum_distance
 
 
 class BezierCurve3D(BSplineCurve3D):
@@ -6198,10 +6335,10 @@ class FullArc3D(Arc3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points(number_points=20):
-            x.append(px)
-            y.append(py)
-            z.append(pz)
+        for x_component, y_component, z_component in self.discretization_points(number_points=20):
+            x.append(x_component)
+            y.append(y_component)
+            z.append(z_component)
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])
@@ -6556,10 +6693,10 @@ class ArcEllipse3D(Edge):
         x = []
         y = []
         z = []
-        for px, py, pz in self.discretization_points(number_points=20):
-            x.append(px)
-            y.append(py)
-            z.append(pz)
+        for x_component, y_component, z_component in self.discretization_points(number_points=20):
+            x.append(x_component)
+            y.append(y_component)
+            z.append(z_component)
 
         ax.plot(x, y, z, edge_style.color, alpha=edge_style.alpha)
         if edge_style.edge_ends:
