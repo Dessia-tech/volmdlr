@@ -906,7 +906,7 @@ class BSplineCurve(Edge):
         func_first_derivative = curve_derivatives[2].dot(distance_vector) + curve_derivatives[1].norm() ** 2
         return func, func_first_derivative, curve_derivatives, distance_vector
 
-    def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-6, tol2: float = 1e-6):
+    def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-6, tol2: float = 1e-8):
         """
         Finds the equivalent B-Spline curve parameter u to a given a point 3D or 2D using an initial guess u0.
 
@@ -937,7 +937,7 @@ class BSplineCurve(Edge):
         return self.point_invertion(u0, point, maxiter=maxiter - 1)
 
     @staticmethod
-    def _check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-6, tol2: float = 1e-6):
+    def _check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-6, tol2: float = 1e-8):
         """
         Helper function to check convergence of point_invertion method.
         """
@@ -1422,6 +1422,15 @@ class BSplineCurve(Edge):
         """
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
+
+    def point_projection(self, point):
+        """
+        Calculates the projection of a point on the B-Spline.
+
+        :param point: point to be verified.
+        :return: point projection.
+        """
+        return self.point_at_abscissa(self.abscissa(point))
 
 
 class Line2D(Line):
