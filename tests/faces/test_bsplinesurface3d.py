@@ -4,6 +4,7 @@ Unit tests for volmdlr.faces.BSplineSurface3D
 import unittest
 
 import volmdlr.edges as vme
+import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 import volmdlr.grid
 from volmdlr.models import bspline_surfaces
@@ -64,6 +65,16 @@ class TestBSplineSurface3D(unittest.TestCase):
         point_test = bspline_after_transfomation.point_at_abscissa(0.5 * length_after_transformation)
         self.assertAlmostEqual(original_length, length_after_transformation, places=6)
         # self.assertTrue(point.is_close(point_test, 1e-6))
+
+    def test_bsplinecurve2d_to_3d(self):
+        surface = vmf.BSplineSurface3D.load_from_file("faces/objects_bspline_test/bspline_surface_with_arcs.json")
+        contour3d = vmw.Contour3D.load_from_file("faces/objects_bspline_test/bspline_contour_with_arcs.json")
+
+        contour2d = surface.contour3d_to_2d(contour3d)
+        bspline_1 = contour2d.primitives[0]
+        arc3d = surface.bsplinecurve2d_to_3d(bspline_1)[0]
+        self.assertTrue(isinstance(bspline_1, vme.BSplineCurve2D))
+        self.assertTrue(isinstance(arc3d, vme.Arc3D))
 
 
 if __name__ == '__main__':
