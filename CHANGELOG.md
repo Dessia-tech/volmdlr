@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - argument convexe in volmdlr.cloud has been renamed to convex
 - Add some missing docstrings in volmdlr.faces
+- sphere methods renamed in_points & to_point_skin to inner points & skin_points
 
 ### Performance improvements
 * BSplineCurve: compilation of some functions used by from_points_interpolation classmethod.

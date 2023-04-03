@@ -1861,7 +1861,8 @@ class Sphere(RevolvedProfile):
 
         self.center.frame_mapping_inplace(frame, side)
 
-    def to_point_skin(self, resolution: float = 1e-3):
+    def skin_points(self, resolution: float = 1e-3):
+        """Gives points on the skin with respect to a resolution."""
         if resolution > 2 * self.radius:
             return []
 
@@ -1900,7 +1901,8 @@ class Sphere(RevolvedProfile):
 
         return skin_points
 
-    def to_point_in(self, resolution: float = 1e-3):
+    def inner_points(self, resolution: float = 1e-3):
+        """Gives points inside of the sphere with a subsphere strategy."""
         in_points = [self.center]
         nb_spheres = int(self.radius / resolution)
         if nb_spheres == 0:
