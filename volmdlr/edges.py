@@ -1593,7 +1593,7 @@ class Line2D(Line):
             a new figure is created.
         :type ax: matplotlib.axes._subplots.AxesSubplot, optional
         :param edge_style: data class instance, containing all parameters needed to plot Line 2D.
-        :return: The matplotlib axis.
+        :return: The Matplotlib axis.
         :rtype: matplotlib.axes._subplots.AxesSubplot
         """
         if ax is None:
@@ -5858,7 +5858,7 @@ class BSplineCurve3D(BSplineCurve):
 
 class BezierCurve3D(BSplineCurve3D):
     """
-    A class for 3 dimensional Bézier curves.
+    A class for 3 dimensional Bezier curves.
 
     :param degree: The degree of the Bézier curve
     :type degree: int
