@@ -26,7 +26,7 @@ npy.seterr(divide='raise')
 
 DEFAULT_COLOR = (0.8, 0.8, 0.8)
 
-# TODO: put voldmlr metadata in this freecad header
+# TODO: put volmdlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('{name}'),'2;1');
