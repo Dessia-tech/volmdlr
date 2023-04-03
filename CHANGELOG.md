@@ -5,41 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.11.0 [future]
+
+### Fixed
+- 2D conversion: create 2D function name in core_compiled
+
+### Changed
+- better surface3d plots
+
+
 ## v0.10.0 [Unreleased yet]
 
 ### New Features
-
-- Write .msh file (with stream)
-- Arc: reverse
-- BSplineCurve2D: offset
-- Circle2D: bsplinecurve_intersections, point_distance
-- ConicalSurface3D, CylindricalSurface3D: plot method
-- volmdlr.edge: FullArcEllipse
-- BSplineCurve: evaluate_single
-- Wire2: hash
-- Contour3D: hash
-- Circle3D frame_mapping
-- LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
-
+* Write .msh file (with stream)
+* Arc: reverse
+* BSplineCurve2D: offset
+* Circle2D: bsplinecurve_intersections, point_distance
+* ConicalSurface3D, CylindricalSurface3D: plot method
+* BSplineCurve3D: minimum distance
+* volmdlr.edge: FullArcEllipse
+* BSplineCurve: evaluate_single
+* Wire2: hash
+* Contour3D: hash
+* LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
+ 
 ### Fixed
-- primitives: ClosedRoundedLineSegment bug on rounding last corner
-- Bspline in sweep
-- Plane3D: plane_intersections
-- fixes to step assemblies
-- fixes to wire
-- Arc: split. Case when spliting point is the start or end point.
-- BplineCurve2D: tangent, vector_direction, normal_vector
-- BSplineCurve: abscissa
-- Add some important fixes to unittests: missing two __init__py files.
-- Contour2D, Contour3D: merge_with()
-- Edge: change unit_direction_vector and unit_normal_vector to concrete methods
-- stl: add _standalone_in_db to Stl class
-- Documentation: Add introduction to volmdlr technology
-- BSplineSurface3D: merge_with
-- BSplineSurface3D: refactor bsplinecurve3d_to_2d to take into account periodic behavior
-- OpenedRoundedLineSegments2D/ClosedRoundedLineSegments2D: fix radius type
-- Surface3D: debug some special cases while using face_from_contours3d.
-
+* Bspline in sweep
+* Plane3D: plane_intersections
+* fixes to step assemblies
+* LineSegment3D: matrix_distance
+* fixes to wire
+* Arc: split. Case when spliting point is the start or end point.
+* BplineCurve2D: tangent, vector_direction, normal_vector
+* BSplineCurve: abscissa
+* Add some important fixes to unittests: missing two __init__py files.
+* Contour2D, Contour3D: merge_with()
+* Edge: change unit_direction_vector and unit_normal_vector to concrete methods
+* stl: add _standalone_in_db to Stl class
+* BSplineSurface3D: merge_with
+* Documentation: Add introduction to volmdlr technology
+* BSplineSurface3D: refactor bsplinecurve3d_to_2d to take into account periodic behavior
+* OpenedRoundedLineSegments2D/ClosedRoundedLineSegments2D: fix radius type
+* Surface3D: debug some special cases while using face_from_contours3d.
 
 ### Removed
 - stl: remove default value in from_stream method
@@ -64,14 +71,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
 ### Unittests
-- BSplineCurve2D: offset, point_distance, point_belongs
-- Circle2D: bspline_intersections, point_distance
-- Unittests for Vector2D
-- Unittests for Point2D
-- Unittests for Vector3D
-- Unittests for Point3D
-- LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
-- Contour3D: merge_with()
+* BSplineCurve2D: offset, point_distance, point_belongs
+* Circle2D: bspline_intersections, point_distance
+* Unittests for Vector2D
+* Unittests for Point2D
+* Unittests for Vector3D
+* Unittests for Point3D
+* LineSegment3D: test_matrix_distance
+* LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
+* Contour3D: merge_with()
 
 ## v0.9.1
 
@@ -83,41 +91,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.9.0 [Released 06/03/2023]
 
 ### New Features
-
-- Unit coversion factor parameter added to the end of the from_step arguments parameter (So we can convert the units correctly)
-- SphericalSurface3D: rotation, translation, frame_mapping
-- read steps: Identify assemblies in a step file.
-- ClosedTriangleShell3D: to_trimesh method
-- PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
-- BSplineSurface3D: Now the plot method uses u and v curves
-- Create .geo and .msh files (Mesh geometries with GMSH)
-- RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
-- RevolutionFace3D
-- WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
-- Edge: local_discretization
+* Unit coversion factor parameter added to the end of the from_step arguments parameter (So we can convert the units correctly)
+* SphericalSurface3D: rotation, translation, frame_mapping
+* read steps: Identify assemblies in a step file.
+* ClosedTriangleShell3D: to_trimesh method
+* PointCloud3D: add method shell_distances to compute distances from triangular mesh in PointCloud3D
+* BSplineSurface3D: Now the plot method uses u and v curves
+* Create .geo and .msh files (Mesh geometries with GMSH)
+* RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
+* RevolutionFace3D
+* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
+* Added package.xml metadata in order to be listed in the FreeCAD Addon Manager 
+* Edge: local_discretization
+* ArcEllipse2d: point_at_abscissa, translation, split, point_distance.
 
 ### Fixed
 
-- WireMixin: abscissa (add tolerance as parameter)
-- OpenRoundedLineSegment2D: deleted discretization_points() so it uses the one from WireMixin.
-- Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
-- BSplineCurve: from_points_interpolation, uses centripedal method for better fitting.
-- Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard. 
-- BSplineSurface3D: debug linesegment2d_to_3d method.
-- Parametric operations with BSpline curves.
-- OpenTriangleShell3D: fix from_mesh_data method.
-- PeriodicalSurface: fix face from contours.
-- LineSegment2D.line_intersections: verify if colinear first.
-- Cylinder: to_dict, min_distance_to_other_cylinder.
-- Step_assemblies: consider when no transformation is needed.
-- fix some pydocstyle errors
-- Script/step/workflow: Update Workflow, use last version of dessia_common
-- LineSegment3D: Rotation method update due to points attribute deletion
-- ConicalSurface3D: fix from_step class method by adding the angle convertion factor
-- fix f string usage
-- Add some typings
-- Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
-- Arc2d: point_belongs, abscissa 
+* WireMixin: abscissa (add tolerance as parameter)
+* OpenRoundedLineSegment2D: deleted discretization_points() so it uses the one from WireMixin.
+* Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
+* BSplineCurve: from_points_interpolation, uses centripedal method for better fitting.
+* Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard. 
+* BSplineSurface3D: debug linesegment2d_to_3d method.
+* Parametric operations with BSpline curves.
+* OpenTriangleShell3D: fix from_mesh_data method.
+* PeriodicalSurface: fix face from contours.
+* LineSegment2D.line_intersections: verify if colinear first.
+* Cylinder: to_dict, min_distance_to_other_cylinder.
+* Step_assemblies: consider when no transformation is needed.
+* fix some pydocstyle errors
+* Script/step/workflow: Update Workflow, use last version of dessia_common
+* LineSegment3D: Rotation method update due to points attribute deletion
+* ConicalSurface3D: fix from_step class method by adding the angle convertion factor
+* fix f string usage
+* Add some typings
+* Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
+* Arc2d: point_belongs, abscissa.
+* ArcEllipse2d: point_belongs, abscissa, init.
+
 
 ### Removed
 
@@ -154,9 +165,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 intersection_area, distance_to_b_rectangle, distance_to_point
 - BoundingBox: center, add, to_dict, points, from_bounding_boxes, from_points, to_frame, volume, bbox_intersection,
 is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_to_point, plot
-- VolumeModel: eq, volume, rotation, translation, frame_mapping, bounding_box, plot
-- Wire: extract_with_points, split_with_two_points
-- Arc2d: point_belongs, abscissa.
+* VolumeModel: eq, volume, rotation, translation, frame_mapping, bounding_box, plot
+* Wire: extract_with_points, split_with_two_points
+* Arc2d: point_belongs, abscissa.
+* ArcEllipse2d: point_belongs, abscissa, init, translation, split, point_at_abscissa, point_distance.
 
 ### CI
 - add spell check to pylint with pyenchant

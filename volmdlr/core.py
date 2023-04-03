@@ -26,7 +26,7 @@ npy.seterr(divide='raise')
 
 DEFAULT_COLOR = (0.8, 0.8, 0.8)
 
-# TODO: put voldmlr metadata in this freecad header
+# TODO: put volmdlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('{name}'),'2;1');
@@ -124,7 +124,7 @@ def step_ids_to_str(ids):
 @dataclass
 class EdgeStyle:
     """
-    Data class for styling edges matplotlib plots.
+    Data class for styling edges Matplotlib plots.
 
     """
     color: str = 'k'
@@ -1165,8 +1165,11 @@ class VolumeModel(dc.PhysicalObject):
         return babylon_data
 
     @classmethod
-    def babylonjs_script(cls, babylon_data, use_cdn=True,
-                         debug=False):
+    def babylonjs_script(cls, babylon_data, use_cdn=True,  debug=False):
+        """
+        Run babylonjs script.
+
+        """
         if use_cdn:
             script = volmdlr.templates.BABYLON_UNPACKER_CDN_HEADER  # .substitute(name=page_name)
         else:
@@ -1177,6 +1180,10 @@ class VolumeModel(dc.PhysicalObject):
         return script
 
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+        """
+        Creates a html file using babylonjs to show a 3d model in the browser.
+
+        """
         babylon_data = self.babylon_data()
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                        debug=debug)
