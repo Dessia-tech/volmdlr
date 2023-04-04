@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.11.0 [future]
 
 ### New Features
-BSplineCurve: associated_curve
+BSplineCurve, Edge: simplify
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
