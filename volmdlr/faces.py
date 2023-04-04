@@ -2792,7 +2792,7 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     def point_projection(self, point3d):
         """
-        Returns the projection of the point on the cylindrical surface.
+        Returns the projection of the point on the toroidal surface.
 
         :param point3d: Point to project.
         :type point3d: volmdlr.Point3D
