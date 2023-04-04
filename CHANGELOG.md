@@ -108,6 +108,7 @@ BSplineCurve: associated_curve
 * WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
 * Added package.xml metadata in order to be listed in the FreeCAD Addon Manager 
 * Edge: local_discretization
+* ArcEllipse2d: point_at_abscissa, translation, split, point_distance.
 
 ### Fixed
 
@@ -130,7 +131,9 @@ BSplineCurve: associated_curve
 * fix f string usage
 * Add some typings
 * Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
-* Arc2d: point_belongs, abscissa. 
+* Arc2d: point_belongs, abscissa.
+* ArcEllipse2d: point_belongs, abscissa, init.
+
 
 ### Removed
 
@@ -170,7 +173,7 @@ is_inside_bbox, intersection_volume, distance_to_bbox, point_belongs, distance_t
 * VolumeModel: eq, volume, rotation, translation, frame_mapping, bounding_box, plot
 * Wire: extract_with_points, split_with_two_points
 * Arc2d: point_belongs, abscissa.
-
+* ArcEllipse2d: point_belongs, abscissa, init, translation, split, point_at_abscissa, point_distance.
 ### CI
 - add spell check to pylint with pyenchant
 - make code_pydocstyle more explicit
