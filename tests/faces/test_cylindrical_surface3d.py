@@ -138,6 +138,16 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertEqual(linesegment2d.start, Point2D(0, 0.003))
         self.assertEqual(linesegment2d.end, Point2D(0, 0.013))
 
+        surface = dessia_common.core.DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/cylindrical_surface_bspline_openned_contour.json')
+        contour = dessia_common.core.DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/cylindrical_contour_bspline_openned_contour.json')
+
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertEqual(len(contour2d.primitives), 2)
+        self.assertFalse(contour2d.is_ordered())
+
+
     def test_bsplinecurve3d_to_2d(self):
         surface = dessia_common.core.DessiaObject.load_from_file(
             'faces/objects_cylindrical_tests/cylindrical_surf_bug.json')
