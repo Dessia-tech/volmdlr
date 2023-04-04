@@ -328,6 +328,11 @@ class Edge(dc.DessiaObject):
                 break
         return distance
 
+    @property
+    def simplify(self):
+        """Search another simplified edge that can represent the edge."""
+        return self
+
 
 class Line(dc.DessiaObject):
     """
@@ -633,9 +638,8 @@ class LineSegment(Edge):
         :return: shared line segment section.
         """
         if self.__class__ != other_linesegment.__class__:
-            if hasattr(other_linesegment, 'associated_curve') and\
-                    self.__class__ == other_linesegment.associated_curve.__class__:
-                return self.get_shared_section(other_linesegment.associated_curve)
+            if self.__class__ == other_linesegment.simplify.__class__:
+                return self.get_shared_section(other_linesegment.simplify)
             return []
         if not self.direction_vector().is_colinear_to(other_linesegment.direction_vector()) or \
                 (not any(self.point_belongs(point, 1e-6)
@@ -778,7 +782,7 @@ class BSplineCurve(Edge):
         self.knot_multiplicities = knot_multiplicities
         self.weights = weights
         self.periodic = periodic
-        self._associated_curve = None
+        self._simplified = None
 
         points = [[*point] for point in control_points]
         if weights is None:
@@ -849,14 +853,14 @@ class BSplineCurve(Edge):
             periodic=self.periodic)
 
     @property
-    def associated_curve(self):
-        """Search another edge that can represent the bspline."""
-        if self._associated_curve is None:
+    def simplify(self):
+        """Search another simplified edge that can represent the bspline."""
+        if self._simplified is None:
             class_sufix = self.__class__.__name__[-2:]
             lineseg_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
             lineseg = lineseg_class(self.points[0], self.points[-1])
             if all(lineseg.point_belongs(pt) for pt in self.points):
-                self._associated_curve = lineseg
+                self._simplified = lineseg
                 return lineseg
             colinear = True
             previous_vec = None
@@ -873,10 +877,10 @@ class BSplineCurve(Edge):
                 arc_class_ = getattr(sys.modules[__name__], 'Arc' + class_sufix)
                 try_arc = arc_class_(points_[0], points_[int(len(points_) / 2)], points_[-1])
                 if all(try_arc.point_belongs(point, 1e-6) for point in self.points):
-                    self._associated_curve = try_arc
+                    self._simplified = try_arc
                     return try_arc
-            self._associated_curve = 'No associated curve to this BSpline'
-        return self._associated_curve
+            self._simplified = self
+        return self._simplified
 
     @classmethod
     def from_geomdl_curve(cls, curve, name: str = ""):
@@ -1403,8 +1407,8 @@ class BSplineCurve(Edge):
         :return: shared arc section.
         """
         if self.__class__ != other_bspline2.__class__:
-            if self.associated_curve.__class__ == other_bspline2.__class__:
-                return self.associated_curve.get_shared_section(other_bspline2)
+            if self.simplify.__class__ == other_bspline2.__class__:
+                return self.simplify.get_shared_section(other_bspline2)
             return []
         if self.__class__.__name__[-2:] == '3D':
             if self.bounding_box.distance_to_bbox(other_bspline2.bounding_box) > 1e-7:
@@ -2705,9 +2709,8 @@ class Arc(Edge):
         :return: shared arc section.
         """
         if self.__class__ != other_arc2.__class__:
-            if hasattr(other_arc2, 'associated_curve') and\
-                    self.__class__ == other_arc2.associated_curve.__class__:
-                return self.get_shared_section(other_arc2.associated_curve)
+            if self.__class__ == other_arc2.simplify.__class__:
+                return self.get_shared_section(other_arc2.simplify)
             return []
         if not self.center.is_close(other_arc2.center) or self.radius != self.radius or \
                 not any(self.point_belongs(point) for point in [other_arc2.start,
