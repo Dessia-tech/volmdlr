@@ -58,6 +58,28 @@ class TestPlane3D(unittest.TestCase):
         fullarc_intersections2 = self.plane1.fullarc_intersections(fullarc2)
         self.assertFalse(fullarc_intersections2)
 
+    def test_from_3_points(self):
+        """
+        Test we can create from 3 points, that should be on the surface & a that the frame.w is orthogonal.
+        """
+        for p1, p2, p3 in [(volmdlr.Point3D(-0.18141727653547446, -0.3129888988150751, -0.7869168525937733),
+                            volmdlr.Point3D(0.1756754261634219, -0.22088840984091496, -0.2482699866635696),
+                            volmdlr.Point3D(0.7373327193311012, -0.8849251090904118, -0.9464563060452031)),
+                           (volmdlr.Point3D(9.80579460566209, 6.917108655469294, 0.0),
+                            volmdlr.Point3D(12.0, 0.0, 0.6956521739130439),
+                            volmdlr.Point3D(12.0, 0.0, 0.5217391304347831)),
+                           (volmdlr.Point3D(8.773150355532506, 8.18729704110092, 0.0),
+                            volmdlr.Point3D(12.0, 0.0, 0.8695652173913047),
+                            volmdlr.Point3D(12.0, 0.0, 0.6956521739130439))
+                           ]:
+
+            surface = faces.Plane3D.from_3_points(p1, p2, p3)
+            self.assertTrue(surface.point_on_surface(p1))
+            self.assertTrue(surface.point_on_surface(p2))
+            self.assertTrue(surface.point_on_surface(p3))
+            self.assertAlmostEqual(surface.frame.w.dot(p1 - p2), 0.)
+            self.assertAlmostEqual(surface.frame.w.dot(p3 - p2), 0.)
+            self.assertAlmostEqual(surface.frame.w.dot(p3 - p1), 0.)
 
 if __name__ == '__main__':
     unittest.main()
