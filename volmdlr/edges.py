@@ -4167,6 +4167,7 @@ class ArcEllipse2D(Edge):
         Intersections between an Arc Ellipse 2D and a Line Segment 2D.
 
         :param linesegment2d: LineSegment 2D to verify intersections.
+        :param abs_tol: tolerance.
         :return: List with all intersections.
         """
         if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
@@ -4179,11 +4180,17 @@ class ArcEllipse2D(Edge):
         return linesegment_intersections
 
     def bsplinecurve_intersections(self, bspline, abs_tol:float=1e-6):
+        """
+        Intersections between an Arc Ellipse 2D and a bSpline 2D.
+
+        :param bspline: bspline 2D to verify intersections.
+        :param abs_tol: tolerance.
+        :return: List with all intersections.
+        """
         if not self.bounding_rectangle.b_rectangle_intersection(bspline.bounding_rectangle):
             return []
         intersections = vm_utils_intersections.get_bsplinecurve_intersections(self, bspline)
         return intersections
-        # return bspline.edge_intersections(self, abs_tol)
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
