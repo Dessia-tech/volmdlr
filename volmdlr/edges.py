@@ -244,7 +244,7 @@ class Edge(dc.DessiaObject):
 
     def intersections(self, edge2: 'Edge'):
         """
-        Gets the intersections betweeen two edges.
+        Gets the intersections between two edges.
 
         :param edge2: other edge.
         :return: list of intersection points.
@@ -1532,7 +1532,7 @@ class BSplineCurve(Edge):
         Identify the sections where there may exist intersection between a bspline and another edge.
 
         :param edge2: other edge.
-        :return: list contaning the sections pairs to further search for intesections.
+        :return: list containing the sections pairs to further search for intersections.
         """
         lineseg_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
         bspline_discretized_points1 = []
@@ -2301,7 +2301,7 @@ class LineSegment2D(LineSegment):
         Computes the distance of a point to segment of line.
 
         :param point: point to calculate distance.
-        :param return_other_points: Boolean variable to return linesegment's corresponding point or not.
+        :param return_other_points: Boolean variable to return line segment's corresponding point or not.
         """
         distance, point = volmdlr.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)],
@@ -4005,7 +4005,7 @@ class ArcEllipse2D(Edge):
         """
         Calculates the bounding rectangle for the arc ellipse 2d.
 
-        :return: Bouding Rectangle object.
+        :return: Bounding Rectangle object.
         """
         if not self._bounding_rectangle:
             discretization_points = self.discretization_points(number_points=20)

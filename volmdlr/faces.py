@@ -3635,7 +3635,7 @@ class ExtrusionSurface3D(Surface3D):
     """
     Defines a surface of revolution.
 
-    An extrusion surface is a sufarce that is a generic cylindrical surface genarated by the linear
+    An extrusion surface is a surfarce that is a generic cylindrical surface genarated by the linear
     extrusion of a curve, generally an Ellipse or a B-Spline curve.
 
     :param edge: edge.
@@ -6723,7 +6723,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def get_face_cutting_contours(self, dict_intersecting_combinations):
         """
-        Get all contours cutting the face, resultig from multiple faces intersections.
+        Get all contours cutting the face, resulting from multiple faces intersections.
 
         :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
         and as the values the resulting primitive from the intersection of these two faces
@@ -8738,7 +8738,7 @@ class BSplineFace3D(Face3D):
         """
         Finds out how the uv parametric frames are located.
 
-        It does it by compaing to each other and also how grid 3d can be defined respected to these directions.
+        It does it by comparing to each other and also how grid 3d can be defined respected to these directions.
 
         :param other_bspline_face3d: BSplineFace3D
         :type other_bspline_face3d: :class:`volmdlr.faces.BSplineFace3D`
