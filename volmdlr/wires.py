@@ -716,7 +716,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             if not start_equal_to_end:
                 crossings = self.validate_edge_crossings(crossings)
             for crossing in crossings:
-                if not edge.is_point_edge_extremity(crossing) and not volmdlr.core.point_in_list(crossing, edge_crossings):
+                if not edge.is_point_edge_extremity(crossing) and\
+                        not volmdlr.core.point_in_list(crossing, edge_crossings):
                     edge_crossings.append(crossing)
         return edge_crossings
 
