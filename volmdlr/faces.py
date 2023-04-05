@@ -1025,14 +1025,13 @@ class Surface3D(DessiaObject):
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
-            is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-5)
+            is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-3)
             if not is_connected and \
                     primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
                     math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-5):
                 primitives2d[i] = primitives2d[i].reverse()
             elif not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
-                    math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-5):
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3):
                 primitives2d[i] = primitives2d[i].reverse()
             elif not is_connected:
                 primitives2d[i] = primitives2d[i].translation(delta)
@@ -1854,7 +1853,7 @@ class PeriodicalSurface(Surface3D):
         if start.x != end.x:
             end = volmdlr.Point2D(start.x, end.y)
         if not start.is_close(end):
-            return [vme.LineSegment2D(start, end)]
+            return [vme.LineSegment2D(start, end, name="parametric.linesegment")]
         return None
 
     def arc3d_to_2d(self, arc3d):
@@ -1869,7 +1868,8 @@ class PeriodicalSurface(Surface3D):
         start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, angle3d,
                                                                                  point_after_start.x,
                                                                                  point_before_end.x)
-        return [vme.LineSegment2D(start, end)]
+        return [vme.LineSegment2D(start, end, name="arc")]
+
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
@@ -1884,18 +1884,13 @@ class PeriodicalSurface(Surface3D):
                                                                                  point_after_start.x,
                                                                                  point_before_end.x)
         theta1, z1 = start
-        theta2, z2 = end
+        _, z2 = end
         theta3, z3 = point_after_start
 
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             if start.is_close(end):
-                point1 = volmdlr.Point2D(theta1, z1)
-                if theta1 > theta3:
-                    point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
-                elif theta1 < theta3:
-                    point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
-                return [vme.LineSegment2D(point1, point2)]
-            return [vme.LineSegment2D(start, end)]
+                start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, theta3)
+            return [vme.LineSegment2D(start, end, name="parametric.fullarc")]
         # Treating one case from Revolution Surface
         if z1 > z3:
             point1 = volmdlr.Point2D(theta1, 1)
@@ -1903,7 +1898,7 @@ class PeriodicalSurface(Surface3D):
         else:
             point1 = volmdlr.Point2D(theta1, 0)
             point2 = volmdlr.Point2D(theta1, 1)
-        return [vme.LineSegment2D(point1, point2)]
+        return [vme.LineSegment2D(point1, point2, name="parametric.fullarc")]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
@@ -1938,7 +1933,22 @@ class PeriodicalSurface(Surface3D):
         theta1, z1 = points[0]
         theta2, z2 = points[-1]
 
-        theta1, theta2 = self._verify_start_end_angles(arcellipse3d, theta1, theta2)
+        # theta3, _ = self.point3d_to_2d(arcellipse3d.point_at_abscissa(0.001 * length))
+        theta3, _ = points[1]
+        # make sure that the reference angle is not undefined
+        if abs(theta3) == math.pi:
+            theta3, _ = points[1]
+
+        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+        if abs(theta1) == math.pi:
+            theta1 = vm_parametric.repair_start_end_angle_periodicity(theta1, theta3)
+        if abs(theta2) == math.pi:
+            theta4, _ = points[-2]
+            # make sure that the reference angle is not undefined
+            if abs(theta4) == math.pi:
+                theta4, _ = points[-3]
+            theta2 = vm_parametric.repair_start_end_angle_periodicity(theta2, theta4)
+
         points[0] = volmdlr.Point2D(theta1, z1)
         points[-1] = volmdlr.Point2D(theta2, z2)
 
@@ -1948,19 +1958,20 @@ class PeriodicalSurface(Surface3D):
             points = self._fix_angle_discontinuity_on_discretization_points(points,
                                                                             indexes_theta_discontinuity, "x")
 
-        bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points, degree=2)
-        return [bsplinecurve2d]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, degree=2, name="parametric.arcellipse")]
 
     def fullarcellipse3d_to_2d(self, arcellipse3d):
         """
-        Transformation of a 3D arcellipse to 2D, in a cylindrical surface.
+        Transformation of a 3D arc ellipse to 2D, in a cylindrical surface.
 
         """
         points = [self.point3d_to_2d(p)
                   for p in arcellipse3d.discretization_points(number_points=100)]
-        points.pop()
-        theta1, z1 = points[0]
-        theta2, z2 = points[-1]
+        start, end = points[0], points[-1]
+        if start.is_close(end, 1e-4):
+            start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, points[2])
+        theta1, z1 = start
+        theta2, z2 = end
         theta1, theta2 = self._verify_start_end_angles(arcellipse3d, theta1, theta2)
         points[0] = volmdlr.Point2D(theta1, z1)
         points[-1] = volmdlr.Point2D(theta2, z2)
@@ -1971,15 +1982,26 @@ class PeriodicalSurface(Surface3D):
             points = self._fix_angle_discontinuity_on_discretization_points(points,
                                                                             indexes_theta_discontinuity, "x")
 
-        bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points, degree=2, periodic=True, name="ellipse")
-        return [bsplinecurve2d]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, degree=2, periodic=True,
+                                                                      name="parametric.fullarcellipse")]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
         Is this right?.
-
-        #TODO: today ArcEllipse3D are also represented as bspline curves 2D.
         """
+        if bspline_curve2d.name in ("parametric.arcellipse", "parametric.fullarcellipse"):
+            start = self.point2d_to_3d(bspline_curve2d.start)
+            middle_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.45 * bspline_curve2d.length()))
+            if bspline_curve2d.name == "parametric.arcellipse":
+                end = self.point2d_to_3d(bspline_curve2d.end)
+                plane3d = Plane3D.from_3_points(start, middle_point, end)
+                ellipse = self.concurrent_plane_intersection(plane3d)[0]
+                return [vme.ArcEllipse3D(start, middle_point, end, ellipse.center, ellipse.major_dir, ellipse.normal)]
+            extra_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.75 * bspline_curve2d.length()))
+            plane3d = Plane3D.from_3_points(start, middle_point, extra_point)
+            ellipse = self.concurrent_plane_intersection(plane3d)[0]
+            return [vme.FullArcEllipse3D(start, ellipse.major_axis, ellipse.minor_axis, ellipse.center, ellipse.normal,
+                                         ellipse.major_dir)]
         n = len(bspline_curve2d.control_points)
         points = [self.point2d_to_3d(p)
                   for p in bspline_curve2d.discretization_points(number_points=n)]
@@ -1991,10 +2013,11 @@ class PeriodicalSurface(Surface3D):
         """
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
-        if math.isclose(theta1, theta2, abs_tol=1e-4):
+        if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametic.linesegment":
             return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
                                       self.point2d_to_3d(linesegment2d.end))]
-        if math.isclose(z1, z2, abs_tol=1e-4):
+        if math.isclose(z1, z2, abs_tol=1e-4) or linesegment2d.name == "parametric.arc" or\
+                linesegment2d.name == "parametric.fullarc":
             if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
                 return [vme.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
                                       start_end=self.point2d_to_3d(linesegment2d.start),
@@ -2005,7 +2028,7 @@ class PeriodicalSurface(Surface3D):
                 self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
                 self.point2d_to_3d(linesegment2d.end)
             )]
-        return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start), self.point2d_to_3d(linesegment2d.end))]
+        raise NotImplementedError("This case is not yet treated")
 
 
 class CylindricalSurface3D(PeriodicalSurface):
@@ -2585,6 +2608,15 @@ class ToroidalSurface3D(PeriodicalSurface):
             )]
         raise NotImplementedError('Ellipse?')
 
+    def bsplinecurve2d_to_3d(self, bspline_curve2d):
+        """
+        Converts the parametric boundary representation into a 3D primitive.
+        """
+        n = len(bspline_curve2d.control_points)
+        points = [self.point2d_to_3d(p)
+                  for p in bspline_curve2d.discretization_points(number_points=n)]
+        return [vme.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree, bspline_curve2d.periodic)]
+
     def fullarc3d_to_2d(self, fullarc3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
@@ -2676,47 +2708,6 @@ class ToroidalSurface3D(PeriodicalSurface):
                                                                             indexes_phi_discontinuity, "y")
 
         return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
-
-    def arcellipse3d_to_2d(self, arcellipse3d):
-        """
-        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
-        """
-        points = [self.point3d_to_2d(p) for p in arcellipse3d.discretization_points(number_points=15)]
-        theta1, phi1 = self.point3d_to_2d(arcellipse3d.start)
-        theta2, phi2 = self.point3d_to_2d(arcellipse3d.end)
-        # TODO: create a method point_at_abscissa abssissa for ArcEllipse3D and enhance this code
-
-        theta3, phi3 = points[1]
-        theta4, phi4 = points[-2]
-
-        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-        if abs(theta1) == math.pi:
-            theta1 = vm_parametric.repair_start_end_angle_periodicity(theta1, theta3)
-        if abs(theta2) == math.pi:
-            theta2 = vm_parametric.repair_start_end_angle_periodicity(theta2, theta4)
-
-        # Verify if phi1 or phi2 point should be -pi because phi -> ]-pi, pi]
-        if abs(phi1) == math.pi:
-            phi1 = vm_parametric.repair_start_end_angle_periodicity(phi1, phi3)
-        if abs(phi2) == math.pi:
-            phi2 = vm_parametric.repair_start_end_angle_periodicity(phi2, phi4)
-
-        points[0] = volmdlr.Point2D(theta1, phi1)
-        points[-1] = volmdlr.Point2D(theta2, phi2)
-
-        theta_list = [point.x for point in points]
-        phi_list = [point.y for point in points]
-        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
-        phi_discontinuity, indexes_phi_discontinuity = angle_discontinuity(phi_list)
-
-        if theta_discontinuity:
-            points = self._fix_angle_discontinuity_on_discretization_points(points,
-                                                                            indexes_theta_discontinuity, "x")
-        if phi_discontinuity:
-            points = self._fix_angle_discontinuity_on_discretization_points(points,
-                                                                            indexes_phi_discontinuity, "y")
-
-        return [vme.BSplineCurve2D.from_points_interpolation(points=points, degree=3, periodic=True)]
 
     def triangulation(self):
         """
@@ -3109,15 +3100,24 @@ class ConicalSurface3D(PeriodicalSurface):
                     i += 1
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
-            elif math.isclose(primitives2d[i].start.y, 0.0, abs_tol=1e-6):
+            # treat very specific case of conical surfaces when the previous primitive and the primitive are a
+            # linesegment3d with singularity
+            elif math.isclose(primitives2d[i].start.y, 0.0, abs_tol=1e-6) and \
+                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-6) and \
+                        math.isclose(primitives2d[i].start.x, previous_primitive.end.x, abs_tol=1e-6):
                 if primitives2d[i + 1].end.x < primitives2d[i].end.x:
-                    primitives2d[i] = primitives2d[i].translation(volmdlr.Vector2D(volmdlr.TWO_PI, 0))
-                    primitives2d.insert(i - 1, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
-                                                                 name="construction"))
-                else:
-                    primitives2d[i] = primitives2d[i].translation(volmdlr.Vector2D(-volmdlr.TWO_PI, 0))
-                    primitives2d.insert(i - 1, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
-                                                                 name="construction"))
+                    theta_offset = volmdlr.TWO_PI
+                elif primitives2d[i + 1].end.x > primitives2d[i].end.x:
+                    theta_offset = -volmdlr.TWO_PI
+                primitive1 = vme.LineSegment2D(previous_primitive.end,
+                                               previous_primitive.end + volmdlr.Point2D(theta_offset, 0),
+                                               name="construction")
+                primitive2 = primitives2d[i].translation(volmdlr.Vector2D(theta_offset, 0))
+                primitive3 = primitives2d[i + 1].translation(volmdlr.Vector2D(theta_offset, 0))
+                primitives2d[i] = primitive1
+                primitives2d.insert(i + 1, primitive2)
+                primitives2d[i + 2] = primitive3
+                i += 1
             i += 1
         if not primitives2d[0].start.is_close(primitives2d[-1].end) \
                 and primitives2d[0].start.y == 0.0 and primitives2d[-1].end.y == 0.0:
@@ -4399,12 +4399,10 @@ class BSplineSurface3D(Surface3D):
         linesegment = vme.LineSegment3D(points[0], points[-1])
         flag = True
         flag_arc = False
-        for point in points:
-            if not linesegment.point_belongs(point, abs_tol=1e-4):
-                flag = False
-                break
+        flag = all(linesegment.point_belongs(point, abs_tol=1e-4) for point in points)
         if not flag:
-            arc = vme.Arc3D(points[0], points[10], points[-1])
+            interior = self.point2d_to_3d(linesegment2d.point_at_abscissa(0.5 * lth))
+            arc = vme.Arc3D(points[0], interior, points[-1])
             flag_arc = all(arc.point_belongs(point, abs_tol=1e-4) for point in points)
 
         periodic = False
@@ -4655,6 +4653,21 @@ class BSplineSurface3D(Surface3D):
 
         return linesegments
 
+    def bsplinecurve2d_to_3d(self, bspline_curve2d):
+        """
+        Converts the parametric boundary representation into a 3D primitive.
+        """
+        if bspline_curve2d.name == "parametric.arc":
+            start = self.point2d_to_3d(bspline_curve2d.start)
+            interior = self.point2d_to_3d(bspline_curve2d.evaluate_single(0.5))
+            end = self.point2d_to_3d(bspline_curve2d.end)
+            return [vme.Arc3D(start, interior, end)]
+
+        n = len(bspline_curve2d.control_points)
+        points = [self.point2d_to_3d(p)
+                  for p in bspline_curve2d.discretization_points(number_points=n)]
+        return [vme.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree, bspline_curve2d.periodic)]
+
     def arc3d_to_2d(self, arc3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
@@ -4686,7 +4699,7 @@ class BSplineSurface3D(Surface3D):
                     end.y = min_bound_y
         if start.is_close(end):
             return []
-        linesegment = vme.LineSegment2D(start, end)
+        linesegment = vme.LineSegment2D(start, end, name="parametric.arc")
         flag = True
         for point in points:
             if not linesegment.point_belongs(point):
@@ -4694,7 +4707,7 @@ class BSplineSurface3D(Surface3D):
                 break
         if flag:
             return [linesegment]
-        return [vme.BSplineCurve2D.from_points_interpolation(points, degree)]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, degree, name="parametric.arc")]
 
     def arc2d_to_3d(self, arc2d):
         number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
@@ -6347,7 +6360,7 @@ class Face3D(volmdlr.core.Primitive3D):
             if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
                 return surface
             if (len(contours) == 2) and isinstance(contours[1], volmdlr.Point3D):
-                raise NotImplementedError
+                return surface.face_from_contours3d([contours[0]], name)
             return surface.face_from_contours3d(contours, name)
             # except Exception:
             #     return None
