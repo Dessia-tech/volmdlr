@@ -5,7 +5,7 @@ Extended primitives 2D classes.
 """
 
 import math
-from typing import List
+from typing import List, Dict
 
 import warnings
 
@@ -31,7 +31,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     line_class = volmdlr.edges.LineSegment2D
     arc_class = volmdlr.edges.Arc2D
 
-    def __init__(self, points: List[volmdlr.Point2D], radius: float, adapt_radius: bool = False, name: str = ''):
+    def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
+                 adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      closed=False,
                                      adapt_radius=adapt_radius,
@@ -43,22 +44,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         """
         Returns the arc features for point at index.
         """
+        # raise NotImplementedError
         radius = self.radius[point_index]
-        if self.closed:
-            if point_index == 0:
-                pt1 = self.points[-1]
-            else:
-                pt1 = self.points[point_index - 1]
-            pti = self.points[point_index]
-            if point_index < self.npoints - 1:
-                pt2 = self.points[point_index + 1]
-            else:
-                pt2 = self.points[0]
-        else:
-            pt1 = self.points[point_index - 1]
-            pti = self.points[point_index]
-            pt2 = self.points[point_index + 1]
-
+        pt1, pti, pt2 = self.get_points(point_index)
         # TODO: change to point_distance ------> done
         point_distance1 = (pt1 - pti).norm()
         point_distance2 = (pt2 - pti).norm()
@@ -82,10 +70,10 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         if v1.dot(w) < 0:
             v1 = -v1
 
-        pc = p3 + v1 * radius
-        pm = pc - radius * w
+        point_curvature = p3 + v1 * radius
+        point_interior = point_curvature - radius * w
 
-        return p3, pm, p4, point_distance, alpha
+        return p3, point_interior, p4, point_distance, alpha
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -191,7 +179,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                           offset_vectors[i - (not self.closed)]
+                offset_vectors[i - (not self.closed)]
             offset_points.append(offset_point)
 
         if not self.closed:
@@ -210,6 +198,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def offset_single_line(self, line_index, offset):
         """
+        Offsets a single line.
+
         :param line_index: 0 being the 1st line
         """
         new_linesegment2D_points = []
@@ -299,9 +289,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def offset_lines(self, line_indexes, offset):
         """
-        line_indexes is a list of consecutive line indexes
-        These line should all be aligned
-        line_indexes = 0 being the 1st line
+        line_indexes is a list of consecutive line indexes.
+
+        These line should all be aligned line_indexes = 0 being the 1st line.
 
         if self.close last line_index can be len(self.points)-1
         if not, last line_index can be len(self.points)-2
@@ -414,11 +404,11 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         # =============================================================================
         # CREATE THE NEW POINTS' LIST
         # =============================================================================
-        for i, _ in enumerate(self.points):
+        for i, point in enumerate(self.points):
             if i in new_points:
                 new_linesegment2D_points.append(new_points[i])
             else:
-                new_linesegment2D_points.append(self.points[i])
+                new_linesegment2D_points.append(point)
 
         rls_2d = self.__class__(new_linesegment2D_points, self.radius,
                                 adapt_radius=self.adapt_radius)
@@ -438,7 +428,8 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
     """
     closed = True
 
-    def __init__(self, points: List[volmdlr.Point2D], radius: float, adapt_radius: bool = False, name: str = ''):
+    def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
+                 adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      closed=True,
                                      adapt_radius=adapt_radius, name='')
@@ -450,11 +441,12 @@ class Measure2D(volmdlr.edges.LineSegment2D):
     """
     Measure 2D class.
 
+    :param unit: 'mm', 'm' or None. If None, the distance won't be in the label.
     """
 
     def __init__(self, point1, point2, label='', unit: str = 'mm', type_: str = 'distance'):
         """
-        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
+        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label.
 
         """
         # TODO: offset parameter

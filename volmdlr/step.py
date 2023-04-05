@@ -202,6 +202,9 @@ def oriented_edge(arguments, object_dict):
     """
     Returns the data in case of an ORIENTED_EDGE.
     """
+    if not object_dict[arguments[3]]:
+        # This can happen when the is too small
+        return None
     edge_orientation = arguments[4]
     if edge_orientation == '.T.':
         return object_dict[arguments[3]]
@@ -358,6 +361,26 @@ def manifold_surface_shape_representation(arguments, object_dict):
     return shells
 
 
+def faceted_brep(arguments, object_dict):
+    """
+    Returns the data in case of a faceted_brep entity, interpreted as shell3D.
+    """
+    return object_dict[arguments[1]]
+
+
+def faceted_brep_shape_representation(arguments, object_dict):
+    """
+    Returns the data in case of a faceted_brep_shape_representation, interpreted as shell3D.
+    """
+    shells = []
+    for arg in arguments[1]:
+        if isinstance(object_dict[int(arg[1:])],
+                      volmdlr.faces.OpenShell3D):
+            shell = object_dict[int(arg[1:])]
+            shells.append(shell)
+    return shells
+
+
 def manifold_solid_brep(arguments, object_dict):
     """
     Returns the data in case of a manifold_solid_brep with voids.
@@ -477,9 +500,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector,
-                                    v_vector,
-                                    w_vector)
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
         new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
         new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
         new_closedshells.append(new_closed_shell3d)
@@ -600,7 +621,6 @@ class Step(dc.DessiaObject):
     _standalone_in_db = True
 
     def __init__(self, lines: List[str], name: str = ''):
-        self.lines = lines
         self.functions, self.all_connections, self.connections = self.read_lines(lines)
         self._graph = None
         self.global_uncertainty = 1e-6
@@ -616,7 +636,7 @@ class Step(dc.DessiaObject):
         return self._graph
 
     @classmethod
-    def from_stream(cls, stream: BinaryFile = None):
+    def from_stream(cls, stream: BinaryFile):
         stream.seek(0)
         lines = []
         for line in stream:
@@ -719,10 +739,11 @@ class Step(dc.DessiaObject):
 
     def create_graph(self):
         """
-        Step functions graph
-        :return:
+        Step functions graph.
+
+        :return: A graph representation the step file structure.
+        :rtype: nx.DiGraph
         """
-        # G = nx.Graph()
         F = nx.DiGraph()
         labels = {}
 
@@ -737,13 +758,9 @@ class Step(dc.DessiaObject):
                 self.all_connections.remove(elem2)
                 self.all_connections.append((elem1[1], elem2[1]))
 
-                self.functions[id1].arg.append('#{}'.format(id2))
+                self.functions[id1].arg.append(f'#{id2}')
 
             elif function.name in STEP_TO_VOLMDLR:
-                # G.add_node(function.id,
-                #            color='rgb(0, 0, 0)',
-                #            shape='.',
-                #            name=str(function.id))
                 F.add_node(function.id,
                            color='rgb(0, 0, 0)',
                            shape='.',
@@ -761,7 +778,6 @@ class Step(dc.DessiaObject):
             self.all_connections.remove(delete)
 
         # Create graph connections
-        # G.add_edges_from(self.all_connections)
         F.add_edges_from(self.all_connections)
 
         # Remove single nodes
@@ -872,12 +888,10 @@ class Step(dc.DessiaObject):
                 volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
 
             elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
-                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict,
-                                                                 name=name,
-                                                                 step_id=step_id,
-                                                                 global_uncertainty=self.global_uncertainty,
-                                                                 length_conversion_factor=self.length_conversion_factor,
-                                                                 angle_conversion_factor=self.angle_conversion_factor)
+                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                    arguments, object_dict, name=name, step_id=step_id, global_uncertainty=self.global_uncertainty,
+                    length_conversion_factor=self.length_conversion_factor,
+                    angle_conversion_factor=self.angle_conversion_factor)
 
             else:
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
@@ -887,16 +901,15 @@ class Step(dc.DessiaObject):
 
     def create_node_list(self, stack):
         """
-        Step functions graph as a list of nodes
-        :return:
+        Step functions graph as a list of nodes.
+
+        :param stack: Initial list of shell nodes and assemblies entities.
+        :type stack: List[int]
+        :return: A list of nodes in the right order of dependency.
+        :rtype: List[int]
         """
         list_head = []
         list_nodes = []
-        # shell_nodes = stack
-        # initial_stack = []
-        # for node in shell_nodes:
-        #     initial_stack.extend(self.connections[node])
-        # stack = initial_stack
         visited_set = set()
         while stack:
             node = stack.pop(0)
@@ -913,14 +926,56 @@ class Step(dc.DessiaObject):
                     list_head.append(node)
         return list_head + list_nodes[::-1]
 
-    def get_frame_mapped_shell_node(self, node):
+    def get_shell_node_from_representation_entity(self, id_representation_entity: int):
         """
-        Find the shells nodes in the assembly.
+        Find the shell node ID related to a given representation entity.
+
+        :param id_representation_entity: Representation entity ID.
+        :type id_representation_entity: int
+        :return: Shell ID.
+        :rtype: int
+        """
+        name_representation_entity = self.functions[id_representation_entity].name
+        arg = self.functions[id_representation_entity].arg[1]
+        if name_representation_entity == "MANIFOLD_SURFACE_SHAPE_REPRESENTATION":
+            if self.functions[int(arg[0][1:])].name == "AXIS2_PLACEMENT_3D":
+                id_solid_entity = int(arg[1][1:])
+            else:
+                id_solid_entity = int(arg[0][1:])
+            if self.functions[id_solid_entity].name in {"CLOSED_SHELL", "OPEN_SHELL"}:
+                return id_solid_entity
+            id_shell = self.functions[id_solid_entity].arg[1]
+            if isinstance(id_shell, list):
+                return int(id_shell[0][1:])
+            return int(id_shell[1:])
+        if self.functions[int(arg[0][1:])].name == "AXIS2_PLACEMENT_3D":
+            id_solid_entity = int(arg[1][1:])
+        else:
+            id_solid_entity = int(arg[0][1:])
+        id_shell = self.functions[id_solid_entity].arg[1]
+        if isinstance(id_shell, list):
+            return int(id_shell[0][1:])
+        return int(id_shell[1:])
+
+    def get_frame_mapped_shell_node(self, node: int):
+        """
+        Find the shell node in the assembly.
 
         :param node: Assembly step entity node.
         :type node: int
+        :return: Shell ID.
+        :rtype: int
         """
+        id_representation_entity = None
         arguments = self.functions[node].arg
+        name_arg1 = self.functions[int(arguments[2][1:])].name
+        name_arg2 = self.functions[int(arguments[3][1:])].name
+        if name_arg1 in STEP_REPRESENTATION_ENTITIES:
+            id_representation_entity = int(arguments[2][1:])
+        elif name_arg2 in STEP_REPRESENTATION_ENTITIES:
+            id_representation_entity = int(arguments[3][1:])
+        if id_representation_entity:
+            return self.get_shell_node_from_representation_entity(id_representation_entity)
         id_shape_representation = int(arguments[3][1:])
         # The shape_representation can be a list of frames, if it's a list of frames
         # (len(self.functions[id_shape_representation].arg) != 4, I'm not sure if this is always true)
@@ -928,6 +983,8 @@ class Step(dc.DessiaObject):
         if len(self.functions[id_shape_representation].arg) != 4:
             id_shape_representation = int(arguments[2][1:])
         if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION":
+            if len(self.functions[id_shape_representation].arg) != 4:
+                return None
             id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
             id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
             id_shell = self.functions[id_solid_entity].arg[1]
@@ -945,7 +1002,7 @@ class Step(dc.DessiaObject):
         Translate a step file into a volmdlr object.
 
         :param show_times: if True, displays how many times a given class has been
-            instanciated and the total time of all the instanciations of this
+            instantiated and the total time of all the instantiations of this
             given class.
         :type show_times: bool
         :return: A volmdlr solid object.
@@ -962,22 +1019,23 @@ class Step(dc.DessiaObject):
                 id2 = int(function.arg[3][1:])
                 self.connections[id1].append(id2)
                 self.functions[id1].arg.append(f'#{id2}')
-        # sr_nodes = []
         not_shell_nodes = []
         frame_mapped_shell_node = []
-        # for node in self.graph.nodes:
+
         for node in list(self.functions.keys()):
             if self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, ' \
                                             'REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, ' \
                                             'SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
-                frame_mapped_shell_node.append(self.get_frame_mapped_shell_node(node))
-            elif self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]:
+                shell_node = self.get_frame_mapped_shell_node(node)
+                if shell_node:
+                    frame_mapped_shell_node.append(shell_node)
+            elif self.functions[node].name in {"CLOSED_SHELL", "OPEN_SHELL"}:
                 shell_nodes.append(node)
             elif self.functions[node].name == 'GEOMETRIC_REPRESENTATION_CONTEXT, ' \
                                               'GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, ' \
                                               'GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT':
-                object_dict, times = self.helper_instantiate(node, object_dict, times, show_times)
+                object_dict, times = self._helper_instantiate(node, object_dict, times, show_times)
                 arguments = self.functions[node].arg[:]
                 self.global_uncertainty = object_dict[int(arguments[1][0][1:])]
                 self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
@@ -994,11 +1052,11 @@ class Step(dc.DessiaObject):
 
         nodes = self.create_node_list(shell_nodes + frame_mapping_nodes)
         errors = set()
-        for i, node in enumerate(nodes):
+        for node in nodes:
 
             if node is None:
                 continue
-            object_dict, times = self.helper_instantiate(node, object_dict, times, show_times)
+            object_dict, times = self._helper_instantiate(node, object_dict, times, show_times)
 
             if not object_dict[node]:
                 errors.add(node)
@@ -1027,11 +1085,9 @@ class Step(dc.DessiaObject):
                 self.read_diagnostic = StepReaderReport(self.name, step_number_faces, faces_read,
                                                         faces_read / step_number_faces, list(errors))
         volume_model = volmdlr.core.VolumeModel(shells)
-        # bounding_box = volume_model.bounding_box
-        # volume_model = volume_model.translation(-bounding_box.center)
         return volume_model
 
-    def helper_instantiate(self, node, object_dict, times, show_times):
+    def _helper_instantiate(self, node, object_dict, times, show_times):
         """
         Helper method to translate step entities into volmdlr objects.
         """
@@ -1083,7 +1139,7 @@ class Step(dc.DessiaObject):
         return points3d[1:]
 
     def plot_data(self):
-        graph = self.graph.copy()
+        graph = self.graph().copy()
 
         graph.remove_nodes_from([stepfunction.id for stepfunction
                                  in self.functions.values()
@@ -1149,7 +1205,7 @@ STEP_TO_VOLMDLR = {
     'SURFACE_REPLICA': None,
     'RATIONAL_B_SPLINE_SURFACE': volmdlr.faces.BSplineSurface3D,
     'RECTANGULAR_TRIMMED_SURFACE': None,
-    'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.primitives3d.BSplineExtrusion,
+    'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.faces.ExtrusionSurface3D,
     # CAN BE A BSplineSurface3D
     'SURFACE_OF_REVOLUTION': volmdlr.faces.RevolutionSurface3D,
     'UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
@@ -1220,3 +1276,10 @@ for k, v in STEP_TO_VOLMDLR.items():
 SI_PREFIX = {'.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9, '.MEGA.': 1e6, '.KILO.': 1e3,
              '.HECTO.': 1e2, '.DECA.': 1e1, '$': 1, '.DECI.': 1e-1, '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6,
              '.NANO.': 1e-9, '.PICO.': 1e-12, '.FEMTO.': 1e-15, '.ATTO.': 1e-18}
+
+STEP_REPRESENTATION_ENTITIES = {"ADVANCED_BREP_SHAPE_REPRESENTATION", "FACETED_BREP_SHAPE_REPRESENTATION",
+                                "MANIFOLD_SURFACE_SHAPE_REPRESENTATION",
+                                "GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION",
+                                "GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION",
+                                "EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION"
+                                }

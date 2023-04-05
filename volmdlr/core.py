@@ -26,7 +26,7 @@ npy.seterr(divide='raise')
 
 DEFAULT_COLOR = (0.8, 0.8, 0.8)
 
-# TODO: put voldmlr metadata in this freecad header
+# TODO: put volmdlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('{name}'),'2;1');
@@ -73,7 +73,7 @@ def get_point_index_in_list(point, list_points, tol: float = 1e-6):
     :return: The point index.
     """
     for i, point_i in enumerate(list_points):
-        if point_i.is_close(point):
+        if point_i.is_close(point, tol):
             return i
     raise ValueError(f'{point} is not in list')
 
@@ -124,7 +124,7 @@ def step_ids_to_str(ids):
 @dataclass
 class EdgeStyle:
     """
-    Data class for styling edges matplotlib plots.
+    Data class for styling edges Matplotlib plots.
 
     """
     color: str = 'k'
@@ -216,9 +216,9 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         Rotates the CompositePrimitive2D.
 
-        :param center: rotation center
-        :param angle: angle rotation
-        :return: a new rotated CompositePrimitive2D
+        :param center: rotation center.
+        :param angle: angle rotation.
+        :return: a new rotated CompositePrimitive2D.
         """
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
@@ -227,8 +227,8 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         Rotates the CompositePrimitive2D. Object is updated in-place.
 
-        :param center: rotation center
-        :param angle: rotation angle
+        :param center: rotation center.
+        :param angle: rotation angle.
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
@@ -294,11 +294,7 @@ class CompositePrimitive2D(CompositePrimitive):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(
-                ax=ax,
-                edge_style=EdgeStyle(
-                    color=edge_style.color,
-                    alpha=edge_style.alpha))  # , plot_points=plot_points)
+            element.plot(ax=ax, edge_style=edge_style)
 
         ax.margins(0.1)
         plt.show()
@@ -466,6 +462,13 @@ class BoundingRectangle(dc.DessiaObject):
         """
         return self.xmin, self.xmax, self.ymin, self.ymax
 
+    def bounding_points(self):
+        """
+        Return the bounds of the BoundingRectangle.
+        """
+        return [volmdlr.Point2D(self.xmin, self.ymin), volmdlr.Point2D(self.xmax, self.ymin),
+                volmdlr.Point2D(self.xmax, self.ymax), volmdlr.Point2D(self.xmin, self.ymax)]
+
     def plot(self, ax=None, color='k', linestyle='dotted'):
         """
         Plot of the bounding rectangle and its vertex.
@@ -589,6 +592,22 @@ class BoundingRectangle(dc.DessiaObject):
             dy = 0
 
         return (dx ** 2 + dy ** 2) ** 0.5
+
+    @classmethod
+    def from_points(cls, points: List[volmdlr.Point2D]) -> "BoundingRectangle":
+        """
+        Initializes a bounding rectangle from a list of points.
+
+        :param points: The list of points to create the bounding rectangle from.
+        :type points: List[volmdlr.Point2D]
+        :return: The bounding rectangle initialized from the list of points.
+        :rtype: BoundingRectangle
+        """
+        xmin = min(pt.x for pt in points)
+        xmax = max(pt.x for pt in points)
+        ymin = min(pt.y for pt in points)
+        ymax = max(pt.y for pt in points)
+        return cls(xmin, xmax, ymin, ymax)
 
 
 class BoundingBox(dc.DessiaObject):
@@ -1146,8 +1165,11 @@ class VolumeModel(dc.PhysicalObject):
         return babylon_data
 
     @classmethod
-    def babylonjs_script(cls, babylon_data, use_cdn=True,
-                         debug=False):
+    def babylonjs_script(cls, babylon_data, use_cdn=True,  debug=False):
+        """
+        Run babylonjs script.
+
+        """
         if use_cdn:
             script = volmdlr.templates.BABYLON_UNPACKER_CDN_HEADER  # .substitute(name=page_name)
         else:
@@ -1158,6 +1180,10 @@ class VolumeModel(dc.PhysicalObject):
         return script
 
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+        """
+        Creates a html file using babylonjs to show a 3d model in the browser.
+
+        """
         babylon_data = self.babylon_data()
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                        debug=debug)
@@ -1253,10 +1279,8 @@ class VolumeModel(dc.PhysicalObject):
             step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
                             f"'',#{product_definition_id});\n"
             shape_definition_repr_id = product_definition_shape_id + 1
-            step_content += "#{} = SHAPE_DEFINITION_REPRESENTATION(#{},#{});\n".format(shape_definition_repr_id,
-                                                                                       product_definition_shape_id,
-                                                                                       primitive_id
-                                                                                       )
+            step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
+                            f"#{product_definition_shape_id},#{primitive_id});\n"
             product_related_category = shape_definition_repr_id + 1
             step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
                             f"'part',$,(#{product_id}));\n"
@@ -1810,7 +1834,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def to_msh_file(self, mesh_dimension: int,
                     factor: float, file_name: str = '', **kwargs):
-        """ Convert and write model to a .msh file """
+        """ Convert and write model to a .msh file. """
 
         for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
             if element[0] not in kwargs:
@@ -1835,13 +1859,13 @@ class VolumeModel(dc.PhysicalObject):
         tag = None
         entities = gmsh_model.model.getEntities()
         for dim, tag in entities:
-            nodeTags, nodeCoords, nodeParams = gmsh_model.model.mesh.getNodes(dim, tag)
+            node_tags, node_coords, _ = gmsh_model.model.mesh.getNodes(dim, tag)
 
-            lines_nodes.append(str(dim) + ' ' + str(tag) + ' ' + '0 ' + str(len(nodeTags)))
-            for tag in nodeTags:
+            lines_nodes.append(str(dim) + ' ' + str(tag) + ' ' + '0 ' + str(len(node_tags)))
+            for tag in node_tags:
                 lines_nodes.append(str(tag))
-            for n in range(0, len(nodeCoords), 3):
-                lines_nodes.append(str(nodeCoords[n:n + 3])[1:-1])
+            for n in range(0, len(node_coords), 3):
+                lines_nodes.append(str(node_coords[n:n + 3])[1:-1])
 
         lines_nodes.insert(1, str(len(entities)) + ' ' + str(tag) + ' 1 ' + str(tag))
         lines_nodes.append('$EndNodes')
@@ -1855,15 +1879,15 @@ class VolumeModel(dc.PhysicalObject):
 
         entities = gmsh_model.model.getEntities()
         for dim, tag in entities:
-            elemTypes, elemTags, elemNodeTags = gmsh_model.model.mesh.getElements(dim, tag)
+            elem_types, elem_tags, elem_node_tags = gmsh_model.model.mesh.getElements(dim, tag)
 
-            lines_elements.append(str(dim) + ' ' + str(tag) + ' ' + str(elemTypes[0]) + ' ' + str(len(elemTags[0])))
-            range_list = int(len(elemNodeTags[0]) / len(elemTags[0]))
-            for n in range(0, len(elemNodeTags[0]), range_list):
-                lines_elements.append(str(elemTags[0][int(n / range_list)]) + ' ' +
-                                      str(elemNodeTags[0][n:n + range_list])[1:-1])
+            lines_elements.append(str(dim) + ' ' + str(tag) + ' ' + str(elem_types[0]) + ' ' + str(len(elem_tags[0])))
+            range_list = int(len(elem_node_tags[0]) / len(elem_tags[0]))
+            for n in range(0, len(elem_node_tags[0]), range_list):
+                lines_elements.append(str(elem_tags[0][int(n / range_list)]) + ' ' +
+                                      str(elem_node_tags[0][n:n + range_list])[1:-1])
 
-        tag = str(elemTags[0][int(n / range_list)])
+        tag = str(elem_tags[0][int(n / range_list)])
         lines_elements.insert(1, str(len(entities)) + ' ' + tag + ' 1 ' + tag)
         lines_elements.append('$EndElements')
 
@@ -1901,7 +1925,7 @@ class MovingVolumeModel(VolumeModel):
         """
         Get babylonjs data.
 
-        :return: Dictionary with babylon data.
+        :return: Dictionary with babylonjs data.
         """
         meshes = []
         primitives_to_meshes = []

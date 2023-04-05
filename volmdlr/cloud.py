@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Cloud of points classes
+Cloud of points classes.
+
 """
 
 import math
@@ -87,7 +88,7 @@ class PointCloud3D(dc.DessiaObject):
 
         polygon2d, polygon3d = [], []
         for n, poly in enumerate(initial_polygon2d):
-            if (poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1])):
+            if poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1]):
                 continue
             if poly.area() < avg_area / 10:
                 new_poly = vmw.ClosedPolygon2D.concave_hull(poly.points, -1, 0.000005)
@@ -108,6 +109,7 @@ class PointCloud3D(dc.DessiaObject):
         return subcloud2d
 
     def to_shell(self, resolution: int = 10, normal=None, offset: float = 0):
+        """ Creates a Shell from a Cloud of points 3D."""
         if normal is None:
             posmax, normal, vec1, vec2 = self.determine_extrusion_vector()
         else:
@@ -153,7 +155,7 @@ class PointCloud3D(dc.DessiaObject):
         :param normal: normal to the sewing plane.
         :param vec1: u vector in the sewing plane.
         :param vec2: v vector in the sewing plane.
-        :return: returun a shell.
+        :return: return a shell.
         """
         position_plane = [p.points[0].dot(normal) for p in polygon3d]
         resolution = len(polygon3d)
@@ -166,7 +168,8 @@ class PointCloud3D(dc.DessiaObject):
             if n in (resolution - 1, 0):
                 faces.append(
                     vmf.PlaneFace3D(surface3d=vmf.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2),
-                                    surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2)))
+                                    surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n],
+                                                                  normal, vec1, vec2)))
 
             if n != resolution - 1:
                 poly2 = polygon3d[n + 1]
@@ -267,6 +270,12 @@ class PointCloud3D(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, step_file: str):
+        """
+        Creates a Clopud of Points from a step file.
+
+        :param step_file: step file.
+        :return: Point Cloud 3D.
+        """
         step = vstep.Step(step_file)
         points = step.to_points()
         return cls(points)
@@ -327,6 +336,7 @@ class PointCloud2D(dc.DessiaObject):
         dc.DessiaObject.__init__(self, name=name)
 
     def plot(self, ax=None, color='k'):
+        """Plot a point cloud 2d using matplotlib."""
         if ax is None:
             _, ax = plt.subplots()
         for point in self.points:
@@ -334,6 +344,12 @@ class PointCloud2D(dc.DessiaObject):
         return ax
 
     def to_polygon(self, convex=False):
+        """
+        Use a Cloud point 2d to create a polygon.
+
+        :param convex: if True, it will return a convex polygon. If false, il will search for a concave polygon.
+        :return: closed polygon 2d.
+        """
         if not self.points:
             return None
 
@@ -345,14 +361,19 @@ class PointCloud2D(dc.DessiaObject):
 
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol=1e-6):
             return None
-
         return polygon
 
     def bounding_rectangle(self):
+        """
+        Calculates the bounding rectangle for the point cloud.
+
+        :return: bounds for bounding rectangle.
+        """
         x_list, y_list = [p.x for p in self.points], [p.y for p in self.points]
         return min(x_list), max(x_list), min(y_list), max(y_list)
 
     def simplify(self, resolution=5):
+        """Simplify cloud point 2d."""
         if not self.points:
             return PointCloud2D(self.points, name=self.name + '_none')
 

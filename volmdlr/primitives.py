@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Common abstract primitives
+Common abstract primitives.
+
 """
 
 import math
@@ -35,6 +36,24 @@ class RoundedLineSegments:
         self.adapt_radius = adapt_radius
         self.name = name
         self.npoints = len(points)
+
+    def get_points(self, point_index):
+        """Gets points to calculate the arc features."""
+        if self.closed:
+            if point_index == 0:
+                pt1 = self.points[-1]
+            else:
+                pt1 = self.points[point_index - 1]
+            pti = self.points[point_index]
+            if point_index < self.npoints - 1:
+                pt2 = self.points[point_index + 1]
+            else:
+                pt2 = self.points[0]
+        else:
+            pt1 = self.points[point_index - 1]
+            pti = self.points[point_index]
+            pt2 = self.points[point_index + 1]
+        return pt1, pti, pt2
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -78,13 +97,13 @@ class RoundedLineSegments:
 
             for i in rounded_points_indices[1:]:
                 # Computing the arc
-                _, pi2, _, dist2, alpha2 = self.arc_features(i)
+                _, _, _, dist2, alpha2 = self.arc_features(i)
                 dist[i] = dist2
                 alpha[i] = alpha2
                 if i - 1 in self.radius:
-                    p1 = self.points[i - 1]
-                    p2 = self.points[i]
-                    length = (p2 - p1).norm()
+                    point1 = self.points[i - 1]
+                    point2 = self.points[i]
+                    length = (point2 - point1).norm()
                     lines_length[i - 1] = length
                     dist1 = dist[i - 1]
 
@@ -115,100 +134,101 @@ class RoundedLineSegments:
                 neq_ub = 0
                 bounds = []
                 for group in groups:
-                    lg = len(group)
-                    if lg == 1:
+                    len_group = len(group)
+                    if len_group == 1:
                         # Single point, reducing its radius by simple computation if needed
                         ipoint = group[0]
                         if self.closed:
                             if ipoint == 0:
-                                p1 = self.points[-1]
-                                p2 = self.points[0]
-                                p3 = self.points[1]
+                                point1 = self.points[-1]
+                                point2 = self.points[0]
+                                point3 = self.points[1]
                             elif ipoint == self.npoints - 1:
-                                p1 = self.points[-2]
-                                p2 = self.points[-1]
-                                p3 = self.points[0]
+                                point1 = self.points[-2]
+                                point2 = self.points[-1]
+                                point3 = self.points[0]
                             else:
-                                p1 = self.points[ipoint - 1]
-                                p2 = self.points[ipoint]
-                                p3 = self.points[ipoint + 1]
+                                point1 = self.points[ipoint - 1]
+                                point2 = self.points[ipoint]
+                                point3 = self.points[ipoint + 1]
 
                         else:
-                            p1 = self.points[ipoint - 1]
-                            p2 = self.points[ipoint]
-                            p3 = self.points[ipoint + 1]
+                            point1 = self.points[ipoint - 1]
+                            point2 = self.points[ipoint]
+                            point3 = self.points[ipoint + 1]
 
-                        d1 = p1.point_distance(p2)
-                        d2 = p2.point_distance(p3)
+                        distance_1 = point1.point_distance(point2)
+                        distance_2 = point2.point_distance(point3)
 
-                        if dist[ipoint] > (min(d1, d2)):
-                            self.radius[ipoint] = min(self.radius[ipoint], min(d1, d2) * math.tan(alpha[ipoint]))
+                        if dist[ipoint] > (min(distance_1, distance_2)):
+                            self.radius[ipoint] = min(self.radius[ipoint],
+                                                      min(distance_1, distance_2) * math.tan(alpha[ipoint]))
 
                     else:
                         # Adding to dof
                         bounds.extend([(0, self.radius[j] / math.tan(alpha[j])) for j in group])
                         dof.update({j: ndof + i for i, j in enumerate(group)})
-                        ndof += lg
+                        ndof += len_group
                         groups2.append(group)
-                        neq_ub += lg - 1
+                        neq_ub += len_group - 1
 
                 # Constructing simplex problem
                 # C matrix:
                 if ndof > 0:
-                    C = zeros(ndof)
+                    c = zeros(ndof)
                     for j, i in dof.items():
-                        C[i] = -math.tan(alpha[j])
+                        c[i] = -math.tan(alpha[j])
 
-                    A_ub = zeros((neq_ub, ndof))
+                    a_ub = zeros((neq_ub, ndof))
                     b_ub = zeros(neq_ub)
                     ieq_ub = 0
 
                     for group in groups2:
                         for ip1, ip2 in zip(group[:-1], group[1:]):
-                            A_ub[ieq_ub, dof[ip1]] = 1
-                            A_ub[ieq_ub, dof[ip2]] = 1
+                            a_ub[ieq_ub, dof[ip1]] = 1
+                            a_ub[ieq_ub, dof[ip2]] = 1
                             b_ub[ieq_ub] = lines_length[ip1]
                             ieq_ub += 1
 
-                    d = linprog(C, A_ub, b_ub, bounds=bounds)
+                    d_ = linprog(c, a_ub, b_ub, bounds=bounds)
 
                     for ipoint, dof_point in dof.items():
-                        r = d.x[dof_point] * math.tan(alpha[ipoint])
-                        if r > 1e-10:
-                            self.radius[ipoint] = r
+                        radius = d_.x[dof_point] * math.tan(alpha[ipoint])
+                        if radius > 1e-10:
+                            self.radius[ipoint] = radius
                         else:
                             del self.radius[ipoint]
 
             # Creating geometry
             # Creating arcs
-            for ipoint, r in self.radius.items():
-                ps, pi, pe, _, _ = self.arc_features(ipoint)
-                arcs[ipoint] = self.arc_class(ps, pi, pe)
+            for ipoint, radius in self.radius.items():
+                p_start, p_iterior, p_end, _, _ = self.arc_features(ipoint)
+                arcs[ipoint] = self.arc_class(p_start, p_iterior, p_end)
 
         return self.primitives_from_arcs(arcs)
 
     def primitives_from_arcs(self, arcs):
         primitives = []
         # Creating lines
-        for iline in range(self.npoints - 1):
-            if iline in self.radius:
-                arc1 = arcs[iline]
+        for index_line in range(self.npoints - 1):
+            if index_line in self.radius:
+                arc1 = arcs[index_line]
                 primitives.append(arc1)
-                if iline + 1 in self.radius:
-                    arc2 = arcs[iline + 1]
+                if index_line + 1 in self.radius:
+                    arc2 = arcs[index_line + 1]
                     if not arc1.end.is_close(arc2.start):
                         primitives.append(self.line_class(arc1.end, arc2.start))
                 else:
-                    if not arc1.end.is_close(self.points[iline + 1]):
-                        primitives.append(self.line_class(arc1.end, self.points[iline + 1]))
+                    if not arc1.end.is_close(self.points[index_line + 1]):
+                        primitives.append(self.line_class(arc1.end, self.points[index_line + 1]))
             else:
-                p1 = self.points[iline]
-                if iline + 1 in self.radius:
-                    arc2 = arcs[iline + 1]
+                p1 = self.points[index_line]
+                if index_line + 1 in self.radius:
+                    arc2 = arcs[index_line + 1]
                     if not p1.is_close(arc2.start):
                         primitives.append(self.line_class(p1, arc2.start))
                 else:
-                    primitives.append(self.line_class(p1, self.points[iline + 1]))
+                    primitives.append(self.line_class(p1, self.points[index_line + 1]))
 
         if self.closed:
             if self.npoints - 1 in self.radius:
@@ -219,7 +239,7 @@ class RoundedLineSegments:
                     if not arc1.end.is_close(arc2.start):
                         primitives.append(self.line_class(arc1.end, arc2.start))
                 else:
-                    primitives.append(self.line_class(arc1.end, self.points[iline + 1]))
+                    primitives.append(self.line_class(arc1.end, self.points[0]))
             else:
                 p1 = self.points[self.npoints - 1]
                 if 0 in self.radius:
