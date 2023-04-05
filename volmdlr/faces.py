@@ -3755,7 +3755,7 @@ class ExtrusionSurface3D(Surface3D):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
         for i in range(21):
-            step = i / 20. * 0.5
+            step = i / 20. * z
             wire = self.edge.translation(step * self.frame.w)
             wire.plot(ax=ax, color=color, alpha=alpha)
 
@@ -4804,7 +4804,7 @@ class BSplineSurface3D(Surface3D):
         """
         Verifies if BSplineSurface3D could be a Plane3D.
 
-        :return: simplified surface if possible, otherwise, returns self.
+        :return: A planar surface if possible, otherwise, returns self.
         """
         points = [self.control_points[0]]
         vector_list = []
@@ -4815,11 +4815,10 @@ class BSplineSurface3D(Surface3D):
                 points.append(point)
                 vector_list.append(vector)
                 if len(points) == 3:
+                    plane3d = Plane3D.from_3_points(*points)
+                    if all(plane3d.point_on_surface(point) for point in self.control_points):
+                        return plane3d
                     break
-        if len(points) == 3:
-            plane3d = Plane3D.from_3_points(*points)
-            if all(plane3d.point_on_surface(point) for point in self.control_points):
-                return plane3d
         return self
 
     @classmethod
@@ -8524,8 +8523,7 @@ class RuledFace3D(Face3D):
     def __init__(self,
                  surface3d: RuledSurface3D,
                  surface2d: Surface2D,
-                 name: str = '',
-                 color=None):
+                 name: str = ''):
         Face3D.__init__(self, surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
