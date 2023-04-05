@@ -4,9 +4,10 @@ volmdlr utils for calculating curves intersections.
 """
 import math
 
-import volmdlr
-from volmdlr import edges
 import numpy as npy
+
+import volmdlr
+
 
 def circle_3d_line_intersections(circle_3d, line):
     """

@@ -599,7 +599,7 @@ class LineSegment(Edge):
         length = vector.norm()
         t_param = (point - self.start).dot(vector) / length
         if t_param < -1e-9 or t_param > length + 1e-9:
-            raise ValueError(f'Point is not on linesegment: abscissa={t}')
+            raise ValueError(f'Point is not on linesegment: abscissa={t_param}')
         return t_param
 
     def direction_vector(self, abscissa=0.):
