@@ -178,6 +178,22 @@ class TestCylindricalSurface3D(unittest.TestCase):
         face = cylindrical.face_from_contours3d([contour1, contour2])
         self.assertEqual(face.surface2d.area(), 0.2*2*math.pi)
 
+    def test_point_projection(self):
+        test_points = [Point3D(-2.0, -2.0, 0.0), Point3D(0.0, -2.0, 0.0), Point3D(2.0, -2.0, 0.0),
+                       Point3D(2.0, 0.0, 0.0), Point3D(2.0, 2.0, 0.0), Point3D(0.0, 2.0, 0.0),
+                       Point3D(-2.0, 2.0, 0.0), Point3D(-2.0, 0.0, 0.0)]
+        expected_points = [volmdlr.Point3D(-0.5 * math.sqrt(2), -0.5 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(0.0, -1.0, 0.0),
+                           volmdlr.Point3D(0.5 * math.sqrt(2), -0.5 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(1.0, 0.0, 0.0),
+                           volmdlr.Point3D(0.5 * math.sqrt(2), 0.5 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(0.0, 1.0, 0.0),
+                           volmdlr.Point3D(-0.5 * math.sqrt(2), 0.5 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(-1.0, 0.0, 0.0)]
+
+        for i, point in enumerate(test_points):
+            self.assertTrue(self.cylindrical_surface2.point_projection(point).is_close(expected_points[i]))
+
 
 if __name__ == '__main__':
     unittest.main()
