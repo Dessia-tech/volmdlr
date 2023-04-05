@@ -983,7 +983,7 @@ class BSplineCurve(Edge):
         func_first_derivative = curve_derivatives[2].dot(distance_vector) + curve_derivatives[1].norm() ** 2
         return func, func_first_derivative, curve_derivatives, distance_vector
 
-    def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-6, tol2: float = 1e-6):
+    def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-6, tol2: float = 1e-8):
         """
         Finds the equivalent B-Spline curve parameter u to a given a point 3D or 2D using an initial guess u0.
 
@@ -1014,7 +1014,7 @@ class BSplineCurve(Edge):
         return self.point_invertion(u0, point, maxiter=maxiter - 1)
 
     @staticmethod
-    def _check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-6, tol2: float = 1e-6):
+    def _check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-6, tol2: float = 1e-8):
         """
         Helper function to check convergence of point_invertion method.
         """
@@ -1479,6 +1479,15 @@ class BSplineCurve(Edge):
         """
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
+
+    def point_projection(self, point):
+        """
+        Calculates the projection of a point on the B-Spline.
+
+        :param point: point to be verified.
+        :return: point projection.
+        """
+        return self.point_at_abscissa(self.abscissa(point))
 
 
 class Line2D(Line):
@@ -2803,7 +2812,7 @@ class Arc2D(Arc):
         """
         Calculates the center of the Arc.
 
-        :return: asc's center.
+        :return: arc's center.
         """
         x_interior, y_interior = self.interior.x, self.interior.y
         x_end, y_end = self.end.x, self.end.y
@@ -5128,12 +5137,10 @@ class LineSegment3D(LineSegment):
         w = u.cross(v)
         length_1 = self.length()
         length_2 = extrusion_vector.norm()
-        # outer_contour = Polygon2D([O2D, Point2D((l1, 0.)),
-        #                            Point2D((l1, l2)), Point2D((0., l2))])
         plane = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.start, u, v, w))
         return [plane.rectangular_cut(0, length_1, 0, length_2)]
 
-    def _revolution_conical(self, params):
+    def _conical_revolution(self, params):
         axis, u, p1_proj, dist1, dist2, angle = params
         v = axis.cross(u)
         direction_vector = self.direction_vector()
@@ -5234,7 +5241,7 @@ class LineSegment3D(LineSegment):
 
         if not math.isclose(distance_1, distance_2, abs_tol=1e-9):
             # Conical
-            return self._revolution_conical([axis, u, p1_proj, distance_1, distance_2, angle])
+            return self._conical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
 
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
@@ -5887,7 +5894,7 @@ class Arc3D(Arc):
             center, _ = line_1.minimum_distance_points(line_2)
         except ZeroDivisionError:
             raise ValueError(
-                'Start, end and interior points  of an arc must be distincts') from ZeroDivisionError
+                'Start, end and interior points of an arc must be distincts') from ZeroDivisionError
 
         return center
 

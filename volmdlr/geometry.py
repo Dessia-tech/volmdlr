@@ -127,7 +127,9 @@ def vectors3d_angle(vector1, vector2):
     :rtype: float
     """
     dot_v1v2 = vector1.dot(vector2)
-    theta = math.acos(dot_v1v2 / (vector1.norm() * vector2.norm()))
+    ratio = dot_v1v2 / (vector1.norm() * vector2.norm())
+    ratio = max(min(ratio, 1.0), -1.0)
+    theta = math.acos(ratio)
 
     return theta
 

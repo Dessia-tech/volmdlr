@@ -5,6 +5,19 @@ from volmdlr import edges, wires
 
 
 class TestCircle3D(unittest.TestCase):
+
+    def test_frame_mapping(self):
+        for side in ['old', 'new']:
+            circle = wires.Circle3D(volmdlr.Frame3D(volmdlr.Point3D(1.456, -0.12456, -0.457),
+                                                    volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), 0.32)
+            frame = volmdlr.Frame3D(volmdlr.Point3D(0.12, 0.1, -0.07), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
+            framed_mapped_circle = circle.frame_mapping(frame, side)
+            framed_center = circle.frame.origin.frame_mapping(frame, side)
+            framed_normal = circle.frame.w.frame_mapping(frame, side)
+            self.assertAlmostEqual(framed_center.point_distance(framed_mapped_circle.frame.origin), 0.)
+            self.assertAlmostEqual(framed_normal.point_distance(framed_mapped_circle.frame.w), 0.)
+            self.assertEqual(circle.radius, framed_mapped_circle.radius)
+
     def test_linsegment_intersections(self):
         circle = wires.Circle3D(volmdlr.OXYZ, 1)
         lineseg = edges.LineSegment3D(volmdlr.Point3D(0, 0, -1), volmdlr.Point3D(2, 0, 1))
