@@ -336,7 +336,7 @@ class PointCloud2D(dc.DessiaObject):
         dc.DessiaObject.__init__(self, name=name)
 
     def plot(self, ax=None, color='k'):
-        """Plot a point cloud 2d using matplotlib."""
+        """Plot a point cloud 2d using Matplotlib."""
         if ax is None:
             _, ax = plt.subplots()
         for point in self.points:
@@ -347,7 +347,7 @@ class PointCloud2D(dc.DessiaObject):
         """
         Use a Cloud point 2d to create a polygon.
 
-        :param convex: if True, it will return a convex polygon. If false, il will search for a concave polygon.
+        :param convex: if True, it will return a convex polygon. If false, it will search for a concave polygon.
         :return: closed polygon 2d.
         """
         if not self.points:

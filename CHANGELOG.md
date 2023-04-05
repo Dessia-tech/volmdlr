@@ -10,21 +10,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - BSplineCurve, Edge: simplify
 - Plane3D: angle_between_planes, plane_betweeen_two_planes
+- Edge: intersections, crossings, validate_crossings
+- Arc2D: bsplinecurve_intersections, arc_intersections, arcellipse_intersections.
+- ArcEllipse2D: bsplinecurve_intersections
+- get_circle_intersections added to volmdlr.utils.intersections, so it can be used to calculate intersections between two arcs 2d.
+- get_bsplinecurve_intersections added to volmdlr.utils.intersections. Used to calculate intersection between a bspline and another edge.
+- Wire2D: edge_intersections, wire_intersections, edge_crossings, edge_intersections, validate_edge_crossings, validate_wire_crossings
+- Contour2D: split_contour_with_sorted_points, intersection_contour_with
 - CylindricalSurface3D: point_projection, point_distance
 - ToroidalSurface3D: point_projection
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
 - LineSegment, Arc, BSplineCurve: get_shared_section()
+- bSpline2D: linesegment_intersections
+
+### Refactor
 
 ### Changed
 - better surface3d plots
 
 ### Unittests
+- Arc2D: test_arc_intersections
+- TestEdge2DIntersections: test intersections for all edges.
+- Circle2D: test_circle_intersections
+- Contour2D: test_crossings, test_intersection_contour_with
+- BSplineCurve: get_intersection_sections
+- BSplineCurve2D: edge_intersections, arc_intersections, bsplinecurve_intersections
 - CylindricalFace3D: test_triangulation_quality
 - CylindricalSurface3D: test_point_projection
 - BSplineCurve: point_projection
-
 
 ## v0.10.0 [Unreleased yet]
 
