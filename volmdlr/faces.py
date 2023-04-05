@@ -1198,7 +1198,7 @@ class Surface3D(DessiaObject):
 
     def point_projection(self, point3d):
         """
-        Returns the projection of the point on the cylindrical surface.
+        Returns the projection of the point on the surface.
 
         :param point3d: Point to project.
         :type point3d: volmdlr.Point3D
