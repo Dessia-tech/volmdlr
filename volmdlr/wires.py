@@ -2956,10 +2956,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         def get_nearby_points(line, points, scale_factor):
             points_hull = [point.copy() for point in points]
 
-            # print('i enter here')
             nearby_points = []
             line_midpoint = 0.5 * (line.start + line.end)
-            # print(line_midpoint)
             tries = 0
             n = 5
             bounding_box = [line_midpoint.x - line.length() / 2,
@@ -3829,14 +3827,16 @@ class Circle2D(Contour2D):
                              abs_tol=1e-06)
 
     def _primitives(self):
-        points = [
-            volmdlr.Point2D(self.center.x + self.radius, self.center.y),
-            volmdlr.Point2D(self.center.x, self.center.y - self.radius),
-            volmdlr.Point2D(self.center.x - self.radius, self.center.y),
-            volmdlr.Point2D(self.center.x, self.center.y + self.radius)]
+        # points = [
+        #     volmdlr.Point2D(self.center.x + self.radius, self.center.y),
+        #     volmdlr.Point2D(self.center.x, self.center.y - self.radius),
+        #     volmdlr.Point2D(self.center.x - self.radius, self.center.y),
+        #     volmdlr.Point2D(self.center.x, self.center.y + self.radius)]
 
-        return [volmdlr.edges.Arc2D(points[0], points[1], points[2]),
-                volmdlr.edges.Arc2D(points[2], points[3], points[0])]
+        # return [volmdlr.edges.Arc2D(points[0], points[1], points[2]),
+        #         volmdlr.edges.Arc2D(points[2], points[3], points[0])]
+        start = volmdlr.Point2D(self.center.x + self.radius, self.center.y)
+        return [volmdlr.edges.FullArc2D(self.center, start)]
 
     @classmethod
     def from_arc(cls, arc: volmdlr.edges.Arc2D):
@@ -4843,12 +4843,8 @@ class Circle3D(Contour3D):
         :return: list containing two Arc3D
         """
         if not self._primitives:
-            points = [self.center + self.frame.u * self.radius,
-                      self.center - self.frame.v * self.radius,
-                      self.center - self.frame.u * self.radius,
-                      self.center + self.frame.v * self.radius]
-            self._primitives = [volmdlr.edges.Arc3D(points[0], points[1], points[2]),
-                                volmdlr.edges.Arc3D(points[2], points[3], points[0])]
+            start = self.center + self.frame.u * self.radius
+            return [volmdlr.edges.FullArc3D(self.center, start, self.normal)]
 
         return self._primitives
 
@@ -4928,6 +4924,20 @@ class Circle3D(Contour3D):
         warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         self.frame.translation_inplace(offset)
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Circle3D.
+
+        side = 'old' or 'new'.
+        """
+        # return Circle3D(self.frame.frame_mapping(frame, side), self.radius)
+
+        return Circle3D(volmdlr.Frame3D(self.frame.origin.frame_mapping(frame, side),
+                                        self.frame.u.frame_mapping(frame, side),
+                                        self.frame.v.frame_mapping(frame, side),
+                                        self.frame.w.frame_mapping(frame, side)),
+                        self.radius)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
