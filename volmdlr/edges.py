@@ -379,7 +379,7 @@ class Edge(dc.DessiaObject):
         """Search another simplified edge that can represent the edge."""
         return self
 
-    def is_point_any_end(self, other_point, abs_tol: float = 1e-6):
+    def is_point_edge_extremity(self, other_point, abs_tol: float = 1e-6):
         """
         Verifies if a point is the start or the end of the edge.
 

@@ -716,7 +716,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             if not start_equal_to_end:
                 crossings = self.validate_edge_crossings(crossings)
             for crossing in crossings:
-                if not edge.is_point_any_end(crossing) and not volmdlr.core.point_in_list(crossing, edge_crossings):
+                if not edge.is_point_edge_extremity(crossing) and not volmdlr.core.point_in_list(crossing, edge_crossings):
                     edge_crossings.append(crossing)
         return edge_crossings
 
@@ -729,7 +729,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         :param next_wire_primitive: next wire primitive intersecting wire.
         :return:
         """
-        self_primitives_to_test = [prim for prim in self.primitives if prim.is_point_any_end(crossing)]
+        self_primitives_to_test = [prim for prim in self.primitives if prim.is_point_edge_extremity(crossing)]
         if len(self_primitives_to_test) < 2:
             return True
         if len(self_primitives_to_test) > 2:
