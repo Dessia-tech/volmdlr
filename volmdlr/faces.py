@@ -4808,7 +4808,7 @@ class BSplineSurface3D(Surface3D):
         """
         points = [self.control_points[0]]
         vector_list = []
-        for point in self.control_points:
+        for point in self.control_points[1:]:
             vector = point - points[0]
             is_colinear = any(vector.is_colinear_to(other_vector) for other_vector in vector_list)
             if not point_in_list(point, points) and not is_colinear:
@@ -4816,9 +4816,10 @@ class BSplineSurface3D(Surface3D):
                 vector_list.append(vector)
                 if len(points) == 3:
                     break
-        plane3d = Plane3D.from_3_points(*points)
-        if all(plane3d.point_on_surface(point) for point in self.control_points):
-            return plane3d
+        if len(points) == 3:
+            plane3d = Plane3D.from_3_points(*points)
+            if all(plane3d.point_on_surface(point) for point in self.control_points):
+                return plane3d
         return self
 
     @classmethod
