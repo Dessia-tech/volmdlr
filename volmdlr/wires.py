@@ -683,6 +683,12 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         return intersections_points
 
     def validate_edge_crossings(self, crossings):
+        """
+        Validates the crossings points from an edge and a wire.
+
+        :param crossings: list of crossing points found.
+        :return: list of valid crossing points.
+        """
         crossings_ = []
         first_primitive = self.primitives[0]
         last_primitive = self.primitives[-1]
@@ -692,6 +698,12 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         return crossings_
 
     def edge_crossings(self, edge):
+        """
+        Gets the crossings between an edge and a Wire.
+
+        :param edge: edge to search for crossings.
+        :return: list of points containing all crossing points.
+        """
         edge_crossings = []
         start_equal_to_end = self.primitives[0].start.is_close(self.primitives[-1].end)
         for primitive in self.primitives:
