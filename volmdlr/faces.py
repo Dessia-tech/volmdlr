@@ -1196,6 +1196,29 @@ class Surface3D(DessiaObject):
         point2_2d = self.point3d_to_2d(point2_3d)
         return self.geodesic_distance_from_points2d(point1_2d, point2_2d)
 
+    def point_projection(self, point3d):
+        """
+        Returns the projection of the point on the surface.
+
+        :param point3d: Point to project.
+        :type point3d: volmdlr.Point3D
+        :return: A point on the surface
+        :rtype: volmdlr.Point3D
+        """
+        return self.point2d_to_3d(self.point3d_to_2d(point3d))
+
+    def point_distance(self, point3d: volmdlr.Point3D):
+        """
+        Calculates the minimal distance from a given point and the surface.
+
+        :param point3d: point to verify distance.
+        :type point3d: volmdlr.Point3D
+        :return: point distance to the surface.
+        :rtype: float
+        """
+        proj_point = self.point_projection(point3d)
+        return proj_point.point_distance(point3d)
+
 
 class Plane3D(Surface3D):
     """
@@ -2020,11 +2043,11 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
         ncircles = 10
         nlines = 30
-        
+
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-            
+
         self.frame.plot(ax=ax)
         for i in range(nlines):
             theta = i / (nlines-1) * volmdlr.TWO_PI
@@ -2336,16 +2359,6 @@ class CylindricalSurface3D(PeriodicalSurface):
         if math.isclose(new_point.x ** 2 + new_point.y ** 2, self.radius ** 2, abs_tol=1e-6):
             return True
         return False
-
-    def point_distance(self, point3d):
-        """
-        Calculates the distance of a point to plane.
-
-        :param point3d: point to verify distance.
-        :return: a float, point distance to plane.
-        """
-        proj_point = self.point2d_to_3d(self.point3d_to_2d(point3d))
-        return proj_point.point_distance(point3d)
 
 
 class ToroidalSurface3D(PeriodicalSurface):
@@ -2759,6 +2772,57 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         self.frame.rotation_inplace(center, axis, angle)
 
+    def plot(self, ax=None, color='grey', alpha=0.5):
+        """Plot torus arcs."""
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+
+        self.frame.plot(ax=ax)
+        number_arcs = 50
+        for i in range(number_arcs):
+            theta = i / number_arcs * volmdlr.TWO_PI
+            t_points = []
+            for j in range(number_arcs):
+                phi = j / number_arcs * volmdlr.TWO_PI
+                t_points.append(self.point2d_to_3d(volmdlr.Point2D(theta, phi)))
+            ax = volmdlr.wires.ClosedPolygon3D(t_points).plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+
+        return ax
+
+    def point_projection(self, point3d):
+        """
+        Returns the projection of the point on the toroidal surface.
+
+        :param point3d: Point to project.
+        :type point3d: volmdlr.Point3D
+        :return: A point on the surface
+        :rtype: volmdlr.Point3D
+        """
+        x, y, z = self.frame.global_to_local_coordinates(point3d)
+
+        if abs(x) < 1e-12:
+            x = 0
+        if abs(y) < 1e-12:
+            y = 0
+
+        # z_theta = min(self.r, max(-self.r, z))
+        # u = self.tore_radius + math.sqrt((self.r ** 2) - (z_theta ** 2))
+        # u1, u2 = round(x / u, 5), round(y / u, 5)
+        theta = math.atan2(y, x)
+
+        vector_to_tube_center = volmdlr.Vector3D(self.tore_radius * math.cos(theta),
+                                                 self.tore_radius * math.sin(theta), 0)
+        vector_from_tube_center_to_point = volmdlr.Vector3D(x, y, z) - vector_to_tube_center
+        phi = volmdlr.geometry.vectors3d_angle(vector_to_tube_center, vector_from_tube_center_to_point)
+        if z < 0:
+            phi = 2*math.pi - phi
+        if abs(theta) < 1e-9:
+            theta = 0.0
+        if abs(phi) < 1e-9:
+            phi = 0.0
+        return self.point2d_to_3d(volmdlr.Point2D(theta, phi))
+
 
 class ConicalSurface3D(PeriodicalSurface):
     """
@@ -2782,6 +2846,8 @@ class ConicalSurface3D(PeriodicalSurface):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
+
+        self.frame.plot(ax=ax)
         x = z / math.sin(self.semi_angle)
         # point1 = self.frame.local_to_global_coordinates(volmdlr.Point3D(-x, 0, -z))
         point1 = self.frame.origin
@@ -3455,6 +3521,11 @@ class SphericalSurface3D(PeriodicalSurface):
 
     def plot(self, ax=None, color='grey', alpha=0.5):
         """Plot sphere arcs."""
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+
+        self.frame.plot(ax=ax)
         for i in range(20):
             theta = i / 20. * volmdlr.TWO_PI
             t_points = []

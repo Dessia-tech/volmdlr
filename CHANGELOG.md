@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.11.0 [future]
 
 ### New Features
-BSplineCurve, Edge: simplify
+- BSplineCurve, Edge: simplify
+- CylindricalSurface3D: point_projection, point_distance
+- ToroidalSurface3D: point_projection
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -16,6 +18,11 @@ BSplineCurve, Edge: simplify
 
 ### Changed
 - better surface3d plots
+
+### Unittests
+- CylindricalFace3D: test_triangulation_quality
+- CylindricalSurface3D: test_point_projection
+- BSplineCurve: point_projection
 
 
 ## v0.10.0 [Unreleased yet]
