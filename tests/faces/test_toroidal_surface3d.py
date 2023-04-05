@@ -48,6 +48,27 @@ class TestToroidalSurface3D(unittest.TestCase):
 
         self.assertTrue(inv_prof.end.is_close(bspline_curve3d.end))
 
+    def test_point_projection(self):
+        test_points = [volmdlr.Point3D(-2.0, -2.0, 0.0), volmdlr.Point3D(0.0, -2.0, 0.0),
+                       volmdlr.Point3D(2.0, -2.0, 0.0),
+                       volmdlr.Point3D(2.0, 0.0, 0.0), volmdlr.Point3D(2.0, 2.0, 0.0), volmdlr.Point3D(0.0, 2.0, 0.0),
+                       volmdlr.Point3D(-2.0, 2.0, 0.0), volmdlr.Point3D(-2.0, 0.0, 0.0),
+                       ]
+
+
+        expected_points = [volmdlr.Point3D(-0.55 * math.sqrt(2), -0.55 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(0.0, -1.1, 0.0),
+                           volmdlr.Point3D(0.55 * math.sqrt(2), -0.55 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(1.1, 0.0, 0.0),
+                           volmdlr.Point3D(0.55 * math.sqrt(2), 0.55 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(0.0, 1.1, 0.0),
+                           volmdlr.Point3D(-0.55 * math.sqrt(2), 0.55 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(-1.1, 0.0, 0.0),
+                            ]
+
+        for i, point in enumerate(test_points):
+            self.assertTrue(self.toroidal_surface.point_projection(point).is_close(expected_points[i]))
+
 
 if __name__ == '__main__':
     unittest.main()
