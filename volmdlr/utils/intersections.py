@@ -102,6 +102,13 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
 
 
 def get_circle_intersections(circle1, circle2):
+    """
+    Calculates the intersections between two circle 2d.
+
+    :param circle1: circle 1 verify intersection with bspline
+    :param circle2: circle 2 to search for intersections.
+    :return: a list with all intersections between the two circles.
+    """
     x0, y0 = circle1.center
     x1, y1 = circle2.center
 
@@ -157,7 +164,7 @@ def get_bsplinecurve_intersections(edge2d, bsplinecurve2d, abs_tol: float = 1e-6
     :param edge2d: edge to verify intersection with bspline
     :param bsplinecurve2d: bsplinecurve2d to search for intersections.
     :param abs_tol: tolerance to be considered while validating an intersection.
-    :return: a list with all intersections between circle and bsplinecurve2d.
+    :return: a list with all intersections between the edge and bsplinecurve2d.
     """
     edge_bounding_rectangle = edge2d.bounding_rectangle
     param_intersections = bspline_intersections_initial_conditions(edge2d, bsplinecurve2d)
