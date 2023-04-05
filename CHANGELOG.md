@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse2D: bsplinecurve_intersections
 - get_circle_intersections added to volmdlr.utils.intersections, so it can be used to calculate intersections between two arcs 2d.
 - get_bsplinecurve_intersections added to volmdlr.utils.intersections. Used to calculate intersection between a bspline and another edge.
-- Wire2D: edge_intersections, wire_intersections, edge_crossings, edge_intersections
+- Wire2D: edge_intersections, wire_intersections, edge_crossings, edge_intersections, validate_edge_crossings, validate_wire_crossings
 - Contour2D: split_contour_with_sorted_points, intersection_contour_with
 
 ### Fixed

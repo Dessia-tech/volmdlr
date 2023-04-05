@@ -565,12 +565,12 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                 intersection_points.append((point, primitive))
         return intersection_points
 
-    def is_start_end_crossings_valid(self, line, intersections, primitive):
+    def is_start_end_crossings_valid(self, crossing_primitive, intersection, primitive):
         """
         Returns if the crossings are valid.
 
-        :param line: crossing line
-        :param intersections: intersections results
+        :param crossing_primitive: crossing primitive.
+        :param intersection: intersection result.
          for primitive line intersections
         :param primitive: intersecting primitive
         :return: None if intersection not a start or
@@ -578,23 +578,21 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         """
         primitive_index = self.primitives.index(primitive)
         point1, point2 = None, None
-        if intersections[0].is_close(primitive.start):
+        if intersection.is_close(primitive.start):
             point1 = primitive.point_at_abscissa(primitive.length() * 0.01)
             point2 = self.primitives[primitive_index - 1].point_at_abscissa(
                 self.primitives[primitive_index - 1].length() * .99
             )
-
-            # point2 = primitive.start + \
-            #          self.primitives[primitive_index - 1].unit_direction_vector(0.5)
-        elif intersections[0].is_close(primitive.end) and primitive != self.primitives[-1]:
+        elif intersection.is_close(primitive.end) and primitive != self.primitives[-1]:
             point1 = primitive.point_at_abscissa(primitive.length() * 0.99)
             point2 = self.primitives[primitive_index + 1].point_at_abscissa(
                 self.primitives[primitive_index + 1].length() * .01)
-
-            # point2 = primitive.end + \
-            #          self.primitives[primitive_index + 1].unit_direction_vector(0.5)
         if point1 is not None and point2 is not None:
-            return line.is_between_points(point1, point2)
+            if not point1.is_close(point2):
+                lineseg = volmdlr.edges.LineSegment2D(point1, point2)
+                inter = crossing_primitive.linesegment_intersections(lineseg)
+                if inter:
+                    return True
         return False
 
     @staticmethod
@@ -630,7 +628,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                     if not self.is_crossing_start_end_point(intersections, primitive):
                         intersection_points.append(intersection)
                         intersection_points_primitives.append((intersection, primitive))
-                    elif self.is_start_end_crossings_valid(line, intersections, primitive):
+                    elif self.is_start_end_crossings_valid(line, intersection, primitive):
                         intersection_points.append(intersection)
                         intersection_points_primitives.append((intersection, primitive))
         return intersection_points_primitives
@@ -665,8 +663,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         edge_intersections = []
         for primitive in self.primitives:
             intersections = primitive.intersections(edge)
-            if intersections:
-                edge_intersections.extend(intersections)
+            for intersection in intersections:
+                if not volmdlr.core.point_in_list(intersection, edge_intersections):
+                    edge_intersections.append(intersection)
         return edge_intersections
 
     def wire_intersections(self, wire):
@@ -674,7 +673,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         Compute intersections between two wire 2d.
 
         :param wire: volmdlr.wires.Wire2D
-        :type intersections_points: List[(volmdlr.Point2D)]
         """
         intersections_points = []
         for primitive in wire.primitives:
@@ -684,13 +682,59 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                     intersections_points.append(crossing)
         return intersections_points
 
+    def validate_edge_crossings(self, crossings):
+        crossings_ = []
+        first_primitive = self.primitives[0]
+        last_primitive = self.primitives[-1]
+        for point in crossings:
+            if not first_primitive.start.is_close(point) and not last_primitive.end.is_close(point):
+                crossings_.append(point)
+        return crossings_
+
     def edge_crossings(self, edge):
         edge_crossings = []
+        start_equal_to_end = self.primitives[0].start.is_close(self.primitives[-1].end)
         for primitive in self.primitives:
-            crossings = primitive.crossings(edge)
-            if crossings:
-                edge_crossings.extend(crossings)
+            crossings = primitive.intersections(edge)
+            if not start_equal_to_end:
+                crossings = self.validate_edge_crossings(crossings)
+            for crossing in crossings:
+                if not edge.is_point_any_end(crossing) and not volmdlr.core.point_in_list(crossing, edge_crossings):
+                    edge_crossings.append(crossing)
         return edge_crossings
+
+    def validate_wire_crossing(self, crossing, current_wire_primitive, next_wire_primitive):
+        """
+        Validate the crossing point for the operation wire crossings.
+
+        :param crossing: crossing point.
+        :param current_wire_primitive: current wire primitive intersecting wire.
+        :param next_wire_primitive: next wire primitive intersecting wire.
+        :return:
+        """
+        self_primitives_to_test = [prim for prim in self.primitives if prim.is_point_any_end(crossing)]
+        if len(self_primitives_to_test) < 2:
+            return True
+        if len(self_primitives_to_test) > 2:
+            raise NotImplementedError
+        if self_primitives_to_test[0] == self.primitives[0] and self_primitives_to_test[1] == self.primitives[-1]:
+            point1 = self_primitives_to_test[0].point_at_abscissa(self_primitives_to_test[0].length() * 0.01)
+            point2 = self_primitives_to_test[1].point_at_abscissa(self_primitives_to_test[1].length() * .99)
+            point3 = current_wire_primitive.point_at_abscissa(current_wire_primitive.length() * .99)
+            point4 = next_wire_primitive.point_at_abscissa(next_wire_primitive.length() * 0.01)
+            linesegment1 = volmdlr.edges.LineSegment2D(point1, point2)
+            linesegment2 = volmdlr.edges.LineSegment2D(point3, point4)
+        else:
+            point1 = self_primitives_to_test[0].point_at_abscissa(self_primitives_to_test[0].length() * .99)
+            point2 = self_primitives_to_test[1].point_at_abscissa(self_primitives_to_test[1].length() * 0.01)
+            point3 = current_wire_primitive.point_at_abscissa(current_wire_primitive.length() * .99)
+            point4 = next_wire_primitive.point_at_abscissa(next_wire_primitive.length() * 0.01)
+            linesegment1 = volmdlr.edges.LineSegment2D(point1, point2)
+            linesegment2 = volmdlr.edges.LineSegment2D(point3, point4)
+        inter = linesegment1.linesegment_intersections(linesegment2)
+        if inter:
+            return True
+        return False
 
     def wire_crossings(self, wire):
         """
@@ -699,12 +743,27 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         :param wire: volmdlr.wires.Wire2D
         :return: crossing points: List[(volmdlr.Point2D)]
         """
+        self_start_equal_to_end = self.primitives[0].start.is_close(self.primitives[-1].end)
+        wire_start_equal_to_end = wire.primitives[0].start.is_close(wire.primitives[-1].end)
+        wire_primitives = wire.primitives
+        if wire_start_equal_to_end:
+            wire_primitives = wire.primitives + [wire.primitives[0]]
         crossings_points = []
-        for primitive in wire.primitives:
-            edge_crossings = self.edge_crossings(primitive)
-            for crossing in edge_crossings:
-                if not volmdlr.core.point_in_list(crossing, crossings_points):
-                    crossings_points.append(crossing)
+        len_wire_primitives = len(wire_primitives)
+        invalid_crossings = []
+        for i_prim, primitive in enumerate(wire_primitives):
+            edge_intersections = self.edge_intersections(primitive)
+            if not self_start_equal_to_end:
+                edge_intersections = self.validate_edge_crossings(edge_intersections)
+            if not wire_start_equal_to_end:
+                edge_intersections = wire.validate_edge_crossings(edge_intersections)
+            for crossing in edge_intersections:
+                if i_prim != len_wire_primitives - 1:
+                    if not self.validate_wire_crossing(crossing, primitive, wire_primitives[i_prim + 1]):
+                        continue
+                    if not volmdlr.core.point_in_list(crossing, crossings_points) and\
+                            not volmdlr.core.point_in_list(crossing, invalid_crossings):
+                        crossings_points.append(crossing)
         return crossings_points
 
     def to_wire_with_linesegments(self):
@@ -2242,13 +2301,13 @@ class Contour2D(ContourMixin, Wire2D):
         :return: contours2d : list[volmdlr.wires.Contour2D].
         """
 
-        intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
-        if not intersections or len(intersections) < 2:
+        points_intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
+        if len(points_intersections) < 2:
             return [self]
-        points_intersections = []
-        for intersection, _ in intersections:
-            if intersection not in points_intersections:
-                points_intersections.append(intersection)
+        # points_intersections = []
+        # for intersection, _ in intersections:
+        #     if intersection not in points_intersections:
+        #         points_intersections.append(intersection)
         if len(points_intersections) % 2 != 0:
             raise NotImplementedError(
                 f'{len(points_intersections)} intersections not supported yet')

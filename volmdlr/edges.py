@@ -242,33 +242,36 @@ class Edge(dc.DessiaObject):
                     touching_points.append(point)
         return touching_points
 
-    def intersections(self, edge2: 'Edge'):
+    def intersections(self, edge2: 'Edge', abs_tol:float=1e-6):
         """
         Gets the intersections between two edges.
 
         :param edge2: other edge.
+        :param abs_tol: tolerance.
         :return: list of intersection points.
         """
-        if not self.bounding_rectangle.b_rectangle_intersection(edge2.bounding_rectangle):
-            return []
+        # if self.bounding_rectangle.distance_to_b_rectangle(edge2.bounding_rectangle) > abs_tol:
+        #     return []
         method_name = f'{edge2.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(self, method_name):
-            intersections = getattr(self, method_name)(edge2)
+            intersections = getattr(self, method_name)(edge2, abs_tol)
             return intersections
         method_name = f'{self.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(edge2, method_name):
-            intersections = getattr(edge2, method_name)(self)
+            intersections = getattr(edge2, method_name)(self, abs_tol)
             return intersections
         raise NotImplementedError(f'There is no method to calculate the intersectios between'
                                   f' a {self.__class__.__name__} and a {edge2.__class__.__name__}')
 
     def validate_crossings(self, edge, intersection):
         """Validates the intersections as crossings: edge not touching the other at one end, or in a tangent point."""
-        if intersection not in [self.start, self.end, edge.start, edge.end]:
+        if not volmdlr.core.point_in_list(intersection, [self.start, self.end, edge.start, edge.end]):
             tangent1 = self.unit_direction_vector(self.abscissa(intersection))
             tangent2 = edge.unit_direction_vector(edge.abscissa(intersection))
             if math.isclose(abs(tangent1.dot(tangent2)), 1, abs_tol=1e-6):
                 return None
+        else:
+            return None
         return intersection
 
     def crossings(self, edge):
@@ -375,6 +378,20 @@ class Edge(dc.DessiaObject):
     def simplify(self):
         """Search another simplified edge that can represent the edge."""
         return self
+
+    def is_point_any_end(self, other_point, abs_tol: float=1e-6):
+        """
+        Verifies if a point is the start or the end of the edge.
+
+        :param other_point: other point to verify if it is any end of the edge.
+        :param abs_tol: tolerance.
+        :return: True of False.
+        """
+        if self.start.is_close(other_point, abs_tol):
+            return True
+        if self.end.is_close(other_point, abs_tol):
+            return True
+        return False
 
 
 class Line(dc.DessiaObject):
@@ -1714,6 +1731,9 @@ class Line2D(Line):
             return [point_projection1]
         return []
 
+    def linesegment_intersections(self, linesegment):
+        return linesegment.line_intersections(self)
+
     @staticmethod
     def _compute_data_create_tangent_circle(line, point, other_line):
         """
@@ -2114,7 +2134,7 @@ class BSplineCurve2D(BSplineCurve):
             intersections.extend(intersections_points)
         return intersections
 
-    def linesegment_intersections(self, linesegment2d, abs_tol=1e-6):
+    def linesegment_intersections(self, linesegment2d, abs_tol:float=1e-6):
         """
         Calculates intersections between a BSpline Curve 2D and a Line Segment 2D.
 
@@ -2122,7 +2142,7 @@ class BSplineCurve2D(BSplineCurve):
         :param abs_tol: tolerance.
         :return: list with the intersections points.
         """
-        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+        if self.bounding_rectangle.distance_to_b_rectangle(linesegment2d.bounding_rectangle) > abs_tol:
             return []
         intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(
             linesegment2d, self, abs_tol=abs_tol)
@@ -2136,7 +2156,7 @@ class BSplineCurve2D(BSplineCurve):
         :param abs_tol: tolerance.
         :return: list with the intersections points.
         """
-        if not self.bounding_rectangle.b_rectangle_intersection(arc.bounding_rectangle):
+        if self.bounding_rectangle.distance_to_b_rectangle(arc.bounding_rectangle) > abs_tol:
             return []
         return self.edge_intersections(arc, abs_tol)
 
@@ -2148,7 +2168,7 @@ class BSplineCurve2D(BSplineCurve):
         :param abs_tol: tolerance.
         :return: list with the intersections points.
         """
-        if not self.bounding_rectangle.b_rectangle_intersection(bspline.bounding_rectangle):
+        if self.bounding_rectangle.distance_to_b_rectangle(bspline.bounding_rectangle) > abs_tol:
             return []
         return self.edge_intersections(bspline, abs_tol)
 
@@ -2350,7 +2370,7 @@ class LineSegment2D(LineSegment):
         """
         Touching line segments does not intersect.
         """
-        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+        if self.bounding_rectangle.distance_to_b_rectangle(linesegment2d.bounding_rectangle) > abs_tol:
             return []
         if self.direction_vector().is_colinear_to(linesegment2d.direction_vector(), abs_tol=abs_tol):
             return []
@@ -3059,45 +3079,47 @@ class Arc2D(Arc):
         Calculates the intersection between a LineSegment2D and an Arc2D.
 
         :param linesegment2d: LineSegment2D to verify intersections.
+        :param abs_tol: tolerance.
         :return: a list with intersections points.
         """
-        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+        if self.bounding_rectangle.distance_to_b_rectangle(linesegment2d.bounding_rectangle) > abs_tol:
             return []
         full_arc_2d = self.to_full_arc_2d()
-        fa2d_intersection_points = full_arc_2d.linesegment_intersections(
-            linesegment2d)
+        fa2d_intersection_points = full_arc_2d.linesegment_intersections(linesegment2d, abs_tol)
         intersection_points = []
         for point in fa2d_intersection_points:
-            if self.point_belongs(point):
+            if self.point_belongs(point, abs_tol):
                 intersection_points.append(point)
         return intersection_points
 
-    def bsplinecurve_intersections(self, bspline):
+    def bsplinecurve_intersections(self, bspline, abs_tol: float = 1e-6):
         """
         Intersections between an arc 2d and bspline curve 2d.
 
         :param bspline: bspline curve 2d.
+        :param abs_tol: tolerance.
         :return: list of intersection points.
         """
-        intersections = bspline.arc_intersections(self)
+        intersections = bspline.arc_intersections(self, abs_tol)
         return intersections
 
-    def arc_intersections(self, arc):
+    def arc_intersections(self, arc, abs_tol:float=1e-6):
         """Intersections between two arc 2d."""
         circle_intersections = vm_utils_intersections.get_circle_intersections(self, arc)
-        arc_intersections = [inter for inter in circle_intersections if self.point_belongs(inter)]
+        arc_intersections = [inter for inter in circle_intersections if self.point_belongs(inter, abs_tol)]
         return arc_intersections
 
-    def arcellipse_intersections(self, arcellipse):
+    def arcellipse_intersections(self, arcellipse, abs_tol:float=1e-6):
         """
         Intersections between an arc 2d and arc-ellipse 2d.
 
         :param arcellipse: arc ellipse 2d.
+        :param abs_tol: tolerance
         :return: list of intersection points.
         """
-        if not self.bounding_rectangle.b_rectangle_intersection(arcellipse.bounding_rectangle):
+        if self.bounding_rectangle.distance_to_b_rectangle(arcellipse.bounding_rectangle) > abs_tol:
             return []
-        intersections = vm_utils_intersections.get_bsplinecurve_intersections(arcellipse, self)
+        intersections = vm_utils_intersections.get_bsplinecurve_intersections(arcellipse, self, abs_tol)
         return intersections
 
     def abscissa(self, point: volmdlr.Point2D, tol=1e-6):
@@ -3710,7 +3732,7 @@ class FullArc2D(Arc2D):
         return []
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D, tol=1e-9):
-        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+        if self.bounding_rectangle.distance_to_b_rectangle(linesegment2d.bounding_rectangle) > tol:
             return []
         try:
             if linesegment2d.start.is_close(self.center):
@@ -3756,7 +3778,7 @@ class FullArc2D(Arc2D):
 
 class ArcEllipse2D(Edge):
     """
-    An 2 dimensional elliptical arc.
+    An 2-dimensional elliptical arc.
 
     :param start: The starting point of the elliptical arc
     :type start: :class:`volmdlr.Point2D`
@@ -3794,32 +3816,10 @@ class ArcEllipse2D(Edge):
         self._bounding_rectangle = None
         self._reverse = None
 
-        # vector_center_interior = interior_new - center_new
-        vector_center_start = start_new - center_new
-        vector_center_end = end_new - center_new
-        if vector_center_start.norm() >= vector_center_end.norm():
-            x1 = start_new.x - center_new.x
-            y1 = start_new.y - center_new.y
-            x2 = end_new.x - center_new.x
-            y2 = end_new.y - center_new.y
-        else:
-            x2 = start_new.x - center_new.x
-            y2 = start_new.y - center_new.y
-            x1 = end_new.x - center_new.x
-            y1 = end_new.y - center_new.y
-        if vector_center_start.is_colinear_to(vector_center_end) or abs(x1) == abs(x2):
-            x2 = interior_new.x - center_new.x
-            y2 = interior_new.y - center_new.y
-            if abs(x1) == abs(x2):
-                raise ValueError(f"Interior point{interior} is not valid. Try specifying another interior point.")
-        minor_axis = math.sqrt((x1**2 * y2**2 - x2**2 * y1**2) / (x1**2 - x2**2))
-        if (1 - (y1 ** 2 / minor_axis ** 2)) == 0.0:
-            if abs(y1) != abs(y2) and abs(interior_new.y) != abs(y2):
-                x1 = interior_new.x - center_new.x
-                y1 = interior_new.y - center_new.y
-            else:
-                raise NotImplementedError
-        major_axis = math.sqrt(x1 ** 2 / (1 - (y1 ** 2 / minor_axis ** 2)))
+        if abs(self.end.x) == abs(self.interior.x) == abs(self.start.x):
+            raise ValueError(f"Interior point{self.interior} is not valid. Try specifying another interior point.")
+        major_axis, minor_axis = self.get_major_minor_axis_with_formula(
+            start_new, end_new, interior_new, center_new)
         self.major_axis = major_axis
         self.minor_axis = minor_axis
 
@@ -3866,6 +3866,33 @@ class ArcEllipse2D(Edge):
             self.offset_angle = angle1
         else:
             self.offset_angle = angle2
+
+    def get_major_minor_axis_with_formula(self, start_, iterior_, end_, center_):
+        vector_center_start = start_ - center_
+        vector_center_end = end_ - center_
+        if vector_center_start.norm() >= vector_center_end.norm():
+            x1 = start_.x - center_.x
+            y1 = start_.y - center_.y
+            x2 = end_.x - center_.x
+            y2 = end_.y - center_.y
+        else:
+            x2 = start_.x - center_.x
+            y2 = start_.y - center_.y
+            x1 = end_.x - center_.x
+            y1 = end_.y - center_.y
+        if vector_center_start.is_colinear_to(vector_center_end) or abs(x1) == abs(x2):
+            x2 = iterior_.x - center_.x
+            y2 = iterior_.y - center_.y
+            if abs(x1) == abs(x2):
+                raise ValueError(f"Interior point{self.interior} is not valid. Try specifying another interior point.")
+        minor_axis = math.sqrt((x1 ** 2 * y2 ** 2 - x2 ** 2 * y1 ** 2) / (x1 ** 2 - x2 ** 2))
+        if abs(y1) != minor_axis:
+            major_axis = math.sqrt(x1 ** 2 / (1 - (y1 ** 2 / minor_axis ** 2)))
+        elif abs(y2) != minor_axis:
+            major_axis = math.sqrt(x2 ** 2 / (1 - (y2 ** 2 / minor_axis ** 2)))
+        else:
+            raise NotImplementedError
+        return major_axis, minor_axis
 
     def _get_points(self):
         return self.discretization_points(number_points=20)
@@ -4170,12 +4197,12 @@ class ArcEllipse2D(Edge):
         :param abs_tol: tolerance.
         :return: List with all intersections.
         """
-        if not self.bounding_rectangle.b_rectangle_intersection(linesegment2d.bounding_rectangle):
+        if self.bounding_rectangle.distance_to_b_rectangle(linesegment2d.bounding_rectangle) > abs_tol:
             return []
         intersections = self.line_intersections(linesegment2d.to_line())
         linesegment_intersections = []
         for inter in intersections:
-            if linesegment2d.point_belongs(inter):
+            if linesegment2d.point_belongs(inter, abs_tol):
                 linesegment_intersections.append(inter)
         return linesegment_intersections
 
@@ -4187,9 +4214,9 @@ class ArcEllipse2D(Edge):
         :param abs_tol: tolerance.
         :return: List with all intersections.
         """
-        if not self.bounding_rectangle.b_rectangle_intersection(bspline.bounding_rectangle):
+        if self.bounding_rectangle.distance_to_b_rectangle(bspline.bounding_rectangle) > abs_tol:
             return []
-        intersections = vm_utils_intersections.get_bsplinecurve_intersections(self, bspline)
+        intersections = vm_utils_intersections.get_bsplinecurve_intersections(self, bspline, abs_tol)
         return intersections
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):

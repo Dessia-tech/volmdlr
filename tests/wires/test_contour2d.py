@@ -5,7 +5,7 @@ from dessia_common.core import DessiaObject
 
 import volmdlr
 from volmdlr import edges, wires
-from volmdlr.models.contours import contour2d_1, contour2d_2
+from volmdlr.models.contours import contour2d_1, contour2d_2, contour1_cut_by_wire, contour2_cut_by_wire
 
 
 class TestContour2D(unittest.TestCase):
@@ -54,13 +54,38 @@ class TestContour2D(unittest.TestCase):
             self.assertEqual(previous_primitive.end, primitive.start)
 
     def test_cut_by_wire(self):
-        pass
+        results = contour1_cut_by_wire.cut_by_wire(contour2_cut_by_wire)
+        results1 = contour2_cut_by_wire.cut_by_wire(contour1_cut_by_wire)
+        list_expected_contour_lengths = [0.735061566418825, 0.7350615482415725, 0.7350613283792926, 0.7350615900834909,
+                                         3.4786699386591753, 1.2716033189138256, 0.8996336040021796,
+                                         1.2716033047094752, 0.8996337337370333, 3.4786699386591753]
+        self.assertEqual(len(results)+len(results1), 10)
+        for i, contour in enumerate(results + results1):
+            self.assertAlmostEqual(contour.length(), list_expected_contour_lengths[i])
 
     def test_offset(self):
         contour_to_offset = DessiaObject.load_from_file('wires/contour_to_offset.json')
         stringer_contour_offset = contour_to_offset.offset(4)
         self.assertEqual(len(stringer_contour_offset.primitives), 10)
         self.assertAlmostEqual(stringer_contour_offset.area(), 546.1486677646163)
+
+    def test_edge_crossings(self):
+        points = [volmdlr.Point2D(-0.3, -0.2), volmdlr.Point2D(0.3, -0.2),
+                  volmdlr.Point2D(0.2, 0.2), volmdlr.Point2D(0, 0.35), volmdlr.Point2D(-0.2, 0.2)]
+        contour = wires.ClosedPolygon2D(points)
+        lineseg = edges.LineSegment2D(volmdlr.Point2D(-.3, -.3), volmdlr.Point2D(.3, .3))
+        lineseg1 = edges.LineSegment2D(volmdlr.Point2D(-.3, -.3), volmdlr.Point2D(.2, .2))
+        edge_crossings = contour.edge_crossings(lineseg)
+        edge_crossings1 = contour.edge_crossings(lineseg1)
+        wire = wires.Wire2D([edges.LineSegment2D(p1, p2) for p1, p2 in (points[:2], points[1:3])])
+        wire_edge_crossings = wire.edge_crossings(lineseg)
+        self.assertEqual(len(edge_crossings), 2)
+        self.assertTrue(edge_crossings[0].is_close(volmdlr.Point2D(-0.2, -0.2)))
+        self.assertTrue(edge_crossings[1].is_close(volmdlr.Point2D(0.2, 0.2)))
+        self.assertEqual(len(edge_crossings1), 1)
+        self.assertTrue(edge_crossings1[0].is_close(volmdlr.Point2D(-0.2, -0.2)))
+        self.assertEqual(len(wire_edge_crossings), 1)
+        self.assertTrue(wire_edge_crossings[0].is_close(volmdlr.Point2D(-0.2, -0.2)))
 
     def test_crossings(self):
         contour_crossings = self.contour2.wire_crossings(self.contour3)
@@ -75,6 +100,26 @@ class TestContour2D(unittest.TestCase):
         self.assertEqual(len(contour_crossings), len(expected_crossings))
         for crossing, expected_crossing in zip(contour_crossings, expected_crossings):
             self.assertTrue(crossing.is_close(expected_crossing))
+        points = [volmdlr.Point2D(-0.3, -0.2), volmdlr.Point2D(0.3, -0.2),
+                  volmdlr.Point2D(0.2, 0.2), volmdlr.Point2D(0, 0.3), volmdlr.Point2D(-0.2, 0.2)]
+        contour = volmdlr.wires.ClosedPolygon2D(points)
+        primitives = [volmdlr.edges.LineSegment2D(volmdlr.Point2D(-0.35, -0.1), volmdlr.Point2D(-0.1, 0)),
+                      volmdlr.edges.LineSegment2D(volmdlr.Point2D(-0.1, 0), volmdlr.Point2D(0.2, 0.2)),
+                      volmdlr.edges.LineSegment2D(volmdlr.Point2D(0.2, 0.2), volmdlr.Point2D(0.3, 0.3))]
+        wire = volmdlr.wires.Wire2D(primitives)
+        wire2 = volmdlr.wires.Wire2D(primitives[:-1])
+        wire3 = volmdlr.wires.Wire2D(primitives[:-1] + [volmdlr.edges.LineSegment2D(
+            volmdlr.Point2D(0.2, 0.2), volmdlr.Point2D(0.1, 0.0))])
+        wire_crossings = contour.wire_crossings(wire)
+        wire_crossings2 = contour.wire_crossings(wire2)
+        wire_crossings3 = contour.wire_crossings(wire3)
+        self.assertEqual(len(wire_crossings), 2)
+        self.assertTrue(wire_crossings[0].is_close(volmdlr.Point2D(-0.26666666666666666, -0.0666666666666666)))
+        self.assertTrue(wire_crossings[1].is_close(volmdlr.Point2D(0.2, 0.19999999999999996)))
+        self.assertEqual(len(wire_crossings2), 1)
+        self.assertTrue(wire_crossings2[0].is_close(volmdlr.Point2D(-0.26666666666666666, -0.0666666666666666)))
+        self.assertEqual(len(wire_crossings3), 1)
+        self.assertTrue(wire_crossings3[0].is_close(volmdlr.Point2D(-0.26666666666666666, -0.0666666666666666)))
 
     def test_split_with_two_points(self):
         expected_results = [(3, 0.3499999999999999, 3, 0.85),

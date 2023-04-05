@@ -3729,7 +3729,7 @@ class ExtrusionSurface3D(Surface3D):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
         for i in range(21):
-            step = i / 20. * 0.5
+            step = i / 20. * z
             wire = self.edge.translation(step * self.frame.w)
             wire.plot(ax=ax, color=color, alpha=alpha)
 
@@ -8480,8 +8480,7 @@ class RuledFace3D(Face3D):
     def __init__(self,
                  surface3d: RuledSurface3D,
                  surface2d: Surface2D,
-                 name: str = '',
-                 color=None):
+                 name: str = ''):
         Face3D.__init__(self, surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
@@ -9858,7 +9857,7 @@ class ClosedShell3D(OpenShell3D):
                 return True
         return False
 
-    def is_inside_shell(self, shell2, resolution: float):
+    def is_inside_shell(self, shell2):
         """
         Returns True if all the points of self are inside shell2 and no face are intersecting.
 
@@ -10199,9 +10198,9 @@ class ClosedShell3D(OpenShell3D):
         """
         if self.is_disjoint_from(shell2, tol):
             return [self, shell2]
-        if self.is_inside_shell(shell2, resolution=0.01):
+        if self.is_inside_shell(shell2):
             return [shell2]
-        if shell2.is_inside_shell(self, resolution=0.01):
+        if shell2.is_inside_shell(self):
             return [self]
         return []
 
