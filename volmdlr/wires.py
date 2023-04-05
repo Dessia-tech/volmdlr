@@ -660,6 +660,11 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         return crossings_points
 
     def edge_intersections(self, edge):
+        """
+        Compute intersections between a wire 2d and an edge.
+
+        :param edge: edge to compute intersections.
+        """
         edge_intersections = []
         for primitive in self.primitives:
             intersections = primitive.intersections(edge)
