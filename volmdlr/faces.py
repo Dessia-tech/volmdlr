@@ -1567,8 +1567,8 @@ class Plane3D(Surface3D):
         self.frame.plot(ax=ax, color=edge_style.color)
         for i in range(grid_size):
             for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
-                start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i/(grid_size - 1)) * length * v2
-                end = self.frame.origin + 0.5 * length * v1 + (-0.5 + i/(grid_size - 1)) * length * v2
+                start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
+                end = self.frame.origin + 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
                 volmdlr.edges.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
         return ax
 
@@ -2051,7 +2051,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.radius = radius
         PeriodicalSurface.__init__(self, name=name)
 
-    def plot(self, ax=None, edge_style:EdgeStyle = EdgeStyle(color='grey', alpha=0.5), length: float = 1.):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), length: float = 1.):
         """
         Plot the cylindrical surface in the local frame normal direction.
 
@@ -2075,14 +2075,14 @@ class CylindricalSurface3D(PeriodicalSurface):
 
         self.frame.plot(ax=ax)
         for i in range(nlines):
-            theta = i / (nlines-1) * volmdlr.TWO_PI
-            start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5*length))
-            end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5*length))
+            theta = i / (nlines - 1) * volmdlr.TWO_PI
+            start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
+            end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5 * length))
             vme.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
 
         for j in range(ncircles):
             circle_frame = self.frame.copy()
-            circle_frame.origin += (-0.5 + j/(ncircles-1)) * length * circle_frame.w
+            circle_frame.origin += (-0.5 + j / (ncircles - 1)) * length * circle_frame.w
             circle = volmdlr.wires.Circle3D(circle_frame, self.radius)
             circle.plot(ax=ax, edge_style=edge_style)
         return ax
@@ -3734,7 +3734,7 @@ class ExtrusionSurface3D(Surface3D):
     """
     Defines a surface of revolution.
 
-    An extrusion surface is a sufarce that is a generic cylindrical surface genarated by the linear
+    An extrusion surface is a surfarce that is a generic cylindrical surface genarated by the linear
     extrusion of a curve, generally an Ellipse or a B-Spline curve.
 
     :param edge: edge.
@@ -6042,7 +6042,7 @@ class BSplineSurface3D(Surface3D):
 
         """
 
-        def f(param):
+        def fun(param):
             p3d = self.point2d_to_3d(volmdlr.Point2D(param[0], param[1]))
             return point3d.point_distance(p3d)
 
@@ -6053,7 +6053,7 @@ class BSplineSurface3D(Surface3D):
                 x_init.append((xi, yi))
 
         for x0 in x_init:
-            z = least_squares(f, x0=x0, bounds=([0, 1]))
+            z = least_squares(fun, x0=x0, bounds=([0, 1]))
             if z.fun < 1e-10:
                 return True
         return False
@@ -6072,7 +6072,7 @@ class BSplineSurface3D(Surface3D):
         # else:
         #     return False
 
-        def f(param):
+        def fun(param):
             return (self.point2d_to_3d(volmdlr.Point2D(param[0], param[1])) -
                     other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(param[2], param[3]))).norm()
 
@@ -6084,7 +6084,7 @@ class BSplineSurface3D(Surface3D):
 
         i = 0
         for x0 in x_init:
-            z = least_squares(f, x0=x0, bounds=([0, 1]))
+            z = least_squares(fun, x0=x0, bounds=([0, 1]))
             if z.fun < 1e-5:
                 i += 1
                 if i >= 50:
@@ -6840,7 +6840,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def get_face_cutting_contours(self, dict_intersecting_combinations):
         """
-        Get all contours cutting the face, resultig from multiple faces intersections.
+        Get all contours cutting the face, resulting from multiple faces intersections.
 
         :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
         and as the values the resulting primitive from the intersection of these two faces
@@ -6858,7 +6858,7 @@ class Face3D(volmdlr.core.Primitive3D):
                     self.surface2d.outer_contour.point_over_contour(cutting_contour.primitives[-1].end)) or \
                         cutting_contour.primitives[0].start == cutting_contour.primitives[-1].end:
                     valid_cutting_contours.append(cutting_contour)
-                if self.surface2d.outer_contour.contour_intersections(cutting_contour):
+                if self.surface2d.outer_contour.intersection_points(cutting_contour):
                     connectig_to_outer_contour.append(cutting_contour)
             if len(valid_cutting_contours) == len(list_cutting_contours):
                 return valid_cutting_contours
@@ -7137,7 +7137,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 inner_contour.invert_inplace()
             dict_inner_contour_intersections[inner_contour] = []
             for cutting_contour in list_cutting_contours:
-                inner_contour_intersections = inner_contour.contour_intersections(cutting_contour)
+                inner_contour_intersections = inner_contour.intersection_points(cutting_contour)
                 if inner_contour_intersections:
                     dict_inner_contour_intersections[inner_contour].extend(inner_contour_intersections)
                     if cutting_contour not in inner_contours_connected_cutting_contour:
@@ -7612,7 +7612,7 @@ class PlaneFace3D(Face3D):
         outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
 
         if (face.face_inside(self)
-                and not outer_contour_1.contour_intersections(outer_contour_2)):
+                and not outer_contour_1.intersection_points(outer_contour_2)):
             return self.divide_face(face.surface2d.inner_contours, True)
 
         inner_contours = self.surface2d.inner_contours
@@ -8854,7 +8854,7 @@ class BSplineFace3D(Face3D):
         """
         Finds out how the uv parametric frames are located.
 
-        It does it by compaing to each other and also how grid 3d can be defined respected to these directions.
+        It does it by comparing to each other and also how grid 3d can be defined respected to these directions.
 
         :param other_bspline_face3d: BSplineFace3D
         :type other_bspline_face3d: :class:`volmdlr.faces.BSplineFace3D`
@@ -9974,7 +9974,7 @@ class ClosedShell3D(OpenShell3D):
                 return True
         return False
 
-    def is_inside_shell(self, shell2, resolution: float):
+    def is_inside_shell(self, shell2):
         """
         Returns True if all the points of self are inside shell2 and no face are intersecting.
 
@@ -10129,7 +10129,7 @@ class ClosedShell3D(OpenShell3D):
                         face1.surface3d.frame.origin,
                         face1.surface3d.frame.u,
                         face1.surface3d.frame.v)
-                    inters = contour1.contour_intersections(contour2)
+                    inters = contour1.intersection_points(contour2)
                     if len(inters) >= 2:
                         list_coincident_faces.append((face1, face2))
 
@@ -10315,9 +10315,9 @@ class ClosedShell3D(OpenShell3D):
         """
         if self.is_disjoint_from(shell2, tol):
             return [self, shell2]
-        if self.is_inside_shell(shell2, resolution=0.01):
+        if self.is_inside_shell(shell2):
             return [shell2]
-        if shell2.is_inside_shell(self, resolution=0.01):
+        if shell2.is_inside_shell(self):
             return [self]
         return []
 

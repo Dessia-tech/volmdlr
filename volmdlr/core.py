@@ -714,11 +714,11 @@ class BoundingBox(dc.DessiaObject):
         Plot the bounding box on 3D axes.
 
         :param ax: The 3D axes to plot on. If not provided, a new figure will be created.
-        :type ax: matplotlib.axes._subplots.Axes3DSubplot, optional
+        :type ax: Matplotlib.axes._subplots.Axes3DSubplot, optional
         :param color: The color of the lines used to plot the bounding box.
         :type color: str, optional
         :return: The 3D axes with the plotted bounding box.
-        :rtype: matplotlib.axes._subplots.Axes3DSubplot
+        :rtype: Matplotlib.axes._subplots.Axes3DSubplot
         """
         if ax is None:
             fig = plt.figure()
@@ -1165,7 +1165,7 @@ class VolumeModel(dc.PhysicalObject):
         return babylon_data
 
     @classmethod
-    def babylonjs_script(cls, babylon_data, use_cdn=True,  debug=False):
+    def babylonjs_script(cls, babylon_data, use_cdn=True, debug=False):
         """
         Run babylonjs script.
 
@@ -1689,7 +1689,7 @@ class VolumeModel(dc.PhysicalObject):
 
         :param file_name: The msh. file name
         :type file_name: str
-        :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+        :param mesh_dimension: The mesh dimension (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
         :type mesh_dimension: int
         :param factor: A float, between 0 and 1, that describes the mesh quality
         (1 for coarse mesh - 0 for fine mesh)
@@ -1778,7 +1778,7 @@ class VolumeModel(dc.PhysicalObject):
     #
     #     :param file_name: The msh. file name
     #     :type file_name: str
-    #     :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+    #     :param mesh_dimension: The mesh dimension (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
     #     :type mesh_dimension: int
     #     :param factor: A float, between 0 and 1, that describes the mesh quality
     #     (1 for coarse mesh - 0 for fine mesh)
