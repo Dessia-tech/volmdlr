@@ -3888,13 +3888,6 @@ class BSplineSurface3D(Surface3D):
         def evaluate_point_distance(x):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
 
-        # def fun(x):
-        #     S = self.derivatives(x[0], x[1], 1)
-        #     r = S[0][0] - point3d
-        #     f = r.norm() + 1e-18
-        #     jac = npy.array([r.dot(S[1][0]) / f, r.dot(S[0][1]) / f])
-        #     return f, jac
-
         min_bound_x, max_bound_x = self.surface.domain[0]
         min_bound_y, max_bound_y = self.surface.domain[1]
 
@@ -3917,21 +3910,7 @@ class BSplineSurface3D(Surface3D):
                (min_bound_x + 0.75 * delta_bound_x,  min_bound_y + 0.25 * delta_bound_y),
                (min_bound_x + 0.75 * delta_bound_x, min_bound_y + 0.75 * delta_bound_y)
                ]
-        # x0s = [(min_bound_x,  min_bound_y + delta_bound_y / 4),
-        #        (max_bound_x, min_bound_y + delta_bound_y / 4),
-        #        (min_bound_x + delta_bound_x/4, min_bound_y),
-        #        (min_bound_x + delta_bound_x / 4, max_bound_y),
-        #        ((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
-        #        ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
-        #        ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
-        #        ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
-        #        (max_bound_x - delta_bound_x / 4, min_bound_y + delta_bound_y / 10),
-        #        ((min_bound_x + max_bound_x) / 4, max_bound_y - delta_bound_y / 10),
-        #        (max_bound_x - delta_bound_x / 4, max_bound_y - delta_bound_y / 10),
-        #        (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-        #        (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
-        #        (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-        #        (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
+
 
         # Sort the initial conditions
         x0s.sort(key=evaluate_point_distance)
@@ -3953,21 +3932,6 @@ class BSplineSurface3D(Surface3D):
             print(True)
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
-    def point_inversion_funcs(self, x, point3d):
-        surface_derivatives = self.derivatives(x[0], x[1], 2)
-        distance_vector = surface_derivatives[0][0] - point3d
-        common_term = surface_derivatives[1][0].dot(surface_derivatives[0][1]) + \
-                      distance_vector.dot(surface_derivatives[1][1])
-        jacobian = npy.array(
-            [[surface_derivatives[1][0].norm()**2 + distance_vector.dot(surface_derivatives[2][0]),
-              common_term],
-             [common_term,
-              surface_derivatives[0][1].norm()**2 + distance_vector.dot(surface_derivatives[0][2])]])
-        k = npy.array(
-            [[-(distance_vector.dot(surface_derivatives[1][0]))], [-(distance_vector.dot(surface_derivatives[0][1]))]])
-
-        return jacobian, k, surface_derivatives, distance_vector
-
     def point_invertion(self, x, point3d, maxiter: int = 50):
         if maxiter == 0:
             return x, False
@@ -3983,6 +3947,21 @@ class BSplineSurface3D(Surface3D):
             return x, False
         x = new_x
         return self.point_invertion(x, point3d, maxiter=maxiter - 1)
+
+    def point_inversion_funcs(self, x, point3d):
+        surface_derivatives = self.derivatives(x[0], x[1], 2)
+        distance_vector = surface_derivatives[0][0] - point3d
+        common_term = surface_derivatives[1][0].dot(surface_derivatives[0][1]) + \
+                      distance_vector.dot(surface_derivatives[1][1])
+        jacobian = npy.array(
+            [[surface_derivatives[1][0].norm()**2 + distance_vector.dot(surface_derivatives[2][0]),
+              common_term],
+             [common_term,
+              surface_derivatives[0][1].norm()**2 + distance_vector.dot(surface_derivatives[0][2])]])
+        k = npy.array(
+            [[-(distance_vector.dot(surface_derivatives[1][0]))], [-(distance_vector.dot(surface_derivatives[0][1]))]])
+
+        return jacobian, k, surface_derivatives, distance_vector
 
     @staticmethod
     def check_convergence(surf_derivatives, distance_vector, tol1: float = 1e-6, tol2: float = 1e-8):
@@ -4004,30 +3983,30 @@ class BSplineSurface3D(Surface3D):
         x_periodicity = self.x_periodicity
         y_periodicity = self.y_periodicity
 
-    # if x_periodicity:
-        if u < a:
-            u = b - (a - u)
-        elif u > b:
-            u = a + (u - b)
-        # else:
-        #     if u < a:
-        #         u = a
-        #
-        #     elif u > b:
-        #         u = b
+        if x_periodicity:
+            if u < a:
+                u = b - (a - u)
+            elif u > b:
+                u = a + (u - b)
+            else:
+                if u < a:
+                    u = a
 
-        # if y_periodicity:
-        if v < c:
-            v = d - (c - v)
+                elif u > b:
+                    u = b
 
-        elif v > d:
-            v = c + (v - d)
-        # else:
-        #     if v < c:
-        #         v = c
-        #
-        #     elif v > d:
-        #         v = d
+        if y_periodicity:
+            if v < c:
+                v = d - (c - v)
+
+            elif v > d:
+                v = c + (v - d)
+            else:
+                if v < c:
+                    v = c
+
+                elif v > d:
+                    v = d
 
         x[0] = u
         x[1] = v
