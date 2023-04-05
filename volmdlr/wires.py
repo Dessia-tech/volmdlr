@@ -1605,6 +1605,10 @@ class ContourMixin(WireMixin):
         contours = [cls(new_primitives)]
         return contours
 
+    def invert(self):
+        """Invert the Contour."""
+        return self.__class__(self.inverted_primitives())
+
 
 class Contour2D(ContourMixin, Wire2D):
     """
@@ -1808,15 +1812,6 @@ class Contour2D(ContourMixin, Wire2D):
                 return False
         return True
 
-    def inverted_primitives(self):
-        new_primitives = []
-        for prim in self.primitives[::-1]:
-            new_primitives.append(prim.reverse())
-        return new_primitives
-
-    def invert(self):
-        return Contour2D(self.inverted_primitives())
-
     def random_point_inside(self, include_edge_points: bool = False):
         """
         Finds a random point inside the polygon.
@@ -1890,20 +1885,20 @@ class Contour2D(ContourMixin, Wire2D):
         while len(remaining_transitions) > 0:
             nb_max_enclosed_transitions = -1
             enclosed_transitions = {}
-            for it in remaining_transitions:
-                i1 = sorted_inter_index_dict[2 * it + n]
-                i2 = sorted_inter_index_dict[2 * it + 1 + n]
+            for i_transitions in remaining_transitions:
+                i1 = sorted_inter_index_dict[2 * i_transitions + n]
+                i2 = sorted_inter_index_dict[2 * i_transitions + 1 + n]
                 net = abs(i2 - i1) - 1
                 if net > nb_max_enclosed_transitions:
                     nb_max_enclosed_transitions = net
-                    best_transition = it
+                    best_transition = i_transitions
                     if i1 < i2:
-                        enclosed_transitions[it] = [(i + abs(n - 1)) // 2 for i
-                                                    in sorted_inter_index[
+                        enclosed_transitions[i_transitions] = [(i + abs(n - 1)) // 2 for i
+                                                               in sorted_inter_index[
                                                        i2 - 1:i1:-2]]
                     else:
-                        enclosed_transitions[it] = [(i + abs(n - 1)) // 2 for i
-                                                    in sorted_inter_index[
+                        enclosed_transitions[i_transitions] = [(i + abs(n - 1)) // 2 for i
+                                                               in sorted_inter_index[
                                                        i2 + 1:i1:2]]
 
             remaining_transitions.remove(best_transition)

@@ -1545,8 +1545,8 @@ class Plane3D(Surface3D):
         self.frame.plot(ax=ax, color=edge_style.color)
         for i in range(grid_size):
             for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
-                start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i/(grid_size - 1)) * length * v2
-                end = self.frame.origin + 0.5 * length * v1 + (-0.5 + i/(grid_size - 1)) * length * v2
+                start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
+                end = self.frame.origin + 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
                 volmdlr.edges.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
         return ax
 
@@ -1696,7 +1696,7 @@ class PeriodicalSurface(Surface3D):
                     elif number_contours == 1:
                         contour = cutted_contours[0]
                         theta_offset = outer_contour_theta[outer_contour_side] - \
-                                       inner_contour_theta[inner_contour_side]
+                            inner_contour_theta[inner_contour_side]
                         translation_vector = volmdlr.Vector2D(theta_offset, 0)
                         old_innner_contour_positioned = contour.translation(offset=translation_vector)
 
@@ -1718,8 +1718,8 @@ class PeriodicalSurface(Surface3D):
                 closing_linesegment1 = volmdlr.edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = volmdlr.edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = old_outer_contour_positioned.primitives + [closing_linesegment1] + \
-                                               old_innner_contour_positioned.primitives + \
-                                               [closing_linesegment2]
+                    old_innner_contour_positioned.primitives + \
+                    [closing_linesegment2]
                 new_outer_contour = volmdlr.wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour()
             else:
@@ -2003,7 +2003,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.radius = radius
         PeriodicalSurface.__init__(self, name=name)
 
-    def plot(self, ax=None, edge_style:EdgeStyle = EdgeStyle(color='grey', alpha=0.5), length: float = 1.):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), length: float = 1.):
         """
         Plot the cylindrical surface in the local frame normal direction.
 
@@ -2020,21 +2020,21 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
         ncircles = 10
         nlines = 30
-        
+
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-            
+
         self.frame.plot(ax=ax)
         for i in range(nlines):
-            theta = i / (nlines-1) * volmdlr.TWO_PI
-            start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5*length))
-            end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5*length))
+            theta = i / (nlines - 1) * volmdlr.TWO_PI
+            start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
+            end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5 * length))
             vme.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
 
         for j in range(ncircles):
             circle_frame = self.frame.copy()
-            circle_frame.origin += (-0.5 + j/(ncircles-1)) * length * circle_frame.w
+            circle_frame.origin += (-0.5 + j / (ncircles - 1)) * length * circle_frame.w
             circle = volmdlr.wires.Circle3D(circle_frame, self.radius)
             circle.plot(ax=ax, edge_style=edge_style)
         return ax
@@ -5930,7 +5930,7 @@ class BSplineSurface3D(Surface3D):
 
         """
 
-        def f(param):
+        def fun(param):
             p3d = self.point2d_to_3d(volmdlr.Point2D(param[0], param[1]))
             return point3d.point_distance(p3d)
 
@@ -5941,7 +5941,7 @@ class BSplineSurface3D(Surface3D):
                 x_init.append((xi, yi))
 
         for x0 in x_init:
-            z = least_squares(f, x0=x0, bounds=([0, 1]))
+            z = least_squares(fun, x0=x0, bounds=([0, 1]))
             if z.fun < 1e-10:
                 return True
         return False
@@ -5960,7 +5960,7 @@ class BSplineSurface3D(Surface3D):
         # else:
         #     return False
 
-        def f(param):
+        def fun(param):
             return (self.point2d_to_3d(volmdlr.Point2D(param[0], param[1])) -
                     other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(param[2], param[3]))).norm()
 
@@ -5972,7 +5972,7 @@ class BSplineSurface3D(Surface3D):
 
         i = 0
         for x0 in x_init:
-            z = least_squares(f, x0=x0, bounds=([0, 1]))
+            z = least_squares(fun, x0=x0, bounds=([0, 1]))
             if z.fun < 1e-5:
                 i += 1
                 if i >= 50:
@@ -6001,7 +6001,7 @@ class BSplineSurface3D(Surface3D):
         grid2d_direction = (bspline_face3d.pair_with(other_bspline_face3d))[1]
 
         if (not bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
-            and self.is_intersected_with(other_bspline_surface3d)):
+                and self.is_intersected_with(other_bspline_surface3d)):
             # find pimitives to split with
             contour1 = bspline_face3d.outer_contour3d
             contour2 = other_bspline_face3d.outer_contour3d
@@ -6040,7 +6040,7 @@ class BSplineSurface3D(Surface3D):
         nb = 10
         points3d = []
         is_true = (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
-                    or self.is_intersected_with(other_bspline_surface3d))
+                   or self.is_intersected_with(other_bspline_surface3d))
 
         for i, bspline in enumerate(bsplines_new):
             grid3d = bspline.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(0, 1),
@@ -7144,9 +7144,9 @@ class Face3D(volmdlr.core.Primitive3D):
                 remove_cutting_contour.append(splitting_points_and_cutting_contour[point1])
                 remove_splitting_points.extend([point1, point2])
                 primitives1 = inner_contour.extract_with_points(point1, point2, True) + \
-                              splitting_points_and_cutting_contour[point1].primitives
+                    splitting_points_and_cutting_contour[point1].primitives
                 primitives2 = inner_contour.extract_with_points(point1, point2, False) + \
-                              splitting_points_and_cutting_contour[point1].primitives
+                    splitting_points_and_cutting_contour[point1].primitives
                 contour1 = volmdlr.wires.Contour2D(primitives1).order_contour()
                 contour2 = volmdlr.wires.Contour2D(primitives2).order_contour()
                 if contour1.is_inside(inner_contour):
@@ -7315,7 +7315,7 @@ class PlaneFace3D(Face3D):
             return []
         points_intersections = []
         for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d + \
-                       planeface.inner_contours3d:
+                planeface.inner_contours3d:
             for intersection in contour.line_intersections(face2_plane_interections[0]):
                 if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
                     points_intersections.append(intersection)
@@ -9638,9 +9638,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                     discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
                                                                                   start_point_tag=start_point_tag
-                                                                                                  + point_account,
+                                                                                  + point_account,
                                                                                   end_point_tag=end_point_tag
-                                                                                                + point_account))
+                                                                                  + point_account))
 
                             if isinstance(primitive, volmdlr.edges.LineSegment):
                                 start_point_tag = points.index(primitive.start) + 1
@@ -10233,7 +10233,7 @@ class ClosedShell3D(OpenShell3D):
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces) + \
-                shell2.get_non_intersecting_faces(self, intersecting_faces)
+            shell2.get_non_intersecting_faces(self, intersecting_faces)
         if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces:
             return [self, shell2]
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
@@ -10378,7 +10378,7 @@ class ClosedShell3D(OpenShell3D):
         intersecting_faces = intersecting_faces1 + intersecting_faces2
         faces = self.intersection_faces(shell2, intersecting_faces, intersecting_combinations)
         faces += self.get_non_intersecting_faces(shell2, intersecting_faces, intersection_method=True) + \
-                 shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
+            shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
         new_shell = ClosedShell3D(faces)
         new_shell.eliminate_not_valid_closedshell_faces()
         return [new_shell]

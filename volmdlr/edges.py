@@ -242,7 +242,7 @@ class Edge(dc.DessiaObject):
                     touching_points.append(point)
         return touching_points
 
-    def intersections(self, edge2: 'Edge', abs_tol:float=1e-6):
+    def intersections(self, edge2: 'Edge', abs_tol: float = 1e-6):
         """
         Gets the intersections between two edges.
 
@@ -379,7 +379,7 @@ class Edge(dc.DessiaObject):
         """Search another simplified edge that can represent the edge."""
         return self
 
-    def is_point_any_end(self, other_point, abs_tol: float=1e-6):
+    def is_point_any_end(self, other_point, abs_tol: float = 1e-6):
         """
         Verifies if a point is the start or the end of the edge.
 
@@ -597,10 +597,10 @@ class LineSegment(Edge):
 
         vector = self.end - self.start
         length = vector.norm()
-        t = (point - self.start).dot(vector) / length
-        if t < -1e-9 or t > length + 1e-9:
+        t_param = (point - self.start).dot(vector) / length
+        if t_param < -1e-9 or t_param > length + 1e-9:
             raise ValueError(f'Point is not on linesegment: abscissa={t}')
-        return t
+        return t_param
 
     def direction_vector(self, abscissa=0.):
         """
@@ -2134,7 +2134,7 @@ class BSplineCurve2D(BSplineCurve):
             intersections.extend(intersections_points)
         return intersections
 
-    def linesegment_intersections(self, linesegment2d, abs_tol:float=1e-6):
+    def linesegment_intersections(self, linesegment2d, abs_tol: float = 1e-6):
         """
         Calculates intersections between a BSpline Curve 2D and a Line Segment 2D.
 
@@ -3103,13 +3103,13 @@ class Arc2D(Arc):
         intersections = bspline.arc_intersections(self, abs_tol)
         return intersections
 
-    def arc_intersections(self, arc, abs_tol:float=1e-6):
+    def arc_intersections(self, arc, abs_tol: float = 1e-6):
         """Intersections between two arc 2d."""
         circle_intersections = vm_utils_intersections.get_circle_intersections(self, arc)
         arc_intersections = [inter for inter in circle_intersections if self.point_belongs(inter, abs_tol)]
         return arc_intersections
 
-    def arcellipse_intersections(self, arcellipse, abs_tol:float=1e-6):
+    def arcellipse_intersections(self, arcellipse, abs_tol: float = 1e-6):
         """
         Intersections between an arc 2d and arc-ellipse 2d.
 
@@ -3971,6 +3971,7 @@ class ArcEllipse2D(Edge):
         u1, u2 = initial_point.x / self.major_axis, initial_point.y / self.minor_axis
         initial_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         angle_start, initial_angle = self.valid_abscissa_start_end_angle(initial_angle)
+
         def ellipse_arc_length(theta):
             return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
                              (self.minor_axis ** 2) * math.cos(theta) ** 2)
@@ -4019,6 +4020,7 @@ class ArcEllipse2D(Edge):
             u1, u2 = new_point.x / self.major_axis, new_point.y / self.minor_axis
             angle_abscissa = volmdlr.geometry.sin_cos_angle(u1, u2)
             angle_start, angle_end = self.valid_abscissa_start_end_angle(angle_abscissa)
+
             def ellipse_arc_length(theta):
                 return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
                                  (self.minor_axis ** 2) * math.cos(theta) ** 2)
@@ -4172,7 +4174,7 @@ class ArcEllipse2D(Edge):
     def reverse(self):
         if not self._reverse:
             self._reverse = self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(),
-                              self.center.copy(), self.major_dir.copy(), self.name)
+                                           self.center.copy(), self.major_dir.copy(), self.name)
         return self._reverse
 
     def line_intersections(self, line2d: Line2D):
@@ -4206,7 +4208,7 @@ class ArcEllipse2D(Edge):
                 linesegment_intersections.append(inter)
         return linesegment_intersections
 
-    def bsplinecurve_intersections(self, bspline, abs_tol:float=1e-6):
+    def bsplinecurve_intersections(self, bspline, abs_tol: float = 1e-6):
         """
         Intersections between an Arc Ellipse 2D and a bSpline 2D.
 
@@ -5130,10 +5132,10 @@ class LineSegment3D(LineSegment):
         c = v.dot(v)
         d = u.dot(w)
         e = v.dot(w)
-        determinant = a*c - b*c
+        determinant = a * c - b * c
         if determinant > - 1e-6:
-            b_times_e = b*e
-            c_times_d = c*d
+            b_times_e = b * e
+            c_times_d = c * d
             if b_times_e <= c_times_d:
                 s_parameter = 0.0
                 if e <= 0.0:
