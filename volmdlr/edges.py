@@ -855,12 +855,16 @@ class BSplineCurve(Edge):
     @property
     def simplify(self):
         """Search another simplified edge that can represent the bspline."""
+        if self.length() < 1e-6:
+            return self
         class_sufix = self.__class__.__name__[-2:]
         if self._simplified is None:
             if self.periodic:
                 fullarc_class_ = getattr(sys.modules[__name__], 'FullArc' + class_sufix)
                 n = len(self.points)
-                try_fullarc = fullarc_class_.from_3_points(self.points[0], self.points[int(0.5 * n)], self.points[int(0.75 * n)])
+                try_fullarc = fullarc_class_.from_3_points(self.points[0], self.points[int(0.5 * n)],
+                                                           self.points[int(0.75 * n)])
+
                 if all(try_fullarc.point_belongs(point, 1e-5) for point in self.points):
                     self._simplified = try_fullarc
                     return try_fullarc
@@ -5637,7 +5641,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
-        curves = operations.split_curve(self.curve, parameter)
+        curves = operations.split_curve(self.curve, round(parameter, 5))
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):

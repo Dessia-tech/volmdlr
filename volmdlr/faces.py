@@ -1036,19 +1036,6 @@ class Surface3D(DessiaObject):
             elif not is_connected:
                 primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
-        # last_end = primitives2d[-1].end
-        # first_start = primitives2d[0].start
-        # if not last_end.is_close(first_start, tol=1e-5):
-        #     deltax = first_start.x - last_end.x
-        #     deltay = first_start.y - last_end.y
-        #     if deltax and x_periodicity and abs(deltax) % x_periodicity == 0:
-        #         primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
-        #                                              volmdlr.Point2D(primitives2d[-1].end.x + deltax,
-        #                                                              primitives2d[-1].end.y))
-        #     elif deltay and y_periodicity and abs(deltay) % y_periodicity == 0:
-        #         primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
-        #                                              volmdlr.Point2D(primitives2d[-1].end.x,
-        #                                                              primitives2d[-1].end.y + deltay))
 
         return primitives2d
 
@@ -4176,10 +4163,6 @@ class BSplineSurface3D(Surface3D):
         """
         if self._x_periodicity is False:
             u = self.curves['u']
-            # a, b = self.surface.domain[0]
-            # u0 = u[0]
-            # point_at_a = u0.evaluate_single(a)
-            # point_at_b = u0.evaluate_single(b)
             start = u[0].ctrlpts[0]
             end = u[0].ctrlpts[-1]
             if npy.linalg.norm(npy.array(start) - npy.array(end)) < 1e-6:
@@ -4195,10 +4178,6 @@ class BSplineSurface3D(Surface3D):
         """
         if self._y_periodicity is False:
             v = self.curves['v']
-            # c, d = self.surface.domain[1]
-            # v0 = v[0]
-            # point_at_c = v0.evaluate_single(c)
-            # point_at_d = v0.evaluate_single(d)
             start = v[0].ctrlpts[0]
             end = v[0].ctrlpts[-1]
             if npy.linalg.norm(npy.array(start) - npy.array(end)) < 1e-6:
@@ -4655,9 +4634,19 @@ class BSplineSurface3D(Surface3D):
             # lth = bspline_curve3d.start.point_distance(bspline_curve3d.end)
             if lth > 1e-5:
                 n = len(bspline_curve3d.control_points)
-                points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
+                discretization_points = bspline_curve3d.discretization_points(number_points=n)
+                points = [self.point3d_to_2d(p) for p in discretization_points]
 
                 if self.x_periodicity:
+                    u_min, u_max = self.surface.domain[0]
+                    if all(self.surface_curves["v"][0].point_belongs(point) for point in discretization_points):
+                        start = volmdlr.Point2D(u_min, points[0].y)
+                        end = volmdlr.Point2D(u_min, points[-1].y)
+                        return [vme.LineSegment2D(start, end)]
+                    if all(self.surface_curves["v"][-1].point_belongs(point) for point in discretization_points):
+                        start = volmdlr.Point2D(u_max, points[0].y)
+                        end = volmdlr.Point2D(u_max, points[-1].y)
+                        return [vme.LineSegment2D(start, end)]
                     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
                     if bspline_curve3d.periodic and points[0].is_close(points[-1]):
                         u_min, u_max = bspline_curve3d.curve.domain
@@ -4674,6 +4663,15 @@ class BSplineSurface3D(Surface3D):
                             else:
                                 points[-1] = volmdlr.Point2D(u_min, points[-1].y)
                 if self.y_periodicity:
+                    v_min, v_max = self.surface.domain[1]
+                    if all(self.surface_curves["u"][0].point_belongs(point) for point in discretization_points):
+                        start = volmdlr.Point2D(points[0].x, v_min)
+                        end = volmdlr.Point2D(points[-1].x, v_min)
+                        return [vme.LineSegment2D(start, end)]
+                    if all(self.surface_curves["u"][-1].point_belongs(point) for point in discretization_points):
+                        start = volmdlr.Point2D(points[0].x, v_max)
+                        end = volmdlr.Point2D(points[-1].x, v_max)
+                        return [vme.LineSegment2D(start, end)]
                     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
                     if bspline_curve3d.periodic and points[0].is_close(points[-1]):
                         u_min, u_max = bspline_curve3d.curve.domain
@@ -4939,7 +4937,9 @@ class BSplineSurface3D(Surface3D):
                     v0_simplified_curve = v_curves[0].simplify
                     line = v0_simplified_curve.to_line()
                     intersection = normal_line.intersection(line)
-                    conical_check = all(normal_line.intersection(curve.simplify.to_line()).is_close(intersection)
+                    conical_check = False
+                    if intersection:
+                        conical_check = all(normal_line.intersection(curve.simplify.to_line()).is_close(intersection)
                                         for curve in v_curves[1:])
                     if conical_check:
                         # make sure that the normal is in the right sense
@@ -4972,7 +4972,9 @@ class BSplineSurface3D(Surface3D):
                     u0_simplified_curve = u_curves[0].simplify
                     line = u0_simplified_curve.to_line()
                     intersection = normal_line.intersection(line)
-                    conical_check = all(normal_line.intersection(curve.simplify.to_line()).is_close(intersection)
+                    conical_check = False
+                    if intersection:
+                        conical_check = all(normal_line.intersection(curve.simplify.to_line()).is_close(intersection)
                                         for curve in u_curves[1:])
                     if conical_check:
                         # make sure that the normal is in the right sense
