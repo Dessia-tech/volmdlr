@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: split_contour_with_sorted_points, intersection_contour_with
 - CylindricalSurface3D: point_projection, point_distance
 - ToroidalSurface3D: point_projection
+- ContourMixin: is_adjacent
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
