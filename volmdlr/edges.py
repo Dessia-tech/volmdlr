@@ -1162,35 +1162,34 @@ class BSplineCurve(Edge):
         for point in self.control_points:
             point.translation_inplace(offset)
 
-    def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
-                      abs_tol: float = 1e-6):
+    def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-6):
         """
-        Checks if a 2D or 3D point belongs to the B-spline curve or not. It uses the least square method.
+        Checks if a 2D or 3D point belongs to the B-spline curve or not. It uses the point_distance.
 
-        :param point: The point to be checked
+        :param point: The point to be checked.
         :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
         :param abs_tol: The precision in terms of distance.
-            Default value is 1e-4
-        :type abs_tol: float, optional
+            Default value is 1e-6
+        :type abs_tol: float, optional.
         :return: `True` if the point belongs to the B-spline curve, `False`
             otherwise
         :rtype: bool
         """
-        point_dimension = f'Point{self.__class__.__name__[-2::]}'
 
-        def fun(x):
-            return (point - getattr(volmdlr, point_dimension)(*self.curve.evaluate_single(x))).norm()
-
-        x = npy.linspace(0, 1, 5)
-        x_init = []
-        for xi in x:
-            x_init.append(xi)
-
-        for x0 in x_init:
-            z = least_squares(fun, x0=x0, bounds=([0, 1]))
-            if z.fun < abs_tol:
-                return True
+        if self.point_distance(point) < abs_tol:
+            return True
         return False
+
+    def point_distance(self, point: Union[volmdlr.Point2D, volmdlr.Point3D]):
+        """
+        Calculates the distance from a given point to a BSplineCurve2D or 3D.
+
+        :param point: The point to be checked.
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :return: distance.
+        """
+
+        return self.point_distance_to_edge(point)
 
     def merge_with(self, bspline_curve: 'BSplineCurve'):
         """
@@ -2109,15 +2108,6 @@ class BSplineCurve2D(BSplineCurve):
                               weights=self.weights,
                               periodic=self.periodic)
 
-    def point_distance(self, point):
-        """
-        Calculates the distance from a given point to a BSplineCurve2D.
-
-        :param point: point 2d.
-        :return: distance.
-        """
-        return self.point_distance_to_edge(point)
-
     def nearest_point_to(self, point):
         """
         Find out the nearest point on the linesegment to point.
@@ -2211,23 +2201,6 @@ class BSplineCurve2D(BSplineCurve):
         offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree,
                                                                     self.periodic)
         return offseted_bspline
-
-    def point_belongs(self, point: volmdlr.Point2D, abs_tol: float = 1e-6):
-        """
-        Checks if a 2D point belongs to the B-spline curve 2D or not. It uses the point_distance.
-
-        :param point: The point to be checked.
-        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
-        :param abs_tol: The precision in terms of distance.
-            Default value is 1e-7
-        :type abs_tol: float, optional.
-        :return: `True` if the point belongs to the B-spline curve, `False`
-            otherwise
-        :rtype: bool
-        """
-        if self.point_distance(point) < abs_tol:
-            return True
-        return False
 
 
 class BezierCurve2D(BSplineCurve2D):
@@ -5645,51 +5618,6 @@ class BSplineCurve3D(BSplineCurve):
         else:
             content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
         return content, [current_id]
-
-    # def point_distance(self, pt1):
-    #     """Returns the minimal distance to a point."""
-    #     distances = []
-    #     for point in self.points:
-    #         distances.append(pt1.point_distance(point))
-    #     return min(distances)
-
-    def point_distance(self, point):
-        """
-        Calculates the distance from a given point to a BSplineCurve3D.
-
-        :param point: point 3d.
-        :return: distance.
-        """
-        best_distance = math.inf
-        abscissa1 = 0
-        abscissa2 = self.abscissa(self.end)
-        distance = best_distance
-        point1_ = None
-        point2_ = None
-        while True:
-            discretized_points_between_1_2 = []
-            for abscissa in npy.linspace(abscissa1, abscissa2, num=8):
-                abscissa_point = self.point_at_abscissa(abscissa)
-                if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
-                    discretized_points_between_1_2.append(abscissa_point)
-            if not discretized_points_between_1_2:
-                break
-            distance = point.point_distance(discretized_points_between_1_2[0])
-            for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
-                line = LineSegment2D(point1, point2)
-                dist = line.point_distance(point)
-                if dist < distance:
-                    point1_ = point1
-                    point2_ = point2
-                    distance = dist
-            if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-6):
-                break
-            abscissa1 = self.abscissa(point1_)
-            abscissa2 = self.abscissa(point2_)
-            best_distance = distance
-            if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
-                break
-        return distance
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
