@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - BSplineCurve, Edge: simplify
+- Plane3D: angle_between_planes, plane_betweeen_two_planes
 - Edge: intersections, crossings, validate_crossings
 - Arc2D: bsplinecurve_intersections, arc_intersections, arcellipse_intersections.
 - ArcEllipse2D: bsplinecurve_intersections

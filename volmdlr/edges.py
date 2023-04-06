@@ -809,7 +809,7 @@ class BSplineCurve(Edge):
 
     :param degree: The degree of the B-spline curve.
     :type degree: int
-    :param control_points: A list of 2 or 3 dimensional points
+    :param control_points: A list of 2 or 3-dimensional points
     :type control_points: Union[List[:class:`volmdlr.Point2D`],
         List[:class:`volmdlr.Point3D`]]
     :param knot_multiplicities: The vector of multiplicities for each knot
