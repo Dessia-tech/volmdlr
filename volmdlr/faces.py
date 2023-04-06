@@ -1567,8 +1567,8 @@ class Plane3D(Surface3D):
         self.frame.plot(ax=ax, color=edge_style.color)
         for i in range(grid_size):
             for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
-                start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i/(grid_size - 1)) * length * v2
-                end = self.frame.origin + 0.5 * length * v1 + (-0.5 + i/(grid_size - 1)) * length * v2
+                start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
+                end = self.frame.origin + 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
                 volmdlr.edges.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
         return ax
 
@@ -1870,7 +1870,6 @@ class PeriodicalSurface(Surface3D):
                                                                                  point_before_end.x)
         return [vme.LineSegment2D(start, end, name="arc")]
 
-
     def fullarc3d_to_2d(self, fullarc3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
@@ -1983,7 +1982,7 @@ class PeriodicalSurface(Surface3D):
                                                                             indexes_theta_discontinuity, "x")
 
         return [vme.BSplineCurve2D.from_points_interpolation(points, degree=2, periodic=True,
-                                                                      name="parametric.fullarcellipse")]
+                                                             name="parametric.fullarcellipse")]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -2016,7 +2015,7 @@ class PeriodicalSurface(Surface3D):
         if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametic.linesegment":
             return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
                                       self.point2d_to_3d(linesegment2d.end))]
-        if math.isclose(z1, z2, abs_tol=1e-4) or linesegment2d.name == "parametric.arc" or\
+        if math.isclose(z1, z2, abs_tol=1e-4) or linesegment2d.name == "parametric.arc" or \
                 linesegment2d.name == "parametric.fullarc":
             if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
                 return [vme.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
@@ -2049,7 +2048,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.radius = radius
         PeriodicalSurface.__init__(self, name=name)
 
-    def plot(self, ax=None, edge_style:EdgeStyle = EdgeStyle(color='grey', alpha=0.5), length: float = 1.):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), length: float = 1.):
         """
         Plot the cylindrical surface in the local frame normal direction.
 
@@ -2073,14 +2072,14 @@ class CylindricalSurface3D(PeriodicalSurface):
 
         self.frame.plot(ax=ax)
         for i in range(nlines):
-            theta = i / (nlines-1) * volmdlr.TWO_PI
-            start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5*length))
-            end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5*length))
+            theta = i / (nlines - 1) * volmdlr.TWO_PI
+            start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
+            end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5 * length))
             vme.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
 
         for j in range(ncircles):
             circle_frame = self.frame.copy()
-            circle_frame.origin += (-0.5 + j/(ncircles-1)) * length * circle_frame.w
+            circle_frame.origin += (-0.5 + j / (ncircles - 1)) * length * circle_frame.w
             circle = volmdlr.wires.Circle3D(circle_frame, self.radius)
             circle.plot(ax=ax, edge_style=edge_style)
         return ax
@@ -2807,7 +2806,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         vector_from_tube_center_to_point = volmdlr.Vector3D(x, y, z) - vector_to_tube_center
         phi = volmdlr.geometry.vectors3d_angle(vector_to_tube_center, vector_from_tube_center_to_point)
         if z < 0:
-            phi = 2*math.pi - phi
+            phi = 2 * math.pi - phi
         if abs(theta) < 1e-9:
             theta = 0.0
         if abs(phi) < 1e-9:
@@ -2832,14 +2831,14 @@ class ConicalSurface3D(PeriodicalSurface):
         self.semi_angle = semi_angle
         PeriodicalSurface.__init__(self, name=name)
 
-    def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
+    def plot(self, ax=None, edge_style=EdgeStyle(color='grey', alpha=0.5), **kwargs):
         z = kwargs.get("z", 0.5)
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
         self.frame.plot(ax=ax)
-        x = z / math.sin(self.semi_angle)
+        x = z * math.tan(self.semi_angle)
         # point1 = self.frame.local_to_global_coordinates(volmdlr.Point3D(-x, 0, -z))
         point1 = self.frame.origin
         point2 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, z))
@@ -2847,7 +2846,7 @@ class ConicalSurface3D(PeriodicalSurface):
         for i in range(37):
             theta = i / 36. * volmdlr.TWO_PI
             wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
-            wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+            wire.plot(ax=ax, edge_style=edge_style)
         return ax
 
     @classmethod
@@ -3104,7 +3103,7 @@ class ConicalSurface3D(PeriodicalSurface):
             # linesegment3d with singularity
             elif math.isclose(primitives2d[i].start.y, 0.0, abs_tol=1e-6) and \
                     math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-6) and \
-                        math.isclose(primitives2d[i].start.x, previous_primitive.end.x, abs_tol=1e-6):
+                    math.isclose(primitives2d[i].start.x, previous_primitive.end.x, abs_tol=1e-6):
                 if primitives2d[i + 1].end.x < primitives2d[i].end.x:
                     theta_offset = volmdlr.TWO_PI
                 elif primitives2d[i + 1].end.x > primitives2d[i].end.x:
@@ -4138,6 +4137,7 @@ class BSplineSurface3D(Surface3D):
         self._grids2d = None
         self._grids2d_deformed = None
         self._bbox = None
+        self._surface_curves = None
 
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
@@ -4149,11 +4149,13 @@ class BSplineSurface3D(Surface3D):
         """
         if self._x_periodicity is False:
             u = self.curves['u']
-            a, b = self.surface.domain[0]
-            u0 = u[0]
-            point_at_a = u0.evaluate_single(a)
-            point_at_b = u0.evaluate_single(b)
-            if npy.linalg.norm(npy.array(point_at_b) - npy.array(point_at_a)) < 1e-6:
+            # a, b = self.surface.domain[0]
+            # u0 = u[0]
+            # point_at_a = u0.evaluate_single(a)
+            # point_at_b = u0.evaluate_single(b)
+            start = u[0].ctrlpts[0]
+            end = u[0].ctrlpts[-1]
+            if npy.linalg.norm(npy.array(start) - npy.array(end)) < 1e-6:
                 self._x_periodicity = self.surface.range[0]
             else:
                 self._x_periodicity = None
@@ -4166,11 +4168,13 @@ class BSplineSurface3D(Surface3D):
         """
         if self._y_periodicity is False:
             v = self.curves['v']
-            c, d = self.surface.domain[1]
-            v0 = v[0]
-            point_at_c = v0.evaluate_single(c)
-            point_at_d = v0.evaluate_single(d)
-            if npy.linalg.norm(npy.array(point_at_d) - npy.array(point_at_c)) < 1e-6:
+            # c, d = self.surface.domain[1]
+            # v0 = v[0]
+            # point_at_c = v0.evaluate_single(c)
+            # point_at_d = v0.evaluate_single(d)
+            start = v[0].ctrlpts[0]
+            end = v[0].ctrlpts[-1]
+            if npy.linalg.norm(npy.array(start) - npy.array(end)) < 1e-6:
                 self._y_periodicity = self.surface.range[1]
             else:
                 self._y_periodicity = None
@@ -4191,6 +4195,41 @@ class BSplineSurface3D(Surface3D):
         xmin, ymin, zmin = min_bounds
         xmax, ymax, zmax = max_bounds
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    @property
+    def surface_curves(self, extract_u: bool = True, extract_v: bool = True):
+        """
+        Extracts curves from a surface.
+
+        :param extract_u: If True, extract the curves in u direction
+        :param extract_v: If True, extract the curves in v direction
+        """
+        if not self._surface_curves:
+            self._surface_curves = self.get_surface_curves(extract_u, extract_v)
+        return self._surface_curves
+
+    def get_surface_curves(self, extract_u, extract_v):
+        """
+        Converts the surface curves from geomdl curve to volmdlr.
+
+        :param extract_u: If True, extract the curves in u direction.
+        :param extract_v: If True, extract the curves in v direction.
+        """
+        # v-direction
+        crvlist_v = []
+        if extract_v:
+            v_curves = self.curves["v"]
+            for curve in v_curves:
+                crvlist_v.append(vme.BSplineCurve3D.from_geomdl_curve(curve))
+        # u-direction
+        crvlist_u = []
+        if extract_u:
+            u_curves = self.curves["u"]
+            for curve in u_curves:
+                crvlist_u.append(vme.BSplineCurve3D.from_geomdl_curve(curve))
+
+        # Return shapes as a dict object
+        return dict(u=crvlist_u, v=crvlist_v)
 
     def control_points_matrix(self, coordinates):
         """
@@ -4832,17 +4871,18 @@ class BSplineSurface3D(Surface3D):
         self.control_points = new_bsplinesurface3d.control_points
         self.surface = new_bsplinesurface3d.surface
 
-    def plot(self, ax=None, color='grey', alpha=0.5):
-        u_curves = [vme.BSplineCurve3D.from_geomdl_curve(u) for u in self.curves['u']]
-        v_curves = [vme.BSplineCurve3D.from_geomdl_curve(v) for v in self.curves['v']]
+    def plot(self, ax=None, edge_style=EdgeStyle(color='grey', alpha=0.5)):
+        curves = self.surface_curves
+        u_curves = curves['u']
+        v_curves = curves['v']
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         for u in u_curves:
-            u.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+            u.plot(ax=ax, edge_style=edge_style)
         for v in v_curves:
-            v.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+            v.plot(ax=ax, edge_style=edge_style)
         for point in self.control_points:
-            point.plot(ax, color=color, alpha=alpha)
+            point.plot(ax, color=edge_style.color, alpha=edge_style.alpha)
         return ax
 
     def simplify_surface(self):
@@ -4851,6 +4891,73 @@ class BSplineSurface3D(Surface3D):
 
         :return: simplified surface if possible, otherwise, returns self.
         """
+        if self.x_periodicity and self.y_periodicity:
+            raise NotImplementedError
+        elif self.x_periodicity:
+            curves = self.surface_curves
+            u_curves = curves["u"]
+            u0_simplified_curve = u_curves[0].simplify
+            if isinstance(u0_simplified_curve, vme.FullArc3D):
+                cylindrical_check = all(isinstance(curve.simplify, vme.FullArc3D) and
+                                        math.isclose(u0_simplified_curve.radius, curve.simplify.radius, abs_tol=1e-6)
+                                        for curve in u_curves[1:])
+                if cylindrical_check:
+                    return CylindricalSurface3D(u0_simplified_curve.frame, u0_simplified_curve.radius, self.name)
+                v_curves = curves["v"]
+                are_all_v_curves_line_segments = all(isinstance(curve.simplify, vme.LineSegment3D)
+                                                     for curve in v_curves[1:])
+                if are_all_v_curves_line_segments:
+                    normal_line = vme.Line3D(u0_simplified_curve.frame.origin,
+                                             u0_simplified_curve.frame.origin + u0_simplified_curve.normal)
+                    v0_simplified_curve = v_curves[0].simplify
+                    line = v0_simplified_curve.to_line()
+                    intersection = normal_line.intersection(line)
+                    conical_check = all(normal_line.intersection(curve.simplify.to_line()).is_close(intersection)
+                                        for curve in v_curves[1:])
+                    if conical_check:
+                        # make sure that the normal is in the right sense
+                        new_normal = u0_simplified_curve.center - intersection
+                        new_normal.normalize()
+                        frame = volmdlr.Frame3D(intersection, u0_simplified_curve.frame.u,
+                                                new_normal.cross(u0_simplified_curve.frame.u),
+                                                new_normal)
+                        _, _, z = frame.global_to_local_coordinates(u0_simplified_curve.center)
+                        semi_angle = math.atan(u0_simplified_curve.radius / z)
+                        return ConicalSurface3D(frame, semi_angle, self.name)
+                return self
+        elif self.y_periodicity:
+            curves = self.surface_curves
+            v_curves = curves["v"]
+            v0_simplified_curve = v_curves[0].simplify
+            if isinstance(v0_simplified_curve, vme.FullArc3D):
+                all_fullarc = all(isinstance(curve.simplify, vme.FullArc3D)
+                                  for curve in v_curves[1:])
+                cylindrical_check = all(math.isclose(v0_simplified_curve.radius, curve.simplify.radius)
+                                        for curve in v_curves[1:]) and all_fullarc
+                if cylindrical_check:
+                    return CylindricalSurface3D(v0_simplified_curve.frame, v0_simplified_curve.radius, self.name)
+                u_curves = curves["u"]
+                are_all_u_curves_line_segments = all(isinstance(curve.simplify, vme.LineSegment3D)
+                                                     for curve in u_curves[1:])
+                if are_all_u_curves_line_segments:
+                    normal_line = vme.Line3D(v0_simplified_curve.frame.origin,
+                                             v0_simplified_curve.frame.origin + v0_simplified_curve.normal)
+                    u0_simplified_curve = u_curves[0].simplify
+                    line = u0_simplified_curve.to_line()
+                    intersection = normal_line.intersection(line)
+                    conical_check = all(normal_line.intersection(curve.simplify.to_line()).is_close(intersection)
+                                        for curve in u_curves[1:])
+                    if conical_check:
+                        # make sure that the normal is in the right sense
+                        new_normal = v0_simplified_curve.center - intersection
+                        new_normal.normalize()
+                        frame = volmdlr.Frame3D(intersection, v0_simplified_curve.frame.u,
+                                                new_normal.cross(v0_simplified_curve.frame.u),
+                                                new_normal)
+                        _, _, z = frame.global_to_local_coordinates(v0_simplified_curve.center)
+                        semi_angle = math.atan(v0_simplified_curve.radius / z)
+                        return ConicalSurface3D(frame, semi_angle, self.name)
+                return self
         points = [self.control_points[0]]
         vector_list = []
         for point in self.control_points:
@@ -4923,12 +5030,7 @@ class BSplineSurface3D(Surface3D):
         bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
                              u_multiplicities, v_multiplicities, u_knots,
                              v_knots, weight_data, name)
-        if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
-            bsplinesurface = bsplinesurface.simplify_surface()
-        # if u_closed:
-        #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
-        # if v_closed:
-        #     bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
+        bsplinesurface = bsplinesurface.simplify_surface()
         return bsplinesurface
 
     def to_step(self, current_id):
@@ -6085,7 +6187,7 @@ class BSplineSurface3D(Surface3D):
         grid2d_direction = (bspline_face3d.pair_with(other_bspline_face3d))[1]
 
         if (not bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
-            and self.is_intersected_with(other_bspline_surface3d)):
+                and self.is_intersected_with(other_bspline_surface3d)):
             # find pimitives to split with
             contour1 = bspline_face3d.outer_contour3d
             contour2 = other_bspline_face3d.outer_contour3d
@@ -6124,7 +6226,7 @@ class BSplineSurface3D(Surface3D):
         nb = 10
         points3d = []
         is_true = (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
-                    or self.is_intersected_with(other_bspline_surface3d))
+                   or self.is_intersected_with(other_bspline_surface3d))
 
         for i, bspline in enumerate(bsplines_new):
             grid3d = bspline.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(0, 1),

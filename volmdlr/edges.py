@@ -855,27 +855,24 @@ class BSplineCurve(Edge):
     @property
     def simplify(self):
         """Search another simplified edge that can represent the bspline."""
+        class_sufix = self.__class__.__name__[-2:]
         if self._simplified is None:
-            class_sufix = self.__class__.__name__[-2:]
-            lineseg_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
-            lineseg = lineseg_class(self.points[0], self.points[-1])
-            if all(lineseg.point_belongs(pt) for pt in self.points):
-                self._simplified = lineseg
-                return lineseg
-            colinear = True
-            previous_vec = None
-            points_ = [self.points[0]]
-            for i, (point1, point2) in enumerate(zip(self.points[:-1], self.points[1:])):
-                vec = point2 - point1
-                if i == 0:
-                    previous_vec = vec
-                elif not vec.is_colinear_to(previous_vec):
-                    colinear = False
-                    points_.append(point2)
-                previous_vec = vec
-            if not colinear:
+            if self.periodic:
+                fullarc_class_ = getattr(sys.modules[__name__], 'FullArc' + class_sufix)
+                n = len(self.points)
+                try_fullarc = fullarc_class_.from_3_points(self.points[0], self.points[int(0.5 * n)], self.points[int(0.75 * n)])
+                if all(try_fullarc.point_belongs(point, 1e-5) for point in self.points):
+                    self._simplified = try_fullarc
+                    return try_fullarc
+            else:
+                lineseg_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
+                lineseg = lineseg_class(self.points[0], self.points[-1])
+                if all(lineseg.point_belongs(pt) for pt in self.points):
+                    self._simplified = lineseg
+                    return lineseg
+
                 arc_class_ = getattr(sys.modules[__name__], 'Arc' + class_sufix)
-                try_arc = arc_class_(points_[0], points_[int(len(points_) / 2)], points_[-1])
+                try_arc = arc_class_(self.points[0], self.points[int(len(self.points) / 2)], self.points[-1])
                 if all(try_arc.point_belongs(point, 1e-6) for point in self.points):
                     self._simplified = try_arc
                     return try_arc
@@ -896,12 +893,15 @@ class BSplineCurve(Edge):
 
         knots = list(sorted(set(curve.knotvector)))
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
-
+        start = curve.ctrlpts[0]
+        end = curve.ctrlpts[-1]
+        periodic =  npy.linalg.norm(npy.array(start) - npy.array(end)) < 1e-6
         return cls(degree=curve.degree,
                    control_points=[getattr(volmdlr, point_dimension)(*point)
                                    for point in curve.ctrlpts],
                    knots=knots,
-                   knot_multiplicities=knot_multiplicities, name=name)
+                   knot_multiplicities=knot_multiplicities,
+                   weights= curve.weights ,periodic=periodic, name=name)
 
     def length(self):
         """
@@ -2762,6 +2762,62 @@ class Arc(Edge):
                 new_arcs.append(arc)
         return new_arcs
 
+class FullArc(Arc):
+    """
+    Abstract class for representing a circle with a start and end points that are the same.
+    """
+    def __init__(self, center: Union[volmdlr.Point2D, volmdlr.Point3D],
+                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
+        self.__center = center
+        self.start_end = start_end
+        Arc.__init__(self, start=start_end, interior=self.interior,
+                       end=start_end, name=name)  # !!! this is dangerous
+
+    @property
+    def is_trigo(self):
+        return True
+
+    @property
+    def center(self):
+        return self.__center
+
+    @property
+    def angle(self):
+        return volmdlr.TWO_PI
+
+    @classmethod
+    def from_3_points(cls, point1, point2, point3):
+        vector_u1 = point2 - point1
+        vector_u2 = point2 - point3
+        try:
+            vector_u1.normalize()
+            vector_u2.normalize()
+        except ZeroDivisionError:
+            raise ValueError('the 3 points must be distincts')
+
+        normal = vector_u2.cross(vector_u1)
+        normal.normalize()
+
+        if vector_u1.is_close(vector_u2):
+            vector_u2 = normal.cross(vector_u1)
+            vector_u2.normalize()
+
+        vector_v1 = normal.cross(vector_u1)  # v1 is normal, equal u2
+        vector_v2 = normal.cross(vector_u2)  # equal -u1
+
+        point11 = 0.5 * (point1 + point2)  # Mid-point of segment s,m
+        point21 = 0.5 * (point2 + point3)  # Mid-point of segment s,m
+
+        line1 = volmdlr.edges.Line3D(point11, point11 + vector_v1)
+        line2 = volmdlr.edges.Line3D(point21, point21 + vector_v2)
+
+        try:
+            center, _ = line1.minimum_distance_points(line2)
+        except ZeroDivisionError:
+            raise ValueError('Start, end and interior points  of an arc must be distincts')
+
+        return cls(center=center, start_end=point1, normal=normal)
+
 
 class Arc2D(Arc):
     """
@@ -3366,28 +3422,13 @@ class Arc2D(Arc):
                               end=points_symmetry[2])
 
 
-class FullArc2D(Arc2D):
+class FullArc2D(FullArc, Arc2D):
     """ An edge that starts at start_end, ends at the same point after having described a circle. """
 
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
                  name: str = ''):
-        self.__center = center
-        self.start_end = start_end
-        interior = start_end.rotation(center, math.pi)
-        Arc2D.__init__(self, start=start_end, interior=interior,
-                       end=start_end, name=name)  # !!! this is dangerous
-
-    @property
-    def is_trigo(self):
-        return True
-
-    @property
-    def center(self):
-        return self.__center
-
-    @property
-    def angle(self):
-        return volmdlr.TWO_PI
+        self.interior = start_end.rotation(center, math.pi)
+        FullArc.__init__(self, center=center, start_end=start_end, name=name)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         dict_ = self.base_dict()
@@ -3623,6 +3664,13 @@ class FullArc2D(Arc2D):
 
     def reverse(self):
         return self
+
+    def point_belongs(self, point: volmdlr.Point2D, tol: float = 1e-6):
+        """
+        Returns if given point belongs to the FullArc2D.
+        """
+        distance = point.point_distance(self.center)
+        return math.isclose(distance, self.radius, abs_tol=tol)
 
 
 class ArcEllipse2D(Edge):
@@ -6450,7 +6498,7 @@ class Arc3D(Arc):
         return linesegment_intersections
 
 
-class FullArc3D(Arc3D):
+class FullArc3D(FullArc, Arc3D):
     """
     An edge that starts at start_end, ends at the same point after having described a circle.
 
@@ -6459,12 +6507,10 @@ class FullArc3D(Arc3D):
     def __init__(self, center: volmdlr.Point3D, start_end: volmdlr.Point3D,
                  normal: volmdlr.Vector3D,
                  name: str = ''):
-        self.__center = center
         self.__normal = normal
-        self.start_end = start_end
-        interior = start_end.rotation(center, normal, math.pi)
-        Arc3D.__init__(self, start=start_end, end=start_end,
-                       interior=interior, name=name)  # !!! this is dangerous
+        self._utd_frame = None
+        self.interior = start_end.rotation(center, normal, math.pi)
+        FullArc.__init__(self, center=center, start_end=start_end, name=name)
 
     def __hash__(self):
         return hash(self.center) + 5 * hash(self.start_end)
@@ -6474,20 +6520,8 @@ class FullArc3D(Arc3D):
             and (self.start == other_arc.start)
 
     @property
-    def center(self):
-        return self.__center
-
-    @property
-    def angle(self):
-        return volmdlr.TWO_PI
-
-    @property
     def normal(self):
         return self.__normal
-
-    @property
-    def is_trigo(self):
-        return True
 
     def copy(self, *args, **kwargs):
         return FullArc3D(self._center.copy(), self.end.copy(), self._normal.copy())
@@ -6644,6 +6678,16 @@ class FullArc3D(Arc3D):
 
         """
         return self
+
+    def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
+        """
+        Returns if given point belongs to the FullArc3D.
+        """
+        distance = point.point_distance(self.center)
+        vec = volmdlr.Vector3D(*point - self.center)
+        dot = self.normal.dot(vec)
+        return math.isclose(distance, self.radius, abs_tol=abs_tol) \
+                and math.isclose(dot, 0, abs_tol=abs_tol)
 
 
 class ArcEllipse3D(Edge):
