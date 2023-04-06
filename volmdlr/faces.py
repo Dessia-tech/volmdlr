@@ -1036,19 +1036,6 @@ class Surface3D(DessiaObject):
             elif not is_connected:
                 primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
-        # last_end = primitives2d[-1].end
-        # first_start = primitives2d[0].start
-        # if not last_end.is_close(first_start, tol=1e-5):
-        #     deltax = first_start.x - last_end.x
-        #     deltay = first_start.y - last_end.y
-        #     if deltax and x_periodicity and abs(deltax) % x_periodicity == 0:
-        #         primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
-        #                                              volmdlr.Point2D(primitives2d[-1].end.x + deltax,
-        #                                                              primitives2d[-1].end.y))
-        #     elif deltay and y_periodicity and abs(deltay) % y_periodicity == 0:
-        #         primitives2d[-1] = vme.LineSegment2D(primitives2d[-1].start,
-        #                                              volmdlr.Point2D(primitives2d[-1].end.x,
-        #                                                              primitives2d[-1].end.y + deltay))
 
         return primitives2d
 
