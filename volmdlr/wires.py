@@ -1395,7 +1395,8 @@ class ContourMixin(WireMixin):
     def is_adjacent(self, contour):
         """
         Check if two contour are adjacent.
-        (so are sharing primitives but not supperposing or none is inside the other).
+
+        So: are sharing primitives but not supperposing or none is inside the other.
         """
 
         if (self.is_inside(contour) or contour.is_inside(self)
