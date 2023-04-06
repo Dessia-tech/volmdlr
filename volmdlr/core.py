@@ -26,7 +26,7 @@ npy.seterr(divide='raise')
 
 DEFAULT_COLOR = (0.8, 0.8, 0.8)
 
-# TODO: put voldmlr metadata in this freecad header
+# TODO: put volmdlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('{name}'),'2;1');
@@ -73,7 +73,7 @@ def get_point_index_in_list(point, list_points, tol: float = 1e-6):
     :return: The point index.
     """
     for i, point_i in enumerate(list_points):
-        if point_i.is_close(point):
+        if point_i.is_close(point, tol):
             return i
     raise ValueError(f'{point} is not in list')
 
@@ -124,7 +124,7 @@ def step_ids_to_str(ids):
 @dataclass
 class EdgeStyle:
     """
-    Data class for styling edges matplotlib plots.
+    Data class for styling edges Matplotlib plots.
 
     """
     color: str = 'k'
@@ -714,11 +714,11 @@ class BoundingBox(dc.DessiaObject):
         Plot the bounding box on 3D axes.
 
         :param ax: The 3D axes to plot on. If not provided, a new figure will be created.
-        :type ax: matplotlib.axes._subplots.Axes3DSubplot, optional
+        :type ax: Matplotlib.axes._subplots.Axes3DSubplot, optional
         :param color: The color of the lines used to plot the bounding box.
         :type color: str, optional
         :return: The 3D axes with the plotted bounding box.
-        :rtype: matplotlib.axes._subplots.Axes3DSubplot
+        :rtype: Matplotlib.axes._subplots.Axes3DSubplot
         """
         if ax is None:
             fig = plt.figure()
@@ -1165,8 +1165,11 @@ class VolumeModel(dc.PhysicalObject):
         return babylon_data
 
     @classmethod
-    def babylonjs_script(cls, babylon_data, use_cdn=True,
-                         debug=False):
+    def babylonjs_script(cls, babylon_data, use_cdn=True, debug=False):
+        """
+        Run babylonjs script.
+
+        """
         if use_cdn:
             script = volmdlr.templates.BABYLON_UNPACKER_CDN_HEADER  # .substitute(name=page_name)
         else:
@@ -1177,6 +1180,10 @@ class VolumeModel(dc.PhysicalObject):
         return script
 
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+        """
+        Creates a html file using babylonjs to show a 3d model in the browser.
+
+        """
         babylon_data = self.babylon_data()
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                        debug=debug)
@@ -1682,7 +1689,7 @@ class VolumeModel(dc.PhysicalObject):
 
         :param file_name: The msh. file name
         :type file_name: str
-        :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+        :param mesh_dimension: The mesh dimension (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
         :type mesh_dimension: int
         :param factor: A float, between 0 and 1, that describes the mesh quality
         (1 for coarse mesh - 0 for fine mesh)
@@ -1771,7 +1778,7 @@ class VolumeModel(dc.PhysicalObject):
     #
     #     :param file_name: The msh. file name
     #     :type file_name: str
-    #     :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+    #     :param mesh_dimension: The mesh dimension (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
     #     :type mesh_dimension: int
     #     :param factor: A float, between 0 and 1, that describes the mesh quality
     #     (1 for coarse mesh - 0 for fine mesh)
@@ -1852,13 +1859,13 @@ class VolumeModel(dc.PhysicalObject):
         tag = None
         entities = gmsh_model.model.getEntities()
         for dim, tag in entities:
-            nodeTags, nodeCoords, nodeParams = gmsh_model.model.mesh.getNodes(dim, tag)
+            node_tags, node_coords, _ = gmsh_model.model.mesh.getNodes(dim, tag)
 
-            lines_nodes.append(str(dim) + ' ' + str(tag) + ' ' + '0 ' + str(len(nodeTags)))
-            for tag in nodeTags:
+            lines_nodes.append(str(dim) + ' ' + str(tag) + ' ' + '0 ' + str(len(node_tags)))
+            for tag in node_tags:
                 lines_nodes.append(str(tag))
-            for n in range(0, len(nodeCoords), 3):
-                lines_nodes.append(str(nodeCoords[n:n + 3])[1:-1])
+            for n in range(0, len(node_coords), 3):
+                lines_nodes.append(str(node_coords[n:n + 3])[1:-1])
 
         lines_nodes.insert(1, str(len(entities)) + ' ' + str(tag) + ' 1 ' + str(tag))
         lines_nodes.append('$EndNodes')
@@ -1872,15 +1879,15 @@ class VolumeModel(dc.PhysicalObject):
 
         entities = gmsh_model.model.getEntities()
         for dim, tag in entities:
-            elemTypes, elemTags, elemNodeTags = gmsh_model.model.mesh.getElements(dim, tag)
+            elem_types, elem_tags, elem_node_tags = gmsh_model.model.mesh.getElements(dim, tag)
 
-            lines_elements.append(str(dim) + ' ' + str(tag) + ' ' + str(elemTypes[0]) + ' ' + str(len(elemTags[0])))
-            range_list = int(len(elemNodeTags[0]) / len(elemTags[0]))
-            for n in range(0, len(elemNodeTags[0]), range_list):
-                lines_elements.append(str(elemTags[0][int(n / range_list)]) + ' ' +
-                                      str(elemNodeTags[0][n:n + range_list])[1:-1])
+            lines_elements.append(str(dim) + ' ' + str(tag) + ' ' + str(elem_types[0]) + ' ' + str(len(elem_tags[0])))
+            range_list = int(len(elem_node_tags[0]) / len(elem_tags[0]))
+            for n in range(0, len(elem_node_tags[0]), range_list):
+                lines_elements.append(str(elem_tags[0][int(n / range_list)]) + ' ' +
+                                      str(elem_node_tags[0][n:n + range_list])[1:-1])
 
-        tag = str(elemTags[0][int(n / range_list)])
+        tag = str(elem_tags[0][int(n / range_list)])
         lines_elements.insert(1, str(len(entities)) + ' ' + tag + ' 1 ' + tag)
         lines_elements.append('$EndElements')
 

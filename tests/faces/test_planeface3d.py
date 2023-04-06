@@ -7,7 +7,7 @@ import unittest
 import dessia_common.core as dc
 
 import volmdlr
-from volmdlr import edges, wires
+from volmdlr import edges, wires, faces
 
 
 class TestPlaneFace3D(unittest.TestCase):
@@ -110,7 +110,6 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertTrue(self.plane_face_cylindricalface_intersec.circle_inside(circle))
         circle2 = volmdlr.wires.Circle3D(volmdlr.OYZX, 0.1)
         self.assertFalse(self.plane_face_cylindricalface_intersec.circle_inside(circle2))
-
 
 if __name__ == '__main__':
     unittest.main()
