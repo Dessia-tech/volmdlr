@@ -1378,6 +1378,18 @@ class ContourMixin(WireMixin):
             return True
         return False
 
+    def is_adjacent(self, contour):
+        """
+        Check if two contour are adjacent.
+        (so are sharing primitives but not supperposing or none is inside the other).
+        """
+
+        if (self.is_inside(contour) or contour.is_inside(self)
+            or self.is_overlapping(contour) or self.is_superposing(contour)):
+            return False
+        if self.is_sharing_primitives_with(contour):
+            return True
+
     def is_sharing_primitives_with(self, contour):
         """
         Check if two contour are sharing primitives.
