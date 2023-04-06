@@ -1,11 +1,11 @@
 {
   "object_class": "volmdlr.wires.Contour3D",
-  "package_version": "0.9.2.dev524+g2a8362eb",
+  "package_version": "0.9.2.dev818+g7e21d642",
   "name": "",
   "primitives": [
     {
       "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.9.2.dev524+g2a8362eb",
+      "package_version": "0.9.2.dev818+g7e21d642",
       "name": "",
       "start": {
         "object_class": "volmdlr.Point3D",
@@ -44,7 +44,7 @@
     },
     {
       "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.9.2.dev524+g2a8362eb",
+      "package_version": "0.9.2.dev818+g7e21d642",
       "name": "",
       "start": {
         "object_class": "volmdlr.Point3D",
@@ -86,4 +86,3 @@
   "color": null,
   "alpha": 1
 }
-
