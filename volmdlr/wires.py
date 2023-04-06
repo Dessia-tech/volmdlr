@@ -1389,6 +1389,7 @@ class ContourMixin(WireMixin):
             return False
         if self.is_sharing_primitives_with(contour):
             return True
+        return False
 
     def is_sharing_primitives_with(self, contour):
         """
