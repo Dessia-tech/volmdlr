@@ -22,8 +22,8 @@ If you are not sure about your contribution you can ask the question on the issu
 
 We have a process based on three branches:
 
-- dev that receive the features and imacting changes pull requests
-- testing that is regulary a freeze of testing. Release candidate (RC) can be made on testing
+- dev that receive the features and impacting changes pull requests
+- testing that is regularly a freeze of testing. Release candidate (RC) can be made on testing
 - master that receive the code from testing before the release. Release are made on master
 
 Before coding, think of where to start from. You should start your branch for pull request where the pull request will point at:
