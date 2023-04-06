@@ -33,7 +33,7 @@ Before coding, think of where to start from. You should start your branch for pu
 
 ### CI
 
-Your contribution may be refused by our CI in these case:
+Your contribution may be refused by our CI. In this case:
 - lowering the coverage: add some tests
 - introducing pylint errors
 - triggering pydocstyle errors
