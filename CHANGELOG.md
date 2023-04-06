@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: split_contour_with_sorted_points, intersection_contour_with
 - CylindricalSurface3D: point_projection, point_distance
 - ToroidalSurface3D: point_projection
+- Wire2D: area
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -26,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bSpline2D: linesegment_intersections
 
 ### Refactor
+- Contour2D: cut_by_wire
+- Contour2D: extract_with_points displaced to WireMixin
+- Contour2D: extract_contour displaced to WireMixin and renamed to extract
+- Contour2D: split_contour_with_sorted_points displaced to WireMixin and renamed to split_with_sorted_points
+- Contour2D: get_divided_contours
 
 ### Changed
 - better surface3d plots
