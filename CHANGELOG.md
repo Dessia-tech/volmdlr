@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed many pylint errors: 13/03/2023
 - fix contour2d: divide
 
+### Documentation
+ - typo in CONTRIBUTING.md
+
 ## v0.9.0 [released 03/26/2023]
 
 ### New Features
