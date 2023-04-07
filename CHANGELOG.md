@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CylindricalSurface3D: point_projection, point_distance
 - ToroidalSurface3D: point_projection
 - BsplineCurve: point_distance, point_belongs
+- ContourMixin: is_adjacent
 - Wire2D: area
 
 ### Fixed
