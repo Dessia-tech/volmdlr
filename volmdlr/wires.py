@@ -320,6 +320,52 @@ class WireMixin:
         class_ = getattr(sys.modules[__name__], class_name_)
         return class_.from_points(points)
 
+    def extract_with_points(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D, inside: bool = True):
+        """
+        Extract primitives between two given points.
+
+        :param point1: extraction point 1.
+        :param point2:extraction point2.
+        :param inside: If True it'll Extract primitives from smaller point abscissa value
+        to greater point abscissa value. If False, it'll return the contour primitives going from
+        the greater point abscissa value to the smaller one.
+        """
+        inside_primitives, outside_primitives = self.split_with_two_points(point1, point2)
+        if inside:
+            return inside_primitives
+        return outside_primitives
+
+    @classmethod
+    def extract(cls, contour, point1, point2, inside=False):
+        """Extracts a contour from another contour, given two points."""
+        new_primitives = contour.extract_with_points(point1, point2, inside)
+        contours = [cls(new_primitives)]
+        return contours
+
+    def split_with_sorted_points(self, sorted_points):
+        """
+        Split contour in various sections using a list of sorted points along the contour.
+
+        :param sorted_points: sorted list of points.
+        :return: list of Contour sections.
+        """
+        self_start_equal_to_end = True
+        if not self.primitives[0].start.is_close(self.primitives[-1].end):
+            self_start_equal_to_end = False
+            if not volmdlr.core.point_in_list(self.primitives[0].start, sorted_points):
+                sorted_points = [self.primitives[0].start] + sorted_points
+            if not volmdlr.core.point_in_list(self.primitives[-1].end, sorted_points):
+                sorted_points.append(self.primitives[-1].end)
+        split_wires = []
+        len_sorted_points = len(sorted_points)
+        for i, (point1, point2) in enumerate(
+                zip(sorted_points, sorted_points[1:] + [sorted_points[0]])):
+            if i == len_sorted_points - 1 and self_start_equal_to_end:
+                split_wires.extend(self.__class__.extract(self, point1, point2, False))
+            else:
+                split_wires.extend(self.__class__.extract(self, point1, point2, True))
+        return split_wires
+
 
 class EdgeCollection3D(WireMixin):
     """
@@ -416,9 +462,14 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         return hash(('wire2d', tuple(self.primitives)))
 
     def length(self):
+        """ Gets the length for a Wire2D."""
         if not self._length:
             self._length = WireMixin.length(self)
         return self._length
+
+    def area(self):
+        """ Gets the area for a Wire2D."""
+        return 0.0
 
     def to_3d(self, plane_origin, x, y):
         """
@@ -433,22 +484,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         for edge in self.primitives:
             primitives3d.append(edge.to_3d(plane_origin, x, y))
         return Wire3D(primitives3d)
-
-    def extract_with_points(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D, inside: bool = True):
-        """
-        Extract primitives between two given points.
-
-        :param point1: extraction point 1.
-        :param point2:extraction point2.
-        :param inside: If True it'll Extract primitives from smaller point abscissa value
-        to greater point abscissa value. If False, it'll return the contour primitives going from
-        the greater point abscissa value to the smaller one.
-        """
-        inside_primitives, outside_primitives = self.split_with_two_points(point1, point2)
-        if inside:
-            return inside_primitives
-        return outside_primitives
-
         # TODO: method to check if it is a wire
 
     def infinite_intersections(self, infinite_primitives):
@@ -732,6 +767,14 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         """
         self_primitives_to_test = [prim for prim in self.primitives if prim.is_point_edge_extremity(crossing)]
         if len(self_primitives_to_test) < 2:
+            self_primitive = [prim for prim in self.primitives if prim.point_belongs(crossing)][0]
+            crossing_abscissa = self_primitive.abscissa(crossing)
+            vector_crossing = self_primitive.direction_vector(crossing_abscissa)
+            current_vector = current_wire_primitive.direction_vector(current_wire_primitive.length())
+            next_vector = next_wire_primitive.direction_vector(next_wire_primitive.length())
+            if math.isclose(abs(vector_crossing.dot(current_vector)), 1, abs_tol=1e-6) or\
+                    math.isclose(abs(vector_crossing.dot(next_vector)), 1, abs_tol=1e-6):
+                return False
             return True
         if len(self_primitives_to_test) > 2:
             raise NotImplementedError
@@ -1616,13 +1659,6 @@ class ContourMixin(WireMixin):
             return ClosedPolygon2D(polygon_points)
         return ClosedPolygon3D(polygon_points)
 
-    @classmethod
-    def extract_contours(cls, contour, point1, point2, inside=False):
-
-        new_primitives = contour.extract_with_points(point1, point2, inside)
-        contours = [cls(new_primitives)]
-        return contours
-
     def invert(self):
         """Invert the Contour."""
         return self.__class__(self.inverted_primitives())
@@ -1965,7 +2001,7 @@ class Contour2D(ContourMixin, Wire2D):
             if not contour_to_cut.point_belongs(closing_line.middle_point()):
                 continue
             closing_contour = Contour2D([closing_line])
-            contour1, contour2 = contour_to_cut.get_divided_contours(point1, point2, closing_contour, True)
+            contour1, contour2 = contour_to_cut.get_divided_contours(point1, point2, closing_contour)
             if sorted_points.index(point1) + 2 <= len(sorted_points) - 1:
                 if contour1.point_over_contour(sorted_points[sorted_points.index(point1) + 2]):
                     contour_to_cut = contour1
@@ -1985,15 +2021,15 @@ class Contour2D(ContourMixin, Wire2D):
             return [self]
         if len(intersections) < 2:
             extracted_outerpoints_contour1 = \
-                volmdlr.wires.Contour2D.extract_contours(self, self.primitives[0].start, intersections[0], True)[0]
+                volmdlr.wires.Contour2D.extract(self, self.primitives[0].start, intersections[0], True)[0]
             extracted_innerpoints_contour1 = \
-                volmdlr.wires.Contour2D.extract_contours(self, intersections[0], self.primitives[-1].end, True)[0]
+                volmdlr.wires.Contour2D.extract(self, intersections[0], self.primitives[-1].end, True)[0]
             return extracted_outerpoints_contour1, extracted_innerpoints_contour1
         if len(intersections) == 2:
             extracted_outerpoints_contour1 = \
-                volmdlr.wires.Contour2D.extract_contours(self, intersections[0], intersections[1], True)[0]
+                volmdlr.wires.Contour2D.extract(self, intersections[0], intersections[1], True)[0]
             extracted_innerpoints_contour1 = \
-                volmdlr.wires.Contour2D.extract_contours(self, intersections[0], intersections[1], False)[0]
+                volmdlr.wires.Contour2D.extract(self, intersections[0], intersections[1], False)[0]
             return extracted_innerpoints_contour1, extracted_outerpoints_contour1
         raise NotImplementedError
 
@@ -2097,20 +2133,12 @@ class Contour2D(ContourMixin, Wire2D):
                 break
         return intersecting_points
 
-    def get_divided_contours(self, cutting_point1: volmdlr.Point2D,
-                             cutting_point2: volmdlr.Point2D,
-                             closing_contour,
-                             inside: bool):
-        extracted_outerpoints_contour1 = \
-            volmdlr.wires.Contour2D.extract_contours(self,
-                                                     cutting_point1,
-                                                     cutting_point2,
-                                                     inside)[0]
-        extracted_innerpoints_contour1 = \
-            volmdlr.wires.Contour2D.extract_contours(self,
-                                                     cutting_point1,
-                                                     cutting_point2,
-                                                     not inside)[0]
+    def get_divided_contours(self, cutting_point1: volmdlr.Point2D, cutting_point2: volmdlr.Point2D,
+                             closing_contour):
+        extracted_innerpoints_contour1_prims, extracted_outerpoints_contour1_prims = self.split_with_two_points(
+            cutting_point1, cutting_point2)
+        extracted_outerpoints_contour1 = Contour2D(extracted_outerpoints_contour1_prims)
+        extracted_innerpoints_contour1 = Contour2D(extracted_innerpoints_contour1_prims)
         primitives1 = extracted_outerpoints_contour1.primitives + closing_contour.primitives
         primitives2 = extracted_innerpoints_contour1.primitives + closing_contour.primitives
         if extracted_outerpoints_contour1.primitives[0].start.is_close(closing_contour.primitives[0].start):
@@ -2159,7 +2187,7 @@ class Contour2D(ContourMixin, Wire2D):
                     continue
                 if cutting_points:
                     contour1, contour2 = base_contour.get_divided_contours(
-                        cutting_points[0], cutting_points[1], cutting_contour, inside)
+                        cutting_points[0], cutting_points[1], cutting_contour)
 
                     new_base_contours_ = []
                     for cntr in [contour1, contour2]:
@@ -2314,73 +2342,21 @@ class Contour2D(ContourMixin, Wire2D):
         :return: contours2d : list[volmdlr.wires.Contour2D].
         """
 
-        points_intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
+        points_intersections = self.wire_intersections(wire)
         if len(points_intersections) < 2:
             return [self]
-        # points_intersections = []
-        # for intersection, _ in intersections:
-        #     if intersection not in points_intersections:
-        #         points_intersections.append(intersection)
         if len(points_intersections) % 2 != 0:
             raise NotImplementedError(
                 f'{len(points_intersections)} intersections not supported yet')
-
-        # points_intersections = [point for point, prim in intersections]
-
         sorted_points = wire.sort_points_along_wire(points_intersections)
-        list_contours = []
-        contour_to_cut = self
-        cutting_points_counter = 0
-        while cutting_points_counter != len(sorted_points):
-
-            point1 = sorted_points[cutting_points_counter]
-            point2 = sorted_points[cutting_points_counter + 1]
-
-            closing_wire = wire.extract_with_points(point1, point2, True)
-
-            for point in points_intersections:
-                if point not in [point1, point2] and Wire2D(closing_wire).point_over_wire(point):
-                    closing_wire = wire.extract_with_points(point1, point2, False)
-                    break
-
-            closing_wire_prim = [closing_w for closing_w in closing_wire if closing_w]
-            closing_contour = Contour2D(closing_wire_prim)
-            contour1, contour2 = contour_to_cut.get_divided_contours(point1,
-                                                                     point2,
-                                                                     closing_contour,
-                                                                     True)
-
-            if sorted_points.index(point1) + 2 < len(sorted_points) - 1:
-                if contour1.point_over_contour(
-                        sorted_points[sorted_points.index(point1) + 2]):
-                    contour_to_cut = contour1
-                    list_contours.append(contour2)
-                elif contour2.point_over_contour(
-                        sorted_points[sorted_points.index(point1) + 2]):
-                    contour_to_cut = contour2
-                    list_contours.append(contour1)
-            else:
-                list_contours.extend([contour1, contour2])
-            cutting_points_counter += 2
-
-        return list_contours
-
-    def split_contour_with_sorted_points(self, sorted_points):
-        """
-        Split contour in various sections using a list of sorted points along the contour.
-
-        :param sorted_points: sorted list of points.
-        :return: list of Contour sections.
-        """
-        split_wires = []
-        len_sorted_points = len(sorted_points)
-        for i, (point1, point2) in enumerate(
-                zip(sorted_points, sorted_points[1:] + [sorted_points[0]])):
-            if i == len_sorted_points - 1:
-                split_wires.extend(Contour2D.extract_contours(self, point1, point2, False))
-            else:
-                split_wires.extend(Contour2D.extract_contours(self, point1, point2, True))
-        return split_wires
+        split_wires = wire.split_with_sorted_points(sorted_points)
+        valid_cutting_wires = []
+        for split_wire in split_wires:
+            if self.is_superposing(split_wire) or not self.is_inside(split_wire):
+                continue
+            valid_cutting_wires.append(split_wire)
+        divided_contours = self.divide(valid_cutting_wires, True)
+        return divided_contours
 
     def intersection_contour_with(self, other_contour, abs_tol=1e-6):
         """
@@ -2393,8 +2369,8 @@ class Contour2D(ContourMixin, Wire2D):
         contour_crossings = self.wire_crossings(other_contour)
         sorted_points_contour1 = sorted(contour_crossings, key=self.abscissa)
         sorted_points_contour2 = sorted(contour_crossings, key=other_contour.abscissa)
-        split_wires1 = self.split_contour_with_sorted_points(sorted_points_contour1)
-        split_wires2 = other_contour.split_contour_with_sorted_points(sorted_points_contour2)
+        split_wires1 = self.split_with_sorted_points(sorted_points_contour1)
+        split_wires2 = other_contour.split_with_sorted_points(sorted_points_contour2)
         intersection_contour_primitives = []
         for section in split_wires1:
             if other_contour.is_inside(section):
