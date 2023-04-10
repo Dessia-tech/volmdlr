@@ -1165,8 +1165,11 @@ class VolumeModel(dc.PhysicalObject):
         return babylon_data
 
     @classmethod
-    def babylonjs_script(cls, babylon_data, use_cdn=True,
-                         debug=False):
+    def babylonjs_script(cls, babylon_data, use_cdn=True, debug=False):
+        """
+        Run babylonjs script.
+
+        """
         if use_cdn:
             script = volmdlr.templates.BABYLON_UNPACKER_CDN_HEADER  # .substitute(name=page_name)
         else:
@@ -1177,6 +1180,10 @@ class VolumeModel(dc.PhysicalObject):
         return script
 
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+        """
+        Creates a html file using babylonjs to show a 3d model in the browser.
+
+        """
         babylon_data = self.babylon_data()
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                        debug=debug)

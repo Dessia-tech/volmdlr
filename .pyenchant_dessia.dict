@@ -1,5 +1,8 @@
+asarray
 babylon
 babylonjs
+Bbox
+BBox
 Bentley-Ottmann
 Bezier
 bool
@@ -8,6 +11,7 @@ bsplinecurve
 Bspline
 bsplines
 cosinus
+ctrlpts
 dataset
 dbscan
 dectree
@@ -22,11 +26,14 @@ freecad
 geo
 getter
 gmsh
+huygens
 init
 inplace
+isinstance
 isort
 JSON
 jsonschema
+kwargs
 len
 LHS
 linesegment
@@ -35,6 +42,7 @@ matplolib
 maxiter
 .msh
 msh
+plt
 nbv
 ndarray
 numpy
