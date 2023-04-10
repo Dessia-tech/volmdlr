@@ -85,7 +85,7 @@ for error_code, number_errors in code_to_number.items():
                 f"\nYou can adjust number of admissible errors (in code_pydocstyle.py) of {error_code} to {number_errors + time_decrease} (actual {max_errors + time_decrease})"
             )
 
-        elif number_errors < max_errors - ratchet_limit:
+        elif number_errors < max_errors - time_decrease:
             # The number of errors is below the maximum acceptable, and below the ratchet_limit:
             # the user must reduce the maximum number of errors
             error_over_ratchet_limit = True
