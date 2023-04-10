@@ -349,13 +349,10 @@ class Line(dc.DessiaObject):
         """
         return self.direction_vector().normal_vector()
 
-    def unit_normal_vector(self, abscissa=0.):
+    def unit_normal_vector(self, *args, **kwargs):
         """
         Get the unit normal vector of the line.
 
-        :param abscissa: The abscissa of the point from which to calculate
-            the normal vector
-        :type abscissa: float, optional
         :return: The unit normal vector of the line
         :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
         """
@@ -446,7 +443,7 @@ class Line(dc.DessiaObject):
             return True
         return False
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, *args, **kwargs):
         """Exports to STEP format."""
         p1_content, p1_id = self.point1.to_step(current_id)
         # p2_content, p2_id = self.point2.to_step(current_id+1)
@@ -680,7 +677,7 @@ class LineSegment(Edge):
         raise NotImplementedError('the point_distance method must be'
                                   'overloaded by subclassing class')
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, *args, **kwargs):
         """Exports to STEP format."""
         line = self.to_line()
         content, (line_id,) = line.to_step(current_id)

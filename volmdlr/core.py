@@ -1165,8 +1165,7 @@ class VolumeModel(dc.PhysicalObject):
         return babylon_data
 
     @classmethod
-    def babylonjs_script(cls, babylon_data, use_cdn=True,
-                         debug=False):
+    def babylonjs_script(cls, babylon_data, use_cdn=True):
         if use_cdn:
             script = volmdlr.templates.BABYLON_UNPACKER_CDN_HEADER  # .substitute(name=page_name)
         else:
@@ -1176,10 +1175,9 @@ class VolumeModel(dc.PhysicalObject):
             babylon_data=babylon_data)
         return script
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+    def babylonjs(self, page_name=None, use_cdn=True):
         babylon_data = self.babylon_data()
-        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                       debug=debug)
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn)
         if page_name is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
                                              delete=False) as file:
@@ -1195,11 +1193,9 @@ class VolumeModel(dc.PhysicalObject):
 
         return page_name
 
-    def save_babylonjs_to_file(self, filename: str = None,
-                               use_cdn=True, debug=False):
+    def save_babylonjs_to_file(self, filename: str = None, use_cdn=True):
         babylon_data = self.babylon_data()
-        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                       debug=debug)
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn)
         if filename is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
                                              delete=False) as file:
