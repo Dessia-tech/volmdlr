@@ -652,11 +652,11 @@ class LineSegment(Edge):
             return [self]
         new_linesegment_points = []
         for point in [self.start, self.end]:
-            if other_linesegment.point_belongs(point, abs_tol=1e-6) and\
+            if other_linesegment.point_belongs(point, abs_tol=1e-6) and \
                     not volmdlr.core.point_in_list(point, new_linesegment_points):
                 new_linesegment_points.append(point)
         for point in [other_linesegment.start, other_linesegment.end]:
-            if self.point_belongs(point, abs_tol=1e-6) and\
+            if self.point_belongs(point, abs_tol=1e-6) and \
                     not volmdlr.core.point_in_list(point, new_linesegment_points):
                 new_linesegment_points.append(point)
         if len(new_linesegment_points) == 1:
@@ -907,7 +907,7 @@ class BSplineCurve(Edge):
                                    for point in curve.ctrlpts],
                    knots=knots,
                    knot_multiplicities=knot_multiplicities,
-                   weights= curve.weights ,periodic=periodic, name=name)
+                   weights=curve.weights, periodic=periodic, name=name)
 
     def length(self):
         """
@@ -965,6 +965,7 @@ class BSplineCurve(Edge):
 
         def evaluate_point_distance(u):
             return (point - self.evaluate_single(u)).norm()
+
         results = []
         initial_condition_list.sort(key=evaluate_point_distance)
         for u0 in initial_condition_list:
@@ -2768,16 +2769,18 @@ class Arc(Edge):
                 new_arcs.append(arc)
         return new_arcs
 
+
 class FullArc(Arc):
     """
     Abstract class for representing a circle with a start and end points that are the same.
     """
+
     def __init__(self, center: Union[volmdlr.Point2D, volmdlr.Point3D],
                  start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
         self.__center = center
         self.start_end = start_end
         Arc.__init__(self, start=start_end, interior=self.interior,
-                       end=start_end, name=name)  # !!! this is dangerous
+                     end=start_end, name=name)  # !!! this is dangerous
 
     @property
     def is_trigo(self):
@@ -3434,6 +3437,7 @@ class FullArc2D(FullArc, Arc2D):
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
                  name: str = ''):
         self.interior = start_end.rotation(center, math.pi)
+        self._bounding_rectangle = None
         FullArc.__init__(self, center=center, start_end=start_end, name=name)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
@@ -3611,7 +3615,7 @@ class FullArc2D(FullArc, Arc2D):
         vector1 = vec.dot(vec)
         vector2 = 2 * vec.dot(pt1 - self.center)
         vector3 = pt1.dot(pt1) + self.center.dot(self.center) \
-            - 2 * pt1.dot(self.center) - self.radius ** 2
+                  - 2 * pt1.dot(self.center) - self.radius ** 2
 
         disc = vector2 ** 2 - 4 * vector1 * vector3
         if math.isclose(disc, 0., abs_tol=tol):
@@ -3647,7 +3651,7 @@ class FullArc2D(FullArc, Arc2D):
         vector1 = vec.dot(vec)
         vector2 = 2 * vec.dot(pt1 - self.center)
         vector3 = pt1.dot(pt1) + self.center.dot(self.center) \
-            - 2 * pt1.dot(self.center) - self.radius ** 2
+                  - 2 * pt1.dot(self.center) - self.radius ** 2
 
         disc = vector2 ** 2 - 4 * vector1 * vector3
         if math.isclose(disc, 0., abs_tol=tol):
@@ -3737,7 +3741,7 @@ class ArcEllipse2D(Edge):
             y2 = interior_new.y - center_new.y
             if abs(x1) == abs(x2):
                 raise ValueError(f"Interior point{interior} is not valid. Try specifying another interior point.")
-        minor_axis = math.sqrt((x1**2 * y2**2 - x2**2 * y1**2) / (x1**2 - x2**2))
+        minor_axis = math.sqrt((x1 ** 2 * y2 ** 2 - x2 ** 2 * y1 ** 2) / (x1 ** 2 - x2 ** 2))
         if (1 - (y1 ** 2 / minor_axis ** 2)) == 0.0:
             if abs(y1) != abs(y2) and abs(interior_new.y) != abs(y2):
                 x1 = interior_new.x - center_new.x
@@ -3869,9 +3873,11 @@ class ArcEllipse2D(Edge):
         u1, u2 = initial_point.x / self.major_axis, initial_point.y / self.minor_axis
         initial_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         angle_start, initial_angle = self.valid_abscissa_start_end_angle(initial_angle)
+
         def ellipse_arc_length(theta):
             return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
                              (self.minor_axis ** 2) * math.cos(theta) ** 2)
+
         abscissa_angle = None
         iter_counter = 0
         increment_factor = 1e-5
@@ -3917,6 +3923,7 @@ class ArcEllipse2D(Edge):
             u1, u2 = new_point.x / self.major_axis, new_point.y / self.minor_axis
             angle_abscissa = volmdlr.geometry.sin_cos_angle(u1, u2)
             angle_start, angle_end = self.valid_abscissa_start_end_angle(angle_abscissa)
+
             def ellipse_arc_length(theta):
                 return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
                                  (self.minor_axis ** 2) * math.cos(theta) ** 2)
@@ -4070,7 +4077,7 @@ class ArcEllipse2D(Edge):
     def reverse(self):
         if not self._reverse:
             self._reverse = self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(),
-                              self.center.copy(), self.major_dir.copy(), self.name)
+                                           self.center.copy(), self.major_dir.copy(), self.name)
         return self._reverse
 
     def line_intersections(self, line2d: Line2D):
@@ -4176,6 +4183,7 @@ class ArcEllipse2D(Edge):
                 self.__class__(split_point, self.point_at_abscissa(
                     (self.abscissa(self.end) - abscissa) * 0.5 + abscissa),
                                self.end, self.center.copy(), self.major_dir.copy())]
+
 
 class FullArcEllipse(Edge):
     """
@@ -5013,10 +5021,10 @@ class LineSegment3D(LineSegment):
         c = v.dot(v)
         d = u.dot(w)
         e = v.dot(w)
-        determinant = a*c - b*c
+        determinant = a * c - b * c
         if determinant > - 1e-6:
-            b_times_e = b*e
-            c_times_d = c*d
+            b_times_e = b * e
+            c_times_d = c * d
             if b_times_e <= c_times_d:
                 s_parameter = 0.0
                 if e <= 0.0:
@@ -6515,6 +6523,7 @@ class FullArc3D(FullArc, Arc3D):
                  name: str = ''):
         self.__normal = normal
         self._utd_frame = None
+        self._bbox = None
         self.interior = start_end.rotation(center, normal, math.pi)
         FullArc.__init__(self, center=center, start_end=start_end, name=name)
 
@@ -6693,7 +6702,7 @@ class FullArc3D(FullArc, Arc3D):
         vec = volmdlr.Vector3D(*point - self.center)
         dot = self.normal.dot(vec)
         return math.isclose(distance, self.radius, abs_tol=abs_tol) \
-                and math.isclose(dot, 0, abs_tol=abs_tol)
+            and math.isclose(dot, 0, abs_tol=abs_tol)
 
 
 class ArcEllipse3D(Edge):
@@ -6748,7 +6757,7 @@ class ArcEllipse3D(Edge):
 
             """
             x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1], \
-                iterior_[0] - center_[0], iterior_[1] - center_[
+                                                                     iterior_[0] - center_[0], iterior_[1] - center_[
                                                                          1], end_[0] - center_[0], end_[1] - center_[1]
             matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
                                   [x_interior ** 2, y_interior ** 2, 2 * x_interior * y_interior],
