@@ -9,7 +9,6 @@ import warnings
 from random import uniform
 from typing import Dict, List, Tuple
 
-import dessia_common
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -557,27 +556,11 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
             for p in inner_contour.primitives:
                 lateral_faces.extend(p.extrusion(self.extrusion_vector))
 
-        return [lower_face] + [upper_face] + lateral_faces
-
-    # def plot(self, ax=None, color:str='k', alpha:float=1):
-    #     if ax is None:
-    #         fig, ax = plt.subplots()
-    #         ax.set_aspect('equal')
-    #     for contour in [self.outer_contour2d]+self.inner_contours2d:
-    #         for primitive in contour.primitives:
-    #             primitive.plot(ax)
-    #     ax.margins(0.1)
-    #     return ax
+        return [lower_face, upper_face] + lateral_faces
 
     def area(self):
         areas = self.outer_contour2d.area()
         areas -= sum([contour.area() for contour in self.inner_contours2d])
-
-        # sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
-        # area=areas[sic[0]]
-
-        # for i in sic[1:]:
-        #     area-=self.contours2D[i].Area()
         return areas
 
     def volume(self):
@@ -740,7 +723,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),
                               x=self.x.copy(), y=self.y.copy(),
-                              contour2d=self.contour2d.copy(),
+                              contour2d=self.contour2d.copy(deep=deep, memo=memo),
                               axis=self.axis.copy(), angle=self.angle,
                               axis_point=self.axis_point.copy(),
                               color=self.color, alpha=self.alpha,
@@ -1071,7 +1054,7 @@ class Cylinder(RevolvedProfile):
         """
         Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class Revolved Profile.
         """
-        return dessia_common.DessiaObject.to_dict(self, use_pointers, memo, path)
+        return dc.DessiaObject.to_dict(self, use_pointers, memo, path)
 
     def copy(self, deep=True, memo=None):
         """
@@ -1526,7 +1509,7 @@ class HollowCylinder(RevolvedProfile):
         return self.length * math.pi * (self.outer_radius**2
                                         - self.inner_radius**2)
 
-    def copy(self):
+    def copy(self, *args, **kwargs):
         """
         Creates a copy of HollowCylinder.
 
