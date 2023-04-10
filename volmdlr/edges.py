@@ -2865,6 +2865,62 @@ class Arc(Edge):
                 new_arcs.append(arc)
         return new_arcs
 
+class FullArc(Arc):
+    """
+    Abstract class for representing a circle with a start and end points that are the same.
+    """
+    def __init__(self, center: Union[volmdlr.Point2D, volmdlr.Point3D],
+                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
+        self.__center = center
+        self.start_end = start_end
+        Arc.__init__(self, start=start_end, interior=self.interior,
+                       end=start_end, name=name)  # !!! this is dangerous
+
+    @property
+    def is_trigo(self):
+        return True
+
+    @property
+    def center(self):
+        return self.__center
+
+    @property
+    def angle(self):
+        return volmdlr.TWO_PI
+
+    @classmethod
+    def from_3_points(cls, point1, point2, point3):
+        vector_u1 = point2 - point1
+        vector_u2 = point2 - point3
+        try:
+            vector_u1.normalize()
+            vector_u2.normalize()
+        except ZeroDivisionError:
+            raise ValueError('the 3 points must be distincts')
+
+        normal = vector_u2.cross(vector_u1)
+        normal.normalize()
+
+        if vector_u1.is_close(vector_u2):
+            vector_u2 = normal.cross(vector_u1)
+            vector_u2.normalize()
+
+        vector_v1 = normal.cross(vector_u1)  # v1 is normal, equal u2
+        vector_v2 = normal.cross(vector_u2)  # equal -u1
+
+        point11 = 0.5 * (point1 + point2)  # Mid-point of segment s,m
+        point21 = 0.5 * (point2 + point3)  # Mid-point of segment s,m
+
+        line1 = volmdlr.edges.Line3D(point11, point11 + vector_v1)
+        line2 = volmdlr.edges.Line3D(point21, point21 + vector_v2)
+
+        try:
+            center, _ = line1.minimum_distance_points(line2)
+        except ZeroDivisionError:
+            raise ValueError('Start, end and interior points  of an arc must be distincts')
+
+        return cls(center=center, start_end=point1, normal=normal)
+
 
 class Arc2D(Arc):
     """
@@ -3499,28 +3555,13 @@ class Arc2D(Arc):
                               end=points_symmetry[2])
 
 
-class FullArc2D(Arc2D):
+class FullArc2D(FullArc, Arc2D):
     """ An edge that starts at start_end, ends at the same point after having described a circle. """
 
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
                  name: str = ''):
-        self.__center = center
-        self.start_end = start_end
-        interior = start_end.rotation(center, math.pi)
-        Arc2D.__init__(self, start=start_end, interior=interior,
-                       end=start_end, name=name)  # !!! this is dangerous
-
-    @property
-    def is_trigo(self):
-        return True
-
-    @property
-    def center(self):
-        return self.__center
-
-    @property
-    def angle(self):
-        return volmdlr.TWO_PI
+        self.interior = start_end.rotation(center, math.pi)
+        FullArc.__init__(self, center=center, start_end=start_end, name=name)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         dict_ = self.base_dict()
@@ -3756,6 +3797,13 @@ class FullArc2D(Arc2D):
 
     def reverse(self):
         return self
+
+    def point_belongs(self, point: volmdlr.Point2D, tol: float = 1e-6):
+        """
+        Returns if given point belongs to the FullArc2D.
+        """
+        distance = point.point_distance(self.center)
+        return math.isclose(distance, self.radius, abs_tol=tol)
 
 
 class ArcEllipse2D(Edge):
@@ -6598,7 +6646,7 @@ class Arc3D(Arc):
         return linesegment_intersections
 
 
-class FullArc3D(Arc3D):
+class FullArc3D(FullArc, Arc3D):
     """
     An edge that starts at start_end, ends at the same point after having described a circle.
 
@@ -6607,12 +6655,10 @@ class FullArc3D(Arc3D):
     def __init__(self, center: volmdlr.Point3D, start_end: volmdlr.Point3D,
                  normal: volmdlr.Vector3D,
                  name: str = ''):
-        self.__center = center
         self.__normal = normal
-        self.start_end = start_end
-        interior = start_end.rotation(center, normal, math.pi)
-        Arc3D.__init__(self, start=start_end, end=start_end,
-                       interior=interior, name=name)  # !!! this is dangerous
+        self._utd_frame = None
+        self.interior = start_end.rotation(center, normal, math.pi)
+        FullArc.__init__(self, center=center, start_end=start_end, name=name)
 
     def __hash__(self):
         return hash(self.center) + 5 * hash(self.start_end)
@@ -6622,20 +6668,8 @@ class FullArc3D(Arc3D):
             and (self.start == other_arc.start)
 
     @property
-    def center(self):
-        return self.__center
-
-    @property
-    def angle(self):
-        return volmdlr.TWO_PI
-
-    @property
     def normal(self):
         return self.__normal
-
-    @property
-    def is_trigo(self):
-        return True
 
     def copy(self, *args, **kwargs):
         return FullArc3D(self._center.copy(), self.end.copy(), self._normal.copy())
@@ -6792,6 +6826,16 @@ class FullArc3D(Arc3D):
 
         """
         return self
+
+    def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
+        """
+        Returns if given point belongs to the FullArc3D.
+        """
+        distance = point.point_distance(self.center)
+        vec = volmdlr.Vector3D(*point - self.center)
+        dot = self.normal.dot(vec)
+        return math.isclose(distance, self.radius, abs_tol=abs_tol) \
+                and math.isclose(dot, 0, abs_tol=abs_tol)
 
 
 class ArcEllipse3D(Edge):
