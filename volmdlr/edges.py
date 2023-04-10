@@ -915,27 +915,28 @@ class BSplineCurve(Edge):
     @property
     def simplify(self):
         """Search another simplified edge that can represent the bspline."""
+        if self.length() < 1e-6:
+            return self
+        class_sufix = self.__class__.__name__[-2:]
         if self._simplified is None:
-            class_sufix = self.__class__.__name__[-2:]
-            lineseg_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
-            lineseg = lineseg_class(self.points[0], self.points[-1])
-            if all(lineseg.point_belongs(pt) for pt in self.points):
-                self._simplified = lineseg
-                return lineseg
-            colinear = True
-            previous_vec = None
-            points_ = [self.points[0]]
-            for i, (point1, point2) in enumerate(zip(self.points[:-1], self.points[1:])):
-                vec = point2 - point1
-                if i == 0:
-                    previous_vec = vec
-                elif not vec.is_colinear_to(previous_vec):
-                    colinear = False
-                    points_.append(point2)
-                previous_vec = vec
-            if not colinear:
+            if self.periodic:
+                fullarc_class_ = getattr(sys.modules[__name__], 'FullArc' + class_sufix)
+                n = len(self.points)
+                try_fullarc = fullarc_class_.from_3_points(self.points[0], self.points[int(0.5 * n)],
+                                                           self.points[int(0.75 * n)])
+
+                if all(try_fullarc.point_belongs(point, 1e-5) for point in self.points):
+                    self._simplified = try_fullarc
+                    return try_fullarc
+            else:
+                lineseg_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
+                lineseg = lineseg_class(self.points[0], self.points[-1])
+                if all(lineseg.point_belongs(pt) for pt in self.points):
+                    self._simplified = lineseg
+                    return lineseg
+
                 arc_class_ = getattr(sys.modules[__name__], 'Arc' + class_sufix)
-                try_arc = arc_class_(points_[0], points_[int(len(points_) / 2)], points_[-1])
+                try_arc = arc_class_(self.points[0], self.points[int(len(self.points) / 2)], self.points[-1])
                 if all(try_arc.point_belongs(point, 1e-6) for point in self.points):
                     self._simplified = try_arc
                     return try_arc
@@ -956,12 +957,15 @@ class BSplineCurve(Edge):
 
         knots = list(sorted(set(curve.knotvector)))
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
-
+        start = curve.ctrlpts[0]
+        end = curve.ctrlpts[-1]
+        periodic =  npy.linalg.norm(npy.array(start) - npy.array(end)) < 1e-6
         return cls(degree=curve.degree,
                    control_points=[getattr(volmdlr, point_dimension)(*point)
                                    for point in curve.ctrlpts],
                    knots=knots,
-                   knot_multiplicities=knot_multiplicities, name=name)
+                   knot_multiplicities=knot_multiplicities,
+                   weights= curve.weights ,periodic=periodic, name=name)
 
     def length(self):
         """
