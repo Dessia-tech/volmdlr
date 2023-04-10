@@ -500,9 +500,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector,
-                                    v_vector,
-                                    w_vector)
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
         new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
         new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
         new_closedshells.append(new_closed_shell3d)

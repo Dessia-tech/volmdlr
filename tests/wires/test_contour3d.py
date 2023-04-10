@@ -19,6 +19,17 @@ class TestContour3D(unittest.TestCase):
         merged_contours = contour1_to_merge.merge_with(contour2_to_merge)
         self.assertEqual(merged_contours[0], expected_contour1)
         self.assertEqual(merged_contours[1], expected_contour2)
+        contour1 = Contour3D.load_from_file('wires/contour1_merge_bug.json')
+        contour2 = Contour3D.load_from_file('wires/contour2_merge_bug.json')
+        merged_contour1_contour2 = contour1.merge_with(contour2)
+        merged_contour2_contour1 = contour2.merge_with(contour1)
+        self.assertEqual(merged_contour1_contour2, merged_contour2_contour1)
+
+    def test_is_sharing_primitives_with(self):
+        contour1_sharing_primitives = Contour3D.load_from_file('wires/contour3d_sharing_primitives1.json')
+        contour2_sharing_primitives = Contour3D.load_from_file('wires/contour3d_sharing_primitives2.json')
+
+        self.assertTrue(contour1_sharing_primitives.is_sharing_primitives_with(contour2_sharing_primitives))
 
 
 if __name__ == '__main__':
