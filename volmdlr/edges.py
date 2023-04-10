@@ -3694,13 +3694,17 @@ class ArcEllipse2D(Edge):
             return True
         return False
 
-    def abscissa(self, point: volmdlr.Point2D):
+    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-6):
         """
         Calculates the abscissa of a given point.
 
         :param point: point for calculating abscissa
         :return: a float, between 0 and the arc ellipse 2d's length
         """
+        if point.point_distance(self.start) < tol:
+            return 0
+        if point.point_distance(self.end) < tol:
+            return self.length()
         if self.point_belongs(point):
             angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
             angle_start = self.angle_start
@@ -5800,14 +5804,19 @@ class Arc3D(Arc):
         self.start, self.interior, self.end = new_start, new_interior, new_end
         self._bbox = None
 
-    def abscissa(self, point3d: volmdlr.Point3D):
+    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
         """
         Calculates the abscissa given a point in the Arc3D.
 
-        :param point3d: point to calculate the abscissa.
+        :param point: point to calculate the abscissa.
+        :param tol: (Optional) Confusion distance to consider points equal. Default 1e-6.
         :return: corresponding abscissa.
         """
-        x, y, _ = self.frame.global_to_local_coordinates(point3d)
+        if point.point_distance(self.start) < tol:
+            return 0
+        if point.point_distance(self.end) < tol:
+            return self.length()
+        x, y, _ = self.frame.global_to_local_coordinates(point)
         u1 = x / self.radius
         u2 = y / self.radius
         theta = volmdlr.geometry.sin_cos_angle(u1, u2)
@@ -6499,13 +6508,17 @@ class ArcEllipse3D(Edge):
     def direction_vector(self, abscissa):
         raise NotImplementedError
 
-    def abscissa(self, point: volmdlr.Point3D):
+    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
         """
         Calculates the abscissa a given point.
 
         :param point: point to calculate abscissa.
         :return: abscissa
         """
+        if point.point_distance(self.start) < tol:
+            return 0
+        if point.point_distance(self.end) < tol:
+            return self.length()
         vector_2 = self.normal.cross(self.major_dir)
         ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)

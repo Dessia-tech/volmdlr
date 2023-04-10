@@ -9037,7 +9037,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             self._faces_graph = faces_graph
         return self._faces_graph
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """
         Serializes a 3 dimensional open shell into a dictionary.
 
@@ -9047,8 +9047,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :return: A serialized version of the OpenShell3D
         :rtype: dict
 
-        .. seealso::
-            How `serialization and deserialization`_ works in dessia_common
+        .. see also::
+            How `serialization and de-serialization`_ works in dessia_common
 
         .. _serialization and deserialization:
         https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method

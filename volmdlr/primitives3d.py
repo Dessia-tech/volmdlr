@@ -740,7 +740,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),
                               x=self.x.copy(), y=self.y.copy(),
-                              contour2d=self.contour2d.copy(),
+                              contour2d=self.contour2d.copy(deep=deep, memo=memo),
                               axis=self.axis.copy(), angle=self.angle,
                               axis_point=self.axis_point.copy(),
                               color=self.color, alpha=self.alpha,
@@ -1071,7 +1071,7 @@ class Cylinder(RevolvedProfile):
         """
         Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class Revolved Profile.
         """
-        return dessia_common.DessiaObject.to_dict(self, use_pointers, memo, path)
+        return dc.DessiaObject.to_dict(self, use_pointers, memo, path)
 
     def copy(self, deep=True, memo=None):
         """
@@ -1526,7 +1526,7 @@ class HollowCylinder(RevolvedProfile):
         return self.length * math.pi * (self.outer_radius**2
                                         - self.inner_radius**2)
 
-    def copy(self):
+    def copy(self, *args, **kwargs):
         """
         Creates a copy of HollowCylinder.
 
