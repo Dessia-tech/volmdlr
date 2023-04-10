@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineSurface3D: refactor bsplinecurve3d_to_2d to take into account periodic behavior
 * OpenedRoundedLineSegments2D/ClosedRoundedLineSegments2D: fix radius type
 * Surface3D: debug some special cases while using face_from_contours3d.
+* Improve pylint code quality.
 
 ### Removed
 * stl: remove default value in from_stream method

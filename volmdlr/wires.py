@@ -532,8 +532,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         return self.__class__(offset_primitives)
 
-    def plot_data(self, name: str = '', fill=None, color='black',
-                  stroke_width: float = 1, opacity: float = 1):
+    def plot_data(self, *args, **kwargs):
         data = []
         for item in self.primitives:
             data.append(item.plot_data())
@@ -1720,7 +1719,7 @@ class Contour2D(ContourMixin, Wire2D):
         return second_moment_area_x, second_moment_area_y, second_moment_area_xy
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
-                  surface_style: plot_data.SurfaceStyle = None, *args, **kwargs):
+                  surface_style: plot_data.SurfaceStyle = None):
         plot_data_primitives = [item.plot_data() for item in self.primitives]
         return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
                                    edge_style=edge_style,
