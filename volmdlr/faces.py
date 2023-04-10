@@ -700,6 +700,13 @@ class Surface2D(volmdlr.core.Primitive2D):
                               inner_contours=inner_contours)
 
     def rotation(self, center, angle):
+        """
+        Surface2D rotation.
+
+        :param center: rotation center.
+        :param angle: angle rotation.
+        :return: a new rotated Surface2D.
+        """
 
         outer_contour = self.outer_contour.rotation(center, angle)
         if self.inner_contours:
@@ -720,6 +727,12 @@ class Surface2D(volmdlr.core.Primitive2D):
         self.inner_contours = new_surface2d.inner_contours
 
     def translation(self, offset: volmdlr.Vector2D):
+        """
+        Surface2D translation.
+
+        :param offset: translation vector.
+        :return: A new translated Surface2D.
+        """
         outer_contour = self.outer_contour.translation(offset)
         inner_contours = [contour.translation(offset) for contour in self.inner_contours]
         return self.__class__(outer_contour, inner_contours)
@@ -2340,6 +2353,9 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     @property
     def bounding_box(self):
+        """
+        Returns the surface bounding box.
+        """
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
