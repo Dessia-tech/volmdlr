@@ -2635,7 +2635,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         points = [self.point3d_to_2d(p) for p in arcellipse3d.discretization_points(number_points=15)]
         theta1, phi1 = self.point3d_to_2d(arcellipse3d.start)
         theta2, phi2 = self.point3d_to_2d(arcellipse3d.end)
-        # TODO: create a method point_at_abscissa abssissa for ArcEllipse3D and enhance this code
+        # TODO: create a method point_at_abscissa abscissa for ArcEllipse3D and enhance this code
 
         theta3, phi3 = points[1]
         theta4, phi4 = points[-2]
@@ -2874,8 +2874,7 @@ class ConicalSurface3D(PeriodicalSurface):
             start = volmdlr.Point2D(end.x, 0)
         elif start.x != end.x and end == volmdlr.Point2D(0, 0):
             end = volmdlr.Point2D(start.x, 0)
-        # elif start.x != end.x:
-        #     end = volmdlr.Point2D(start.x, end.y)
+
         if not start.is_close(end):
             return [vme.LineSegment2D(start, end)]
         return [vme.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
@@ -2986,7 +2985,7 @@ class ConicalSurface3D(PeriodicalSurface):
         :return: A list of primitives.
         :rtype: list
         """
-        # Search for a primitive that can be used as reference for reparing periodicity
+        # Search for a primitive that can be used as reference for repairing periodicity
         pos = vm_parametric.find_index_defined_brep_primitive_on_periodical_surface(primitives2d,
                                                                                     [self.x_periodicity,
                                                                                      self.y_periodicity])
@@ -8304,48 +8303,6 @@ class ConicalFace3D(Face3D):
         number_points_y = 0
 
         return number_points_x, number_points_y
-
-    # def create_triangle(self, all_contours_points, part):
-    #     Triangles, ts = [], []
-    #     pts, h_list = [], []
-    #     for listpt in all_contours_points:
-    #         for pt in listpt:
-    #             pts.append(pt)
-    #             h_list.append(pt[1])
-    #     if part == 'bot':
-    #         h_concerned = min(h_list)
-    #     else:
-    #         h_concerned = max(h_list)
-    #     peak_list, other = [], []
-    #     for pt in pts:
-    #         if pt[1] == h_concerned:
-    #             peak_list.append(pt)
-    #         else:
-    #             other.append(pt)
-    #     points = [peak_list[0]] + other
-    #
-    #     for i in range(1, len(points)):
-    #         if i == len(points) - 1:
-    #             vertices = [points[i].vector, points[0].vector,
-    #                         points[1].vector]
-    #             segments = [[0, 1], [1, 2], [2, 0]]
-    #             listindice = [i, 0, 1]
-    #         else:
-    #             vertices = [points[i].vector, points[0].vector,
-    #                         points[i + 1].vector]
-    #             segments = [[0, 1], [1, 2], [2, 0]]
-    #             listindice = [i, 0, i + 1]
-    #         tri = {'vertices': vertices, 'segments': segments}
-    #         t = triangle_lib.triangulate(tri, 'p')
-    #         if 'triangles' in t:
-    #             triangles = t['triangles'].tolist()
-    #             triangles[0] = listindice
-    #             Triangles.append(triangles)
-    #         else:
-    #             Triangles.append(None)
-    #         ts.append(t)
-    #
-    #     return points, Triangles
 
 
 class SphericalFace3D(Face3D):

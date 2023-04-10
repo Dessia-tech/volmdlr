@@ -2423,7 +2423,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return equal
 
     def area(self):
-        # TODO: perf: cache number of points
+        # TODO: performance: cache number of points
         if len(self.points) < 3:
             return 0.
 
