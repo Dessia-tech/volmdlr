@@ -300,7 +300,7 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError(f'the abscissa method must be overloaded by {self.__class__.__name__}')
 
-    def local_discretization(self, point1, point2, number_points):
+    def local_discretization(self, point1, point2, number_points: int = 10):
         """
         Gets n discretization points between two given points of the edge.
 
@@ -311,8 +311,11 @@ class Edge(dc.DessiaObject):
         """
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
-        discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
-                                          in npy.linspace(abscissa1, abscissa2, num=number_points)]
+        discretized_points_between_1_2 = []
+        for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
+            abscissa_point = self.point_at_abscissa(abscissa)
+            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+                discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
 
     def split_between_two_points(self, point1, point2):
@@ -346,15 +349,11 @@ class Edge(dc.DessiaObject):
         abscissa1 = 0
         abscissa2 = self.abscissa(self.end)
         distance = best_distance
-        point1_ = None
-        point2_ = None
+        point1_ = self.start
+        point2_ = self.end
         linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
         while True:
-            discretized_points_between_1_2 = []
-            for abscissa in npy.linspace(abscissa1, abscissa2, num=8):
-                abscissa_point = self.point_at_abscissa(abscissa)
-                if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
-                    discretized_points_between_1_2.append(abscissa_point)
+            discretized_points_between_1_2 = self.local_discretization(point1_, point2_)
             if not discretized_points_between_1_2:
                 break
             distance = point.point_distance(discretized_points_between_1_2[0])
@@ -367,8 +366,6 @@ class Edge(dc.DessiaObject):
                     distance = dist
             if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-6):
                 break
-            abscissa1 = self.abscissa(point1_)
-            abscissa2 = self.abscissa(point2_)
             best_distance = distance
             if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
                 break
