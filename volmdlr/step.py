@@ -918,9 +918,9 @@ class Step(dc.DessiaObject):
                 visited_set.add(node)
                 if self.connections[node]:
                     list_nodes.append(node)
-                    for c in self.connections[node]:
-                        if c not in visited_set:
-                            stack.append(c)
+                    for connection in self.connections[node]:
+                        if connection not in visited_set:
+                            stack.append(connection)
                 else:
                     # Entities without connections should be instatiated first
                     list_head.append(node)
@@ -1095,6 +1095,8 @@ class Step(dc.DessiaObject):
         error = True
         while error:
             try:
+                # here we invert instantiate_ids because if the code enter inside the except
+                # block, we want to loop from the last KeyError to the fisrt. This avoids an infinite loop
                 for instanciate_id in instanciate_ids[::-1]:
                     t = time.time()
 
