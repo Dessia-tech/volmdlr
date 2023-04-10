@@ -9,7 +9,6 @@ import warnings
 from random import uniform
 from typing import Dict, List, Tuple
 
-import dessia_common
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
 import numpy as npy
