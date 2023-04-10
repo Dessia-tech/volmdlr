@@ -3707,8 +3707,6 @@ class ArcEllipse2D(Edge):
         """
         if point.point_distance(self.start) < tol:
             return 0
-        if point.point_distance(self.end) < tol:
-            return self.length()
         if self.point_belongs(point):
             angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
             angle_start = self.angle_start
@@ -6537,8 +6535,6 @@ class ArcEllipse3D(Edge):
         """
         if point.point_distance(self.start) < tol:
             return 0
-        if point.point_distance(self.end) < tol:
-            return self.length()
         vector_2 = self.normal.cross(self.major_dir)
         ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
