@@ -185,6 +185,11 @@ class TestBSplineCurve2D(unittest.TestCase):
         for point1, point2 in zip(expected_points, local_discretization):
             self.assertTrue(point1.is_close(point2))
 
+    def test_simplify(self):
+        bsplinecurve = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_fullarc.json")
+        fullarc = bsplinecurve.simplify
+        self.assertTrue(isinstance(fullarc, vme.FullArc3D))
+
 
 class TestBSplineCurve3D(unittest.TestCase):
     b_splinecurve3d = vme.BSplineCurve3D(degree=5, control_points=[
