@@ -6353,9 +6353,9 @@ class ArcEllipse3D(Edge):
             theta = 0.5 * math.atan(2 * r3 / (r2 - r1))
             c1 = r1 + r2
             c2 = (r2 - r1) / math.cos(2 * theta)
-            gdaxe = math.sqrt((2 / (c1 - c2)))
-            ptax = math.sqrt((2 / (c1 + c2)))
-            return theta, gdaxe, ptax
+            major_axis = math.sqrt((2 / (c1 - c2)))
+            minor_axis = math.sqrt((2 / (c1 + c2)))
+            return theta, major_axis, minor_axis
 
         if start.is_close(end):
             extra_new = frame.global_to_local_coordinates(self.extra)
