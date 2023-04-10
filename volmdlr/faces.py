@@ -4768,21 +4768,21 @@ class BSplineSurface3D(Surface3D):
         """
         Verifies if BSplineSurface3D could be a Plane3D.
 
-        :return: simplified surface if possible, otherwise, returns self.
+        :return: simplified a planar surface if possible, otherwise, returns self.
         """
         points = [self.control_points[0]]
         vector_list = []
-        for point in self.control_points:
+        for point in self.control_points[1:]:
             vector = point - points[0]
             is_colinear = any(vector.is_colinear_to(other_vector) for other_vector in vector_list)
             if not point_in_list(point, points) and not is_colinear:
                 points.append(point)
                 vector_list.append(vector)
                 if len(points) == 3:
+                    plane3d = Plane3D.from_3_points(*points)
+                    if all(plane3d.point_on_surface(point) for point in self.control_points):
+                        return plane3d
                     break
-        plane3d = Plane3D.from_3_points(*points)
-        if all(plane3d.point_on_surface(point) for point in self.control_points):
-            return plane3d
         return self
 
     @classmethod
@@ -8170,7 +8170,7 @@ class ToroidalFace3D(Face3D):
     @property
     def bounding_box(self):
         """
-        Returns the surface bounding box.
+        Returns the face bounding box.
         """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
