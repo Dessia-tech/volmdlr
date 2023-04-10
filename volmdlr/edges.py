@@ -959,7 +959,9 @@ class BSplineCurve(Edge):
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
         start = curve.ctrlpts[0]
         end = curve.ctrlpts[-1]
-        periodic =  npy.linalg.norm(npy.array(start) - npy.array(end)) < 1e-6
+        periodic = False
+        if npy.linalg.norm(npy.array(start) - npy.array(end)) < 1e-6:
+            periodic = True
         return cls(degree=curve.degree,
                    control_points=[getattr(volmdlr, point_dimension)(*point)
                                    for point in curve.ctrlpts],
