@@ -5771,7 +5771,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
-        curves = operations.split_curve(self.curve, parameter)
+        curves = operations.split_curve(self.curve, round(parameter, 5))
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
@@ -5783,7 +5783,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-        curves = operations.split_curve(self.curve, parameter)
+        curves = operations.split_curve(self.curve, round(parameter, 5))
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
