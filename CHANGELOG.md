@@ -19,12 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: split_contour_with_sorted_points, intersection_contour_with
 - CylindricalSurface3D: point_projection, point_distance
 - ToroidalSurface3D: point_projection
+- BsplineCurve: point_distance, point_belongs
+- ContourMixin: is_adjacent
 - Wire2D: area
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
 - LineSegment, Arc, BSplineCurve: get_shared_section()
 - bSpline2D: linesegment_intersections
+- BsplineCurve: from_points_interpolation
 
 ### Refactor
 - Contour2D: cut_by_wire
