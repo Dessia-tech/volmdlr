@@ -3562,6 +3562,8 @@ class FullArc2D(FullArc, Arc2D):
                  name: str = ''):
         self.interior = start_end.rotation(center, math.pi)
         FullArc.__init__(self, center=center, start_end=start_end, name=name)
+        self.angle1 = 0.0
+        self.angle2 = 0.0
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         dict_ = self.base_dict()
