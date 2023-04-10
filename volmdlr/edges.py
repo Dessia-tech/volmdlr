@@ -1240,6 +1240,7 @@ class BSplineCurve(Edge):
         return 'BSpline(' + str(tag) + ') = {' + str(control_points_tags)[1:-1] + '};'
 
     def get_geo_points(self):
+        """Gets the points that define a BsplineCurve in a .geo file."""
         return list(self.discretization_points())
 
     def line_intersections(self, line):
@@ -2272,6 +2273,9 @@ class LineSegment2D(LineSegment):
         return LineSegment3D(start, end, name=self.name)
 
     def reverse(self):
+        """
+        Invert the sense of the line segment.
+        """
         return LineSegment2D(self.end.copy(), self.start.copy())
 
     def to_line(self):
@@ -4617,6 +4621,7 @@ class LineSegment3D(LineSegment):
         self._bbox = None
 
     def copy(self, *args, **kwargs):
+        """Returns a copy of the line segment."""
         return LineSegment3D(self.start.copy(), self.end.copy())
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
@@ -4660,6 +4665,9 @@ class LineSegment3D(LineSegment):
                                 dash, opacity, arrow)
 
     def to_line(self):
+        """
+        Converts the line segment into a line object.
+        """
         return Line3D(self.start, self.end)
 
     def to_2d(self, plane_origin, x, y):
@@ -5258,6 +5266,12 @@ class BSplineCurve3D(BSplineCurve):
                               name=bspline_curve.name)
 
     def cut_before(self, parameter: float):
+        """
+        Returns the right side of the splitted curve at a given parameter.
+
+        :param parameter: parameter value that specifies where to split the curve.
+        :type parameter: float
+        """
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=4e-3):
             return self
@@ -5269,6 +5283,12 @@ class BSplineCurve3D(BSplineCurve):
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
+        """
+        Returns the left side of the splitted curve at a given parameter.
+
+        :param parameter: parameter value that specifies where to split the curve.
+        :type parameter: float
+        """
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=1e-6):
             #     # raise ValueError('Nothing will be left from the BSplineCurve3D')

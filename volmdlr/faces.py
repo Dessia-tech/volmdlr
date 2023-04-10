@@ -1182,7 +1182,6 @@ class Surface3D(DessiaObject):
     def normal_from_point3d(self, point3d):
         """
         Evaluates the normal vector of the bspline surface at this 3D point.
-
         """
 
         return (self.normal_from_point2d(self.point3d_to_2d(point3d)))[1]
@@ -1537,8 +1536,6 @@ class Plane3D(Surface3D):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig = ax.figure
 
         self.frame.origin.plot(ax)
         self.frame.u.plot(ax, color='r')
@@ -1546,15 +1543,27 @@ class Plane3D(Surface3D):
         return ax
 
     def point2d_to_3d(self, point2d):
+        """
+        Converts a 2D parametric point into a 3D point on the surface.
+        """
         return point2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
 
     def point3d_to_2d(self, point3d):
+        """
+        Converts a 3D point into a 2D parametric point.
+        """
         return point3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
 
     def contour2d_to_3d(self, contour2d):
+        """
+        Converts a contour 2D on parametric surface into a 3D contour.
+        """
         return contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
 
     def contour3d_to_2d(self, contour3d):
+        """
+        Converts a contour 3D into a 2D parametric contour.
+        """
         return contour3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
