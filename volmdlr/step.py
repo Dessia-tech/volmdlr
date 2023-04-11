@@ -588,7 +588,7 @@ class StepFunction(dc.DessiaObject):
         self.name = function_name
         self.arg = function_arg
 
-        # TODO : Modifier ce qui suit et simplify
+        # TODO : modify this continuation and simplify
         if self.name == "":
             if self.arg[1][0] == 'B_SPLINE_SURFACE':
                 self.simplify('B_SPLINE_SURFACE')
@@ -918,11 +918,11 @@ class Step(dc.DessiaObject):
                 visited_set.add(node)
                 if self.connections[node]:
                     list_nodes.append(node)
-                    for c in self.connections[node]:
-                        if c not in visited_set:
-                            stack.append(c)
+                    for connection in self.connections[node]:
+                        if connection not in visited_set:
+                            stack.append(connection)
                 else:
-                    # Entities without connections should be instatiated first
+                    # Entities without connections should be instatiate first
                     list_head.append(node)
         return list_head + list_nodes[::-1]
 
@@ -977,9 +977,6 @@ class Step(dc.DessiaObject):
         if id_representation_entity:
             return self.get_shell_node_from_representation_entity(id_representation_entity)
         id_shape_representation = int(arguments[3][1:])
-        # The shape_representation can be a list of frames, if it's a list of frames
-        # (len(self.functions[id_shape_representation].arg) != 4, I'm not sure if this is always true)
-        # we should use the 3rd arg
         if len(self.functions[id_shape_representation].arg) != 4:
             id_shape_representation = int(arguments[2][1:])
         if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION":
@@ -1095,6 +1092,8 @@ class Step(dc.DessiaObject):
         error = True
         while error:
             try:
+                # here we invert instantiate_ids because if the code enter inside the except
+                # block, we want to loop from the last KeyError to the fisrt. This avoids an infinite loop
                 for instanciate_id in instanciate_ids[::-1]:
                     t = time.time()
 
@@ -1126,10 +1125,6 @@ class Step(dc.DessiaObject):
                 name = self.functions[stepfunction.id].name
                 arguments = self.functions[stepfunction.id].arg[:]
                 self.parse_arguments(arguments)
-                # for i, arg in enumerate(arguments):
-                #     if type(arg) == str and arg[0] == '#':
-                #         arguments[i] = int(arg[1:])
-                # print(arguments)
                 if arguments[1].count(',') == 2:
                     volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                         arguments, object_dict)

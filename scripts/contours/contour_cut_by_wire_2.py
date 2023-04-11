@@ -69,7 +69,7 @@ points = [
     vm.Point2D(0.04545459207437027, 0.19659788603626316),
     vm.Point2D(0.05203818215846509, 0.10517733497317228),
     vm.Point2D(0.09686210943003962, 0.04545460320088811),
-    vm.Point2D(0.15573034610061637, 0.04966777166777087)]
+    vm.Point2D(0.15573034610061637, 0.04966777166777087), vm.Point2D(0.20308817713481986, 0.04966773764193705)]
 
 contour1 = volmdlr.wires.Contour2D.from_points(points)
 
@@ -103,7 +103,7 @@ points = [
     vm.Point2D(0.7969119981329132, 0.012323366834239619),
     vm.Point2D(0.7828402953854121, 0.0),
     vm.Point2D(0.21715982313378532, 0.0),
-    vm.Point2D(0.2030881157414971, 0.012323183603131671)]
+    vm.Point2D(0.2030881157414971, 0.012323183603131671), vm.Point2D(0.2030881575366132, 0.04966771677601732)]
 
 
 contour2 = volmdlr.wires.Contour2D.from_points(points)
@@ -118,5 +118,5 @@ plot_cutted_contours2d(contour1, contour2, results)
 
 # %%% contour2.cut_by_wire(contour1)
 
-results = contour2.cut_by_wire(contour1)
-plot_cutted_contours2d(contour2, contour1, results)
+results2 = contour2.cut_by_wire(contour1)
+plot_cutted_contours2d(contour2, contour1, results2)

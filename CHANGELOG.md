@@ -9,21 +9,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - BSplineCurve, Edge: simplify
+- Plane3D: angle_between_planes, plane_betweeen_two_planes
+- Edge: intersections, crossings, validate_crossings
+- Arc2D: bsplinecurve_intersections, arc_intersections, arcellipse_intersections.
+- ArcEllipse2D: bsplinecurve_intersections
+- get_circle_intersections added to volmdlr.utils.intersections, so it can be used to calculate intersections between two arcs 2d.
+- get_bsplinecurve_intersections added to volmdlr.utils.intersections. Used to calculate intersection between a bspline and another edge.
+- Wire2D: edge_intersections, wire_intersections, edge_crossings, edge_intersections, validate_edge_crossings, validate_wire_crossings
+- Contour2D: split_contour_with_sorted_points, intersection_contour_with
 - CylindricalSurface3D: point_projection, point_distance
 - ToroidalSurface3D: point_projection
+- BsplineCurve: point_distance, point_belongs
+- ContourMixin: is_adjacent
+- Wire2D: area
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
 - LineSegment, Arc, BSplineCurve: get_shared_section()
+- bSpline2D: linesegment_intersections
+- BsplineCurve: from_points_interpolation
 
+### Refactor
+- Contour2D: cut_by_wire
+- Contour2D: extract_with_points displaced to WireMixin
+- Contour2D: extract_contour displaced to WireMixin and renamed to extract
+- Contour2D: split_contour_with_sorted_points displaced to WireMixin and renamed to split_with_sorted_points
+- Contour2D: get_divided_contours
+- FullArc2D, FullArc3D: create FullArc Abstract class.
 ### Changed
 - better surface3d plots
 
 ### Unittests
+- Arc2D: test_arc_intersections
+- TestEdge2DIntersections: test intersections for all edges.
+- Circle2D: test_circle_intersections
+- Contour2D: test_crossings, test_intersection_contour_with
+- BSplineCurve: get_intersection_sections
+- BSplineCurve2D: edge_intersections, arc_intersections, bsplinecurve_intersections
 - CylindricalFace3D: test_triangulation_quality
 - CylindricalSurface3D: test_point_projection
 - BSplineCurve: point_projection
-
 
 ## v0.10.0 [Unreleased yet]
 
@@ -59,6 +84,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * OpenedRoundedLineSegments2D/ClosedRoundedLineSegments2D: fix radius type
 * Surface3D: debug some special cases while using face_from_contours3d.
 * Step: debug some special cases while reading step file.
+* BSplineSurface3D: fix simplify_surface method.
+* Improve pylint code quality.
 * PeriodicalSurface: enhance some parametric transformations.
 
 ### Removed
