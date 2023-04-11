@@ -2896,8 +2896,8 @@ class FullArc(Arc):
         try:
             vector_u1.normalize()
             vector_u2.normalize()
-        except ZeroDivisionError:
-            raise ValueError('the 3 points must be distincts')
+        except ZeroDivisionError as error:
+            raise ValueError('the 3 points must be distincts') from error
 
         normal = vector_u2.cross(vector_u1)
         normal.normalize()
@@ -2917,8 +2917,8 @@ class FullArc(Arc):
 
         try:
             center, _ = line1.minimum_distance_points(line2)
-        except ZeroDivisionError:
-            raise ValueError('Start, end and interior points  of an arc must be distincts')
+        except ZeroDivisionError as error:
+            raise ValueError('Start, end and interior points  of an arc must be distincts') from error
 
         return cls(center=center, start_end=point1, normal=normal)
 
@@ -3564,6 +3564,7 @@ class FullArc2D(FullArc, Arc2D):
         self.interior = start_end.rotation(center, math.pi)
         self._bounding_rectangle = None
         FullArc.__init__(self, center=center, start_end=start_end, name=name)
+        Arc2D.__init__(self, start=start_end, interior=self.interior, end=start_end)
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
 
@@ -6681,6 +6682,7 @@ class FullArc3D(FullArc, Arc3D):
         self.interior = start_end.rotation(center, normal, math.pi)
         self._bbox = None
         FullArc.__init__(self, center=center, start_end=start_end, name=name)
+        Arc3D.__init__(self, start=start_end, interior=self.interior, end=start_end)
 
     def __hash__(self):
         return hash(self.center) + 5 * hash(self.start_end)
