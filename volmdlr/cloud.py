@@ -109,6 +109,7 @@ class PointCloud3D(dc.DessiaObject):
         return subcloud2d
 
     def to_shell(self, resolution: int = 10, normal=None, offset: float = 0):
+        """ Creates a Shell from a Cloud of points 3D."""
         if normal is None:
             posmax, normal, vec1, vec2 = self.determine_extrusion_vector()
         else:
@@ -224,51 +225,14 @@ class PointCloud3D(dc.DessiaObject):
         """Generate an n_points x 3 matrix of coordinates."""
         return [point.coordinates() for point in self.points]
 
-    # def alpha_shape(self, alpha:float, number_point_samples:int):
-    #     '''
-    #     Parameters
-    #     ----------
-    #     alpha : float
-    #         the parameter alpha determines how precise the object surface reconstruction is wanted to be.
-    #         The bigger the value of alpha is, more convex the final object will be. If it is smaller,
-    #         the algorithm is able to find the concave parts of the object, giving a more precise object
-    #         surface approximation
-    #     number_point_samples : int
-    #         denotes the number of points to be used from the point cloud to reconstruct the surface.
-    #         It uses poisson disk sampling algorithm.
-    #
-    #     Returns
-    #     -------
-    #     Returns a ClosedShell3D object
-    #
-    #     '''
-    #
-    #     points = [[p.x, p.y, p.z] for p in self.points]
-    #     array = numpy.array(points)
-    #     points = open3d.cpu.pybind.utility.Vector3dVector(array)
-    #     pcd = open3d.geometry.PointCloud()
-    #     pcd.points = points
-    #     mesh = open3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd, alpha)
-    #     mesh.compute_vertex_normals()
-    #     if number_point_samples != None:
-    #         pcd = mesh.sample_points_poisson_disk(number_point_samples)
-    #         # tetra_mesh, pt_map = open3d.geometry.TetraMesh.create_from_point_cloud(pcd)
-    #         mesh = open3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(
-    #         pcd, alpha,
-    #         # tetra_mesh, pt_map
-    #         )
-    #         mesh.compute_vertex_normals()
-    #     # open3d.visualization.draw_geometries([mesh], mesh_show_back_face=True)
-    #     vertices = [volmdlr.Point3D(float(x), float(y), float(z))
-    #                 for x, y, z in list(numpy.asarray(mesh.vertices))]
-    #     triangles = [vmf.Triangle3D(vertices[p1], vertices[p2], vertices[p3],
-    #                                 color = (1, 0.1, 0.1), alpha = 0.6)
-    #                  for p1, p2, p3 in list(numpy.asarray(mesh.triangles))]
-    #
-    #     return vmf.ClosedShell3D(triangles)
-
     @classmethod
     def from_step(cls, step_file: str):
+        """
+        Creates a Clopud of Points from a step file.
+
+        :param step_file: step file.
+        :return: Point Cloud 3D.
+        """
         step = vstep.Step(step_file)
         points = step.to_points()
         return cls(points)
@@ -329,6 +293,7 @@ class PointCloud2D(dc.DessiaObject):
         dc.DessiaObject.__init__(self, name=name)
 
     def plot(self, ax=None, color='k'):
+        """Plot a point cloud 2d using Matplotlib."""
         if ax is None:
             _, ax = plt.subplots()
         for point in self.points:
@@ -336,6 +301,12 @@ class PointCloud2D(dc.DessiaObject):
         return ax
 
     def to_polygon(self, convex=False):
+        """
+        Use a Cloud point 2d to create a polygon.
+
+        :param convex: if True, it will return a convex polygon. If false, it will search for a concave polygon.
+        :return: closed polygon 2d.
+        """
         if not self.points:
             return None
 
@@ -350,10 +321,16 @@ class PointCloud2D(dc.DessiaObject):
         return polygon
 
     def bounding_rectangle(self):
+        """
+        Calculates the bounding rectangle for the point cloud.
+
+        :return: bounds for bounding rectangle.
+        """
         x_list, y_list = [p.x for p in self.points], [p.y for p in self.points]
         return min(x_list), max(x_list), min(y_list), max(y_list)
 
     def simplify(self, resolution=5):
+        """Simplify cloud point 2d."""
         if not self.points:
             return PointCloud2D(self.points, name=self.name + '_none')
 

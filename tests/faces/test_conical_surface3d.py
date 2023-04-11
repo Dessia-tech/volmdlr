@@ -61,10 +61,10 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertEqual(area_cone, 0.2 * math.pi)
         self.assertEqual(area_demi_cone, 0.1 * math.pi)
         self.assertEqual(fullarc2d.start, Point2D(0, 0.1))
-        self.assertEqual(fullarc2d.end, Point2D(2 * math.pi, 0.1))
+        self.assertEqual(fullarc2d.end, Point2D(-2 * math.pi, 0.1))
         self.assertEqual(fullarc2d.length(), 2 * math.pi)
-        self.assertEqual(linesegment2d_cone.start, Point2D(2 * math.pi, 0.1))
-        self.assertEqual(linesegment2d_cone.end, Point2D(2 * math.pi, 0.0))
+        self.assertEqual(linesegment2d_cone.start, Point2D(-2 * math.pi, 0.1))
+        self.assertEqual(linesegment2d_cone.end, Point2D(-2 * math.pi, 0.0))
 
     def bsplinecurve3d_to_2d(self):
         conical_surface3 = conical_surfaces.conical_surface3
@@ -117,6 +117,14 @@ class TestConicalSurface3D(unittest.TestCase):
         conical_face = buggy_conical_surface.face_from_contours3d([buggy_contours3d1, buggy_contours3d2])
         self.assertFalse(len(conical_face.surface2d.inner_contours))
         self.assertAlmostEqual(conical_face.area(), 0.055154411016251716, 4)
+
+        buggy_conical_surface = vmf.ConicalSurface3D.load_from_file(
+            "faces/objects_conical_tests/conical_surface_with_singularity.json")
+        buggy_contours3d = vmw.Contour3D.load_from_file(
+            'faces/objects_conical_tests/conical_contour_with_singularity.json')
+        conical_face = buggy_conical_surface.face_from_contours3d([buggy_contours3d])
+        self.assertEqual(len(conical_face.surface2d.outer_contour.primitives), 5)
+        self.assertAlmostEqual(conical_face.area(), 0.0009613769926732048*volmdlr.TWO_PI, 4)
 
 
 if __name__ == '__main__':

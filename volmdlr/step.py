@@ -361,6 +361,26 @@ def manifold_surface_shape_representation(arguments, object_dict):
     return shells
 
 
+def faceted_brep(arguments, object_dict):
+    """
+    Returns the data in case of a faceted_brep entity, interpreted as shell3D.
+    """
+    return object_dict[arguments[1]]
+
+
+def faceted_brep_shape_representation(arguments, object_dict):
+    """
+    Returns the data in case of a faceted_brep_shape_representation, interpreted as shell3D.
+    """
+    shells = []
+    for arg in arguments[1]:
+        if isinstance(object_dict[int(arg[1:])],
+                      volmdlr.faces.OpenShell3D):
+            shell = object_dict[int(arg[1:])]
+            shells.append(shell)
+    return shells
+
+
 def manifold_solid_brep(arguments, object_dict):
     """
     Returns the data in case of a manifold_solid_brep with voids.
@@ -480,9 +500,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector,
-                                    v_vector,
-                                    w_vector)
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
         new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
         new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
         new_closedshells.append(new_closed_shell3d)
@@ -570,7 +588,7 @@ class StepFunction(dc.DessiaObject):
         self.name = function_name
         self.arg = function_arg
 
-        # TODO : Modifier ce qui suit et simplify
+        # TODO : modify this continuation and simplify
         if self.name == "":
             if self.arg[1][0] == 'B_SPLINE_SURFACE':
                 self.simplify('B_SPLINE_SURFACE')
@@ -870,12 +888,10 @@ class Step(dc.DessiaObject):
                 volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
 
             elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
-                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(arguments, object_dict,
-                                                                 name=name,
-                                                                 step_id=step_id,
-                                                                 global_uncertainty=self.global_uncertainty,
-                                                                 length_conversion_factor=self.length_conversion_factor,
-                                                                 angle_conversion_factor=self.angle_conversion_factor)
+                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                    arguments, object_dict, name=name, step_id=step_id, global_uncertainty=self.global_uncertainty,
+                    length_conversion_factor=self.length_conversion_factor,
+                    angle_conversion_factor=self.angle_conversion_factor)
 
             else:
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
@@ -906,7 +922,7 @@ class Step(dc.DessiaObject):
                         if c not in visited_set:
                             stack.append(c)
                 else:
-                    # Entities without connections should be instatiated first
+                    # Entities without connections should be instatiate first
                     list_head.append(node)
         return list_head + list_nodes[::-1]
 
@@ -961,9 +977,6 @@ class Step(dc.DessiaObject):
         if id_representation_entity:
             return self.get_shell_node_from_representation_entity(id_representation_entity)
         id_shape_representation = int(arguments[3][1:])
-        # The shape_representation can be a list of frames, if it's a list of frames
-        # (len(self.functions[id_shape_representation].arg) != 4, I'm not sure if this is always true)
-        # we should use the 3rd arg
         if len(self.functions[id_shape_representation].arg) != 4:
             id_shape_representation = int(arguments[2][1:])
         if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION":
@@ -1110,10 +1123,6 @@ class Step(dc.DessiaObject):
                 name = self.functions[stepfunction.id].name
                 arguments = self.functions[stepfunction.id].arg[:]
                 self.parse_arguments(arguments)
-                # for i, arg in enumerate(arguments):
-                #     if type(arg) == str and arg[0] == '#':
-                #         arguments[i] = int(arg[1:])
-                # print(arguments)
                 if arguments[1].count(',') == 2:
                     volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                         arguments, object_dict)

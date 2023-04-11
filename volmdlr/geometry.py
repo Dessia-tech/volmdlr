@@ -81,8 +81,6 @@ def huygens2d(Ix, Iy, Ixy, area, point1, point2):
     Area acts the same way as the mass in 3D.
     """
     a, b = point1 - point2
-    # I2 = I1+area*array([[b**2,-a*b],[-a*b,a**2]])
-    # return I2
     return Ix + area * b**2, Iy + area * a**2, Ixy - area * a * b
 
 
@@ -127,7 +125,9 @@ def vectors3d_angle(vector1, vector2):
     :rtype: float
     """
     dot_v1v2 = vector1.dot(vector2)
-    theta = math.acos(dot_v1v2 / (vector1.norm() * vector2.norm()))
+    ratio = dot_v1v2 / (vector1.norm() * vector2.norm())
+    ratio = max(min(ratio, 1.0), -1.0)
+    theta = math.acos(ratio)
 
     return theta
 
