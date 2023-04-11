@@ -6307,7 +6307,7 @@ class BSplineSurface3D(Surface3D):
             if not inner_contour.is_ordered():
                 if self.x_periodicity and self.y_periodicity:
                     raise NotImplementedError
-                elif self.x_periodicity:
+                if self.x_periodicity:
                     outer_contour_param = [u1, u2]
                     inner_contour_param = [u3, u4]
                 elif self.y_periodicity:
