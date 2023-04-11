@@ -567,8 +567,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
         return self.__class__(offset_primitives)
 
-    def plot_data(self, name: str = '', fill=None, color='black',
-                  stroke_width: float = 1, opacity: float = 1):
+    def plot_data(self, *args, **kwargs):
         data = []
         for item in self.primitives:
             data.append(item.plot_data())
@@ -1183,14 +1182,14 @@ class ContourMixin(WireMixin):
                     # raise NotImplementedError
         return new_primitives
 
-    def order_contour(self):
+    def order_contour(self, tol: float = 1e-6):
         """
         Verifies if the contours'primitives are ordered (one after the other). If not, it will order it.
 
         """
-        if self.is_ordered() or len(self.primitives) < 2:
+        if self.is_ordered(tol=tol) or len(self.primitives) < 2:
             return self
-        new_primitives = self.ordering_contour()
+        new_primitives = self.ordering_contour(tol=tol)
         self.primitives = new_primitives
 
         return self
@@ -2528,7 +2527,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return equal
 
     def area(self):
-        # TODO: perf: cache number of points
+        # TODO: performance: cache number of points
         if len(self.points) < 3:
             return 0.
 

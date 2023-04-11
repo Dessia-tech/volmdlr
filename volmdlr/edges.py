@@ -450,13 +450,10 @@ class Line(dc.DessiaObject):
         """
         return self.direction_vector().normal_vector()
 
-    def unit_normal_vector(self, abscissa=0.):
+    def unit_normal_vector(self, *args, **kwargs):
         """
         Get the unit normal vector of the line.
 
-        :param abscissa: The abscissa of the point from which to calculate
-            the normal vector
-        :type abscissa: float, optional
         :return: The unit normal vector of the line
         :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
         """
@@ -547,7 +544,7 @@ class Line(dc.DessiaObject):
             return True
         return False
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, *args, **kwargs):
         """Exports to STEP format."""
         p1_content, p1_id = self.point1.to_step(current_id)
         # p2_content, p2_id = self.point2.to_step(current_id+1)
@@ -785,7 +782,7 @@ class LineSegment(Edge):
         raise NotImplementedError('the point_distance method must be'
                                   'overloaded by subclassing class')
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, *args, **kwargs):
         """Exports to STEP format."""
         line = self.to_line()
         content, (line_id,) = line.to_step(current_id)
@@ -1382,6 +1379,7 @@ class BSplineCurve(Edge):
         return 'BSpline(' + str(tag) + ') = {' + str(control_points_tags)[1:-1] + '};'
 
     def get_geo_points(self):
+        """Gets the points that define a BsplineCurve in a .geo file."""
         return list(self.discretization_points())
 
     def line_intersections(self, line):
@@ -2440,6 +2438,9 @@ class LineSegment2D(LineSegment):
         return LineSegment3D(start, end, name=self.name)
 
     def reverse(self):
+        """
+        Invert the sense of the line segment.
+        """
         return LineSegment2D(self.end.copy(), self.start.copy())
 
     def to_line(self):
@@ -3979,23 +3980,23 @@ class ArcEllipse2D(Edge):
         y = self.minor_axis * math.sin(abscissa_angle)
         return self.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
 
-    def abscissa(self, point: volmdlr.Point2D):
+    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-6):
         """
         Calculates the abscissa of a given point.
 
         :param point: point for calculating abscissa
+        :param tol: tolerance.
         :return: a float, between 0 and the arc ellipse 2d's length
         """
-        if self.start.is_close(point):
+        if self.start.is_close(point, tol):
             return 0.0
-        if self.end.is_close(point):
+        if self.end.is_close(point, tol):
             if self._length:
                 return self._length
             if not self.is_trigo:
                 arc_ellipse_trigo = self.reverse()
                 abscissa_end = arc_ellipse_trigo.abscissa(self.start)
                 return abscissa_end
-
         if self.point_belongs(point):
             if not self.is_trigo:
                 arc_ellipse_trigo = self.reverse()
@@ -5015,6 +5016,7 @@ class LineSegment3D(LineSegment):
         self._bbox = None
 
     def copy(self, *args, **kwargs):
+        """Returns a copy of the line segment."""
         return LineSegment3D(self.start.copy(), self.end.copy())
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
@@ -5058,6 +5060,9 @@ class LineSegment3D(LineSegment):
                                 dash, opacity, arrow)
 
     def to_line(self):
+        """
+        Converts the line segment into a line object.
+        """
         return Line3D(self.start, self.end)
 
     def to_2d(self, plane_origin, x, y):
@@ -5733,6 +5738,12 @@ class BSplineCurve3D(BSplineCurve):
                               name=bspline_curve.name)
 
     def cut_before(self, parameter: float):
+        """
+        Returns the right side of the splitted curve at a given parameter.
+
+        :param parameter: parameter value that specifies where to split the curve.
+        :type parameter: float
+        """
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=4e-3):
             return self
@@ -5740,10 +5751,16 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
-        curves = operations.split_curve(self.curve, parameter)
+        curves = operations.split_curve(self.curve, round(parameter, 5))
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
+        """
+        Returns the left side of the splitted curve at a given parameter.
+
+        :param parameter: parameter value that specifies where to split the curve.
+        :type parameter: float
+        """
         # Is a value of parameter below 4e-3 a real need for precision ?
         if math.isclose(parameter, 0, abs_tol=1e-6):
             #     # raise ValueError('Nothing will be left from the BSplineCurve3D')
@@ -5752,7 +5769,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-        curves = operations.split_curve(self.curve, parameter)
+        curves = operations.split_curve(self.curve, round(parameter, 5))
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
@@ -6310,14 +6327,19 @@ class Arc3D(Arc):
         self.start, self.interior, self.end = new_start, new_interior, new_end
         self._bbox = None
 
-    def abscissa(self, point3d: volmdlr.Point3D):
+    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
         """
         Calculates the abscissa given a point in the Arc3D.
 
-        :param point3d: point to calculate the abscissa.
+        :param point: point to calculate the abscissa.
+        :param tol: (Optional) Confusion distance to consider points equal. Default 1e-6.
         :return: corresponding abscissa.
         """
-        x, y, _ = self.frame.global_to_local_coordinates(point3d)
+        if point.point_distance(self.start) < tol:
+            return 0
+        if point.point_distance(self.end) < tol:
+            return self.length()
+        x, y, _ = self.frame.global_to_local_coordinates(point)
         u1 = x / self.radius
         u2 = y / self.radius
         theta = volmdlr.geometry.sin_cos_angle(u1, u2)
@@ -6860,9 +6882,9 @@ class ArcEllipse3D(Edge):
             theta = 0.5 * math.atan(2 * r3 / (r2 - r1))
             c1 = r1 + r2
             c2 = (r2 - r1) / math.cos(2 * theta)
-            gdaxe = math.sqrt((2 / (c1 - c2)))
-            ptax = math.sqrt((2 / (c1 + c2)))
-            return theta, gdaxe, ptax
+            major_axis = math.sqrt((2 / (c1 - c2)))
+            minor_axis = math.sqrt((2 / (c1 + c2)))
+            return theta, major_axis, minor_axis
 
         if start.is_close(end):
             extra_new = frame.global_to_local_coordinates(self.extra)
@@ -7009,13 +7031,15 @@ class ArcEllipse3D(Edge):
     def direction_vector(self, abscissa):
         raise NotImplementedError
 
-    def abscissa(self, point: volmdlr.Point3D):
+    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
         """
         Calculates the abscissa a given point.
 
         :param point: point to calculate abscissa.
         :return: abscissa
         """
+        if point.point_distance(self.start) < tol:
+            return 0
         vector_2 = self.normal.cross(self.major_dir)
         ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
