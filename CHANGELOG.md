@@ -83,6 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * OpenedRoundedLineSegments2D/ClosedRoundedLineSegments2D: fix radius type
 * Surface3D: debug some special cases while using face_from_contours3d.
 * Step: debug some special cases while reading step file.
+* BSplineSurface3D: fix simplify_surface method.
+* Improve pylint code quality.
 * PeriodicalSurface: enhance some parametric transformations.
 
 ### Removed
