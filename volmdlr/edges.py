@@ -3562,6 +3562,7 @@ class FullArc2D(FullArc, Arc2D):
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
                  name: str = ''):
         self.interior = start_end.rotation(center, math.pi)
+        self._bounding_rectangle = None
         FullArc.__init__(self, center=center, start_end=start_end, name=name)
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
@@ -3584,10 +3585,6 @@ class FullArc2D(FullArc, Arc2D):
         start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
 
         return cls(center, start_end, name=dict_['name'])
-
-    # def __hash__(self):
-    #     return hash(("fullarc", self.center, self.radius, self.start, self.end))
-    #     # return hash(self.center) + 5*hash(self.start)
 
     def __hash__(self):
         return hash((self.__class__.__name__, self.center, self.radius, self.start_end))
@@ -6682,6 +6679,7 @@ class FullArc3D(FullArc, Arc3D):
         self.__normal = normal
         self._utd_frame = None
         self.interior = start_end.rotation(center, normal, math.pi)
+        self._bbox = None
         FullArc.__init__(self, center=center, start_end=start_end, name=name)
 
     def __hash__(self):
