@@ -43,7 +43,8 @@ def angle_discontinuity(angle_list):
         for index in indexes_sign_changes:
             sign = round(angle_list[index - 1] / abs(angle_list[index - 1]), 2)
             delta = abs(angle_list[index] + sign * volmdlr.TWO_PI - angle_list[index - 1])
-            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta):
+            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta) and\
+                    not math.isclose(abs(angle_list[index]), 0, abs_tol=delta):
                 indexes_angle_discontinuity.append(index)
                 discontinuity = True
     return discontinuity, indexes_angle_discontinuity

@@ -6711,7 +6711,7 @@ class FullArc3D(FullArc, Arc3D):
                  name: str = ''):
         self._utd_frame = None
         self._bbox = None
-        self.__normal = None
+        self.__normal = normal
         self.interior = start_end.rotation(center, normal, math.pi)
         FullArc.__init__(self, center=center, start_end=start_end, name=name)
         Arc3D.__init__(self, start=start_end, interior=self.interior, end=start_end)
