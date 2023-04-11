@@ -2032,13 +2032,14 @@ class PeriodicalSurface(Surface3D):
         """
         if bspline_curve2d.name in ("parametric.arcellipse", "parametric.fullarcellipse"):
             start = self.point2d_to_3d(bspline_curve2d.start)
-            middle_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.45 * bspline_curve2d.length()))
+            middle_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.5 * bspline_curve2d.length()))
+            extra_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.75 * bspline_curve2d.length()))
             if bspline_curve2d.name == "parametric.arcellipse":
                 end = self.point2d_to_3d(bspline_curve2d.end)
                 plane3d = Plane3D.from_3_points(start, middle_point, end)
                 ellipse = self.concurrent_plane_intersection(plane3d)[0]
-                return [vme.ArcEllipse3D(start, middle_point, end, ellipse.center, ellipse.major_dir, ellipse.normal)]
-            extra_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.75 * bspline_curve2d.length()))
+                return [vme.ArcEllipse3D(start, middle_point, end, ellipse.center, ellipse.major_dir, ellipse.normal,
+                                         extra_point)]
             plane3d = Plane3D.from_3_points(start, middle_point, extra_point)
             ellipse = self.concurrent_plane_intersection(plane3d)[0]
             return [vme.FullArcEllipse3D(start, ellipse.major_axis, ellipse.minor_axis, ellipse.center, ellipse.normal,
@@ -6283,6 +6284,96 @@ class BSplineSurface3D(Surface3D):
             for j in range(order + 1):
                 derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])
         return derivatives
+
+    def repair_contours2d(self, outer_contour, inner_contours):
+        """
+        Repair contours on parametric domain.
+
+        :param outer_contour: Outer contour 2D.
+        :type inner_contours: volmdlr.wires.Contour2D
+        :param inner_contours: List of 2D contours.
+        :type inner_contours: list
+        :param name: the name to inject in the new face.
+        """
+        new_inner_contours = []
+        point1 = outer_contour.primitives[0].start
+        point2 = outer_contour.primitives[-1].end
+
+        u1, v1 = point1
+        u2, v2 = point2
+
+        for inner_contour in inner_contours:
+            u3, v3 = inner_contour.primitives[0].start
+            u4, v4 = inner_contour.primitives[-1].end
+
+            if not inner_contour.is_ordered():
+                if self.x_periodicity and self.y_periodicity:
+                    raise NotImplementedError
+                elif self.x_periodicity:
+                    outer_contour_param = [u1, u2]
+                    inner_contour_param = [u3, u4]
+                elif self.y_periodicity:
+                    outer_contour_param = [v1, v2]
+                    inner_contour_param = [v3, v4]
+                else:
+                    raise NotImplementedError
+
+                point1 = outer_contour.primitives[0].start
+                point2 = outer_contour.primitives[-1].end
+                point3 = inner_contour.primitives[0].start
+                point4 = inner_contour.primitives[-1].end
+
+                outer_contour_direction = outer_contour_param[0] < outer_contour_param[1]
+                inner_contour_direction = inner_contour_param[0] < inner_contour_param[1]
+                if outer_contour_direction == inner_contour_direction:
+                    inner_contour = inner_contour.invert()
+                    point3 = inner_contour.primitives[0].start
+                    point4 = inner_contour.primitives[-1].end
+
+                closing_linesegment1 = volmdlr.edges.LineSegment2D(point2, point3)
+                closing_linesegment2 = volmdlr.edges.LineSegment2D(point4, point1)
+                new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
+                    inner_contour.primitives + \
+                    [closing_linesegment2]
+                new_outer_contour = volmdlr.wires.Contour2D(primitives=new_outer_contour_primitives)
+                new_outer_contour.order_contour(tol=1e-4)
+            else:
+                new_inner_contours.append(inner_contour)
+        return new_outer_contour, new_inner_contours
+
+    def _get_overlapping_theta(self, outer_contour_startend_theta, inner_contour_startend_theta):
+        """
+        Find overlapping theta domain between two contours on periodical Surfaces.
+        """
+        oc_xmin_index, outer_contour_xmin = min(enumerate(outer_contour_startend_theta), key=lambda x: x[1])
+        oc_xmax_index, outer_contour_xman = max(enumerate(outer_contour_startend_theta), key=lambda x: x[1])
+        inner_contour_xmin = min(inner_contour_startend_theta)
+        inner_contour_xmax = max(inner_contour_startend_theta)
+
+        # check if tetha3 or theta4 is in [theta1, theta2] interval
+        overlap = outer_contour_xmin <= inner_contour_xmax and outer_contour_xman >= inner_contour_xmin
+
+        if overlap:
+            if inner_contour_xmin < outer_contour_xmin:
+                overlapping_theta = outer_contour_startend_theta[oc_xmin_index]
+                outer_contour_side = oc_xmin_index
+                side = 0
+                return overlapping_theta, outer_contour_side, side
+            overlapping_theta = outer_contour_startend_theta[oc_xmax_index]
+            outer_contour_side = oc_xmax_index
+            side = 1
+            return overlapping_theta, outer_contour_side, side
+
+        # if not direct intersection -> find intersection at periodicity
+        if inner_contour_xmin < outer_contour_xmin:
+            overlapping_theta = outer_contour_startend_theta[oc_xmin_index] - 2 * math.pi
+            outer_contour_side = oc_xmin_index
+            side = 0
+            return overlapping_theta, outer_contour_side, side
+        overlapping_theta = outer_contour_startend_theta[oc_xmax_index] + 2 * math.pi
+        outer_contour_side = oc_xmax_index
+        side = 1
+        return overlapping_theta, outer_contour_side, side
 
 
 class BezierSurface3D(BSplineSurface3D):
