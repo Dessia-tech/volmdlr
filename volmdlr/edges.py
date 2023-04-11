@@ -2871,9 +2871,8 @@ class FullArc(Arc):
     Abstract class for representing a circle with a start and end points that are the same.
     """
     def __init__(self, center: Union[volmdlr.Point2D, volmdlr.Point3D],
-                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D], normal=None, name: str = ''):
+                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
         self.__center = center
-        self.__normal = normal
         self.start_end = start_end
         Arc.__init__(self, start=start_end, interior=self.interior, end=start_end, name=name)  # !!! this is dangerous
 
@@ -3745,7 +3744,7 @@ class FullArc2D(FullArc, Arc2D):
             - 2 * pt1.dot(self.center) - self.radius ** 2
 
         disc = vector2 ** 2 - 4 * vector1 * vector3
-        if math.isclose(disc, 0., abs_tol=tol):
+        if math.isclose(disc, 0., abs_tol=abs_tol):
             t_param = -vector2 / (2 * vector1)
             points = [pt1 + t_param * vec]
             if linesegment2d.point_belongs(points[0]):
@@ -6645,9 +6644,10 @@ class FullArc3D(FullArc, Arc3D):
                  normal: volmdlr.Vector3D,
                  name: str = ''):
         self._utd_frame = None
-        self.interior = start_end.rotation(center, normal, math.pi)
         self._bbox = None
-        FullArc.__init__(self, center=center, start_end=start_end, normal=normal, name=name)
+        self.__normal = None
+        self.interior = start_end.rotation(center, normal, math.pi)
+        FullArc.__init__(self, center=center, start_end=start_end, name=name)
         Arc3D.__init__(self, start=start_end, interior=self.interior, end=start_end)
 
     def __hash__(self):
