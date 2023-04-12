@@ -1182,14 +1182,14 @@ class ContourMixin(WireMixin):
                     # raise NotImplementedError
         return new_primitives
 
-    def order_contour(self):
+    def order_contour(self, tol: float = 1e-6):
         """
         Verifies if the contours'primitives are ordered (one after the other). If not, it will order it.
 
         """
-        if self.is_ordered() or len(self.primitives) < 2:
+        if self.is_ordered(tol=tol) or len(self.primitives) < 2:
             return self
-        new_primitives = self.ordering_contour()
+        new_primitives = self.ordering_contour(tol=tol)
         self.primitives = new_primitives
 
         return self
@@ -5069,7 +5069,7 @@ class Circle3D(Contour3D):
             vector_u1.normalize()
             vector_u2.normalize()
         except ZeroDivisionError:
-            raise ValueError(
+            raise ZeroDivisionError(
                 'the 3 points must be distincts')
 
         normal = vector_u2.cross(vector_u1)
@@ -5091,7 +5091,7 @@ class Circle3D(Contour3D):
         try:
             center, _ = line1.minimum_distance_points(line2)
         except ZeroDivisionError:
-            raise ValueError(
+            raise ZeroDivisionError(
                 'Start, end and interior points  of an arc must be distincts')
 
         radius = (center - point1).norm()
