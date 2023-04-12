@@ -60,7 +60,7 @@ class TestBSplineCurve2D(unittest.TestCase):
 
         line_intersections = bspline_curve2d.line_intersections(line)
         self.assertEqual(len(line_intersections), 1)
-        self.assertTrue(line_intersections[0].is_close(volmdlr.Point2D(1.2631617118836584, -0.0026450894340933075)))
+        self.assertTrue(line_intersections[0].is_close(volmdlr.Point2D(1.263163105753452, -0.0026450893856384914)))
 
     def test_discretization_points(self):
         control_points_2d = [volmdlr.Point2D(1.5707963267948966, 2.3),
