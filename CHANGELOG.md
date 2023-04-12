@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fixes to wire
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
-* BSplineCurve: abscissa
+* BSplineCurve: abscissa, line_intersections
 * Add some important fixes to unittests: missing two __init__py files.
 * Contour2D, Contour3D: merge_with()
 * Edge: change unit_direction_vector and unit_normal_vector to concrete methods
