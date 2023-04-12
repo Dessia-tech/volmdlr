@@ -6134,12 +6134,14 @@ class BSplineSurface3D(Surface3D):
                     return True
         return False
 
-    def merge_with(self, other_bspline_surface3d):
+    def merge_with(self, other_bspline_surface3d, abs_tol: float = 1e-6):
         """
         Merges two adjacent surfaces based on their faces.
 
         :param other_bspline_surface3d: Other adjacent surface
         :type other_bspline_surface3d: :class:`volmdlr.faces.BSplineSurface3D`
+        :param abs_tol: tolerance.
+        :type abs_tol: float.
 
         :return: Merged surface
         :rtype: :class:`volmdlr.faces.BSplineSurface3D`
@@ -6155,7 +6157,8 @@ class BSplineSurface3D(Surface3D):
                   other_bspline_face3d.surface2d.outer_contour.center_of_mass()]
         grid2d_direction = (bspline_face3d.pair_with(other_bspline_face3d))[1]
 
-        if (not bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
+        if (not bspline_face3d.outer_contour3d.is_sharing_primitives_with(
+                other_bspline_face3d.outer_contour3d, abs_tol)
                 and self.is_intersected_with(other_bspline_surface3d)):
             # find pimitives to split with
             contour1 = bspline_face3d.outer_contour3d
@@ -6194,8 +6197,8 @@ class BSplineSurface3D(Surface3D):
         # grid3d
         nb = 10
         points3d = []
-        is_true = (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
-                   or self.is_intersected_with(other_bspline_surface3d))
+        is_true = (bspline_face3d.outer_contour3d.is_sharing_primitives_with(
+            other_bspline_face3d.outer_contour3d, abs_tol) or self.is_intersected_with(other_bspline_surface3d))
 
         for i, bspline in enumerate(bsplines_new):
             grid3d = bspline.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(0, 1),
