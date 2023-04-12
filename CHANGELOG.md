@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bSpline2D: linesegment_intersections
 - BsplineCurve: from_points_interpolation
 - Coverage: use coverage rc to enable cython coverage
+- BsplineCurve: simplify
 
 ### Refactor
 - Contour2D: cut_by_wire
