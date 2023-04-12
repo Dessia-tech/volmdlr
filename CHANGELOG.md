@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BsplineCurve: point_distance, point_belongs
 - ContourMixin: is_adjacent
 - Wire2D: area
+- add tolerance param to many methods from edges and wires.
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
