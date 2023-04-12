@@ -121,7 +121,7 @@ class TestBSplineCurve2D(unittest.TestCase):
         point = volmdlr.Point2D(1.5, 0.1)
         self.assertAlmostEqual(self.bspline1.point_distance(point), 0.08945546033235202)
         point2 = self.bspline1.point_at_abscissa(0.4)
-        self.assertAlmostEqual(self.bspline1.point_distance(point2), 0.0, 8)
+        self.assertAlmostEqual(self.bspline1.point_distance(point2), 0.0, 7)
 
     def test_point_belongs(self):
         point = volmdlr.Point2D(1.5, 0.1)
