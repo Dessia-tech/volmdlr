@@ -18,6 +18,14 @@ class TestContour2D(unittest.TestCase):
     point2_ = volmdlr.Point2D(0.12500000000000003, -0.15)
     point_to_extract_with = [(point1_, point2_), (volmdlr.Point2D(0.15, -0.05), volmdlr.Point2D(0.15, 0.05)),
                        (volmdlr.Point2D(-0.15, 0.15), point2_), (volmdlr.Point2D(-0.15, 0.15), point1_)]
+    line_segment1 = edges.LineSegment2D(volmdlr.Point2D(1, -1), volmdlr.Point2D(1.5, 1))
+    arc = edges.Arc2D(volmdlr.Point2D(1.5, 1), volmdlr.Point2D(1.3, 1.5), volmdlr.Point2D(0.5, 1.5))
+    line_segment2 = edges.LineSegment2D(volmdlr.Point2D(0.5, 1.5), volmdlr.Point2D(-2, 1))
+    line_segment3 = edges.LineSegment2D(volmdlr.Point2D(-2, 1), volmdlr.Point2D(-2, 0.7))
+    lie_segment4 = edges.LineSegment2D(volmdlr.Point2D(-2, 0.7), volmdlr.Point2D(-1, 1))
+    points2d = [volmdlr.Point2D(-1, 1), volmdlr.Point2D(2, 2), volmdlr.Point2D(-2, -2), volmdlr.Point2D(1, -1)]
+    bspline = edges.BSplineCurve2D(3, points2d, knot_multiplicities=[4, 4], knots=[0.0, 1.0])
+    contour2 = wires.Contour2D([bspline, line_segment1, arc, line_segment2, line_segment3, lie_segment4])
 
     def test_point_belongs(self):
         point1 = volmdlr.Point2D(0.0144822, 0.00595264)
@@ -84,6 +92,22 @@ class TestContour2D(unittest.TestCase):
         contour1, contour2 = contour.split_by_line(line)
         self.assertTrue(contour1.primitives[-1].end.is_close(intersection))
         self.assertTrue(contour2.primitives[0].start.is_close(intersection))
+
+    def test_closest_point_to_point2(self):
+        point1 = volmdlr.Point2D(1.5, -1.5)
+        point2 = volmdlr.Point2D(-1, -1)
+        closest_point1 = self.contour2.closest_point_to_point2(point1)
+        self.assertEqual(closest_point1, volmdlr.Point2D(1.0, -1.0))
+        closest_point2 = self.contour2.closest_point_to_point2(point2)
+        self.assertEqual(closest_point2, volmdlr.Point2D(-2.0, 0.7))
+
+    def test_furthest_point_to_point2(self):
+        point1 = volmdlr.Point2D(1.5, -1.5)
+        point2 = volmdlr.Point2D(-1, -1)
+        furthest_point1 = self.contour2.get_furthest_point_to_point2(point1)
+        self.assertEqual(furthest_point1, volmdlr.Point2D(-2.0, 1.0))
+        furthest_point2 = self.contour2.get_furthest_point_to_point2(point2)
+        self.assertEqual(furthest_point2, volmdlr.Point2D(1.5, 1.0))
 
 
 if __name__ == '__main__':
