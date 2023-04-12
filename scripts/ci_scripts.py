@@ -90,8 +90,8 @@ CONTROLED_TIMES = {'showcases/casing.py': 15,
 # Executing scripts
 print('Executing scripts for CI:')
 total_time = time.time()
-# top_level_dir = os.getcwd()
-top_level_dir = os.sep.join(__file__.split(os.sep)[:-1])
+top_level_dir = os.getcwd()
+#top_level_dir = os.sep.join(__file__.split(os.sep)[:-1])
 
 times = {}
 for script_name in scripts:
