@@ -1395,14 +1395,18 @@ class BSplineCurve(Edge):
                 polygon_points.append(point)
         list_intersections = []
         initial_abscissa = 0
+        linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
         for points in zip(polygon_points[:-1], polygon_points[1:]):
-            linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
             linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
             intersections = linesegment.line_intersections(line)
+
             if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
                 if line.point_distance(linesegment.middle_point()) < 1e-8:
                     list_intersections.append(linesegment.middle_point())
             if intersections and intersections[0] not in list_intersections:
+                if self.point_belongs(intersections[0], 1e-6):
+                    list_intersections.append(intersections[0])
+                    continue
                 abs1 = self.abscissa(linesegment.start)
                 abs2 = self.abscissa(linesegment.end)
                 list_abscissas = list(new_abscissa for new_abscissa in npy.linspace(abs1, abs2, 1000))
