@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: extract_contour displaced to WireMixin and renamed to extract
 - Contour2D: split_contour_with_sorted_points displaced to WireMixin and renamed to split_with_sorted_points
 - Contour2D: get_divided_contours
+- FullArc2D, FullArc3D: create FullArc Abstract class.
 ### Changed
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
@@ -74,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fixes to wire
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
-* BSplineCurve: abscissa
+* BSplineCurve: abscissa, line_intersections
 * Add some important fixes to unittests: missing two __init__py files.
 * Contour2D, Contour3D: merge_with()
 * Edge: change unit_direction_vector and unit_normal_vector to concrete methods
@@ -84,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineSurface3D: refactor bsplinecurve3d_to_2d to take into account periodic behavior
 * OpenedRoundedLineSegments2D/ClosedRoundedLineSegments2D: fix radius type
 * Surface3D: debug some special cases while using face_from_contours3d.
+* Step: debug some special cases while reading step file.
 * BSplineSurface3D: fix simplify_surface method.
 * Improve pylint code quality.
 * PeriodicalSurface: enhance some parametric transformations.
