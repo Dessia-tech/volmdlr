@@ -1,7 +1,7 @@
 import os
 import time
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as _plt
 
 scripts = [
             # Core.py
@@ -113,7 +113,7 @@ for script_name in scripts:
         exec(script.read())
     time_start_script = time.time() - time_start_script
     times[script_name] = time_start_script
-    plt.close('all')
+    _plt.close('all')
 
 print('Computation times:')
 for script_name, t in sorted(times.items(), key=lambda x: x[1]):
