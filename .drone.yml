@@ -97,6 +97,7 @@ steps:
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
   - cd ../tutorials
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
+  - cd ..
   - coverage json
   - coverage report
   - coverage html
