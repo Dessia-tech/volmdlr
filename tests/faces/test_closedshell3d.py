@@ -41,6 +41,13 @@ class TestClosedShell3D(unittest.TestCase):
         union_shell1_shell2 = extruded_prifile1.union(extruded_prifile2)[0]
         union_shell1_shell2.merge_faces()
         self.assertEqual(len(union_shell1_shell2.faces), 7)
+        boundary1 = primitives3d.Block(volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, 0.3 * volmdlr.Y3D, 0.1 * volmdlr.Z3D))
+        boundary2 = primitives3d.Block(
+            volmdlr.Frame3D(volmdlr.O3D, 0.3 * volmdlr.X3D, 0.8 * volmdlr.Y3D, 0.2 * volmdlr.Z3D))
+        boundary2 = boundary2.translation(offset=(0.5 + 0.15) * volmdlr.X3D)
+        union = boundary1.union(boundary2)[0]
+        self.assertEqual(len(union.faces), 11)
+
 
     def test_set_operations_blocks(self):
 
