@@ -1448,7 +1448,7 @@ class ContourMixin(WireMixin):
             return True
         return False
 
-    def is_sharing_primitives_with(self, contour):
+    def is_sharing_primitives_with(self, contour, abs_tol: float = 1e-6):
         """
         Check if two contour are sharing primitives.
 
@@ -1456,7 +1456,7 @@ class ContourMixin(WireMixin):
 
         for prim1 in self.primitives:
             for prim2 in contour.primitives:
-                shared_section = prim1.get_shared_section(prim2)
+                shared_section = prim1.get_shared_section(prim2, abs_tol)
                 if shared_section:
                     return True
         return False
@@ -1524,21 +1524,22 @@ class ContourMixin(WireMixin):
                     shared_primitives_2.extend(shared_section_2)
         return shared_primitives_1, shared_primitives_2
 
-    def delete_shared_contour_section(self, contour):
+    def delete_shared_contour_section(self, contour, abs_tol: float = 1e-6):
         """
         Delete shared primitives between two adjacent contours.
 
         :param contour: other contour.
+        :param abs_tol: tolerance.
         :return: list of new primitives, without those shared by both contours.
         """
         new_primitives_contour1 = self.primitives[:]
         new_primitives_contour2 = contour.primitives[:]
         for prim1 in self.primitives:
             for prim2 in contour.primitives:
-                shared_section = prim1.get_shared_section(prim2)
+                shared_section = prim1.get_shared_section(prim2, abs_tol)
                 if shared_section:
-                    prim1_delete_shared_section = prim1.delete_shared_section(shared_section[0])
-                    prim2_delete_shared_section = prim2.delete_shared_section(shared_section[0])
+                    prim1_delete_shared_section = prim1.delete_shared_section(shared_section[0], abs_tol)
+                    prim2_delete_shared_section = prim2.delete_shared_section(shared_section[0], abs_tol)
                     if prim1 in new_primitives_contour1:
                         new_primitives_contour1.remove(prim1)
                     if prim2 in new_primitives_contour2:
@@ -2295,11 +2296,12 @@ class Contour2D(ContourMixin, Wire2D):
 
         return Contour2D(new_primitives)
 
-    def merge_with(self, contour2d):
+    def merge_with(self, contour2d, abs_tol: float = 1e-6):
         """
         Merge two adjacent contours, and returns one outer contour and inner contours (if there are any).
 
         :param contour2d: contour to merge with.
+        :param abs_tol: tolerance.
         :return: merged contours.
         """
         is_sharing_primitive = self.is_sharing_primitives_with(contour2d)
@@ -2308,7 +2310,7 @@ class Contour2D(ContourMixin, Wire2D):
         if contour2d.is_inside(self) and not is_sharing_primitive:
             return [contour2d]
 
-        merged_primitives = self.delete_shared_contour_section(contour2d)
+        merged_primitives = self.delete_shared_contour_section(contour2d, abs_tol)
         contours = Contour2D.contours_from_edges(merged_primitives)
         contours = sorted(contours, key=lambda contour: contour.area(),
                           reverse=True)
@@ -4740,13 +4742,13 @@ class Contour3D(ContourMixin, Wire3D):
 
         return Contour3D(new_primitives)
 
-    def merge_with(self, contour3d):
+    def merge_with(self, contour3d, abs_tol: float = 1e-6):
         """
         Merge two adjacent contours, and returns one outer contour and inner contours (if there are any).
 
         """
 
-        merged_primitives = self.delete_shared_contour_section(contour3d)
+        merged_primitives = self.delete_shared_contour_section(contour3d, abs_tol)
         contours = Contour3D.contours_from_edges(merged_primitives, tol=1e-6)
 
         return contours
