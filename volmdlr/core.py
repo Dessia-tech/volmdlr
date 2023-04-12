@@ -1689,7 +1689,7 @@ class VolumeModel(dc.PhysicalObject):
 
         :param file_name: The msh. file name
         :type file_name: str
-        :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+        :param mesh_dimension: The mesh dimension (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
         :type mesh_dimension: int
         :param factor: A float, between 0 and 1, that describes the mesh quality
         (1 for coarse mesh - 0 for fine mesh)
@@ -1778,7 +1778,7 @@ class VolumeModel(dc.PhysicalObject):
     #
     #     :param file_name: The msh. file name
     #     :type file_name: str
-    #     :param mesh_dimension: The mesh dimesion (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+    #     :param mesh_dimension: The mesh dimension (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
     #     :type mesh_dimension: int
     #     :param factor: A float, between 0 and 1, that describes the mesh quality
     #     (1 for coarse mesh - 0 for fine mesh)
