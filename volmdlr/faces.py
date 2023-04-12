@@ -10130,8 +10130,7 @@ class ClosedShell3D(OpenShell3D):
                         face1.surface3d.frame.origin,
                         face1.surface3d.frame.u,
                         face1.surface3d.frame.v)
-                    inters = contour1.intersection_points(contour2)
-                    if len(inters) >= 2:
+                    if contour1.bounding_rectangle.b_rectangle_intersection(contour2.bounding_rectangle):
                         list_coincident_faces.append((face1, face2))
 
         return list_coincident_faces
@@ -10188,6 +10187,8 @@ class ClosedShell3D(OpenShell3D):
             new_faces = face.set_operations_new_faces(intersecting_combinations, contour_extract_inside)
             faces = self.set_operations_valid_exterior_faces(new_faces, faces, list_coincident_faces,
                                                              shell2, reference_shell)
+        if list_coincident_faces:
+            faces = self.validate_set_operations_faces(faces)
         return faces
 
     def get_subtraction_valid_faces(self, new_faces, valid_faces, reference_shell, shell2, keep_interior_faces):
@@ -10200,8 +10201,8 @@ class ClosedShell3D(OpenShell3D):
             elif self.set_operations_exterior_face(new_face, faces, inside_reference_shell, [], shell2):
                 faces.append(new_face)
         return faces
-
-    def validate_intersection_substractions_faces(self, faces):
+    @staticmethod
+    def validate_set_operations_faces(faces):
         """
         Final validation of new faces created during intersections or subtractions of two closedshells.
 
@@ -10209,8 +10210,9 @@ class ClosedShell3D(OpenShell3D):
         :return: valid faces.
         """
         valid_faces = []
-        finished = False
-        while not finished:
+        while True:
+            if not faces:
+                break
             for face in valid_faces:
                 if face.face_inside(faces[0]):
                     faces.remove(faces[0])
@@ -10218,8 +10220,6 @@ class ClosedShell3D(OpenShell3D):
             else:
                 valid_faces.append(faces[0])
                 faces.remove(faces[0])
-            if not faces:
-                finished = True
         return valid_faces
 
     def subtraction_faces(self, shell2, intersecting_faces, intersecting_combinations):
@@ -10234,7 +10234,7 @@ class ClosedShell3D(OpenShell3D):
                                                            shell2, keep_interior_faces)
             faces.extend(valid_faces)
 
-        valid_faces = self.validate_intersection_substractions_faces(faces)
+        valid_faces = self.validate_set_operations_faces(faces)
 
         return valid_faces
 
@@ -10262,7 +10262,7 @@ class ClosedShell3D(OpenShell3D):
                 new_faces, faces, reference_shell, shell2)
             faces.extend(valid_faces)
 
-        valid_faces = self.validate_intersection_substractions_faces(faces)
+        valid_faces = self.validate_set_operations_faces(faces)
         return valid_faces
 
     def set_operations_interior_face(self, new_face, faces, inside_reference_shell):
@@ -10322,27 +10322,13 @@ class ClosedShell3D(OpenShell3D):
             return [self]
         return []
 
-    def is_clean(self):
-        """
-        Verifies if closed shell\'s faces are clean or if it is needed to be cleaned.
-
-        :return: True if clean and False Otherwise
-        """
-        for face1, face2 in product(self.faces, repeat=2):
-            if face1 != face2 and \
-                    face1.surface3d.is_coincident(face2.surface3d) and \
-                    face1.is_adjacent(face2):
-                return False
-        return True
-
     def union(self, shell2: 'ClosedShell3D', tol: float = 1e-8):
         """
         Given Two closed shells, it returns a new united ClosedShell3D object.
 
         """
 
-        validate_set_operation = \
-            self.validate_set_operation(shell2, tol)
+        validate_set_operation = self.validate_set_operation(shell2, tol)
         if validate_set_operation:
             return validate_set_operation
         list_coincident_faces = self.get_coincident_faces(shell2)
