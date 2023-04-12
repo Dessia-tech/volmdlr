@@ -1898,7 +1898,7 @@ class Sphere(RevolvedProfile):
 
         for srad in spheres_radius:
             in_sphere = Sphere(self.center, srad)
-            in_points.extend(in_sphere.to_point_skin(resolution=resolution))
+            in_points.extend(in_sphere.skin_points(resolution=resolution))
 
         return in_points
 
