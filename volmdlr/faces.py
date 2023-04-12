@@ -5,7 +5,7 @@ Surfaces & faces.
 
 import math
 import warnings
-from itertools import chain, product
+from itertools import chain
 from typing import List, Tuple, Union
 
 import matplotlib.pyplot as plt
