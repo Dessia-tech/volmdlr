@@ -500,9 +500,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector,
-                                    v_vector,
-                                    w_vector)
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
         new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
         new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
         new_closedshells.append(new_closed_shell3d)
@@ -920,9 +918,9 @@ class Step(dc.DessiaObject):
                 visited_set.add(node)
                 if self.connections[node]:
                     list_nodes.append(node)
-                    for c in self.connections[node]:
-                        if c not in visited_set:
-                            stack.append(c)
+                    for connection in self.connections[node]:
+                        if connection not in visited_set:
+                            stack.append(connection)
                 else:
                     # Entities without connections should be instatiate first
                     list_head.append(node)
@@ -1094,6 +1092,8 @@ class Step(dc.DessiaObject):
         error = True
         while error:
             try:
+                # here we invert instantiate_ids because if the code enter inside the except
+                # block, we want to loop from the last KeyError to the fisrt. This avoids an infinite loop
                 for instanciate_id in instanciate_ids[::-1]:
                     t = time.time()
 

@@ -138,6 +138,16 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertEqual(linesegment2d.start, Point2D(0, 0.003))
         self.assertEqual(linesegment2d.end, Point2D(0, 0.013))
 
+        surface = dessia_common.core.DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/cylindrical_surface_bspline_openned_contour.json')
+        contour = dessia_common.core.DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/cylindrical_contour_bspline_openned_contour.json')
+
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertEqual(len(contour2d.primitives), 2)
+        self.assertFalse(contour2d.is_ordered())
+
+
     def test_bsplinecurve3d_to_2d(self):
         surface = dessia_common.core.DessiaObject.load_from_file(
             'faces/objects_cylindrical_tests/cylindrical_surf_bug.json')
@@ -167,6 +177,22 @@ class TestCylindricalSurface3D(unittest.TestCase):
         contour2 = wires.Contour3D([fullarc2])
         face = cylindrical.face_from_contours3d([contour1, contour2])
         self.assertEqual(face.surface2d.area(), 0.2*2*math.pi)
+
+    def test_point_projection(self):
+        test_points = [Point3D(-2.0, -2.0, 0.0), Point3D(0.0, -2.0, 0.0), Point3D(2.0, -2.0, 0.0),
+                       Point3D(2.0, 0.0, 0.0), Point3D(2.0, 2.0, 0.0), Point3D(0.0, 2.0, 0.0),
+                       Point3D(-2.0, 2.0, 0.0), Point3D(-2.0, 0.0, 0.0)]
+        expected_points = [volmdlr.Point3D(-0.5 * math.sqrt(2), -0.5 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(0.0, -1.0, 0.0),
+                           volmdlr.Point3D(0.5 * math.sqrt(2), -0.5 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(1.0, 0.0, 0.0),
+                           volmdlr.Point3D(0.5 * math.sqrt(2), 0.5 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(0.0, 1.0, 0.0),
+                           volmdlr.Point3D(-0.5 * math.sqrt(2), 0.5 * math.sqrt(2), 0.0),
+                           volmdlr.Point3D(-1.0, 0.0, 0.0)]
+
+        for i, point in enumerate(test_points):
+            self.assertTrue(self.cylindrical_surface2.point_projection(point).is_close(expected_points[i]))
 
 
 if __name__ == '__main__':

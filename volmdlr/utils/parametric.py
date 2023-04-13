@@ -38,18 +38,16 @@ def angle_discontinuity(angle_list):
     """
     indexes_sign_changes = find_sign_changes(angle_list)
     discontinuity = False
-    indexes_theta_discontinuity = []
+    indexes_angle_discontinuity = []
     if indexes_sign_changes:
         for index in indexes_sign_changes:
-            delta = max(angle_list) - min(angle_list)
-            # n = 10
-            # local_discretization = primitive.local_discretization(points3d[index - 1], points3d[index], n)
-            # point2d_to_verification = surface.point3d_to_2d(local_discretization[int(0.5*n)])
-            # if math.isclose(abs(point2d_to_verification.x), math.pi, abs_tol=delta/len(angle_list)):
-            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=1.1*(delta / len(angle_list))):
-                indexes_theta_discontinuity.append(index)
+            sign = round(angle_list[index - 1] / abs(angle_list[index - 1]), 2)
+            delta = abs(angle_list[index] + sign * volmdlr.TWO_PI - angle_list[index - 1])
+            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta) and\
+                    not math.isclose(abs(angle_list[index]), 0, abs_tol=delta):
+                indexes_angle_discontinuity.append(index)
                 discontinuity = True
-    return discontinuity, indexes_theta_discontinuity
+    return discontinuity, indexes_angle_discontinuity
 
 
 def is_undefined_brep_primitive(primitive, periodicity):
@@ -188,6 +186,20 @@ def arc3d_to_cylindrical_coordinates_verification(start, end, angle3d, theta3, t
 
     start = volmdlr.Point2D(theta1, z1)
     end = volmdlr.Point2D(theta2, z2)
+    return [start, end]
+
+
+def fullarc_to_cylindrical_coordinates_verification(start, end, theta3):
+    """
+    Verifies theta from start and end of a full arc after transformation from spatial to parametric coordinates.
+    """
+    theta1, _ = start
+    _, z2 = end
+
+    if theta1 > theta3:
+        end = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
+    elif theta1 < theta3:
+        end = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
     return [start, end]
 
 
