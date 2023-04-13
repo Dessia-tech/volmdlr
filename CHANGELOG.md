@@ -72,7 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Wire2: hash
 * Contour3D: hash
 * LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
- 
+* Contour2D: closest_point_to_point2, get_furthest_point_to_point2
 ### Fixed
 * Bspline in sweep
 * Plane3D: plane_intersections
@@ -128,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment3D: test_matrix_distance
 * LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
 * Contour3D: merge_with()
+* Contour2D: closest_point_to_point2, get_furthest_point_to_point2
 
 ## v0.9.1
 
