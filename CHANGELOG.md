@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShell3D: union
 - BSplineSurface3D: take into account oppened contour while using face_from_contours3d
 - BsplineCurve: simplify
+- Dessiaobject inheritance up-to-date
 
 ### Refactor
 - Contour2D: cut_by_wire
