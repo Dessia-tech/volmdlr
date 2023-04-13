@@ -65,7 +65,7 @@ class TestArc3D(unittest.TestCase):
         self.assertTrue(split3[1].start.is_close(self.arc3d.interior))
         self.assertTrue(split3[1].end.is_close(self.arc3d.end))
 
-    def test_minimum_distance(self):
+    def test_minimum_distance_points_line(self):
         linesegment = edges.LineSegment3D(volmdlr.Point3D(-2.4, 3.9, -4.1), volmdlr.Point3D(3.2, -3.6, -3.6))
         point = volmdlr.Point3D(4.6, -4., 2.8)
         radius = 2
@@ -74,6 +74,7 @@ class TestArc3D(unittest.TestCase):
         point1, point2 = arc.minimum_distance_points_line(linesegment)
         minimum_distance = linesegment.minimum_distance(arc)
         self.assertEqual(point1.point_distance(point2), minimum_distance)
+        self.assertAlmostEqual(minimum_distance, 5.203844732503075)
 
 
 if __name__ == '__main__':
