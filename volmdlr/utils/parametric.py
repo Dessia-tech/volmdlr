@@ -161,11 +161,11 @@ def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, ang
     #  ref_up > math.pi -> crossing lower bound of atan2  [-math.pi, math.pi]
     elif angle_after_start > angle_start and ref_up > math.pi:
         angle_end = ref_up
-
-    if angle_start > 0 > angle_after_start:
-        angle_start -= periodicity
-    elif angle_start < 0 < angle_after_start:
-        angle_start += periodicity
+    if not math.isclose(angle_start, 0, abs_tol=1e-4):
+        if angle_start > 0 > angle_after_start:
+            angle_start -= periodicity
+        elif angle_start < 0 < angle_after_start:
+            angle_start += periodicity
 
     return angle_start, angle_end
 

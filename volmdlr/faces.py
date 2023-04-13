@@ -826,7 +826,7 @@ class Surface3D(DessiaObject):
                 outer_contour2d, inner_contours2d = self.repair_contours2d(contours2d[0], contours2d[1:])
             else:
                 for contour2d in contours2d:
-                    if not contour2d.is_ordered():
+                    if not contour2d.is_ordered(1e-4):
                         contour2d = vm_parametric.contour2d_healing(contour2d)
                     inner_contours2d.append(contour2d)
                     contour_area = contour2d.area()
@@ -841,9 +841,8 @@ class Surface3D(DessiaObject):
             class_ = globals()[self.face_class]
         else:
             class_ = self.face_class
-        if not outer_contour2d.is_ordered():
+        if not outer_contour2d.is_ordered(1e-4):
             outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
-            outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
@@ -961,11 +960,11 @@ class Surface3D(DessiaObject):
                     if primitives is None:
                         continue
                     primitives3d.extend(primitives)
-                except NotImplementedError:
+                except AttributeError:
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
                           f'with {primitive2d.__class__.__name__}')
             else:
-                raise NotImplementedError(
+                raise AttributeError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
 
         return volmdlr.wires.Contour3D(primitives3d)
@@ -1890,6 +1889,8 @@ class PeriodicalSurface(Surface3D):
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
         if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametic.linesegment":
+            if self.point2d_to_3d(linesegment2d.start).is_close(self.point2d_to_3d(linesegment2d.end)):
+                print(True)
             return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
                                       self.point2d_to_3d(linesegment2d.end))]
 
@@ -1948,7 +1949,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        self.frame.plot(ax=ax)
+        self.frame.plot(ax=ax, ratio=0.5 * length)
         for i in range(nlines):
             theta = i / (nlines - 1) * volmdlr.TWO_PI
             start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
@@ -3090,11 +3091,11 @@ class SphericalSurface3D(PeriodicalSurface):
                         primitives3d.extend(primitives_list)
                     else:
                         continue
-                except NotImplementedError:
+                except AttributeError:
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
                           f'with {primitive2d.__class__.__name__}')
             else:
-                raise NotImplementedError(f'Class {self.__class__.__name__} does not implement {method_name}')
+                raise AttributeError(f'Class {self.__class__.__name__} does not implement {method_name}')
 
         return volmdlr.wires.Contour3D(primitives3d)
 
