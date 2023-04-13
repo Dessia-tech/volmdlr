@@ -188,7 +188,7 @@ class Edge(dc.DessiaObject):
         :param abscissa: edge abscissa
         :return: unit normal vector
         """
-        vector = self.normal_vector(abscissa)
+        vector = self.normal_vector(abscissa).copy(deep=True)
         vector.normalize()
         return vector
 
@@ -209,7 +209,7 @@ class Edge(dc.DessiaObject):
         :param abscissa: edge abscissa
         :return: unit direction vector
         """
-        vector = self.direction_vector(abscissa)
+        vector = self.direction_vector(abscissa).copy(deep=True)
         vector.normalize()
         return vector
 
