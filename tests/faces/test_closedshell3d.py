@@ -49,6 +49,7 @@ class TestClosedShell3D(unittest.TestCase):
         self.assertEqual(len(union.faces), 11)
 
 
+
     def test_set_operations_blocks(self):
 
         box_red = primitives3d.Block(
@@ -127,6 +128,19 @@ class TestClosedShell3D(unittest.TestCase):
         shell2 = shell1.translation(volmdlr.Point3D(0, -0.28, -0.2)).rotation(volmdlr.O3D, volmdlr.X3D, math.pi)
         union_shell1_shell2 = shell1.union(shell2)
         self.assertEqual(len(union_shell1_shell2), 2)
+
+    def test_cut_by_plane(self):
+        boundary1 = primitives3d.Block(volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, 0.3 * volmdlr.Y3D, 0.1 * volmdlr.Z3D))
+        boundary2 = primitives3d.Block(
+            volmdlr.Frame3D(volmdlr.O3D, 0.4 * volmdlr.X3D, 0.8 * volmdlr.Y3D, 0.4 * volmdlr.Z3D))
+        boundary2 = boundary2.translation(offset=(0.5 + 0.14) * volmdlr.X3D)
+        boundary2 = boundary2.translation(offset=(0.1) * volmdlr.Z3D)
+        union = boundary1.union(boundary2)[0]
+        center = union.bounding_box.center
+        plane = volmdlr.faces.Plane3D.from_normal(center, volmdlr.Y3D)
+        cut_by_plane = union.cut_by_plane(plane)
+        self.assertEqual(len(cut_by_plane), 1)
+        self.assertEqual(cut_by_plane[0].area(), 0.254)
 
 
 if __name__ == '__main__':

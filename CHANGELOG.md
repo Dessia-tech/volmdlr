@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LineSegment, Arc, BSplineCurve: get_shared_section()
 - bSpline2D: linesegment_intersections
 - BsplineCurve: from_points_interpolation
+- ClosedShel3D: cut_by_plane
 - ClosedShell3D: union
 - BSplineSurface3D: take into account oppened contour while using face_from_contours3d
 - BsplineCurve: simplify
@@ -53,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CylindricalFace3D: test_triangulation_quality
 - CylindricalSurface3D: test_point_projection
 - BSplineCurve: point_projection
+- ClosedShel3D: cut_by_plane
 
 ## v0.10.0 [Unreleased yet]
 
