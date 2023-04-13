@@ -76,6 +76,17 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertTrue(isinstance(bspline_1, vme.BSplineCurve2D))
         self.assertTrue(isinstance(arc3d, vme.Arc3D))
 
+    def test_face_from_contours3d(self):
+        surface = vmf.BSplineSurface3D.load_from_file(
+            "faces/objects_bspline_test/bspline_surface_openned_contour.json")
+        contour3d_0 = vmw.Contour3D.load_from_file(
+            "faces/objects_bspline_test/bspline_contour_0_openned_contour.json")
+        contour3d_1 = vmw.Contour3D.load_from_file(
+            "faces/objects_bspline_test/bspline_contour_1_openned_contour.json")
+        contours = [contour3d_0, contour3d_1]
+        face = surface.face_from_contours3d(contours)
+        self.assertAlmostEqual(face.surface2d.area(), 0.6319342194477546)
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=0)
