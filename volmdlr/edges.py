@@ -497,7 +497,7 @@ class Line(dc.DessiaObject):
 
         :param abscissa: The abscissa
         :type abscissa: float
-        :return: The point that correspods to the given abscissa.
+        :return: The point that corresponds to the given abscissa.
         :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
         """
         return self.point1 + (self.point2 - self.point1) * abscissa
@@ -1788,6 +1788,10 @@ class Line2D(Line):
 
     @staticmethod
     def compute_tangent_circle_for_parallel_segments(new_basis, new_a, new_c):
+        """
+        Compute tangent circle betwen parallel segments.
+
+        """
         segments_distance = abs(new_c[1] - new_a[1])
         radius = segments_distance / 2
         new_circle_center = volmdlr.Point2D((0, npy.sign(new_c[1] - new_a[1]) * radius))
@@ -1797,6 +1801,10 @@ class Line2D(Line):
 
     @staticmethod
     def compute_tangent_circles_for_perpendicular_segments(new_basis, new_a, new_b, new_c, new_d):
+        """
+        Compute tangent circle betwen perpendicular segments.
+
+        """
         line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
         line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
         new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
