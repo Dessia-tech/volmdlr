@@ -35,7 +35,7 @@ import volmdlr.wires
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
 from volmdlr.bspline_evaluators import evaluate_single
 from volmdlr.core import point_in_list
-
+c = 0
 
 def knots_vector_inv(knots_vector):
     """
@@ -995,6 +995,8 @@ class Surface3D(DessiaObject):
                 outer_contour2d, inner_contours2d = self.repair_contours2d(contours2d[0], contours2d[1:])
             else:
                 for contour2d in contours2d:
+                    if not contour2d.is_ordered():
+                        contour2d = vm_parametric.contour2d_healing(contour2d)
                     inner_contours2d.append(contour2d)
                     contour_area = contour2d.area()
                     if contour_area > area:
@@ -1008,6 +1010,9 @@ class Surface3D(DessiaObject):
             class_ = globals()[self.face_class]
         else:
             class_ = self.face_class
+        if not outer_contour2d.is_ordered():
+            outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+            outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
@@ -2890,8 +2895,8 @@ class ConicalSurface3D(PeriodicalSurface):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        self.frame.plot(ax=ax)
-        x = z / math.sin(self.semi_angle)
+        self.frame.plot(ax=ax, ratio=z)
+        x = z * math.tan(self.semi_angle)
         # point1 = self.frame.local_to_global_coordinates(volmdlr.Point3D(-x, 0, -z))
         point1 = self.frame.origin
         point2 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, z))
@@ -3019,7 +3024,8 @@ class ConicalSurface3D(PeriodicalSurface):
             start = volmdlr.Point2D(end.x, 0)
         elif start.x != end.x and end == volmdlr.Point2D(0, 0):
             end = volmdlr.Point2D(start.x, 0)
-
+        elif start.x != end.x:
+            end = volmdlr.Point2D(start.x, end.y)
         if not start.is_close(end):
             return [vme.LineSegment2D(start, end)]
         return [vme.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
@@ -4551,7 +4557,7 @@ class BSplineSurface3D(Surface3D):
         else:
             i = 1
         min_bound, max_bound = self.surface.domain[i]
-        delta = max_bound - min_bound
+        delta = max_bound + min_bound
 
         if math.isclose(start[i], min_bound, abs_tol=1e-4) and pt_after_start[i] > 0.5 * delta:
             start[i] = max_bound
@@ -9735,7 +9741,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def triangulation(self):
         meshes = []
         for face in self.faces:
-            face_mesh = face.triangulation()
+            try:
+                face_mesh = face.triangulation()
+            except Exception:
+                warnings.warn("Could not triangulate face. Probabaly because topology error in contour2d.")
+                continue
             meshes.append(face_mesh)
         return vmd.DisplayMesh3D.merge_meshes(meshes)
 

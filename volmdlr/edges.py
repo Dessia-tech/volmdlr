@@ -1578,6 +1578,24 @@ class BSplineCurve(Edge):
         """
         return self.point_at_abscissa(self.abscissa(point))
 
+    def local_discretization(self, point1, point2, number_points):
+        """
+        Gets n discretization points between two given points of the edge.
+
+        :param point1: point 1 on edge.
+        :param point2: point 2 on edge.
+        :param number_points: number of points to discretize locally.
+        :return: list of locally discretized points.
+        """
+        abscissa1 = self.abscissa(point1)
+        abscissa2 = self.abscissa(point2)
+        # special case periodical bsplinecurve
+        if self.periodic and abscissa2 == 0.0 and abscissa1 > 0.0:
+            abscissa2 = self.length()
+        discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
+                                          in npy.linspace(abscissa1, abscissa2, num=number_points)]
+        return discretized_points_between_1_2
+
 
 class Line2D(Line):
     """
@@ -5539,12 +5557,13 @@ class BSplineCurve3D(BSplineCurve):
         :return: the given point when the BSplineCurve3D is evaluated at the t value.
         """
 
-        def fun(param):
-            p3d = volmdlr.Point3D(*self.curve.evaluate_single(param))
-            return point.point_distance(p3d)
-
-        res = minimize(fun=fun, x0=0.5, bounds=[(0, 1)], tol=1e-9)
-        return res.x[0]
+        # def fun(param):
+        #     p3d = volmdlr.Point3D(*self.curve.evaluate_single(param))
+        #     return point.point_distance(p3d)
+        #
+        # res = minimize(fun=fun, x0=0.5, bounds=[(0, 1)], tol=1e-9)
+        # return res.x[0]
+        return self.abscissa(point) / self.length()
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
@@ -5677,6 +5696,9 @@ class BSplineCurve3D(BSplineCurve):
         self._bbox = None
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        if self.periodic:
+            return self.trim_with_interpolation(point1, point2)
+
         if (point1.is_close(self.start) and point2.is_close(self.end)) \
                 or (point1.is_close(self.end) and point2.is_close(self.start)):
             return self
@@ -5706,6 +5728,14 @@ class BSplineCurve3D(BSplineCurve):
         new_param2 = bspline_curve.point3d_to_parameter(point2)
         trimmed_bspline_cruve = bspline_curve.cut_after(new_param2)
         return trimmed_bspline_cruve
+
+    def trim_with_interpolation(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        """
+        Creates a new BSplineCurve3D between point1 and point2 using interpolation method.
+        """
+        n = len(self.control_points)
+        local_discretization = self.local_discretization(point1, point2, n)
+        return self.__class__.from_points_interpolation(local_discretization, self.degree, self.periodic)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         print('Use BSplineCurve3D.trim instead of trim_between_evaluation')
