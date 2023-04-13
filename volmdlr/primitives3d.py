@@ -363,16 +363,14 @@ class Block(volmdlr.faces.ClosedShell3D):
             pass
         else:
             raise KeyError('plane is not orthogonal either with x, y or z')
-        dir1 = plane_3d.frame.u
-        dir2 = plane_3d.frame.v
         point_min = volmdlr.Point3D(bouding_box.xmin, bouding_box.ymin,
                                     bouding_box.zmin)
         point_max = volmdlr.Point3D(bouding_box.xmax, bouding_box.ymax,
                                     bouding_box.zmax)
-        points = [volmdlr.Point2D(point_min.dot(dir1), point_min.dot(dir2)),
-                  volmdlr.Point2D(point_min.dot(dir1), point_max.dot(dir2)),
-                  volmdlr.Point2D(point_max.dot(dir1), point_max.dot(dir2)),
-                  volmdlr.Point2D(point_max.dot(dir1), point_min.dot(dir2))]
+        point_min_2d = plane_3d.point3d_to_2d(point_min)
+        point_max_2d = plane_3d.point3d_to_2d(point_max)
+        points = [point_min_2d, volmdlr.Point2D(point_max_2d.x, point_min_2d.y),
+                  point_max_2d, volmdlr.Point2D(point_min_2d.x, point_max_2d.y)]
         contour_2d = volmdlr.faces.Surface2D(
             volmdlr.wires.ClosedPolygon2D(points), [])
 
