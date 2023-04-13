@@ -363,16 +363,14 @@ class Block(volmdlr.faces.ClosedShell3D):
             pass
         else:
             raise KeyError('plane is not orthogonal either with x, y or z')
-        dir1 = plane_3d.frame.u
-        dir2 = plane_3d.frame.v
         point_min = volmdlr.Point3D(bouding_box.xmin, bouding_box.ymin,
                                     bouding_box.zmin)
         point_max = volmdlr.Point3D(bouding_box.xmax, bouding_box.ymax,
                                     bouding_box.zmax)
-        points = [volmdlr.Point2D(point_min.dot(dir1), point_min.dot(dir2)),
-                  volmdlr.Point2D(point_min.dot(dir1), point_max.dot(dir2)),
-                  volmdlr.Point2D(point_max.dot(dir1), point_max.dot(dir2)),
-                  volmdlr.Point2D(point_max.dot(dir1), point_min.dot(dir2))]
+        point_min_2d = plane_3d.point3d_to_2d(point_min)
+        point_max_2d = plane_3d.point3d_to_2d(point_max)
+        points = [point_min_2d, volmdlr.Point2D(point_max_2d.x, point_min_2d.y),
+                  point_max_2d, volmdlr.Point2D(point_min_2d.x, point_max_2d.y)]
         contour_2d = volmdlr.faces.Surface2D(
             volmdlr.wires.ClosedPolygon2D(points), [])
 
@@ -1844,7 +1842,8 @@ class Sphere(RevolvedProfile):
 
         self.center.frame_mapping_inplace(frame, side)
 
-    def to_point_skin(self, resolution: float = 1e-3):
+    def skin_points(self, resolution: float = 1e-3):
+        """Gives points on the skin with respect to a resolution."""
         if resolution > 2 * self.radius:
             return []
 
@@ -1883,7 +1882,8 @@ class Sphere(RevolvedProfile):
 
         return skin_points
 
-    def to_point_in(self, resolution: float = 1e-3):
+    def inner_points(self, resolution: float = 1e-3):
+        """Gives points inside of the sphere with a subsphere strategy."""
         in_points = [self.center]
         nb_spheres = int(self.radius / resolution)
         if nb_spheres == 0:
@@ -1896,7 +1896,7 @@ class Sphere(RevolvedProfile):
 
         for srad in spheres_radius:
             in_sphere = Sphere(self.center, srad)
-            in_points.extend(in_sphere.to_point_skin(resolution=resolution))
+            in_points.extend(in_sphere.skin_points(resolution=resolution))
 
         return in_points
 

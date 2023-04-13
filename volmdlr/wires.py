@@ -205,32 +205,46 @@ class WireMixin:
                 return False
         return True
 
+    def ordering_primitives(self, tol: float = 1e-6):
+        """
+        Ordering wire / contour primitives.
+
+        :param tol: tolerance.
+        :return:
+        """
+        primitives = [prim for prim in self.primitives[:] if not math.isclose(prim.length(), 0.0, abs_tol=tol)]
+        new_primitives = [primitives[0]]
+        primitives.remove(primitives[0])
+        while True:
+            if not primitives:
+                break
+            for primitive in primitives:
+                if primitive.is_point_edge_extremity(new_primitives[-1].end, tol):
+                    if new_primitives[-1].end.is_close(primitive.start, tol):
+                        new_primitives.append(primitive)
+                    else:
+                        new_primitives.append(primitive.reverse())
+                    primitives.remove(primitive)
+                    break
+                if primitive.is_point_edge_extremity(new_primitives[0].start, tol):
+                    if new_primitives[0].start.is_close(primitive.end, tol):
+                        new_primitives.insert(0, primitive)
+                    else:
+                        new_primitives.insert(0, primitive.reverse())
+                    primitives.remove(primitive)
+                    break
+            else:
+                raise NotImplementedError('There may exist a problem with this'
+                                          ' contour, it seems it cannot be reordered.'
+                                          ' Please, verify its points')
+        return new_primitives
+
     def order_wire(self, tol=1e-6):
         """ Order wire's primitives. """
 
         if self.is_ordered(tol=tol):
-            return self.__class__(self.primitives[:])
-
-        new_primitives = [self.primitives[0]]
-        primitives = self.primitives[1:]
-        length_primitives = len(primitives) + 1
-
-        while len(new_primitives) < length_primitives:
-            for primitive in primitives:
-                if new_primitives[0].start.point_distance(primitive.start) < tol:
-                    new_primitives.insert(0, primitive.reverse())
-                    primitives.remove(primitive)
-                elif new_primitives[-1].end.point_distance(primitive.start) < tol:
-                    new_primitives.append(primitive)
-                    primitives.remove(primitive)
-                elif new_primitives[0].start.point_distance(primitive.end) < tol:
-                    new_primitives.insert(0, primitive)
-                    primitives.remove(primitive)
-                elif new_primitives[-1].end.point_distance(primitive.end) < tol:
-                    new_primitives.append(primitive.reverse())
-                    primitives.remove(primitive)
-
-        return self.__class__(new_primitives)
+            return self
+        return self.__class__(self.ordering_primitives(tol))
 
     @classmethod
     def from_wires(cls, wires):
@@ -1116,72 +1130,6 @@ class ContourMixin(WireMixin):
                 return False
         return True
 
-    def ordering_contour(self, tol=1e-6):
-        """
-        Returns the points of the contour ordered.
-
-        """
-        list_point_pairs = [(prim.start, prim.end) for prim in self.primitives]
-        length_list_points = len(list_point_pairs)
-        points = [list_point_pairs[0]]
-        primitives = self.primitives[:]
-        new_primitives = [primitives[0]]
-        primitives.remove(primitives[0])
-        list_point_pairs.remove(
-            (list_point_pairs[0][0], list_point_pairs[0][1]))
-        finished = False
-        counter = 0
-        counter1 = 0
-
-        while not finished:
-            for i, (point1, point2) in enumerate(list_point_pairs):
-                if point1.point_distance(point2) < tol:
-                    list_point_pairs.remove((point1, point2))
-                    primitives.remove(primitives[i])
-                elif point1.point_distance(points[-1][-1]) < tol:
-                    points.append((point1, point2))
-                    new_primitives.append(primitives[i])
-                    primitives.remove(primitives[i])
-                    list_point_pairs.remove((point1, point2))
-                elif point2.point_distance(points[-1][-1]) < tol:
-                    points.append((point2, point1))
-                    new_primitives.append(primitives[i].reverse())
-                    primitives.remove(primitives[i])
-                    list_point_pairs.remove((point1, point2))
-                elif point1.point_distance(points[0][0]) < tol:
-                    points = [(point2, point1)] + points
-                    new_primitives = [primitives[i].reverse()] + new_primitives
-                    primitives.remove(primitives[i])
-                    list_point_pairs.remove((point1, point2))
-                elif point2.point_distance(points[0][0]) < tol:
-                    points = [(point1, point2)] + points
-                    new_primitives = [primitives[i]] + new_primitives
-                    primitives.remove(primitives[i])
-                    list_point_pairs.remove((point1, point2))
-            if len(list_point_pairs) == 0:
-                finished = True
-            counter1 += 1
-            if counter1 >= 100 * length_list_points:
-                self.plot()
-                raise NotImplementedError
-            if len(list_point_pairs) == 1:
-                counter += 1
-                if counter > 3:
-                    # for point_pair in list_point_pairs:
-                    if list_point_pairs[0][0] in points or list_point_pairs[0][::-1] in points:
-                        finished = True
-                        continue
-                    warnings.warn('There may exist a problem with this'
-                                  ' contour, it seems it cannot be reordered.'
-                                  ' Please, verify its points')
-                    finished = True
-                    # ax = self.plot()
-                    # for point_pair in list_point_pairs:
-                    #     point_pair[0].plot(ax=ax, color='r')
-                    #     point_pair[1].plot(ax=ax, color='r')
-                    # raise NotImplementedError
-        return new_primitives
-
     def order_contour(self, tol: float = 1e-6):
         """
         Verifies if the contours'primitives are ordered (one after the other). If not, it will order it.
@@ -1189,7 +1137,7 @@ class ContourMixin(WireMixin):
         """
         if self.is_ordered(tol=tol) or len(self.primitives) < 2:
             return self
-        new_primitives = self.ordering_contour(tol=tol)
+        new_primitives = self.ordering_primitives(tol)
         self.primitives = new_primitives
 
         return self
@@ -1448,7 +1396,7 @@ class ContourMixin(WireMixin):
             return True
         return False
 
-    def is_sharing_primitives_with(self, contour):
+    def is_sharing_primitives_with(self, contour, abs_tol: float = 1e-6):
         """
         Check if two contour are sharing primitives.
 
@@ -1456,7 +1404,7 @@ class ContourMixin(WireMixin):
 
         for prim1 in self.primitives:
             for prim2 in contour.primitives:
-                shared_section = prim1.get_shared_section(prim2)
+                shared_section = prim1.get_shared_section(prim2, abs_tol)
                 if shared_section:
                     return True
         return False
@@ -1524,21 +1472,22 @@ class ContourMixin(WireMixin):
                     shared_primitives_2.extend(shared_section_2)
         return shared_primitives_1, shared_primitives_2
 
-    def delete_shared_contour_section(self, contour):
+    def delete_shared_contour_section(self, contour, abs_tol: float = 1e-6):
         """
         Delete shared primitives between two adjacent contours.
 
         :param contour: other contour.
+        :param abs_tol: tolerance.
         :return: list of new primitives, without those shared by both contours.
         """
         new_primitives_contour1 = self.primitives[:]
         new_primitives_contour2 = contour.primitives[:]
         for prim1 in self.primitives:
             for prim2 in contour.primitives:
-                shared_section = prim1.get_shared_section(prim2)
+                shared_section = prim1.get_shared_section(prim2, abs_tol)
                 if shared_section:
-                    prim1_delete_shared_section = prim1.delete_shared_section(shared_section[0])
-                    prim2_delete_shared_section = prim2.delete_shared_section(shared_section[0])
+                    prim1_delete_shared_section = prim1.delete_shared_section(shared_section[0], abs_tol)
+                    prim2_delete_shared_section = prim2.delete_shared_section(shared_section[0], abs_tol)
                     if prim1 in new_primitives_contour1:
                         new_primitives_contour1.remove(prim1)
                     if prim2 in new_primitives_contour2:
@@ -2073,6 +2022,7 @@ class Contour2D(ContourMixin, Wire2D):
         return cutted_contours
 
     def triangulation(self):
+        """Returns the triangulation of the contour2d."""
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
 
@@ -2295,11 +2245,12 @@ class Contour2D(ContourMixin, Wire2D):
 
         return Contour2D(new_primitives)
 
-    def merge_with(self, contour2d):
+    def merge_with(self, contour2d, abs_tol: float = 1e-6):
         """
         Merge two adjacent contours, and returns one outer contour and inner contours (if there are any).
 
         :param contour2d: contour to merge with.
+        :param abs_tol: tolerance.
         :return: merged contours.
         """
         is_sharing_primitive = self.is_sharing_primitives_with(contour2d)
@@ -2308,7 +2259,7 @@ class Contour2D(ContourMixin, Wire2D):
         if contour2d.is_inside(self) and not is_sharing_primitive:
             return [contour2d]
 
-        merged_primitives = self.delete_shared_contour_section(contour2d)
+        merged_primitives = self.delete_shared_contour_section(contour2d, abs_tol)
         contours = Contour2D.contours_from_edges(merged_primitives)
         contours = sorted(contours, key=lambda contour: contour.area(),
                           reverse=True)
@@ -2392,6 +2343,38 @@ class Contour2D(ContourMixin, Wire2D):
             if self.is_inside(section):
                 intersection_contour_primitives.extend(section.primitives)
         return self.contours_from_edges(intersection_contour_primitives, abs_tol)
+
+    def get_furthest_point_to_point2(self, point2):
+        """
+        Search the furthest point from self to point2. It only considers the start or end or primitives.
+
+        :param point2: other point.
+        :return: the furthest point.
+        """
+        furthest_point = self.primitives[0].start
+        furthest_distance = point2.point_distance(self.primitives[0].start)
+        for prim in self.primitives:
+            distance = point2.point_distance(prim.end)
+            if distance > furthest_distance:
+                furthest_distance = distance
+                furthest_point = prim.end
+        return furthest_point
+
+    def closest_point_to_point2(self, point2):
+        """
+        Search the closest point from self to point2. It only considers the start or end or primitives.
+
+        :param point2: other point.
+        :return: the closest point to point2.
+        """
+        closest_point = self.primitives[0].start
+        closest_distance = point2.point_distance(self.primitives[0].start)
+        for prim in self.primitives:
+            distance = point2.point_distance(prim.end)
+            if distance < closest_distance:
+                closest_distance = distance
+                closest_point = prim.end
+        return closest_point
 
 
 class ClosedPolygonMixin:
@@ -4104,7 +4087,7 @@ class Circle2D(Contour2D):
                 volmdlr.Point3D(self.center.x, self.center.y, 0),
                 volmdlr.Point3D(-self.radius, self.center.y, 0)]
 
-    def bsplinecurve_intersections(self, bsplinecurve: volmdlr.edges.BSplineCurve2D, abs_tol: float = 1e-7):
+    def bsplinecurve_intersections(self, bsplinecurve: volmdlr.edges.BSplineCurve2D, abs_tol: float = 1e-6):
         """
         Calculates the intersections between a circle 2d and a BSpline Curve 2D.
 
@@ -4112,44 +4095,7 @@ class Circle2D(Contour2D):
         :param abs_tol: tolerance to be considered while validating an intersection.
         :return: a list with all intersections between circle and bsplinecurve.
         """
-        circle_bounding_rectangle = self.bounding_rectangle
-        bspline_discretized_points = bsplinecurve.discretization_points(number_points=10)
-        param_intersections = []
-        for point1, point2 in zip(bspline_discretized_points[:-1], bspline_discretized_points[1:]):
-            line_seg = volmdlr.edges.LineSegment2D(point1, point2)
-            abscissa1 = bsplinecurve.abscissa(point1)
-            abscissa2 = bsplinecurve.abscissa(point2)
-            if line_seg.bounding_rectangle.b_rectangle_intersection(circle_bounding_rectangle):
-                intersection = self.linesegment_intersections(line_seg)
-                if intersection:
-                    param_intersections.append((abscissa1, abscissa2))
-        intersections = []
-        while True:
-            if not param_intersections:
-                break
-            for abscissa1, abscissa2 in param_intersections:
-                discretized_points_between_1_2 = [bsplinecurve.point_at_abscissa(abscissa) for abscissa
-                                                  in npy.linspace(abscissa1, abscissa2, num=10)]
-                break_flag = False
-                for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
-                    line_seg = volmdlr.edges.LineSegment2D(point1, point2)
-                    if line_seg.bounding_rectangle.b_rectangle_intersection(circle_bounding_rectangle):
-                        intersection = self.linesegment_intersections(line_seg, 1e-12)
-                        if not intersection:
-                            continue
-                        if bsplinecurve.point_distance(intersection[0]) > abs_tol:
-                            param_intersections.insert(0, (bsplinecurve.abscissa(point1),
-                                                           bsplinecurve.abscissa(point2)))
-                        else:
-                            intersections.append(intersection[0])
-                        break_flag = True
-                        break
-                if break_flag:
-                    break
-            else:
-                continue
-            param_intersections.remove((abscissa1, abscissa2))
-        return intersections
+        return vm_utils_intersections.get_bsplinecurve_intersections(self, bsplinecurve, abs_tol)
 
 
 class Ellipse2D(Contour2D):
@@ -4777,13 +4723,13 @@ class Contour3D(ContourMixin, Wire3D):
 
         return Contour3D(new_primitives)
 
-    def merge_with(self, contour3d):
+    def merge_with(self, contour3d, abs_tol: float = 1e-6):
         """
         Merge two adjacent contours, and returns one outer contour and inner contours (if there are any).
 
         """
 
-        merged_primitives = self.delete_shared_contour_section(contour3d)
+        merged_primitives = self.delete_shared_contour_section(contour3d, abs_tol)
         contours = Contour3D.contours_from_edges(merged_primitives, tol=1e-6)
 
         return contours
