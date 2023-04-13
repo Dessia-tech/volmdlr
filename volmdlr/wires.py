@@ -2343,6 +2343,38 @@ class Contour2D(ContourMixin, Wire2D):
                 intersection_contour_primitives.extend(section.primitives)
         return self.contours_from_edges(intersection_contour_primitives, abs_tol)
 
+    def get_furthest_point_to_point2(self, point2):
+        """
+        Search the furthest point from self to point2. It only considers the start or end or primitives.
+
+        :param point2: other point.
+        :return: the furthest point.
+        """
+        furthest_point = self.primitives[0].start
+        furthest_distance = point2.point_distance(self.primitives[0].start)
+        for prim in self.primitives:
+            distance = point2.point_distance(prim.end)
+            if distance > furthest_distance:
+                furthest_distance = distance
+                furthest_point = prim.end
+        return furthest_point
+
+    def closest_point_to_point2(self, point2):
+        """
+        Search the closest point from self to point2. It only considers the start or end or primitives.
+
+        :param point2: other point.
+        :return: the closest point to point2.
+        """
+        closest_point = self.primitives[0].start
+        closest_distance = point2.point_distance(self.primitives[0].start)
+        for prim in self.primitives:
+            distance = point2.point_distance(prim.end)
+            if distance < closest_distance:
+                closest_distance = distance
+                closest_point = prim.end
+        return closest_point
+
 
 class ClosedPolygonMixin:
     """

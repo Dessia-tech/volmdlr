@@ -170,6 +170,22 @@ class TestContour2D(unittest.TestCase):
         self.assertTrue(contour1.primitives[-1].end.is_close(intersection))
         self.assertTrue(contour2.primitives[0].start.is_close(intersection))
 
+    def test_closest_point_to_point2(self):
+        point1 = volmdlr.Point2D(1.5, -1.5)
+        point2 = volmdlr.Point2D(-1, -1)
+        closest_point1 = self.contour2.closest_point_to_point2(point1)
+        self.assertEqual(closest_point1, volmdlr.Point2D(1.0, -1.0))
+        closest_point2 = self.contour2.closest_point_to_point2(point2)
+        self.assertEqual(closest_point2, volmdlr.Point2D(-2.0, 0.7))
+
+    def test_furthest_point_to_point2(self):
+        point1 = volmdlr.Point2D(1.5, -1.5)
+        point2 = volmdlr.Point2D(-1, -1)
+        furthest_point1 = self.contour2.get_furthest_point_to_point2(point1)
+        self.assertEqual(furthest_point1, volmdlr.Point2D(-2.0, 1.0))
+        furthest_point2 = self.contour2.get_furthest_point_to_point2(point2)
+        self.assertEqual(furthest_point2, volmdlr.Point2D(1.5, 1.0))
+
     def test_intersection_contour_with(self):
         vol = DessiaObject.load_from_file('wires/test_intersection_contour_with.json')
         contour2 = vol.primitives[0]
