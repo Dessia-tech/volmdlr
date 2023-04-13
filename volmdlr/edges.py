@@ -1601,10 +1601,13 @@ class BSplineCurve(Edge):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         # special case periodical bsplinecurve
-        if self.periodic and abscissa2 == 0.0 and abscissa1 > 0.0:
+        if self.periodic and abscissa2 == 0.0:
             abscissa2 = self.length()
-        discretized_points_between_1_2 = [self.point_at_abscissa(abscissa) for abscissa
-                                          in npy.linspace(abscissa1, abscissa2, num=number_points)]
+        discretized_points_between_1_2 = []
+        for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
+            abscissa_point = self.point_at_abscissa(abscissa)
+            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+                discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
 
 
