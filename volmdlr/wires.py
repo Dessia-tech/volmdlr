@@ -2074,6 +2074,7 @@ class Contour2D(ContourMixin, Wire2D):
         return cutted_contours
 
     def triangulation(self):
+        """Returns the triangulation of the contour2d."""
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
 
