@@ -6439,6 +6439,11 @@ class Arc3D(Arc):
                 + math.sin(2 * x[1]) * v.dot(k) * radius ** 2)
 
     def minimum_distance_points_line(self, other_line):
+        """
+        Gets the points from the arc and the line that gives the minimal distance between them.
+
+        :param other_line: other line.
+        """
         u = other_line.direction_vector()
         k = self.start - self.center
         k.normalize()
