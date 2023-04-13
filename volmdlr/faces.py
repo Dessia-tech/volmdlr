@@ -35,7 +35,7 @@ import volmdlr.wires
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
 from volmdlr.bspline_evaluators import evaluate_single
 from volmdlr.core import point_in_list
-c = 0
+
 
 def knots_vector_inv(knots_vector):
     """

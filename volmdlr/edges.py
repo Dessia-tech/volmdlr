@@ -1589,7 +1589,7 @@ class BSplineCurve(Edge):
         """
         return self.point_at_abscissa(self.abscissa(point))
 
-    def local_discretization(self, point1, point2, number_points):
+    def local_discretization(self, point1, point2, number_points: int = 10):
         """
         Gets n discretization points between two given points of the edge.
 
