@@ -2396,6 +2396,38 @@ class Contour2D(ContourMixin, Wire2D):
                 intersection_contour_primitives.extend(section.primitives)
         return self.contours_from_edges(intersection_contour_primitives, abs_tol)
 
+    def get_furthest_point_to_point2(self, point2):
+        """
+        Search the furthest point from self to point2. It only considers the start or end or primitives.
+
+        :param point2: other point.
+        :return: the furthest point.
+        """
+        furthest_point = self.primitives[0].start
+        furthest_distance = point2.point_distance(self.primitives[0].start)
+        for prim in self.primitives:
+            distance = point2.point_distance(prim.end)
+            if distance > furthest_distance:
+                furthest_distance = distance
+                furthest_point = prim.end
+        return furthest_point
+
+    def closest_point_to_point2(self, point2):
+        """
+        Search the closest point from self to point2. It only considers the start or end or primitives.
+
+        :param point2: other point.
+        :return: the closest point to point2.
+        """
+        closest_point = self.primitives[0].start
+        closest_distance = point2.point_distance(self.primitives[0].start)
+        for prim in self.primitives:
+            distance = point2.point_distance(prim.end)
+            if distance < closest_distance:
+                closest_distance = distance
+                closest_point = prim.end
+        return closest_point
+
 
 class ClosedPolygonMixin:
     """
@@ -4107,7 +4139,7 @@ class Circle2D(Contour2D):
                 volmdlr.Point3D(self.center.x, self.center.y, 0),
                 volmdlr.Point3D(-self.radius, self.center.y, 0)]
 
-    def bsplinecurve_intersections(self, bsplinecurve: volmdlr.edges.BSplineCurve2D, abs_tol: float = 1e-7):
+    def bsplinecurve_intersections(self, bsplinecurve: volmdlr.edges.BSplineCurve2D, abs_tol: float = 1e-6):
         """
         Calculates the intersections between a circle 2d and a BSpline Curve 2D.
 
@@ -4115,44 +4147,7 @@ class Circle2D(Contour2D):
         :param abs_tol: tolerance to be considered while validating an intersection.
         :return: a list with all intersections between circle and bsplinecurve.
         """
-        circle_bounding_rectangle = self.bounding_rectangle
-        bspline_discretized_points = bsplinecurve.discretization_points(number_points=10)
-        param_intersections = []
-        for point1, point2 in zip(bspline_discretized_points[:-1], bspline_discretized_points[1:]):
-            line_seg = volmdlr.edges.LineSegment2D(point1, point2)
-            abscissa1 = bsplinecurve.abscissa(point1)
-            abscissa2 = bsplinecurve.abscissa(point2)
-            if line_seg.bounding_rectangle.b_rectangle_intersection(circle_bounding_rectangle):
-                intersection = self.linesegment_intersections(line_seg)
-                if intersection:
-                    param_intersections.append((abscissa1, abscissa2))
-        intersections = []
-        while True:
-            if not param_intersections:
-                break
-            for abscissa1, abscissa2 in param_intersections:
-                discretized_points_between_1_2 = [bsplinecurve.point_at_abscissa(abscissa) for abscissa
-                                                  in npy.linspace(abscissa1, abscissa2, num=10)]
-                break_flag = False
-                for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
-                    line_seg = volmdlr.edges.LineSegment2D(point1, point2)
-                    if line_seg.bounding_rectangle.b_rectangle_intersection(circle_bounding_rectangle):
-                        intersection = self.linesegment_intersections(line_seg, 1e-12)
-                        if not intersection:
-                            continue
-                        if bsplinecurve.point_distance(intersection[0]) > abs_tol:
-                            param_intersections.insert(0, (bsplinecurve.abscissa(point1),
-                                                           bsplinecurve.abscissa(point2)))
-                        else:
-                            intersections.append(intersection[0])
-                        break_flag = True
-                        break
-                if break_flag:
-                    break
-            else:
-                continue
-            param_intersections.remove((abscissa1, abscissa2))
-        return intersections
+        return vm_utils_intersections.get_bsplinecurve_intersections(self, bsplinecurve, abs_tol)
 
 
 class Ellipse2D(Contour2D):
