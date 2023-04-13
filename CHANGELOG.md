@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: split_contour_with_sorted_points displaced to WireMixin and renamed to split_with_sorted_points
 - Contour2D: get_divided_contours
 - FullArc2D, FullArc3D: create FullArc Abstract class.
+- Contour2D: ordering_contour
+- WireMixin: order_wire
 ### Changed
 - better surface3d plots
 
