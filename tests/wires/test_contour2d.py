@@ -5,7 +5,8 @@ from dessia_common.core import DessiaObject
 
 import volmdlr
 from volmdlr import edges, wires
-from volmdlr.models.contours import contour2d_1, contour2d_2, contour1_cut_by_wire, contour2_cut_by_wire
+from volmdlr.models.contours import contour2d_1, contour2d_2, contour1_cut_by_wire, contour2_cut_by_wire,\
+    contour2_unittest, unordered_contour2_unittest, invalid_unordered_contour2_unittest
 
 
 class TestContour2D(unittest.TestCase):
@@ -19,15 +20,7 @@ class TestContour2D(unittest.TestCase):
     point2_ = volmdlr.Point2D(0.12500000000000003, -0.15)
     point_to_extract_with = [(point1_, point2_), (volmdlr.Point2D(0.15, -0.05), volmdlr.Point2D(0.15, 0.05)),
                        (volmdlr.Point2D(-0.15, 0.15), point2_), (volmdlr.Point2D(-0.15, 0.15), point1_)]
-    line_segment1 = edges.LineSegment2D(volmdlr.Point2D(1, -1), volmdlr.Point2D(1.5, 1))
-    arc = edges.Arc2D(volmdlr.Point2D(1.5, 1), volmdlr.Point2D(1.3, 1.5), volmdlr.Point2D(0.5, 1.5))
-    line_segment2 = edges.LineSegment2D(volmdlr.Point2D(0.5, 1.5), volmdlr.Point2D(-2, 1))
-    line_segment3 = edges.LineSegment2D(volmdlr.Point2D(-2, 1), volmdlr.Point2D(-2, 0.7))
-    lie_segment4 = edges.LineSegment2D(volmdlr.Point2D(-2, 0.7), volmdlr.Point2D(-1, 1))
-    points2d = [volmdlr.Point2D(-1, 1), volmdlr.Point2D(2, 2), volmdlr.Point2D(-2, -2), volmdlr.Point2D(1, -1)]
-    bspline = edges.BSplineCurve2D(3, points2d, knot_multiplicities=[4, 4], knots=[0.0, 1.0])
-    contour2 = wires.Contour2D([bspline, line_segment1, arc, line_segment2, line_segment3, lie_segment4])
-    contour3 = contour2.rotation(volmdlr.Point2D(0.5, 0.5), math.pi / 1.5)
+    contour3 = contour2_unittest.rotation(volmdlr.Point2D(0.5, 0.5), math.pi / 1.5)
     contour3 = contour3.translation(volmdlr.Vector2D(-0.3, 0))
 
     def test_point_belongs(self):
@@ -52,6 +45,11 @@ class TestContour2D(unittest.TestCase):
         for previous_primitive, primitive in zip(ordered_contour.primitives, ordered_contour.primitives[1:] +
                                                                              [ordered_contour.primitives[0]]):
             self.assertEqual(previous_primitive.end, primitive.start)
+        self.assertFalse(unordered_contour2_unittest.is_ordered())
+        unordered_contour2_unittest.order_contour()
+        self.assertTrue(unordered_contour2_unittest.is_ordered())
+        with self.assertRaises(NotImplementedError):
+            invalid_unordered_contour2_unittest.order_contour()
 
     def test_cut_by_wire(self):
         results = contour1_cut_by_wire.cut_by_wire(contour2_cut_by_wire)
@@ -102,7 +100,7 @@ class TestContour2D(unittest.TestCase):
         self.assertTrue(wire_edge_crossings[0].is_close(volmdlr.Point2D(-0.2, -0.2)))
 
     def test_crossings(self):
-        contour_crossings = self.contour2.wire_crossings(self.contour3)
+        contour_crossings = contour2_unittest.wire_crossings(self.contour3)
         expected_crossings = [volmdlr.Point2D(0.003455042474764269, 0.010365521626940934),
                               volmdlr.Point2D(-0.08592141662920678, -0.26441019657119236),
                               volmdlr.Point2D(1.3565385114925572, 0.4261540459702289),
@@ -179,7 +177,7 @@ class TestContour2D(unittest.TestCase):
         intersection_contours1 = contour2.intersection_contour_with(contour3, abs_tol=1e-5)
         self.assertTrue(len(intersection_contours1), 1)
         self.assertAlmostEqual(intersection_contours1[0].length(), 0.1651419895544224, 6)
-        intersection_contours2 = self.contour2.intersection_contour_with(self.contour3, abs_tol=1e-6)
+        intersection_contours2 = contour2_unittest.intersection_contour_with(self.contour3, abs_tol=1e-6)
         self.assertTrue(len(intersection_contours1), 2)
         self.assertAlmostEqual(intersection_contours2[0].length(), 6.915893328290323, 6)
         self.assertAlmostEqual(intersection_contours2[1].length(), 2.440629779494193, 6)
