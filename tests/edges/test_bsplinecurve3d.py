@@ -5,7 +5,7 @@ import volmdlr.edges as vme
 
 class TestBSplineCurve3D(unittest.TestCase):
     def test_trim(self):
-        obj = vme.BSplineCurve3D.load_from_file(r"C:\Users\gabri\Documents\dessia\tests\bspline_buggy_trim.json")
+        obj = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_objects/bspline_buggy_trim.json")
         point1 = volmdlr.Point3D(1.20555954308, -0.879118549155, 0.938030639643)
         point2 = volmdlr.Point3D(1.2150653573, -0.879118549155, 0.958332154591)
         trimmed_curve = obj.trim(point1, point2)
