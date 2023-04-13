@@ -215,8 +215,7 @@ class WireMixin:
         primitives = [prim for prim in self.primitives[:] if not math.isclose(prim.length(), 0.0, abs_tol=tol)]
         new_primitives = [primitives[0]]
         primitives.remove(primitives[0])
-        finished = False
-        while not finished:
+        while True:
             if not primitives:
                 break
             for primitive in primitives:
@@ -235,7 +234,6 @@ class WireMixin:
                     primitives.remove(primitive)
                     break
             else:
-                # self.plot()
                 raise NotImplementedError('There may exist a problem with this'
                                           ' contour, it seems it cannot be reordered.'
                                           ' Please, verify its points')
