@@ -22,13 +22,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BsplineCurve: point_distance, point_belongs
 - ContourMixin: is_adjacent
 - Wire2D: area
+- add tolerance param to many methods from edges and wires.
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
 - LineSegment, Arc, BSplineCurve: get_shared_section()
 - bSpline2D: linesegment_intersections
 - BsplineCurve: from_points_interpolation
+- ClosedShel3D: cut_by_plane
+- ClosedShell3D: union
 - BSplineSurface3D: take into account oppened contour while using face_from_contours3d
+- BsplineCurve: simplify
+
 ### Refactor
 - Contour2D: cut_by_wire
 - Contour2D: extract_with_points displaced to WireMixin
@@ -49,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CylindricalFace3D: test_triangulation_quality
 - CylindricalSurface3D: test_point_projection
 - BSplineCurve: point_projection
+- ClosedShel3D: cut_by_plane
 
 ## v0.10.0 [Unreleased yet]
 
@@ -73,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fixes to wire
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
-* BSplineCurve: abscissa
+* BSplineCurve: abscissa, line_intersections
 * Add some important fixes to unittests: missing two __init__py files.
 * Contour2D, Contour3D: merge_with()
 * Edge: change unit_direction_vector and unit_normal_vector to concrete methods
