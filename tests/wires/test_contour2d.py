@@ -173,17 +173,17 @@ class TestContour2D(unittest.TestCase):
     def test_closest_point_to_point2(self):
         point1 = volmdlr.Point2D(1.5, -1.5)
         point2 = volmdlr.Point2D(-1, -1)
-        closest_point1 = self.contour2.closest_point_to_point2(point1)
+        closest_point1 = contour2_unittest.closest_point_to_point2(point1)
         self.assertEqual(closest_point1, volmdlr.Point2D(1.0, -1.0))
-        closest_point2 = self.contour2.closest_point_to_point2(point2)
+        closest_point2 = contour2_unittest.closest_point_to_point2(point2)
         self.assertEqual(closest_point2, volmdlr.Point2D(-2.0, 0.7))
 
     def test_furthest_point_to_point2(self):
         point1 = volmdlr.Point2D(1.5, -1.5)
         point2 = volmdlr.Point2D(-1, -1)
-        furthest_point1 = self.contour2.get_furthest_point_to_point2(point1)
+        furthest_point1 = contour2_unittest.get_furthest_point_to_point2(point1)
         self.assertEqual(furthest_point1, volmdlr.Point2D(-2.0, 1.0))
-        furthest_point2 = self.contour2.get_furthest_point_to_point2(point2)
+        furthest_point2 = contour2_unittest.get_furthest_point_to_point2(point2)
         self.assertEqual(furthest_point2, volmdlr.Point2D(1.5, 1.0))
 
     def test_intersection_contour_with(self):
