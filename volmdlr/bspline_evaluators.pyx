@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# cython: language_level=3
+
 """
 This module contains functions for working with Non-Uniform Rational B-Splines (NURBs).
 Some of the functions in this module are either partially or totally copied from the geomdl open
