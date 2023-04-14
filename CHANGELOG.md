@@ -47,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FullArc2D, FullArc3D: create FullArc Abstract class.
 - Contour2D: ordering_contour
 - WireMixin: order_wire
+- Contour2D: delete cut_by_linesegments
+
 ### Changed
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
