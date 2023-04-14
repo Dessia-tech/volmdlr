@@ -3785,7 +3785,6 @@ class ExtrusionSurface3D(Surface3D):
             if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-4):
                 primitive = self.edge.translation(self.direction * z1)
                 return [primitive]
-                # if primitive.__name__
             primitive = self.edge.translation(self.direction * z1)
             primitive = primitive.trim(start3d, end3d)
             return [primitive]
