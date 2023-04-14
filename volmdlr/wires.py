@@ -4391,7 +4391,7 @@ class Contour3D(ContourMixin, Wire3D):
                      raw_edges[0].end.point_distance(raw_edges[1].end),
                      raw_edges[0].start.point_distance(raw_edges[1].end)]
         index = distances.index(min(distances))
-        if min(distances) > 6e-4:
+        if min(distances) > 1e-3:
             # Green color : well-placed and well-read
             ax = raw_edges[0].plot(edge_style=EdgeStyle(color='g'))
             ax.set_title(f"Step ID: #{step_id}")
@@ -4432,7 +4432,7 @@ class Contour3D(ContourMixin, Wire3D):
             distances = [raw_edge.start.point_distance(last_edge.end),
                          raw_edge.end.point_distance(last_edge.end)]
             index = distances.index(min(distances))
-            if min(distances) > 6e-4:
+            if min(distances) > 1e-3:
                 # Green color : well-placed and well-read
                 ax = last_edge.plot(edge_style=EdgeStyle(color='g'))
                 ax.set_title(f"Step ID: #{step_id}")

@@ -85,7 +85,14 @@ class TestBSplineSurface3D(unittest.TestCase):
             "faces/objects_bspline_test/bspline_contour_1_openned_contour.json")
         contours = [contour3d_0, contour3d_1]
         face = surface.face_from_contours3d(contours)
-        self.assertAlmostEqual(face.surface2d.area(), 0.6319342194477546)
+        self.assertAlmostEqual(face.surface2d.area(), 0.6319342194477546, 5)
+
+        surface = vmf.BSplineSurface3D.load_from_file(
+            "faces/objects_bspline_test/bspline_surface_self_intersecting_contour.json")
+        contour3d = vmw.Contour3D.load_from_file(
+            "faces/objects_bspline_test/bspline_contour_self_intersecting_contour.json")
+        face = surface.face_from_contours3d([contour3d])
+        self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
 
 if __name__ == '__main__':

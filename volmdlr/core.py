@@ -1181,7 +1181,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
         """
-        Creates a html file using babylonjs to show a 3d model in the browser.
+        Creates a HTML file using babylonjs to show a 3d model in the browser.
 
         """
         babylon_data = self.babylon_data()
