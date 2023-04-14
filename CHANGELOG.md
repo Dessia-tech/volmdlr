@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle2D: bsplinecurve_intersections
 - add tolerance param to many methods from edges and wires.
 - Surface3D: add contour healing into face_from_contours3d method.
+- ExtrusionSurface3D: implement missing cases for linesegment2d_to_3d method.
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
