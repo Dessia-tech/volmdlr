@@ -3728,7 +3728,8 @@ class ExtrusionSurface3D(Surface3D):
         name = arguments[0][1:-1]
         edge = object_dict[arguments[1]]
         if edge.__class__ is volmdlr.wires.Ellipse3D:
-            fullarcellipse = vme.FullArcEllipse3D(edge.point_at_abscissa(0), edge.major_axis, edge.minor_axis,
+            start_end = edge.center + edge.major_axis * edge.major_dir
+            fullarcellipse = vme.FullArcEllipse3D(start_end, edge.major_axis, edge.minor_axis,
                                                   edge.center, edge.normal, edge.major_dir, edge.name)
             edge = fullarcellipse
             direction = -object_dict[arguments[2]]
