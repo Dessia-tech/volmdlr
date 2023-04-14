@@ -6,6 +6,7 @@ Cloud of points classes.
 
 import math
 from typing import List, Tuple
+import random
 
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
@@ -18,7 +19,6 @@ import volmdlr.step as vstep
 import volmdlr.stl as vmstl
 # import volmdlr.core
 import volmdlr.wires as vmw
-
 
 class PointCloud3D(dc.DessiaObject):
     """
@@ -228,7 +228,7 @@ class PointCloud3D(dc.DessiaObject):
     @classmethod
     def from_step(cls, step_file: str):
         """
-        Creates a Clopud of Points from a step file.
+        Creates a cloud of Points from a step file.
 
         :param step_file: step file.
         :return: Point Cloud 3D.
@@ -242,9 +242,15 @@ class PointCloud3D(dc.DessiaObject):
         Plot the cloud 3d.
 
         """
-        ax = self.points[0].plot(ax=ax)
-        for point in self.points[1::100]:
-            point.plot(ax=ax, color=color)
+        
+        if self.points:
+            ax = self.points[0].plot(ax=ax)
+            if len(self.points) > 1000:
+                plot_points = random.choice(self.points, k=1000)
+            else:
+                plot_points = self.points
+            for point in plot_points:
+                point.plot(ax=ax, color=color)
 
         return ax
 
@@ -279,6 +285,7 @@ class PointCloud3D(dc.DessiaObject):
         new_poly = [poly.offset(offset) for poly in polyconvexe]
 
         return new_position_plane, new_poly
+
 
 
 class PointCloud2D(dc.DessiaObject):
