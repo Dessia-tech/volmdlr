@@ -188,7 +188,7 @@ class Edge(dc.DessiaObject):
         :param abscissa: edge abscissa
         :return: unit normal vector
         """
-        vector = self.normal_vector(abscissa)
+        vector = self.normal_vector(abscissa).copy(deep=True)
         vector.normalize()
         return vector
 
@@ -209,7 +209,7 @@ class Edge(dc.DessiaObject):
         :param abscissa: edge abscissa
         :return: unit direction vector
         """
-        vector = self.direction_vector(abscissa)
+        vector = self.direction_vector(abscissa).copy(deep=True)
         vector.normalize()
         return vector
 
@@ -4588,7 +4588,7 @@ class Line3D(Line):
     Define an infinite line passing through the 2 points.
 
     """
-    _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
+    _non_data_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  name: str = ''):
@@ -6480,6 +6480,11 @@ class Arc3D(Arc):
                 + math.sin(2 * x[1]) * v.dot(k) * radius ** 2)
 
     def minimum_distance_points_line(self, other_line):
+        """
+        Gets the points from the arc and the line that gives the minimal distance between them.
+
+        :param other_line: other line.
+        """
         u = other_line.direction_vector()
         k = self.start - self.center
         k.normalize()

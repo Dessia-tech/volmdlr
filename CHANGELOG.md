@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShell3D: union
 - BSplineSurface3D: take into account oppened contour while using face_from_contours3d
 - BsplineCurve: simplify
+- Dessiaobject inheritance up-to-date
+- Edge: unit_direction_vector, unit_normal_vector
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -62,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CylindricalSurface3D: test_point_projection
 - BSplineCurve: point_projection
 - ClosedShel3D: cut_by_plane
+- Arc3D.minimum_distance_points_line
 
 ## v0.10.0 [Unreleased yet]
 
