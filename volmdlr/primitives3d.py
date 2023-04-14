@@ -38,8 +38,8 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
     :type radius: {position1(n): float which is the radius linked the n-1 and.
     n+1 points, position2(n+1):...}
     """
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
 
     line_class = volmdlr.edges.LineSegment3D
     arc_class = volmdlr.edges.Arc3D
@@ -146,8 +146,8 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     n+1 points, position2(n+1):...}
     """
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
 
     def __init__(self, points: List[volmdlr.Point3D], radius: float, adapt_radius: bool = False, name: str = ''):
         volmdlr.primitives.RoundedLineSegments.__init__(
@@ -167,9 +167,9 @@ class Block(volmdlr.faces.ClosedShell3D):
     """
     _standalone_in_db = True
     _non_serializable_attributes = ['size', 'bounding_box', 'faces', 'contours', 'plane', 'points', 'polygon2D']
-    _non_eq_attributes = ['name', 'color', 'alpha', 'size', 'bounding_box',
+    _non_data_eq_attributes = ['name', 'color', 'alpha', 'size', 'bounding_box',
                           'faces', 'contours', 'plane', 'points', 'polygon2D']
-    _non_hash_attributes = []
+    _non_data_hash_attributes = []
 
     def __init__(self, frame: volmdlr.Frame3D, *,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,

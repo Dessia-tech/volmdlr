@@ -21,8 +21,8 @@ class GmshParser(DessiaObject):
     """
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
     _generic_eq = True
 
     def __init__(self,

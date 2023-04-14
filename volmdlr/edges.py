@@ -4567,7 +4567,7 @@ class Line3D(Line):
     Define an infinite line passing through the 2 points.
 
     """
-    _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
+    _non_data_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  name: str = ''):
