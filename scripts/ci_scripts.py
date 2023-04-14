@@ -1,6 +1,8 @@
 import os
 import time
 
+import matplotlib.pyplot as _plt
+
 scripts = [
             # Core.py
             'core/points.py',
@@ -28,7 +30,7 @@ scripts = [
             "primitives/bspline_sweep.py",
             'primitives/revolved_profile.py',
             'primitives/block3d.py',
-            'primitives/sphere_to_point.py',
+            'primitives/sphere.py',
             'primitives/cone.py',
             'primitives/cylinders.py',
             # Faces
@@ -85,17 +87,17 @@ scripts = [
 CONTROLED_TIMES = {'showcases/casing.py': 15,
                    'primitives/sweep.py': 15}
 
-# Testing if all scripts exists before launching them
-for script_name in scripts:
-    if not os.path.isfile(script_name):
-        raise FileNotFoundError(f'Script {script_name} does not exists in CI scripts')
-
 # Executing scripts
 print('Executing scripts for CI:')
 total_time = time.time()
 top_level_dir = os.getcwd()
+#top_level_dir = os.sep.join(__file__.split(os.sep)[:-1])
+
 times = {}
 for script_name in scripts:
+    if not os.path.isfile(os.path.join(top_level_dir, script_name)):
+        raise FileNotFoundError(f'Script {script_name} does not exists in CI scripts')
+
     print(f'\t* {script_name}')
     # Reset dir
     os.chdir(top_level_dir)
@@ -111,6 +113,7 @@ for script_name in scripts:
         exec(script.read())
     time_start_script = time.time() - time_start_script
     times[script_name] = time_start_script
+    _plt.close('all')
 
 print('Computation times:')
 for script_name, t in sorted(times.items(), key=lambda x: x[1]):

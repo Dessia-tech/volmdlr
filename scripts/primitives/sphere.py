@@ -21,18 +21,18 @@ sphere = p3d.Sphere(center = center,
 resolution = max([math.pi*radius/10, 1e-3])
 
 
-point_skin = sphere.to_point_skin(resolution = resolution)
+skin_points = sphere.skin_points(resolution = resolution)
 
 spheres = [sphere]
-for pt in point_skin :
+for pt in skin_points :
     spheres.append(p3d.Sphere(center = pt, 
                               radius = resolution/4,
                               color = (1,0,0)))
 
 
-point_in = sphere.to_point_in(resolution = resolution)
+points_in = sphere.inner_points(resolution = resolution)
 
-for pt in point_in :
+for pt in points_in :
     spheres.append(p3d.Sphere(center = pt, 
                               radius = resolution/4,
                               color = (0,1,0)))

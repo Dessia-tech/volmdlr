@@ -205,32 +205,46 @@ class WireMixin:
                 return False
         return True
 
+    def ordering_primitives(self, tol: float = 1e-6):
+        """
+        Ordering wire / contour primitives.
+
+        :param tol: tolerance.
+        :return:
+        """
+        primitives = [prim for prim in self.primitives[:] if not math.isclose(prim.length(), 0.0, abs_tol=tol)]
+        new_primitives = [primitives[0]]
+        primitives.remove(primitives[0])
+        while True:
+            if not primitives:
+                break
+            for primitive in primitives:
+                if primitive.is_point_edge_extremity(new_primitives[-1].end, tol):
+                    if new_primitives[-1].end.is_close(primitive.start, tol):
+                        new_primitives.append(primitive)
+                    else:
+                        new_primitives.append(primitive.reverse())
+                    primitives.remove(primitive)
+                    break
+                if primitive.is_point_edge_extremity(new_primitives[0].start, tol):
+                    if new_primitives[0].start.is_close(primitive.end, tol):
+                        new_primitives.insert(0, primitive)
+                    else:
+                        new_primitives.insert(0, primitive.reverse())
+                    primitives.remove(primitive)
+                    break
+            else:
+                raise NotImplementedError('There may exist a problem with this'
+                                          ' contour, it seems it cannot be reordered.'
+                                          ' Please, verify its points')
+        return new_primitives
+
     def order_wire(self, tol=1e-6):
         """ Order wire's primitives. """
 
         if self.is_ordered(tol=tol):
-            return self.__class__(self.primitives[:])
-
-        new_primitives = [self.primitives[0]]
-        primitives = self.primitives[1:]
-        length_primitives = len(primitives) + 1
-
-        while len(new_primitives) < length_primitives:
-            for primitive in primitives:
-                if new_primitives[0].start.point_distance(primitive.start) < tol:
-                    new_primitives.insert(0, primitive.reverse())
-                    primitives.remove(primitive)
-                elif new_primitives[-1].end.point_distance(primitive.start) < tol:
-                    new_primitives.append(primitive)
-                    primitives.remove(primitive)
-                elif new_primitives[0].start.point_distance(primitive.end) < tol:
-                    new_primitives.insert(0, primitive)
-                    primitives.remove(primitive)
-                elif new_primitives[-1].end.point_distance(primitive.end) < tol:
-                    new_primitives.append(primitive.reverse())
-                    primitives.remove(primitive)
-
-        return self.__class__(new_primitives)
+            return self
+        return self.__class__(self.ordering_primitives(tol))
 
     @classmethod
     def from_wires(cls, wires):
@@ -1116,72 +1130,6 @@ class ContourMixin(WireMixin):
                 return False
         return True
 
-    def ordering_contour(self, tol=1e-6):
-        """
-        Returns the points of the contour ordered.
-
-        """
-        list_point_pairs = [(prim.start, prim.end) for prim in self.primitives]
-        length_list_points = len(list_point_pairs)
-        points = [list_point_pairs[0]]
-        primitives = self.primitives[:]
-        new_primitives = [primitives[0]]
-        primitives.remove(primitives[0])
-        list_point_pairs.remove(
-            (list_point_pairs[0][0], list_point_pairs[0][1]))
-        finished = False
-        counter = 0
-        counter1 = 0
-
-        while not finished:
-            for i, (point1, point2) in enumerate(list_point_pairs):
-                if point1.point_distance(point2) < tol:
-                    list_point_pairs.remove((point1, point2))
-                    primitives.remove(primitives[i])
-                elif point1.point_distance(points[-1][-1]) < tol:
-                    points.append((point1, point2))
-                    new_primitives.append(primitives[i])
-                    primitives.remove(primitives[i])
-                    list_point_pairs.remove((point1, point2))
-                elif point2.point_distance(points[-1][-1]) < tol:
-                    points.append((point2, point1))
-                    new_primitives.append(primitives[i].reverse())
-                    primitives.remove(primitives[i])
-                    list_point_pairs.remove((point1, point2))
-                elif point1.point_distance(points[0][0]) < tol:
-                    points = [(point2, point1)] + points
-                    new_primitives = [primitives[i].reverse()] + new_primitives
-                    primitives.remove(primitives[i])
-                    list_point_pairs.remove((point1, point2))
-                elif point2.point_distance(points[0][0]) < tol:
-                    points = [(point1, point2)] + points
-                    new_primitives = [primitives[i]] + new_primitives
-                    primitives.remove(primitives[i])
-                    list_point_pairs.remove((point1, point2))
-            if len(list_point_pairs) == 0:
-                finished = True
-            counter1 += 1
-            if counter1 >= 100 * length_list_points:
-                self.plot()
-                raise NotImplementedError
-            if len(list_point_pairs) == 1:
-                counter += 1
-                if counter > 3:
-                    # for point_pair in list_point_pairs:
-                    if list_point_pairs[0][0] in points or list_point_pairs[0][::-1] in points:
-                        finished = True
-                        continue
-                    warnings.warn('There may exist a problem with this'
-                                  ' contour, it seems it cannot be reordered.'
-                                  ' Please, verify its points')
-                    finished = True
-                    # ax = self.plot()
-                    # for point_pair in list_point_pairs:
-                    #     point_pair[0].plot(ax=ax, color='r')
-                    #     point_pair[1].plot(ax=ax, color='r')
-                    # raise NotImplementedError
-        return new_primitives
-
     def order_contour(self, tol: float = 1e-6):
         """
         Verifies if the contours'primitives are ordered (one after the other). If not, it will order it.
@@ -1189,7 +1137,7 @@ class ContourMixin(WireMixin):
         """
         if self.is_ordered(tol=tol) or len(self.primitives) < 2:
             return self
-        new_primitives = self.ordering_contour(tol=tol)
+        new_primitives = self.ordering_primitives(tol)
         self.primitives = new_primitives
 
         return self
@@ -2074,6 +2022,7 @@ class Contour2D(ContourMixin, Wire2D):
         return cutted_contours
 
     def triangulation(self):
+        """Returns the triangulation of the contour2d."""
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
 
