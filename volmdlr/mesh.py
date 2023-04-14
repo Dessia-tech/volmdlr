@@ -94,8 +94,8 @@ class LinearElement(vme.LineSegment2D):
     """ A class that defines a linear element. """
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
     _generic_eq = True
 
     def __init__(self, start: vm.Point2D, end: vm.Point2D,
@@ -133,8 +133,8 @@ class TriangularElement(vmw.Triangle):
     """
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
     _generic_eq = True
 
     def __init__(self, points: List[volmdlr.Point2D]):
@@ -276,8 +276,8 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
     """ Class to define a 2D triangular element. """
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
     _generic_eq = True
 
     def __init__(self, points, name: str = ''):
@@ -453,8 +453,8 @@ class QuadrilateralElement2D(vmw.ClosedPolygon2D):
 
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
     _generic_eq = True
 
     def __init__(self, points: List[volmdlr.Point2D]):
@@ -474,8 +474,8 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
 
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
     _generic_eq = True
 
     def __init__(self, points):
@@ -624,8 +624,8 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
 
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
     _generic_eq = True
 
     def __init__(self, points, name: str = ''):
@@ -727,8 +727,8 @@ class ElementsGroup(DessiaObject):
 
     _standalone_in_db = False
     _non_serializable_attributes = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
     _generic_eq = True
 
     def __init__(self, elements, name: str):
@@ -811,8 +811,8 @@ class Mesh(DessiaObject):
 
     _standalone_in_db = True
     _non_serializable_attributes = ['node_to_index']
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
     _generic_eq = True
 
     def __init__(self, elements_groups: List[ElementsGroup]):

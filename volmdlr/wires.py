@@ -4320,8 +4320,8 @@ class Contour3D(ContourMixin, Wire3D):
 
     """
     _non_serializable_attributes = ['points']
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['points', 'name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['points', 'name']
     _generic_eq = True
 
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
@@ -4742,8 +4742,8 @@ class Circle3D(Contour3D):
     frame.u, frame.v define the plane, frame.w the normal
     """
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = ['name']
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
     _generic_eq = True
 
     def __init__(self, frame: volmdlr.Frame3D, radius: float,
@@ -5350,7 +5350,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
     """
     _non_serializable_attributes = ['line_segments', 'primitives']
-    _non_eq_attributes = ['line_segments', 'primitives']
+    _non_data_eq_attributes = ['line_segments', 'primitives']
 
     def __init__(self, points: List[volmdlr.Point3D], name: str = ''):
         self.points = points
