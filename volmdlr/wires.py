@@ -1844,30 +1844,6 @@ class Contour2D(ContourMixin, Wire2D):
                 return point
         raise ValueError('Could not find a point inside')
 
-    def cut_by_linesegments(self, lines: List[volmdlr.edges.LineSegment2D]):
-        cut_lines = []
-        for cut_ls in lines:
-            cut_lines.append(cut_ls.to_line())
-
-        contour_to_cut = [self]
-        for line in cut_lines:
-            new_contour_to_cut = []
-            for contour in contour_to_cut:
-                cutted_contour = contour.cut_by_line(line)
-                new_contour_to_cut.extend(cutted_contour)
-            contour_to_cut.extend(new_contour_to_cut)
-
-        point1 = Contour2D(lines).center_of_mass()
-        dist_min = math.inf
-        c_opti = None
-        for contour in contour_to_cut:
-            if contour.area() > 1e-10:
-                point0 = contour.center_of_mass()
-                if point0.point_distance(point1) < dist_min:
-                    c_opti = contour
-                    dist_min = point0.point_distance(point1)
-        return c_opti
-
     def repair_cut_contour(self, n, intersections, line):
         """
         Repair contour.
