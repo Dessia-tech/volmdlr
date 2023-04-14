@@ -37,6 +37,18 @@ class TestExtrusionSurface3D(unittest.TestCase):
         self.assertEqual(extrusion_surface.edge.degree, 3)
         self.assertEqual(extrusion_surface.edge.knot_multiplicities, [4, 1, 4])
 
+    def test_linesegment2d_to_3d(self):
+        surface = vmf.ExtrusionSurface3D.load_from_file(
+            "faces/objects_extrusion_tests/extrusion_surface_undefined_direction_linesegment.json")
+        point1 = volmdlr.Point2D(0.9020984833336293, -0.08534036750789999)
+        point2 = volmdlr.Point2D(0.9286913444016728, -0.07799341694)
+        linesegment2d = vme.LineSegment2D(point1, point2)
+        start3d = surface.point2d_to_3d(point1)
+        end3d = surface.point2d_to_3d(point2)
+        result = surface.linesegment2d_to_3d(linesegment2d)[0]
+        self.assertTrue(result.start.is_close(start3d))
+        self.assertTrue(result.end.is_close(end3d))
+
 
 if __name__ == '__main__':
     unittest.main()

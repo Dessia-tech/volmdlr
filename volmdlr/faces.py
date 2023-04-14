@@ -1889,8 +1889,10 @@ class PeriodicalSurface(Surface3D):
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
         if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametic.linesegment":
-            if self.point2d_to_3d(linesegment2d.start).is_close(self.point2d_to_3d(linesegment2d.end)):
-                print(True)
+            start3d = self.point2d_to_3d(linesegment2d.start)
+            end3d = self.point2d_to_3d(linesegment2d.end)
+            if start3d.is_close(end3d):
+                return None
             return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
                                       self.point2d_to_3d(linesegment2d.end))]
 
@@ -3726,7 +3728,8 @@ class ExtrusionSurface3D(Surface3D):
         name = arguments[0][1:-1]
         edge = object_dict[arguments[1]]
         if edge.__class__ is volmdlr.wires.Ellipse3D:
-            fullarcellipse = vme.FullArcEllipse3D(edge.point_at_abscissa(0), edge.major_axis, edge.minor_axis,
+            start_end = edge.center + edge.major_axis * edge.major_dir
+            fullarcellipse = vme.FullArcEllipse3D(start_end, edge.major_axis, edge.minor_axis,
                                                   edge.center, edge.normal, edge.major_dir, edge.name)
             edge = fullarcellipse
             direction = -object_dict[arguments[2]]
@@ -3743,6 +3746,10 @@ class ExtrusionSurface3D(Surface3D):
         Transformation of an arcellipse3d to 2d, in a cylindrical surface.
 
         """
+        if isinstance(self.edge, vme.FullArcEllipse3D):
+            start2d = self.point3d_to_2d(arcellipse3d.start)
+            end2d = self.point3d_to_2d(arcellipse3d.end)
+            return [vme.LineSegment2D(start2d, end2d)]
         points = [self.point3d_to_2d(p)
                   for p in arcellipse3d.discretization_points(number_points=15)]
 
@@ -3776,14 +3783,17 @@ class ExtrusionSurface3D(Surface3D):
         if math.isclose(u1, u2, abs_tol=1e-4):
             return [vme.LineSegment3D(start3d, end3d)]
         if math.isclose(z1, z2, abs_tol=1e-4):
-            if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-6):
+            if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-4):
                 primitive = self.edge.translation(self.direction * z1)
                 return [primitive]
-                # if primitive.__name__
-                # return [vme.FullArcEllipse3D()]
-            # TODO: return self.edge translated and trimmed between u1 and u2
-            raise NotImplementedError
-        raise NotImplementedError
+            primitive = self.edge.translation(self.direction * z1)
+            primitive = primitive.trim(start3d, end3d)
+            return [primitive]
+        n = 10
+        degree = 3
+        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
+        periodic = points[0].is_close(points[-1])
+        return [vme.BSplineCurve3D.from_points_interpolation(points, degree, periodic)]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         n = len(bspline_curve3d.control_points)

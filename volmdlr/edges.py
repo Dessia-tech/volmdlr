@@ -1127,7 +1127,7 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if point.point_distance(self.end) < tol:
             return [self.copy(), None]
-        adim_abscissa = self.abscissa(point) / self.length()
+        adim_abscissa = min(max(0, self.abscissa(point) / self.length()), 1)
         curve1, curve2 = split_curve(self.curve, adim_abscissa)
 
         return [self.__class__.from_geomdl_curve(curve1),
