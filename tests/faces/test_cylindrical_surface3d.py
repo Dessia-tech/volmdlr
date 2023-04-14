@@ -178,6 +178,15 @@ class TestCylindricalSurface3D(unittest.TestCase):
         face = cylindrical.face_from_contours3d([contour1, contour2])
         self.assertEqual(face.surface2d.area(), 0.2*2*math.pi)
 
+        surface = dessia_common.core.DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/cylindrical_surface_floating_point_error.json')
+        contour0 = dessia_common.core.DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/cylindrical_contour_floating_point_error.json')
+
+        face = surface.face_from_contours3d([contour0])
+        self.assertTrue(face.surface2d.outer_contour.is_ordered())
+        self.assertAlmostEqual(face.surface2d.area(), 0.003143137591511259, 3)
+
     def test_point_projection(self):
         test_points = [Point3D(-2.0, -2.0, 0.0), Point3D(0.0, -2.0, 0.0), Point3D(2.0, -2.0, 0.0),
                        Point3D(2.0, 0.0, 0.0), Point3D(2.0, 2.0, 0.0), Point3D(0.0, 2.0, 0.0),

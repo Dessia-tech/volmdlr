@@ -43,7 +43,7 @@ def angle_discontinuity(angle_list):
         for index in indexes_sign_changes:
             sign = round(angle_list[index - 1] / abs(angle_list[index - 1]), 2)
             delta = abs(angle_list[index] + sign * volmdlr.TWO_PI - angle_list[index - 1])
-            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta) and\
+            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta) and \
                     not math.isclose(abs(angle_list[index]), 0, abs_tol=delta):
                 indexes_angle_discontinuity.append(index)
                 discontinuity = True
@@ -161,11 +161,11 @@ def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, ang
     #  ref_up > math.pi -> crossing lower bound of atan2  [-math.pi, math.pi]
     elif angle_after_start > angle_start and ref_up > math.pi:
         angle_end = ref_up
-
-    if angle_start > 0 > angle_after_start:
-        angle_start -= periodicity
-    elif angle_start < 0 < angle_after_start:
-        angle_start += periodicity
+    if not math.isclose(angle_start, 0, abs_tol=1e-4):
+        if angle_start > 0 > angle_after_start:
+            angle_start -= periodicity
+        elif angle_start < 0 < angle_after_start:
+            angle_start += periodicity
 
     return angle_start, angle_end
 
@@ -262,3 +262,48 @@ def array_range_search(x, xmin, xmax):
     right = bisect.bisect_right(x, xmax)
 
     return range(left, right)
+
+
+def contour2d_healing(contour2d):
+    """
+    Heals topologies incoherences on the boundary representation.
+    """
+    contour2d = contour2d_healing_self_intersection(contour2d)
+    contour2d = contour2d_healing_close_gaps(contour2d)
+    return contour2d
+
+
+def contour2d_healing_close_gaps(contour2d):
+    """
+    Heals topologies incoherences on the boundary representation.
+    """
+    new_primitives = [contour2d.primitives[0]]
+    for i, (prim1, prim2) in enumerate(
+            zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
+        if not prim1.end.is_close(prim2.start):
+            new_primitives.append(vme.LineSegment2D(prim1.end, prim2.start))
+        if i < len(contour2d.primitives) - 1:
+            new_primitives.append(prim2)
+    contour2d.primitives = new_primitives
+
+    return contour2d
+
+
+def contour2d_healing_self_intersection(contour2d):
+    """
+    Heals topologies incoherences on the boundary representation.
+    """
+    for i, (prim1, prim2) in enumerate(
+            zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
+        if not prim1.end.is_close(prim2.start):
+            # check intersection
+            crossings = prim1.intersections(prim2)
+            if crossings:
+                if len(crossings) > 1:
+                    raise NotImplementedError
+                split_point = crossings[0]
+                new_prim1 = prim1.split(split_point)[0]
+                new_prim2 = prim2.split(split_point)[1]
+                contour2d.primitives[i] = new_prim1
+                contour2d.primitives[(i + 1) % len(contour2d.primitives)] = new_prim2
+    return contour2d
