@@ -2876,12 +2876,22 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         while not next_point.is_close(point_start):
             vec1 = next_point - hull[-2]
             theta = []
+            vectors = []
             for point in remaining_points:
                 vec2 = point - next_point
+                vectors.append(vec2)
                 theta_i = -volmdlr.geometry.clockwise_angle(vec1, vec2)
                 theta.append(theta_i)
 
             min_theta, posmin_theta = argmin(theta)
+            closing_vector = vec1 + vectors[posmin_theta]
+            for i, theta_i in enumerate(theta):
+                if theta_i == min_theta:
+                    i_closing_vector = vec1 + vectors[i]
+                    if i_closing_vector.norm() > closing_vector.norm():
+                        closing_vector = i_closing_vector
+                        posmin_theta = i
+
             if math.isclose(min_theta, -2 * math.pi, abs_tol=1e-6) \
                     or math.isclose(min_theta, 0, abs_tol=1e-6):
                 if remaining_points[posmin_theta] == point_start:
