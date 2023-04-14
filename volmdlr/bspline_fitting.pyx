@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# cython: language_level=3
+
 from math import sqrt
 import numpy as np
 from geomdl import BSpline

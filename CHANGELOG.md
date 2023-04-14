@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LineSegment, Arc, BSplineCurve: get_shared_section()
 - bSpline2D: linesegment_intersections
 - BsplineCurve: from_points_interpolation
+- Coverage: use coverage rc to enable cython coverage
 - ClosedShel3D: cut_by_plane
 - ClosedShell3D: union
 - BSplineSurface3D: take into account oppened contour while using face_from_contours3d
@@ -43,8 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: split_contour_with_sorted_points displaced to WireMixin and renamed to split_with_sorted_points
 - Contour2D: get_divided_contours
 - FullArc2D, FullArc3D: create FullArc Abstract class.
+- Contour2D: ordering_contour
+- WireMixin: order_wire
 ### Changed
 - better surface3d plots
+- sphere methods renamed in_points & to_point_skin to inner points & skin_points
 
 ### Unittests
 - Arc2D: test_arc_intersections
