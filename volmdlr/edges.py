@@ -1427,7 +1427,7 @@ class BSplineCurve(Edge):
         Select closest point in curve to intersection point obtained with discretized linesegment.
 
         :param list_abscissas: list of abscissas to verify the closest point.
-        :param intersections: intersection with discretised line.
+        :param intersections: intersection with discretized line.
         :return:
         """
         distance = npy.inf
@@ -2136,7 +2136,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def reverse(self):
         """
-        Reverse the Bspline's direction by reversing its start and end points.
+        Reverse the BSpline's direction by reversing its start and end points.
 
         """
 
@@ -3615,7 +3615,7 @@ class FullArc2D(FullArc, Arc2D):
 
     def straight_line_area(self):
         """
-        Calculates the area of the fullarc, with line drawn from start to end.
+        Calculates the area of the full arc, with line drawn from start to end.
 
         :return: straight_line_area.
         """

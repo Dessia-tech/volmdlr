@@ -36,7 +36,7 @@ from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_
 from volmdlr.bspline_evaluators import evaluate_single
 from volmdlr.core import point_in_list
 
-c= 0
+
 def knots_vector_inv(knots_vector):
     """
     Compute knot-elements and multiplicities based on the global knot vector.
@@ -1905,7 +1905,6 @@ class PeriodicalSurface(Surface3D):
                 self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
                 self.point2d_to_3d(linesegment2d.end)
             )]
-        print(True)
         raise NotImplementedError("This case is not yet treated")
 
 
