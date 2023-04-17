@@ -1087,6 +1087,8 @@ class BSplineCurve(Edge):
         distance = distance_vector.norm()
         if distance <= tol1:
             return True
+        if curve_derivatives[1].norm():
+            return False
         zero_cos = abs(curve_derivatives[1].dot(distance_vector)) / curve_derivatives[1].norm() * distance
         if distance <= tol1 and zero_cos <= tol2:
             return True
@@ -1102,12 +1104,11 @@ class BSplineCurve(Edge):
                 u = b - (a - u)
             elif u > b:
                 u = a + (u - b)
-        else:
-            if u < a:
-                u = a
+        if u < a:
+            u = a
 
-            elif u > b:
-                u = b
+        elif u > b:
+            u = b
         return u
 
     def split(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
@@ -1127,7 +1128,7 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if point.point_distance(self.end) < tol:
             return [self.copy(), None]
-        adim_abscissa = min(max(0, self.abscissa(point) / self.length()), 1)
+        adim_abscissa = round(min(max(0, self.abscissa(point) / self.length()), 1), 5)
         curve1, curve2 = split_curve(self.curve, adim_abscissa)
 
         return [self.__class__.from_geomdl_curve(curve1),
@@ -5720,7 +5721,7 @@ class BSplineCurve3D(BSplineCurve):
         self._bbox = None
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        if self.periodic:
+        if self.periodic and not point1.is_close(point2):
             return self.trim_with_interpolation(point1, point2)
 
         if (point1.is_close(self.start) and point2.is_close(self.end)) \
