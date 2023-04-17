@@ -375,26 +375,6 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 
 ### Fixed
 
-<<<<<<< HEAD
-* BsplineCurve: abscissa (use different start point between 0 and length)
-* Arc3D: plot
-* Cylinder: point_belongs
-* FullArc3D: plot (use discretization_points instead of discretise)
-* Face3D: line_intersections: consider borders
-* STL: from stream (use BinaryFile and StringFile instead of io.BinaryIO and FileIO)
-* Step: from stream (use BinaryFile instead of io.BinaryIO)
-* Contour: is_overlapping (consider intersecting_points is empty)
-* LineSegment2D: to_wire (use discretization_points instead of discretise)
-* ArcEllipse2D: to_3d
-* Fix boolean operations when faces are 100% coincident
-<<<<<<< HEAD
-* Mesh: delete_duplicated_nodes
-
->>>>>>> update_mesh_dev
-=======
-* Fix some to_step methods from edges.py and faces.py
->>>>>>> to_geo_msh
-=======
 - Contour2D: point_belongs
 - BsplineCurve: abscissa (use different start point between 0 and length)
 - Arc3D: plot
@@ -409,7 +389,6 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 - Fix boolean operations when faces are 100% coincident
 - Fix some to_step methods from edges.py and faces.py
 
->>>>>>> dev
 
 ### Performance improvements
 

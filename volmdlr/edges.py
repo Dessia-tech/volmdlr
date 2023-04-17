@@ -2082,7 +2082,6 @@ class BSplineCurve2D(BSplineCurve):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
-
     def to_step(self, current_id, surface_id=None):
         """Exports to STEP format."""
         points_ids = []

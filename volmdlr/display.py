@@ -6,6 +6,7 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 
 import math
 from typing import List, Tuple
+
 import dessia_common.core as dc
 
 import volmdlr.edges

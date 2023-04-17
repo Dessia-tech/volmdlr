@@ -30,7 +30,6 @@ import volmdlr.display as vmd
 import volmdlr.edges as vme
 import volmdlr.geometry
 import volmdlr.grid
-
 import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
@@ -9888,12 +9887,9 @@ class ClosedShell3D(OpenShell3D):
 
         Returns True if the point is inside the Shell, False otherwise
         """
-
         nb_rays = kwargs.get("nb_rays", 1)  # TODO: remove nb_rays argument in the future as it shouldn't be necessary
 
         bbox = self.bounding_box
-        # print(time.time_ns() - t_0)
-        # stop
         if not bbox.point_belongs(point3d):
             return False
 
