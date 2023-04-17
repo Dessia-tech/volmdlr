@@ -4,17 +4,16 @@ type: docker
 name: default
 
 steps:
-- name: chmod repo
-  image: alpine/git
-  commands:
-  - chmod 777 -R . 
-
 - name: merge master on testing
   image: alpine/git
   when:
     event: push
     branch: master
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout master
   - git fetch origin testing
   - git checkout testing
   - git merge master
@@ -26,31 +25,50 @@ steps:
     event: push
     branch: testing
   commands:
+  - cd /tmp
+  - git clone $DRONE_GIT_HTTP_URL
+  - cd volmdlr
+  - git checkout testing
   - git fetch origin dev
   - git checkout dev
   - git merge testing
   - git push
 
+- name: notify by email
+  when:
+    event: push
+    branch:
+      - master
+      - dev
+    status:
+    - failure
+  image: drillster/drone-email
+  settings:
+    host: mail.dessia.tech
+    username: technical@dessia.tech
+    password:
+      from_secret: email_password
+    from: technical@dessia.tech
 
 - name: check code complexity
-  image: python:3.9
+  image: dessia/python-ci:3.9
   commands:
-  - pip install radon pylint pydocstyle
-  - ./code_quality.sh
+  - pip install pylint==2.16.1 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
   - python code_pylint.py
   - python code_pydocstyle.py
+  - pre-commit run -a
 
   volumes:
     # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
+    - name: cache
+      path: /root/.cache
 
 
 - name: check pep8 formatting
   image: python:3.9
   commands:
     - git fetch --tags
-    - pip3 install -U pip autopep8
+    - pip3 install -U pip autopep8==2.0.0
     - bash code_pep8.sh
 
   volumes:
@@ -58,35 +76,32 @@ steps:
     - name: pip_cache
       path: /root/.cache/pip
 
-- name: install and run scripts
-  image: dessia/python-gmsh:3.9
-  commands:
-  - pip install Cython coverage
-  - python setup.py install --user
-  - cd tests
-  - coverage run --source volmdlr -m unittest discover
-  - cd ../scripts
-  - coverage run --source volmdlr ci_scripts.py
-  - cd ..
-  - coverage combine scripts/.coverage tests/.coverage
-  - coverage json
-  - coverage report
-  - python coverage_script.py
-
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
-
-- name: build doc
-  image: python:3.9
+- name: check changelog update
+  image: python:3.8
   when:
-    branch: master
+    event: pull_request
   commands:
-  - pip install Cython sphinx sphinx_rtd_theme coverage
+    - bash code_changelog.sh
+
+- name: install, build doc run scripts and tutorials
+  image: python:3.8
+  commands:
+  - git fetch --tags
+  - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
   - python setup.py install
   - cd doc
   - make html
+  - cd ../tests
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
+  - cd ../scripts  
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
+  - cd ../tutorials
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
+  - cd ..
+  - coverage json
+  - coverage report
+  - coverage html
+  - python coverage.py
 
   volumes:
     # Mount pip cache from host
@@ -96,8 +111,6 @@ steps:
 
 - name: generate sdist
   image: python:3.8
-  when:
-    branch: master
   commands:
   - git fetch --tags
   - pip install Cython
@@ -133,8 +146,26 @@ steps:
     password:
       from_secret: ssh_drone_password
 
+- name: upload coverage
+  image: appleboy/drone-scp
+  when:
+    event: push
+  failure: ignore
+  settings:
+    host: magenta.dessia.tech
+    target: /var/www/cdn/volmdlr/coverage/${DRONE_BRANCH}
+    source: htmlcov/*
+    strip_components: 1
+    username: drone
+    password:
+      from_secret: ssh_drone_password
+
+
 
 volumes:
   - name: pip_cache
     host:
       path: /tmp/cache/drone/pip
+  - name: cache
+    host:
+      path: /tmp/cache/drone

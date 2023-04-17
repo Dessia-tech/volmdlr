@@ -20,18 +20,10 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Volmdlr'
-copyright = '2018, DessIA Technologies'
+copyright = '2018-2023 DessIA Technologies'
 author = 'DessIA Technologies'
 
 import volmdlr
-import re
-from os.path import dirname, isdir, join
-from subprocess import CalledProcessError, check_output
-
-tag_re = re.compile(r'\btag: %s([0-9][^,]*)\b')
-version_re = re.compile('^Version: (.+)$', re.M)
-
-
 
 version = volmdlr.__version__
 # The full version, including alpha/beta/rc tags
@@ -72,7 +64,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

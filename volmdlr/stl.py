@@ -1,36 +1,33 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+STL reader & writer.
 
+https://en.wikipedia.org/wiki/STL_(file_format)
 """
-# from binaryornot.check import is_binary
+
 import struct
 import warnings
-# from typing import BinaryIO
 from typing import List
 
 from binaryornot.check import is_binary
-# import kaitaistruct
 from kaitaistruct import KaitaiStream
 
-import dessia_common.core as dc
-from dessia_common.files import BinaryFile, StringFile
+import dessia_common.core as dc  # isort: skip
+from dessia_common.files import BinaryFile, StringFile  # isort: skip
+
 import volmdlr as vm
 import volmdlr.core as vmc
 import volmdlr.faces as vmf
 
 
-# from kaitaistruct import KaitaiStream
-
-
 class Stl(dc.DessiaObject):
     """
-    STL files are used to represent simple 3D models,
-    defined using triangular 3D faces.
+    STL files are used to represent simple 3D models, defined using triangular 3D faces.
 
     Initially it was introduced as native format for 3D Systems
-    Stereolithography CAD system, but due to its extreme simplicity, it
-    was adopted by a wide range of 3D modelling, CAD, rapid prototyping
+    Stereo-lithography CAD system, but due to its extreme simplicity, it
+    was adopted by a wide range of 3D modeling, CAD, rapid prototyping
     and 3D printing applications as the simplest 3D model exchange
     format.
 
@@ -42,6 +39,8 @@ class Stl(dc.DessiaObject):
     There are two versions of the format (text and binary), this spec
     describes binary version.
     """
+
+    _standalone_in_db = True
 
     _dessia_methods = ['from_text_stream', 'from_text_stream', 'to_closed_shell', 'to_open_shell']
 
@@ -172,40 +171,6 @@ class Stl(dc.DessiaObject):
             return cls.from_text_stream(
                 file, distance_multiplier=distance_multiplier)
 
-    # Commented because seemed invalid
-    # @classmethod
-    # def from_file_points(cls, filename:str, distance_multiplier=0.001):
-    #     all_points = []
-    #     if is_binary(filename):
-    #         with open(filename, 'rb') as file:
-    #             stream = KaitaiStream(file)
-    #             name = stream.read_bytes(80).decode('utf8')
-    #             # print(name)
-    #             num_triangles = stream.read_u4le()
-    #             # print(num_triangles)
-    #             all_points = []
-    #             for i in range(num_triangles):
-    #                 if i % 5000 == 0:
-    #                     print('reading stl', round(i/num_triangles*100, 2),
-    #                           '%')
-    #                 _ = vm.Vector3D(stream.read_f4le(),
-    #                                      stream.read_f4le(),
-    #                                      stream.read_f4le())
-    #                 # print(n)
-    #                 p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le())
-    #                 p2 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le())
-    #                 p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le())
-    #                 # print(p1, p2, p3)
-    #                 all_points.extend([p1, p2, p3])
-    #                 stream.read_u2le()
-    #     return all_points
-
     def save_to_binary_file(self, filepath, distance_multiplier=1000):
         if not filepath.endswith('.stl'):
             filepath += '.stl'
@@ -240,10 +205,10 @@ class Stl(dc.DessiaObject):
             stream.write(struct.pack(BINARY_FACET, *data))
 
     def to_closed_shell(self):
-        return vmf.ClosedShell3D(self.triangles, name=self.name)
+        return vmf.ClosedTriangleShell3D(self.triangles, name=self.name)
 
     def to_open_shell(self):
-        return vmf.OpenShell3D(self.triangles, name=self.name)
+        return vmf.OpenTriangleShell3D(self.triangles, name=self.name)
 
     def to_volume_model(self):
         closed_shell = self.to_closed_shell()
@@ -261,7 +226,7 @@ class Stl(dc.DessiaObject):
     # TODO: decide which algorithm to be used (no _BIS)
     def extract_points_BIS(self, min_distance: float = 0.001):
         points = []
-        for i, t in enumerate(self.triangles):
+        for t in self.triangles:
             distance12 = t.point1.point_distance(t.point2)
             distance13 = t.point1.point_distance(t.point3)
             distance23 = t.point2.point_distance(t.point3)
@@ -295,8 +260,8 @@ class Stl(dc.DessiaObject):
 
     def get_normals(self):
         """
-        Returns
-        -------
+        Gets normals.
+
         points_normals : dictionary
             returns a diction
         """

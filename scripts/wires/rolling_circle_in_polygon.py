@@ -7,9 +7,11 @@ Created on Fri May 31 12:05:03 2019
 """
 
 
-import volmdlr as vm
 import math
+
 import matplotlib.pyplot as plt
+
+import volmdlr as vm
 
 
 def circle_3_segments(segment1, segment2, segment3):
@@ -273,20 +275,3 @@ min_seg1.MPLPlot(axe, style='r')
 min_seg2.MPLPlot(axe, style='r')
 min_point.MPLPlot(axe)
 min_circle.MPLPlot(axe)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

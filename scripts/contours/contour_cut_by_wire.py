@@ -6,11 +6,13 @@ Created on Wed Mar 2 2022
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
+
+import matplotlib.pyplot as plt
 
 import volmdlr as vm
 import volmdlr.wires
-import matplotlib.pyplot as plt
+from volmdlr.core import EdgeStyle
 
 # %% Contour2d
 
@@ -40,8 +42,8 @@ colors = ['g', 'b']
 for i in range(len(axs)):
     contour.plot(ax=axs[i])
     for prim in wire.primitives:
-        prim.plot(ax=axs[i], width=2, color='r')
+        prim.plot(ax=axs[i], edge_style=EdgeStyle(width=2, color='r'))
     axs[i].set_title(titles[i])
     if i !=0:
         for prim in contours[i-1].primitives:
-            prim.plot(ax=axs[i], width=2, color=colors[i-1])
+            prim.plot(ax=axs[i], edge_style=EdgeStyle(width=2, color=colors[i-1]))

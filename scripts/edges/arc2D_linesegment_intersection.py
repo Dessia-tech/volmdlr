@@ -1,6 +1,7 @@
+import matplotlib.pyplot as plt
+
 import volmdlr
 import volmdlr.edges
-import matplotlib.pyplot as plt
 
 # Random arc
 # i = volmdlr.Point2D.random(-1,1,-1,1)

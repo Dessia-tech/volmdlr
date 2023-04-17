@@ -4,8 +4,9 @@
 """
 
 import volmdlr as vm
-import volmdlr.step as vm_step
 import volmdlr.primitives3d as primitives3d
+import volmdlr.step as vm_step
+
 resolution = 0.0010
 
 box = primitives3d.Block(
@@ -25,7 +26,7 @@ p2_ray = vm.Point3D(0.009855980224206917, 0.6250574317556334, -0.140714209041350
 ray = vm.edges.LineSegment3D(p1_ray, p2_ray)
 
 
-ax = ray.plot(color='b')
+ax = ray.plot(edge_style=vm.edges.EdgeStyle(color='b'))
 p1_ray.plot(ax=ax, color='b')
 p2_ray.plot(ax=ax, color='b')
 box_red.plot(ax=ax, color='r')
@@ -59,14 +60,14 @@ print(box_green.intersection_external_aabb_volume(box_blue, resolution))
 model = vm.core.VolumeModel([box, box_red, box_green, box_blue])
 model.babylonjs(debug=True)
 
-assert box.is_inside_shell(box_red, resolution) == True
-assert box_red.is_inside_shell(box, resolution) == False
+assert box.is_inside_shell(box_red) == True
+assert box_red.is_inside_shell(box) == False
 
-assert box.is_inside_shell(box_green, resolution) == False
-assert box_green.is_inside_shell(box, resolution) == False
+assert box.is_inside_shell(box_green) == False
+assert box_green.is_inside_shell(box) == False
 
-assert box.is_inside_shell(box_blue, resolution) == False
-assert box_blue.is_inside_shell(box, resolution) == False
+assert box.is_inside_shell(box_blue) == False
+assert box_blue.is_inside_shell(box) == False
 
 model = vm.core.VolumeModel([box_red])
 model.to_step('block.step')

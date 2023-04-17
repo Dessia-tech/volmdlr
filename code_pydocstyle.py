@@ -1,12 +1,16 @@
-import pydocstyle
 import os
-from glob import glob
 import random
-from datetime import date
+from datetime import date, timedelta
+from glob import glob
 
-file_list = filter(lambda z: not z.endswith("__init__.py"),
-                   [y for x in os.walk('./volmdlr')
-                    for y in glob(os.path.join(x[0], '*.py'))])
+import pydocstyle
+
+print(f"Pydocstyle version: {pydocstyle.__version__}")
+
+file_list = filter(
+    lambda z: not z.endswith("__init__.py"),
+    [y for x in os.walk("./volmdlr") for y in glob(os.path.join(x[0], "*.py"))],
+)
 
 UNWATCHED_ERRORS = [
     # Do not watch these errors
@@ -18,63 +22,37 @@ UNWATCHED_ERRORS = [
 ]
 
 MAX_ERROR_BY_TYPE = {
-    'D100': 1,
-    'D101': 84,
-    'D102': 745,
-    'D103': 39,
-    'D104': 1,
-    'D105': 1,
-    'D106': 1,
-    'D107': 1,
+    # If the error code is not in this dict, then there is no tolerance on the error.
+    # http://www.pydocstyle.org/en/stable/error_codes.html
+    "D101": 53,
+    "D102": 530,
 
-    'D200': 1,
-    'D201': 1,
-    'D202': 1,
-    'D203': 1,
-    'D204': 1,
-    'D205': 341,
-    'D206': 1,
-    'D207': 1,
-    'D208': 7,
-    'D209': 1,
-    'D210': 1,
-    'D211': 1,
-    'D212': 1,
-    'D213': 2,
-    'D214': 1,
-    'D215': 1,
+    "D205": 77,
 
-    'D300': 87,
-    'D301': 1,
-    'D302': 1,
-
-    'D400': 562,
-    'D401': 1,
-    'D402': 1,
-    'D403': 184,
-    'D404': 6,
-    'D405': 1,
-    'D406': 1,
-    'D407': 1,
-    'D408': 1,
-    'D409': 1,
-    'D410': 1,
-    'D411': 1,
-    'D412': 1,
-    'D413': 3,
-    'D414': 1,
-    'D415': 1,
-    'D416': 1,
-    'D417': 9,
-    'D418': 1,
+    "D400": 67,
 }
 
 error_detected = False
 error_over_ratchet_limit = False
-ratchet_limit = 10000
-effective_date = date(2022, 11, 28)
+EFFECTIVE_DATE = date(2022, 11, 28)
+DAYS_TIME_EFFECT_LIMITING = 21
+
+limit_time_effect = False
+if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
+    limit_time_effect = True
+    print(f"Limiting time effect of 21 days as we are on {os.environ['DRONE_BRANCH']}")
+
+if os.environ.get('DRONE_TARGET_BRANCH', '') in ['master', 'testing']:
+    limit_time_effect = True
+    print(f"Limiting time effect of 21 days as we are targetting {os.environ['DRONE_TARGET_BRANCH']}")
+
+if limit_time_effect:
+    EFFECTIVE_DATE += timedelta(days=21)
+
 today = date.today()
 weekly_decrease = 5
+time_decrease = int((today - EFFECTIVE_DATE).days / 7.0 * weekly_decrease)
+ratchet_limit = 5 + int(DAYS_TIME_EFFECT_LIMITING / 7.0 * weekly_decrease)
 
 
 code_to_errors = {}
@@ -86,25 +64,39 @@ code_to_number = {code: len(errors) for code, errors in code_to_errors.items()}
 
 for error_code, number_errors in code_to_number.items():
     if error_code not in UNWATCHED_ERRORS:
-        max_errors = max(MAX_ERROR_BY_TYPE.get(error_code, 0) - (today - effective_date).days//7 * weekly_decrease, 0)
+        max_errors = max(MAX_ERROR_BY_TYPE.get(error_code, 0) - time_decrease, 0)
 
         if number_errors > max_errors:
+            # The number of errors is above the maximum acceptable
             error_detected = True
-            print(f'\nFix some {error_code} errors: {number_errors}/{max_errors}')
+            print(f"\nFix some {error_code} errors: {number_errors}/{max_errors}")
 
             errors = code_to_errors[error_code]
-            errors_to_show = sorted(random.sample(errors, min(30, len(errors))),
-                                    key=lambda m: (m.filename, m.line))
+            errors_to_show = sorted(
+                random.sample(errors, min(30, len(errors))), key=lambda m: (m.filename, m.line)
+            )
             for error in errors_to_show:
-                print(f'{error.filename} line {error.line}: {error.message}')
-        # elif max_errors - ratchet_limit <= number_errors < max_errors:
-        #     print(f'\nYou can lower number of {error_code} to {number_errors} (actual {max_errors})')
-        # elif number_errors < max_errors - ratchet_limit:
-        #     error_over_ratchet_limit = True
-        #     print(f'\nYou must lower number of {error_code} to {number_errors} (actual {max_errors})')
+                print(f"{error.filename} line {error.line}: {error.message}")
+
+        elif max_errors - ratchet_limit <= number_errors < max_errors:
+            # The number of errors is below the maximum acceptable, but above the ratchet_limit:
+            # the user can reduce the maximum number of errors
+            print(
+                f"\nYou can adjust number of admissible errors (in code_pydocstyle.py) of {error_code} to {number_errors + time_decrease} (actual {max_errors + time_decrease})"
+            )
+
+        elif number_errors < max_errors - ratchet_limit:
+            # The number of errors is below the maximum acceptable, and below the ratchet_limit:
+            # the user must reduce the maximum number of errors
+            error_over_ratchet_limit = True
+            print(
+                f"\nYou MUST adjust number of admissible errors (in code_pydocstyle.py) of {error_code} to {number_errors + time_decrease} (actual {max_errors + time_decrease})"
+            )
 
 if error_detected:
-    raise RuntimeError('Too many errors\nRun pydocstyle volmdlr to get the errors')
+    raise RuntimeError("Too many errors\nRun pydocstyle volmdlr to get the errors")
 
 if error_over_ratchet_limit:
-    raise RuntimeError('Please lower the error limits in code_pydocstyle.py MAX_ERROR_BY_TYPE according to warnings above')
+    raise RuntimeError(
+        "Please lower the error limits in code_pydocstyle.py MAX_ERROR_BY_TYPE according to warnings above"
+    )

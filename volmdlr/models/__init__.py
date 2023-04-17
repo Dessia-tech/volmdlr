@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Feb 28 11:03:00 2020
-
-@author: masfaraud
+Base models for volmdlr.
 """
 
-from .casing import casing
 from .bspline_surfaces import *
+from .casing import casing

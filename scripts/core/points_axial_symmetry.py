@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
- 
+
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
+
+import matplotlib.pyplot as plt
 
 import volmdlr as vm
 import volmdlr.edges
 import volmdlr.wires
-import matplotlib.pyplot as plt
 
 # %% Initial Data
 

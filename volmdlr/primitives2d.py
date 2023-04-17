@@ -1,25 +1,38 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+Extended primitives 2D classes.
 """
 
 import math
+from typing import List, Dict
+
 import warnings
+
 import matplotlib.patches
 
 import volmdlr
 import volmdlr.edges
 import volmdlr.wires
+from volmdlr.core import EdgeStyle
 from volmdlr.primitives import RoundedLineSegments
 
 
 class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
+    """
+    Opened Rounded LineSegment2D class.
+
+    :param points: Points used to draw the wire.
+    :type points: List of Point2D.
+    :param radius: Radius used to connect different parts of the wire.
+    :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}.
+    """
     closed = False
     line_class = volmdlr.edges.LineSegment2D
     arc_class = volmdlr.edges.Arc2D
 
-    def __init__(self, points, radius, adapt_radius=False, name=''):
+    def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
+                 adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      closed=False,
                                      adapt_radius=adapt_radius,
@@ -27,35 +40,13 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         volmdlr.wires.Wire2D.__init__(self, self._primitives(), name)
 
-    def discretization_points(self, resolution=5):
-        points = []
-        for primitive in self.primitives:
-            points.extend(primitive.discretization_points(resolution))
-        return points
-
-    def polygon_points(self, discretization_resolution: int):
-        warnings.warn('polygon_points is deprecated,\
-                please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
-
-    def arc_features(self, ipoint):
-        radius = self.radius[ipoint]
-        if self.closed:
-            if ipoint == 0:
-                pt1 = self.points[-1]
-            else:
-                pt1 = self.points[ipoint - 1]
-            pti = self.points[ipoint]
-            if ipoint < self.npoints - 1:
-                pt2 = self.points[ipoint + 1]
-            else:
-                pt2 = self.points[0]
-        else:
-            pt1 = self.points[ipoint - 1]
-            pti = self.points[ipoint]
-            pt2 = self.points[ipoint + 1]
-
+    def arc_features(self, point_index: int):
+        """
+        Returns the arc features for point at index.
+        """
+        # raise NotImplementedError
+        radius = self.radius[point_index]
+        pt1, pti, pt2 = self.get_points(point_index)
         # TODO: change to point_distance ------> done
         point_distance1 = (pt1 - pti).norm()
         point_distance2 = (pt2 - pti).norm()
@@ -71,22 +62,23 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         p3 = pti + u1 * point_distance
         p4 = pti + u2 * point_distance
 
-        w = (u1 + u2)
-        if w != volmdlr.Vector2D(0, 0):
+        w = u1 + u2
+        if not w.is_close(volmdlr.Vector2D(0, 0)):
             w.normalize()
 
         v1 = u1.deterministic_unit_normal_vector()
         if v1.dot(w) < 0:
             v1 = -v1
 
-        pc = p3 + v1 * radius
-        pm = pc - radius * w
+        point_curvature = p3 + v1 * radius
+        point_interior = point_curvature - radius * w
 
-        return p3, pm, p4, point_distance, alpha
+        return p3, point_interior, p4, point_distance, alpha
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
-        OpenedRoundedLineSegments2D rotation
+        OpenedRoundedLineSegments2D rotation.
+
         :param center: rotation center
         :param angle: angle rotation
         :return: a new rotationed OpenedRoundedLineSegments2D
@@ -99,16 +91,20 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
-        OpenedRoundedLineSegments2D rotation. Object is updated inplace
+        OpenedRoundedLineSegments2D rotation. Object is updated inplace.
+
         :param center: rotation center
         :param angle: rotation angle
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.rotation_inplace(center, angle)
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        OpenedRoundedLineSegments2D translation
+        OpenedRoundedLineSegments2D translation.
+
         :param offset: translation vector
         :return: A new translated OpenedRoundedLineSegments2D
         """
@@ -118,9 +114,12 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
-        OpenedRoundedLineSegments2D translation. Object is updated inplace
+        OpenedRoundedLineSegments2D translation. Object is updated inplace.
+
         :param offset: translation vector
         """
+        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+
         for point in self.points:
             point.translation_inplace(offset)
 
@@ -151,7 +150,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
             check = False
             ni = vectors[2 * i - 1] + vectors[2 * i]
-            if ni == volmdlr.Vector2D(0, 0):
+            if ni.is_close(volmdlr.Vector2D(0, 0)):
                 ni = vectors[2 * i]
                 ni = ni.normalVector()
                 offset_vectors.append(ni)
@@ -199,7 +198,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def offset_single_line(self, line_index, offset):
         """
-        line_index = 0 being the 1st line
+        Offsets a single line.
+
+        :param line_index: 0 being the 1st line
         """
         new_linesegment2D_points = []
         dont_add_last_point = False
@@ -281,16 +282,16 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         if not dont_add_last_point and not self.closed:
             new_linesegment2D_points.append(self.points[-1])
 
-        rls2D = self.__class__(new_linesegment2D_points, self.radius,
-                               self.closed, adapt_radius=self.adapt_radius)
+        rls_2d = self.__class__(new_linesegment2D_points, self.radius,
+                                self.closed, adapt_radius=self.adapt_radius)
 
-        return rls2D
+        return rls_2d
 
     def offset_lines(self, line_indexes, offset):
         """
-        line_indexes is a list of consecutive line indexes
-        These line should all be aligned
-        line_indexes = 0 being the 1st line
+        line_indexes is a list of consecutive line indexes.
+
+        These line should all be aligned line_indexes = 0 being the 1st line.
 
         if self.close last line_index can be len(self.points)-1
         if not, last line_index can be len(self.points)-2
@@ -403,21 +404,23 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         # =============================================================================
         # CREATE THE NEW POINTS' LIST
         # =============================================================================
-        for i in range(len(self.points)):
-            if i in new_points.keys():
+        for i, point in enumerate(self.points):
+            if i in new_points:
                 new_linesegment2D_points.append(new_points[i])
             else:
-                new_linesegment2D_points.append(self.points[i])
+                new_linesegment2D_points.append(point)
 
-        rls2D = self.__class__(new_linesegment2D_points, self.radius,
-                               adapt_radius=self.adapt_radius)
+        rls_2d = self.__class__(new_linesegment2D_points, self.radius,
+                                adapt_radius=self.adapt_radius)
 
-        return rls2D
+        return rls_2d
 
 
 class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
                                   volmdlr.wires.Contour2D):
     """
+    Defines a polygon with some rounded corners.
+
     :param points: Points used to draw the wire
     :type points: List of Point2D
     :param radius: Radius used to connect different parts of the wire
@@ -425,7 +428,8 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
     """
     closed = True
 
-    def __init__(self, points, radius, adapt_radius=False, name=''):
+    def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
+                 adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      closed=True,
                                      adapt_radius=adapt_radius, name='')
@@ -434,9 +438,15 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
 
 
 class Measure2D(volmdlr.edges.LineSegment2D):
-    def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
+    """
+    Measure 2D class.
+
+    :param unit: 'mm', 'm' or None. If None, the distance won't be in the label.
+    """
+
+    def __init__(self, point1, point2, label='', unit: str = 'mm', type_: str = 'distance'):
         """
-        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
+        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label.
 
         """
         # TODO: offset parameter
@@ -445,31 +455,32 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         self.unit = unit
         self.type_ = type_
 
-    def plot(self, ax, ndigits=6):
+    def plot(self, ax, edge_style: EdgeStyle()):
+        ndigits = 6
         x1, y1 = self.start
         x2, y2 = self.end
         xm, ym = 0.5 * (self.start + self.end)
         distance = self.end.point_distance(self.start)
 
         if self.label != '':
-            label = '{}: '.format(self.label)
+            label = f'{self.label}: '
         else:
             label = ''
         if self.unit == 'mm':
-            label += '{} mm'.format(round(distance * 1000, ndigits))
+            label += f'{round(distance * 1000, ndigits)} mm'
         else:
-            label += '{} m'.format(round(distance, ndigits))
+            label += f'{round(distance, ndigits)} m'
 
         if self.type_ == 'distance':
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
                                                        arrowstyle='<|-|>,head_length=10,head_width=5',
                                                        shrinkA=0, shrinkB=0,
-                                                       color='k')
+                                                       color=edge_style.color)
         elif self.type_ == 'radius':
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
                                                        arrowstyle='-|>,head_length=10,head_width=5',
                                                        shrinkA=0, shrinkB=0,
-                                                       color='k')
+                                                       color=edge_style.color)
 
         ax.add_patch(arrow)
         if x2 - x1 == 0.:

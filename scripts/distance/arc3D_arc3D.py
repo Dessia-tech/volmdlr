@@ -5,10 +5,12 @@ Created on Fri May 22 11:17:51 2020
 @author: Mack Pro
 """
 
+import random
+
+import matplotlib.pyplot as plt
+
 import volmdlr as vm
 import volmdlr.edges as vme
-import matplotlib.pyplot as plt
-import random
 
 ##### cas 9 arc/arc
 

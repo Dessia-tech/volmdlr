@@ -1,10 +1,12 @@
 
 
+import matplotlib.pyplot as plt
+
 import volmdlr as vm
 import volmdlr.edges as edges
-import volmdlr.wires as wires
+from volmdlr.core import EdgeStyle
 import volmdlr.primitives2d as p2d
-import matplotlib.pyplot as plt
+import volmdlr.wires as wires
 
 plt, (ax1, ax2, ax3) = plt.subplots(1, 3)
 
@@ -34,15 +36,15 @@ ax = contour.plot(ax=ax1)
 line = edges.Line2D(vm.O2D, u)
 line2 = edges.Line2D(0.3*v, u+0.3*v)
 
-line.plot(ax=ax1, color='b')
-line2.plot(ax=ax1, color='g')
+line.plot(ax=ax1, edge_style=EdgeStyle(color='b'))
+line2.plot(ax=ax1, edge_style=EdgeStyle(color='g'))
 
 split_contours1 = contour.cut_by_line(line)
 for c in split_contours1:
-    c.plot(ax=ax2, color='b')
+    c.plot(ax=ax2, edge_style=EdgeStyle(color='b'))
 ax2.set_title('{} splitted contours'.format(len(split_contours1)))
 
 split_contours2 = contour.cut_by_line(line2)
 for c in split_contours2:
-    c.plot(ax=ax3, color='g')
+    c.plot(ax=ax3, edge_style=EdgeStyle(color='g'))
 ax3.set_title('{} splitted contours'.format(len(split_contours2)))

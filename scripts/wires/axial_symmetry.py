@@ -5,12 +5,13 @@
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
+
+import matplotlib.pyplot as plt
 
 import volmdlr as vm
 import volmdlr.edges
 import volmdlr.wires
-import matplotlib.pyplot as plt
 
 # %% Initial Data
 
@@ -31,5 +32,5 @@ ax.set_aspect('equal')
 
 line.plot(ax)
 
-contour.plot(ax=ax, color='r')
-axial_contour.plot(ax=ax, color='g')
+contour.plot(ax=ax, edge_style=EdgeStyle(color='r'))
+axial_contour.plot(ax=ax, edge_style=EdgeStyle(color='g'))

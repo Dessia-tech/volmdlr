@@ -1,7 +1,8 @@
 import math
 import unittest
-from volmdlr import primitives3d, wires, faces, edges
+
 import volmdlr
+from volmdlr import edges, faces, primitives3d, wires
 
 
 class TestClosedShell3D(unittest.TestCase):
@@ -40,25 +41,33 @@ class TestClosedShell3D(unittest.TestCase):
         union_shell1_shell2 = extruded_prifile1.union(extruded_prifile2)[0]
         union_shell1_shell2.merge_faces()
         self.assertEqual(len(union_shell1_shell2.faces), 7)
+        boundary1 = primitives3d.Block(volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, 0.3 * volmdlr.Y3D, 0.1 * volmdlr.Z3D))
+        boundary2 = primitives3d.Block(
+            volmdlr.Frame3D(volmdlr.O3D, 0.3 * volmdlr.X3D, 0.8 * volmdlr.Y3D, 0.2 * volmdlr.Z3D))
+        boundary2 = boundary2.translation(offset=(0.5 + 0.15) * volmdlr.X3D)
+        union = boundary1.union(boundary2)[0]
+        self.assertEqual(len(union.faces), 11)
+
+
 
     def test_set_operations_blocks(self):
 
         box_red = primitives3d.Block(
             volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(0.4, 0, 0),
-                       volmdlr.Vector3D(0, 0.4, 0), volmdlr.Vector3D(0, 0, 0.4)),
+                            volmdlr.Vector3D(0, 0.4, 0), volmdlr.Vector3D(0, 0, 0.4)),
             color=(0.2, 1, 0.4), alpha=0.6)
         box_green = box_red.frame_mapping(volmdlr.Frame3D(volmdlr.Point3D(-0.4, 0, -0.1), volmdlr.Vector3D(1, 0, 0),
-                                                     volmdlr.Vector3D(0, 1, 0), volmdlr.Vector3D(0, 0, 1)), 'new')
+                                                          volmdlr.Vector3D(0, 1, 0), volmdlr.Vector3D(0, 0, 1)), 'new')
         union_red_green_boxes = box_red.union(box_green)[0]
         union_red_green_boxes.merge_faces()
         self.assertEqual(len(union_red_green_boxes.faces), 10)
 
         box_blue = primitives3d.Block(
             volmdlr.Frame3D(volmdlr.Point3D(0.1, 0, 0), volmdlr.Vector3D(0.2, 0, 0),
-                       volmdlr.Vector3D(0, 0.1, 0), volmdlr.Vector3D(0, 0, 1)),
+                            volmdlr.Vector3D(0, 0.1, 0), volmdlr.Vector3D(0, 0, 1)),
             alpha=0.6)
         box_blue2 = box_blue.frame_mapping(volmdlr.Frame3D(volmdlr.Point3D(0.2, 0, 0), volmdlr.Vector3D(1, 0, 0),
-                                                      volmdlr.Vector3D(0, 1.8, 0), volmdlr.Vector3D(0, 0, 1)), 'old')
+                                                           volmdlr.Vector3D(0, 1.8, 0), volmdlr.Vector3D(0, 0, 1)), 'old')
         union_blue_blue2_boxes = box_blue.union(box_blue2)[0]
         union_blue_blue2_boxes.merge_faces()
         self.assertEqual(len(union_blue_blue2_boxes.faces), 10)
@@ -119,6 +128,19 @@ class TestClosedShell3D(unittest.TestCase):
         shell2 = shell1.translation(volmdlr.Point3D(0, -0.28, -0.2)).rotation(volmdlr.O3D, volmdlr.X3D, math.pi)
         union_shell1_shell2 = shell1.union(shell2)
         self.assertEqual(len(union_shell1_shell2), 2)
+
+    def test_cut_by_plane(self):
+        boundary1 = primitives3d.Block(volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, 0.3 * volmdlr.Y3D, 0.1 * volmdlr.Z3D))
+        boundary2 = primitives3d.Block(
+            volmdlr.Frame3D(volmdlr.O3D, 0.4 * volmdlr.X3D, 0.8 * volmdlr.Y3D, 0.4 * volmdlr.Z3D))
+        boundary2 = boundary2.translation(offset=(0.5 + 0.14) * volmdlr.X3D)
+        boundary2 = boundary2.translation(offset=(0.1) * volmdlr.Z3D)
+        union = boundary1.union(boundary2)[0]
+        center = union.bounding_box.center
+        plane = volmdlr.faces.Plane3D.from_normal(center, volmdlr.Y3D)
+        cut_by_plane = union.cut_by_plane(plane)
+        self.assertEqual(len(cut_by_plane), 1)
+        self.assertEqual(cut_by_plane[0].area(), 0.254)
 
 
 if __name__ == '__main__':

@@ -1,30 +1,44 @@
 # -*- coding: utf-8 -*-
 """
+Cloud of points classes.
 
 """
 
 import math
-from typing import List
-
-import matplotlib.pyplot as plt
+from typing import List, Tuple
 
 import dessia_common.core as dc
+import matplotlib.pyplot as plt
+from trimesh.proximity import closest_point
+
 import volmdlr as vm
-# import volmdlr.core
-import volmdlr.wires as vmw
 import volmdlr.faces as vmf
+import volmdlr.primitives3d as p3d
 import volmdlr.step as vstep
 import volmdlr.stl as vmstl
-import volmdlr.primitives3d as p3d
+# import volmdlr.core
+import volmdlr.wires as vmw
 
 
 class PointCloud3D(dc.DessiaObject):
-    def __init__(self, points, name: str = ''):
+    """
+    Point Cloud3D, a list of points.
+
+    :param points: a list of points.
+    """
+
+    def __init__(self, points: List[vm.Point3D], name: str = ''):
         self.points = points
         dc.DessiaObject.__init__(self, name=name)
 
     @classmethod
     def from_stl(cls, file_path):
+        """
+        Creates a point cloud 3d from an stl file.
+
+        :param file_path: path to stl file.
+        :return: point cloud 3d object.
+        """
         list_points = vmstl.Stl.from_file(file_path).extract_points_BIS()
 
         return cls(list_points, name='from_stl')
@@ -74,9 +88,9 @@ class PointCloud3D(dc.DessiaObject):
 
         polygon2d, polygon3d = [], []
         for n, poly in enumerate(initial_polygon2d):
-            if (poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1])):
+            if poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1]):
                 continue
-            elif poly.area() < avg_area / 10:
+            if poly.area() < avg_area / 10:
                 new_poly = vmw.ClosedPolygon2D.concave_hull(poly.points, -1, 0.000005)
                 new_polygon = new_poly.to_3d(position_plane[n] * normal, vec1,
                                              vec2)
@@ -95,6 +109,7 @@ class PointCloud3D(dc.DessiaObject):
         return subcloud2d
 
     def to_shell(self, resolution: int = 10, normal=None, offset: float = 0):
+        """ Creates a Shell from a Cloud of points 3D."""
         if normal is None:
             posmax, normal, vec1, vec2 = self.determine_extrusion_vector()
         else:
@@ -119,7 +134,7 @@ class PointCloud3D(dc.DessiaObject):
 
         # Offsetting
         if offset != 0:
-            initial_polygon2d = [cloud2d.to_polygon(convexe=True) for cloud2d in subcloud2d]
+            initial_polygon2d = [cloud2d.to_polygon(convex=True) for cloud2d in subcloud2d]
             position_plane, initial_polygon2d = self.offset_to_shell(position_plane, initial_polygon2d, offset)
         else:
             initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
@@ -133,89 +148,100 @@ class PointCloud3D(dc.DessiaObject):
     @classmethod
     def generate_shell(cls, polygon3d: List[vm.wires.ClosedPolygon3D],
                        normal: vm.Vector3D, vec1: vm.Vector3D, vec2: vm.Vector3D):
+        """
+        Generates a shell from a list of polygon 3d, using a sewing algorithm.
+
+        :param polygon3d: list of polygon 3d to be sewed.
+        :param normal: normal to the sewing plane.
+        :param vec1: u vector in the sewing plane.
+        :param vec2: v vector in the sewing plane.
+        :return: return a shell.
+        """
         position_plane = [p.points[0].dot(normal) for p in polygon3d]
         resolution = len(polygon3d)
 
         faces = []
-
         for n in range(resolution):
             poly1 = polygon3d[n]
-            poly1_2d = poly1.to_2d(position_plane[n] * normal, vec1, vec2)
-            poly1_2d_simplified = poly1_2d.simplify_polygon(0.01, 1)
-            poly1_simplified = poly1_2d_simplified.to_3d(position_plane[n] * normal, vec1, vec2)
-
-            if 1 - poly1_2d_simplified.area() / poly1_2d.area() > 0.3:
-                poly1_simplified = poly1
+            poly1_simplified = cls._helper_simplify_polygon(poly1, position_plane[n], normal, vec1, vec2)
 
             if n in (resolution - 1, 0):
-                plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2)
-                surf2d = vmf.Surface2D(poly1_simplified.to_2d(position_plane[n] * normal, vec1, vec2), [])
+                faces.append(
+                    vmf.PlaneFace3D(surface3d=vmf.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2),
+                                    surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n],
+                                                                  normal, vec1, vec2)))
 
-                faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution - 1:
                 poly2 = polygon3d[n + 1]
+                poly2_simplified = cls._helper_simplify_polygon(poly2, position_plane[n + 1], normal, vec1, vec2)
 
-                poly2_2d = poly2.to_2d(position_plane[n + 1] * normal, vec1, vec2)
-                poly2_2d_simplified = poly2_2d.simplify_polygon(0.01, 1)
-                poly2_simplified = poly2_2d_simplified.to_3d(
-                    position_plane[n + 1] * normal, vec1, vec2)
-
-                if 1 - poly2_2d_simplified.area() / poly2_2d.area() > 0.3:
-                    poly2_simplified = poly2
-                list_triangles_points = poly1_simplified.sewing(poly2_simplified,
-                                                                vec1, vec2)
-                list_faces = [vmf.Triangle3D(*triangle_points, alpha=0.9,
-                                             color=(1, 0.1, 0.1))
+                list_triangles_points = cls._helper_sew_polygons(poly1_simplified, poly2_simplified, vec1, vec2)
+                list_faces = [vmf.Triangle3D(*triangle_points, alpha=0.9, color=(1, 0.1, 0.1))
                               for triangle_points in list_triangles_points]
                 faces.extend(list_faces)
         return vmf.ClosedShell3D(faces)
 
-    # def alpha_shape(self, alpha:float, number_point_samples:int):
-    #     '''
-    #     Parameters
-    #     ----------
-    #     alpha : float
-    #         the parameter alpha determines how precise the object surface reconstruction is wanted to be.
-    #         The bigger the value of alpha is, more convex the final object will be. If it is smaller,
-    #         the algorigthm is able to find the concave parts of the object, giving a more precise object
-    #         surface approximation
-    #     number_point_samples : int
-    #         denotes the number of points to be used from the point cloud to reconstruct the surface. It uses poisson disk sampling algorithm
-    #
-    #     Returns
-    #     -------
-    #     Returns a ClosedShell3D object
-    #
-    #     '''
-    #
-    #     points = [[p.x, p.y, p.z] for p in self.points]
-    #     array = npy.array(points)
-    #     points = open3d.cpu.pybind.utility.Vector3dVector(array)
-    #     pcd = open3d.geometry.PointCloud()
-    #     pcd.points = points
-    #     mesh = open3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd, alpha)
-    #     mesh.compute_vertex_normals()
-    #     if number_point_samples != None:
-    #         pcd = mesh.sample_points_poisson_disk(number_point_samples)
-    #         # tetra_mesh, pt_map = open3d.geometry.TetraMesh.create_from_point_cloud(pcd)
-    #         mesh = open3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(
-    #         pcd, alpha,
-    #         # tetra_mesh, pt_map
-    #         )
-    #         mesh.compute_vertex_normals()
-    #     # open3d.visualization.draw_geometries([mesh], mesh_show_back_face=True)
-    #     vertices = [volmdlr.Point3D(float(x), float(y), float(z)) for x, y, z in list(npy.asarray(mesh.vertices))]
-    #     triangles = [vmf.Triangle3D(vertices[p1], vertices[p2], vertices[p3], color = (1, 0.1, 0.1), alpha = 0.6) for p1, p2, p3 in list(npy.asarray(mesh.triangles))]
-    #
-    #     return vmf.ClosedShell3D(triangles)
+    @staticmethod
+    def _helper_simplify_polygon(polygon, position_plane, normal, vec1, vec2):
+        poly_2d = polygon.to_2d(position_plane * normal, vec1, vec2)
+        poly_2d_simplified = poly_2d.simplify_polygon(0.01, 1)
+        if 1 - poly_2d_simplified.area() / poly_2d.area() > 0.3:
+            poly_2d_simplified = poly_2d
+        return poly_2d_simplified.to_3d(position_plane * normal, vec1, vec2)
+
+    @staticmethod
+    def _poly_to_surf2d(polygon, position_plane, normal, vec1, vec2):
+        return vmf.Surface2D(polygon.to_2d(position_plane * normal, vec1, vec2), [])
+
+    @staticmethod
+    def _helper_sew_polygons(poly1, poly2, vec1, vec2):
+        return poly1.sewing(poly2, vec1, vec2)
+
+    def shell_distances(self, shells: vmf.OpenTriangleShell3D) -> Tuple['PointCloud3D', List[float], List[int]]:
+        """
+        Computes distance of point to shell for each point in self.points.
+
+        :return: The point cloud of points projection on nearest triangle, their distances and the corresponding
+        triangles index
+        :rtype: Tuple[PointCloud3D, List[float], List[int]]
+        """
+        nearest_coords, distances, triangles_idx = self.shell_distances_ndarray(shells)
+        return (PointCloud3D([vm.Point3D(*coords) for coords in nearest_coords]),
+                distances.tolist(),
+                triangles_idx.tolist())
+
+    def shell_distances_ndarray(self, shells: vmf.OpenTriangleShell3D):
+        """
+        Computes distance of point to shell for each point in self.points in a numpy formatted data.
+
+        :return: The point cloud of points projection on nearest triangle, their distances and the corresponding
+        triangles index
+        :rtype: Tuple[numpy.ndarray(float), numpy.ndarray(float), numpy.ndarray(int)]
+        """
+        shells_trimesh = shells.to_trimesh()
+        return closest_point(shells_trimesh, self.to_coord_matrix())
+
+    def to_coord_matrix(self) -> List[List[float]]:
+        """Generate an n_points x 3 matrix of coordinates."""
+        return [point.coordinates() for point in self.points]
 
     @classmethod
     def from_step(cls, step_file: str):
+        """
+        Creates a Clopud of Points from a step file.
+
+        :param step_file: step file.
+        :return: Point Cloud 3D.
+        """
         step = vstep.Step(step_file)
         points = step.to_points()
         return cls(points)
 
     def plot(self, ax=None, color='k'):
+        """
+        Plot the cloud 3d.
+
+        """
         ax = self.points[0].plot(ax=ax)
         for point in self.points[1::100]:
             point.plot(ax=ax, color=color)
@@ -256,37 +282,55 @@ class PointCloud3D(dc.DessiaObject):
 
 
 class PointCloud2D(dc.DessiaObject):
+    """
+    Point Cloud2D class.
+
+    :param points: list of points for point cloud.
+    """
+
     def __init__(self, points, name: str = ''):
         self.points = points
         dc.DessiaObject.__init__(self, name=name)
 
     def plot(self, ax=None, color='k'):
+        """Plot a point cloud 2d using Matplotlib."""
         if ax is None:
             _, ax = plt.subplots()
         for point in self.points:
             point.plot(ax=ax, color=color)
         return ax
 
-    def to_polygon(self, convexe=False):
+    def to_polygon(self, convex=False):
+        """
+        Use a Cloud point 2d to create a polygon.
+
+        :param convex: if True, it will return a convex polygon. If false, it will search for a concave polygon.
+        :return: closed polygon 2d.
+        """
         if not self.points:
             return None
 
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
-        if convexe:
+        if convex:
             polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
         else:
             polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.2, 0.000005)
 
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol=1e-6):
             return None
-        else:
-            return polygon
+        return polygon
 
     def bounding_rectangle(self):
+        """
+        Calculates the bounding rectangle for the point cloud.
+
+        :return: bounds for bounding rectangle.
+        """
         x_list, y_list = [p.x for p in self.points], [p.y for p in self.points]
         return min(x_list), max(x_list), min(y_list), max(y_list)
 
     def simplify(self, resolution=5):
+        """Simplify cloud point 2d."""
         if not self.points:
             return PointCloud2D(self.points, name=self.name + '_none')
 
@@ -311,3 +355,9 @@ class PointCloud2D(dc.DessiaObject):
             if poly is not None:
                 clean_points += poly.points
         return PointCloud2D(clean_points, name=self.name + '_clean')
+
+    def to_coord_matrix(self) -> List[List[float]]:
+        """
+        Generate a n_points x 2 matrix of coordinates.
+        """
+        return [point.coordinates() for point in self.points]

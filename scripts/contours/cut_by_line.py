@@ -1,8 +1,10 @@
-import volmdlr
-import volmdlr.wires as vmw
-import volmdlr.edges as vme
 import matplotlib.pyplot as plt
 import numpy as np
+
+import volmdlr
+from volmdlr.core import EdgeStyle
+import volmdlr.edges as vme
+import volmdlr.wires as vmw
 
 line_seg1 = vme.LineSegment2D(volmdlr.Point2D(-0.5, -0.2), volmdlr.O2D)
 line_seg2 = vme.LineSegment2D(volmdlr.O2D, volmdlr.Point2D(0.3, 1))
@@ -59,7 +61,7 @@ fig, axs = plt.subplots(4, 3)
 for i in range(0, 4):
     list_contours[i].plot(ax=axs[i][0])
     for j in range(0, 3):
-        lines[i].plot(ax=axs[i][j], color='r')
+        lines[i].plot(ax=axs[i][j], edge_style=EdgeStyle(color='r'))
         if j != 0:
             r, g, b = np.random.random(), np.random.random(), np.random.random()
-            lists_cutted_contours[i][j-1].plot(ax=axs[i][j], color=(r, g, b))
+            lists_cutted_contours[i][j-1].plot(ax=axs[i][j], edge_style=EdgeStyle(color=(r, g, b)))

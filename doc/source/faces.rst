@@ -28,5 +28,3 @@ https://github.com/Dessia-tech/volmdlr/blob/distancewire/scripts/Tutorial/Cylind
 .. autoclass:: volmdlr.faces.ToroidalSurface3D
   :members:
 https://github.com/Dessia-tech/volmdlr/blob/distancewire/scripts/Tutorial/Tore.py
-
-

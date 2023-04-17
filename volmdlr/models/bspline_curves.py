@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Mar 3 2022
+Created on Thu Mar 3 2022.
 
 @author: s.bendjebla
 """
 
-# %% Librairies
+# %% Libraries
 
 import volmdlr.edges
 

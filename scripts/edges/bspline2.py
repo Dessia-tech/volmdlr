@@ -1,7 +1,8 @@
-import volmdlr as vm
-import volmdlr.edges as vme
 import matplotlib.pyplot as plt
 
+import volmdlr as vm
+import volmdlr.edges as vme
+from volmdlr.core import EdgeStyle
 
 degree = 5
 control_points = [vm.Point3D(0, 0, 0),
@@ -26,16 +27,16 @@ ax = bspline_curve3d.plot()
 
 l = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 for absc in l:
-    pt = bspline_curve3d.point_at_abscissa(absc*bspline_curve3d.length())
+    pt = bspline_curve3d.point_at_abscissa(absc * bspline_curve3d.length())
     if absc != 0:
         pt.plot(ax=ax)
     else:
         pt.plot(ax=ax, color='g')
 trimmed_bspline = bspline_curve3d.trim_between_evaluations(0.5, 0.9)
-trimmed_bspline.plot(ax=ax, color='r')
+trimmed_bspline.plot(ax=ax, edge_style=EdgeStyle(color='r'))
 
 cut_bspline = bspline_curve3d.cut_after(0.5)
-cut_bspline.plot(ax=ax, color='b')
+cut_bspline.plot(ax=ax, edge_style=EdgeStyle(color='b'))
 
 cut_bspline2 = bspline_curve3d.cut_before(0.9)
-cut_bspline2.plot(ax=ax, color='g')
+cut_bspline2.plot(ax=ax, edge_style=EdgeStyle(color='g'))
