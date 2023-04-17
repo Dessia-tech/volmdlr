@@ -1325,8 +1325,9 @@ class VolumeModel(dc.PhysicalObject):
                     styled_item_id += 1
                 styled_item_id -= 1
             else:
-                step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
-                        styled_item_id, presentation_style_id, primitive_id)
+                step_content += f"#{styled_item_id} = STYLED_ITEM('color', (#{presentation_style_id})," \
+                    f"#{primitive_id});\n"
+
             current_id = styled_item_id + 1
 
         step_content += STEP_FOOTER
