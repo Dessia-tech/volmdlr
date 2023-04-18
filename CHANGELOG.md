@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add tolerance param to many methods from edges and wires.
 - Surface3D: add contour healing into face_from_contours3d method.
 - ExtrusionSurface3D: implement missing cases for linesegment2d_to_3d method.
+- VolumeModel: to_msh (consider both order 1 and 2)
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
