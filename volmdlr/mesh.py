@@ -722,6 +722,21 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
         return form_funct[0], form_funct[1], form_funct[2], form_funct[3]
 
 
+class TetrahedralElementQuadratic(TriangularElement, vmw.ClosedPolygon3D):
+    """ Class to define a 3D quadratic tetrahedral element. """
+
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
+    _generic_eq = True
+
+    def __init__(self, points, name: str = ''):
+        self.points = points
+        self.name = name
+        DessiaObject.__init__(self, name=name)
+
+
 class ElementsGroup(DessiaObject):
     """Defines a group of elements."""
 
