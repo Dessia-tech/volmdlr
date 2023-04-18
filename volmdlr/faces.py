@@ -1886,11 +1886,10 @@ class PeriodicalSurface(Surface3D):
         theta2, z2 = linesegment2d.end
         start3d = self.point2d_to_3d(linesegment2d.start)
         end3d = self.point2d_to_3d(linesegment2d.end)
-        if start3d.is_close(end3d):
-            return None
         if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametic.linesegment":
-            return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
-                                      self.point2d_to_3d(linesegment2d.end))]
+            if start3d.is_close(end3d):
+                return None
+            return [vme.LineSegment3D(start3d, end3d)]
 
         if math.isclose(z1, z2, abs_tol=1e-4) or linesegment2d.name == "parametric.arc" or \
                 linesegment2d.name == "parametric.fullarc":
@@ -1904,6 +1903,8 @@ class PeriodicalSurface(Surface3D):
                 self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
                 self.point2d_to_3d(linesegment2d.end)
             )]
+        if start3d.is_close(end3d):
+            return None
         raise NotImplementedError("This case is not yet treated")
 
 
