@@ -895,9 +895,9 @@ class BSplineCurve(Edge):
 
     def reverse(self):
         """
-        Reverses the B-spline's direction by reversing its control points.
+        Reverses the B-Spline's direction by reversing its control points.
 
-        :return: A reversed B-spline curve.
+        :return: A reversed B-Spline curve.
         :rtype: :class:`volmdlr.edges.BSplineCurve`.
         """
         return self.__class__(
