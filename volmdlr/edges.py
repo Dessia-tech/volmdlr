@@ -797,14 +797,16 @@ class LineSegment(Edge):
 
     def is_close(self, linesegment, tol: float = 1e-6):
         """
-        Checks if two linesegments are close to each other considering the euclidean distance.
-        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
-        :type tol: float, optional
+        Checks if two line segments are the same considering the euclidean distance.
+
+        :param linesegment: other line segment.
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6.
+        :type tol: float, optional.
         """
 
         if isinstance(linesegment, self.__class__):
             if (self.start.is_close(linesegment.start, tol)
-                and self.end.is_close(linesegment.end, tol)):
+                    and self.end.is_close(linesegment.end, tol)):
                 return True
         return False
 
@@ -1625,7 +1627,9 @@ class BSplineCurve(Edge):
 
     def is_close(self, bspline, tol: float = 1e-6):
         """
-        Checks if two bsplines are close to each other considering the euclidean distance.
+        Checks if two bsplines are the same considering the euclidean distance.
+
+        :param bspline: other bspline.
         :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
         :type tol: float, optional
         """
@@ -2940,7 +2944,9 @@ class Arc(Edge):
 
     def is_close(self, arc, tol: float = 1e-6):
         """
-        Checks if two arc are close to each other considering the euclidean distance.
+        Checks if two arc are the same considering the euclidean distance.
+
+        :param arc: other arc.
         :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
         :type tol: float, optional
         """
@@ -2964,14 +2970,17 @@ class FullArc(Arc):
 
     @property
     def is_trigo(self):
+        """Defines that a Full Arc is always in the trigo-wise direction."""
         return True
 
     @property
     def center(self):
+        """Center of Full Arc. """
         return self.__center
 
     @property
     def angle(self):
+        """Angle of Full Arc. """
         return volmdlr.TWO_PI
 
 
@@ -3016,6 +3025,11 @@ class Arc2D(Arc):
 
     @property
     def center(self):
+        """
+        Gets the center of the arc.
+
+        :return: the center of the arc.
+        """
         if not self._center:
             self._center = self.get_center()
         return self._center
@@ -3056,6 +3070,7 @@ class Arc2D(Arc):
 
     @property
     def clockwise_and_trigowise_paths(self):
+        """Gets clock-wise and trigo-wise paths."""
         if not self._clockwise_and_trigowise_paths:
             radius_1 = self.start - self.center
             radius_2 = self.end - self.center

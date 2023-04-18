@@ -49,9 +49,9 @@ END-ISO-10303-21;
 
 def element_in_list(element, list_elements, tol: float = 1e-6):
     """
-    Verifies if an element is inside a list  of elements, considering a certain tolerance.
+    Verifies if a volmdlr element is inside a list  of elements, considering a certain tolerance.
 
-    :param point: Element to be verified inside list.
+    :param element: Element to be verified inside list.
     :param list_elements: List of elements to be used.
     :param tol: Tolerance to consider if two points are the same.
     :return: True if there is an element inside the list close to the element to given tolerance.
@@ -72,19 +72,20 @@ def point_in_list(point, list_points, tol: float = 1e-6):
     :return: True if there is a point inside the list close to the point to given tolerance.
     """
 
-    return element_in_list(point, list_points)
+    return element_in_list(point, list_points, tol)
 
 
 def edge_in_list(edge, list_edges, tol: float = 1e-6):
     """
     Verifies if an edge is inside a list  of edges, considering a certain tolerance.
-    :param point: Edge to be verified inside list.
+
+    :param edge: Edge to be verified inside list.
     :param list_edges: List of edges to be used.
     :param tol: Tolerance to consider if two points are the same.
     :return: True if there is an edge inside the list close to the edge to given tolerance.
     """
 
-    return element_in_list(edge, list_edges)
+    return element_in_list(edge, list_edges, tol)
 
 
 def get_element_index_in_list(element, list_elements, tol: float = 1e-6):
@@ -92,7 +93,7 @@ def get_element_index_in_list(element, list_elements, tol: float = 1e-6):
     Gets the index an element inside a list of elements, considering a certain tolerance.
 
     :param point: Element to be verified inside list.
-    :param list_points: List of elements to be used.
+    :param list_elements: List of elements to be used.
     :param tol: Tolerance to consider if two elements are the same.
     :return: The element index.
     """
@@ -112,19 +113,19 @@ def get_point_index_in_list(point, list_points, tol: float = 1e-6):
     :return: The point index.
     """
 
-    return get_element_index_in_list(point, list_points)
+    return get_element_index_in_list(point, list_points, tol)
 
 
 def get_edge_index_in_list(edge, list_edges, tol: float = 1e-6):
     """
     Gets the index a edge inside a list of edges, considering a certain tolerance.
     :param edge: Edge to be verified inside list.
-    :param list_points: List of edges to be used.
+    :param list_edges: List of edges to be used.
     :param tol: Tolerance to consider if two edges are the same.
     :return: The edge index.
     """
 
-    return get_element_index_in_list(edge, list_edges)
+    return get_element_index_in_list(edge, list_edges, tol)
 
 
 def determinant(vec1, vec2, vec3):
