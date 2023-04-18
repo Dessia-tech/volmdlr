@@ -803,9 +803,10 @@ class LineSegment(Edge):
         :type tol: float, optional
         """
 
-        if (self.start.is_close(linesegment.start, tol)
-            and self.end.is_close(linesegment.end, tol)):
-            return True
+        if isinstance(linesegment, self.__class__):
+            if (self.start.is_close(linesegment.start, tol)
+                and self.end.is_close(linesegment.end, tol)):
+                return True
         return False
 
 
@@ -6736,9 +6737,10 @@ class Arc3D(Arc):
         :type tol: float, optional
         """
 
-        if (self.start.is_close(arc3d.start, tol) and self.end.is_close(arc3d.end, tol)
-            and self.center.is_close(arc3d.center, tol)):
-            return True
+        if isinstance(arc3d, self.__class__):
+            if (self.start.is_close(arc3d.start, tol) and self.end.is_close(arc3d.end, tol)
+                and self.center.is_close(arc3d.center, tol)):
+                return True
         return False
 
 
