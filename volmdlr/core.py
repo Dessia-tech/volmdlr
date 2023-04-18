@@ -1016,6 +1016,33 @@ class BoundingBox(dc.DessiaObject):
             dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
+class Assembly(dc.PhysicalObject):
+    """
+    Defines an assembly.
+
+    :param primitives: A list of volmdlr objects
+    :type primitives: List[:class:`volmdlr.core.Primitive3D`]
+    :param name: The Assembly's name
+    :type name: str
+    """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['shells', 'bounding_box']
+    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                               'faces']
+    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                                 'faces']
+    _dessia_methods = ['to_stl_model']
+
+    def __init__(self, primitives: List[Primitive3D], relationships: dict, name: str = ''):
+        self.primitives = primitives
+        self.relationships = relationships
+        self.name = name
+        self.shells = []
+        self._bbox = None
+        dc.PhysicalObject.__init__(self, name=name)
+
+
 
 class VolumeModel(dc.PhysicalObject):
     """
