@@ -843,7 +843,6 @@ class Surface3D(DessiaObject):
             class_ = self.face_class
         if not outer_contour2d.is_ordered(1e-4):
             outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
-            outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
