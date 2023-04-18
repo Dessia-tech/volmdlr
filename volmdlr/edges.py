@@ -795,6 +795,19 @@ class LineSegment(Edge):
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
         return content, [current_id]
 
+    def is_close(self, linesegment, tol: float = 1e-6):
+        """
+        Checks if two linesegments are close to each other considering the euclidean distance.
+
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :type tol: float, optional
+        """
+
+        if (self.is_point_edge_extremity(linesegment.start, tol)
+            and self.is_point_edge_extremity(linesegment.end, tol)):
+            return True
+        return False
+
 
 class BSplineCurve(Edge):
     """
@@ -6696,6 +6709,19 @@ class Arc3D(Arc):
             if linesegment3d.point_belongs(intersection):
                 linesegment_intersections.append(intersection)
         return linesegment_intersections
+
+    def is_close(self, arc3d, tol: float = 1e-6):
+        """
+        Checks if two arc3d are close to each other considering the euclidean distance.
+
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :type tol: float, optional
+        """
+
+        if (self.is_point_edge_extremity(arc3d.start, tol) and self.is_point_edge_extremity(arc3d.end, tol)
+            and self.center.is_close(arc3d.center, tol)):
+            return True
+        return False
 
 
 class FullArc3D(FullArc, Arc3D):
