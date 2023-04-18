@@ -17,6 +17,18 @@ class TestPeriodicalSurface(unittest.TestCase):
         self.assertAlmostEqual(face.surface2d.area(), 0.4272566008882119, 6)
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
+        surface = vmf.CylindricalSurface3D.load_from_file(
+            "faces/objects_periodical_surface/cylindrical_surface_repair_contour2d.json")
+        contour3d_0 = vmw.Contour3D.load_from_file(
+            "faces/objects_periodical_surface/cylindrical_contour_0_repair_contour2d.json")
+        contour3d_1 = vmw.Contour3D.load_from_file(
+            "faces/objects_periodical_surface/cylindrical_contour_1_repair_contour2d.json")
+
+        contours = [contour3d_0, contour3d_1]
+        face = surface.face_from_contours3d(contours)
+        self.assertAlmostEqual(face.surface2d.area(), 0.024190263432641437, 4)
+        self.assertTrue(face.surface2d.outer_contour.is_ordered())
+
     def test_bsplinecurve3d_to_2d(self):
         surface = vmf.CylindricalSurface3D.load_from_file(
             "faces/objects_periodical_surface/periodicalsurface_with_theta_discontinuity.json")
