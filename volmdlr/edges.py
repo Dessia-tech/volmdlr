@@ -906,6 +906,24 @@ class BSplineCurve(Edge):
                     and self.knots == other.knots)
         return False
 
+    def is_close(self, bspline, tol: float = 1e-6):
+        """
+        Checks if two bsplines are close to each other considering the euclidean distance.
+
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :type tol: float, optional
+        """
+
+        if isinstance(bspline, self.__class__):
+            is_true = True
+            for i, point in self.control_points:
+                if not point.is_close(bspline.control_points[i]):
+                    is_true = False
+                    break
+            if is_true and self.degree == bspline.degree and self.knots == bspline.knots:
+                return True
+        return False
+
     def reverse(self):
         """
         Reverses the B-spline's direction by reversing its control points.
