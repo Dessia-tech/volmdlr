@@ -1691,28 +1691,27 @@ class PeriodicalSurface(Surface3D):
 
         return theta1, theta2
 
+    def _helper_fix_angle_discontinuity(self, points, index_angle_discontinuity, i):
+        sign = round(points[index_angle_discontinuity - 1][i] / abs(points[index_angle_discontinuity - 1][i]), 2)
+        if i == 0:
+            points = [p + volmdlr.Point2D(sign * volmdlr.TWO_PI, 0) if i >= index_angle_discontinuity else p
+                      for i, p in enumerate(points)]
+        else:
+            points = [p + volmdlr.Point2D(0, sign * volmdlr.TWO_PI) if i >= index_angle_discontinuity else p
+                      for i, p in enumerate(points)]
+        return points
+
     def _fix_angle_discontinuity_on_discretization_points(self, points, indexes_angle_discontinuity, direction):
-        # angle1, angle2, angle3 = angle_list
-        # if angle3 < angle1 < angle2:
-        #     points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
-        #     if angle2 == 0.0:
-        #         points[-1] = volmdlr.Point2D(-volmdlr.TWO_PI, points[-1].y)
-        # elif angle3 > angle1 > angle2:
-        #     points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
-        #     if angle2 == 0.0:
-        #         points[-1] = volmdlr.Point2D(volmdlr.TWO_PI, points[-1].y)
         i = 0 if direction == "x" else 1
         if len(indexes_angle_discontinuity) == 1:
             index_angle_discontinuity = indexes_angle_discontinuity[0]
-            sign = round(points[index_angle_discontinuity - 1][i] / abs(points[index_angle_discontinuity - 1][i]), 2)
-            if i == 0:
-                points = [p + volmdlr.Point2D(sign * volmdlr.TWO_PI, 0) if i >= index_angle_discontinuity else p
-                          for i, p in enumerate(points)]
-            else:
-                points = [p + volmdlr.Point2D(0, sign * volmdlr.TWO_PI) if i >= index_angle_discontinuity else p
-                          for i, p in enumerate(points)]
+            self._helper_fix_angle_discontinuity(points, index_angle_discontinuity, i)
         else:
-            raise NotImplementedError
+            for j, index_angle_discontinuity in enumerate(indexes_angle_discontinuity[:-1]):
+                next_angle_discontinuity_index = indexes_angle_discontinuity[j + 1]
+                temp_points = points[:next_angle_discontinuity_index]
+                temp_points = self._helper_fix_angle_discontinuity(temp_points, index_angle_discontinuity, i)
+                points = temp_points + points[next_angle_discontinuity_index:]
         return points
 
     def linesegment3d_to_2d(self, linesegment3d):
