@@ -4,6 +4,7 @@ volmdlr utils for calculating 3D to surface parametric domain operation.
 """
 import bisect
 import math
+import warnings
 
 import volmdlr
 import volmdlr.edges as vme
@@ -300,7 +301,8 @@ def contour2d_healing_self_intersection(contour2d):
             crossings = prim1.intersections(prim2)
             if crossings:
                 if len(crossings) > 1:
-                    raise NotImplementedError
+                    warnings.warn("More than one crossings found while detecting contour self intersection.")
+                    return contour2d
                 split_point = crossings[0]
                 new_prim1 = prim1.split(split_point)[0]
                 new_prim2 = prim2.split(split_point)[1]

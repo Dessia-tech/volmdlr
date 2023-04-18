@@ -919,7 +919,7 @@ class Surface3D(DessiaObject):
                     continue
                 primitives2d.extend(primitives)
             else:
-                raise NotImplementedError(f'Class {self.__class__.__name__} does not implement {method_name}')
+                raise AttributeError(f'Class {self.__class__.__name__} does not implement {method_name}')
         return primitives2d
 
     def contour3d_to_2d(self, contour3d):
@@ -1409,13 +1409,13 @@ class Plane3D(Surface3D):
 
         :param ax: Matplotlib Axes3D object to plot on. If None, create a new figure.
         :type ax: Axes3D or None
-        :param color: color of the wireframe plot. Default is 'grey'.
+        :param color: color of the wire-frame plot. Default is 'grey'.
         :type color: str
         :param alpha: transparency of the edge frame plot. Default is 0.5.
         :type alpha: float
         :param length: plotted length
         :type length: float
-        :return: Matplotlib Axes3D object containing the plotted wireframe.
+        :return: Matplotlib Axes3D object containing the plotted wire-frame.
         :rtype: Axes3D
         """
         grid_size = 10
@@ -1558,7 +1558,7 @@ class PeriodicalSurface(Surface3D):
                     old_innner_contour_positioned = inner_contour
 
                 else:
-                    overlapping_theta, outer_contour_side, inner_contour_side = self._get_overlapping_theta(
+                    overlapping_theta, outer_contour_side, inner_contour_side, side = self._get_overlapping_theta(
                         outer_contour_theta,
                         inner_contour_theta)
                     line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
@@ -1568,9 +1568,9 @@ class PeriodicalSurface(Surface3D):
                     if number_contours == 2:
                         contour1, contour2 = cutted_contours
                         increasing_theta = theta3 < theta4
-                        # inner_contour_side = 0 --> left  inner_contour_side = 1 --> right
-                        if (not inner_contour_side and increasing_theta) or (
-                                inner_contour_side and not increasing_theta):
+                        # side = 0 --> left  side = 1 --> right
+                        if (not side and increasing_theta) or (
+                                side and not increasing_theta):
                             theta_offset = outer_contour_theta[outer_contour_side] - contour2.primitives[0].start.x
                             translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour2_positionned = contour2.translation(offset=translation_vector)
@@ -1629,8 +1629,8 @@ class PeriodicalSurface(Surface3D):
         """
         oc_xmin_index, outer_contour_xmin = min(enumerate(outer_contour_startend_theta), key=lambda x: x[1])
         oc_xmax_index, outer_contour_xman = max(enumerate(outer_contour_startend_theta), key=lambda x: x[1])
-        inner_contour_xmin = min(inner_contour_startend_theta)
-        inner_contour_xmax = max(inner_contour_startend_theta)
+        ic_xmin_index, inner_contour_xmin = min(enumerate(inner_contour_startend_theta), key=lambda x: x[1])
+        ic_xmax_index, inner_contour_xmax = max(enumerate(inner_contour_startend_theta), key=lambda x: x[1])
 
         # check if tetha3 or theta4 is in [theta1, theta2] interval
         overlap = outer_contour_xmin <= inner_contour_xmax and outer_contour_xman >= inner_contour_xmin
@@ -1638,24 +1638,20 @@ class PeriodicalSurface(Surface3D):
         if overlap:
             if inner_contour_xmin < outer_contour_xmin:
                 overlapping_theta = outer_contour_startend_theta[oc_xmin_index]
-                outer_contour_side = oc_xmin_index
                 side = 0
-                return overlapping_theta, outer_contour_side, side
+                return overlapping_theta, oc_xmin_index, ic_xmin_index, side
             overlapping_theta = outer_contour_startend_theta[oc_xmax_index]
-            outer_contour_side = oc_xmax_index
             side = 1
-            return overlapping_theta, outer_contour_side, side
+            return overlapping_theta, oc_xmax_index, ic_xmax_index, side
 
         # if not direct intersection -> find intersection at periodicity
         if inner_contour_xmin < outer_contour_xmin:
             overlapping_theta = outer_contour_startend_theta[oc_xmin_index] - 2 * math.pi
-            outer_contour_side = oc_xmin_index
             side = 0
-            return overlapping_theta, outer_contour_side, side
+            return overlapping_theta, oc_xmin_index, ic_xmin_index, side
         overlapping_theta = outer_contour_startend_theta[oc_xmax_index] + 2 * math.pi
-        outer_contour_side = oc_xmax_index
         side = 1
-        return overlapping_theta, outer_contour_side, side
+        return overlapping_theta, oc_xmax_index, ic_xmax_index, side
 
     def _reference_points(self, edge):
         """
@@ -1888,13 +1884,12 @@ class PeriodicalSurface(Surface3D):
         """
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
+        start3d = self.point2d_to_3d(linesegment2d.start)
+        end3d = self.point2d_to_3d(linesegment2d.end)
         if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametic.linesegment":
-            start3d = self.point2d_to_3d(linesegment2d.start)
-            end3d = self.point2d_to_3d(linesegment2d.end)
             if start3d.is_close(end3d):
                 return None
-            return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
-                                      self.point2d_to_3d(linesegment2d.end))]
+            return [vme.LineSegment3D(start3d, end3d)]
 
         if math.isclose(z1, z2, abs_tol=1e-4) or linesegment2d.name == "parametric.arc" or \
                 linesegment2d.name == "parametric.fullarc":
@@ -1908,6 +1903,8 @@ class PeriodicalSurface(Surface3D):
                 self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
                 self.point2d_to_3d(linesegment2d.end)
             )]
+        if start3d.is_close(end3d):
+            return None
         raise NotImplementedError("This case is not yet treated")
 
 
@@ -1935,13 +1932,13 @@ class CylindricalSurface3D(PeriodicalSurface):
 
         :param ax: Matplotlib Axes3D object to plot on. If None, create a new figure.
         :type ax: Axes3D or None
-        :param color: color of the wireframe plot. Default is 'grey'.
+        :param color: color of the wire-frame plot. Default is 'grey'.
         :type color: str
         :param alpha: transparency of the edge frame plot. Default is 0.5.
         :type alpha: float
         :param z: additional keyword arguments to pass the value of z to cut the surface.
         :type z: float
-        :return: Matplotlib Axes3D object containing the plotted wireframe.
+        :return: Matplotlib Axes3D object containing the plotted wire-frame.
         :rtype: Axes3D
         """
         ncircles = 10
@@ -2302,21 +2299,21 @@ class ToroidalSurface3D(PeriodicalSurface):
     def _bounding_box(self):
         distance = self.tore_radius + self.small_radius
         point1 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point2 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point3 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point4 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
         point5 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point6 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point7 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point8 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
 
         return volmdlr.core.BoundingBox.from_points(
             [point1, point2, point3, point4, point5, point6, point7, point8])
@@ -2698,7 +2695,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         vector_from_tube_center_to_point = volmdlr.Vector3D(x, y, z) - vector_to_tube_center
         phi = volmdlr.geometry.vectors3d_angle(vector_to_tube_center, vector_from_tube_center_to_point)
         if z < 0:
-            phi = 2*math.pi - phi
+            phi = 2 * math.pi - phi
         if abs(theta) < 1e-9:
             theta = 0.0
         if abs(phi) < 1e-9:
@@ -2995,7 +2992,7 @@ class ConicalSurface3D(PeriodicalSurface):
             # linesegment3d with singularity
             elif math.isclose(primitives2d[i].start.y, 0.0, abs_tol=1e-6) and \
                     math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-6) and \
-                        math.isclose(primitives2d[i].start.x, previous_primitive.end.x, abs_tol=1e-6):
+                math.isclose(primitives2d[i].start.x, previous_primitive.end.x, abs_tol=1e-6):
 
                 if primitives2d[i + 1].end.x < primitives2d[i].end.x:
                     theta_offset = volmdlr.TWO_PI
@@ -3623,7 +3620,7 @@ class ExtrusionSurface3D(Surface3D):
     """
     Defines a surface of revolution.
 
-    An extrusion surface is a surfarce that is a generic cylindrical surface genarated by the linear
+    An extrusion surface is a surface that is a generic cylindrical surface generated by the linear
     extrusion of a curve, generally an Ellipse or a B-Spline curve.
 
     :param edge: edge.
@@ -4339,7 +4336,8 @@ class BSplineSurface3D(Surface3D):
         lth = linesegment2d.length()
         points = [self.point2d_to_3d(
             linesegment2d.point_at_abscissa(i * lth / 20.)) for i in range(21)]
-
+        if points[0].is_close(points[-1]):
+            return None
         linesegment = vme.LineSegment3D(points[0], points[-1])
         flag = True
         flag_arc = False
@@ -10183,6 +10181,7 @@ class ClosedShell3D(OpenShell3D):
             elif self.set_operations_exterior_face(new_face, faces, inside_reference_shell, [], shell2):
                 faces.append(new_face)
         return faces
+
     @staticmethod
     def validate_set_operations_faces(faces):
         """
