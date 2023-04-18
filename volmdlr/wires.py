@@ -233,10 +233,13 @@ class WireMixin:
                         new_primitives.insert(0, primitive.reverse())
                     primitives.remove(primitive)
                     break
-            else:
-                raise NotImplementedError('There may exist a problem with this'
-                                          ' contour, it seems it cannot be reordered.'
-                                          ' Please, verify its points')
+                else:
+                    print(self, primitive)
+                    ax = self.plot()
+                    primitive.plot(edge_style=EdgeStyle(color='r'), ax=ax)
+                    raise NotImplementedError('There may exist a problem with this'
+                                              ' contour, it seems it cannot be reordered.'
+                                              ' Please, verify its points')
         return new_primitives
 
     def order_wire(self, tol=1e-6):
