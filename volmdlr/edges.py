@@ -1087,7 +1087,7 @@ class BSplineCurve(Edge):
         distance = distance_vector.norm()
         if distance <= tol1:
             return True
-        if curve_derivatives[1].norm():
+        if curve_derivatives[1].norm() == 0.0:
             return False
         zero_cos = abs(curve_derivatives[1].dot(distance_vector)) / curve_derivatives[1].norm() * distance
         if distance <= tol1 and zero_cos <= tol2:
@@ -1128,7 +1128,7 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if point.point_distance(self.end) < tol:
             return [self.copy(), None]
-        adim_abscissa = round(min(max(0, self.abscissa(point) / self.length()), 1), 5)
+        adim_abscissa = round(self.abscissa(point) / self.length(), 7)
         curve1, curve2 = split_curve(self.curve, adim_abscissa)
 
         return [self.__class__.from_geomdl_curve(curve1),
@@ -5817,7 +5817,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
-        curves = operations.split_curve(self.curve, round(parameter, 5))
+        curves = operations.split_curve(self.curve, round(parameter, 7))
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
@@ -5835,7 +5835,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-        curves = operations.split_curve(self.curve, round(parameter, 5))
+        curves = operations.split_curve(self.curve, round(parameter, 7))
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
