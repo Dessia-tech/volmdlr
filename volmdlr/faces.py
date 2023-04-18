@@ -6888,7 +6888,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         list_faces = []
         if not self.surface2d.outer_contour.edge_polygon.is_trigo:
-            self.surface2d.outer_contour.invert_inplace()
+            self.surface2d.outer_contour = self.surface2d.outer_contour.invert()
         new_faces_contours = self.surface2d.outer_contour.divide(list_open_cutting_contours, inside)
         new_inner_contours = len(new_faces_contours) * [[]]
         if self.surface2d.inner_contours:
