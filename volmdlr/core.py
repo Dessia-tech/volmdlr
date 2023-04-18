@@ -392,12 +392,12 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
         :param ax: optional
             The Axes3D object onto which to plot the primitives. If None, a new
             figure and Axes3D object will be created.
-        :type ax: plt.figure().add_subplot(111, projection='3d')
+        :type ax: Matplotlib plot
         edge_style : optional
             The EdgeStyle to use when plotting the primitives.
         :type edge_style: vme.EdgeStyle
         :return: The Axes3D object onto which the primitives were plotted.
-        :rtype: Axes3D
+        :rtype: Matplotlib plot
         """
         if ax is None:
             fig = plt.figure()
@@ -1250,7 +1250,6 @@ class VolumeModel(dc.PhysicalObject):
             self.to_stl_stream(file)
 
     def to_stl_stream(self, stream: dcf.BinaryFile):
-        """"""
         stl = self.to_stl_model()
         stl.save_to_stream(stream)
         return stream

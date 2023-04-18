@@ -1824,7 +1824,7 @@ class Line2D(Line):
     @staticmethod
     def compute_tangent_circles_for_perpendicular_segments(new_basis, new_a, new_b, new_c, new_d):
         """
-        Compute tangent circle betwen perpendicular segments.
+        Computes tangent circle between perpendicular segments.
 
         """
         line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
@@ -4182,7 +4182,7 @@ class ArcEllipse2D(Edge):
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
-        Plot arc-ellipse 2d using matplotlob.
+        Plot arc-ellipse 2d using Matplotlob.
 
         :param ax: Matplotlib plot if there exists any.
         :param edge_style: edge styles.
