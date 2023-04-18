@@ -2302,21 +2302,21 @@ class ToroidalSurface3D(PeriodicalSurface):
     def _bounding_box(self):
         distance = self.tore_radius + self.small_radius
         point1 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point2 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point3 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point4 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
         point5 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point6 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point7 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point8 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
 
         return volmdlr.core.BoundingBox.from_points(
             [point1, point2, point3, point4, point5, point6, point7, point8])
@@ -2698,7 +2698,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         vector_from_tube_center_to_point = volmdlr.Vector3D(x, y, z) - vector_to_tube_center
         phi = volmdlr.geometry.vectors3d_angle(vector_to_tube_center, vector_from_tube_center_to_point)
         if z < 0:
-            phi = 2*math.pi - phi
+            phi = 2 * math.pi - phi
         if abs(theta) < 1e-9:
             theta = 0.0
         if abs(phi) < 1e-9:
@@ -2995,7 +2995,7 @@ class ConicalSurface3D(PeriodicalSurface):
             # linesegment3d with singularity
             elif math.isclose(primitives2d[i].start.y, 0.0, abs_tol=1e-6) and \
                     math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-6) and \
-                        math.isclose(primitives2d[i].start.x, previous_primitive.end.x, abs_tol=1e-6):
+                math.isclose(primitives2d[i].start.x, previous_primitive.end.x, abs_tol=1e-6):
 
                 if primitives2d[i + 1].end.x < primitives2d[i].end.x:
                     theta_offset = volmdlr.TWO_PI
@@ -10147,6 +10147,7 @@ class ClosedShell3D(OpenShell3D):
             elif self.set_operations_exterior_face(new_face, faces, inside_reference_shell, [], shell2):
                 faces.append(new_face)
         return faces
+
     @staticmethod
     def validate_set_operations_faces(faces):
         """

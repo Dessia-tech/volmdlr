@@ -47,6 +47,7 @@ STEP_FOOTER = '''ENDSEC;
 END-ISO-10303-21;
 '''
 
+
 def element_in_list(element, list_elements, tol: float = 1e-6):
     """
     Verifies if a volmdlr element is inside a list  of elements, considering a certain tolerance.

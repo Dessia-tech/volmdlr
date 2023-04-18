@@ -978,7 +978,7 @@ class BSplineCurve(Edge):
                                    for point in curve.ctrlpts],
                    knots=knots,
                    knot_multiplicities=knot_multiplicities,
-                   weights= curve.weights ,periodic=periodic, name=name)
+                   weights=curve.weights, periodic=periodic, name=name)
 
     def length(self):
         """
@@ -2953,7 +2953,7 @@ class Arc(Edge):
 
         if isinstance(arc, self.__class__):
             if (self.start.is_close(arc.start, tol) and self.end.is_close(arc.end, tol)
-                and self.center.is_close(arc.center, tol)):
+                    and self.center.is_close(arc.center, tol)):
                 return True
         return False
 
@@ -2962,6 +2962,7 @@ class FullArc(Arc):
     """
     Abstract class for representing a circle with a start and end points that are the same.
     """
+
     def __init__(self, center: Union[volmdlr.Point2D, volmdlr.Point3D],
                  start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
         self.__center = center
@@ -6943,7 +6944,7 @@ class FullArc3D(FullArc, Arc3D):
         vec = volmdlr.Vector3D(*point - self.center)
         dot = self.normal.dot(vec)
         return math.isclose(distance, self.radius, abs_tol=abs_tol) \
-                and math.isclose(dot, 0, abs_tol=abs_tol)
+            and math.isclose(dot, 0, abs_tol=abs_tol)
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):

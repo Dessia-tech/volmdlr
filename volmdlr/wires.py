@@ -1390,7 +1390,7 @@ class ContourMixin(WireMixin):
         """
 
         if (self.is_inside(contour) or contour.is_inside(self)
-            or self.is_overlapping(contour) or self.is_superposing(contour)):
+                or self.is_overlapping(contour) or self.is_superposing(contour)):
             return False
         if self.is_sharing_primitives_with(contour):
             return True
