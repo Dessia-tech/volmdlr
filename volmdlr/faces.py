@@ -34,7 +34,7 @@ import volmdlr.utils.parametric as vm_parametric
 import volmdlr.wires
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
 from volmdlr.bspline_evaluators import evaluate_single
-from volmdlr.core import point_in_list
+from volmdlr.core import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
 
 
 def knots_vector_inv(knots_vector):
@@ -9668,16 +9668,23 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         """
 
         primitives = []
-        points = set()
+        points = []
+        # pp = []
         for face in self.faces:
             for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
-                points.update(contour.get_geo_points())
+                # points.update(contour.get_geo_points())
+                for point_contour in contour.get_geo_points():
+                    if not point_in_list(point_contour, points):
+                        points.append(point_contour)
+
                 if isinstance(contour, volmdlr.wires.Circle2D):
                     pass
                 else:
                     for _, primitive in enumerate(contour.primitives):
-                        if ((primitive not in primitives)
-                                and (primitive.reverse() not in primitives)):
+                        # if ((primitive not in primitives)
+                        #         and (primitive.reverse() not in primitives)):
+                        #     primitives.append(primitive)
+                        if not edge_in_list(primitive, primitives):
                             primitives.append(primitive)
 
                 # if isinstance(contour, volmdlr.wires.Circle2D):
@@ -9725,15 +9732,23 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     pass
                 else:
                     for _, primitive in enumerate(contour.primitives):
+                        index = get_edge_index_in_list(primitive, primitives)
 
-                        try:
-                            # line_account += 1
-                            # print(line_account)
-                            index = primitives.index(primitive)
+                        if (primitives[index].start.is_close(primitive.start)
+                            and primitives[index].end.is_close(primitive.end)):
+                        # try:
+                        #     # line_account += 1
+                        #     # print(line_account)
+                        #     index = primitives.index(primitive)
+
                             if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
                                 discretization_points = primitive.discretization_points()
-                                start_point_tag = points.index(discretization_points[0]) + 1
-                                end_point_tag = points.index(discretization_points[1]) + 1
+                                # start_point_tag = points.index(discretization_points[0]) + 1
+                                # end_point_tag = points.index(discretization_points[1]) + 1
+
+                                start_point_tag = get_point_index_in_list(discretization_points[0], points) + 1
+                                end_point_tag = get_point_index_in_list(discretization_points[1], points) + 1
+
                                 primitive_linesegments = volmdlr.edges.LineSegment3D(
                                     discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
@@ -9743,15 +9758,24 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                                                                   + point_account))
 
                             if isinstance(primitive, volmdlr.edges.LineSegment):
-                                start_point_tag = points.index(primitive.start) + 1
-                                end_point_tag = points.index(primitive.end) + 1
+                                # start_point_tag = points.index(primitive.start) + 1
+                                # end_point_tag = points.index(primitive.end) + 1
+
+                                start_point_tag = get_point_index_in_list(primitive.start, points) + 1
+                                end_point_tag = get_point_index_in_list(primitive.end, points) + 1
+
                                 lines.append(primitive.get_geo_lines(tag=line_account,
                                                                      start_point_tag=start_point_tag + point_account,
                                                                      end_point_tag=end_point_tag + point_account))
                             elif isinstance(primitive, volmdlr.edges.Arc):
-                                start_point_tag = points.index(primitive.start) + 1
-                                center_point_tag = points.index(primitive.center) + 1
-                                end_point_tag = points.index(primitive.end) + 1
+                                # start_point_tag = points.index(primitive.start) + 1
+                                # center_point_tag = points.index(primitive.center) + 1
+                                # end_point_tag = points.index(primitive.end) + 1
+
+                                start_point_tag = get_point_index_in_list(primitive.start, points) + 1
+                                center_point_tag = get_point_index_in_list(primitive.center, points) + 1
+                                end_point_tag = get_point_index_in_list(primitive.end, points) + 1
+
                                 lines.append(primitive.get_geo_lines(tag=line_account,
                                                                      start_point_tag=start_point_tag + point_account,
                                                                      center_point_tag=center_point_tag + point_account,
@@ -9761,9 +9785,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             indices_check[index] = line_account
                             line_account += 1
 
-                        except ValueError:
-                            index = primitives.index(primitive.reverse())
-                            lines_tags.append(-indices_check[index])
+                        # except ValueError:
+                        if (primitives[index].start.is_close(primitive.end)
+                            and primitives[index].end.is_close(primitive.start)):
+
+                                # index = primitives.index(primitive.reverse())
+                                lines_tags.append(-indices_check[index])
 
                     lines.append(contour.get_geo_lines(line_loop_account + 1, lines_tags))
 
