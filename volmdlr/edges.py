@@ -795,6 +795,19 @@ class LineSegment(Edge):
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
         return content, [current_id]
 
+    def is_close(self, linesegment, tol: float = 1e-6):
+        """
+        Checks if two linesegments are close to each other considering the euclidean distance.
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :type tol: float, optional
+        """
+
+        if isinstance(linesegment, self.__class__):
+            if (self.start.is_close(linesegment.start, tol)
+                and self.end.is_close(linesegment.end, tol)):
+                return True
+        return False
+
 
 class BSplineCurve(Edge):
     """
@@ -1609,6 +1622,23 @@ class BSplineCurve(Edge):
             if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
                 discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
+
+    def is_close(self, bspline, tol: float = 1e-6):
+        """
+        Checks if two bsplines are close to each other considering the euclidean distance.
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :type tol: float, optional
+        """
+
+        if isinstance(bspline, self.__class__):
+            is_true = True
+            for i, point in self.control_points:
+                if not point.is_close(bspline.control_points[i]):
+                    is_true = False
+                    break
+            if is_true and self.degree == bspline.degree and self.knots == bspline.knots:
+                return True
+        return False
 
 
 class Line2D(Line):
@@ -2907,6 +2937,20 @@ class Arc(Edge):
             if arc and not arc.point_belongs(shared_section[0].interior, abs_tol):
                 new_arcs.append(arc)
         return new_arcs
+
+    def is_close(self, arc, tol: float = 1e-6):
+        """
+        Checks if two arc are close to each other considering the euclidean distance.
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :type tol: float, optional
+        """
+
+        if isinstance(arc, self.__class__):
+            if (self.start.is_close(arc.start, tol) and self.end.is_close(arc.end, tol)
+                and self.center.is_close(arc.center, tol)):
+                return True
+        return False
+
 
 class FullArc(Arc):
     """
