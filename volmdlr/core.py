@@ -120,6 +120,7 @@ def get_point_index_in_list(point, list_points, tol: float = 1e-6):
 def get_edge_index_in_list(edge, list_edges, tol: float = 1e-6):
     """
     Gets the index a edge inside a list of edges, considering a certain tolerance.
+
     :param edge: Edge to be verified inside list.
     :param list_edges: List of edges to be used.
     :param tol: Tolerance to consider if two edges are the same.
