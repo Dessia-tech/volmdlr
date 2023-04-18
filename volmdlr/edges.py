@@ -5848,7 +5848,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def cut_before(self, parameter: float):
         """
-        Returns the right side of the splitted curve at a given parameter.
+        Returns the right side of the split curve at a given parameter.
 
         :param parameter: parameter value that specifies where to split the curve.
         :type parameter: float
@@ -5865,7 +5865,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def cut_after(self, parameter: float):
         """
-        Returns the left side of the splitted curve at a given parameter.
+        Returns the left side of the split curve at a given parameter.
 
         :param parameter: parameter value that specifies where to split the curve.
         :type parameter: float
@@ -7313,7 +7313,7 @@ class ArcEllipse3D(Edge):
         :param frame: Local coordinate system.
         :type frame: volmdlr.Frame3D
         :param side: 'old' will perform a transformation from local to global coordinates. 'new' will
-            perform a tranformation from global to local coordinates.
+            perform a transformation from global to local coordinates.
         :type side: str
         :return: A new transformed ArcEllipse3D.
         :rtype: ArcEllipse3D
@@ -7419,8 +7419,8 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
 
         :param frame: Local coordinate system.
         :type frame: volmdlr.Frame3D
-        :param side: 'old' will perform a tranformation from local to global coordinates. 'new' will
-            perform a tranformation from global to local coordinates.
+        :param side: 'old' will perform a transformation from local to global coordinates. 'new' will
+            perform a transformation from global to local coordinates.
         :type side: str
         :return: A new transformed FulLArcEllipse3D.
         :rtype: FullArcEllipse3D
