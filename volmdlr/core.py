@@ -63,6 +63,21 @@ def point_in_list(point, list_points, tol: float = 1e-6):
     return False
 
 
+def edge_in_list(edge, list_edges, tol: float = 1e-6):
+    """
+    Verifies if an edge is inside a list  of edges, considering a certain tolerance.
+
+    :param point: Edge to be verified inside list.
+    :param list_edges: List of edges to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: True if there is an edge inside the list close to the edge to given tolerance.
+    """
+    for edge_i in list_edges:
+        if edge.is_close(edge_i, tol):
+            return True
+    return False
+
+
 def get_point_index_in_list(point, list_points, tol: float = 1e-6):
     """
     Gets the index a point inside a list of points, considering a certain tolerance.
@@ -76,6 +91,21 @@ def get_point_index_in_list(point, list_points, tol: float = 1e-6):
         if point_i.is_close(point, tol):
             return i
     raise ValueError(f'{point} is not in list')
+
+
+def get_edge_index_in_list(edge, list_edges, tol: float = 1e-6):
+    """
+    Gets the index a edge inside a list of edges, considering a certain tolerance.
+
+    :param edge: Edge to be verified inside list.
+    :param list_points: List of edges to be used.
+    :param tol: Tolerance to consider if two edges are the same.
+    :return: The edge index.
+    """
+    for i, edge_i in enumerate(list_edges):
+        if edge_i.is_close(edge, tol):
+            return i
+    raise ValueError(f'{edge} is not in list')
 
 
 def determinant(vec1, vec2, vec3):
