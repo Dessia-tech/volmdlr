@@ -4068,6 +4068,12 @@ class BSplineSurface3D(Surface3D):
         self._y_periodicity = False
 
     def to_plane3d(self):
+        """
+        Converts a Bspline surface3d to a Plane3d.
+        :return: A Plane
+        :rtype: Plane3D
+        """
+
         points_2d = [volmdlr.Point2D(0.1, 0.1),
                      volmdlr.Point2D(0.1, 0.8),
                      volmdlr.Point2D(0.8, 0.5)]
@@ -8755,17 +8761,22 @@ class BSplineFace3D(Face3D):
                         name=name)
         self._bbox = None
 
-    def to_planeface3d(self):
-        s3d = self.surface3d.to_plane3d()
-        s2d = Surface2D(outer_contour=s3d.contour3d_to_2d(self.outer_contour3d),
-                        inner_contours=[s3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
+    def to_planeface3d(self, plane3d: Plane3D = None):
+        """
+        Converts a Bspline face3d to a Plane face3d (using or without a reference Plane3D).
+        :param plane3d: A reference Plane3D, defaults to None
+        :type plane3d: Plane3D, optional
+        :return: A Plane face3d
+        :rtype: PlaneFace3D
+        """
 
-        return PlaneFace3D(surface3d=s3d, surface2d=s2d)
+        if not plane3d:
+            plane3d = self.surface3d.to_plane3d()
+        surface2d = Surface2D(
+            outer_contour=plane3d.contour3d_to_2d(self.outer_contour3d),
+            inner_contours=[plane3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
 
-    # def to_planeface3d(self, plane3d: Plane3D):
-    #     s2d = Surface2D(outer_contour=plane3d.contour3d_to_2d(self.outer_contour3d),
-    #                     inner_contours=[plane3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
-    #     return PlaneFace3D(surface3d=plane3d, surface2d=s2d)
+        return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
 
     @property
     def bounding_box(self):
