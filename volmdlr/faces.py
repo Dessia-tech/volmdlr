@@ -8765,10 +8765,7 @@ class BSplineFace3D(Face3D):
     def to_planeface3d(self, plane3d: Plane3D = None):
         """
         Converts a Bspline face3d to a Plane face3d (using or without a reference Plane3D).
-<<<<<<< HEAD
-=======
 
->>>>>>> bspline_2_plane3d
         :param plane3d: A reference Plane3D, defaults to None
         :type plane3d: Plane3D, optional
         :return: A Plane face3d
