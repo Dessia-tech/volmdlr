@@ -4067,6 +4067,17 @@ class BSplineSurface3D(Surface3D):
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
 
+    def to_plane3d(self):
+        points_2d = [volmdlr.Point2D(0.1, 0.1),
+                     volmdlr.Point2D(0.1, 0.8),
+                     volmdlr.Point2D(0.8, 0.5)]
+        points = [self.point2d_to_3d(pt) for pt in points_2d]
+
+        surface3d = Plane3D.from_3_points(points[0],
+                                          points[1],
+                                          points[2])
+        return surface3d
+
     @property
     def x_periodicity(self):
         """
