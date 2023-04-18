@@ -795,6 +795,21 @@ class LineSegment(Edge):
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
         return content, [current_id]
 
+    def is_close(self, linesegment, tol: float = 1e-6):
+        """
+        Checks if two line segments are the same considering the euclidean distance.
+
+        :param linesegment: other line segment.
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6.
+        :type tol: float, optional.
+        """
+
+        if isinstance(linesegment, self.__class__):
+            if (self.start.is_close(linesegment.start, tol)
+                    and self.end.is_close(linesegment.end, tol)):
+                return True
+        return False
+
 
 class BSplineCurve(Edge):
     """
@@ -963,7 +978,7 @@ class BSplineCurve(Edge):
                                    for point in curve.ctrlpts],
                    knots=knots,
                    knot_multiplicities=knot_multiplicities,
-                   weights= curve.weights ,periodic=periodic, name=name)
+                   weights=curve.weights, periodic=periodic, name=name)
 
     def length(self):
         """
@@ -1609,6 +1624,25 @@ class BSplineCurve(Edge):
             if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
                 discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
+
+    def is_close(self, bspline, tol: float = 1e-6):
+        """
+        Checks if two bsplines are the same considering the euclidean distance.
+
+        :param bspline: other bspline.
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :type tol: float, optional
+        """
+
+        if isinstance(bspline, self.__class__):
+            is_true = True
+            for i, point in self.control_points:
+                if not point.is_close(bspline.control_points[i]):
+                    is_true = False
+                    break
+            if is_true and self.degree == bspline.degree and self.knots == bspline.knots:
+                return True
+        return False
 
 
 class Line2D(Line):
@@ -2908,10 +2942,27 @@ class Arc(Edge):
                 new_arcs.append(arc)
         return new_arcs
 
+    def is_close(self, arc, tol: float = 1e-6):
+        """
+        Checks if two arc are the same considering the euclidean distance.
+
+        :param arc: other arc.
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :type tol: float, optional
+        """
+
+        if isinstance(arc, self.__class__):
+            if (self.start.is_close(arc.start, tol) and self.end.is_close(arc.end, tol)
+                    and self.center.is_close(arc.center, tol)):
+                return True
+        return False
+
+
 class FullArc(Arc):
     """
     Abstract class for representing a circle with a start and end points that are the same.
     """
+
     def __init__(self, center: Union[volmdlr.Point2D, volmdlr.Point3D],
                  start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
         self.__center = center
@@ -2920,14 +2971,17 @@ class FullArc(Arc):
 
     @property
     def is_trigo(self):
+        """Defines that a Full Arc is always in the trigo-wise direction."""
         return True
 
     @property
     def center(self):
+        """Center of Full Arc. """
         return self.__center
 
     @property
     def angle(self):
+        """Angle of Full Arc. """
         return volmdlr.TWO_PI
 
 
@@ -2972,6 +3026,11 @@ class Arc2D(Arc):
 
     @property
     def center(self):
+        """
+        Gets the center of the arc.
+
+        :return: the center of the arc.
+        """
         if not self._center:
             self._center = self.get_center()
         return self._center
@@ -3012,6 +3071,7 @@ class Arc2D(Arc):
 
     @property
     def clockwise_and_trigowise_paths(self):
+        """Gets clock-wise and trigo-wise paths."""
         if not self._clockwise_and_trigowise_paths:
             radius_1 = self.start - self.center
             radius_2 = self.end - self.center
@@ -5804,7 +5864,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def cut_before(self, parameter: float):
         """
-        Returns the right side of the splitted curve at a given parameter.
+        Returns the right side of the split curve at a given parameter.
 
         :param parameter: parameter value that specifies where to split the curve.
         :type parameter: float
@@ -5821,7 +5881,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def cut_after(self, parameter: float):
         """
-        Returns the left side of the splitted curve at a given parameter.
+        Returns the left side of the split curve at a given parameter.
 
         :param parameter: parameter value that specifies where to split the curve.
         :type parameter: float
@@ -6884,7 +6944,7 @@ class FullArc3D(FullArc, Arc3D):
         vec = volmdlr.Vector3D(*point - self.center)
         dot = self.normal.dot(vec)
         return math.isclose(distance, self.radius, abs_tol=abs_tol) \
-                and math.isclose(dot, 0, abs_tol=abs_tol)
+            and math.isclose(dot, 0, abs_tol=abs_tol)
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
@@ -7269,7 +7329,7 @@ class ArcEllipse3D(Edge):
         :param frame: Local coordinate system.
         :type frame: volmdlr.Frame3D
         :param side: 'old' will perform a transformation from local to global coordinates. 'new' will
-            perform a tranformation from global to local coordinates.
+            perform a transformation from global to local coordinates.
         :type side: str
         :return: A new transformed ArcEllipse3D.
         :rtype: ArcEllipse3D
@@ -7375,8 +7435,8 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
 
         :param frame: Local coordinate system.
         :type frame: volmdlr.Frame3D
-        :param side: 'old' will perform a tranformation from local to global coordinates. 'new' will
-            perform a tranformation from global to local coordinates.
+        :param side: 'old' will perform a transformation from local to global coordinates. 'new' will
+            perform a transformation from global to local coordinates.
         :type side: str
         :return: A new transformed FulLArcEllipse3D.
         :rtype: FullArcEllipse3D
