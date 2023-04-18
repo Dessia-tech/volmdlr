@@ -4068,6 +4068,13 @@ class BSplineSurface3D(Surface3D):
         self._y_periodicity = False
 
     def to_plane3d(self):
+        """
+        Converts a Bspline surface3d to a Plane3d.
+
+        :return: A Plane
+        :rtype: Plane3D
+        """
+
         points_2d = [volmdlr.Point2D(0.1, 0.1),
                      volmdlr.Point2D(0.1, 0.8),
                      volmdlr.Point2D(0.8, 0.5)]
