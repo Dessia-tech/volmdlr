@@ -584,17 +584,10 @@ class GmshParser(DessiaObject):
         for tetrahedrons in tetrahedron_elements:
             tetrahedrons_mesh = []
             for tetrahedron in tetrahedrons:
-                tetrahedrons_mesh.append(volmdlr.mesh.TetrahedralElementQuadratic(
-                    [points[tetrahedron[0]],
-                     points[tetrahedron[1]],
-                     points[tetrahedron[2]],
-                     points[tetrahedron[3]],
-                     points[tetrahedron[4]],
-                     points[tetrahedron[5]],
-                     points[tetrahedron[6]],
-                     points[tetrahedron[7]],
-                     points[tetrahedron[8]],
-                     points[tetrahedron[9]]]))
+                elements_points = []
+                for i in range(10):
+                    elements_points.append(points[tetrahedron[i]])
+                tetrahedrons_mesh.append(volmdlr.mesh.TetrahedralElementQuadratic(elements_points))
 
             element_groups.append(volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name=''))
 
