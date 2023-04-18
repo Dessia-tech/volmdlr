@@ -803,8 +803,8 @@ class LineSegment(Edge):
         :type tol: float, optional
         """
 
-        if (self.is_point_edge_extremity(linesegment.start, tol)
-            and self.is_point_edge_extremity(linesegment.end, tol)):
+        if (self.start.is_close(linesegment.start, tol)
+            and self.end.is_close(linesegment.end, tol)):
             return True
         return False
 
@@ -6718,7 +6718,7 @@ class Arc3D(Arc):
         :type tol: float, optional
         """
 
-        if (self.is_point_edge_extremity(arc3d.start, tol) and self.is_point_edge_extremity(arc3d.end, tol)
+        if (self.start.is_close(arc3d.start, tol) and self.end.is_close(arc3d.end, tol)
             and self.center.is_close(arc3d.center, tol)):
             return True
         return False
