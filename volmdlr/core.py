@@ -406,6 +406,9 @@ class Primitive3D(dc.PhysicalObject):
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
     def babylon_meshes(self):
+        """
+        Returns the babylonjs mesh.
+        """
         mesh = self.triangulation()
         if mesh is None:
             return []
@@ -435,6 +438,19 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
         self._utd_primitives_to_index = False
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """
+        Plot the 3D primitives onto the given Axes3D object.
+
+        :param ax: optional
+            The Axes3D object onto which to plot the primitives. If None, a new
+            figure and Axes3D object will be created.
+        :type ax: Matplotlib plot
+        edge_style : optional
+            The EdgeStyle to use when plotting the primitives.
+        :type edge_style: vme.EdgeStyle
+        :return: The Axes3D object onto which the primitives were plotted.
+        :rtype: Matplotlib plot
+        """
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')

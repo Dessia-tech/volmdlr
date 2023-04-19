@@ -919,7 +919,7 @@ class Surface3D(DessiaObject):
                     continue
                 primitives2d.extend(primitives)
             else:
-                raise NotImplementedError(f'Class {self.__class__.__name__} does not implement {method_name}')
+                raise AttributeError(f'Class {self.__class__.__name__} does not implement {method_name}')
         return primitives2d
 
     def contour3d_to_2d(self, contour3d):
@@ -1558,7 +1558,7 @@ class PeriodicalSurface(Surface3D):
                     old_innner_contour_positioned = inner_contour
 
                 else:
-                    overlapping_theta, outer_contour_side, inner_contour_side = self._get_overlapping_theta(
+                    overlapping_theta, outer_contour_side, inner_contour_side, side = self._get_overlapping_theta(
                         outer_contour_theta,
                         inner_contour_theta)
                     line = vme.Line2D(volmdlr.Point2D(overlapping_theta, z1),
@@ -1568,9 +1568,9 @@ class PeriodicalSurface(Surface3D):
                     if number_contours == 2:
                         contour1, contour2 = cutted_contours
                         increasing_theta = theta3 < theta4
-                        # inner_contour_side = 0 --> left  inner_contour_side = 1 --> right
-                        if (not inner_contour_side and increasing_theta) or (
-                                inner_contour_side and not increasing_theta):
+                        # side = 0 --> left  side = 1 --> right
+                        if (not side and increasing_theta) or (
+                                side and not increasing_theta):
                             theta_offset = outer_contour_theta[outer_contour_side] - contour2.primitives[0].start.x
                             translation_vector = volmdlr.Vector2D(theta_offset, 0)
                             contour2_positionned = contour2.translation(offset=translation_vector)
@@ -1629,8 +1629,8 @@ class PeriodicalSurface(Surface3D):
         """
         oc_xmin_index, outer_contour_xmin = min(enumerate(outer_contour_startend_theta), key=lambda x: x[1])
         oc_xmax_index, outer_contour_xman = max(enumerate(outer_contour_startend_theta), key=lambda x: x[1])
-        inner_contour_xmin = min(inner_contour_startend_theta)
-        inner_contour_xmax = max(inner_contour_startend_theta)
+        ic_xmin_index, inner_contour_xmin = min(enumerate(inner_contour_startend_theta), key=lambda x: x[1])
+        ic_xmax_index, inner_contour_xmax = max(enumerate(inner_contour_startend_theta), key=lambda x: x[1])
 
         # check if tetha3 or theta4 is in [theta1, theta2] interval
         overlap = outer_contour_xmin <= inner_contour_xmax and outer_contour_xman >= inner_contour_xmin
@@ -1638,24 +1638,20 @@ class PeriodicalSurface(Surface3D):
         if overlap:
             if inner_contour_xmin < outer_contour_xmin:
                 overlapping_theta = outer_contour_startend_theta[oc_xmin_index]
-                outer_contour_side = oc_xmin_index
                 side = 0
-                return overlapping_theta, outer_contour_side, side
+                return overlapping_theta, oc_xmin_index, ic_xmin_index, side
             overlapping_theta = outer_contour_startend_theta[oc_xmax_index]
-            outer_contour_side = oc_xmax_index
             side = 1
-            return overlapping_theta, outer_contour_side, side
+            return overlapping_theta, oc_xmax_index, ic_xmax_index, side
 
         # if not direct intersection -> find intersection at periodicity
         if inner_contour_xmin < outer_contour_xmin:
             overlapping_theta = outer_contour_startend_theta[oc_xmin_index] - 2 * math.pi
-            outer_contour_side = oc_xmin_index
             side = 0
-            return overlapping_theta, outer_contour_side, side
+            return overlapping_theta, oc_xmin_index, ic_xmin_index, side
         overlapping_theta = outer_contour_startend_theta[oc_xmax_index] + 2 * math.pi
-        outer_contour_side = oc_xmax_index
         side = 1
-        return overlapping_theta, outer_contour_side, side
+        return overlapping_theta, oc_xmax_index, ic_xmax_index, side
 
     def _reference_points(self, edge):
         """
@@ -1888,13 +1884,12 @@ class PeriodicalSurface(Surface3D):
         """
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
+        start3d = self.point2d_to_3d(linesegment2d.start)
+        end3d = self.point2d_to_3d(linesegment2d.end)
         if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametic.linesegment":
-            start3d = self.point2d_to_3d(linesegment2d.start)
-            end3d = self.point2d_to_3d(linesegment2d.end)
             if start3d.is_close(end3d):
                 return None
-            return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
-                                      self.point2d_to_3d(linesegment2d.end))]
+            return [vme.LineSegment3D(start3d, end3d)]
 
         if math.isclose(z1, z2, abs_tol=1e-4) or linesegment2d.name == "parametric.arc" or \
                 linesegment2d.name == "parametric.fullarc":
@@ -1908,6 +1903,8 @@ class PeriodicalSurface(Surface3D):
                 self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
                 self.point2d_to_3d(linesegment2d.end)
             )]
+        if start3d.is_close(end3d):
+            return None
         raise NotImplementedError("This case is not yet treated")
 
 
@@ -4321,7 +4318,8 @@ class BSplineSurface3D(Surface3D):
         lth = linesegment2d.length()
         points = [self.point2d_to_3d(
             linesegment2d.point_at_abscissa(i * lth / 20.)) for i in range(21)]
-
+        if points[0].is_close(points[-1]):
+            return None
         linesegment = vme.LineSegment3D(points[0], points[-1])
         flag = True
         flag_arc = False
