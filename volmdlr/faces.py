@@ -826,8 +826,8 @@ class Surface3D(DessiaObject):
                 outer_contour2d, inner_contours2d = self.repair_contours2d(contours2d[0], contours2d[1:])
             else:
                 for contour2d in contours2d:
-                    if not contour2d.is_ordered(1e-4):
-                        contour2d = vm_parametric.contour2d_healing(contour2d)
+                    # if not contour2d.is_ordered(1e-4):
+                    #     contour2d = vm_parametric.contour2d_healing(contour2d)
                     inner_contours2d.append(contour2d)
                     contour_area = contour2d.area()
                     if contour_area > area:
@@ -841,8 +841,8 @@ class Surface3D(DessiaObject):
             class_ = globals()[self.face_class]
         else:
             class_ = self.face_class
-        if not outer_contour2d.is_ordered(1e-4):
-            outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+        # if not outer_contour2d.is_ordered(1e-4):
+        #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
@@ -1904,7 +1904,14 @@ class PeriodicalSurface(Surface3D):
             )]
         if start3d.is_close(end3d):
             return None
-        raise NotImplementedError("This case is not yet treated")
+        # Quick implementation for RevolutionSurface
+        # todo: Study this case
+        n = 10
+        points = [self.point2d_to_3d(p)
+                  for p in linesegment2d.discretization_points(number_points=n)]
+        periodic = points[0].is_close(points[-1])
+        return [vme.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
+        # raise NotImplementedError("This case is not yet treated")
 
 
 class CylindricalSurface3D(PeriodicalSurface):
@@ -3526,13 +3533,15 @@ class SphericalSurface3D(PeriodicalSurface):
                     half_pi = -0.5 * math.pi
                 else:
                     half_pi = 0.5 * math.pi
-                lines = [vme.LineSegment2D(last_end, volmdlr.Point2D(last_end.x, half_pi), name="construction"),
-                         vme.LineSegment2D(volmdlr.Point2D(last_end.x, half_pi),
-                                           volmdlr.Point2D(first_start.x, half_pi), name="construction"),
-                         vme.LineSegment2D(volmdlr.Point2D(first_start.x, half_pi),
-                                           first_start, name="construction")
-                         ]
-                primitives2d.extend(lines)
+                if not last_end.is_close(first_start) and \
+                    not first_start.is_close(volmdlr.Point2D(first_start.x, half_pi)):
+                    lines = [vme.LineSegment2D(last_end, volmdlr.Point2D(last_end.x, half_pi), name="construction"),
+                             vme.LineSegment2D(volmdlr.Point2D(last_end.x, half_pi),
+                                               volmdlr.Point2D(first_start.x, half_pi), name="construction"),
+                             vme.LineSegment2D(volmdlr.Point2D(first_start.x, half_pi),
+                                               first_start, name="construction")
+                             ]
+                    primitives2d.extend(lines)
             else:
                 primitives2d.append(vme.LineSegment2D(last_end, first_start))
         return primitives2d
@@ -3752,6 +3761,15 @@ class ExtrusionSurface3D(Surface3D):
         bsplinecurve2d = vme.BSplineCurve2D.from_points_interpolation(points, degree=2)
         return [bsplinecurve2d]
 
+    def arc3d_to_2d(self, arc3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        # todo: needs detailed investigation
+        start = self.point3d_to_2d(arc3d.start)
+        end = self.point3d_to_2d(arc3d.end)
+        return [vme.LineSegment2D(start, end, name="arc")]
+
     def fullarcellipse3d_to_2d(self, fullarcellipse3d):
         length = fullarcellipse3d.length()
         start = self.point3d_to_2d(fullarcellipse3d.start)
@@ -3813,6 +3831,19 @@ class ExtrusionSurface3D(Surface3D):
                   for p in bspline_curve3d.discretization_points(number_points=n)]
         return [vme.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree, bspline_curve3d.periodic)]
         # raise NotImplementedError
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Returns a new Extrusion Surface positioned in the specified frame.
+
+        :param frame: Frame of reference
+        :type frame: `volmdlr.Frame3D`
+        :param side: 'old' or 'new'
+        """
+        new_frame = self.frame.frame_mapping(frame, side)
+        direction = new_frame.w
+        new_edge = self.edge.frame_mapping(frame, side)
+        return ExtrusionSurface3D(new_edge, direction, name=self.name)
 
 
 class RevolutionSurface3D(PeriodicalSurface):
@@ -3954,6 +3985,20 @@ class RevolutionSurface3D(PeriodicalSurface):
         elif theta1 < theta3:
             point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
         return [vme.LineSegment2D(point1, point2)]
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Returns a new Revolution Surface positionned in the specified frame.
+
+        :param frame: Frame of reference
+        :type frame: `volmdlr.Frame3D`
+        :param side: 'old' or 'new'
+        """
+        new_frame = self.frame.frame_mapping(frame, side)
+        axis = new_frame.w
+        axis_point = new_frame.origin
+        new_wire = self.wire.frame_mapping(frame, side)
+        return RevolutionSurface3D(new_wire, axis_point, axis, name=self.name)
 
 
 class BSplineSurface3D(Surface3D):
@@ -4613,6 +4658,49 @@ class BSplineSurface3D(Surface3D):
                     end.x = min_bound_x
         if self.y_periodicity:
             points = self._repair_periodic_boundary_points(arc3d, points, 'y')
+            start = points[0]
+            end = points[-1]
+            if start.is_close(end):
+                if math.isclose(start.y, min_bound_y, abs_tol=1e-4):
+                    end.y = max_bound_y
+                else:
+                    end.y = min_bound_y
+        if start.is_close(end):
+            return []
+        linesegment = vme.LineSegment2D(start, end, name="parametric.arc")
+        flag = True
+        for point in points:
+            if not linesegment.point_belongs(point):
+                flag = False
+                break
+        if flag:
+            return [linesegment]
+        return [vme.BSplineCurve2D.from_points_interpolation(points, degree, name="parametric.arc")]
+
+    def arcellipse3d_to_2d(self, arcellipse3d_to_2d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        # todo: Is this right? Needs detailed investigation
+        number_points = max(self.nb_u, self.nb_v)
+        degree = max(self.degree_u, self.degree_v)
+        points = [self.point3d_to_2d(point3d) for point3d in
+                  arcellipse3d_to_2d.discretization_points(number_points=number_points)]
+        start = points[0]
+        end = points[-1]
+        min_bound_x, max_bound_x = self.surface.domain[0]
+        min_bound_y, max_bound_y = self.surface.domain[1]
+        if self.x_periodicity:
+            points = self._repair_periodic_boundary_points(arcellipse3d_to_2d, points, 'x')
+            start = points[0]
+            end = points[-1]
+            if start.is_close(end):
+                if math.isclose(start.x, min_bound_x, abs_tol=1e-4):
+                    end.x = max_bound_x
+                else:
+                    end.x = min_bound_x
+        if self.y_periodicity:
+            points = self._repair_periodic_boundary_points(arcellipse3d_to_2d, points, 'y')
             start = points[0]
             end = points[-1]
             if start.is_close(end):
@@ -8693,7 +8781,7 @@ class RevolutionFace3D(Face3D):
 
     def get_bounding_box(self):
         # To be enhanced by restricting wires to cut
-        curve_points = self.surface3d.edge.discretization_points(angle_resolution=20)
+        curve_points = self.outer_contour3d.discretization_points(angle_resolution=20)
         points = []
         for i in range(37):
             angle = i * volmdlr.TWO_PI / 36
