@@ -8441,6 +8441,25 @@ class ConicalFace3D(Face3D):
 
         return number_points_x, number_points_y
 
+    @classmethod
+    def rectangular_cut(cls, conical_surface3d, theta1: float, theta2: float,
+                        z1: float, z2: float, name: str = ''):
+        """
+        Cut a rectangular piece of the ConicalSurface3D object and return a ConicalFace3D object.
+
+        """
+        # theta1 = angle_principal_measure(theta1)
+        # theta2 = angle_principal_measure(theta2)
+        if theta1 == theta2:
+            theta2 += volmdlr.TWO_PI
+
+        point1 = volmdlr.Point2D(theta1, z1)
+        point2 = volmdlr.Point2D(theta2, z1)
+        point3 = volmdlr.Point2D(theta2, z2)
+        point4 = volmdlr.Point2D(theta1, z2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        return cls(conical_surface3d, Surface2D(outer_contour, []), name)
+
 
 class SphericalFace3D(Face3D):
     """
@@ -9096,6 +9115,21 @@ class BSplineFace3D(Face3D):
         merged_face = merged_surface.face_from_contours3d(contours)
 
         return merged_face
+
+    @classmethod
+    def from_surface_rectangular_cut(cls, bspline_surface3d, u1: float, u2: float,
+                                     v1: float, v2: float, name: str = ''):
+        """
+        Cut a rectangular piece of the BSplineSurface3D object and return a BSplineFace3D object.
+
+        """
+        point1 = volmdlr.Point2D(u1, v1)
+        point2 = volmdlr.Point2D(u2, v1)
+        point3 = volmdlr.Point2D(u2, v2)
+        point4 = volmdlr.Point2D(u1, v2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        surface = Surface2D(outer_contour, [])
+        return BSplineFace3D(bspline_surface3d, surface, name)
 
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
