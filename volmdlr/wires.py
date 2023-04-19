@@ -134,8 +134,8 @@ class WireMixin:
         """
         Split a wire or contour in two points.
 
-        :param point1: spliting point1.
-        :param point2: spliting point2.
+        :param point1: splitting point1.
+        :param point2: splitting point2.
         :return: List of primitives in between these two points, and another list with the remaining primitives.
         """
         abscissa1 = self.abscissa(point1)
@@ -1135,7 +1135,7 @@ class ContourMixin(WireMixin):
 
     def order_contour(self, tol: float = 1e-6):
         """
-        Verifies if the contours'primitives are ordered (one after the other). If not, it will order it.
+        Verifies if the contours' primitives are ordered (one after the other). If not, it will order it.
 
         """
         if self.is_ordered(tol=tol) or len(self.primitives) < 2:
@@ -1393,7 +1393,7 @@ class ContourMixin(WireMixin):
         """
 
         if (self.is_inside(contour) or contour.is_inside(self)
-            or self.is_overlapping(contour) or self.is_superposing(contour)):
+                or self.is_overlapping(contour) or self.is_superposing(contour)):
             return False
         if self.is_sharing_primitives_with(contour):
             return True
@@ -3142,7 +3142,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
         """
-        Use an n by m grid to triangulize the contour.
+        Use an n by m grid to triangulate the contour.
 
         :param number_points_x: Number of discretization points in x direction.
         :type number_points_x: int
@@ -4258,14 +4258,13 @@ class Ellipse2D(Contour2D):
 
         :param center: center of the rotation.
         :param angle: angle to rotated of.
-        :return: a rotationed new ellipse.
+        :return: a rotated new ellipse.
         """
-        rotationed_center = self.center.rotation(center, angle)
+        rotated_center = self.center.rotation(center, angle)
         point_major_dir = self.center + self.major_dir * self.major_axis
-        rotationed_major_dir_point = point_major_dir.rotation(center, angle)
-        major_dir = rotationed_major_dir_point - rotationed_center
-        return Ellipse2D(self.major_axis, self.minor_axis, rotationed_center,
-                         major_dir)
+        rotated_major_dir_point = point_major_dir.rotation(center, angle)
+        major_dir = rotated_major_dir_point - rotated_center
+        return Ellipse2D(self.major_axis, self.minor_axis, rotated_center, major_dir)
 
     def translation(self, offset: volmdlr.Vector2D):
         """

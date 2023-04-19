@@ -228,7 +228,7 @@ class PointCloud3D(dc.DessiaObject):
     @classmethod
     def from_step(cls, step_file: str):
         """
-        Creates a cloud of Points from a step file.
+        Creates a cloud of points from a step file.
 
         :param step_file: step file.
         :return: Point Cloud 3D.
