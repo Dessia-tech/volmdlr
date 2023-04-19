@@ -729,10 +729,7 @@ class GmshParser(DessiaObject):
 
         cells_str_int = {'elements_type_1': ('2 ', 3),
                          'elements_type_2': ('3 ', 4),
-                         'elements_type_4': ('4 ', 5),
-                         'elements_type_8': ('3 ', 4),
-                         'elements_type_9': ('6 ', 7),
-                         'elements_type_11': ('10 ', 11)}
+                         'elements_type_4': ('4 ', 5)}
 
         for key, value in cells_str_int.items():
             cells = 0
@@ -762,10 +759,7 @@ class GmshParser(DessiaObject):
 
         cells_str_int = {'elements_type_1': '3',
                          'elements_type_2': '5',
-                         'elements_type_4': '10',
-                         'elements_type_8': '21',
-                         'elements_type_9': '22',
-                         'elements_type_11': '24'}
+                         'elements_type_4': '10'}
 
         for key, value in cells_str_int.items():
             try:
