@@ -826,8 +826,9 @@ class Surface3D(DessiaObject):
                 outer_contour2d, inner_contours2d = self.repair_contours2d(contours2d[0], contours2d[1:])
             else:
                 for contour2d in contours2d:
-                    # if not contour2d.is_ordered(1e-4):
+                    if not contour2d.is_ordered(1e-4):
                     #     contour2d = vm_parametric.contour2d_healing(contour2d)
+                        contour2d.plot().set_aspect("auto")
                     inner_contours2d.append(contour2d)
                     contour_area = contour2d.area()
                     if contour_area > area:
@@ -841,8 +842,9 @@ class Surface3D(DessiaObject):
             class_ = globals()[self.face_class]
         else:
             class_ = self.face_class
-        # if not outer_contour2d.is_ordered(1e-4):
+        if not outer_contour2d.is_ordered(1e-4):
         #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+            outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         return class_(self, surface2d=surface2d, name=name)
@@ -1705,7 +1707,7 @@ class PeriodicalSurface(Surface3D):
         i = 0 if direction == "x" else 1
         if len(indexes_angle_discontinuity) == 1:
             index_angle_discontinuity = indexes_angle_discontinuity[0]
-            self._helper_fix_angle_discontinuity(points, index_angle_discontinuity, i)
+            points = self._helper_fix_angle_discontinuity(points, index_angle_discontinuity, i)
         else:
             for j, index_angle_discontinuity in enumerate(indexes_angle_discontinuity[:-1]):
                 next_angle_discontinuity_index = indexes_angle_discontinuity[j + 1]
