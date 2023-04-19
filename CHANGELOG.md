@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExtrusionSurface3D: implement missing cases for linesegment2d_to_3d method.
 - mesh: TetrahedralElementQuadratic 
 - GmshParser: define_quadratic_tetrahedron_element_mesh
+- GmshParser: to_vtk (consider quadratic tetrahedron element)
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
