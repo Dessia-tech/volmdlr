@@ -897,6 +897,7 @@ class Step(dc.DessiaObject):
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
         except (ValueError, NotImplementedError) as error:
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
+        print(step_id)
         return volmdlr_object
 
     def create_node_list(self, stack):
@@ -1192,7 +1193,7 @@ STEP_TO_VOLMDLR = {
     'CONICAL_SURFACE': volmdlr.faces.ConicalSurface3D,
     'SPHERICAL_SURFACE': volmdlr.faces.SphericalSurface3D,
     'TOROIDAL_SURFACE': volmdlr.faces.ToroidalSurface3D,
-    'DEGENERATE_TOROIDAL_SURFACE': None,
+    "DEGENERATE_TOROIDAL_SURFACE": volmdlr.faces.ToroidalSurface3D,
     'B_SPLINE_SURFACE_WITH_KNOTS': volmdlr.faces.BSplineSurface3D,
     'B_SPLINE_SURFACE': volmdlr.faces.BSplineSurface3D,
     'BEZIER_SURFACE': volmdlr.faces.BSplineSurface3D,
@@ -1256,6 +1257,7 @@ STEP_TO_VOLMDLR = {
     'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
     'ITEM_DEFINED_TRANSFORMATION': None,
     'SHAPE_REPRESENTATION_RELATIONSHIP': None,
+    "NEXT_ASSEMBLY_USAGE_OCCURRENCE": None,
 
     'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM': volmdlr.edges.BSplineCurve3D
 }

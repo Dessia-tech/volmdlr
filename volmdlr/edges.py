@@ -6038,6 +6038,18 @@ class BSplineCurve3D(BSplineCurve):
             return minimum_distance, points[0], points[1]
         return minimum_distance
 
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Returns a new Revolution Surface positionned in the specified frame.
+
+        :param frame: Frame of reference
+        :type frame: `volmdlr.Frame3D`
+        :param side: 'old' or 'new'
+        """
+        new_control_points = [control_point.frame_mapping(frame, side) for control_point in self.control_points]
+        return BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights,
+                              self.periodic, self.name)
+
 
 class BezierCurve3D(BSplineCurve3D):
     """
