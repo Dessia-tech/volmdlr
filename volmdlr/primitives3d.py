@@ -1911,7 +1911,7 @@ class Measure3D:
         self.point1, self.point2 = point1, point2
         self.color = color
         self.distance = (point1 - point2).norm()
-        self.bounding_box = self._bounding_box()
+        # self.bounding_box = self._bounding_box()
 
     # !!! no eq defined!
     def __hash__(self):
