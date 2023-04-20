@@ -714,12 +714,13 @@ class LineSegment(Edge):
             if self.point_belongs(point, abs_tol=abs_tol) and\
                     not volmdlr.core.point_in_list(point, new_linesegment_points):
                 new_linesegment_points.append(point)
-        if len(new_linesegment_points) == 1:
-            return []
+        shared_sections = []
+        if len(new_linesegment_points) != 1:
+            class_ = self.__class__
+            shared_sections = [class_(new_linesegment_points[0], new_linesegment_points[1])]
         if len(new_linesegment_points) != 2:
             raise ValueError
-        class_ = self.__class__
-        return [class_(new_linesegment_points[0], new_linesegment_points[1])]
+        return shared_sections
 
     def delete_shared_section(self, other_linesegment, abs_tol: float = 1e-6):
         """
