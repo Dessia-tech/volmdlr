@@ -294,6 +294,31 @@ def vertex_loop(arguments, object_dict):
     """
     return object_dict[arguments[1]]
 
+def composite_curve_segment(arguments, object_dict):
+    """
+    Returns the data in case of a COMPOSITE_CURVE_SEGMENT.
+    """
+    # arguments[0] = trasition_code (unused)
+    # The transition_code type conveys the continuity properties of a composite curve or surface.
+    # The continuity referred to is geometric, not parametric continuity.
+    # arguments[1] = same_sense : BOOLEAN;
+    # arguments[2] = parent_curve : curve;
+    edge = object_dict[arguments[2]]
+    if arguments[1] == ".F.":
+        edge = edge.reverse()
+    return edge
+
+def composite_curve(arguments, object_dict):
+    """
+    Returns the data in case of a COMPOSITE_CURVE.
+    """
+    name = arguments[0]
+    list_primitives = arguments[1]
+    first_primitive = list_primitives[0]
+    last_primitive = list_primitives[-1]
+    if first_primitive.start.is_close(last_primitive.end):
+        return volmdlr.wires.Contour3D(list_primitives, name)
+    return volmdlr.wires.Wire3D(list_primitives, name)
 
 def pcurve(arguments, object_dict):
     """
@@ -575,6 +600,34 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometr
                            'RATIONAL_B_SPLINE_SURFACE, '
                            'REPRESENTATION_ITEM, SURFACE'].from_step(
         modified_arguments, object_dict)
+
+
+def product_definition_shape(arguments, object_dict):
+    return object_dict[arguments[2]]
+
+
+def product_definition(arguments, object_dict):
+    return object_dict[arguments[2]]
+
+
+def product_definition_formation(arguments, object_dict):
+    return object_dict[arguments[2]]
+
+
+def product_definition_formation_with_specified_source(arguments, object_dict):
+    return object_dict[arguments[2]]
+
+
+def product(arguments, *args, **kwargs):
+    return arguments[0]
+
+
+def application_context(arguments, *args, **kwargs):
+    return arguments[0]
+
+
+def product_context(arguments, *args, **kwargs):
+    return arguments
 
 
 class StepFunction(dc.DessiaObject):
@@ -897,6 +950,7 @@ class Step(dc.DessiaObject):
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
         except (ValueError, NotImplementedError) as error:
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
+        print(step_id)
         return volmdlr_object
 
     def create_node_list(self, stack):
@@ -957,6 +1011,27 @@ class Step(dc.DessiaObject):
             return int(id_shell[0][1:])
         return int(id_shell[1:])
 
+    def get_shell_node_from_shape_representation(self, id_shape_representation: int):
+        """
+        Find the shell node ID related to a given shape representation.
+
+        :param id_shape_representation: Representation entity ID.
+        :type id_shape_representation: int
+        :return: Shell ID.
+        :rtype: int
+        """
+        if len(self.functions[id_shape_representation].arg) != 4:
+            # From the step file, the SHAPE_REPRESENTATION entity has 3 arguments. But we add a 4th argument to
+            # those SHAPE_REPRESENTATION entity that are related to a representation entity. So, if the arg are
+            # different of 4 there is no representation entity related to it and we return None.
+            return None
+        id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
+        id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
+        id_shell = self.functions[id_solid_entity].arg[1]
+        if isinstance(id_shell, list):
+            return int(id_shell[0][1:])
+        return int(id_shell[1:])
+
     def get_frame_mapped_shell_node(self, node: int):
         """
         Find the shell node in the assembly.
@@ -980,19 +1055,60 @@ class Step(dc.DessiaObject):
         if len(self.functions[id_shape_representation].arg) != 4:
             id_shape_representation = int(arguments[2][1:])
         if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION":
-            if len(self.functions[id_shape_representation].arg) != 4:
-                return None
-            id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
-            id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
-            id_shell = self.functions[id_solid_entity].arg[1]
-            if isinstance(id_shell, list):
-                return int(id_shell[0][1:])
-            return int(id_shell[1:])
+            return self .get_shell_node_from_shape_representation(id_shape_representation)
         id_representation_entity = int(self.functions[id_shape_representation].arg[1][1][1:])
         id_shell = self.functions[id_representation_entity].arg[1]
         if isinstance(id_shell, list):
             return int(id_shell[0][1:])
         return int(id_shell[1:])
+
+    def shape_definition_representation_to_shell_node(self, shape_definition_representation_id):
+        id_representation_entity = self.functions[shape_definition_representation_id].arg[1]
+        function_name = self.functions[int(id_representation_entity[1:])].name
+        if function_name in STEP_REPRESENTATION_ENTITIES:
+            return self.get_shell_node_from_representation_entity(int(id_representation_entity[1:]))
+        if function_name == "SHAPE_REPRESENTATION":
+            return self.get_shell_node_from_shape_representation(int(id_representation_entity[1:]))
+
+    def product_definition_to_product(self, id_product_definition):
+        if self.functions[int(id_product_definition[1:])].name == "NEXT_ASSEMBLY_USAGE_OCCURRENCE":
+            print(f"ID NEXT_ASSEMBLY_USAGE_OCCURRENCE: {id_product_definition}")
+            id_product_definition = self.functions[int(id_product_definition[1:])].arg[3]
+        id_product_definition_formation = self.functions[int(id_product_definition[1:])].arg[2]
+        id_product = self.functions[int(id_product_definition_formation[1:])].arg[2]
+        return int(id_product[1:])
+
+    def shape_definition_representation_to_product_node(self, shape_definition_representation_id):
+        id_product_definition_shape = self.functions[shape_definition_representation_id].arg[0]
+        id_product_definition = self.functions[int(id_product_definition_shape[1:])].arg[2]
+        return self.product_definition_to_product(id_product_definition)
+
+    def get_root_nodes(self):
+        next_assembly_usage_occurrence = []
+        product_definition = []
+        shape_representation_relationship = []
+        shape_definition_representation = []
+        assemblies = {}
+        for function in self.functions.values():
+            if function.name == "NEXT_ASSEMBLY_USAGE_OCCURRENCE":
+                next_assembly_usage_occurrence.append(function.id)
+
+            elif function.name == "PRODUCT_DEFINITION":
+                product_definition.append(function.id)
+            elif function.name == "SHAPE_REPRESENTATION_RELATIONSHIP":
+                shape_representation_relationship.append(function.id)
+            elif function.name == "SHAPE_DEFINITION_REPRESENTATION":
+                shape_definition_representation.append(function.id)
+        return {"NEXT_ASSEMBLY_USAGE_OCCURRENCE": next_assembly_usage_occurrence,
+                "PRODUCT_DEFINITION": product_definition,
+                "SHAPE_REPRESENTATION_RELATIONSHIP": shape_representation_relationship,
+                "SHAPE_DEFINITION_REPRESENTATION": shape_definition_representation}
+
+    def create_connections(self):
+        pass
+
+    def instatiate_assembly(self):
+        pass
 
     def to_volume_model(self, show_times: bool = False):
         """
@@ -1016,6 +1132,16 @@ class Step(dc.DessiaObject):
                 id2 = int(function.arg[3][1:])
                 self.connections[id1].append(id2)
                 self.functions[id1].arg.append(f'#{id2}')
+        for function in self.functions.values():
+            if function.name == 'SHAPE_DEFINITION_REPRESENTATION':
+                # Create short cut from id1 to id2
+                shell_node = self.shape_definition_representation_to_shell_node(function.id)
+                product_node = self.shape_definition_representation_to_product_node(function.id)
+                if shell_node:
+                    # id1 = int(function.arg[2][1:])
+                    # id2 = int(function.arg[3][1:])
+                    self.connections[shell_node].append(product_node)
+                    self.functions[shell_node].arg.append(f'#{product_node}')
         not_shell_nodes = []
         frame_mapped_shell_node = []
 
@@ -1154,6 +1280,17 @@ class StepReaderReport:
     errors: list = field(default_factory=list)
 
 
+# @dataclass
+# class StepRootNodes:
+#     """
+#     Data class to save the root nodes of a step file.
+#     """
+#     NEXT_ASSEMBLY_USAGE_OCCURRENCE: str = " "
+#     total_number_of_faces: int = 0
+#     faces_read: int = 0
+#     sucess_rate: float = 0.0
+#     errors: list = field(default_factory=list)
+
 STEP_TO_VOLMDLR = {
     # GEOMETRICAL ENTITIES
     'CARTESIAN_POINT': volmdlr.Point3D,
@@ -1257,7 +1394,12 @@ STEP_TO_VOLMDLR = {
     'ITEM_DEFINED_TRANSFORMATION': None,
     'SHAPE_REPRESENTATION_RELATIONSHIP': None,
 
-    'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM': volmdlr.edges.BSplineCurve3D
+    'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM': volmdlr.edges.BSplineCurve3D,
+    "APPLICATION_CONTEXT": None,
+    "PRODUCT_DEFINITION_SHAPE": None,
+    "PRODUCT_DEFINITION": None,
+    "PRODUCT_DEFINITION_FORMATION": None,
+    "PRODUCT": None,
 }
 
 VOLMDLR_TO_STEP = {}

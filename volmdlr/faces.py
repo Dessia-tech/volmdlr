@@ -845,6 +845,7 @@ class Surface3D(DessiaObject):
         #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
+
         return class_(self, surface2d=surface2d, name=name)
 
     def repair_primitives_periodicity(self, primitives2d):
@@ -3724,7 +3725,7 @@ class ExtrusionSurface3D(Surface3D):
         for i in range(21):
             step = i / 20. * z
             wire = self.edge.translation(step * self.frame.w)
-            wire.plot(ax=ax, color=color, alpha=alpha)
+            wire.plot(ax=ax, edge_style=vme.EdgeStyle(color=color, alpha=alpha))
 
         return ax
 
@@ -3887,7 +3888,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         u = [0, 2pi] and v = [0, 1] into a
         """
         u, v = point2d
-        point_at_curve = self.wire.point_at_abscissa(v * self.wire.length())
+        point_at_curve = self.wire.point_at_abscissa(v)
         point = point_at_curve.rotation(self.axis_point, self.axis, u)
         return point
 
@@ -3903,7 +3904,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         u = math.atan2(y, x)
 
         point_at_curve = point3d.rotation(self.axis_point, self.axis, -u)
-        v = self.wire.abscissa(point_at_curve) / self.wire.length()
+        v = self.wire.abscissa(point_at_curve)
         return volmdlr.Point2D(u, v)
 
     def rectangular_cut(self, x1: float, x2: float,
@@ -9294,8 +9295,15 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :return: The corresponding OpenShell3D object.
         :rtype: :class:`volmdlr.faces.OpenShell3D`
         """
+        # Quick fix:
+        # ----------------------------------
+        name = arguments[0][1:-1]
+        if isinstance(arguments[-1], int):
+            product = object_dict[arguments[-1]]
+            name = product[1:-1]
+        # ----------------------------------
         faces = [object_dict[int(face[1:])] for face in arguments[1] if object_dict[int(face[1:])] is not None]
-        return cls(faces, name=arguments[0][1:-1])
+        return cls(faces, name=name)
 
     def to_step(self, current_id):
         """
