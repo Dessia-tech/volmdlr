@@ -17,9 +17,9 @@ triangle_points=[vm.Point2D.random(0, 1, 0, 1) for i in range(3)]
 triangle = vmw.ClosedPolygon2D(triangle_points)
 
 
-cog_triangle = triangle.center_of_mass()
-c1 = vm.core.CompositePrimitive2D([triangle, cog_triangle])
-c1.plot()
+# cog_triangle = triangle.center_of_mass()
+# c1 = vm.core.CompositePrimitive2D([triangle, cog_triangle])
+# c1.plot()
 
 print(triangle.area())
 

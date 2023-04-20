@@ -38,7 +38,7 @@ def binomial_coefficient(int k, int i):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef int find_span_linear(int degree, list knot_vector, int num_ctrlpts, double knot):
+def find_span_linear(int degree, list knot_vector, int num_ctrlpts, double knot):
     """ Finds the span of a single knot over the knot vector using linear search.
 
     Alternative implementation for the Algorithm A2.1 from The NURBS Book by Piegl & Tiller.
@@ -59,6 +59,81 @@ cpdef int find_span_linear(int degree, list knot_vector, int num_ctrlpts, double
         span += 1
 
     return span - 1
+
+
+def find_spans(int degree, list knot_vector, int num_ctrlpts, list knots, func=find_span_linear):
+    """
+    Finds spans of a list of knots over the knot vector.
+
+    :param degree: degree, :math:`p`
+    :type degree: int
+    :param knot_vector: knot vector, :math:`U`
+    :type knot_vector: list, tuple
+    :param num_ctrlpts: number of control points, :math:`n + 1`
+    :type num_ctrlpts: int
+    :param knots: list of knots or parameters
+    :type knots: list, tuple
+    :param func: function for span finding, e.g. linear or binary search
+    :return: list of spans
+    :rtype: list
+    """
+    cdef int i
+    cdef double knot
+    cdef int num_knots = len(knots)
+    cdef list spans = [0.0]*num_knots
+
+    for i in range(num_knots):
+        knot = knots[i]
+        spans[i] = func(degree, knot_vector, num_ctrlpts, knot)
+
+    return spans
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef basis_function(int degree, list knot_vector, int span, double knot):
+
+    cdef list left = [0.0] * (degree + 1)
+    cdef list right = [0.0] * (degree + 1)
+    cdef list N = [1.0] * (degree + 1)
+
+    cdef int j, r
+    cdef double temp, saved
+    for j in range(1, degree + 1):
+        left[j] = knot - knot_vector[span + 1 - j]
+        right[j] = knot_vector[span + j] - knot
+        saved = 0.0
+        for r in range(0, j):
+            temp = N[r] / (right[r + 1] + left[j - r])
+            N[r] = saved + right[r + 1] * temp
+            saved = left[j - r] * temp
+        N[j] = saved
+
+    return N
+
+
+def basis_functions(degree, knot_vector, spans, knots):
+    """ Computes the non-vanishing basis functions for a list of parameters.
+
+    Wrapper for :func:`.helpers.basis_function` to process multiple span
+    and knot values. Uses recurrence to compute the basis functions, also
+    known as Cox - de Boor recursion formula.
+
+    :param degree: degree, :math:`p`
+    :type degree: int
+    :param knot_vector: knot vector, :math:`U`
+    :type knot_vector: list, tuple
+    :param spans: list of knot spans
+    :type spans:  list, tuple
+    :param knots: list of knots or parameters
+    :type knots: list, tuple
+    :return: basis functions
+    :rtype: list
+    """
+    basis = []
+    for span, knot in zip(spans, knots):
+        basis.append(basis_function(degree, knot_vector, span, knot))
+    return basis
 
 
 @cython.boundscheck(False)
