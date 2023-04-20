@@ -3,15 +3,76 @@ import unittest
 
 import volmdlr
 from volmdlr import edges, surfaces
+from volmdlr.surfaces import Plane3D
 
 
 class TestPlane3D(unittest.TestCase):
+
     plane1 = surfaces.Plane3D(volmdlr.OXYZ)
     plane2 = surfaces.Plane3D(volmdlr.OYZX.translation(volmdlr.Vector3D(1, 2, 1)).rotation(
         volmdlr.Point3D(1, 2, 1), volmdlr.Y3D, math.pi / 4))
     plane3 = surfaces.Plane3D(volmdlr.OXYZ.translation(volmdlr.Vector3D(0, 0, 1)).rotation(
         volmdlr.O3D, volmdlr.Vector3D(0, 0, 1), math.pi / 4))
     plane4 = surfaces.Plane3D(volmdlr.OXYZ.rotation(volmdlr.O3D, volmdlr.Vector3D(0, 0, 1), math.pi / 4))
+
+    def setUp(self):
+        self.point1 = volmdlr.Point3D(0, 0, 0)
+        self.point2 = volmdlr.Point3D(1, 0, 0)
+        self.point3 = volmdlr.Point3D(0, 1, 0)
+        self.point4 = volmdlr.Point3D(0, 0, 1)
+        self.vector1 = volmdlr.Vector3D(1, 0, 0)
+        self.vector2 = volmdlr.Vector3D(0, 1, 0)
+        self.vector3 = volmdlr.Vector3D(0, 0, 1)
+
+    def test_from_normal(self):
+        plane = Plane3D.from_normal(self.point1, self.vector3)
+        self.assertEqual(plane.frame, volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, -volmdlr.Y3D, volmdlr.Z3D))
+
+    def test_from_plane_vectors(self):
+        plane = Plane3D.from_plane_vectors(self.point1, self.vector1, self.vector2)
+        self.assertEqual(plane.frame, volmdlr.OXYZ)
+
+    def test_from_points(self):
+        # Test with only two points
+        points = [self.point1, self.point2]
+        with self.assertRaises(ValueError):
+            Plane3D.from_points(points)
+
+        # Test with three points
+        plane = Plane3D.from_points([self.point1, self.point2, self.point3])
+        self.assertEqual(plane.frame, volmdlr.OXYZ)
+
+        # Test with more than three points
+        points = [self.point1, self.point2, self.point3, self.point4]
+        plane = Plane3D.from_points(points)
+        self.assertEqual(plane.frame, volmdlr.OXYZ)
+
+    def test_angle_between_planes(self):
+        # Test with two orthogonal planes
+        plane1 = Plane3D.from_normal(self.point1, self.vector1)
+        plane2 = Plane3D.from_normal(self.point1, self.vector2)
+        angle = plane1.angle_between_planes(plane2)
+        self.assertAlmostEqual(angle, math.pi / 2)
+
+        # Test with two parallel planes
+        plane1 = Plane3D.from_normal(self.point1, self.vector1)
+        plane2 = Plane3D.from_normal(self.point2, self.vector1)
+        angle = plane1.angle_between_planes(plane2)
+        self.assertAlmostEqual(angle, 0)
+
+    def test_point_on_surface(self):
+        # Test with point on the plane
+        plane = Plane3D.from_3_points(self.point1, self.point2, self.point3)
+        point = self.point1
+        self.assertTrue(plane.point_on_surface(point))
+
+        # Test with point above the plane
+        point = volmdlr.Point3D(0, 0, 1)
+        self.assertFalse(plane.point_on_surface(point))
+
+        # Test with point below the plane
+        point = volmdlr.Point3D(0, 0, -1)
+        self.assertFalse(plane.point_on_surface(point))
 
     def test_plane_intersections(self):
         plane_intersections = self.plane1.plane_intersection(self.plane2)
@@ -80,6 +141,7 @@ class TestPlane3D(unittest.TestCase):
             self.assertAlmostEqual(surface.frame.w.dot(p1 - p2), 0.)
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p2), 0.)
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p1), 0.)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1103,7 +1103,8 @@ class Plane3D(Surface3D):
         point1, point2, point3 = args
         vector1 = point2 - point1
         vector2 = point3 - point1
-
+        vector1 = vector1.to_vector()
+        vector2 = vector2.to_vector()
         vector1.normalize()
         vector2.normalize()
         normal = vector1.cross(vector2)
@@ -1140,9 +1141,9 @@ class Plane3D(Surface3D):
         if len(points) < 3:
             raise ValueError
         if len(points) == 3:
-            return cls.from_3_points(volmdlr.Point3D(points[0].vector),
-                                     volmdlr.Vector3D(points[1].vector),
-                                     volmdlr.Vector3D(points[2].vector))
+            return cls.from_3_points(points[0],
+                                     points[1],
+                                     points[2])
         points = [p.copy() for p in points]
         indexes_to_del = []
         for i, point in enumerate(points[1:]):
