@@ -1215,6 +1215,12 @@ class Plane3D(Surface3D):
 
     def linesegment_intersections(self, linesegment: edges.LineSegment3D) \
             -> List[volmdlr.Point3D]:
+        """
+        Gets the intersections of a plane a line segment 3d.
+
+        :param linesegment: other line segment.
+        :return: a list with the intersecting point.
+        """
         u_vector = linesegment.end - linesegment.start
         w_vector = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u_vector)
@@ -1393,6 +1399,7 @@ class Plane3D(Surface3D):
         self.frame.w = new_frame.w
 
     def copy(self, deep=True, memo=None):
+        """Creates a copy of the plane."""
         new_frame = self.frame.copy(deep, memo)
         return Plane3D(new_frame, self.name)
 
@@ -1480,6 +1487,7 @@ class Plane3D(Surface3D):
 
     def rectangular_cut(self, x1: float, x2: float,
                         y1: float, y2: float, name: str = ''):
+        """Deprecated method, Use PlaneFace3D from_surface_rectangular_cut method."""
 
         raise AttributeError('Use PlaneFace3D from_surface_rectangular_cut method')
 
@@ -2024,6 +2032,7 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def rectangular_cut(self, theta1: float, theta2: float,
                         z1: float, z2: float, name: str = ''):
+        """Deprecated method, Use CylindricalFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use CylindricalFace3D from_surface_rectangular_cut method')
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -2391,6 +2400,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         self.frame = new_frame
 
     def rectangular_cut(self, theta1: float, theta2: float, phi1: float, phi2: float, name: str = ""):
+        """Deprecated method, Use ToroidalFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use ToroidalFace3D from_surface_rectangular_cut method')
 
     def linesegment2d_to_3d(self, linesegment2d):
@@ -2758,6 +2768,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def rectangular_cut(self, theta1: float, theta2: float,
                         z1: float, z2: float, name: str = ''):
+        """Deprecated method, Use ConicalFace3D from_surface_rectangular_cut method."""
         raise AttributeError("ConicalSurface3D.rectangular_cut is deprecated."
                              "Use the class_method from_surface_rectangular_cut in ConicalFace3D instead")
 
@@ -3346,6 +3357,7 @@ class SphericalSurface3D(PeriodicalSurface):
         return ax
 
     def rectangular_cut(self, theta1, theta2, phi1, phi2, name=''):
+        """Deprecated method, Use ShericalFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use ShericalFace3D from_surface_rectangular_cut method')
 
     def triangulation(self):
@@ -3465,6 +3477,7 @@ class RuledSurface3D(Surface3D):
 
     def rectangular_cut(self, x1: float, x2: float,
                         y1: float, y2: float, name: str = ''):
+        """Deprecated method, Use RuledFace3D from_surface_rectangular_cut method."""
         raise NotImplementedError('Use RuledFace3D from_surface_rectangular_cut method')
 
 
@@ -3549,6 +3562,7 @@ class ExtrusionSurface3D(Surface3D):
 
     def rectangular_cut(self, x1: float = 0.0, x2: float = 1.0,
                         y1: float = 0.0, y2: float = 1.0, name: str = ''):
+        """Deprecated method, Use ExtrusionFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use ExtrusionFace3D from_surface_rectangular_cut method')
 
     def plot(self, ax=None, color='grey', alpha=0.5, z: float = 0.5):
@@ -3720,6 +3734,7 @@ class RevolutionSurface3D(PeriodicalSurface):
 
     def rectangular_cut(self, x1: float, x2: float,
                         y1: float, y2: float, name: str = ''):
+        """Deprecated method, Use RevolutionFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use RevolutionFace3D from_surface_rectangular_cut method')
 
     def plot(self, ax=None, color='grey', alpha=0.5, number_curves: int = 20):
@@ -4473,6 +4488,7 @@ class BSplineSurface3D(Surface3D):
 
     def rectangular_cut(self, u1: float, u2: float,
                         v1: float, v2: float, name: str = ''):
+        """Deprecated method, Use BSplineFace3D from_surface_rectangular_cut method."""
         raise AttributeError("BSplineSurface3D.rectangular_cut is deprecated."
                              " Use the class_method from_surface_rectangular_cut in BSplineFace3D instead")
 

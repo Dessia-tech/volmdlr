@@ -7,7 +7,7 @@ import math
 from pylint import __version__
 from pylint.lint import Run
 
-MIN_NOTE = 8.20
+MIN_NOTE = 9.3
 
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
@@ -18,7 +18,7 @@ WEEKLY_DECREASE = 0.03
 MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 216,
                      "wrong-spelling-in-docstring": 143,
-                     'invalid-name': 243,
+                     'invalid-name': 190,
                      'no-member': 3,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
@@ -45,7 +45,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-function-args': 4,
                      'too-many-nested-blocks': 10,
                      'too-many-return-statements': 3,
-                     'cyclic-import': 4,
+                     'cyclic-import': 1,
                      'raise-missing-from': 2,
                      'undefined-variable': 0,  # 2 when gmsh is fixed
                      'broad-except': 1,
