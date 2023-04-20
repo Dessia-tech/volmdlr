@@ -20,7 +20,6 @@ import numpy as npy
 import dessia_common.core as dc
 import dessia_common.files as dcf
 import volmdlr
-from volmdlr import shells
 import volmdlr.templates
 
 npy.seterr(divide='raise')
