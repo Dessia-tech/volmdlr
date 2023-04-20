@@ -2237,8 +2237,7 @@ class ToroidalSurface3D(PeriodicalSurface):
     :param tore_radius: Tore's radius.
     :param r: Circle to revolute radius.
 
-    See Also:
-    Definitions of R and r according to https://en.wikipedia.org/wiki/Torus.
+    See Also Definitions of R and r according to https://en.wikipedia.org/wiki/Torus.
 
     """
     face_class = 'ToroidalFace3D'
