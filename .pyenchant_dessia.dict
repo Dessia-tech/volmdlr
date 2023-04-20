@@ -52,6 +52,8 @@ rtype
 STEP
 STL
 stl
+spline
+Spline
 str
 th
 tol
@@ -60,6 +62,8 @@ toroidal
 trigo
 txt
 utils
+vme
+vme.EdgeStyle
 vtk
 volmdlr
 xmin

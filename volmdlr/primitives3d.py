@@ -169,7 +169,7 @@ class Block(shells.ClosedShell3D):
     _standalone_in_db = True
     _non_serializable_attributes = ['size', 'bounding_box', 'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_data_eq_attributes = ['name', 'color', 'alpha', 'size', 'bounding_box',
-                          'faces', 'contours', 'plane', 'points', 'polygon2D']
+                               'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_data_hash_attributes = []
 
     def __init__(self, frame: volmdlr.Frame3D, *,
