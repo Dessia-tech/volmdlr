@@ -1,0 +1,100 @@
+{
+  "name": "generatedtabulatedcylinder",
+  "object_class": "volmdlr.faces.ExtrusionSurface3D",
+  "package_version": "0.9.2.dev1050+g45192f1d",
+  "edge": {
+    "name": "",
+    "object_class": "volmdlr.edges.BSplineCurve3D",
+    "package_version": "0.9.2.dev1050+g45192f1d",
+    "degree": 5,
+    "control_points": [
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.32714150586,
+        "y": 0.515285623776,
+        "z": 0.6171,
+        "name": "ControlPoint"
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.326460127936,
+        "y": 0.5152421582519999,
+        "z": 0.6171,
+        "name": "ControlPoint"
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.32577862797,
+        "y": 0.5152006059450001,
+        "z": 0.6171,
+        "name": "ControlPoint"
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.325097013131,
+        "y": 0.515160967101,
+        "z": 0.6171,
+        "name": "ControlPoint"
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.324415290589,
+        "y": 0.5151232419690001,
+        "z": 0.6171,
+        "name": "ControlPoint"
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.323733467513,
+        "y": 0.5150874307950001,
+        "z": 0.6171,
+        "name": "ControlPoint"
+      }
+    ],
+    "knot_multiplicities": [
+      6,
+      6
+    ],
+    "knots": [
+      0.0,
+      1.0
+    ],
+    "weights": null,
+    "periodic": false
+  },
+  "direction": {
+    "object_class": "volmdlr.Vector3D",
+    "x": 0.0,
+    "y": 0.0,
+    "z": -1.0,
+    "name": "ExtrusionSurfaceVector"
+  },
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.32714150586,
+      "y": 0.515285623776,
+      "z": 0.6171
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -1.0,
+      "y": -0.0,
+      "z": -0.0
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.0,
+      "y": -1.0,
+      "z": -0.0
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.0,
+      "y": -0.0,
+      "z": -1.0
+    }
+  }
+}

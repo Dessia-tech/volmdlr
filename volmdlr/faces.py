@@ -845,6 +845,7 @@ class Surface3D(DessiaObject):
         #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
+
         return class_(self, surface2d=surface2d, name=name)
 
     def repair_primitives_periodicity(self, primitives2d):
@@ -1705,7 +1706,7 @@ class PeriodicalSurface(Surface3D):
         i = 0 if direction == "x" else 1
         if len(indexes_angle_discontinuity) == 1:
             index_angle_discontinuity = indexes_angle_discontinuity[0]
-            self._helper_fix_angle_discontinuity(points, index_angle_discontinuity, i)
+            points = self._helper_fix_angle_discontinuity(points, index_angle_discontinuity, i)
         else:
             for j, index_angle_discontinuity in enumerate(indexes_angle_discontinuity[:-1]):
                 next_angle_discontinuity_index = indexes_angle_discontinuity[j + 1]
@@ -3723,7 +3724,7 @@ class ExtrusionSurface3D(Surface3D):
         for i in range(21):
             step = i / 20. * z
             wire = self.edge.translation(step * self.frame.w)
-            wire.plot(ax=ax, color=color, alpha=alpha)
+            wire.plot(ax=ax, edge_style=vme.EdgeStyle(color=color, alpha=alpha))
 
         return ax
 
@@ -3764,6 +3765,7 @@ class ExtrusionSurface3D(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
+        # todo: needs detailed investigation
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
         return [vme.LineSegment2D(start, end, name="arc")]
@@ -3885,7 +3887,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         u = [0, 2pi] and v = [0, 1] into a
         """
         u, v = point2d
-        point_at_curve = self.wire.point_at_abscissa(v * self.wire.length())
+        point_at_curve = self.wire.point_at_abscissa(v)
         point = point_at_curve.rotation(self.axis_point, self.axis, u)
         return point
 
@@ -3901,7 +3903,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         u = math.atan2(y, x)
 
         point_at_curve = point3d.rotation(self.axis_point, self.axis, -u)
-        v = self.wire.abscissa(point_at_curve) / self.wire.length()
+        v = self.wire.abscissa(point_at_curve)
         return volmdlr.Point2D(u, v)
 
     def rectangular_cut(self, x1: float, x2: float,
@@ -4679,6 +4681,7 @@ class BSplineSurface3D(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
+        # todo: Is this right? Needs detailed investigation
         number_points = max(self.nb_u, self.nb_v)
         degree = max(self.degree_u, self.degree_v)
         points = [self.point3d_to_2d(point3d) for point3d in
@@ -9291,8 +9294,15 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :return: The corresponding OpenShell3D object.
         :rtype: :class:`volmdlr.faces.OpenShell3D`
         """
+        # Quick fix:
+        # ----------------------------------
+        name = arguments[0][1:-1]
+        if isinstance(arguments[-1], int):
+            product = object_dict[arguments[-1]]
+            name = product[1:-1]
+        # ----------------------------------
         faces = [object_dict[int(face[1:])] for face in arguments[1] if object_dict[int(face[1:])] is not None]
-        return cls(faces, name=arguments[0][1:-1])
+        return cls(faces, name=name)
 
     def to_step(self, current_id):
         """
