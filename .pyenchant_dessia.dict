@@ -7,6 +7,7 @@ Bezier
 bool
 bspline
 bsplinecurve
+bsplinesurface
 Bspline
 bsplines
 cosinus
@@ -52,7 +53,7 @@ STEP
 STL
 stl
 str
-n-th
+th
 tol
 todo
 toroidal
@@ -67,3 +68,8 @@ ymin
 ymax
 zmin
 zmax
+SKL
+dimensioned
+geomdl's
+Tore's
+deserialization

@@ -2,16 +2,16 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import edges, faces
+from volmdlr import edges, faces, surfaces
 
 
 class TestToroidalSurface3D(unittest.TestCase):
-    toroidal_surface = faces.ToroidalSurface3D(volmdlr.OXYZ, 1, 0.1)
+    toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 1, 0.1)
     frame = volmdlr.Frame3D(volmdlr.Point3D(-0.005829, 0.000765110438227, -0.0002349369830163),
                             volmdlr.Vector3D(-0.6607898454031987, 0.562158151695499, -0.4973278523210991),
                             volmdlr.Vector3D(-0.7505709694705869, -0.4949144228333324, 0.43783893597935386),
                             volmdlr.Vector3D(-0.0, 0.6625993710787045, 0.748974013865705))
-    toroidal_surface2 = faces.ToroidalSurface3D(frame, 0.000725, 0.000125)
+    toroidal_surface2 = surfaces.ToroidalSurface3D(frame, 0.000725, 0.000125)
 
     def test_arc3d_to_2d(self):
         arc1 = edges.Arc3D(volmdlr.Point3D(1-0.1/math.sqrt(2), 0, 0.1/math.sqrt(2)),

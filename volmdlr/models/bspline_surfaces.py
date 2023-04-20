@@ -8,9 +8,9 @@ Created on Thu Mar 3 2022.
 
 # %% Libraries
 from geomdl import BSpline
-
+import volmdlr
 import volmdlr as vm
-import volmdlr.faces
+from volmdlr import faces, surfaces
 
 # %% Surface 1
 # %%% Control points
@@ -158,7 +158,7 @@ v_knots, v_multiplicities = [0.0, 0.24999999999982622, 0.49999999999826233, 0.74
 
 # %%% Bspline-surface definition (1)
 
-bspline_surface_1 = volmdlr.faces.BSplineSurface3D(degree_u=degree_u,
+bspline_surface_1 = surfaces.BSplineSurface3D(degree_u=degree_u,
                                                    degree_v=degree_v,
                                                    control_points=control_points,
                                                    nb_u=nb_u,
@@ -167,7 +167,7 @@ bspline_surface_1 = volmdlr.faces.BSplineSurface3D(degree_u=degree_u,
                                                    v_multiplicities=v_multiplicities,
                                                    u_knots=u_knots,
                                                    v_knots=v_knots)
-bspline_face_1 = bspline_surface_1.rectangular_cut(0, 1, 0, 1)
+bspline_face_1 = faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surface_1, 0, 1, 0, 1)
 
 # %% Surface 2
 # %%% Control points
@@ -1272,7 +1272,7 @@ v_multiplicities = [6, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 6]
 
 # %%% Bspline-surface definition (2)
 
-bspline_surface_2 = volmdlr.faces.BSplineSurface3D(degree_u=degree_u,
+bspline_surface_2 = surfaces.BSplineSurface3D(degree_u=degree_u,
                                                    degree_v=degree_v,
                                                    control_points=control_points,
                                                    nb_u=nb_u,
@@ -1297,7 +1297,7 @@ surface.ctrlpts2d = control_points
 surface.knotvector_u = knots_u
 surface.knotvector_v = knots_v
 
-bspline_surface_3 = volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface)
+bspline_surface_3 = surfaces.BSplineSurface3D.from_geomdl_surface(surface)
 
 control_points = [volmdlr.Point3D(-0.01095390080125269, 0.11799262528924392, -0.10353989358359014),
                   volmdlr.Point3D(-0.011535717295921321, 0.11792722541881508, -0.10404957828848037),
@@ -1324,7 +1324,7 @@ v_knots = [0.0, 1.0]
 v_multiplicities = [3, 3]
 weights = [1.0, 0.78993622021847, 1.0, 1.0, 0.8033365728710228, 1.0, 1.0, 0.8144657654133199, 1.0,
            1.0, 0.8312545004058921, 1.0, 1.0, 0.8369148216834191, 1.0, 1.0, 0.8395864183082261, 1.0]
-bspline_surface_4 = volmdlr.faces.BSplineSurface3D(degree_u=degree_u,
+bspline_surface_4 = surfaces.BSplineSurface3D(degree_u=degree_u,
                                                    degree_v=degree_v,
                                                    control_points=control_points,
                                                    nb_u=nb_u,

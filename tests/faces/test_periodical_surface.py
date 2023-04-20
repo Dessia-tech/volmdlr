@@ -3,12 +3,11 @@ import unittest
 import volmdlr
 import volmdlr.wires as vmw
 import volmdlr.edges as vme
-import volmdlr.faces as vmf
-
+from volmdlr import surfaces
 
 class TestPeriodicalSurface(unittest.TestCase):
     def test_face_from_contours3d(self):
-        surface = vmf.CylindricalSurface3D.load_from_file("faces/objects_periodical_surface/surface_openned_one_contour.json")
+        surface = surfaces.CylindricalSurface3D.load_from_file("faces/objects_periodical_surface/surface_openned_one_contour.json")
         contour3d_0 = vmw.Contour3D.load_from_file("faces/objects_periodical_surface/contour3d__openned_one_contour_0.json")
         contour3d_1 = vmw.Contour3D.load_from_file("faces/objects_periodical_surface/contour3d__openned_one_contour_1.json")
 
@@ -18,7 +17,7 @@ class TestPeriodicalSurface(unittest.TestCase):
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
     def test_bsplinecurve3d_to_2d(self):
-        surface = vmf.CylindricalSurface3D.load_from_file(
+        surface = surfaces.CylindricalSurface3D.load_from_file(
             "faces/objects_periodical_surface/periodicalsurface_with_theta_discontinuity.json")
         bspline = vme.BSplineCurve3D.load_from_file(
             "faces/objects_periodical_surface/bsplinecurve_with_theta_discontinuity.json")

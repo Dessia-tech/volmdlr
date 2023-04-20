@@ -2,16 +2,16 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import edges, faces
+from volmdlr import edges, surfaces
 
 
 class TestPlane3D(unittest.TestCase):
-    plane1 = faces.Plane3D(volmdlr.OXYZ)
-    plane2 = faces.Plane3D(volmdlr.OYZX.translation(volmdlr.Vector3D(1, 2, 1)).rotation(
+    plane1 = surfaces.Plane3D(volmdlr.OXYZ)
+    plane2 = surfaces.Plane3D(volmdlr.OYZX.translation(volmdlr.Vector3D(1, 2, 1)).rotation(
         volmdlr.Point3D(1, 2, 1), volmdlr.Y3D, math.pi / 4))
-    plane3 = faces.Plane3D(volmdlr.OXYZ.translation(volmdlr.Vector3D(0, 0, 1)).rotation(
+    plane3 = surfaces.Plane3D(volmdlr.OXYZ.translation(volmdlr.Vector3D(0, 0, 1)).rotation(
         volmdlr.O3D, volmdlr.Vector3D(0, 0, 1), math.pi / 4))
-    plane4 = faces.Plane3D(volmdlr.OXYZ.rotation(volmdlr.O3D, volmdlr.Vector3D(0, 0, 1), math.pi / 4))
+    plane4 = surfaces.Plane3D(volmdlr.OXYZ.rotation(volmdlr.O3D, volmdlr.Vector3D(0, 0, 1), math.pi / 4))
 
     def test_plane_intersections(self):
         plane_intersections = self.plane1.plane_intersection(self.plane2)
@@ -19,13 +19,13 @@ class TestPlane3D(unittest.TestCase):
         self.assertEqual(plane_intersections[0], edges.Line3D(volmdlr.O3D, volmdlr.Point3D(0, 0.7071067811865476, 0)))
         no_plane_intersections = self.plane1.plane_intersection(self.plane3)
         self.assertFalse(no_plane_intersections)
-        plane1 = faces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(2.47172762684, 0.709056119825, 0.533657243895),
+        plane1 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(2.47172762684, 0.709056119825, 0.533657243895),
                                                volmdlr.Vector3D(0.08730196938518492, 0.9961818941044193, 0.0),
                                                volmdlr.Vector3D(-0.36467438001762453, 0.031958813694844,
                                                                 -0.9305864982826579),
                                                volmdlr.Vector3D(-0.9270334204872172, 0.08124203398333905,
                                                                 0.3660720819920861)))
-        plane2 = faces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(2.535691031746372, 0.7426189496471666,
+        plane2 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(2.535691031746372, 0.7426189496471666,
                                                                0.6712946669810791),
                                                volmdlr.Vector3D(0.08730196938518722, 0.9961818941044189, 0.0),
                                                volmdlr.Vector3D(0.9270334204872168, -0.08124203398334119,
@@ -73,7 +73,7 @@ class TestPlane3D(unittest.TestCase):
                             volmdlr.Point3D(12.0, 0.0, 0.6956521739130439))
                            ]:
 
-            surface = faces.Plane3D.from_3_points(p1, p2, p3)
+            surface = surfaces.Plane3D.from_3_points(p1, p2, p3)
             self.assertTrue(surface.point_on_surface(p1))
             self.assertTrue(surface.point_on_surface(p2))
             self.assertTrue(surface.point_on_surface(p3))

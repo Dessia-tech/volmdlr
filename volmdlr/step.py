@@ -22,6 +22,7 @@ import volmdlr.edges
 import volmdlr.faces
 import volmdlr.primitives3d
 import volmdlr.wires
+from volmdlr import shells, surfaces
 
 
 def set_to_list(step_set):
@@ -355,7 +356,7 @@ def manifold_surface_shape_representation(arguments, object_dict):
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
-                      volmdlr.faces.OpenShell3D):
+                      shells.OpenShell3D):
             shell = object_dict[int(arg[1:])]
             shells.append(shell)
     return shells
@@ -375,7 +376,7 @@ def faceted_brep_shape_representation(arguments, object_dict):
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
-                      volmdlr.faces.OpenShell3D):
+                      shells.OpenShell3D):
             shell = object_dict[int(arg[1:])]
             shells.append(shell)
     return shells
@@ -422,7 +423,7 @@ def shape_representation(arguments, object_dict):
             shells.append(*object_dict[int(arg[1:])])
         elif int(arg[1:]) in object_dict and \
                 isinstance(object_dict[int(arg[1:])],
-                           volmdlr.faces.OpenShell3D):
+                           shells.OpenShell3D):
             shells.append(object_dict[int(arg[1:])])
         elif int(arg[1:]) in object_dict and isinstance(object_dict[int(arg[1:])], volmdlr.Frame3D):
             # TODO: Is there something to read here ?
@@ -459,7 +460,7 @@ def advanced_brep_shape_representation(arguments, object_dict):
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
-                      volmdlr.faces.OpenShell3D):
+                      shells.OpenShell3D):
             shells.append(object_dict[int(arg[1:])])
     return shells
 
@@ -469,7 +470,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
     Frame maps a closed shell in an assembly to its good position.
 
     :param closed_shells: DESCRIPTION
-    :type closed_shells: volmdlr.faces.OpenShell3D
+    :type closed_shells: shells.OpenShell3D
     :param item_defined_transformation_frames: DESCRIPTION
     :type item_defined_transformation_frames: TYPE
     :param shape_representation_frames: DESCRIPTION
@@ -502,7 +503,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
         new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
         new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
-        new_closed_shell3d = volmdlr.faces.ClosedShell3D(new_faces)
+        new_closed_shell3d = shells.ClosedShell3D(new_faces)
         new_closedshells.append(new_closed_shell3d)
     return new_closedshells
 
@@ -1096,7 +1097,6 @@ class Step(dc.DessiaObject):
                 # block, we want to loop from the last KeyError to the fisrt. This avoids an infinite loop
                 for instanciate_id in instanciate_ids[::-1]:
                     t = time.time()
-
                     volmdlr_object = self.instantiate(
                         self.functions[instanciate_id].name,
                         self.functions[instanciate_id].arg[:], object_dict, instanciate_id)
@@ -1187,32 +1187,32 @@ STEP_TO_VOLMDLR = {
     'COMPOSITE_CURVE_ON_SURFACE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
     'BOUNDARY_CURVE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
 
-    'PLANE': volmdlr.faces.Plane3D,
-    'CYLINDRICAL_SURFACE': volmdlr.faces.CylindricalSurface3D,
-    'CONICAL_SURFACE': volmdlr.faces.ConicalSurface3D,
-    'SPHERICAL_SURFACE': volmdlr.faces.SphericalSurface3D,
-    'TOROIDAL_SURFACE': volmdlr.faces.ToroidalSurface3D,
+    'PLANE': surfaces.Plane3D,
+    'CYLINDRICAL_SURFACE': surfaces.CylindricalSurface3D,
+    'CONICAL_SURFACE': surfaces.ConicalSurface3D,
+    'SPHERICAL_SURFACE': surfaces.SphericalSurface3D,
+    'TOROIDAL_SURFACE': surfaces.ToroidalSurface3D,
     'DEGENERATE_TOROIDAL_SURFACE': None,
-    'B_SPLINE_SURFACE_WITH_KNOTS': volmdlr.faces.BSplineSurface3D,
-    'B_SPLINE_SURFACE': volmdlr.faces.BSplineSurface3D,
-    'BEZIER_SURFACE': volmdlr.faces.BSplineSurface3D,
+    'B_SPLINE_SURFACE_WITH_KNOTS': surfaces.BSplineSurface3D,
+    'B_SPLINE_SURFACE': surfaces.BSplineSurface3D,
+    'BEZIER_SURFACE': surfaces.BSplineSurface3D,
     'OFFSET_SURFACE': None,
     'SURFACE_REPLICA': None,
-    'RATIONAL_B_SPLINE_SURFACE': volmdlr.faces.BSplineSurface3D,
+    'RATIONAL_B_SPLINE_SURFACE': surfaces.BSplineSurface3D,
     'RECTANGULAR_TRIMMED_SURFACE': None,
-    'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.faces.ExtrusionSurface3D,
+    'SURFACE_OF_LINEAR_EXTRUSION': surfaces.ExtrusionSurface3D,
     # CAN BE A BSplineSurface3D
-    'SURFACE_OF_REVOLUTION': volmdlr.faces.RevolutionSurface3D,
-    'UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
-    'QUASI_UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
+    'SURFACE_OF_REVOLUTION': surfaces.RevolutionSurface3D,
+    'UNIFORM_SURFACE': surfaces.BSplineSurface3D,
+    'QUASI_UNIFORM_SURFACE': surfaces.BSplineSurface3D,
     'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
     'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
 
     # Bsplines
     'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM,'
-    ' RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
+    ' RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': surfaces.BSplineSurface3D,
     "BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, SURFACE, GEOMETRIC_REPRESENTATION_ITEM,"
-    " RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM": volmdlr.faces.BSplineSurface3D,
+    " RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM": surfaces.BSplineSurface3D,
     # TOPOLOGICAL ENTITIES
     'VERTEX_POINT': None,
 
@@ -1232,10 +1232,10 @@ STEP_TO_VOLMDLR = {
     'ADVANCED_FACE': volmdlr.faces.Face3D,
     'FACE_SURFACE': volmdlr.faces.Face3D,
 
-    'CLOSED_SHELL': volmdlr.faces.ClosedShell3D,
-    'OPEN_SHELL': volmdlr.faces.OpenShell3D,
+    'CLOSED_SHELL': shells.ClosedShell3D,
+    'OPEN_SHELL': shells.OpenShell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
-    'CONNECTED_FACE_SET': volmdlr.faces.OpenShell3D,
+    'CONNECTED_FACE_SET': shells.OpenShell3D,
     'GEOMETRIC_CURVE_SET': None,
 
     # step subfunctions
@@ -1247,7 +1247,7 @@ STEP_TO_VOLMDLR = {
     'NAMED_UNIT, PLANE_ANGLE_UNIT, SI_UNIT': None,
     'CONVERSION_BASED_UNIT, NAMED_UNIT, PLANE_ANGLE_UNIT': None,
     'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT': None,
-    'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': volmdlr.faces.OpenShell3D.translation,
+    'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': shells.OpenShell3D.translation,
     'SHELL_BASED_SURFACE_MODEL': None,
     'MANIFOLD_SURFACE_SHAPE_REPRESENTATION': None,
     'MANIFOLD_SOLID_BREP': None,
