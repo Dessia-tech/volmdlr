@@ -1045,13 +1045,6 @@ class VolumeModel(dc.PhysicalObject):
     def __hash__(self):
         return sum(hash(point) for point in self.primitives)
 
-    # def _extract_shells(self):
-    #     shells = []
-    #     for primitive in self.primitives:
-    #         if isinstance(primitive, Shell3D):
-    #             volmdlr.volmdlr.volmdlr.shells.append(primitive)
-    #     return shells
-
     def __eq__(self, other):
         if self.__class__.__name__ != other.__class__.__name__:
             return False
@@ -1423,13 +1416,13 @@ class VolumeModel(dc.PhysicalObject):
         lines = []
         volume = 0
         for primitive in self.primitives:
-            if isinstance(primitive, volmdlr.volmdlr.volmdlr.volmdlr.shells.ClosedShell3D):
+            if isinstance(primitive, volmdlr.shells.ClosedShell3D):
                 volume += 1
                 lines_primitives, update_data = primitive.get_geo_lines(update_data)
                 lines.extend(lines_primitives)
                 surface_loop = ((lines[-1].split('('))[1].split(')')[0])
                 lines.append('Volume(' + str(volume) + ') = {' + surface_loop + '};')
-            elif isinstance(primitive, volmdlr.volmdlr.volmdlr.volmdlr.shells.OpenShell3D):
+            elif isinstance(primitive, volmdlr.shells.OpenShell3D):
                 lines_primitives, update_data = primitive.get_geo_lines(update_data)
                 lines.extend(lines_primitives)
 
@@ -1488,7 +1481,7 @@ class VolumeModel(dc.PhysicalObject):
         lines.append('General.Verbosity = 0;')
 
         for i, primitive in enumerate(self.primitives):
-            if isinstance(primitive, volmdlr.volmdlr.volmdlr.volmdlr.shells.ClosedShell3D):
+            if isinstance(primitive, volmdlr.shells.ClosedShell3D):
                 bbx = primitive.bounding_box
                 dim1, dim2, dim3 = (bbx.xmax - bbx.xmin), (bbx.ymax - bbx.ymin), (bbx.zmax - bbx.zmin)
                 volume = dim1 * dim2 * dim3
@@ -1533,7 +1526,7 @@ class VolumeModel(dc.PhysicalObject):
                 field_nums.append(field_num + 1)
                 field_num += 2
 
-            elif isinstance(primitive, volmdlr.volmdlr.volmdlr.volmdlr.shells.OpenShell3D):
+            elif isinstance(primitive, volmdlr.shells.OpenShell3D):
                 continue
 
         # meshsize_max = max(meshsizes_max)
