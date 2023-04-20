@@ -2233,13 +2233,13 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     Theta is the angle around the big (R) circle and phi around the small (r).
 
-    :param frame: Tore's frame: origin is the center, u is pointing at theta=0
-    :param tore_radius: Tore's radius
-    :param r: Circle to revolute radius
+    :param frame: Tore's frame: origin is the center, u is pointing at theta=0.
+    :param tore_radius: Tore's radius.
+    :param r: Circle to revolute radius.
 
     See Also:
+    Definitions of R and r according to https://en.wikipedia.org/wiki/Torus.
 
-    Definitions of R and r according to https://en.wikipedia.org/wiki/Torus
     """
     face_class = 'ToroidalFace3D'
     x_periodicity = volmdlr.TWO_PI
