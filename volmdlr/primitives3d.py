@@ -136,7 +136,7 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 
 
 class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
-                                  OpenRoundedLineSegments3D):
+                                  OpenRoundedLineSegments3D, volmdlr.primitives.RoundedLineSegments):
     """
     Defines a closed rounded line segment in 3D.
 
@@ -152,8 +152,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 
     def __init__(self, points: List[volmdlr.Point3D], radius: float, adapt_radius: bool = False, name: str = ''):
         volmdlr.primitives.RoundedLineSegments.__init__(
-                self, points, radius, 'volmdlr.edges.LineSegment3D',
-                'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
+                self, points, radius, closed=True, adapt_radius=adapt_radius,
                 name='')
 
         volmdlr.wires.Contour3D.__init__(self, primitives=self._primitives(), name=name)

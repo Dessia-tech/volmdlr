@@ -1373,15 +1373,15 @@ class PlaneFace3D(Face3D):
 
         contours = outer_contour_1.cut_by_wire(outer_contour_2)
 
-        surfaces = []
+        list_surfaces = []
         for contour in contours:
             inners = []
             for inner_c in inner_contours:
                 if contour.is_inside(inner_c):
                     inners.append(inner_c)
-            surfaces.append(surfaces.Surface2D(contour, inners))
+            list_surfaces.append(surfaces.Surface2D(contour, inners))
 
-        return [self.__class__(self.surface3d, surface2d) for surface2d in surfaces]
+        return [self.__class__(self.surface3d, surface2d) for surface2d in list_surfaces]
 
     def check_inner_contours(self, face):
         c_inners_1 = self.surface2d.inner_contours

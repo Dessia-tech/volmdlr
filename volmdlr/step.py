@@ -22,8 +22,8 @@ import volmdlr.edges
 import volmdlr.faces
 import volmdlr.primitives3d
 import volmdlr.wires
-from volmdlr import shells, surfaces
-
+from volmdlr import surfaces
+from volmdlr import shells as vmshells
 
 def set_to_list(step_set):
     """
@@ -356,7 +356,7 @@ def manifold_surface_shape_representation(arguments, object_dict):
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
-                      shells.OpenShell3D):
+                      vmshells.OpenShell3D):
             shell = object_dict[int(arg[1:])]
             shells.append(shell)
     return shells
@@ -376,7 +376,7 @@ def faceted_brep_shape_representation(arguments, object_dict):
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
-                      shells.OpenShell3D):
+                      vmshells.OpenShell3D):
             shell = object_dict[int(arg[1:])]
             shells.append(shell)
     return shells
@@ -423,7 +423,7 @@ def shape_representation(arguments, object_dict):
             shells.append(*object_dict[int(arg[1:])])
         elif int(arg[1:]) in object_dict and \
                 isinstance(object_dict[int(arg[1:])],
-                           shells.OpenShell3D):
+                           vmshells.OpenShell3D):
             shells.append(object_dict[int(arg[1:])])
         elif int(arg[1:]) in object_dict and isinstance(object_dict[int(arg[1:])], volmdlr.Frame3D):
             # TODO: Is there something to read here ?
@@ -460,7 +460,7 @@ def advanced_brep_shape_representation(arguments, object_dict):
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
-                      shells.OpenShell3D):
+                      vmshells.OpenShell3D):
             shells.append(object_dict[int(arg[1:])])
     return shells
 
@@ -470,7 +470,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
     Frame maps a closed shell in an assembly to its good position.
 
     :param closed_shells: DESCRIPTION
-    :type closed_shells: shells.OpenShell3D
+    :type closed_shells: vmshells.OpenShell3D
     :param item_defined_transformation_frames: DESCRIPTION
     :type item_defined_transformation_frames: TYPE
     :param shape_representation_frames: DESCRIPTION
@@ -503,7 +503,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
         new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
         new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
-        new_closed_shell3d = shells.ClosedShell3D(new_faces)
+        new_closed_shell3d = vmshells.ClosedShell3D(new_faces)
         new_closedshells.append(new_closed_shell3d)
     return new_closedshells
 
@@ -1232,10 +1232,10 @@ STEP_TO_VOLMDLR = {
     'ADVANCED_FACE': volmdlr.faces.Face3D,
     'FACE_SURFACE': volmdlr.faces.Face3D,
 
-    'CLOSED_SHELL': shells.ClosedShell3D,
-    'OPEN_SHELL': shells.OpenShell3D,
+    'CLOSED_SHELL': vmshells.ClosedShell3D,
+    'OPEN_SHELL': vmshells.OpenShell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
-    'CONNECTED_FACE_SET': shells.OpenShell3D,
+    'CONNECTED_FACE_SET': vmshells.OpenShell3D,
     'GEOMETRIC_CURVE_SET': None,
 
     # step subfunctions
@@ -1247,7 +1247,7 @@ STEP_TO_VOLMDLR = {
     'NAMED_UNIT, PLANE_ANGLE_UNIT, SI_UNIT': None,
     'CONVERSION_BASED_UNIT, NAMED_UNIT, PLANE_ANGLE_UNIT': None,
     'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT': None,
-    'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': shells.OpenShell3D.translation,
+    'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': vmshells.OpenShell3D.translation,
     'SHELL_BASED_SURFACE_MODEL': None,
     'MANIFOLD_SURFACE_SHAPE_REPRESENTATION': None,
     'MANIFOLD_SOLID_BREP': None,
