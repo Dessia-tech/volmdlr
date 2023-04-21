@@ -1146,9 +1146,6 @@ class Assembly(dc.PhysicalObject):
             current_id = styled_item_id + 1
         return step_content, current_id
 
-    @classmethod
-    def from_step(cls, arguments, object_dict, **kwargs):
-        pass
 
 class VolumeModel(dc.PhysicalObject):
     """

@@ -680,8 +680,15 @@ class Step(dc.DessiaObject):
         self.length_conversion_factor = 1
         self.angle_conversion_factor = 1
         self.read_diagnostic = StepReaderReport
+        self._roots_nodes = None
 
         dc.DessiaObject.__init__(self, name=name)
+
+    @property
+    def root_nodes(self):
+        if not self._roots_nodes:
+            self._roots_nodes = self.get_root_nodes()
+        return self._roots_nodes
 
     def graph(self):
         if not self._graph:
@@ -1085,30 +1092,83 @@ class Step(dc.DessiaObject):
 
     def get_root_nodes(self):
         next_assembly_usage_occurrence = []
-        product_definition = []
+        _product_definition = []
         shape_representation_relationship = []
         shape_definition_representation = []
-        assemblies = {}
+        shell_nodes = []
+
         for function in self.functions.values():
             if function.name == "NEXT_ASSEMBLY_USAGE_OCCURRENCE":
                 next_assembly_usage_occurrence.append(function.id)
-
             elif function.name == "PRODUCT_DEFINITION":
-                product_definition.append(function.id)
+                _product_definition.append(function.id)
             elif function.name == "SHAPE_REPRESENTATION_RELATIONSHIP":
                 shape_representation_relationship.append(function.id)
             elif function.name == "SHAPE_DEFINITION_REPRESENTATION":
                 shape_definition_representation.append(function.id)
+            elif functions.name in {"CLOSED_SHELL", "OPEN_SHELL"}:
+                shell_nodes.append(node)
         return {"NEXT_ASSEMBLY_USAGE_OCCURRENCE": next_assembly_usage_occurrence,
-                "PRODUCT_DEFINITION": product_definition,
+                "PRODUCT_DEFINITION": _product_definition,
                 "SHAPE_REPRESENTATION_RELATIONSHIP": shape_representation_relationship,
-                "SHAPE_DEFINITION_REPRESENTATION": shape_definition_representation}
+                "SHAPE_DEFINITION_REPRESENTATION": shape_definition_representation,
+                "SHELLS": shell_nodes}
+
+    def get_assembly_data(self):
+        root_nodes = self.root_nodes
+        assemblies = {}
+        for node in root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
+            function = self.functions[node]
+            assembly_node = int(function.arg[3][1:])
+            if assembly_node in assemblies:
+                assemblies[assembly_node].append(int(function.arg[4][1:]))
+            else:
+                assemblies[assembly_node] = [int(function.arg[4][1:])]
+        return assemblies
 
     def create_connections(self):
-        pass
+        for node in self.root_nodes['SHAPE_REPRESENTATION_RELATIONSHIP']:
+            # Associate each step representation entity to its SHAPE_REPRESENTATION
+            function = self.functions[node]
+            id1 = int(function.arg[2][1:])
+            id2 = int(function.arg[3][1:])
+            self.connections[id1].append(id2)
+            self.functions[id1].arg.append(f'#{id2}')
+        for node in self.root_nodes['SHAPE_DEFINITION_REPRESENTATION']:
+            # Associate each step representation entity to its SHAPE_REPRESENTATION
+            function = self.functions[node]
+            id_product_definition = int(function.arg[0][1:])
+            id_shape_representation = int(function.arg[1][1:])
+            if len(self.functions[id_shape_representation].arg) == 4:
+                id_shape = self.functions[id_shape_representation].arg[4]
+                self.connections[id_product_definition].append(id_shape)
+                self.functions[id_product_definition].arg.append(f'#{id_shape}')
 
-    def instatiate_assembly(self):
-        pass
+    def instatiate_assembly(self, object_dict):
+        assembly_data = self.get_assembly_data()
+        assembly_list = list(assembly_data.keys())
+        stack = assembly_list
+        list_instatiated_assemblies = []
+        visited_set = set()
+        instanciate_ids = [node]
+        error = True
+        while error:
+            try:
+                # here we invert instantiate_ids because if the code enter inside the except
+                # block, we want to loop from the last KeyError to the fisrt. This avoids an infinite loop
+                for instanciate_id in instanciate_ids[::-1]:
+
+                    volmdlr_object = self.instantiate(
+                        self.functions[instanciate_id].name,
+                        self.functions[instanciate_id].arg[:], object_dict, instanciate_id)
+                    object_dict[instanciate_id] = volmdlr_object
+
+                error = False
+            except KeyError as key:
+                # Sometimes the bfs search don't instanciate the nodes of a
+                # depth in the right order, leading to error
+                instanciate_ids.append(key.args[0])
+
 
     def to_volume_model(self, show_times: bool = False):
         """
