@@ -1079,16 +1079,15 @@ class Step(dc.DessiaObject):
             return self.get_shell_node_from_shape_representation(int(id_representation_entity[1:]))
 
     def product_definition_to_product(self, id_product_definition):
-        if self.functions[int(id_product_definition[1:])].name == "NEXT_ASSEMBLY_USAGE_OCCURRENCE":
-            print(f"ID NEXT_ASSEMBLY_USAGE_OCCURRENCE: {id_product_definition}")
-            id_product_definition = self.functions[int(id_product_definition[1:])].arg[3]
-        id_product_definition_formation = self.functions[int(id_product_definition[1:])].arg[2]
+        if self.functions[id_product_definition].name == "NEXT_ASSEMBLY_USAGE_OCCURRENCE":
+            id_product_definition = self.functions[id_product_definition].arg[3]
+        id_product_definition_formation = self.functions[id_product_definition].arg[2]
         id_product = self.functions[int(id_product_definition_formation[1:])].arg[2]
         return int(id_product[1:])
 
     def shape_definition_representation_to_product_node(self, shape_definition_representation_id):
         id_product_definition_shape = self.functions[shape_definition_representation_id].arg[0]
-        id_product_definition = self.functions[int(id_product_definition_shape[1:])].arg[2]
+        id_product_definition = int(self.functions[int(id_product_definition_shape[1:])].arg[2][1:])
         return self.product_definition_to_product(id_product_definition)
 
     def get_root_nodes(self):
@@ -1107,8 +1106,8 @@ class Step(dc.DessiaObject):
                 shape_representation_relationship.append(function.id)
             elif function.name == "SHAPE_DEFINITION_REPRESENTATION":
                 shape_definition_representation.append(function.id)
-            elif functions.name in {"CLOSED_SHELL", "OPEN_SHELL"}:
-                shell_nodes.append(node)
+            elif function.name in {"CLOSED_SHELL", "OPEN_SHELL"}:
+                shell_nodes.append(function.id)
         return {"NEXT_ASSEMBLY_USAGE_OCCURRENCE": next_assembly_usage_occurrence,
                 "PRODUCT_DEFINITION": _product_definition,
                 "SHAPE_REPRESENTATION_RELATIONSHIP": shape_representation_relationship,
@@ -1120,11 +1119,16 @@ class Step(dc.DessiaObject):
         assemblies = {}
         for node in root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             function = self.functions[node]
-            assembly_node = int(function.arg[3][1:])
+            assembly_product_definition = int(function.arg[3][1:])
+            assembly_node = int(self.functions[assembly_product_definition].arg[4][1:])
+            id_product_definition = int(function.arg[4][1:])
+            id_shape_definition_representation = int(self.functions[id_product_definition].arg[4][1:])
+            if len(self.functions[id_product_definition].arg) == 6:
+                id_shape_definition_representation = int(self.functions[id_product_definition].arg[5][1:])
             if assembly_node in assemblies:
-                assemblies[assembly_node].append(int(function.arg[4][1:]))
+                assemblies[assembly_node].append(id_shape_definition_representation)
             else:
-                assemblies[assembly_node] = [int(function.arg[4][1:])]
+                assemblies[assembly_node] = [id_shape_definition_representation]
         return assemblies
 
     def create_connections(self):
@@ -1138,37 +1142,46 @@ class Step(dc.DessiaObject):
         for node in self.root_nodes['SHAPE_DEFINITION_REPRESENTATION']:
             # Associate each step representation entity to its SHAPE_REPRESENTATION
             function = self.functions[node]
-            id_product_definition = int(function.arg[0][1:])
+            id_product_definition_shape = int(function.arg[0][1:])
+            id_product_definition = int(self.functions[id_product_definition_shape].arg[2][1:])
             id_shape_representation = int(function.arg[1][1:])
+            self.connections[id_product_definition].append(node)
+            self.functions[id_product_definition].arg.append(f'#{node}')
             if len(self.functions[id_shape_representation].arg) == 4:
-                id_shape = self.functions[id_shape_representation].arg[4]
+                id_shape = int(self.functions[id_shape_representation].arg[3][1:])
                 self.connections[id_product_definition].append(id_shape)
                 self.functions[id_product_definition].arg.append(f'#{id_shape}')
 
+
     def instatiate_assembly(self, object_dict):
         assembly_data = self.get_assembly_data()
-        assembly_list = list(assembly_data.keys())
-        stack = assembly_list
         list_instatiated_assemblies = []
-        visited_set = set()
-        instanciate_ids = [node]
+        instanciate_ids = list(assembly_data.keys())
         error = True
         while error:
             try:
                 # here we invert instantiate_ids because if the code enter inside the except
                 # block, we want to loop from the last KeyError to the fisrt. This avoids an infinite loop
                 for instanciate_id in instanciate_ids[::-1]:
-
-                    volmdlr_object = self.instantiate(
-                        self.functions[instanciate_id].name,
-                        self.functions[instanciate_id].arg[:], object_dict, instanciate_id)
+                    if instanciate_id in object_dict:
+                        continue
+                    list_primitives = [object_dict[node][0] if isinstance(object_dict[node], list)
+                                       else object_dict[node] for node in assembly_data[instanciate_id]]
+                    product_id = self.shape_definition_representation_to_product_node(instanciate_id)
+                    name = self.functions[product_id].arg[0]
+                    volmdlr_object = volmdlr.core.Assembly(list_primitives, {}, name=name)
                     object_dict[instanciate_id] = volmdlr_object
+                    if instanciate_id in assembly_data:
+                        list_instatiated_assemblies.append(instanciate_id)
 
                 error = False
             except KeyError as key:
                 # Sometimes the bfs search don't instanciate the nodes of a
                 # depth in the right order, leading to error
+                print(key.args[0])
+                print(instanciate_ids)
                 instanciate_ids.append(key.args[0])
+        return volmdlr_object
 
 
     def to_volume_model(self, show_times: bool = False):
@@ -1186,23 +1199,7 @@ class Step(dc.DessiaObject):
         times = {}
         frame_mapping_nodes = []
         shell_nodes = []
-        for function in self.functions.values():
-            if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
-                # Create short cut from id1 to id2
-                id1 = int(function.arg[2][1:])
-                id2 = int(function.arg[3][1:])
-                self.connections[id1].append(id2)
-                self.functions[id1].arg.append(f'#{id2}')
-        for function in self.functions.values():
-            if function.name == 'SHAPE_DEFINITION_REPRESENTATION':
-                # Create short cut from id1 to id2
-                shell_node = self.shape_definition_representation_to_shell_node(function.id)
-                product_node = self.shape_definition_representation_to_product_node(function.id)
-                if shell_node:
-                    # id1 = int(function.arg[2][1:])
-                    # id2 = int(function.arg[3][1:])
-                    self.connections[shell_node].append(product_node)
-                    self.functions[shell_node].arg.append(f'#{product_node}')
+        self.create_connections()
         not_shell_nodes = []
         frame_mapped_shell_node = []
 
@@ -1268,6 +1265,8 @@ class Step(dc.DessiaObject):
             if step_number_faces and faces_read:
                 self.read_diagnostic = StepReaderReport(self.name, step_number_faces, faces_read,
                                                         faces_read / step_number_faces, list(errors))
+        if self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
+            return volmdlr.core.VolumeModel([self.instatiate_assembly(object_dict)])
         volume_model = volmdlr.core.VolumeModel(shells)
         return volume_model
 

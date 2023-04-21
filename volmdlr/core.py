@@ -1037,7 +1037,6 @@ class Assembly(dc.PhysicalObject):
     def __init__(self, primitives: List[Primitive3D], relationships: dict, name: str = ''):
         self.primitives = primitives
         self.relationships = relationships
-        self.name = name
         self.shells = []
         self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)
@@ -1061,6 +1060,44 @@ class Assembly(dc.PhysicalObject):
         Computes the bounding box of the model.
         """
         return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
+
+    def babylon_data(self):
+        """
+        Get babylonjs data.
+
+        :return: Dictionary with babylon data.
+        """
+
+        meshes = []
+        lines = []
+        for primitive in self.primitives:
+            # if hasattr(primitive, 'babylon_data'):
+                # data = primitive.babylon_data()
+                # meshes.extend(mesh for mesh in data["meshes"])
+                # lines.append(line for line in data["lines"])
+            # else:
+            if hasattr(primitive, 'babylon_meshes'):
+                meshes.extend(primitive.babylon_meshes())
+                if hasattr(primitive, 'babylon_curves'):
+                    lines.append(primitive.babylon_curves())
+            elif hasattr(primitive, 'babylon_data'):
+                data = primitive.babylon_data()
+                meshes.extend(mesh for mesh in data["meshes"])
+                lines.extend(line for line in data["lines"])
+
+
+        bbox = self.bounding_box
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
+
+        babylon_data = {'meshes': meshes,
+                        'lines': lines,
+                        'max_length': max_length,
+                        'center': list(center)}
+
+        return babylon_data
 
     def to_step(self, current_id):
         """
@@ -1339,8 +1376,12 @@ class VolumeModel(dc.PhysicalObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
-            if hasattr(primitive, 'babylon_curves'):
-                lines.append(primitive.babylon_curves())
+                if hasattr(primitive, 'babylon_curves'):
+                    lines.append(primitive.babylon_curves())
+            elif hasattr(primitive, 'babylon_data'):
+                data = primitive.babylon_data()
+                meshes.extend(mesh for mesh in data["meshes"])
+                lines.extend(line for line in data["lines"])
 
         bbox = self.bounding_box
         center = bbox.center
