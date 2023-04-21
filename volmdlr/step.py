@@ -527,8 +527,8 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
         new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
-        new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
-        new_closed_shell3d = vmshells.ClosedShell3D(new_faces)
+        # new_faces = [face.frame_mapping(new_frame, 'old') for face in shell3d.faces]
+        new_closed_shell3d = shell3d.frame_mapping(new_frame, 'old')
         new_closedshells.append(new_closed_shell3d)
     return new_closedshells
 
@@ -1169,7 +1169,11 @@ class Step(dc.DessiaObject):
                                        else object_dict[node] for node in assembly_data[instanciate_id]]
                     product_id = self.shape_definition_representation_to_product_node(instanciate_id)
                     name = self.functions[product_id].arg[0]
-                    volmdlr_object = volmdlr.core.Assembly(list_primitives, {}, name=name)
+                    id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
+                    ids_frames = self.functions[id_shape_representation].arg[1]
+                    self.parse_arguments(ids_frames)
+                    frames = [object_dict[id_frame] for id_frame in ids_frames]
+                    volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
                     object_dict[instanciate_id] = volmdlr_object
                     if instanciate_id in assembly_data:
                         list_instatiated_assemblies.append(instanciate_id)
@@ -1178,8 +1182,6 @@ class Step(dc.DessiaObject):
             except KeyError as key:
                 # Sometimes the bfs search don't instanciate the nodes of a
                 # depth in the right order, leading to error
-                print(key.args[0])
-                print(instanciate_ids)
                 instanciate_ids.append(key.args[0])
         return volmdlr_object
 

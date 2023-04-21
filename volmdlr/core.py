@@ -1016,28 +1016,31 @@ class BoundingBox(dc.DessiaObject):
             dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
+
 class Assembly(dc.PhysicalObject):
     """
     Defines an assembly.
 
     :param primitives: A list of volmdlr objects
     :type primitives: List[:class:`volmdlr.core.Primitive3D`]
+    :param positions: A list of volmdlr objects
+    :type primitives: List[:class:`volmdlr.core.Primitive3D`]
     :param name: The Assembly's name
     :type name: str
     """
     _standalone_in_db = True
     _eq_is_data_eq = True
-    _non_serializable_attributes = ['shells', 'bounding_box']
-    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                               'faces']
-    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                                 'faces']
-    _dessia_methods = ['to_stl_model']
+    _non_serializable_attributes = ['bounding_box']
+    _non_data_eq_attributes = ['name', 'bounding_box']
+    _non_data_hash_attributes = ['name', 'bounding_box']
 
-    def __init__(self, primitives: List[Primitive3D], relationships: dict, name: str = ''):
+    def __init__(self, primitives: List[Primitive3D], positions: List[volmdlr.Frame3D],
+                 frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
         self.primitives = primitives
-        self.relationships = relationships
-        self.shells = []
+        self.frame = frame
+        self.positions = positions
+        self.positioned_primitives = [self.map_primitive(primitive, frame, frame_primitive)
+                                      for primitive, frame_primitive in zip(primitives, positions)]
         self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)
 
@@ -1059,7 +1062,7 @@ class Assembly(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
+        return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.positioned_primitives])
 
     def babylon_data(self):
         """
@@ -1070,12 +1073,7 @@ class Assembly(dc.PhysicalObject):
 
         meshes = []
         lines = []
-        for primitive in self.primitives:
-            # if hasattr(primitive, 'babylon_data'):
-                # data = primitive.babylon_data()
-                # meshes.extend(mesh for mesh in data["meshes"])
-                # lines.append(line for line in data["lines"])
-            # else:
+        for primitive in self.positioned_primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
                 if hasattr(primitive, 'babylon_curves'):
@@ -1084,7 +1082,6 @@ class Assembly(dc.PhysicalObject):
                 data = primitive.babylon_data()
                 meshes.extend(mesh for mesh in data["meshes"])
                 lines.extend(line for line in data["lines"])
-
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1098,6 +1095,48 @@ class Assembly(dc.PhysicalObject):
                         'center': list(center)}
 
         return babylon_data
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new VolumeModel.
+
+        side = 'old' or 'new'
+        """
+        new_frame = self.frame.frame_mapping(frame, side)
+        new_positions = [position.frame_mapping(frame, side)
+                          for position in self.positions]
+        return Assembly(self.primitives, new_positions, new_frame, self.name)
+
+    @staticmethod
+    def map_primitive(primitive, global_frame, transformed_frame):
+        """
+        Frame maps a primitive in an assembly to its good position.
+
+        :param primitive: primitive to map
+        :type primitive: Primitive3D
+        :param global_frame: Assembly frame
+        :type global_frame: volmdlr.Frame3D
+        :param transformed_frame: position of the primitive on the assembly
+        :type transformed_frame: volmdlr.Frame3D
+        :return: A new positioned primitive
+        :rtype: Primitive3D
+
+        """
+        basis_a = global_frame.basis()
+        basis_b = transformed_frame.basis()
+        A = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+                       [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                       [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+        B = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+                       [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                       [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+        transfer_matrix = npy.linalg.solve(A, B)
+        u_vector = volmdlr.Vector3D(*transfer_matrix[0])
+        v_vector = volmdlr.Vector3D(*transfer_matrix[1])
+        w_vector = volmdlr.Vector3D(*transfer_matrix[2])
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
+        new_primitive = primitive.frame_mapping(new_frame, 'old')
+        return new_primitive
 
     def to_step(self, current_id):
         """
