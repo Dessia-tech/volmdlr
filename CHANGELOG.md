@@ -22,10 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BsplineCurve: point_distance, point_belongs
 - ContourMixin: is_adjacent
 - Wire2D: area
-- Circle2D: bsplinecurve_intersections
+- Circle2D: bsplinecurve_intersections.
 - add tolerance param to many methods from edges and wires.
 - Surface3D: add contour healing into face_from_contours3d method.
 - ExtrusionSurface3D: implement missing cases for linesegment2d_to_3d method.
+- BSplineCurve, Arc, LineSegment: is_close
+- Core: get_edge_index_in_list, edge_in_list
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -50,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: ordering_contour
 - WireMixin: order_wire
 - Contour2D: delete cut_by_linesegments
+- split faces.py into surfaces.py, faces.py and shells.py
 
 ### Changed
 - better surface3d plots

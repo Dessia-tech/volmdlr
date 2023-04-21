@@ -795,6 +795,21 @@ class LineSegment(Edge):
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
         return content, [current_id]
 
+    def is_close(self, linesegment, tol: float = 1e-6):
+        """
+        Checks if two line segments are the same considering the euclidean distance.
+
+        :param linesegment: other line segment.
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6.
+        :type tol: float, optional.
+        """
+
+        if isinstance(linesegment, self.__class__):
+            if (self.start.is_close(linesegment.start, tol)
+                    and self.end.is_close(linesegment.end, tol)):
+                return True
+        return False
+
 
 class BSplineCurve(Edge):
     """
@@ -895,9 +910,9 @@ class BSplineCurve(Edge):
 
     def reverse(self):
         """
-        Reverses the B-spline's direction by reversing its control points.
+        Reverses the B-Spline's direction by reversing its control points.
 
-        :return: A reversed B-spline curve.
+        :return: A reversed B-Spline curve.
         :rtype: :class:`volmdlr.edges.BSplineCurve`.
         """
         return self.__class__(
@@ -963,7 +978,7 @@ class BSplineCurve(Edge):
                                    for point in curve.ctrlpts],
                    knots=knots,
                    knot_multiplicities=knot_multiplicities,
-                   weights= curve.weights ,periodic=periodic, name=name)
+                   weights=curve.weights, periodic=periodic, name=name)
 
     def length(self):
         """
@@ -1087,6 +1102,8 @@ class BSplineCurve(Edge):
         distance = distance_vector.norm()
         if distance <= tol1:
             return True
+        if curve_derivatives[1].norm() == 0.0:
+            return False
         zero_cos = abs(curve_derivatives[1].dot(distance_vector)) / curve_derivatives[1].norm() * distance
         if distance <= tol1 and zero_cos <= tol2:
             return True
@@ -1102,12 +1119,11 @@ class BSplineCurve(Edge):
                 u = b - (a - u)
             elif u > b:
                 u = a + (u - b)
-        else:
-            if u < a:
-                u = a
+        if u < a:
+            u = a
 
-            elif u > b:
-                u = b
+        elif u > b:
+            u = b
         return u
 
     def split(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
@@ -1127,7 +1143,7 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if point.point_distance(self.end) < tol:
             return [self.copy(), None]
-        adim_abscissa = min(max(0, self.abscissa(point) / self.length()), 1)
+        adim_abscissa = round(self.abscissa(point) / self.length(), 7)
         curve1, curve2 = split_curve(self.curve, adim_abscissa)
 
         return [self.__class__.from_geomdl_curve(curve1),
@@ -1426,7 +1442,7 @@ class BSplineCurve(Edge):
         Select closest point in curve to intersection point obtained with discretized linesegment.
 
         :param list_abscissas: list of abscissas to verify the closest point.
-        :param intersections: intersection with discretised line.
+        :param intersections: intersection with discretized line.
         :return:
         """
         distance = npy.inf
@@ -1609,6 +1625,25 @@ class BSplineCurve(Edge):
             if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
                 discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
+
+    def is_close(self, bspline, tol: float = 1e-6):
+        """
+        Checks if two bsplines are the same considering the euclidean distance.
+
+        :param bspline: other bspline.
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :type tol: float, optional
+        """
+
+        if isinstance(bspline, self.__class__):
+            is_true = True
+            for i, point in self.control_points:
+                if not point.is_close(bspline.control_points[i]):
+                    is_true = False
+                    break
+            if is_true and self.degree == bspline.degree and self.knots == bspline.knots:
+                return True
+        return False
 
 
 class Line2D(Line):
@@ -1823,7 +1858,7 @@ class Line2D(Line):
     @staticmethod
     def compute_tangent_circles_for_perpendicular_segments(new_basis, new_a, new_b, new_c, new_d):
         """
-        Compute tangent circle betwen perpendicular segments.
+        Computes tangent circle between perpendicular segments.
 
         """
         line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
@@ -2135,7 +2170,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def reverse(self):
         """
-        Reverse the Bspline's direction by reversing its start and end points.
+        Reverse the BSpline's direction by reversing its start and end points.
 
         """
 
@@ -2913,10 +2948,27 @@ class Arc(Edge):
                 new_arcs.append(arc)
         return new_arcs
 
+    def is_close(self, arc, tol: float = 1e-6):
+        """
+        Checks if two arc are the same considering the euclidean distance.
+
+        :param arc: other arc.
+        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :type tol: float, optional
+        """
+
+        if isinstance(arc, self.__class__):
+            if (self.start.is_close(arc.start, tol) and self.end.is_close(arc.end, tol)
+                    and self.center.is_close(arc.center, tol)):
+                return True
+        return False
+
+
 class FullArc(Arc):
     """
     Abstract class for representing a circle with a start and end points that are the same.
     """
+
     def __init__(self, center: Union[volmdlr.Point2D, volmdlr.Point3D],
                  start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
         self.__center = center
@@ -2925,14 +2977,17 @@ class FullArc(Arc):
 
     @property
     def is_trigo(self):
+        """Defines that a Full Arc is always in the trigo-wise direction."""
         return True
 
     @property
     def center(self):
+        """Center of Full Arc. """
         return self.__center
 
     @property
     def angle(self):
+        """Angle of Full Arc. """
         return volmdlr.TWO_PI
 
 
@@ -2977,6 +3032,11 @@ class Arc2D(Arc):
 
     @property
     def center(self):
+        """
+        Gets the center of the arc.
+
+        :return: the center of the arc.
+        """
         if not self._center:
             self._center = self.get_center()
         return self._center
@@ -3017,6 +3077,7 @@ class Arc2D(Arc):
 
     @property
     def clockwise_and_trigowise_paths(self):
+        """Gets clock-wise and trigo-wise paths."""
         if not self._clockwise_and_trigowise_paths:
             radius_1 = self.start - self.center
             radius_2 = self.end - self.center
@@ -3619,7 +3680,7 @@ class FullArc2D(FullArc, Arc2D):
 
     def straight_line_area(self):
         """
-        Calculates the area of the fullarc, with line drawn from start to end.
+        Calculates the area of the full arc, with line drawn from start to end.
 
         :return: straight_line_area.
         """
@@ -4186,7 +4247,7 @@ class ArcEllipse2D(Edge):
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
-        Plot arc-ellipse 2d using matplotlob.
+        Plot arc-ellipse 2d using Matplotlob.
 
         :param ax: Matplotlib plot if there exists any.
         :param edge_style: edge styles.
@@ -5279,7 +5340,7 @@ class LineSegment3D(LineSegment):
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
-        plane1 = volmdlr.faces.Plane3D.from_3_points(pt_a, pt_b, pt_c)
+        plane1 = volmdlr.surfaces.Plane3D.from_3_points(pt_a, pt_b, pt_c)
         v = vector.cross(plane1.frame.w)  # distance vector
         # pt_a = k*u + c*v + pt_c
         res = (pt_a - pt_c).vector
@@ -5358,8 +5419,8 @@ class LineSegment3D(LineSegment):
         w = u.cross(v)
         length_1 = self.length()
         length_2 = extrusion_vector.norm()
-        plane = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.start, u, v, w))
-        return [plane.rectangular_cut(0, length_1, 0, length_2)]
+        plane = volmdlr.surfaces.Plane3D(volmdlr.Frame3D(self.start, u, v, w))
+        return [volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(plane, 0, length_1, 0, length_2)]
 
     def _conical_revolution(self, params):
         axis, u, p1_proj, dist1, dist2, angle = params
@@ -5378,14 +5439,16 @@ class LineSegment3D(LineSegment):
             angle2 = angle
             cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
 
-        surface = volmdlr.faces.ConicalSurface3D(cone_frame, semi_angle)
-        return [surface.rectangular_cut(0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
+        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle)
+        return [volmdlr.faces.ConicalFace3D.from_surface_rectangular_cut(
+            surface, 0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
         axis, u, p1_proj, dist1, dist2, angle = params
         v = axis.cross(u)
-        surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), dist1)
-        return [surface.rectangular_cut(0, angle, 0, (self.end - self.start).dot(axis))]
+        surface = volmdlr.surfaces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), dist1)
+        return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
+            surface, 0, angle, 0, (self.end - self.start).dot(axis))]
 
     def revolution(self, axis_point, axis, angle):
         """
@@ -5411,7 +5474,7 @@ class LineSegment3D(LineSegment):
         if u.is_colinear_to(self.direction_vector()):
             # Planar face
             v = axis.cross(u)
-            surface = volmdlr.faces.Plane3D(
+            surface = volmdlr.surfaces.Plane3D(
                 volmdlr.Frame3D(p1_proj, u, v, axis))
             smaller_r, bigger_r = sorted([distance_1, distance_2])
             if angle == volmdlr.TWO_PI:
@@ -5456,7 +5519,7 @@ class LineSegment3D(LineSegment):
                                                                arc2, line2])
 
             return [volmdlr.faces.PlaneFace3D(surface,
-                                              volmdlr.faces.Surface2D(
+                                              volmdlr.surfaces.Surface2D(
                                                   outer_contour2d,
                                                   inner_contours2d))]
 
@@ -5725,7 +5788,7 @@ class BSplineCurve3D(BSplineCurve):
         self._bbox = None
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        if self.periodic:
+        if self.periodic and not point1.is_close(point2):
             return self.trim_with_interpolation(point1, point2)
 
         if (point1.is_close(self.start) and point2.is_close(self.end)) \
@@ -5809,7 +5872,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def cut_before(self, parameter: float):
         """
-        Returns the right side of the splitted curve at a given parameter.
+        Returns the right side of the split curve at a given parameter.
 
         :param parameter: parameter value that specifies where to split the curve.
         :type parameter: float
@@ -5821,12 +5884,12 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
-        curves = operations.split_curve(self.curve, round(parameter, 5))
+        curves = operations.split_curve(self.curve, round(parameter, 7))
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
         """
-        Returns the left side of the splitted curve at a given parameter.
+        Returns the left side of the split curve at a given parameter.
 
         :param parameter: parameter value that specifies where to split the curve.
         :type parameter: float
@@ -5839,7 +5902,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-        curves = operations.split_curve(self.curve, round(parameter, 5))
+        curves = operations.split_curve(self.curve, round(parameter, 7))
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
@@ -6546,14 +6609,15 @@ class Arc3D(Arc):
             angle1, angle2 = arc2d.angle1, arc2d.angle2
             if angle2 < angle1:
                 angle2 += volmdlr.TWO_PI
-            cylinder = volmdlr.faces.CylindricalSurface3D(
+            cylinder = volmdlr.surfaces.CylindricalSurface3D(
                 volmdlr.Frame3D(self.center,
                                 u,
                                 v,
                                 w),
                 self.radius
             )
-            return [cylinder.rectangular_cut(angle1, angle2, 0., extrusion_vector.norm())]
+            return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
+                cylinder, angle1, angle2, 0., extrusion_vector.norm())]
         raise NotImplementedError(f'Elliptic faces not handled: dot={self.normal.dot(extrusion_vector)}')
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -6579,11 +6643,11 @@ class Arc3D(Arc):
             v = axis.cross(u)
             arc2d = self.to_2d(self.center, u, axis)
 
-            surface = volmdlr.faces.SphericalSurface3D(
+            surface = volmdlr.surfaces.SphericalSurface3D(
                 volmdlr.Frame3D(self.center, u, v, axis), self.radius)
 
-            return [surface.rectangular_cut(0, angle,
-                                            arc2d.angle1, arc2d.angle2)]
+            return [volmdlr.faces.SphericalFace3D.from_surface_rectangular_cut(surface, 0, angle,
+                                                                               arc2d.angle1, arc2d.angle2)]
 
         # Toroidal
         u = self.center - tore_center
@@ -6594,12 +6658,12 @@ class Arc3D(Arc):
                 'Outside of plane revolution not supported')
 
         radius = tore_center.point_distance(self.center)
-        surface = volmdlr.faces.ToroidalSurface3D(
+        surface = volmdlr.surfaces.ToroidalSurface3D(
             volmdlr.Frame3D(tore_center, u, v, axis), radius,
             self.radius)
         arc2d = self.to_2d(tore_center, u, axis)
-        return [surface.rectangular_cut(0, angle,
-                                        arc2d.angle1, arc2d.angle2)]
+        return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(surface, 0, angle,
+                                                                          arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
         """Exports to STEP format."""
@@ -6889,7 +6953,7 @@ class FullArc3D(FullArc, Arc3D):
         vec = volmdlr.Vector3D(*point - self.center)
         dot = self.normal.dot(vec)
         return math.isclose(distance, self.radius, abs_tol=abs_tol) \
-                and math.isclose(dot, 0, abs_tol=abs_tol)
+            and math.isclose(dot, 0, abs_tol=abs_tol)
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
@@ -7274,7 +7338,7 @@ class ArcEllipse3D(Edge):
         :param frame: Local coordinate system.
         :type frame: volmdlr.Frame3D
         :param side: 'old' will perform a transformation from local to global coordinates. 'new' will
-            perform a tranformation from global to local coordinates.
+            perform a transformation from global to local coordinates.
         :type side: str
         :return: A new transformed ArcEllipse3D.
         :rtype: ArcEllipse3D
@@ -7380,8 +7444,8 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
 
         :param frame: Local coordinate system.
         :type frame: volmdlr.Frame3D
-        :param side: 'old' will perform a tranformation from local to global coordinates. 'new' will
-            perform a tranformation from global to local coordinates.
+        :param side: 'old' will perform a transformation from local to global coordinates. 'new' will
+            perform a transformation from global to local coordinates.
         :type side: str
         :return: A new transformed FulLArcEllipse3D.
         :rtype: FullArcEllipse3D

@@ -4,10 +4,11 @@ import unittest
 import dessia_common.core
 import volmdlr
 import volmdlr.edges as vme
-import volmdlr.faces as vmf
+from volmdlr import surfaces, faces
 import volmdlr.wires as vmw
 from volmdlr import O3D, X3D, Y3D, Z3D, Point2D, Point3D
 from volmdlr.models import conical_surfaces
+
 
 class TestConicalSurface3D(unittest.TestCase):
     conical_surface = conical_surfaces.conical_surface1
@@ -118,7 +119,7 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertFalse(len(conical_face.surface2d.inner_contours))
         self.assertAlmostEqual(conical_face.area(), 0.055154411016251716, 4)
 
-        buggy_conical_surface = vmf.ConicalSurface3D.load_from_file(
+        buggy_conical_surface = surfaces.ConicalSurface3D.load_from_file(
             "faces/objects_conical_tests/conical_surface_with_singularity.json")
         buggy_contours3d = vmw.Contour3D.load_from_file(
             'faces/objects_conical_tests/conical_contour_with_singularity.json')
@@ -133,7 +134,7 @@ class TestConicalSurface3D(unittest.TestCase):
         trim_point = volmdlr.Point3D(0.5 * math.sqrt(3), 0, 1)
         fullarc = circle.trim(trim_point, trim_point)
         contour = vmw.Contour3D([fullarc])
-        face = self.conical_surface.face_from_base_and_vertex(contour, volmdlr.O3D)
+        face = faces.ConicalFace3D.face_from_base_and_vertex(self.conical_surface, contour, volmdlr.O3D)
         self.assertEqual(face.surface2d.area(), volmdlr.TWO_PI)
 
 
