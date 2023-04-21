@@ -1,6 +1,6 @@
 {
   "name": "",
-  "object_class": "volmdlr.faces.CylindricalSurface3D",
+  "object_class": "volmdlr.surfaces.CylindricalSurface3D",
   "package_version": "0.8.1.dev468+g652bbe39",
   "frame": {
     "object_class": "volmdlr.Frame3D",
