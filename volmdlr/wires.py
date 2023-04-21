@@ -1083,7 +1083,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         :return: list of 2d primitives.
         """
         z = x.cross(y)
-        plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
+        plane3d = volmdlr.surfaces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         primitives2d = []
         for primitive in self.primitives:
             primitive2d = plane3d.point3d_to_2d(primitive)
@@ -1376,8 +1376,9 @@ class ContourMixin(WireMixin):
         point1 = middle_point + normal * 0.00001
         point2 = middle_point - normal * 0.00001
         if (self.point_belongs(point1) and contour2.point_belongs(point1)) or \
-                (not self.point_belongs(point1) and not contour2.point_belongs(point1)) or \
-                (self.point_belongs(point1) and self.point_belongs(point2)) or \
+                (not self.point_belongs(point1) and not contour2.point_belongs(point1)):
+            return True
+        if (self.point_belongs(point1) and self.point_belongs(point2)) or \
                 (contour2.point_belongs(point1) and contour2.point_belongs(point2)):
             return True
         return False
@@ -2442,6 +2443,9 @@ class ClosedPolygonMixin:
             return self
 
         return self.__class__(points)
+    def invert(self):
+        """Invert the polygon."""
+        return self.__class__(self.points[::-1])
 
     @property
     def line_segments(self):
@@ -2454,7 +2458,7 @@ class ClosedPolygonMixin:
             f"get_line_segments method must be overloaded by {self.__class__.__name__}")
 
 
-class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
+class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
     """
     A collection of points, connected by line segments, following each other.
 
@@ -4970,7 +4974,7 @@ class Circle3D(Contour3D):
         :return: Circle2D.
         """
         z = x.cross(y)
-        plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
+        plane3d = volmdlr.surfaces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         return Circle2D(plane3d.point3d_to_2d(self.center), self.radius)
 
     @classmethod
@@ -5028,10 +5032,10 @@ class Circle3D(Contour3D):
             v = self.normal.cross(u)
             w = extrusion_vector.copy()
             w.normalize()
-            cylinder = volmdlr.faces.CylindricalSurface3D(
+            cylinder = volmdlr.surfaces.CylindricalSurface3D(
                 volmdlr.Frame3D(self.center, u, v, w), self.radius)
-            return [cylinder.rectangular_cut(0, volmdlr.TWO_PI,
-                                             0, extrusion_vector.norm())]
+            return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(cylinder, 0, volmdlr.TWO_PI,
+                                                                                 0, extrusion_vector.norm())]
         raise NotImplementedError(
             f'Extrusion along vector not colinar to normal for circle not '
             f'handled yet: dot={self.normal.dot(extrusion_vector)}')
@@ -5051,10 +5055,10 @@ class Circle3D(Contour3D):
                 'Outside of plane revolution not supported')
 
         tore_radius = tore_center.point_distance(self.center)
-        surface = volmdlr.faces.ToroidalSurface3D(
+        surface = volmdlr.surfaces.ToroidalSurface3D(
             volmdlr.Frame3D(tore_center, u, v, axis),
             tore_radius, self.radius)
-        return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
+        return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(surface, 0, angle, 0, volmdlr.TWO_PI)]
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
         """

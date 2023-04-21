@@ -4,7 +4,7 @@
   "package_version": "0.6.1.dev495+g0217ec9d",
   "surface3d": {
     "name": "",
-    "object_class": "volmdlr.faces.Plane3D",
+    "object_class": "volmdlr.surfaces.Plane3D",
     "package_version": "0.6.1.dev495+g0217ec9d",
     "frame": {
       "object_class": "volmdlr.Frame3D",
@@ -41,7 +41,7 @@
   },
   "surface2d": {
     "name": "name",
-    "object_class": "volmdlr.faces.Surface2D",
+    "object_class": "volmdlr.surfaces.Surface2D",
     "package_version": "0.6.1.dev495+g0217ec9d",
     "outer_contour": {
       "name": "",
