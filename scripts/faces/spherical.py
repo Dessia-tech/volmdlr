@@ -3,12 +3,13 @@ import volmdlr.edges as vme
 import volmdlr.faces as vmf
 import volmdlr.primitives3d as p3d
 import volmdlr.wires as vmw
+from volmdlr import surfaces
 
-sphere = vmf.SphericalSurface3D(vm.Frame3D(vm.O3D, vm.X3D, vm.Y3D, vm.Z3D), 0.3)
+sphere = surfaces.SphericalSurface3D(vm.Frame3D(vm.O3D, vm.X3D, vm.Y3D, vm.Z3D), 0.3)
 sphere.plot()
 # sphere.babylonjs()
 
-face = sphere.rectangular_cut(0, 2.5, 0, 0.5)
+face = vmf.SphericalFace3D.from_surface_rectangular_cut(sphere, 0, 2.5, 0, 0.5)
 face.babylonjs()
 face.plot()
 

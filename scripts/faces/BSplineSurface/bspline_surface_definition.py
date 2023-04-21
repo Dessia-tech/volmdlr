@@ -14,6 +14,7 @@ import geomdl
 
 import volmdlr as vm
 import volmdlr.faces as vmf
+from volmdlr import surfaces
 
 # %% Control points
 
@@ -167,12 +168,12 @@ degree_u, degree_v, nb_u, nb_v = 5, 5, 9, 15
 knots_vector_u = geomdl.knotvector.generate(degree_u, nb_u)
 knots_vector_v = geomdl.knotvector.generate(degree_v, nb_v)
 
-(u_knots, u_multiplicities) = vmf.knots_vector_inv(knots_vector_u)
-(v_knots, v_multiplicities) = vmf.knots_vector_inv(knots_vector_v)
+(u_knots, u_multiplicities) = surfaces.knots_vector_inv(knots_vector_u)
+(v_knots, v_multiplicities) = surfaces.knots_vector_inv(knots_vector_v)
 
 # %% Bspline-surface definition
 
-bspline_surface = vm.faces.BSplineSurface3D(degree_u = degree_u, 
+bspline_surface = surfaces.BSplineSurface3D(degree_u = degree_u,
                                             degree_v = degree_v, 
                                             control_points = control_points,
                                             nb_u = nb_u, 
@@ -186,7 +187,7 @@ bspline_surface = vm.faces.BSplineSurface3D(degree_u = degree_u,
 
 # bspline_surface.plot()
 
-bspline_face = bspline_surface.rectangular_cut(0, 1, 0, 1)
+bspline_face = vmf.BSplineFace3D.from_surface_rectangular_cut(bspline_surface, 0, 1, 0, 1)
 # bspline_face.babylonjs()
 
 

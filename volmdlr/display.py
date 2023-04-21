@@ -5,6 +5,7 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 """
 
 import math
+import warnings
 from typing import List, Tuple
 
 import dessia_common.core as dc
@@ -236,7 +237,4 @@ class DisplayMesh3D(DisplayMesh):
         Exports to STL.
 
         """
-        # TODO: remove this in the future
-        import volmdlr.stl as vmstl
-        stl = vmstl.Stl.from_display_mesh(self)
-        return stl
+        warnings.warn('Please use the Stl.from_display_mesh methos instead')

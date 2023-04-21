@@ -5335,7 +5335,7 @@ class LineSegment3D(LineSegment):
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
-        plane1 = volmdlr.faces.Plane3D.from_3_points(pt_a, pt_b, pt_c)
+        plane1 = volmdlr.surfaces.Plane3D.from_3_points(pt_a, pt_b, pt_c)
         v = vector.cross(plane1.frame.w)  # distance vector
         # pt_a = k*u + c*v + pt_c
         res = (pt_a - pt_c).vector
@@ -5414,8 +5414,8 @@ class LineSegment3D(LineSegment):
         w = u.cross(v)
         length_1 = self.length()
         length_2 = extrusion_vector.norm()
-        plane = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.start, u, v, w))
-        return [plane.rectangular_cut(0, length_1, 0, length_2)]
+        plane = volmdlr.surfaces.Plane3D(volmdlr.Frame3D(self.start, u, v, w))
+        return [volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(plane, 0, length_1, 0, length_2)]
 
     def _conical_revolution(self, params):
         axis, u, p1_proj, dist1, dist2, angle = params
@@ -5434,14 +5434,16 @@ class LineSegment3D(LineSegment):
             angle2 = angle
             cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
 
-        surface = volmdlr.faces.ConicalSurface3D(cone_frame, semi_angle)
-        return [surface.rectangular_cut(0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
+        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle)
+        return [volmdlr.faces.ConicalFace3D.from_surface_rectangular_cut(
+            surface, 0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
         axis, u, p1_proj, dist1, dist2, angle = params
         v = axis.cross(u)
-        surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), dist1)
-        return [surface.rectangular_cut(0, angle, 0, (self.end - self.start).dot(axis))]
+        surface = volmdlr.surfaces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), dist1)
+        return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
+            surface, 0, angle, 0, (self.end - self.start).dot(axis))]
 
     def revolution(self, axis_point, axis, angle):
         """
@@ -5467,7 +5469,7 @@ class LineSegment3D(LineSegment):
         if u.is_colinear_to(self.direction_vector()):
             # Planar face
             v = axis.cross(u)
-            surface = volmdlr.faces.Plane3D(
+            surface = volmdlr.surfaces.Plane3D(
                 volmdlr.Frame3D(p1_proj, u, v, axis))
             smaller_r, bigger_r = sorted([distance_1, distance_2])
             if angle == volmdlr.TWO_PI:
@@ -5512,7 +5514,7 @@ class LineSegment3D(LineSegment):
                                                                arc2, line2])
 
             return [volmdlr.faces.PlaneFace3D(surface,
-                                              volmdlr.faces.Surface2D(
+                                              volmdlr.surfaces.Surface2D(
                                                   outer_contour2d,
                                                   inner_contours2d))]
 
@@ -6614,14 +6616,15 @@ class Arc3D(Arc):
             angle1, angle2 = arc2d.angle1, arc2d.angle2
             if angle2 < angle1:
                 angle2 += volmdlr.TWO_PI
-            cylinder = volmdlr.faces.CylindricalSurface3D(
+            cylinder = volmdlr.surfaces.CylindricalSurface3D(
                 volmdlr.Frame3D(self.center,
                                 u,
                                 v,
                                 w),
                 self.radius
             )
-            return [cylinder.rectangular_cut(angle1, angle2, 0., extrusion_vector.norm())]
+            return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
+                cylinder, angle1, angle2, 0., extrusion_vector.norm())]
         raise NotImplementedError(f'Elliptic faces not handled: dot={self.normal.dot(extrusion_vector)}')
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -6647,11 +6650,11 @@ class Arc3D(Arc):
             v = axis.cross(u)
             arc2d = self.to_2d(self.center, u, axis)
 
-            surface = volmdlr.faces.SphericalSurface3D(
+            surface = volmdlr.surfaces.SphericalSurface3D(
                 volmdlr.Frame3D(self.center, u, v, axis), self.radius)
 
-            return [surface.rectangular_cut(0, angle,
-                                            arc2d.angle1, arc2d.angle2)]
+            return [volmdlr.faces.SphericalFace3D.from_surface_rectangular_cut(surface, 0, angle,
+                                                                               arc2d.angle1, arc2d.angle2)]
 
         # Toroidal
         u = self.center - tore_center
@@ -6662,12 +6665,12 @@ class Arc3D(Arc):
                 'Outside of plane revolution not supported')
 
         radius = tore_center.point_distance(self.center)
-        surface = volmdlr.faces.ToroidalSurface3D(
+        surface = volmdlr.surfaces.ToroidalSurface3D(
             volmdlr.Frame3D(tore_center, u, v, axis), radius,
             self.radius)
         arc2d = self.to_2d(tore_center, u, axis)
-        return [surface.rectangular_cut(0, angle,
-                                        arc2d.angle1, arc2d.angle2)]
+        return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(surface, 0, angle,
+                                                                          arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
         """Exports to STEP format."""

@@ -283,7 +283,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             new_linesegment2D_points.append(self.points[-1])
 
         rls_2d = self.__class__(new_linesegment2D_points, self.radius,
-                                self.closed, adapt_radius=self.adapt_radius)
+                                adapt_radius=self.adapt_radius)
 
         return rls_2d
 
@@ -417,7 +417,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
 
 class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
-                                  volmdlr.wires.Contour2D):
+                                  volmdlr.wires.Contour2D, RoundedLineSegments):
     """
     Defines a polygon with some rounded corners.
 

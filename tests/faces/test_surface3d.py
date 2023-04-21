@@ -3,13 +3,13 @@ import unittest
 
 import volmdlr
 import volmdlr.edges as vme
-import volmdlr.faces as vmf
 import volmdlr.wires as vmw
 from volmdlr import OXYZ, X3D, Y3D, Z3D, Point2D, Point3D
+from volmdlr import surfaces
 
 
 class TestSurface3D(unittest.TestCase):
-    cylindrical_surface = vmf.CylindricalSurface3D(OXYZ, radius=0.03)
+    cylindrical_surface = surfaces.CylindricalSurface3D(OXYZ, radius=0.03)
 
     def test_contour3d_to_2d(self):
         primitives_cylinder = [vme.LineSegment3D(Point3D(0.03, 0, 0.003), Point3D(0.03, 0, 0.013)),
