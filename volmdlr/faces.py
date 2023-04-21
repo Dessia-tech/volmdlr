@@ -142,7 +142,7 @@ class Face3D(volmdlr.core.Primitive3D):
             if len(contours) == 2 and any(isinstance(contour, volmdlr.Point3D) for contour in contours):
                 vertex = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
                 base = next(contour for contour in contours if contour is not vertex)
-                return cls.face_from_base_and_vertex(base, vertex, name)
+                return surface.face_class.face_from_base_and_vertex(base, vertex, name)
             if any(isinstance(contour, volmdlr.Point3D) for contour in contours):
                 raise NotImplementedError
 
