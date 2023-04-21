@@ -2626,12 +2626,7 @@ class RevolutionFace3D(Face3D):
 
     def get_bounding_box(self):
         # To be enhanced by restricting wires to cut
-        curve_points = self.surface3d.edge.discretization_points(angle_resolution=20)
-        points = []
-        for i in range(37):
-            angle = i * volmdlr.TWO_PI / 36
-            points.extend([point.rotation(self.surface3d.axis_point, self.surface3d.axis, angle)
-                           for point in curve_points])
+        points = self.outer_contour3d.discretization_points(number_points=25)
 
         return volmdlr.core.BoundingBox.from_points(points)
 
