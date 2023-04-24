@@ -3010,6 +3010,7 @@ class BSplineFace3D(Face3D):
     def adjacent_direction_xy(self, other_face3d):
         """
         Find out in which direction the faces are adjacent.
+
         :type other_face3d: volmdlr.faces.BSplineFace3D
         :return: adjacent_direction
         """
@@ -3028,6 +3029,7 @@ class BSplineFace3D(Face3D):
     def merge_with(self, other_bspline_face3d):
         """
         Merge two adjacent faces.
+
         :type: other_bspline_face3d : volmdlr.faces.BSplineFace3D
         :rtype: merged_face : volmdlr.faces.BSplineFace3D
         """
@@ -3045,6 +3047,7 @@ class BSplineFace3D(Face3D):
                                      v1: float, v2: float, name: str = ''):
         """
         Cut a rectangular piece of the BSplineSurface3D object and return a BSplineFace3D object.
+
         """
         point1 = volmdlr.Point2D(u1, v1)
         point2 = volmdlr.Point2D(u2, v1)
@@ -3053,6 +3056,7 @@ class BSplineFace3D(Face3D):
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface = surfaces.Surface2D(outer_contour, [])
         return BSplineFace3D(bspline_surface3d, surface, name)
+
     def to_planeface3d(self, plane3d: surfaces.Plane3D = None):
         """
         Converts a Bspline face3d to a Plane face3d (using or without a reference Plane3D).
