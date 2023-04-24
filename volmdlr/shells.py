@@ -1322,6 +1322,7 @@ class ClosedShell3D(OpenShell3D):
     def validate_intersection_operation(self, shell2, tol):
         """
         Verifies if two shells are valid for union or subtractions operations.
+
         Its Verfies if they are disjointed or if one is totally inside the other.
         If it returns an empty list, it means the two shells are valid to continue the
         operation.
