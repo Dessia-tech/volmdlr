@@ -439,7 +439,9 @@ class Line(dc.DessiaObject):
         """
         if not self._direction_vector:
             direction_vector = self.point2 - self.point1
-            self._direction_vector = direction_vector.to_vector()
+            if isinstance(direction_vector, volmdlr.Point3D):
+                direction_vector = direction_vector.to_vector()
+            self._direction_vector = direction_vector
         return self._direction_vector
 
     def normal_vector(self, *args, **kwargs):
