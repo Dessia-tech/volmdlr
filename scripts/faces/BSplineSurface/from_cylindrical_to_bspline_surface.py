@@ -12,6 +12,7 @@ import numpy as npy
 import volmdlr as vm
 import volmdlr.faces as vmf
 import volmdlr.step as vms
+from volmdlr import surfaces
 
 # %% Read Step file
 
@@ -29,7 +30,7 @@ faces = []
 for primitive in primitives:
     faces.extend(primitive.faces)
 
-# %% Cylindrical face 
+# %% Cylindrical face
 
 cylindrical_face = faces[0]
 
@@ -37,19 +38,19 @@ cylindrical_face = faces[0]
 
 degree_u, degree_v = 3, 3
 
-bspline_surface = vmf.BSplineSurface3D.from_cylindrical_face(cylindrical_face, degree_u, degree_v, points_x=50, points_y=50)
+bspline_surface = surfaces.BSplineSurface3D.from_cylindrical_face(cylindrical_face, degree_u, degree_v, points_x=50, points_y=50)
 
-bspline_face = bspline_surface.rectangular_cut(0, 1, 0, 1)
+bspline_face = vmf.BSplineFace3D.from_surface_rectangular_cut(bspline_surface, 0, 1, 0, 1)
 
 
 # %% Display
 
-cylindrical_face.color = [list(npy.random.choice(range(255), size=1))[0] / 256, 
-                          list(npy.random.choice(range(255), size=1))[0] / 256, 
+cylindrical_face.color = [list(npy.random.choice(range(255), size=1))[0] / 256,
+                          list(npy.random.choice(range(255), size=1))[0] / 256,
                           list(npy.random.choice(range(255), size=1))[0] / 256]
 
-bspline_face.color = [list(npy.random.choice(range(255), size=1))[0] / 256, 
-                      list(npy.random.choice(range(255), size=1))[0] / 256, 
+bspline_face.color = [list(npy.random.choice(range(255), size=1))[0] / 256,
+                      list(npy.random.choice(range(255), size=1))[0] / 256,
                       list(npy.random.choice(range(255), size=1))[0] / 256]
 
 vm.core.VolumeModel([cylindrical_face, bspline_face]).babylonjs()

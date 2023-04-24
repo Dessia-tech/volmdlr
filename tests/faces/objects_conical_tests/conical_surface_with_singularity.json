@@ -1,6 +1,6 @@
 {
   "name": "",
-  "object_class": "volmdlr.faces.ConicalSurface3D",
+  "object_class": "volmdlr.surfaces.ConicalSurface3D",
   "package_version": "0.9.2.dev421+gb87a301e",
   "frame": {
     "object_class": "volmdlr.Frame3D",

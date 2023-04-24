@@ -1,6 +1,6 @@
 {
   "name": "",
-  "object_class": "volmdlr.faces.BSplineSurface3D",
+  "object_class": "volmdlr.surfaces.BSplineSurface3D",
   "package_version": "0.6.2.dev870+g69103188",
   "degree_u": 3,
   "degree_v": 2,

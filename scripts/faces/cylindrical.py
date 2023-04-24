@@ -8,12 +8,12 @@ Created on Fri Sep 18 12:40:31 2020
 
 import volmdlr
 import volmdlr.faces
-
+from volmdlr import faces, surfaces
 R = 0.32
 
-surface = volmdlr.faces.CylindricalSurface3D(volmdlr.OXYZ, R)
+surface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, R)
 
-face = surface.rectangular_cut(-0.01, 1.3, -0.1, 0.3)
+face = faces.CylindricalFace3D.from_surface_rectangular_cut(surface, -0.01, 1.3, -0.1, 0.3)
 face.babylonjs(debug=True, use_cdn=False)
 
 lines_x, lines_y = face.triangulation_lines()
