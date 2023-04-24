@@ -72,6 +72,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour3D: merge_with()
 * Contour2D: closest_point_to_point2, get_furthest_point_to_point2
 
+## v0.9.3
+
+- build: bump dessia common to 0.10.0
+- build: remove useless jsonschema dep
+- build: update package.xml for freecad
+
 ## v0.9.1
 
 ### Fixed
