@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add tolerance param to many methods from edges and wires.
 - Surface3D: add contour healing into face_from_contours3d method.
 - ExtrusionSurface3D: implement missing cases for linesegment2d_to_3d method.
+- BSplineSurface3D: to_plane3d
+- BSplineFace3D: to_planeface3d
 - BSplineCurve, Arc, LineSegment: is_close
 - Core: get_edge_index_in_list, edge_in_list
 
@@ -41,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BsplineCurve: simplify
 - Dessiaobject inheritance up-to-date
 - Edge: unit_direction_vector, unit_normal_vector
+- VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -53,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WireMixin: order_wire
 - Contour2D: delete cut_by_linesegments
 - split faces.py into surfaces.py, faces.py and shells.py
+- ContourMixin: from_points
 
 ### Changed
 - better surface3d plots

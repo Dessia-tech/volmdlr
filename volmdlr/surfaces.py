@@ -6059,6 +6059,24 @@ class BSplineSurface3D(Surface3D):
         side = 1
         return overlapping_theta, outer_contour_side, side
 
+    def to_plane3d(self):
+        """
+        Converts a Bspline surface3d to a Plane3d.
+
+        :return: A Plane
+        :rtype: Plane3D
+        """
+
+        points_2d = [volmdlr.Point2D(0.1, 0.1),
+                     volmdlr.Point2D(0.1, 0.8),
+                     volmdlr.Point2D(0.8, 0.5)]
+        points = [self.point2d_to_3d(pt) for pt in points_2d]
+
+        surface3d = Plane3D.from_3_points(points[0],
+                                          points[1],
+                                          points[2])
+        return surface3d
+
 
 class BezierSurface3D(BSplineSurface3D):
     """
