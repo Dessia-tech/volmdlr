@@ -806,6 +806,9 @@ class Surface3D(DessiaObject):
             outer_contour3d = contours3d[0]
             inner_contours2d = []
             inner_contours3d = None
+            # if isinstance(self, RevolutionSurface3D):
+            #     ax = self.plot()
+            #     outer_contour3d.plot(ax)
         elif lc3d > 1:
             area = -1
             inner_contours2d = []
@@ -3819,6 +3822,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         name = arguments[0][1:-1]
         contour3d = object_dict[arguments[1]]
+        if hasattr(contour3d, "simplify"):
+            contour3d = contour3d.simplify
         axis_point, axis = object_dict[arguments[2]]
         return cls(wire=contour3d, axis_point=axis_point, axis=axis, name=name)
 
