@@ -806,9 +806,7 @@ class Surface3D(DessiaObject):
             outer_contour3d = contours3d[0]
             inner_contours2d = []
             inner_contours3d = None
-            # if isinstance(self, RevolutionSurface3D):
-            #     ax = self.plot()
-            #     outer_contour3d.plot(ax)
+
         elif lc3d > 1:
             area = -1
             inner_contours2d = []
