@@ -19,6 +19,7 @@ from dessia_common.files import BinaryFile, StringFile  # isort: skip
 import volmdlr as vm
 import volmdlr.core as vmc
 import volmdlr.faces as vmf
+from volmdlr import shells
 
 
 class Stl(dc.DessiaObject):
@@ -205,10 +206,10 @@ class Stl(dc.DessiaObject):
             stream.write(struct.pack(BINARY_FACET, *data))
 
     def to_closed_shell(self):
-        return vmf.ClosedTriangleShell3D(self.triangles, name=self.name)
+        return shells.ClosedTriangleShell3D(self.triangles, name=self.name)
 
     def to_open_shell(self):
-        return vmf.OpenTriangleShell3D(self.triangles, name=self.name)
+        return shells.OpenTriangleShell3D(self.triangles, name=self.name)
 
     def to_volume_model(self):
         closed_shell = self.to_closed_shell()
