@@ -15,7 +15,7 @@ class TestContour2D(unittest.TestCase):
     ordered_contour = DessiaObject.load_from_file('wires/contour_ordered.json')
     contour_to_extract_from = contour = wires.Contour2D.from_points(
         [volmdlr.Point2D(-.15, .15), volmdlr.Point2D(-.15, -.15), volmdlr.Point2D(.15, -.15),
-         volmdlr.Point2D(.15, .15), volmdlr.Point2D(-.15, .15)])
+         volmdlr.Point2D(.15, .15)])
     point1_ = volmdlr.Point2D(0.12500000000000003, 0.15)
     point2_ = volmdlr.Point2D(0.12500000000000003, -0.15)
     point_to_extract_with = [(point1_, point2_), (volmdlr.Point2D(0.15, -0.05), volmdlr.Point2D(0.15, 0.05)),
