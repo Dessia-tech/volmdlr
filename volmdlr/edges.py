@@ -438,7 +438,8 @@ class Line(dc.DessiaObject):
         :rtype: Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
         """
         if not self._direction_vector:
-            self._direction_vector = self.point2 - self.point1
+            direction_vector = self.point2 - self.point1
+            self._direction_vector = direction_vector.to_vector()
         return self._direction_vector
 
     def normal_vector(self, *args, **kwargs):
