@@ -90,9 +90,9 @@ See the [script](https://github.com/Dessia-tech/volmdlr/tree/master/scripts) fol
 
 https://documentation.dessia.tech/volmdlr/
 
-## Licence
+## License
 
-100% opensource on LGPL licence. See LICENCE for more details.
+100% opensource on LGPL license. See LICENSE for more details.
 
 ## Team and contributors
 
