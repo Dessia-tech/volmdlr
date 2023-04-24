@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 import volmdlr.grid
 from volmdlr.models import bspline_surfaces
-
+from volmdlr import faces
 # %% Read Step file
 
 # file_path = 'bspline_surface_2.step'
@@ -28,7 +28,7 @@ from volmdlr.models import bspline_surfaces
 
 # %% Bspline face/surface/contour
 
-bspline_face = bspline_surfaces.bspline_surface_2.rectangular_cut(0, 1, 0, 1)
+bspline_face = faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surfaces.bspline_surface_2, 0, 1, 0, 1)
 
 bspline_surface = bspline_surfaces.bspline_surface_2
 

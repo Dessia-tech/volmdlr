@@ -11,6 +11,7 @@ import numpy as npy
 
 import volmdlr as vm
 from volmdlr.models import bspline_surfaces
+from volmdlr import surfaces, faces
 
 #%%  BSpline-surface definition
 
@@ -29,7 +30,7 @@ splitted_surfaces = bspline_surface.split_surface_u(u)
 random_colors = []
 splitted_faces = []
 for i, s in enumerate(splitted_surfaces):
-    splitted_faces.append(s.rectangular_cut(0, 1, 0, 1))
+    splitted_faces.append(faces.BSplineFace3D.from_surface_rectangular_cut(s, 0, 1, 0, 1))
     random_colors.append([list(npy.random.choice(range(255), size=1))[0] / 256,
                           list(npy.random.choice(range(255), size=1))[0] / 256,
                           list(npy.random.choice(range(255), size=1))[0] / 256])
@@ -37,7 +38,7 @@ for i, s in enumerate(splitted_surfaces):
 
 # %%% Display
 
-ax = bspline_surface.rectangular_cut(0, 1, 0, 1).plot()
+ax = faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surface, 0, 1, 0, 1).plot()
 for f in splitted_faces:
     f.plot(ax=ax, color=f.color)
 
@@ -51,12 +52,12 @@ splitted_surfaces = bspline_surface.split_surface_v(v)
 
 splitted_faces = []
 for i, s in enumerate(splitted_surfaces):
-    splitted_faces.append(s.rectangular_cut(0, 1, 0, 1))
+    splitted_faces.append(faces.BSplineFace3D.from_surface_rectangular_cut(s, 0, 1, 0, 1))
     splitted_faces[i].color = random_colors[i]
 
 # %%% Display
 
-ax = bspline_surface.rectangular_cut(0, 1, 0, 1).plot()
+ax = faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surface, 0, 1, 0, 1).plot()
 for f in splitted_faces:
     f.plot(ax=ax, color=f.color)
 
@@ -82,13 +83,13 @@ bspline_curve3d = bspline_surface.bsplinecurve2d_to_3d(vm.edges.BSplineCurve2D.f
 splitted_surfaces = bspline_surface.split_surface_with_bspline_curve(bspline_curve3d)
 
 splitted_faces = []
-for i,s in enumerate(splitted_surfaces):
-    splitted_faces.append(s.rectangular_cut(0,1,0,1))
+for i, s in enumerate(splitted_surfaces):
+    splitted_faces.append(faces.BSplineFace3D.from_surface_rectangular_cut(s, 0, 1, 0, 1))
     splitted_faces[i].color = random_colors[i]
     
 # %%% Display
 
-ax = bspline_surface.rectangular_cut(0, 1, 0, 1).plot()
+ax = faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surface, 0, 1, 0, 1).plot()
 for f in splitted_faces:
     f.plot(ax=ax, color=f.color)
 
