@@ -126,13 +126,12 @@ setup(
     include_package_data=True,
     install_requires=[
         "packaging",
-        "dessia_common>=0.7.0",
+        "dessia_common>=0.10.0",
         "Cython",
         "numpy",
         "matplotlib",
         "scipy",
         "geomdl",
-        "jsonschema",
         "networkx",
         "triangle",
         "plot_data>=0.10.9",
@@ -145,6 +144,10 @@ setup(
     classifiers=["Topic :: Scientific/Engineering",
                  "Topic :: Multimedia :: Graphics :: 3D Modeling",
                  "Development Status :: 5 - Production/Stable"],
-    ext_modules=cythonize(["volmdlr/core_compiled.pyx", "volmdlr/bspline_compiled.pyx"]),
+
+    ext_modules=cythonize(["volmdlr/core_compiled.pyx",
+                           "volmdlr/bspline_compiled.pyx",
+                           "volmdlr/bspline_fitting.pyx",
+                           "volmdlr/bspline_evaluators.pyx"]),
     python_requires=">=3.7",
 )
