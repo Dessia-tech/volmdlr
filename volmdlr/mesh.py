@@ -734,7 +734,8 @@ class TetrahedralElementQuadratic(TriangularElement, vmw.ClosedPolygon3D):
     def __init__(self, points, name: str = ''):
         self.points = points
         self.name = name
-        DessiaObject.__init__(self, name=name)
+        # DessiaObject.__init__(self, name=name)
+        super().__init__(points)
 
 
 class ElementsGroup(DessiaObject):

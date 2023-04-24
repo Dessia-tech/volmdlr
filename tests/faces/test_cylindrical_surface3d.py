@@ -6,18 +6,18 @@ import unittest
 
 import dessia_common.core
 import volmdlr
-from volmdlr import OXYZ, Z3D, Point2D, Point3D, edges, faces, wires
+from volmdlr import OXYZ, Z3D, Point2D, Point3D, edges, faces, wires, surfaces
 
 
 class TestCylindricalSurface3D(unittest.TestCase):
-    cylindrical_surface = faces.CylindricalSurface3D(volmdlr.OXYZ, 0.32)
-    cylindrical_surface2 = faces.CylindricalSurface3D(volmdlr.OXYZ, 1.0)
+    cylindrical_surface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 0.32)
+    cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 1.0)
     frame = volmdlr.Frame3D(volmdlr.Point3D(-0.005829, 0.000765110438227, -0.0002349369830163),
                             volmdlr.Vector3D(-0.6607898454031987, 0.562158151695499, -0.4973278523210991),
                             volmdlr.Vector3D(-0.7505709694705869, -0.4949144228333324, 0.43783893597935386),
                             volmdlr.Vector3D(-0.0, 0.6625993710787045, 0.748974013865705))
-    cylindrical_surface3 = faces.CylindricalSurface3D(frame, 0.003)
-    cylindrical_surface4 = faces.CylindricalSurface3D(OXYZ, radius=0.03)
+    cylindrical_surface3 = surfaces.CylindricalSurface3D(frame, 0.003)
+    cylindrical_surface4 = surfaces.CylindricalSurface3D(OXYZ, radius=0.03)
 
     def test_line_intersections(self):
         line3d = edges.Line3D(volmdlr.O3D, volmdlr.Point3D(0.3, 0.3, .3))
@@ -27,7 +27,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertTrue(line_inters[1].is_close(volmdlr.Point3D(-0.22627416, -0.22627416, -0.22627416)))
 
     def test_plane_intersections(self):
-        plane_surface = faces.Plane3D(volmdlr.OZXY)
+        plane_surface = surfaces.Plane3D(volmdlr.OZXY)
         parallel_plane_secant_cylinder = plane_surface.frame_mapping(volmdlr.Frame3D(
             volmdlr.O3D, volmdlr.Point3D(.5, 0, 0), volmdlr.Point3D(0, .5, 0), volmdlr.Point3D(0, 0, .2)), 'new')
         cylinder_tanget_plane = plane_surface.frame_mapping(volmdlr.Frame3D(
@@ -63,9 +63,9 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertTrue(isinstance(cylinder_surface_perpendicular_plane_intersec[0], wires.Circle3D))
 
     def test_is_coincident(self):
-        cyl_surface1 = faces.CylindricalSurface3D(volmdlr.OXYZ, 1)
-        cyl_surface2 = faces.CylindricalSurface3D(volmdlr.OXYZ.translation(volmdlr.Vector3D(0, 0, 1)), 1)
-        plane_face = faces.Plane3D(volmdlr.OXYZ)
+        cyl_surface1 = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 1)
+        cyl_surface2 = surfaces.CylindricalSurface3D(volmdlr.OXYZ.translation(volmdlr.Vector3D(0, 0, 1)), 1)
+        plane_face = surfaces.Plane3D(volmdlr.OXYZ)
         self.assertTrue(cyl_surface1.is_coincident(cyl_surface2))
         self.assertFalse(cyl_surface1.is_coincident(plane_face))
         self.assertFalse(self.cylindrical_surface.is_coincident(cyl_surface1))
@@ -170,7 +170,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertEqual(face.surface2d.area(), 0.00077*2*math.pi)
 
         frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
-        cylindrical = faces.CylindricalSurface3D(frame, 0.2)
+        cylindrical = surfaces.CylindricalSurface3D(frame, 0.2)
         fullarc1 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(0.2, 0.0, 0.0), normal=volmdlr.Z3D)
         fullarc2 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(-0.2, 0.0, 0.2), normal=volmdlr.Z3D)
         contour1 = wires.Contour3D([fullarc1])
