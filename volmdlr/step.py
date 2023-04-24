@@ -958,7 +958,7 @@ class Step(dc.DessiaObject):
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
         except (ValueError, NotImplementedError) as error:
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
-        print(step_id)
+        # print(step_id)
         return volmdlr_object
 
     def create_node_list(self, stack):
@@ -1080,7 +1080,7 @@ class Step(dc.DessiaObject):
 
     def product_definition_to_product(self, id_product_definition):
         if self.functions[id_product_definition].name == "NEXT_ASSEMBLY_USAGE_OCCURRENCE":
-            id_product_definition = self.functions[id_product_definition].arg[3]
+            id_product_definition = int(self.functions[id_product_definition].arg[3][1:])
         id_product_definition_formation = self.functions[id_product_definition].arg[2]
         id_product = self.functions[int(id_product_definition_formation[1:])].arg[2]
         return int(id_product[1:])
@@ -1147,10 +1147,20 @@ class Step(dc.DessiaObject):
             id_shape_representation = int(function.arg[1][1:])
             self.connections[id_product_definition].append(node)
             self.functions[id_product_definition].arg.append(f'#{node}')
-            if len(self.functions[id_shape_representation].arg) == 4:
+            if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION" and \
+                len(self.functions[id_shape_representation].arg) == 4:
                 id_shape = int(self.functions[id_shape_representation].arg[3][1:])
                 self.connections[id_product_definition].append(id_shape)
                 self.functions[id_product_definition].arg.append(f'#{id_shape}')
+            elif self.functions[id_shape_representation].name in STEP_REPRESENTATION_ENTITIES:
+                self.connections[id_product_definition].append(id_shape_representation)
+                self.functions[id_product_definition].arg.append(f'#{id_shape_representation}')
+
+            shell_node = self.shape_definition_representation_to_shell_node(node)
+            product_node = self.shape_definition_representation_to_product_node(node)
+            if shell_node:
+                self.connections[shell_node].append(product_node)
+                self.functions[shell_node].arg.append(f'#{product_node}')
 
 
     def instatiate_assembly(self, object_dict):
@@ -1182,6 +1192,7 @@ class Step(dc.DessiaObject):
             except KeyError as key:
                 # Sometimes the bfs search don't instanciate the nodes of a
                 # depth in the right order, leading to error
+                print(key.args[0])
                 instanciate_ids.append(key.args[0])
         return volmdlr_object
 

@@ -1021,26 +1021,27 @@ class Assembly(dc.PhysicalObject):
     """
     Defines an assembly.
 
-    :param primitives: A list of volmdlr objects
-    :type primitives: List[:class:`volmdlr.core.Primitive3D`]
-    :param positions: A list of volmdlr objects
-    :type primitives: List[:class:`volmdlr.core.Primitive3D`]
+    :param components: A list of volmdlr objects
+    :type components: List[:class:`volmdlr.core.Primitive3D`]
+    :param positions: A list of volmdlr.Frame3D representing the positions of each component in the assembly absolute
+        frame.
+    :type positions: List[:class:`volmdlr.Frame3D`]
     :param name: The Assembly's name
     :type name: str
     """
     _standalone_in_db = True
     _eq_is_data_eq = True
-    _non_serializable_attributes = ['bounding_box']
+    _non_serializable_attributes = ['bounding_box', "primitives"]
     _non_data_eq_attributes = ['name', 'bounding_box']
     _non_data_hash_attributes = ['name', 'bounding_box']
 
-    def __init__(self, primitives: List[Primitive3D], positions: List[volmdlr.Frame3D],
+    def __init__(self, components: List[Primitive3D], positions: List[volmdlr.Frame3D],
                  frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
-        self.primitives = primitives
+        self.components = components
         self.frame = frame
         self.positions = positions
-        self.positioned_primitives = [self.map_primitive(primitive, frame, frame_primitive)
-                                      for primitive, frame_primitive in zip(primitives, positions)]
+        self.primitives = [self.map_primitive(primitive, frame, frame_primitive)
+                                      for primitive, frame_primitive in zip(components, positions)]
         self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)
 
@@ -1062,7 +1063,7 @@ class Assembly(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.positioned_primitives])
+        return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
 
     def babylon_data(self):
         """
@@ -1073,7 +1074,7 @@ class Assembly(dc.PhysicalObject):
 
         meshes = []
         lines = []
-        for primitive in self.positioned_primitives:
+        for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
                 if hasattr(primitive, 'babylon_curves'):
@@ -1098,14 +1099,13 @@ class Assembly(dc.PhysicalObject):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new VolumeModel.
+        Changes frame_mapping and return a new Assembly.
 
         side = 'old' or 'new'
         """
-        new_frame = self.frame.frame_mapping(frame, side)
         new_positions = [position.frame_mapping(frame, side)
                           for position in self.positions]
-        return Assembly(self.primitives, new_positions, new_frame, self.name)
+        return Assembly(self.components, new_positions, self.frame, self.name)
 
     @staticmethod
     def map_primitive(primitive, global_frame, transformed_frame):
@@ -1135,8 +1135,13 @@ class Assembly(dc.PhysicalObject):
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
         new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
+        if new_frame == volmdlr.OXYZ:
+            return primitive
         new_primitive = primitive.frame_mapping(new_frame, 'old')
         return new_primitive
+
+    def volmdlr_primitives(self):
+        return [self]
 
     def to_step(self, current_id):
         """

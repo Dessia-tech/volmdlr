@@ -5525,6 +5525,12 @@ class LineSegment3D(LineSegment):
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
 
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        if not self.point_belongs(point1) or not self.point_belongs(point2):
+            raise ValueError('Point not on curve')
+
+        return LineSegment3D(point1, point2)
+
 
 class BSplineCurve3D(BSplineCurve):
     """

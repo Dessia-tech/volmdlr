@@ -803,26 +803,34 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
+            outer_contour3d = contours3d[0]
             inner_contours2d = []
+            inner_contours3d = None
         elif lc3d > 1:
             area = -1
             inner_contours2d = []
+            inner_contours3d = []
 
             contours2d = [self.contour3d_to_2d(contour3d) for contour3d in contours3d]
 
             check_contours = [not contour2d.is_ordered(tol=1e-3) for contour2d in contours2d]
             if any(check_contours):
+                # Not implemented yet, but repair_contours2d should also return outer_contour3d and inner_contours3d
                 outer_contour2d, inner_contours2d = self.repair_contours2d(contours2d[0], contours2d[1:])
+                outer_contour3d, inner_contours3d = None, None
             else:
-                for contour2d in contours2d:
+                for contour2d, contour3d in zip(contours2d, contours3d):
                     # if not contour2d.is_ordered(1e-4):
                     #     contour2d = vm_parametric.contour2d_healing(contour2d)
                     inner_contours2d.append(contour2d)
+                    inner_contours3d.append(contour3d)
                     contour_area = contour2d.area()
                     if contour_area > area:
                         area = contour_area
                         outer_contour2d = contour2d
+                        outer_contour3d = contour3d
                 inner_contours2d.remove(outer_contour2d)
+                inner_contours3d.remove(outer_contour3d)
         else:
             raise ValueError('Must have at least one contour')
 
@@ -835,7 +843,10 @@ class Surface3D(DessiaObject):
         #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
-        return class_(self, surface2d=surface2d, name=name)
+        face = class_(self, surface2d=surface2d, name=name)
+        face._outer_contour3d = outer_contour3d
+        face._inner_contours3d = inner_contours3d
+        return face
 
     def repair_primitives_periodicity(self, primitives2d):
         """
@@ -950,7 +961,8 @@ class Surface3D(DessiaObject):
                     if primitives is None:
                         continue
                     primitives3d.extend(primitives)
-                except AttributeError:
+                except AttributeError as error:
+                    print(error)
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
                           f'with {primitive2d.__class__.__name__}')
             else:
