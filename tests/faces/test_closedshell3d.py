@@ -2,7 +2,7 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import edges, faces, primitives3d, wires
+from volmdlr import edges, faces, primitives3d, wires, surfaces, shells
 
 
 class TestClosedShell3D(unittest.TestCase):
@@ -11,8 +11,8 @@ class TestClosedShell3D(unittest.TestCase):
         frame2 = volmdlr.Frame3D(volmdlr.Point3D(0, 1, 0), volmdlr.X3D, volmdlr.Y3D, 3 * volmdlr.Z3D)
         block1 = primitives3d.Block(frame1)
         block2 = primitives3d.Block(frame2)
-        closed_shell1 = faces.ClosedShell3D(block1.faces)
-        closed_shell2 = faces.ClosedShell3D(block2.faces)
+        closed_shell1 = shells.ClosedShell3D(block1.faces)
+        closed_shell2 = shells.ClosedShell3D(block2.faces)
         block3 = closed_shell1.union(closed_shell2)
         block3[0].merge_faces()
         self.assertEqual(len(block3[0].faces), 10)
@@ -47,8 +47,6 @@ class TestClosedShell3D(unittest.TestCase):
         boundary2 = boundary2.translation(offset=(0.5 + 0.15) * volmdlr.X3D)
         union = boundary1.union(boundary2)[0]
         self.assertEqual(len(union.faces), 11)
-
-
 
     def test_set_operations_blocks(self):
 
@@ -117,14 +115,14 @@ class TestClosedShell3D(unittest.TestCase):
                       [faces.Triangle3D(*points)
                        for points in poly2_vol1.sewing(poly3_vol1, volmdlr.X3D, volmdlr.Y3D)]
 
-        plane3d_1 = faces.Plane3D.from_plane_vectors(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
-        surf2d_1 = faces.Surface2D(poly1_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), [])
+        plane3d_1 = surfaces.Plane3D.from_plane_vectors(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+        surf2d_1 = surfaces.Surface2D(poly1_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), [])
 
-        plane3d_2 = faces.Plane3D.from_plane_vectors(0.3 * volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
-        surf2d_2 = faces.Surface2D(poly3_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), [])
+        plane3d_2 = surfaces.Plane3D.from_plane_vectors(0.3 * volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
+        surf2d_2 = surfaces.Surface2D(poly3_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), [])
         shell_faces += [faces.PlaneFace3D(plane3d_1, surf2d_1), faces.PlaneFace3D(plane3d_2, surf2d_2)]
 
-        shell1 = faces.ClosedShell3D(shell_faces)
+        shell1 = shells.ClosedShell3D(shell_faces)
         shell2 = shell1.translation(volmdlr.Point3D(0, -0.28, -0.2)).rotation(volmdlr.O3D, volmdlr.X3D, math.pi)
         union_shell1_shell2 = shell1.union(shell2)
         self.assertEqual(len(union_shell1_shell2), 2)
@@ -137,7 +135,7 @@ class TestClosedShell3D(unittest.TestCase):
         boundary2 = boundary2.translation(offset=(0.1) * volmdlr.Z3D)
         union = boundary1.union(boundary2)[0]
         center = union.bounding_box.center
-        plane = volmdlr.faces.Plane3D.from_normal(center, volmdlr.Y3D)
+        plane = surfaces.Plane3D.from_normal(center, volmdlr.Y3D)
         cut_by_plane = union.cut_by_plane(plane)
         self.assertEqual(len(cut_by_plane), 1)
         self.assertEqual(cut_by_plane[0].area(), 0.254)
