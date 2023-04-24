@@ -13,6 +13,8 @@ from trimesh.proximity import closest_point
 
 import volmdlr as vm
 import volmdlr.faces as vmf
+from volmdlr import shells as vmshells
+from volmdlr import surfaces
 import volmdlr.primitives3d as p3d
 import volmdlr.step as vstep
 import volmdlr.stl as vmstl
@@ -167,9 +169,9 @@ class PointCloud3D(dc.DessiaObject):
 
             if n in (resolution - 1, 0):
                 faces.append(
-                    vmf.PlaneFace3D(surface3d=vmf.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2),
-                                    surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n],
-                                                                  normal, vec1, vec2)))
+                    vmf.PlaneFace3D(
+                        surface3d=surfaces.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2),
+                        surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2)))
 
             if n != resolution - 1:
                 poly2 = polygon3d[n + 1]
@@ -179,7 +181,7 @@ class PointCloud3D(dc.DessiaObject):
                 list_faces = [vmf.Triangle3D(*triangle_points, alpha=0.9, color=(1, 0.1, 0.1))
                               for triangle_points in list_triangles_points]
                 faces.extend(list_faces)
-        return vmf.ClosedShell3D(faces)
+        return vmshells.ClosedShell3D(faces)
 
     @staticmethod
     def _helper_simplify_polygon(polygon, position_plane, normal, vec1, vec2):
@@ -191,13 +193,13 @@ class PointCloud3D(dc.DessiaObject):
 
     @staticmethod
     def _poly_to_surf2d(polygon, position_plane, normal, vec1, vec2):
-        return vmf.Surface2D(polygon.to_2d(position_plane * normal, vec1, vec2), [])
+        return surfaces.Surface2D(polygon.to_2d(position_plane * normal, vec1, vec2), [])
 
     @staticmethod
     def _helper_sew_polygons(poly1, poly2, vec1, vec2):
         return poly1.sewing(poly2, vec1, vec2)
 
-    def shell_distances(self, shells: vmf.OpenTriangleShell3D) -> Tuple['PointCloud3D', List[float], List[int]]:
+    def shell_distances(self, shells: vmshells.OpenTriangleShell3D) -> Tuple['PointCloud3D', List[float], List[int]]:
         """
         Computes distance of point to shell for each point in self.points.
 
@@ -210,7 +212,7 @@ class PointCloud3D(dc.DessiaObject):
                 distances.tolist(),
                 triangles_idx.tolist())
 
-    def shell_distances_ndarray(self, shells: vmf.OpenTriangleShell3D):
+    def shell_distances_ndarray(self, shells: vmshells.OpenTriangleShell3D):
         """
         Computes distance of point to shell for each point in self.points in a numpy formatted data.
 
@@ -255,7 +257,7 @@ class PointCloud3D(dc.DessiaObject):
             extended_zone = p3d.Sphere(point, distance_extended)
             sphere_primitive = extended_zone.shell_faces[0]
 
-            spheres.append(vmf.ClosedShell3D([sphere_primitive]))
+            spheres.append(vmshells.ClosedShell3D([sphere_primitive]))
 
             extended_points.extend(sphere_primitive.triangulation().points)
 
@@ -269,7 +271,7 @@ class PointCloud3D(dc.DessiaObject):
         return extended_points
 
     @staticmethod
-    def offset_to_shell(positions_plane: List[vmf.Plane3D],
+    def offset_to_shell(positions_plane: List[surfaces.Plane3D],
                         polygons2d: List[vmw.ClosedPolygon2D], offset: float):
 
         origin_f, origin_l = positions_plane[0], positions_plane[-1]
