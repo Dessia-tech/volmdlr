@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Common primitives 3D.
-
 """
 
 import math
@@ -10,7 +9,6 @@ import warnings
 from random import uniform
 from typing import Dict, List, Tuple
 
-import dessia_common
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -55,22 +53,9 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
         volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
 
     def arc_features(self, point_index: int):
+        # raise NotImplementedError
         radius = self.radius[point_index]
-        if self.closed:
-            if point_index == 0:
-                pt1 = self.points[-1]
-            else:
-                pt1 = self.points[point_index - 1]
-            pti = self.points[point_index]
-            if point_index < self.npoints - 1:
-                pt2 = self.points[point_index + 1]
-            else:
-                pt2 = self.points[0]
-        else:
-            pt1 = self.points[point_index - 1]
-            pti = self.points[point_index]
-            pt2 = self.points[point_index + 1]
-
+        pt1, pti, pt2 = self.get_points(point_index)
         dist1 = (pt1 - pti).norm()
         dist2 = (pt2 - pti).norm()
         dist3 = (pt1 - pt2).norm()
@@ -88,13 +73,13 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
         v1 = u1.cross(n)
         v2 = u2.cross(n)
 
-        l1 = volmdlr.edges.Line3D(p3, p3 + v1)
-        l2 = volmdlr.edges.Line3D(p4, p4 + v2)
+        line1 = volmdlr.edges.Line3D(p3, p3 + v1)
+        line2 = volmdlr.edges.Line3D(p4, p4 + v2)
 
-        u3 = u1 + u2  # mean of v1 and v2
-        u3 /= u3.norm()
+        w = u1 + u2  # mean of v1 and v2
+        w /= w.norm()
 
-        interior = l1.minimum_distance_points(l2)[0] - u3 * radius
+        interior = line1.minimum_distance_points(line2)[0] - w * radius
         return p3, interior, p4, dist, alpha
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -164,7 +149,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
 
-    def __init__(self, points, radius, adapt_radius=False, name=''):
+    def __init__(self, points: List[volmdlr.Point3D], radius: float, adapt_radius: bool = False, name: str = ''):
         volmdlr.primitives.RoundedLineSegments.__init__(
                 self, points, radius, 'volmdlr.edges.LineSegment3D',
                 'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
@@ -458,6 +443,10 @@ class Block(volmdlr.faces.ClosedShell3D):
         return lines
 
     def plot2d(self, x3d, y3d, ax=None):
+        """
+        Plot 2d with matplotlib.
+
+        """
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -750,7 +739,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),
                               x=self.x.copy(), y=self.y.copy(),
-                              contour2d=self.contour2d.copy(),
+                              contour2d=self.contour2d.copy(deep=deep, memo=memo),
                               axis=self.axis.copy(), angle=self.angle,
                               axis_point=self.axis_point.copy(),
                               color=self.color, alpha=self.alpha,
@@ -1081,7 +1070,7 @@ class Cylinder(RevolvedProfile):
         """
         Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class Revolved Profile.
         """
-        return dessia_common.DessiaObject.to_dict(self, use_pointers, memo, path)
+        return dc.DessiaObject.to_dict(self, use_pointers, memo, path)
 
     def copy(self, deep=True, memo=None):
         """
@@ -1244,7 +1233,7 @@ class Cylinder(RevolvedProfile):
 
     def random_point_inside(self) -> volmdlr.Point3D:
         """
-        Gets a random point inside a cylindier.
+        Gets a random point inside a cylinder.
 
         :return: a random point inside the Cylinder
         """
@@ -1536,7 +1525,7 @@ class HollowCylinder(RevolvedProfile):
         return self.length * math.pi * (self.outer_radius**2
                                         - self.inner_radius**2)
 
-    def copy(self):
+    def copy(self, *args, **kwargs):
         """
         Creates a copy of HollowCylinder.
 
@@ -1750,17 +1739,18 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                     wire_primitive.__class__ is volmdlr.edges.BezierCurve3D:
 
                 tangents = []
-                for k, pt in enumerate(wire_primitive.points):
+                for k, _ in enumerate(wire_primitive.points):
                     position = k / (len(wire_primitive.points) - 1)
                     tangents.append(wire_primitive.tangent(position))
 
                 circles = []
                 for pt, tan in zip(wire_primitive.points, tangents):
+                    # TODO: replace circle by real contour!
                     circles.append(volmdlr.wires.Circle3D.from_center_normal(center=pt,
                                                                              normal=tan,
                                                                              radius=self.contour2d.radius))
 
-                polys = [volmdlr.wires.ClosedPolygon3D(c.tessellation_points()) for c in circles]
+                polys = [volmdlr.wires.ClosedPolygon3D(c.discretization_points()) for c in circles]
 
                 size_v, size_u = len(polys[0].points) + 1, len(polys)
                 degree_u, degree_v = 3, 3
@@ -1829,7 +1819,7 @@ class Sphere(RevolvedProfile):
 
     """
 
-    def __init__(self, center, radius,
+    def __init__(self, center: volmdlr.Point3D, radius: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
         self.center = center
@@ -1898,8 +1888,7 @@ class Sphere(RevolvedProfile):
                 r_floor = center_floor.point_distance(pt_floor_init)
                 theta_floor = resolution / r_floor
 
-                nb_points_floor = int(2 * math.pi / theta_floor) + 1
-                rota_theta_floor = [n * theta_floor for n in range(nb_points_floor)]
+                rota_theta_floor = [n * theta_floor for n in range(int(2 * math.pi / theta_floor) + 1)]
 
                 if (2 * math.pi - rota_theta_floor[-1]) / theta_floor <= 0.1:
                     rota_theta_floor.pop()
@@ -1964,7 +1953,7 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict, **kwargs):
         """
         Converts a step primitive to a BSplineExtrusion.
 

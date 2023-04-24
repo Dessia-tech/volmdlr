@@ -44,13 +44,9 @@ point2 = volmdlr.Point2D(-0.005383974596215561, 0.011325317547305485)
 
 # %% Wire.extract_without_primitives
 
-extracted_primitives_inside_true = contour2d.extract_primitives(point1, contour2d.primitives[3],
-                                                                point2, contour2d.primitives[3],
-                                                                inside=True)
+extracted_primitives_inside_true = contour2d.extract_with_points(point1, point2, inside=True)
 
-extracted_primitives_inside_false = contour2d.extract_primitives(point1, contour2d.primitives[3],
-                                                                 point2, contour2d.primitives[3],
-                                                                 inside=False)
+extracted_primitives_inside_false = contour2d.extract_with_points(point1, point2, inside=False)
 
 extracted_primitives = [extracted_primitives_inside_true, extracted_primitives_inside_false]
 
@@ -65,5 +61,5 @@ for i in range(len(axs)):
     point1.plot(ax=axs[i])
     point2.plot(ax=axs[i])
     for prim in extracted_primitives[i]:
-        prim.plot(ax=axs[i], color=colors[i])
+        prim.plot(ax=axs[i], edge_style=volmdlr.edges.EdgeStyle(color=colors[i]))
     axs[i].set_title(titles[i])
