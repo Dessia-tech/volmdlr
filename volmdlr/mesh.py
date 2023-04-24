@@ -138,7 +138,7 @@ class TriangularElement(vmw.Triangle):
     _generic_eq = True
 
     def __init__(self, points: List[volmdlr.Point2D]):
-        super().__init__(*points)
+        # super().__init__(*points)
         self.points = points
         # self.linear_elements = self._to_linear_elements()
         # self.form_functions = self._form_functions()
@@ -149,7 +149,7 @@ class TriangularElement(vmw.Triangle):
 
         # self.area = self._area()
 
-        # vmw.Triangle.__init__(self, points)
+        vmw.Triangle.__init__(self, *points)
 
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
@@ -619,7 +619,7 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
     #     return volmdlr.wires.ClosedPolygon2D(points)
 
 
-class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
+class TetrahedralElement(DessiaObject):
     """ Class to define a 3D tetrahedral element. """
 
     _standalone_in_db = False
@@ -722,7 +722,7 @@ class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
         return form_funct[0], form_funct[1], form_funct[2], form_funct[3]
 
 
-class TetrahedralElementQuadratic(TriangularElement, vmw.ClosedPolygon3D):
+class TetrahedralElementQuadratic(DessiaObject):
     """ Class to define a 3D quadratic tetrahedral element. """
 
     _standalone_in_db = False
@@ -734,8 +734,7 @@ class TetrahedralElementQuadratic(TriangularElement, vmw.ClosedPolygon3D):
     def __init__(self, points, name: str = ''):
         self.points = points
         self.name = name
-        # DessiaObject.__init__(self, name=name)
-        super().__init__(points)
+        DessiaObject.__init__(self, name=name)
 
 
 class ElementsGroup(DessiaObject):
