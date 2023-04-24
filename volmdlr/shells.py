@@ -1326,8 +1326,6 @@ class ClosedShell3D(OpenShell3D):
         If it returns an empty list, it means the two shells are valid to continue the
         operation.
         """
-        if self.is_disjoint_from(shell2, tol):
-            return []
         if self.is_inside_shell(shell2):
             return [self]
         if shell2.is_inside_shell(self):
@@ -1339,6 +1337,8 @@ class ClosedShell3D(OpenShell3D):
         Given two ClosedShell3D, it returns the new object resulting from the intersection of the two.
 
         """
+        if self.is_disjoint_from(shell2, tol):
+            return []
         validate_set_operation = self.validate_intersection_operation(
             shell2, tol)
         if validate_set_operation:
