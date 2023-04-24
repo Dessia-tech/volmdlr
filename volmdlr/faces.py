@@ -3056,3 +3056,21 @@ class BSplineFace3D(Face3D):
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface = surfaces.Surface2D(outer_contour, [])
         return BSplineFace3D(bspline_surface3d, surface, name)
+
+    def to_planeface3d(self, plane3d: surfaces.Plane3D = None):
+        """
+        Converts a Bspline face3d to a Plane face3d (using or without a reference Plane3D).
+
+        :param plane3d: A reference Plane3D, defaults to None
+        :type plane3d: Plane3D, optional
+        :return: A Plane face3d
+        :rtype: PlaneFace3D
+        """
+
+        if not plane3d:
+            plane3d = self.surface3d.to_plane3d()
+        surface2d = surfaces.Surface2D(
+            outer_contour=plane3d.contour3d_to_2d(self.outer_contour3d),
+            inner_contours=[plane3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
+
+        return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
