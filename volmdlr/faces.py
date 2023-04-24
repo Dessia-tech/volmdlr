@@ -2939,7 +2939,120 @@ class BSplineFace3D(Face3D):
         dis_sorted = sorted(dis)
 
         shared = []
+        for k, point1 in enumerate(contour1.primitives):
+            if dis_sorted[0] == dis_sorted[1]:
+                indices = npy.where(npy.array(dis) == dis_sorted[0])[0]
+                index1 = indices[0]
+                index2 = indices[1]
+            else:
+                index1 = dis.index(dis_sorted[0])
+                index2 = dis.index(dis_sorted[1])
+            if ((point1.start.is_close(points1[index1]) and point1.end.is_close(points1[index2]))
+                    or
+                    (point1.end.is_close(points1[index1]) and point1.start.is_close(points1[index2]))):
+                shared.append(point1)
+                i = k
 
+        for k, prim2 in enumerate(contour2.primitives):
+            if ((prim2.start.is_close(points2[ind[index1]]) and prim2.end.is_close(points2[ind[index2]]))
+                    or
+                    (prim2.end.is_close(points2[ind[index1]]) and prim2.start.is_close(points2[ind[index2]]))):
+                shared.append(prim2)
+                j = k
+
+        points = [contour2.primitives[j].start, contour2.primitives[j].end]
+
+        if points.index(contour1.primitives[i].start.nearest_point(points)) == 1:
+            start1 = contour1_2d.primitives[i].start
+            end1 = contour1_2d.primitives[i].end
+
+            start2 = contour2_2d.primitives[j].end
+            end2 = contour2_2d.primitives[j].start
+
+        else:
+            start1 = contour1_2d.primitives[i].start
+            end1 = contour1_2d.primitives[i].end
+
+            start2 = contour2_2d.primitives[j].start
+            end2 = contour2_2d.primitives[j].end
+
+        return start1, end1, start2, end2
+
+    def adjacent_direction(self, other_bspline_face3d):
+        """
+        Find directions (u or v) between two faces, in the nearest edges between them.
+        """
+
+        start1, end1, start2, end2 = self.extremities(other_bspline_face3d)
+
+        du1 = abs((end1 - start1)[0])
+        dv1 = abs((end1 - start1)[1])
+
+        if du1 < dv1:
+            adjacent_direction1 = 'v'
+            diff1 = (end1 - start1)[1]
+        else:
+            adjacent_direction1 = 'u'
+            diff1 = (end1 - start1)[0]
+
+        du2 = abs((end2 - start2)[0])
+        dv2 = abs((end2 - start2)[1])
+
+        if du2 < dv2:
+            adjacent_direction2 = 'v'
+            diff2 = (end2 - start2)[1]
+        else:
+            adjacent_direction2 = 'u'
+            diff2 = (end2 - start2)[0]
+
+        return adjacent_direction1, diff1, adjacent_direction2, diff2
+
+    def adjacent_direction_xy(self, other_face3d):
+        """
+        Find out in which direction the faces are adjacent.
+        :type other_face3d: volmdlr.faces.BSplineFace3D
+        :return: adjacent_direction
+        """
+
+        contour1 = self.outer_contour3d
+        contour2 = other_face3d.outer_contour3d
+        point1, point2 = contour1.shared_primitives_extremities(contour2)
+
+        coord = point1 - point2
+        coord = [abs(coord.x), abs(coord.y)]
+
+        if coord.index(max(coord)) == 0:
+            return 'x'
+        return 'y'
+
+    def merge_with(self, other_bspline_face3d):
+        """
+        Merge two adjacent faces.
+        :type: other_bspline_face3d : volmdlr.faces.BSplineFace3D
+        :rtype: merged_face : volmdlr.faces.BSplineFace3D
+        """
+
+        merged_surface = self.surface3d.merge_with(other_bspline_face3d.surface3d)
+        contours = self.outer_contour3d.merge_with(other_bspline_face3d.outer_contour3d)
+        contours.extend(self.inner_contours3d)
+        contours.extend(other_bspline_face3d.inner_contours3d)
+        merged_face = merged_surface.face_from_contours3d(contours)
+
+        return merged_face
+
+    @classmethod
+    def from_surface_rectangular_cut(cls, bspline_surface3d, u1: float, u2: float,
+                                     v1: float, v2: float, name: str = ''):
+        """
+        Cut a rectangular piece of the BSplineSurface3D object and return a BSplineFace3D object.
+        """
+        point1 = volmdlr.Point2D(u1, v1)
+        point2 = volmdlr.Point2D(u2, v1)
+        point3 = volmdlr.Point2D(u2, v2)
+        point4 = volmdlr.Point2D(u1, v2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        surface = surfaces.Surface2D(outer_contour, [])
+        return BSplineFace3D(bspline_surface3d, surface, name)
     def to_planeface3d(self, plane3d: surfaces.Plane3D = None):
         """
         Converts a Bspline face3d to a Plane face3d (using or without a reference Plane3D).
