@@ -6062,6 +6062,7 @@ class BSplineSurface3D(Surface3D):
     def to_plane3d(self):
         """
         Converts a Bspline surface3d to a Plane3d.
+
         :return: A Plane
         :rtype: Plane3D
         """
