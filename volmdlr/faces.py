@@ -1425,7 +1425,7 @@ class Plane3D(Surface3D):
             ax = fig.add_subplot(111, projection='3d')
             ax.axis('equal')
 
-        self.frame.plot(ax=ax, color=edge_style.color, ratio=0.2*length)
+        self.frame.plot(ax=ax, color=edge_style.color)
         for i in range(grid_size):
             for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
                 start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
@@ -6886,7 +6886,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         list_faces = []
         if not self.surface2d.outer_contour.edge_polygon.is_trigo:
-            self.surface2d.outer_contour = self.surface2d.outer_contour.invert()
+            self.surface2d.outer_contour.invert_inplace()
         new_faces_contours = self.surface2d.outer_contour.divide(list_open_cutting_contours, inside)
         new_inner_contours = len(new_faces_contours) * [[]]
         if self.surface2d.inner_contours:
