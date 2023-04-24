@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: ordering_contour
 - WireMixin: order_wire
 - Contour2D: delete cut_by_linesegments
+- split faces.py into surfaces.py, faces.py and shells.py
 
 ### Changed
 - better surface3d plots
@@ -142,6 +143,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour3D: merge_with()
 * Contour2D: closest_point_to_point2, get_furthest_point_to_point2
 
+## v0.9.3
+
+- build: bump dessia common to 0.10.0
+- build: remove useless jsonschema dep
+- build: update package.xml for freecad
+
 ## v0.9.1
 
 ### Fixed
@@ -149,7 +156,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed many pylint errors: 13/03/2023
 - fix contour2d: divide
 
-## v0.9.0 [Released 06/03/2023]
+### Documentation
+ - typo in README.md
+
+## v0.9.0 [released 03/26/2023]
 
 ### New Features
 * Unit coversion factor parameter added to the end of the from_step arguments parameter (So we can convert the units correctly)

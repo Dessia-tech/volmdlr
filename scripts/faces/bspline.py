@@ -6,6 +6,7 @@
 
 import volmdlr as vm
 import volmdlr.faces as vmf
+from volmdlr import surfaces
 
 # 2D
 control_points = [vm.Point3D(0, 0, 0),
@@ -20,7 +21,7 @@ control_points = [vm.Point3D(0, 0, 0),
                   ]
 
 
-surface = vmf.BSplineSurface3D(degree_u=2,
+surface = surfaces.BSplineSurface3D(degree_u=2,
                                degree_v=2,
                                control_points=control_points,
                                nb_u=3,
@@ -30,7 +31,7 @@ surface = vmf.BSplineSurface3D(degree_u=2,
                                u_knots=[0.1, 0.3, 0.5, 0.7],
                                v_knots=[0.1, 0.3, 0.5, 0.7])
 
-face = surface.rectangular_cut(0, 1, 0, 1)
+face = vmf.BSplineFace3D.from_surface_rectangular_cut(surface, 0, 1, 0, 1)
 face._check_platform()
 
 face.babylonjs()
