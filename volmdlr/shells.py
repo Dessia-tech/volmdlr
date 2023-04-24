@@ -62,6 +62,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             self._bbox = None
 
         self._faces_graph = None
+        self._vertices_points = None
 
         volmdlr.core.CompositePrimitive3D.__init__(self,
                                                    primitives=faces, color=color, alpha=alpha,
@@ -80,12 +81,29 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return True
 
     @property
+    def vertices_points(self):
+        """Gets the shell's vertices points. """
+        if self._vertices_points is None:
+            vertices_points = []
+            for face in self.faces:
+                for contour in [face.outer_contour3d] + face.inner_contours3d:
+                    for edge in contour.primitives:
+                        if not volmdlr.core.point_in_list(edge.start, vertices_points):
+                            vertices_points.append(edge.start)
+                        if not volmdlr.core.point_in_list(edge.end, vertices_points):
+                            vertices_points.append(edge.end)
+            self._vertices_points = vertices_points
+        return self._vertices_points
+
+    @property
     def faces_graph(self):
         if not self._faces_graph:
             faces_graph = nx.Graph()
             for face in self.faces:
                 for edge in face.outer_contour3d.primitives:
-                    faces_graph.add_edge(edge.start, edge.end, edge=edge)
+                    edge_start_index = volmdlr.core.get_point_index_in_list(edge.start, self.vertices_points)
+                    edge_end_index = volmdlr.core.get_point_index_in_list(edge.end, self.vertices_points)
+                    faces_graph.add_edge(edge_start_index, edge_end_index, edge=edge)
             self._faces_graph = faces_graph
         return self._faces_graph
 
@@ -1301,12 +1319,27 @@ class ClosedShell3D(OpenShell3D):
         # new_shell.eliminate_not_valid_closedshell_faces()
         return [new_shell]
 
+    def validate_intersection_operation(self, shell2, tol):
+        """
+        Verifies if two shells are valid for union or subtractions operations.
+        Its Verfies if they are disjointed or if one is totally inside the other.
+        If it returns an empty list, it means the two shells are valid to continue the
+        operation.
+        """
+        if self.is_disjoint_from(shell2, tol):
+            return []
+        if self.is_inside_shell(shell2):
+            return [self]
+        if shell2.is_inside_shell(self):
+            return [shell2]
+        return []
+
     def intersection(self, shell2, tol=1e-8):
         """
         Given two ClosedShell3D, it returns the new object resulting from the intersection of the two.
 
         """
-        validate_set_operation = self.validate_set_operation(
+        validate_set_operation = self.validate_intersection_operation(
             shell2, tol)
         if validate_set_operation:
             return validate_set_operation
