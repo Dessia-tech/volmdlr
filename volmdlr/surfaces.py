@@ -722,7 +722,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                 file.write('\n')
         file.close()
 
-    def to_msh(self, file_name: str, mesh_dimension: int,
+    def to_msh(self, file_name: str, mesh_dimension: int, mesh_order: int,
                factor: float, **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
@@ -758,7 +758,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                     factor=factor, curvature_mesh_size=kwargs['curvature_mesh_size'],
                     min_points=kwargs['min_points'], initial_mesh_size=kwargs['initial_mesh_size'])
 
-        volmdlr.core.VolumeModel.generate_msh_file(file_name, mesh_dimension)
+        volmdlr.core.VolumeModel.generate_msh_file(file_name, mesh_dimension, mesh_order)
 
         # gmsh.initialize()
         # gmsh.open(file_name + ".geo")

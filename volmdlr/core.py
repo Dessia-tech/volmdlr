@@ -1905,8 +1905,8 @@ class VolumeModel(dc.PhysicalObject):
         # gmsh.finalize()
 
     def to_msh_file(self, mesh_dimension: int,
-                    factor: float, mesh_order: int = 1,
-                    file_name: str = '', **kwargs):
+                    factor: float, stream: dcf.StringFile,
+                    mesh_order: int = 1, file_name: str = '', **kwargs):
         """ Convert and write model to a .msh file. """
 
         for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
@@ -1921,6 +1921,7 @@ class VolumeModel(dc.PhysicalObject):
             self.to_msh_stream(mesh_dimension=mesh_dimension,
                                factor=factor, file_name=file,
                                mesh_order=mesh_order,
+                               stream=stream,
                                curvature_mesh_size=kwargs['curvature_mesh_size'],
                                min_points=kwargs['min_points'],
                                initial_mesh_size=kwargs['initial_mesh_size'])
