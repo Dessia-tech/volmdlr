@@ -40,6 +40,8 @@ class Stl(dc.DessiaObject):
     describes binary version.
     """
 
+    _standalone_in_db = True
+
     _dessia_methods = ['from_text_stream', 'from_text_stream', 'to_closed_shell', 'to_open_shell']
 
     def __init__(self, triangles: List[vmf.Triangle3D], name: str = ''):
@@ -168,40 +170,6 @@ class Stl(dc.DessiaObject):
         with open(filepath, 'r', errors='ignore') as file:
             return cls.from_text_stream(
                 file, distance_multiplier=distance_multiplier)
-
-    # Commented because seemed invalid
-    # @classmethod
-    # def from_file_points(cls, filename:str, distance_multiplier=0.001):
-    #     all_points = []
-    #     if is_binary(filename):
-    #         with open(filename, 'rb') as file:
-    #             stream = KaitaiStream(file)
-    #             name = stream.read_bytes(80).decode('utf8')
-    #             # print(name)
-    #             num_triangles = stream.read_u4le()
-    #             # print(num_triangles)
-    #             all_points = []
-    #             for i in range(num_triangles):
-    #                 if i % 5000 == 0:
-    #                     print('reading stl', round(i/num_triangles*100, 2),
-    #                           '%')
-    #                 _ = vm.Vector3D(stream.read_f4le(),
-    #                                      stream.read_f4le(),
-    #                                      stream.read_f4le())
-    #                 # print(n)
-    #                 p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le())
-    #                 p2 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le())
-    #                 p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le(),
-    #                                 distance_multiplier*stream.read_f4le())
-    #                 # print(p1, p2, p3)
-    #                 all_points.extend([p1, p2, p3])
-    #                 stream.read_u2le()
-    #     return all_points
 
     def save_to_binary_file(self, filepath, distance_multiplier=1000):
         if not filepath.endswith('.stl'):

@@ -2,7 +2,7 @@ import unittest
 from copy import deepcopy
 import volmdlr
 import volmdlr.edges
-from volmdlr.core import CompositePrimitive2D
+from volmdlr.core import CompositePrimitive2D, EdgeStyle
 
 
 class TestCompositePrimitive2D(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestCompositePrimitive2D(unittest.TestCase):
             self.assertListEqual(line.get_xydata().tolist(), [[ls.start.x, ls.start.y], [ls.end.x, ls.end.y]])
 
     def test_plot_equal_aspect(self):
-        ax = self.composite_2d.plot(equal_aspect=True)
+        ax = self.composite_2d.plot(edge_style=EdgeStyle(equal_aspect=True))
         self.assertEqual(ax.get_aspect(), 1.0)
 
     def test_init(self):
