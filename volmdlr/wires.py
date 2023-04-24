@@ -681,19 +681,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                         intersection_points_primitives.append((intersection, primitive))
         return intersection_points_primitives
 
-    @classmethod
-    def from_points(cls, points: List[volmdlr.Point2D]):
-        """
-        Define a wire based on points 2d with line_segments 2d.
-
-        :param points: points to define wire 2d.
-        """
-        edges = []
-        for i in range(0, len(points) - 1):
-            edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
-
-        return cls(edges)
-
     def linesegment_crossings(self, linesegment: 'volmdlr.edges.LineSegment2D'):
         """
         Gets the wire primitives intersecting with the line.
@@ -1625,6 +1612,24 @@ class ContourMixin(WireMixin):
     def invert(self):
         """Invert the Contour."""
         return self.__class__(self.inverted_primitives())
+
+    @classmethod
+    def from_points(cls, points):
+        """
+        Create a contour from points with line_segments.
+        """
+
+        if len(points) < 3:
+            raise ValueError('contour is defined at least with three points')
+
+        linesegment_name = 'LineSegment' + points[0].__class__.__name__[-2:]
+        edges = []
+        for i in range(0, len(points) - 1):
+            edges.append(getattr(volmdlr.edges, linesegment_name)(points[i], points[i + 1]))
+        edges.append(getattr(volmdlr.edges, linesegment_name)(points[-1], points[0]))
+
+        contour = cls(edges)
+        return contour
 
 
 class Contour2D(ContourMixin, Wire2D):
@@ -4673,24 +4678,6 @@ class Contour3D(ContourMixin, Wire3D):
         if dict_intersecting_points:
             return dict_intersecting_points
         return None
-
-    @classmethod
-    def from_points(cls, points: List[volmdlr.Point3D]):
-        """
-        Create a contour 3d from points with line_segments3D.
-
-        """
-
-        if len(points) < 3:
-            raise ValueError('contour is defined at least with three points')
-        edges = []
-        for i in range(0, len(points) - 1):
-            edges.append(volmdlr.edges.LineSegment3D(points[i], points[i + 1]))
-
-        edges.append(volmdlr.edges.LineSegment3D(points[-1], points[0]))
-        contour = cls(edges)
-
-        return contour
 
     def clean_primitives(self):
         """
