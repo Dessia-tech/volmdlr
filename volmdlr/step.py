@@ -606,30 +606,51 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometr
 
 
 def product_definition_shape(arguments, object_dict):
+    """
+    Returns the data in case of a product_definition_shape.
+    """
     return object_dict[arguments[2]]
 
 
 def product_definition(arguments, object_dict):
+    """
+    Returns the data in case of a product_definition.
+    """
     return object_dict[arguments[2]]
 
 
 def product_definition_formation(arguments, object_dict):
+    """
+    Returns the data in case of a product_definition_formation.
+    """
     return object_dict[arguments[2]]
 
 
 def product_definition_formation_with_specified_source(arguments, object_dict):
+    """
+    Returns the data in case of a product_definition_formation_with_specified_source.
+    """
     return object_dict[arguments[2]]
 
 
 def product(arguments, *args, **kwargs):
+    """
+    Returns the data in case of a product.
+    """
     return arguments[0]
 
 
 def application_context(arguments, *args, **kwargs):
+    """
+    Returns the data in case of an application_context.
+    """
     return arguments[0]
 
 
 def product_context(arguments, *args, **kwargs):
+    """
+    Returns the data in case of a product_context.
+    """
     return arguments
 
 
