@@ -1422,7 +1422,7 @@ class Plane3D(Surface3D):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-            ax.axis('equal')
+            ax.set_aspect('equal')
 
         self.frame.plot(ax=ax, color=edge_style.color)
         for i in range(grid_size):

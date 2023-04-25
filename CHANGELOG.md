@@ -47,7 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dessiaobject inheritance up-to-date
 - Edge: unit_direction_vector, unit_normal_vector
 - VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
-
+- ClosedShel3D: intersection method
+- 
 ### Refactor
 - Contour2D: cut_by_wire
 - Contour2D: extract_with_points displaced to WireMixin
@@ -60,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: delete cut_by_linesegments
 - split faces.py into surfaces.py, faces.py and shells.py
 - ContourMixin: from_points
+- ClosedShell3D: improve performance for boolean operations
 
 ### Changed
 - better surface3d plots
@@ -77,6 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: point_projection
 - ClosedShel3D: cut_by_plane
 - Arc3D.minimum_distance_points_line
+- New unittests for plane3d
+- ClosedShel3D: intersection
 
 ## v0.10.0 [Unreleased yet]
 

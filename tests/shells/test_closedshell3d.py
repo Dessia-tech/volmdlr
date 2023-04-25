@@ -49,7 +49,6 @@ class TestClosedShell3D(unittest.TestCase):
         self.assertEqual(len(union.faces), 11)
 
     def test_set_operations_blocks(self):
-
         box_red = primitives3d.Block(
             volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(0.4, 0, 0),
                             volmdlr.Vector3D(0, 0.4, 0), volmdlr.Vector3D(0, 0, 0.4)),
@@ -139,6 +138,28 @@ class TestClosedShell3D(unittest.TestCase):
         cut_by_plane = union.cut_by_plane(plane)
         self.assertEqual(len(cut_by_plane), 1)
         self.assertEqual(cut_by_plane[0].area(), 0.254)
+
+    def test_intersection(self):
+        box1 = primitives3d.Block(
+            volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(0.6, 0, 0),
+                            volmdlr.Vector3D(0, 0.6, 0), volmdlr.Vector3D(0, 0, 0.6)), color=(1, 0.2, 0.2),
+            alpha=0.6)
+        box2 = primitives3d.Block(
+            volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(0.3, 0, 0),
+                            volmdlr.Vector3D(0, 0.3, 0), volmdlr.Vector3D(0, 0, 0.3)), color=(.1, 0.2, 1),
+            alpha=0.6)
+        self.assertEqual(box1.intersection(box2)[0], box2)
+        box3 = primitives3d.Block(
+            volmdlr.Frame3D(volmdlr.Point3D(.3, 0, 0), volmdlr.Vector3D(0.3, 0, 0),
+                            volmdlr.Vector3D(0, 0.3, 0), volmdlr.Vector3D(0, 0, 0.3)), color=(.1, 0.2, 1), alpha=0.6)
+        expected_box = primitives3d.Block(
+            volmdlr.Frame3D(volmdlr.Point3D(.15 * 3/2, 0, 0), volmdlr.Vector3D(0.15, 0, 0),
+                            volmdlr.Vector3D(0, 0.3, 0), volmdlr.Vector3D(0, 0, 0.3)), color=(.1, 0.2, 1), alpha=0.6)
+        self.assertTrue(all(expected_box.face_on_shell(face) for face in box1.intersection(box3)[0].faces))
+        box4 = primitives3d.Block(
+            volmdlr.Frame3D(volmdlr.Point3D(.5, 0, 0), volmdlr.Vector3D(0.3, 0, 0),
+                            volmdlr.Vector3D(0, 0.3, 0), volmdlr.Vector3D(0, 0, 0.3)), color=(.1, 0.2, 1), alpha=0.6)
+        self.assertFalse(box1.intersection(box4))
 
 
 if __name__ == '__main__':
