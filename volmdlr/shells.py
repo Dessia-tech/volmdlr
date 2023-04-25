@@ -224,13 +224,13 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                          angle: float):
         """
-        Shell 3D rotation. Object is updated inplace.
+        Shell 3D rotation. Object is updated in-place.
 
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'inplace' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for face in self.faces:
             face.rotation_inplace(center, axis, angle)
@@ -251,14 +251,14 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
-        Open Shell 3D translation. Object is updated inplace.
+        Open Shell 3D translation. Object is updated in-place.
 
         :param offset: Translation vector.
         :type offset: `volmdlr.Vector3D`.
         :return: Translate the Open Shell 3D in place.
         :rtype: None.
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'inplace' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for face in self.faces:
             face.translation_inplace(offset)
@@ -277,11 +277,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and the object is updated inplace.
+        Changes frame_mapping and the object is updated in-place.
 
         side = 'old' or 'new'.
         """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+        warnings.warn("'inplace' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         for face in self.faces:
             face.frame_mapping_inplace(frame, side)
