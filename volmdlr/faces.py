@@ -77,6 +77,10 @@ class Face3D(volmdlr.core.Primitive3D):
             self._outer_contour3d = self.surface3d.contour2d_to_3d(self.surface2d.outer_contour)
         return self._outer_contour3d
 
+    @outer_contour3d.setter
+    def outer_contour3d(self, contour3d):
+        self._outer_contour3d = contour3d
+
     @property
     def inner_contours3d(self):
         """
@@ -86,6 +90,10 @@ class Face3D(volmdlr.core.Primitive3D):
             self._inner_contours3d = [self.surface3d.contour2d_to_3d(c) for c in
                                       self.surface2d.inner_contours]
         return self._inner_contours3d
+
+    @inner_contours3d.setter
+    def inner_contours3d(self, contours3d):
+        self._inner_contours3d = contours3d
 
     @property
     def bounding_box(self):
