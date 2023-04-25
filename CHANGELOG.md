@@ -26,8 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add tolerance param to many methods from edges and wires.
 - Surface3D: add contour healing into face_from_contours3d method.
 - ExtrusionSurface3D: implement missing cases for linesegment2d_to_3d method.
+- BSplineSurface3D: to_plane3d
+- BSplineFace3D: to_planeface3d
 - BSplineCurve, Arc, LineSegment: is_close
 - Core: get_edge_index_in_list, edge_in_list
+- mesh: TetrahedralElementQuadratic 
+- GmshParser: define_quadratic_tetrahedron_element_mesh
+- GmshParser: to_vtk (consider quadratic tetrahedron element)
+- Assembly: define a volmdlr Assembly object.
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -41,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BsplineCurve: simplify
 - Dessiaobject inheritance up-to-date
 - Edge: unit_direction_vector, unit_normal_vector
+- VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -53,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WireMixin: order_wire
 - Contour2D: delete cut_by_linesegments
 - split faces.py into surfaces.py, faces.py and shells.py
+- ContourMixin: from_points
 
 ### Changed
 - better surface3d plots
@@ -143,6 +151,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour3D: merge_with()
 * Contour2D: closest_point_to_point2, get_furthest_point_to_point2
 
+## v0.9.3
+
+- build: bump dessia common to 0.10.0
+- build: remove useless jsonschema dep
+- build: update package.xml for freecad
+
 ## v0.9.1
 
 ### Fixed
@@ -150,7 +164,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed many pylint errors: 13/03/2023
 - fix contour2d: divide
 
-## v0.9.0 [Released 06/03/2023]
+### Documentation
+ - typo in README.md
+
+## v0.9.0 [released 03/26/2023]
 
 ### New Features
 * Unit coversion factor parameter added to the end of the from_step arguments parameter (So we can convert the units correctly)

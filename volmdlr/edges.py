@@ -2307,7 +2307,7 @@ class LineSegment2D(LineSegment):
 
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
         if start.is_close(end):
-            raise NotImplementedError
+            raise NotImplementedError('Start & end of linesegment2D are equal')
         self._bounding_rectangle = None
         LineSegment.__init__(self, start, end, name=name)
 
@@ -6089,6 +6089,9 @@ class Arc3D(Arc):
     """
 
     def __init__(self, start, interior, end, name=''):
+        if start.is_close(interior) or end.is_close(interior):
+            raise ValueError(
+                'Start, end and interior points of an arc must be distincts')
         self._utd_normal = False
         self._utd_center = False
         self._utd_frame = False

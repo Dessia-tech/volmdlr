@@ -1124,13 +1124,13 @@ class Assembly(dc.PhysicalObject):
         """
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
-        A = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+        matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
                        [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
                        [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
-        B = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+        matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
                        [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
                        [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
-        transfer_matrix = npy.linalg.solve(A, B)
+        transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
@@ -1226,6 +1226,23 @@ class Assembly(dc.PhysicalObject):
 
             current_id = styled_item_id + 1
         return step_content, current_id
+
+    def plot(self, ax=None, equal_aspect=True):
+        """
+        Matplotlib plot of model.
+
+        To use for debug.
+        """
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d', adjustable='box')
+        for primitive in self.primitives:
+            primitive.plot(ax)
+        if not equal_aspect:
+            # ax.set_aspect('equal')
+            ax.set_aspect('auto')
+        ax.margins(0.1)
+        return ax
 
 
 class VolumeModel(dc.PhysicalObject):
@@ -1402,7 +1419,7 @@ class VolumeModel(dc.PhysicalObject):
         ax = fig.add_subplot(111, projection='3d', adjustable='box')
         for primitive in self.primitives:
             primitive.plot(ax)
-        if equal_aspect:
+        if not equal_aspect:
             # ax.set_aspect('equal')
             ax.set_aspect('auto')
         ax.margins(0.1)
@@ -1691,7 +1708,7 @@ class VolumeModel(dc.PhysicalObject):
 
         lines.append('Mesh.CharacteristicLengthMin = 0;')
         lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
-        lines.append('Geometry.Tolerance = 1e-20;')
+        lines.append('Geometry.Tolerance = 1e-6;')
         lines.append('Mesh.AngleToleranceFacetOverlap = 0.01;')
         lines.append('General.Verbosity = 0;')
 

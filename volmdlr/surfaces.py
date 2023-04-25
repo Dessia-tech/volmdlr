@@ -848,8 +848,8 @@ class Surface3D(DessiaObject):
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         face = class_(self, surface2d=surface2d, name=name)
-        face._outer_contour3d = outer_contour3d
-        face._inner_contours3d = inner_contours3d
+        face.outer_contour3d = outer_contour3d
+        face.inner_contours3d = inner_contours3d
         return face
 
     def repair_primitives_periodicity(self, primitives2d):
@@ -1437,9 +1437,9 @@ class Plane3D(Surface3D):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-            ax.axis('equal')
+            ax.set_aspect('equal')
 
-        self.frame.plot(ax=ax, color=edge_style.color)
+        self.frame.plot(ax=ax, color=edge_style.color, ratio=length)
         for i in range(grid_size):
             for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
                 start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
@@ -1910,14 +1910,14 @@ class PeriodicalSurface(Surface3D):
             )]
         if start3d.is_close(end3d):
             return None
-        # Quick implementation for RevolutionSurface
-        # todo: Study this case
-        n = 10
-        points = [self.point2d_to_3d(p)
-                  for p in linesegment2d.discretization_points(number_points=n)]
-        periodic = points[0].is_close(points[-1])
-        return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
-        # raise NotImplementedError("This case is not yet treated")
+        # # Quick implementation for RevolutionSurface
+        # # todo: Study this case
+        # n = 10
+        # points = [self.point2d_to_3d(p)
+        #           for p in linesegment2d.discretization_points(number_points=n)]
+        # periodic = points[0].is_close(points[-1])
+        # return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
+        raise NotImplementedError("This case is not yet treated")
 
 
 class CylindricalSurface3D(PeriodicalSurface):
@@ -6229,6 +6229,24 @@ class BSplineSurface3D(Surface3D):
         outer_contour_side = oc_xmax_index
         side = 1
         return overlapping_theta, outer_contour_side, side
+
+    def to_plane3d(self):
+        """
+        Converts a Bspline surface3d to a Plane3d.
+
+        :return: A Plane
+        :rtype: Plane3D
+        """
+
+        points_2d = [volmdlr.Point2D(0.1, 0.1),
+                     volmdlr.Point2D(0.1, 0.8),
+                     volmdlr.Point2D(0.8, 0.5)]
+        points = [self.point2d_to_3d(pt) for pt in points_2d]
+
+        surface3d = Plane3D.from_3_points(points[0],
+                                          points[1],
+                                          points[2])
+        return surface3d
 
 
 class BezierSurface3D(BSplineSurface3D):
