@@ -1051,10 +1051,8 @@ class ClosedShell3D(OpenShell3D):
                                             list_coincident_faces: List[volmdlr.faces.Face3D],
                                             shell2, reference_shell):
         for new_face in new_faces:
-            inside_reference_shell = reference_shell.point_belongs(new_face.random_point_inside())
-            face_on_reference_shell = reference_shell.face_on_shell(new_face)
-            if self.set_operations_exterior_face(new_face, valid_faces, inside_reference_shell,
-                                                 list_coincident_faces, shell2, face_on_reference_shell):
+            if self.set_operations_exterior_face(new_face, valid_faces, reference_shell,
+                                                 list_coincident_faces, shell2):
                 valid_faces.append(new_face)
         return valid_faces
 
@@ -1074,13 +1072,10 @@ class ClosedShell3D(OpenShell3D):
     def get_subtraction_valid_faces(self, new_faces, valid_faces, reference_shell, shell2, keep_interior_faces):
         faces = []
         for new_face in new_faces:
-            inside_reference_shell = reference_shell.point_belongs(new_face.random_point_inside())
-            face_on_reference_shell = reference_shell.face_on_shell(new_face)
             if keep_interior_faces:
-                if self.set_operations_interior_face(new_face, valid_faces, inside_reference_shell):
+                if self.set_operations_interior_face(new_face, valid_faces, reference_shell):
                     faces.append(new_face)
-            elif self.set_operations_exterior_face(new_face, faces, inside_reference_shell, [], shell2,
-                                                   face_on_reference_shell):
+            elif self.set_operations_exterior_face(new_face, faces, reference_shell, [], shell2):
                 faces.append(new_face)
         return faces
 
@@ -1148,7 +1143,8 @@ class ClosedShell3D(OpenShell3D):
         valid_faces = self.validate_set_operations_faces(faces)
         return valid_faces
 
-    def set_operations_interior_face(self, new_face, faces, inside_reference_shell):
+    def set_operations_interior_face(self, new_face, faces, reference_shell):
+        inside_reference_shell = reference_shell.point_belongs(new_face.random_point_inside())
         if inside_reference_shell and new_face not in faces:
             return True
         if self.face_on_shell(new_face):
@@ -1177,11 +1173,13 @@ class ClosedShell3D(OpenShell3D):
                     return True
         return False
 
-    def set_operations_exterior_face(self, new_face, valid_faces, inside_reference_shell,
-                                     list_coincident_faces, shell2, face_on_reference_shell):
+    def set_operations_exterior_face(self, new_face, valid_faces, reference_shell,
+                                     list_coincident_faces, shell2):
         if new_face.area() < 1e-8:
             return False
         if new_face not in valid_faces:
+            inside_reference_shell = reference_shell.point_belongs(new_face.random_point_inside())
+            face_on_reference_shell = reference_shell.face_on_shell(new_face)
             if not inside_reference_shell or face_on_reference_shell:
                 if list_coincident_faces:
                     if self.is_face_between_shells(shell2, new_face):
