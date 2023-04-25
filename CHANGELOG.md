@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineFace3D: to_planeface3d
 - BSplineCurve, Arc, LineSegment: is_close
 - Core: get_edge_index_in_list, edge_in_list
+- mesh: TetrahedralElementQuadratic 
+- GmshParser: define_quadratic_tetrahedron_element_mesh
 - VolumeModel: to_msh (consider both order 1 and 2)
 
 ### Fixed
@@ -57,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WireMixin: order_wire
 - Contour2D: delete cut_by_linesegments
 - split faces.py into surfaces.py, faces.py and shells.py
+- ContourMixin: from_points
 
 ### Changed
 - better surface3d plots
