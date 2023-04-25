@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dessiaobject inheritance up-to-date
 - Edge: unit_direction_vector, unit_normal_vector
 - VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
+- RevolutionSurface: fix some parametric operations.
 
 ### Refactor
 - Contour2D: cut_by_wire
