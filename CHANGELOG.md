@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: point_projection
 - ClosedShel3D: cut_by_plane
 - Arc3D.minimum_distance_points_line
+- New unittests for plane3d
 - ClosedShel3D: intersection
 
 ## v0.10.0 [Unreleased yet]

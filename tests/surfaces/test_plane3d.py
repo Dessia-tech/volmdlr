@@ -23,6 +23,8 @@ class TestPlane3D(unittest.TestCase):
         self.vector1 = volmdlr.Vector3D(1, 0, 0)
         self.vector2 = volmdlr.Vector3D(0, 1, 0)
         self.vector3 = volmdlr.Vector3D(0, 0, 1)
+        self.plane5 = Plane3D.from_plane_vectors(volmdlr.Point3D(1, 2, 3), volmdlr.Vector3D(1, 0, 0),
+                                                 volmdlr.Vector3D(0, 1, 0))
 
     def test_from_normal(self):
         plane = Plane3D.from_normal(self.point1, self.vector3)
@@ -73,6 +75,41 @@ class TestPlane3D(unittest.TestCase):
         # Test with point below the plane
         point = volmdlr.Point3D(0, 0, -1)
         self.assertFalse(plane.point_on_surface(point))
+
+    def test_point_distance(self):
+        # test point above the plane
+        point = volmdlr.Point3D(1, 2, 4)
+        self.assertAlmostEqual(self.plane5.point_distance(point), 1.0)
+
+        # test point below the plane
+        point = volmdlr.Point3D(1, 2, 2)
+        self.assertAlmostEqual(self.plane5.point_distance(point), 1.0)
+
+        # test point on the plane
+        point = volmdlr.Point3D(1, 2, 3)
+        self.assertAlmostEqual(self.plane5.point_distance(point), 0.0)
+
+    def test_line_intersections(self):
+        # test line intersects the plane
+        line = edges.Line3D(volmdlr.Point3D(1, 2, 1), volmdlr.Point3D(1, 2, 5))
+        expected_intersection = [volmdlr.Point3D(1.0, 2.0, 3.0)]
+        self.assertEqual(self.plane5.line_intersections(line), expected_intersection)
+
+        # test line is parallel to the plane
+        line = edges.Line3D(volmdlr.Point3D(1, 1, 3), volmdlr.Point3D(2, 2, 3))
+        expected_intersection = []
+        self.assertEqual(self.plane5.line_intersections(line), expected_intersection)
+
+    def test_linesegment_intersections(self):
+        # test linesegment intersects the plane
+        linesegment = edges.LineSegment3D(volmdlr.Point3D(1, 2, 1), volmdlr.Point3D(1, 2, 5))
+        expected_intersection = [volmdlr.Point3D(1.0, 2.0, 3.0)]
+        self.assertEqual(self.plane5.linesegment_intersections(linesegment), expected_intersection)
+
+        # test linesegment does not intersect the plane
+        linesegment = edges.LineSegment3D(volmdlr.Point3D(1, 1, 3), volmdlr.Point3D(2, 2, 3))
+        expected_intersection = []
+        self.assertEqual(self.plane5.linesegment_intersections(linesegment), expected_intersection)
 
     def test_plane_intersections(self):
         plane_intersections = self.plane1.plane_intersection(self.plane2)
@@ -141,6 +178,23 @@ class TestPlane3D(unittest.TestCase):
             self.assertAlmostEqual(surface.frame.w.dot(p1 - p2), 0.)
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p2), 0.)
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p1), 0.)
+
+    def test_plane_betweeen_two_planes(self):
+        plane1 = Plane3D(volmdlr.OXYZ)
+        plane2 = Plane3D(volmdlr.OYZX)
+        plane_b = Plane3D.plane_betweeen_two_planes(plane1, plane2)
+        expected_frame = volmdlr.Frame3D(
+            volmdlr.O3D, volmdlr.Vector3D(0, 1, 0), volmdlr.Vector3D(0.7071067811865475, 0.0, -0.7071067811865475),
+            volmdlr.Vector3D(0.7071067811865475, 0.0, 0.7071067811865475))
+        self.assertEqual(plane_b.frame, expected_frame)
+
+    def test_rotation(self):
+        plane1 = Plane3D(volmdlr.OXYZ)
+        rotated_plane1 = plane1.rotation(volmdlr.O3D, volmdlr.Vector3D(0, 1, 0), math.pi / 4)
+        expected_frame = volmdlr.Frame3D(
+            volmdlr.O3D, volmdlr.Vector3D(0.7071067811865476, 0.0, -0.7071067811865475),
+            volmdlr.Vector3D(0, 1, 0), volmdlr.Vector3D(0.7071067811865475, 0.0, 0.7071067811865476))
+        self.assertEqual(rotated_plane1.frame, expected_frame)
 
 
 if __name__ == '__main__':
