@@ -2315,6 +2315,9 @@ class LineSegment2D(LineSegment):
         LineSegment.__init__(self, start, end, name=name)
 
     def copy(self):
+    """
+    A specified copy of a LineSegment2D.
+    """
         return self.__class__(start=self.start.copy(),
                               end=self.end.copy(),
                               name=self.name)
