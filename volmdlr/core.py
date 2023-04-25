@@ -48,6 +48,21 @@ END-ISO-10303-21;
 '''
 
 
+def element_in_list(element, list_elements, tol: float = 1e-6):
+    """
+    Verifies if a volmdlr element is inside a list  of elements, considering a certain tolerance.
+
+    :param element: Element to be verified inside list.
+    :param list_elements: List of elements to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: True if there is an element inside the list close to the element to given tolerance.
+    """
+    for element_i in list_elements:
+        if element.is_close(element_i, tol):
+            return True
+    return False
+
+
 def point_in_list(point, list_points, tol: float = 1e-6):
     """
     Verifies if a point is inside a list  of points, considering a certain tolerance.
@@ -57,10 +72,36 @@ def point_in_list(point, list_points, tol: float = 1e-6):
     :param tol: Tolerance to consider if two points are the same.
     :return: True if there is a point inside the list close to the point to given tolerance.
     """
-    for point_i in list_points:
-        if point.is_close(point_i, tol):
-            return True
-    return False
+
+    return element_in_list(point, list_points, tol)
+
+
+def edge_in_list(edge, list_edges, tol: float = 1e-6):
+    """
+    Verifies if an edge is inside a list  of edges, considering a certain tolerance.
+
+    :param edge: Edge to be verified inside list.
+    :param list_edges: List of edges to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: True if there is an edge inside the list close to the edge to given tolerance.
+    """
+
+    return element_in_list(edge, list_edges, tol)
+
+
+def get_element_index_in_list(element, list_elements, tol: float = 1e-6):
+    """
+    Gets the index an element inside a list of elements, considering a certain tolerance.
+
+    :param point: Element to be verified inside list.
+    :param list_elements: List of elements to be used.
+    :param tol: Tolerance to consider if two elements are the same.
+    :return: The element index.
+    """
+    for i, element_i in enumerate(list_elements):
+        if element_i.is_close(element, tol):
+            return i
+    raise ValueError(f'{element} is not in list')
 
 
 def get_point_index_in_list(point, list_points, tol: float = 1e-6):
@@ -72,10 +113,21 @@ def get_point_index_in_list(point, list_points, tol: float = 1e-6):
     :param tol: Tolerance to consider if two points are the same.
     :return: The point index.
     """
-    for i, point_i in enumerate(list_points):
-        if point_i.is_close(point, tol):
-            return i
-    raise ValueError(f'{point} is not in list')
+
+    return get_element_index_in_list(point, list_points, tol)
+
+
+def get_edge_index_in_list(edge, list_edges, tol: float = 1e-6):
+    """
+    Gets the index a edge inside a list of edges, considering a certain tolerance.
+
+    :param edge: Edge to be verified inside list.
+    :param list_edges: List of edges to be used.
+    :param tol: Tolerance to consider if two edges are the same.
+    :return: The edge index.
+    """
+
+    return get_element_index_in_list(edge, list_edges, tol)
 
 
 def determinant(vec1, vec2, vec3):
@@ -354,6 +406,9 @@ class Primitive3D(dc.PhysicalObject):
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
     def babylon_meshes(self):
+        """
+        Returns the babylonjs mesh.
+        """
         mesh = self.triangulation()
         if mesh is None:
             return []
@@ -383,6 +438,19 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
         self._utd_primitives_to_index = False
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """
+        Plot the 3D primitives onto the given Axes3D object.
+
+        :param ax: optional
+            The Axes3D object onto which to plot the primitives. If None, a new
+            figure and Axes3D object will be created.
+        :type ax: Matplotlib plot
+        edge_style : optional
+            The EdgeStyle to use when plotting the primitives.
+        :type edge_style: vme.EdgeStyle
+        :return: The Axes3D object onto which the primitives were plotted.
+        :rtype: Matplotlib plot
+        """
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -977,13 +1045,6 @@ class VolumeModel(dc.PhysicalObject):
     def __hash__(self):
         return sum(hash(point) for point in self.primitives)
 
-    # def _extract_shells(self):
-    #     shells = []
-    #     for primitive in self.primitives:
-    #         if isinstance(primitive, Shell3D):
-    #             shells.append(primitive)
-    #     return shells
-
     def __eq__(self, other):
         if self.__class__.__name__ != other.__class__.__name__:
             return False
@@ -1224,7 +1285,7 @@ class VolumeModel(dc.PhysicalObject):
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
-        stl = mesh.to_stl()
+        stl = volmdlr.stl.Stl.from_display_mesh(mesh)
         return stl
 
     def to_stl(self, filepath: str):
@@ -1355,13 +1416,13 @@ class VolumeModel(dc.PhysicalObject):
         lines = []
         volume = 0
         for primitive in self.primitives:
-            if isinstance(primitive, volmdlr.faces.ClosedShell3D):
+            if isinstance(primitive, volmdlr.shells.ClosedShell3D):
                 volume += 1
                 lines_primitives, update_data = primitive.get_geo_lines(update_data)
                 lines.extend(lines_primitives)
                 surface_loop = ((lines[-1].split('('))[1].split(')')[0])
                 lines.append('Volume(' + str(volume) + ') = {' + surface_loop + '};')
-            elif isinstance(primitive, volmdlr.faces.OpenShell3D):
+            elif isinstance(primitive, volmdlr.shells.OpenShell3D):
                 lines_primitives, update_data = primitive.get_geo_lines(update_data)
                 lines.extend(lines_primitives)
 
@@ -1420,7 +1481,7 @@ class VolumeModel(dc.PhysicalObject):
         lines.append('General.Verbosity = 0;')
 
         for i, primitive in enumerate(self.primitives):
-            if isinstance(primitive, volmdlr.faces.ClosedShell3D):
+            if isinstance(primitive, volmdlr.shells.ClosedShell3D):
                 bbx = primitive.bounding_box
                 dim1, dim2, dim3 = (bbx.xmax - bbx.xmin), (bbx.ymax - bbx.ymin), (bbx.zmax - bbx.zmin)
                 volume = dim1 * dim2 * dim3
@@ -1465,7 +1526,7 @@ class VolumeModel(dc.PhysicalObject):
                 field_nums.append(field_num + 1)
                 field_num += 2
 
-            elif isinstance(primitive, volmdlr.faces.OpenShell3D):
+            elif isinstance(primitive, volmdlr.shells.OpenShell3D):
                 continue
 
         # meshsize_max = max(meshsizes_max)

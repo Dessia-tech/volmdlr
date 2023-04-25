@@ -10,15 +10,16 @@ Created on Mon Feb 14 2022
 
 import volmdlr.core
 import volmdlr.step
+from volmdlr import faces, shells
 from volmdlr.models import bspline_surfaces
 
 # %% BsplineFaces3D
 
-bspline_faces = [bspline_surfaces.bspline_surface_2.rectangular_cut(0,1,0,1)]
+bspline_faces = [faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surfaces.bspline_surface_2, 0,1,0,1)]
 
 # %% Export
 
-model = volmdlr.core.VolumeModel([volmdlr.faces.OpenShell3D(bspline_faces)])
+model = volmdlr.core.VolumeModel([shells.OpenShell3D(bspline_faces)])
 
 model.to_step('model_to_step.stp')
 

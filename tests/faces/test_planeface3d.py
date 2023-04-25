@@ -7,7 +7,7 @@ import unittest
 import dessia_common.core as dc
 
 import volmdlr
-from volmdlr import edges, wires, faces
+from volmdlr import edges, wires, faces, surfaces
 
 
 class TestPlaneFace3D(unittest.TestCase):
@@ -44,8 +44,8 @@ class TestPlaneFace3D(unittest.TestCase):
 
     def test_cylindricalface_intersections(self):
         R = 0.15
-        cylindricalsurface = volmdlr.faces.CylindricalSurface3D(volmdlr.OXYZ, R)
-        face = cylindricalsurface.rectangular_cut(0, volmdlr.TWO_PI, -.25, .25)
+        cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, R)
+        face = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindricalsurface, 0, volmdlr.TWO_PI, -.25, .25)
         """ ========== CIRCLE3D ========="""
         plane_face_3 = self.plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2)
         face_intersections = plane_face_3.face_intersections(face)
@@ -110,6 +110,7 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertTrue(self.plane_face_cylindricalface_intersec.circle_inside(circle))
         circle2 = volmdlr.wires.Circle3D(volmdlr.OYZX, 0.1)
         self.assertFalse(self.plane_face_cylindricalface_intersec.circle_inside(circle2))
+
 
 if __name__ == '__main__':
     unittest.main()

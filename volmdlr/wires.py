@@ -134,8 +134,8 @@ class WireMixin:
         """
         Split a wire or contour in two points.
 
-        :param point1: spliting point1.
-        :param point2: spliting point2.
+        :param point1: splitting point1.
+        :param point2: splitting point2.
         :return: List of primitives in between these two points, and another list with the remaining primitives.
         """
         abscissa1 = self.abscissa(point1)
@@ -681,19 +681,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                         intersection_points_primitives.append((intersection, primitive))
         return intersection_points_primitives
 
-    @classmethod
-    def from_points(cls, points: List[volmdlr.Point2D]):
-        """
-        Define a wire based on points 2d with line_segments 2d.
-
-        :param points: points to define wire 2d.
-        """
-        edges = []
-        for i in range(0, len(points) - 1):
-            edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
-
-        return cls(edges)
-
     def linesegment_crossings(self, linesegment: 'volmdlr.edges.LineSegment2D'):
         """
         Gets the wire primitives intersecting with the line.
@@ -1083,7 +1070,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         :return: list of 2d primitives.
         """
         z = x.cross(y)
-        plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
+        plane3d = volmdlr.surfaces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         primitives2d = []
         for primitive in self.primitives:
             primitive2d = plane3d.point3d_to_2d(primitive)
@@ -1132,7 +1119,7 @@ class ContourMixin(WireMixin):
 
     def order_contour(self, tol: float = 1e-6):
         """
-        Verifies if the contours'primitives are ordered (one after the other). If not, it will order it.
+        Verifies if the contours' primitives are ordered (one after the other). If not, it will order it.
 
         """
         if self.is_ordered(tol=tol) or len(self.primitives) < 2:
@@ -1376,8 +1363,9 @@ class ContourMixin(WireMixin):
         point1 = middle_point + normal * 0.00001
         point2 = middle_point - normal * 0.00001
         if (self.point_belongs(point1) and contour2.point_belongs(point1)) or \
-                (not self.point_belongs(point1) and not contour2.point_belongs(point1)) or \
-                (self.point_belongs(point1) and self.point_belongs(point2)) or \
+                (not self.point_belongs(point1) and not contour2.point_belongs(point1)):
+            return True
+        if (self.point_belongs(point1) and self.point_belongs(point2)) or \
                 (contour2.point_belongs(point1) and contour2.point_belongs(point2)):
             return True
         return False
@@ -1390,7 +1378,7 @@ class ContourMixin(WireMixin):
         """
 
         if (self.is_inside(contour) or contour.is_inside(self)
-            or self.is_overlapping(contour) or self.is_superposing(contour)):
+                or self.is_overlapping(contour) or self.is_superposing(contour)):
             return False
         if self.is_sharing_primitives_with(contour):
             return True
@@ -1624,6 +1612,24 @@ class ContourMixin(WireMixin):
     def invert(self):
         """Invert the Contour."""
         return self.__class__(self.inverted_primitives())
+
+    @classmethod
+    def from_points(cls, points):
+        """
+        Create a contour from points with line_segments.
+        """
+
+        if len(points) < 3:
+            raise ValueError('contour is defined at least with three points')
+
+        linesegment_name = 'LineSegment' + points[0].__class__.__name__[-2:]
+        edges = []
+        for i in range(0, len(points) - 1):
+            edges.append(getattr(volmdlr.edges, linesegment_name)(points[i], points[i + 1]))
+        edges.append(getattr(volmdlr.edges, linesegment_name)(points[-1], points[0]))
+
+        contour = cls(edges)
+        return contour
 
 
 class Contour2D(ContourMixin, Wire2D):
@@ -2446,6 +2452,9 @@ class ClosedPolygonMixin:
             return self
 
         return self.__class__(points)
+    def invert(self):
+        """Invert the polygon."""
+        return self.__class__(self.points[::-1])
 
     @property
     def line_segments(self):
@@ -2458,7 +2467,7 @@ class ClosedPolygonMixin:
             f"get_line_segments method must be overloaded by {self.__class__.__name__}")
 
 
-class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
+class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
     """
     A collection of points, connected by line segments, following each other.
 
@@ -3143,7 +3152,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
         """
-        Use an n by m grid to triangulize the contour.
+        Use an n by m grid to triangulate the contour.
 
         :param number_points_x: Number of discretization points in x direction.
         :type number_points_x: int
@@ -4259,14 +4268,13 @@ class Ellipse2D(Contour2D):
 
         :param center: center of the rotation.
         :param angle: angle to rotated of.
-        :return: a rotationed new ellipse.
+        :return: a rotated new ellipse.
         """
-        rotationed_center = self.center.rotation(center, angle)
+        rotated_center = self.center.rotation(center, angle)
         point_major_dir = self.center + self.major_dir * self.major_axis
-        rotationed_major_dir_point = point_major_dir.rotation(center, angle)
-        major_dir = rotationed_major_dir_point - rotationed_center
-        return Ellipse2D(self.major_axis, self.minor_axis, rotationed_center,
-                         major_dir)
+        rotated_major_dir_point = point_major_dir.rotation(center, angle)
+        major_dir = rotated_major_dir_point - rotated_center
+        return Ellipse2D(self.major_axis, self.minor_axis, rotated_center, major_dir)
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -4672,24 +4680,6 @@ class Contour3D(ContourMixin, Wire3D):
             return dict_intersecting_points
         return None
 
-    @classmethod
-    def from_points(cls, points: List[volmdlr.Point3D]):
-        """
-        Create a contour 3d from points with line_segments3D.
-
-        """
-
-        if len(points) < 3:
-            raise ValueError('contour is defined at least with three points')
-        edges = []
-        for i in range(0, len(points) - 1):
-            edges.append(volmdlr.edges.LineSegment3D(points[i], points[i + 1]))
-
-        edges.append(volmdlr.edges.LineSegment3D(points[-1], points[0]))
-        contour = cls(edges)
-
-        return contour
-
     def clean_primitives(self):
         """
         Delete primitives with start=end, and return a new contour.
@@ -4975,7 +4965,7 @@ class Circle3D(Contour3D):
         :return: Circle2D.
         """
         z = x.cross(y)
-        plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
+        plane3d = volmdlr.surfaces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         return Circle2D(plane3d.point3d_to_2d(self.center), self.radius)
 
     @classmethod
@@ -5033,10 +5023,10 @@ class Circle3D(Contour3D):
             v = self.normal.cross(u)
             w = extrusion_vector.copy()
             w.normalize()
-            cylinder = volmdlr.faces.CylindricalSurface3D(
+            cylinder = volmdlr.surfaces.CylindricalSurface3D(
                 volmdlr.Frame3D(self.center, u, v, w), self.radius)
-            return [cylinder.rectangular_cut(0, volmdlr.TWO_PI,
-                                             0, extrusion_vector.norm())]
+            return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(cylinder, 0, volmdlr.TWO_PI,
+                                                                                 0, extrusion_vector.norm())]
         raise NotImplementedError(
             f'Extrusion along vector not colinar to normal for circle not '
             f'handled yet: dot={self.normal.dot(extrusion_vector)}')
@@ -5056,10 +5046,10 @@ class Circle3D(Contour3D):
                 'Outside of plane revolution not supported')
 
         tore_radius = tore_center.point_distance(self.center)
-        surface = volmdlr.faces.ToroidalSurface3D(
+        surface = volmdlr.surfaces.ToroidalSurface3D(
             volmdlr.Frame3D(tore_center, u, v, axis),
             tore_radius, self.radius)
-        return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
+        return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(surface, 0, angle, 0, volmdlr.TWO_PI)]
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
         """

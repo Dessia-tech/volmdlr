@@ -21,6 +21,7 @@ import volmdlr.edges
 import volmdlr.faces
 import volmdlr.primitives
 import volmdlr.wires
+from volmdlr import shells, surfaces
 
 # import dessia_common.typings as dct
 
@@ -135,7 +136,7 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
 
 
 class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
-                                  OpenRoundedLineSegments3D):
+                                  OpenRoundedLineSegments3D, volmdlr.primitives.RoundedLineSegments):
     """
     Defines a closed rounded line segment in 3D.
 
@@ -151,14 +152,13 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 
     def __init__(self, points: List[volmdlr.Point3D], radius: float, adapt_radius: bool = False, name: str = ''):
         volmdlr.primitives.RoundedLineSegments.__init__(
-                self, points, radius, 'volmdlr.edges.LineSegment3D',
-                'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
+                self, points, radius, closed=True, adapt_radius=adapt_radius,
                 name='')
 
         volmdlr.wires.Contour3D.__init__(self, primitives=self._primitives(), name=name)
 
 
-class Block(volmdlr.faces.ClosedShell3D):
+class Block(shells.ClosedShell3D):
     """
     Creates a block.
 
@@ -168,7 +168,7 @@ class Block(volmdlr.faces.ClosedShell3D):
     _standalone_in_db = True
     _non_serializable_attributes = ['size', 'bounding_box', 'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_data_eq_attributes = ['name', 'color', 'alpha', 'size', 'bounding_box',
-                          'faces', 'contours', 'plane', 'points', 'polygon2D']
+                               'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_data_hash_attributes = []
 
     def __init__(self, frame: volmdlr.Frame3D, *,
@@ -180,7 +180,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                      self.frame.w.norm())
 
         faces = self.shell_faces()
-        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
+        shells.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
     def to_dict(self, *args, **kwargs):
         """
@@ -279,18 +279,18 @@ class Block(volmdlr.faces.ClosedShell3D):
         zp_frame = volmdlr.Frame3D(frame.origin + 0.5 * self.frame.w,
                                    frame.u, frame.v, frame.w)
 
-        xm_face = volmdlr.faces.Plane3D(xm_frame)\
-            .rectangular_cut(-hly, hly, -hlz, hlz)
-        xp_face = volmdlr.faces.Plane3D(xp_frame)\
-            .rectangular_cut(-hly, hly, -hlz, hlz)
-        ym_face = volmdlr.faces.Plane3D(ym_frame)\
-            .rectangular_cut(-hlz, hlz, -hlx, hlx)
-        yp_face = volmdlr.faces.Plane3D(yp_frame)\
-            .rectangular_cut(-hlz, hlz, -hlx, hlx)
-        zm_face = volmdlr.faces.Plane3D(zm_frame)\
-            .rectangular_cut(-hlx, hlx, -hly, hly)
-        zp_face = volmdlr.faces.Plane3D(zp_frame)\
-            .rectangular_cut(-hlx, hlx, -hly, hly)
+        xm_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
+            surfaces.Plane3D(xm_frame), -hly, hly, -hlz, hlz)
+        xp_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
+            surfaces.Plane3D(xp_frame), -hly, hly, -hlz, hlz)
+        ym_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
+            surfaces.Plane3D(ym_frame), -hlz, hlz, -hlx, hlx)
+        yp_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
+            surfaces.Plane3D(yp_frame), -hlz, hlz, -hlx, hlx)
+        zm_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
+            surfaces.Plane3D(zm_frame), -hlx, hlx, -hly, hly)
+        zp_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
+            surfaces.Plane3D(zp_frame), -hlx, hlx, -hly, hly)
 
         return [xm_face, xp_face, ym_face, yp_face, zm_face, zp_face]
 
@@ -353,7 +353,7 @@ class Block(volmdlr.faces.ClosedShell3D):
         self.frame.translation_inplace(offset)
         self.faces = self.shell_faces()
 
-    def cut_by_orthogonal_plane(self, plane_3d: volmdlr.faces.Plane3D):
+    def cut_by_orthogonal_plane(self, plane_3d: surfaces.Plane3D):
         bouding_box = self.bounding_box
         if plane_3d.frame.w.dot(volmdlr.Vector3D(1, 0, 0)) == 0:
             pass
@@ -371,7 +371,7 @@ class Block(volmdlr.faces.ClosedShell3D):
         point_max_2d = plane_3d.point3d_to_2d(point_max)
         points = [point_min_2d, volmdlr.Point2D(point_max_2d.x, point_min_2d.y),
                   point_max_2d, volmdlr.Point2D(point_min_2d.x, point_max_2d.y)]
-        contour_2d = volmdlr.faces.Surface2D(
+        contour_2d = surfaces.Surface2D(
             volmdlr.wires.ClosedPolygon2D(points), [])
 
         return volmdlr.faces.PlaneFace3D(plane_3d, contour_2d)
@@ -458,7 +458,7 @@ class Block(volmdlr.faces.ClosedShell3D):
         return fig, ax
 
 
-class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
+class ExtrudedProfile(shells.ClosedShell3D):
     """
     Extrude a profile given by outer and inner contours.
 
@@ -498,7 +498,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
         faces = self.shell_faces()
 
-        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
+        shells.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
     def to_dict(self, *args, **kwargs):
@@ -539,10 +539,10 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         Computes the shell faces from init data.
 
         """
-        lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(
+        lower_plane = surfaces.Plane3D.from_plane_vectors(
             self.plane_origin, self.x, self.y)
         lower_face = volmdlr.faces.PlaneFace3D(
-            lower_plane, volmdlr.faces.Surface2D(self.outer_contour2d,
+            lower_plane, surfaces.Surface2D(self.outer_contour2d,
                                                  self.inner_contours2d))
 
         upper_face = lower_face.translation(self.extrusion_vector)
@@ -668,7 +668,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         self.plane_origin.translation_inplace(offset)
 
 
-class RevolvedProfile(volmdlr.faces.ClosedShell3D):
+class RevolvedProfile(shells.ClosedShell3D):
     """
     Revolve a 2D profile along an axis around a certain angle.
 
@@ -693,7 +693,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         self.contour3d = self.contour2d.to_3d(plane_origin, x, y)
 
         faces = self.shell_faces()
-        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
+        shells.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
     def to_dict(self, *args, **kwargs):
@@ -737,12 +737,12 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         if not math.isclose(self.angle, volmdlr.TWO_PI, abs_tol=1e-9):
             # Adding contours face to close
             w = self.x.cross(self.y)
-            plane1 = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.plane_origin,
+            plane1 = surfaces.Plane3D(volmdlr.Frame3D(self.plane_origin,
                                                            self.x,
                                                            self.y,
                                                            w))
             face1 = volmdlr.faces.PlaneFace3D(
-                plane1, volmdlr.faces.Surface2D(self.contour2d, []))
+                plane1, surfaces.Surface2D(self.contour2d, []))
             face2 = face1.rotation(self.axis_point, self.axis, self.angle)
             faces.append(face1)
             faces.append(face2)
@@ -1623,7 +1623,7 @@ class HollowCylinder(RevolvedProfile):
         self.axis = axis
 
 
-class Sweep(volmdlr.faces.ClosedShell3D):
+class Sweep(shells.ClosedShell3D):
     """
     Sweep a 2D contour along a Wire3D.
 
@@ -1638,7 +1638,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         self.frames = []
 
         faces = self.shell_faces()
-        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
+        shells.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
     def to_dict(self, *args, **kwargs):
@@ -1666,7 +1666,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
             u = w.deterministic_unit_normal_vector()
         v = w.cross(u)
 
-        start_plane = volmdlr.faces.Plane3D(
+        start_plane = surfaces.Plane3D(
             volmdlr.Frame3D(self.wire3d.point_at_abscissa(0.), u, v, w)
         )
 
@@ -1677,17 +1677,17 @@ class Sweep(volmdlr.faces.ClosedShell3D):
             u = w.deterministic_unit_normal_vector()
         v = w.cross(u)
 
-        end_plane = volmdlr.faces.Plane3D(
+        end_plane = surfaces.Plane3D(
             volmdlr.Frame3D(self.wire3d.primitives[-1].point_at_abscissa(
                 l_last_primitive),
                             u, v, w))
 
         faces = [volmdlr.faces.PlaneFace3D(
             start_plane,
-            volmdlr.faces.Surface2D(self.contour2d, [])),
+            surfaces.Surface2D(self.contour2d, [])),
                  volmdlr.faces.PlaneFace3D(
             end_plane,
-            volmdlr.faces.Surface2D(self.contour2d, []))]
+            surfaces.Surface2D(self.contour2d, []))]
 
         for wire_primitive in self.wire3d.primitives:
             # tangent, normal = wire_primitive.frenet(0.)
@@ -1742,7 +1742,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                     points_3d.extend(poly.points)
                     points_3d.append(poly.points[0])
 
-                bezier_surface3d = volmdlr.faces.BezierSurface3D(degree_u,
+                bezier_surface3d = surfaces.BezierSurface3D(degree_u,
                                                                  degree_v,
                                                                  points_3d,
                                                                  size_u,
@@ -1754,7 +1754,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                                                          volmdlr.edges.LineSegment2D(
                                                              volmdlr.X2D + volmdlr.Y2D, volmdlr.Y2D),
                                                          volmdlr.edges.LineSegment2D(volmdlr.Y2D, volmdlr.O2D)])
-                surf2d = volmdlr.faces.Surface2D(outer_contour, [])
+                surf2d = surfaces.Surface2D(outer_contour, [])
 
                 bsface3d = volmdlr.faces.BSplineFace3D(bezier_surface3d, surf2d)
                 faces.append(bsface3d)
@@ -1911,7 +1911,7 @@ class Measure3D:
         self.point1, self.point2 = point1, point2
         self.color = color
         self.distance = (point1 - point2).norm()
-        self.bounding_box = self._bounding_box()
+        # self.bounding_box = self._bounding_box()
 
     # !!! no eq defined!
     def __hash__(self):

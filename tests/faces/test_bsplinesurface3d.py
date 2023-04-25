@@ -8,11 +8,12 @@ import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 import volmdlr.grid
 from volmdlr.models import bspline_surfaces
+from volmdlr import surfaces
 
 
 class TestBSplineSurface3D(unittest.TestCase):
     def test_contour2d_parametric_to_dimension(self):
-        bspline_face = bspline_surfaces.bspline_surface_2.rectangular_cut(0, 1, 0, 1)
+        bspline_face = vmf.BSplineFace3D.from_surface_rectangular_cut(bspline_surfaces.bspline_surface_2, 0, 1, 0, 1)
         contour2d = bspline_surfaces.bspline_surface_2.contour3d_to_2d(bspline_face.outer_contour3d)
         grid2d = volmdlr.grid.Grid2D.from_properties((0, 1), (0, 1), (10, 10))
         contour2d_dim = bspline_surfaces.bspline_surface_2.contour2d_parametric_to_dimension(contour2d, grid2d)
@@ -21,7 +22,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(contour2d_dim.length(), 16.81606170335965, places=2)
 
     def test_periodicity(self):
-        bspline_suface = vmf.BSplineSurface3D.load_from_file('faces/surface3d_8.json')
+        bspline_suface = surfaces.BSplineSurface3D.load_from_file('faces/surface3d_8.json')
         self.assertAlmostEqual(bspline_suface.x_periodicity,  0.8888888888888888)
         self.assertFalse(bspline_suface.y_periodicity)
 
@@ -34,7 +35,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertEqual(volume, 4.0)
 
     def test_arc3d_to_2d(self):
-        bspline_surface = vmf.BSplineSurface3D.load_from_file('faces/BSplineSurface3D_with_Arc3D.json')
+        bspline_surface = surfaces.BSplineSurface3D.load_from_file('faces/BSplineSurface3D_with_Arc3D.json')
         arc = vme.Arc3D(volmdlr.Point3D(0.01, 0.018, 0.014),
                         volmdlr.Point3D(0.00970710678118655, 0.018, 0.014707106781186547),
                         volmdlr.Point3D(0.009, 0.018, 0.015))
@@ -67,7 +68,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         # self.assertTrue(point.is_close(point_test, 1e-6))
 
     def test_bsplinecurve2d_to_3d(self):
-        surface = vmf.BSplineSurface3D.load_from_file("faces/objects_bspline_test/bspline_surface_with_arcs.json")
+        surface = surfaces.BSplineSurface3D.load_from_file("faces/objects_bspline_test/bspline_surface_with_arcs.json")
         contour3d = vmw.Contour3D.load_from_file("faces/objects_bspline_test/bspline_contour_with_arcs.json")
 
         contour2d = surface.contour3d_to_2d(contour3d)
@@ -77,7 +78,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertTrue(isinstance(arc3d, vme.Arc3D))
 
     def test_face_from_contours3d(self):
-        surface = vmf.BSplineSurface3D.load_from_file(
+        surface = surfaces.BSplineSurface3D.load_from_file(
             "faces/objects_bspline_test/bspline_surface_openned_contour.json")
         contour3d_0 = vmw.Contour3D.load_from_file(
             "faces/objects_bspline_test/bspline_contour_0_openned_contour.json")
@@ -87,7 +88,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         face = surface.face_from_contours3d(contours)
         self.assertAlmostEqual(face.surface2d.area(), 0.6319342194477546, 5)
 
-        surface = vmf.BSplineSurface3D.load_from_file(
+        surface = surfaces.BSplineSurface3D.load_from_file(
             "faces/objects_bspline_test/bspline_surface_self_intersecting_contour.json")
         contour3d = vmw.Contour3D.load_from_file(
             "faces/objects_bspline_test/bspline_contour_self_intersecting_contour.json")
