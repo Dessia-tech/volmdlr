@@ -1169,8 +1169,6 @@ class ClosedShell3D(OpenShell3D):
                     if self.is_face_between_shells(shell2, new_face):
                         return False
                 return True
-            # if :
-            #     return True
         return False
 
     def validate_set_operation(self, shell2, tol):
