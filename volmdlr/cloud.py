@@ -248,7 +248,7 @@ class PointCloud3D(dc.DessiaObject):
         if self.points:
             ax = self.points[0].plot(ax=ax)
             if len(self.points) > 1000:
-                plot_points = random.choice(self.points, k=1000)
+                plot_points = random.choices(self.points, k=1000)
             else:
                 plot_points = self.points
             for point in plot_points:
