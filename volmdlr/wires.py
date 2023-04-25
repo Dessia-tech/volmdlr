@@ -1657,6 +1657,9 @@ class Contour2D(ContourMixin, Wire2D):
         self._area = None
 
     def copy(self):
+    """
+    A specified copy of a Contour2D.
+    """
         return self.__class__(primitives=[p.copy() for p in self.primitives],
                               name=self.name)
     def __hash__(self):
