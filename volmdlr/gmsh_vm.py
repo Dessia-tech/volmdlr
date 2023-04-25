@@ -570,6 +570,34 @@ class GmshParser(DessiaObject):
 
         return data
 
+    def define_quadratic_tetrahedron_element_mesh(self):
+        """
+        Defines a volmdlr mesh with Quadratic TetrahedronElement from a .msh file.
+        """
+
+        # nodes = self.nodes[0]
+        points = self.nodes['all_nodes']
+        # elements = self.elements[0]
+
+        tetrahedron_elements = self.elements['elements_type_11']
+        element_groups = []
+        for tetrahedrons in tetrahedron_elements:
+            tetrahedrons_mesh = []
+            for tetrahedron in tetrahedrons:
+                elements_points = []
+                for i in range(10):
+                    elements_points.append(points[tetrahedron[i]])
+                tetrahedrons_mesh.append(volmdlr.mesh.TetrahedralElementQuadratic(elements_points))
+
+            element_groups.append(volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name=''))
+
+        mesh = volmdlr.mesh.Mesh(element_groups)
+        # mesh.nodes = points #gmsh points are duplicated > not needed
+        # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
+        mesh.gmsh = self
+
+        return mesh
+
     def define_tetrahedron_element_mesh(self):
         """
         Defines a volmdlr mesh with TetrahedronElement from a .msh file.
@@ -701,7 +729,10 @@ class GmshParser(DessiaObject):
 
         cells_str_int = {'elements_type_1': ('2 ', 3),
                          'elements_type_2': ('3 ', 4),
-                         'elements_type_4': ('4 ', 5)}
+                         'elements_type_4': ('4 ', 5),
+                         'elements_type_8': ('3 ', 4),
+                         'elements_type_9': ('6 ', 7),
+                         'elements_type_11': ('10 ', 11)}
 
         for key, value in cells_str_int.items():
             cells = 0
@@ -710,6 +741,7 @@ class GmshParser(DessiaObject):
                     for element in map(str, elements):
                         lines.append(value[0] + element[1:-1].replace(',', ''))
                         cells += 1
+
                 cells_1 += cells * value[1]
                 cells_0 += cells
             except KeyError:
@@ -730,7 +762,10 @@ class GmshParser(DessiaObject):
 
         cells_str_int = {'elements_type_1': '3',
                          'elements_type_2': '5',
-                         'elements_type_4': '10'}
+                         'elements_type_4': '10',
+                         'elements_type_8': '21',
+                         'elements_type_9': '22',
+                         'elements_type_11': '24'}
 
         for key, value in cells_str_int.items():
             try:
