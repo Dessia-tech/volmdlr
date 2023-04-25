@@ -366,6 +366,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
         linesegment_intersections = []
+        if not self.bounding_box.bbox_intersection(linesegment.bounding_box):
+            return []
         for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 linesegment_intersections.append(intersection)

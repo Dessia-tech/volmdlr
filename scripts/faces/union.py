@@ -9,7 +9,7 @@ import math
 import time
 
 import volmdlr as vm
-from volmdlr import faces, edges, surfaces, shells
+from volmdlr import faces, edges, wires, surfaces, shells
 
 time_before = time.time()
 
