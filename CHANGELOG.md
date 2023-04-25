@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### Changed
+
+* LICENSE changed from GPL to Lesser GPL 
+
 ## v0.10.0 [Released 20/04/2023]
 
 ### New Features
@@ -58,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactorings
 * ContourMixin: to_polygon (for both 2D and 3D)
-* BSplineCurve2D.point_distance 
+* BSplineCurve2D.point_distance
 * new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
 ### Unittests
@@ -102,17 +106,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Create .geo and .msh files (Mesh geometries with GMSH)
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
-* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
-* Added package.xml metadata in order to be listed in the FreeCAD Addon Manager 
+* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D.
+* Added package.xml metadata in order to be listed in the FreeCAD Addon Manager
 * Edge: local_discretization
 
 ### Fixed
 
 * WireMixin: abscissa (add tolerance as parameter)
 * OpenRoundedLineSegment2D: deleted discretization_points() so it uses the one from WireMixin.
-* Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
+* Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D.
 * BSplineCurve: from_points_interpolation, uses centripedal method for better fitting.
-* Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard. 
+* Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard.
 * BSplineSurface3D: debug linesegment2d_to_3d method.
 * Parametric operations with BSpline curves.
 * OpenTriangleShell3D: fix from_mesh_data method.
@@ -127,7 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fix f string usage
 * Add some typings
 * Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
-* Arc2d: point_belongs, abscissa. 
+* Arc2d: point_belongs, abscissa.
 
 ### Removed
 
@@ -144,7 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D.__eq__(): verify contour length first, when verify if two contours are the same.
 * Contour2D.is_inside(): verify first if the area of the contour2 is not smaller that contour 1.
 * Disabling pointer in to_dict for most primitives
-* Better hash for shells, contours & wires 
+* Better hash for shells, contours & wires
 
 
 ### Refactorings
@@ -292,7 +296,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 * Mandatory CHANGELOG.md update for PR
 * pre-commit checks with cython-lint
 
-## v0.7.0 
+## v0.7.0
 
 ### New Features
 
