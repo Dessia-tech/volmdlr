@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: delete cut_by_linesegments
 - split faces.py into surfaces.py, faces.py and shells.py
 - ContourMixin: from_points
+- ClosedShell3D: improve performance for boolean operations
 
 ### Changed
 - better surface3d plots
