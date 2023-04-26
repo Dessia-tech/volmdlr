@@ -90,7 +90,7 @@ class Edge(dc.DessiaObject):
             return self.end
         raise IndexError
 
-    def is_close(self, other_edge, tol:float = 1e-6):
+    def is_close(self, other_edge, tol: float = 1e-6):
         """
         Verify if two edges are equal, considering a certain tolerance.
 
@@ -819,18 +819,18 @@ class LineSegment(Edge):
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
         return content, [current_id]
 
-    def is_close(self, linesegment, tol: float = 1e-6):
+    def is_close(self, other_edge, tol: float = 1e-6):
         """
         Checks if two line segments are the same considering the euclidean distance.
 
-        :param linesegment: other line segment.
+        :param other_edge: other line segment.
         :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional.
         """
 
-        if isinstance(linesegment, self.__class__):
-            if (self.start.is_close(linesegment.start, tol)
-                    and self.end.is_close(linesegment.end, tol)):
+        if isinstance(other_edge, self.__class__):
+            if (self.start.is_close(other_edge.start, tol)
+                    and self.end.is_close(other_edge.end, tol)):
                 return True
         return False
 
@@ -1650,22 +1650,22 @@ class BSplineCurve(Edge):
                 discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
 
-    def is_close(self, bspline, tol: float = 1e-6):
+    def is_close(self, other_edge, tol: float = 1e-6):
         """
         Checks if two bsplines are the same considering the euclidean distance.
 
-        :param bspline: other bspline.
+        :param other_edge: other bspline.
         :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
         :type tol: float, optional
         """
 
-        if isinstance(bspline, self.__class__):
+        if isinstance(other_edge, self.__class__):
             is_true = True
             for i, point in enumerate(self.control_points):
-                if not point.is_close(bspline.control_points[i]):
+                if not point.is_close(other_edge.control_points[i]):
                     is_true = False
                     break
-            if is_true and self.degree == bspline.degree and self.knots == bspline.knots:
+            if is_true and self.degree == other_edge.degree and self.knots == other_edge.knots:
                 return True
         return False
 
@@ -2967,18 +2967,18 @@ class Arc(Edge):
                 new_arcs.append(arc)
         return new_arcs
 
-    def is_close(self, arc, tol: float = 1e-6):
+    def is_close(self, other_edge, tol: float = 1e-6):
         """
         Checks if two arc are the same considering the euclidean distance.
 
-        :param arc: other arc.
+        :param other_edge: other arc.
         :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
         :type tol: float, optional
         """
 
-        if isinstance(arc, self.__class__):
-            if (self.start.is_close(arc.start, tol) and self.end.is_close(arc.end, tol)
-                    and self.center.is_close(arc.center, tol) and self.point_belongs(arc.interior, tol)):
+        if isinstance(other_edge, self.__class__):
+            if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
+                    and self.center.is_close(other_edge.center, tol) and self.point_belongs(other_edge.interior, tol)):
                 return True
         return False
 
@@ -4417,18 +4417,18 @@ class ArcEllipse2D(Edge):
                     (self.abscissa(self.end) - abscissa) * 0.5 + abscissa),
                                self.end, self.center.copy(), self.major_dir.copy())]
 
-    def is_close(self, arcellispe, tol: float = 1e-6):
+    def is_close(self, other_edge, tol: float = 1e-6):
         """
         Checks if two arc-elipse are the same considering the Euclidean distance.
 
-        :param arcellispe: other arc-elipse.
+        :param other_edge: other arc-elipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
 
-        if isinstance(arcellispe, self.__class__):
-            if (self.start.is_close(arcellispe.start, tol) and self.end.is_close(arcellispe.end, tol)
-                    and self.center.is_close(arcellispe.center, tol) and self.point_belongs(arcellispe.interior, tol)):
+        if isinstance(other_edge, self.__class__):
+            if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
+                    and self.center.is_close(other_edge.center, tol) and self.point_belongs(other_edge.interior, tol)):
                 return True
         return False
 
@@ -7414,18 +7414,18 @@ class ArcEllipse3D(Edge):
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
         return ellipse_2d.point_belongs(point2d, abs_tol=abs_tol)
 
-    def is_close(self, arcellispe, tol: float = 1e-6):
+    def is_close(self, other_edge, tol: float = 1e-6):
         """
         Checks if two arc-elipse are the same considering the Euclidean distance.
 
-        :param arcellispe: other arc-elipse.
+        :param other_edge: other arc-elipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
 
-        if isinstance(arcellispe, self.__class__):
-            if (self.start.is_close(arcellispe.start, tol) and self.end.is_close(arcellispe.end, tol)
-                    and self.center.is_close(arcellispe.center, tol) and self.point_belongs(arcellispe.interior, tol)):
+        if isinstance(other_edge, self.__class__):
+            if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
+                    and self.center.is_close(other_edge.center, tol) and self.point_belongs(other_edge.interior, tol)):
                 return True
         return False
 
