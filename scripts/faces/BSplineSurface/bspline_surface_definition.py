@@ -193,3 +193,22 @@ bspline_face = vmf.BSplineFace3D.from_surface_rectangular_cut(bspline_surface, 0
 
 
 bspline_face2 = dc.DessiaObject.dict_to_object(json.loads(json.dumps(bspline_face.to_dict())))
+
+
+from volmdlr import edges
+import volmdlr
+import matplotlib.pyplot as plt
+import mplcyberpunk
+plt.style.use("cyberpunk")
+ax = bspline_face.plot()
+linesegment = edges.LineSegment3D(volmdlr.Point3D(4, 0, 0), volmdlr.Point3D(4, 2, 2))
+linesegment.plot(ax, volmdlr.core.EdgeStyle('b'))
+
+triangulation = bspline_face.triangulation()
+faces_triangulation = triangulation.triangular_faces()
+for face in faces_triangulation:
+    inters = face.linesegment_intersections(linesegment)
+    if inters:
+        break
+inters[0].plot(ax, 'r')
+triangulation.plot(ax)

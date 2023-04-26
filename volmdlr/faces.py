@@ -57,13 +57,13 @@ class Face3D(volmdlr.core.Primitive3D):
                  and self.surface2d == other_.surface2d)
         return equal
 
-    def point_belongs(self, point3d: volmdlr.Point3D):
+    def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6):
         """
         Tells you if a point is on the 3D face and inside its contour.
         """
         point2d = self.surface3d.point3d_to_2d(point3d)
         check_point3d = self.surface3d.point2d_to_3d(point2d)
-        if check_point3d.point_distance(point3d) > 1e-6:
+        if check_point3d.point_distance(point3d) > tol:
             return False
 
         return self.surface2d.point_belongs(point2d)
@@ -2730,7 +2730,7 @@ class BSplineFace3D(Face3D):
         if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
             resolution = 25
         else:
-            resolution = 15
+            resolution = 30
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
         number_points_x = int(delta_u * resolution)
