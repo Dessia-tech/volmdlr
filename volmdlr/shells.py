@@ -644,7 +644,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
                         if primitives[index].is_close(primitive.reverse()):
 
-                                lines_tags.append(-indices_check[index])
+                            lines_tags.append(-indices_check[index])
 
                     lines.append(contour.get_geo_lines(line_loop_account + 1, lines_tags))
 
