@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Edge: unit_direction_vector, unit_normal_vector
 - VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
 - ClosedShel3D: intersection method
+- Fix: plots
 - OpenShell3D: get_geo_lines (use primitive.is_close)
 
 ### Refactor
