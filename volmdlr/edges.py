@@ -2389,6 +2389,7 @@ class LineSegment2D(LineSegment):
         return 0.
 
     def straight_line_second_moment_area(self, point: volmdlr.Point2D):
+        """Straight line second moment area for a line segment."""
         return 0, 0, 0
 
     def straight_line_center_of_mass(self):
@@ -2400,7 +2401,7 @@ class LineSegment2D(LineSegment):
         Computes the distance of a point to segment of line.
 
         :param point: point to calculate distance.
-        :param return_other_points: Boolean variable to return line segment's corresponding point or not.
+        :param return_other_point: Boolean variable to return line segment's corresponding point or not.
         """
         distance, point = volmdlr.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)],
