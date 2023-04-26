@@ -2499,8 +2499,8 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     def arc3d_to_2d(self, arc3d):
         """
-       Converts the arc from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
-       """
+        Converts the arc from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
 
