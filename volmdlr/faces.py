@@ -146,12 +146,13 @@ class Face3D(volmdlr.core.Primitive3D):
         surface = object_dict[int(arguments[2])]
         if hasattr(surface, 'face_from_contours3d'):
             if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
-                return surface
+                face = globals()[surface.face_class]
+                return face.from_surface_rectangular_cut(surface)
             if len(contours) == 2 and any(isinstance(contour, volmdlr.Point3D) for contour in contours):
                 vertex = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
                 base = next(contour for contour in contours if contour is not vertex)
-
-                return surface.face_class.face_from_base_and_vertex(base, vertex, name)
+                face = globals()[surface.face_class]
+                return face.face_from_base_and_vertex(base, vertex, name)
             if any(isinstance(contour, volmdlr.Point3D) for contour in contours):
                 raise NotImplementedError
 
@@ -1913,11 +1914,11 @@ class CylindricalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 11
+        angle_resolution = 5
         z_resolution = 5
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
-        number_points_x = int(delta_theta * angle_resolution)
+        number_points_x = max(angle_resolution, int(delta_theta * angle_resolution))
 
         delta_z = zmax - zmin
         number_points_y = int(delta_z * z_resolution)
@@ -2125,21 +2126,21 @@ class ToroidalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        theta_angle_resolution = 11
-        phi_angle_resolution = 7
+        theta_angle_resolution = 5
+        phi_angle_resolution = 3
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
-        number_points_x = int(delta_theta * theta_angle_resolution)
+        number_points_x = max(theta_angle_resolution, int(delta_theta * theta_angle_resolution))
 
         delta_phi = phi_max - phi_min
-        number_points_y = int(delta_phi * phi_angle_resolution)
+        number_points_y = max(phi_angle_resolution, int(delta_phi * phi_angle_resolution))
 
         return number_points_x, number_points_y
 
     @classmethod
-    def from_surface_rectangular_cut(cls, toroidal_surface3d, theta1: float, theta2: float,
-                                     phi1: float, phi2: float, name: str = ""):
+    def from_surface_rectangular_cut(cls, toroidal_surface3d, theta1: float = 0.0, theta2: float = volmdlr.TWO_PI,
+                                     phi1: float = 0.0, phi2: float = volmdlr.TWO_PI, name: str = ""):
         """
         Cut a rectangular piece of the ToroidalSurface3D object and return a ToroidalFace3D object.
 
@@ -2404,7 +2405,8 @@ class SphericalFace3D(Face3D):
         return number_points_x, number_points_y
 
     @classmethod
-    def from_surface_rectangular_cut(cls, spherical_surface, theta1, theta2, phi1, phi2, name=''):
+    def from_surface_rectangular_cut(cls, spherical_surface, theta1: float = 0.0, theta2: float = volmdlr.TWO_PI,
+                                     phi1: float = 0.0, phi2: float = volmdlr.TWO_PI, name=''):
         """
         Cut a rectangular piece of the SphericalSurface3D object and return a SphericalFace3D object.
 
@@ -2730,9 +2732,9 @@ class BSplineFace3D(Face3D):
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
         if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
-            resolution = 25
+            resolution = 10
         else:
-            resolution = 15
+            resolution = 10
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
         number_points_x = int(delta_u * resolution)

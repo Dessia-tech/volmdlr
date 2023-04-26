@@ -32,7 +32,7 @@ import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core_compiled import polygon_point_belongs
 from volmdlr.core import EdgeStyle
-
+import os
 
 def argmax(list_of_numbers):
     """
@@ -4400,15 +4400,25 @@ class Contour3D(ContourMixin, Wire3D):
                      raw_edges[0].start.point_distance(raw_edges[1].end)]
         index = distances.index(min(distances))
         if min(distances) > 1e-3:
+            newpath = f"C:/Users/gabri/Documents/dessia/GitHub/volmdlr/scripts/step/{step_id}"
+            if not os.path.exists(newpath):
+                os.makedirs(newpath)
+            try:
+                contour = cls(raw_edges, name=name)
+                contour.save_to_file(newpath + "contour.json")
+            except Exception as error:
+                print(error)
             # Green color : well-placed and well-read
             ax = raw_edges[0].plot(edge_style=EdgeStyle(color='g'))
             ax.set_title(f"Step ID: #{step_id}")
-
+            raw_edges[0].save_to_file(newpath + "/edge_0.json")
             # Red color : can't be connected to green edge
             raw_edges[1].plot(ax=ax, edge_style=EdgeStyle(color='r'))
+            raw_edges[1].save_to_file(newpath + "/edge_1.json")
             # Black color : to be placed
-            for re in raw_edges[2:]:
+            for i, re in enumerate(raw_edges[2:]):
                 re.plot(ax=ax)
+                re.save_to_file(newpath + f"/edge_{i + 2}.json")
 
             warnings.warn(
                 f"Could not instantiate #{step_id} = {step_name}({arguments})"
@@ -4441,6 +4451,14 @@ class Contour3D(ContourMixin, Wire3D):
                          raw_edge.end.point_distance(last_edge.end)]
             index = distances.index(min(distances))
             if min(distances) > 1e-3:
+                newpath = f"C:/Users/gabri/Documents/dessia/GitHub/volmdlr/scripts/step/{step_id}"
+                if not os.path.exists(newpath):
+                    os.makedirs(newpath)
+                try:
+                    contour = cls(raw_edges, name=name)
+                    contour.save_to_file(newpath + "/contour.json")
+                except Exception as error:
+                    print(error)
                 # Green color : well-placed and well-read
                 ax = last_edge.plot(edge_style=EdgeStyle(color='g'))
                 ax.set_title(f"Step ID: #{step_id}")

@@ -2,7 +2,7 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import edges, faces, surfaces
+from volmdlr import edges, faces, wires, surfaces
 
 
 class TestToroidalSurface3D(unittest.TestCase):
@@ -47,6 +47,12 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertTrue(test.end.is_close(volmdlr.Point2D(1.4449243890313308, 1.5707974196708867)))
 
         self.assertTrue(inv_prof.end.is_close(bspline_curve3d.end))
+
+    def test_face_from_contours3d(self):
+        surface = surfaces.ToroidalSurface3D.load_from_file("faces/objects_toroidal_tests/surface_4.json")
+        contour = wires.Contour3D.load_from_file("faces/objects_toroidal_tests/contour_4_0.json")
+        face = surface.face_from_contours3d([contour])
+        self.assertAlmostEqual(face.surface2d.area(), 0.07116351378250674, 4)
 
     def test_point_projection(self):
         test_points = [volmdlr.Point3D(-2.0, -2.0, 0.0), volmdlr.Point3D(0.0, -2.0, 0.0),

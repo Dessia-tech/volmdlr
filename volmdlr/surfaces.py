@@ -24,7 +24,7 @@ import volmdlr.utils.parametric as vm_parametric
 from volmdlr.core import EdgeStyle
 from volmdlr.core import point_in_list
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
-
+c = 0
 
 def knots_vector_inv(knots_vector):
     """
@@ -843,8 +843,25 @@ class Surface3D(DessiaObject):
             class_ = getattr(volmdlr.faces, self.face_class)
         else:
             class_ = self.face_class
-        # if not outer_contour2d.is_ordered(1e-4):
-        #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+        if not outer_contour2d.is_ordered(1e-4):
+            # set_errors = (4, 12, 22, 35, 42, 82, 85, 90)
+            # global c
+            # c += 1
+            global c
+            if isinstance(self, RevolutionSurface3D):
+
+                c += 1
+                self.save_to_file(f"RCC-LAS080-2/revolution_surface_{c}.json")
+                for i, contour in enumerate(contours3d):
+                    contour.save_to_file(f"RCC-LAS080-2/revolution_contour_{c}_{i}.json")
+            if isinstance(self, ExtrusionSurface3D):
+                c += 1
+                self.save_to_file(f"RCC-LAS080-2/extrusion_surface_{c}.json")
+                for i, contour in enumerate(contours3d):
+                    contour.save_to_file(f"RCC-LAS080-2/extrusion_contour_{c}_{i}.json")
+
+            # outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+                outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         face = class_(self, surface2d=surface2d, name=name)
@@ -2337,10 +2354,12 @@ class ToroidalSurface3D(PeriodicalSurface):
         # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Generally this is related to uncertainty of step files.
 
-        if abs(x) < 1e-12:
+        if abs(x) < 1e-6:
             x = 0
-        if abs(y) < 1e-12:
+        if abs(y) < 1e-6:
             y = 0
+        if abs(z) < 1e-6:
+            z = 0
 
         zr = z / self.small_radius
         phi = math.asin(zr)
@@ -2517,7 +2536,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         length = arc3d.length()
         angle3d = arc3d.angle
         point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
-        point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
+        point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.97 * length))
 
         start, end = vm_parametric.arc3d_to_spherical_coordinates_verification(start, end, angle3d,
                                                                                [point_after_start, point_before_end],
@@ -3753,7 +3772,9 @@ class RevolutionSurface3D(PeriodicalSurface):
         vector1 = point1 - axis_point
         w_vector = axis
         w_vector.normalize()
-        u_vector = vector1 - vector1.vector_projection(w_vector)
+        u_vector = vector1
+        if not math.isclose(w_vector.dot(u_vector), 0, abs_tol=1e-6):
+            u_vector = vector1 - vector1.vector_projection(w_vector)
         u_vector.normalize()
         v_vector = w_vector.cross(u_vector)
         self.frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)

@@ -514,7 +514,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         for face in self.faces:
             try:
                 face_mesh = face.triangulation()
-            except Exception:
+            except Exception as error:
+                print(error)
                 warnings.warn("Could not triangulate face. Probabaly because topology error in contour2d.")
                 continue
             meshes.append(face_mesh)
