@@ -17,6 +17,7 @@ import volmdlr.faces
 import volmdlr.geometry
 from volmdlr.core import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
 
+
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     """
     A 3D open shell composed of multiple faces.
@@ -580,7 +581,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 else:
                     for _, primitive in enumerate(contour.primitives):
                         if (not edge_in_list(primitive, primitives)
-                            and not edge_in_list(primitive.reverse(), primitives)):
+                                and not edge_in_list(primitive.reverse(), primitives)):
                             primitives.append(primitive)
 
         indices_check = len(primitives) * [None]
@@ -878,7 +879,7 @@ class ClosedShell3D(OpenShell3D):
         :param tol:
         :return:
         """
-        #todo: delete this method if not used three months from now (25/04/2023)
+        # todo: delete this method if not used three months from now (25/04/2023)
         face_combinations = []
         for face1 in self.faces:
             for face2 in shell2.faces:
@@ -1044,7 +1045,7 @@ class ClosedShell3D(OpenShell3D):
         intersecting_wires = list(dict_intersecting_combinations.values())
         intersecting_contour = \
             wires.Contour3D([wire.primitives[0] for
-                                     wires_ in intersecting_wires for wire in wires_])
+                             wires_ in intersecting_wires for wire in wires_])
         return intersecting_contour
 
     def reference_shell(self, shell2, face):

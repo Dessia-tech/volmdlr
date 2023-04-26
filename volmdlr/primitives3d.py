@@ -499,7 +499,7 @@ class ExtrudedProfile(shells.ClosedShell3D):
         faces = self.shell_faces()
 
         shells.ClosedShell3D.__init__(self, faces, color=color,
-                                             alpha=alpha, name=name)
+                                      alpha=alpha, name=name)
 
     def to_dict(self, *args, **kwargs):
         """
@@ -543,7 +543,7 @@ class ExtrudedProfile(shells.ClosedShell3D):
             self.plane_origin, self.x, self.y)
         lower_face = volmdlr.faces.PlaneFace3D(
             lower_plane, surfaces.Surface2D(self.outer_contour2d,
-                                                 self.inner_contours2d))
+                                            self.inner_contours2d))
 
         upper_face = lower_face.translation(self.extrusion_vector)
         lateral_faces = []
@@ -694,7 +694,7 @@ class RevolvedProfile(shells.ClosedShell3D):
 
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces, color=color,
-                                             alpha=alpha, name=name)
+                                      alpha=alpha, name=name)
 
     def to_dict(self, *args, **kwargs):
         """
@@ -738,9 +738,9 @@ class RevolvedProfile(shells.ClosedShell3D):
             # Adding contours face to close
             w = self.x.cross(self.y)
             plane1 = surfaces.Plane3D(volmdlr.Frame3D(self.plane_origin,
-                                                           self.x,
-                                                           self.y,
-                                                           w))
+                                                      self.x,
+                                                      self.y,
+                                                      w))
             face1 = volmdlr.faces.PlaneFace3D(
                 plane1, surfaces.Surface2D(self.contour2d, []))
             face2 = face1.rotation(self.axis_point, self.axis, self.angle)
@@ -1639,7 +1639,7 @@ class Sweep(shells.ClosedShell3D):
 
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces, color=color,
-                                             alpha=alpha, name=name)
+                                      alpha=alpha, name=name)
 
     def to_dict(self, *args, **kwargs):
         """Custom serialization for performance."""
@@ -1743,10 +1743,10 @@ class Sweep(shells.ClosedShell3D):
                     points_3d.append(poly.points[0])
 
                 bezier_surface3d = surfaces.BezierSurface3D(degree_u,
-                                                                 degree_v,
-                                                                 points_3d,
-                                                                 size_u,
-                                                                 size_v)
+                                                            degree_v,
+                                                            points_3d,
+                                                            size_u,
+                                                            size_v)
 
                 outer_contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D),
                                                          volmdlr.edges.LineSegment2D(

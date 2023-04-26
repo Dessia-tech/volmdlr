@@ -25,6 +25,7 @@ import volmdlr.wires
 from volmdlr import surfaces
 from volmdlr import shells as vmshells
 
+
 def set_to_list(step_set):
     """
     Convert a string representation of a set to a list of strings.

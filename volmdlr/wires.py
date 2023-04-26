@@ -2448,6 +2448,7 @@ class ClosedPolygonMixin:
             return self
 
         return self.__class__(points)
+
     def invert(self):
         """Invert the polygon."""
         return self.__class__(self.points[::-1])

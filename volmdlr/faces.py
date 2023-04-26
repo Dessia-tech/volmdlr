@@ -1326,8 +1326,8 @@ class PlaneFace3D(Face3D):
                 list_new_faces.append(
                     PlaneFace3D(face0.surface3d,
                                 surfaces.Surface2D(merged_contour.copy(),
-                                          face0.surface2d.inner_contours +
-                                          list_inner_contours)))
+                                                   face0.surface2d.inner_contours +
+                                                   list_inner_contours)))
                 merged_contour = \
                     valid_coicident_faces[0].outer_contour3d.to_2d(
                         face0.surface3d.frame.origin,
@@ -1340,8 +1340,8 @@ class PlaneFace3D(Face3D):
         list_new_faces.append(
             PlaneFace3D(face0.surface3d,
                         surfaces.Surface2D(merged_contour,
-                                  face0.surface2d.inner_contours +
-                                  list_inner_contours)))
+                                           face0.surface2d.inner_contours +
+                                           list_inner_contours)))
         return list_new_faces
 
     def cut_by_coincident_face(self, face):
@@ -1459,7 +1459,7 @@ class PlaneFace3D(Face3D):
                 for face1_1 in faces_1:
                     plane3d = face1_1.surface3d
                     s2d = surfaces.Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
-                                    inner_contours=[
+                                             inner_contours=[
                                         plane3d.contour3d_to_2d(contour) for contour in face2_2.inner_contours3d])
                     face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
 
@@ -2318,7 +2318,7 @@ class ConicalFace3D(Face3D):
         primitives2d = contour2d.primitives + [linesegment2d_1, linesegment2d_2, linesegment2d_3]
         outer_contour2d = volmdlr.wires.Contour2D(primitives2d)
 
-        surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,  inner_contours=[])
+        surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=[])
         return cls(conical_surface3d, surface2d=surface2d, name=name)
 
 
@@ -2501,7 +2501,7 @@ class RuledFace3D(Face3D):
 
     @classmethod
     def from_surface_rectangular_cut(cls, ruled_surface3d, x1: float, x2: float,
-                        y1: float, y2: float, name: str = ''):
+                                     y1: float, y2: float, name: str = ''):
         """
         Cut a rectangular piece of the RuledSurface3D object and return a RuledFace3D object.
 
