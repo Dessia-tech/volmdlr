@@ -4,7 +4,7 @@
   <description>A computations-oriented python VOLume MoDeLeR with STEP support for import and export.</description>
   <version>0.9.0</version> <!-- Semantic versioning (1.2.3-beta) or CalVer-based, (2022.01.07), don't omit or non-git installations won't see your updates -->
   <date>2023-03-06</date> <!-- Date of the last update to the version number -->
-  <maintainer email="your_address@null.com">Your Name</maintainer>
+  <maintainer email="root@dessia.tech">Dessia Technologies</maintainer>
   <license file="LICENSE">GPL-3</license> <!-- Make sure you actually have this file in your Addon repo if the license requires it -->
   <url type="repository" branch="master">https://github.com/Dessia-tech/volmdlr</url> <!-- Don't forget to update the branch name here -->
   <url type="readme">https://github.com/Dessia-tech/volmdlr/blob/master/README.md</url> <!-- Link to the HTML-rendered README page -->
@@ -16,13 +16,12 @@
 
       <depend>binaryornot</depend>
       <depend>cython</depend>
-      <depend version_lte="0.7.0">dessia-common</depend>
+      <depend version_lte="0.10.0">dessia-common</depend>
       <depend>geomdl</depend>
       <depend>gmsh</depend>
       <depend>matplotlib</depend>
       <depend>numpy</depend>
       <depend>scipy</depend>
-      <depend>jsonschema</depend>
       <depend>networkx</depend>
       <depend version_lte="0.10.9">plot_data</depend>
       <depend>rtree</depend>

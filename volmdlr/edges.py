@@ -2307,7 +2307,7 @@ class LineSegment2D(LineSegment):
 
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
         if start.is_close(end):
-            raise NotImplementedError
+            raise NotImplementedError('Start & end of linesegment2D are equal')
         self._bounding_rectangle = None
         LineSegment.__init__(self, start, end, name=name)
 
@@ -5525,6 +5525,12 @@ class LineSegment3D(LineSegment):
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
 
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        if not self.point_belongs(point1) or not self.point_belongs(point2):
+            raise ValueError('Point not on curve')
+
+        return LineSegment3D(point1, point2)
+
 
 class BSplineCurve3D(BSplineCurve):
     """
@@ -6083,6 +6089,9 @@ class Arc3D(Arc):
     """
 
     def __init__(self, start, interior, end, name=''):
+        if start.is_close(interior) or end.is_close(interior):
+            raise ValueError(
+                'Start, end and interior points of an arc must be distincts')
         self._utd_normal = False
         self._utd_center = False
         self._utd_frame = False

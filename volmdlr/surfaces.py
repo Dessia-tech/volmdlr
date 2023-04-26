@@ -803,26 +803,38 @@ class Surface3D(DessiaObject):
 
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
+            outer_contour3d = contours3d[0]
             inner_contours2d = []
+            inner_contours3d = None
+            if isinstance(self, RevolutionSurface3D):
+                if not outer_contour2d.is_ordered(1e-4):
+                    outer_contour2d.plot().set_aspect("auto")
+
         elif lc3d > 1:
             area = -1
             inner_contours2d = []
+            inner_contours3d = []
 
             contours2d = [self.contour3d_to_2d(contour3d) for contour3d in contours3d]
 
             check_contours = [not contour2d.is_ordered(tol=1e-3) for contour2d in contours2d]
             if any(check_contours):
+                # Not implemented yet, but repair_contours2d should also return outer_contour3d and inner_contours3d
                 outer_contour2d, inner_contours2d = self.repair_contours2d(contours2d[0], contours2d[1:])
+                outer_contour3d, inner_contours3d = None, None
             else:
-                for contour2d in contours2d:
+                for contour2d, contour3d in zip(contours2d, contours3d):
                     # if not contour2d.is_ordered(1e-4):
                     #     contour2d = vm_parametric.contour2d_healing(contour2d)
                     inner_contours2d.append(contour2d)
+                    inner_contours3d.append(contour3d)
                     contour_area = contour2d.area()
                     if contour_area > area:
                         area = contour_area
                         outer_contour2d = contour2d
+                        outer_contour3d = contour3d
                 inner_contours2d.remove(outer_contour2d)
+                inner_contours3d.remove(outer_contour3d)
         else:
             raise ValueError('Must have at least one contour')
 
@@ -835,7 +847,10 @@ class Surface3D(DessiaObject):
         #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
-        return class_(self, surface2d=surface2d, name=name)
+        face = class_(self, surface2d=surface2d, name=name)
+        face.outer_contour3d = outer_contour3d
+        face.inner_contours3d = inner_contours3d
+        return face
 
     def repair_primitives_periodicity(self, primitives2d):
         """
@@ -950,7 +965,8 @@ class Surface3D(DessiaObject):
                     if primitives is None:
                         continue
                     primitives3d.extend(primitives)
-                except AttributeError:
+                except AttributeError as error:
+                    print(error)
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
                           f'with {primitive2d.__class__.__name__}')
             else:
@@ -1421,9 +1437,9 @@ class Plane3D(Surface3D):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-            ax.axis('equal')
+            ax.set_aspect('equal')
 
-        self.frame.plot(ax=ax, color=edge_style.color)
+        self.frame.plot(ax=ax, color=edge_style.color, ratio=length)
         for i in range(grid_size):
             for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
                 start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
@@ -1894,14 +1910,14 @@ class PeriodicalSurface(Surface3D):
             )]
         if start3d.is_close(end3d):
             return None
-        # Quick implementation for RevolutionSurface
-        # todo: Study this case
-        n = 10
-        points = [self.point2d_to_3d(p)
-                  for p in linesegment2d.discretization_points(number_points=n)]
-        periodic = points[0].is_close(points[-1])
-        return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
-        # raise NotImplementedError("This case is not yet treated")
+        # # Quick implementation for RevolutionSurface
+        # # todo: Study this case
+        # n = 10
+        # points = [self.point2d_to_3d(p)
+        #           for p in linesegment2d.discretization_points(number_points=n)]
+        # periodic = points[0].is_close(points[-1])
+        # return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
+        raise NotImplementedError("This case is not yet treated")
 
 
 class CylindricalSurface3D(PeriodicalSurface):
@@ -3733,7 +3749,7 @@ class RevolutionSurface3D(PeriodicalSurface):
 
         point1 = wire.point_at_abscissa(0)
         if point1 == axis_point:
-            point1 = wire.point_at_abscissa(0.1 * wire.length())
+            point1 = wire.point_at_abscissa(wire.length())
         vector1 = point1 - axis_point
         w_vector = axis
         w_vector.normalize()
@@ -3807,8 +3823,27 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         name = arguments[0][1:-1]
         contour3d = object_dict[arguments[1]]
+        if hasattr(contour3d, "simplify"):
+            contour3d = contour3d.simplify
         axis_point, axis = object_dict[arguments[2]]
-        return cls(wire=contour3d, axis_point=axis_point, axis=axis, name=name)
+        surface = cls(wire=contour3d, axis_point=axis_point, axis=axis, name=name)
+        return surface.simplify()
+
+    def arc3d_to_2d(self, arc3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        start = self.point3d_to_2d(arc3d.start)
+        end = self.point3d_to_2d(arc3d.end)
+        if math.isclose(start.y, end.y, abs_tol=1e-4):
+            angle3d = arc3d.angle
+            point_after_start, point_before_end = self._reference_points(arc3d)
+
+            start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, angle3d,
+                                                                                     point_after_start.x,
+                                                                                     point_before_end.x)
+
+        return [edges.LineSegment2D(start, end, name="arc")]
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
@@ -3841,6 +3876,28 @@ class RevolutionSurface3D(PeriodicalSurface):
             point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
         return [edges.LineSegment2D(point1, point2)]
 
+    def linesegment2d_to_3d(self, linesegment2d):
+        """
+        Converts a BREP line segment 2D onto a 3D primitive on the surface.
+        """
+        start3d = self.point2d_to_3d(linesegment2d.start)
+        end3d = self.point2d_to_3d(linesegment2d.end)
+        theta1, abscissa1 = linesegment2d.start
+        theta2, abscissa2 = linesegment2d.end
+        if math.isclose(abscissa1, abscissa2, abs_tol=1e-4):
+            theta_i = 0.5 * (theta1 + theta2)
+            interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
+            return [edges.Arc3D(start3d, interior, end3d)]
+        if math.isclose(theta1, theta2, abs_tol=1e-3):
+            primitive = self.wire.rotation(self.axis_point, self.axis, theta1)
+            primitive = primitive.split_between_two_points(start3d, end3d)
+            return [primitive]
+        n = 10
+        degree = 3
+        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
+        periodic = points[0].is_close(points[-1])
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic)]
+
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Returns a new Revolution Surface positioned in the specified frame.
@@ -3854,6 +3911,25 @@ class RevolutionSurface3D(PeriodicalSurface):
         axis_point = new_frame.origin
         new_wire = self.wire.frame_mapping(frame, side)
         return RevolutionSurface3D(new_wire, axis_point, axis, name=self.name)
+
+    def simplify(self):
+        line3d = edges.Line3D(self.axis_point, self.axis_point + self.axis)
+        if isinstance(self.wire, edges.Arc3D):
+            tore_center, _ = line3d.point_projection(self.wire.center)
+            # Sphere
+            if math.isclose(tore_center.point_distance(self.wire.center), 0., abs_tol=1e-6):
+                return SphericalSurface3D(self.frame, self.wire.radius, self.name)
+        if isinstance(self.wire, edges.LineSegment3D):
+            generatrix_line = edges.Line3D(self.wire.start, self.wire.end)
+            intersections = line3d.intersection(generatrix_line)
+            if intersections:
+                semi_angle = volmdlr.geometry.vectors3d_angle(self.axis,
+                                                              self.wire.end - self.wire.start)
+                return ConicalSurface3D(self.frame, semi_angle, self.name)
+            start_projection, _ = line3d.point_projection(self.wire.start)
+            radius = start_projection.point_distance(self.wire.start)
+            return CylindricalSurface3D(self.frame, radius, self.name)
+        return self
 
 
 class BSplineSurface3D(Surface3D):
@@ -6153,6 +6229,24 @@ class BSplineSurface3D(Surface3D):
         outer_contour_side = oc_xmax_index
         side = 1
         return overlapping_theta, outer_contour_side, side
+
+    def to_plane3d(self):
+        """
+        Converts a Bspline surface3d to a Plane3d.
+
+        :return: A Plane
+        :rtype: Plane3D
+        """
+
+        points_2d = [volmdlr.Point2D(0.1, 0.1),
+                     volmdlr.Point2D(0.1, 0.8),
+                     volmdlr.Point2D(0.8, 0.5)]
+        points = [self.point2d_to_3d(pt) for pt in points_2d]
+
+        surface3d = Plane3D.from_3_points(points[0],
+                                          points[1],
+                                          points[2])
+        return surface3d
 
 
 class BezierSurface3D(BSplineSurface3D):
