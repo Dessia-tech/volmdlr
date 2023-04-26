@@ -1,3 +1,4 @@
+"""some volmdlr edges models."""
 from geomdl import utilities
 import volmdlr
 from volmdlr import edges
