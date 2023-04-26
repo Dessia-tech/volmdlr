@@ -97,7 +97,7 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError(f'is_close method not implemented by {self.__class__.__name__}')
 
-    def get_reverse(self, other_edge, tol: float = 1e-6):
+    def get_reverse(self):
         """
         Gets the same edge, but in the opposite direction.
 
