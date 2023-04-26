@@ -557,6 +557,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                       point_mesh_size: float = None):
         """
         Gets the lines that define an OpenShell3D geometry in a .geo file.
+
         :param update_data: Data used for VolumeModel defined with different shells
         :type update_data: dict
         :param point_mesh_size: The mesh size at a specific point, defaults to None
