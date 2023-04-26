@@ -78,7 +78,7 @@ class Edge(dc.DessiaObject):
         self.end = end
         self._length = None
         self._direction_vector = None
-
+        self._reverse = None
         # Disabling super init call for performance
         # dc.DessiaObject.__init__(self, name=name)
         self.name = name
@@ -89,6 +89,36 @@ class Edge(dc.DessiaObject):
         if key == 1:
             return self.end
         raise IndexError
+
+    def is_close(self, other_edge, tol:float = 1e-6):
+        """
+        Verify if two edges are equal, considering a certain tolerance.
+
+        """
+        raise NotImplementedError(f'is_close method not implemented by {self.__class__.__name__}')
+
+    def get_reverse(self, other_edge, tol: float = 1e-6):
+        """
+        Gets the same edge, but in the opposite direction.
+
+        """
+        raise NotImplementedError(f'is_close method not implemented by {self.__class__.__name__}')
+
+    def reverse(self):
+        if self._reverse is None:
+            self._reverse = self.get_reverse()
+        return self._reverse
+
+    def direction_independent_is_close(self, other_edge, tol: float = 1e-6):
+        """
+        Verifies if two line segments are the same, not considering its direction.
+
+        """
+        if not isinstance(self, other_edge.__class__):
+            return False
+        if self.is_close(other_edge, tol):
+            return True
+        return self.reverse().is_close(other_edge, tol)
 
     def length(self):
         """
@@ -565,15 +595,6 @@ class LineSegment(Edge):
 
     """
 
-    def direction_independent_eq(self, linesegment2):
-        """
-        Verifies if two line segments are the same, not considering its direction.
-
-        """
-        if self.start.is_close(linesegment2.start) and self.end.is_close(linesegment2.end):
-            return True
-        return self.start.is_close(linesegment2.end) and self.end.is_close(linesegment2.start)
-
     def length(self):
         if not self._length:
             self._length = self.end.point_distance(self.start)
@@ -744,7 +765,7 @@ class LineSegment(Edge):
         class_ = self.__class__
         for point1, point2 in zip(points[:-1], points[1:]):
             lineseg = class_(point1, point2)
-            if not lineseg.direction_independent_eq(shared_section[0]):
+            if not lineseg.direction_independent_is_close(shared_section[0]):
                 new_line_segments.append(lineseg)
         return new_line_segments
 
@@ -911,7 +932,7 @@ class BSplineCurve(Edge):
                     and self.knots == other.knots)
         return False
 
-    def reverse(self):
+    def get_reverse(self):
         """
         Reverses the B-Spline's direction by reversing its control points.
 
@@ -1640,7 +1661,7 @@ class BSplineCurve(Edge):
 
         if isinstance(bspline, self.__class__):
             is_true = True
-            for i, point in self.control_points:
+            for i, point in enumerate(self.control_points):
                 if not point.is_close(bspline.control_points[i]):
                     is_true = False
                     break
@@ -2171,7 +2192,7 @@ class BSplineCurve2D(BSplineCurve):
             crossings.extend(linesegment.line_crossings(line2d))
         return crossings
 
-    def reverse(self):
+    def get_reverse(self):
         """
         Reverse the BSpline's direction by reversing its start and end points.
 
@@ -2514,7 +2535,7 @@ class LineSegment2D(LineSegment):
         end = self.end.to_3d(plane_origin, x1, x2)
         return LineSegment3D(start, end, name=self.name)
 
-    def reverse(self):
+    def get_reverse(self):
         """
         Invert the sense of the line segment.
         """
@@ -2866,7 +2887,7 @@ class Arc(Edge):
         """
         return [self.start, self.center, self.end]
 
-    def reverse(self):
+    def get_reverse(self):
         """
         Gets the reverse version of an arc.
 
@@ -2957,7 +2978,7 @@ class Arc(Edge):
 
         if isinstance(arc, self.__class__):
             if (self.start.is_close(arc.start, tol) and self.end.is_close(arc.end, tol)
-                    and self.center.is_close(arc.center, tol)):
+                    and self.center.is_close(arc.center, tol) and self.point_belongs(arc.interior, tol)):
                 return True
         return False
 
@@ -3868,7 +3889,7 @@ class FullArc2D(FullArc, Arc2D):
 
         return []
 
-    def reverse(self):
+    def get_reverse(self):
         return self
 
     def point_belongs(self, point: volmdlr.Point2D, abs_tol: float = 1e-6):
@@ -3922,7 +3943,7 @@ class ArcEllipse2D(Edge):
         if abs(self.end.x) == abs(self.interior.x) == abs(self.start.x):
             raise ValueError(f"Interior point{self.interior} is not valid. Try specifying another interior point.")
         major_axis, minor_axis = self.get_major_minor_axis_with_formula(
-            start_new, end_new, interior_new, center_new)
+            start_new, interior_new, end_new, center_new)
         self.major_axis = major_axis
         self.minor_axis = minor_axis
 
@@ -3970,7 +3991,7 @@ class ArcEllipse2D(Edge):
         else:
             self.offset_angle = angle2
 
-    def get_major_minor_axis_with_formula(self, start_, iterior_, end_, center_):
+    def get_major_minor_axis_with_formula(self, start_, interior_, end_, center_):
         vector_center_start = start_ - center_
         vector_center_end = end_ - center_
         if vector_center_start.norm() >= vector_center_end.norm():
@@ -3984,8 +4005,8 @@ class ArcEllipse2D(Edge):
             x1 = end_.x - center_.x
             y1 = end_.y - center_.y
         if vector_center_start.is_colinear_to(vector_center_end) or abs(x1) == abs(x2):
-            x2 = iterior_.x - center_.x
-            y2 = iterior_.y - center_.y
+            x2 = interior_.x - center_.x
+            y2 = interior_.y - center_.y
             if abs(x1) == abs(x2):
                 raise ValueError(f"Interior point{self.interior} is not valid. Try specifying another interior point.")
         minor_axis = math.sqrt((x1 ** 2 * y2 ** 2 - x2 ** 2 * y1 ** 2) / (x1 ** 2 - x2 ** 2))
@@ -4274,11 +4295,9 @@ class ArcEllipse2D(Edge):
     def direction_vector(self, abscissa):
         raise NotImplementedError
 
-    def reverse(self):
-        if not self._reverse:
-            self._reverse = self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(),
+    def get_reverse(self):
+        return self.__class__(self.end.copy(), self.interior.copy(), self.start.copy(),
                                            self.center.copy(), self.major_dir.copy(), self.name)
-        return self._reverse
 
     def line_intersections(self, line2d: Line2D):
         """
@@ -4398,6 +4417,30 @@ class ArcEllipse2D(Edge):
                     (self.abscissa(self.end) - abscissa) * 0.5 + abscissa),
                                self.end, self.center.copy(), self.major_dir.copy())]
 
+    def is_close(self, arcellispe, tol: float = 1e-6):
+        """
+        Checks if two arc-elipse are the same considering the Euclidean distance.
+
+        :param arcellispe: other arc-elipse.
+        :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
+        :type tol: float, optional
+        """
+
+        if isinstance(arcellispe, self.__class__):
+            if (self.start.is_close(arcellispe.start, tol) and self.end.is_close(arcellispe.end, tol)
+                    and self.center.is_close(arcellispe.center, tol) and self.point_belongs(arcellispe.interior, tol)):
+                return True
+        return False
+
+    def complementary(self):
+        """Gets the complementary arc of ellipse."""
+        vector = self.interior - self.center
+        vector.normalize()
+        new_interior = self.center - vector * self.center.point_distance(self.interior)
+        if self.point_belongs(new_interior):
+            raise ValueError('interior point found not valid')
+        return self.__class__(self.start, new_interior, self.end, self.center, self.major_dir)
+
 
 class FullArcEllipse(Edge):
     """
@@ -4460,7 +4503,7 @@ class FullArcEllipse(Edge):
                 break
         return last_point
 
-    def reverse(self):
+    def get_reverse(self):
         """
         Defines a new FullArcEllipse, identical to self, but in the opposite direction.
 
@@ -5207,7 +5250,7 @@ class LineSegment3D(LineSegment):
                                                                  degree)
         return bspline_curve
 
-    def reverse(self):
+    def get_reverse(self):
         return LineSegment3D(self.end.copy(), self.start.copy())
 
     def minimum_distance_points(self, other_line):
@@ -6276,7 +6319,7 @@ class Arc3D(Arc):
     def points(self):
         return [self.start, self.interior, self.end]
 
-    def reverse(self):
+    def get_reverse(self):
         """
         Defines a new Arc3D, identical to self, but in the opposite direction.
 
@@ -6936,7 +6979,7 @@ class FullArc3D(FullArc, Arc3D):
             return [volmdlr.Point3D(x_coordinate, y_coordinate, self.frame.origin.z)]
         return []
 
-    def reverse(self):
+    def get_reverse(self):
         """
         Defines a new FullArc3D, identical to self, but in the opposite direction.
 
@@ -7211,7 +7254,7 @@ class ArcEllipse3D(Edge):
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
         return ellipse_2d.abscissa(point2d)
 
-    def reverse(self):
+    def get_reverse(self):
         """
         Reverse the Arc Ellipse 3D.
 
@@ -7370,6 +7413,28 @@ class ArcEllipse3D(Edge):
         ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)
         return ellipse_2d.point_belongs(point2d, abs_tol=abs_tol)
+
+    def is_close(self, arcellispe, tol: float = 1e-6):
+        """
+        Checks if two arc-elipse are the same considering the Euclidean distance.
+
+        :param arcellispe: other arc-elipse.
+        :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
+        :type tol: float, optional
+        """
+
+        if isinstance(arcellispe, self.__class__):
+            if (self.start.is_close(arcellispe.start, tol) and self.end.is_close(arcellispe.end, tol)
+                    and self.center.is_close(arcellispe.center, tol) and self.point_belongs(arcellispe.interior, tol)):
+                return True
+        return False
+
+    def complementary(self):
+        """Gets the complementary arc of ellipse."""
+        vector = self.interior - self.center
+        vector.normalize()
+        new_interior = self.center - vector * self.center.point_distance(self.interior)
+        return self.__class__(self.start, new_interior, self.end, self.center, self.major_dir, self.normal)
 
 
 class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):

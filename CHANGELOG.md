@@ -33,7 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mesh: TetrahedralElementQuadratic 
 - GmshParser: define_quadratic_tetrahedron_element_mesh
 - GmshParser: to_vtk (consider quadratic tetrahedron element)
-
+- Edge: direction_independent_is_close
+- Arcellipse2D, 3D: complementary
+- 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
 - LineSegment, Arc, BSplineCurve: get_shared_section()
@@ -49,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
 - ClosedShel3D: intersection method
 - Fix: plots
+- 
 ### Refactor
 - Contour2D: cut_by_wire
 - Contour2D: extract_with_points displaced to WireMixin
@@ -81,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D.minimum_distance_points_line
 - New unittests for plane3d
 - ClosedShel3D: intersection
+- Arcellipse2D: complementary
 
 ## v0.10.0 [Unreleased yet]
 
