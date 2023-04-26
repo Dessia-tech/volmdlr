@@ -1958,7 +1958,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        self.frame.plot(ax=ax, ratio=0.5 * length)
+        self.frame.plot(ax=ax, color=edge_style.color, ratio=0.5 * length)
         for i in range(nlines):
             theta = i / (nlines - 1) * volmdlr.TWO_PI
             start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
