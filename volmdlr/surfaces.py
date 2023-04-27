@@ -24,7 +24,10 @@ import volmdlr.utils.parametric as vm_parametric
 from volmdlr.core import EdgeStyle
 from volmdlr.core import point_in_list
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
+import traceback
+
 c = 0
+
 
 def knots_vector_inv(knots_vector):
     """
@@ -848,19 +851,12 @@ class Surface3D(DessiaObject):
             # global c
             # c += 1
             global c
-            if isinstance(self, RevolutionSurface3D):
-
+            if not isinstance(self, BSplineSurface3D) and not isinstance(self, ExtrusionSurface3D):
                 c += 1
-                self.save_to_file(f"RCC-LAS080-2/revolution_surface_{c}.json")
+                self.save_to_file(f"RCC-LAS080-2/surface_{c}.json")
                 for i, contour in enumerate(contours3d):
-                    contour.save_to_file(f"RCC-LAS080-2/revolution_contour_{c}_{i}.json")
-            if isinstance(self, ExtrusionSurface3D):
-                c += 1
-                self.save_to_file(f"RCC-LAS080-2/extrusion_surface_{c}.json")
-                for i, contour in enumerate(contours3d):
-                    contour.save_to_file(f"RCC-LAS080-2/extrusion_contour_{c}_{i}.json")
-
-            # outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+                    contour.save_to_file(f"RCC-LAS080-2/contour_{c}_{i}.json")
+                # outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
                 outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
@@ -984,6 +980,7 @@ class Surface3D(DessiaObject):
                     primitives3d.extend(primitives)
                 except AttributeError as error:
                     print(error)
+                    print(traceback.format_exc())
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
                           f'with {primitive2d.__class__.__name__}')
             else:
@@ -3910,7 +3907,10 @@ class RevolutionSurface3D(PeriodicalSurface):
             interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
             return [edges.Arc3D(start3d, interior, end3d)]
         if math.isclose(theta1, theta2, abs_tol=1e-3):
-            primitive = self.wire.rotation(self.axis_point, self.axis, theta1)
+            primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
+            if primitive.is_point_edge_extremity(start3d) and \
+                    primitive.is_point_edge_extremity(end3d):
+                return primitive
             primitive = primitive.split_between_two_points(start3d, end3d)
             return [primitive]
         n = 10
