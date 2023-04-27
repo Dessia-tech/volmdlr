@@ -6,7 +6,6 @@ import volmdlr.step as vms
 import volmdlr.wires as vmw
 from volmdlr import surfaces
 
-
 class TestExtrusionSurface3D(unittest.TestCase):
     control_points = [
         volmdlr.Point3D(-0.025917292, 0.002544355, 0.0),
@@ -61,6 +60,12 @@ class TestExtrusionSurface3D(unittest.TestCase):
         self.assertTrue(result.start.is_close(volmdlr.Point2D(1.0, 0.0032000000499998738)))
         self.assertTrue(result.end.is_close(volmdlr.Point2D(0.13555464614559587, 0.0032000000499998738)))
 
+    def test_frame_mapping(self):
+        surface = self.surface
+        new_frame = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 1), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
+        new_surface = surface.frame_mapping(new_frame, "old")
+        self.assertEqual(new_surface.edge.start.z, 1)
+        self.assertTrue(new_surface.frame.origin.is_close(volmdlr.Point3D(-0.025917292, 0.002544355, 1.0)))
 
 
 if __name__ == '__main__':
