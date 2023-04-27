@@ -1055,6 +1055,16 @@ class Face3D(volmdlr.core.Primitive3D):
         return (dict_cutting_contour_intersections, dict_inner_contour_intersections,
                 inner_contours_connected_cutting_contour, list_cutting_contours)
 
+    def is_linesegment_crossing(self, linesegment):
+        """Verify if a face 3d is being crossed by a linesegment 3d. """
+        triangulation = self.triangulation()
+        faces_triangulation = triangulation.triangular_faces()
+        for face in faces_triangulation:
+            inters = face.linesegment_intersections(linesegment)
+            if inters:
+                return True
+        return False
+
 
 class PlaneFace3D(Face3D):
     """
@@ -2730,7 +2740,7 @@ class BSplineFace3D(Face3D):
         if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
             resolution = 25
         else:
-            resolution = 30
+            resolution = 15
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
         number_points_x = int(delta_u * resolution)
@@ -3076,3 +3086,14 @@ class BSplineFace3D(Face3D):
             inner_contours=[plane3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
 
         return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
+
+    def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+        triangulation = self.triangulation()
+        faces_triangulation = triangulation.triangular_faces()
+        linesegment_intersections = []
+        for face in faces_triangulation:
+            inters = face.linesegment_intersections(linesegment)
+            for point in inters:
+                if volmdlr.core.point_in_list(point, linesegment_intersections):
+                    linesegment_intersections.append(point)
+        return linesegment_intersections
