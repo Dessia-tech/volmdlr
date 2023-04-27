@@ -856,7 +856,7 @@ class Surface3D(DessiaObject):
             class_ = getattr(volmdlr.faces, self.face_class)
         else:
             class_ = self.face_class
-        if not outer_contour2d.is_ordered(1e-4):
+        # if not outer_contour2d.is_ordered(1e-4):
             # set_errors = (4, 12, 22, 35, 42, 82, 85, 90)
             # global c
             # c += 1
@@ -867,7 +867,7 @@ class Surface3D(DessiaObject):
             #     for i, contour in enumerate(contours3d):
             #         contour.save_to_file(f"RCC-LAS080-2/contour_{c}_{i}.json")
                 # outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
-            outer_contour2d.plot().set_aspect("auto")
+            # outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         face = class_(self, surface2d=surface2d, name=name)
@@ -4651,21 +4651,24 @@ class BSplineSurface3D(Surface3D):
             return [linesegment]
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree, name="parametric.arc")]
 
-    def arcellipse3d_to_2d(self, arcellipse3d_to_2d):
+    def arcellipse3d_to_2d(self, arcellipse3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
+        self.save_to_file("bspline_surface_with_arcellipse.json")
+        arcellipse3d.save_to_file("arcellipse_bspline_surface.json")
+        print("Got test to BSplineSurface3D.arcellipse3d_to_2d")
         # todo: Is this right? Needs detailed investigation
         number_points = max(self.nb_u, self.nb_v)
         degree = max(self.degree_u, self.degree_v)
         points = [self.point3d_to_2d(point3d) for point3d in
-                  arcellipse3d_to_2d.discretization_points(number_points=number_points)]
+                  arcellipse3d.discretization_points(number_points=number_points)]
         start = points[0]
         end = points[-1]
         min_bound_x, max_bound_x = self.surface.domain[0]
         min_bound_y, max_bound_y = self.surface.domain[1]
         if self.x_periodicity:
-            points = self._repair_periodic_boundary_points(arcellipse3d_to_2d, points, 'x')
+            points = self._repair_periodic_boundary_points(arcellipse3d, points, 'x')
             start = points[0]
             end = points[-1]
             if start.is_close(end):
@@ -4674,7 +4677,7 @@ class BSplineSurface3D(Surface3D):
                 else:
                     end.x = min_bound_x
         if self.y_periodicity:
-            points = self._repair_periodic_boundary_points(arcellipse3d_to_2d, points, 'y')
+            points = self._repair_periodic_boundary_points(arcellipse3d, points, 'y')
             start = points[0]
             end = points[-1]
             if start.is_close(end):

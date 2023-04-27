@@ -5092,11 +5092,13 @@ class Circle3D(Contour3D):
 
         interior = volmdlr.geometry.clockwise_interior_from_circle3d(
             point1, point2, self)
-        if not self.point_belongs(interior):
-            self.save_to_file("circle_trim_wrong_interior.json")
-            point1.save_to_file("circle_trim_wrong_interior_point1.json")
-            point2.save_to_file("circle_trim_wrong_interior_point2.json")
-        return volmdlr.edges.Arc3D(point1, interior, point2)
+        # if point1.is_close(volmdlr.Point3D(0.008231078601, -0.59734588054, 0.699201282842)) and \
+        #         interior.is_close(volmdlr.Point3D(0.008234733548, -0.597894804006, 0.699235483282)) and \
+        #         point2.is_close(volmdlr.Point3D(0.008238388495, -0.598443727471, 0.699269683724)):
+        #     self.save_to_file("circle_arc_with_problem.json")
+        #     point1.save_to_file("circle_arc_with_problem_point1.json")
+        #     point2.save_to_file("circle_arc_with_problem_point2.json")
+        return volmdlr.edges.Arc3D(point1, interior, point2, self.center)
 
 
 class Ellipse3D(Contour3D):
