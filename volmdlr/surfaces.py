@@ -849,9 +849,9 @@ class Surface3D(DessiaObject):
             class_ = getattr(volmdlr.faces, self.face_class)
         else:
             class_ = self.face_class
-        if outer_contour3d:
-            if not outer_contour3d.is_ordered():
-                outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+        # if outer_contour3d:
+        #     if not outer_contour3d.is_ordered():
+        #         outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         face = class_(self, surface2d=surface2d, name=name)
