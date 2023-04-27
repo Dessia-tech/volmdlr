@@ -5092,20 +5092,10 @@ class Circle3D(Contour3D):
 
         interior = volmdlr.geometry.clockwise_interior_from_circle3d(
             point1, point2, self)
-        linesegment = volmdlr.edges.LineSegment3D(point1, point2)
-        if linesegment.point_belongs(interior):
-            self.save_to_file(
-                f"C:/Users/gabri/Documents/dessia/GitHub/volmdlr/scripts/step/circle_trim/circle_{self.radius}.json")
-            point1.save_to_file(
-                f"C:/Users/gabri/Documents/dessia/GitHub/volmdlr/scripts/step/circle_trim/point1_{self.radius}.json")
-            point2.save_to_file(
-                f"C:/Users/gabri/Documents/dessia/GitHub/volmdlr/scripts/step/circle_trim/point2_{self.radius}.json")
-            ax = self.plot()
-            point1.plot(ax, "r")
-            point2.plot(ax, "b")
-            linesegment.plot(ax, edge_style=EdgeStyle(color="g"))
-            print(f"Circle3D trim with radius: {self.radius} should be a line segment")
-            return linesegment
+        if not self.point_belongs(interior):
+            self.save_to_file("circle_trim_wrong_interior.json")
+            point1.save_to_file("circle_trim_wrong_interior_point1.json")
+            point2.save_to_file("circle_trim_wrong_interior_point2.json")
         return volmdlr.edges.Arc3D(point1, interior, point2)
 
 

@@ -26,6 +26,14 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertTrue(test1.start.is_close(volmdlr.Point2D(0, 0.75 * math.pi)))
         self.assertTrue(test1.end.is_close(volmdlr.Point2D(0, 1.25 * math.pi)))
 
+        arc2 = edges.Arc3D(volmdlr.Point3D(-0.169132244445, 0.06508125180570001, 0.627719515715),
+        volmdlr.Point3D(-0.169169279223, 0.064939567779, 0.628073066814),
+        volmdlr.Point3D(-0.169258691383, 0.064597504793, 0.628219515715))
+        surface2 = surfaces.ToroidalSurface3D.load_from_file("surfaces/objects_toroidal_tests/surface.json")
+        test2 = surface2.arc3d_to_2d(arc3d=arc2)[0]
+        self.assertTrue(test2.start.is_close(volmdlr.Point2D(-0.28681306221029024,  -math.pi)))
+        self.assertTrue(test2.end.is_close(volmdlr.Point2D(-0.28681611209686064, -0.5 * math.pi)))
+
     def test_bsplinecurve3d_to_2d(self):
         control_points = [volmdlr.Point3D(-0.006429000000000001, 0.000765110438227, -0.0002349369830163),
                           volmdlr.Point3D(-0.006429000000000001, 0.0007527699876436001, -0.0002071780906932),

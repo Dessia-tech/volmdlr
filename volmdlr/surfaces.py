@@ -819,9 +819,9 @@ class Surface3D(DessiaObject):
             outer_contour3d = contours3d[0]
             inner_contours2d = []
             inner_contours3d = None
-            if isinstance(self, RevolutionSurface3D):
-                if not outer_contour2d.is_ordered(1e-4):
-                    outer_contour2d.plot().set_aspect("auto")
+            # if isinstance(self, RevolutionSurface3D):
+            #     if not outer_contour2d.is_ordered(1e-4):
+            #         outer_contour2d.plot().set_aspect("auto")
 
         elif lc3d > 1:
             area = -1
@@ -860,14 +860,14 @@ class Surface3D(DessiaObject):
             # set_errors = (4, 12, 22, 35, 42, 82, 85, 90)
             # global c
             # c += 1
-            global c
-            if not isinstance(self, BSplineSurface3D) and not isinstance(self, ExtrusionSurface3D):
-                c += 1
-                self.save_to_file(f"RCC-LAS080-2/surface_{c}.json")
-                for i, contour in enumerate(contours3d):
-                    contour.save_to_file(f"RCC-LAS080-2/contour_{c}_{i}.json")
+            # global c
+            # if not isinstance(self, BSplineSurface3D) and not isinstance(self, ExtrusionSurface3D):
+            #     c += 1
+            #     self.save_to_file(f"RCC-LAS080-2/surface_{c}.json")
+            #     for i, contour in enumerate(contours3d):
+            #         contour.save_to_file(f"RCC-LAS080-2/contour_{c}_{i}.json")
                 # outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
-                outer_contour2d.plot().set_aspect("auto")
+            outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         face = class_(self, surface2d=surface2d, name=name)
@@ -1692,12 +1692,12 @@ class PeriodicalSurface(Surface3D):
         Helper function to return points of reference on the edge to fix some parametric periodical discontinuities.
         """
         length = edge.length()
-        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.001 * length))
+        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.01 * length))
         point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
         theta3, _ = point_after_start
         theta4, _ = point_before_end
         if abs(theta3) == math.pi or abs(theta3) == 0.5 * math.pi:
-            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.002 * length))
+            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.02 * length))
         if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi:
             point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
         return point_after_start, point_before_end
@@ -2516,10 +2516,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         start = self.point3d_to_2d(fullarc3d.start)
         end = self.point3d_to_2d(fullarc3d.end)
 
-        length = fullarc3d.length()
         angle3d = fullarc3d.angle
-        point_after_start = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
-        point_before_end = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
+        point_after_start, point_before_end = self._reference_points(fullarc3d)
 
         start, end = vm_parametric.arc3d_to_spherical_coordinates_verification(start, end, angle3d,
                                                                                [point_after_start, point_before_end],
@@ -2550,10 +2548,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
 
-        length = arc3d.length()
         angle3d = arc3d.angle
-        point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
-        point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.97 * length))
+        point_after_start, point_before_end = self._reference_points(arc3d)
 
         start, end = vm_parametric.arc3d_to_spherical_coordinates_verification(start, end, angle3d,
                                                                                [point_after_start, point_before_end],
@@ -2852,6 +2848,7 @@ class ConicalSurface3D(PeriodicalSurface):
             end = volmdlr.Point2D(start.x, end.y)
         if not start.is_close(end):
             return [edges.LineSegment2D(start, end)]
+        print(True)
         return [edges.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
 
     def linesegment2d_to_3d(self, linesegment2d):
@@ -3363,12 +3360,12 @@ class SphericalSurface3D(PeriodicalSurface):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         # TODO: On a spherical surface we can have fullarc3d in any plane
-        length = fullarc3d.length()
 
         theta1, phi1 = self.point3d_to_2d(fullarc3d.start)
         theta2, phi2 = self.point3d_to_2d(fullarc3d.end)
-        theta3, phi3 = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
-        theta4, _ = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
+        point_after_start, point_before_end = self._reference_points(fullarc3d)
+        theta3, phi3 = point_after_start
+        theta4, _ = point_before_end
 
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             point1 = volmdlr.Point2D(theta1, phi1)
@@ -3405,10 +3402,10 @@ class SphericalSurface3D(PeriodicalSurface):
         points[0] = volmdlr.Point2D(theta1, phi1)
         points[-1] = volmdlr.Point2D(theta2, phi2)
 
-        if theta3 < theta1 < theta2:
-            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
-        elif theta3 > theta1 > theta2:
-            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+        theta_list = [point.x for point in points]
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
+        if theta_discontinuity:
+            points = self._fix_angle_discontinuity_on_discretization_points(points, indexes_theta_discontinuity, "x")
 
         return [edges.BSplineCurve2D.from_points_interpolation(points, 2)]
 
