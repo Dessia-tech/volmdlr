@@ -2185,7 +2185,7 @@ class BSplineCurve2D(BSplineCurve):
             point.rotation_inplace(center, angle)
 
     def line_crossings(self, line2d: Line2D):
-        """BSpline Curve crossings with a line 2d."""
+        """Bspline Curve crossings with a line 2d."""
         polygon_points = self.discretization_points(number_points=50)
         crossings = []
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
@@ -3453,7 +3453,7 @@ class Arc2D(Arc):
         return False
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        """PLot arc 2d with Matplotlib."""
+        """Plot arc 2d with Matplotlib."""
         if ax is None:
             _, ax = plt.subplots()
 
