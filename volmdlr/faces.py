@@ -376,6 +376,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
         linesegment_intersections = []
+        if not self.bounding_box.bbox_intersection(linesegment.bounding_box):
+            return []
         for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 linesegment_intersections.append(intersection)
@@ -692,7 +694,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         for new_contour in list_closed_cutting_contours:
             if len(new_contour.primitives) >= 3 and \
-                    new_contour.primitives[0].start == new_contour.primitives[-1].end:
+                    new_contour.primitives[0].start.is_close(new_contour.primitives[-1].end):
                 inner_contours1 = [new_contour]
                 inner_contours2 = []
                 if list_faces:
