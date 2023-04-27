@@ -53,9 +53,9 @@ class TestExtrusionSurface3D(unittest.TestCase):
 
     def test_arc3d_to_2d(self):
         surface = surfaces.ExtrusionSurface3D.load_from_file(
-            "faces/objects_extrusion_tests/extrusion_surface_test_arc3d_to_2d.json")
+            "surfaces/objects_extrusion_tests/extrusion_surface_test_arc3d_to_2d.json")
         contour3d = vmw.Contour3D.load_from_file(
-            "faces/objects_extrusion_tests/extrusion_contour_test_arc3d_to_2d.json")
+            "surfaces/objects_extrusion_tests/extrusion_contour_test_arc3d_to_2d.json")
         arc3d = contour3d.primitives[2]
         result = surface.arc3d_to_2d(arc3d)[0]
         self.assertTrue(result.start.is_close(volmdlr.Point2D(1.0, 0.0032000000499998738)))
