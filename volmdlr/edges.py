@@ -5591,6 +5591,12 @@ class LineSegment3D(LineSegment):
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
 
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        if not self.point_belongs(point1) or not self.point_belongs(point2):
+            raise ValueError('Point not on curve')
+
+        return LineSegment3D(point1, point2)
+
 
 class BSplineCurve3D(BSplineCurve):
     """
@@ -6106,6 +6112,18 @@ class BSplineCurve3D(BSplineCurve):
             return minimum_distance, points[0], points[1]
         return minimum_distance
 
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Returns a new Revolution Surface positionned in the specified frame.
+
+        :param frame: Frame of reference
+        :type frame: `volmdlr.Frame3D`
+        :param side: 'old' or 'new'
+        """
+        new_control_points = [control_point.frame_mapping(frame, side) for control_point in self.control_points]
+        return BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights,
+                              self.periodic, self.name)
+
 
 class BezierCurve3D(BSplineCurve3D):
     """
@@ -6137,6 +6155,9 @@ class Arc3D(Arc):
     """
 
     def __init__(self, start, interior, end, name=''):
+        if start.is_close(interior) or end.is_close(interior):
+            raise ValueError(
+                'Start, end and interior points of an arc must be distincts')
         self._utd_normal = False
         self._utd_center = False
         self._utd_frame = False
