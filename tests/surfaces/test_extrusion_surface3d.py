@@ -30,7 +30,7 @@ class TestExtrusionSurface3D(unittest.TestCase):
         self.assertEqual(face.surface2d.area(), 2)
 
     def test_from_step(self):
-        step = vms.Step.from_file("faces/objects_extrusion_tests/bspline_extruded_simple.step")
+        step = vms.Step.from_file("surfaces/objects_extrusion_tests/bspline_extruded_simple.step")
         model = step.to_volume_model()
         extrusion_surface = model.primitives[0].primitives[0].surface3d
         self.assertEqual(extrusion_surface.direction, -volmdlr.Z3D)
@@ -39,7 +39,7 @@ class TestExtrusionSurface3D(unittest.TestCase):
 
     def test_linesegment2d_to_3d(self):
         surface = surfaces.ExtrusionSurface3D.load_from_file(
-            "faces/objects_extrusion_tests/extrusion_surface_undefined_direction_linesegment.json")
+            "surfaces/objects_extrusion_tests/extrusion_surface_undefined_direction_linesegment.json")
         point1 = volmdlr.Point2D(0.9020984833336293, -0.08534036750789999)
         point2 = volmdlr.Point2D(0.9286913444016728, -0.07799341694)
         linesegment2d = vme.LineSegment2D(point1, point2)

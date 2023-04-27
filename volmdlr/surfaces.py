@@ -491,6 +491,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         return cls(surface2d_outer_contour, surface2d_inner_contours)
 
     def plot(self, ax=None, color='k', alpha=1, equal_aspect=False):
+        """Plot surface 2d using Matplotlib."""
 
         if ax is None:
             _, ax = plt.subplots()
@@ -559,6 +560,9 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.__class__(outer_contour, inner_contours)
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
+        """
+        Translate the surface in-place.
+        """
         warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         new_contour = self.translation(offset)
@@ -566,6 +570,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         self.inner_contours = new_contour.inner_contours
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """Frame mapping of a surface 2d."""
         outer_contour = self.outer_contour.frame_mapping(frame, side)
         inner_contours = [contour.frame_mapping(frame, side) for contour in self.inner_contours]
         return self.__class__(outer_contour, inner_contours)
@@ -586,7 +591,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         lines, line_surface, lines_tags = [], [], []
         point_account, line_account, line_loop_account = 0, 0, 1
         for outer_contour, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
-
             if isinstance(contour, wires.Circle2D):
                 points = [volmdlr.Point2D(contour.center.x - contour.radius, contour.center.y),
                           contour.center,
@@ -671,23 +675,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         size = (math.sqrt(self.area()) / initial_mesh_size) * factor
 
         if min_points:
-            primitives, primitives_length = [], []
-            for _, contour in enumerate(list(chain(*[[self.outer_contour], self.inner_contours]))):
-                if isinstance(contour, wires.Circle2D):
-                    primitives.append(contour)
-                    primitives.append(contour)
-                    primitives_length.append(contour.length() / 2)
-                    primitives_length.append(contour.length() / 2)
-                else:
-                    for primitive in contour.primitives:
-                        if ((primitive not in primitives)
-                                and (primitive.reverse() not in primitives)):
-                            primitives.append(primitive)
-                            primitives_length.append(primitive.length())
-
-            for i, length in enumerate(primitives_length):
-                if length < min_points * size:
-                    lines.append('Transfinite Curve {' + str(i) + '} = ' + str(min_points) + ' Using Progression 1;')
+            lines.extend(self.get_mesh_lines_with_transfinite_curves(
+                [[self.outer_contour], self.inner_contours], min_points, size))
 
         lines.append('Field[1] = MathEval;')
         lines.append('Field[1].F = "' + str(size) + '";')
@@ -695,8 +684,29 @@ class Surface2D(volmdlr.core.Primitive2D):
         if curvature_mesh_size:
             lines.append('Mesh.MeshSizeFromCurvature = ' + str(curvature_mesh_size) + ';')
 
-        # lines.append('Coherence;')
+        return lines
 
+    @staticmethod
+    def get_mesh_lines_with_transfinite_curves(lists_contours, min_points, size):
+        """Gets Surface 2d mesh lines with transfinite curves."""
+        lines, primitives, primitives_length = [], [], []
+        circle_class_ = getattr(wires, 'Circle'+lists_contours[0][0].__class__.__name__[-2:])
+        for contour in list(chain(*lists_contours)):
+            if isinstance(contour, circle_class_):
+                primitives.append(contour)
+                primitives.append(contour)
+                primitives_length.append(contour.length() / 2)
+                primitives_length.append(contour.length() / 2)
+            else:
+                for primitive in contour.primitives:
+                    if (primitive not in primitives) and (primitive.reverse() not in primitives):
+                        primitives.append(primitive)
+                        primitives_length.append(primitive.length())
+
+        for i, length in enumerate(primitives_length):
+            if length < min_points * size:
+                lines.append('Transfinite Curve {' + str(i) + '} = ' +
+                             str(min_points) + ' Using Progression 1;')
         return lines
 
     def to_geo(self, file_name: str,
@@ -1088,6 +1098,10 @@ class Plane3D(Surface3D):
         return cls(frame, arguments[0][1:-1])
 
     def to_step(self, current_id):
+        """
+        Transform a Plane 3D to step.
+
+        """
         frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
@@ -1114,6 +1128,7 @@ class Plane3D(Surface3D):
 
     @classmethod
     def from_normal(cls, point, normal):
+        """Creates a Plane 3D form a point and a normal vector."""
         v1 = normal.deterministic_unit_normal_vector()
         v2 = v1.cross(normal)
         return cls(volmdlr.Frame3D(point, v1, v2, normal))
@@ -1928,7 +1943,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        self.frame.plot(ax=ax, ratio=0.5 * length)
+        self.frame.plot(ax=ax, color=edge_style.color, ratio=0.5 * length)
         for i in range(nlines):
             theta = i / (nlines - 1) * volmdlr.TWO_PI
             start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
@@ -2092,6 +2107,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         return points_3d
 
     def line_intersections(self, line: edges.Line3D):
+        """Gets intersections between a line and a Cylindrical Surface 3D."""
         line_2d = line.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         if line_2d is None:
             return []
@@ -2113,6 +2129,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         return [intersection1, intersection2]
 
     def linesegment_intersections(self, linesegment: edges.LineSegment3D):
+        """Gets intersections between a line segment and a Cylindrical Surface 3D."""
         line = linesegment.to_line()
         line_intersections = self.line_intersections(line)
         linesegment_intersections = [inters for inters in line_intersections if linesegment.point_belongs(inters)]
@@ -2481,6 +2498,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         return [edges.LineSegment2D(point1, point2)]
 
     def arc3d_to_2d(self, arc3d):
+        """
+        Converts the arc from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
 
@@ -2789,6 +2809,9 @@ class ConicalSurface3D(PeriodicalSurface):
         return [edges.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
 
     def linesegment2d_to_3d(self, linesegment2d):
+        """
+        Converts the primitive from parametric space to 3D spatial coordinates.
+        """
         if linesegment2d.name == "construction":
             return None
         theta1, z1 = linesegment2d.start
@@ -2969,6 +2992,7 @@ class SphericalSurface3D(PeriodicalSurface):
 
     @property
     def bounding_box(self):
+        """Bounding Box for Spherical Surface 3D."""
 
         if not self._bbox:
             self._bbox = self._bounding_box()
@@ -2986,6 +3010,9 @@ class SphericalSurface3D(PeriodicalSurface):
         return volmdlr.core.BoundingBox.from_points(points)
 
     def contour2d_to_3d(self, contour2d):
+        """
+        Converts the primitive from parametric 2D space to 3D spatial coordinates.
+        """
         primitives3d = []
         for primitive2d in contour2d.primitives:
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'

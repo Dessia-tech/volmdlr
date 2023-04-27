@@ -234,6 +234,9 @@ class WireMixin:
                     primitives.remove(primitive)
                     break
             else:
+                # print(self, primitive)
+                # ax = self.plot()
+                # primitive.plot(edge_style=EdgeStyle(color='r'), ax=ax)
                 raise NotImplementedError('There may exist a problem with this'
                                           ' contour, it seems it cannot be reordered.'
                                           ' Please, verify its points')
