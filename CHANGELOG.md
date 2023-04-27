@@ -51,7 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
 - ClosedShel3D: intersection method
 - Fix: plots
-- 
+- add some fixes to pydocstyle errors
+
 ### Refactor
 - Contour2D: cut_by_wire
 - Contour2D: extract_with_points displaced to WireMixin
