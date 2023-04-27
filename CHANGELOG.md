@@ -51,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface: fix some parametric operations.
 - ClosedShel3D: intersection method
 - Fix: plots
+- add some fixes to pydocstyle errors
+
 
 ### Refactor
 - Contour2D: cut_by_wire
