@@ -803,8 +803,8 @@ class Surface3D(DessiaObject):
         raise NotImplementedError(f'point3d_to_2d is abstract and should be implemented in {self.__class__.__name__}')
 
     def face_from_contours3d(self, contours3d: List[wires.Contour3D], name: str = ''):
-        """Deprecated method, 'Use Face3D from_surface_and_contours3d method'."""
-        raise AttributeError('Use Face3D from_surface_and_contours3d method')
+        """Deprecated method, 'Use Face3D from_contours3d method'."""
+        raise AttributeError('Use Face3D from_contours3d method')
 
     def repair_primitives_periodicity(self, primitives2d):
         """
