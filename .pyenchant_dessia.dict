@@ -44,6 +44,7 @@ maxiter
 msh
 plt
 nbv
+networkx.DiGraph
 ndarray
 numpy
 numpy
