@@ -2185,6 +2185,7 @@ class BSplineCurve2D(BSplineCurve):
             point.rotation_inplace(center, angle)
 
     def line_crossings(self, line2d: Line2D):
+        """BSpline Curve crossings with a line 2d."""
         polygon_points = self.discretization_points(number_points=50)
         crossings = []
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
@@ -2425,6 +2426,7 @@ class LineSegment2D(LineSegment):
         return point, curv_abs
 
     def line_intersections(self, line: Line2D):
+        """Line Segment intersections with Line2D."""
         if self.direction_vector().is_colinear_to(line.direction_vector()):
             return []
         point = volmdlr.Point2D.line_intersection(self, line)
@@ -2469,6 +2471,7 @@ class LineSegment2D(LineSegment):
         return []
 
     def line_crossings(self, line: 'Line2D'):
+        """Line Segment crossings with line 2d."""
         if self.direction_vector().is_colinear_to(line.direction_vector()):
             return []
         line_intersection = self.line_intersections(line)
@@ -2543,6 +2546,7 @@ class LineSegment2D(LineSegment):
         return LineSegment2D(self.end.copy(), self.start.copy())
 
     def to_line(self):
+        """Transform a Line Segment to a Line 2D."""
         return Line2D(self.start, self.end)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
@@ -2637,6 +2641,7 @@ class LineSegment2D(LineSegment):
                                        edge_style=edge_style)
 
     def create_tangent_circle(self, point, other_line):
+        """Create a circle tangent to a LineSegment."""
         circle1, circle2 = Line2D.create_tangent_circle(other_line, point, self)
         if circle1 is not None:
             _, curv_abs1 = Line2D.point_projection(self, circle1.center)
@@ -2649,6 +2654,7 @@ class LineSegment2D(LineSegment):
         return circle1, circle2
 
     def infinite_primitive(self, offset):
+        """Get an infinite primitive."""
         n = -self.unit_normal_vector()
         offset_point_1 = self.start + offset * n
         offset_point_2 = self.end + offset * n
@@ -2743,6 +2749,7 @@ class Arc(Edge):
 
     @property
     def radius(self):
+        """Gets the radius of the arc."""
         if not self._radius:
             self._radius = (self.start - self.center).norm()
         return self._radius
@@ -2853,6 +2860,7 @@ class Arc(Edge):
                 for i in range(number_points)]
 
     def polygon_points(self, discretization_resolution: int):
+        #todo: delete this method.
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
@@ -3302,6 +3310,7 @@ class Arc2D(Arc):
 
     @property
     def bounding_rectangle(self):
+        """Gets the bounding rectangle for an Arc 2D."""
         if not self._bounding_rectangle:
             discretization_points = self.discretization_points(number_points=20)
             x_values, y_values = [], []
@@ -3331,7 +3340,7 @@ class Arc2D(Arc):
         return -area
 
     def straight_line_second_moment_area(self, point: volmdlr.Point2D):
-
+        """Straight line second moment area for an Arc 2D."""
         if self.angle2 < self.angle1:
             angle2 = self.angle2 + volmdlr.TWO_PI
 
@@ -3425,7 +3434,7 @@ class Arc2D(Arc):
         """
         Verifies if a point belongs to the surface created by closing the edge.
 
-        :param point_2d: Point to be verified.
+        :param point: Point to be verified.
         :return: Return True if the point belongs to this surface, or False otherwise.
         """
         if self.point_belongs(point):
@@ -3444,6 +3453,7 @@ class Arc2D(Arc):
         return False
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """PLot arc 2d with Matplotlib."""
         if ax is None:
             _, ax = plt.subplots()
 
@@ -3637,7 +3647,7 @@ class Arc2D(Arc):
         return Arc2D(start, interior, end)
 
     def complementary(self):
-
+        """Gets the complementary Arc 2D. """
         interior = self.middle_point().rotation(self.center, math.pi)
         return Arc2D(self.start, interior, self.end)
 
@@ -3692,6 +3702,7 @@ class FullArc2D(FullArc, Arc2D):
 
     @property
     def bounding_rectangle(self):
+        """Gets the bounding rectangle for a full arc 2d."""
         if not self._bounding_rectangle:
             self._bounding_rectangle = volmdlr.core.BoundingRectangle(
                 self.center.x - self.radius, self.center.x + self.radius,
@@ -3708,6 +3719,7 @@ class FullArc2D(FullArc, Arc2D):
         return area
 
     def center_of_mass(self):
+        """Gets the center of the full arc 2d."""
         return self.center
 
     def straight_line_center_of_mass(self):
@@ -3718,7 +3730,7 @@ class FullArc2D(FullArc, Arc2D):
         """
         Verifies if a point belongs to the surface created by closing the edge.
 
-        :param point2d: Point to be verified.
+        :param point: Point to be verified.
         :return: Return True if the point belongs to this surface, or False otherwise.
         """
         if point.point_distance(self.center) <= self.radius:
@@ -3746,6 +3758,7 @@ class FullArc2D(FullArc, Arc2D):
         return FullArc3D(center, start, z)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
+        """Rotation of a full arc 2D."""
         new_center = self._center.rotation(center, angle, True)
         new_start_end = self.start.rotation(center, angle, True)
         return FullArc2D(new_center, new_start_end)
@@ -3759,6 +3772,7 @@ class FullArc2D(FullArc, Arc2D):
         self.end.rotation(center, angle, False)
 
     def translation(self, offset: volmdlr.Vector2D):
+        """Translation of a full arc 2D."""
         new_center = self._center.translation(offset)
         new_start_end = self.start.translation(offset)
         return FullArc2D(new_center, new_start_end)
@@ -3816,6 +3830,7 @@ class FullArc2D(FullArc, Arc2D):
         return arc
 
     def line_intersections(self, line2d: Line2D, tol=1e-9):
+        """Full Arc 2D intersections with a Line 2D."""
         try:
             if line2d.start.is_close(self.center):
                 pt1 = line2d.end
@@ -3850,6 +3865,7 @@ class FullArc2D(FullArc, Arc2D):
         return []
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D, abs_tol=1e-9):
+        """Full arc 2D intersections with a line segment."""
         if self.bounding_rectangle.distance_to_b_rectangle(linesegment2d.bounding_rectangle) > abs_tol:
             return []
         try:
@@ -3891,6 +3907,7 @@ class FullArc2D(FullArc, Arc2D):
         return []
 
     def get_reverse(self):
+        """Reverse of full arc 2D."""
         return self
 
     def point_belongs(self, point: volmdlr.Point2D, abs_tol: float = 1e-6):
@@ -4061,6 +4078,7 @@ class ArcEllipse2D(Edge):
         return False
 
     def valid_abscissa_start_end_angle(self, angle_abscissa):
+        """Get valid abscissa angle for start and end."""
         angle_start = self.angle_start
         angle_end = angle_abscissa
         if self.angle_start > angle_abscissa >= self.angle_end:
@@ -4075,6 +4093,7 @@ class ArcEllipse2D(Edge):
         return angle_start, angle_end
 
     def point_at_abscissa(self, abscissa):
+        """Get a point at given abscissa."""
         if math.isclose(abscissa, 0.0, abs_tol=1e-6):
             return self.start
         if math.isclose(abscissa, self.length(), abs_tol=1e-6):
