@@ -1,27 +1,11 @@
 import unittest
 from itertools import product
 
-from geomdl import utilities
-
 import volmdlr
-from volmdlr import edges
+from volmdlr.models.edges import bspline1, lineseg, arc, arc_ellipse2d
 
 
 class TestEdge2DIntersections(unittest.TestCase):
-    degree = 3
-    points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
-    knotvector = utilities.generate_knot_vector(degree, len(points))
-    knot_multiplicity = [1] * len(knotvector)
-    bspline1 = edges.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
-
-    lineseg = edges.LineSegment2D(volmdlr.Point2D(0, 0.2), volmdlr.Point2D(3, -0.2))
-
-    arc = edges.Arc2D(volmdlr.Point2D(0, 0.3), volmdlr.Point2D(1, -0.3), volmdlr.Point2D(2, 2))
-
-    arc_ellipse2d = edges.ArcEllipse2D(start=10 * volmdlr.Point2D(-0.125, -0.08416500663326211),
-                                       interior=10 * volmdlr.Point2D(-0.03543560762586048, -0.011930639375832372),
-                                       end=10 * volmdlr.Point2D(0.0, 0.125), center=10 * volmdlr.Point2D(-0.15, 0.125),
-                                       major_dir=volmdlr.Vector2D(0, 1))
 
     def test_edge_intersections(self):
         expected_results = [[volmdlr.Point2D(0.21547678763159617, 0.17126976164912053),
@@ -46,7 +30,7 @@ class TestEdge2DIntersections(unittest.TestCase):
                             [volmdlr.Point2D(0.5949972004520672, -0.19981456124516805)]]
 
         intersection_results = []
-        for edge1, edge2 in product([self.bspline1, self.lineseg, self.arc, self.arc_ellipse2d], repeat=2):
+        for edge1, edge2 in product([bspline1, lineseg, arc, arc_ellipse2d], repeat=2):
             if edge1 == edge2:
                 continue
             intersections = edge1.intersections(edge2)
