@@ -1,6 +1,6 @@
 {
   "name": "generatedtabulatedcylinder",
-  "object_class": "volmdlr.faces.ExtrusionSurface3D",
+  "object_class": "volmdlr.surfaces.ExtrusionSurface3D",
   "package_version": "0.9.2.dev1050+g45192f1d",
   "edge": {
     "name": "",

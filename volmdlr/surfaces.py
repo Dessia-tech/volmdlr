@@ -810,7 +810,7 @@ class Surface3D(DessiaObject):
         """
 
         lc3d = len(contours3d)
-
+        outer_contour3d, inner_contours3d = None, None
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
             outer_contour3d = contours3d[0]
@@ -828,7 +828,6 @@ class Surface3D(DessiaObject):
             if any(check_contours):
                 # Not implemented yet, but repair_contours2d should also return outer_contour3d and inner_contours3d
                 outer_contour2d, inner_contours2d = self.repair_contours2d(contours2d[0], contours2d[1:])
-                outer_contour3d, inner_contours3d = None, None
             else:
                 for contour2d, contour3d in zip(contours2d, contours3d):
                     # if not contour2d.is_ordered(1e-4):
@@ -850,8 +849,9 @@ class Surface3D(DessiaObject):
             class_ = getattr(volmdlr.faces, self.face_class)
         else:
             class_ = self.face_class
-        # if not outer_contour2d.is_ordered(1e-4):
-        #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+        if outer_contour3d:
+            if not outer_contour3d.is_ordered():
+                outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         face = class_(self, surface2d=surface2d, name=name)

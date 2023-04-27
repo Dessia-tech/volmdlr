@@ -31,7 +31,7 @@ class TestRevolutionSurface3D(unittest.TestCase):
     def test_point2d_to_3d(self):
         surface = surfaces.RevolutionSurface3D(self.wire, self.axis_point, self.axis)
 
-        point2d = volmdlr.Point2D(math.pi, 0.7047817224492219)
+        point2d = volmdlr.Point2D(math.pi, 0.5)
         point3d = surface.point2d_to_3d(point2d)
         expected_point3d = volmdlr.Point3D(-0.5, 0, 0.5)
 
@@ -42,7 +42,7 @@ class TestRevolutionSurface3D(unittest.TestCase):
 
         point3d = volmdlr.Point3D(-0.5, 0, 0.5)
         point2d = surface.point3d_to_2d(point3d)
-        expected_point2d = volmdlr.Point2D(math.pi, 0.7047817224492219)
+        expected_point2d = volmdlr.Point2D(math.pi, 0.5)
 
         self.assertTrue(point2d.is_close(expected_point2d))
 
