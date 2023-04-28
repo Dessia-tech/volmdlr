@@ -7597,10 +7597,10 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
 
     def split(self, split_point):
         """
-        Splits arc at a given point.
+        Splits the ellipse into two arc of ellipse at a given point.
 
         :param split_point: splitting point.
-        :return: list of two Arc.
+        :return: list of two Arc of ellipse.
         """
         if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):
             raise ValueError("Point should be different of start and end.")
@@ -7619,6 +7619,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
                 ArcEllipse3D(split_point, interior_2, self.start_end, self.center, self.major_dir, self.normal)]
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """FullArcEllipse plot."""
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
