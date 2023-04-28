@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mesh: TetrahedralElementQuadratic 
 - GmshParser: define_quadratic_tetrahedron_element_mesh
 - GmshParser: to_vtk (consider quadratic tetrahedron element)
+- Edge: direction_independent_is_close
+- Arcellipse2D, 3D: complementary
+- Contour2D: copy
+- LineSegment2D: copy
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -48,7 +52,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Edge: unit_direction_vector, unit_normal_vector
 - VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
 - ClosedShel3D: intersection method
-- 
+- Fix: plots
+- add some fixes to pydocstyle errors
+
 ### Refactor
 - Contour2D: cut_by_wire
 - Contour2D: extract_with_points displaced to WireMixin
@@ -59,8 +65,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: ordering_contour
 - WireMixin: order_wire
 - Contour2D: delete cut_by_linesegments
-- split faces.py into surfaces.py, faces.py and shells.py
+- split faces.py into surfaces.py, faces.py and shells.py 
 - ContourMixin: from_points
+- ClosedShell3D: improve performance for boolean operations
+- Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 
 ### Changed
 - better surface3d plots
@@ -80,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D.minimum_distance_points_line
 - New unittests for plane3d
 - ClosedShel3D: intersection
+- Arcellipse2D: complementary
 
 ## v0.10.0 [Unreleased yet]
 

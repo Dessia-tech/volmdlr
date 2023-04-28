@@ -366,6 +366,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
         linesegment_intersections = []
+        if not self.bounding_box.bbox_intersection(linesegment.bounding_box):
+            return []
         for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 linesegment_intersections.append(intersection)
@@ -1904,11 +1906,11 @@ class CylindricalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 11
+        angle_resolution = 5
         z_resolution = 5
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
-        number_points_x = int(delta_theta * angle_resolution)
+        number_points_x = max(angle_resolution, int(delta_theta * angle_resolution))
 
         delta_z = zmax - zmin
         number_points_y = int(delta_z * z_resolution)
@@ -2116,15 +2118,15 @@ class ToroidalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        theta_angle_resolution = 11
-        phi_angle_resolution = 7
+        theta_angle_resolution = 5
+        phi_angle_resolution = 3
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
-        number_points_x = int(delta_theta * theta_angle_resolution)
+        number_points_x = max(theta_angle_resolution, int(delta_theta * theta_angle_resolution))
 
         delta_phi = phi_max - phi_min
-        number_points_y = int(delta_phi * phi_angle_resolution)
+        number_points_y = max(phi_angle_resolution, int(delta_phi * phi_angle_resolution))
 
         return number_points_x, number_points_y
 

@@ -234,6 +234,9 @@ class WireMixin:
                     primitives.remove(primitive)
                     break
             else:
+                # print(self, primitive)
+                # ax = self.plot()
+                # primitive.plot(edge_style=EdgeStyle(color='r'), ax=ax)
                 raise NotImplementedError('There may exist a problem with this'
                                           ' contour, it seems it cannot be reordered.'
                                           ' Please, verify its points')
@@ -1655,6 +1658,13 @@ class Contour2D(ContourMixin, Wire2D):
         self._edge_polygon = None
         self._polygon_100_points = None
         self._area = None
+
+    def copy(self, deep=True, memo=None):
+        """
+        A specified copy of a Contour2D.
+        """
+        return self.__class__(primitives=[p.copy(deep, memo) for p in self.primitives],
+                              name=self.name)
 
     def __hash__(self):
         return hash(tuple(self.primitives))
