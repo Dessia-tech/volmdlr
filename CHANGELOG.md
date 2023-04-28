@@ -34,10 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GmshParser: define_quadratic_tetrahedron_element_mesh
 - GmshParser: to_vtk (consider quadratic tetrahedron element)
 - Edge: direction_independent_is_close
-- Arcellipse2D, 3D: complementary
+- Arcellipse2D, 3D: complementary, translation
 - Contour2D: copy
 - LineSegment2D: copy
-
+-
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
 - LineSegment, Arc, BSplineCurve: get_shared_section()
