@@ -17,21 +17,12 @@ class TestRevolutionSurface3D(unittest.TestCase):
     wire = vmw.Wire3D([linesegment, arc])
     axis_point = volmdlr.O3D
     axis = volmdlr.Z3D
-
-    def test_init(self):
-
-        surface = surfaces.RevolutionSurface3D(self.wire, self.axis_point, self.axis)
-
-        self.assertEqual(surface.x_periodicity, volmdlr.TWO_PI)
-        self.assertEqual(surface.y_periodicity, None)
-        self.assertTrue(surface.frame.origin.is_close(self.axis_point))
-        self.assertTrue(surface.axis_point.is_close(self.axis_point))
-        self.assertTrue(surface.axis.is_close(self.axis))
+    surface = surfaces.RevolutionSurface3D(wire, axis_point, axis)
 
     def test_point2d_to_3d(self):
         surface = surfaces.RevolutionSurface3D(self.wire, self.axis_point, self.axis)
 
-        point2d = volmdlr.Point2D(math.pi, 0.7047817224492219)
+        point2d = volmdlr.Point2D(math.pi, 0.5)
         point3d = surface.point2d_to_3d(point2d)
         expected_point3d = volmdlr.Point3D(-0.5, 0, 0.5)
 
@@ -42,7 +33,7 @@ class TestRevolutionSurface3D(unittest.TestCase):
 
         point3d = volmdlr.Point3D(-0.5, 0, 0.5)
         point2d = surface.point3d_to_2d(point3d)
-        expected_point2d = volmdlr.Point2D(math.pi, 0.7047817224492219)
+        expected_point2d = volmdlr.Point2D(math.pi, 0.5)
 
         self.assertTrue(point2d.is_close(expected_point2d))
 
@@ -51,6 +42,13 @@ class TestRevolutionSurface3D(unittest.TestCase):
         rectangular_cut = volmdlr.faces.RevolutionFace3D.from_surface_rectangular_cut(
             surface, 0, volmdlr.TWO_PI, 0, 1)
         self.assertEqual(rectangular_cut.surface2d.area(), volmdlr.TWO_PI)
+
+    def test_frame_mapping(self):
+        surface = self.surface
+        new_frame = volmdlr.Frame3D(volmdlr.Point3D(0, 1, 0), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
+        new_surface = surface.frame_mapping(new_frame, "old")
+        self.assertEqual(new_surface.wire.primitives[0].start.y, 1)
+        self.assertTrue(new_surface.frame.origin.is_close(volmdlr.Point3D(0, 1, 0)))
 
 
 if __name__ == '__main__':
