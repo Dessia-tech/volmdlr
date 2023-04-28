@@ -1066,6 +1066,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def is_linesegment_crossing(self, linesegment):
         """Verify if a face 3d is being crossed by a linesegment 3d. """
+        if not self.bounding_box.bbox_intersection(linesegment.bounding_box):
+            return False
         triangulation = self.triangulation()
         faces_triangulation = triangulation.triangular_faces()
         for face in faces_triangulation:
