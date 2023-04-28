@@ -7556,7 +7556,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        FullArcEllipse3D translation.
+        Ellipse3D translation.
 
         :param offset: translation vector.
         :type offset: volmdlr.Vector3D
@@ -7619,7 +7619,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
                 ArcEllipse3D(split_point, interior_2, self.start_end, self.center, self.major_dir, self.normal)]
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        """FullArcEllipse plot."""
+        """Ellipse plot."""
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
