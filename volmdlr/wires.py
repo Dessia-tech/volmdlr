@@ -5074,7 +5074,7 @@ class Circle3D(Contour3D):
 
         interior = volmdlr.geometry.clockwise_interior_from_circle3d(
             point1, point2, self)
-        return volmdlr.edges.Arc3D(point1, interior, point2)
+        return volmdlr.edges.Arc3D(point1, interior, point2, self.center)
 
 
 class Ellipse3D(Contour3D):

@@ -3030,8 +3030,9 @@ class Arc2D(Arc):
                  start: volmdlr.Point2D,
                  interior: volmdlr.Point2D,
                  end: volmdlr.Point2D,
+                 center=None,
                  name: str = ''):
-        self._center = None
+        self._center = center
         self._is_trigo = None
         self._angle = None
         self._bounding_rectangle = None
@@ -6170,7 +6171,7 @@ class Arc3D(Arc):
 
     """
 
-    def __init__(self, start, interior, end, name=''):
+    def __init__(self, start, interior, end, center=None, name=''):
         self._utd_normal = False
         self._utd_center = False
         self._utd_frame = False
@@ -6178,7 +6179,7 @@ class Arc3D(Arc):
         self._utd_angle = False
         self._normal = None
         self._frame = None
-        self._center = None
+        self._center = center
         self._is_trigo = None
         self._angle = None
         # self._utd_clockwise_and_trigowise_paths = False
@@ -6263,9 +6264,8 @@ class Arc3D(Arc):
 
     @property
     def center(self):
-        if not self._utd_center:
+        if not self._center:
             self._center = self.get_center()
-            self._utd_center = True
         return self._center
 
     def get_center(self):
@@ -6586,7 +6586,10 @@ class Arc3D(Arc):
         point_start = self.start.to_2d(plane_origin, x, y)
         point_interior = self.interior.to_2d(plane_origin, x, y)
         point_end = self.end.to_2d(plane_origin, x, y)
-        return Arc2D(point_start, point_interior, point_end, name=self.name)
+        center = self.center
+        if center is not None:
+            center = self._center.to_2d(plane_origin, x, y)
+        return Arc2D(point_start, point_interior, point_end, center=center, name=self.name)
 
     def minimum_distance_points_arc(self, other_arc):
 
