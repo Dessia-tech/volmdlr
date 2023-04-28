@@ -71,7 +71,6 @@ assert box_blue.is_inside_shell(box) == False
 
 model = vm.core.VolumeModel([box_red])
 model.to_step('block.step')
-
 step = vm_step.Step.from_file('block.step')
 model2 = step.to_volume_model()
 new_box = box_red.union(box_blue)
