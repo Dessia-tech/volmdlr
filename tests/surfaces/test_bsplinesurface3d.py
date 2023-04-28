@@ -88,6 +88,15 @@ class TestBSplineSurface3D(unittest.TestCase):
         face = surface.face_from_contours3d(contours)
         self.assertAlmostEqual(face.surface2d.area(), 0.6319342194477546, 5)
 
+    def test_arcellipse3d_to_2d(self):
+        arcellipse = vme.ArcEllipse3D.load_from_file("surfaces/objects_bspline_test/arcellipse_on_bsplinesurface.json")
+        bsplinesurface = surfaces.BSplineSurface3D.load_from_file(
+            "surfaces/objects_bspline_test/bsplinesurface_with_arcellipse.json")
+        test = bsplinesurface.arcellipse3d_to_2d(arcellipse)[0]
+        self.assertTrue(isinstance(test, vme.LineSegment2D))
+        self.assertTrue(test.start.is_close(volmdlr.Point2D(0.5, 0)))
+        self.assertTrue(test.end.is_close(volmdlr.Point2D(0.5, 1)))
+
         # todo: Uncomment this block when finish debugging contour2d healing
         # surface = surfaces.BSplineSurface3D.load_from_file(
         #     "surfaces/objects_bspline_test/bspline_surface_self_intersecting_contour.json")
