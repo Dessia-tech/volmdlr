@@ -815,9 +815,7 @@ class Surface3D(DessiaObject):
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
             outer_contour3d = contours3d[0]
             inner_contours2d = []
-            if isinstance(self, RevolutionSurface3D):
-                if not outer_contour2d.is_ordered(1e-4):
-                    outer_contour2d.plot().set_aspect("auto")
+            inner_contours3d = None
 
         elif lc3d > 1:
             area = -1
@@ -851,9 +849,9 @@ class Surface3D(DessiaObject):
             class_ = getattr(volmdlr.faces, self.face_class)
         else:
             class_ = self.face_class
-        if outer_contour3d:
-            if not outer_contour3d.is_ordered():
-                outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+        # if outer_contour3d:
+        #     if not outer_contour3d.is_ordered():
+        #         outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         face = class_(self, surface2d=surface2d, name=name)
