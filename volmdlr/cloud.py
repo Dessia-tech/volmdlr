@@ -367,6 +367,6 @@ class PointCloud2D(dc.DessiaObject):
 
     def to_coord_matrix(self) -> List[List[float]]:
         """
-        Generate a n_points x 2 matrix of coordinates.
+        Generate an n_points x 2 matrix of coordinates.
         """
         return [point.coordinates() for point in self.points]
