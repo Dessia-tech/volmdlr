@@ -40,7 +40,6 @@ surface = surfaces.Surface2D(contour, [hole])
 surface.plot()
 
 surface._check_platform()
-
 # contours = contour.split_regularly(10)
 # ax =  contours[0].plot()
 # for c in contours[1:]:
