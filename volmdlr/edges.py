@@ -6570,7 +6570,9 @@ class Arc3D(Arc):
         point_start = self.start.to_2d(plane_origin, x, y)
         point_interior = self.interior.to_2d(plane_origin, x, y)
         point_end = self.end.to_2d(plane_origin, x, y)
-        center = self._center.to_2d(plane_origin, x, y)
+        center = self.center
+        if center is not None:
+            center = self._center.to_2d(plane_origin, x, y)
         return Arc2D(point_start, point_interior, point_end, center=center, name=self.name)
 
     def minimum_distance_points_arc(self, other_arc):
