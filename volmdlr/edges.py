@@ -4677,7 +4677,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         :param tol: tolerance.
         :return: a float, between 0 and the ellipse's length.
         """
-        if self.point_belongs(point):
+        if self.point_belongs(point, 1e-5):
             angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
             angle_start = 0.0
 
@@ -4709,6 +4709,22 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         """
         raise NotImplementedError
 
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """
+        Matplotlib plot for an ellipse.
+
+        """
+        if ax is None:
+            _, ax = plt.subplots()
+        x = []
+        y = []
+        for point_x, point_y in self.discretization_points(number_points=50):
+            x.append(point_x)
+            y.append(point_y)
+        plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
+        if edge_style.equal_aspect:
+            ax.set_aspect('equal')
+        return ax
 
 class Line3D(Line):
     """
@@ -7606,3 +7622,23 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: direction vector
         """
         raise NotImplementedError
+
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
+        x = []
+        y = []
+        z = []
+        for point_x, point_y, point_z in self.discretization_points():
+            x.append(point_x)
+            y.append(point_y)
+            z.append(point_z)
+        x.append(x[0])
+        y.append(y[0])
+        z.append(z[0])
+        ax.plot(x, y, z, edge_style.color)
+        return ax
