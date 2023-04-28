@@ -7611,9 +7611,9 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         theta_split = volmdlr.geometry.clockwise_angle(point2d - ellipse_2d.center, ellipse_2d.major_dir)
         theta_1 = 0.5 * theta_split
         theta_2 = 0.5 * (theta_split + volmdlr.TWO_PI)
-        interior_1 =  self.center + self.major_axis * math.cos(theta_1) * self.major_dir \
+        interior_1 = self.center + self.major_axis * math.cos(theta_1) * self.major_dir \
                                        + self.minor_axis * math.sin(theta_1) * self.major_dir.cross(self.normal)
-        interior_2 =  self.center + self.major_axis * math.cos(theta_2) * self.major_dir \
+        interior_2 = self.center + self.major_axis * math.cos(theta_2) * self.major_dir \
                                        + self.minor_axis * math.sin(theta_2) * self.major_dir.cross(self.normal)
         return [ArcEllipse3D(self.start_end, interior_1, split_point, self.center, self.major_dir, self.normal),
                 ArcEllipse3D(split_point, interior_2, self.start_end, self.center, self.major_dir, self.normal)]
