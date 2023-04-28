@@ -2336,11 +2336,11 @@ class LineSegment2D(LineSegment):
         self._bounding_rectangle = None
         LineSegment.__init__(self, start, end, name=name)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         """
         A specified copy of a LineSegment2D.
         """
-        return self.__class__(start=self.start.copy(), end=self.end.copy(), name=self.name)
+        return self.__class__(start=self.start.copy(deep, memo), end=self.end.copy(deep, memo), name=self.name)
 
     def __hash__(self):
         # return self._data_hash()
