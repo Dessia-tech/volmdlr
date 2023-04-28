@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arcellipse2D, 3D: complementary
 - Contour2D: copy
 - LineSegment2D: copy
+- FullArcEllipse3D: split
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled

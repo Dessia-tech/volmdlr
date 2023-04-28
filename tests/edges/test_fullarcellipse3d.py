@@ -52,6 +52,15 @@ class TestFullArcEllipse3D(unittest.TestCase):
         self.assertEqual(translated_ellipse.center, volmdlr.Point3D(1, 0, 0))
         self.assertEqual(translated_ellipse.start_end, volmdlr.Point3D(1.0225, 0, 0))
 
+    def test_split(self):
+        fullarcellipse = vme.FullArcEllipse3D.load_from_file("edges/fullarcellipses_to_split.json")
+        split_point = volmdlr.Point3D(-0.4540526537637985, -0.5095148094812338, 0.5059723061104128)
+        result = fullarcellipse.split(split_point)
+        self.assertTrue(result[0].start.is_close(fullarcellipse.start_end))
+        self.assertTrue(result[0].end.is_close(split_point))
+        self.assertTrue(result[1].start.is_close(split_point))
+        self.assertTrue(result[1].end.is_close(fullarcellipse.start_end))
+
 
 if __name__ == '__main__':
     unittest.main()
