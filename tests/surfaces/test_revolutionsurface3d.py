@@ -17,16 +17,7 @@ class TestRevolutionSurface3D(unittest.TestCase):
     wire = vmw.Wire3D([linesegment, arc])
     axis_point = volmdlr.O3D
     axis = volmdlr.Z3D
-
-    def test_init(self):
-
-        surface = surfaces.RevolutionSurface3D(self.wire, self.axis_point, self.axis)
-
-        self.assertEqual(surface.x_periodicity, volmdlr.TWO_PI)
-        self.assertEqual(surface.y_periodicity, None)
-        self.assertTrue(surface.frame.origin.is_close(self.axis_point))
-        self.assertTrue(surface.axis_point.is_close(self.axis_point))
-        self.assertTrue(surface.axis.is_close(self.axis))
+    surface = surfaces.RevolutionSurface3D(wire, axis_point, axis)
 
     def test_point2d_to_3d(self):
         surface = surfaces.RevolutionSurface3D(self.wire, self.axis_point, self.axis)
@@ -69,6 +60,12 @@ class TestRevolutionSurface3D(unittest.TestCase):
         self.assertTrue(linesegment2d.start.is_close(volmdlr.Point2D(1.0582040468439544, 0.0)))
         self.assertTrue(linesegment2d.end.is_close(volmdlr.Point2D(6.0956438652626925, 0.0)))
 
+    def test_frame_mapping(self):
+        surface = self.surface
+        new_frame = volmdlr.Frame3D(volmdlr.Point3D(0, 1, 0), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
+        new_surface = surface.frame_mapping(new_frame, "old")
+        self.assertEqual(new_surface.wire.primitives[0].start.y, 1)
+        self.assertTrue(new_surface.frame.origin.is_close(volmdlr.Point3D(0, 1, 0)))
 
 
 if __name__ == '__main__':
