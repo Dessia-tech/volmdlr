@@ -3088,6 +3088,7 @@ class BSplineFace3D(Face3D):
         return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+        """Aproximation of intersections between a bspline face 3D and a line segment 3D."""
         triangulation = self.triangulation()
         faces_triangulation = triangulation.triangular_faces()
         linesegment_intersections = []
