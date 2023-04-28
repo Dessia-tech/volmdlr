@@ -3,6 +3,7 @@ import volmdlr
 import volmdlr.edges as vme
 import volmdlr.faces as vmf
 import volmdlr.step as vms
+import volmdlr.wires as vmw
 from volmdlr import surfaces
 
 class TestExtrusionSurface3D(unittest.TestCase):
@@ -48,6 +49,23 @@ class TestExtrusionSurface3D(unittest.TestCase):
         result = surface.linesegment2d_to_3d(linesegment2d)[0]
         self.assertTrue(result.start.is_close(start3d))
         self.assertTrue(result.end.is_close(end3d))
+
+    def test_arc3d_to_2d(self):
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
+            "surfaces/objects_extrusion_tests/extrusion_surface_test_arc3d_to_2d.json")
+        contour3d = vmw.Contour3D.load_from_file(
+            "surfaces/objects_extrusion_tests/extrusion_contour_test_arc3d_to_2d.json")
+        arc3d = contour3d.primitives[2]
+        result = surface.arc3d_to_2d(arc3d)[0]
+        self.assertTrue(result.start.is_close(volmdlr.Point2D(1.0, 0.0032000000499998738)))
+        self.assertTrue(result.end.is_close(volmdlr.Point2D(0.13555464614559587, 0.0032000000499998738)))
+
+    def test_frame_mapping(self):
+        surface = self.surface
+        new_frame = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 1), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
+        new_surface = surface.frame_mapping(new_frame, "old")
+        self.assertEqual(new_surface.edge.start.z, 1)
+        self.assertTrue(new_surface.frame.origin.is_close(volmdlr.Point3D(-0.025917292, 0.002544355, 1.0)))
 
 
 if __name__ == '__main__':

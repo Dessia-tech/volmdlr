@@ -33,10 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mesh: TetrahedralElementQuadratic 
 - GmshParser: define_quadratic_tetrahedron_element_mesh
 - GmshParser: to_vtk (consider quadratic tetrahedron element)
+- Assembly: define a volmdlr Assembly object.
 - Edge: direction_independent_is_close
 - Arcellipse2D, 3D: complementary
 - Contour2D: copy
 - LineSegment2D: copy
+
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
