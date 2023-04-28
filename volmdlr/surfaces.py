@@ -60,14 +60,14 @@ class Surface2D(volmdlr.core.Primitive2D):
     def _data_hash(self):
         return hash(self)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         """
         Copies the surface2d.
 
         """
-        return self.__class__(outer_contour=self.outer_contour.copy(),
-                              inner_contours=[c.copy() for c in self.inner_contours],
-                              name=self.name)
+        return self.__class__(outer_contour=self.outer_contour.copy(deep, memo),
+                              inner_contours=[c.copy(deep, memo) for c in self.inner_contours],
+                              name='copy_'+self.name)
 
     def area(self):
         """
