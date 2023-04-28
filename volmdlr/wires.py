@@ -1313,8 +1313,9 @@ class ContourMixin(WireMixin):
         point1 = middle_point + normal * 0.00001
         point2 = middle_point - normal * 0.00001
         if (self.point_belongs(point1) and contour2.point_belongs(point1)) or \
-                (not self.point_belongs(point1) and not contour2.point_belongs(point1)) or \
-                (self.point_belongs(point1) and self.point_belongs(point2)) or \
+                (not self.point_belongs(point1) and not contour2.point_belongs(point1)):
+            return True
+        if (self.point_belongs(point1) and self.point_belongs(point2)) or \
                 (contour2.point_belongs(point1) and contour2.point_belongs(point2)):
             return True
         return False
