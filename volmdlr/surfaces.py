@@ -824,7 +824,7 @@ class Surface3D(DessiaObject):
 
             contours2d = [self.contour3d_to_2d(contour3d) for contour3d in contours3d]
 
-            check_contours = [not contour2d.is_ordered(tol=1e-3) for contour2d in contours2d]
+            check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
             if any(check_contours):
                 # Not implemented yet, but repair_contours2d should also return outer_contour3d and inner_contours3d
                 outer_contour2d, inner_contours2d = self.repair_contours2d(contours2d[0], contours2d[1:])
@@ -6187,6 +6187,7 @@ class BSplineSurface3D(Surface3D):
         :type inner_contours: list
         """
         new_inner_contours = []
+        new_outer_contour = outer_contour
         point1 = outer_contour.primitives[0].start
         point2 = outer_contour.primitives[-1].end
 
