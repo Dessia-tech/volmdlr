@@ -6155,9 +6155,6 @@ class Arc3D(Arc):
     """
 
     def __init__(self, start, interior, end, name=''):
-        if start.is_close(interior) or end.is_close(interior):
-            raise ValueError(
-                'Start, end and interior points of an arc must be distincts')
         self._utd_normal = False
         self._utd_center = False
         self._utd_frame = False
