@@ -3192,8 +3192,8 @@ class SphericalSurface3D(PeriodicalSurface):
         theta2, phi2 = end
 
         point_after_start, point_before_end = self._reference_points(arc3d)
-        theta3, _ = point_after_start
-        theta4, _ = point_before_end
+        theta3, phi3 = point_after_start
+        theta4, phi4 = point_before_end
 
         # Fix sphere singularity point
         if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-5) and theta1 == 0.0 \
@@ -3209,9 +3209,11 @@ class SphericalSurface3D(PeriodicalSurface):
                                                                                [point_after_start, point_before_end],
                                                                                [self.x_periodicity,
                                                                                 self.y_periodicity])
+        theta1, phi1 = start
+        theta2, phi2 = end
         if start == end:  # IS THIS POSSIBLE ?
             return [edges.LineSegment2D(start, start + volmdlr.TWO_PI * volmdlr.X2D)]
-        if self.is_lat_long_curve([theta1, theta_i, theta2], [phi1, phi_i, phi2]):
+        if self.is_lat_long_curve([theta1, theta3, theta4, theta2], [phi1, phi3, phi4, phi2]):
             return [edges.LineSegment2D(start, end)]
 
         return self.arc3d_to_2d_with_singularity(arc3d, start, end, point_after_start)
@@ -3258,11 +3260,16 @@ class SphericalSurface3D(PeriodicalSurface):
             if theta2 == math.pi and theta1 != math.pi:
                 theta2 = -math.pi
 
-            return [edges.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
+            try:
+                primitives = [edges.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
                     edges.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta2, half_pi),
                                         name="construction"),
                     edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
                     ]
+            except Exception:
+                self.save_to_file("sphere_arc3d_to_2d.json")
+                arc3d.save_to_file("sphere_arc3d_to_2d_arc3d.json")
+            return primitives
 
         # maybe this is incomplete and not exact
         angle3d = arc3d.angle
