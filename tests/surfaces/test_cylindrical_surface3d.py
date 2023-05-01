@@ -184,6 +184,10 @@ class TestCylindricalSurface3D(unittest.TestCase):
         for i, point in enumerate(test_points):
             self.assertTrue(self.cylindrical_surface2.point_projection(point).is_close(expected_points[i]))
 
+    def test_plot(self):
+        ax = self.cylindrical_surface.plot()
+        self.assertTrue(ax)
+
 
 if __name__ == '__main__':
     unittest.main()
