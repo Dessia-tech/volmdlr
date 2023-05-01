@@ -3492,8 +3492,10 @@ class Arc2D(Arc):
         point_start = self.start.to_3d(plane_origin, x, y)
         point_interior = self.interior.to_3d(plane_origin, x, y)
         point_end = self.end.to_3d(plane_origin, x, y)
+        if self.center is not None:
+            center = self.center.to_3d(plane_origin, x, y)
 
-        return Arc3D(point_start, point_interior, point_end, name=self.name)
+        return Arc3D(point_start, point_interior, point_end, center, name=self.name)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
