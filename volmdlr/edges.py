@@ -4684,7 +4684,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         :param tol: tolerance.
         :return: a float, between 0 and the ellipse's length.
         """
-        if self.point_belongs(point, 1e-4):
+        if self.point_belongs(point, 1e-2):
             angle_abscissa = volmdlr.geometry.clockwise_angle(point - self.center, self.major_dir)
             angle_start = 0.0
 
