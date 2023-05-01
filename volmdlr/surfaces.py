@@ -59,14 +59,14 @@ class Surface2D(volmdlr.core.Primitive2D):
     def _data_hash(self):
         return hash(self)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         """
         Copies the surface2d.
 
         """
-        return self.__class__(outer_contour=self.outer_contour.copy(),
-                              inner_contours=[c.copy() for c in self.inner_contours],
-                              name=self.name)
+        return self.__class__(outer_contour=self.outer_contour.copy(deep, memo),
+                              inner_contours=[c.copy(deep, memo) for c in self.inner_contours],
+                              name='copy_'+self.name)
 
     def area(self):
         """
@@ -1897,7 +1897,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.radius = radius
         PeriodicalSurface.__init__(self, name=name)
 
-    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), length: float = 1.):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5),
+             length: float = 1):
         """
         Plot the cylindrical surface in the local frame normal direction.
 
@@ -1917,7 +1918,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        self.frame.plot(ax=ax, color=edge_style.color, ratio=0.5 * length)
+        self.frame.plot(ax=ax, color=edge_style.color, ratio=self.radius)
         for i in range(nlines):
             theta = i / (nlines - 1) * volmdlr.TWO_PI
             start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
@@ -3346,7 +3347,7 @@ class SphericalSurface3D(PeriodicalSurface):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        self.frame.plot(ax=ax)
+        self.frame.plot(ax=ax, ratio=self.radius)
         for i in range(20):
             theta = i / 20. * volmdlr.TWO_PI
             t_points = []

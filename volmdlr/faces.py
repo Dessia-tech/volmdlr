@@ -115,6 +115,7 @@ class Face3D(volmdlr.core.Primitive3D):
             f"overloaded by {self.__class__.__name__}")
 
     def get_bounding_box(self):
+        """Abstract method."""
         raise NotImplementedError(
             f"self.__class__.__name__"
             f"overloaded by {self.__class__.__name__}")
@@ -380,6 +381,7 @@ class Face3D(volmdlr.core.Primitive3D):
         self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the Face3D."""
         return self.__class__(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
