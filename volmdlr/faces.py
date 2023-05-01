@@ -115,6 +115,7 @@ class Face3D(volmdlr.core.Primitive3D):
             f"overloaded by {self.__class__.__name__}")
 
     def get_bounding_box(self):
+        """Abstract method."""
         raise NotImplementedError(
             f"self.__class__.__name__"
             f"overloaded by {self.__class__.__name__}")
