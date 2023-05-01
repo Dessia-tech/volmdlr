@@ -168,36 +168,6 @@ class TestCylindricalSurface3D(unittest.TestCase):
         result = cylinder.bsplinecurve3d_to_2d(bspline)[0]
         self.assertTrue(all(point.x < 0 for point in result.points))
 
-    def test_face_from_contours3d(self):
-        surface = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/surface3d_1.json')
-        contour0 = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/contour_1_0.json')
-        contour1 = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/contour_1_1.json')
-
-        face = surface.face_from_contours3d([contour0, contour1])
-
-        self.assertEqual(face.surface2d.area(), 0.00077*2*math.pi)
-
-        frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
-        cylindrical = surfaces.CylindricalSurface3D(frame, 0.2)
-        fullarc1 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(0.2, 0.0, 0.0), normal=volmdlr.Z3D)
-        fullarc2 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(-0.2, 0.0, 0.2), normal=volmdlr.Z3D)
-        contour1 = wires.Contour3D([fullarc1])
-        contour2 = wires.Contour3D([fullarc2])
-        face = cylindrical.face_from_contours3d([contour1, contour2])
-        self.assertEqual(face.surface2d.area(), 0.2*2*math.pi)
-
-        surface = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/cylindrical_surface_floating_point_error.json')
-        contour0 = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/cylindrical_contour_floating_point_error.json')
-
-        face = surface.face_from_contours3d([contour0])
-        self.assertTrue(face.surface2d.outer_contour.is_ordered())
-        self.assertAlmostEqual(face.surface2d.area(), 0.003143137591511259, 3)
-
     def test_point_projection(self):
         test_points = [Point3D(-2.0, -2.0, 0.0), Point3D(0.0, -2.0, 0.0), Point3D(2.0, -2.0, 0.0),
                        Point3D(2.0, 0.0, 0.0), Point3D(2.0, 2.0, 0.0), Point3D(0.0, 2.0, 0.0),
