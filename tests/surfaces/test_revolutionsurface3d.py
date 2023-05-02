@@ -84,6 +84,25 @@ class TestRevolutionSurface3D(unittest.TestCase):
         cylinder = rev3.simplify()
         self.assertTrue(isinstance(cylinder, surfaces.CylindricalSurface3D))
 
+    def test_linesegment2d_to_3d(self):
+        surface = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/revolutionsurface_linesegment2d_to_3d.json")
+        linesegment1 = vme.LineSegment2D.load_from_file("surfaces/objects_revolution_tests/linesegment2d_arc3d.json")
+        arc = surface.linesegment2d_to_3d(linesegment1)[0]
+        self.assertAlmostEqual(arc.radius, 0.02404221842799788)
+
+        linesegment2 = vme.LineSegment2D.load_from_file(
+            "surfaces/objects_revolution_tests/linesegment2d_rotated_primitive.json")
+        arc = surface.linesegment2d_to_3d(linesegment2)[0]
+        self.assertAlmostEqual(arc.radius, 0.022500000035448893)
+        self.assertAlmostEqual(arc.angle, 0.7195087615152496)
+
+        linesegment3 = vme.LineSegment2D.load_from_file(
+            "surfaces/objects_revolution_tests/linesegment2d_split_primitive.json")
+        arc = surface.linesegment2d_to_3d(linesegment3)[0]
+        self.assertAlmostEqual(arc.radius, 0.022500000035448893)
+        self.assertAlmostEqual(arc.angle, 0.022500000035448893)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -3909,19 +3909,24 @@ class RevolutionSurface3D(PeriodicalSurface):
         end3d = self.point2d_to_3d(linesegment2d.end)
         theta1, abscissa1 = linesegment2d.start
         theta2, abscissa2 = linesegment2d.end
-        if math.isclose(abscissa1, abscissa2, abs_tol=1e-4):
+        if self.wire.point_at_abscissa(abscissa1).is_close(self.wire.point_at_abscissa(abscissa2)):
             theta_i = 0.5 * (theta1 + theta2)
             interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
             return [edges.Arc3D(start3d, interior, end3d)]
         if math.isclose(theta1, theta2, abs_tol=1e-3):
-            primitive = self.wire.rotation(self.axis_point, self.axis, theta1)
+            primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
+            if primitive.is_point_edge_extremity(start3d) and \
+                    primitive.is_point_edge_extremity(end3d):
+                return [primitive]
             primitive = primitive.split_between_two_points(start3d, end3d)
-            return [primitive]
+            if primitive:
+                return [primitive]
         n = 10
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
         periodic = points[0].is_close(points[-1])
-        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic)]
+        bspline = edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic)
+        return [bspline.simplify]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
