@@ -575,6 +575,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.__class__(outer_contour, inner_contours)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        """'in-place' methods are deprecated. Use a not in-place method instead."""
         warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         new_contour = self.frame_mapping(frame, side)
@@ -1484,6 +1485,14 @@ class Plane3D(Surface3D):
         return contour3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """
+        Converts a 3D B-Spline in spatial domain intoa 2D B-Spline in parametric domain.
+
+        :param bspline_curve3d: The B-Spline curve to perform the transformation.
+        :type bspline_curve3d: edges.BSplineCurve3D
+        :return: A 2D B-Spline.
+        :rtype: edges.BSplineCurve2D
+        """
         control_points = [self.point3d_to_2d(p)
                           for p in bspline_curve3d.control_points]
         return [edges.BSplineCurve2D(
