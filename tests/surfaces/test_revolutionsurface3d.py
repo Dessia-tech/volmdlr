@@ -43,12 +43,46 @@ class TestRevolutionSurface3D(unittest.TestCase):
             surface, 0, volmdlr.TWO_PI, 0, 1)
         self.assertEqual(rectangular_cut.surface2d.area(), volmdlr.TWO_PI)
 
+    def arc3d_to_2d(self):
+        surface = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/revolution_surface_bug_0.json")
+        contour = vmw.Contour3D.load_from_file("surfaces/objects_revolution_tests/revolution_contour_bug_0.json")
+        arc = contour.primitives[3]
+        linesegment2d = surface.arc3d_to_2d(arc)[0]
+        self.assertTrue(linesegment2d.start.is_close(volmdlr.Point2D(-2.6665730021726306, 0.0003141532401719152)))
+        self.assertTrue(linesegment2d.end.is_close(volmdlr.Point2D(-2.6665730021726324, 0)))
+
+        surface = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/revolution_surface_bug_1.json")
+        contour = vmw.Contour3D.load_from_file("surfaces/objects_revolution_tests/revolution_contour_bug_1.json")
+        arc = contour.primitives[3]
+        linesegment2d = surface.arc3d_to_2d(arc)[0]
+        self.assertTrue(linesegment2d.start.is_close(volmdlr.Point2D(1.0582040468439544, 0.0)))
+        self.assertTrue(linesegment2d.end.is_close(volmdlr.Point2D(6.0956438652626925, 0.0)))
+
     def test_frame_mapping(self):
         surface = self.surface
         new_frame = volmdlr.Frame3D(volmdlr.Point3D(0, 1, 0), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
         new_surface = surface.frame_mapping(new_frame, "old")
         self.assertEqual(new_surface.wire.primitives[0].start.y, 1)
         self.assertTrue(new_surface.frame.origin.is_close(volmdlr.Point3D(0, 1, 0)))
+
+    def test_simplify(self):
+        rev1 = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/revolutionsurface_simplify_spherical.json")
+        rev2 = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/revolutionsurface_simplify_conical.json")
+        rev3 = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/revolutionsurface_simplify_cylindrical.json")
+
+        sphere = rev1.simplify()
+        self.assertTrue(isinstance(sphere, surfaces.SphericalSurface3D))
+
+        cone = rev2.simplify()
+        self.assertTrue(isinstance(cone, surfaces.ConicalSurface3D))
+
+        cylinder = rev3.simplify()
+        self.assertTrue(isinstance(cylinder, surfaces.CylindricalSurface3D))
 
 
 if __name__ == '__main__':
