@@ -44,6 +44,7 @@ maxiter
 msh
 plt
 nbv
+networkx.DiGraph
 ndarray
 numpy
 numpy
@@ -77,3 +78,5 @@ dimensioned
 geomdl's
 Tore's
 deserialization
+Trimesh
+networkx

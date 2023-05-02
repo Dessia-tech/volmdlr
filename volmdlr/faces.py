@@ -77,6 +77,10 @@ class Face3D(volmdlr.core.Primitive3D):
             self._outer_contour3d = self.surface3d.contour2d_to_3d(self.surface2d.outer_contour)
         return self._outer_contour3d
 
+    @outer_contour3d.setter
+    def outer_contour3d(self, contour3d):
+        self._outer_contour3d = contour3d
+
     @property
     def inner_contours3d(self):
         """
@@ -86,6 +90,10 @@ class Face3D(volmdlr.core.Primitive3D):
             self._inner_contours3d = [self.surface3d.contour2d_to_3d(c) for c in
                                       self.surface2d.inner_contours]
         return self._inner_contours3d
+
+    @inner_contours3d.setter
+    def inner_contours3d(self, contours3d):
+        self._inner_contours3d = contours3d
 
     @property
     def bounding_box(self):
@@ -106,6 +114,7 @@ class Face3D(volmdlr.core.Primitive3D):
             f"overloaded by {self.__class__.__name__}")
 
     def get_bounding_box(self):
+        """Abstract method."""
         raise NotImplementedError(
             f"self.__class__.__name__"
             f"overloaded by {self.__class__.__name__}")
@@ -142,7 +151,7 @@ class Face3D(volmdlr.core.Primitive3D):
             if len(contours) == 2 and any(isinstance(contour, volmdlr.Point3D) for contour in contours):
                 vertex = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
                 base = next(contour for contour in contours if contour is not vertex)
-                return surface.face_from_base_and_vertex(base, vertex, name)
+                return surface.face_class.face_from_base_and_vertex(base, vertex, name)
             if any(isinstance(contour, volmdlr.Point3D) for contour in contours):
                 raise NotImplementedError
 
@@ -318,6 +327,7 @@ class Face3D(volmdlr.core.Primitive3D):
         self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the Face3D."""
         return self.__class__(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
@@ -1906,11 +1916,11 @@ class CylindricalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 11
+        angle_resolution = 5
         z_resolution = 5
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
-        number_points_x = int(delta_theta * angle_resolution)
+        number_points_x = max(angle_resolution, int(delta_theta * angle_resolution))
 
         delta_z = zmax - zmin
         number_points_y = int(delta_z * z_resolution)
@@ -2118,15 +2128,15 @@ class ToroidalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        theta_angle_resolution = 11
-        phi_angle_resolution = 7
+        theta_angle_resolution = 5
+        phi_angle_resolution = 3
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
-        number_points_x = int(delta_theta * theta_angle_resolution)
+        number_points_x = max(theta_angle_resolution, int(delta_theta * theta_angle_resolution))
 
         delta_phi = phi_max - phi_min
-        number_points_y = int(delta_phi * phi_angle_resolution)
+        number_points_y = max(phi_angle_resolution, int(delta_phi * phi_angle_resolution))
 
         return number_points_x, number_points_y
 
@@ -2628,7 +2638,7 @@ class RevolutionFace3D(Face3D):
 
     def get_bounding_box(self):
         # To be enhanced by restricting wires to cut
-        curve_points = self.surface3d.edge.discretization_points(angle_resolution=20)
+        curve_points = self.outer_contour3d.discretization_points(angle_resolution=20)
         points = []
         for i in range(37):
             angle = i * volmdlr.TWO_PI / 36

@@ -1,6 +1,7 @@
 """
 Unit tests for CylindriSurface3D
 """
+import numpy as npy
 import math
 import unittest
 
@@ -139,9 +140,9 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertEqual(linesegment2d.end, Point2D(0, 0.013))
 
         surface = dessia_common.core.DessiaObject.load_from_file(
-            'faces/objects_cylindrical_tests/cylindrical_surface_bspline_openned_contour.json')
+            'surfaces/objects_cylindrical_tests/cylindrical_surface_bspline_openned_contour.json')
         contour = dessia_common.core.DessiaObject.load_from_file(
-            'faces/objects_cylindrical_tests/cylindrical_contour_bspline_openned_contour.json')
+            'surfaces/objects_cylindrical_tests/cylindrical_contour_bspline_openned_contour.json')
 
         contour2d = surface.contour3d_to_2d(contour)
         self.assertEqual(len(contour2d.primitives), 2)
@@ -150,20 +151,30 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
     def test_bsplinecurve3d_to_2d(self):
         surface = dessia_common.core.DessiaObject.load_from_file(
-            'faces/objects_cylindrical_tests/cylindrical_surf_bug.json')
+            'surfaces/objects_cylindrical_tests/cylindrical_surf_bug.json')
         bsplinecurve3d = dessia_common.core.DessiaObject.load_from_file(
-            'faces/objects_cylindrical_tests/bsplinecurve3d_bug.json')
+            'surfaces/objects_cylindrical_tests/bsplinecurve3d_bug.json')
         primitive2d = surface.bsplinecurve3d_to_2d(bsplinecurve3d)[0]
         self.assertTrue(primitive2d.start.is_close(volmdlr.Point2D(-0.001540582016168617, -0.0006229082591074433)))
         self.assertTrue(primitive2d.end.is_close(volmdlr.Point2D(0.004940216577284154, -0.000847814405768888)))
 
+        # Test to _fix_angle_discontinuity_on_discretization_points
+        z = npy.linspace(0, 2 * math.pi, 50)
+        theta = math.pi + 0.5 * math.pi * npy.cos(z)
+        points_2d = [volmdlr.Point2D(x, y / (2 * math.pi)) for x, y in zip(theta, z)]
+        cylinder = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 1)
+        points_3d = [cylinder.point2d_to_3d(point) for point in points_2d]
+        bspline = edges.BSplineCurve3D.from_points_interpolation(points_3d, 3)
+        result = cylinder.bsplinecurve3d_to_2d(bspline)[0]
+        self.assertTrue(all(point.x < 0 for point in result.points))
+
     def test_face_from_contours3d(self):
         surface = dessia_common.core.DessiaObject.load_from_file(
-            'faces/objects_cylindrical_tests/surface3d_1.json')
+            'surfaces/objects_cylindrical_tests/surface3d_1.json')
         contour0 = dessia_common.core.DessiaObject.load_from_file(
-            'faces/objects_cylindrical_tests/contour_1_0.json')
+            'surfaces/objects_cylindrical_tests/contour_1_0.json')
         contour1 = dessia_common.core.DessiaObject.load_from_file(
-            'faces/objects_cylindrical_tests/contour_1_1.json')
+            'surfaces/objects_cylindrical_tests/contour_1_1.json')
 
         face = surface.face_from_contours3d([contour0, contour1])
 
@@ -179,9 +190,9 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertEqual(face.surface2d.area(), 0.2*2*math.pi)
 
         surface = dessia_common.core.DessiaObject.load_from_file(
-            'faces/objects_cylindrical_tests/cylindrical_surface_floating_point_error.json')
+            'surfaces/objects_cylindrical_tests/cylindrical_surface_floating_point_error.json')
         contour0 = dessia_common.core.DessiaObject.load_from_file(
-            'faces/objects_cylindrical_tests/cylindrical_contour_floating_point_error.json')
+            'surfaces/objects_cylindrical_tests/cylindrical_contour_floating_point_error.json')
 
         face = surface.face_from_contours3d([contour0])
         self.assertTrue(face.surface2d.outer_contour.is_ordered())

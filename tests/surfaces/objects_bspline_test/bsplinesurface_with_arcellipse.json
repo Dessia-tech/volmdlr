@@ -1,0 +1,656 @@
+{
+  "object_class": "volmdlr.surfaces.BSplineSurface3D",
+  "package_version": "0.9.2.dev1050+g45192f1d",
+  "name": "",
+  "degree_u": 3,
+  "degree_v": 3,
+  "nb_u": 5,
+  "nb_v": 10,
+  "weights": null,
+  "control_points": [
+    {
+      "$ref": "#/_references/30e40254-e5e0-11ed-b868-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e40255-e5e0-11ed-8b82-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e40256-e5e0-11ed-b979-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e40257-e5e0-11ed-b371-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e40258-e5e0-11ed-8713-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e40259-e5e0-11ed-aa6f-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e4025a-e5e0-11ed-bbc3-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e4025b-e5e0-11ed-8e69-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e4025c-e5e0-11ed-99b8-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e4025d-e5e0-11ed-a416-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e4025e-e5e0-11ed-8cc8-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e4025f-e5e0-11ed-89cb-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e40260-e5e0-11ed-a0bd-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d5c-e5e0-11ed-87c4-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d5d-e5e0-11ed-bf8a-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d5e-e5e0-11ed-b731-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d5f-e5e0-11ed-b87e-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d60-e5e0-11ed-bc98-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d61-e5e0-11ed-9821-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d62-e5e0-11ed-98ad-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d63-e5e0-11ed-a806-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d64-e5e0-11ed-a08c-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d65-e5e0-11ed-9a20-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d66-e5e0-11ed-96cc-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d67-e5e0-11ed-a21b-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d68-e5e0-11ed-9bfd-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d69-e5e0-11ed-8eb8-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d6a-e5e0-11ed-99a1-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d6b-e5e0-11ed-87bb-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d6c-e5e0-11ed-9d07-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d6d-e5e0-11ed-b6f5-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d6e-e5e0-11ed-8cac-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d6f-e5e0-11ed-84a0-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d70-e5e0-11ed-81bf-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d71-e5e0-11ed-8e41-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d72-e5e0-11ed-90cf-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d73-e5e0-11ed-99e4-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d74-e5e0-11ed-81d2-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d75-e5e0-11ed-a72c-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d76-e5e0-11ed-bde8-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d77-e5e0-11ed-8b0f-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d78-e5e0-11ed-8f9b-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d79-e5e0-11ed-ad3a-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d7a-e5e0-11ed-bf26-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d7b-e5e0-11ed-8cad-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d7c-e5e0-11ed-8d9d-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d7d-e5e0-11ed-8579-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d7e-e5e0-11ed-8ffc-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d7f-e5e0-11ed-b5c8-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/30e41d80-e5e0-11ed-ab99-68545aefcc97"
+    }
+  ],
+  "u_knots": [
+    0.0,
+    0.5,
+    1.0
+  ],
+  "v_knots": [
+    0.0,
+    0.22112627540207663,
+    0.3322062589050812,
+    0.44366759771887543,
+    0.555345254194752,
+    0.6669878608666738,
+    0.7783580175306914,
+    1.0
+  ],
+  "u_multiplicities": [
+    4,
+    1,
+    4
+  ],
+  "v_multiplicities": [
+    4,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    4
+  ],
+  "control_points_table": [
+    [
+      {
+        "$ref": "#/_references/30e40254-e5e0-11ed-b868-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e40255-e5e0-11ed-8b82-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e40256-e5e0-11ed-b979-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e40257-e5e0-11ed-b371-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e40258-e5e0-11ed-8713-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e40259-e5e0-11ed-aa6f-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e4025a-e5e0-11ed-bbc3-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e4025b-e5e0-11ed-8e69-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e4025c-e5e0-11ed-99b8-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e4025d-e5e0-11ed-a416-68545aefcc97"
+      }
+    ],
+    [
+      {
+        "$ref": "#/_references/30e4025e-e5e0-11ed-8cc8-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e4025f-e5e0-11ed-89cb-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e40260-e5e0-11ed-a0bd-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d5c-e5e0-11ed-87c4-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d5d-e5e0-11ed-bf8a-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d5e-e5e0-11ed-b731-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d5f-e5e0-11ed-b87e-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d60-e5e0-11ed-bc98-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d61-e5e0-11ed-9821-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d62-e5e0-11ed-98ad-68545aefcc97"
+      }
+    ],
+    [
+      {
+        "$ref": "#/_references/30e41d63-e5e0-11ed-a806-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d64-e5e0-11ed-a08c-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d65-e5e0-11ed-9a20-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d66-e5e0-11ed-96cc-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d67-e5e0-11ed-a21b-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d68-e5e0-11ed-9bfd-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d69-e5e0-11ed-8eb8-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d6a-e5e0-11ed-99a1-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d6b-e5e0-11ed-87bb-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d6c-e5e0-11ed-9d07-68545aefcc97"
+      }
+    ],
+    [
+      {
+        "$ref": "#/_references/30e41d6d-e5e0-11ed-b6f5-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d6e-e5e0-11ed-8cac-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d6f-e5e0-11ed-84a0-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d70-e5e0-11ed-81bf-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d71-e5e0-11ed-8e41-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d72-e5e0-11ed-90cf-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d73-e5e0-11ed-99e4-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d74-e5e0-11ed-81d2-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d75-e5e0-11ed-a72c-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d76-e5e0-11ed-bde8-68545aefcc97"
+      }
+    ],
+    [
+      {
+        "$ref": "#/_references/30e41d77-e5e0-11ed-8b0f-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d78-e5e0-11ed-8f9b-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d79-e5e0-11ed-ad3a-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d7a-e5e0-11ed-bf26-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d7b-e5e0-11ed-8cad-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d7c-e5e0-11ed-8d9d-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d7d-e5e0-11ed-8579-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d7e-e5e0-11ed-8ffc-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d7f-e5e0-11ed-b5c8-68545aefcc97"
+      },
+      {
+        "$ref": "#/_references/30e41d80-e5e0-11ed-ab99-68545aefcc97"
+      }
+    ]
+  ],
+  "_references": {
+    "30e40254-e5e0-11ed-b868-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.47224769454711546,
+      "y": -0.5097733884504486,
+      "z": 0.5141642233743522
+    },
+    "30e40255-e5e0-11ed-8b82-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.47115651313752616,
+      "y": -0.5098395519232534,
+      "z": 0.516009009063728
+    },
+    "30e40256-e5e0-11ed-b979-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.468560586711392,
+      "y": -0.5099192114940879,
+      "z": 0.5181740271326849
+    },
+    "30e40257-e5e0-11ed-b371-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4643134130133084,
+      "y": -0.5099582118980411,
+      "z": 0.5191038440809318
+    },
+    "30e40258-e5e0-11ed-8713-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.46105775391382076,
+      "y": -0.5099512111382474,
+      "z": 0.5187612283423574
+    },
+    "30e40259-e5e0-11ed-aa6f-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4580684560015502,
+      "y": -0.5099086954168242,
+      "z": 0.5174144104415096
+    },
+    "30e4025a-e5e0-11ed-bbc3-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4556510081368851,
+      "y": -0.5098350450109401,
+      "z": 0.5152020404031298
+    },
+    "30e4025b-e5e0-11ed-8e69-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4535215796199898,
+      "y": -0.5097055046466311,
+      "z": 0.5114036202817402
+    },
+    "30e4025c-e5e0-11ed-99b8-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.45340494296870126,
+      "y": -0.509587412496039,
+      "z": 0.5080206778256257
+    },
+    "30e4025d-e5e0-11ed-a416-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4540526256885259,
+      "y": -0.5095148092137862,
+      "z": 0.5059722972327537
+    },
+    "30e4025e-e5e0-11ed-8cc8-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.47225024104900687,
+      "y": -0.5114390355560774,
+      "z": 0.5141059909725773
+    },
+    "30e4025f-e5e0-11ed-89cb-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4711590596394174,
+      "y": -0.5115051990288821,
+      "z": 0.5159507766619534
+    },
+    "30e40260-e5e0-11ed-a0bd-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.46856313321328363,
+      "y": -0.5115848585997166,
+      "z": 0.5181157947309096
+    },
+    "30e41d5c-e5e0-11ed-87c4-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4643159595151996,
+      "y": -0.5116238590036697,
+      "z": 0.5190456116791567
+    },
+    "30e41d5d-e5e0-11ed-bf8a-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4610603004157125,
+      "y": -0.5116168582438764,
+      "z": 0.5187029959405823
+    },
+    "30e41d5e-e5e0-11ed-b731-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4580710025034416,
+      "y": -0.5115743425224524,
+      "z": 0.5173561780397347
+    },
+    "30e41d5f-e5e0-11ed-b87e-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.45565355463877644,
+      "y": -0.5115006921165689,
+      "z": 0.5151438080013548
+    },
+    "30e41d60-e5e0-11ed-bc98-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4535241261218813,
+      "y": -0.5113711517522601,
+      "z": 0.5113453878799652
+    },
+    "30e41d61-e5e0-11ed-9821-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.45340748947059256,
+      "y": -0.5112530596016677,
+      "z": 0.5079624454238506
+    },
+    "30e41d62-e5e0-11ed-98ad-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4540551721904173,
+      "y": -0.5111804563194149,
+      "z": 0.5059140648309787
+    },
+    "30e41d63-e5e0-11ed-a806-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.47225533405279013,
+      "y": -0.5147703297673346,
+      "z": 0.5139895261690276
+    },
+    "30e41d64-e5e0-11ed-a08c-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4711641526432006,
+      "y": -0.5148364932401398,
+      "z": 0.5158343118584032
+    },
+    "30e41d65-e5e0-11ed-9a20-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4685682262170665,
+      "y": -0.5149161528109738,
+      "z": 0.5179993299273604
+    },
+    "30e41d66-e5e0-11ed-96cc-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4643210525189832,
+      "y": -0.5149551532149275,
+      "z": 0.5189291468756073
+    },
+    "30e41d67-e5e0-11ed-a21b-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4610653934194951,
+      "y": -0.5149481524551333,
+      "z": 0.5185865311370328
+    },
+    "30e41d68-e5e0-11ed-9bfd-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.45807609550722506,
+      "y": -0.5149056367337106,
+      "z": 0.517239713236185
+    },
+    "30e41d69-e5e0-11ed-8eb8-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.45565864764255964,
+      "y": -0.5148319863278261,
+      "z": 0.5150273431978054
+    },
+    "30e41d6a-e5e0-11ed-99a1-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4535292191256644,
+      "y": -0.5147024459635173,
+      "z": 0.5112289230764157
+    },
+    "30e41d6b-e5e0-11ed-87bb-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.45341258247437594,
+      "y": -0.5145843538129251,
+      "z": 0.5078459806203014
+    },
+    "30e41d6c-e5e0-11ed-9d07-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.45406026519420056,
+      "y": -0.5145117505306726,
+      "z": 0.5057976000274294
+    },
+    "30e41d6d-e5e0-11ed-b6f5-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.472260427056573,
+      "y": -0.5181016239785925,
+      "z": 0.5138730613654778
+    },
+    "30e41d6e-e5e0-11ed-8cac-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.47116924564698376,
+      "y": -0.5181677874513976,
+      "z": 0.515717847054854
+    },
+    "30e41d6f-e5e0-11ed-84a0-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4685733192208498,
+      "y": -0.5182474470222317,
+      "z": 0.5178828651238102
+    },
+    "30e41d70-e5e0-11ed-81bf-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.46432614552276585,
+      "y": -0.5182864474261849,
+      "z": 0.5188126820720574
+    },
+    "30e41d71-e5e0-11ed-8e41-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4610704864232784,
+      "y": -0.518279446666391,
+      "z": 0.5184700663334831
+    },
+    "30e41d72-e5e0-11ed-90cf-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4580811885110077,
+      "y": -0.5182369309449678,
+      "z": 0.5171232484326355
+    },
+    "30e41d73-e5e0-11ed-99e4-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.45566374064634274,
+      "y": -0.5181632805390839,
+      "z": 0.5149108783942555
+    },
+    "30e41d74-e5e0-11ed-81d2-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4535343121294472,
+      "y": -0.5180337401747751,
+      "z": 0.5111124582728657
+    },
+    "30e41d75-e5e0-11ed-a72c-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.45341767547815903,
+      "y": -0.5179156480241826,
+      "z": 0.5077295158167513
+    },
+    "30e41d76-e5e0-11ed-bde8-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4540653581979835,
+      "y": -0.51784304474193,
+      "z": 0.5056811352238794
+    },
+    "30e41d77-e5e0-11ed-8b0f-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4722629735584646,
+      "y": -0.519767271084221,
+      "z": 0.513814828963703
+    },
+    "30e41d78-e5e0-11ed-8f9b-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.47117179214887517,
+      "y": -0.5198334345570259,
+      "z": 0.5156596146530787
+    },
+    "30e41d79-e5e0-11ed-ad3a-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.46857586572274124,
+      "y": -0.5199130941278604,
+      "z": 0.5178246327220358
+    },
+    "30e41d7a-e5e0-11ed-bf26-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4643286920246575,
+      "y": -0.5199520945318136,
+      "z": 0.5187544496702825
+    },
+    "30e41d7b-e5e0-11ed-8cad-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.46107303292516993,
+      "y": -0.5199450937720197,
+      "z": 0.5184118339317083
+    },
+    "30e41d7c-e5e0-11ed-8d9d-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.45808373501289934,
+      "y": -0.5199025780505965,
+      "z": 0.5170650160308604
+    },
+    "30e41d7d-e5e0-11ed-8579-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4556662871482342,
+      "y": -0.5198289276447126,
+      "z": 0.5148526459924807
+    },
+    "30e41d7e-e5e0-11ed-8ffc-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.45353685863133897,
+      "y": -0.5196993872804037,
+      "z": 0.5110542258710911
+    },
+    "30e41d7f-e5e0-11ed-b5c8-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.4534202219800504,
+      "y": -0.5195812951298113,
+      "z": 0.5076712834149765
+    },
+    "30e41d80-e5e0-11ed-ab99-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.454067904699875,
+      "y": -0.5195086918475587,
+      "z": 0.5056229028221045
+    }
+  }
+}
