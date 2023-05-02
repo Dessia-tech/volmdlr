@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShel3D: intersection method
 - Fix: plots
 - add some fixes to pydocstyle errors
+- ToroidalSurface3D: fix some parametric operations.
 
 
 ### Refactor
