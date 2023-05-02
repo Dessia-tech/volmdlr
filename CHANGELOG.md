@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arcellipse2D, 3D: complementary
 - Face3D: is_linesegment_crossing
 - BSplineFace3D: linesegment_intersections
+- Assembly: define a volmdlr Assembly object.
 - Contour2D: copy
 - LineSegment2D: copy
 
