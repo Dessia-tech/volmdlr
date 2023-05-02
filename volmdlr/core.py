@@ -1017,6 +1017,234 @@ class BoundingBox(dc.DessiaObject):
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
 
+class Assembly(dc.PhysicalObject):
+    """
+    Defines an assembly.
+
+    :param components: A list of volmdlr objects
+    :type components: List[:class:`volmdlr.core.Primitive3D`]
+    :param positions: A list of volmdlr.Frame3D representing the positions of each component in the assembly absolute
+        frame.
+    :type positions: List[:class:`volmdlr.Frame3D`]
+    :param name: The Assembly's name
+    :type name: str
+    """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['bounding_box', "primitives"]
+    _non_data_eq_attributes = ['name', 'bounding_box']
+    _non_data_hash_attributes = ['name', 'bounding_box']
+
+    def __init__(self, components: List[Primitive3D], positions: List[volmdlr.Frame3D],
+                 frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
+        self.components = components
+        self.frame = frame
+        self.positions = positions
+        self.primitives = [self.map_primitive(primitive, frame, frame_primitive)
+                                      for primitive, frame_primitive in zip(components, positions)]
+        self._bbox = None
+        dc.PhysicalObject.__init__(self, name=name)
+
+    @property
+    def bounding_box(self):
+        """
+        Returns the bounding box.
+
+        """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model.
+        """
+        return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
+
+    def babylon_data(self):
+        """
+        Get babylonjs data.
+
+        :return: Dictionary with babylon data.
+        """
+
+        meshes = []
+        lines = []
+        for primitive in self.primitives:
+            if hasattr(primitive, 'babylon_meshes'):
+                meshes.extend(primitive.babylon_meshes())
+                if hasattr(primitive, 'babylon_curves'):
+                    lines.append(primitive.babylon_curves())
+            elif hasattr(primitive, 'babylon_data'):
+                data = primitive.babylon_data()
+                meshes.extend(mesh for mesh in data["meshes"])
+                lines.extend(line for line in data["lines"])
+
+        bbox = self.bounding_box
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
+
+        babylon_data = {'meshes': meshes,
+                        'lines': lines,
+                        'max_length': max_length,
+                        'center': list(center)}
+
+        return babylon_data
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Assembly.
+
+        side = 'old' or 'new'
+        """
+        new_positions = [position.frame_mapping(frame, side)
+                          for position in self.positions]
+        return Assembly(self.components, new_positions, self.frame, self.name)
+
+    @staticmethod
+    def map_primitive(primitive, global_frame, transformed_frame):
+        """
+        Frame maps a primitive in an assembly to its good position.
+
+        :param primitive: primitive to map
+        :type primitive: Primitive3D
+        :param global_frame: Assembly frame
+        :type global_frame: volmdlr.Frame3D
+        :param transformed_frame: position of the primitive on the assembly
+        :type transformed_frame: volmdlr.Frame3D
+        :return: A new positioned primitive
+        :rtype: Primitive3D
+
+        """
+        basis_a = global_frame.basis()
+        basis_b = transformed_frame.basis()
+        matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+                       [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                       [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+        matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+                       [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                       [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+        transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
+        u_vector = volmdlr.Vector3D(*transfer_matrix[0])
+        v_vector = volmdlr.Vector3D(*transfer_matrix[1])
+        w_vector = volmdlr.Vector3D(*transfer_matrix[2])
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
+        if new_frame == volmdlr.OXYZ:
+            return primitive
+        new_primitive = primitive.frame_mapping(new_frame, 'old')
+        return new_primitive
+
+    def volmdlr_primitives(self):
+        return [self]
+
+    def to_step(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
+        step_content = []
+        for primitive in self.primitives:
+            if primitive.__class__.__name__ == 'OpenShell3D':
+                primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
+            else:
+                primitive_content, primitive_id = primitive.to_step(current_id)
+
+            step_content += primitive_content
+
+            product_definition_context_id = primitive_id + 1
+            step_content += (f"#{product_definition_context_id} = "
+                             + "PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n")
+
+            product_context_id = product_definition_context_id + 1
+            step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
+            product_id = product_context_id + 1
+            step_content += f"#{product_id} = PRODUCT('{primitive.name}'," \
+                            f"'{primitive.name}','',(#{product_context_id}));\n"
+            product_definition_formation_id = product_id + 1
+            step_content += f"#{product_definition_formation_id} = " \
+                            f"PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
+            product_definition_id = product_definition_formation_id + 1
+            step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
+                            f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
+            product_definition_shape_id = product_definition_id + 1
+            step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
+                            f"'',#{product_definition_id});\n"
+            shape_definition_repr_id = product_definition_shape_id + 1
+            step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
+                            f"#{product_definition_shape_id},#{primitive_id});\n"
+            product_related_category = shape_definition_repr_id + 1
+            step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
+                            f"'part',$,(#{product_id}));\n"
+            draughting_id = product_related_category + 1
+            step_content += f"#{draughting_id} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n"
+            color_id = draughting_id + 1
+            primitive_color = (1, 1, 1)
+            if hasattr(primitive, 'color') and primitive.color is not None:
+                primitive_color = primitive.color
+            step_content += f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)}," \
+                            f"{round(float(primitive_color[1]), 4)}, {round(float(primitive_color[2]), 4)});\n"
+
+            curve_style_id = color_id + 1
+            step_content += f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," \
+                            f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
+
+            fill_area_color_id = curve_style_id + 1
+            step_content += f"#{fill_area_color_id} = FILL_AREA_STYLE_COLOUR('',#{color_id});\n"
+
+            fill_area_id = fill_area_color_id + 1
+            step_content += f"#{fill_area_id} = FILL_AREA_STYLE('',#{fill_area_color_id});\n"
+
+            suface_fill_area_id = fill_area_id + 1
+            step_content += f"#{suface_fill_area_id} = SURFACE_STYLE_FILL_AREA(#{fill_area_id});\n"
+
+            suface_side_style_id = suface_fill_area_id + 1
+            step_content += f"#{suface_side_style_id} = SURFACE_SIDE_STYLE('',(#{suface_fill_area_id}));\n"
+
+            suface_style_usage_id = suface_side_style_id + 1
+            step_content += f"#{suface_style_usage_id} = SURFACE_STYLE_USAGE(.BOTH.,#{suface_side_style_id});\n"
+
+            presentation_style_id = suface_style_usage_id + 1
+
+            step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
+                            f"#{curve_style_id}));\n"
+
+            styled_item_id = presentation_style_id + 1
+            if primitive.__class__.__name__ == 'OpenShell3D':
+                for face_id in face_ids:
+                    step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                                    f"#{face_id});\n"
+                    styled_item_id += 1
+                styled_item_id -= 1
+            else:
+                step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                                f"#{primitive_id});\n"
+
+            current_id = styled_item_id + 1
+        return step_content, current_id
+
+    def plot(self, ax=None, equal_aspect=True):
+        """
+        Matplotlib plot of model.
+
+        To use for debug.
+        """
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d', adjustable='box')
+        for primitive in self.primitives:
+            primitive.plot(ax)
+        if not equal_aspect:
+            # ax.set_aspect('equal')
+            ax.set_aspect('auto')
+        ax.margins(0.1)
+        return ax
+
+
 class VolumeModel(dc.PhysicalObject):
     """
     A class containing one or several :class:`volmdlr.core.Primitive3D`.
@@ -1191,7 +1419,7 @@ class VolumeModel(dc.PhysicalObject):
         ax = fig.add_subplot(111, projection='3d', adjustable='box')
         for primitive in self.primitives:
             primitive.plot(ax)
-        if equal_aspect:
+        if not equal_aspect:
             # ax.set_aspect('equal')
             ax.set_aspect('auto')
         ax.margins(0.1)
@@ -1209,8 +1437,12 @@ class VolumeModel(dc.PhysicalObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
-            if hasattr(primitive, 'babylon_curves'):
-                lines.append(primitive.babylon_curves())
+                if hasattr(primitive, 'babylon_curves'):
+                    lines.append(primitive.babylon_curves())
+            elif hasattr(primitive, 'babylon_data'):
+                data = primitive.babylon_data()
+                meshes.extend(mesh for mesh in data["meshes"])
+                lines.extend(line for line in data["lines"])
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1265,6 +1497,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def save_babylonjs_to_file(self, filename: str = None,
                                use_cdn=True, debug=False):
+        """Export a html file of the model."""
         babylon_data = self.babylon_data()
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                        debug=debug)
@@ -1282,6 +1515,7 @@ class VolumeModel(dc.PhysicalObject):
             return filename
 
     def to_stl_model(self):
+        """Converts the model into a stl object."""
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
@@ -1289,17 +1523,20 @@ class VolumeModel(dc.PhysicalObject):
         return stl
 
     def to_stl(self, filepath: str):
+        """Export a stl file of the model."""
         if not filepath.endswith('.stl'):
             filepath += '.stl'
         with open(filepath, 'wb') as file:
             self.to_stl_stream(file)
 
     def to_stl_stream(self, stream: dcf.BinaryFile):
+        """Converts the model into a stl stream file."""
         stl = self.to_stl_model()
         stl.save_to_stream(stream)
         return stream
 
     def to_step(self, filepath: str):
+        """Export a step file of the model."""
         if not (filepath.endswith('.step') or filepath.endswith('.stp')):
             filepath += '.step'
         with open(filepath, 'w', encoding='utf-8') as file:
