@@ -3925,8 +3925,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
         periodic = points[0].is_close(points[-1])
-        bspline = edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic)
-        return [bspline.simplify]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic).simplify]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
