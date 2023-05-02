@@ -1622,12 +1622,12 @@ class PeriodicalSurface(Surface3D):
         Helper function to return points of reference on the edge to fix some parametric periodical discontinuities.
         """
         length = edge.length()
-        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.001 * length))
+        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.01 * length))
         point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
         theta3, _ = point_after_start
         theta4, _ = point_before_end
         if abs(theta3) == math.pi or abs(theta3) == 0.5 * math.pi:
-            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.002 * length))
+            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.02 * length))
         if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi:
             point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
         return point_after_start, point_before_end
@@ -1639,7 +1639,7 @@ class PeriodicalSurface(Surface3D):
         length = edge.length()
         theta3, _ = self.point3d_to_2d(edge.point_at_abscissa(0.001 * length))
         # make sure that the reference angle is not undefined
-        if abs(theta3) == math.pi:
+        if abs(theta3) == math.pi or abs(theta3) == 0.5 * math.pi:
             theta3, _ = self.point3d_to_2d(edge.point_at_abscissa(0.002 * length))
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
@@ -1649,7 +1649,7 @@ class PeriodicalSurface(Surface3D):
         if abs(theta2) == math.pi or abs(theta2) == 0.5 * math.pi:
             theta4, _ = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
             # make sure that the reference angle is not undefined
-            if abs(theta4) == math.pi:
+            if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi:
                 theta4, _ = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
             theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
@@ -2303,6 +2303,8 @@ class ToroidalSurface3D(PeriodicalSurface):
             x = 0
         if abs(y) < 1e-12:
             y = 0
+        if abs(z) < 1e-6:
+            z = 0
 
         zr = z / self.small_radius
         phi = math.asin(zr)
@@ -2445,10 +2447,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         start = self.point3d_to_2d(fullarc3d.start)
         end = self.point3d_to_2d(fullarc3d.end)
 
-        length = fullarc3d.length()
         angle3d = fullarc3d.angle
-        point_after_start = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
-        point_before_end = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
+        point_after_start, point_before_end = self._reference_points(fullarc3d)
 
         start, end = vm_parametric.arc3d_to_spherical_coordinates_verification(start, end, angle3d,
                                                                                [point_after_start, point_before_end],
@@ -2479,10 +2479,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
 
-        length = arc3d.length()
         angle3d = arc3d.angle
-        point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.001 * length))
-        point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * length))
+        point_after_start, point_before_end = self._reference_points(arc3d)
 
         start, end = vm_parametric.arc3d_to_spherical_coordinates_verification(start, end, angle3d,
                                                                                [point_after_start, point_before_end],
@@ -2635,6 +2633,25 @@ class ToroidalSurface3D(PeriodicalSurface):
         if abs(phi) < 1e-9:
             phi = 0.0
         return self.point2d_to_3d(volmdlr.Point2D(theta, phi))
+
+    def _reference_points(self, edge):
+        """
+        Helper function to return points of reference on the edge to fix some parametric periodical discontinuities.
+        """
+        length = edge.length()
+        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.01 * length))
+        point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
+        theta3, phi3 = point_after_start
+        theta4, phi4 = point_before_end
+        if abs(theta3) == math.pi or abs(theta3) == 0.5 * math.pi:
+            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.02 * length))
+        if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi:
+            point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
+        if abs(phi3) == math.pi or abs(phi3) == 0.5 * math.pi:
+            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.02 * length))
+        if abs(phi4) == math.pi or abs(phi4) == 0.5 * math.pi:
+            point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
+        return point_after_start, point_before_end
 
 
 class ConicalSurface3D(PeriodicalSurface):
@@ -3142,8 +3159,8 @@ class SphericalSurface3D(PeriodicalSurface):
         theta2, phi2 = end
 
         point_after_start, point_before_end = self._reference_points(arc3d)
-        theta3, _ = point_after_start
-        theta4, _ = point_before_end
+        theta3, phi3 = point_after_start
+        theta4, phi4 = point_before_end
 
         # Fix sphere singularity point
         if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-5) and theta1 == 0.0 \
@@ -3159,9 +3176,11 @@ class SphericalSurface3D(PeriodicalSurface):
                                                                                [point_after_start, point_before_end],
                                                                                [self.x_periodicity,
                                                                                 self.y_periodicity])
+        theta1, phi1 = start
+        theta2, phi2 = end
         if start == end:  # IS THIS POSSIBLE ?
             return [edges.LineSegment2D(start, start + volmdlr.TWO_PI * volmdlr.X2D)]
-        if self.is_lat_long_curve([theta1, theta_i, theta2], [phi1, phi_i, phi2]):
+        if self.is_lat_long_curve([theta1, theta3, theta4, theta2], [phi1, phi3, phi4, phi2]):
             return [edges.LineSegment2D(start, end)]
 
         return self.arc3d_to_2d_with_singularity(arc3d, start, end, point_after_start)
@@ -3299,8 +3318,9 @@ class SphericalSurface3D(PeriodicalSurface):
 
         theta1, phi1 = self.point3d_to_2d(fullarc3d.start)
         theta2, phi2 = self.point3d_to_2d(fullarc3d.end)
-        theta3, phi3 = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
-        theta4, _ = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
+        point_after_start, point_before_end = self._reference_points(fullarc3d)
+        theta3, phi3 = point_after_start
+        theta4, _ = point_before_end
 
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             point1 = volmdlr.Point2D(theta1, phi1)
@@ -3337,10 +3357,10 @@ class SphericalSurface3D(PeriodicalSurface):
         points[0] = volmdlr.Point2D(theta1, phi1)
         points[-1] = volmdlr.Point2D(theta2, phi2)
 
-        if theta3 < theta1 < theta2:
-            points = [p - volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x > 0 else p for p in points]
-        elif theta3 > theta1 > theta2:
-            points = [p + volmdlr.Point2D(volmdlr.TWO_PI, 0) if p.x < 0 else p for p in points]
+        theta_list = [point.x for point in points]
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
+        if theta_discontinuity:
+            points = self._fix_angle_discontinuity_on_discretization_points(points, indexes_theta_discontinuity, "x")
 
         return [edges.BSplineCurve2D.from_points_interpolation(points, 2)]
 
