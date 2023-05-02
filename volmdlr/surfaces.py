@@ -3235,35 +3235,38 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        length = bspline_curve3d.length()
         n = len(bspline_curve3d.control_points)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         points = [self.point3d_to_2d(point) for point in points3d]
         theta1, phi1 = points[0]
         theta2, phi2 = points[-1]
 
-        theta3, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
-        # make sure that the reference angle is not undefined
-        if abs(theta3) == math.pi:
-            theta3, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.002 * length))
-
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         if abs(theta1) == math.pi:
             theta1 = repair_start_end_angle_periodicity(theta1, theta3)
         if abs(theta2) == math.pi:
-            theta4, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
-            # make sure that the reference angle is not undefined
-            if abs(theta4) == math.pi:
-                theta4, _ = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.97 * length))
             theta2 = repair_start_end_angle_periodicity(theta2, theta4)
+
+        # Verify if phi1 or phi2 point should be -pi because phi -> ]-pi, pi]
+        if abs(phi1) == math.pi:
+            phi1 = repair_start_end_angle_periodicity(phi1, phi3)
+        if abs(phi2) == math.pi:
+            phi2 = repair_start_end_angle_periodicity(phi2, phi4)
 
         points[0] = volmdlr.Point2D(theta1, phi1)
         points[-1] = volmdlr.Point2D(theta2, phi2)
 
         theta_list = [point.x for point in points]
+        phi_list = [point.y for point in points]
         theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
+        phi_discontinuity, indexes_phi_discontinuity = angle_discontinuity(phi_list)
+
         if theta_discontinuity:
-            points = self._fix_angle_discontinuity_on_discretization_points(points, indexes_theta_discontinuity, "x")
+            points = self._fix_angle_discontinuity_on_discretization_points(points,
+                                                                            indexes_theta_discontinuity, "x")
+        if phi_discontinuity:
+            points = self._fix_angle_discontinuity_on_discretization_points(points,
+                                                                            indexes_phi_discontinuity, "y")
 
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree,
                                                                periodic=bspline_curve3d.periodic)]
