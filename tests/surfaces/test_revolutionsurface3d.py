@@ -101,7 +101,7 @@ class TestRevolutionSurface3D(unittest.TestCase):
             "surfaces/objects_revolution_tests/linesegment2d_split_primitive.json")
         arc = surface.linesegment2d_to_3d(linesegment3)[0]
         self.assertAlmostEqual(arc.radius, 0.022500000035448893)
-        self.assertAlmostEqual(arc.angle, 0.022500000035448893)
+        self.assertAlmostEqual(arc.angle, 0.15581712793343738)
 
 
 if __name__ == '__main__':
