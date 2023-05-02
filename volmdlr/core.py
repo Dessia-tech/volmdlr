@@ -1497,6 +1497,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def save_babylonjs_to_file(self, filename: str = None,
                                use_cdn=True, debug=False):
+        """Export a html file of the model."""
         babylon_data = self.babylon_data()
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                        debug=debug)
@@ -1514,6 +1515,7 @@ class VolumeModel(dc.PhysicalObject):
             return filename
 
     def to_stl_model(self):
+        """Converts the model into a stl object."""
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
@@ -1521,17 +1523,20 @@ class VolumeModel(dc.PhysicalObject):
         return stl
 
     def to_stl(self, filepath: str):
+        """Export a stl file of the model."""
         if not filepath.endswith('.stl'):
             filepath += '.stl'
         with open(filepath, 'wb') as file:
             self.to_stl_stream(file)
 
     def to_stl_stream(self, stream: dcf.BinaryFile):
+        """Converts the model into a stl stream file."""
         stl = self.to_stl_model()
         stl.save_to_stream(stream)
         return stream
 
     def to_step(self, filepath: str):
+        """Export a step file of the model."""
         if not (filepath.endswith('.step') or filepath.endswith('.stp')):
             filepath += '.step'
         with open(filepath, 'w', encoding='utf-8') as file:
