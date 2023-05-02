@@ -852,6 +852,8 @@ class Surface3D(DessiaObject):
         # if outer_contour3d:
         #     if not outer_contour3d.is_ordered():
         #         outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+        if not outer_contour2d.is_ordered(1e-2):
+            outer_contour2d.plot().set_aspect("auto")
         surface2d = Surface2D(outer_contour=outer_contour2d,
                               inner_contours=inner_contours2d)
         face = class_(self, surface2d=surface2d, name=name)
@@ -1675,12 +1677,12 @@ class PeriodicalSurface(Surface3D):
         Helper function to return points of reference on the edge to fix some parametric periodical discontinuities.
         """
         length = edge.length()
-        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.001 * length))
+        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.01 * length))
         point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
         theta3, _ = point_after_start
         theta4, _ = point_before_end
         if abs(theta3) == math.pi or abs(theta3) == 0.5 * math.pi:
-            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.002 * length))
+            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.02 * length))
         if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi:
             point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
         return point_after_start, point_before_end
@@ -1692,7 +1694,7 @@ class PeriodicalSurface(Surface3D):
         length = edge.length()
         theta3, _ = self.point3d_to_2d(edge.point_at_abscissa(0.001 * length))
         # make sure that the reference angle is not undefined
-        if abs(theta3) == math.pi:
+        if abs(theta3) == math.pi or abs(theta3) == 0.5 * math.pi:
             theta3, _ = self.point3d_to_2d(edge.point_at_abscissa(0.002 * length))
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
@@ -1702,7 +1704,7 @@ class PeriodicalSurface(Surface3D):
         if abs(theta2) == math.pi or abs(theta2) == 0.5 * math.pi:
             theta4, _ = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
             # make sure that the reference angle is not undefined
-            if abs(theta4) == math.pi:
+            if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi:
                 theta4, _ = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
             theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
@@ -2686,6 +2688,25 @@ class ToroidalSurface3D(PeriodicalSurface):
             phi = 0.0
         return self.point2d_to_3d(volmdlr.Point2D(theta, phi))
 
+    def _reference_points(self, edge):
+        """
+        Helper function to return points of reference on the edge to fix some parametric periodical discontinuities.
+        """
+        length = edge.length()
+        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.01 * length))
+        point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
+        theta3, phi3 = point_after_start
+        theta4, phi4 = point_before_end
+        if abs(theta3) == math.pi or abs(theta3) == 0.5 * math.pi:
+            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.02 * length))
+        if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi:
+            point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
+        if abs(phi3) == math.pi or abs(phi3) == 0.5 * math.pi:
+            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.02 * length))
+        if abs(phi4) == math.pi or abs(phi4) == 0.5 * math.pi:
+            point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
+        return point_after_start, point_before_end
+
 
 class ConicalSurface3D(PeriodicalSurface):
     """
@@ -2831,7 +2852,9 @@ class ConicalSurface3D(PeriodicalSurface):
             end = volmdlr.Point2D(start.x, end.y)
         if not start.is_close(end):
             return [edges.LineSegment2D(start, end)]
-        return [edges.BSplineCurve2D.from_points_interpolation([start, end], 1, False)]
+        self.save_to_file("conicalsurface_linesegment3d_to_2d.json")
+        linesegment3d.save_to_file("conicalsurface_linesegment3d_to_2d_linesegment3d.json")
+        return None
 
     def linesegment2d_to_3d(self, linesegment2d):
         """
@@ -3921,7 +3944,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         end3d = self.point2d_to_3d(linesegment2d.end)
         theta1, abscissa1 = linesegment2d.start
         theta2, abscissa2 = linesegment2d.end
-        if math.isclose(abscissa1, abscissa2, abs_tol=1e-4):
+        if self.wire.point_at_abscissa(abscissa1).is_close(self.wire.point_at_abscissa(abscissa2)):
+        # if math.isclose(abscissa1, abscissa2, abs_tol=1e-4) and not math.isclose(theta1, theta2, abs_tol=1e-3):
             theta_i = 0.5 * (theta1 + theta2)
             interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
             return [edges.Arc3D(start3d, interior, end3d)]
@@ -3929,14 +3953,16 @@ class RevolutionSurface3D(PeriodicalSurface):
             primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
             if primitive.is_point_edge_extremity(start3d) and \
                     primitive.is_point_edge_extremity(end3d):
-                return primitive
+                return [primitive]
             primitive = primitive.split_between_two_points(start3d, end3d)
-            return [primitive]
+            if primitive:
+                return [primitive]
         n = 10
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
         periodic = points[0].is_close(points[-1])
-        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic)]
+        bspline = edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic)
+        return [bspline.simplify]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """

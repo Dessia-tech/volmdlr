@@ -363,7 +363,7 @@ class Edge(dc.DessiaObject):
             split2 = split1[1].split(point2)
         new_split_edge = None
         for split_edge in split2:
-            if split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
+            if split_edge and split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
                 new_split_edge = split_edge
                 break
         return new_split_edge
@@ -3492,8 +3492,7 @@ class Arc2D(Arc):
         point_start = self.start.to_3d(plane_origin, x, y)
         point_interior = self.interior.to_3d(plane_origin, x, y)
         point_end = self.end.to_3d(plane_origin, x, y)
-        if self.center is not None:
-            center = self.center.to_3d(plane_origin, x, y)
+        center = self.center.to_3d(plane_origin, x, y) if self.center else None
 
         return Arc3D(point_start, point_interior, point_end, center, name=self.name)
 
@@ -3505,8 +3504,8 @@ class Arc2D(Arc):
         :param angle: angle rotation.
         :return: a new rotated Arc2D.
         """
-        return Arc2D(*[point.rotation(center, angle, ) for point in
-                       [self.start, self.interior, self.end]])
+        return Arc2D(*[point.rotation(center, angle, ) if point else point for point in
+                       [self.start, self.interior, self.end, self.center]])
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
@@ -3532,8 +3531,8 @@ class Arc2D(Arc):
         :param offset: translation vector.
         :return: A new translated Arc2D.
         """
-        return Arc2D(*[point.translation(offset) for point in
-                       [self.start, self.interior, self.end]])
+        return Arc2D(*[point.translation(offset) if point else point for point in
+                       [self.start, self.interior, self.end, self.center]])
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
@@ -3557,8 +3556,8 @@ class Arc2D(Arc):
 
         side = 'old' or 'new'
         """
-        return Arc2D(*[point.frame_mapping(frame, side) for point in
-                       [self.start, self.interior, self.end]])
+        return Arc2D(*[point.frame_mapping(frame, side) if point else point for point in
+                       [self.start, self.interior, self.end, self.center]])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -3616,9 +3615,10 @@ class Arc2D(Arc):
                                name=self.name)
 
     def copy(self, *args, **kwargs):
+        center = self.center.copy() if self.center else None
         return Arc2D(self.start.copy(),
                      self.interior.copy(),
-                     self.end.copy())
+                     self.end.copy(), center)
 
     def cut_between_two_points(self, point1, point2):
         """
@@ -6425,7 +6425,8 @@ class Arc3D(Arc):
         new_start = self.start.rotation(center, axis, angle)
         new_interior = self.interior.rotation(center, axis, angle)
         new_end = self.end.rotation(center, axis, angle)
-        return Arc3D(new_start, new_interior, new_end, name=self.name)
+        new_center = self.center.rotation(center, axis, angle) if self.center else None
+        return Arc3D(new_start, new_interior, new_end, new_center, name=self.name)
 
     def rotation_inplace(self, center: volmdlr.Point3D,
                          axis: volmdlr.Vector3D, angle: float):
@@ -6454,7 +6455,8 @@ class Arc3D(Arc):
         new_start = self.start.translation(offset)
         new_interior = self.interior.translation(offset)
         new_end = self.end.translation(offset)
-        return Arc3D(new_start, new_interior, new_end, name=self.name)
+        new_center = self.center.translation(offset) if self.center else None
+        return Arc3D(new_start, new_interior, new_end, new_center, name=self.name)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
@@ -6525,21 +6527,24 @@ class Arc3D(Arc):
         return ax
 
     def copy(self, *args, **kwargs):
-        return Arc3D(self.start.copy(), self.interior.copy(), self.end.copy())
+        new_center = self.center.copy() if self.center else None
+        return Arc3D(self.start.copy(), self.interior.copy(), self.end.copy(), new_center)
 
     def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
         if side == 'old':
             new_start = frame.local_to_global_coordinates(self.start.copy())
             new_interior = frame.local_to_global_coordinates(self.interior.copy())
             new_end = frame.local_to_global_coordinates(self.end.copy())
+            new_center = frame.local_to_global_coordinates(self.center.copy()) if self.center else None
         elif side == 'new':
             new_start = frame.global_to_local_coordinates(self.start.copy())
             new_interior = frame.global_to_local_coordinates(self.interior.copy())
             new_end = frame.global_to_local_coordinates(self.end.copy())
+            new_center = frame.global_to_local_coordinates(self.center.copy()) if self.center else None
         else:
             raise ValueError('side value not valid, please specify'
                              'a correct value: \'old\' or \'new\'')
-        return new_start, new_interior, new_end
+        return new_start, new_interior, new_end, new_center
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -6547,10 +6552,10 @@ class Arc3D(Arc):
 
         side = 'old' or 'new'
         """
-        new_start, new_interior, new_end = \
+        new_start, new_interior, new_end, new_center = \
             self.frame_mapping_parameters(frame, side)
 
-        return Arc3D(new_start, new_interior, new_end, name=self.name)
+        return Arc3D(new_start, new_interior, new_end, new_center, name=self.name)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
