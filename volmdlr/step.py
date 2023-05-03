@@ -1410,7 +1410,7 @@ STEP_TO_VOLMDLR = {
     'CONICAL_SURFACE': surfaces.ConicalSurface3D,
     'SPHERICAL_SURFACE': surfaces.SphericalSurface3D,
     'TOROIDAL_SURFACE': surfaces.ToroidalSurface3D,
-    'DEGENERATE_TOROIDAL_SURFACE': None,
+    'DEGENERATE_TOROIDAL_SURFACE': surfaces.ToroidalSurface3D,
     'B_SPLINE_SURFACE_WITH_KNOTS': surfaces.BSplineSurface3D,
     'B_SPLINE_SURFACE': surfaces.BSplineSurface3D,
     'BEZIER_SURFACE': surfaces.BSplineSurface3D,
