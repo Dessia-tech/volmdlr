@@ -2437,7 +2437,11 @@ class ToroidalSurface3D(PeriodicalSurface):
                 self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), phi1)),
                 self.point2d_to_3d(linesegment2d.end),
             )]
-        raise NotImplementedError('Ellipse?')
+        n = 10
+        degree = 3
+        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
+        periodic = points[0].is_close(points[-1])
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
