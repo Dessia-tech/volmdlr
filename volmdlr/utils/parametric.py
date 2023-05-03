@@ -281,10 +281,11 @@ def contour2d_healing_close_gaps(contour2d):
     new_primitives = [contour2d.primitives[0]]
     for i, (prim1, prim2) in enumerate(
             zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
-        if not prim1.end.is_close(prim2.start):
-            new_primitives.append(vme.LineSegment2D(prim1.end, prim2.start))
-        if i < len(contour2d.primitives) - 1:
-            new_primitives.append(prim2)
+        if prim1 and prim2:
+            if not prim1.end.is_close(prim2.start):
+                new_primitives.append(vme.LineSegment2D(prim1.end, prim2.start))
+            if i < len(contour2d.primitives) - 1:
+                new_primitives.append(prim2)
     contour2d.primitives = new_primitives
 
     return contour2d
