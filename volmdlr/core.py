@@ -13,7 +13,10 @@ from datetime import datetime
 from functools import lru_cache
 from typing import List, Tuple
 
-import gmsh
+try:
+    import gmsh
+except:
+    pass
 import matplotlib.pyplot as plt
 import numpy as npy
 
