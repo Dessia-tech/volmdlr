@@ -63,7 +63,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add some fixes to pydocstyle errors
 - ToroidalSurface3D: fix some parametric operations.
 - Node2D, Node3D: is_close
--
 
 ### Refactor
 - Contour2D: cut_by_wire
