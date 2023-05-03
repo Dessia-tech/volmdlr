@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Assembly: define a volmdlr Assembly object.
 - Edge: direction_independent_is_close
 - Arcellipse2D, 3D: complementary
+- Assembly: define a volmdlr Assembly object.
 - Contour2D: copy
 - LineSegment2D: copy
 
@@ -53,9 +54,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dessiaobject inheritance up-to-date
 - Edge: unit_direction_vector, unit_normal_vector
 - VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
+- RevolutionSurface: fix some parametric operations.
 - ClosedShel3D: intersection method
 - Fix: plots
 - add some fixes to pydocstyle errors
+- ToroidalSurface3D: fix some parametric operations.
+
 
 ### Refactor
 - Contour2D: cut_by_wire
