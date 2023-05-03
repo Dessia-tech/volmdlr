@@ -1669,6 +1669,10 @@ class Contour2D(ContourMixin, Wire2D):
     def __hash__(self):
         return hash(tuple(self.primitives))
 
+    def copy(self):
+        return self.__class__(primitives=[p.copy() for p in self.primitives],
+                              name=self.name)
+
     def __eq__(self, other_):
         if id(self) == id(other_):
             return True
