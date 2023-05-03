@@ -2493,9 +2493,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        length = bspline_curve3d.length()
-        theta3, phi3 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.001 * length))
-        theta4, phi4 = self.point3d_to_2d(bspline_curve3d.point_at_abscissa(0.98 * length))
+        point_after_start, point_before_end = self._reference_points(bspline_curve3d)
+        theta3, phi3 = point_after_start
+        theta4, phi4 = point_before_end
         n = len(bspline_curve3d.control_points)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         points = [self.point3d_to_2d(p) for p in points3d]
@@ -3075,9 +3075,9 @@ class SphericalSurface3D(PeriodicalSurface):
 
         # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Generally this is related to uncertainty of step files.
-        if abs(x) < 1e-12:
+        if abs(x) < 1e-6:
             x = 0
-        if abs(y) < 1e-12:
+        if abs(y) < 1e-6:
             y = 0
 
         theta = math.atan2(y, x)
@@ -3119,9 +3119,9 @@ class SphericalSurface3D(PeriodicalSurface):
 
         # Transform the contour's primitives to parametric domain
         for primitive3d in contour3d.primitives:
-            method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
+            method_name = f'{primitive3d.simplify.__class__.__name__.lower()}_to_2d'
             if hasattr(self, method_name):
-                primitives = getattr(self, method_name)(primitive3d)
+                primitives = getattr(self, method_name)(primitive3d.simplify)
 
                 if primitives is None:
                     continue
@@ -3163,12 +3163,12 @@ class SphericalSurface3D(PeriodicalSurface):
         theta4, phi4 = point_before_end
 
         # Fix sphere singularity point
-        if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-5) and theta1 == 0.0 \
-                and math.isclose(theta3, theta_i, abs_tol=1e-6) and math.isclose(theta4, theta_i, abs_tol=1e-6):
+        if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-2) and theta1 == 0.0 \
+                and math.isclose(theta3, theta_i, abs_tol=1e-2) and math.isclose(theta4, theta_i, abs_tol=1e-2):
             theta1 = theta_i
             start = volmdlr.Point2D(theta1, phi1)
-        if math.isclose(abs(phi2), 0.5 * math.pi, abs_tol=1e-5) and theta2 == 0.0 \
-                and math.isclose(theta3, theta_i, abs_tol=1e-6) and math.isclose(theta4, theta_i, abs_tol=1e-6):
+        if math.isclose(abs(phi2), 0.5 * math.pi, abs_tol=1e-2) and theta2 == 0.0 \
+                and math.isclose(theta3, theta_i, abs_tol=1e-2) and math.isclose(theta4, theta_i, abs_tol=1e-2):
             theta2 = theta_i
             end = volmdlr.Point2D(theta2, phi2)
 
@@ -3260,17 +3260,25 @@ class SphericalSurface3D(PeriodicalSurface):
         theta1, phi1 = points[0]
         theta2, phi2 = points[-1]
 
-        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-        if abs(theta1) == math.pi:
-            theta1 = repair_start_end_angle_periodicity(theta1, theta3)
-        if abs(theta2) == math.pi:
-            theta2 = repair_start_end_angle_periodicity(theta2, theta4)
+        point_after_start, point_before_end = self._reference_points(bspline_curve3d)
+        theta3, phi3 = point_after_start
+        theta4, phi4 = point_before_end
 
-        # Verify if phi1 or phi2 point should be -pi because phi -> ]-pi, pi]
-        if abs(phi1) == math.pi:
-            phi1 = repair_start_end_angle_periodicity(phi1, phi3)
-        if abs(phi2) == math.pi:
-            phi2 = repair_start_end_angle_periodicity(phi2, phi4)
+        # Fix sphere singularity point
+        if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-2) and theta1 == 0.0 \
+                and math.isclose(theta3, theta4, abs_tol=1e-2):
+            theta1 = theta3
+            start = volmdlr.Point2D(theta1, phi1)
+        if math.isclose(abs(phi2), 0.5 * math.pi, abs_tol=1e-2) and theta2 == 0.0 \
+                and math.isclose(theta3, theta4, abs_tol=1e-2):
+            theta2 = theta4
+            end = volmdlr.Point2D(theta2, phi2)
+
+        # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
+        if abs(theta1) == math.pi or abs(theta1) == 0.5 * math.pi:
+            theta1 = repair_start_end_angle_periodicity(theta1, theta3)
+        if abs(theta2) == math.pi or abs(theta2) == 0.5 * math.pi:
+            theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
         points[0] = volmdlr.Point2D(theta1, phi1)
         points[-1] = volmdlr.Point2D(theta2, phi2)
@@ -3403,11 +3411,11 @@ class SphericalSurface3D(PeriodicalSurface):
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
-            if not math.isclose(delta.norm(), 0, abs_tol=1e-5):
+            if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
                 if primitives2d[i].end == primitives2d[i - 1].end and \
                         primitives2d[i].length() == volmdlr.TWO_PI:
                     primitives2d[i] = primitives2d[i].reverse()
-                elif math.isclose(abs(previous_primitive.end.y), 0.5 * math.pi, abs_tol=1e-6):
+                elif math.isclose(abs(previous_primitive.end.y), 0.5 * math.pi, abs_tol=1e-2):
                     primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                name="construction"))
                 else:
@@ -3417,7 +3425,7 @@ class SphericalSurface3D(PeriodicalSurface):
         # primitives2d = repair(primitives2d)
         last_end = primitives2d[-1].end
         first_start = primitives2d[0].start
-        if not last_end.is_close(first_start, tol=1e-3):
+        if not last_end.is_close(first_start, tol=1e-2):
             last_end_3d = self.point2d_to_3d(last_end)
             first_start_3d = self.point2d_to_3d(first_start)
             if last_end_3d.is_close(first_start_3d, 1e-6) and \
