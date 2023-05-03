@@ -58,7 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShel3D: intersection method
 - Fix: plots
 - add some fixes to pydocstyle errors
-
+- Node2D, Node3D: is_close
+- 
 
 ### Refactor
 - Contour2D: cut_by_wire
