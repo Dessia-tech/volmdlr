@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Assembly: define a volmdlr Assembly object.
 - Edge: direction_independent_is_close
 - Arcellipse2D, 3D: complementary
+- Assembly: define a volmdlr Assembly object.
 - Contour2D: copy
 - LineSegment2D: copy
 
@@ -56,7 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface: fix some parametric operations.
 - ClosedShel3D: intersection method
 - Fix: plots
-- Add some fixes to pydocstyle errors
+- add some fixes to pydocstyle errors
+- Node2D, Node3D: is_close
 - OpenShell3D: get_geo_lines (use primitive.is_close)
 
 ### Refactor
