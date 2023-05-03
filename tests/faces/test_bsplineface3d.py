@@ -1,7 +1,7 @@
 import unittest
 
 import volmdlr
-from volmdlr import surfaces, wires, faces
+from volmdlr import edges, surfaces, wires, faces
 from volmdlr.models.bspline_surfaces import bspline_surface_1
 
 
