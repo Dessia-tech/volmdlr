@@ -40,7 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Assembly: define a volmdlr Assembly object.
 - Contour2D: copy
 - LineSegment2D: copy
--
+- FullArcEllipse3D: split
+
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -59,7 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShel3D: intersection method
 - Fix: plots
 - add some fixes to pydocstyle errors
-
+- Node2D, Node3D: is_close
+- 
 
 ### Refactor
 - Contour2D: cut_by_wire
