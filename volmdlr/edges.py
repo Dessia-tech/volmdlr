@@ -4484,7 +4484,9 @@ class FullArcEllipse(Edge):
         self.minor_axis = minor_axis
         self.center = center
         self.major_dir = major_dir
-
+        self.is_trigo = True
+        self.angle_start = self.theta
+        self.angle_end = self.theta + volmdlr.TWO_PI
         Edge.__init__(self, start=start_end, end=start_end, name=name)
 
     def length(self):
@@ -4512,25 +4514,6 @@ class FullArcEllipse(Edge):
         new_point = self.frame.global_to_local_coordinates(point)
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
                             new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=abs_tol)
-
-    def point_at_abscissa(self, abscissa: float, resolution: int = 2500):
-        """
-        Calculates a point on the FullArcEllipse at a given abscissa.
-
-        :param abscissa: abscissa where in the curve the point should be calculated.
-        :return: Corresponding point.
-        """
-        # TODO: enhance this method to a more precise method
-        points = self.discretization_points(number_points=resolution)
-        approx_abscissa = 0
-        last_point = None
-        for p1, p2 in zip(points[:-1], points[1:]):
-            if approx_abscissa <= abscissa:
-                approx_abscissa += p1.point_distance(p2)
-                last_point = p2
-            else:
-                break
-        return last_point
 
     def get_reverse(self):
         """
@@ -7321,9 +7304,8 @@ class ArcEllipse3D(Edge):
         """
         if point.point_distance(self.start) < tol:
             return 0
-        vector_2 = self.normal.cross(self.major_dir)
-        ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
-        point2d = point.to_2d(self.center, self.major_dir, vector_2)
+        ellipse_2d = self.to_2d(self.center, self.major_dir, self.minor_dir)
+        point2d = point.to_2d(self.center, self.major_dir, self.minor_dir)
         return ellipse_2d.abscissa(point2d)
 
     def get_reverse(self):
@@ -7507,6 +7489,17 @@ class ArcEllipse3D(Edge):
         vector.normalize()
         new_interior = self.center - vector * self.center.point_distance(self.interior)
         return self.__class__(self.start, new_interior, self.end, self.center, self.major_dir, self.normal)
+
+    def point_at_abscissa(self, abscissa):
+        """
+        Calculates the point at a given abscissa.
+
+        :param abscissa: abscissa to calculate point.
+        :return: volmdlr.Point3D
+        """
+        ellipse_2d = self.to_2d(self.center, self.major_dir, self.minor_dir)
+        point2d = ellipse_2d.point_at_abscissa(abscissa)
+        return point2d.to_3d(self.center, self.major_dir, self.minor_dir)
 
 
 class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):

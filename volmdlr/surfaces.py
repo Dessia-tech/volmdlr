@@ -184,7 +184,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         triangulates_with_grid = number_points_x > 0 or number_points_y > 0
 
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=triangulates_with_grid)
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=11, discretize_line=triangulates_with_grid)
 
         if not self.inner_contours and not triangulates_with_grid:
             return outer_polygon.triangulation()
@@ -3644,9 +3644,14 @@ class ExtrusionSurface3D(Surface3D):
             start_end = edge.center + edge.major_axis * edge.major_dir
             fullarcellipse = edges.FullArcEllipse3D(start_end, edge.major_axis, edge.minor_axis,
                                                     edge.center, edge.normal, edge.major_dir, edge.name)
-            edge = fullarcellipse
             direction = -object_dict[arguments[2]]
-            surface = cls(edge=edge, direction=direction, name=name)
+            surface = cls(edge=fullarcellipse, direction=direction, name=name)
+            surface.x_periodicity = 1
+        elif edge.__class__ is wires.Circle3D:
+            start_end = edge.center + edge.frame.u * edge.radius
+            fullarc = edges.FullArc3D(edge.frame.origin, start_end, edge.frame.w)
+            direction = object_dict[arguments[2]]
+            surface = cls(edge=fullarc, direction=direction, name=name)
             surface.x_periodicity = 1
 
         else:

@@ -4231,7 +4231,7 @@ class Ellipse2D(Contour2D):
         :param point: point to calculate the abscissa.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
-        if self.point_over_ellipse(point):
+        if self.point_over_ellipse(point, 1e-3):
             angle_abscissa = self.point_angle_with_major_dir(point)
 
             def arc_length(theta):

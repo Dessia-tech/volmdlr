@@ -2640,7 +2640,7 @@ class ExtrusionFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 36
+        angle_resolution = 11
         xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
         number_points_x = int(delta_x * angle_resolution)
