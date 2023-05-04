@@ -1,0 +1,23 @@
+{
+  "name": "",
+  "object_class": "volmdlr.edges.Arc3D",
+  "package_version": "0.9.2.dev1050+g45192f1d",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.177922447446,
+    "y": 0.03351981629780013,
+    "z": 0.07827867754649165
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.16314383693389,
+    "y": 0.03209684370446766,
+    "z": 0.07275268006571214
+  },
+  "interior": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.16993810026843711,
+    "y": 0.03313602763518086,
+    "z": 0.07678826571935846
+  }
+}

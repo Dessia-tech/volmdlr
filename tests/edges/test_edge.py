@@ -1,4 +1,7 @@
 import unittest
+
+import volmdlr
+from volmdlr import edges
 from volmdlr.models.edges import bspline1, lineseg, arc, arc_ellipse2d
 
 
@@ -15,6 +18,15 @@ class TestEdge(unittest.TestCase):
         self.assertTrue(arc_ellipse2d.direction_independent_is_close(arc_ellipse2d))
         self.assertTrue(arc_ellipse2d.direction_independent_is_close(arc_ellipse2d.reverse()))
         self.assertFalse(arc_ellipse2d.direction_independent_is_close(arc_ellipse2d.complementary()))
+
+    def test_split_between_two_points(self):
+        point1 = volmdlr.Point3D(0.1744332430903422, 0.033444245563080795, 0.07798520478978595)
+        point2 = volmdlr.Point3D(0.177922447446, 0.03351981629780013, 0.07827867754649165)
+        arc3d = edges.Arc3D.load_from_file("edges/arc3d_split_between_two_points.json")
+        new_arc3d = arc3d.split_between_two_points(point1, point2)
+        self.assertTrue(new_arc3d)
+        self.assertTrue(new_arc3d.start.is_close(point2))
+        self.assertTrue(new_arc3d.end.is_close(point1))
 
 
 if __name__ == '__main__':

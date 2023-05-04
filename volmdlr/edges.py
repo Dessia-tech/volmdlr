@@ -365,7 +365,7 @@ class Edge(dc.DessiaObject):
             split2 = split1[1].split(point2)
         new_split_edge = None
         for split_edge in split2:
-            if split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
+            if split_edge and split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
                 new_split_edge = split_edge
                 break
         return new_split_edge
@@ -4386,7 +4386,8 @@ class ArcEllipse2D(Edge):
         new_end = self.end.translation(offset)
         new_interior = self.interior.translation(offset)
         new_center = self.center.translation(offset)
-        return ArcEllipse2D(new_start, new_interior, new_end, new_center, self.major_dir)
+        new_extra = self.extra if self.extra is None else self.extra.translation(offset)
+        return ArcEllipse2D(new_start, new_interior, new_end, new_center, self.major_dir, new_extra)
 
     def point_distance(self, point):
         """
@@ -5577,6 +5578,12 @@ class LineSegment3D(LineSegment):
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
 
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        if not self.point_belongs(point1) or not self.point_belongs(point2):
+            raise ValueError('Point not on curve')
+
+        return LineSegment3D(point1, point2)
+
 
 class BSplineCurve3D(BSplineCurve):
     """
@@ -6091,6 +6098,18 @@ class BSplineCurve3D(BSplineCurve):
         if return_points:
             return minimum_distance, points[0], points[1]
         return minimum_distance
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Returns a new Revolution Surface positionned in the specified frame.
+
+        :param frame: Frame of reference
+        :type frame: `volmdlr.Frame3D`
+        :param side: 'old' or 'new'
+        """
+        new_control_points = [control_point.frame_mapping(frame, side) for control_point in self.control_points]
+        return BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights,
+                              self.periodic, self.name)
 
 
 class BezierCurve3D(BSplineCurve3D):
@@ -7439,6 +7458,20 @@ class ArcEllipse3D(Edge):
         new_interior = self.center - vector * self.center.point_distance(self.interior)
         return self.__class__(self.start, new_interior, self.end, self.center, self.major_dir, self.normal)
 
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        ArcEllipse3D translation.
+
+        :param offset: translation vector.
+        :return: A new translated ArcEllipse3D.
+        """
+        new_start = self.start.translation(offset)
+        new_interior = self.interior.translation(offset)
+        new_end = self.end.translation(offset)
+        new_center = self.center.translation(offset)
+        new_extra = self.extra if self.extra is None else self.extra.translation(offset)
+        return ArcEllipse3D(new_start, new_interior, new_end, new_center, self.major_dir, self.normal, new_extra)
+
 
 class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
     """
@@ -7533,7 +7566,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        FullArcEllipse3D translation.
+        Ellipse3D translation.
 
         :param offset: translation vector.
         :type offset: volmdlr.Vector3D
@@ -7571,3 +7604,47 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: direction vector
         """
         raise NotImplementedError
+
+    def split(self, split_point):
+        """
+        Splits the ellipse into two arc of ellipse at a given point.
+
+        :param split_point: splitting point.
+        :return: list of two Arc of ellipse.
+        """
+        if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):
+            raise ValueError("Point should be different of start and end.")
+        if not self.point_belongs(split_point, 1e-5):
+            raise ValueError("Point not on the ellipse.")
+        ellipse_2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        point2d = split_point.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        theta_split = volmdlr.geometry.clockwise_angle(point2d - ellipse_2d.center, ellipse_2d.major_dir)
+        theta_1 = 0.5 * theta_split
+        theta_2 = 0.5 * (theta_split + volmdlr.TWO_PI)
+        interior_1 = self.center + self.major_axis * math.cos(theta_1) * self.major_dir \
+                                       + self.minor_axis * math.sin(theta_1) * self.major_dir.cross(self.normal)
+        interior_2 = self.center + self.major_axis * math.cos(theta_2) * self.major_dir \
+                                       + self.minor_axis * math.sin(theta_2) * self.major_dir.cross(self.normal)
+        return [ArcEllipse3D(self.start_end, interior_1, split_point, self.center, self.major_dir, self.normal),
+                ArcEllipse3D(split_point, interior_2, self.start_end, self.center, self.major_dir, self.normal)]
+
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Ellipse plot."""
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
+        x = []
+        y = []
+        z = []
+        for point_x, point_y, point_z in self.discretization_points():
+            x.append(point_x)
+            y.append(point_y)
+            z.append(point_z)
+        x.append(x[0])
+        y.append(y[0])
+        z.append(z[0])
+        ax.plot(x, y, z, edge_style.color)
+        return ax

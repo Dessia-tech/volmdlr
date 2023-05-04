@@ -33,10 +33,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mesh: TetrahedralElementQuadratic 
 - GmshParser: define_quadratic_tetrahedron_element_mesh
 - GmshParser: to_vtk (consider quadratic tetrahedron element)
+- VolumeModel: to_msh (consider both order 1 and 2)
+- Assembly: define a volmdlr Assembly object.
 - Edge: direction_independent_is_close
+- Arcellipse2D, 3D: complementary, translation
 - Arcellipse2D, 3D: complementary
+- Face3D: is_linesegment_crossing
+- BSplineFace3D: linesegment_intersections
+- Assembly: define a volmdlr Assembly object.
 - Contour2D: copy
 - LineSegment2D: copy
+- FullArcEllipse3D: split
+
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -49,13 +57,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: take into account oppened contour while using face_from_contours3d
 - BsplineCurve: simplify
 - Dessiaobject inheritance up-to-date
-- Edge: unit_direction_vector, unit_normal_vector
+- Edge: unit_direction_vector, unit_normal_vector, split_between_two_points
 - VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
+- RevolutionSurface: fix some parametric operations.
 - ClosedShel3D: intersection method
 - Fix: plots
 - add some fixes to pydocstyle errors
 - Node2D, Node3D: is_close
 - 
+
 ### Refactor
 - Contour2D: cut_by_wire
 - Contour2D: extract_with_points displaced to WireMixin
