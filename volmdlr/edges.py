@@ -363,7 +363,7 @@ class Edge(dc.DessiaObject):
             split2 = split1[1].split(point2)
         new_split_edge = None
         for split_edge in split2:
-            if split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
+            if split_edge and split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
                 new_split_edge = split_edge
                 break
         return new_split_edge
