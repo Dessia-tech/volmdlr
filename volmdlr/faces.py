@@ -58,13 +58,13 @@ class Face3D(volmdlr.core.Primitive3D):
                  and self.surface2d == other_.surface2d)
         return equal
 
-    def point_belongs(self, point3d: volmdlr.Point3D):
+    def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6):
         """
         Tells you if a point is on the 3D face and inside its contour.
         """
         point2d = self.surface3d.point3d_to_2d(point3d)
         check_point3d = self.surface3d.point2d_to_3d(point2d)
-        if check_point3d.point_distance(point3d) > 1e-6:
+        if check_point3d.point_distance(point3d) > tol:
             return False
 
         return self.surface2d.point_belongs(point2d)
@@ -115,10 +115,8 @@ class Face3D(volmdlr.core.Primitive3D):
             f"overloaded by {self.__class__.__name__}")
 
     def get_bounding_box(self):
-        """Abstract method."""
-        raise NotImplementedError(
-            f"self.__class__.__name__"
-            f"overloaded by {self.__class__.__name__}")
+        """General method to get the bounding box of a face 3D."""
+        return self.outer_contour3d.bounding_box
 
     def area(self):
         return self.surface2d.area()
@@ -432,6 +430,8 @@ class Face3D(volmdlr.core.Primitive3D):
         linesegment_intersections = []
         if not self.bounding_box.bbox_intersection(linesegment.bounding_box):
             return []
+        if not hasattr(self.surface3d, 'linesegment_intersections'):
+            return self.linesegment_intersections_approximation(linesegment)
         for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 linesegment_intersections.append(intersection)
@@ -1119,6 +1119,35 @@ class Face3D(volmdlr.core.Primitive3D):
         return (dict_cutting_contour_intersections, dict_inner_contour_intersections,
                 inner_contours_connected_cutting_contour, list_cutting_contours)
 
+    def is_linesegment_crossing(self, linesegment):
+        """Verify if a face 3d is being crossed by a linesegment 3d. """
+
+        bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
+        if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
+            return False
+        triangulation = self.triangulation()
+        faces_triangulation = triangulation.triangular_faces()
+        for face in faces_triangulation:
+            inters = face.linesegment_intersections(linesegment)
+            if inters:
+                return True
+        return False
+
+    def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+        """Approximation of intersections between a b-spline face 3D and a line segment 3D."""
+        bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
+        if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
+            return []
+        triangulation = self.triangulation()
+        faces_triangulation = triangulation.triangular_faces()
+        linesegment_intersections = []
+        for face in faces_triangulation:
+            inters = face.linesegment_intersections(linesegment)
+            for point in inters:
+                if not volmdlr.core.point_in_list(point, linesegment_intersections):
+                    linesegment_intersections.append(point)
+        return linesegment_intersections
+
 
 class PlaneFace3D(Face3D):
     """
@@ -1161,9 +1190,6 @@ class PlaneFace3D(Face3D):
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
         self._bbox = new_bounding_box
-
-    def get_bounding_box(self):
-        return self.outer_contour3d.bounding_box
 
     def distance_to_point(self, point, return_other_point=False):
         """
@@ -1937,12 +1963,6 @@ class CylindricalFace3D(Face3D):
     def bounding_box(self, new_bouding_box):
         self._bbox = new_bouding_box
 
-    def get_bounding_box(self):
-        """
-        Computes the bounding box using the contour 3d. true in this case of cylindrical face (not general).
-        """
-        return self.outer_contour3d.bounding_box
-
     def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle.bounds()
         delta_theta = theta_max - theta_min
@@ -2157,9 +2177,6 @@ class ToroidalFace3D(Face3D):
     def bounding_box(self, new_bounding_box):
         self._bbox = new_bounding_box
 
-    def get_bounding_box(self):
-        return self.surface3d.bounding_box
-
     def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
@@ -2263,51 +2280,6 @@ class ConicalFace3D(Face3D):
     @bounding_box.setter
     def bounding_box(self, new_bouding_box):
         self._bbox = new_bouding_box
-
-    def get_bounding_box(self):
-        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
-
-        x_vector = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-                    + volmdlr.X3D.dot(self.surface3d.frame.v) * self.surface3d.frame.v)
-        try:
-            x_vector.normalize()
-        except ZeroDivisionError:
-            pass
-        y_vector = (volmdlr.Y3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-                    + volmdlr.Y3D.dot(self.surface3d.frame.v) * self.surface3d.frame.v)
-
-        try:
-            y_vector.normalize()
-        except ZeroDivisionError:
-            pass
-
-        z_vector = (volmdlr.Z3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-                    + volmdlr.Z3D.dot(self.surface3d.frame.v) * self.surface3d.frame.v)
-        try:
-            z_vector.normalize()
-        except ZeroDivisionError:
-            pass
-
-        lower_center = self.surface3d.frame.origin + zmin * self.surface3d.frame.w
-        upper_center = self.surface3d.frame.origin + zmax * self.surface3d.frame.w
-        lower_radius = math.tan(self.surface3d.semi_angle) * zmin
-        upper_radius = math.tan(self.surface3d.semi_angle) * zmax
-
-        points = [lower_center - lower_radius * x_vector,
-                  lower_center + lower_radius * x_vector,
-                  lower_center - lower_radius * y_vector,
-                  lower_center + lower_radius * y_vector,
-                  lower_center - lower_radius * z_vector,
-                  lower_center + lower_radius * z_vector,
-                  upper_center - upper_radius * x_vector,
-                  upper_center + upper_radius * x_vector,
-                  upper_center - upper_radius * y_vector,
-                  upper_center + upper_radius * y_vector,
-                  upper_center - upper_radius * z_vector,
-                  upper_center + upper_radius * z_vector,
-                  ]
-
-        return volmdlr.core.BoundingBox.from_points(points)
 
     def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
@@ -2419,10 +2391,6 @@ class SphericalFace3D(Face3D):
     @bounding_box.setter
     def bounding_box(self, new_bouding_box):
         self._bbox = new_bouding_box
-
-    def get_bounding_box(self):
-        # To be enhanced
-        return self.surface3d.bounding_box
 
     def triangulation_lines(self, angle_resolution=7):
         """
@@ -2619,12 +2587,6 @@ class ExtrusionFace3D(Face3D):
     def bounding_box(self, new_bouding_box):
         self._bbox = new_bouding_box
 
-    def get_bounding_box(self):
-        # To be enhanced by restricting wires to cut
-        points = self.outer_contour3d.discretization_points(number_points=25)
-
-        return volmdlr.core.BoundingBox.from_points(points)
-
     def grid_size(self):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
@@ -2692,17 +2654,6 @@ class RevolutionFace3D(Face3D):
     def bounding_box(self, new_bouding_box):
         self._bbox = new_bouding_box
 
-    def get_bounding_box(self):
-        # To be enhanced by restricting wires to cut
-        curve_points = self.outer_contour3d.discretization_points(angle_resolution=20)
-        points = []
-        for i in range(37):
-            angle = i * volmdlr.TWO_PI / 36
-            points.extend([point.rotation(self.surface3d.axis_point, self.surface3d.axis, angle)
-                           for point in curve_points])
-
-        return volmdlr.core.BoundingBox.from_points(points)
-
     def grid_size(self):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
@@ -2766,9 +2717,6 @@ class BSplineFace3D(Face3D):
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
         self._bbox = new_bounding_box
-
-    def get_bounding_box(self):
-        return self.surface3d.bounding_box
 
     def triangulation_lines(self, resolution=25):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
