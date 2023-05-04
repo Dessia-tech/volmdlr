@@ -44,6 +44,11 @@ class TestArcEllipse3D(unittest.TestCase):
         for expected_point, point in zip(expected_points, discretization_points):
             self.assertTrue(expected_point.is_close(point))
 
+    def test_translation(self):
+        translated_arc = self.arc_ellipse3d.translation(volmdlr.Z3D)
+        self.assertTrue(translated_arc.start.is_close(
+            volmdlr.Point3D(-0.14790199457730885, 0.024999999999999994, 1.028874700719328038)))
+
 
 if __name__ == '__main__':
     unittest.main()
