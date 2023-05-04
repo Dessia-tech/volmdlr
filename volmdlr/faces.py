@@ -24,7 +24,7 @@ import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
 from volmdlr import surfaces
 import volmdlr.wires
-
+c = 0
 
 class Face3D(volmdlr.core.Primitive3D):
     """

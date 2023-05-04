@@ -4397,12 +4397,6 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
 
-        # if any(edge is None for edge in raw_edges):
-        #     raw_edges = [edge for edge in raw_edges if edge is not None]
-            # warnings.warn(f"Could not instantiate #{step_id} = {step_name}({arguments})"
-            #               f" because some of the edges are NoneType."
-            #               "See Contour3D.from_step method")
-            # return None
         # Making things right for first 2 primitives
         distances = [raw_edges[0].end.point_distance(raw_edges[1].start),
                      raw_edges[0].start.point_distance(raw_edges[1].start),
@@ -4447,6 +4441,8 @@ class Contour3D(ContourMixin, Wire3D):
         # Connecting the next edges
         last_edge = edges[-1]
         for i, raw_edge in enumerate(raw_edges[2:]):
+            if raw_edge.direction_independent_is_close(last_edge):
+                continue
             distances = [raw_edge.start.point_distance(last_edge.end),
                          raw_edge.end.point_distance(last_edge.end)]
             index = distances.index(min(distances))
