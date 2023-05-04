@@ -368,6 +368,8 @@ class Face3D(volmdlr.core.Primitive3D):
         linesegment_intersections = []
         if not self.bounding_box.bbox_intersection(linesegment.bounding_box):
             return []
+        if not hasattr(self.surface3d, 'linesegment_intersections'):
+            return self.linesegment_intersections_approximation(linesegment)
         for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 linesegment_intersections.append(intersection)
@@ -1064,6 +1066,18 @@ class Face3D(volmdlr.core.Primitive3D):
             if inters:
                 return True
         return False
+
+    def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+        """Aproximation of intersections between a bspline face 3D and a line segment 3D."""
+        triangulation = self.triangulation()
+        faces_triangulation = triangulation.triangular_faces()
+        linesegment_intersections = []
+        for face in faces_triangulation:
+            inters = face.linesegment_intersections(linesegment)
+            for point in inters:
+                if volmdlr.core.point_in_list(point, linesegment_intersections):
+                    linesegment_intersections.append(point)
+        return linesegment_intersections
 
 
 class PlaneFace3D(Face3D):
@@ -2638,7 +2652,7 @@ class RevolutionFace3D(Face3D):
 
     def get_bounding_box(self):
         # To be enhanced by restricting wires to cut
-        curve_points = self.surface3d.edge.discretization_points(angle_resolution=20)
+        curve_points = self.surface3d.wire.discretization_points(angle_resolution=20)
         points = []
         for i in range(37):
             angle = i * volmdlr.TWO_PI / 36
@@ -3087,14 +3101,14 @@ class BSplineFace3D(Face3D):
 
         return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
 
-    def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
-        """Aproximation of intersections between a bspline face 3D and a line segment 3D."""
-        triangulation = self.triangulation()
-        faces_triangulation = triangulation.triangular_faces()
-        linesegment_intersections = []
-        for face in faces_triangulation:
-            inters = face.linesegment_intersections(linesegment)
-            for point in inters:
-                if volmdlr.core.point_in_list(point, linesegment_intersections):
-                    linesegment_intersections.append(point)
-        return linesegment_intersections
+    # def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+    #     """Aproximation of intersections between a bspline face 3D and a line segment 3D."""
+    #     triangulation = self.triangulation()
+    #     faces_triangulation = triangulation.triangular_faces()
+    #     linesegment_intersections = []
+    #     for face in faces_triangulation:
+    #         inters = face.linesegment_intersections(linesegment)
+    #         for point in inters:
+    #             if volmdlr.core.point_in_list(point, linesegment_intersections):
+    #                 linesegment_intersections.append(point)
+    #     return linesegment_intersections
