@@ -1134,7 +1134,10 @@ class Face3D(volmdlr.core.Primitive3D):
         return False
 
     def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
-        """Aproximation of intersections between a bspline face 3D and a line segment 3D."""
+        """Approximation of intersections between a b-spline face 3D and a line segment 3D."""
+        bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
+        if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
+            return []
         triangulation = self.triangulation()
         faces_triangulation = triangulation.triangular_faces()
         linesegment_intersections = []
