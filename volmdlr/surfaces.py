@@ -131,17 +131,21 @@ class Surface2D(volmdlr.core.Primitive2D):
         :return: A random point inside the surface.
         :rtype: :class:`volmdlr.Point2D`
         """
-        valid_point = False
         point_inside_outer_contour = None
-        while not valid_point:
+        center_of_mass = self.center_of_mass()
+        if self.point_belongs(center_of_mass):
+            point_inside_outer_contour = center_of_mass
+        if not point_inside_outer_contour:
             point_inside_outer_contour = self.outer_contour.random_point_inside()
+        while True:
             inside_inner_contour = False
             for inner_contour in self.inner_contours:
                 if inner_contour.point_belongs(point_inside_outer_contour):
                     inside_inner_contour = True
             if not inside_inner_contour and \
                     point_inside_outer_contour is not None:
-                valid_point = True
+                break
+            point_inside_outer_contour = self.outer_contour.random_point_inside()
 
         return point_inside_outer_contour
 
@@ -180,7 +184,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
-        if math.isclose(area, 0., abs_tol=1e-6):
+        if math.isclose(area, 0., abs_tol=1e-8):
             return display.DisplayMesh2D([], triangles=[])
 
         triangulates_with_grid = number_points_x > 0 or number_points_y > 0

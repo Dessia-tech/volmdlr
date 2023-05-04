@@ -321,10 +321,10 @@ class PointCloud2D(dc.DessiaObject):
 
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         if convex:
-            polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+            polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         else:
             polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.2, 0.000005)
-
+        polygon = polygon.simplify(min_distance=0.002)
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol=1e-6):
             return None
         return polygon

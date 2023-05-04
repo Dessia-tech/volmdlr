@@ -315,7 +315,7 @@ class Vector(DessiaObject):
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
+    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-6):
         """
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.

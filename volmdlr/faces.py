@@ -610,7 +610,7 @@ class Face3D(volmdlr.core.Primitive3D):
             for cutting_contour in list_cutting_contours:
                 if (self.surface2d.outer_contour.point_over_contour(cutting_contour.primitives[0].start) and
                     self.surface2d.outer_contour.point_over_contour(cutting_contour.primitives[-1].end)) or \
-                        cutting_contour.primitives[0].start == cutting_contour.primitives[-1].end:
+                        cutting_contour.primitives[0].start.is_close(cutting_contour.primitives[-1].end):
                     valid_cutting_contours.append(cutting_contour)
                 if self.surface2d.outer_contour.intersection_points(cutting_contour):
                     connectig_to_outer_contour.append(cutting_contour)
@@ -643,7 +643,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if list_open_cutting_contours:
             list_faces = self.divide_face_with_open_cutting_contours(list_open_cutting_contours, inside)
         list_faces = self.divide_face_with_closed_cutting_contours(list_closed_cutting_contours, list_faces)
-        list_faces = [face for face in list_faces if not math.isclose(face.area(), 0.0, abs_tol=1e-6)]
+        list_faces = [face for face in list_faces if not math.isclose(face.area(), 0.0, abs_tol=1e-08)]
         return list_faces
 
     def divide_face_with_open_cutting_contours(self, list_open_cutting_contours, inside):
@@ -685,17 +685,22 @@ class Face3D(volmdlr.core.Primitive3D):
         for new_contour in list_closed_cutting_contours:
             if len(new_contour.primitives) >= 3 and \
                     new_contour.primitives[0].start.is_close(new_contour.primitives[-1].end):
-                inner_contours1 = [new_contour]
+                inner_contours1 = []
                 inner_contours2 = []
                 if list_faces:
                     new_list_faces = self.get_closed_contour_divided_faces_inner_contours(list_faces, new_contour)
                     list_faces = list_faces + new_list_faces
                     continue
+                if not self.surface2d.inner_contours:
+                    inner_contours1.append(new_contour)
                 for inner_contour in self.surface2d.inner_contours:
                     if new_contour.is_inside(inner_contour):
                         inner_contours2.append(inner_contour)
                         continue
-                    inner_contours1.append(inner_contour)
+                    if new_contour.is_sharing_primitives_with(inner_contour):
+                        inner_contours1.extend(new_contour.merge_with(inner_contour))
+                    else:
+                        inner_contours1.append(inner_contour)
                 if isinstance(self, Triangle3D):
                     class_to_instanciate = PlaneFace3D
                 else:
@@ -797,9 +802,12 @@ class Face3D(volmdlr.core.Primitive3D):
                     if len(intersection_wire.primitives) != 1:
                         raise NotImplementedError
                     # primitive2 = intersection_wire
-                    primitive2_2d = self.surface3d.contour3d_to_2d(intersection_wire)
-                    if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d.primitives[0], tol=1e-7):
-                        face_intersecting_primitives2d.append(primitive2_2d.primitives[0])
+                    primitive2_2d = self.surface3d.contour3d_to_2d(intersection_wire).primitives[0]
+                    if volmdlr.core.edge_in_list(primitive2_2d, face_intersecting_primitives2d) or\
+                            volmdlr.core.edge_in_list(primitive2_2d.reverse(), face_intersecting_primitives2d):
+                        continue
+                    if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d, tol=1e-7):
+                        face_intersecting_primitives2d.append(primitive2_2d)
         return face_intersecting_primitives2d
 
     def get_inner_contours_cutting_primitives(self, list_cutting_contours, connectig_to_outer_contour):

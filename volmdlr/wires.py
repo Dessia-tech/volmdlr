@@ -234,7 +234,7 @@ class WireMixin:
                     primitives.remove(primitive)
                     break
             else:
-                # print(self, primitive)
+                print(self, primitive)
                 # ax = self.plot()
                 # primitive.plot(edge_style=EdgeStyle(color='r'), ax=ax)
                 raise NotImplementedError('There may exist a problem with this'
@@ -2133,12 +2133,12 @@ class Contour2D(ContourMixin, Wire2D):
                 cutting_points = []
                 point1, point2 = [cutting_contour.primitives[0].start,
                                   cutting_contour.primitives[-1].end]
-                if not any(base_contour.point_belongs(prim.middle_point()) for prim in cutting_contour.primitives):
-                    continue
                 if base_contour.point_over_contour(point1) and base_contour.point_over_contour(point2):
                     cutting_points = [point1, point2]
                 elif len(new_base_contours) == 1:
                     contours.remove(cutting_contour)
+                    continue
+                if not any(base_contour.point_belongs(prim.middle_point()) for prim in cutting_contour.primitives):
                     continue
                 if cutting_points:
                     contour1, contour2 = base_contour.get_divided_contours(
@@ -2159,7 +2159,7 @@ class Contour2D(ContourMixin, Wire2D):
                             else:
                                 continue
                             break
-                        if all_divided_contour and not math.isclose(cntr.area(), 0.0, abs_tol=1e-6):
+                        if all_divided_contour and not math.isclose(cntr.area(), 0.0, abs_tol=1e-08):
                             list_valid_contours.append(cntr)
                         else:
                             new_base_contours_.append(cntr)
@@ -2246,10 +2246,12 @@ class Contour2D(ContourMixin, Wire2D):
         :return: merged contours.
         """
         is_sharing_primitive = self.is_sharing_primitives_with(contour2d)
-        if self.is_inside(contour2d) and not is_sharing_primitive:
-            return [self]
-        if contour2d.is_inside(self) and not is_sharing_primitive:
-            return [contour2d]
+        if not is_sharing_primitive:
+            if self.is_inside(contour2d):
+                return [self]
+            if contour2d.is_inside(self):
+                return [contour2d]
+            return [self, contour2d]
 
         merged_primitives = self.delete_shared_contour_section(contour2d, abs_tol)
         contours = Contour2D.contours_from_edges(merged_primitives)
@@ -3061,10 +3063,10 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                 break
             point1, point2 = None, None
             for point1, point2 in polygon_points:
-                if point1 == points_hull[-1]:
+                if point1.is_close(points_hull[-1]):
                     points_hull.append(point2)
                     break
-                if point2 == points_hull[-1]:
+                if point2.is_close(points_hull[-1]):
                     points_hull.append(point1)
                     break
             polygon_points.remove((point1, point2))
