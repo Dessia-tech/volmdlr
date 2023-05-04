@@ -15,7 +15,7 @@ from typing import List, Tuple
 
 try:
     import gmsh
-except ModuleNotFoundError:
+except TypeError:
     pass
 import matplotlib.pyplot as plt
 import numpy as npy
