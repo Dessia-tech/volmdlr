@@ -3085,15 +3085,3 @@ class BSplineFace3D(Face3D):
             inner_contours=[plane3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
 
         return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
-
-    # def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
-    #     """Aproximation of intersections between a bspline face 3D and a line segment 3D."""
-    #     triangulation = self.triangulation()
-    #     faces_triangulation = triangulation.triangular_faces()
-    #     linesegment_intersections = []
-    #     for face in faces_triangulation:
-    #         inters = face.linesegment_intersections(linesegment)
-    #         for point in inters:
-    #             if volmdlr.core.point_in_list(point, linesegment_intersections):
-    #                 linesegment_intersections.append(point)
-    #     return linesegment_intersections
