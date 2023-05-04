@@ -347,7 +347,7 @@ class Vector(DessiaObject):
         :return: `True` if the two vectors are colinear, `False` otherwise
         :rtype: bool
         """
-        return math.isclose(self.dot(other_vector), 0, abs_tol=abs_tol)
+        return math.isclose(abs(self.dot(other_vector)), 0, abs_tol=abs_tol)
 
     @classmethod
     def mean_point(cls, points: List["Vector"]):
