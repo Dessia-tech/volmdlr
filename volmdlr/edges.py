@@ -363,7 +363,7 @@ class Edge(dc.DessiaObject):
             split2 = split1[1].split(point2)
         new_split_edge = None
         for split_edge in split2:
-            if split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
+            if split_edge and split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
                 new_split_edge = split_edge
                 break
         return new_split_edge
@@ -7574,7 +7574,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        FullArcEllipse3D translation.
+        Ellipse3D translation.
 
         :param offset: translation vector.
         :type offset: volmdlr.Vector3D
@@ -7612,3 +7612,47 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: direction vector
         """
         raise NotImplementedError
+
+    def split(self, split_point):
+        """
+        Splits the ellipse into two arc of ellipse at a given point.
+
+        :param split_point: splitting point.
+        :return: list of two Arc of ellipse.
+        """
+        if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):
+            raise ValueError("Point should be different of start and end.")
+        if not self.point_belongs(split_point, 1e-5):
+            raise ValueError("Point not on the ellipse.")
+        ellipse_2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        point2d = split_point.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        theta_split = volmdlr.geometry.clockwise_angle(point2d - ellipse_2d.center, ellipse_2d.major_dir)
+        theta_1 = 0.5 * theta_split
+        theta_2 = 0.5 * (theta_split + volmdlr.TWO_PI)
+        interior_1 = self.center + self.major_axis * math.cos(theta_1) * self.major_dir \
+                                       + self.minor_axis * math.sin(theta_1) * self.major_dir.cross(self.normal)
+        interior_2 = self.center + self.major_axis * math.cos(theta_2) * self.major_dir \
+                                       + self.minor_axis * math.sin(theta_2) * self.major_dir.cross(self.normal)
+        return [ArcEllipse3D(self.start_end, interior_1, split_point, self.center, self.major_dir, self.normal),
+                ArcEllipse3D(split_point, interior_2, self.start_end, self.center, self.major_dir, self.normal)]
+
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Ellipse plot."""
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
+        x = []
+        y = []
+        z = []
+        for point_x, point_y, point_z in self.discretization_points():
+            x.append(point_x)
+            y.append(point_y)
+            z.append(point_z)
+        x.append(x[0])
+        y.append(y[0])
+        z.append(z[0])
+        ax.plot(x, y, z, edge_style.color)
+        return ax

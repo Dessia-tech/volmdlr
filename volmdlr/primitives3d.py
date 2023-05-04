@@ -195,6 +195,7 @@ class Block(shells.ClosedShell3D):
         return dict_
 
     def volume(self):
+        """Returns the volume of the block."""
         return self.size[0] * self.size[1] * self.size[2]
 
     @classmethod
@@ -433,6 +434,7 @@ class Block(shells.ClosedShell3D):
 
     def plot_data(self, x3d, y3d, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
+        """Plot the 2D projections of a block."""
         lines = []
         for edge3d in self.edges():
             lines.append(edge3d.plot_data(x3d, y3d, marker, color,
