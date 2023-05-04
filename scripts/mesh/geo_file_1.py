@@ -45,8 +45,30 @@ model.to_geo(file_name = 'model_1_geo',
 
 # %% DIRECT: gmsh file generation
 
-model.to_msh(file_name = '',
+# %%% 2D & Order 1
+
+model.to_msh(file_name = 'mesh_2d_order_1',
              mesh_dimension = 2,
+             factor = 1,
+             curvature_mesh_size = 0,
+             min_points = None,
+             initial_mesh_size = 5)
+
+# %%% 3D & Order 1
+
+model.to_msh(file_name = 'mesh_3d_order_1',
+             mesh_dimension = 3,
+             mesh_order = 1,
+             factor = 1,
+             curvature_mesh_size = 0,
+             min_points = None,
+             initial_mesh_size = 5)
+
+# %%% 3D & Order 2
+
+model.to_msh(file_name = 'mesh_3d_order_2',
+             mesh_dimension = 3,
+             mesh_order = 2,
              factor = 1,
              curvature_mesh_size = 0,
              min_points = None,
