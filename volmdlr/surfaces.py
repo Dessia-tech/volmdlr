@@ -575,6 +575,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.__class__(outer_contour, inner_contours)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        """'in-place' methods are deprecated. Use a not in-place method instead."""
         warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         new_contour = self.frame_mapping(frame, side)
@@ -1431,6 +1432,14 @@ class Plane3D(Surface3D):
         return contour3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """
+        Converts a 3D B-Spline in spatial domain intoa 2D B-Spline in parametric domain.
+
+        :param bspline_curve3d: The B-Spline curve to perform the transformation.
+        :type bspline_curve3d: edges.BSplineCurve3D
+        :return: A 2D B-Spline.
+        :rtype: edges.BSplineCurve2D
+        """
         control_points = [self.point3d_to_2d(p)
                           for p in bspline_curve3d.control_points]
         return [edges.BSplineCurve2D(
@@ -3876,19 +3885,23 @@ class RevolutionSurface3D(PeriodicalSurface):
         end3d = self.point2d_to_3d(linesegment2d.end)
         theta1, abscissa1 = linesegment2d.start
         theta2, abscissa2 = linesegment2d.end
-        if math.isclose(abscissa1, abscissa2, abs_tol=1e-4):
+        if self.wire.point_at_abscissa(abscissa1).is_close(self.wire.point_at_abscissa(abscissa2)):
             theta_i = 0.5 * (theta1 + theta2)
             interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
             return [edges.Arc3D(start3d, interior, end3d)]
         if math.isclose(theta1, theta2, abs_tol=1e-3):
-            primitive = self.wire.rotation(self.axis_point, self.axis, theta1)
+            primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
+            if primitive.is_point_edge_extremity(start3d) and \
+                    primitive.is_point_edge_extremity(end3d):
+                return [primitive]
             primitive = primitive.split_between_two_points(start3d, end3d)
-            return [primitive]
+            if primitive:
+                return [primitive]
         n = 10
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
         periodic = points[0].is_close(points[-1])
-        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic).simplify]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
