@@ -4403,7 +4403,8 @@ class ArcEllipse2D(Edge):
         new_end = self.end.translation(offset)
         new_interior = self.interior.translation(offset)
         new_center = self.center.translation(offset)
-        return ArcEllipse2D(new_start, new_interior, new_end, new_center, self.major_dir)
+        new_extra = self.extra if self.extra is None else self.extra.translation(offset)
+        return ArcEllipse2D(new_start, new_interior, new_end, new_center, self.major_dir, new_extra)
 
     def point_distance(self, point):
         """
@@ -7479,6 +7480,20 @@ class ArcEllipse3D(Edge):
         vector.normalize()
         new_interior = self.center - vector * self.center.point_distance(self.interior)
         return self.__class__(self.start, new_interior, self.end, self.center, self.major_dir, self.normal)
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        ArcEllipse3D translation.
+
+        :param offset: translation vector.
+        :return: A new translated ArcEllipse3D.
+        """
+        new_start = self.start.translation(offset)
+        new_interior = self.interior.translation(offset)
+        new_end = self.end.translation(offset)
+        new_center = self.center.translation(offset)
+        new_extra = self.extra if self.extra is None else self.extra.translation(offset)
+        return ArcEllipse3D(new_start, new_interior, new_end, new_center, self.major_dir, self.normal, new_extra)
 
 
 class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
