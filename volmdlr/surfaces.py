@@ -3126,41 +3126,40 @@ class SphericalSurface3D(PeriodicalSurface):
             primitives2d = self.repair_primitives_periodicity(primitives2d)
         return wires.Contour2D(primitives2d)
 
-    def is_lat_long_curve(self, theta_list, phi_list):
+    def is_lat_long_curve(self, arc):
         """
         Checks if a curve defined on the sphere is a latitude/longitude curve.
 
         Returns True if it is, False otherwise.
         """
         # Check if curve is a longitude curve (phi is constant)
-        if all(math.isclose(theta, theta_list[0], abs_tol=1e-3) for theta in theta_list[1:]):
+        if self.frame.w.is_colinear_to(arc.normal, abs_tol=1e-4):
             return True
         # Check if curve is a latitude curve (theta is constant)
-        if all(math.isclose(phi, phi_list[0], abs_tol=1e-3) for phi in phi_list[1:]):
+        if self.frame.w.is_perpendicular_to(arc.normal, abs_tol=1e-4):
             return True
         return False
 
-    def arc3d_to_2d(self, arc3d):
+    def arc_start_end_3d_to_2d(self, arc3d):
         """
-        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        Helper function to fix periodicity issues while performing transformations into parametric domain.
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
         theta_i, phi_i = self.point3d_to_2d(arc3d.interior)
         theta1, phi1 = start
         theta2, phi2 = end
-
         point_after_start, point_before_end = self._reference_points(arc3d)
         theta3, _ = point_after_start
         theta4, _ = point_before_end
 
         # Fix sphere singularity point
-        if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-5) and theta1 == 0.0 \
-                and math.isclose(theta3, theta_i, abs_tol=1e-6) and math.isclose(theta4, theta_i, abs_tol=1e-6):
+        if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-2) and theta1 == 0.0 \
+                and math.isclose(theta3, theta_i, abs_tol=1e-2) and math.isclose(theta4, theta_i, abs_tol=1e-2):
             theta1 = theta_i
             start = volmdlr.Point2D(theta1, phi1)
-        if math.isclose(abs(phi2), 0.5 * math.pi, abs_tol=1e-5) and theta2 == 0.0 \
-                and math.isclose(theta3, theta_i, abs_tol=1e-6) and math.isclose(theta4, theta_i, abs_tol=1e-6):
+        if math.isclose(abs(phi2), 0.5 * math.pi, abs_tol=1e-2) and theta2 == 0.0 \
+                and math.isclose(theta3, theta_i, abs_tol=1e-2) and math.isclose(theta4, theta_i, abs_tol=1e-2):
             theta2 = theta_i
             end = volmdlr.Point2D(theta2, phi2)
 
@@ -3168,18 +3167,40 @@ class SphericalSurface3D(PeriodicalSurface):
                                                                                [point_after_start, point_before_end],
                                                                                [self.x_periodicity,
                                                                                 self.y_periodicity])
-        if start == end:  # IS THIS POSSIBLE ?
-            return [edges.LineSegment2D(start, start + volmdlr.TWO_PI * volmdlr.X2D)]
-        if self.is_lat_long_curve([theta1, theta_i, theta2], [phi1, phi_i, phi2]):
+        return start, end
+
+    def edge_passes_on_singularity_point(self, edge):
+        """Helper function to verify id edge passes on the sphere singularity point."""
+        half_pi = 0.5 * math.pi
+        point_positive_singularity = self.point2d_to_3d(volmdlr.Point2D(0, half_pi))
+        point_negative_singularity = self.point2d_to_3d(volmdlr.Point2D(0, -half_pi))
+        positive_singularity = edge.point_belongs(point_positive_singularity, 1e-5)
+        negative_singularity = edge.point_belongs(point_negative_singularity, 1e-5)
+        if positive_singularity or negative_singularity:
+            return True
+        return False
+
+    def arc3d_to_2d(self, arc3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        if self.is_lat_long_curve(arc3d):
+            start, end = self.arc_start_end_3d_to_2d(arc3d)
+            if self.edge_passes_on_singularity_point(arc3d):
+                return self.arc3d_to_2d_with_singularity(arc3d, start, end)
             return [edges.LineSegment2D(start, end)]
+        return self.arc3d_to_2d_any_direction(arc3d)
 
-        return self.arc3d_to_2d_with_singularity(arc3d, start, end, point_after_start)
 
-    def arc3d_to_2d_with_singularity(self, arc3d, start, end, point_after_start):
+    def arc3d_to_2d_with_singularity(self, arc3d, start, end):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         # trying to treat when the arc starts at theta1 passes at the singularity at |phi| = 0.5*math.pi
         # and ends at theta2 = theta1 + math.pi
         theta1, phi1 = start
         theta2, phi2 = end
+        point_after_start, _ = self._reference_points(arc3d)
         theta3, phi3 = point_after_start
 
         half_pi = 0.5 * math.pi
@@ -3222,21 +3243,56 @@ class SphericalSurface3D(PeriodicalSurface):
                                         name="construction"),
                     edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
                     ]
+        return self.arc3d_to_2d_any_direction(arc3d)
 
-        # maybe this is incomplete and not exact
+    def fix_start_end_singularity_point_at_parametric_domain(self, edge, reference_point_2d, reference_point_3d, point_at_singularity):
+        _, phi = point_at_singularity
+        abscissa_before_singularity = edge.abscissa(reference_point_3d)
+        direction_vector = edge.direction_vector(abscissa_before_singularity)
+        direction_line = edges.Line2D(reference_point_2d, reference_point_2d + direction_vector)
+        if phi > 0:
+            line_positive_singularity = edges.Line2D(volmdlr.Point2D(-math.pi, 0.5 * math.pi),
+                                                     volmdlr.Point2D(math.pi, 0.5 * math.pi))
+            return direction_line.line_intersections(line_positive_singularity)[0]
+
+
+        line_negative_singularity = edges.Line2D(volmdlr.Point2D(-math.pi, -0.5 * math.pi),
+                                                 volmdlr.Point2D(math.pi, -0.5 * math.pi))
+
+        return direction_line.line_intersections(line_negative_singularity)[0]
+
+    def arc3d_to_2d_any_direction(self, arc3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         angle3d = arc3d.angle
         number_points = math.ceil(angle3d * 50) + 1  # 50 points per radian
         number_points = max(number_points, 5)
         points3d = arc3d.discretization_points(number_points=number_points)
         points = [self.point3d_to_2d(p) for p in points3d]
+        point_after_start, point_before_end = self._reference_points(arc3d)
+        start, end = vm_parametric.spherical_repair_start_end_angle_periodicity(
+            points[0], points[-1], point_after_start, point_before_end)
+        points[0] = start
+        points[-1] = end
 
-        points[0] = start  # to take into account all the previous verification
-        points[-1] = end  # to take into account all the previous verification
+        if math.isclose(abs(points[0].y), 0.5 * math.pi, abs_tol=1e-4):
+            points[0] = self.fix_start_end_singularity_point_at_parametric_domain(arc3d,
+                                                                                  reference_point_2d=points[1],
+                                                                                  reference_point_3d=points3d[1],
+                                                                                  point_at_singularity=points[0])
+        if math.isclose(abs(points[-1].y), 0.5 * math.pi, abs_tol=1e-4):
+            points[-1] = self.fix_start_end_singularity_point_at_parametric_domain(arc3d,
+                                                                                  reference_point_2d=points[-2],
+                                                                                   reference_point_3d=points3d[-2],
+                                                                                  point_at_singularity=points[-1])
 
-        if theta3 < theta1 < theta2:
-            points = [p - volmdlr.Point2D(self.x_periodicity, 0) if p.x > 0 else p for p in points]
-        elif theta3 > theta1 > theta2:
-            points = [p + volmdlr.Point2D(self.x_periodicity, 0) if p.x < 0 else p for p in points]
+        theta_list = [point.x for point in points]
+        theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
+
+        if theta_discontinuity:
+            points = self._fix_angle_discontinuity_on_discretization_points(points,
+                                                                            indexes_theta_discontinuity, "x")
 
         return [edges.BSplineCurve2D.from_points_interpolation(points, 2)]
 
@@ -3308,7 +3364,7 @@ class SphericalSurface3D(PeriodicalSurface):
         theta3, phi3 = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
         theta4, _ = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
 
-        if self.frame.w.is_colinear_to(fullarc3d.normal):
+        if self.frame.w.is_colinear_to(fullarc3d.normal, abs_tol=1e-4):
             point1 = volmdlr.Point2D(theta1, phi1)
             if theta1 > theta3:
                 point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi2)
@@ -3316,7 +3372,7 @@ class SphericalSurface3D(PeriodicalSurface):
                 point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
             return [edges.LineSegment2D(point1, point2)]
 
-        if math.isclose(self.frame.w.dot(fullarc3d.normal), 0, abs_tol=1e-4):
+        if self.frame.w.is_perpendicular_to(fullarc3d.normal, abs_tol=1e-4):
             if theta1 > theta3:
                 theta_plus_pi = theta1 - math.pi
             else:
