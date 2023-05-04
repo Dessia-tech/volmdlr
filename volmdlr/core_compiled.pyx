@@ -342,9 +342,9 @@ class Vector(DessiaObject):
 
         :param other_vector: A vector-like object
         :type other_vector: :class:`volmdlr.Vector`
-        :param abs_tol: Absolute tolerance to consider colinear
+        :param abs_tol: Absolute tolerance to consider perpendicular
         :type abs_tol: float
-        :return: `True` if the two vectors are colinear, `False` otherwise
+        :return: `True` if the two vectors are perpendicular, `False` otherwise
         :rtype: bool
         """
         return math.isclose(abs(self.dot(other_vector)), 0, abs_tol=abs_tol)
