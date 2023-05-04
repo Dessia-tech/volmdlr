@@ -755,16 +755,18 @@ class Face3D(volmdlr.core.Primitive3D):
                     new_list_faces = self.get_closed_contour_divided_faces_inner_contours(list_faces, new_contour)
                     list_faces = list_faces + new_list_faces
                     continue
-                if not self.surface2d.inner_contours:
-                    inner_contours1.append(new_contour)
+                new_contour_adjacent_to_inner_contour = False
                 for inner_contour in self.surface2d.inner_contours:
                     if new_contour.is_inside(inner_contour):
                         inner_contours2.append(inner_contour)
                         continue
                     if new_contour.is_sharing_primitives_with(inner_contour):
+                        new_contour_adjacent_to_inner_contour = True
                         inner_contours1.extend(new_contour.merge_with(inner_contour))
                     else:
                         inner_contours1.append(inner_contour)
+                if not new_contour_adjacent_to_inner_contour:
+                    inner_contours1.append(new_contour)
                 if isinstance(self, Triangle3D):
                     class_to_instanciate = PlaneFace3D
                 else:

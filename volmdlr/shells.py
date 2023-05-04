@@ -762,6 +762,19 @@ class ClosedShell3D(OpenShell3D):
                     return False
         return True
 
+    def is_face_intersecting(self, face: volmdlr.faces.Face3D):
+        """Verifies if face is intersecting shell somehow."""
+        if not self.bounding_box.bbox_intersection(face.bounding_box):
+            return False
+        for i_face in self.faces:
+            if i_face.face_intersections(face):
+                return True
+        # for prim in face.outer_contour3d.primitives:
+        #     for point in prim.discretization_points(number_points=5):
+        #         if self.point_belongs(point) or self.point_on_shell(point):
+        #             return True
+        return False
+
     def shell_intersection(self, shell2: 'OpenShell3D', resolution: float):
         """
         Return None if disjointed.
