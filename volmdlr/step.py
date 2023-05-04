@@ -1324,6 +1324,7 @@ class Step(dc.DessiaObject):
         return object_dict, times
 
     def to_points(self):
+        """Returns a list containing all the points present in a step file."""
         object_dict = {}
         points3d = []
         for stepfunction in self.functions.values():
