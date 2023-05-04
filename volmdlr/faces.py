@@ -115,10 +115,8 @@ class Face3D(volmdlr.core.Primitive3D):
             f"overloaded by {self.__class__.__name__}")
 
     def get_bounding_box(self):
-        """Abstract method."""
-        raise NotImplementedError(
-            f"self.__class__.__name__"
-            f"overloaded by {self.__class__.__name__}")
+        """General method to get the bounding box of a face 3D."""
+        return self.outer_contour3d.bounding_box
 
     def area(self):
         return self.surface2d.area()
@@ -1141,7 +1139,7 @@ class Face3D(volmdlr.core.Primitive3D):
         for face in faces_triangulation:
             inters = face.linesegment_intersections(linesegment)
             for point in inters:
-                if volmdlr.core.point_in_list(point, linesegment_intersections):
+                if not volmdlr.core.point_in_list(point, linesegment_intersections):
                     linesegment_intersections.append(point)
         return linesegment_intersections
 
@@ -1187,9 +1185,6 @@ class PlaneFace3D(Face3D):
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
         self._bbox = new_bounding_box
-
-    def get_bounding_box(self):
-        return self.outer_contour3d.bounding_box
 
     def distance_to_point(self, point, return_other_point=False):
         """
@@ -1963,12 +1958,6 @@ class CylindricalFace3D(Face3D):
     def bounding_box(self, new_bouding_box):
         self._bbox = new_bouding_box
 
-    def get_bounding_box(self):
-        """
-        Computes the bounding box using the contour 3d. true in this case of cylindrical face (not general).
-        """
-        return self.outer_contour3d.bounding_box
-
     def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle.bounds()
         delta_theta = theta_max - theta_min
@@ -2183,9 +2172,6 @@ class ToroidalFace3D(Face3D):
     def bounding_box(self, new_bounding_box):
         self._bbox = new_bounding_box
 
-    def get_bounding_box(self):
-        return self.surface3d.bounding_box
-
     def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
@@ -2289,51 +2275,6 @@ class ConicalFace3D(Face3D):
     @bounding_box.setter
     def bounding_box(self, new_bouding_box):
         self._bbox = new_bouding_box
-
-    def get_bounding_box(self):
-        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
-
-        x_vector = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-                    + volmdlr.X3D.dot(self.surface3d.frame.v) * self.surface3d.frame.v)
-        try:
-            x_vector.normalize()
-        except ZeroDivisionError:
-            pass
-        y_vector = (volmdlr.Y3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-                    + volmdlr.Y3D.dot(self.surface3d.frame.v) * self.surface3d.frame.v)
-
-        try:
-            y_vector.normalize()
-        except ZeroDivisionError:
-            pass
-
-        z_vector = (volmdlr.Z3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-                    + volmdlr.Z3D.dot(self.surface3d.frame.v) * self.surface3d.frame.v)
-        try:
-            z_vector.normalize()
-        except ZeroDivisionError:
-            pass
-
-        lower_center = self.surface3d.frame.origin + zmin * self.surface3d.frame.w
-        upper_center = self.surface3d.frame.origin + zmax * self.surface3d.frame.w
-        lower_radius = math.tan(self.surface3d.semi_angle) * zmin
-        upper_radius = math.tan(self.surface3d.semi_angle) * zmax
-
-        points = [lower_center - lower_radius * x_vector,
-                  lower_center + lower_radius * x_vector,
-                  lower_center - lower_radius * y_vector,
-                  lower_center + lower_radius * y_vector,
-                  lower_center - lower_radius * z_vector,
-                  lower_center + lower_radius * z_vector,
-                  upper_center - upper_radius * x_vector,
-                  upper_center + upper_radius * x_vector,
-                  upper_center - upper_radius * y_vector,
-                  upper_center + upper_radius * y_vector,
-                  upper_center - upper_radius * z_vector,
-                  upper_center + upper_radius * z_vector,
-                  ]
-
-        return volmdlr.core.BoundingBox.from_points(points)
 
     def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
@@ -2445,10 +2386,6 @@ class SphericalFace3D(Face3D):
     @bounding_box.setter
     def bounding_box(self, new_bouding_box):
         self._bbox = new_bouding_box
-
-    def get_bounding_box(self):
-        # To be enhanced
-        return self.surface3d.bounding_box
 
     def triangulation_lines(self, angle_resolution=7):
         """
@@ -2645,12 +2582,6 @@ class ExtrusionFace3D(Face3D):
     def bounding_box(self, new_bouding_box):
         self._bbox = new_bouding_box
 
-    def get_bounding_box(self):
-        # To be enhanced by restricting wires to cut
-        points = self.outer_contour3d.discretization_points(number_points=25)
-
-        return volmdlr.core.BoundingBox.from_points(points)
-
     def grid_size(self):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
@@ -2718,17 +2649,6 @@ class RevolutionFace3D(Face3D):
     def bounding_box(self, new_bouding_box):
         self._bbox = new_bouding_box
 
-    def get_bounding_box(self):
-        # To be enhanced by restricting wires to cut
-        curve_points = self.outer_contour3d.discretization_points(angle_resolution=20)
-        points = []
-        for i in range(37):
-            angle = i * volmdlr.TWO_PI / 36
-            points.extend([point.rotation(self.surface3d.axis_point, self.surface3d.axis, angle)
-                           for point in curve_points])
-
-        return volmdlr.core.BoundingBox.from_points(points)
-
     def grid_size(self):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
@@ -2792,9 +2712,6 @@ class BSplineFace3D(Face3D):
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
         self._bbox = new_bounding_box
-
-    def get_bounding_box(self):
-        return self.surface3d.bounding_box
 
     def triangulation_lines(self, resolution=25):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
