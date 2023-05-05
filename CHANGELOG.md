@@ -82,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ContourMixin: from_points
 - ClosedShell3D: improve performance for boolean operations
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
+- Cylinder: inheritance directly from ClosedShell3D
 
 ### Changed
 - better surface3d plots
