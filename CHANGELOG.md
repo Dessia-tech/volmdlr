@@ -33,14 +33,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mesh: TetrahedralElementQuadratic 
 - GmshParser: define_quadratic_tetrahedron_element_mesh
 - GmshParser: to_vtk (consider quadratic tetrahedron element)
+- VolumeModel: to_msh (consider both order 1 and 2)
 - Assembly: define a volmdlr Assembly object.
 - Edge: direction_independent_is_close
 - Arcellipse2D, 3D: complementary, translation
 - Arcellipse2D, 3D: complementary
+- Face3D: is_linesegment_crossing
+- BSplineFace3D: linesegment_intersections
 - Assembly: define a volmdlr Assembly object.
 - Contour2D: copy
 - LineSegment2D: copy
 - FullArcEllipse3D: split
+- Vector: is_perpendicular_to
 
 
 ### Fixed
@@ -62,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add some fixes to pydocstyle errors
 - ToroidalSurface3D: fix some parametric operations.
 - Node2D, Node3D: is_close
-- 
+- Basis3D: normalize
 
 ### Refactor
 - Contour2D: cut_by_wire

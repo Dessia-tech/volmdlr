@@ -732,7 +732,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                 file.write('\n')
         file.close()
 
-    def to_msh(self, file_name: str, mesh_dimension: int,
+    def to_msh(self, file_name: str, mesh_dimension: int, mesh_order: int,
                factor: float, **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
@@ -768,7 +768,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                     factor=factor, curvature_mesh_size=kwargs['curvature_mesh_size'],
                     min_points=kwargs['min_points'], initial_mesh_size=kwargs['initial_mesh_size'])
 
-        volmdlr.core.VolumeModel.generate_msh_file(file_name, mesh_dimension)
+        volmdlr.core.VolumeModel.generate_msh_file(file_name, mesh_dimension, mesh_order)
 
         # gmsh.initialize()
         # gmsh.open(file_name + ".geo")
@@ -2437,7 +2437,12 @@ class ToroidalSurface3D(PeriodicalSurface):
                 self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), phi1)),
                 self.point2d_to_3d(linesegment2d.end),
             )]
-        raise NotImplementedError('Ellipse?')
+        # raise NotImplementedError('Ellipse?')
+        n = 10
+        degree = 3
+        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
+        periodic = points[0].is_close(points[-1])
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -3150,10 +3155,10 @@ class SphericalSurface3D(PeriodicalSurface):
         Returns True if it is, False otherwise.
         """
         # Check if curve is a longitude curve (phi is constant)
-        if all(math.isclose(theta, theta_list[0], abs_tol=1e-4) for theta in theta_list[1:]):
+        if all(math.isclose(theta, theta_list[0], abs_tol=1e-3) for theta in theta_list[1:]):
             return True
         # Check if curve is a latitude curve (theta is constant)
-        if all(math.isclose(phi, phi_list[0], abs_tol=1e-4) for phi in phi_list[1:]):
+        if all(math.isclose(phi, phi_list[0], abs_tol=1e-3) for phi in phi_list[1:]):
             return True
         return False
 
