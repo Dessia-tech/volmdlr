@@ -3138,10 +3138,10 @@ class SphericalSurface3D(PeriodicalSurface):
         Returns True if it is, False otherwise.
         """
         # Check if curve is a longitude curve (phi is constant)
-        if all(math.isclose(theta, theta_list[0], abs_tol=1e-4) for theta in theta_list[1:]):
+        if all(math.isclose(theta, theta_list[0], abs_tol=1e-3) for theta in theta_list[1:]):
             return True
         # Check if curve is a latitude curve (theta is constant)
-        if all(math.isclose(phi, phi_list[0], abs_tol=1e-4) for phi in phi_list[1:]):
+        if all(math.isclose(phi, phi_list[0], abs_tol=1e-3) for phi in phi_list[1:]):
             return True
         return False
 
