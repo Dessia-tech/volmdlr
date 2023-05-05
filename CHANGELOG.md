@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: copy
 - LineSegment2D: copy
 - FullArcEllipse3D: split
+- Vector: is_perpendicular_to
 
 
 ### Fixed
@@ -65,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add some fixes to pydocstyle errors
 - Node2D, Node3D: is_close
 - BSplineface3D: linesegment2d_to_3d
+- Basis3D: normalize
 
 ### Refactor
 - Contour2D: cut_by_wire
