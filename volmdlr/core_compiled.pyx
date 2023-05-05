@@ -3039,9 +3039,12 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
-        self.u.normalize()
-        self.v.normalize()
-        self.w.normalize()
+        if not math.isclose(self.u.norm(), 0.0, abs_tol=1e-10):
+            self.u.normalize()
+        if not math.isclose(self.v.norm(), 0.0, abs_tol=1e-10):
+            self.v.normalize()
+        if not math.isclose(self.w.norm(), 0.0, abs_tol=1e-10):
+            self.w.normalize()
 
 
 class Frame2D(Basis2D):
