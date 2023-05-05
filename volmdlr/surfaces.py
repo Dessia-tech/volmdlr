@@ -4283,16 +4283,6 @@ class BSplineSurface3D(Surface3D):
         lth = linesegment2d.length()
         points = [self.point2d_to_3d(
             linesegment2d.point_at_abscissa(i * lth / 20.)) for i in range(21)]
-        if points[0].is_close(points[-1]):
-            return None
-        linesegment = edges.LineSegment3D(points[0], points[-1])
-        flag_arc = False
-        flag = all(linesegment.point_belongs(point, abs_tol=1e-4) for point in points)
-        if not flag:
-            interior = self.point2d_to_3d(linesegment2d.point_at_abscissa(0.5 * lth))
-            arc = edges.Arc3D(points[0], interior, points[-1])
-            flag_arc = all(arc.point_belongs(point, abs_tol=1e-4) for point in points)
-
         periodic = False
         if self.x_periodicity is not None and \
                 math.isclose(lth, self.x_periodicity, abs_tol=1e-6) and \
@@ -4305,15 +4295,9 @@ class BSplineSurface3D(Surface3D):
                              abs_tol=1e-6):
             periodic = True
 
-        if flag and not flag_arc:
-            # All the points are on the same LineSegment3D
-            primitives = [linesegment]
-        elif flag_arc:
-            primitives = [arc]
-        else:
-            primitives = [edges.BSplineCurve3D.from_points_interpolation(
-                points, min(self.degree_u, self.degree_v), periodic=periodic)]
-        return primitives
+        bspline = edges.BSplineCurve3D.from_points_interpolation(
+                points, min(self.degree_u, self.degree_v), periodic=periodic)
+        return [bspline.simplify]
 
     def linesegment3d_to_2d(self, linesegment3d):
         """
