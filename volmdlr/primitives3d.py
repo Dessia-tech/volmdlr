@@ -895,10 +895,8 @@ class Cylinder(shells.ClosedShell3D):
         self.axis = axis
         self.radius = radius
         self.length = length
-        y = axis.deterministic_unit_normal_vector()
-        x = y.cross(axis)
         frame_origin = position - axis * length * 0.5
-        self.frame = volmdlr.Frame3D(frame_origin, x, y, axis)
+        self.frame = volmdlr.Frame3D.from_point_and_vector(frame_origin, axis, volmdlr.Z3D)
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
