@@ -238,7 +238,9 @@ class DisplayMesh3D(DisplayMesh):
             point1 = self.points[vertex1]
             point2 = self.points[vertex2]
             point3 = self.points[vertex3]
-            triangular_faces.append(volmdlr.faces.Triangle3D(point1, point2, point3))
+            face = volmdlr.faces.Triangle3D(point1, point2, point3)
+            if face.area() >= 1e-08:
+                triangular_faces.append(face)
         return triangular_faces
 
     def to_stl(self):

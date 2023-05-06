@@ -36,9 +36,9 @@ class TestBSplineSurface3D(unittest.TestCase):
 
     def test_arc3d_to_2d(self):
         bspline_surface = surfaces.BSplineSurface3D.load_from_file('surfaces/BSplineSurface3D_with_Arc3D.json')
-        arc = vme.Arc3D(volmdlr.Point3D(0.01, 0.018, 0.014),
-                        volmdlr.Point3D(0.00970710678118655, 0.018, 0.014707106781186547),
-                        volmdlr.Point3D(0.009, 0.018, 0.015))
+        arc = vme.Arc3D(volmdlr.Point3D(-0.01, -0.013722146986970815, 0.026677756316261864),
+                        volmdlr.Point3D(-0.01, 0.013517082603, 0.026782241839),
+                        volmdlr.Point3D(-0.01, 0.029612430603, 0.004806657236))
 
         test = bspline_surface.arc3d_to_2d(arc3d=arc)[0]
 
