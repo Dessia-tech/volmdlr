@@ -33,15 +33,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mesh: TetrahedralElementQuadratic 
 - GmshParser: define_quadratic_tetrahedron_element_mesh
 - GmshParser: to_vtk (consider quadratic tetrahedron element)
+- VolumeModel: to_msh (consider both order 1 and 2)
 - Assembly: define a volmdlr Assembly object.
 - Edge: direction_independent_is_close
 - Arcellipse2D, 3D: complementary, translation
 - Arcellipse2D, 3D: complementary
+- Face3D: is_linesegment_crossing
+- BSplineFace3D: linesegment_intersections
 - Assembly: define a volmdlr Assembly object.
 - Contour2D: copy
 - LineSegment2D: copy
 - FullArcEllipse3D: split
 - ArcEllipse3D: split, point_at_abscissa
+- Vector: is_perpendicular_to
 
 
 ### Fixed
@@ -62,7 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix: plots
 - add some fixes to pydocstyle errors
 - Node2D, Node3D: is_close
-- 
+- BSplineface3D: linesegment2d_to_3d
+- Basis3D: normalize
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -78,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ContourMixin: from_points
 - ClosedShell3D: improve performance for boolean operations
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
+- Cylinder: inheritance directly from ClosedShell3D
 
 ### Changed
 - better surface3d plots

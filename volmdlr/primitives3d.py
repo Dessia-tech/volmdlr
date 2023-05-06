@@ -696,7 +696,7 @@ class RevolvedProfile(shells.ClosedShell3D):
 
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces, color=color,
-                                             alpha=alpha, name=name)
+                                      alpha=alpha, name=name)
 
     def to_dict(self, *args, **kwargs):
         """
@@ -880,7 +880,7 @@ class RevolvedProfile(shells.ClosedShell3D):
         self.axis_point.frame_mapping_inplace(frame, side)
 
 
-class Cylinder(RevolvedProfile):
+class Cylinder(shells.ClosedShell3D):
     """
     Creates a full cylinder with the position, the axis of revolution the radius and the length.
     """
@@ -895,23 +895,25 @@ class Cylinder(RevolvedProfile):
         self.axis = axis
         self.radius = radius
         self.length = length
-        self.bounding_box = self._bounding_box()
+        frame_origin = position - axis * length * 0.5
+        self.frame = volmdlr.Frame3D.from_point_and_vector(frame_origin, axis, volmdlr.Z3D)
+        faces = self.shell_faces()
+        shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
-        # Revolved Profile
-        point1 = volmdlr.Point2D(-0.5 * self.length, 0.)
-        point2 = volmdlr.Point2D(0.5 * self.length, 0.)
-        point3 = volmdlr.Point2D(0.5 * self.length, self.radius)
-        point4 = volmdlr.Point2D(-0.5 * self.length, self.radius)
-        line_seg1 = volmdlr.edges.LineSegment2D(point1, point2)
-        line_seg2 = volmdlr.edges.LineSegment2D(point2, point3)
-        line_seg3 = volmdlr.edges.LineSegment2D(point3, point4)
-        line_seg4 = volmdlr.edges.LineSegment2D(point4, point1)
-        contour = volmdlr.wires.Contour2D([line_seg1, line_seg2, line_seg3, line_seg4])
-        y = axis.random_unit_normal_vector()
-        RevolvedProfile.__init__(self, position, axis, y, contour, position,
-                                 axis, color=color, alpha=alpha, name=name)
+    def shell_faces(self):
+        surface3d = surfaces.CylindricalSurface3D(self.frame, self.radius)
+        cylindrical_face = volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
+            surface3d, 0, 2*math.pi, 0, self.length)
+        lower_plane = surfaces.Plane3D.from_plane_vectors(
+            self.frame.origin, self.frame.u, self.frame.v)
+        lower_face = volmdlr.faces.PlaneFace3D(
+            lower_plane, surfaces.Surface2D(
+                volmdlr.wires.Circle2D(self.position.to_2d(self.frame.origin, self.frame.u,
+                                                           self.frame.v), self.radius), []))
+        upper_face = lower_face.translation(self.frame.w * self.length)
+        return [lower_face, cylindrical_face, upper_face]
 
-    def _bounding_box(self):
+    def get_bounding_box(self):
         """
         Computes the bounding box of a cylinder.
 
