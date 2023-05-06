@@ -7072,6 +7072,20 @@ class FullArc3D(FullArc, Arc3D):
             raise ValueError('Start, end and interior points  of an arc must be distincts') from error
         return cls(center=center, start_end=point1, normal=normal)
 
+    def split(self, split_point):
+        """
+        Splits the circle into two arcs at a given point.
+
+        :param split_point: splitting point.
+        :return: list of two arcs.
+        """
+        if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):
+            raise ValueError("Point should be different of start and end.")
+        if not self.point_belongs(split_point, 1e-5):
+            raise ValueError("Point not on the circle.")
+        abscissa = self.abscissa(split_point)
+        return [Arc3D(self.start, self.point_at_abscissa(0.5 * abscissa), split_point),
+                Arc3D(split_point, self.point_at_abscissa((self.length() - abscissa) * 0.5 + abscissa), self.end)]
 
 class ArcEllipse3D(Edge):
     """
