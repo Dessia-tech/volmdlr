@@ -1038,11 +1038,13 @@ class ClosedShell3D(OpenShell3D):
 
         for face in self.faces:
             if (face not in intersecting_faces) and (face not in non_intersecting_faces):
+                if shell2.face_on_shell(face):
+                    continue
                 if not intersection_method:
                     if not face.bounding_box.is_inside_bbox(shell2.bounding_box) or not shell2.is_face_inside(face):
                         for face2 in shell2.faces:
-                            if face.surface3d.is_coincident(face2.surface3d) and \
-                                    face.bounding_box.is_inside_bbox(face2.bounding_box):
+                            if (face.surface3d.is_coincident(face2.surface3d) and
+                                    face.bounding_box.is_inside_bbox(face2.bounding_box)):
                                 break
                         else:
                             non_intersecting_faces.append(face)
@@ -1166,6 +1168,10 @@ class ClosedShell3D(OpenShell3D):
         faces = []
         for new_face in new_faces:
             if reference_shell.face_on_shell(new_face):
+                if (reference_shell == self and shell2.face_on_shell(new_face)) or (
+                    reference_shell == shell2 and self.face_on_shell(new_face)):
+                    if self.is_face_between_shells(shell2, new_face):
+                        faces.append(new_face)
                 continue
             if keep_interior_faces:
                 if self.set_operations_interior_face(new_face, valid_faces, reference_shell):

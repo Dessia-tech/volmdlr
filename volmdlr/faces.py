@@ -394,7 +394,9 @@ class Face3D(volmdlr.core.Primitive3D):
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
             face2_contour2d = face2.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
-            if self_contour2d.is_inside(face2_contour2d):
+            if self_contour2d.is_inside(face2_contour2d, ):
+                return True
+            if self_contour2d.is_superposing(face2_contour2d):
                 return True
         return False
 
@@ -801,13 +803,21 @@ class Face3D(volmdlr.core.Primitive3D):
                 if new_face_contour.is_superposing(inner_contour):
                     break
             else:
-                if new_face_contour not in valid_new_faces_contours:
-                    inner_contours = []
-                    for inner_contour in self.surface2d.inner_contours:
-                        if new_face_contour.is_inside(inner_contour):
+                if new_face_contour in valid_new_faces_contours:
+                    continue
+                inner_contours = []
+                for inner_contour in self.surface2d.inner_contours:
+                    if new_face_contour.is_inside(inner_contour):
+                        if new_face_contour.is_sharing_primitives_with(inner_contour):
+                            merged_new_face_contours = new_face_contour.merge_with(inner_contour)
+                            if len(merged_new_face_contours) == 1:
+                                new_face_contour = merged_new_face_contours[0]
+                            else:
+                                raise NotImplementedError
+                        else:
                             inner_contours.append(inner_contour)
-                    valid_new_faces_contours.append(new_face_contour)
-                    valid_inner_contours.append(inner_contours)
+                valid_new_faces_contours.append(new_face_contour)
+                valid_inner_contours.append(inner_contours)
         return valid_new_faces_contours, valid_inner_contours
 
     def get_closed_contour_divided_faces_inner_contours(self, list_faces, new_contour):
@@ -1131,7 +1141,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def is_linesegment_crossing(self, linesegment):
         """Verify if a face 3d is being crossed by a linesegment 3d. """
-
+        if math.isclose(self.area(), 0.0, abs_tol=1e-10):
+            return False
         bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
         if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
             return False
