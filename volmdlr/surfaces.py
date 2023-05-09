@@ -4534,8 +4534,13 @@ class BSplineSurface3D(Surface3D):
             return [edges.Arc3D(start, interior, end)]
 
         number_points = len(bspline_curve2d.control_points)
-        points = [self.point2d_to_3d(point)
-                  for point in bspline_curve2d.discretization_points(number_points=number_points)]
+        points = []
+        for point in bspline_curve2d.discretization_points(number_points=number_points):
+            point3d = self.point2d_to_3d(point)
+            if not volmdlr.core.point_in_list(point3d, points):
+                points.append(point3d)
+        if len(points) < bspline_curve2d.degree + 2:
+            return None
         return [edges.BSplineCurve3D.from_points_interpolation(
             points, bspline_curve2d.degree, bspline_curve2d.periodic)]
 

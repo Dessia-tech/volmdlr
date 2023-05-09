@@ -360,7 +360,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def get_bounding_box(self):
         """Gets the Shell bounding box."""
-        return volmdlr.core.BoundingBox.from_bounding_boxes([face.bounding_box for face in self.faces])
+        bounding_boxes = []
+        for face in self.faces:
+            if face.outer_contour3d.primitives:
+                bounding_boxes.append(face.bounding_box)
+        return volmdlr.core.BoundingBox.from_bounding_boxes(bounding_boxes)
 
     def cut_by_plane(self, plane_3d: surfaces.Plane3D):
         """
