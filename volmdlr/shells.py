@@ -586,6 +586,21 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             meshes.append(face_mesh)
         return display.DisplayMesh3D.merge_meshes(meshes)
 
+    def babylon_meshes(self):
+        """
+        Returns the babylonjs mesh.
+        """
+        babylon_meshes = []
+        for face in self.faces:
+            face_babylon_meshes = face.babylon_meshes()
+            if not face_babylon_meshes:
+                continue
+            if face_babylon_meshes[0]['positions']:
+                babylon_meshes.extend(face.babylon_meshes())
+        babylon_mesh = {'primitives_meshes': babylon_meshes}
+        babylon_mesh.update(self.babylon_param())
+        return [babylon_mesh]
+
     def plot(self, ax=None, color: str = 'k', alpha: float = 1.0):
         """
         Plot a Shell 3D using Matplotlib.
