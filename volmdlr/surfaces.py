@@ -4292,11 +4292,8 @@ class BSplineSurface3D(Surface3D):
         periodic = points[0].is_close(points[-1], 1e-6)
         if len(points) < min(self.degree_u, self.degree_v) + 2:
             return None
-        try:
-            bspline = edges.BSplineCurve3D.from_points_interpolation(
-                    points, min(self.degree_u, self.degree_v), periodic=periodic)
-        except ValueError:
-            print(True)
+        bspline = edges.BSplineCurve3D.from_points_interpolation(
+                            points, min(self.degree_u, self.degree_v), periodic=periodic)
         return [bspline.simplify]
 
     def linesegment3d_to_2d(self, linesegment3d):
