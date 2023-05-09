@@ -575,6 +575,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.__class__(outer_contour, inner_contours)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        """'in-place' methods are deprecated. Use a not in-place method instead."""
         warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
 
         new_contour = self.frame_mapping(frame, side)
@@ -731,7 +732,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                 file.write('\n')
         file.close()
 
-    def to_msh(self, file_name: str, mesh_dimension: int,
+    def to_msh(self, file_name: str, mesh_dimension: int, mesh_order: int,
                factor: float, **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
@@ -767,7 +768,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                     factor=factor, curvature_mesh_size=kwargs['curvature_mesh_size'],
                     min_points=kwargs['min_points'], initial_mesh_size=kwargs['initial_mesh_size'])
 
-        volmdlr.core.VolumeModel.generate_msh_file(file_name, mesh_dimension)
+        volmdlr.core.VolumeModel.generate_msh_file(file_name, mesh_dimension, mesh_order)
 
         # gmsh.initialize()
         # gmsh.open(file_name + ".geo")
@@ -1431,6 +1432,14 @@ class Plane3D(Surface3D):
         return contour3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """
+        Converts a 3D B-Spline in spatial domain intoa 2D B-Spline in parametric domain.
+
+        :param bspline_curve3d: The B-Spline curve to perform the transformation.
+        :type bspline_curve3d: edges.BSplineCurve3D
+        :return: A 2D B-Spline.
+        :rtype: edges.BSplineCurve2D
+        """
         control_points = [self.point3d_to_2d(p)
                           for p in bspline_curve3d.control_points]
         return [edges.BSplineCurve2D(
@@ -2426,7 +2435,12 @@ class ToroidalSurface3D(PeriodicalSurface):
                 self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), phi1)),
                 self.point2d_to_3d(linesegment2d.end),
             )]
-        raise NotImplementedError('Ellipse?')
+        # raise NotImplementedError('Ellipse?')
+        n = 10
+        degree = 3
+        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
+        periodic = points[0].is_close(points[-1])
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -3124,10 +3138,10 @@ class SphericalSurface3D(PeriodicalSurface):
         Returns True if it is, False otherwise.
         """
         # Check if curve is a longitude curve (phi is constant)
-        if all(math.isclose(theta, theta_list[0], abs_tol=1e-4) for theta in theta_list[1:]):
+        if all(math.isclose(theta, theta_list[0], abs_tol=1e-3) for theta in theta_list[1:]):
             return True
         # Check if curve is a latitude curve (theta is constant)
-        if all(math.isclose(phi, phi_list[0], abs_tol=1e-4) for phi in phi_list[1:]):
+        if all(math.isclose(phi, phi_list[0], abs_tol=1e-3) for phi in phi_list[1:]):
             return True
         return False
 
@@ -3856,19 +3870,23 @@ class RevolutionSurface3D(PeriodicalSurface):
         end3d = self.point2d_to_3d(linesegment2d.end)
         theta1, abscissa1 = linesegment2d.start
         theta2, abscissa2 = linesegment2d.end
-        if math.isclose(abscissa1, abscissa2, abs_tol=1e-4):
+        if self.wire.point_at_abscissa(abscissa1).is_close(self.wire.point_at_abscissa(abscissa2)):
             theta_i = 0.5 * (theta1 + theta2)
             interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
             return [edges.Arc3D(start3d, interior, end3d)]
         if math.isclose(theta1, theta2, abs_tol=1e-3):
-            primitive = self.wire.rotation(self.axis_point, self.axis, theta1)
+            primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
+            if primitive.is_point_edge_extremity(start3d) and \
+                    primitive.is_point_edge_extremity(end3d):
+                return [primitive]
             primitive = primitive.split_between_two_points(start3d, end3d)
-            return [primitive]
+            if primitive:
+                return [primitive]
         n = 10
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
         periodic = points[0].is_close(points[-1])
-        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic).simplify]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -4261,41 +4279,12 @@ class BSplineSurface3D(Surface3D):
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
     def linesegment2d_to_3d(self, linesegment2d):
-        # TODO: this is a non exact method!
-        lth = linesegment2d.length()
-        points = [self.point2d_to_3d(
-            linesegment2d.point_at_abscissa(i * lth / 20.)) for i in range(21)]
-        if points[0].is_close(points[-1]):
-            return None
-        linesegment = edges.LineSegment3D(points[0], points[-1])
-        flag_arc = False
-        flag = all(linesegment.point_belongs(point, abs_tol=1e-4) for point in points)
-        if not flag:
-            interior = self.point2d_to_3d(linesegment2d.point_at_abscissa(0.5 * lth))
-            arc = edges.Arc3D(points[0], interior, points[-1])
-            flag_arc = all(arc.point_belongs(point, abs_tol=1e-4) for point in points)
-
-        periodic = False
-        if self.x_periodicity is not None and \
-                math.isclose(lth, self.x_periodicity, abs_tol=1e-6) and \
-                math.isclose(linesegment2d.start.y, linesegment2d.end.y,
-                             abs_tol=1e-6):
-            periodic = True
-        elif self.y_periodicity is not None and \
-                math.isclose(lth, self.y_periodicity, abs_tol=1e-6) and \
-                math.isclose(linesegment2d.start.x, linesegment2d.end.x,
-                             abs_tol=1e-6):
-            periodic = True
-
-        if flag and not flag_arc:
-            # All the points are on the same LineSegment3D
-            primitives = [linesegment]
-        elif flag_arc:
-            primitives = [arc]
-        else:
-            primitives = [edges.BSplineCurve3D.from_points_interpolation(
-                points, min(self.degree_u, self.degree_v), periodic=periodic)]
-        return primitives
+        """Evaluates the Euclidean form for the parametric line segment."""
+        points = [self.point2d_to_3d(point) for point in linesegment2d.discretization_points(number_points=50)]
+        periodic = points[0].is_close(points[-1], 1e-6)
+        bspline = edges.BSplineCurve3D.from_points_interpolation(
+                points, min(self.degree_u, self.degree_v), periodic=periodic)
+        return [bspline.simplify]
 
     def linesegment3d_to_2d(self, linesegment3d):
         """

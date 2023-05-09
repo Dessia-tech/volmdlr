@@ -56,11 +56,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         else:
             self.color = color
         self.alpha = alpha
-
+        self._bbox = None
         if bounding_box:
             self._bbox = bounding_box
-        else:
-            self._bbox = None
 
         self._faces_graph = None
         self._vertices_points = None

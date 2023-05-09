@@ -6,9 +6,11 @@ Created on Fri Sep 18 12:40:31 2020
 @author: masfaraud
 """
 
-import volmdlr
+from volmdlr.core import EdgeStyle
 import volmdlr.faces
 from volmdlr import faces, surfaces
+
+
 R = 0.32
 
 surface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, R)
@@ -19,7 +21,7 @@ face.babylonjs(debug=True, use_cdn=False)
 lines_x, lines_y = face.triangulation_lines()
 ax = face.surface2d.plot()
 for line in lines_x+lines_y:
-    line.plot(ax=ax, color='r')
+    line.plot(ax, EdgeStyle(color='r'))
 
 ax2 = face.surface2d.plot()
 for surface in face.surface2d.split_by_lines(lines_x):
