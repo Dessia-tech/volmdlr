@@ -65,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix: plots
 - add some fixes to pydocstyle errors
 - Node2D, Node3D: is_close
-- BSplineface3D: linesegment2d_to_3d
+- BSplineface3D: linesegment2d_to_3d.
 - Basis3D: normalize
 
 ### Refactor
