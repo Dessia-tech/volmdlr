@@ -754,7 +754,23 @@ class ClosedShell3D(OpenShell3D):
     STEP_FUNCTION = 'CLOSED_SHELL'
 
     def is_face_inside(self, face: volmdlr.faces.Face3D):
-        for point in face.outer_contour3d.discretization_points(angle_resolution=1):
+        if not face.bounding_box.is_inside_bbox(self.bounding_box):
+            return False
+        # points_contour = []
+        # len_contour_primitives = len(face.outer_contour3d.primitives)
+        # for i, prim in enumerate(face.outer_contour3d.primitives):
+        #     points = prim.discretization_points(number_points=2)
+        #     if i == 0:
+        #         points_contour.extend(points[1:])
+        #     elif i == len_contour_primitives - 1:
+        #         points_contour.extend(points[:-1])
+        #     else:
+        #         points_contour.extend(points)
+        points = []
+        for point in face.bounding_box.points:
+            if not volmdlr.core.point_in_list(point, points):
+                points.append(point)
+        for point in points:
             point_inside_shell = self.point_belongs(point)
             if not point_inside_shell:
                 point_in_shells_faces = self.point_on_shell(point)
@@ -1034,26 +1050,39 @@ class ClosedShell3D(OpenShell3D):
         returns a list of all the faces that never intersect any
         face of the other shell.
         """
-        non_intersecting_faces = []
+        # non_intersecting_faces = []
+        non_intersecting_faces = [face for face in self.faces if face not in intersecting_faces]
+        valid_non_intercting_faces = []
+        for face in non_intersecting_faces:
+            if shell2.face_on_shell(face):
+                continue
+            if intersection_method:
+                if shell2.is_face_inside(face):
+                    valid_non_intercting_faces.append(face)
+            elif not shell2.is_face_inside(face):
+                valid_non_intercting_faces.append(face)
+        # for face in self.faces:
+        #     if (face not in intersecting_faces) and (face not in non_intersecting_faces):
+        #         if shell2.face_on_shell(face):
+        #             continue
+        #         if not intersection_method:
+        #             if not shell2.is_face_inside(face):
+        #                 # for face2 in shell2.faces:
+        #                 #     if (face.surface3d.is_coincident(face2.surface3d) and
+        #                 #             face.bounding_box.is_inside_bbox(face2.bounding_box)):
+        #                 #         break
+        #                 # else:
+        #                 non_intersecting_faces.append(face)
+        #                 if shell2.is_face_intersecting(face):
+        #                     print(True)
+        #         else:
+        #             if face.bounding_box.is_inside_bbox(shell2.bounding_box):
+        #                 if not shell2.face_on_shell(face) and shell2.is_face_inside(face):
+        #                     non_intersecting_faces.append(face)
+        #                     if shell2.is_face_intersecting(face):
+        #                         print(True)
 
-        for face in self.faces:
-            if (face not in intersecting_faces) and (face not in non_intersecting_faces):
-                if shell2.face_on_shell(face):
-                    continue
-                if not intersection_method:
-                    if not face.bounding_box.is_inside_bbox(shell2.bounding_box) or not shell2.is_face_inside(face):
-                        for face2 in shell2.faces:
-                            if (face.surface3d.is_coincident(face2.surface3d) and
-                                    face.bounding_box.is_inside_bbox(face2.bounding_box)):
-                                break
-                        else:
-                            non_intersecting_faces.append(face)
-                else:
-                    if face.bounding_box.is_inside_bbox(shell2.bounding_box):
-                        if not shell2.face_on_shell(face) and shell2.is_face_inside(face):
-                            non_intersecting_faces.append(face)
-
-        return non_intersecting_faces
+        return valid_non_intercting_faces
 
     def get_coincident_faces(self, shell2):
         """
@@ -1470,28 +1499,9 @@ class ClosedShell3D(OpenShell3D):
         :param tol: tolerance
         :return:
         """
-
-        # validate_set_operation = self.validate_set_operation(shell2, tol)
-        # if validate_set_operation:
-        #     return validate_set_operation
         if self.is_disjoint_from(shell2, tol):
             return [self]
-        shell2_inside_self = shell2.is_inside_shell(self)
-
-        list_coincident_faces = self.get_coincident_faces(shell2)
-        if shell2_inside_self and not list_coincident_faces:
-            new_faces = self.faces + shell2.faces
-            new_shell = ClosedShell3D(new_faces)
-            return [new_shell]
-        # face_combinations = self.intersecting_faces_combinations(
-        #     shell2, list_coincident_faces, tol)
-        # intersecting_combinations = self.dict_intersecting_combinations(
-        #     face_combinations, tol)
-        # list_coincident_faces = self.get_coincident_faces(shell2)
         intersecting_combinations = self.intersecting_faces_combinations2(shell2, tol)
-
-        # if len(intersecting_combinations) == 0:
-        #     return [self, shell2]
 
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(
             intersecting_combinations)

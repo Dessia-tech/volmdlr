@@ -377,8 +377,9 @@ class WireMixin:
         len_sorted_points = len(sorted_points)
         for i, (point1, point2) in enumerate(
                 zip(sorted_points, sorted_points[1:] + [sorted_points[0]])):
-            if i == len_sorted_points - 1 and self_start_equal_to_end:
-                split_wires.extend(self.__class__.extract(self, point1, point2, False))
+            if i == len_sorted_points -1:
+                if self_start_equal_to_end:
+                    split_wires.extend(self.__class__.extract(self, point1, point2, False))
             else:
                 split_wires.extend(self.__class__.extract(self, point1, point2, True))
         return split_wires
@@ -1831,7 +1832,7 @@ class Contour2D(ContourMixin, Wire2D):
             return False
         points_contour2 = []
         for i, prim in enumerate(contour2.primitives):
-            points = prim.discretization_points(number_points=10)
+            points = prim.discretization_points(number_points=5)
             if i == 0:
                 points_contour2.extend(points[1:])
             elif i == len(contour2.primitives) - 1:
@@ -1839,8 +1840,7 @@ class Contour2D(ContourMixin, Wire2D):
             else:
                 points_contour2.extend(points)
         for point in points_contour2:
-            if not self.point_belongs(point, include_edge_points=True) and\
-                    not self.point_over_contour(point, abs_tol=1e-7):
+            if not self.point_belongs(point, include_edge_points=True):
                 return False
         return True
 
@@ -2118,7 +2118,7 @@ class Contour2D(ContourMixin, Wire2D):
         contour2.order_contour()
         return contour1, contour2
 
-    def divide(self, contours, inside):
+    def divide(self, contours):
         new_base_contours = [self]
         finished = False
         counter = 0
@@ -2313,7 +2313,7 @@ class Contour2D(ContourMixin, Wire2D):
             if self.is_superposing(split_wire) or not self.is_inside(split_wire):
                 continue
             valid_cutting_wires.append(split_wire)
-        divided_contours = self.divide(valid_cutting_wires, True)
+        divided_contours = self.divide(valid_cutting_wires)
         return divided_contours
 
     def intersection_contour_with(self, other_contour, abs_tol=1e-6):

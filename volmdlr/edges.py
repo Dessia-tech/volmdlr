@@ -78,6 +78,7 @@ class Edge(dc.DessiaObject):
         self.end = end
         self._length = None
         self._direction_vector = None
+        self._unit_direction_vector = None
         self._reverse = None
         self._middle_point = None
         # Disabling super init call for performance
@@ -241,9 +242,11 @@ class Edge(dc.DessiaObject):
         :param abscissa: edge abscissa
         :return: unit direction vector
         """
-        vector = self.direction_vector(abscissa).copy(deep=True)
-        vector.normalize()
-        return vector
+        if not self._unit_direction_vector:
+            vector = self.direction_vector(abscissa).copy(deep=True)
+            vector.normalize()
+            self._unit_direction_vector = vector
+        return self._unit_direction_vector
 
     def straight_line_point_belongs(self, point):
         """
