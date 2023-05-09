@@ -1588,8 +1588,8 @@ class PeriodicalSurface(Surface3D):
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = old_outer_contour_positioned.primitives + [closing_linesegment1] + \
-                                               old_innner_contour_positioned.primitives + \
-                                               [closing_linesegment2]
+                    old_innner_contour_positioned.primitives + \
+                    [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:
@@ -2266,21 +2266,21 @@ class ToroidalSurface3D(PeriodicalSurface):
     def _bounding_box(self):
         distance = self.tore_radius + self.small_radius
         point1 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point2 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point3 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point4 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
         point5 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point6 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point7 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point8 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
 
         return volmdlr.core.BoundingBox.from_points(
             [point1, point2, point3, point4, point5, point6, point7, point8])
@@ -6167,8 +6167,8 @@ class BSplineSurface3D(Surface3D):
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
-                                               inner_contour.primitives + \
-                                               [closing_linesegment2]
+                    inner_contour.primitives + \
+                    [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:
