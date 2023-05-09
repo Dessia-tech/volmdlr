@@ -226,7 +226,7 @@ def spherical_repair_start_end_angle_periodicity(start, end, point_after_start, 
     return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
 
 
-def arc3d_to_spherical_coordinates_verification(start, end, angle3d, reference_points, periodicity):
+def arc3d_to_toroidal_coordinates_verification(start, end, angle3d, reference_points, periodicity):
     """
     Verifies theta and phi from start and end of an arc 3D after transformation from spatial to parametric coordinates.
     """
@@ -243,6 +243,23 @@ def arc3d_to_spherical_coordinates_verification(start, end, angle3d, reference_p
     if math.isclose(theta1, theta2, abs_tol=1e-4):
         phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2,
                                                    angle3d, periodicity[1])
+
+    return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
+
+
+def arc3d_to_spherical_coordinates_verification(start, end, angle3d, reference_points, periodicity):
+    """
+    Verifies theta and phi from start and end of an arc 3D after transformation from spatial to parametric coordinates.
+    """
+    point_after_start = reference_points[0]
+    point_before_end = reference_points[1]
+    theta3, phi3 = point_after_start
+    start, end = spherical_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end)
+    theta1, phi1 = start
+    theta2, phi2 = end
+    if math.isclose(phi1, phi2, abs_tol=1e-4):
+        theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2,
+                                                       angle3d, periodicity[0])
 
     return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
 
