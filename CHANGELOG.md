@@ -63,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix: plots
 - add some fixes to pydocstyle errors
 - Node2D, Node3D: is_close
-- 
+- SphericalSurface3D: enhance arc3d_to_2d and bsplinecurve3d_to_2d
 
 ### Refactor
 - Contour2D: cut_by_wire
