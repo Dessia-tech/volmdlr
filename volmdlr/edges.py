@@ -4164,7 +4164,7 @@ class ArcEllipse2D(Edge):
                 arc_ellipse_trigo = self.reverse()
                 abscissa_end = arc_ellipse_trigo.abscissa(self.start)
                 return abscissa_end
-        if self.point_belongs(point):
+        if self.point_belongs(point, 1e-4):
             if not self.is_trigo:
                 arc_ellipse_trigo = self.reverse()
                 abscissa_point = arc_ellipse_trigo.abscissa(point)
@@ -7501,6 +7501,24 @@ class ArcEllipse3D(Edge):
         ellipse_2d = self.to_2d(self.center, self.major_dir, self.minor_dir)
         point2d = ellipse_2d.point_at_abscissa(abscissa)
         return point2d.to_3d(self.center, self.major_dir, self.minor_dir)
+
+    def split(self, split_point):
+        """
+        Splits arc-elipse at a given point.
+
+        :param split_point: splitting point.
+        :return: list of two Arc-Ellipse.
+        """
+        if split_point.is_close(self.start, 1e-6):
+            return [None, self.copy()]
+        if split_point.is_close(self.end, 1e-6):
+            return [self.copy(), None]
+        abscissa = self.abscissa(split_point)
+        return [self.__class__(self.start, self.point_at_abscissa(0.5 * abscissa), split_point,
+                               self.center.copy(), self.major_dir.copy(), self.normal.copy()),
+                self.__class__(split_point, self.point_at_abscissa(
+                    (self.abscissa(self.end) - abscissa) * 0.5 + abscissa),
+                               self.end, self.center.copy(), self.major_dir.copy(), self.normal.copy())]
 
     def translation(self, offset: volmdlr.Vector3D):
         """

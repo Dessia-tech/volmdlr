@@ -3714,7 +3714,7 @@ class ExtrusionSurface3D(Surface3D):
                 primitive = self.edge.translation(self.direction * z1)
                 return [primitive]
             primitive = self.edge.translation(self.direction * z1)
-            primitive = primitive.trim(start3d, end3d)
+            primitive = primitive.split_between_two_points(start3d, end3d)
             return [primitive]
         n = 10
         degree = 3
