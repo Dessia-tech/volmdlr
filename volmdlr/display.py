@@ -232,6 +232,17 @@ class DisplayMesh3D(DisplayMesh):
             flatten_indices.extend(vertex)
         return positions, flatten_indices
 
+    def triangular_faces(self):
+        triangular_faces = []
+        for (vertex1, vertex2, vertex3) in self.triangles:
+            point1 = self.points[vertex1]
+            point2 = self.points[vertex2]
+            point3 = self.points[vertex3]
+            face = volmdlr.faces.Triangle3D(point1, point2, point3)
+            if face.area() >= 1e-08:
+                triangular_faces.append(face)
+        return triangular_faces
+
     def to_stl(self):
         """
         Exports to STL.
