@@ -582,12 +582,15 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         """
         meshes = []
-        for face in self.faces:
+        for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
             except Exception:
-                warnings.warn("Could not triangulate face. Probabaly because topology error in contour2d.")
+                warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell faces."
+                              f"Probabaly because topology error in contour2d.")
                 continue
+            if not face_mesh:
+                face.save_to_file("face_triangulation_none.json")
             meshes.append(face_mesh)
         return display.DisplayMesh3D.merge_meshes(meshes)
 

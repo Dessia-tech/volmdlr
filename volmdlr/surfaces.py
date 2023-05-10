@@ -1397,7 +1397,7 @@ class Plane3D(Surface3D):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-            ax.set_aspect('equal')
+            ax.set_aspect('auto')
 
         self.frame.plot(ax=ax, color=edge_style.color, ratio=length)
         for i in range(grid_size):
@@ -3359,6 +3359,9 @@ class SphericalSurface3D(PeriodicalSurface):
                 point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi2)
             elif theta1 < theta3:
                 point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
+            else:
+                self.save_to_file("fullarc3d_to_2d_sphericalsurface.json")
+                fullarc3d.save_to_file("fullarc3d_to_2d_sphericalsurface_fullarc.json")
             return [edges.LineSegment2D(point1, point2)]
 
         if math.isclose(self.frame.w.dot(fullarc3d.normal), 0, abs_tol=1e-4):
@@ -3787,7 +3790,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         w_vector = axis
         w_vector.normalize()
         u_vector = vector1
-        if not math.isclose(w_vector.dot(u_vector), 0, abs_tol=1e-6):
+        if not w_vector.is_perpendicular_to(u_vector):
             u_vector = vector1 - vector1.vector_projection(w_vector)
         u_vector.normalize()
         v_vector = w_vector.cross(u_vector)
