@@ -87,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShell3D: improve performance for boolean operations
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 - Cylinder: inheritance directly from ClosedShell3D
+- Edges: cache middle_points and unit_direction_vector 
 
 ### Changed
 - better surface3d plots
