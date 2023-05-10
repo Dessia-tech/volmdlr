@@ -78,7 +78,9 @@ class Edge(dc.DessiaObject):
         self.end = end
         self._length = None
         self._direction_vector = None
+        self._unit_direction_vector = None
         self._reverse = None
+        self._middle_point = None
         # Disabling super init call for performance
         # dc.DessiaObject.__init__(self, name=name)
         self.name = name
@@ -139,9 +141,10 @@ class Edge(dc.DessiaObject):
 
         :return:
         """
-        half_length = self.length() / 2
-        middle_point = self.point_at_abscissa(abscissa=half_length)
-        return middle_point
+        if not self._middle_point:
+            half_length = self.length() / 2
+            self._middle_point = self.point_at_abscissa(abscissa=half_length)
+        return self._middle_point
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
@@ -239,9 +242,11 @@ class Edge(dc.DessiaObject):
         :param abscissa: edge abscissa
         :return: unit direction vector
         """
-        vector = self.direction_vector(abscissa).copy(deep=True)
-        vector.normalize()
-        return vector
+        if not self._unit_direction_vector:
+            vector = self.direction_vector(abscissa).copy(deep=True)
+            vector.normalize()
+            self._unit_direction_vector = vector
+        return self._unit_direction_vector
 
     def straight_line_point_belongs(self, point):
         """
@@ -677,7 +682,9 @@ class LineSegment(Edge):
 
         :return:
         """
-        return 0.5 * (self.start + self.end)
+        if not self._middle_point:
+            self._middle_point = 0.5 * (self.start + self.end)
+        return self._middle_point
 
     def point_at_abscissa(self, abscissa):
         """
@@ -1033,15 +1040,6 @@ class BSplineCurve(Edge):
         u = abscissa / self.length()
         derivatives = self.derivatives(u, 1)
         return derivatives[1]
-
-    def middle_point(self):
-        """
-        Computes the 2D or 3D middle point of the B-spline curve.
-
-        :return: The middle point
-        :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
-        """
-        return self.point_at_abscissa(self.length() * 0.5)
 
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
                  tol: float = 1e-6):
@@ -2370,12 +2368,6 @@ class LineSegment2D(LineSegment):
                 'end': self.end.to_dict()
                 }
 
-    # def middle_point(self):
-    #     return 0.5 * (self.start + self.end)
-    #
-    # def point_at_abscissa(self, abscissa):
-    #     return self.start + self.unit_direction_vector() * abscissa
-
     @property
     def bounding_rectangle(self):
         """
@@ -2833,12 +2825,6 @@ class Arc(Edge):
             trigowise_path += angle2 - anglei
             clockwise_path += anglei - angle2 + volmdlr.TWO_PI
         return clockwise_path, trigowise_path
-
-    def middle_point(self):
-        """
-        Get point in the middle of Arc.
-        """
-        return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
@@ -5053,9 +5039,6 @@ class LineSegment3D(LineSegment):
     def unit_normal_vector(self, abscissa=0.):
         return None
 
-    # def middle_point(self):
-    #     return self.point_at_abscissa(0.5 * self.length())
-
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
         distance, point = volmdlr.LineSegment3DPointDistance(
@@ -6815,9 +6798,6 @@ class Arc3D(Arc):
 
         """
         return None
-
-    def middle_point(self):
-        return self.point_at_abscissa(self.length() / 2)
 
     def line_intersections(self, line3d: Line3D):
         """
