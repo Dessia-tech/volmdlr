@@ -2656,13 +2656,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
         theta3, phi3 = point_after_start
         theta4, phi4 = point_before_end
-        if abs(theta3) == math.pi or abs(theta3) == 0.5 * math.pi:
+        if abs(theta3) == math.pi or abs(theta3) == 0.5 * math.pi or \
+                abs(phi3) == math.pi or abs(phi3) == 0.5 * math.pi:
             point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.02 * length))
-        if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi:
-            point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
-        if abs(phi3) == math.pi or abs(phi3) == 0.5 * math.pi:
-            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.02 * length))
-        if abs(phi4) == math.pi or abs(phi4) == 0.5 * math.pi:
+        if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi or \
+                abs(phi4) == math.pi or abs(phi4) == 0.5 * math.pi:
             point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
         return point_after_start, point_before_end
 
@@ -4410,9 +4408,8 @@ class BSplineSurface3D(Surface3D):
         points[0] = start
         points[-1] = end
 
-        boundary = [(math.isclose(p[i], max_bound, abs_tol=1e-4) or math.isclose(p[i], min_bound, abs_tol=1e-4)) for
-                    p in points]
-        if all(boundary):
+        if all((math.isclose(p[i], max_bound, abs_tol=1e-4) or math.isclose(p[i], min_bound, abs_tol=1e-4)) for
+                    p in points):
             # if the line is at the boundary of the surface domain, we take the first point as reference
             t_param = max_bound if math.isclose(points[0][i], max_bound, abs_tol=1e-4) else min_bound
             if direction_periodicity == 'x':
