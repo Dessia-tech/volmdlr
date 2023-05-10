@@ -335,6 +335,20 @@ class Vector(DessiaObject):
         except ZeroDivisionError:
             return False
 
+    def is_perpendicular_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
+        """
+        Checks if two vectors are perpendicular.
+        The two vectors should be of same dimension.
+
+        :param other_vector: A vector-like object
+        :type other_vector: :class:`volmdlr.Vector`
+        :param abs_tol: Absolute tolerance to consider perpendicular
+        :type abs_tol: float
+        :return: `True` if the two vectors are perpendicular, `False` otherwise
+        :rtype: bool
+        """
+        return math.isclose(abs(self.dot(other_vector)), 0, abs_tol=abs_tol)
+
     @classmethod
     def mean_point(cls, points: List["Vector"]):
         """
@@ -3039,9 +3053,12 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
-        self.u.normalize()
-        self.v.normalize()
-        self.w.normalize()
+        if not math.isclose(self.u.norm(), 0.0, abs_tol=1e-10):
+            self.u.normalize()
+        if not math.isclose(self.v.norm(), 0.0, abs_tol=1e-10):
+            self.v.normalize()
+        if not math.isclose(self.w.norm(), 0.0, abs_tol=1e-10):
+            self.w.normalize()
 
 
 class Frame2D(Basis2D):

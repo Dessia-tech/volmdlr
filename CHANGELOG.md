@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: copy
 - LineSegment2D: copy
 - FullArcEllipse3D: split
+- Vector: is_perpendicular_to
 
 
 ### Fixed
@@ -65,6 +66,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add some fixes to pydocstyle errors
 - ToroidalSurface3D: fix some parametric operations.
 - Node2D, Node3D: is_close
+- BSplineface3D: linesegment2d_to_3d.
+- OpenShell3D: get_geo_lines (use primitive.is_close)
+- Basis3D: normalize
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -80,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ContourMixin: from_points
 - ClosedShell3D: improve performance for boolean operations
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
+- Cylinder: inheritance directly from ClosedShell3D
 
 ### Changed
 - better surface3d plots
