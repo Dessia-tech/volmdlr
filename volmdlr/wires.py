@@ -4396,15 +4396,11 @@ class Contour3D(ContourMixin, Wire3D):
                 # Case of a circle, ellipse...
                 return raw_edges[0]
             return cls(raw_edges, name=name)
-        reversed_distances = [edge1.start.point_distance(edge2.end) for edge1, edge2 in zip(raw_edges[::-1][1:], raw_edges[::-1][:-1])]
+        reversed_distances = [edge1.start.point_distance(edge2.end)
+                              for edge1, edge2 in zip(raw_edges[::-1][1:], raw_edges[::-1][:-1])]
         if all((dist < 1e-6) for dist in reversed_distances):
             return cls(raw_edges[::-1], name=name)
-        # if any(edge is None for edge in raw_edges):
-        #     raw_edges = [edge for edge in raw_edges if edge is not None]
-            # warnings.warn(f"Could not instantiate #{step_id} = {step_name}({arguments})"
-            #               f" because some of the edges are NoneType."
-            #               "See Contour3D.from_step method")
-            # return None
+
         # Making things right for first 2 primitives
         distances = [raw_edges[0].end.point_distance(raw_edges[1].start),
                      raw_edges[0].start.point_distance(raw_edges[1].start),

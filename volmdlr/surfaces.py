@@ -3084,6 +3084,9 @@ class SphericalSurface3D(PeriodicalSurface):
         return volmdlr.Point2D(theta, phi)
 
     def linesegment2d_to_3d(self, linesegment2d):
+        """
+        Converts a BREP line segment 2D onto a 3D primitive on the surface.
+        """
         if linesegment2d.name == "construction":
             return []
         start = self.point2d_to_3d(linesegment2d.start)
@@ -3199,6 +3202,7 @@ class SphericalSurface3D(PeriodicalSurface):
 
     @staticmethod
     def helper_arc3d_to_2d_with_singularity(arc3d, start, end, point_singularity, half_pi):
+        """Helper function to arc3d_to_2d_with_singularity."""
         theta1, phi1 = start
         theta2, phi2 = end
         if arc3d.is_point_edge_extremity(point_singularity):
@@ -3275,6 +3279,7 @@ class SphericalSurface3D(PeriodicalSurface):
 
     @staticmethod
     def fix_start_end_singularity_point_at_parametric_domain(edge, reference_point, point_at_singularity):
+        """Uses tangent line to find real theta angle of the singularity point on parametric domain."""
         _, phi = point_at_singularity
         abscissa_before_singularity = edge.abscissa(reference_point)
         direction_vector = edge.direction_vector(abscissa_before_singularity)

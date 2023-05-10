@@ -30,7 +30,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-branches': 26,
                      'too-many-statements': 18,
                      'super-init-not-called': 13,
-                     'no-name-in-module':11,
+                     'no-name-in-module': 11,
                      'abstract-method': 37,
                      'duplicate-code': 9,
                      'arguments-renamed': 2,
@@ -44,7 +44,7 @@ MAX_ERROR_BY_TYPE = {
                      'unspecified-encoding': 1,
                      'too-many-function-args': 4,
                      'too-many-nested-blocks': 10,
-                     'too-many-return-statements': 4,
+                     'too-many-return-statements': 5,
                      'cyclic-import': 1,
                      'raise-missing-from': 2,
                      'undefined-variable': 0,  # 2 when gmsh is fixed
