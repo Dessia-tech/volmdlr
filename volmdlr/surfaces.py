@@ -1588,8 +1588,8 @@ class PeriodicalSurface(Surface3D):
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = old_outer_contour_positioned.primitives + [closing_linesegment1] + \
-                                               old_innner_contour_positioned.primitives + \
-                                               [closing_linesegment2]
+                    old_innner_contour_positioned.primitives + \
+                    [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:
@@ -2266,21 +2266,21 @@ class ToroidalSurface3D(PeriodicalSurface):
     def _bounding_box(self):
         distance = self.tore_radius + self.small_radius
         point1 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point2 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point3 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point4 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
         point5 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point6 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point7 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point8 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
 
         return volmdlr.core.BoundingBox.from_points(
             [point1, point2, point3, point4, point5, point6, point7, point8])
@@ -2435,7 +2435,12 @@ class ToroidalSurface3D(PeriodicalSurface):
                 self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), phi1)),
                 self.point2d_to_3d(linesegment2d.end),
             )]
-        raise NotImplementedError('Ellipse?')
+        # raise NotImplementedError('Ellipse?')
+        n = 10
+        degree = 3
+        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
+        periodic = points[0].is_close(points[-1])
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -4447,41 +4452,12 @@ class BSplineSurface3D(Surface3D):
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
     def linesegment2d_to_3d(self, linesegment2d):
-        # TODO: this is a non exact method!
-        lth = linesegment2d.length()
-        points = [self.point2d_to_3d(
-            linesegment2d.point_at_abscissa(i * lth / 20.)) for i in range(21)]
-        if points[0].is_close(points[-1]):
-            return None
-        linesegment = edges.LineSegment3D(points[0], points[-1])
-        flag_arc = False
-        flag = all(linesegment.point_belongs(point, abs_tol=1e-4) for point in points)
-        if not flag:
-            interior = self.point2d_to_3d(linesegment2d.point_at_abscissa(0.5 * lth))
-            arc = edges.Arc3D(points[0], interior, points[-1])
-            flag_arc = all(arc.point_belongs(point, abs_tol=1e-4) for point in points)
-
-        periodic = False
-        if self.x_periodicity is not None and \
-                math.isclose(lth, self.x_periodicity, abs_tol=1e-6) and \
-                math.isclose(linesegment2d.start.y, linesegment2d.end.y,
-                             abs_tol=1e-6):
-            periodic = True
-        elif self.y_periodicity is not None and \
-                math.isclose(lth, self.y_periodicity, abs_tol=1e-6) and \
-                math.isclose(linesegment2d.start.x, linesegment2d.end.x,
-                             abs_tol=1e-6):
-            periodic = True
-
-        if flag and not flag_arc:
-            # All the points are on the same LineSegment3D
-            primitives = [linesegment]
-        elif flag_arc:
-            primitives = [arc]
-        else:
-            primitives = [edges.BSplineCurve3D.from_points_interpolation(
-                points, min(self.degree_u, self.degree_v), periodic=periodic)]
-        return primitives
+        """Evaluates the Euclidean form for the parametric line segment."""
+        points = [self.point2d_to_3d(point) for point in linesegment2d.discretization_points(number_points=50)]
+        periodic = points[0].is_close(points[-1], 1e-6)
+        bspline = edges.BSplineCurve3D.from_points_interpolation(
+                points, min(self.degree_u, self.degree_v), periodic=periodic)
+        return [bspline.simplify]
 
     def linesegment3d_to_2d(self, linesegment3d):
         """
@@ -6346,8 +6322,8 @@ class BSplineSurface3D(Surface3D):
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
-                                               inner_contour.primitives + \
-                                               [closing_linesegment2]
+                    inner_contour.primitives + \
+                    [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:
