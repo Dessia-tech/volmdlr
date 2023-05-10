@@ -137,6 +137,8 @@ def reorder_contour3d_edges_from_step(raw_edges, step_data):
     # Connecting the next edges
     last_edge = edges[-1]
     for i, raw_edge in enumerate(raw_edges[2:]):
+        if raw_edge.direction_independent_is_close(last_edge):
+            continue
         distances = [raw_edge.start.point_distance(last_edge.end),
                      raw_edge.end.point_distance(last_edge.end)]
         index = distances.index(min(distances))
