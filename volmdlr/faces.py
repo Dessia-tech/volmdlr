@@ -202,14 +202,14 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             raise ValueError('Must have at least one contour')
 
-        if outer_contour3d and not outer_contour3d.is_ordered():
-            outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
-            if len(outer_contour3d.primitives) == 2:
-                if any(primitive is None for primitive in outer_contour2d.primitives):
-                    surface.save_to_file("contour2d_healing_bug_surface.json")
-                    outer_contour3d.save_to_file("contour2d_healing_bug_contour.json")
-                ax = outer_contour2d.plot()
-                ax.set_aspect("auto")
+        # if outer_contour3d and not outer_contour3d.is_ordered():
+        #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+            # if len(outer_contour3d.primitives) == 2:
+            #     if any(primitive is None for primitive in outer_contour2d.primitives):
+            #         surface.save_to_file("contour2d_healing_bug_surface.json")
+            #         outer_contour3d.save_to_file("contour2d_healing_bug_contour.json")
+            #     ax = outer_contour2d.plot()
+            #     ax.set_aspect("auto")
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
         face = cls(surface, surface2d=surface2d, name=name)
