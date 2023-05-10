@@ -786,16 +786,6 @@ class ClosedShell3D(OpenShell3D):
     def is_face_inside(self, face: volmdlr.faces.Face3D):
         if not face.bounding_box.is_inside_bbox(self.bounding_box):
             return False
-        # points_contour = []
-        # len_contour_primitives = len(face.outer_contour3d.primitives)
-        # for i, prim in enumerate(face.outer_contour3d.primitives):
-        #     points = prim.discretization_points(number_points=2)
-        #     if i == 0:
-        #         points_contour.extend(points[1:])
-        #     elif i == len_contour_primitives - 1:
-        #         points_contour.extend(points[:-1])
-        #     else:
-        #         points_contour.extend(points)
         points = []
         for point in face.bounding_box.points:
             if not volmdlr.core.point_in_list(point, points):
@@ -815,10 +805,6 @@ class ClosedShell3D(OpenShell3D):
         for i_face in self.faces:
             if i_face.face_intersections(face):
                 return True
-        # for prim in face.outer_contour3d.primitives:
-        #     for point in prim.discretization_points(number_points=5):
-        #         if self.point_belongs(point) or self.point_on_shell(point):
-        #             return True
         return False
 
     def shell_intersection(self, shell2: 'OpenShell3D', resolution: float):
@@ -872,22 +858,14 @@ class ClosedShell3D(OpenShell3D):
             return None
         return 1
 
-    def is_intersecting_with(self, shell2, resolution):
-        points2 = []
+    def is_intersecting_with(self, shell2):
+        """Verifies if two closed shells are intersecting somehow."""
         if self.is_disjoint_from(shell2):
             return False
-        for face in shell2.faces:
-            points_tobe_added = []
-            for prim in face.outer_contour3d.primitives:
-                points_tobe_added.extend([prim.middle_point(), prim.end])
-            # points2.extend(face.outer_contour3d.discretization_points(angle_resolution=resolution))
-            points2.extend(points_tobe_added)
-        is_intersecting = False
-        for point2 in points2:
-            if self.point_belongs(point2) or self.point_on_shell(point2):
-                is_intersecting = True
-                break
-        return is_intersecting
+        for face2 in shell2.faces:
+            if self.is_face_intersecting(face2):
+                return True
+        return False
 
     def point_belongs(self, point3d: volmdlr.Point3D, **kwargs):
         """

@@ -815,15 +815,16 @@ class Face3D(volmdlr.core.Primitive3D):
                     continue
                 inner_contours = []
                 for inner_contour in self.surface2d.inner_contours:
-                    if new_face_contour.is_inside(inner_contour):
-                        if new_face_contour.is_sharing_primitives_with(inner_contour):
-                            merged_new_face_contours = new_face_contour.merge_with(inner_contour)
-                            if len(merged_new_face_contours) == 1:
-                                new_face_contour = merged_new_face_contours[0]
-                            else:
-                                raise NotImplementedError
+                    if not new_face_contour.is_inside(inner_contour):
+                        continue
+                    if new_face_contour.is_sharing_primitives_with(inner_contour):
+                        merged_new_face_contours = new_face_contour.merge_with(inner_contour)
+                        if len(merged_new_face_contours) == 1:
+                            new_face_contour = merged_new_face_contours[0]
                         else:
-                            inner_contours.append(inner_contour)
+                            raise NotImplementedError
+                    else:
+                        inner_contours.append(inner_contour)
                 valid_new_faces_contours.append(new_face_contour)
                 valid_inner_contours.append(inner_contours)
         return valid_new_faces_contours, valid_inner_contours
