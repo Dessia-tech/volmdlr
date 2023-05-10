@@ -591,7 +591,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             meshes.append(face_mesh)
         return display.DisplayMesh3D.merge_meshes(meshes)
 
-    def babylon_meshes(self, merge_meshes=False):
+    def babylon_meshes(self, merge_meshes=True):
         """
         Returns the babylonjs mesh.
         """

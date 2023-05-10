@@ -408,7 +408,7 @@ class Primitive3D(dc.PhysicalObject):
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
-    def babylon_meshes(self, merge_meshes=False):
+    def babylon_meshes(self, merge_meshes=True):
         """
         Returns the babylonjs mesh.
         """
@@ -1067,7 +1067,7 @@ class Assembly(dc.PhysicalObject):
         """
         return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
 
-    def babylon_data(self, merge_meshes=False):
+    def babylon_data(self, merge_meshes=True):
         """
         Get babylonjs data.
 
@@ -1427,7 +1427,7 @@ class VolumeModel(dc.PhysicalObject):
         ax.margins(0.1)
         return ax
 
-    def babylon_data(self, merge_meshes=False):
+    def babylon_data(self, merge_meshes=True):
         """
         Get babylonjs data.
 
@@ -1474,7 +1474,7 @@ class VolumeModel(dc.PhysicalObject):
             babylon_data=babylon_data)
         return script
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False, merge_meshes=False):
+    def babylonjs(self, page_name=None, use_cdn=True, debug=False, merge_meshes=True):
         """
         Creates a HTML file using babylonjs to show a 3d model in the browser.
 
