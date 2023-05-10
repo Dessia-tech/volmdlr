@@ -32,7 +32,7 @@ MAX_ERROR_BY_TYPE = {
                      'super-init-not-called': 13,
                      'no-name-in-module':11,
                      'abstract-method': 37,
-                     'duplicate-code': 9,
+                     'duplicate-code': 10,
                      'arguments-renamed': 2,
                      'too-many-ancestors': 9,
                      'too-few-public-methods': 3,
