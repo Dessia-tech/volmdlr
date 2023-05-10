@@ -2657,13 +2657,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
         theta3, phi3 = point_after_start
         theta4, phi4 = point_before_end
-        if abs(theta3) == math.pi or abs(theta3) == 0.5 * math.pi:
+        if abs(theta3) == math.pi or abs(theta3) == 0.5 * math.pi or \
+                abs(phi3) == math.pi or abs(phi3) == 0.5 * math.pi:
             point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.02 * length))
-        if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi:
-            point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
-        if abs(phi3) == math.pi or abs(phi3) == 0.5 * math.pi:
-            point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.02 * length))
-        if abs(phi4) == math.pi or abs(phi4) == 0.5 * math.pi:
+        if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi or \
+                abs(phi4) == math.pi or abs(phi4) == 0.5 * math.pi:
             point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
         return point_after_start, point_before_end
 
