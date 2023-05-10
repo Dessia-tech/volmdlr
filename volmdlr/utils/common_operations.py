@@ -2,6 +2,8 @@
 Concatenate common operation for two or more objects.
 
 """
+import random
+
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -36,3 +38,7 @@ def plot_circle(circle, ax=None, edge_style: EdgeStyle = EdgeStyle()):
     if edge_style.equal_aspect:
         ax.set_aspect('equal')
     return ax
+
+def random_color():
+    """Random color generator"""
+    return random.random(), random.random(), random.random()
