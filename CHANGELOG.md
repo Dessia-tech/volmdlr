@@ -71,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineface3D: linesegment2d_to_3d.
 - OpenShell3D: get_geo_lines (use primitive.is_close)
 - Basis3D: normalize
+- Contour3D: from_step removes repeated edges from primitives list
 
 ### Refactor
 - Contour2D: cut_by_wire
