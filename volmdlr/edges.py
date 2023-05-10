@@ -4161,7 +4161,7 @@ class ArcEllipse2D(Edge):
                 arc_ellipse_trigo = self.reverse()
                 abscissa_end = arc_ellipse_trigo.abscissa(self.start)
                 return abscissa_end
-        if self.point_belongs(point):
+        if self.point_belongs(point, 1e-4):
             if not self.is_trigo:
                 arc_ellipse_trigo = self.reverse()
                 abscissa_point = arc_ellipse_trigo.abscissa(point)
