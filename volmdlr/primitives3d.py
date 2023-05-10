@@ -182,6 +182,16 @@ class Block(shells.ClosedShell3D):
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
+    def __eq__(self, other):
+        if self.__class__.__name__ != other.__class__.__name__:
+            return False
+        if self.frame != other.frame:
+            return False
+        return True
+
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.frame))
+
     def to_dict(self, *args, **kwargs):
         """
         Custom to_dict for performance.
