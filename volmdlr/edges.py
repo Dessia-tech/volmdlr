@@ -1326,7 +1326,7 @@ class BSplineCurve(Edge):
 
     @classmethod
     def from_points_interpolation(cls, points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                                  degree: int, periodic: bool = False, name: str = ""):
+                                  degree: int, periodic: bool = False, name: str = " "):
         """
         Creates a B-spline curve interpolation through the data points.
 

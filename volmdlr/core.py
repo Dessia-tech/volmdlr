@@ -408,7 +408,7 @@ class Primitive3D(dc.PhysicalObject):
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
-    def babylon_meshes(self):
+    def babylon_meshes(self, merge_meshes=True):
         """
         Returns the babylonjs mesh.
         """
@@ -463,8 +463,7 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_points(self):
         points = []
-        if hasattr(self, 'primitives') and \
-                hasattr(self.primitives[0], 'start'):
+        if hasattr(self, 'primitives') and hasattr(self.primitives[0], 'start'):
             points = [[self.primitives[0].start.x,
                        self.primitives[0].start.y,
                        self.primitives[0].start.z]]
@@ -1068,7 +1067,7 @@ class Assembly(dc.PhysicalObject):
         """
         return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
 
-    def babylon_data(self):
+    def babylon_data(self, merge_meshes=True):
         """
         Get babylonjs data.
 
@@ -1079,11 +1078,11 @@ class Assembly(dc.PhysicalObject):
         lines = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes())
+                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
                     lines.append(primitive.babylon_curves())
             elif hasattr(primitive, 'babylon_data'):
-                data = primitive.babylon_data()
+                data = primitive.babylon_data(merge_meshes=merge_meshes)
                 meshes.extend(mesh for mesh in data["meshes"])
                 lines.extend(line for line in data["lines"])
 
@@ -1428,7 +1427,7 @@ class VolumeModel(dc.PhysicalObject):
         ax.margins(0.1)
         return ax
 
-    def babylon_data(self):
+    def babylon_data(self, merge_meshes=True):
         """
         Get babylonjs data.
 
@@ -1439,11 +1438,11 @@ class VolumeModel(dc.PhysicalObject):
         lines = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes())
+                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
                     lines.append(primitive.babylon_curves())
             elif hasattr(primitive, 'babylon_data'):
-                data = primitive.babylon_data()
+                data = primitive.babylon_data(merge_meshes=merge_meshes)
                 meshes.extend(mesh for mesh in data["meshes"])
                 lines.extend(line for line in data["lines"])
 
@@ -1475,12 +1474,12 @@ class VolumeModel(dc.PhysicalObject):
             babylon_data=babylon_data)
         return script
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+    def babylonjs(self, page_name=None, use_cdn=True, debug=False, merge_meshes=True):
         """
         Creates a HTML file using babylonjs to show a 3d model in the browser.
 
         """
-        babylon_data = self.babylon_data()
+        babylon_data = self.babylon_data(merge_meshes=merge_meshes)
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                        debug=debug)
         if page_name is None:

@@ -2460,6 +2460,7 @@ class ClosedPolygonMixin:
             return self
 
         return self.__class__(points)
+
     def invert(self):
         """Invert the polygon."""
         return self.__class__(self.points[::-1])
@@ -3152,6 +3153,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                'segments': npy.array(segments).reshape((-1, 2)),
                }
+        if len(tri['vertices']) < 3:
+            return None
         t = triangulate(tri, tri_opt)
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]

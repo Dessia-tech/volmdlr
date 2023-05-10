@@ -15,6 +15,7 @@ import volmdlr.core
 from volmdlr import display, edges, wires, surfaces
 import volmdlr.faces
 import volmdlr.geometry
+from volmdlr.core import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
 
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
@@ -55,11 +56,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         else:
             self.color = color
         self.alpha = alpha
-
+        self._bbox = None
         if bounding_box:
             self._bbox = bounding_box
-        else:
-            self._bbox = None
 
         self._faces_graph = None
         self._vertices_points = None
@@ -362,7 +361,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def get_bounding_box(self):
         """Gets the Shell bounding box."""
-        return volmdlr.core.BoundingBox.from_bounding_boxes([face.bounding_box for face in self.faces])
+        bounding_boxes = []
+        for face in self.faces:
+            if face.outer_contour3d.primitives:
+                bounding_boxes.append(face.bounding_box)
+        return volmdlr.core.BoundingBox.from_bounding_boxes(bounding_boxes)
 
     def cut_by_plane(self, plane_3d: surfaces.Plane3D):
         """
@@ -588,6 +591,23 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             meshes.append(face_mesh)
         return display.DisplayMesh3D.merge_meshes(meshes)
 
+    def babylon_meshes(self, merge_meshes=True):
+        """
+        Returns the babylonjs mesh.
+        """
+        if merge_meshes:
+            return super().babylon_meshes()
+        babylon_meshes = []
+        for face in self.faces:
+            face_babylon_meshes = face.babylon_meshes()
+            if not face_babylon_meshes:
+                continue
+            if face_babylon_meshes[0]['positions']:
+                babylon_meshes.extend(face.babylon_meshes())
+        babylon_mesh = {'primitives_meshes': babylon_meshes}
+        babylon_mesh.update(self.babylon_param())
+        return [babylon_mesh]
+
     def plot(self, ax=None, color: str = 'k', alpha: float = 1.0):
         """
         Plot a Shell 3D using Matplotlib.
@@ -624,22 +644,25 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :type update_data: dict
         :param point_mesh_size: The mesh size at a specific point, defaults to None
         :type point_mesh_size: float, optional
-
         :return: A list of lines that describe the geometry & the updated data
         :rtype: Tuple(List[str], dict)
         """
 
         primitives = []
-        points = set()
+        points = []
+
         for face in self.faces:
             for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
-                points.update(contour.get_geo_points())
-                if isinstance(contour, wires.Circle2D):
+                for point_contour in contour.get_geo_points():
+                    if not point_in_list(point_contour, points):
+                        points.append(point_contour)
+
+                if isinstance(contour, volmdlr.wires.Circle2D):
                     pass
                 else:
                     for _, primitive in enumerate(contour.primitives):
-                        if ((primitive not in primitives)
-                                and (primitive.reverse() not in primitives)):
+                        if (not edge_in_list(primitive, primitives)
+                                and not edge_in_list(primitive.reverse(), primitives)):
                             primitives.append(primitive)
 
         indices_check = len(primitives) * [None]
@@ -657,17 +680,20 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             line_surface = []
             for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
                 lines_tags = []
-                if isinstance(contour, wires.Circle2D):
+                if isinstance(contour, volmdlr.wires.Circle2D):
                     pass
                 else:
                     for _, primitive in enumerate(contour.primitives):
+                        index = get_edge_index_in_list(primitive, primitives)
 
-                        try:
-                            index = primitives.index(primitive)
+                        if primitives[index].is_close(primitive):
+
                             if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
                                 discretization_points = primitive.discretization_points()
-                                start_point_tag = points.index(discretization_points[0]) + 1
-                                end_point_tag = points.index(discretization_points[1]) + 1
+
+                                start_point_tag = get_point_index_in_list(discretization_points[0], points) + 1
+                                end_point_tag = get_point_index_in_list(discretization_points[1], points) + 1
+
                                 primitive_linesegments = volmdlr.edges.LineSegment3D(
                                     discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
@@ -677,15 +703,19 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                                                                   + point_account))
 
                             if isinstance(primitive, volmdlr.edges.LineSegment):
-                                start_point_tag = points.index(primitive.start) + 1
-                                end_point_tag = points.index(primitive.end) + 1
+
+                                start_point_tag = get_point_index_in_list(primitive.start, points) + 1
+                                end_point_tag = get_point_index_in_list(primitive.end, points) + 1
+
                                 lines.append(primitive.get_geo_lines(tag=line_account,
                                                                      start_point_tag=start_point_tag + point_account,
                                                                      end_point_tag=end_point_tag + point_account))
                             elif isinstance(primitive, volmdlr.edges.Arc):
-                                start_point_tag = points.index(primitive.start) + 1
-                                center_point_tag = points.index(primitive.center) + 1
-                                end_point_tag = points.index(primitive.end) + 1
+
+                                start_point_tag = get_point_index_in_list(primitive.start, points) + 1
+                                center_point_tag = get_point_index_in_list(primitive.center, points) + 1
+                                end_point_tag = get_point_index_in_list(primitive.end, points) + 1
+
                                 lines.append(primitive.get_geo_lines(tag=line_account,
                                                                      start_point_tag=start_point_tag + point_account,
                                                                      center_point_tag=center_point_tag + point_account,
@@ -695,8 +725,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             indices_check[index] = line_account
                             line_account += 1
 
-                        except ValueError:
-                            index = primitives.index(primitive.reverse())
+                        if primitives[index].is_close(primitive.reverse()):
+
                             lines_tags.append(-indices_check[index])
 
                     lines.append(contour.get_geo_lines(line_loop_account + 1, lines_tags))
@@ -961,7 +991,7 @@ class ClosedShell3D(OpenShell3D):
         :param tol:
         :return:
         """
-        #todo: delete this method if not used three months from now (25/04/2023)
+        # todo: delete this method if not used three months from now (25/04/2023)
         face_combinations = []
         for face1 in self.faces:
             for face2 in shell2.faces:
@@ -1129,7 +1159,7 @@ class ClosedShell3D(OpenShell3D):
         intersecting_wires = list(dict_intersecting_combinations.values())
         intersecting_contour = \
             wires.Contour3D([wire.primitives[0] for
-                                     wires_ in intersecting_wires for wire in wires_])
+                             wires_ in intersecting_wires for wire in wires_])
         return intersecting_contour
 
     def reference_shell(self, shell2, face):

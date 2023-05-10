@@ -292,6 +292,8 @@ class Face3D(volmdlr.core.Primitive3D):
     def triangulation(self):
         number_points_x, number_points_y = self.grid_size()
         mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
+        if mesh2d is None:
+            return None
         return vmd.DisplayMesh3D([vmd.Node3D(*self.surface3d.point2d_to_3d(point)) for point in mesh2d.points],
                                  mesh2d.triangles)
 
@@ -1162,6 +1164,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
         """Approximation of intersections between a b-spline face 3D and a line segment 3D."""
+        if math.isclose(self.area(), 0.0, abs_tol=1e-10):
+            return False
         bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
         if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
             return []
@@ -1989,7 +1993,7 @@ class CylindricalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=5):
-        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle.bounds()
+        theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         nlines = math.ceil(delta_theta * angle_resolution)
         lines = []
