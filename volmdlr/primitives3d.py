@@ -180,6 +180,9 @@ class Block(shells.ClosedShell3D):
                      self.frame.w.norm())
 
         faces = self.shell_faces()
+        for face in faces:
+            face.alpha = alpha
+            face.color = color
         shells.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
     def to_dict(self, *args, **kwargs):
