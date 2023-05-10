@@ -39,6 +39,7 @@ def plot_circle(circle, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         ax.set_aspect('equal')
     return ax
 
+
 def random_color():
-    """Random color generator"""
+    """Random color generator."""
     return random.random(), random.random(), random.random()
