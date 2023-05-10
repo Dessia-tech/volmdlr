@@ -24,6 +24,15 @@ class TestSphericalSurface3D(unittest.TestCase):
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 4.107527949001648, 2)
 
+        surface = surfaces.SphericalSurface3D.load_from_file(
+            "surfaces/objects_spherical_tests/spherical_surface_arc3d_to_2d.json")
+        contour = wires.Contour3D.load_from_file(
+            "surfaces/objects_spherical_tests/spherical_surface_arc3d_to_2d_contour3d.json")
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertEqual(len(contour2d.primitives), 4)
+        self.assertTrue(contour2d.is_ordered(1e-2))
+        self.assertAlmostEqual(contour2d.area(), 1.7779412219307336, 2)
+
         contour_left_side = wires.Contour3D.load_from_file("surfaces/objects_spherical_tests/contour_left_side.json")
         test = self.surface3d.contour3d_to_2d(contour_left_side)
         theta_min, theta_max, _, _ = test.bounding_rectangle.bounds()
@@ -52,6 +61,15 @@ class TestSphericalSurface3D(unittest.TestCase):
         self.assertAlmostEqual(theta_min, 0, 6)
         self.assertAlmostEqual(theta_max, math.pi, 6)
         self.assertAlmostEqual(phi_max, 0.5 * math.pi, 3)
+
+    def test_plane_intersection(self):
+        frame = volmdlr.Frame3D.from_point_and_vector(volmdlr.Point3D(0, 0.5, 0.5),
+                                                      volmdlr.Vector3D(0, 1 / math.sqrt(2), 1 / math.sqrt(2)),
+                                                      volmdlr.Z3D)
+        plane = surfaces.Plane3D(frame)
+        circle = self.surface3d.plane_intersection(plane)[0]
+        self.assertAlmostEqual(circle.radius, 1/math.sqrt(2))
+        self.assertTrue(circle.normal.is_colinear_to(frame.w))
 
 
 if __name__ == '__main__':
