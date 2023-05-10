@@ -3786,9 +3786,14 @@ class ExtrusionSurface3D(Surface3D):
             start_end = edge.center + edge.major_axis * edge.major_dir
             fullarcellipse = edges.FullArcEllipse3D(start_end, edge.major_axis, edge.minor_axis,
                                                     edge.center, edge.normal, edge.major_dir, edge.name)
-            edge = fullarcellipse
             direction = -object_dict[arguments[2]]
-            surface = cls(edge=edge, direction=direction, name=name)
+            surface = cls(edge=fullarcellipse, direction=direction, name=name)
+            surface.x_periodicity = 1
+        elif edge.__class__ is wires.Circle3D:
+            start_end = edge.center + edge.frame.u * edge.radius
+            fullarc = edges.FullArc3D(edge.frame.origin, start_end, edge.frame.w)
+            direction = object_dict[arguments[2]]
+            surface = cls(edge=fullarc, direction=direction, name=name)
             surface.x_periodicity = 1
 
         else:
@@ -3851,7 +3856,7 @@ class ExtrusionSurface3D(Surface3D):
                 primitive = self.edge.translation(self.direction * z1)
                 return [primitive]
             primitive = self.edge.translation(self.direction * z1)
-            primitive = primitive.trim(start3d, end3d)
+            primitive = primitive.split_between_two_points(start3d, end3d)
             return [primitive]
         n = 10
         degree = 3
