@@ -72,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineface3D: linesegment2d_to_3d.
 - OpenShell3D: get_geo_lines (use primitive.is_close)
 - Basis3D: normalize
+- Contour3D: from_step removes repeated edges from primitives list
 
 
 ### Refactor
@@ -89,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShell3D: improve performance for boolean operations
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 - Cylinder: inheritance directly from ClosedShell3D
+- Edges: cache middle_points and unit_direction_vector 
 
 ### Changed
 - better surface3d plots
