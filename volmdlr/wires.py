@@ -85,6 +85,100 @@ def bounding_rectangle_adjacent_contours(contours: List):
     return volmdlr.core.BoundingRectangle(x_min, x_max, y_min, y_max)
 
 
+def reorder_contour3d_edges_from_step(raw_edges, step_data):
+    """Helper function to order edges from a 3D contour coming from a step file."""
+    step_id, step_name, arguments = step_data
+    reversed_distances = [edge1.start.point_distance(edge2.end)
+                          for edge1, edge2 in zip(raw_edges[::-1][1:], raw_edges[::-1][:-1])]
+    if all((dist < 1e-6) for dist in reversed_distances):
+        return raw_edges[::-1]
+
+    # Making things right for first 2 primitives
+    distances = [raw_edges[0].end.point_distance(raw_edges[1].start),
+                 raw_edges[0].start.point_distance(raw_edges[1].start),
+                 raw_edges[0].end.point_distance(raw_edges[1].end),
+                 raw_edges[0].start.point_distance(raw_edges[1].end)]
+    index = distances.index(min(distances))
+    if min(distances) > 1e-3:
+        # Green color : well-placed and well-read
+        ax = raw_edges[0].plot(edge_style=EdgeStyle(color='g'))
+        ax.set_title(f"Step ID: #{step_id}")
+
+        # Red color : can't be connected to green edge
+        raw_edges[1].plot(ax=ax, edge_style=EdgeStyle(color='r'))
+        # Black color : to be placed
+        for re in raw_edges[2:]:
+            re.plot(ax=ax)
+
+        warnings.warn(
+            f"Could not instantiate #{step_id} = {step_name}({arguments})"
+            "because the first 2 edges of contour not following each other.\n"
+            f'Number of edges: {len(raw_edges)}.\n'
+            f'delta_x = {abs(raw_edges[0].start.x - raw_edges[1].end.x)}, '
+            f' {abs(raw_edges[0].end.x - raw_edges[1].end.x)}.\n'
+            f'delta_y = {abs(raw_edges[0].start.y - raw_edges[1].end.y)} ,'
+            f' {abs(raw_edges[0].end.y - raw_edges[1].end.y)}.\n'
+            f'delta_z = {abs(raw_edges[0].start.z - raw_edges[1].end.z)}, '
+            f' {abs(raw_edges[0].end.z - raw_edges[1].end.z)}.\n'
+            f'distance = {min(distances)}')
+        return None
+
+    if index == 0:
+        edges = [raw_edges[0], raw_edges[1]]
+    elif index == 1:
+        edges = [raw_edges[0].reverse(), raw_edges[1]]
+    elif index == 2:
+        edges = [raw_edges[0], raw_edges[1].reverse()]
+    elif index == 3:
+        edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]
+    else:
+        raise NotImplementedError
+
+    # Connecting the next edges
+    last_edge = edges[-1]
+    for i, raw_edge in enumerate(raw_edges[2:]):
+        distances = [raw_edge.start.point_distance(last_edge.end),
+                     raw_edge.end.point_distance(last_edge.end)]
+        index = distances.index(min(distances))
+        if min(distances) > 1e-3:
+            # Green color : well-placed and well-read
+            ax = last_edge.plot(edge_style=EdgeStyle(color='g'))
+            ax.set_title(f"Step ID: #{step_id}")
+
+            for re in raw_edges[:2 + i]:
+                re.plot(ax=ax, edge_style=EdgeStyle(color='g'))
+                re.start.plot(ax=ax, color='g')
+                re.end.plot(ax=ax, color='g')
+            last_edge.end.plot(ax=ax, color='g')
+            # Red color : can't be connected to red dot
+            raw_edge.plot(ax=ax, edge_style=EdgeStyle(color='g'))
+            # Black color : to be placed
+            for re in raw_edges[2 + i + 1:]:
+                re.plot(ax=ax)
+                re.start.plot(ax=ax)
+                re.end.plot(ax=ax)
+
+            warnings.warn(
+                f"Could not instantiate #{step_id} = {step_name}({arguments})"
+                "because some Edges of contour are not following each other.\n"
+                f'Number of edges: {len(raw_edges)}.\n'
+                f'delta_x = {abs(raw_edge.start.x - last_edge.end.x)}, '
+                f' {abs(raw_edge.end.x - last_edge.end.x)}.\n'
+                f'delta_y = {abs(raw_edge.start.y - last_edge.end.y)}, '
+                f' {abs(raw_edge.end.y - last_edge.end.y)}.\n'
+                f'delta_z = {abs(raw_edge.start.z - last_edge.end.z)}, '
+                f' {abs(raw_edge.end.z - last_edge.end.z)}.\n'
+                f'distance = {min(distances)}')
+            return None
+        if index == 0:
+            last_edge = raw_edge
+        elif index == 1:
+            last_edge = raw_edge.reverse()
+
+        edges.append(last_edge)
+    return edges
+
+
 class WireMixin:
     """
     Abstract class for Wire, storing methods and attributes used by many classes in this module.
@@ -4397,94 +4491,7 @@ class Contour3D(ContourMixin, Wire3D):
                 # Case of a circle, ellipse...
                 return raw_edges[0]
             return cls(raw_edges, name=name)
-        reversed_distances = [edge1.start.point_distance(edge2.end)
-                              for edge1, edge2 in zip(raw_edges[::-1][1:], raw_edges[::-1][:-1])]
-        if all((dist < 1e-6) for dist in reversed_distances):
-            return cls(raw_edges[::-1], name=name)
-
-        # Making things right for first 2 primitives
-        distances = [raw_edges[0].end.point_distance(raw_edges[1].start),
-                     raw_edges[0].start.point_distance(raw_edges[1].start),
-                     raw_edges[0].end.point_distance(raw_edges[1].end),
-                     raw_edges[0].start.point_distance(raw_edges[1].end)]
-        index = distances.index(min(distances))
-        if min(distances) > 1e-3:
-            # Green color : well-placed and well-read
-            ax = raw_edges[0].plot(edge_style=EdgeStyle(color='g'))
-            ax.set_title(f"Step ID: #{step_id}")
-
-            # Red color : can't be connected to green edge
-            raw_edges[1].plot(ax=ax, edge_style=EdgeStyle(color='r'))
-            # Black color : to be placed
-            for re in raw_edges[2:]:
-                re.plot(ax=ax)
-
-            warnings.warn(
-                f"Could not instantiate #{step_id} = {step_name}({arguments})"
-                "because the first 2 edges of contour not following each other.\n"
-                f'Number of edges: {len(raw_edges)}.\n'
-                f'delta_x = {abs(raw_edges[0].start.x - raw_edges[1].end.x)}, '
-                f' {abs(raw_edges[0].end.x - raw_edges[1].end.x)}.\n'
-                f'delta_y = {abs(raw_edges[0].start.y - raw_edges[1].end.y)} ,'
-                f' {abs(raw_edges[0].end.y - raw_edges[1].end.y)}.\n'
-                f'delta_z = {abs(raw_edges[0].start.z - raw_edges[1].end.z)}, '
-                f' {abs(raw_edges[0].end.z - raw_edges[1].end.z)}.\n'
-                f'distance = {min(distances)}')
-            return None
-
-        if index == 0:
-            edges = [raw_edges[0], raw_edges[1]]
-        elif index == 1:
-            edges = [raw_edges[0].reverse(), raw_edges[1]]
-        elif index == 2:
-            edges = [raw_edges[0], raw_edges[1].reverse()]
-        elif index == 3:
-            edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]
-        else:
-            raise NotImplementedError
-
-        # Connecting the next edges
-        last_edge = edges[-1]
-        for i, raw_edge in enumerate(raw_edges[2:]):
-            distances = [raw_edge.start.point_distance(last_edge.end),
-                         raw_edge.end.point_distance(last_edge.end)]
-            index = distances.index(min(distances))
-            if min(distances) > 1e-3:
-                # Green color : well-placed and well-read
-                ax = last_edge.plot(edge_style=EdgeStyle(color='g'))
-                ax.set_title(f"Step ID: #{step_id}")
-
-                for re in raw_edges[:2 + i]:
-                    re.plot(ax=ax, edge_style=EdgeStyle(color='g'))
-                    re.start.plot(ax=ax, color='g')
-                    re.end.plot(ax=ax, color='g')
-                last_edge.end.plot(ax=ax, color='g')
-                # Red color : can't be connected to red dot
-                raw_edge.plot(ax=ax, edge_style=EdgeStyle(color='g'))
-                # Black color : to be placed
-                for re in raw_edges[2 + i + 1:]:
-                    re.plot(ax=ax)
-                    re.start.plot(ax=ax)
-                    re.end.plot(ax=ax)
-
-                warnings.warn(
-                    f"Could not instantiate #{step_id} = {step_name}({arguments})"
-                    "because some Edges of contour are not following each other.\n"
-                    f'Number of edges: {len(raw_edges)}.\n'
-                    f'delta_x = {abs(raw_edge.start.x - last_edge.end.x)}, '
-                    f' {abs(raw_edge.end.x - last_edge.end.x)}.\n'
-                    f'delta_y = {abs(raw_edge.start.y - last_edge.end.y)}, '
-                    f' {abs(raw_edge.end.y - last_edge.end.y)}.\n'
-                    f'delta_z = {abs(raw_edge.start.z - last_edge.end.z)}, '
-                    f' {abs(raw_edge.end.z - last_edge.end.z)}.\n'
-                    f'distance = {min(distances)}')
-                return None
-            if index == 0:
-                last_edge = raw_edge
-            elif index == 1:
-                last_edge = raw_edge.reverse()
-
-            edges.append(last_edge)
+        edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         return cls(edges, name=name)
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
