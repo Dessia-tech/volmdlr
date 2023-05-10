@@ -4458,10 +4458,20 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment2d_to_3d(self, linesegment2d):
         """Evaluates the Euclidean form for the parametric line segment."""
-        points = [self.point2d_to_3d(point) for point in linesegment2d.discretization_points(number_points=50)]
+        points = []
+        for point in linesegment2d.discretization_points(number_points=20):
+            point3d = self.point2d_to_3d(point)
+            if not volmdlr.core.point_in_list(point3d, points):
+                points.append(point3d)
+        if len(points) < 2:
+            return None
+        if len(points) == 2:
+            return [volmdlr.edges.LineSegment3D(points[0], points[-1])]
         periodic = points[0].is_close(points[-1], 1e-6)
+        if len(points) < min(self.degree_u, self.degree_v) + 2:
+            return None
         bspline = edges.BSplineCurve3D.from_points_interpolation(
-                points, min(self.degree_u, self.degree_v), periodic=periodic)
+                            points, min(self.degree_u, self.degree_v), periodic=periodic)
         return [bspline.simplify]
 
     def linesegment3d_to_2d(self, linesegment3d):
@@ -4699,8 +4709,13 @@ class BSplineSurface3D(Surface3D):
             return [edges.Arc3D(start, interior, end)]
 
         number_points = len(bspline_curve2d.control_points)
-        points = [self.point2d_to_3d(point)
-                  for point in bspline_curve2d.discretization_points(number_points=number_points)]
+        points = []
+        for point in bspline_curve2d.discretization_points(number_points=number_points):
+            point3d = self.point2d_to_3d(point)
+            if not volmdlr.core.point_in_list(point3d, points):
+                points.append(point3d)
+        if len(points) < bspline_curve2d.degree + 2:
+            return None
         return [edges.BSplineCurve3D.from_points_interpolation(
             points, bspline_curve2d.degree, bspline_curve2d.periodic)]
 
