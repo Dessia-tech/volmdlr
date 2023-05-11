@@ -270,7 +270,7 @@ def arc3d_to_spherical_coordinates_verification(start, end, angle3d, reference_p
     """
     point_after_start = reference_points[0]
     point_before_end = reference_points[1]
-    theta3, _= point_after_start
+    theta3, _ = point_after_start
     start, end = spherical_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end)
     theta1, phi1 = start
     theta2, phi2 = end
