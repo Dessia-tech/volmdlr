@@ -157,7 +157,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             product = object_dict[arguments[-1]]
             name = product[1:-1]
         # ----------------------------------
-        faces = [object_dict[int(face[1:])] for face in arguments[1] if object_dict[int(face[1:])] is not None]
+        faces = [object_dict[int(face[1:])] for face in arguments[1] if object_dict[int(face[1:])]]
         return cls(faces, name=name)
 
     def to_step(self, current_id):
@@ -586,8 +586,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             try:
                 face_mesh = face.triangulation()
             except Exception:
-                warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell faces."
-                              f"Probabaly because topology error in contour2d.")
+                warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
+                              f"{self.name} faces. Probabaly because topology error in contour2d.")
                 continue
             if not face_mesh:
                 face.save_to_file("face_triangulation_none.json")

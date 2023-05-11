@@ -1173,7 +1173,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         primitives2d = []
         for primitive in self.primitives:
             primitive2d = plane3d.point3d_to_2d(primitive)
-            if primitive2d is not None:
+            if primitive2d:
                 primitives2d.append(primitive2d)
         return primitives2d
 
