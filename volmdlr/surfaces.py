@@ -3154,7 +3154,7 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        theta_i, phi_i = self.point3d_to_2d(arc3d.interior)
+        theta_i, _ = self.point3d_to_2d(arc3d.interior)
         theta1, phi1 = start
         theta2, phi2 = end
         point_after_start, point_before_end = self._reference_points(arc3d)
