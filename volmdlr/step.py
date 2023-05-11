@@ -1239,7 +1239,10 @@ class Step(dc.DessiaObject):
                 # Sometimes the bfs search don't instanciate the nodes of a
                 # depth in the right order, leading to error
                 print(key.args[0])
-                instanciate_ids.append(key.args[0])
+                if key.args[0] in assembly_data:
+                    instanciate_ids.extend(assembly_data[key.args[0]])
+                else:
+                    instanciate_ids.append(key.args[0])
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
