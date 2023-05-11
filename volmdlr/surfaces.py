@@ -3568,7 +3568,7 @@ class ExtrusionSurface3D(Surface3D):
         if abs(u) < 1e-7:
             u = 0.0
         if abs(v) < 1e-7:
-            v = 0.
+            v = 0.0
 
         point_at_curve_global = self.edge.point_at_abscissa(u * self.edge.length())
         point_at_curve_local = self.frame.global_to_local_coordinates(point_at_curve_global)
@@ -3590,9 +3590,7 @@ class ExtrusionSurface3D(Surface3D):
         v = z
         point_at_curve_local = volmdlr.Point3D(x, y, 0)
         point_at_curve_global = self.frame.local_to_global_coordinates(point_at_curve_local)
-
         u = self.edge.abscissa(point_at_curve_global) / self.edge.length()
-
         u = min(u, 1.0)
         return volmdlr.Point2D(u, v)
 
@@ -3605,6 +3603,7 @@ class ExtrusionSurface3D(Surface3D):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
+        self.frame.plot(ax=ax, ratio=z)
         for i in range(21):
             step = i / 20. * z
             wire = self.edge.translation(step * self.frame.w)
@@ -3685,11 +3684,10 @@ class ExtrusionSurface3D(Surface3D):
         u2, z2 = linesegment2d.end
         if math.isclose(u1, u2, abs_tol=1e-4):
             return [edges.LineSegment3D(start3d, end3d)]
-        if math.isclose(z1, z2, abs_tol=1e-4):
+        primitive = self.edge.translation(self.direction * (z1 + z2) * 0.5)
+        if math.isclose(z1, z2, abs_tol=1e-6) and primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
             if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-4):
-                primitive = self.edge.translation(self.direction * z1)
                 return [primitive]
-            primitive = self.edge.translation(self.direction * z1)
             primitive = primitive.split_between_two_points(start3d, end3d)
             return [primitive]
         n = 10

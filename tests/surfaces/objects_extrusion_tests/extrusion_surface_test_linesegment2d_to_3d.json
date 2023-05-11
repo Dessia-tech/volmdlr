@@ -1,0 +1,86 @@
+{
+  "name": "",
+  "object_class": "volmdlr.surfaces.ExtrusionSurface3D",
+  "package_version": "0.10.1.dev658+gfad49fd5",
+  "edge": {
+    "name": "",
+    "object_class": "volmdlr.edges.BSplineCurve3D",
+    "package_version": "0.10.1.dev658+gfad49fd5",
+    "degree": 3,
+    "control_points": [
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.29566592546599996,
+        "y": 0.32607633487300003,
+        "z": 0.015365557267999999
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.29881583643200005,
+        "y": 0.325074538044,
+        "z": 0.016450158593199996
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.30210155911700004,
+        "y": 0.324029547692,
+        "z": 0.016999999999999998
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.305432970099,
+        "y": 0.32297002664700003,
+        "z": 0.016999999999999998
+      }
+    ],
+    "knot_multiplicities": [
+      4,
+      4
+    ],
+    "knots": [
+      0.0,
+      1.0
+    ],
+    "weights": [
+      1.0,
+      0.990857067691,
+      0.990857067691,
+      1.0
+    ],
+    "periodic": false
+  },
+  "direction": {
+    "object_class": "volmdlr.Vector3D",
+    "x": -0.3030806968058863,
+    "y": -0.9529648950636421,
+    "z": 0.0
+  },
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.29566592546599996,
+      "y": 0.32607633487300003,
+      "z": 0.015365557267999999
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 0.9081420912236584,
+      "y": -0.28882526442743695,
+      "z": 0.3030806968058863
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.2888252644274369,
+      "y": 0.0918579087763416,
+      "z": 0.9529648950636421
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.3030806968058863,
+      "y": -0.9529648950636421,
+      "z": 6.123233995736766e-17
+    }
+  }
+}
