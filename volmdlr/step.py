@@ -1195,8 +1195,9 @@ class Step(dc.DessiaObject):
             self.connections[id_product_definition].append(node)
             self.functions[id_product_definition].arg.append(f'#{node}')
             if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION" and \
-                    len(self.functions[id_shape_representation].arg) == 4:
-                id_shape = int(self.functions[id_shape_representation].arg[3][1:])
+                    len(self.functions[id_shape_representation].arg) >= 4:
+                # todo: take all the arg starting from index 3 to end ??? needs investigation
+                id_shape = int(self.functions[id_shape_representation].arg[-1][1:])
                 self.connections[id_product_definition].append(id_shape)
                 self.functions[id_product_definition].arg.append(f'#{id_shape}')
             elif self.functions[id_shape_representation].name in STEP_REPRESENTATION_ENTITIES:
@@ -1240,6 +1241,7 @@ class Step(dc.DessiaObject):
                 # depth in the right order, leading to error
                 print(key.args[0])
                 if key.args[0] in assembly_data:
+                    instanciate_ids.append(key.args[0])
                     instanciate_ids.extend(assembly_data[key.args[0]])
                 else:
                     instanciate_ids.append(key.args[0])
