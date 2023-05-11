@@ -1149,7 +1149,7 @@ class BSplineCurve(Edge):
         return u
 
     def split(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
-              tol: float = 1e-5):
+              tol: float = 1e-6):
         """
         Splits of B-spline curve in two pieces using a 2D or 3D point.
 
@@ -1161,11 +1161,11 @@ class BSplineCurve(Edge):
             curve
         :rtype: List[:class:`volmdlr.edges.BSplineCurve`]
         """
-        if point.point_distance(self.start) < tol:
+        if point.is_close(self.start, tol):
             return [None, self.copy()]
-        if point.point_distance(self.end) < tol:
+        if point.is_close(self.end, tol):
             return [self.copy(), None]
-        adim_abscissa = round(self.abscissa(point) / self.length(), 7)
+        adim_abscissa = min(1.0, max(0.0, round(self.abscissa(point) / self.length(), 7)))
         curve1, curve2 = split_curve(self.curve, adim_abscissa)
 
         return [self.__class__.from_geomdl_curve(curve1),

@@ -3882,11 +3882,10 @@ class ExtrusionSurface3D(Surface3D):
         u2, z2 = linesegment2d.end
         if math.isclose(u1, u2, abs_tol=1e-4):
             return [edges.LineSegment3D(start3d, end3d)]
-        if math.isclose(z1, z2, abs_tol=1e-4):
+        primitive = self.edge.translation(self.direction * (z1 + z2) * 0.5)
+        if math.isclose(z1, z2, abs_tol=1e-6) and primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
             if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-4):
-                primitive = self.edge.translation(self.direction * z1)
                 return [primitive]
-            primitive = self.edge.translation(self.direction * z1)
             primitive = primitive.split_between_two_points(start3d, end3d)
             return [primitive]
         n = 10
