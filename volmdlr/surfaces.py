@@ -3202,8 +3202,8 @@ class SphericalSurface3D(PeriodicalSurface):
         half_pi = 0.5 * math.pi
         point_positive_singularity = self.point2d_to_3d(volmdlr.Point2D(0, half_pi))
         point_negative_singularity = self.point2d_to_3d(volmdlr.Point2D(0, -half_pi))
-        positive_singularity = edge.point_belongs(point_positive_singularity, 1e-5)
-        negative_singularity = edge.point_belongs(point_negative_singularity, 1e-5)
+        positive_singularity = edge.point_belongs(point_positive_singularity, 1e-6)
+        negative_singularity = edge.point_belongs(point_negative_singularity, 1e-6)
         if positive_singularity and negative_singularity:
             return [point_positive_singularity, point_negative_singularity]
         if positive_singularity:
@@ -3390,7 +3390,11 @@ class SphericalSurface3D(PeriodicalSurface):
                              "See arc3d_to_2d method for detail.")
         if point_positive_singularity and not arc3d.is_point_edge_extremity(point_positive_singularity):
             split = arc3d.split(point_positive_singularity)
-            primitive0 = self.arc3d_to_2d_any_direction(split[0])[0]
+            try:
+                primitive0 = self.arc3d_to_2d_any_direction(split[0])[0]
+            except Exception:
+                self.save_to_file("arc3d_to_2d_any_direction_surface.json")
+                arc3d.save_to_file("arc3d_to_2d_any_direction_arc3d.json")
             primitive2 = self.arc3d_to_2d_any_direction(split[1])[0]
             primitive1 = edges.LineSegment2D(volmdlr.Point2D(primitive0.end.x, half_pi),
                                              volmdlr.Point2D(primitive2.start.x, half_pi))
@@ -3473,9 +3477,10 @@ class SphericalSurface3D(PeriodicalSurface):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         # TODO: On a spherical surface we can have fullarc3d in any plane
+        start, end = self.arc_start_end_3d_to_2d(fullarc3d)
+        theta1, phi1 = start
+        theta2, phi2 = end
 
-        theta1, phi1 = self.point3d_to_2d(fullarc3d.start)
-        theta2, phi2 = self.point3d_to_2d(fullarc3d.end)
         point_after_start, point_before_end = self._reference_points(fullarc3d)
         theta3, phi3 = point_after_start
         theta4, _ = point_before_end
