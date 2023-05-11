@@ -3687,7 +3687,10 @@ class ExtrusionSurface3D(Surface3D):
         primitive = self.edge.translation(self.direction * (z1 + z2) * 0.5)
         if math.isclose(z1, z2, abs_tol=1e-6) and primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
             if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-4):
-                return [primitive]
+                if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
+                    return [primitive]
+                if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
+                    return [primitive.reverse()]
             primitive = primitive.split_between_two_points(start3d, end3d)
             return [primitive]
         n = 10
@@ -3895,14 +3898,16 @@ class RevolutionSurface3D(PeriodicalSurface):
             theta_i = 0.5 * (theta1 + theta2)
             interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
             return [edges.Arc3D(start3d, interior, end3d)]
-        if math.isclose(theta1, theta2, abs_tol=1e-3):
-            primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
-            if primitive.is_point_edge_extremity(start3d) and \
-                    primitive.is_point_edge_extremity(end3d):
-                return [primitive]
+        primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
+        if math.isclose(theta1, theta2, abs_tol=1e-3) and primitive.point_belongs(start3d) and \
+                primitive.point_belongs(end3d):
+            if math.isclose(abs(abscissa1 - abscissa2), self.wire.length(), abs_tol=1e-4):
+                if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
+                    return [primitive]
+                if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
+                    return [primitive.reverse()]
             primitive = primitive.split_between_two_points(start3d, end3d)
-            if primitive:
-                return [primitive]
+            return [primitive]
         n = 10
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
