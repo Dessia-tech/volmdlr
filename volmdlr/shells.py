@@ -1107,12 +1107,10 @@ class ClosedShell3D(OpenShell3D):
     def reference_shell(self, shell2, face):
         """Reference shell used during bool operations, to help decide if a new divided face should be saved or not."""
         if face in shell2.faces:
-            contour_extract_inside = True
             reference_shell = self
         else:
-            contour_extract_inside = False
             reference_shell = shell2
-        return contour_extract_inside, reference_shell
+        return reference_shell
 
     def set_operations_valid_exterior_faces(self, new_faces: List[volmdlr.faces.Face3D],
                                             valid_faces: List[volmdlr.faces.Face3D],
@@ -1147,8 +1145,8 @@ class ClosedShell3D(OpenShell3D):
         """
         faces = []
         for face in intersecting_faces:
-            contour_extract_inside, reference_shell = self.reference_shell(shell2, face)
-            new_faces = face.set_operations_new_faces(intersecting_combinations, contour_extract_inside)
+            reference_shell = self.reference_shell(shell2, face)
+            new_faces = face.set_operations_new_faces(intersecting_combinations)
             faces = self.set_operations_valid_exterior_faces(new_faces, faces, list_coincident_faces,
                                                              shell2, reference_shell)
         if list_coincident_faces:
@@ -1211,8 +1209,8 @@ class ClosedShell3D(OpenShell3D):
             keep_interior_faces = False
             if face in shell2.faces:
                 keep_interior_faces = True
-            contour_extract_inside, reference_shell = self.reference_shell(shell2, face)
-            new_faces = face.set_operations_new_faces(intersecting_combinations, contour_extract_inside)
+            reference_shell = self.reference_shell(shell2, face)
+            new_faces = face.set_operations_new_faces(intersecting_combinations)
             valid_faces = self.get_subtraction_valid_faces(new_faces, faces, reference_shell,
                                                            shell2, keep_interior_faces)
             faces.extend(valid_faces)
@@ -1253,10 +1251,8 @@ class ClosedShell3D(OpenShell3D):
         """
         faces = []
         for face in intersecting_faces:
-            contour_extract_inside, reference_shell = \
-                self.reference_shell(shell2, face)
-            new_faces = face.set_operations_new_faces(
-                intersecting_combinations, contour_extract_inside)
+            reference_shell = self.reference_shell(shell2, face)
+            new_faces = face.set_operations_new_faces(intersecting_combinations)
             valid_faces = self.valid_intersection_faces(
                 new_faces, faces, reference_shell, shell2)
             faces.extend(valid_faces)
