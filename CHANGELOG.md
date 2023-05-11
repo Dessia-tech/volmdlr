@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: copy
 - LineSegment2D: copy
 - FullArcEllipse3D: split
+- ArcEllipse3D: split, point_at_abscissa
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
 
@@ -65,10 +66,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShel3D: intersection method
 - Fix: plots
 - add some fixes to pydocstyle errors
+- ToroidalSurface3D: fix some parametric operations.
 - Node2D, Node3D: is_close
 - BSplineface3D: linesegment2d_to_3d.
 - OpenShell3D: get_geo_lines (use primitive.is_close)
 - Basis3D: normalize
+- Face3D: add fixes to divide_face
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -85,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShell3D: improve performance for boolean operations
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 - Cylinder: inheritance directly from ClosedShell3D
+- Edges: cache middle_points and unit_direction_vector 
 
 ### Changed
 - better surface3d plots

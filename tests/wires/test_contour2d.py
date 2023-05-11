@@ -192,11 +192,11 @@ class TestContour2D(unittest.TestCase):
         contour3 = vol.primitives[1]
         intersection_contours1 = contour2.intersection_contour_with(contour3, abs_tol=1e-5)
         self.assertTrue(len(intersection_contours1), 1)
-        self.assertAlmostEqual(intersection_contours1[0].length(), 0.1651419895544224, 6)
+        self.assertAlmostEqual(intersection_contours1[0].length(), 0.16514108581676357, 7)
         intersection_contours2 = contour2_unittest.intersection_contour_with(self.contour3, abs_tol=1e-6)
         self.assertTrue(len(intersection_contours1), 2)
         self.assertAlmostEqual(intersection_contours2[0].length(), 6.915893328290323, 6)
-        self.assertAlmostEqual(intersection_contours2[1].length(), 2.440629779494193, 6)
+        self.assertAlmostEqual(intersection_contours2[1].length(), 2.4397442643543243, 6)
 
 
 if __name__ == '__main__':

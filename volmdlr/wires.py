@@ -377,7 +377,7 @@ class WireMixin:
         len_sorted_points = len(sorted_points)
         for i, (point1, point2) in enumerate(
                 zip(sorted_points, sorted_points[1:] + [sorted_points[0]])):
-            if i == len_sorted_points -1:
+            if i == len_sorted_points - 1:
                 if self_start_equal_to_end:
                     split_wires.extend(self.__class__.extract(self, point1, point2, False))
             else:
@@ -569,7 +569,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         offset_primitives = []
         infinite_primitives = []
         offset_intersections = []
-        # ax = self.plot()
         for primitive in self.primitives:
             infinite_primitive = primitive.infinite_primitive(offset)
             if infinite_primitive is not None:
