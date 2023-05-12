@@ -4167,7 +4167,7 @@ class BSplineSurface3D(Surface3D):
     :type name: str
     """
     face_class = "BSplineFace3D"
-    _non_serializable_attributes = ["surface", "curves"]
+    _non_serializable_attributes = ["surface", "curves", "control_points_table"]
 
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
