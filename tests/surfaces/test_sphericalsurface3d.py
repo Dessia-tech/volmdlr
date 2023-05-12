@@ -33,6 +33,15 @@ class TestSphericalSurface3D(unittest.TestCase):
         self.assertTrue(contour2d.is_ordered(1e-2))
         self.assertAlmostEqual(contour2d.area(), 1.7779412219307336, 2)
 
+        surface = surfaces.SphericalSurface3D.load_from_file(
+            "surfaces/objects_spherical_tests/contour3d_to_2d_surface_bspline_with_singularity.json")
+        contour = wires.Contour3D.load_from_file(
+            "surfaces/objects_spherical_tests/contour3d_to_2d_contour_bspline_with_singularity.json")
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertEqual(len(contour2d.primitives), 4)
+        self.assertTrue(contour2d.is_ordered(1e-2))
+        self.assertAlmostEqual(contour2d.area(), 1.1836145679685492, 2)
+
         contour_left_side = wires.Contour3D.load_from_file("surfaces/objects_spherical_tests/contour_left_side.json")
         test = self.surface3d.contour3d_to_2d(contour_left_side)
         theta_min, theta_max, _, _ = test.bounding_rectangle.bounds()
