@@ -1,6 +1,7 @@
 import unittest
 
 from volmdlr.wires import Contour3D
+from volmdlr.step import Step
 
 
 class TestContour3D(unittest.TestCase):
@@ -30,6 +31,11 @@ class TestContour3D(unittest.TestCase):
         contour2_sharing_primitives = Contour3D.load_from_file('wires/contour3d_sharing_primitives2.json')
 
         self.assertTrue(contour1_sharing_primitives.is_sharing_primitives_with(contour2_sharing_primitives))
+
+    def test_from_step(self):
+        step = Step.from_file(filepath="wires/sphere_with_singularity.step")
+        model = step.to_volume_model()
+        self.assertTrue(model)
 
 
 if __name__ == '__main__':

@@ -68,10 +68,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add some fixes to pydocstyle errors
 - ToroidalSurface3D: fix some parametric operations.
 - Node2D, Node3D: is_close
+- SphericalSurface3D: enhance arc3d_to_2d and bsplinecurve3d_to_2d
 - BSplineface3D: linesegment2d_to_3d.
 - OpenShell3D: get_geo_lines (use primitive.is_close)
 - Basis3D: normalize
 - Face3D: add fixes to divide_face
+
 
 ### Refactor
 - Contour2D: cut_by_wire
