@@ -3159,7 +3159,7 @@ class SphericalSurface3D(PeriodicalSurface):
         if self.frame.w.is_colinear_to(arc.normal, abs_tol=1e-4):
             return True
         # Check if curve is a latitude curve (theta is constant)
-        if self.frame.w.is_perpendicular_to(arc.normal, abs_tol=1e-4) and arc.center.is_close(self.frame.origin):
+        if self.frame.w.is_perpendicular_to(arc.normal, abs_tol=1e-4) and arc.center.is_close(self.frame.origin, 1e-4):
             return True
         return False
 
@@ -3314,6 +3314,25 @@ class SphericalSurface3D(PeriodicalSurface):
 
         return direction_line.line_intersections(line_negative_singularity)[0]
 
+    def is_point2d_on_sphere_singularity(self, point2d, tol=1e-5):
+        """Verifies if point is on the spherical singularity point on parametric domain."""
+        half_pi = 0.5 * math.pi
+        point = self.point2d_to_3d(point2d)
+        point_positive_singularity = self.point2d_to_3d(volmdlr.Point2D(0, half_pi))
+        point_negative_singularity = self.point2d_to_3d(volmdlr.Point2D(0, -half_pi))
+        if point.is_close(point_positive_singularity, tol) or point.is_close(point_negative_singularity, tol):
+            return True
+        return False
+
+    def is_point3d_on_sphere_singularity(self, point3d):
+        """Verifies if point is on the spherical singularity point on parametric domain."""
+        half_pi = 0.5 * math.pi
+        point_positive_singularity = self.point2d_to_3d(volmdlr.Point2D(0, half_pi))
+        point_negative_singularity = self.point2d_to_3d(volmdlr.Point2D(0, -half_pi))
+        if point3d.is_close(point_positive_singularity) or point3d.is_close(point_negative_singularity):
+            return True
+        return False
+
     def find_edge_start_end_undefined_parametric_points(self, edge3d, points, points3d):
         """
         Helper function.
@@ -3321,8 +3340,7 @@ class SphericalSurface3D(PeriodicalSurface):
         Uses local discretization and line intersection with the tangent line at the point just before the undefined
         point on the BREP of the 3D edge to find the real value of theta on the sphere parametric domain.
         """
-        half_pi = 0.5 * math.pi
-        if math.isclose(abs(points[0].y), half_pi, abs_tol=1e-3):
+        if self.is_point3d_on_sphere_singularity(points3d[0]):
             distance = points3d[0].point_distance(points3d[1])
             maximum_linear_distance_reference_point = 1e-5
             if distance < maximum_linear_distance_reference_point:
@@ -3346,7 +3364,7 @@ class SphericalSurface3D(PeriodicalSurface):
             points[0] = self.fix_start_end_singularity_point_at_parametric_domain(edge,
                                                                                   reference_point=temp_points[1],
                                                                                   point_at_singularity=points[0])
-        if math.isclose(abs(points[-1].y), half_pi, abs_tol=1e-3):
+        if self.is_point3d_on_sphere_singularity(points3d[-1]):
             distance = points3d[-2].point_distance(points3d[-1])
             maximum_linear_distance_reference_point = 1e-5
             if distance < maximum_linear_distance_reference_point:
@@ -3379,7 +3397,10 @@ class SphericalSurface3D(PeriodicalSurface):
         singularity_points = self.edge_passes_on_singularity_point(arc3d)
         half_pi = 0.5 * math.pi # this variable avoid doing this multiplication several times (performance)
         point_positive_singularity, point_negative_singularity = singularity_points
-        if point_negative_singularity and point_negative_singularity:
+
+        if point_positive_singularity and point_negative_singularity:
+            self.save_to_file("arc3d_with_singularity_surface.json")
+            arc3d.save_to_file("arc3d_with_singularity_arc3d.json")
             raise ValueError("Impossible. This case should be treated by arc3d_to_2d_with_singularity method."
                              "See arc3d_to_2d method for detail.")
         if point_positive_singularity and not arc3d.is_point_edge_extremity(point_positive_singularity):
@@ -3562,14 +3583,14 @@ class SphericalSurface3D(PeriodicalSurface):
                 if primitives2d[i].end == primitives2d[i - 1].end and \
                         primitives2d[i].length() == volmdlr.TWO_PI:
                     primitives2d[i] = primitives2d[i].reverse()
-                elif math.isclose(abs(previous_primitive.end.y), 0.5 * math.pi, abs_tol=1e-3):
+                elif self.is_point2d_on_sphere_singularity(previous_primitive.end, 1e-5):
                     primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                name="construction"))
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
-            elif math.isclose(abs(primitives2d[i].start.y), 0.5 * math.pi, abs_tol=1e-3) and \
-                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-3) and \
-                    math.isclose(primitives2d[i].start.x, previous_primitive.start.x, abs_tol=1e-3):
+            elif self.is_point2d_on_sphere_singularity(primitives2d[i].start, 1e-5) and \
+                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-2) and \
+                    math.isclose(primitives2d[i].start.x, previous_primitive.start.x, abs_tol=1e-2):
 
                 if primitives2d[i + 1].end.x < primitives2d[i].end.x:
                     theta_offset = volmdlr.TWO_PI
