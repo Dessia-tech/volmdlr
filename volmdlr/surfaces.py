@@ -3135,9 +3135,9 @@ class SphericalSurface3D(PeriodicalSurface):
 
         # Transform the contour's primitives to parametric domain
         for primitive3d in contour3d.primitives:
-            method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
+            method_name = f'{primitive3d.simplify.__class__.__name__.lower()}_to_2d'
             if hasattr(self, method_name):
-                primitives = getattr(self, method_name)(primitive3d)
+                primitives = getattr(self, method_name)(primitive3d.simplify)
 
                 if primitives is None:
                     continue
@@ -3174,7 +3174,7 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        theta_i, phi_i = self.point3d_to_2d(arc3d.interior)
+        theta_i, _ = self.point3d_to_2d(arc3d.interior)
         theta1, phi1 = start
         theta2, phi2 = end
         point_after_start, point_before_end = self._reference_points(arc3d)
@@ -3404,8 +3404,7 @@ class SphericalSurface3D(PeriodicalSurface):
         half_pi = 0.5 * math.pi # this variable avoid doing this multiplication several times (performance)
         point_positive_singularity, point_negative_singularity = singularity_points
         if point_positive_singularity and point_negative_singularity:
-            self.save_to_file("arc3d_with_singularity_surface.json")
-            arc3d.save_to_file("arc3d_with_singularity_arc3d.json")
+
             raise ValueError("Impossible. This case should be treated by arc3d_to_2d_with_singularity method."
                              "See arc3d_to_2d method for detail.")
         if point_positive_singularity and not arc3d.is_point_edge_extremity(point_positive_singularity):
@@ -3474,6 +3473,9 @@ class SphericalSurface3D(PeriodicalSurface):
                                                                periodic=bspline_curve3d.periodic).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
+        """
+        Converts a BREP BSpline curve 2D onto a 3D primitive on the surface.
+        """
         # TODO: this is incomplete, a bspline_curve2d can be also a bspline_curve3d
         i = round(0.5 * len(bspline_curve2d.points))
         start = self.point2d_to_3d(bspline_curve2d.points[0])
@@ -3491,6 +3493,16 @@ class SphericalSurface3D(PeriodicalSurface):
 
         return [edges.BSplineCurve3D.from_points_interpolation(points3d, degree=bspline_curve2d.degree,
                                                                periodic=bspline_curve2d.periodic)]
+
+    def arc2d_to_3d(self, arc2d):
+        """
+        Converts a BREP arc 2D onto a 3D primitive on the surface.
+        """
+        n = 10
+        degree = 2
+        points = [self.point2d_to_3d(point2d) for point2d in arc2d.discretization_points(number_points=n)]
+        periodic = points[0].is_close(points[-1])
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, periodic).simplify]
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
@@ -3624,7 +3636,7 @@ class SphericalSurface3D(PeriodicalSurface):
             last_end_3d = self.point2d_to_3d(last_end)
             first_start_3d = self.point2d_to_3d(first_start)
             if last_end_3d.is_close(first_start_3d, 1e-6) and \
-                    not math.isclose(abs(last_end.y), 0.5 * math.pi, abs_tol=1e-5):
+                    not self.is_point2d_on_sphere_singularity(last_end):
                 if first_start.x > last_end.x:
                     half_pi = -0.5 * math.pi
                 else:

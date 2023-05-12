@@ -232,8 +232,8 @@ def spherical_repair_start_end_angle_periodicity(start, end, point_after_start, 
     """
     theta1, phi1 = start
     theta2, phi2 = end
-    theta3, phi3 = point_after_start
-    theta4, phi4 = point_before_end
+    theta3, _ = point_after_start
+    theta4, _ = point_before_end
     # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
     if abs(theta1) == math.pi or abs(theta1) == 0.5 * math.pi:
         theta1 = repair_start_end_angle_periodicity(theta1, theta3)
@@ -270,7 +270,7 @@ def arc3d_to_spherical_coordinates_verification(start, end, angle3d, reference_p
     """
     point_after_start = reference_points[0]
     point_before_end = reference_points[1]
-    theta3, phi3 = point_after_start
+    theta3, _ = point_after_start
     start, end = spherical_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end)
     theta1, phi1 = start
     theta2, phi2 = end
