@@ -215,7 +215,7 @@ class Face3D(volmdlr.core.Primitive3D):
             #         outer_contour3d.save_to_file("contour2d_healing_bug_contour.json")
             #     ax = outer_contour2d.plot()
             #     ax.set_aspect("auto")
-        if not outer_contour2d:
+        if (not outer_contour2d) or (not outer_contour2d.primitives):
             # onlyfiles = next(os.walk("none/surfaces"))[2]  # directory is your directory path as string
             # i = len(onlyfiles)
             # surface.save_to_file(f"none/surfaces/none_contour3d_to_2d_surface_{i}.json")
