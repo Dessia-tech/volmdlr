@@ -4520,7 +4520,12 @@ class BSplineSurface3D(Surface3D):
             return [volmdlr.edges.LineSegment3D(points[0], points[-1])]
         periodic = points[0].is_close(points[-1], 1e-6)
         if len(points) < min(self.degree_u, self.degree_v) + 2:
-            return None
+            try:
+                bspline = edges.BSplineCurve3D.from_points_interpolation(
+                    points, 2, periodic=periodic)
+                return bspline
+            except Exception:
+                return None
         bspline = edges.BSplineCurve3D.from_points_interpolation(
                             points, min(self.degree_u, self.degree_v), periodic=periodic)
         return [bspline.simplify]

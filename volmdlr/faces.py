@@ -214,6 +214,10 @@ class Face3D(volmdlr.core.Primitive3D):
             #         outer_contour3d.save_to_file("contour2d_healing_bug_contour.json")
             #     ax = outer_contour2d.plot()
             #     ax.set_aspect("auto")
+        if not outer_contour2d:
+            surface.save_to_file("none_contour3d_to_2d_surface.json")
+            contours3d[0].save_to_file("none_contour3d_to_2d_contour.json")
+            return None
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
         face = cls(surface, surface2d=surface2d, name=name)
