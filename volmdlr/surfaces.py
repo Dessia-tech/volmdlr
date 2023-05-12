@@ -4083,8 +4083,8 @@ class RevolutionSurface3D(PeriodicalSurface):
                     edges.LineSegment2D(point3, point4, name="parametric.arc")
                     ]
 
-        else:
-            raise NotImplementedError
+
+        raise NotImplementedError
 
     def linesegment2d_to_3d(self, linesegment2d):
         """
@@ -4518,12 +4518,10 @@ class BSplineSurface3D(Surface3D):
             return [volmdlr.edges.LineSegment3D(points[0], points[-1])]
         periodic = points[0].is_close(points[-1], 1e-6)
         if len(points) < min(self.degree_u, self.degree_v) + 2:
-            try:
-                bspline = edges.BSplineCurve3D.from_points_interpolation(
-                    points, 2, periodic=periodic)
-                return bspline
-            except Exception:
-                return None
+            bspline = edges.BSplineCurve3D.from_points_interpolation(
+                points, 2, periodic=periodic)
+            return [bspline]
+
         bspline = edges.BSplineCurve3D.from_points_interpolation(
                             points, min(self.degree_u, self.degree_v), periodic=periodic)
         return [bspline.simplify]
