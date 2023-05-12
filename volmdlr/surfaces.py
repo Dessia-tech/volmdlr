@@ -3399,8 +3399,6 @@ class SphericalSurface3D(PeriodicalSurface):
         point_positive_singularity, point_negative_singularity = singularity_points
 
         if point_positive_singularity and point_negative_singularity:
-            self.save_to_file("arc3d_with_singularity_surface.json")
-            arc3d.save_to_file("arc3d_with_singularity_arc3d.json")
             raise ValueError("Impossible. This case should be treated by arc3d_to_2d_with_singularity method."
                              "See arc3d_to_2d method for detail.")
         if point_positive_singularity and not arc3d.is_point_edge_extremity(point_positive_singularity):
