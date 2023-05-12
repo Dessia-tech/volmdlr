@@ -24,6 +24,7 @@ import volmdlr.grid
 import volmdlr.utils.parametric as vm_parametric
 from volmdlr import surfaces
 import volmdlr.wires
+import os
 c = 0
 
 class Face3D(volmdlr.core.Primitive3D):
@@ -214,9 +215,11 @@ class Face3D(volmdlr.core.Primitive3D):
             #         outer_contour3d.save_to_file("contour2d_healing_bug_contour.json")
             #     ax = outer_contour2d.plot()
             #     ax.set_aspect("auto")
-        if not outer_contour2d:
-            surface.save_to_file("none_contour3d_to_2d_surface.json")
-            contours3d[0].save_to_file("none_contour3d_to_2d_contour.json")
+        if not outer_contour2d.primitives:
+            onlyfiles = next(os.walk("none/surfaces"))[2]  # directory is your directory path as string
+            i = len(onlyfiles)
+            surface.save_to_file(f"none/surfaces/none_contour3d_to_2d_surface_{i}.json")
+            contours3d[0].save_to_file(f"none/contours/none_contour3d_to_2d_contour{i}.json")
             return None
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
