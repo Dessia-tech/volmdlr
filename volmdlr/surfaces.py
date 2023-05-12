@@ -4541,7 +4541,7 @@ class BSplineSurface3D(Surface3D):
             try:
                 bspline = edges.BSplineCurve3D.from_points_interpolation(
                     points, 2, periodic=periodic)
-                return bspline
+                return [bspline.simplify]
             except Exception:
                 return None
         bspline = edges.BSplineCurve3D.from_points_interpolation(
