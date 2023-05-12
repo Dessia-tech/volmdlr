@@ -216,10 +216,10 @@ class Face3D(volmdlr.core.Primitive3D):
             #     ax = outer_contour2d.plot()
             #     ax.set_aspect("auto")
         if not outer_contour2d.primitives:
-            onlyfiles = next(os.walk("none/surfaces"))[2]  # directory is your directory path as string
-            i = len(onlyfiles)
-            surface.save_to_file(f"none/surfaces/none_contour3d_to_2d_surface_{i}.json")
-            contours3d[0].save_to_file(f"none/contours/none_contour3d_to_2d_contour{i}.json")
+            # onlyfiles = next(os.walk("none/surfaces"))[2]  # directory is your directory path as string
+            # i = len(onlyfiles)
+            # surface.save_to_file(f"none/surfaces/none_contour3d_to_2d_surface_{i}.json")
+            # contours3d[0].save_to_file(f"none/contours/none_contour3d_to_2d_contour{i}.json")
             return None
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
