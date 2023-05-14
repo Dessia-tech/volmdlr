@@ -96,6 +96,8 @@ class DisplayMesh(dc.DessiaObject):
         if len(meshes) == 1:
             return cls(meshes[0].points, meshes[0].triangles)
         for mesh in meshes:
+            if not mesh:
+                continue
             for point in mesh.points:
                 if point not in point_index:
                     point_index[point] = i_points
@@ -104,6 +106,8 @@ class DisplayMesh(dc.DessiaObject):
 
         triangles = []
         for mesh in meshes:
+            if not mesh:
+                continue
             for vertex1, vertex2, vertex3 in mesh.triangles:
                 point1 = mesh.points[vertex1]
                 point2 = mesh.points[vertex2]
