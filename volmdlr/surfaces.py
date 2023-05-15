@@ -3149,13 +3149,10 @@ class SphericalSurface3D(PeriodicalSurface):
             else:
                 raise NotImplementedError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
-        # Fix contour
-        if self.x_periodicity or self.y_periodicity:
-            try:
-                primitives2d = self.repair_primitives_periodicity(primitives2d)
-            except Exception:
-                self.save_to_file("spherical_surface_arc3d_to_2d.json")
-                contour3d.save_to_file("spherical_surface_arc3d_to_2d_contour3d.json")
+        contour2d = wires.Contour2D(primitives2d)
+        if contour2d.is_ordered(1e-2):
+            return contour2d
+        primitives2d = self.repair_primitives_periodicity(primitives2d)
         return wires.Contour2D(primitives2d)
 
     def is_lat_long_curve(self, arc):
