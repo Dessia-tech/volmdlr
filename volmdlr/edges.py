@@ -967,7 +967,7 @@ class BSplineCurve(Edge):
                 try_fullarc = fullarc_class_.from_3_points(self.points[0], self.points[int(0.5 * n)],
                                                            self.points[int(0.75 * n)])
 
-                if all(try_fullarc.point_belongs(point, 1e-5) for point in self.points):
+                if all(try_fullarc.point_belongs(point, 1e-6) for point in self.points):
                     self._simplified = try_fullarc
                     return try_fullarc
             else:
