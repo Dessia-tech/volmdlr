@@ -4549,7 +4549,7 @@ class BSplineSurface3D(Surface3D):
         if len(points) == 2:
             return [volmdlr.edges.LineSegment3D(points[0], points[-1])]
         periodic = points[0].is_close(points[-1], 1e-6)
-        if len(points) < min(self.degree_u, self.degree_v) + 2:
+        if len(points) < min(self.degree_u, self.degree_v) + 1:
             bspline = edges.BSplineCurve3D.from_points_interpolation(
                 points, 2, periodic=periodic)
             return [bspline]
@@ -4797,7 +4797,7 @@ class BSplineSurface3D(Surface3D):
             point3d = self.point2d_to_3d(point)
             if not volmdlr.core.point_in_list(point3d, points):
                 points.append(point3d)
-        if len(points) < bspline_curve2d.degree + 2:
+        if len(points) < bspline_curve2d.degree + 1:
             return None
         return [edges.BSplineCurve3D.from_points_interpolation(
             points, bspline_curve2d.degree, bspline_curve2d.periodic)]
