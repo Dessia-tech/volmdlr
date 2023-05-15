@@ -24,9 +24,6 @@ import volmdlr.utils.parametric as vm_parametric
 from volmdlr.core import EdgeStyle
 from volmdlr.core import point_in_list
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
-import traceback
-
-c = 0
 
 
 def knots_vector_inv(knots_vector):

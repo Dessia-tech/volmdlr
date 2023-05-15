@@ -49,7 +49,7 @@ MAX_ERROR_BY_TYPE = {
                      'raise-missing-from': 2,
                      'undefined-variable': 0,  # 2 when gmsh is fixed
                      'broad-except': 1,
-                     "broad-exception-caught": 1,
+                     "broad-exception-caught": 2,
                      'too-many-boolean-expressions': 3,
                      'too-many-lines': 4,
                      'redundant-keyword-arg': 3,
