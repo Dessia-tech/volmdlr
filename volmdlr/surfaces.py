@@ -3517,9 +3517,6 @@ class SphericalSurface3D(PeriodicalSurface):
                 point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi2)
             elif theta1 < theta3:
                 point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
-            else:
-                self.save_to_file("fullarc3d_to_2d_sphericalsurface.json")
-                fullarc3d.save_to_file("fullarc3d_to_2d_sphericalsurface_fullarc.json")
             return [edges.LineSegment2D(point1, point2)]
 
         if self.frame.w.is_perpendicular_to(fullarc3d.normal, abs_tol=1e-4):
