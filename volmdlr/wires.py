@@ -1878,7 +1878,7 @@ class Contour2D(ContourMixin, Wire2D):
                     trigo = -1
                 for edge in self.primitives:
                     area += trigo * edge.straight_line_area()
-                    self._area = abs(area)
+                self._area = abs(area)
             else:
                 polygon = self.to_polygon(angle_resolution=50)
                 self._area = polygon.triangulation().area()
