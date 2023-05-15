@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour3D: from_step removes repeated edges from primitives list
 - Face3D: add fixes to divide_face
 - ExtrusionSurface3D: linesegment2d_to_3d.
+- utils.parametric: fix contour2d_healing
 
 
 ### Refactor
