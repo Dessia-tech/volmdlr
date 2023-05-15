@@ -1,4 +1,5 @@
 """volmdlr shells module."""
+import traceback
 import warnings
 from itertools import chain
 from typing import List, Tuple
@@ -586,9 +587,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             try:
                 face_mesh = face.triangulation()
 
-            except Exception as error:
+            except Exception:
                 warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
                               f"{self.name} faces. Probabaly because topology error in contour2d.")
+                print(traceback.format_exc())
                 continue
             if not face_mesh:
                 face.save_to_file("face_triangulation_none.json")

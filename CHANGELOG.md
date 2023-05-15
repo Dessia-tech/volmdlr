@@ -33,17 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mesh: TetrahedralElementQuadratic 
 - GmshParser: define_quadratic_tetrahedron_element_mesh
 - GmshParser: to_vtk (consider quadratic tetrahedron element)
-<<<<<<< HEAD
-=======
 - VolumeModel: to_msh (consider both order 1 and 2)
->>>>>>> step_reader_renault
 - Assembly: define a volmdlr Assembly object.
 - Edge: direction_independent_is_close
 - Arcellipse2D, 3D: complementary, translation
 - Arcellipse2D, 3D: complementary
-<<<<<<< HEAD
-- 
-=======
 - Face3D: is_linesegment_crossing
 - BSplineFace3D: linesegment_intersections
 - Assembly: define a volmdlr Assembly object.
@@ -53,8 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D: split, point_at_abscissa
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
-
->>>>>>> step_reader_renault
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
