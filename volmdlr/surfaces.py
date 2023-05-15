@@ -3410,11 +3410,7 @@ class SphericalSurface3D(PeriodicalSurface):
                              "See arc3d_to_2d method for detail.")
         if point_positive_singularity and not arc3d.is_point_edge_extremity(point_positive_singularity):
             split = arc3d.split(point_positive_singularity)
-            try:
-                primitive0 = self.arc3d_to_2d_any_direction(split[0])[0]
-            except Exception:
-                self.save_to_file("arc3d_to_2d_any_direction_surface.json")
-                arc3d.save_to_file("arc3d_to_2d_any_direction_arc3d.json")
+            primitive0 = self.arc3d_to_2d_any_direction(split[0])[0]
             primitive2 = self.arc3d_to_2d_any_direction(split[1])[0]
             primitive1 = edges.LineSegment2D(volmdlr.Point2D(primitive0.end.x, half_pi),
                                              volmdlr.Point2D(primitive2.start.x, half_pi))

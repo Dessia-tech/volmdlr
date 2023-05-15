@@ -32,7 +32,6 @@ import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core_compiled import polygon_point_belongs
 from volmdlr.core import EdgeStyle
-import os
 
 def argmax(list_of_numbers):
     """
