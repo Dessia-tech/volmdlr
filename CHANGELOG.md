@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour3D: from_step removes repeated edges from primitives list
 - Face3D: add fixes to divide_face
 - ExtrusionSurface3D: linesegment2d_to_3d.
+- BSplineSurface3D: ban useless attr in serialization 
 
 
 ### Refactor
@@ -98,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
+- remove useless attribute in Bspline serialization
 
 ### Unittests
 - Arc2D: test_arc_intersections
