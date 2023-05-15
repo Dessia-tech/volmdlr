@@ -6,6 +6,7 @@ from typing import List, Union
 
 import matplotlib.pyplot as plt
 import numpy as npy
+import traceback
 import triangle as triangle_lib
 from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
@@ -920,8 +921,7 @@ class Surface3D(DessiaObject):
                     if primitives is None:
                         continue
                     primitives3d.extend(primitives)
-                except AttributeError as error:
-                    print(error)
+                except AttributeError:
                     print(traceback.format_exc())
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
                           f'with {primitive2d.__class__.__name__}')
