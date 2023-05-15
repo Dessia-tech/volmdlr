@@ -74,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basis3D: normalize
 - Face3D: add fixes to divide_face
 - ExtrusionSurface3D: linesegment2d_to_3d.
+- BSplineSurface3D: ban useless attr in serialization 
 
 
 ### Refactor
