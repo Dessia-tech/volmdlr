@@ -17,16 +17,7 @@ class TestRevolutionSurface3D(unittest.TestCase):
     wire = vmw.Wire3D([linesegment, arc])
     axis_point = volmdlr.O3D
     axis = volmdlr.Z3D
-
-    def test_init(self):
-
-        surface = surfaces.RevolutionSurface3D(self.wire, self.axis_point, self.axis)
-
-        self.assertEqual(surface.x_periodicity, volmdlr.TWO_PI)
-        self.assertEqual(surface.y_periodicity, None)
-        self.assertTrue(surface.frame.origin.is_close(self.axis_point))
-        self.assertTrue(surface.axis_point.is_close(self.axis_point))
-        self.assertTrue(surface.axis.is_close(self.axis))
+    surface = surfaces.RevolutionSurface3D(wire, axis_point, axis)
 
     def test_point2d_to_3d(self):
         surface = surfaces.RevolutionSurface3D(self.wire, self.axis_point, self.axis)
@@ -54,21 +45,63 @@ class TestRevolutionSurface3D(unittest.TestCase):
 
     def arc3d_to_2d(self):
         surface = surfaces.RevolutionSurface3D.load_from_file(
-            "faces/objects_revolution_tests/revolution_surface_bug_0.json")
-        contour = vmw.Contour3D.load_from_file("faces/objects_revolution_tests/revolution_contour_bug_0.json")
+            "surfaces/objects_revolution_tests/revolution_surface_bug_0.json")
+        contour = vmw.Contour3D.load_from_file("surfaces/objects_revolution_tests/revolution_contour_bug_0.json")
         arc = contour.primitives[3]
         linesegment2d = surface.arc3d_to_2d(arc)[0]
         self.assertTrue(linesegment2d.start.is_close(volmdlr.Point2D(-2.6665730021726306, 0.0003141532401719152)))
         self.assertTrue(linesegment2d.end.is_close(volmdlr.Point2D(-2.6665730021726324, 0)))
 
         surface = surfaces.RevolutionSurface3D.load_from_file(
-            "faces/objects_revolution_tests/revolution_surface_bug_1.json")
-        contour = vmw.Contour3D.load_from_file("faces/objects_revolution_tests/revolution_contour_bug_1.json")
+            "surfaces/objects_revolution_tests/revolution_surface_bug_1.json")
+        contour = vmw.Contour3D.load_from_file("surfaces/objects_revolution_tests/revolution_contour_bug_1.json")
         arc = contour.primitives[3]
         linesegment2d = surface.arc3d_to_2d(arc)[0]
         self.assertTrue(linesegment2d.start.is_close(volmdlr.Point2D(1.0582040468439544, 0.0)))
         self.assertTrue(linesegment2d.end.is_close(volmdlr.Point2D(6.0956438652626925, 0.0)))
 
+    def test_frame_mapping(self):
+        surface = self.surface
+        new_frame = volmdlr.Frame3D(volmdlr.Point3D(0, 1, 0), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
+        new_surface = surface.frame_mapping(new_frame, "old")
+        self.assertEqual(new_surface.wire.primitives[0].start.y, 1)
+        self.assertTrue(new_surface.frame.origin.is_close(volmdlr.Point3D(0, 1, 0)))
+
+    def test_simplify(self):
+        rev1 = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/revolutionsurface_simplify_spherical.json")
+        rev2 = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/revolutionsurface_simplify_conical.json")
+        rev3 = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/revolutionsurface_simplify_cylindrical.json")
+
+        sphere = rev1.simplify()
+        self.assertTrue(isinstance(sphere, surfaces.SphericalSurface3D))
+
+        cone = rev2.simplify()
+        self.assertTrue(isinstance(cone, surfaces.ConicalSurface3D))
+
+        cylinder = rev3.simplify()
+        self.assertTrue(isinstance(cylinder, surfaces.CylindricalSurface3D))
+
+    def test_linesegment2d_to_3d(self):
+        surface = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/revolutionsurface_linesegment2d_to_3d.json")
+        linesegment1 = vme.LineSegment2D.load_from_file("surfaces/objects_revolution_tests/linesegment2d_arc3d.json")
+        arc = surface.linesegment2d_to_3d(linesegment1)[0]
+        self.assertAlmostEqual(arc.radius, 0.02404221842799788)
+
+        linesegment2 = vme.LineSegment2D.load_from_file(
+            "surfaces/objects_revolution_tests/linesegment2d_rotated_primitive.json")
+        arc = surface.linesegment2d_to_3d(linesegment2)[0]
+        self.assertAlmostEqual(arc.radius, 0.022500000035448893)
+        self.assertAlmostEqual(arc.angle, 0.7195087615152496)
+
+        linesegment3 = vme.LineSegment2D.load_from_file(
+            "surfaces/objects_revolution_tests/linesegment2d_split_primitive.json")
+        arc = surface.linesegment2d_to_3d(linesegment3)[0]
+        self.assertAlmostEqual(arc.radius, 0.022500000035448893)
+        self.assertAlmostEqual(arc.angle, 0.15581712793343738)
 
 
 if __name__ == '__main__':

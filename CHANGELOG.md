@@ -33,10 +33,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mesh: TetrahedralElementQuadratic 
 - GmshParser: define_quadratic_tetrahedron_element_mesh
 - GmshParser: to_vtk (consider quadratic tetrahedron element)
+<<<<<<< HEAD
+=======
+- VolumeModel: to_msh (consider both order 1 and 2)
+>>>>>>> step_reader_renault
 - Assembly: define a volmdlr Assembly object.
 - Edge: direction_independent_is_close
+- Arcellipse2D, 3D: complementary, translation
 - Arcellipse2D, 3D: complementary
+<<<<<<< HEAD
 - 
+=======
+- Face3D: is_linesegment_crossing
+- BSplineFace3D: linesegment_intersections
+- Assembly: define a volmdlr Assembly object.
+- Contour2D: copy
+- LineSegment2D: copy
+- FullArcEllipse3D: split
+- ArcEllipse3D: split, point_at_abscissa
+- Vector: is_perpendicular_to
+- babylonjs: add nested meshes
+
+>>>>>>> step_reader_renault
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -49,12 +67,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: take into account oppened contour while using face_from_contours3d
 - BsplineCurve: simplify
 - Dessiaobject inheritance up-to-date
-- Edge: unit_direction_vector, unit_normal_vector
+- Edge: unit_direction_vector, unit_normal_vector, split_between_two_points
 - VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
 - RevolutionSurface: fix some parametric operations.
 - ClosedShel3D: intersection method
 - Fix: plots
 - add some fixes to pydocstyle errors
+- ToroidalSurface3D: fix some parametric operations.
+- Node2D, Node3D: is_close
+- SphericalSurface3D: enhance arc3d_to_2d and bsplinecurve3d_to_2d.
+- BSplineface3D: linesegment2d_to_3d.
+- OpenShell3D: get_geo_lines (use primitive.is_close)
+- Basis3D: normalize
+- Contour3D: from_step removes repeated edges from primitives list
+- Face3D: add fixes to divide_face
+- ExtrusionSurface3D: linesegment2d_to_3d.
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -70,6 +97,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ContourMixin: from_points
 - ClosedShell3D: improve performance for boolean operations
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
+- Cylinder: inheritance directly from ClosedShell3D
+- Edges: cache middle_points and unit_direction_vector 
 
 ### Changed
 - better surface3d plots

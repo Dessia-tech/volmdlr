@@ -1,6 +1,7 @@
 """
 Unit tests for CylindriSurface3D
 """
+import numpy as npy
 import math
 import unittest
 
@@ -157,35 +158,15 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertTrue(primitive2d.start.is_close(volmdlr.Point2D(-0.001540582016168617, -0.0006229082591074433)))
         self.assertTrue(primitive2d.end.is_close(volmdlr.Point2D(0.004940216577284154, -0.000847814405768888)))
 
-    def test_face_from_contours3d(self):
-        surface = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/surface3d_1.json')
-        contour0 = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/contour_1_0.json')
-        contour1 = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/contour_1_1.json')
-
-        face = surface.face_from_contours3d([contour0, contour1])
-
-        self.assertEqual(face.surface2d.area(), 0.00077*2*math.pi)
-
-        frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
-        cylindrical = surfaces.CylindricalSurface3D(frame, 0.2)
-        fullarc1 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(0.2, 0.0, 0.0), normal=volmdlr.Z3D)
-        fullarc2 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(-0.2, 0.0, 0.2), normal=volmdlr.Z3D)
-        contour1 = wires.Contour3D([fullarc1])
-        contour2 = wires.Contour3D([fullarc2])
-        face = cylindrical.face_from_contours3d([contour1, contour2])
-        self.assertEqual(face.surface2d.area(), 0.2*2*math.pi)
-
-        surface = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/cylindrical_surface_floating_point_error.json')
-        contour0 = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/cylindrical_contour_floating_point_error.json')
-
-        face = surface.face_from_contours3d([contour0])
-        self.assertTrue(face.surface2d.outer_contour.is_ordered())
-        self.assertAlmostEqual(face.surface2d.area(), 0.003143137591511259, 3)
+        # Test to _fix_angle_discontinuity_on_discretization_points
+        z = npy.linspace(0, 2 * math.pi, 50)
+        theta = math.pi + 0.5 * math.pi * npy.cos(z)
+        points_2d = [volmdlr.Point2D(x, y / (2 * math.pi)) for x, y in zip(theta, z)]
+        cylinder = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 1)
+        points_3d = [cylinder.point2d_to_3d(point) for point in points_2d]
+        bspline = edges.BSplineCurve3D.from_points_interpolation(points_3d, 3)
+        result = cylinder.bsplinecurve3d_to_2d(bspline)[0]
+        self.assertTrue(all(point.x < 0 for point in result.points))
 
     def test_point_projection(self):
         test_points = [Point3D(-2.0, -2.0, 0.0), Point3D(0.0, -2.0, 0.0), Point3D(2.0, -2.0, 0.0),
@@ -202,6 +183,10 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
         for i, point in enumerate(test_points):
             self.assertTrue(self.cylindrical_surface2.point_projection(point).is_close(expected_points[i]))
+
+    def test_plot(self):
+        ax = self.cylindrical_surface.plot()
+        self.assertTrue(ax)
 
 
 if __name__ == '__main__':

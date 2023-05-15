@@ -13,7 +13,10 @@ from datetime import datetime
 from functools import lru_cache
 from typing import List, Tuple
 
-# import gmsh
+try:
+    import gmsh
+except TypeError:
+    pass
 import matplotlib.pyplot as plt
 import numpy as npy
 
@@ -405,7 +408,7 @@ class Primitive3D(dc.PhysicalObject):
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
-    def babylon_meshes(self):
+    def babylon_meshes(self, merge_meshes=True):
         """
         Returns the babylonjs mesh.
         """
@@ -460,8 +463,7 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_points(self):
         points = []
-        if hasattr(self, 'primitives') and \
-                hasattr(self.primitives[0], 'start'):
+        if hasattr(self, 'primitives') and hasattr(self.primitives[0], 'start'):
             points = [[self.primitives[0].start.x,
                        self.primitives[0].start.y,
                        self.primitives[0].start.z]]
@@ -1065,7 +1067,7 @@ class Assembly(dc.PhysicalObject):
         """
         return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
 
-    def babylon_data(self):
+    def babylon_data(self, merge_meshes=True):
         """
         Get babylonjs data.
 
@@ -1076,11 +1078,11 @@ class Assembly(dc.PhysicalObject):
         lines = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes())
+                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
                     lines.append(primitive.babylon_curves())
             elif hasattr(primitive, 'babylon_data'):
-                data = primitive.babylon_data()
+                data = primitive.babylon_data(merge_meshes=merge_meshes)
                 meshes.extend(mesh for mesh in data["meshes"])
                 lines.extend(line for line in data["lines"])
 
@@ -1425,7 +1427,7 @@ class VolumeModel(dc.PhysicalObject):
         ax.margins(0.1)
         return ax
 
-    def babylon_data(self):
+    def babylon_data(self, merge_meshes=True):
         """
         Get babylonjs data.
 
@@ -1436,11 +1438,11 @@ class VolumeModel(dc.PhysicalObject):
         lines = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes())
+                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
                     lines.append(primitive.babylon_curves())
             elif hasattr(primitive, 'babylon_data'):
-                data = primitive.babylon_data()
+                data = primitive.babylon_data(merge_meshes=merge_meshes)
                 meshes.extend(mesh for mesh in data["meshes"])
                 lines.extend(line for line in data["lines"])
 
@@ -1472,12 +1474,12 @@ class VolumeModel(dc.PhysicalObject):
             babylon_data=babylon_data)
         return script
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+    def babylonjs(self, page_name=None, use_cdn=True, debug=False, merge_meshes=True):
         """
         Creates a HTML file using babylonjs to show a 3d model in the browser.
 
         """
-        babylon_data = self.babylon_data()
+        babylon_data = self.babylon_data(merge_meshes=merge_meshes)
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                        debug=debug)
         if page_name is None:
@@ -1497,6 +1499,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def save_babylonjs_to_file(self, filename: str = None,
                                use_cdn=True, debug=False):
+        """Export a html file of the model."""
         babylon_data = self.babylon_data()
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                        debug=debug)
@@ -1514,6 +1517,7 @@ class VolumeModel(dc.PhysicalObject):
             return filename
 
     def to_stl_model(self):
+        """Converts the model into a stl object."""
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
@@ -1521,17 +1525,20 @@ class VolumeModel(dc.PhysicalObject):
         return stl
 
     def to_stl(self, filepath: str):
+        """Export a stl file of the model."""
         if not filepath.endswith('.stl'):
             filepath += '.stl'
         with open(filepath, 'wb') as file:
             self.to_stl_stream(file)
 
     def to_stl_stream(self, stream: dcf.BinaryFile):
+        """Converts the model into a stl stream file."""
         stl = self.to_stl_model()
         stl.save_to_stream(stream)
         return stream
 
     def to_step(self, filepath: str):
+        """Export a step file of the model."""
         if not (filepath.endswith('.step') or filepath.endswith('.stp')):
             filepath += '.step'
         with open(filepath, 'w', encoding='utf-8') as file:
@@ -1972,8 +1979,8 @@ class VolumeModel(dc.PhysicalObject):
                         continue
         return surfaces
 
-    def to_msh(self, mesh_dimension: int,
-               factor: float, file_name: str = '', **kwargs):
+    def to_msh(self, mesh_dimension: int, factor: float,
+               mesh_order: int = 1, file_name: str = '', **kwargs):
         # curvature_mesh_size: int = 0,
         # min_points: int = None,
         # initial_mesh_size: float = 5):
@@ -1984,6 +1991,8 @@ class VolumeModel(dc.PhysicalObject):
         :type file_name: str
         :param mesh_dimension: The mesh dimension (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
         :type mesh_dimension: int
+        :param mesh_order: The msh order (1: linear, 2: 2nd order)
+        :type mesh_order: int
         :param factor: A float, between 0 and 1, that describes the mesh quality
         (1 for coarse mesh - 0 for fine mesh)
         :type factor: float
@@ -2027,7 +2036,7 @@ class VolumeModel(dc.PhysicalObject):
                     min_points=kwargs['min_points'],
                     initial_mesh_size=kwargs['initial_mesh_size'])
 
-        self.generate_msh_file(file_name, mesh_dimension)
+        self.generate_msh_file(file_name, mesh_dimension, mesh_order)
 
         # gmsh.initialize()
         # gmsh.open(file_name + ".geo")
@@ -2039,94 +2048,104 @@ class VolumeModel(dc.PhysicalObject):
 
         # gmsh.finalize()
 
-    # @staticmethod
-    # def generate_msh_file(file_name, mesh_dimension):
-    #     """
-    #     Generates a mesh written in a .msh file using GMSH library.
-    #
-    #     :param file_name: DESCRIPTION
-    #     :type file_name: TYPE
-    #     :param mesh_dimension: DESCRIPTION
-    #     :type mesh_dimension: TYPE
-    #     :return: DESCRIPTION
-    #     :rtype: TYPE
-    #
-    #     """
-    #
-    #     gmsh.initialize()
-    #     gmsh.open(file_name + ".geo")
-    #
-    #     gmsh.model.geo.synchronize()
-    #     gmsh.model.mesh.generate(mesh_dimension)
-    #
-    #     gmsh.write(file_name + ".msh")
-    #
-    #     gmsh.finalize()
-    #
-    # def to_msh_stream(self, mesh_dimension: int,
-    #                   factor: float, stream: dcf.StringFile,
-    #                   file_name: str = '', **kwargs):
-    #     """
-    #     Gets .msh file for the VolumeModel generated by gmsh.
-    #
-    #     :param file_name: The msh. file name
-    #     :type file_name: str
-    #     :param mesh_dimension: The mesh dimension (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
-    #     :type mesh_dimension: int
-    #     :param factor: A float, between 0 and 1, that describes the mesh quality
-    #     (1 for coarse mesh - 0 for fine mesh)
-    #     :type factor: float
-    #     :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
-    #     (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
-    #     :type curvature_mesh_size: int, optional
-    #     :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
-    #     on that edge), defaults to None
-    #     :type min_points: int, optional
-    #     :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
-    #     :type initial_mesh_size: float, optional
-    #
-    #     :return: A txt file
-    #     :rtype: .txt
-    #     """
-    #
-    #     for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
-    #         if element[0] not in kwargs:
-    #             kwargs[element[0]] = element[1]
-    #
-    #     if file_name == '':
-    #         with tempfile.NamedTemporaryFile(delete=False) as file:
-    #             file_name = file.name
-    #
-    #     self.to_geo(file_name=file_name,
-    #                 factor=factor,
-    #                 curvature_mesh_size=kwargs['curvature_mesh_size'],
-    #                 min_points=kwargs['min_points'],
-    #                 initial_mesh_size=kwargs['initial_mesh_size'])
-    #
-    #     gmsh.initialize()
-    #     gmsh.open(file_name + ".geo")
-    #
-    #     gmsh.model.geo.synchronize()
-    #     gmsh.model.mesh.generate(mesh_dimension)
-    #
-    #     lines = []
-    #     lines.append('$MeshFormat')
-    #     lines.append('4.1 0 8')
-    #     lines.append('$EndMeshFormat')
-    #
-    #     lines.extend(self.get_nodes_lines(gmsh))
-    #     lines.extend(self.get_elements_lines(gmsh))
-    #
-    #     content = ''
-    #     for line in lines:
-    #         content += line + '\n'
-    #
-    #     stream.write(content)
-    #
-    #     # gmsh.finalize()
+    @staticmethod
+    def generate_msh_file(file_name, mesh_dimension, mesh_order):
+        """
+        Generates a mesh written in a .msh file using GMSH library.
+
+        :param file_name: DESCRIPTION
+        :type file_name: TYPE
+        :param mesh_dimension: DESCRIPTION
+        :type mesh_dimension: TYPE
+        :param mesh_order: The msh order (1: linear, 2: 2nd order)
+        :type mesh_order: int
+
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
+        gmsh.initialize()
+        gmsh.open(file_name + ".geo")
+
+        gmsh.model.geo.synchronize()
+        gmsh.model.mesh.generate(mesh_dimension)
+        gmsh.model.mesh.setOrder(mesh_order)
+
+        gmsh.write(file_name + ".msh")
+
+        gmsh.finalize()
+
+    def to_msh_stream(self, mesh_dimension: int,
+                      factor: float, stream: dcf.StringFile,
+                      mesh_order: int = 1,
+                      file_name: str = '', **kwargs):
+        """
+        Gets .msh file for the VolumeModel generated by gmsh.
+
+        :param file_name: The msh. file name
+        :type file_name: str
+        :param mesh_dimension: The mesh dimension (1: 1D-Edge, 2: 2D-Triangle, 3D-Tetrahedra)
+        :type mesh_dimension: int
+        :param mesh_order: The msh order (1: linear, 2: 2nd order)
+        :type mesh_order: int
+
+        :param factor: A float, between 0 and 1, that describes the mesh quality
+        (1 for coarse mesh - 0 for fine mesh)
+        :type factor: float
+        :param curvature_mesh_size: Activate the calculation of mesh element sizes based on curvature
+        (with curvature_mesh_size elements per 2*Pi radians), defaults to 0
+        :type curvature_mesh_size: int, optional
+        :param min_points: Check if there are enough points on small edges (if it is not, we force to have min_points
+        on that edge), defaults to None
+        :type min_points: int, optional
+        :param initial_mesh_size: If factor=1, it will be initial_mesh_size elements per dimension, defaults to 5
+        :type initial_mesh_size: float, optional
+
+        :return: A txt file
+        :rtype: .txt
+        """
+
+        for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
+            if element[0] not in kwargs:
+                kwargs[element[0]] = element[1]
+
+        if file_name == '':
+            with tempfile.NamedTemporaryFile(delete=False) as file:
+                file_name = file.name
+
+        self.to_geo(file_name=file_name,
+                    factor=factor,
+                    curvature_mesh_size=kwargs['curvature_mesh_size'],
+                    min_points=kwargs['min_points'],
+                    initial_mesh_size=kwargs['initial_mesh_size'])
+
+        gmsh.initialize()
+        gmsh.open(file_name + ".geo")
+
+        gmsh.model.geo.synchronize()
+        gmsh.model.mesh.generate(mesh_dimension)
+        gmsh.model.mesh.setOrder(mesh_order)
+
+        lines = []
+        lines.append('$MeshFormat')
+        lines.append('4.1 0 8')
+        lines.append('$EndMeshFormat')
+
+        lines.extend(self.get_nodes_lines(gmsh))
+        lines.extend(self.get_elements_lines(gmsh))
+
+        content = ''
+        for line in lines:
+            content += line + '\n'
+
+        stream.write(content)
+
+        # gmsh.finalize()
 
     def to_msh_file(self, mesh_dimension: int,
-                    factor: float, file_name: str = '', **kwargs):
+                    factor: float, stream: dcf.StringFile,
+                    mesh_order: int = 1, file_name: str = '', **kwargs):
         """ Convert and write model to a .msh file. """
 
         for element in [('curvature_mesh_size', 0), ('min_points', None), ('initial_mesh_size', 5)]:
@@ -2138,8 +2157,10 @@ class VolumeModel(dc.PhysicalObject):
                 file_name = file.name
 
         with open(file_name, mode='w', encoding='utf-8') as file:
-            self.to_msh_stream(mesh_dimension,
-                               factor, file,
+            self.to_msh_stream(mesh_dimension=mesh_dimension,
+                               factor=factor, file_name=file,
+                               mesh_order=mesh_order,
+                               stream=stream,
                                curvature_mesh_size=kwargs['curvature_mesh_size'],
                                min_points=kwargs['min_points'],
                                initial_mesh_size=kwargs['initial_mesh_size'])

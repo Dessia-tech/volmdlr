@@ -76,7 +76,7 @@ def step_split_arguments(function_arg):
 
 def uncertainty_measure_with_unit(arguments, object_dict):
     """
-    Gets the global length uncertainty.
+    Gets the length uncertainty related to the shape representation.
 
     :param arguments: step primitive arguments
     :param object_dict: dictionary containing already instantiated objects.
@@ -124,23 +124,21 @@ def conversion_based_unit_named_unit_plane_angle_unit(arguments, object_dict):
     return object_dict[arguments[1]]
 
 
-def named_unit_plane_angle_unit_si_unit(arguments, object_dict):
+def named_unit_plane_angle_unit_si_unit(arguments, *args, **kwargs):
     """
     Returns the dimension of plane angle measure.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionary containing already instantiated objects.
     :return: SI unit dimension.
     """
     return SI_PREFIX[arguments[1]]
 
 
-def named_unit_si_unit_solid_angle_unit(arguments, object_dict):
+def named_unit_si_unit_solid_angle_unit(arguments, *args, **kwargs):
     """
     Returns the dimension of solid angle measure.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionary containing already instantiated objects.
     :return: SI unit dimension.
     """
     return SI_PREFIX[arguments[1]]
@@ -159,12 +157,11 @@ def plane_angle_measure_with_unit(arguments, object_dict):
     return angle_measure * angle_si_unit
 
 
-def length_unit_named_unit_si_unit(arguments, object_dict):
+def length_unit_named_unit_si_unit(arguments, *args, **kwargs):
     """
     Gets the length si unit.
 
     :param arguments: step primitive arguments
-    :param object_dict: dictionary containing already instantiated objects.
     :return: length si unit
     """
     si_unit_length = SI_PREFIX[arguments[1]]
@@ -205,7 +202,7 @@ def oriented_edge(arguments, object_dict):
     Returns the data in case of an ORIENTED_EDGE.
     """
     if not object_dict[arguments[3]]:
-        # This can happen when the is too small
+        # This can happen when the edge is too small
         return None
     edge_orientation = arguments[4]
     if edge_orientation == '.T.':
@@ -215,30 +212,30 @@ def oriented_edge(arguments, object_dict):
 
 def face_outer_bound(arguments, object_dict):
     """
-    Returns xx.
+    Returns the data in case of a FACE_OUTER_BOUND.
 
-    :param arguments: DESCRIPTION
-    :type arguments: TYPE
-    :param object_dict: DESCRIPTION
-    :type object_dict: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
-
+    :param arguments: list containing the arguments of the FACE_OUTER_BOUND entity.
+    :type arguments: list
+    :param object_dict: Dictionary containing the objects already instantiated that will be used as arguments to the
+        face_outer_bound entity.
+    :type object_dict: dict
+    :return: A Contour3D representing the BREP of a face.
+    :rtype: volmdlr.wires.Contour3D
     """
     return object_dict[arguments[1]]
 
 
 def face_bound(arguments, object_dict):
     """
-    Returns xx.
+    Returns the data in case of a FACE_BOUND.
 
-    :param arguments: DESCRIPTION
-    :type arguments: TYPE
-    :param object_dict: DESCRIPTION
-    :type object_dict: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
-
+    :param arguments: list containing the arguments of the FACE_BOUND entity.
+    :type arguments: list
+    :param object_dict: Dictionary containing the objects already instantiated that will be used as arguments to the
+        face_outer_bound entity.
+    :type object_dict: dict
+    :return: A Contour3D representing the BREP of a face.
+    :rtype: volmdlr.wires.Contour3D
     """
     return object_dict[arguments[1]]
 
@@ -312,7 +309,7 @@ def composite_curve_segment(arguments, object_dict):
     return edge
 
 
-def composite_curve(arguments, object_dict):
+def composite_curve(arguments, *args, **kwargs):
     """
     Returns the data in case of a COMPOSITE_CURVE.
     """
@@ -674,6 +671,7 @@ class StepFunction(dc.DessiaObject):
         dc.DessiaObject.__init__(self, name=function_name)
 
     def simplify(self, new_name):
+        """ADD DOCSTRING."""
         # ITERATE ON SUBFUNCTIONS
         args = [subfun[1] for (i, subfun) in enumerate(self.arg) if
                 (len(subfun[1]) != 0 or i == 0)]
@@ -710,17 +708,20 @@ class Step(dc.DessiaObject):
 
     @property
     def root_nodes(self):
+        """Returns a dictionary containing the nodes of the step file function that are used as start points."""
         if not self._roots_nodes:
             self._roots_nodes = self.get_root_nodes()
         return self._roots_nodes
 
     def graph(self):
+        """Returns the step file networkx graph of dependencies."""
         if not self._graph:
             self._graph = self.create_graph()
         return self._graph
 
     @classmethod
     def from_stream(cls, stream: BinaryFile):
+        """Instantiate a Step object from a stream."""
         stream.seek(0)
         lines = []
         for line in stream:
@@ -731,6 +732,7 @@ class Step(dc.DessiaObject):
 
     @classmethod
     def from_file(cls, filepath: str = None):
+        """Instantiate a Step object from a step file."""
         with open(filepath, "r", encoding="ISO-8859-1") as file:
             lines = []
             for line in file:
@@ -738,6 +740,7 @@ class Step(dc.DessiaObject):
         return cls(lines)
 
     def read_lines(self, lines):
+        """Translate the step file into step functions objects."""
         all_connections = []
         dict_connections = {}
         previous_line = ""
@@ -826,7 +829,7 @@ class Step(dc.DessiaObject):
         Step functions graph.
 
         :return: A graph representation the step file structure.
-        :rtype: nx.DiGraph
+        :rtype: networkx.DiGraph
         """
         F = nx.DiGraph()
         labels = {}
@@ -908,7 +911,9 @@ class Step(dc.DessiaObject):
         nx.draw_networkx_edges(new_graph, pos)
         nx.draw_networkx_labels(new_graph, pos, labels)
 
-    def step_subfunctions(self, subfunctions):
+    @staticmethod
+    def step_subfunctions(subfunctions):
+        """Handles context elements from step file."""
         subfunctions = subfunctions[0]
         parenthesis_count = 0
         subfunction_names = []
@@ -943,6 +948,7 @@ class Step(dc.DessiaObject):
             for i in range(len(subfunction_names))]
 
     def parse_arguments(self, arguments):
+        """Converts the arguments IDs from string to integer."""
         for i, arg in enumerate(arguments):
             if isinstance(arg, str) and arg[0] == '#':
                 arguments[i] = int(arg[1:])
@@ -1093,6 +1099,7 @@ class Step(dc.DessiaObject):
         return int(id_shell[1:])
 
     def shape_definition_representation_to_shell_node(self, shape_definition_representation_id):
+        """Returns the ID of the shell entity related to the given shape_definition_representation ID."""
         id_representation_entity = self.functions[shape_definition_representation_id].arg[1]
         function_name = self.functions[int(id_representation_entity[1:])].name
         if function_name in STEP_REPRESENTATION_ENTITIES:
@@ -1101,6 +1108,7 @@ class Step(dc.DessiaObject):
             return self.get_shell_node_from_shape_representation(int(id_representation_entity[1:]))
 
     def product_definition_to_product(self, id_product_definition):
+        """Returns the ID of the product entity related to the given product_definition ID."""
         if self.functions[id_product_definition].name == "NEXT_ASSEMBLY_USAGE_OCCURRENCE":
             id_product_definition = int(self.functions[id_product_definition].arg[3][1:])
         id_product_definition_formation = self.functions[id_product_definition].arg[2]
@@ -1108,11 +1116,13 @@ class Step(dc.DessiaObject):
         return int(id_product[1:])
 
     def shape_definition_representation_to_product_node(self, shape_definition_representation_id):
+        """Returns the ID of the product entity related to the given shape_definition_representation ID."""
         id_product_definition_shape = self.functions[shape_definition_representation_id].arg[0]
         id_product_definition = int(self.functions[int(id_product_definition_shape[1:])].arg[2][1:])
         return self.product_definition_to_product(id_product_definition)
 
     def get_root_nodes(self):
+        """Returns a dictionnary containing the nodes of the step file function that are used as start points."""
         next_assembly_usage_occurrence = []
         product_definitions = []
         shape_representation_relationship = []
@@ -1184,8 +1194,9 @@ class Step(dc.DessiaObject):
             self.connections[id_product_definition].append(node)
             self.functions[id_product_definition].arg.append(f'#{node}')
             if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION" and \
-                    len(self.functions[id_shape_representation].arg) == 4:
-                id_shape = int(self.functions[id_shape_representation].arg[3][1:])
+                    len(self.functions[id_shape_representation].arg) >= 4:
+                # todo: take all the arg starting from index 3 to end ??? needs investigation
+                id_shape = int(self.functions[id_shape_representation].arg[-1][1:])
                 self.connections[id_product_definition].append(id_shape)
                 self.functions[id_product_definition].arg.append(f'#{id_shape}')
             elif self.functions[id_shape_representation].name in STEP_REPRESENTATION_ENTITIES:
@@ -1228,7 +1239,11 @@ class Step(dc.DessiaObject):
                 # Sometimes the bfs search don't instanciate the nodes of a
                 # depth in the right order, leading to error
                 print(key.args[0])
-                instanciate_ids.append(key.args[0])
+                if key.args[0] in assembly_data:
+                    instanciate_ids.append(key.args[0])
+                    instanciate_ids.extend(assembly_data[key.args[0]])
+                else:
+                    instanciate_ids.append(key.args[0])
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
@@ -1313,6 +1328,7 @@ class Step(dc.DessiaObject):
         return object_dict, times
 
     def to_points(self):
+        """Returns a list containing all the points present in a step file."""
         object_dict = {}
         points3d = []
         for stepfunction in self.functions.values():
@@ -1399,7 +1415,7 @@ STEP_TO_VOLMDLR = {
     'CONICAL_SURFACE': surfaces.ConicalSurface3D,
     'SPHERICAL_SURFACE': surfaces.SphericalSurface3D,
     'TOROIDAL_SURFACE': surfaces.ToroidalSurface3D,
-    'DEGENERATE_TOROIDAL_SURFACE': None,
+    'DEGENERATE_TOROIDAL_SURFACE': surfaces.ToroidalSurface3D,
     'B_SPLINE_SURFACE_WITH_KNOTS': surfaces.BSplineSurface3D,
     'B_SPLINE_SURFACE': surfaces.BSplineSurface3D,
     'BEZIER_SURFACE': surfaces.BSplineSurface3D,

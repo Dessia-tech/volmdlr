@@ -96,6 +96,8 @@ class DisplayMesh(dc.DessiaObject):
         if len(meshes) == 1:
             return cls(meshes[0].points, meshes[0].triangles)
         for mesh in meshes:
+            if not mesh:
+                continue
             for point in mesh.points:
                 if point not in point_index:
                     point_index[point] = i_points
@@ -104,6 +106,8 @@ class DisplayMesh(dc.DessiaObject):
 
         triangles = []
         for mesh in meshes:
+            if not mesh:
+                continue
             for vertex1, vertex2, vertex3 in mesh.triangles:
                 point1 = mesh.points[vertex1]
                 point2 = mesh.points[vertex2]
@@ -231,6 +235,17 @@ class DisplayMesh3D(DisplayMesh):
         for vertex in self.triangles:
             flatten_indices.extend(vertex)
         return positions, flatten_indices
+
+    def triangular_faces(self):
+        triangular_faces = []
+        for (vertex1, vertex2, vertex3) in self.triangles:
+            point1 = self.points[vertex1]
+            point2 = self.points[vertex2]
+            point3 = self.points[vertex3]
+            face = volmdlr.faces.Triangle3D(point1, point2, point3)
+            if face.area() >= 1e-08:
+                triangular_faces.append(face)
+        return triangular_faces
 
     def to_stl(self):
         """

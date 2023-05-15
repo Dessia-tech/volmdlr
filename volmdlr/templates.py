@@ -177,36 +177,73 @@ BABYLON_UNPACKER_BODY_TEMPLATE = Template(
         for (let mesh_data of babylon_data['meshes']){
                 var mesh = new BABYLON.Mesh(mesh_data['name'], scene);
                 meshes.push(mesh);
-
-                var normals = [];
-                var vertexData = new BABYLON.VertexData();
-                BABYLON.VertexData.ComputeNormals(mesh_data['positions'], mesh_data['indices'], normals);
-
-                vertexData.positions = mesh_data['positions'];
-                vertexData.indices = mesh_data['indices'];
-                vertexData.normals = normals;
-                vertexData.applyToMesh(mesh);
-                mesh.enableEdgesRendering(0.9);
-                mesh.edgesWidth = max_length*0.025;
-                if ('edges_color' in mesh_data) {
-                        mesh.edgesColor = new BABYLON.Color4(mesh_data['edges_color'][0],
-                                                             mesh_data['edges_color'][1],
-                                                             mesh_data['edges_color'][2],
-                                                             mesh_data['alpha']);
-                        }
-                else {mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6)};
-                var mat = new BABYLON.StandardMaterial("material", scene);
-                // mat.diffuseColor = BABYLON.Color3.Green();
-                // mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);
-                // mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
-                // mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
-                mat.backFaceCulling = false;
-                mat.twoSidedLighting = true;
-                mesh.material = mat;
-                mat.diffuseColor = new BABYLON.Color3(mesh_data['color'][0],
-                                                      mesh_data['color'][1],
-                                                      mesh_data['color'][2]);
-                mat.alpha = mesh_data['alpha'];
+                if ('primitives_meshes' in mesh_data) {
+                    for (let prim_mesh_data of mesh_data['primitives_meshes']){
+                        var child_mesh = new BABYLON.Mesh(prim_mesh_data['name'], scene);
+                        var normals = [];
+                        var vertexData = new BABYLON.VertexData();
+                        BABYLON.VertexData.ComputeNormals(prim_mesh_data['positions'], prim_mesh_data['indices'],
+                                                          normals);
+                        vertexData.positions = prim_mesh_data['positions'];
+                        vertexData.indices = prim_mesh_data['indices'];
+                        vertexData.normals = normals;
+                        vertexData.applyToMesh(child_mesh);
+                        child_mesh.enableEdgesRendering(0.9);
+                        child_mesh.edgesWidth = max_length*0.025;
+                        if ('edges_color' in prim_mesh_data) {
+                                child_mesh.edgesColor = new BABYLON.Color4(prim_mesh_data['edges_color'][0],
+                                                                     prim_mesh_data['edges_color'][1],
+                                                                     prim_mesh_data['edges_color'][2],
+                                                                     prim_mesh_data['alpha']);
+                                }
+                        else {child_mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6)};
+                        var mat = new BABYLON.StandardMaterial("material", scene);
+                        // mat.diffuseColor = BABYLON.Color3.Green();
+                        // mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);
+                        // mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
+                        // mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
+                        mat.backFaceCulling = false;
+                        mat.twoSidedLighting = true;
+                        child_mesh.material = mat;
+                        mat.diffuseColor = new BABYLON.Color3(prim_mesh_data['color'][0],
+                                                              prim_mesh_data['color'][1],
+                                                              prim_mesh_data['color'][2]);
+                        mat.alpha = prim_mesh_data['alpha'];
+                        child_mesh.parent = mesh
+                    }
+                        
+                }
+                else{
+                    var normals = [];
+                    var vertexData = new BABYLON.VertexData();
+                    BABYLON.VertexData.ComputeNormals(mesh_data['positions'], mesh_data['indices'], normals);
+    
+                    vertexData.positions = mesh_data['positions'];
+                    vertexData.indices = mesh_data['indices'];
+                    vertexData.normals = normals;
+                    vertexData.applyToMesh(mesh);
+                    mesh.enableEdgesRendering(0.9);
+                    mesh.edgesWidth = max_length*0.025;
+                    if ('edges_color' in mesh_data) {
+                            mesh.edgesColor = new BABYLON.Color4(mesh_data['edges_color'][0],
+                                                                 mesh_data['edges_color'][1],
+                                                                 mesh_data['edges_color'][2],
+                                                                 mesh_data['alpha']);
+                            }
+                    else {mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6)};
+                    var mat = new BABYLON.StandardMaterial("material", scene);
+                    // mat.diffuseColor = BABYLON.Color3.Green();
+                    // mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);
+                    // mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
+                    // mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
+                    mat.backFaceCulling = false;
+                    mat.twoSidedLighting = true;
+                    mesh.material = mat;
+                    mat.diffuseColor = new BABYLON.Color3(mesh_data['color'][0],
+                                                          mesh_data['color'][1],
+                                                          mesh_data['color'][2]);
+                    mat.alpha = mesh_data['alpha'];
+                    }
 
                 }
 
