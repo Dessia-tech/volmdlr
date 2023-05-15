@@ -1705,10 +1705,10 @@ class ContourMixin(WireMixin):
                 else:
                     is_horizontal = math.isclose(primitive.start.y, primitive.end.y, abs_tol=1e-6)
                     is_vertical = math.isclose(primitive.start.x, primitive.end.x, abs_tol=1e-6)
-                    if discretize_line_direction == "xy" or (not is_vertical and not is_horizontal):
-                        polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
-                    elif (discretize_line_direction == "x" and is_horizontal) or \
-                            (discretize_line_direction == "y" and is_vertical):
+                    should_discretize = discretize_line_direction == "xy" or \
+                                        (discretize_line_direction == "x" and is_horizontal) or \
+                                        (discretize_line_direction == "y" and is_vertical)
+                    if should_discretize:
                         polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
                     else:
                         polygon_points.append(primitive.start)
