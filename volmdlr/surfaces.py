@@ -3,10 +3,10 @@ import math
 import warnings
 from itertools import chain
 from typing import List, Union
+import traceback
 
 import matplotlib.pyplot as plt
 import numpy as npy
-import traceback
 import triangle as triangle_lib
 from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
