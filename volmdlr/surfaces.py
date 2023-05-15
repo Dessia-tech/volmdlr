@@ -4092,32 +4092,49 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        length = fullarc3d.length()
-
         start = self.point3d_to_2d(fullarc3d.start)
         end = self.point3d_to_2d(fullarc3d.end)
 
-        theta3, _ = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.001 * length))
-        theta4, _ = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.98 * length))
+        point_after_start, point_before_end = self._reference_points(fullarc3d)
 
-        # make sure that the references points are not undefined
-        if abs(theta3) == math.pi:
-            theta3, _ = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.002 * length))
-        if abs(theta4) == math.pi:
-            theta4, _ = self.point3d_to_2d(fullarc3d.point_at_abscissa(0.97 * length))
-
-        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, volmdlr.TWO_PI, theta3,
-                                                                                 theta4)
-
+        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, volmdlr.TWO_PI,
+                                                                                 point_after_start.x,
+                                                                                 point_before_end.x)
         theta1, z1 = start
-        _, z2 = end
+        theta2, _ = end
+        theta3, z3 = point_after_start
 
-        point1 = volmdlr.Point2D(theta1, z1)
-        if theta1 > theta3:
-            point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
-        elif theta1 < theta3:
-            point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
-        return [edges.LineSegment2D(point1, point2)]
+        if self.frame.w.is_colinear_to(fullarc3d.normal):
+            if start.is_close(end):
+                start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, theta3)
+            return [edges.LineSegment2D(start, end, name="parametric.fullarc")]
+        if math.isclose(theta1, theta2, abs_tol=1e-3):
+            # Treating one case from Revolution Surface
+            if z1 > z3:
+                point1 = volmdlr.Point2D(theta1, 1)
+                point2 = volmdlr.Point2D(theta1, 0)
+            else:
+                point1 = volmdlr.Point2D(theta1, 0)
+                point2 = volmdlr.Point2D(theta1, 1)
+            return [edges.LineSegment2D(point1, point2, name="parametric.fullarc")]
+        if math.isclose(abs(theta1 - theta2), math.pi, abs_tol=1e-3):
+            if z1 > z3:
+                point1 = volmdlr.Point2D(theta1, 1)
+                point2 = volmdlr.Point2D(theta1, 0)
+                point3 = volmdlr.Point2D(theta2, 0)
+                point4 = volmdlr.Point2D(theta2, 1)
+            else:
+                point1 = volmdlr.Point2D(theta1, 0)
+                point2 = volmdlr.Point2D(theta1, 1)
+                point3 = volmdlr.Point2D(theta2, 1)
+                point4 = volmdlr.Point2D(theta2, 0)
+            return [edges.LineSegment2D(point1, point2, name="parametric.arc"),
+                    edges.LineSegment2D(point2, point3, name="parametric.singularity"),
+                    edges.LineSegment2D(point3, point4, name="parametric.arc")
+                    ]
+
+
+        raise NotImplementedError
 
     def linesegment2d_to_3d(self, linesegment2d):
         """
@@ -4558,6 +4575,7 @@ class BSplineSurface3D(Surface3D):
                 return [bspline.simplify]
             except Exception:
                 return None
+
         bspline = edges.BSplineCurve3D.from_points_interpolation(
                             points, min(self.degree_u, self.degree_v), periodic=periodic)
         return [bspline.simplify]
