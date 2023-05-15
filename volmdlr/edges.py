@@ -4669,8 +4669,6 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
 
             res, _ = scipy_integrate.quad(arc_length, angle_start, angle_abscissa)
             return res
-        self.save_to_file("ellipse_point_belongs.json")
-        point.save_to_file("ellipse_point_belongs_point.json")
         raise ValueError(f'point {point} does not belong to ellipse')
 
     def normal_vector(self, abscissa):
