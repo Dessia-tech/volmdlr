@@ -3401,8 +3401,8 @@ class SphericalSurface3D(PeriodicalSurface):
         singularity_points = self.edge_passes_on_singularity_point(arc3d)
         half_pi = 0.5 * math.pi # this variable avoid doing this multiplication several times (performance)
         point_positive_singularity, point_negative_singularity = singularity_points
-        if point_positive_singularity and point_negative_singularity:
 
+        if point_positive_singularity and point_negative_singularity:
             raise ValueError("Impossible. This case should be treated by arc3d_to_2d_with_singularity method."
                              "See arc3d_to_2d method for detail.")
         if point_positive_singularity and not arc3d.is_point_edge_extremity(point_positive_singularity):
