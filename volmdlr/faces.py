@@ -2236,14 +2236,14 @@ class ToroidalFace3D(Face3D):
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
         theta_angle_resolution = 5
-        phi_angle_resolution = 3
+        phi_angle_resolution = 2.3
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
         number_points_x = max(theta_angle_resolution, int(delta_theta * theta_angle_resolution))
 
         delta_phi = phi_max - phi_min
-        number_points_y = max(phi_angle_resolution, int(delta_phi * phi_angle_resolution))
+        number_points_y = max(math.ceil(phi_angle_resolution), int(delta_phi * phi_angle_resolution))
 
         return number_points_x, number_points_y
 

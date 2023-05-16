@@ -1277,7 +1277,7 @@ class Step(dc.DessiaObject):
         # ------------------------------------------------------
         shell_nodes = root_nodes["SHELLS"]
         shape_representations = root_nodes["SHAPE_REPRESENTATION"]
-        nodes = self.create_node_list(shape_representations + shell_nodes)
+        nodes = self.create_node_list(shape_representations)
         errors = set()
         for node in nodes:
 
