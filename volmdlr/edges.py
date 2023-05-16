@@ -6532,9 +6532,8 @@ class Arc3D(Arc):
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
-        new_start, new_interior, new_end = \
+        self.start, self.interior, self.end, self.center = \
             self.frame_mapping_parameters(frame, side)
-        self.start, self.interior, self.end = new_start, new_interior, new_end
         self._bbox = None
 
     def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):

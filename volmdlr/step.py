@@ -987,7 +987,6 @@ class Step(dc.DessiaObject):
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
         except (ValueError, NotImplementedError) as error:
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
-        # print(step_id)
         return volmdlr_object
 
     def create_node_list(self, stack):
@@ -1230,7 +1229,10 @@ class Step(dc.DessiaObject):
                     ids_frames = self.functions[id_shape_representation].arg[1]
                     self.parse_arguments(ids_frames)
                     frames = [object_dict[id_frame] for id_frame in ids_frames]
-                    volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
+                    try:
+                        volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
+                    except Exception:
+                        print(True)
                     object_dict[instanciate_id] = volmdlr_object
                     if instanciate_id in assembly_data:
                         list_instatiated_assemblies.append(instanciate_id)

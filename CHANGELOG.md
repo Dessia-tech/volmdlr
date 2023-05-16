@@ -48,7 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
 
-
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
 - LineSegment, Arc, BSplineCurve: get_shared_section()
@@ -75,8 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour3D: from_step removes repeated edges from primitives list
 - Face3D: add fixes to divide_face
 - ExtrusionSurface3D: linesegment2d_to_3d.
-- BSplineSurface3D: ban useless attr in serialization 
-
+- BSplineSurface3D: ban useless attr in serialization
+- Surface3D: repair_primitive_periodicity
 
 ### Refactor
 - Contour2D: cut_by_wire

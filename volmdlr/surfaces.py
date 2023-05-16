@@ -3,6 +3,7 @@ import math
 import warnings
 from itertools import chain
 from typing import List, Union
+import traceback
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -835,12 +836,17 @@ class Surface3D(DessiaObject):
             delta = previous_primitive.end - primitives2d[i].start
             is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-3)
             if not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
-                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-5):
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2) and \
+                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
             elif not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3):
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
+            elif not is_connected and math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
+                math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
+                new_primitive = primitives2d[i].reverse()
+                new_delta = previous_primitive.end - new_primitive.start
+                primitives2d[i] = new_primitive.translation(new_delta)
             elif not is_connected:
                 primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
@@ -920,8 +926,8 @@ class Surface3D(DessiaObject):
                     if primitives is None:
                         continue
                     primitives3d.extend(primitives)
-                except AttributeError as error:
-                    print(error)
+                except AttributeError:
+                    print(traceback.format_exc())
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
                           f'with {primitive2d.__class__.__name__}')
             else:
@@ -2308,9 +2314,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Generally this is related to uncertainty of step files.
 
-        if abs(x) < 1e-12:
+        if abs(x) < 1e-6:
             x = 0
-        if abs(y) < 1e-12:
+        if abs(y) < 1e-6:
             y = 0
         if abs(z) < 1e-6:
             z = 0
@@ -3145,13 +3151,10 @@ class SphericalSurface3D(PeriodicalSurface):
             else:
                 raise NotImplementedError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
-        # Fix contour
-        if self.x_periodicity or self.y_periodicity:
-            try:
-                primitives2d = self.repair_primitives_periodicity(primitives2d)
-            except Exception:
-                self.save_to_file("spherical_surface_arc3d_to_2d.json")
-                contour3d.save_to_file("spherical_surface_arc3d_to_2d_contour3d.json")
+        contour2d = wires.Contour2D(primitives2d)
+        if contour2d.is_ordered(1e-2):
+            return contour2d
+        primitives2d = self.repair_primitives_periodicity(primitives2d)
         return wires.Contour2D(primitives2d)
 
     def is_lat_long_curve(self, arc):
@@ -3403,17 +3406,13 @@ class SphericalSurface3D(PeriodicalSurface):
         singularity_points = self.edge_passes_on_singularity_point(arc3d)
         half_pi = 0.5 * math.pi # this variable avoid doing this multiplication several times (performance)
         point_positive_singularity, point_negative_singularity = singularity_points
-        if point_positive_singularity and point_negative_singularity:
 
+        if point_positive_singularity and point_negative_singularity:
             raise ValueError("Impossible. This case should be treated by arc3d_to_2d_with_singularity method."
                              "See arc3d_to_2d method for detail.")
         if point_positive_singularity and not arc3d.is_point_edge_extremity(point_positive_singularity):
             split = arc3d.split(point_positive_singularity)
-            try:
-                primitive0 = self.arc3d_to_2d_any_direction(split[0])[0]
-            except Exception:
-                self.save_to_file("arc3d_to_2d_any_direction_surface.json")
-                arc3d.save_to_file("arc3d_to_2d_any_direction_arc3d.json")
+            primitive0 = self.arc3d_to_2d_any_direction(split[0])[0]
             primitive2 = self.arc3d_to_2d_any_direction(split[1])[0]
             primitive1 = edges.LineSegment2D(volmdlr.Point2D(primitive0.end.x, half_pi),
                                              volmdlr.Point2D(primitive2.start.x, half_pi))
@@ -3523,9 +3522,6 @@ class SphericalSurface3D(PeriodicalSurface):
                 point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi2)
             elif theta1 < theta3:
                 point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
-            else:
-                self.save_to_file("fullarc3d_to_2d_sphericalsurface.json")
-                fullarc3d.save_to_file("fullarc3d_to_2d_sphericalsurface_fullarc.json")
             return [edges.LineSegment2D(point1, point2)]
 
         if self.frame.w.is_perpendicular_to(fullarc3d.normal, abs_tol=1e-4):
@@ -3993,6 +3989,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         w_vector = axis
         w_vector.normalize()
         u_vector = vector1
+
         if not w_vector.is_perpendicular_to(u_vector):
             u_vector = vector1 - vector1.vector_projection(w_vector)
         u_vector.normalize()
@@ -4864,6 +4861,9 @@ class BSplineSurface3D(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
+        self.save_to_file("bspline_surface_with_arcellipse.json")
+        arcellipse3d.save_to_file("arcellipse_bspline_surface.json")
+        print("Got test to BSplineSurface3D.arcellipse3d_to_2d")
         # todo: Is this right? Needs detailed investigation
         number_points = max(self.nb_u, self.nb_v)
         degree = max(self.degree_u, self.degree_v)

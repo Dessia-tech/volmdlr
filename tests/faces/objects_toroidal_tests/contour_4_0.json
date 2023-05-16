@@ -1,0 +1,164 @@
+{
+  "name": "",
+  "object_class": "volmdlr.wires.Contour3D",
+  "package_version": "0.9.2.dev1050+g45192f1d",
+  "primitives": [
+    {
+      "name": "",
+      "object_class": "volmdlr.edges.Arc3D",
+      "package_version": "0.9.2.dev1050+g45192f1d",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.0397812995536,
+        "y": -0.597885026932,
+        "z": 0.5409999585540001
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.036247751536,
+        "y": -0.591668123343,
+        "z": 0.540160823177
+      },
+      "interior": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.038224712501,
+        "y": -0.594654546161,
+        "z": 0.540599382664
+      }
+    },
+    {
+      "name": "",
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "package_version": "0.9.2.dev1050+g45192f1d",
+      "degree": 5,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.0362477515342,
+          "y": -0.5916681233440001,
+          "z": 0.540160823177
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.036192996339099996,
+          "y": -0.5916793161020001,
+          "z": 0.540308470168
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.0361466875207,
+          "y": -0.591685332587,
+          "z": 0.5404588994480001
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.036108884513600004,
+          "y": -0.591686037247,
+          "z": 0.540612864991
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.0360802567186,
+          "y": -0.5916814156169999,
+          "z": 0.5407676551770001
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.0360604082298,
+          "y": -0.591671606303,
+          "z": 0.540923910234
+        }
+      ],
+      "knot_multiplicities": [
+        6,
+        6
+      ],
+      "knots": [
+        0.0,
+        1.0
+      ],
+      "weights": null,
+      "periodic": false
+    },
+    {
+      "name": "",
+      "object_class": "volmdlr.edges.Arc3D",
+      "package_version": "0.9.2.dev1050+g45192f1d",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.0360604082298,
+        "y": -0.591671606303,
+        "z": 0.540923910235
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.03959388518010001,
+        "y": -0.597888474718,
+        "z": 0.541763605463
+      },
+      "interior": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.038038118541,
+        "y": -0.594657517563,
+        "z": 0.541363103699
+      }
+    },
+    {
+      "name": "",
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "package_version": "0.9.2.dev1050+g45192f1d",
+      "degree": 5,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.0395938851767,
+          "y": -0.597888474719,
+          "z": 0.541763605462
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.039613722084000005,
+          "y": -0.59789830611,
+          "z": 0.541607235617
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.0396423510136,
+          "y": -0.5979029425019999,
+          "z": 0.541452331285
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.0396801688471,
+          "y": -0.597902244926,
+          "z": 0.5412982508259999
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.0397265049524,
+          "y": -0.5978962277450001,
+          "z": 0.541147711803
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.0397812995536,
+          "y": -0.597885026932,
+          "z": 0.5409999585540001
+        }
+      ],
+      "knot_multiplicities": [
+        6,
+        6
+      ],
+      "knots": [
+        0.0,
+        1.0
+      ],
+      "weights": null,
+      "periodic": false
+    }
+  ],
+  "basis_primitives": [],
+  "color": null,
+  "alpha": 1
+}

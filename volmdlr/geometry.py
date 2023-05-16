@@ -213,9 +213,6 @@ def clockwise_interior_from_circle3d(start, end, circle):
     elif theta2 >= theta1:
         theta3 = (theta1 + theta2) / 2 + vm.TWO_PI / 2
     else:
-        start.save_to_file("clockwise_interior_from_circle3d_start.json")
-        end.save_to_file("clockwise_interior_from_circle3d_end.json")
-        circle.save_to_file("clockwise_interior_from_circle3d_circle.json")
         raise NotImplementedError
 
     if theta3 > vm.TWO_PI:
