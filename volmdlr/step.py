@@ -1228,8 +1228,14 @@ class Step(dc.DessiaObject):
                     id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
                     ids_frames = self.functions[id_shape_representation].arg[1]
                     self.parse_arguments(ids_frames)
+                    if name == "'M000526994'":
+                        frame = object_dict[ids_frames[0]]
+                        print(frame.origin, frame.u, frame.v, frame.w)
                     frames = [object_dict[id_frame] for id_frame in ids_frames]
-                    volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
+                    try:
+                        volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
+                    except Exception:
+                        print(True)
                     object_dict[instanciate_id] = volmdlr_object
                     if instanciate_id in assembly_data:
                         list_instatiated_assemblies.append(instanciate_id)

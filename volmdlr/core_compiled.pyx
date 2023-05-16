@@ -15,6 +15,8 @@ from typing import List, Text, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as npy
+import volmdlr
+
 import plot_data
 from dessia_common.core import DessiaObject
 from matplotlib.patches import FancyArrow, FancyArrowPatch
@@ -3660,17 +3662,17 @@ class Frame3D(Basis3D):
         """
         origin = object_dict[arguments[1]]
         if arguments[2] == "$":
-            u = None
+            u = volmdlr.Z3D
         else:
             u = object_dict[arguments[2]]
         if arguments[3] == "$":
-            v = None
+            v = volmdlr.X3D
         else:
             v = object_dict[arguments[3]]
-        if u is None or v is None:
-            w = None
-        else:
-            w = u.cross(v)
+        # if u is None or v is None:
+        #     w = None
+        # else:
+        w = u.cross(v)
 
         return cls(origin, u, v, w, arguments[0][1:-1])
 
