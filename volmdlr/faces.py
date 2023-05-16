@@ -2027,7 +2027,7 @@ class CylindricalFace3D(Face3D):
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
         angle_resolution = 5
-        z_resolution = 5
+        z_resolution = 0
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         number_points_x = max(angle_resolution, int(delta_theta * angle_resolution))

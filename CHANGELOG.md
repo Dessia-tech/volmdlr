@@ -98,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
 - remove useless attribute in Bspline serialization
+- Improve CylincricalFace3D rendering mesh.
 
 ### Unittests
 - Arc2D: test_arc_intersections

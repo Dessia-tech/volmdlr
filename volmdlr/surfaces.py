@@ -184,8 +184,11 @@ class Surface2D(volmdlr.core.Primitive2D):
             return display.DisplayMesh2D([], triangles=[])
 
         triangulates_with_grid = number_points_x > 0 or number_points_y > 0
-
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=11, discretize_line=triangulates_with_grid)
+        discretize_line_direction = "xy"
+        if number_points_y == 0:
+            discretize_line_direction = "x"
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=20, discretize_line=triangulates_with_grid,
+                                                      discretize_line_direction=discretize_line_direction)
 
         if not self.inner_contours and not triangulates_with_grid:
             return outer_polygon.triangulation()

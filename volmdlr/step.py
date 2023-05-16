@@ -1277,7 +1277,7 @@ class Step(dc.DessiaObject):
         # ------------------------------------------------------
         shell_nodes = root_nodes["SHELLS"]
         shape_representations = root_nodes["SHAPE_REPRESENTATION"]
-        nodes = self.create_node_list(shape_representations)
+        nodes = self.create_node_list(shape_representations + shell_nodes)
         errors = set()
         for node in nodes:
 
@@ -1296,7 +1296,7 @@ class Step(dc.DessiaObject):
 
         if self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             return volmdlr.core.VolumeModel([self.instatiate_assembly(object_dict)])
-        volume_model = volmdlr.core.VolumeModel([object_dict[shell_nodes[0]]])
+        volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
         return volume_model
 
     def _helper_instantiate(self, node, object_dict, times, show_times):
