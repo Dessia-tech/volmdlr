@@ -1181,10 +1181,10 @@ class Step(dc.DessiaObject):
         for node in self.root_nodes['SHAPE_REPRESENTATION_RELATIONSHIP']:
             # Associate each step representation entity to its SHAPE_REPRESENTATION
             function = self.functions[node]
-            id1 = int(function.arg[2][1:])
-            id2 = int(function.arg[3][1:])
-            self.connections[id1].append(id2)
-            self.functions[id1].arg.append(f'#{id2}')
+            id_shape_representation = int(function.arg[2][1:])
+            id_shape = int(function.arg[3][1:])
+            self.connections[id_shape_representation].append(id_shape)
+            self.functions[id_shape_representation].arg.append(f'#{id_shape}')
         for node in self.root_nodes['SHAPE_DEFINITION_REPRESENTATION']:
             # Associate each step representation entity to its SHAPE_REPRESENTATION
             function = self.functions[node]
