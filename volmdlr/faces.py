@@ -2133,6 +2133,12 @@ class CylindricalFace3D(Face3D):
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(cylindrical_surface, surface2d, name)
 
+    def neutral_fiber(self):
+        _, _, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
+
+        point1 = self.surface3d.frame.origin + self.surface3d.frame.w * zmin
+        point2 = self.surface3d.frame.origin + self.surface3d.frame.w * zmax
+        return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
 
 class ToroidalFace3D(Face3D):
     """
@@ -2278,6 +2284,15 @@ class ToroidalFace3D(Face3D):
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         return cls(toroidal_surface3d, surfaces.Surface2D(outer_contour, []), name)
 
+    def neutral_fiber(self):
+        theta_min, theta_max, _, _ = self.surface2d.outer_contour.bounding_rectangle.bounds()
+        circle = volmdlr.wires.Circle3D(self.surface3d.frame, self.surface3d.tore_radius)
+        # point1 = self.surface3d.point2d_to_3d(volmdlr.Point2D(theta_min, 0))
+        # point2 = self.surface3d.point2d_to_3d(volmdlr.Point2D(theta_max, 0))
+        point1, point2 = [circle.center + circle.radius * math.cos(theta) * circle.frame.u +
+                                    circle.radius * math.sin(theta) * circle.frame.v for theta in
+                                    [theta_max, theta_min]]
+        return volmdlr.wires.Wire3D([circle.trim(point1, point2)])
 
 class ConicalFace3D(Face3D):
     """
