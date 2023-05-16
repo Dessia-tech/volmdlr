@@ -14,7 +14,7 @@ class TestToroidalFace3D(unittest.TestCase):
         """
         The triangle middle of triangulation should be at least at radius/20 of the surface
         """
-        triangulation = self.face2.triangulation()
+        triangulation = self.face1.triangulation()
         for i1, i2, i3 in triangulation.triangles:
             point1 = triangulation.points[i1]
             point2 = triangulation.points[i2]
@@ -26,7 +26,7 @@ class TestToroidalFace3D(unittest.TestCase):
             # Test distance from middle to surface
 
             self.assertLess(self.surface1.point_distance(triangle.middle()),
-                            self.surface1.radius * 0.05)
+                            self.surface1.small_radius * 0.05)
 
     def test_number_triangles(self):
         triangulation = self.face1.triangulation()
