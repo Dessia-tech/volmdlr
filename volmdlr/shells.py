@@ -1419,6 +1419,8 @@ class ClosedShell3D(OpenShell3D):
         for i, face1 in enumerate(union_faces):
             for j, face2 in enumerate(union_faces):
                 if j != i and face1.surface3d.is_coincident(face2.surface3d):
+                    # and\
+                    #     face1.outer_contour3d.is_sharing_primitives_with(face2.outer_contour3d):
                     if face1 not in coincident_planes_faces:
                         coincident_planes_faces.append(face1)
                     coincident_planes_faces.append(face2)

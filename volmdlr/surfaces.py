@@ -931,7 +931,8 @@ class Surface3D(DessiaObject):
             else:
                 raise AttributeError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
-
+        if not primitives3d:
+            raise ValueError("no primitives to create contour")
         return wires.Contour3D(primitives3d)
 
     def linesegment3d_to_2d(self, linesegment3d):
@@ -4317,7 +4318,7 @@ class BSplineSurface3D(Surface3D):
         if len(points) == 2:
             return [volmdlr.edges.LineSegment3D(points[0], points[-1])]
         periodic = points[0].is_close(points[-1], 1e-6)
-        if len(points) < min(self.degree_u, self.degree_v) + 2:
+        if len(points) < min(self.degree_u, self.degree_v) + 1:
             return None
         bspline = edges.BSplineCurve3D.from_points_interpolation(
                             points, min(self.degree_u, self.degree_v), periodic=periodic)
@@ -4562,7 +4563,7 @@ class BSplineSurface3D(Surface3D):
             point3d = self.point2d_to_3d(point)
             if not volmdlr.core.point_in_list(point3d, points):
                 points.append(point3d)
-        if len(points) < bspline_curve2d.degree + 2:
+        if len(points) < bspline_curve2d.degree + 1:
             return None
         return [edges.BSplineCurve3D.from_points_interpolation(
             points, bspline_curve2d.degree, bspline_curve2d.periodic)]
