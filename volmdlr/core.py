@@ -468,8 +468,8 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
                        self.primitives[0].start.y,
                        self.primitives[0].start.z]]
             for primitive in self.primitives:
-                if hasattr(primitive, 'curve'):
-                    points.extend(primitive.curve.evalpts)
+                if hasattr(primitive, 'discretization_points'):
+                    points.extend([*point] for point in primitive.discretization_points(number_points=20))
                 else:
                     points.append([primitive.end.x, primitive.end.y,
                                    primitive.end.z])
@@ -2206,6 +2206,38 @@ class VolumeModel(dc.PhysicalObject):
         lines_elements.append('$EndElements')
 
         return lines_elements
+
+    def get_shells(self):
+        """
+        Dissociates all the assemblies to get a list of shells only.
+
+        :return: A list of closed shells
+        :rtype: List[OpenShell3D]
+        """
+
+        list_shells = []
+        list_assembly = []
+        for primitive in self.primitives:
+            if primitive.__class__.__name__ == 'Assembly':
+                list_assembly.append(primitive)
+            elif (primitive.__class__.__name__ == 'OpenShell3D'
+                  or primitive.__class__.__name__ == 'ClosedShell3D'):
+                list_shells.append(primitive)
+
+        while list_assembly:
+            for i, assembly in enumerate(list_assembly):
+                for primitive in assembly.primitives:
+                    if primitive.__class__.__name__ == 'Assembly':
+                        list_assembly.append(primitive)
+
+                    elif (primitive.__class__.__name__ == 'OpenShell3D'
+                          or primitive.__class__.__name__ == 'ClosedShell3D'):
+
+                        list_shells.append(primitive)
+
+                list_assembly.pop(i)
+
+        return list_shells
 
 
 class MovingVolumeModel(VolumeModel):

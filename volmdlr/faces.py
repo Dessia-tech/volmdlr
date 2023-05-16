@@ -2292,7 +2292,7 @@ class ToroidalFace3D(Face3D):
         point1, point2 = [circle.center + circle.radius * math.cos(theta) * circle.frame.u +
                                     circle.radius * math.sin(theta) * circle.frame.v for theta in
                                     [theta_max, theta_min]]
-        return volmdlr.wires.Wire3D([circle.trim(point1, point2)])
+        return volmdlr.wires.Wire3D([circle.trim(point1, point2).reverse()])
 
 class ConicalFace3D(Face3D):
     """
