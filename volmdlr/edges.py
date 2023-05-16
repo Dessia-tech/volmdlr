@@ -158,7 +158,7 @@ class Edge(dc.DessiaObject):
         """
         if angle_resolution:
             number_points = int(angle_resolution * (self.length()/math.pi))
-        if number_points is None or number_points == 1:
+        if number_points is None or number_points <= 1:
             number_points = 2
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]

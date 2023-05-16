@@ -180,7 +180,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
-        if math.isclose(area, 0., abs_tol=1e-6):
+        if area == 0.0:
             return display.DisplayMesh2D([], triangles=[])
 
         triangulates_with_grid = number_points_x > 0 or number_points_y > 0
