@@ -3141,20 +3141,58 @@ class BSplineFace3D(Face3D):
 
         return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
 
+    def find_neutral_fiber_direction(self):
+        curves = self.surface3d.surface_curves
+        u_curves = curves['u']
+        v_curves = curves['v']
+        if any(isinstance(curve.simplify, vme.LineSegment3D) for curve in u_curves):
+            return "u"
+        if any(isinstance(curve.simplify, vme.LineSegment3D) for curve in v_curves):
+            return "v"
+        u_radius = []
+        for curve in u_curves:
+            point1 = curve.start
+            point2 = curve.end
+            interior = curve.point_at_abscissa(0.5 * curve.length())
+            arc = vme.Arc3D(point1, interior, point2)
+            u_radius.append(arc.radius)
+        v_radius = []
+        for curve in v_curves:
+            point1 = curve.start
+            point2 = curve.end
+            interior = curve.point_at_abscissa(0.5 * curve.length())
+            arc = vme.Arc3D(point1, interior, point2)
+            v_radius.append(arc.radius)
+        u_var = npy.var(u_radius)
+        v_var = npy.var(v_radius)
+        if u_var > v_var:
+            return "u"
+        else:
+            return "v"
+
     def neutral_fiber(self):
         curves = self.surface3d.surface_curves
         u_curves = curves['u']
         v_curves = curves['v']
-        u0 = u_curves[0]
-        u05 = u_curves[int(0.5 * len(u_curves))]
-        v0 = v_curves[0]
-        v05 = v_curves[int(0.5 * len(v_curves))]
-        u0_length = u0.length()
-        v0_length = v0.length()
-        if v0_length < u0_length:
-            fiber_curve = v0
-            linesegment = vme.LineSegment3D(u0.start, u0.end)
-            neutral_fiber_location = linesegment.point_at_abscissa(0.5 * linesegment.length())
+        # u0 = u_curves[0]
+        # u05 = u_curves[int(0.5 * len(u_curves))]
+        # v0 = v_curves[0]
+        # v05 = v_curves[int(0.5 * len(v_curves))]
+        # u0_length = u0.length()
+        # v0_length = v0.length()
+        neutral_fiber_direction = self.find_neutral_fiber_direction()
+
+        if neutral_fiber_direction == "v":
+            center_approximation = []
+            for curve in u_curves:
+                if isinstance(curve.simplify, vme.Arc3D):
+                    center_approximation.append(curve.simplify.center)
+                else:
+                    point1 = curve.start
+                    point2 = curve.end
+                    interior = curve.point_at_abscissa(0.5 * curve.length())
+                    arc = vme.Arc3D(point1, interior, point2)
+                    center_approximation.append(arc.center)
         else:
             center_approximation = []
             for curve in v_curves:

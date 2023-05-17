@@ -463,6 +463,8 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_points(self):
         points = []
+        if not self.primitives:
+            return points
         if hasattr(self, 'primitives') and hasattr(self.primitives[0], 'start'):
             points = [[self.primitives[0].start.x,
                        self.primitives[0].start.y,
@@ -488,6 +490,8 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_curves(self):
         points = self.babylon_points()
+        if not points:
+            return []
         babylon_curves = self.babylon_lines(points)[0]
         return babylon_curves
 
@@ -1440,7 +1444,10 @@ class VolumeModel(dc.PhysicalObject):
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+                    curves = primitive.babylon_curves()
+                    if not curves:
+                        continue
+                    lines.append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 meshes.extend(mesh for mesh in data["meshes"])
