@@ -3140,3 +3140,13 @@ class BSplineFace3D(Face3D):
             inner_contours=[plane3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
 
         return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
+
+    def neutral_fiber(self):
+        theta_min, theta_max, _, _ = self.surface2d.outer_contour.bounding_rectangle.bounds()
+        circle = volmdlr.wires.Circle3D(self.surface3d.frame, self.surface3d.tore_radius)
+        # point1 = self.surface3d.point2d_to_3d(volmdlr.Point2D(theta_min, 0))
+        # point2 = self.surface3d.point2d_to_3d(volmdlr.Point2D(theta_max, 0))
+        point1, point2 = [circle.center + circle.radius * math.cos(theta) * circle.frame.u +
+                                    circle.radius * math.sin(theta) * circle.frame.v for theta in
+                                    [theta_max, theta_min]]
+        return volmdlr.wires.Wire3D([circle.trim(point1, point2).reverse()])
