@@ -182,9 +182,13 @@ class Face3D(volmdlr.core.Primitive3D):
             contours2d = [surface.contour3d_to_2d(contour3d) for contour3d in contours3d]
 
             check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
-            if any(check_contours):
+            if any(check_contours) and isinstance(surface, (surfaces.PeriodicalSurface, surfaces.BSplineSurface3D)):
                 # Not implemented yet, but repair_contours2d should also return outer_contour3d and inner_contours3d
                 outer_contour2d, inner_contours2d = surface.repair_contours2d(contours2d[0], contours2d[1:])
+            elif any(check_contours):
+                surface.save_to_file("buggy_contour_surface.json")
+                for i, contour in enumerate(contours3d):
+                    contour.save_to_file(f"buggy_contour_contour_{i}.json")
             else:
                 for contour2d, contour3d in zip(contours2d, contours3d):
                     # if not contour2d.is_ordered(1e-4):
