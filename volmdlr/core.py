@@ -463,6 +463,8 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_points(self):
         points = []
+        if not self.primitives:
+            return points
         if hasattr(self, 'primitives') and hasattr(self.primitives[0], 'start'):
             points = [[self.primitives[0].start.x,
                        self.primitives[0].start.y,
@@ -488,6 +490,8 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_curves(self):
         points = self.babylon_points()
+        if not points:
+            return []
         babylon_curves = self.babylon_lines(points)[0]
         return babylon_curves
 
@@ -1440,7 +1444,10 @@ class VolumeModel(dc.PhysicalObject):
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+                    curves = primitive.babylon_curves()
+                    if not curves:
+                        continue
+                    lines.append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 meshes.extend(mesh for mesh in data["meshes"])
@@ -2206,6 +2213,38 @@ class VolumeModel(dc.PhysicalObject):
         lines_elements.append('$EndElements')
 
         return lines_elements
+
+    def get_shells(self):
+        """
+        Dissociates all the assemblies to get a list of shells only.
+
+        :return: A list of closed shells
+        :rtype: List[OpenShell3D]
+        """
+
+        list_shells = []
+        list_assembly = []
+        for primitive in self.primitives:
+            if primitive.__class__.__name__ == 'Assembly':
+                list_assembly.append(primitive)
+            elif (primitive.__class__.__name__ == 'OpenShell3D'
+                  or primitive.__class__.__name__ == 'ClosedShell3D'):
+                list_shells.append(primitive)
+
+        while list_assembly:
+            for i, assembly in enumerate(list_assembly):
+                for primitive in assembly.primitives:
+                    if primitive.__class__.__name__ == 'Assembly':
+                        list_assembly.append(primitive)
+
+                    elif (primitive.__class__.__name__ == 'OpenShell3D'
+                          or primitive.__class__.__name__ == 'ClosedShell3D'):
+
+                        list_shells.append(primitive)
+
+                list_assembly.pop(i)
+
+        return list_shells
 
 
 class MovingVolumeModel(VolumeModel):
