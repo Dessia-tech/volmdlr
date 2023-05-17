@@ -4282,6 +4282,7 @@ class BSplineSurface3D(Surface3D):
         self._grids2d = None
         self._grids2d_deformed = None
         self._bbox = None
+        self._surface_curves = None
 
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
@@ -4335,6 +4336,41 @@ class BSplineSurface3D(Surface3D):
         xmin, ymin, zmin = min_bounds
         xmax, ymax, zmax = max_bounds
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    @property
+    def surface_curves(self, extract_u: bool = True, extract_v: bool = True):
+        """
+        Extracts curves from a surface.
+
+        :param extract_u: If True, extract the curves in u direction
+        :param extract_v: If True, extract the curves in v direction
+        """
+        if not self._surface_curves:
+            self._surface_curves = self.get_surface_curves(extract_u, extract_v)
+        return self._surface_curves
+
+    def get_surface_curves(self, extract_u, extract_v):
+        """
+        Converts the surface curves from geomdl curve to volmdlr.
+
+        :param extract_u: If True, extract the curves in u direction.
+        :param extract_v: If True, extract the curves in v direction.
+        """
+        # v-direction
+        crvlist_v = []
+        if extract_v:
+            v_curves = self.curves["v"]
+            for curve in v_curves:
+                crvlist_v.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+        # u-direction
+        crvlist_u = []
+        if extract_u:
+            u_curves = self.curves["u"]
+            for curve in u_curves:
+                crvlist_u.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+
+        # Return shapes as a dict object
+        return dict(u=crvlist_u, v=crvlist_v)
 
     def control_points_matrix(self, coordinates):
         """
@@ -5020,6 +5056,102 @@ class BSplineSurface3D(Surface3D):
 
         :return: A planar surface if possible, otherwise, returns self.
         """
+        if self.x_periodicity and self.y_periodicity:
+            raise NotImplementedError
+        elif self.x_periodicity:
+            curves = self.surface_curves
+            u_curves = curves["u"]
+            u0_simplified_curve = u_curves[0].simplify
+            if isinstance(u0_simplified_curve, (edges.FullArc3D)):
+                cylindrical_check = all(isinstance(curve.simplify, edges.FullArc3D) and
+                                        math.isclose(u0_simplified_curve.radius, curve.simplify.radius, abs_tol=1e-6)
+                                        for curve in u_curves[1:])
+                if cylindrical_check:
+                    return CylindricalSurface3D(u0_simplified_curve.frame, u0_simplified_curve.radius, self.name)
+                v_curves = curves["v"]
+                are_all_v_curves_line_segments = all(isinstance(curve.simplify, edges.LineSegment3D)
+                                                     for curve in v_curves[1:])
+                if are_all_v_curves_line_segments:
+                    normal_line = edges.Line3D(u0_simplified_curve.frame.origin,
+                                             u0_simplified_curve.frame.origin + u0_simplified_curve.normal)
+                    v0_simplified_curve = v_curves[0].simplify
+                    line = v0_simplified_curve.to_line()
+                    intersection = normal_line.intersection(line)
+                    conical_check = False
+                    if intersection:
+                        conical_check = all(normal_line.intersection(curve.simplify.to_line()).is_close(intersection)
+                                        for curve in v_curves[1:])
+                    if conical_check:
+                        # make sure that the normal is in the right sense
+                        new_normal = u0_simplified_curve.center - intersection
+                        new_normal.normalize()
+                        frame = volmdlr.Frame3D(intersection, u0_simplified_curve.frame.u,
+                                                new_normal.cross(u0_simplified_curve.frame.u),
+                                                new_normal)
+                        _, _, z = frame.global_to_local_coordinates(u0_simplified_curve.center)
+                        semi_angle = math.atan(u0_simplified_curve.radius / z)
+                        return ConicalSurface3D(frame, semi_angle, self.name)
+                return self
+        elif self.y_periodicity:
+            curves = self.surface_curves
+            v_curves = curves["v"]
+            v0_simplified_curve = v_curves[0].simplify
+            if isinstance(v0_simplified_curve, edges.FullArc3D):
+                all_fullarc = all(isinstance(curve.simplify, edges.FullArc3D)
+                                  for curve in v_curves[1:])
+                if all_fullarc:
+                    cylindrical_check = all(math.isclose(v0_simplified_curve.radius, curve.simplify.radius)
+                                            for curve in v_curves[1:]) and all_fullarc
+                    if cylindrical_check:
+                        return CylindricalSurface3D(v0_simplified_curve.frame, v0_simplified_curve.radius, self.name)
+                u_curves = curves["u"]
+                are_all_u_curves_line_segments = all(isinstance(curve.simplify, edges.LineSegment3D)
+                                                     for curve in u_curves[1:])
+                if are_all_u_curves_line_segments:
+                    normal_line = edges.Line3D(v0_simplified_curve.frame.origin,
+                                             v0_simplified_curve.frame.origin + v0_simplified_curve.normal)
+                    u0_simplified_curve = u_curves[0].simplify
+                    line = u0_simplified_curve.to_line()
+                    intersection = normal_line.intersection(line)
+                    conical_check = False
+                    if intersection:
+                        conical_check = all(normal_line.intersection(curve.simplify.to_line()).is_close(intersection)
+                                        for curve in u_curves[1:])
+                    if conical_check:
+                        # make sure that the normal is in the right sense
+                        new_normal = v0_simplified_curve.center - intersection
+                        new_normal.normalize()
+                        frame = volmdlr.Frame3D(intersection, v0_simplified_curve.frame.u,
+                                                new_normal.cross(v0_simplified_curve.frame.u),
+                                                new_normal)
+                        _, _, z = frame.global_to_local_coordinates(v0_simplified_curve.center)
+                        semi_angle = math.atan(v0_simplified_curve.radius / z)
+                        return ConicalSurface3D(frame, semi_angle, self.name)
+                return self
+        curves = self.surface_curves
+        u_curves = curves["u"]
+        v_curves = curves["v"]
+        u0_simplified_curve = u_curves[0].simplify
+        v0_simplified_curve = v_curves[0].simplify
+        cylindrical_check = False
+        if isinstance(u0_simplified_curve, edges.Arc3D):
+            cylindrical_check = all(isinstance(curve.simplify, edges.Arc3D) and
+                                    math.isclose(u0_simplified_curve.radius, curve.simplify.radius, abs_tol=1e-4)
+                                    for curve in u_curves[1:]) and \
+                                all(isinstance(curve.simplify, edges.LineSegment3D)
+                                    for curve in v_curves)
+            frame = u0_simplified_curve.frame
+            radius = u0_simplified_curve.radius
+        elif isinstance(v0_simplified_curve, edges.Arc3D):
+            cylindrical_check = all(isinstance(curve.simplify, edges.Arc3D) and
+                                    math.isclose(v0_simplified_curve.radius, curve.simplify.radius, abs_tol=1e-4)
+                                    for curve in v_curves[1:]) and \
+                                all(isinstance(curve.simplify, edges.LineSegment3D)
+                                    for curve in u_curves)
+            frame = v0_simplified_curve.frame
+            radius = v0_simplified_curve.radius
+        if cylindrical_check:
+            return CylindricalSurface3D(frame, radius, self.name)
         points = [self.control_points[0]]
         vector_list = []
         for point in self.control_points[1:]:
@@ -5092,13 +5224,13 @@ class BSplineSurface3D(Surface3D):
         bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
                              u_multiplicities, v_multiplicities, u_knots,
                              v_knots, weight_data, name)
-        if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
-            bsplinesurface = bsplinesurface.simplify_surface()
+        # if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
+        #     bsplinesurface = bsplinesurface.simplify_surface()
         # if u_closed:
         #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
         # if v_closed:
         #     bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
-        return bsplinesurface
+        return bsplinesurface.simplify_surface()
 
     def to_step(self, current_id):
         content = ''

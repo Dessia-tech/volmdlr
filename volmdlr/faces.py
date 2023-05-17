@@ -3104,7 +3104,7 @@ class BSplineFace3D(Face3D):
         contours = self.outer_contour3d.merge_with(other_bspline_face3d.outer_contour3d)
         contours.extend(self.inner_contours3d)
         contours.extend(other_bspline_face3d.inner_contours3d)
-        merged_face = merged_surface.face_from_contours3d(contours)
+        merged_face = self.from_contours3d(merged_surface, contours)
 
         return merged_face
 
@@ -3142,11 +3142,34 @@ class BSplineFace3D(Face3D):
         return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
 
     def neutral_fiber(self):
-        theta_min, theta_max, _, _ = self.surface2d.outer_contour.bounding_rectangle.bounds()
-        circle = volmdlr.wires.Circle3D(self.surface3d.frame, self.surface3d.tore_radius)
-        # point1 = self.surface3d.point2d_to_3d(volmdlr.Point2D(theta_min, 0))
-        # point2 = self.surface3d.point2d_to_3d(volmdlr.Point2D(theta_max, 0))
-        point1, point2 = [circle.center + circle.radius * math.cos(theta) * circle.frame.u +
-                                    circle.radius * math.sin(theta) * circle.frame.v for theta in
-                                    [theta_max, theta_min]]
-        return volmdlr.wires.Wire3D([circle.trim(point1, point2).reverse()])
+        curves = self.surface3d.surface_curves
+        u_curves = curves['u']
+        v_curves = curves['v']
+        u0 = u_curves[0]
+        u05 = u_curves[int(0.5 * len(u_curves))]
+        v0 = v_curves[0]
+        v05 = v_curves[int(0.5 * len(v_curves))]
+        u0_length = u0.length()
+        v0_length = v0.length()
+        if v0_length < u0_length:
+            fiber_curve = v0
+            linesegment = vme.LineSegment3D(u0.start, u0.end)
+            neutral_fiber_location = linesegment.point_at_abscissa(0.5 * linesegment.length())
+        else:
+            center_approximation = []
+            for curve in v_curves:
+                if isinstance(curve.simplify, vme.Arc3D):
+                    center_approximation.append(curve.simplify.center)
+                else:
+                    point1 = curve.start
+                    point2 = curve.end
+                    interior = curve.point_at_abscissa(0.5 * curve.length())
+                    arc = vme.Arc3D(point1, interior, point2)
+                    center_approximation.append(arc.center)
+            # fiber_curve = u0
+            # linesegment = vme.LineSegment3D(v0.start, v0.end)
+            # neutral_fiber_location = linesegment.point_at_abscissa(0.5 * linesegment.length())
+
+        # neutral_fiber = fiber_curve.translation(neutral_fiber_location - fiber_curve.start)
+        neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(center_approximation, min(self.surface3d.degree_u, self.surface3d.degree_v))
+        return volmdlr.wires.Wire3D([neutral_fiber])
