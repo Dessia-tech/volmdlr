@@ -1535,8 +1535,13 @@ class BSplineCurve(Edge):
             bspline1_, bspline2_ = self.split(other_bspline2.start)
         elif self.point_belongs(other_bspline2.end, abs_tol=abs_tol):
             bspline1_, bspline2_ = self.split(other_bspline2.end)
+        # elif self.point_belongs(other_bspline2.start) and self.point_belongs(other_bspline2.end):
+        #     return [self]
+        # elif other_bspline2.point_belongs(self.start) and other_bspline2.point_belongs(self.end):
+        #     return [other_bspline2]
         else:
-            raise NotImplementedError
+            return []
+            # raise NotImplementedError
         shared_bspline_section = []
         for bspline in [bspline1_, bspline2_]:
             if bspline and all(other_bspline2.point_belongs(point)
