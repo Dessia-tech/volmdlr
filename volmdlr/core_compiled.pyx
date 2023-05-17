@@ -335,6 +335,20 @@ class Vector(DessiaObject):
         except ZeroDivisionError:
             return False
 
+    def is_perpendicular_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
+        """
+        Checks if two vectors are perpendicular.
+        The two vectors should be of same dimension.
+
+        :param other_vector: A vector-like object
+        :type other_vector: :class:`volmdlr.Vector`
+        :param abs_tol: Absolute tolerance to consider perpendicular
+        :type abs_tol: float
+        :return: `True` if the two vectors are perpendicular, `False` otherwise
+        :rtype: bool
+        """
+        return math.isclose(abs(self.dot(other_vector)), 0, abs_tol=abs_tol)
+
     @classmethod
     def mean_point(cls, points: List["Vector"]):
         """
@@ -448,7 +462,7 @@ class Vector2D(Vector):
     def is_close(self, other_vector: "Vector2D", tol: float = 1e-6):
         """
         Checks if two vectors are close to each other considering the
-        euclidean distance. The tolerance can be modified. The two vectors
+        Euclidean distance. The tolerance can be modified. The two vectors
         should be of same dimension.
 
         :param other_vector: A Vector2D-like object
@@ -460,7 +474,7 @@ class Vector2D(Vector):
             to each other, `False` otherwise
         :rtype: bool
         """
-        if other_vector.__class__.__name__ not in ["Vector2D", "Point2D"]:
+        if other_vector.__class__.__name__ not in ["Vector2D", "Point2D", "Node2D"]:
             return False
         return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
 
@@ -1317,7 +1331,7 @@ class Vector3D(Vector):
     def is_close(self, other_vector, tol=1e-6):
         """
         Checks if two vectors are close to each other considering the
-        euclidean distance. The tolerance can be modified. The two vectors
+        Euclidean distance. The tolerance can be modified. The two vectors
         should be of same dimension.
 
         :param other_vector: A Vector3D-like object
@@ -1329,7 +1343,7 @@ class Vector3D(Vector):
             to each other, `False` otherwise
         :rtype: bool
         """
-        if other_vector.__class__.__name__ not in ["Vector3D", "Point3D"]:
+        if other_vector.__class__.__name__ not in ["Vector3D", "Point3D", "Node3D"]:
             return False
         # return math.isclose(self.x, other_vector.x, abs_tol=tol) \
         # and math.isclose(self.y, other_vector.y, abs_tol=tol) \
@@ -3039,9 +3053,12 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
-        self.u.normalize()
-        self.v.normalize()
-        self.w.normalize()
+        if not math.isclose(self.u.norm(), 0.0, abs_tol=1e-10):
+            self.u.normalize()
+        if not math.isclose(self.v.norm(), 0.0, abs_tol=1e-10):
+            self.v.normalize()
+        if not math.isclose(self.w.norm(), 0.0, abs_tol=1e-10):
+            self.w.normalize()
 
 
 class Frame2D(Basis2D):

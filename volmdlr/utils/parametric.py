@@ -4,6 +4,7 @@ volmdlr utils for calculating 3D to surface parametric domain operation.
 """
 import bisect
 import math
+import warnings
 
 import volmdlr
 import volmdlr.edges as vme
@@ -43,7 +44,7 @@ def angle_discontinuity(angle_list):
         for index in indexes_sign_changes:
             sign = round(angle_list[index - 1] / abs(angle_list[index - 1]), 2)
             delta = abs(angle_list[index] + sign * volmdlr.TWO_PI - angle_list[index - 1])
-            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta) and\
+            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta) and \
                     not math.isclose(abs(angle_list[index]), 0, abs_tol=delta):
                 indexes_angle_discontinuity.append(index)
                 discontinuity = True
@@ -161,11 +162,11 @@ def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, ang
     #  ref_up > math.pi -> crossing lower bound of atan2  [-math.pi, math.pi]
     elif angle_after_start > angle_start and ref_up > math.pi:
         angle_end = ref_up
-
-    if angle_start > 0 > angle_after_start:
-        angle_start -= periodicity
-    elif angle_start < 0 < angle_after_start:
-        angle_start += periodicity
+    if not math.isclose(angle_start, 0, abs_tol=1e-4):
+        if angle_start > 0 > angle_after_start:
+            angle_start -= periodicity
+        elif angle_start < 0 < angle_after_start:
+            angle_start += periodicity
 
     return angle_start, angle_end
 
@@ -203,28 +204,55 @@ def fullarc_to_cylindrical_coordinates_verification(start, end, theta3):
     return [start, end]
 
 
-def arc3d_to_spherical_coordinates_verification(start, end, angle3d, reference_points, periodicity):
+def toroidal_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end):
     """
     Verifies theta and phi from start and end of an arc 3D after transformation from spatial to parametric coordinates.
     """
-    point_after_start = reference_points[0]
-    point_before_end = reference_points[1]
     theta1, phi1 = start
     theta2, phi2 = end
     theta3, phi3 = point_after_start
     theta4, phi4 = point_before_end
     # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
-    if abs(theta1) == math.pi:
+    if abs(theta1) == math.pi or abs(theta1) == 0.5 * math.pi:
         theta1 = repair_start_end_angle_periodicity(theta1, theta3)
-    if abs(theta2) == math.pi:
+    if abs(theta2) == math.pi or abs(theta2) == 0.5 * math.pi:
         theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
     # Verify if phi1 or phi2 point should be -pi or pi because phi -> ]-pi, pi]
-    if abs(phi1) == math.pi:
+    if abs(phi1) == math.pi or abs(phi1) == 0.5 * math.pi:
         phi1 = repair_start_end_angle_periodicity(phi1, phi3)
-    if abs(phi2) == math.pi:
+    if abs(phi2) == math.pi or abs(phi2) == 0.5 * math.pi:
         phi2 = repair_start_end_angle_periodicity(phi2, phi4)
+    return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
 
+
+def spherical_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end):
+    """
+    Verifies theta and phi from start and end of an arc 3D after transformation from spatial to parametric coordinates.
+    """
+    theta1, phi1 = start
+    theta2, phi2 = end
+    theta3, _ = point_after_start
+    theta4, _ = point_before_end
+    # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
+    if abs(theta1) == math.pi or abs(theta1) == 0.5 * math.pi:
+        theta1 = repair_start_end_angle_periodicity(theta1, theta3)
+    if abs(theta2) == math.pi or abs(theta2) == 0.5 * math.pi:
+        theta2 = repair_start_end_angle_periodicity(theta2, theta4)
+
+    return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
+
+
+def arc3d_to_toroidal_coordinates_verification(start, end, angle3d, reference_points, periodicity):
+    """
+    Verifies theta and phi from start and end of an arc 3D after transformation from spatial to parametric coordinates.
+    """
+    point_after_start = reference_points[0]
+    point_before_end = reference_points[1]
+    theta3, phi3 = point_after_start
+    start, end = toroidal_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end)
+    theta1, phi1 = start
+    theta2, phi2 = end
     if math.isclose(phi1, phi2, abs_tol=1e-4):
         theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2,
                                                        angle3d, periodicity[0])
@@ -232,6 +260,23 @@ def arc3d_to_spherical_coordinates_verification(start, end, angle3d, reference_p
     if math.isclose(theta1, theta2, abs_tol=1e-4):
         phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2,
                                                    angle3d, periodicity[1])
+
+    return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
+
+
+def arc3d_to_spherical_coordinates_verification(start, end, angle3d, reference_points, periodicity):
+    """
+    Verifies theta and phi from start and end of an arc 3D after transformation from spatial to parametric coordinates.
+    """
+    point_after_start = reference_points[0]
+    point_before_end = reference_points[1]
+    theta3, _ = point_after_start
+    start, end = spherical_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end)
+    theta1, phi1 = start
+    theta2, phi2 = end
+    if math.isclose(phi1, phi2, abs_tol=1e-4):
+        theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2,
+                                                       angle3d, periodicity[0])
 
     return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
 
@@ -262,3 +307,49 @@ def array_range_search(x, xmin, xmax):
     right = bisect.bisect_right(x, xmax)
 
     return range(left, right)
+
+
+def contour2d_healing(contour2d):
+    """
+    Heals topologies incoherences on the boundary representation.
+    """
+    contour2d = contour2d_healing_self_intersection(contour2d)
+    contour2d = contour2d_healing_close_gaps(contour2d)
+    return contour2d
+
+
+def contour2d_healing_close_gaps(contour2d):
+    """
+    Heals topologies incoherences on the boundary representation.
+    """
+    new_primitives = [contour2d.primitives[0]]
+    for i, (prim1, prim2) in enumerate(
+            zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
+        if not prim1.end.is_close(prim2.start):
+            new_primitives.append(vme.LineSegment2D(prim1.end, prim2.start))
+        if i < len(contour2d.primitives) - 1:
+            new_primitives.append(prim2)
+    contour2d.primitives = new_primitives
+
+    return contour2d
+
+
+def contour2d_healing_self_intersection(contour2d):
+    """
+    Heals topologies incoherences on the boundary representation.
+    """
+    for i, (prim1, prim2) in enumerate(
+            zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
+        if not prim1.end.is_close(prim2.start):
+            # check intersection
+            crossings = prim1.intersections(prim2)
+            if crossings:
+                if len(crossings) > 1:
+                    warnings.warn("More than one crossings found while detecting contour self intersection.")
+                    return contour2d
+                split_point = crossings[0]
+                new_prim1 = prim1.split(split_point)[0]
+                new_prim2 = prim2.split(split_point)[1]
+                contour2d.primitives[i] = new_prim1
+                contour2d.primitives[(i + 1) % len(contour2d.primitives)] = new_prim2
+    return contour2d

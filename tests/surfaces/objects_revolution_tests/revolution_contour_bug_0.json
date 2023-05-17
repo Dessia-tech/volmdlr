@@ -1,0 +1,177 @@
+{
+  "name": "",
+  "object_class": "volmdlr.wires.Contour3D",
+  "package_version": "0.9.2.dev1050+g45192f1d",
+  "primitives": [
+    {
+      "name": "",
+      "object_class": "volmdlr.edges.Arc3D",
+      "package_version": "0.9.2.dev1050+g45192f1d",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.595619165039,
+        "y": 0.62849672659,
+        "z": -0.00544103685668
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.5956191650560001,
+        "y": 0.628710790118,
+        "z": -0.0050308657534799996
+      },
+      "interior": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.595619165039,
+        "y": 0.628553461245,
+        "z": -0.005209701961
+      }
+    },
+    {
+      "name": "",
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "package_version": "0.9.2.dev1050+g45192f1d",
+      "degree": 3,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.595619165039,
+          "y": 0.628710790319,
+          "z": -0.005030865613199999
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.595502005329,
+          "y": 0.62871079032,
+          "z": -0.00503086561317
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.595419165444,
+          "y": 0.62875816715,
+          "z": -0.00509882695733
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.5954191650389999,
+          "y": 0.6288251644330001,
+          "z": -0.005194933544
+        }
+      ],
+      "knot_multiplicities": [
+        4,
+        4
+      ],
+      "knots": [
+        2.7755575615628914e-17,
+        1.0
+      ],
+      "weights": [
+        1.17150580602,
+        0.942787246754,
+        0.942831406517,
+        1.17163828531
+      ],
+      "periodic": false
+    },
+    {
+      "name": "",
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "package_version": "0.9.2.dev1050+g45192f1d",
+      "degree": 5,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.5954191650389999,
+          "y": 0.628825189709,
+          "z": -0.0051949167673499995
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.5954191650389999,
+          "y": 0.628806717817,
+          "z": -0.005207791014159999
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.5954191650389999,
+          "y": 0.628789233267,
+          "z": -0.005222552011630001
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.5954191650389999,
+          "y": 0.628772830669,
+          "z": -0.00523935555837
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.5954191650389999,
+          "y": 0.628736538075,
+          "z": -0.00528464873073
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.5954191650389999,
+          "y": 0.6287117532140001,
+          "z": -0.005337871286590001
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.5954191650389999,
+          "y": 0.628701479587,
+          "z": -0.0053728849189
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.5954191650389999,
+          "y": 0.6286967265900001,
+          "z": -0.0054072632972000005
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.5954191650389999,
+          "y": 0.6286967265900001,
+          "z": -0.00544103685668
+        }
+      ],
+      "knot_multiplicities": [
+        6,
+        3,
+        6
+      ],
+      "knots": [
+        0.0,
+        0.4,
+        1.0
+      ],
+      "weights": null,
+      "periodic": false
+    },
+    {
+      "name": "",
+      "object_class": "volmdlr.edges.Arc3D",
+      "package_version": "0.9.2.dev1050+g45192f1d",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.5954191650389999,
+        "y": 0.6286967265900001,
+        "z": -0.00544103685668
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.595619165039,
+        "y": 0.62849672659,
+        "z": -0.00544103685668
+      },
+      "interior": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.595477743683,
+        "y": 0.628555305234,
+        "z": -0.005441036857
+      }
+    }
+  ],
+  "basis_primitives": [],
+  "color": null,
+  "alpha": 1
+}

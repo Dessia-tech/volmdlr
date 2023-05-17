@@ -92,13 +92,12 @@ steps:
   - cd doc
   - make html
   - cd ../tests
-  - coverage run --source volmdlr -m unittest discover -v
-  - cd ../scripts
-  - coverage run --source volmdlr ci_scripts.py
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
+  - cd ../scripts  
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
   - cd ../tutorials
-  - coverage run --source volmdlr ci_tutorials.py
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
   - cd ..
-  - coverage combine scripts/.coverage tests/.coverage tutorials/.coverage
   - coverage json
   - coverage report
   - coverage html

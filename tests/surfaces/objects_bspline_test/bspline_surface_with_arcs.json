@@ -1,0 +1,181 @@
+{
+  "name": "",
+  "object_class": "volmdlr.surfaces.BSplineSurface3D",
+  "package_version": "0.9.2.dev421+gb87a301e",
+  "degree_u": 3,
+  "degree_v": 3,
+  "nb_u": 4,
+  "nb_v": 4,
+  "control_points": [
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.29851599999999,
+      "y": 0.45774099653199,
+      "z": 0.31114886258063
+    },
+    {
+      "$ref": "#/control_points/0"
+    },
+    {
+      "$ref": "#/control_points/0"
+    },
+    {
+      "$ref": "#/control_points/0"
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.29851599999999,
+      "y": 0.45774099653199,
+      "z": 0.31068761433964
+    },
+    {
+      "$ref": "#/control_points/4"
+    },
+    {
+      "$ref": "#/control_points/4"
+    },
+    {
+      "$ref": "#/control_points/4"
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.29822040612105005,
+      "y": 0.45760315884254,
+      "z": 0.31036146258063
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.29820019775080997,
+      "y": 0.45764649583236,
+      "z": 0.31036146258063
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.29818984824098,
+      "y": 0.45769317945435,
+      "z": 0.31036146258063
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.29818984824098,
+      "y": 0.45774099653199,
+      "z": 0.31036146258063
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.29780237324848,
+      "y": 0.4574082269127,
+      "z": 0.31036146258063
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.29775358592698004,
+      "y": 0.45751285166128997,
+      "z": 0.31036146258063
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.29772859999999,
+      "y": 0.45762555589462,
+      "z": 0.31036146258063
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.29772859999999,
+      "y": 0.45774099653199,
+      "z": 0.31036146258063
+    }
+  ],
+  "u_knots": [
+    0.0,
+    1.0
+  ],
+  "v_knots": [
+    0.0,
+    1.0
+  ],
+  "u_multiplicities": [
+    4,
+    4
+  ],
+  "v_multiplicities": [
+    4,
+    4
+  ],
+  "weights": [
+    1.0,
+    0.98419733808,
+    0.98419733808,
+    1.0,
+    0.804737854124,
+    0.792020853881,
+    0.792020853881,
+    0.804737854124,
+    0.804737854124,
+    0.792020853881,
+    0.792020853881,
+    0.804737854124,
+    1.0,
+    0.98419733808,
+    0.98419733808,
+    1.0
+  ],
+  "control_points_table": [
+    [
+      {
+        "$ref": "#/control_points/0"
+      },
+      {
+        "$ref": "#/control_points/0"
+      },
+      {
+        "$ref": "#/control_points/0"
+      },
+      {
+        "$ref": "#/control_points/0"
+      }
+    ],
+    [
+      {
+        "$ref": "#/control_points/4"
+      },
+      {
+        "$ref": "#/control_points/4"
+      },
+      {
+        "$ref": "#/control_points/4"
+      },
+      {
+        "$ref": "#/control_points/4"
+      }
+    ],
+    [
+      {
+        "$ref": "#/control_points/8"
+      },
+      {
+        "$ref": "#/control_points/9"
+      },
+      {
+        "$ref": "#/control_points/10"
+      },
+      {
+        "$ref": "#/control_points/11"
+      }
+    ],
+    [
+      {
+        "$ref": "#/control_points/12"
+      },
+      {
+        "$ref": "#/control_points/13"
+      },
+      {
+        "$ref": "#/control_points/14"
+      },
+      {
+        "$ref": "#/control_points/15"
+      }
+    ]
+  ]
+}

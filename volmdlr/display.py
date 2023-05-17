@@ -5,6 +5,7 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 """
 
 import math
+import warnings
 from typing import List, Tuple
 
 import dessia_common.core as dc
@@ -153,7 +154,7 @@ class DisplayMesh(dc.DessiaObject):
         return self.__class__(new_points, new_triangles)
 
     def plot(self, ax=None, numbering=False):
-        """Plots the mesh with matplotlib."""
+        """Plots the mesh with Matplotlib."""
         for i_points, point in enumerate(self.points):
             ax = point.plot(ax=ax)
             if numbering:
@@ -231,12 +232,20 @@ class DisplayMesh3D(DisplayMesh):
             flatten_indices.extend(vertex)
         return positions, flatten_indices
 
+    def triangular_faces(self):
+        triangular_faces = []
+        for (vertex1, vertex2, vertex3) in self.triangles:
+            point1 = self.points[vertex1]
+            point2 = self.points[vertex2]
+            point3 = self.points[vertex3]
+            face = volmdlr.faces.Triangle3D(point1, point2, point3)
+            if face.area() >= 1e-08:
+                triangular_faces.append(face)
+        return triangular_faces
+
     def to_stl(self):
         """
         Exports to STL.
 
         """
-        # TODO: remove this in the future
-        import volmdlr.stl as vmstl
-        stl = vmstl.Stl.from_display_mesh(self)
-        return stl
+        warnings.warn('Please use the Stl.from_display_mesh methos instead')

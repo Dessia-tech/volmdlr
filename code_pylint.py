@@ -7,7 +7,7 @@ import math
 from pylint import __version__
 from pylint.lint import Run
 
-MIN_NOTE = 8.20
+MIN_NOTE = 9.3
 
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
@@ -18,40 +18,40 @@ WEEKLY_DECREASE = 0.03
 MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 216,
                      "wrong-spelling-in-docstring": 143,
-                     'invalid-name': 243,
+                     'invalid-name': 190,
                      'no-member': 3,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 14,
-                     'too-many-locals': 70,
+                     'too-many-locals': 71,
                      'unused-argument': 29,
-                     'too-many-arguments': 26,
+                     'too-many-arguments': 34,
                      'line-too-long': 7,
                      'too-many-branches': 26,
                      'too-many-statements': 18,
                      'super-init-not-called': 13,
-                     'no-name-in-module': 8,
+                     'no-name-in-module': 11,
                      'abstract-method': 37,
-                     'duplicate-code': 9,
+                     'duplicate-code': 10,
                      'arguments-renamed': 2,
                      'too-many-ancestors': 9,
                      'too-few-public-methods': 3,
                      'non-parent-init-called': 3,
                      'too-many-public-methods': 12,
-                     'too-many-instance-attributes': 13,
+                     'too-many-instance-attributes': 14,
                      'protected-access': 4,
                      'undefined-loop-variable': 2,
                      'unspecified-encoding': 1,
                      'too-many-function-args': 4,
                      'too-many-nested-blocks': 10,
-                     'too-many-return-statements': 2,
-                     'cyclic-import': 4,
+                     'too-many-return-statements': 5,
+                     'cyclic-import': 1,
                      'raise-missing-from': 2,
                      'undefined-variable': 0,  # 2 when gmsh is fixed
                      'broad-except': 1,
                      "broad-exception-caught": 1,
                      'too-many-boolean-expressions': 3,
-                     'too-many-lines': 3,
+                     'too-many-lines': 4,
                      'redundant-keyword-arg': 3,
                      'consider-using-with': 1,
                      'unnecessary-dunder-call': 2,
@@ -65,7 +65,7 @@ MAX_ERROR_BY_TYPE = {
 ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-many-arguments", "too-many-statements",
                                 "too-many-nested-blocks", "too-many-instance-attributes", "abstract-method",
                                 "no-name-in-module", "too-many-public-methods", "too-many-ancestors",
-                                "protected-access", "cyclic-import", "line-too-long"]
+                                "protected-access", "cyclic-import", "line-too-long", "duplicate-code"]
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:

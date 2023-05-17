@@ -7,6 +7,7 @@ Bezier
 bool
 bspline
 bsplinecurve
+bsplinesurface
 Bspline
 bsplines
 cosinus
@@ -43,6 +44,7 @@ maxiter
 msh
 plt
 nbv
+networkx.DiGraph
 ndarray
 numpy
 numpy
@@ -51,14 +53,18 @@ rtype
 STEP
 STL
 stl
+spline
+Spline
 str
-n-th
+th
 tol
 todo
 toroidal
 trigo
 txt
 utils
+vme
+vme.EdgeStyle
 vtk
 volmdlr
 xmin
@@ -67,3 +73,10 @@ ymin
 ymax
 zmin
 zmax
+SKL
+dimensioned
+geomdl's
+Tore's
+deserialization
+Trimesh
+networkx

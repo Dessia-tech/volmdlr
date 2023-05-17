@@ -32,3 +32,15 @@ mesh = gmsh_parser.define_tetrahedron_element_mesh()
 gmsh_parser.to_vtk(file_path)
 
 # mesh.plot()
+
+# %% 3D (Quadratic)
+
+file_path = 'mesh_quadratic'
+
+gmsh_parser = volmdlr.gmsh_vm.GmshParser.from_file(file_path+'.msh')
+
+mesh = gmsh_parser.define_quadratic_tetrahedron_element_mesh()
+
+gmsh_parser.to_vtk(file_path)
+
+# mesh.plot()

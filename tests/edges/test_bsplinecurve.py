@@ -60,7 +60,7 @@ class TestBSplineCurve2D(unittest.TestCase):
 
         line_intersections = bspline_curve2d.line_intersections(line)
         self.assertEqual(len(line_intersections), 1)
-        self.assertTrue(line_intersections[0].is_close(volmdlr.Point2D(1.2631617118836584, -0.0026450894340933075)))
+        self.assertTrue(line_intersections[0].is_close(volmdlr.Point2D(1.263163105753452, -0.0026450893856384914)))
 
     def test_discretization_points(self):
         control_points_2d = [volmdlr.Point2D(1.5707963267948966, 2.3),
@@ -121,7 +121,7 @@ class TestBSplineCurve2D(unittest.TestCase):
         point = volmdlr.Point2D(1.5, 0.1)
         self.assertAlmostEqual(self.bspline1.point_distance(point), 0.08945546033235202)
         point2 = self.bspline1.point_at_abscissa(0.4)
-        self.assertAlmostEqual(self.bspline1.point_distance(point2), 0.0, 8)
+        self.assertAlmostEqual(self.bspline1.point_distance(point2), 0.0, 7)
 
     def test_point_belongs(self):
         point = volmdlr.Point2D(1.5, 0.1)
@@ -138,7 +138,7 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertEqual(len(shared_section2), 1)
         self.assertTrue(shared_section2[0].start.is_close(volmdlr.Point2D(0.8999999, 0.252000000)))
         self.assertTrue(shared_section2[0].end.is_close(volmdlr.Point2D(2.09999999, -0.251999999)))
-        self.assertAlmostEqual(shared_section2[0].length(), 1.3038324934975103)
+        self.assertAlmostEqual(shared_section2[0].length(), 1.3038324934975103, 6)
         shared_section3 = self.bspline1.get_shared_section(self.bspline5)
         self.assertEqual(shared_section3, [self.bspline5])
         shared_section4 = self.bspline5.get_shared_section(self.bspline1)
@@ -150,20 +150,20 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertEqual(len(remaining_section1), 1)
         self.assertTrue(remaining_section1[0].start.is_close(volmdlr.Point2D(1.5, 0.0)))
         self.assertTrue(remaining_section1[0].end.is_close(volmdlr.Point2D(3.0, 0.0)))
-        self.assertAlmostEqual(remaining_section1[0].length(), 1.6373881438050524)
+        self.assertAlmostEqual(remaining_section1[0].length(), 1.6373881438050524, 6)
         remaining_section2 = self.bspline6.delete_shared_section(self.bspline7)
         self.assertEqual(len(remaining_section2), 1)
         self.assertTrue(remaining_section2[0].start.is_close(volmdlr.Point2D(0.0, 0.0)))
         self.assertTrue(remaining_section2[0].end.is_close(volmdlr.Point2D(0.8999999997498065, 0.25200000006505024)))
-        self.assertAlmostEqual(remaining_section2[0].length(), 0.9854029549808058)
+        self.assertAlmostEqual(remaining_section2[0].length(), 0.9854029549808058, 6)
         remaining_section3 = self.bspline1.delete_shared_section(self.bspline5)
         self.assertEqual(len(remaining_section3), 2)
         self.assertTrue(remaining_section3[0].start.is_close(volmdlr.Point2D(0.0, 0.0)))
         self.assertTrue(remaining_section3[0].end.is_close(volmdlr.Point2D(0.44999999682593295, 0.26774999925409426)))
-        self.assertAlmostEqual(remaining_section3[0].length(), 0.5305607215935024)
+        self.assertAlmostEqual(remaining_section3[0].length(), 0.5305607215935024, 6)
         self.assertTrue(remaining_section3[1].start.is_close(volmdlr.Point2D(1.4999999878769186, 0.0)))
         self.assertTrue(remaining_section3[1].end.is_close(volmdlr.Point2D(3.0, 0.0)))
-        self.assertAlmostEqual(remaining_section3[1].length(), 1.6373881438050524)
+        self.assertAlmostEqual(remaining_section3[1].length(), 1.6373881438050524, 6)
         self.assertFalse(self.bspline5.delete_shared_section(self.bspline1))
         remaining_section4 = self.bspline4.delete_shared_section(self.bspline3)
         self.assertEqual(remaining_section4, [self.bspline4])

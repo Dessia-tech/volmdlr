@@ -153,6 +153,11 @@ class TestArcEllipse2D(unittest.TestCase):
         for point, expected_point in zip(list_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
+    def test_complementary(self):
+        complementary = self.arc_ellipse2d.complementary()
+        self.assertTrue(complementary.interior.is_close(volmdlr.Point2D(-0.26456439237413953, 0.2619306393758324)))
+        self.assertAlmostEqual(complementary.length(), 0.884777951933013)
+
 
 if __name__ == '__main__':
     unittest.main()

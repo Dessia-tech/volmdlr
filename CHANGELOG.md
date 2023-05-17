@@ -22,13 +22,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BsplineCurve: point_distance, point_belongs
 - ContourMixin: is_adjacent
 - Wire2D: area
+- Circle2D: bsplinecurve_intersections.
+- add tolerance param to many methods from edges and wires.
+- Surface3D: add contour healing into face_from_contours3d method.
+- ExtrusionSurface3D: implement missing cases for linesegment2d_to_3d method.
+- BSplineSurface3D: to_plane3d
+- BSplineFace3D: to_planeface3d
+- BSplineCurve, Arc, LineSegment: is_close
+- Core: get_edge_index_in_list, edge_in_list
+- mesh: TetrahedralElementQuadratic 
+- GmshParser: define_quadratic_tetrahedron_element_mesh
+- GmshParser: to_vtk (consider quadratic tetrahedron element)
+- VolumeModel: to_msh (consider both order 1 and 2)
+- Assembly: define a volmdlr Assembly object.
+- Edge: direction_independent_is_close
+- Arcellipse2D, 3D: complementary, translation
+- Arcellipse2D, 3D: complementary
+- Face3D: is_linesegment_crossing
+- BSplineFace3D: linesegment_intersections
+- Assembly: define a volmdlr Assembly object.
+- Contour2D: copy
+- LineSegment2D: copy
+- FullArcEllipse3D: split
+- ArcEllipse3D: split, point_at_abscissa
+- Vector: is_perpendicular_to
+- babylonjs: add nested meshes
+
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
 - LineSegment, Arc, BSplineCurve: get_shared_section()
 - bSpline2D: linesegment_intersections
 - BsplineCurve: from_points_interpolation
+- Coverage: use coverage rc to enable cython coverage
+- ClosedShel3D: cut_by_plane
+- ClosedShell3D: union
+- BSplineSurface3D: take into account oppened contour while using face_from_contours3d
 - BsplineCurve: simplify
+- Dessiaobject inheritance up-to-date
+- Edge: unit_direction_vector, unit_normal_vector, split_between_two_points
+- VolumeModel: get_mesh_lines (change tolerance 1e-20 to 1e-6)
+- RevolutionSurface: fix some parametric operations.
+- ClosedShel3D: intersection method
+- Fix: plots
+- add some fixes to pydocstyle errors
+- ToroidalSurface3D: fix some parametric operations.
+- Node2D, Node3D: is_close
+- SphericalSurface3D: enhance arc3d_to_2d and bsplinecurve3d_to_2d.
+- BSplineface3D: linesegment2d_to_3d, bsplinecurve2d_to_3d.
+- OpenShell3D: get_geo_lines (use primitive.is_close)
+- Basis3D: normalize
+- Contour3D: from_step removes repeated edges from primitives list
+- Face3D: add fixes to divide_face
+- ExtrusionSurface3D: linesegment2d_to_3d.
+- BSplineSurface3D: ban useless attr in serialization 
+
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -37,8 +85,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour2D: split_contour_with_sorted_points displaced to WireMixin and renamed to split_with_sorted_points
 - Contour2D: get_divided_contours
 - FullArc2D, FullArc3D: create FullArc Abstract class.
+- Contour2D: ordering_contour
+- WireMixin: order_wire
+- Contour2D: delete cut_by_linesegments
+- split faces.py into surfaces.py, faces.py and shells.py 
+- ContourMixin: from_points
+- ClosedShell3D: improve performance for boolean operations
+- Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
+- Cylinder: inheritance directly from ClosedShell3D
+- Edges: cache middle_points and unit_direction_vector 
+
 ### Changed
 - better surface3d plots
+- sphere methods renamed in_points & to_point_skin to inner points & skin_points
+- remove useless attribute in Bspline serialization
 
 ### Unittests
 - Arc2D: test_arc_intersections
@@ -50,6 +110,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CylindricalFace3D: test_triangulation_quality
 - CylindricalSurface3D: test_point_projection
 - BSplineCurve: point_projection
+- ClosedShel3D: cut_by_plane
+- Arc3D.minimum_distance_points_line
+- New unittests for plane3d
+- ClosedShel3D: intersection
+- Arcellipse2D: complementary
 
 ## v0.10.0 [Unreleased yet]
 
@@ -65,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Wire2: hash
 * Contour3D: hash
 * LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
- 
+* Contour2D: closest_point_to_point2, get_furthest_point_to_point2
 ### Fixed
 * Bspline in sweep
 * Plane3D: plane_intersections
@@ -74,7 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fixes to wire
 * Arc: split. Case when spliting point is the start or end point.
 * BplineCurve2D: tangent, vector_direction, normal_vector
-* BSplineCurve: abscissa
+* BSplineCurve: abscissa, line_intersections
 * Add some important fixes to unittests: missing two __init__py files.
 * Contour2D, Contour3D: merge_with()
 * Edge: change unit_direction_vector and unit_normal_vector to concrete methods
@@ -121,6 +186,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * LineSegment3D: test_matrix_distance
 * LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
 * Contour3D: merge_with()
+* Contour2D: closest_point_to_point2, get_furthest_point_to_point2
+
+## v0.9.3
+
+- build: bump dessia common to 0.10.0
+- build: remove useless jsonschema dep
+- build: update package.xml for freecad
 
 ## v0.9.1
 
@@ -129,7 +201,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed many pylint errors: 13/03/2023
 - fix contour2d: divide
 
-## v0.9.0 [Released 06/03/2023]
+### Documentation
+ - typo in README.md
+
+## v0.9.0 [released 03/26/2023]
 
 ### New Features
 * Unit coversion factor parameter added to the end of the from_step arguments parameter (So we can convert the units correctly)

@@ -7,7 +7,7 @@ import unittest
 import dessia_common.core as dc
 
 import volmdlr
-from volmdlr import edges, wires, faces
+from volmdlr import edges, wires, faces, surfaces
 
 
 class TestPlaneFace3D(unittest.TestCase):
@@ -39,13 +39,24 @@ class TestPlaneFace3D(unittest.TestCase):
         face_intersections = self.face.face_intersections(self.face_with_3holes)
         cutting_contours = self.face_with_3holes.get_face_cutting_contours(
             {(self.face, self.face_with_3holes): face_intersections})
-        new_faces = self.face_with_3holes.divide_face(cutting_contours, False)
+        new_faces = self.face_with_3holes.divide_face(cutting_contours)
         self.assertEqual(len(new_faces), 2)
+        cutting_contour = wires.Wire2D.from_points([
+            volmdlr.Point2D(0.5, 1.), volmdlr.Point2D(0.5, 0.75),
+            volmdlr.Point2D(1, 0.75), volmdlr.Point2D(1, 1), volmdlr.Point2D(1.25, 1),
+            volmdlr.Point2D(1.25, 1.5), volmdlr.Point2D(1, 1.5)
+        ])
+        face_tobe_divided = dc.DessiaObject.load_from_file('faces/face_tobe_divided.json')
+        divided_faces = face_tobe_divided.divide_face([cutting_contour])
+        self.assertEqual(len(divided_faces), 4)
+        expected_areas = [0.125, 1.4320458460875176, 0.05704584608751772, 0.125]
+        for i, face in enumerate(divided_faces):
+            self.assertAlmostEqual(expected_areas[i], face.area())
 
     def test_cylindricalface_intersections(self):
         R = 0.15
-        cylindricalsurface = volmdlr.faces.CylindricalSurface3D(volmdlr.OXYZ, R)
-        face = cylindricalsurface.rectangular_cut(0, volmdlr.TWO_PI, -.25, .25)
+        cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, R)
+        face = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindricalsurface, 0, volmdlr.TWO_PI, -.25, .25)
         """ ========== CIRCLE3D ========="""
         plane_face_3 = self.plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2)
         face_intersections = plane_face_3.face_intersections(face)
@@ -110,6 +121,7 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertTrue(self.plane_face_cylindricalface_intersec.circle_inside(circle))
         circle2 = volmdlr.wires.Circle3D(volmdlr.OYZX, 0.1)
         self.assertFalse(self.plane_face_cylindricalface_intersec.circle_inside(circle2))
+
 
 if __name__ == '__main__':
     unittest.main()
