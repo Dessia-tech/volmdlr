@@ -976,9 +976,13 @@ class BSplineCurve(Edge):
                 if all(lineseg.point_belongs(pt) for pt in self.points):
                     self._simplified = lineseg
                     return lineseg
-
+                interior = self.point_at_abscissa(0.5 * self.length())
+                vector1 = interior - self.start
+                vector2 = interior - self.end
+                if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
+                    return self
                 arc_class_ = getattr(sys.modules[__name__], 'Arc' + class_sufix)
-                try_arc = arc_class_(self.points[0], self.points[int(len(self.points) / 2)], self.points[-1])
+                try_arc = arc_class_(self.start, interior, self.end)
                 if all(try_arc.point_belongs(point, 1e-6) for point in self.points):
                     self._simplified = try_arc
                     return try_arc
@@ -1535,8 +1539,13 @@ class BSplineCurve(Edge):
             bspline1_, bspline2_ = self.split(other_bspline2.start)
         elif self.point_belongs(other_bspline2.end, abs_tol=abs_tol):
             bspline1_, bspline2_ = self.split(other_bspline2.end)
+        # elif self.point_belongs(other_bspline2.start) and self.point_belongs(other_bspline2.end):
+        #     return [self]
+        # elif other_bspline2.point_belongs(self.start) and other_bspline2.point_belongs(self.end):
+        #     return [other_bspline2]
         else:
-            raise NotImplementedError
+            return []
+            # raise NotImplementedError
         shared_bspline_section = []
         for bspline in [bspline1_, bspline2_]:
             if bspline and all(other_bspline2.point_belongs(point)
@@ -2828,8 +2837,21 @@ class Arc(Edge):
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
-        points = self.discretization_points(angle_resolution=100)
-        return point.point_distance(point.nearest_point(points))
+        class_sufix = self.__class__.__name__[-2:]
+        linesegment_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
+        linesegment = linesegment_class(self.center, point)
+        if self.point_belongs(point):
+            return 0
+        if linesegment.length() > self.radius:
+            if self.linesegment_intersections(linesegment):
+                return linesegment.length() - self.radius
+            return min(self.start.point_distance(point), self.end.point_distance(point))
+        vector_to_point = point - self.center
+        vector_to_point.normalize()
+        projected_point = self.center + self.radius * vector_to_point
+        if self.point_belongs(projected_point):
+            return self.radius - linesegment.length()
+        return min(self.start.point_distance(point), self.end.point_distance(point))
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
@@ -3145,22 +3167,6 @@ class Arc2D(Arc):
         return [self.start, self.interior, self.end]
 
     points = property(_get_points)
-
-    def point_distance(self, point):
-        """
-        Returns the distance between a point and the edge.
-        """
-        vector_start = self.start - self.center
-        vector_point = point - self.center
-        vector_end = self.end - self.center
-        if self.is_trigo:
-            vector_start, vector_end = vector_end, vector_start
-        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
-        point_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
-        if point_angle <= arc_angle:
-            return abs(
-                LineSegment2D(point, self.center).length() - self.radius)
-        return min(point.point_distance(self.start), point.point_distance(self.end))
 
     def point_belongs(self, point, abs_tol=1e-6):
         """

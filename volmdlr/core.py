@@ -470,8 +470,8 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
                        self.primitives[0].start.y,
                        self.primitives[0].start.z]]
             for primitive in self.primitives:
-                if hasattr(primitive, 'curve'):
-                    points.extend(primitive.curve.evalpts)
+                if hasattr(primitive, 'discretization_points'):
+                    points.extend([*point] for point in primitive.discretization_points(number_points=20))
                 else:
                     points.append([primitive.end.x, primitive.end.y,
                                    primitive.end.z])

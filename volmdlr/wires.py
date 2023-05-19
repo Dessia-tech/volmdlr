@@ -102,7 +102,7 @@ def reorder_contour3d_edges_from_step(raw_edges, step_data):
         # # Green color : well-placed and well-read
         # ax = raw_edges[0].plot(edge_style=EdgeStyle(color='g'))
         # ax.set_title(f"Step ID: #{step_id}")
-        # 
+
         # # Red color : can't be connected to green edge
         # raw_edges[1].plot(ax=ax, edge_style=EdgeStyle(color='r'))
         # # Black color : to be placed
@@ -142,10 +142,10 @@ def reorder_contour3d_edges_from_step(raw_edges, step_data):
                      raw_edge.end.point_distance(last_edge.end)]
         index = distances.index(min(distances))
         if min(distances) > 1e-3:
-            # # Green color : well-placed and well-read
+            # Green color : well-placed and well-read
             # ax = last_edge.plot(edge_style=EdgeStyle(color='g'))
             # ax.set_title(f"Step ID: #{step_id}")
-            # 
+            #
             # for re in raw_edges[:2 + i]:
             #     re.plot(ax=ax, edge_style=EdgeStyle(color='g'))
             #     re.start.plot(ax=ax, color='g')

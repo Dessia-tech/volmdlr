@@ -2137,6 +2137,12 @@ class CylindricalFace3D(Face3D):
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(cylindrical_surface, surface2d, name)
 
+    def neutral_fiber(self):
+        _, _, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
+
+        point1 = self.surface3d.frame.origin + self.surface3d.frame.w * zmin
+        point2 = self.surface3d.frame.origin + self.surface3d.frame.w * zmax
+        return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
 
 class ToroidalFace3D(Face3D):
     """
@@ -2282,6 +2288,15 @@ class ToroidalFace3D(Face3D):
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         return cls(toroidal_surface3d, surfaces.Surface2D(outer_contour, []), name)
 
+    def neutral_fiber(self):
+        theta_min, theta_max, _, _ = self.surface2d.outer_contour.bounding_rectangle.bounds()
+        circle = volmdlr.wires.Circle3D(self.surface3d.frame, self.surface3d.tore_radius)
+        # point1 = self.surface3d.point2d_to_3d(volmdlr.Point2D(theta_min, 0))
+        # point2 = self.surface3d.point2d_to_3d(volmdlr.Point2D(theta_max, 0))
+        point1, point2 = [circle.center + circle.radius * math.cos(theta) * circle.frame.u +
+                                    circle.radius * math.sin(theta) * circle.frame.v for theta in
+                                    [theta_max, theta_min]]
+        return volmdlr.wires.Wire3D([circle.trim(point1, point2).reverse()])
 
 class ConicalFace3D(Face3D):
     """
@@ -2396,6 +2411,13 @@ class ConicalFace3D(Face3D):
 
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=[])
         return cls(conical_surface3d, surface2d=surface2d, name=name)
+
+    def neutral_fiber(self):
+        _, _, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
+
+        point1 = self.surface3d.frame.origin + self.surface3d.frame.w * zmin
+        point2 = self.surface3d.frame.origin + self.surface3d.frame.w * zmax
+        return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
 
 
 class SphericalFace3D(Face3D):
@@ -3093,7 +3115,7 @@ class BSplineFace3D(Face3D):
         contours = self.outer_contour3d.merge_with(other_bspline_face3d.outer_contour3d)
         contours.extend(self.inner_contours3d)
         contours.extend(other_bspline_face3d.inner_contours3d)
-        merged_face = merged_surface.face_from_contours3d(contours)
+        merged_face = self.from_contours3d(merged_surface, contours)
 
         return merged_face
 
@@ -3129,3 +3151,76 @@ class BSplineFace3D(Face3D):
             inner_contours=[plane3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
 
         return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
+
+    def find_neutral_fiber_direction(self):
+        curves = self.surface3d.surface_curves
+        u_curves = curves['u']
+        v_curves = curves['v']
+        u_curves = [primitive.simplify for primitive in u_curves
+                      if not isinstance(primitive, vme.LineSegment3D)]
+        v_curves = [primitive.simplify for primitive in v_curves
+                      if not isinstance(primitive, vme.LineSegment3D)]
+        u_radius = []
+        for curve in u_curves:
+            arc = self.arc_approximation(curve)
+            if arc:
+                u_radius.append(arc.radius)
+        v_radius = []
+        for curve in v_curves:
+            arc = self.arc_approximation(curve)
+            if arc:
+                v_radius.append(arc.radius)
+        if not u_radius and not v_radius:
+            return None
+        u_var = npy.var(u_radius)
+        v_var = npy.var(v_radius)
+        if v_radius or u_var > v_var:
+            return "u"
+        elif u_radius or u_var < v_var:
+            return "v"
+        else:
+            return None
+
+    @staticmethod
+    def arc_approximation(edge):
+        interior = edge.point_at_abscissa(0.5 * edge.length())
+        vector1 = interior - edge.start
+        vector2 = interior - edge.end
+        if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
+            return None
+        return vme.Arc3D(edge.start, interior, edge.end)
+
+    def neutral_fiber(self):
+        curves = self.surface3d.surface_curves
+        u_curves = curves['u']
+        v_curves = curves['v']
+        neutral_fiber_direction = self.find_neutral_fiber_direction()
+        if not neutral_fiber_direction:
+            return None
+        if neutral_fiber_direction == "v":
+            center_approximation = []
+            for curve in u_curves:
+                if isinstance(curve.simplify, vme.Arc3D):
+                    center_approximation.append(curve.simplify.center)
+                else:
+                    arc = self.arc_approximation(curve)
+                    if not arc:
+                        return None
+                    center_approximation.append(arc.center)
+        else:
+            center_approximation = []
+            for curve in v_curves:
+                if isinstance(curve.simplify, vme.Arc3D):
+                    center_approximation.append(curve.simplify.center)
+                else:
+                    arc = self.arc_approximation(curve)
+                    if not arc:
+                        return None
+                    center_approximation.append(arc.center)
+            # fiber_curve = u0
+            # linesegment = vme.LineSegment3D(v0.start, v0.end)
+            # neutral_fiber_location = linesegment.point_at_abscissa(0.5 * linesegment.length())
+
+        # neutral_fiber = fiber_curve.translation(neutral_fiber_location - fiber_curve.start)
+        neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(center_approximation, min(self.surface3d.degree_u, self.surface3d.degree_v))
+        return volmdlr.wires.Wire3D([neutral_fiber])
