@@ -4235,7 +4235,7 @@ class BSplineSurface3D(Surface3D):
     :type name: str
     """
     face_class = "BSplineFace3D"
-    _non_serializable_attributes = ["surface", "curves"]
+    _non_serializable_attributes = ["surface", "curves", "control_points_table"]
 
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
@@ -4563,13 +4563,11 @@ class BSplineSurface3D(Surface3D):
         if len(points) == 2:
             return [volmdlr.edges.LineSegment3D(points[0], points[-1])]
         periodic = points[0].is_close(points[-1], 1e-6)
-        if len(points) < min(self.degree_u, self.degree_v) + 2:
-            try:
-                bspline = edges.BSplineCurve3D.from_points_interpolation(
-                    points, 2, periodic=periodic)
-                return [bspline.simplify]
-            except Exception:
-                return None
+        return None
+        if len(points) < min(self.degree_u, self.degree_v) + 1:
+            bspline = edges.BSplineCurve3D.from_points_interpolation(
+                points, 2, periodic=periodic)
+            return [bspline]
 
         bspline = edges.BSplineCurve3D.from_points_interpolation(
                             points, min(self.degree_u, self.degree_v), periodic=periodic)
@@ -4814,7 +4812,7 @@ class BSplineSurface3D(Surface3D):
             point3d = self.point2d_to_3d(point)
             if not volmdlr.core.point_in_list(point3d, points):
                 points.append(point3d)
-        if len(points) < bspline_curve2d.degree + 2:
+        if len(points) < bspline_curve2d.degree + 1:
             return None
         return [edges.BSplineCurve3D.from_points_interpolation(
             points, bspline_curve2d.degree, bspline_curve2d.periodic)]
