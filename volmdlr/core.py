@@ -462,21 +462,15 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
         return ax
 
     def babylon_points(self):
+        """
+        Returns a list of discretization points from the 3D primitive.
+        """
         points = []
-        if hasattr(self, 'primitives') and hasattr(self.primitives[0], 'start'):
-            points = [[self.primitives[0].start.x,
-                       self.primitives[0].start.y,
-                       self.primitives[0].start.z]]
+        if hasattr(self, 'primitives'):
             for primitive in self.primitives:
-                if hasattr(primitive, 'curve'):
-                    points.extend(primitive.curve.evalpts)
-                else:
-                    points.append([primitive.end.x, primitive.end.y,
-                                   primitive.end.z])
-        elif hasattr(self, 'curve'):
-            points = self.curve.evalpts
-        elif hasattr(self, 'polygon_points'):
-            points = self.polygon_points(50)
+                points.extend([*point] for point in primitive.discretization_points())
+        else:
+            points.extend([*point] for point in self.discretization_points())
         return points
 
     def babylon_lines(self, points=None):
