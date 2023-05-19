@@ -62,5 +62,11 @@ class TestConicalFace3D(unittest.TestCase):
         face = faces.ConicalFace3D.from_base_and_vertex(conical_surfaces.conical_surface1, contour, volmdlr.O3D)
         self.assertEqual(face.surface2d.area(), volmdlr.TWO_PI)
 
+    def test_neutral_fiber(self):
+        surface = conical_surfaces.conical_surface1
+        face = faces.ConicalFace3D.from_surface_rectangular_cut(surface, 0, math.pi, 0.5, 1)
+        neutral_fiber = face.neutral_fiber()
+        self.assertEqual(neutral_fiber.length(), 0.5)
+
 if __name__ == '__main__':
     unittest.main()
