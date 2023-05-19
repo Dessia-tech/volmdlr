@@ -239,7 +239,8 @@ class DisplayMesh3D(DisplayMesh):
             point2 = self.points[vertex2]
             point3 = self.points[vertex3]
             face = volmdlr.faces.Triangle3D(point1, point2, point3)
-            if face.area() >= 1e-08:
+            if (not point1.is_close(point2) and not point2.is_close(point3) and not point2.is_close(point3))\
+                    and face.area() >= 1e-08:
                 triangular_faces.append(face)
         return triangular_faces
 
