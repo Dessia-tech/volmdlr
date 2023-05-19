@@ -2661,7 +2661,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         Helper function to return points of reference on the edge to fix some parametric periodical discontinuities.
         """
         length = edge.length()
-        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.01 * length))
+        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.005 * length))
         point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
         theta3, phi3 = point_after_start
         theta4, phi4 = point_before_end
