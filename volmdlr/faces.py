@@ -209,6 +209,8 @@ class Face3D(volmdlr.core.Primitive3D):
         #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
         if (not outer_contour2d) or (not outer_contour2d.primitives):
             return None
+        if not outer_contour2d.is_ordered():
+            outer_contour2d.plot()
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
         face = cls(surface, surface2d=surface2d, name=name)
