@@ -2408,6 +2408,13 @@ class ConicalFace3D(Face3D):
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=[])
         return cls(conical_surface3d, surface2d=surface2d, name=name)
 
+    def neutral_fiber(self):
+        _, _, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
+
+        point1 = self.surface3d.frame.origin + self.surface3d.frame.w * zmin
+        point2 = self.surface3d.frame.origin + self.surface3d.frame.w * zmax
+        return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
+
 
 class SphericalFace3D(Face3D):
     """
@@ -3145,53 +3152,56 @@ class BSplineFace3D(Face3D):
         curves = self.surface3d.surface_curves
         u_curves = curves['u']
         v_curves = curves['v']
-        if any(isinstance(curve.simplify, vme.LineSegment3D) for curve in u_curves):
-            return "u"
-        if any(isinstance(curve.simplify, vme.LineSegment3D) for curve in v_curves):
-            return "v"
+        u_curves = [primitive.simplify for primitive in u_curves
+                      if not isinstance(primitive, vme.LineSegment3D)]
+        v_curves = [primitive.simplify for primitive in v_curves
+                      if not isinstance(primitive, vme.LineSegment3D)]
         u_radius = []
         for curve in u_curves:
-            point1 = curve.start
-            point2 = curve.end
-            interior = curve.point_at_abscissa(0.5 * curve.length())
-            arc = vme.Arc3D(point1, interior, point2)
-            u_radius.append(arc.radius)
+            arc = self.arc_approximation(curve)
+            if arc:
+                u_radius.append(arc.radius)
         v_radius = []
         for curve in v_curves:
-            point1 = curve.start
-            point2 = curve.end
-            interior = curve.point_at_abscissa(0.5 * curve.length())
-            arc = vme.Arc3D(point1, interior, point2)
-            v_radius.append(arc.radius)
+            arc = self.arc_approximation(curve)
+            if arc:
+                v_radius.append(arc.radius)
+        if not u_radius and not v_radius:
+            return None
         u_var = npy.var(u_radius)
         v_var = npy.var(v_radius)
-        if u_var > v_var:
+        if v_radius or u_var > v_var:
             return "u"
-        else:
+        elif u_radius or u_var < v_var:
             return "v"
+        else:
+            return None
+
+    @staticmethod
+    def arc_approximation(edge):
+        interior = edge.point_at_abscissa(0.5 * edge.length())
+        vector1 = interior - edge.start
+        vector2 = interior - edge.end
+        if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
+            return None
+        return vme.Arc3D(edge.start, interior, edge.end)
 
     def neutral_fiber(self):
         curves = self.surface3d.surface_curves
         u_curves = curves['u']
         v_curves = curves['v']
-        # u0 = u_curves[0]
-        # u05 = u_curves[int(0.5 * len(u_curves))]
-        # v0 = v_curves[0]
-        # v05 = v_curves[int(0.5 * len(v_curves))]
-        # u0_length = u0.length()
-        # v0_length = v0.length()
         neutral_fiber_direction = self.find_neutral_fiber_direction()
-
+        if not neutral_fiber_direction:
+            return None
         if neutral_fiber_direction == "v":
             center_approximation = []
             for curve in u_curves:
                 if isinstance(curve.simplify, vme.Arc3D):
                     center_approximation.append(curve.simplify.center)
                 else:
-                    point1 = curve.start
-                    point2 = curve.end
-                    interior = curve.point_at_abscissa(0.5 * curve.length())
-                    arc = vme.Arc3D(point1, interior, point2)
+                    arc = self.arc_approximation(curve)
+                    if not arc:
+                        return None
                     center_approximation.append(arc.center)
         else:
             center_approximation = []
@@ -3199,10 +3209,9 @@ class BSplineFace3D(Face3D):
                 if isinstance(curve.simplify, vme.Arc3D):
                     center_approximation.append(curve.simplify.center)
                 else:
-                    point1 = curve.start
-                    point2 = curve.end
-                    interior = curve.point_at_abscissa(0.5 * curve.length())
-                    arc = vme.Arc3D(point1, interior, point2)
+                    arc = self.arc_approximation(curve)
+                    if not arc:
+                        return None
                     center_approximation.append(arc.center)
             # fiber_curve = u0
             # linesegment = vme.LineSegment3D(v0.start, v0.end)
