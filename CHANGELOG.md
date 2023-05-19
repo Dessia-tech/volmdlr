@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D: split, point_at_abscissa
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
-
+- VolumeModel: get_shells
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
