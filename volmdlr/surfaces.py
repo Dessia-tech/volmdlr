@@ -183,11 +183,14 @@ class Surface2D(volmdlr.core.Primitive2D):
         if area == 0.0:
             return display.DisplayMesh2D([], triangles=[])
 
-        triangulates_with_grid = number_points_x > 0 or number_points_y > 0
+        triangulates_with_grid = number_points_x > 0 and number_points_y > 0
+        discretize_line = number_points_x > 0 or number_points_y > 0
+        if not triangulates_with_grid:
+            tri_opt = "pq"
         discretize_line_direction = "xy"
         if number_points_y == 0:
             discretize_line_direction = "x"
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=20, discretize_line=triangulates_with_grid,
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=20, discretize_line=discretize_line,
                                                       discretize_line_direction=discretize_line_direction)
 
         if not self.inner_contours and not triangulates_with_grid:
@@ -839,9 +842,17 @@ class Surface3D(DessiaObject):
             delta = previous_primitive.end - primitives2d[i].start
             is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-3)
             if not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2) and \
                     math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2):
-                primitives2d[i] = primitives2d[i].reverse()
+                if primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
+                    primitives2d[i] = primitives2d[i].reverse()
+                delta_end = previous_primitive.end - primitives2d[i].end
+                delta_min_index, delta = min(enumerate([delta, delta_end]), key=lambda x: x[1])
+                if delta_min_index == 0:
+                    primitives2d[i] = primitives2d[i].translation(delta)
+                else:
+                    new_primitive = primitives2d[i].reverse()
+                    primitives2d[i] = new_primitive.translation(delta_end)
+
             elif not is_connected and \
                     primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
@@ -1640,7 +1651,7 @@ class PeriodicalSurface(Surface3D):
         Helper function to return points of reference on the edge to fix some parametric periodical discontinuities.
         """
         length = edge.length()
-        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.01 * length))
+        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.001 * length))
         point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
         theta3, _ = point_after_start
         theta4, _ = point_before_end

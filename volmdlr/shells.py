@@ -585,9 +585,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         meshes = []
         face_mesh = None
         for i, face in enumerate(self.faces):
-            if i == 44:
-                print(True)
-            print(f"{i} : {face.__class__.__name__}")
             try:
                 face_mesh = face.triangulation()
             except Exception:

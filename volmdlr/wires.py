@@ -3293,7 +3293,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         for i, xi in enumerate(x):
             for j, yi in enumerate(y):
                 point = vmd.Node2D(xi, yi)
-                if self.point_belongs(point, include_edge_points=False) and point not in polygon_points:
+                if self.point_belongs(point, include_edge_points=True) and point not in polygon_points:
                     grid_point_index[(i, j)] = point
                     points.append(point)
 
