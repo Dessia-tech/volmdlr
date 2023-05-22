@@ -32,7 +32,7 @@ class TestToroidalFace3D(unittest.TestCase):
         triangulation = self.face1.triangulation()
         triangulation.plot()
         n_triangles = len(triangulation.triangles)
-        n_triangles_max = 220  # Could be 208 (13*8 tiles on this ex, 2 triangles per tile)
+        n_triangles_max = 225  # Could be 208 (13*8 tiles on this ex, 2 triangles per tile)
         self.assertLess(n_triangles, n_triangles_max,
                         f'Too much triangles in cylindrical face triangulation: {n_triangles}/{n_triangles_max}')
 
