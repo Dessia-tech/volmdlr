@@ -190,6 +190,11 @@ class TestBSplineCurve2D(unittest.TestCase):
         fullarc = bsplinecurve.simplify
         self.assertTrue(isinstance(fullarc, vme.FullArc3D))
 
+    def test_direction_independent_is_close(self):
+        bsplinecurve1 = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_objects/bspline_curve1.json")
+        bsplinecurve2 = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_objects/bspline_curve2.json")
+        self.assertTrue(bsplinecurve1.direction_independent_is_close(bsplinecurve2))
+
 
 class TestBSplineCurve3D(unittest.TestCase):
     b_splinecurve3d = vme.BSplineCurve3D(degree=5, control_points=[
