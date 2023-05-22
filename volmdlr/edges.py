@@ -156,10 +156,10 @@ class Edge(dc.DessiaObject):
             a controlled angular distance. Useful to mesh an arc
         :return: a list of sampled points
         """
-        if number_points is None or number_points == 1:
-            number_points = 2
         if angle_resolution:
             number_points = int(math.pi * angle_resolution)
+        if number_points is None or number_points <= 1:
+            number_points = 2
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
@@ -1650,21 +1650,21 @@ class BSplineCurve(Edge):
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
-        Checks if two bsplines are the same considering the euclidean distance.
+        Checks if two bsplines are the same considering the Euclidean distance.
 
         :param other_edge: other bspline.
-        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6
         :type tol: float, optional
         """
-
         if isinstance(other_edge, self.__class__):
-            is_true = True
-            for i, point in enumerate(self.control_points):
-                if not point.is_close(other_edge.control_points[i]):
-                    is_true = False
-                    break
-            if is_true and self.degree == other_edge.degree and self.knots == other_edge.knots:
-                return True
+            if self.start.is_close(other_edge.start) and self.end.is_close(other_edge.end):
+                is_true = True
+                for point in other_edge.discretization_points(number_points=20):
+                    if not self.point_belongs(point):
+                        is_true = False
+                        break
+                if is_true:
+                    return True
         return False
 
 
