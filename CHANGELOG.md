@@ -95,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 - Cylinder: inheritance directly from ClosedShell3D
 - Edges: cache middle_points and unit_direction_vector 
+- Arc: point_distance
 - BSplineCurve: is_close
 - CompositePrimitive3D: babylon_points
 
