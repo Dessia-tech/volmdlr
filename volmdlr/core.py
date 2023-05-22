@@ -2215,19 +2215,13 @@ class VolumeModel(dc.PhysicalObject):
             for primitive in assembly.primitives:
                 if primitive.__class__.__name__ == 'Assembly':
                     unpack_assembly(primitive)
-                elif (
-                        primitive.__class__.__name__ == 'OpenShell3D'
-                        or primitive.__class__.__name__ == 'ClosedShell3D'
-                ):
+                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
                     list_shells.append(primitive)
 
         for primitive in self.primitives:
             if primitive.__class__.__name__ == 'Assembly':
                 unpack_assembly(primitive)
-            elif (
-                    primitive.__class__.__name__ == 'OpenShell3D'
-                    or primitive.__class__.__name__ == 'ClosedShell3D'
-            ):
+            elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
                 list_shells.append(primitive)
 
         return list_shells
