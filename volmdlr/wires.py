@@ -496,6 +496,8 @@ class WireMixin:
             if primitive.__class__.__name__[0:-2] != 'LineSegment':
                 primitives.extend(class_.from_edge(
                     edge=primitive, number_segments=number_segments).primitives)
+            else:
+                primitives.append(primitive)
 
         return class_(primitives)
 
