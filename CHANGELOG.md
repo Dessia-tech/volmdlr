@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D: split, point_at_abscissa
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
+- WireMixin: wires_from_edges
 
 
 ### Fixed
