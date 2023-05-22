@@ -75,7 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour3D: from_step removes repeated edges from primitives list
 - Face3D: add fixes to divide_face
 - ExtrusionSurface3D: linesegment2d_to_3d.
-- BSplineSurface3D: ban useless attr in serialization 
+- BSplineSurface3D: ban useless attr in serialization
+- BSplineCurve: simplify
 
 
 ### Refactor
@@ -95,6 +96,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cylinder: inheritance directly from ClosedShell3D
 - Edges: cache middle_points and unit_direction_vector 
 - Arc: add optional parameter center
+- BSplineCurve: is_close
+- CompositePrimitive3D: babylon_points
 
 ### Changed
 - better surface3d plots
