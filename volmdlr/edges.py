@@ -2833,11 +2833,13 @@ class Arc(Edge):
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
+        if self.point_belongs(point):
+            return 0
+        if self.center.is_close(point):
+            return self.radius
         class_sufix = self.__class__.__name__[-2:]
         linesegment_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
         linesegment = linesegment_class(self.center, point)
-        if self.point_belongs(point):
-            return 0
         if linesegment.length() > self.radius:
             if self.linesegment_intersections(linesegment):
                 return linesegment.length() - self.radius
