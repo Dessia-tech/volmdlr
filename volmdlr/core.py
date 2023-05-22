@@ -466,10 +466,10 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
         Returns a list of discretization points from the 3D primitive.
         """
         points = []
-        if hasattr(self, 'primitives'):
+        if hasattr(self, 'primitives') and hasattr(self.primitives[0], "discretization_points"):
             for primitive in self.primitives:
                 points.extend([*point] for point in primitive.discretization_points())
-        else:
+        elif hasattr(self, "discretization_points"):
             points.extend([*point] for point in self.discretization_points())
         return points
 
