@@ -75,7 +75,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: add fixes to divide_face
 - ExtrusionSurface3D: linesegment2d_to_3d.
 - BSplineSurface3D: ban useless attr in serialization
+<<<<<<< HEAD
 - Surface3D: repair_primitive_periodicity
+=======
+- BSplineCurve: simplify
+
+>>>>>>> origin/dev
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -93,12 +98,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 - Cylinder: inheritance directly from ClosedShell3D
 - Edges: cache middle_points and unit_direction_vector 
+- BSplineCurve: is_close
+- CompositePrimitive3D: babylon_points
 
 ### Changed
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
 - remove useless attribute in Bspline serialization
 - Improve CylincricalFace3D rendering mesh.
+- Improve CylincricalFace3D rendering mesh.
+- remove useless attribute in Bspline serialization
 
 ### Unittests
 - Arc2D: test_arc_intersections

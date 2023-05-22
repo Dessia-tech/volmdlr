@@ -1659,10 +1659,10 @@ class BSplineCurve(Edge):
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
-        Checks if two bsplines are the same considering the euclidean distance.
+        Checks if two bsplines are the same considering the Euclidean distance.
 
         :param other_edge: other bspline.
-        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6
         :type tol: float, optional
         """
         if isinstance(other_edge, self.__class__):
