@@ -3216,13 +3216,12 @@ class BSplineFace3D(Face3D):
             return v_centers
         if u_radius and not v_radius:
             return u_centers
-        else:
-            u_var = npy.var(u_radius)
-            v_var = npy.var(v_radius)
-            if u_var > v_var:
-                return v_centers
-            if u_var < v_var:
-                return u_centers
+        u_var = npy.var(u_radius)
+        v_var = npy.var(v_radius)
+        if u_var > v_var:
+            return v_centers
+        if u_var < v_var:
+            return u_centers
         return None
 
     def neutral_fiber(self):
