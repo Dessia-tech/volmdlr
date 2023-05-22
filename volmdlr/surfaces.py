@@ -1652,7 +1652,7 @@ class PeriodicalSurface(Surface3D):
         Helper function to return points of reference on the edge to fix some parametric periodical discontinuities.
         """
         length = edge.length()
-        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.001 * length))
+        point_after_start = self.point3d_to_2d(edge.point_at_abscissa(0.01 * length))
         point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
         theta3, _ = point_after_start
         theta4, _ = point_before_end
@@ -1899,6 +1899,8 @@ class PeriodicalSurface(Surface3D):
             )]
         if start3d.is_close(end3d):
             return None
+        self.save_to_file("linesegment2d_to_3d_surface.json")
+        linesegment2d.save_to_file("linesegment2d_to_3d_linesegment2d.json")
         # # Quick implementation for RevolutionSurface
         # # todo: Study this case
         # n = 10
@@ -3156,6 +3158,8 @@ class SphericalSurface3D(PeriodicalSurface):
 
         # Transform the contour's primitives to parametric domain
         for primitive3d in contour3d.primitives:
+            primitive3d = primitive3d.simplify if primitive3d.simplify.__class__.__name__ != "LineSegment3D" else \
+                            primitive3d
             method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
