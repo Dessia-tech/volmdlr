@@ -841,14 +841,28 @@ class Surface3D(DessiaObject):
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
-            is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-3)
+            distance = delta.norm()
+            is_connected = math.isclose(distance, 0, abs_tol=1e-3)
             if not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
-                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-5):
-                primitives2d[i] = primitives2d[i].reverse()
+                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2):
+                delta_end = previous_primitive.end - primitives2d[i].end
+                delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
+                if primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
+                    primitives2d[i] = primitives2d[i].reverse()
+                elif delta_min_index == 0:
+                    primitives2d[i] = primitives2d[i].translation(delta)
+                else:
+                    new_primitive = primitives2d[i].reverse()
+                    primitives2d[i] = new_primitive.translation(delta_end)
+
             elif not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3):
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
+            elif not is_connected and math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
+                math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
+                new_primitive = primitives2d[i].reverse()
+                new_delta = previous_primitive.end - new_primitive.start
+                primitives2d[i] = new_primitive.translation(new_delta)
             elif not is_connected:
                 primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
@@ -3142,9 +3156,11 @@ class SphericalSurface3D(PeriodicalSurface):
 
         # Transform the contour's primitives to parametric domain
         for primitive3d in contour3d.primitives:
-            method_name = f'{primitive3d.simplify.__class__.__name__.lower()}_to_2d'
+            primitive3d = primitive3d.simplify if primitive3d.simplify.__class__.__name__ != "LineSegment3D" else \
+                            primitive3d
+            method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
             if hasattr(self, method_name):
-                primitives = getattr(self, method_name)(primitive3d.simplify)
+                primitives = getattr(self, method_name)(primitive3d)
 
                 if primitives is None:
                     continue
@@ -3152,9 +3168,10 @@ class SphericalSurface3D(PeriodicalSurface):
             else:
                 raise NotImplementedError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
-        # Fix contour
-        if self.x_periodicity or self.y_periodicity:
-            primitives2d = self.repair_primitives_periodicity(primitives2d)
+        contour2d = wires.Contour2D(primitives2d)
+        if contour2d.is_ordered(1e-2):
+            return contour2d
+        primitives2d = self.repair_primitives_periodicity(primitives2d)
         return wires.Contour2D(primitives2d)
 
     def is_lat_long_curve(self, arc):
@@ -3509,10 +3526,10 @@ class SphericalSurface3D(PeriodicalSurface):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         # TODO: On a spherical surface we can have fullarc3d in any plane
-        length = fullarc3d.length()
+        start, end = self.arc_start_end_3d_to_2d(fullarc3d)
+        theta1, phi1 = start
+        theta2, phi2 = end
 
-        theta1, phi1 = self.point3d_to_2d(fullarc3d.start)
-        theta2, phi2 = self.point3d_to_2d(fullarc3d.end)
         point_after_start, point_before_end = self._reference_points(fullarc3d)
         theta3, phi3 = point_after_start
         theta4, _ = point_before_end
@@ -3598,18 +3615,19 @@ class SphericalSurface3D(PeriodicalSurface):
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
-            if not math.isclose(delta.norm(), 0, abs_tol=1e-5):
+            if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
                 if primitives2d[i].end == primitives2d[i - 1].end and \
                         primitives2d[i].length() == volmdlr.TWO_PI:
                     primitives2d[i] = primitives2d[i].reverse()
                 elif self.is_point2d_on_sphere_singularity(previous_primitive.end, 1e-5):
                     primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                name="construction"))
+                    i += 1
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
             elif self.is_point2d_on_sphere_singularity(primitives2d[i].start, 1e-5) and \
-                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-2) and \
-                    math.isclose(primitives2d[i].start.x, previous_primitive.start.x, abs_tol=1e-2):
+                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-3) and \
+                    math.isclose(primitives2d[i].start.x, previous_primitive.start.x, abs_tol=1e-3):
 
                 if primitives2d[i + 1].end.x < primitives2d[i].end.x:
                     theta_offset = volmdlr.TWO_PI

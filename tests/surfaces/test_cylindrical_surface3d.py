@@ -128,7 +128,8 @@ class TestCylindricalSurface3D(unittest.TestCase):
         contour_cylinder = wires.Contour3D(primitives_cylinder)
 
         contour2d_cylinder = self.cylindrical_surface4.contour3d_to_2d(contour_cylinder)
-
+        ax = contour2d_cylinder.plot()
+        ax.set_aspect("auto")
         area = contour2d_cylinder.area()
         linesegment2d = contour2d_cylinder.primitives[3]
         fullarc2d = contour2d_cylinder.primitives[2]
@@ -147,6 +148,15 @@ class TestCylindricalSurface3D(unittest.TestCase):
         contour2d = surface.contour3d_to_2d(contour)
         self.assertEqual(len(contour2d.primitives), 2)
         self.assertFalse(contour2d.is_ordered())
+
+        surface = dessia_common.core.DessiaObject.load_from_file(
+            'surfaces/objects_cylindrical_tests/test_contour3d_to_2d_surface.json')
+        contour = dessia_common.core.DessiaObject.load_from_file(
+            'surfaces/objects_cylindrical_tests/test_contour3d_to_2d_contour.json')
+
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertAlmostEqual(contour2d.area, 0.29361767646954695, 2)
+        self.assertTrue(contour2d.is_ordered())
 
 
     def test_bsplinecurve3d_to_2d(self):
