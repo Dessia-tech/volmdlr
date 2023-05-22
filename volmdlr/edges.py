@@ -1665,15 +1665,15 @@ class BSplineCurve(Edge):
         :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
         :type tol: float, optional
         """
-
         if isinstance(other_edge, self.__class__):
-            is_true = True
-            for i, point in enumerate(self.control_points):
-                if not point.is_close(other_edge.control_points[i]):
-                    is_true = False
-                    break
-            if is_true and self.degree == other_edge.degree and self.knots == other_edge.knots:
-                return True
+            if self.start.is_close(other_edge.start) and self.end.is_close(other_edge.end):
+                is_true = True
+                for point in other_edge.discretization_points(number_points=20):
+                    if not self.point_belongs(point):
+                        is_true = False
+                        break
+                if is_true:
+                    return True
         return False
 
 

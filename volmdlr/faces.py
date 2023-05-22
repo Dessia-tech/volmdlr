@@ -170,7 +170,11 @@ class Face3D(volmdlr.core.Primitive3D):
         outer_contour2d = None
         outer_contour3d, inner_contours3d = None, None
         if lc3d == 1:
-            outer_contour2d = surface.contour3d_to_2d(contours3d[0])
+            try:
+                outer_contour2d = surface.contour3d_to_2d(contours3d[0])
+            except Exception:
+                surface.save_to_file("buggy_contour3d_to_2d_surface.json")
+                contours3d[0].save_to_file("buggy_contour3d_to_2d_contour.json")
             outer_contour3d = contours3d[0]
             inner_contours2d = []
 
@@ -209,8 +213,8 @@ class Face3D(volmdlr.core.Primitive3D):
         #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
         if (not outer_contour2d) or (not outer_contour2d.primitives):
             return None
-        if not outer_contour2d.is_ordered():
-            outer_contour2d.plot()
+        # if not outer_contour2d.is_ordered():
+        #     outer_contour2d.plot()
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
         face = cls(surface, surface2d=surface2d, name=name)
