@@ -157,7 +157,7 @@ class Edge(dc.DessiaObject):
         :return: a list of sampled points
         """
         if angle_resolution:
-            number_points = int(math.pi * angle_resolution)
+            number_points = int(angle_resolution * (self.length()/math.pi))
         if number_points is None or number_points <= 1:
             number_points = 2
         step = self.length() / (number_points - 1)
