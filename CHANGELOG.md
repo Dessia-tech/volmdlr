@@ -95,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cylinder: inheritance directly from ClosedShell3D
 - Edges: cache middle_points and unit_direction_vector 
 - BSplineCurve: is_close
-
+- CompositePrimitive3D: babylon_points
 
 ### Changed
 - better surface3d plots
