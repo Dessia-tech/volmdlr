@@ -157,7 +157,7 @@ class Edge(dc.DessiaObject):
         :return: a list of sampled points
         """
         if angle_resolution:
-            number_points = int(math.pi * angle_resolution)
+            number_points = int(angle_resolution * (self.length()/math.pi))
         if number_points is None or number_points <= 1:
             number_points = 2
         step = self.length() / (number_points - 1)
@@ -2833,8 +2833,23 @@ class Arc(Edge):
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
-        points = self.discretization_points(angle_resolution=100)
-        return point.point_distance(point.nearest_point(points))
+        if self.point_belongs(point):
+            return 0
+        if self.center.is_close(point):
+            return self.radius
+        class_sufix = self.__class__.__name__[-2:]
+        linesegment_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
+        linesegment = linesegment_class(self.center, point)
+        if linesegment.length() > self.radius:
+            if self.linesegment_intersections(linesegment):
+                return linesegment.length() - self.radius
+            return min(self.start.point_distance(point), self.end.point_distance(point))
+        vector_to_point = point - self.center
+        vector_to_point.normalize()
+        projected_point = self.center + self.radius * vector_to_point
+        if self.point_belongs(projected_point):
+            return self.radius - linesegment.length()
+        return min(self.start.point_distance(point), self.end.point_distance(point))
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
@@ -3149,22 +3164,6 @@ class Arc2D(Arc):
         return [self.start, self.interior, self.end]
 
     points = property(_get_points)
-
-    def point_distance(self, point):
-        """
-        Returns the distance between a point and the edge.
-        """
-        vector_start = self.start - self.center
-        vector_point = point - self.center
-        vector_end = self.end - self.center
-        if self.is_trigo:
-            vector_start, vector_end = vector_end, vector_start
-        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
-        point_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
-        if point_angle <= arc_angle:
-            return abs(
-                LineSegment2D(point, self.center).length() - self.radius)
-        return min(point.point_distance(self.start), point.point_distance(self.end))
 
     def point_belongs(self, point, abs_tol=1e-6):
         """
