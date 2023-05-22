@@ -1689,7 +1689,7 @@ class ContourMixin(WireMixin):
             points.update(primitive.get_geo_points())
         return points
 
-    def to_polygon(self, angle_resolution, discretize_line: bool = False):
+    def to_polygon(self, angle_resolution, discretize_line: bool = False, discretize_line_direction: str = "xy"):
         """
         Transform the contour_mixin to a polygon, COPY/PASTE from Contour2D.
 
@@ -1704,8 +1704,20 @@ class ContourMixin(WireMixin):
         polygon_points = []
 
         for primitive in self.primitives:
-            if isinstance(primitive, volmdlr.edges.LineSegment2D) and not discretize_line:
-                polygon_points.append(primitive.start)
+            if isinstance(primitive, volmdlr.edges.LineSegment2D):
+                if not discretize_line:
+                    polygon_points.append(primitive.start)
+                else:
+                    is_horizontal = math.isclose(primitive.start.y, primitive.end.y, abs_tol=1e-6)
+                    is_vertical = math.isclose(primitive.start.x, primitive.end.x, abs_tol=1e-6)
+                    should_discretize = discretize_line_direction == "xy" or \
+                                        (discretize_line_direction == "x" and is_horizontal) or \
+                                        (discretize_line_direction == "y" and is_vertical)
+                    if should_discretize:
+                        polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
+                    else:
+                        polygon_points.append(primitive.start)
+
             else:
                 polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
 
@@ -1871,7 +1883,7 @@ class Contour2D(ContourMixin, Wire2D):
                     trigo = -1
                 for edge in self.primitives:
                     area += trigo * edge.straight_line_area()
-                    self._area = abs(area)
+                self._area = abs(area)
             else:
                 polygon = self.to_polygon(angle_resolution=50)
                 self._area = polygon.triangulation().area()
