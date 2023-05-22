@@ -3144,9 +3144,9 @@ class SphericalSurface3D(PeriodicalSurface):
 
         # Transform the contour's primitives to parametric domain
         for primitive3d in contour3d.primitives:
-            method_name = f'{primitive3d.simplify.__class__.__name__.lower()}_to_2d'
+            method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
             if hasattr(self, method_name):
-                primitives = getattr(self, method_name)(primitive3d.simplify)
+                primitives = getattr(self, method_name)(primitive3d)
 
                 if primitives is None:
                     continue
@@ -3607,11 +3607,12 @@ class SphericalSurface3D(PeriodicalSurface):
                 elif self.is_point2d_on_sphere_singularity(previous_primitive.end, 1e-5):
                     primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                name="construction"))
+                    i += 1
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
             elif self.is_point2d_on_sphere_singularity(primitives2d[i].start, 1e-5) and \
-                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-2) and \
-                    math.isclose(primitives2d[i].start.x, previous_primitive.start.x, abs_tol=1e-2):
+                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-3) and \
+                    math.isclose(primitives2d[i].start.x, previous_primitive.start.x, abs_tol=1e-3):
 
                 if primitives2d[i + 1].end.x < primitives2d[i].end.x:
                     theta_offset = volmdlr.TWO_PI
