@@ -976,9 +976,13 @@ class BSplineCurve(Edge):
                 if all(lineseg.point_belongs(pt) for pt in self.points):
                     self._simplified = lineseg
                     return lineseg
-
+                interior = self.point_at_abscissa(0.5 * self.length())
+                vector1 = interior - self.start
+                vector2 = interior - self.end
+                if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
+                    return self
                 arc_class_ = getattr(sys.modules[__name__], 'Arc' + class_sufix)
-                try_arc = arc_class_(self.points[0], self.points[int(len(self.points) / 2)], self.points[-1])
+                try_arc = arc_class_(self.start, interior, self.end)
                 if all(try_arc.point_belongs(point, 1e-6) for point in self.points):
                     self._simplified = try_arc
                     return try_arc
@@ -1536,7 +1540,8 @@ class BSplineCurve(Edge):
         elif self.point_belongs(other_bspline2.end, abs_tol=abs_tol):
             bspline1_, bspline2_ = self.split(other_bspline2.end)
         else:
-            raise NotImplementedError
+            return []
+            # raise NotImplementedError
         shared_bspline_section = []
         for bspline in [bspline1_, bspline2_]:
             if bspline and all(other_bspline2.point_belongs(point)
