@@ -1,3 +1,4 @@
+import math
 import unittest
 
 import volmdlr
@@ -131,6 +132,21 @@ class TestArc2D(unittest.TestCase):
         self.assertTrue(remaining_arc2[1].interior.is_close(volmdlr.Point2D(0.38268343236508984, 0.9238795325112867)))
         self.assertTrue(remaining_arc2[1].end.is_close(volmdlr.Point2D(0.0, 1.0)))
         self.assertFalse(self.arc4.delete_shared_section(self.arc1))
+
+    def test_point_distance(self):
+        arc = self.arc2
+
+        point1 = volmdlr.Point2D(1, 1)
+        self.assertEqual(arc.point_distance(point1), math.sqrt(2) - 1)
+
+        point2 = volmdlr.Point2D(0.5/math.sqrt(2), 0.5/math.sqrt(2))
+        self.assertEqual(arc.point_distance(point2), 0.5)
+
+        point3 = volmdlr.Point2D(0, 0)
+        self.assertEqual(arc.point_distance(point3), 1)
+
+        point4 = volmdlr.Point2D(0, -1)
+        self.assertEqual(arc.point_distance(point4), math.sqrt(2))
 
 
 if __name__ == '__main__':

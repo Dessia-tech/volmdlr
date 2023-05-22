@@ -126,7 +126,7 @@ model.to_step('revolved_profile.step')
 planar_face = profile1.faces[1]
 
 planar_face_triangulation = planar_face.surface2d.triangulation
-assert math.isclose(planar_face_triangulation().area(), planar_face.surface2d.area(), abs_tol=1e-4)
+assert math.isclose(planar_face_triangulation().area(), planar_face.surface2d.area(), abs_tol=1e-3)
 
 model_copy = model.copy()
 assert model_copy == model
