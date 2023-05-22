@@ -183,6 +183,9 @@ class Surface2D(volmdlr.core.Primitive2D):
             return display.DisplayMesh2D([], triangles=[])
 
         triangulates_with_grid = number_points_x > 0 or number_points_y > 0
+        if not triangulates_with_grid:
+          tri_opt = "pq"
+
         discretize_line_direction = "xy"
         if number_points_y == 0:
             discretize_line_direction = "x"
