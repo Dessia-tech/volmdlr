@@ -1905,7 +1905,8 @@ class PeriodicalSurface(Surface3D):
         #           for p in linesegment2d.discretization_points(number_points=n)]
         # periodic = points[0].is_close(points[-1])
         # return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
-        raise Warning("This case is not yet treated")
+        else:
+            warnings.warn("This case is not yet treated")
 
 
 class CylindricalSurface3D(PeriodicalSurface):
