@@ -3214,14 +3214,14 @@ class BSplineFace3D(Face3D):
             return None
         if v_radius and not u_radius:
             return v_centers
-        elif u_radius and not v_radius:
+        if u_radius and not v_radius:
             return u_centers
         else:
             u_var = npy.var(u_radius)
             v_var = npy.var(v_radius)
             if u_var > v_var:
                 return v_centers
-            elif u_var < v_var:
+            if u_var < v_var:
                 return u_centers
         return None
 
