@@ -479,61 +479,26 @@ class WireMixin:
                 split_wires.extend(self.__class__.extract(self, point1, point2, True))
         return split_wires
 
-    @classmethod
-    def wires_from_edges(cls, edges, tol=1e-6):
+    def to_wire_with_linesegments(self, number_segments: int):
         """
-        Defines a list of wires from edges, by ordering successives edges.
+        Convert a wire with different primitives to a wire with just linesegments by discretizing primitives.
 
-        :param edges: A list of edges
-        :type edges: List[edges.Edge]
-        :param tol: A tolerance, defaults to 1e-6
-        :type tol: float, optional
-
-        :return: A list of wires
-        :rtype: List[wires.WireMixin]
+        :param number_segments: number of segment for each primitive to be converted.
+        :type number_segments: int
         """
 
-        if not edges:
-            return []
-        if len(edges) == 1:
-            return [cls(edges)]
+        primitives = []
+        class_name_ = 'Wire' + self.primitives[0].__class__.__name__[-2:]
+        class_ = getattr(sys.modules[__name__], class_name_)
 
-        new_primitives, i = [], -1
-        while edges:
-            i += 1
-            new_primitives.append([edges[0]])
-            edges.remove(edges[0])
+        for primitive in self.primitives:
+            if primitive.__class__.__name__[0:-2] != 'LineSegment':
+                primitives.extend(class_.from_edge(
+                    edge=primitive, number_segments=number_segments).primitives)
+            else:
+                primitives.append(primitive)
 
-            to_continue = True
-
-            while to_continue:
-                broke = False
-                for p, primitive in enumerate(edges):
-
-                    if primitive.is_point_edge_extremity(new_primitives[i][-1].end, tol):
-                        if new_primitives[i][-1].end.is_close(primitive.start, tol):
-                            new_primitives[i].append(primitive)
-                        else:
-                            new_primitives[i].append(primitive.reverse())
-                        edges.remove(primitive)
-                        broke = True
-                        break
-
-                    if primitive.is_point_edge_extremity(new_primitives[i][0].start, tol):
-                        if new_primitives[i][0].start.is_close(primitive.end, tol):
-                            new_primitives[i].insert(0, primitive)
-                        else:
-                            new_primitives[i].insert(0, primitive.reverse())
-                        edges.remove(primitive)
-                        broke = True
-                        break
-
-                if ((not broke) and (len(edges) == p+1)) or len(edges) == 0:
-                    to_continue = False
-
-        wires = [cls(primitives_wire) for primitives_wire in new_primitives]
-
-        return wires
+        return class_(primitives)
 
 
 class EdgeCollection3D(WireMixin):
@@ -980,20 +945,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                             not volmdlr.core.point_in_list(crossing, invalid_crossings):
                         crossings_points.append(crossing)
         return crossings_points
-
-    def to_wire_with_linesegments(self):
-        """
-        Convert a wire with different primitives to a wire with just line segments.
-        """
-
-        wires = []
-        for primitive in self.primitives:
-            if not isinstance(primitive, volmdlr.edges.LineSegment2D):
-                wires.append(primitive.to_wire(10))
-            else:
-                wires.append(Wire2D([primitive]))
-
-        return Wire2D.from_wires(wires)
 
     def invert(self):
         return Wire2D(self.inverted_primitives())

@@ -78,12 +78,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: add fixes to divide_face
 - ExtrusionSurface3D: linesegment2d_to_3d.
 - BSplineSurface3D: ban useless attr in serialization
-<<<<<<< HEAD
 - Surface3D: repair_primitive_periodicity
-=======
+- BSplineSurface3D: ban useless attr in serialization
 - BSplineCurve: simplify
-
->>>>>>> origin/dev
+- WireMixin: to_wire_with_linesegments (use new methods, for 2D and 3D)
 
 ### Refactor
 - Contour2D: cut_by_wire
