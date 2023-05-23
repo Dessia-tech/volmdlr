@@ -1,9 +1,10 @@
-pipeline:
-  clone:
-    git:
-      image: woodpeckerci/plugin-git
+clone:
+  git:
+    image: woodpeckerci/plugin-git
       settings:
         tags: true
+
+pipeline:
   check-code-complexity:
     image: dessia/python-ci:3.9
     commands:
@@ -30,7 +31,6 @@ pipeline:
   install-doc-coverage:
     image: python:3.8
     commands:
-      - git fetch --tags
       - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
       - python setup.py install
       - cd doc
