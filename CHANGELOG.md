@@ -47,8 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D: split, point_at_abscissa
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
+- WireMixin: wires_from_edges
 - DisplayMesh3D: triangulation_faces
-
+- Woodpecker CI setup
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
