@@ -41,4 +41,3 @@ pipeline:
       - coverage report
       - coverage html
       - python coverage.py
-
