@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - babylonjs: add nested meshes
 - WireMixin: wires_from_edges
 - DisplayMesh3D: triangulation_faces
-
+- Woodpecker CI setup
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
