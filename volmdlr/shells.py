@@ -633,7 +633,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         """
         meshes = []
-        for face in self.faces:
+        for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
             except Exception:

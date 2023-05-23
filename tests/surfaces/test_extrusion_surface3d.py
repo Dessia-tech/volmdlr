@@ -50,6 +50,19 @@ class TestExtrusionSurface3D(unittest.TestCase):
         result = surface.linesegment2d_to_3d(linesegment2d)[0]
         self.assertTrue(result.start.is_close(start3d))
         self.assertTrue(result.end.is_close(end3d))
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
+            "surfaces/objects_extrusion_tests/extrusion_surface_test_linesegment2d_to_3d.json")
+        linesegment2d = vme.LineSegment2D.load_from_file(
+            "surfaces/objects_extrusion_tests/linesegment2d_to_linesegment3d.json")
+        result = surface.linesegment2d_to_3d(linesegment2d)[0]
+        self.assertIsInstance(result, vme.LineSegment3D)
+
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
+            "surfaces/objects_extrusion_tests/extrusion_surface_test_linesegment2d_to_3d.json")
+        linesegment2d = vme.LineSegment2D.load_from_file(
+            "surfaces/objects_extrusion_tests/linesegment2d_to_self_edge.json")
+        result = surface.linesegment2d_to_3d(linesegment2d)[0]
+        self.assertEqual(result, surface.edge)
 
     def test_arc3d_to_2d(self):
         surface = surfaces.ExtrusionSurface3D.load_from_file(

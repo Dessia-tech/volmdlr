@@ -156,10 +156,10 @@ class Edge(dc.DessiaObject):
             a controlled angular distance. Useful to mesh an arc
         :return: a list of sampled points
         """
-        if number_points is None or number_points == 1:
-            number_points = 2
         if angle_resolution:
-            number_points = int(math.pi * angle_resolution)
+            number_points = int(angle_resolution * (self.length()/math.pi))
+        if number_points is None or number_points <= 1:
+            number_points = 2
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
@@ -967,7 +967,7 @@ class BSplineCurve(Edge):
                 try_fullarc = fullarc_class_.from_3_points(self.points[0], self.points[int(0.5 * n)],
                                                            self.points[int(0.75 * n)])
 
-                if all(try_fullarc.point_belongs(point, 1e-5) for point in self.points):
+                if all(try_fullarc.point_belongs(point, 1e-6) for point in self.points):
                     self._simplified = try_fullarc
                     return try_fullarc
             else:
@@ -976,9 +976,13 @@ class BSplineCurve(Edge):
                 if all(lineseg.point_belongs(pt) for pt in self.points):
                     self._simplified = lineseg
                     return lineseg
-
+                interior = self.point_at_abscissa(0.5 * self.length())
+                vector1 = interior - self.start
+                vector2 = interior - self.end
+                if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
+                    return self
                 arc_class_ = getattr(sys.modules[__name__], 'Arc' + class_sufix)
-                try_arc = arc_class_(self.points[0], self.points[int(len(self.points) / 2)], self.points[-1])
+                try_arc = arc_class_(self.start, interior, self.end)
                 if all(try_arc.point_belongs(point, 1e-6) for point in self.points):
                     self._simplified = try_arc
                     return try_arc
@@ -1536,7 +1540,8 @@ class BSplineCurve(Edge):
         elif self.point_belongs(other_bspline2.end, abs_tol=abs_tol):
             bspline1_, bspline2_ = self.split(other_bspline2.end)
         else:
-            raise NotImplementedError
+            return []
+            # raise NotImplementedError
         shared_bspline_section = []
         for bspline in [bspline1_, bspline2_]:
             if bspline and all(other_bspline2.point_belongs(point)
@@ -1656,15 +1661,15 @@ class BSplineCurve(Edge):
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
-
         if isinstance(other_edge, self.__class__):
-            is_true = True
-            for i, point in enumerate(self.control_points):
-                if not point.is_close(other_edge.control_points[i]):
-                    is_true = False
-                    break
-            if is_true and self.degree == other_edge.degree and self.knots == other_edge.knots:
-                return True
+            if self.start.is_close(other_edge.start) and self.end.is_close(other_edge.end):
+                is_true = True
+                for point in other_edge.discretization_points(number_points=20):
+                    if not self.point_belongs(point):
+                        is_true = False
+                        break
+                if is_true:
+                    return True
         return False
 
 
@@ -2828,8 +2833,23 @@ class Arc(Edge):
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
-        points = self.discretization_points(angle_resolution=100)
-        return point.point_distance(point.nearest_point(points))
+        if self.point_belongs(point):
+            return 0
+        if self.center.is_close(point):
+            return self.radius
+        class_sufix = self.__class__.__name__[-2:]
+        linesegment_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
+        linesegment = linesegment_class(self.center, point)
+        if linesegment.length() > self.radius:
+            if self.linesegment_intersections(linesegment):
+                return linesegment.length() - self.radius
+            return min(self.start.point_distance(point), self.end.point_distance(point))
+        vector_to_point = point - self.center
+        vector_to_point.normalize()
+        projected_point = self.center + self.radius * vector_to_point
+        if self.point_belongs(projected_point):
+            return self.radius - linesegment.length()
+        return min(self.start.point_distance(point), self.end.point_distance(point))
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
@@ -3144,22 +3164,6 @@ class Arc2D(Arc):
         return [self.start, self.interior, self.end]
 
     points = property(_get_points)
-
-    def point_distance(self, point):
-        """
-        Returns the distance between a point and the edge.
-        """
-        vector_start = self.start - self.center
-        vector_point = point - self.center
-        vector_end = self.end - self.center
-        if self.is_trigo:
-            vector_start, vector_end = vector_end, vector_start
-        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
-        point_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
-        if point_angle <= arc_angle:
-            return abs(
-                LineSegment2D(point, self.center).length() - self.radius)
-        return min(point.point_distance(self.start), point.point_distance(self.end))
 
     def point_belongs(self, point, abs_tol=1e-6):
         """
@@ -7051,6 +7055,20 @@ class FullArc3D(FullArc, Arc3D):
             raise ValueError('Start, end and interior points  of an arc must be distincts') from error
         return cls(center=center, start_end=point1, normal=normal)
 
+    def split(self, split_point):
+        """
+        Splits the circle into two arcs at a given point.
+
+        :param split_point: splitting point.
+        :return: list of two arcs.
+        """
+        if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):
+            raise ValueError("Point should be different of start and end.")
+        if not self.point_belongs(split_point, 1e-5):
+            raise ValueError("Point not on the circle.")
+        abscissa = self.abscissa(split_point)
+        return [Arc3D(self.start, self.point_at_abscissa(0.5 * abscissa), split_point),
+                Arc3D(split_point, self.point_at_abscissa((self.length() - abscissa) * 0.5 + abscissa), self.end)]
 
 class ArcEllipse3D(Edge):
     """
