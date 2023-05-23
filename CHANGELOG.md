@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - VolumeModel: get_shells
 - WireMixin: wires_from_edges
 - DisplayMesh3D: triangulation_faces
-
+- Woodpecker CI setup
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -78,6 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour3D: from_step removes repeated edges from primitives list
 - Face3D: add fixes to divide_face
 - ExtrusionSurface3D: linesegment2d_to_3d.
+- utils.parametric: fix contour2d_healing
+- BSplineSurface3D: ban useless attr in serialization 
 - BSplineSurface3D: ban useless attr in serialization
 - BSplineCurve: simplify
 
