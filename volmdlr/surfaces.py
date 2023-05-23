@@ -843,19 +843,11 @@ class Surface3D(DessiaObject):
             delta = previous_primitive.end - primitives2d[i].start
             is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-3)
             if not is_connected and \
-                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2):
-                if primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
-                    primitives2d[i] = primitives2d[i].reverse()
-                delta_end = previous_primitive.end - primitives2d[i].end
-                delta_min_index, delta = min(enumerate([delta, delta_end]), key=lambda x: x[1])
-                if delta_min_index == 0:
-                    primitives2d[i] = primitives2d[i].translation(delta)
-                else:
-                    new_primitive = primitives2d[i].reverse()
-                    primitives2d[i] = new_primitive.translation(delta_end)
-
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
+                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-5):
+                primitives2d[i] = primitives2d[i].reverse()
             elif not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3):
                 primitives2d[i] = primitives2d[i].reverse()
             elif not is_connected and math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
                 math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
@@ -1899,16 +1891,11 @@ class PeriodicalSurface(Surface3D):
             )]
         if start3d.is_close(end3d):
             return None
-        # self.save_to_file("linesegment2d_to_3d_surface.json")
-        # linesegment2d.save_to_file("linesegment2d_to_3d_linesegment2d.json")
-        # # Quick implementation for RevolutionSurface
-        # # todo: Study this case
-        # n = 10
-        # points = [self.point2d_to_3d(p)
-        #           for p in linesegment2d.discretization_points(number_points=n)]
-        # periodic = points[0].is_close(points[-1])
-        # return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
-        warnings.warn("This case is not yet treated")
+        n = 10
+        points = [self.point2d_to_3d(p)
+                  for p in linesegment2d.discretization_points(number_points=n)]
+        periodic = points[0].is_close(points[-1])
+        return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
 
 
 class CylindricalSurface3D(PeriodicalSurface):
