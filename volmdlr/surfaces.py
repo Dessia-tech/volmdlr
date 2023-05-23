@@ -4290,6 +4290,7 @@ class BSplineSurface3D(Surface3D):
         self._grids2d = None
         self._grids2d_deformed = None
         self._bbox = None
+        self._surface_curves = None
 
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
@@ -4343,6 +4344,33 @@ class BSplineSurface3D(Surface3D):
         xmin, ymin, zmin = min_bounds
         xmax, ymax, zmax = max_bounds
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    @property
+    def surface_curves(self):
+        """
+        Extracts curves from a surface.
+        """
+        if not self._surface_curves:
+            self._surface_curves = self.get_surface_curves()
+        return self._surface_curves
+
+    def get_surface_curves(self):
+        """
+        Converts the surface curves from geomdl curve to volmdlr.
+        """
+        # v-direction
+        crvlist_v = []
+        v_curves = self.curves["v"]
+        for curve in v_curves:
+            crvlist_v.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+        # u-direction
+        crvlist_u = []
+        u_curves = self.curves["u"]
+        for curve in u_curves:
+            crvlist_u.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+
+        # Return shapes as a dict object
+        return {"u": crvlist_u, "v": crvlist_v}
 
     def control_points_matrix(self, coordinates):
         """
@@ -4638,12 +4666,47 @@ class BSplineSurface3D(Surface3D):
 
         return points
 
+    def is_boundary_curve(self, curve):
+        domain = self.surface.domain
+        u_min, u_max = domain[0]
+        v_min, v_max = domain[1]
+        point1 = volmdlr.Point2D(u_min, v_min)
+        point2 = volmdlr.Point2D(u_max, v_min)
+        point3 = volmdlr.Point2D(u_max, v_max)
+        point4 = volmdlr.Point2D(u_min, v_max)
+        linesegment1 = edges.LineSegment2D(point1, point2)
+        linesegment2 = edges.LineSegment2D(point2, point3)
+        linesegment3 = edges.LineSegment2D(point3, point4)
+        linesegment4 = edges.LineSegment2D(point4, point1)
+
+        u_curves = self.surface_curves["u"]
+        v_curves = self.surface_curves["v"]
+
+        curve1 = u_curves[0]
+        curve2 = v_curves[-1]
+        curve3 = u_curves[-1]
+        curve4 = v_curves[0]
+
+        curves = [curve1, curve2, curve3, curve4]
+        linesegments = [linesegment1, linesegment2, linesegment3, linesegment4]
+
+        for i, primitive in enumerate(curves):
+            if curve.direction_independent_is_close(primitive):
+                if curve.start.is_close(primitive.start):
+                    return linesegments[i]
+                return linesegments[i].reverse()
+        return False
+
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         # TODO: enhance this, it is a non exact method!
         # TODO: bsplinecurve can be periodic but not around the bsplinesurface
+        # is_boundary_curve = self.is_boundary_curve(bspline_curve3d)
+        # if is_boundary_curve:
+        #     # print(True)
+        #     return [is_boundary_curve]
         flag = False
         if not bspline_curve3d.points[0].is_close(bspline_curve3d.points[-1]):
             bsc_linesegment = edges.LineSegment3D(bspline_curve3d.points[0],
