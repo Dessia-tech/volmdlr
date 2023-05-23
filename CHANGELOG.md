@@ -47,6 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D: split, point_at_abscissa
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
+- WireMixin: wires_from_edges
+- DisplayMesh3D: triangulation_faces
+- Woodpecker CI setup
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -98,15 +101,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 - Cylinder: inheritance directly from ClosedShell3D
 - Edges: cache middle_points and unit_direction_vector 
+- Arc: point_distance
 - BSplineCurve: is_close
 - CompositePrimitive3D: babylon_points
 
 ### Changed
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
+<<<<<<< HEAD
 - remove useless attribute in Bspline serialization
 - Improve CylincricalFace3D rendering mesh.
 - Improve CylincricalFace3D rendering mesh.
+=======
+- Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
+>>>>>>> origin/dev
 - remove useless attribute in Bspline serialization
 
 ### Unittests
