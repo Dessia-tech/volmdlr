@@ -1,8 +1,8 @@
 clone:
   git:
     image: woodpeckerci/plugin-git
-      settings:
-        tags: true
+    settings:
+      tags: true
 
 pipeline:
   check-code-complexity:

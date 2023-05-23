@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
 - DisplayMesh3D: triangulation_faces
-
+- Woodpecker CI setup
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
