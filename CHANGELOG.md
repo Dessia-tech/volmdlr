@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D: split, point_at_abscissa
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
+- DisplayMesh3D: triangulation_faces
 
 
 ### Fixed
@@ -77,6 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExtrusionSurface3D: linesegment2d_to_3d.
 - utils.parametric: fix contour2d_healing
 - BSplineSurface3D: ban useless attr in serialization 
+- BSplineSurface3D: ban useless attr in serialization
+- BSplineCurve: simplify
 
 
 ### Refactor
@@ -95,10 +98,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 - Cylinder: inheritance directly from ClosedShell3D
 - Edges: cache middle_points and unit_direction_vector 
+- Arc: point_distance
+- BSplineCurve: is_close
+- CompositePrimitive3D: babylon_points
 
 ### Changed
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
+- Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
 
 ### Unittests

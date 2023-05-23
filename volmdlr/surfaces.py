@@ -182,9 +182,16 @@ class Surface2D(volmdlr.core.Primitive2D):
         if math.isclose(area, 0., abs_tol=1e-6):
             return display.DisplayMesh2D([], triangles=[])
 
-        triangulates_with_grid = number_points_x > 0 or number_points_y > 0
+        triangulates_with_grid = number_points_x > 0 and number_points_y > 0
+        discretize_line = number_points_x > 0 or number_points_y > 0
+        if not triangulates_with_grid:
+            tri_opt = "pq"
 
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=triangulates_with_grid)
+        discretize_line_direction = "xy"
+        if number_points_y == 0:
+            discretize_line_direction = "x"
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
+                                                      discretize_line_direction=discretize_line_direction)
 
         if not self.inner_contours and not triangulates_with_grid:
             return outer_polygon.triangulation()
@@ -203,7 +210,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=triangulates_with_grid)
+            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
+                                                      discretize_line_direction=discretize_line_direction)
             inner_polygon_nodes = [display.Node2D.from_point(p) for p in inner_polygon.points]
             for point in inner_polygon_nodes:
                 if point not in point_index:
