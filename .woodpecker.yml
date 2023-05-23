@@ -2,7 +2,7 @@ clone:
   git:
     image: woodpeckerci/plugin-git
     settings:
-      tags: true
+      depth: 50
 
 pipeline:
   check-code-complexity:
