@@ -48,8 +48,8 @@ pipeline:
       - python coverage.py
 
   generate-sdist:
-  image: python:3.8
-  commands:
-    - git fetch --tags
-    - pip install Cython
-    - python setup.py sdist
+    image: python:3.8
+    commands:
+      - git fetch --tags
+      - pip install Cython
+      - python setup.py sdist
