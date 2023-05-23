@@ -479,6 +479,62 @@ class WireMixin:
                 split_wires.extend(self.__class__.extract(self, point1, point2, True))
         return split_wires
 
+    @classmethod
+    def wires_from_edges(cls, edges, tol=1e-6):
+        """
+        Defines a list of wires from edges, by ordering successives edges.
+
+        :param edges: A list of edges
+        :type edges: List[edges.Edge]
+        :param tol: A tolerance, defaults to 1e-6
+        :type tol: float, optional
+
+        :return: A list of wires
+        :rtype: List[wires.WireMixin]
+        """
+
+        if not edges:
+            return []
+        if len(edges) == 1:
+            return [cls(edges)]
+
+        new_primitives, i = [], -1
+        while edges:
+            i += 1
+            new_primitives.append([edges[0]])
+            edges.remove(edges[0])
+
+            to_continue = True
+
+            while to_continue:
+                broke = False
+                for p, primitive in enumerate(edges):
+
+                    if primitive.is_point_edge_extremity(new_primitives[i][-1].end, tol):
+                        if new_primitives[i][-1].end.is_close(primitive.start, tol):
+                            new_primitives[i].append(primitive)
+                        else:
+                            new_primitives[i].append(primitive.reverse())
+                        edges.remove(primitive)
+                        broke = True
+                        break
+
+                    if primitive.is_point_edge_extremity(new_primitives[i][0].start, tol):
+                        if new_primitives[i][0].start.is_close(primitive.end, tol):
+                            new_primitives[i].insert(0, primitive)
+                        else:
+                            new_primitives[i].insert(0, primitive.reverse())
+                        edges.remove(primitive)
+                        broke = True
+                        break
+
+                if ((not broke) and (len(edges) == p+1)) or len(edges) == 0:
+                    to_continue = False
+
+        wires = [cls(primitives_wire) for primitives_wire in new_primitives]
+
+        return wires
+
     def to_wire_with_linesegments(self, number_segments: int):
         """
         Convert a wire with different primitives to a wire with just linesegments by discretizing primitives.
