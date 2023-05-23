@@ -111,13 +111,14 @@ class Surface2D(volmdlr.core.Primitive2D):
         :return: True if the point belongs to the surface, False otherwise.
         :rtype: bool
         """
-        if not self.outer_contour.point_belongs(point2d):
-            if self.outer_contour.point_over_contour(point2d):
-                return True
+        if not self.outer_contour.point_belongs(point2d, include_edge_points=True):
+            # if self.outer_contour.point_over_contour(point2d):
+            #     return True
             return False
 
         for inner_contour in self.inner_contours:
-            if inner_contour.point_belongs(point2d) and not inner_contour.point_over_contour(point2d):
+            # if inner_contour.point_belongs(point2d) and not inner_contour.point_over_contour(point2d):
+            if inner_contour.point_belongs(point2d, include_edge_points=False):
                 return False
         return True
 

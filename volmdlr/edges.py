@@ -1650,10 +1650,10 @@ class BSplineCurve(Edge):
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
-        Checks if two bsplines are the same considering the euclidean distance.
+        Checks if two bsplines are the same considering the Euclidean distance.
 
         :param other_edge: other bspline.
-        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
 
@@ -4781,8 +4781,8 @@ class Line3D(Line):
         """
         Calculates the intersection between to Line3D, if there is an intersection.
 
-        :param line: other Line3D
-        :return: None if there is no intersection between Lines. A volmdlr.Point3D if there existes an intersection
+        :param line2: other Line3D
+        :return: None if there is no intersection between Lines. A volmdlr.Point3D if there exists an intersection.
         """
         direction_vector1 = self.direction_vector()
         direction_vector2 = line2.direction_vector()
