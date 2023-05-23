@@ -77,7 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour3D: from_step removes repeated edges from primitives list
 - Face3D: add fixes to divide_face
 - ExtrusionSurface3D: linesegment2d_to_3d.
-- BSplineSurface3D: ban useless attr in serialization 
+- utils.parametric: fix contour2d_healing
+- BSplineSurface3D: ban useless attr in serialization
 - BSplineCurve: simplify
 - WireMixin: to_wire_with_linesegments (use new methods, for 2D and 3D)
 
