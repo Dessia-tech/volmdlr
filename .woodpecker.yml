@@ -1,4 +1,9 @@
 pipeline:
+  clone:
+    git:
+      image: woodpeckerci/plugin-git
+      settings:
+        tags: true
   check-code-complexity:
     image: dessia/python-ci:3.9
     commands:
