@@ -482,8 +482,6 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_curves(self):
         points = self.babylon_points()
-        if not points:
-            return []
         babylon_curves = self.babylon_lines(points)[0]
         return babylon_curves
 
@@ -1079,8 +1077,8 @@ class Assembly(dc.PhysicalObject):
                     lines.append(primitive.babylon_curves())
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                meshes.extend(data["meshes"])
+                lines.extend(data["lines"])
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1147,7 +1145,7 @@ class Assembly(dc.PhysicalObject):
         """
         step_content = []
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'OpenShell3D':
+            if primitive.__class__.__name__ in ('OpenShell3D', "ClosedShell3D"):
                 primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
             else:
                 primitive_content, primitive_id = primitive.to_step(current_id)
@@ -1436,14 +1434,11 @@ class VolumeModel(dc.PhysicalObject):
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    curves = primitive.babylon_curves()
-                    if not curves:
-                        continue
-                    lines.append(curves)
+                    lines.append(primitive.babylon_curves())
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                meshes.extend(data["meshes"])
+                lines.extend(data["lines"])
 
         bbox = self.bounding_box
         center = bbox.center
