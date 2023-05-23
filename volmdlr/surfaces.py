@@ -1844,20 +1844,20 @@ class PeriodicalSurface(Surface3D):
         """
         Is this right?.
         """
-        if bspline_curve2d.name in ("parametric.arcellipse", "parametric.fullarcellipse"):
-            start = self.point2d_to_3d(bspline_curve2d.start)
-            middle_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.5 * bspline_curve2d.length()))
-            extra_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.75 * bspline_curve2d.length()))
-            if bspline_curve2d.name == "parametric.arcellipse":
-                end = self.point2d_to_3d(bspline_curve2d.end)
-                plane3d = Plane3D.from_3_points(start, middle_point, end)
-                ellipse = self.concurrent_plane_intersection(plane3d)[0]
-                return [edges.ArcEllipse3D(start, middle_point, end, ellipse.center, ellipse.major_dir, ellipse.normal,
-                                           extra_point)]
-            plane3d = Plane3D.from_3_points(start, middle_point, extra_point)
-            ellipse = self.concurrent_plane_intersection(plane3d)[0]
-            return [edges.FullArcEllipse3D(start, ellipse.major_axis, ellipse.minor_axis,
-                                           ellipse.center, ellipse.normal, ellipse.major_dir)]
+        # if bspline_curve2d.name in ("parametric.arcellipse", "parametric.fullarcellipse"):
+        #     start = self.point2d_to_3d(bspline_curve2d.start)
+        #     middle_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.5 * bspline_curve2d.length()))
+        #     extra_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.75 * bspline_curve2d.length()))
+        #     if bspline_curve2d.name == "parametric.arcellipse":
+        #         end = self.point2d_to_3d(bspline_curve2d.end)
+        #         plane3d = Plane3D.from_3_points(start, middle_point, end)
+        #         ellipse = self.concurrent_plane_intersection(plane3d)[0]
+        #         return [edges.ArcEllipse3D(start, middle_point, end, ellipse.center, ellipse.major_dir, ellipse.normal,
+        #                                    extra_point)]
+        #     plane3d = Plane3D.from_3_points(start, middle_point, extra_point)
+        #     ellipse = self.concurrent_plane_intersection(plane3d)[0]
+        #     return [edges.FullArcEllipse3D(start, ellipse.major_axis, ellipse.minor_axis,
+        #                                    ellipse.center, ellipse.normal, ellipse.major_dir)]
         n = len(bspline_curve2d.control_points)
         points = [self.point2d_to_3d(p)
                   for p in bspline_curve2d.discretization_points(number_points=n)]
