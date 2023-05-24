@@ -1772,7 +1772,7 @@ class ContourMixin(WireMixin):
                                         (discretize_line_direction == "y" and is_vertical)
                     if should_discretize:
                         polygon_points.extend(primitive.discretization_points(
-                            angle_resolution=2 * angle_resolution)[:-1])
+                            angle_resolution=angle_resolution)[:-1])
                     else:
                         polygon_points.append(primitive.start)
 
