@@ -1872,7 +1872,7 @@ class Line2D(Line):
     @staticmethod
     def compute_tangent_circle_for_parallel_segments(new_basis, new_a, new_c):
         """
-        Compute tangent circle betwen parallel segments.
+        Compute tangent circle between parallel segments.
 
         """
         segments_distance = abs(new_c[1] - new_a[1])
@@ -7208,10 +7208,6 @@ class ArcEllipse3D(Edge):
         else:
             self.offset_angle = angle2
 
-        volmdlr.core.CompositePrimitive3D.__init__(self,
-                                                   primitives=self.discretization_points(number_points=20),
-                                                   name=name)
-
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
         Discretization of a Contour to have "n" points.
@@ -7409,7 +7405,7 @@ class ArcEllipse3D(Edge):
         """
         Calculates the bounding box of the Arc3D.
 
-        :return: a volmdlr.core.BoundingBox object.
+        :return: Bounding Box object.
         """
         # TODO: implement exact calculation
 
