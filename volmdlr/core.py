@@ -971,7 +971,6 @@ class BoundingBox(dc.DessiaObject):
         :return: True if the point belongs to the bounding box, False otherwise.
         :rtype: bool
         """
-        tol = 1e-6
         return (
                 self.xmin - tol <= point[0] <= self.xmax + tol
                 and self.ymin - tol <= point[1] <= self.ymax + tol
