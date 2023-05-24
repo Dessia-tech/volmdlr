@@ -989,18 +989,19 @@ class Step(dc.DessiaObject):
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
         return volmdlr_object
 
-    def create_node_list(self, stack):
+    def create_node_list(self, initial_nodes):
         """
         Step functions graph as a list of nodes.
 
-        :param stack: Initial list of shell nodes and assemblies entities.
-        :type stack: List[int]
+        :param initial_nodes: Initial list of shell nodes and assemblies entities.
+        :type initial_nodes: List[int]
         :return: A list of nodes in the right order of dependency.
         :rtype: List[int]
         """
         list_head = []
         list_nodes = []
         visited_set = set()
+        stack = initial_nodes.copy()
         while stack:
             node = stack.pop(0)
             name = self.functions[node].name
@@ -1197,6 +1198,9 @@ class Step(dc.DessiaObject):
                     len(self.functions[id_shape_representation].arg) >= 4:
                 # todo: take all the arg starting from index 3 to end ??? needs investigation
                 id_shape = int(self.functions[id_shape_representation].arg[-1][1:])
+                if len(self.functions[id_shape_representation].arg) == 5:
+                    print(self.functions[id_shape_representation].arg)
+                    print(id_shape_representation)
                 self.connections[id_product_definition].append(id_shape)
                 self.functions[id_product_definition].arg.append(f'#{id_shape}')
             elif self.functions[id_shape_representation].name in STEP_REPRESENTATION_ENTITIES:
