@@ -2201,6 +2201,31 @@ class VolumeModel(dc.PhysicalObject):
 
         return lines_elements
 
+    def get_shells(self):
+        """
+        Dissociates all the assemblies to get a list of shells only.
+
+        :return: A list of closed shells
+        :rtype: List[OpenShell3D]
+        """
+
+        list_shells = []
+
+        def unpack_assembly(assembly):
+            for primitive in assembly.primitives:
+                if primitive.__class__.__name__ == 'Assembly':
+                    unpack_assembly(primitive)
+                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                    list_shells.append(primitive)
+
+        for primitive in self.primitives:
+            if primitive.__class__.__name__ == 'Assembly':
+                unpack_assembly(primitive)
+            elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                list_shells.append(primitive)
+
+        return list_shells
+
 
 class MovingVolumeModel(VolumeModel):
     """

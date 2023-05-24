@@ -157,7 +157,7 @@ class Edge(dc.DessiaObject):
         :return: a list of sampled points
         """
         if angle_resolution:
-            number_points = int(math.pi * angle_resolution)
+            number_points = int(angle_resolution * (self.length()/math.pi))
         if number_points is None or number_points <= 1:
             number_points = 2
         step = self.length() / (number_points - 1)
@@ -1153,7 +1153,7 @@ class BSplineCurve(Edge):
         return u
 
     def split(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
-              tol: float = 1e-5):
+              tol: float = 1e-6):
         """
         Splits of B-spline curve in two pieces using a 2D or 3D point.
 
@@ -1165,11 +1165,11 @@ class BSplineCurve(Edge):
             curve
         :rtype: List[:class:`volmdlr.edges.BSplineCurve`]
         """
-        if point.point_distance(self.start) < tol:
+        if point.is_close(self.start, tol):
             return [None, self.copy()]
-        if point.point_distance(self.end) < tol:
+        if point.is_close(self.end, tol):
             return [self.copy(), None]
-        adim_abscissa = round(self.abscissa(point) / self.length(), 7)
+        adim_abscissa = min(1.0, max(0.0, round(self.abscissa(point) / self.length(), 7)))
         curve1, curve2 = split_curve(self.curve, adim_abscissa)
 
         return [self.__class__.from_geomdl_curve(curve1),
@@ -1872,7 +1872,7 @@ class Line2D(Line):
     @staticmethod
     def compute_tangent_circle_for_parallel_segments(new_basis, new_a, new_c):
         """
-        Compute tangent circle betwen parallel segments.
+        Compute tangent circle between parallel segments.
 
         """
         segments_distance = abs(new_c[1] - new_a[1])
@@ -2833,8 +2833,28 @@ class Arc(Edge):
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
+<<<<<<< HEAD
         points = self.discretization_points(angle_resolution=100)
         return point.point_distance(point.nearest_point(points))
+=======
+        if self.point_belongs(point):
+            return 0
+        if self.center.is_close(point):
+            return self.radius
+        class_sufix = self.__class__.__name__[-2:]
+        linesegment_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
+        linesegment = linesegment_class(self.center, point)
+        if linesegment.length() > self.radius:
+            if self.linesegment_intersections(linesegment):
+                return linesegment.length() - self.radius
+            return min(self.start.point_distance(point), self.end.point_distance(point))
+        vector_to_point = point - self.center
+        vector_to_point.normalize()
+        projected_point = self.center + self.radius * vector_to_point
+        if self.point_belongs(projected_point):
+            return self.radius - linesegment.length()
+        return min(self.start.point_distance(point), self.end.point_distance(point))
+>>>>>>> origin/dev
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
@@ -3027,8 +3047,9 @@ class Arc2D(Arc):
                  start: volmdlr.Point2D,
                  interior: volmdlr.Point2D,
                  end: volmdlr.Point2D,
+                 center=None,
                  name: str = ''):
-        self._center = None
+        self._center = center
         self._is_trigo = None
         self._angle = None
         self._bounding_rectangle = None
@@ -3482,8 +3503,9 @@ class Arc2D(Arc):
         point_start = self.start.to_3d(plane_origin, x, y)
         point_interior = self.interior.to_3d(plane_origin, x, y)
         point_end = self.end.to_3d(plane_origin, x, y)
+        center = self.center.to_3d(plane_origin, x, y) if self.center else None
 
-        return Arc3D(point_start, point_interior, point_end, name=self.name)
+        return Arc3D(point_start, point_interior, point_end, center, name=self.name)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -3493,8 +3515,8 @@ class Arc2D(Arc):
         :param angle: angle rotation.
         :return: a new rotated Arc2D.
         """
-        return Arc2D(*[point.rotation(center, angle, ) for point in
-                       [self.start, self.interior, self.end]])
+        return Arc2D(*[point.rotation(center, angle, ) if point else point for point in
+                       [self.start, self.interior, self.end, self.center]])
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
@@ -3520,8 +3542,8 @@ class Arc2D(Arc):
         :param offset: translation vector.
         :return: A new translated Arc2D.
         """
-        return Arc2D(*[point.translation(offset) for point in
-                       [self.start, self.interior, self.end]])
+        return Arc2D(*[point.translation(offset) if point else point for point in
+                       [self.start, self.interior, self.end, self.center]])
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
@@ -3545,8 +3567,8 @@ class Arc2D(Arc):
 
         side = 'old' or 'new'
         """
-        return Arc2D(*[point.frame_mapping(frame, side) for point in
-                       [self.start, self.interior, self.end]])
+        return Arc2D(*[point.frame_mapping(frame, side) if point else point for point in
+                       [self.start, self.interior, self.end, self.center]])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -3604,9 +3626,10 @@ class Arc2D(Arc):
                                name=self.name)
 
     def copy(self, *args, **kwargs):
+        center = self.center.copy() if self.center else None
         return Arc2D(self.start.copy(),
                      self.interior.copy(),
-                     self.end.copy())
+                     self.end.copy(), center)
 
     def cut_between_two_points(self, point1, point2):
         """
@@ -6148,7 +6171,7 @@ class Arc3D(Arc):
 
     """
 
-    def __init__(self, start, interior, end, name=''):
+    def __init__(self, start, interior, end, center=None, name=''):
         self._utd_normal = False
         self._utd_center = False
         self._utd_frame = False
@@ -6156,7 +6179,7 @@ class Arc3D(Arc):
         self._utd_angle = False
         self._normal = None
         self._frame = None
-        self._center = None
+        self._center = center
         self._is_trigo = None
         self._angle = None
         # self._utd_clockwise_and_trigowise_paths = False
@@ -6241,9 +6264,8 @@ class Arc3D(Arc):
 
     @property
     def center(self):
-        if not self._utd_center:
+        if not self._center:
             self._center = self.get_center()
-            self._utd_center = True
         return self._center
 
     def get_center(self):
@@ -6393,7 +6415,8 @@ class Arc3D(Arc):
         new_start = self.start.rotation(center, axis, angle)
         new_interior = self.interior.rotation(center, axis, angle)
         new_end = self.end.rotation(center, axis, angle)
-        return Arc3D(new_start, new_interior, new_end, name=self.name)
+        new_center = self.center.rotation(center, axis, angle) if self.center else None
+        return Arc3D(new_start, new_interior, new_end, new_center, name=self.name)
 
     def rotation_inplace(self, center: volmdlr.Point3D,
                          axis: volmdlr.Vector3D, angle: float):
@@ -6422,7 +6445,8 @@ class Arc3D(Arc):
         new_start = self.start.translation(offset)
         new_interior = self.interior.translation(offset)
         new_end = self.end.translation(offset)
-        return Arc3D(new_start, new_interior, new_end, name=self.name)
+        new_center = self.center.translation(offset) if self.center else None
+        return Arc3D(new_start, new_interior, new_end, new_center, name=self.name)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
@@ -6493,21 +6517,24 @@ class Arc3D(Arc):
         return ax
 
     def copy(self, *args, **kwargs):
-        return Arc3D(self.start.copy(), self.interior.copy(), self.end.copy())
+        new_center = self.center.copy() if self.center else None
+        return Arc3D(self.start.copy(), self.interior.copy(), self.end.copy(), new_center)
 
     def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
         if side == 'old':
             new_start = frame.local_to_global_coordinates(self.start.copy())
             new_interior = frame.local_to_global_coordinates(self.interior.copy())
             new_end = frame.local_to_global_coordinates(self.end.copy())
+            new_center = frame.local_to_global_coordinates(self.center.copy()) if self.center else None
         elif side == 'new':
             new_start = frame.global_to_local_coordinates(self.start.copy())
             new_interior = frame.global_to_local_coordinates(self.interior.copy())
             new_end = frame.global_to_local_coordinates(self.end.copy())
+            new_center = frame.global_to_local_coordinates(self.center.copy()) if self.center else None
         else:
             raise ValueError('side value not valid, please specify'
                              'a correct value: \'old\' or \'new\'')
-        return new_start, new_interior, new_end
+        return new_start, new_interior, new_end, new_center
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -6515,10 +6542,10 @@ class Arc3D(Arc):
 
         side = 'old' or 'new'
         """
-        new_start, new_interior, new_end = \
+        new_start, new_interior, new_end, new_center = \
             self.frame_mapping_parameters(frame, side)
 
-        return Arc3D(new_start, new_interior, new_end, name=self.name)
+        return Arc3D(new_start, new_interior, new_end, new_center, name=self.name)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -6528,9 +6555,8 @@ class Arc3D(Arc):
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
-        new_start, new_interior, new_end = \
+        self.start, self.interior, self.end, self.center = \
             self.frame_mapping_parameters(frame, side)
-        self.start, self.interior, self.end = new_start, new_interior, new_end
         self._bbox = None
 
     def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
@@ -6564,7 +6590,10 @@ class Arc3D(Arc):
         point_start = self.start.to_2d(plane_origin, x, y)
         point_interior = self.interior.to_2d(plane_origin, x, y)
         point_end = self.end.to_2d(plane_origin, x, y)
-        return Arc2D(point_start, point_interior, point_end, name=self.name)
+        center = self.center
+        if center is not None:
+            center = self._center.to_2d(plane_origin, x, y)
+        return Arc2D(point_start, point_interior, point_end, center=center, name=self.name)
 
     def minimum_distance_points_arc(self, other_arc):
 
@@ -7200,10 +7229,6 @@ class ArcEllipse3D(Edge):
         else:
             self.offset_angle = angle2
 
-        volmdlr.core.CompositePrimitive3D.__init__(self,
-                                                   primitives=self.discretization_points(number_points=20),
-                                                   name=name)
-
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
         Discretization of a Contour to have "n" points.
@@ -7401,7 +7426,7 @@ class ArcEllipse3D(Edge):
         """
         Calculates the bounding box of the Arc3D.
 
-        :return: a volmdlr.core.BoundingBox object.
+        :return: Bounding Box object.
         """
         # TODO: implement exact calculation
 

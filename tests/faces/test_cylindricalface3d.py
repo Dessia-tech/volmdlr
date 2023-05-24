@@ -86,7 +86,7 @@ class TestCylindricalFace3D(unittest.TestCase):
 
         face = faces.CylindricalFace3D.from_contours3d(surface, [contour0, contour1])
 
-        self.assertEqual(face.surface2d.area(), 0.00077*2*math.pi)
+        self.assertEqual(face.surface2d.area(), 0.00077 * 2 * math.pi)
 
         frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
         cylindrical = surfaces.CylindricalSurface3D(frame, 0.2)
@@ -95,7 +95,7 @@ class TestCylindricalFace3D(unittest.TestCase):
         contour1 = wires.Contour3D([fullarc1])
         contour2 = wires.Contour3D([fullarc2])
         face = faces.CylindricalFace3D.from_contours3d(cylindrical, [contour1, contour2])
-        self.assertEqual(face.surface2d.area(), 0.2*2*math.pi)
+        self.assertEqual(face.surface2d.area(), 0.2 * 2 * math.pi)
 
         surface = DessiaObject.load_from_file(
             'faces/objects_cylindrical_tests/cylindrical_surface_floating_point_error.json')
@@ -110,6 +110,17 @@ class TestCylindricalFace3D(unittest.TestCase):
         face = self.cylindrical_face1
         neutral_fiber = face.neutral_fiber()
         self.assertEqual(neutral_fiber.length(), 0.4)
+
+    def test_number_triangles(self):
+        cylindrical_surface1 = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 0.32)
+        cylindrical_face1 = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindrical_surface1,
+                                                                                 -0.01, 1.3, -0.1, 0.3)
+        triangulation = cylindrical_face1.triangulation()
+        triangulation.plot()
+        n_triangles = len(triangulation.triangles)
+        n_triangles_max = 30  # Could be 14 (7 slices on theta)
+        self.assertLess(n_triangles, n_triangles_max,
+                        f'Too much triangles in cylindrical face triangulation: {n_triangles}/{n_triangles_max}')
 
 
 if __name__ == '__main__':
