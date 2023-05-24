@@ -2777,9 +2777,9 @@ class BSplineFace3D(Face3D):
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
         if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
-            resolution = 10
+            resolution = 25
         else:
-            resolution = 10
+            resolution = 15
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
         number_points_x = int(delta_u * resolution)
