@@ -154,15 +154,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             self._faces_graph = faces_graph
         return self._faces_graph
 
-    @property
-    def shell_octree(self):
-        if not self._shell_octree:
-            self._shell_octree = Octree(self)
-        return self._shell_octree
-
     def to_dict(self, *args, **kwargs):
         """
-        Serializes a 3 dimensional open shell into a dictionary.
+        Serializes a 3-dimensional open shell into a dictionary.
 
         This method does not use pointers for faces as it has no sense
         to have duplicate faces.
@@ -464,8 +458,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             face_intersections = face.linesegment_intersections(linesegment3d)
             if face_intersections:
                 intersections.append((face, face_intersections))
-        # intersections = self.shell_octree.linesegment_intersection_with_node_faces(
-        #     linesegment3d, self.shell_octree.root)
         return intersections
 
     def line_intersections(self,

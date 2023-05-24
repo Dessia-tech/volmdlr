@@ -209,18 +209,6 @@ class Block(shells.ClosedShell3D):
 
         return dict_
 
-    def point_belongs(self, point3d: volmdlr.Point3D, **kwargs):
-        return self.bounding_box.point_belongs(point3d)
-
-    def is_face_intersecting(self, face: volmdlr.faces.Face3D):
-        """Verifies if face is intersecting shell somehow."""
-        if not self.bounding_box.bbox_intersection(face.bounding_box):
-            return False
-        for i_face in self.faces:
-            if i_face.face_intersections(face):
-                return True
-        return False
-
     def volume(self):
         """Returns the volume of the block."""
         return self.size[0] * self.size[1] * self.size[2]
@@ -489,16 +477,16 @@ class Block(shells.ClosedShell3D):
     def octree(self):
         """Subdivide block into eight other blocks."""
         if not self._octree:
-            self._octree = self.divide_block(2, 2, 2)
+            self._octree = self.subdivide_block(2, 2, 2)
         return self._octree
 
     def quadtree(self):
         """Subdivide block into four other blocks."""
         if not self._quadtree:
-            self._quadtree = self.divide_block(2, 2, 1)
+            self._quadtree = self.subdivide_block(2, 2, 1)
         return self._quadtree
 
-    def divide_block(self, number_blocks_x, number_blocks_y, number_blocks_z):
+    def subdivide_block(self, number_blocks_x, number_blocks_y, number_blocks_z):
         """Divide block into sub blocks."""
         filling_boxes_size = [self.size[0] / number_blocks_x, self.size[1] / number_blocks_y,
                               self.size[2] / number_blocks_z]
