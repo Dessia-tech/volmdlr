@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D: split, point_at_abscissa
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
+- VolumeModel: get_shells
 - WireMixin: wires_from_edges
 - DisplayMesh3D: triangulation_faces
 - Woodpecker CI setup
@@ -99,6 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 - Cylinder: inheritance directly from ClosedShell3D
 - Edges: cache middle_points and unit_direction_vector 
+- unittests: find dynamicly the folder for the json
 - Arc: point_distance
 - BSplineCurve: is_close
 - CompositePrimitive3D: babylon_points
