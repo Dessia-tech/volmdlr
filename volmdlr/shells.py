@@ -114,7 +114,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Serializes a 3 dimensional open shell into a dictionary.
+        Serializes a 3-dimensional open shell into a dictionary.
 
         This method does not use pointers for faces as it has no sense
         to have duplicate faces.
@@ -1574,7 +1574,7 @@ class OpenTriangleShell3D(OpenShell3D):
                  alpha: float = 1., name: str = ''):
         OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
-    def to_dict(self):
+    def to_dict(self, *args, **kwargs):
         dict_ = self.base_dict()
         dict_['faces'] = [t.to_dict() for t in self.faces]
         dict_['alpha'] = self.alpha
