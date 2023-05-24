@@ -202,13 +202,12 @@ class TestContour2D(unittest.TestCase):
     def test_contours_from_edges(self):
         source_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                      'test_contour2d_contours_from_edges_json_files')
-        expected_contour_areas = [[0.06136684795257308, 0.0055788043592579495],
-                                  [0.032085522557644186, 0.0855613934860544]]
-        expected_contour_lengths = [[1.05404105005, 0.315748639158], [0.8277671086559999, 1.642237241348]]
+        expected_contour_areas = [[0.032085522557644186, 0.0855613934860544],
+                                  [0.06136684795257308, 0.0055788043592579495]]
+        expected_contour_lengths = [[0.8277671086559999, 1.642237241348], [1.05404105005, 0.315748639158]]
         contour_areas = []
         contour_lengths = []
         for filename in os.listdir(source_folder):
-            print(filename)
             if '.json' not in filename:
                 continue
             file_path = os.path.join(source_folder, filename)
