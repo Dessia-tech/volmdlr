@@ -185,7 +185,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         triangulates_with_grid = number_points_x > 0 and number_points_y > 0
         discretize_line = number_points_x > 0 or number_points_y > 0
-        if not triangulates_with_grid:
+        if not discretize_line:
             tri_opt = "pq"
         discretize_line_direction = "xy"
         if number_points_y == 0:
@@ -3806,7 +3806,7 @@ class ExtrusionSurface3D(Surface3D):
         if abs(v) < 1e-7:
             v = 0.0
 
-        point_at_curve_global = self.edge.point_at_abscissa(u * self.edge.length())
+        point_at_curve_global = self.edge.point_at_abscissa(u * self.edge.length()/math.pi)
         point_at_curve_local = self.frame.global_to_local_coordinates(point_at_curve_global)
         # x, y, z = point_at_curve_local
         point_local = point_at_curve_local.translation(volmdlr.Vector3D(0, 0, v))
@@ -3826,8 +3826,9 @@ class ExtrusionSurface3D(Surface3D):
         v = z
         point_at_curve_local = volmdlr.Point3D(x, y, 0)
         point_at_curve_global = self.frame.local_to_global_coordinates(point_at_curve_local)
-        u = self.edge.abscissa(point_at_curve_global) / self.edge.length()
-        u = min(u, 1.0)
+        # multiplying by math.pi is a quick fix to the triangulation
+        u = self.edge.abscissa(point_at_curve_global) / self.edge.length() * math.pi
+        u = min(u, math.pi)
         return volmdlr.Point2D(u, v)
 
     def rectangular_cut(self, x1: float = 0.0, x2: float = 1.0,

@@ -1771,7 +1771,8 @@ class ContourMixin(WireMixin):
                                         (discretize_line_direction == "x" and is_horizontal) or \
                                         (discretize_line_direction == "y" and is_vertical)
                     if should_discretize:
-                        polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
+                        polygon_points.extend(primitive.discretization_points(
+                            angle_resolution=2 * angle_resolution)[:-1])
                     else:
                         polygon_points.append(primitive.start)
 
@@ -3301,7 +3302,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         return ax
 
-    def triangulation(self, tri_opt: str = 'pd'):
+    def triangulation(self, tri_opt: str = 'p'):
         """
         Perform triangulation on the polygon.
 

@@ -214,8 +214,6 @@ class Face3D(volmdlr.core.Primitive3D):
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
         face = cls(surface, surface2d=surface2d, name=name)
-        if isinstance(face, ExtrusionFace3D):
-            outer_contour2d.plot().set_aspect("auto")
         # To improve performance while reading from step file
         face.outer_contour3d = outer_contour3d
         face.inner_contours3d = inner_contours3d
@@ -2656,12 +2654,12 @@ class ExtrusionFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 11
+        angle_resolution = 15
         xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
         number_points_x = int(delta_x * angle_resolution)
 
-        number_points_y = number_points_x
+        number_points_y = 0
 
         return number_points_x, number_points_y
 
@@ -2728,7 +2726,7 @@ class RevolutionFace3D(Face3D):
         delta_x = xmax - xmin
         number_points_x = int(delta_x * angle_resolution)
 
-        number_points_y = number_points_x
+        number_points_y = 0
 
         return number_points_x, number_points_y
 
