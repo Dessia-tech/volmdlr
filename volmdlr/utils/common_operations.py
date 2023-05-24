@@ -12,12 +12,12 @@ from volmdlr.core import EdgeStyle
 
 def plot_circle(circle, ax=None, edge_style: EdgeStyle = EdgeStyle()):
     """
-    Create a matplotlib plot for a circle 2d or fullarc 2d.
+    Create a Matplotlib plot for a circle 2d or fullarc 2d.
 
     :param circle: circle to plot.
-    :param ax: matplotlib plot axis.
+    :param ax: Matplotlib plot axis.
     :param edge_style: Edge Style to implement.
-    :return: matplotlib plot axis.
+    :return: Matplotlib plot axis.
     """
     if ax is None:
         _, ax = plt.subplots()
