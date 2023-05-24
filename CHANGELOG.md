@@ -85,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: simplify
 - WireMixin: to_wire_with_linesegments (use new methods, for 2D and 3D)
 - ArcEllipse2d: point_belongs, abscissa, init.
-
+- BoundingBox: point_belongs now considers bounds.
 
 ### Refactor
 - Contour2D: cut_by_wire
