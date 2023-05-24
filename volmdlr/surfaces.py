@@ -841,19 +841,24 @@ class Surface3D(DessiaObject):
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
-            is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-3)
+            distance = delta.norm()
+            is_connected = math.isclose(distance, 0, abs_tol=1e-3)
             if not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
-                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-5):
-                primitives2d[i] = primitives2d[i].reverse()
+                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
+                        math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
+                delta_end = previous_primitive.end - primitives2d[i].end
+                delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
+                if primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
+                    primitives2d[i] = primitives2d[i].reverse()
+                elif delta_min_index == 0:
+                    primitives2d[i] = primitives2d[i].translation(delta)
+                else:
+                    new_primitive = primitives2d[i].reverse()
+                    primitives2d[i] = new_primitive.translation(delta_end)
+
             elif not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3):
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
-            elif not is_connected and math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
-                math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
-                new_primitive = primitives2d[i].reverse()
-                new_delta = previous_primitive.end - new_primitive.start
-                primitives2d[i] = new_primitive.translation(new_delta)
             elif not is_connected:
                 primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
@@ -3935,24 +3940,8 @@ class ExtrusionSurface3D(Surface3D):
         n = len(bspline_curve3d.control_points)
         points = [self.point3d_to_2d(point)
                   for point in bspline_curve3d.discretization_points(number_points=n)]
-        start = points[0]
-        end = points[-1]
-        if not start.is_close(end):
-            linesegment = edges.LineSegment2D(start, end)
-            flag = True
-            for point in points:
-                if not linesegment.point_belongs(point):
-                    flag = False
-                    break
-            if flag:
-                return [linesegment]
-
-        # Is this always True?
-        n = len(bspline_curve3d.control_points)
-        points = [self.point3d_to_2d(p)
-                  for p in bspline_curve3d.discretization_points(number_points=n)]
         return [edges.BSplineCurve2D.from_points_interpolation(
-            points, bspline_curve3d.degree, bspline_curve3d.periodic)]
+            points, bspline_curve3d.degree, bspline_curve3d.periodic).simplify]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
