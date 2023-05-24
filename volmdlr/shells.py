@@ -1534,7 +1534,7 @@ class ClosedShell3D(OpenShell3D):
             valid_coicident_faces = ClosedShell3D.get_faces_to_be_merged(union_faces)
             list_valid_coincident_faces = valid_coicident_faces[:]
             if valid_coicident_faces:
-                list_new_faces += volmdlr.faces.PlaneFace3D.merge_faces2(valid_coicident_faces)
+                list_new_faces += volmdlr.faces.PlaneFace3D.merge_faces(valid_coicident_faces)
             for face in list_valid_coincident_faces:
                 union_faces.remove(face)
             count += 1
