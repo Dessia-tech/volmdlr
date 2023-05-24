@@ -536,7 +536,7 @@ class WireMixin:
 
         return wires
 
-      def to_wire_with_linesegments(self, number_segments: int):
+    def to_wire_with_linesegments(self, number_segments: int):
         """
         Convert a wire with different primitives to a wire with just linesegments by discretizing primitives.
 
