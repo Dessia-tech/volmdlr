@@ -21,7 +21,6 @@ import volmdlr.display as vmd
 import volmdlr.edges as vme
 import volmdlr.geometry
 import volmdlr.grid
-import volmdlr.utils.parametric as vm_parametric
 from volmdlr import surfaces
 import volmdlr.wires
 
@@ -182,7 +181,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
             contours2d = [surface.contour3d_to_2d(contour3d) for contour3d in contours3d]
 
-            check_contours = [not contour2d.is_ordered(tol=1e-3) for contour2d in contours2d]
+            check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
             if any(check_contours):
                 # Not implemented yet, but repair_contours2d should also return outer_contour3d and inner_contours3d
                 outer_contour2d, inner_contours2d = surface.repair_contours2d(contours2d[0], contours2d[1:])
@@ -202,9 +201,10 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             raise ValueError('Must have at least one contour')
 
-        if outer_contour3d:
-            if not outer_contour3d.is_ordered():
-                outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+        # if outer_contour3d and not outer_contour3d.is_ordered():
+        #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+        if (not outer_contour2d) or (not outer_contour2d.primitives):
+            return None
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
         face = cls(surface, surface2d=surface2d, name=name)
@@ -2626,7 +2626,7 @@ class ExtrusionFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 36
+        angle_resolution = 11
         xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
         number_points_x = int(delta_x * angle_resolution)
