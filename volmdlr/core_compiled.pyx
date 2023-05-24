@@ -197,7 +197,7 @@ cdef(double, double, double,
 
 # =============================================================================
 
-def polygon_point_belongs(point, points, include_edge_points: bool = False, tol: float = 1e-12):
+def polygon_point_belongs(point, points, include_edge_points: bool = False):
 
     cdef int i
     cdef int n = len(points)
@@ -208,14 +208,14 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False, tol:
         p1x, p1y = points[i]
         p2x, p2y = points[(i + 1) % n]
         xints = math.inf
-        if min(p1y, p2y) - tol <= y <= max(p1y, p2y) + tol and min(p1x, p2x) - tol <= x <= max(p1x, p2x) + tol:
+        if min(p1y, p2y) <= y <= max(p1y, p2y) and min(p1x, p2x) <= x <= max(p1x, p2x):
             if p1y != p2y:
                 xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
             if p1y == p2y or x == xints:
                 if include_edge_points:
                     return True
                 return False
-        if min(p1y, p2y) - tol < y <= max(p1y, p2y) + tol and x <= max(p1x, p2x) + tol:
+        if min(p1y, p2y) < y <= max(p1y, p2y) and x <= max(p1x, p2x):
             if p1y != p2y:
                 xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
             if p1x == p2x or x < xints:

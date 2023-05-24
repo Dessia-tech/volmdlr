@@ -2722,12 +2722,12 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             barycenter1_2d += point
         return barycenter1_2d / len(self.points)
 
-    def point_belongs(self, point, include_edge_points: bool = False, tol: float = 1e-12):
+    def point_belongs(self, point, include_edge_points: bool = False):
         """
         Ray casting algorithm copied from internet.
         """
         return polygon_point_belongs((point.x, point.y), [(point_.x, point_.y) for point_ in self.points],
-                                     include_edge_points=include_edge_points, tol=tol)
+                                     include_edge_points=include_edge_points)
 
     def second_moment_area(self, point):
         second_moment_area_x, second_moment_area_y, second_moment_area_xy = 0., 0., 0.
