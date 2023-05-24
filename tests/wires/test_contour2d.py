@@ -207,7 +207,9 @@ class TestContour2D(unittest.TestCase):
         expected_contour_lengths = [[0.8277671086559999, 1.642237241348], [1.05404105005, 0.315748639158]]
         contour_areas = []
         contour_lengths = []
-        for filename in os.listdir(source_folder):
+        for filename in [
+            '1_test_contours_from_edges.json',
+            '2_test_contours_from_edges2.json']:
             if '.json' not in filename:
                 continue
             file_path = os.path.join(source_folder, filename)
