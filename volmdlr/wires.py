@@ -536,6 +536,27 @@ class WireMixin:
 
         return wires
 
+    def to_wire_with_linesegments(self, number_segments: int):
+        """
+        Convert a wire with different primitives to a wire with just linesegments by discretizing primitives.
+
+        :param number_segments: number of segment for each primitive to be converted.
+        :type number_segments: int
+        """
+
+        primitives = []
+        class_name_ = 'Wire' + self.primitives[0].__class__.__name__[-2:]
+        class_ = getattr(sys.modules[__name__], class_name_)
+
+        for primitive in self.primitives:
+            if primitive.__class__.__name__[0:-2] != 'LineSegment':
+                primitives.extend(class_.from_edge(
+                    edge=primitive, number_segments=number_segments).primitives)
+            else:
+                primitives.append(primitive)
+
+        return class_(primitives)
+
 
 class EdgeCollection3D(WireMixin):
     """
@@ -981,20 +1002,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
                             not volmdlr.core.point_in_list(crossing, invalid_crossings):
                         crossings_points.append(crossing)
         return crossings_points
-
-    def to_wire_with_linesegments(self):
-        """
-        Convert a wire with different primitives to a wire with just line segments.
-        """
-
-        wires = []
-        for primitive in self.primitives:
-            if not isinstance(primitive, volmdlr.edges.LineSegment2D):
-                wires.append(primitive.to_wire(10))
-            else:
-                wires.append(Wire2D([primitive]))
-
-        return Wire2D.from_wires(wires)
 
     def invert(self):
         return Wire2D(self.inverted_primitives())
