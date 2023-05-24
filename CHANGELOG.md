@@ -101,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cylinder: inheritance directly from ClosedShell3D
 - Edges: cache middle_points and unit_direction_vector 
 - Arc: add optional parameter center
+- unittests: find dynamicly the folder for the json
 - Arc: point_distance
 - BSplineCurve: is_close
 - CompositePrimitive3D: babylon_points
