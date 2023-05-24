@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## v0.11.0 [future]
+
 
 ### New Features
 - BSplineCurve, Edge: simplify
@@ -82,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: ban useless attr in serialization
 - BSplineCurve: simplify
 - WireMixin: to_wire_with_linesegments (use new methods, for 2D and 3D)
+- ArcEllipse2d: point_belongs, abscissa, init.
 
 
 ### Refactor
@@ -127,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShel3D: intersection
 - Arcellipse2D: complementary
 
-## v0.10.0 [Unreleased yet]
+v0.10.0 [Released 20/04/2023]
 
 ### New Features
 * Write .msh file (with stream)
@@ -187,6 +190,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve2D.point_distance 
 - new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
+
 ### Unittests
 * BSplineCurve2D: offset, point_distance, point_belongs
 * Circle2D: bspline_intersections, point_distance
@@ -213,6 +217,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix contour2d: divide
 
 ### Documentation
+ - typo in CONTRIBUTING.md
  - typo in README.md
 
 ## v0.9.0 [released 03/26/2023]
@@ -227,8 +232,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Create .geo and .msh files (Mesh geometries with GMSH)
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
-* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
-* Added package.xml metadata in order to be listed in the FreeCAD Addon Manager 
+* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D.
+* Added package.xml metadata in order to be listed in the FreeCAD Addon Manager
 * Edge: local_discretization
 * ArcEllipse2d: point_at_abscissa, translation, split, point_distance.
 
@@ -236,9 +241,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * WireMixin: abscissa (add tolerance as parameter)
 * OpenRoundedLineSegment2D: deleted discretization_points() so it uses the one from WireMixin.
-* Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
+* Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D.
 * BSplineCurve: from_points_interpolation, uses centripedal method for better fitting.
-* Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard. 
+* Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard.
 * BSplineSurface3D: debug linesegment2d_to_3d method.
 * Parametric operations with BSpline curves.
 * OpenTriangleShell3D: fix from_mesh_data method.
@@ -254,7 +259,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Add some typings
 * Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
 * Arc2d: point_belongs, abscissa.
-* ArcEllipse2d: point_belongs, abscissa, init.
 
 
 ### Removed
@@ -421,7 +425,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 - Mandatory CHANGELOG.md update for PR
 - pre-commit checks with cython-lint
 
-## v0.7.0 
+## v0.7.0
 
 ### New Features
 
