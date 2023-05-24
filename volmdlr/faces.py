@@ -1369,8 +1369,6 @@ class PlaneFace3D(Face3D):
                 continue
             if over_planeface_inner_contour and over_self_outer_contour:
                 continue
-            # if over_self_inner_contour or over_planeface_inner_contour:
-            #     print(True)
             if over_self_outer_contour and over_planeface_outer_contour:
                 continue
             if self.edge3d_inside(linesegment3d) or over_self_outer_contour:
