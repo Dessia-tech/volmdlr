@@ -1422,19 +1422,18 @@ class ContourMixin(WireMixin):
         if len(edges) == 1:
             return [cls(edges)]
         list_contours = []
-        contour_primitives = [edges[0]]
         points = [edges[0].start, edges[0].end]
-        edges.remove(edges[0])
+        contour_primitives = [edges.pop(0)]
         while True:
             if not contour_primitives:
                 print(True)
-            for edge in edges:
+            for i, edge in enumerate(edges):
                 if edge.is_point_edge_extremity(contour_primitives[-1].end, tol):
                     if contour_primitives[-1].end.is_close(edge.start, tol):
                         contour_primitives.append(edge)
                     else:
                         contour_primitives.append(edge.reverse())
-                    edges.remove(edge)
+                    edges.pop(i)
                     validating_points = points[:]
                     validating_point = contour_primitives[-1].end
                     points.append(contour_primitives[-1].end)
@@ -1447,15 +1446,14 @@ class ContourMixin(WireMixin):
                     validating_points = points[:]
                     validating_point = contour_primitives[0].start
                     points.insert(0, contour_primitives[0].start)
-                    edges.remove(edge)
+                    edges.pop(i)
                     break
             else:
                 list_contours.append(cls(contour_primitives))
                 if not edges:
                     break
-                contour_primitives = [edges[0]]
                 points = [edges[0].start, edges[0].end]
-                edges.remove(edges[0])
+                contour_primitives = [edges.pop(0)]
                 continue
             if volmdlr.core.point_in_list(validating_point, validating_points):
                 if not validating_point.is_close(validating_points[0]):
@@ -1473,9 +1471,8 @@ class ContourMixin(WireMixin):
                 else:
                     list_contours.append(cls(contour_primitives))
                     if edges:
-                        contour_primitives = [edges[0]]
                         points = [edges[0].start, edges[0].end]
-                        edges.remove(edges[0])
+                        contour_primitives = [edges.pop(0)]
         valid_contours = [list_contours[0]]
         list_contours.remove(list_contours[0])
         for contour in list_contours:
