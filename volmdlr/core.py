@@ -212,9 +212,11 @@ class CompositePrimitive(dc.PhysicalObject):
 
         dc.PhysicalObject.__init__(self, name=name)
 
-    def to_dict(self, *args, **kwargs):
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#',
+                id_method=True, id_memo=None):
         """Avoids storing points in memo that makes serialization slow."""
-        return dc.PhysicalObject.to_dict(self, use_pointers=False)
+        return dc.PhysicalObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path,
+                                         id_method=id_method, id_memo=id_memo)
 
     def primitive_to_index(self, primitive):
         """Constructs a dictionary associating primitive to its index."""

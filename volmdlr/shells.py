@@ -112,9 +112,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             self._faces_graph = faces_graph
         return self._faces_graph
 
-    def to_dict(self, *args, **kwargs):
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#',
+                id_method=True, id_memo=None):
         """
-        Serializes a 3 dimensional open shell into a dictionary.
+        Serializes a 3-dimensional open shell into a dictionary.
 
         This method does not use pointers for faces as it has no sense
         to have duplicate faces.
@@ -132,9 +133,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         dict_ = DessiaObject.base_dict(self)
         dict_.update({'color': self.color,
                       'alpha': self.alpha,
-                      'faces': [f.to_dict(use_pointers=False) for f in self.faces]})
+                      'faces': [f.to_dict(use_pointers=use_pointers, memo=memo, path=path,
+                id_method=id_method, id_memo=id_memo) for f in self.faces]})
         if self._bbox:
-            dict_['bounding_box'] = self._bbox.to_dict()
+            dict_['bounding_box'] = self._bbox.to_dict(use_pointers=use_pointers, memo=memo, path=path,
+                id_method=id_method, id_memo=id_memo)
 
         return dict_
 
@@ -1574,9 +1577,12 @@ class OpenTriangleShell3D(OpenShell3D):
                  alpha: float = 1., name: str = ''):
         OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
-    def to_dict(self):
-        dict_ = self.base_dict()
-        dict_['faces'] = [t.to_dict() for t in self.faces]
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#',
+                id_method=True, id_memo=None):
+        dict_ = self.base_dict(use_pointers=use_pointers, memo=memo, path=path,
+                id_method=id_method, id_memo=id_memo)
+        dict_['faces'] = [t.to_dict(use_pointers=use_pointers, memo=memo, path=path,
+                id_method=id_method, id_memo=id_memo) for t in self.faces]
         dict_['alpha'] = self.alpha
         dict_['color'] = self.color
         return dict_
