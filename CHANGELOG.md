@@ -147,6 +147,8 @@ v0.10.0 [Released 20/04/2023]
 * Contour3D: hash
 * LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
 * Contour2D: closest_point_to_point2, get_furthest_point_to_point2
+* Block: octree, quadtree, subdivide_block
+
 ### Fixed
 * Bspline in sweep
 * Plane3D: plane_intersections
