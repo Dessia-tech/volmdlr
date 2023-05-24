@@ -3980,7 +3980,7 @@ class Circle2D(Contour2D):
     def from_arc(cls, arc: volmdlr.edges.Arc2D):
         return cls(arc.center, arc.radius, arc.name + ' to circle')
 
-    def point_belongs(self, point, include_edge_points: bool = False):
+    def point_belongs(self, point, include_edge_points: bool = False, tol: float = 1e-6):
         """
         Verifies if a point is inside the Circle 2D.
 
@@ -3989,12 +3989,13 @@ class Circle2D(Contour2D):
         :param include_edge_points: A Boolean indicating whether points on the edge of the Circle 2D
             should be considered inside the circle.
         :type include_edge_points: bool
+        :param tol: tolerance.
         :return: True if point inside the circle or false otherwise.
         :rtype: bool
         """
 
         if include_edge_points:
-            return point.point_distance(self.center) <= self.radius
+            return point.point_distance(self.center) <= self.radius + tol
         return point.point_distance(self.center) < self.radius
 
     def point_distance(self, point):
