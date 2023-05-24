@@ -4062,7 +4062,7 @@ class RevolutionSurface3D(PeriodicalSurface):
             contour3d = contour3d.simplify
         axis_point, axis = object_dict[arguments[2]]
         surface = cls(wire=contour3d, axis_point=axis_point, axis=axis, name=name)
-        return surface
+        return surface.simplify()
 
     def arc3d_to_2d(self, arc3d):
         """
