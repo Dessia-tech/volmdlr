@@ -202,13 +202,12 @@ class TestContour2D(unittest.TestCase):
     def test_contours_from_edges(self):
         source_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                      'test_contour2d_contours_from_edges_json_files')
-        expected_contour_areas = [[0.06136684795257308, 0.0055788043592579495],
-                                  [0.032085522557644186, 0.0855613934860544]]
-        expected_contour_lengths = [[1.05404105005, 0.315748639158], [0.8277671086559999, 1.642237241348]]
+        expected_contour_areas = [[0.032085522557644186, 0.0855613934860544],
+                                  [0.06136684795257308, 0.0055788043592579495]]
+        expected_contour_lengths = [[0.8277671086559999, 1.642237241348], [1.05404105005, 0.315748639158]]
         contour_areas = []
         contour_lengths = []
         for filename in os.listdir(source_folder):
-            print(filename)
             if '.json' not in filename:
                 continue
             file_path = os.path.join(source_folder, filename)
@@ -229,6 +228,19 @@ class TestContour2D(unittest.TestCase):
         for solution, expected_solution in zip(contour_lengths, expected_contour_lengths):
             for contour_length, expected_contour_length in zip(solution, expected_solution):
                 self.assertAlmostEqual(contour_length, expected_contour_length)
+
+    def test_divide(self):
+        vol = DessiaObject.load_from_file('wires/test_contour2d_divide_1.json')
+        contour, cutting_contours = vol.primitives[0], vol.primitives[1:]
+        divided_contours = contour.divide(cutting_contours)
+        divided_contours = sorted(divided_contours, key=lambda cntr: cntr.area())
+        expected_contour_areas = [0.0006684483866419249, 0.002005345159820638, 0.002005345159845676,
+                                  0.0033422419331328506]
+        expected_contour_lengths = [0.10347088858400005, 0.21026602115199994, 0.210266021154, 0.3137369097360001]
+        self.assertEqual(len(divided_contours), 4)
+        for i, contour_ in enumerate(divided_contours):
+            self.assertAlmostEqual(contour_.area(), expected_contour_areas[i])
+            self.assertAlmostEqual(contour_.length(), expected_contour_lengths[i])
 
 
 if __name__ == '__main__':
