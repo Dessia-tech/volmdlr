@@ -987,7 +987,6 @@ class Step(dc.DessiaObject):
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
         except (ValueError, NotImplementedError) as error:
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
-        # print(step_id)
         return volmdlr_object
 
     def create_node_list(self, stack):
@@ -1195,8 +1194,9 @@ class Step(dc.DessiaObject):
             self.connections[id_product_definition].append(node)
             self.functions[id_product_definition].arg.append(f'#{node}')
             if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION" and \
-                    len(self.functions[id_shape_representation].arg) == 4:
-                id_shape = int(self.functions[id_shape_representation].arg[3][1:])
+                    len(self.functions[id_shape_representation].arg) >= 4:
+                # todo: take all the arg starting from index 3 to end ??? needs investigation
+                id_shape = int(self.functions[id_shape_representation].arg[-1][1:])
                 self.connections[id_product_definition].append(id_shape)
                 self.functions[id_product_definition].arg.append(f'#{id_shape}')
             elif self.functions[id_shape_representation].name in STEP_REPRESENTATION_ENTITIES:
@@ -1239,7 +1239,11 @@ class Step(dc.DessiaObject):
                 # Sometimes the bfs search don't instanciate the nodes of a
                 # depth in the right order, leading to error
                 print(key.args[0])
-                instanciate_ids.append(key.args[0])
+                if key.args[0] in assembly_data:
+                    instanciate_ids.append(key.args[0])
+                    instanciate_ids.extend(assembly_data[key.args[0]])
+                else:
+                    instanciate_ids.append(key.args[0])
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
@@ -1411,7 +1415,7 @@ STEP_TO_VOLMDLR = {
     'CONICAL_SURFACE': surfaces.ConicalSurface3D,
     'SPHERICAL_SURFACE': surfaces.SphericalSurface3D,
     'TOROIDAL_SURFACE': surfaces.ToroidalSurface3D,
-    'DEGENERATE_TOROIDAL_SURFACE': None,
+    'DEGENERATE_TOROIDAL_SURFACE': surfaces.ToroidalSurface3D,
     'B_SPLINE_SURFACE_WITH_KNOTS': surfaces.BSplineSurface3D,
     'B_SPLINE_SURFACE': surfaces.BSplineSurface3D,
     'BEZIER_SURFACE': surfaces.BSplineSurface3D,

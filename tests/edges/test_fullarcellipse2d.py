@@ -45,6 +45,10 @@ class TestFullArcEllipse2D(unittest.TestCase):
         self.assertAlmostEqual(self.ellipse.abscissa(point1), 0.75*self.ellipse.length())
         self.assertAlmostEqual(self.ellipse.abscissa(point2), self.ellipse.length())
 
+        ellipse = vme.FullArcEllipse2D.load_from_file("edges/fullarcellipse_objects/ellipse2d_point_belongs.json")
+        point = volmdlr.Point2D(-0.00019157369860950402, 0.00046201712544124973)
+        self.assertAlmostEqual(ellipse.abscissa(point), 0.00098248885770749, 4)
+
     def test_translation(self):
         translated_ellipse = self.ellipse.translation(volmdlr.X2D)
         self.assertEqual(translated_ellipse.center, volmdlr.Point2D(1, 0))

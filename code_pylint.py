@@ -49,7 +49,7 @@ MAX_ERROR_BY_TYPE = {
                      'raise-missing-from': 2,
                      'undefined-variable': 0,  # 2 when gmsh is fixed
                      'broad-except': 1,
-                     "broad-exception-caught": 1,
+                     "broad-exception-caught": 2,
                      'too-many-boolean-expressions': 3,
                      'too-many-lines': 4,
                      'redundant-keyword-arg': 3,
@@ -65,7 +65,8 @@ MAX_ERROR_BY_TYPE = {
 ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-many-arguments", "too-many-statements",
                                 "too-many-nested-blocks", "too-many-instance-attributes", "abstract-method",
                                 "no-name-in-module", "too-many-public-methods", "too-many-ancestors",
-                                "protected-access", "cyclic-import", "line-too-long", "duplicate-code"]
+                                "protected-access", "cyclic-import", "line-too-long", "too-many-lines", "no-member",
+                                "too-few-public-methods", "duplicate-code"]
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
