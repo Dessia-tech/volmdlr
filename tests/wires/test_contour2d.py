@@ -1,4 +1,5 @@
 import math
+import os
 import unittest
 
 from dessia_common.core import DessiaObject
@@ -197,6 +198,36 @@ class TestContour2D(unittest.TestCase):
         self.assertTrue(len(intersection_contours1), 2)
         self.assertAlmostEqual(intersection_contours2[0].length(), 6.915893328290323, 6)
         self.assertAlmostEqual(intersection_contours2[1].length(), 2.4397442643543243, 6)
+
+    def test_contours_from_edges(self):
+        source_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                     'test_contour2d_contours_from_edges_json_files')
+        expected_contour_areas = [[0.06136684795257308, 0.0055788043592579495],
+         [0.032085522557644186, 0.0855613934860544]]
+        expected_contour_lengths = [[1.05404105005, 0.315748639158], [0.8277671086559999, 1.642237241348]]
+        contour_areas = []
+        contour_lengths = []
+        for filename in os.listdir(source_folder):
+            if '.json' not in filename:
+                continue
+            file_path = os.path.join(source_folder, filename)
+            obj = DessiaObject.load_from_file(file_path)
+            primitives = obj.primitives
+            contours = wires.Contour2D.contours_from_edges(primitives)
+            areas = []
+            lengths = []
+            for contour in contours:
+                areas.append(contour.area())
+                lengths.append(contour.length())
+            contour_lengths.append(lengths)
+            contour_areas.append(areas)
+        for solution, expected_solution in zip(contour_areas, expected_contour_areas):
+            self.assertEqual(len(solution), len(expected_solution))
+            for contour_area, expected_contour_area in zip(solution, expected_solution):
+                self.assertAlmostEqual(contour_area, expected_contour_area)
+        for solution, expected_solution in zip(contour_lengths, expected_contour_lengths):
+            for contour_length, expected_contour_length in zip(solution, expected_solution):
+                self.assertAlmostEqual(contour_length, expected_contour_length)
 
 
 if __name__ == '__main__':
