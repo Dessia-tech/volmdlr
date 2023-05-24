@@ -33,7 +33,6 @@ import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core_compiled import polygon_point_belongs
 from volmdlr.core import EdgeStyle
 
-
 def argmax(list_of_numbers):
     """
     Returns the max value and the argmax.
@@ -1236,7 +1235,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         primitives2d = []
         for primitive in self.primitives:
             primitive2d = plane3d.point3d_to_2d(primitive)
-            if primitive2d is not None:
+            if primitive2d:
                 primitives2d.append(primitive2d)
         return primitives2d
 
@@ -4402,7 +4401,7 @@ class Ellipse2D(Contour2D):
         :param point: point to calculate the abscissa.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
-        if self.point_over_ellipse(point):
+        if self.point_over_ellipse(point, 1e-3):
             angle_abscissa = self.point_angle_with_major_dir(point)
 
             def arc_length(theta):
@@ -5166,7 +5165,7 @@ class Circle3D(Contour3D):
 
         interior = volmdlr.geometry.clockwise_interior_from_circle3d(
             point1, point2, self)
-        return volmdlr.edges.Arc3D(point1, interior, point2)
+        return volmdlr.edges.Arc3D(point1, interior, point2, self.center)
 
 
 class Ellipse3D(Contour3D):

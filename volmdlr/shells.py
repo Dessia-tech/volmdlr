@@ -1,4 +1,5 @@
 """volmdlr shells module."""
+import traceback
 import warnings
 from itertools import chain
 from typing import List, Tuple
@@ -157,7 +158,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             product = object_dict[arguments[-1]]
             name = product[1:-1]
         # ----------------------------------
-        faces = [object_dict[int(face[1:])] for face in arguments[1] if object_dict[int(face[1:])] is not None]
+        faces = [object_dict[int(face[1:])] for face in arguments[1] if object_dict[int(face[1:])]]
         return cls(faces, name=name)
 
     def to_step(self, current_id):
@@ -585,10 +586,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
+
             except Exception:
-                warnings.warn("Could not triangulate face. Probabaly because topology error in contour2d.")
+                warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
+                              f"{self.name} faces. Probabaly because topology error in contour2d.")
+                print(traceback.format_exc())
                 continue
-            meshes.append(face_mesh)
+            if face_mesh:
+                meshes.append(face_mesh)
+            else:
+                warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
+                              f"{self.name} faces. Probabaly because topology error in contour2d.")
         return display.DisplayMesh3D.merge_meshes(meshes)
 
     def babylon_meshes(self, merge_meshes=True):
