@@ -113,6 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc: point_distance
 - BSplineCurve: is_close
 - CompositePrimitive3D: babylon_points
+- WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
 - ContourMixin: contours_from_edges
 
 ### Changed

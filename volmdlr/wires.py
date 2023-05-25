@@ -468,15 +468,22 @@ class WireMixin:
                 sorted_points = [self.primitives[0].start] + sorted_points
             if not volmdlr.core.point_in_list(self.primitives[-1].end, sorted_points):
                 sorted_points.append(self.primitives[-1].end)
+        if not self_start_equal_to_end:
+            if len(sorted_points) == 2 and sorted_points[0].is_close(self.primitives[0].start) and \
+                    sorted_points[1].is_close(self.primitives[-1].end):
+                return [self]
         split_wires = []
         len_sorted_points = len(sorted_points)
         for i, (point1, point2) in enumerate(
                 zip(sorted_points, sorted_points[1:] + [sorted_points[0]])):
             if i == len_sorted_points - 1:
                 if self_start_equal_to_end:
-                    split_wires.extend(self.__class__.extract(self, point1, point2, False))
+                    split_wires.extend([wire.order_wire() for wire in
+                                        self.__class__.extract(self, point1, point2, False)])
+
             else:
-                split_wires.extend(self.__class__.extract(self, point1, point2, True))
+                split_wires.extend([wire.order_wire() for wire in
+                                    self.__class__.extract(self, point1, point2, True)])
         return split_wires
 
     @classmethod
