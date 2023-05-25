@@ -98,7 +98,6 @@ class TrippleExtrusionSimplify(DessiaObject):
         lx = bbox.xmax - bbox.xmin
         ly = bbox.ymax - bbox.ymin
         lz = bbox.zmax - bbox.zmin
-        shells_ = []
         for w_vector, length, center in zip([volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D], [lx, ly, lz], bbox.center):
             u_vector = w_vector.random_unit_normal_vector()
             v_vector = w_vector.cross(u_vector)
@@ -110,7 +109,6 @@ class TrippleExtrusionSimplify(DessiaObject):
             dir_shell.merge_faces()
 
             list_shells.append(dir_shell)
-            shells_.append(dir_shell)
             if simplified_shell is None:
                 simplified_shell = dir_shell
             else:
