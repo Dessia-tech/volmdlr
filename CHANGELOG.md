@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WireMixin: wires_from_edges
 - DisplayMesh3D: triangulation_faces
 - Woodpecker CI setup
-
+- ContourMixin: primitive_section_over_contour.
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -87,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WireMixin: to_wire_with_linesegments (use new methods, for 2D and 3D)
 - ArcEllipse2d: point_belongs, abscissa, init.
 - BoundingBox: point_belongs now considers bounds.
+- ContourMixin: delete_shared_contour_section
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -110,6 +111,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: is_close
 - CompositePrimitive3D: babylon_points
 - WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
+- ContourMixin: contours_from_edges
+
 ### Changed
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
@@ -131,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New unittests for plane3d
 - ClosedShel3D: intersection
 - Arcellipse2D: complementary
+- Contour2D: contours_from_edges.
 
 v0.10.0 [Released 20/04/2023]
 
