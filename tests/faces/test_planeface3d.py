@@ -25,6 +25,11 @@ class TestPlaneFace3D(unittest.TestCase):
                                         volmdlr.Vector3D(0, 0.5, 0), volmdlr.Vector3D(0, 0, 0.5)), 'old')
         self.assertEqual(self.face.face_inside(face2), True)
         self.assertEqual(face2.face_inside(self.face), False)
+        face1, face2 = dc.DessiaObject.load_from_file('faces/objects_planeface_tests/test_face_inside.json').primitives
+        self.assertTrue(face1.face_inside(face2))
+        face1, face2 = dc.DessiaObject.load_from_file(
+            'faces/objects_planeface_tests/test_face3_face_inside.json').primitives
+        self.assertFalse(face1.face_inside(face2))
 
     def test_face_intersections_with_holes(self):
         face_intersections = self.face.face_intersections(self.face_with_3holes)
