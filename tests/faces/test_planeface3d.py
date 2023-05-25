@@ -58,6 +58,29 @@ class TestPlaneFace3D(unittest.TestCase):
         expected_areas = [0.125, 1.4320458460875176, 0.05704584608751772, 0.125]
         for i, face in enumerate(divided_faces):
             self.assertAlmostEqual(expected_areas[i], face.area())
+        source_folder = 'faces/objects_planeface_tests/test_planeface_divide_face_json_files'
+        expected_faces_areas = [[0.0055788043593624215, 0.23430978309161565, 0.005578804359415823, 0.0948396741089057],
+                                [0.0855613934860544, 0.032085522557644186, 0.01069517418574345],
+                                [0.002005345159845676, 0.002005345159820638, 0.0033422419331328506,
+                                 0.0006684483866419249], [0.3403070659192998, 0.005578804359415823],
+                                [0.0427806967433878, 0.010695174185850198, 0.08556139348605463],
+                                [0.07754001284661505, 0.002673793546460905]]
+        file_names = ['test_face_divide_face5.json', 'test_face_divide_face2.json',
+                      'test_planeface3d_divide_face.json', 'test_face_divide_face3.json', 'test_face_divide_face.json',
+                      'test_face_divide_face6.json']
+        faces_areas = []
+        for filename in file_names:
+            file_path = os.path.join(source_folder, filename)
+            obj = dc.DessiaObject.load_from_file(file_path)
+            face = obj.primitives[0]
+            list_cutting_contours = obj.primitives[1:]
+            divide_faces = face.divide_face(list_cutting_contours)
+            areas = [face.area() for face in divide_faces]
+            faces_areas.append(areas)
+        for solution, expected_solution in zip(faces_areas, expected_faces_areas):
+            self.assertEqual(len(solution), len(expected_solution))
+            for solution_area, expected_solution_area in zip(solution, expected_solution):
+                self.assertAlmostEqual(solution_area, expected_solution_area)
 
     def test_cylindricalface_intersections(self):
         R = 0.15
