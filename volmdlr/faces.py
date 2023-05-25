@@ -396,7 +396,14 @@ class Face3D(volmdlr.core.Primitive3D):
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
             face2_contour2d = face2.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
-            if self_contour2d.is_inside(face2_contour2d, ):
+            if self_contour2d.is_inside(face2_contour2d):
+                if self_contour2d.is_inside(face2_contour2d):
+                    for inner_contour in self.inner_contours3d:
+                        inner_contour2d = inner_contour.to_2d(
+                            self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
+                        if inner_contour2d.is_inside(face2_contour2d) or inner_contour2d.is_superposing(
+                                face2_contour2d):
+                            return False
                 return True
             if self_contour2d.is_superposing(face2_contour2d):
                 return True
