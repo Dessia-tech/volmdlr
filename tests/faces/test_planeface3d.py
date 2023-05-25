@@ -2,6 +2,7 @@
 Tests for places faces
 """
 import math
+import os
 import unittest
 
 import dessia_common.core as dc
@@ -126,6 +127,30 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertTrue(self.plane_face_cylindricalface_intersec.circle_inside(circle))
         circle2 = volmdlr.wires.Circle3D(volmdlr.OYZX, 0.1)
         self.assertFalse(self.plane_face_cylindricalface_intersec.circle_inside(circle2))
+
+    def test_merges_faces(self):
+        source_folder = 'faces/objects_planeface_tests/test_planeface3d_merge_faces_json_files'
+        faces_areas = []
+        file_names = ['test_merge_faces4.json', 'test_merge_faces5.json', 'faces_merge_faces2.json',
+                      'faces_merge_faces3.json', 'faces_merge_faces4.json']
+        for filename in file_names:
+            file_path = os.path.join(source_folder, filename)
+            obj = dc.DessiaObject.load_from_file(file_path)
+            faces_ = obj.primitives
+            merged_faces = faces.PlaneFace3D.merge_faces(faces_)
+            areas = []
+            for face in merged_faces:
+                areas.append(face.area())
+            faces_areas.append(areas)
+        expected_faces_areas = [[0.1621764423452034], [0.15508002569387766],
+                                [0.005347587092921799, 0.032085522557310564, 0.18181796115851334],
+                                [0.08021380639307588],
+                                [0.05578804359331602, 0.005578804359362449, 0.011157608718620371,
+                                 0.022315217437398727, 0.05020923923410867]]
+        for solution, expected_solution in zip(faces_areas, expected_faces_areas):
+            self.assertEqual(len(solution), len(expected_solution))
+            for solution_area, expected_solution_area in zip(solution, expected_solution):
+                self.assertAlmostEqual(solution_area, expected_solution_area)
 
 
 if __name__ == '__main__':
