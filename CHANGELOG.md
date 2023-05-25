@@ -87,8 +87,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: simplify
 - WireMixin: to_wire_with_linesegments (use new methods, for 2D and 3D)
 - ArcEllipse2d: point_belongs, abscissa, init.
+- Face3D: face_inside - now considers inners_contours
 - BoundingBox: point_belongs now considers bounds.
 - ContourMixin: delete_shared_contour_section
+- PlaneFace3D: merge_faces
+- Contour2D: divide
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -111,6 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc: point_distance
 - BSplineCurve: is_close
 - CompositePrimitive3D: babylon_points
+- WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
 - ContourMixin: contours_from_edges
 
 ### Changed
@@ -135,7 +139,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShel3D: intersection
 - Arcellipse2D: complementary
 - Contour2D: contours_from_edges.
-
+- PlaneFace3D: merge_faces
+- Contour2D: divide.
 v0.10.0 [Released 20/04/2023]
 
 ### New Features

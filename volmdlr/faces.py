@@ -396,7 +396,14 @@ class Face3D(volmdlr.core.Primitive3D):
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
             face2_contour2d = face2.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
-            if self_contour2d.is_inside(face2_contour2d, ):
+            if self_contour2d.is_inside(face2_contour2d):
+                if self_contour2d.is_inside(face2_contour2d):
+                    for inner_contour in self.inner_contours3d:
+                        inner_contour2d = inner_contour.to_2d(
+                            self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
+                        if inner_contour2d.is_inside(face2_contour2d) or inner_contour2d.is_superposing(
+                                face2_contour2d):
+                            return False
                 return True
             if self_contour2d.is_superposing(face2_contour2d):
                 return True
@@ -1323,6 +1330,14 @@ class PlaneFace3D(Face3D):
             linesegment3d = vme.LineSegment3D(point1, point2)
             over_self_outer_contour = self.outer_contour3d.primitive_over_contour(linesegment3d)
             over_planeface_outer_contour = planeface.outer_contour3d.primitive_over_contour(linesegment3d)
+            over_self_inner_contour = any(inner_contour.primitive_over_contour(linesegment3d)
+                                          for inner_contour in self.inner_contours3d)
+            over_planeface_inner_contour = any(inner_contour.primitive_over_contour(linesegment3d)
+                                               for inner_contour in planeface.inner_contours3d)
+            if over_self_inner_contour and over_planeface_outer_contour:
+                continue
+            if over_planeface_inner_contour and over_self_outer_contour:
+                continue
             if over_self_outer_contour and over_planeface_outer_contour:
                 continue
             if self.edge3d_inside(linesegment3d) or over_self_outer_contour:
@@ -1418,58 +1433,56 @@ class PlaneFace3D(Face3D):
 
     @staticmethod
     def merge_faces(list_coincident_faces: List[Face3D]):
-        valid_coicident_faces = list_coincident_faces[:]
-        list_new_faces = []
-        list_inner_contours = []
-        merge_finished = False
-        face0 = valid_coicident_faces[0]
-        merged_contour = face0.outer_contour3d.to_2d(face0.surface3d.frame.origin,
-                                                     face0.surface3d.frame.u,
-                                                     face0.surface3d.frame.v)
-        valid_coicident_faces.remove(face0)
-        while not merge_finished:
-            adjacent_faces = False
-            list_inner_contours = []
-            for face in valid_coicident_faces:
-                adjacent_faces = False
-                face_inside = False
-                contour = face.outer_contour3d.to_2d(face0.surface3d.frame.origin,
-                                                     face0.surface3d.frame.u,
-                                                     face0.surface3d.frame.v)
-                if contour.is_sharing_primitives_with(merged_contour):
-                    merged_contour_results = merged_contour.union(contour)
-                    merged_contour = merged_contour_results[0]
-                    merged_inner_contours = merged_contour_results[1:]
-                    list_inner_contours.extend(merged_inner_contours)
-                    list_inner_contours.extend(face.surface2d.inner_contours)
-                    valid_coicident_faces.remove(face)
-                    adjacent_faces = True
+        """Merges faces from a list of faces in the same plane, if any are adjacent to one another."""
+        list_coincident_faces = sorted(list_coincident_faces, key=lambda face_: face_.area())
+        current_face = list_coincident_faces[0]
+        list_coincident_faces.remove(current_face)
+        list_merged_faces = []
+        while True:
+            for face in list_coincident_faces:
+                if current_face.outer_contour3d.is_sharing_primitives_with(face.outer_contour3d):
+                    merged_contours = current_face.outer_contour3d.merge_with(face.outer_contour3d)
+                    merged_contours2d = [contour.to_2d(face.surface3d.frame.origin, face.surface3d.frame.u,
+                                                       face.surface3d.frame.v) for contour in merged_contours]
+                    merged_contours2d = sorted(merged_contours2d, key=lambda contour: contour.area(), reverse=True)
+                    new_outer_contour = merged_contours2d[0]
+                    inner_contours = [contour.to_2d(face.surface3d.frame.origin, face.surface3d.frame.u,
+                                                    face.surface3d.frame.v)
+                                      for contour in current_face.inner_contours3d]
+                    inner_contours += merged_contours2d[1:] + face.surface2d.inner_contours
+                    new_face = PlaneFace3D(face.surface3d, surfaces.Surface2D(
+                        new_outer_contour, inner_contours))
+                    current_face = new_face
+                    list_coincident_faces.remove(face)
                     break
-                if merged_contour.is_inside(contour):
-                    valid_coicident_faces.remove(face)
-                    face_inside = True
+                if current_face.face_inside(face):
+                    list_coincident_faces.remove(face)
                     break
-            if not adjacent_faces and not face_inside and valid_coicident_faces:
-                list_new_faces.append(
-                    PlaneFace3D(face0.surface3d,
-                                surfaces.Surface2D(merged_contour.copy(),
-                                                   face0.surface2d.inner_contours +
-                                                   list_inner_contours)))
-                merged_contour = \
-                    valid_coicident_faces[0].outer_contour3d.to_2d(
-                        face0.surface3d.frame.origin,
-                        face0.surface3d.frame.u,
-                        face0.surface3d.frame.v)
-                valid_coicident_faces.remove(valid_coicident_faces[0])
-
-            if not valid_coicident_faces:
-                merge_finished = True
-        list_new_faces.append(
-            PlaneFace3D(face0.surface3d,
-                        surfaces.Surface2D(merged_contour,
-                                           face0.surface2d.inner_contours +
-                                           list_inner_contours)))
-        return list_new_faces
+                new_inner_contours = []
+                inner_contour_merged = False
+                for inner_contour3d in face.inner_contours3d:
+                    if current_face.outer_contour3d.is_sharing_primitives_with(inner_contour3d):
+                        merged_inner_contours = current_face.outer_contour3d.merge_with(inner_contour3d)
+                        if len(merged_inner_contours) >= 2:
+                            raise NotImplementedError
+                        new_inner_contours.extend(merged_inner_contours)
+                        inner_contour_merged = True
+                if inner_contour_merged:
+                    list_coincident_faces.remove(face)
+                    inner_contours2d = [inner_contour.to_2d(face.surface3d.frame.origin,
+                                                            face.surface3d.frame.u,
+                                                            face.surface3d.frame.v) for inner_contour in
+                                        new_inner_contours]
+                    current_face = PlaneFace3D(face.surface3d, surfaces.Surface2D(
+                        face.surface2d.outer_contour, inner_contours2d))
+                    break
+            else:
+                list_merged_faces.append(current_face)
+                if not list_coincident_faces:
+                    break
+                current_face = list_coincident_faces[0]
+                list_coincident_faces.remove(current_face)
+        return list_merged_faces
 
     def cut_by_coincident_face(self, face):
         """
@@ -1623,7 +1636,7 @@ class PlaneFace3D(Face3D):
         point2 = volmdlr.Point2D(x2, y1)
         point3 = volmdlr.Point2D(x2, y2)
         point4 = volmdlr.Point2D(x1, y2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        outer_contour = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         surface = surfaces.Surface2D(outer_contour, [])
         return cls(plane3d, surface, name)
 
