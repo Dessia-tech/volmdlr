@@ -88,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse2d: point_belongs, abscissa, init.
 - BoundingBox: point_belongs now considers bounds.
 - ContourMixin: delete_shared_contour_section
+- PlaneFace3D: merge_faces
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -134,6 +135,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShel3D: intersection
 - Arcellipse2D: complementary
 - Contour2D: contours_from_edges.
+- PlaneFace3D: merge_faces
 
 v0.10.0 [Released 20/04/2023]
 
