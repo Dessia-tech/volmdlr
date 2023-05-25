@@ -1055,11 +1055,11 @@ class Cylinder(shells.ClosedShell3D):
         self.position.frame_mapping_inplace(frame, side)
         self.axis = axis
 
-    def to_dict(self, use_pointers: bool = False, memo: bool = None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         """
         Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class Revolved Profile.
         """
-        return dc.DessiaObject.to_dict(self, use_pointers, memo, path)
+        return dc.DessiaObject.to_dict(self, use_pointers=False)
 
     def copy(self, deep=True, memo=None):
         """

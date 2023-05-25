@@ -961,19 +961,20 @@ class BoundingBox(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def point_belongs(self, point: volmdlr.Point3D) -> bool:
+    def point_belongs(self, point: volmdlr.Point3D, tol = 1e-6) -> bool:
         """
         Determines if a point belongs to the bounding box.
 
         :param point: The point to check for inclusion.
         :type point: volmdlr.Point3D
+        :param tol: tolerance.
         :return: True if the point belongs to the bounding box, False otherwise.
         :rtype: bool
         """
         return (
-                self.xmin < point[0] < self.xmax
-                and self.ymin < point[1] < self.ymax
-                and self.zmin < point[2] < self.zmax
+                self.xmin - tol <= point[0] <= self.xmax + tol
+                and self.ymin - tol <= point[1] <= self.ymax + tol
+                and self.zmin - tol <= point[2] <= self.zmax + tol
         )
 
     def distance_to_point(self, point: volmdlr.Point3D) -> float:

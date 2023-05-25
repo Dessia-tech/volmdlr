@@ -22,6 +22,7 @@ import volmdlr.stl as vmstl
 # import volmdlr.core
 import volmdlr.wires as vmw
 
+
 class PointCloud3D(dc.DessiaObject):
     """
     Point Cloud3D, a list of points.
