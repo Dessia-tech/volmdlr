@@ -1744,22 +1744,14 @@ class ContourMixin(WireMixin):
 
     def primitive_over_contour(self, primitive, tol: float = 1e-6):
         """
-<<<<<<< HEAD
-        Verifies if the entire primitive is over an contour.
-
-=======
         Verifies if the entire primitive is over a contour.
->>>>>>> origin/dev
         """
         return self.primitive_over_wire(primitive, tol)
 
     def primitive_section_over_contour(self, primitive, abs_tol: float=1e-6):
         """
         Verifies if at least a small section of a primitive is over a contour, not necessarilly the entire primitive.
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/dev
         """
         for prim in self.primitives:
             shared_section = prim.get_shared_section(primitive, abs_tol)
@@ -1945,13 +1937,6 @@ class Contour2D(ContourMixin, Wire2D):
         tol = 1e-6
         if point.x < x_min - tol or point.x > x_max + tol or point.y < y_min - tol or point.y > y_max + tol:
             return False
-        # if self.edge_polygon.point_belongs(point):
-        #     return True
-        # for edge in self.primitives:
-        #     if hasattr(edge, 'straight_line_point_belongs'):
-        #         if edge.straight_line_point_belongs(point):
-        #             return True
-        #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
         if include_edge_points:
             for primitive in self.primitives:
                 if primitive.point_belongs(point, 1e-6):
@@ -2046,14 +2031,9 @@ class Contour2D(ContourMixin, Wire2D):
         if contour2.area() > self.area() + 1e-6:
             return False
         points_contour2 = []
-        for i, prim in enumerate(contour2.primitives):
+        for prim in contour2.primitives:
             points = prim.discretization_points(number_points=5)
-            # if i == 0:
-            #     points_contour2.extend(points[1:])
-            # elif i == len(contour2.primitives) - 1:
             points_contour2.extend(points[:-1])
-            # else:
-            #     points_contour2.extend(points)
         for point in points_contour2:
             if not self.point_belongs(point, include_edge_points=True):
                 return False
