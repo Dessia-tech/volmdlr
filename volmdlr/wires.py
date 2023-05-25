@@ -1924,18 +1924,19 @@ class Contour2D(ContourMixin, Wire2D):
 
         return Contour3D(p3d)
 
-    def point_belongs(self, point, include_edge_points: bool = False):
+    def point_belongs(self, point, include_edge_points: bool = False, tol: float = 1e-6):
+        """
+        Verifies if point belongs is within the contour.
+
+        :param point: point to be verified.
+        :param include_edge_points: consider bounds of contour or not.
+        :param tol: tolerance to be considered.
+        :return: True if point belongs, false otherwise.
+        """
         # TODO: This is incomplete!!!
         x_min, x_max, y_min, y_max = self.bounding_rectangle
-        if point.x < x_min or point.x > x_max or point.y < y_min or point.y > y_max:
+        if point.x < x_min - tol or point.x > x_max + tol or point.y < y_min - tol or point.y > y_max + tol:
             return False
-        # if self.edge_polygon.point_belongs(point):
-        #     return True
-        # for edge in self.primitives:
-        #     if hasattr(edge, 'straight_line_point_belongs'):
-        #         if edge.straight_line_point_belongs(point):
-        #             return True
-        #     warnings.warn(f'{edge.__class__.__name__} does not implement straight_line_point_belongs yet')
         if include_edge_points:
             for primitive in self.primitives:
                 if primitive.point_belongs(point, 1e-6):
@@ -2027,17 +2028,12 @@ class Contour2D(ContourMixin, Wire2D):
 
         :returns: True or False
         """
-        if contour2.area() > self.area():
+        if contour2.area() > self.area() and not math.isclose(contour2.area(), self.area(), rel_tol=0.01):
             return False
         points_contour2 = []
         for i, prim in enumerate(contour2.primitives):
             points = prim.discretization_points(number_points=5)
-            if i == 0:
-                points_contour2.extend(points[1:])
-            elif i == len(contour2.primitives) - 1:
-                points_contour2.extend(points[:-1])
-            else:
-                points_contour2.extend(points)
+            points_contour2.extend(points[:-1])
         for point in points_contour2:
             if not self.point_belongs(point, include_edge_points=True):
                 return False
@@ -4016,7 +4012,7 @@ class Circle2D(Contour2D):
     def from_arc(cls, arc: volmdlr.edges.Arc2D):
         return cls(arc.center, arc.radius, arc.name + ' to circle')
 
-    def point_belongs(self, point, include_edge_points: bool = False):
+    def point_belongs(self, point, include_edge_points: bool = False, tol: float = 1e-6):
         """
         Verifies if a point is inside the Circle 2D.
 
@@ -4025,12 +4021,13 @@ class Circle2D(Contour2D):
         :param include_edge_points: A Boolean indicating whether points on the edge of the Circle 2D
             should be considered inside the circle.
         :type include_edge_points: bool
+        :param tol: tolerance.
         :return: True if point inside the circle or false otherwise.
         :rtype: bool
         """
 
         if include_edge_points:
-            return point.point_distance(self.center) <= self.radius
+            return point.point_distance(self.center) <= self.radius + tol
         return point.point_distance(self.center) < self.radius
 
     def point_distance(self, point):
