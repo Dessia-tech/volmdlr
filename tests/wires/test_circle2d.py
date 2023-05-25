@@ -5,6 +5,7 @@ from geomdl import utilities
 import volmdlr.edges
 import volmdlr.wires as vmw
 
+
 circle = vmw.Circle2D(volmdlr.O2D, 0.50)
 line = volmdlr.edges.Line2D(volmdlr.O2D, volmdlr.Point2D(0, 1))
 
@@ -42,6 +43,19 @@ class TestCircle2D(unittest.TestCase):
                                   volmdlr.Point2D(2.4589695213572873, -0.2835091834628551)]
         for intersection, expected_intersection in zip(circle_intersections, expected_intersections):
             self.assertTrue(intersection.is_close(expected_intersection))
+        circle_2 = vmw.Circle2D(volmdlr.Point2D(4.257776625181402, -2.6149184392658222), 1.1791034225674362)
+        bspline = volmdlr.edges.BSplineCurve2D.load_from_file('wires/bspline.json')
+        intersections = circle_2.bsplinecurve_intersections(bspline, 1e-6)
+        self.assertEqual(len(intersections), 1)
+        self.assertTrue(intersections[0], volmdlr.Point2D(3.218528920632699, -3.1719185197869))
+
+    def test_circle_intersections(self):
+        circle1 = vmw.Circle2D(volmdlr.Point2D(0, 0), 1)
+        circle2 = vmw.Circle2D(volmdlr.Point2D(1, 1), 1)
+        circle_intersections = circle1.circle_intersections(circle2)
+        self.assertEqual(len(circle_intersections), 2)
+        self.assertTrue(circle_intersections[0].is_close(volmdlr.Point2D(1.0, 0.0)))
+        self.assertTrue(circle_intersections[1].is_close(volmdlr.Point2D(0.0, 1.0)))
 
 
 if __name__ == '__main__':

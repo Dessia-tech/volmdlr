@@ -1,3 +1,4 @@
+import math
 import unittest
 
 import volmdlr
@@ -42,6 +43,13 @@ class TestArc2D(unittest.TestCase):
         self.assertTrue(arc_split3[0].end.is_close(self.arc2d.interior))
         self.assertTrue(arc_split3[1].start.is_close(self.arc2d.interior))
         self.assertTrue(arc_split3[1].end.is_close(self.arc2d.end))
+
+    def test_arc_intersections(self):
+        arc2 = Arc2D(volmdlr.Point2D(-1, 1.5), volmdlr.Point2D(0, 0.5), volmdlr.Point2D(1, 1.5))
+        arc_intersections = self.arc1.arc_intersections(arc2)
+        self.assertEqual(len(arc_intersections), 1)
+        self.assertTrue(arc_intersections[0].is_close(volmdlr.Point2D(0.6614378277661477, 0.75)))
+        self.assertFalse(self.arc5.arc_intersections(arc2))
 
     def test_abscissa(self):
         expected_abscissa_results = [[1.5707963267948966, 0.7853981633974483, 0, 3.141592653589793, 2.356194490192345],
@@ -124,6 +132,21 @@ class TestArc2D(unittest.TestCase):
         self.assertTrue(remaining_arc2[1].interior.is_close(volmdlr.Point2D(0.38268343236508984, 0.9238795325112867)))
         self.assertTrue(remaining_arc2[1].end.is_close(volmdlr.Point2D(0.0, 1.0)))
         self.assertFalse(self.arc4.delete_shared_section(self.arc1))
+
+    def test_point_distance(self):
+        arc = self.arc2
+
+        point1 = volmdlr.Point2D(1, 1)
+        self.assertEqual(arc.point_distance(point1), math.sqrt(2) - 1)
+
+        point2 = volmdlr.Point2D(0.5/math.sqrt(2), 0.5/math.sqrt(2))
+        self.assertEqual(arc.point_distance(point2), 0.5)
+
+        point3 = volmdlr.Point2D(0, 0)
+        self.assertEqual(arc.point_distance(point3), 1)
+
+        point4 = volmdlr.Point2D(0, -1)
+        self.assertEqual(arc.point_distance(point4), math.sqrt(2))
 
 
 if __name__ == '__main__':

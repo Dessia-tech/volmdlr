@@ -1,0 +1,14 @@
+{
+  "object_class": "volmdlr.edges.LineSegment2D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point2D",
+    "x": -3.141592653589793,
+    "y": 0.003505885384025662
+  },
+  "end": {
+    "object_class": "volmdlr.Point2D",
+    "x": -3.141592653589793,
+    "y": 0.0
+  }
+}

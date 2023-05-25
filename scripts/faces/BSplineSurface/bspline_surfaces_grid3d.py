@@ -11,7 +11,7 @@ import volmdlr as vm
 import volmdlr.grid
 # import volmdlr.step as vms
 from volmdlr.models import bspline_surfaces
-
+from volmdlr import faces
 # %% Read Step file
 
 # files_path = ['bspline_surface_1.step', 'bspline_surface_2.step']
@@ -29,8 +29,8 @@ from volmdlr.models import bspline_surfaces
     
 #     bspline_faces.append(faces[0])
 
-bspline_faces = [bspline_surfaces.bspline_surface_1.rectangular_cut(0,1,0,1),
-                 bspline_surfaces.bspline_surface_2.rectangular_cut(0,1,0,1)]
+bspline_faces = [faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surfaces.bspline_surface_1, 0,1,0,1),
+                 faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surfaces.bspline_surface_2, 0,1,0,1)]
 
 
 # %% Bspline surfaces

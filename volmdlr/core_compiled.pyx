@@ -335,6 +335,20 @@ class Vector(DessiaObject):
         except ZeroDivisionError:
             return False
 
+    def is_perpendicular_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
+        """
+        Checks if two vectors are perpendicular.
+        The two vectors should be of same dimension.
+
+        :param other_vector: A vector-like object
+        :type other_vector: :class:`volmdlr.Vector`
+        :param abs_tol: Absolute tolerance to consider perpendicular
+        :type abs_tol: float
+        :return: `True` if the two vectors are perpendicular, `False` otherwise
+        :rtype: bool
+        """
+        return math.isclose(abs(self.dot(other_vector)), 0, abs_tol=abs_tol)
+
     @classmethod
     def mean_point(cls, points: List["Vector"]):
         """
@@ -448,7 +462,7 @@ class Vector2D(Vector):
     def is_close(self, other_vector: "Vector2D", tol: float = 1e-6):
         """
         Checks if two vectors are close to each other considering the
-        euclidean distance. The tolerance can be modified. The two vectors
+        Euclidean distance. The tolerance can be modified. The two vectors
         should be of same dimension.
 
         :param other_vector: A Vector2D-like object
@@ -460,7 +474,7 @@ class Vector2D(Vector):
             to each other, `False` otherwise
         :rtype: bool
         """
-        if other_vector.__class__.__name__ not in ["Vector2D", "Point2D"]:
+        if other_vector.__class__.__name__ not in ["Vector2D", "Point2D", "Node2D"]:
             return False
         return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
 
@@ -1045,7 +1059,7 @@ class Point2D(Vector2D):
         (x3, y3), (x4, y4) = line2
 
         denominateur = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-        if math.isclose(denominateur, 0, abs_tol=1e-6):
+        if math.isclose(denominateur, 0, abs_tol=1e-15):
             if not curvilinear_abscissa:
                 return None
             else:
@@ -1088,7 +1102,7 @@ class Point2D(Vector2D):
         (x3, y3), (x4, y4) = segment2
 
         denominateur = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-        if math.isclose(denominateur, 0, abs_tol=1e-6):
+        if math.isclose(denominateur, 0, abs_tol=1e-15):
             if not curvilinear_abscissa:
                 return None
             else:
@@ -1317,7 +1331,7 @@ class Vector3D(Vector):
     def is_close(self, other_vector, tol=1e-6):
         """
         Checks if two vectors are close to each other considering the
-        euclidean distance. The tolerance can be modified. The two vectors
+        Euclidean distance. The tolerance can be modified. The two vectors
         should be of same dimension.
 
         :param other_vector: A Vector3D-like object
@@ -1329,7 +1343,7 @@ class Vector3D(Vector):
             to each other, `False` otherwise
         :rtype: bool
         """
-        if other_vector.__class__.__name__ not in ["Vector3D", "Point3D"]:
+        if other_vector.__class__.__name__ not in ["Vector3D", "Point3D", "Node3D"]:
             return False
         # return math.isclose(self.x, other_vector.x, abs_tol=tol) \
         # and math.isclose(self.y, other_vector.y, abs_tol=tol) \
@@ -1676,8 +1690,7 @@ class Vector3D(Vector):
         self.y = new_vector.y
         self.z = new_vector.z
 
-    def plane_projection3d(self, plane_origin: "Vector3D", x: "Vector3D",
-                           y: "Vector3D"):
+    def plane_projection3d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
         """
         Projects a Vector3D-like object on a 3D plane.
 
@@ -1694,8 +1707,7 @@ class Vector3D(Vector):
         z.normalize()
         return self - z.dot(self - plane_origin) * z
 
-    def plane_projection2d(self, plane_origin: "Vector3D", x: "Vector3D",
-                           y: "Vector3D"):
+    def plane_projection2d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
         """
         Projects a Vector3D-like object on a 2D plane.
 
@@ -1716,8 +1728,7 @@ class Vector3D(Vector):
         u2 = p3d.dot(y)
         return Point2D(u1, u2)
 
-    def to_2d(self, plane_origin: "Vector3D", x: "Vector3D",
-              y: "Vector3D"):
+    def to_2d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
         """
         # TODO: difference with plane_projection2d needs details
         Transforms a Vector3D-like object to a Point2D.
@@ -1734,7 +1745,7 @@ class Vector3D(Vector):
         x2d = self.dot(x) - plane_origin.dot(x)
         y2d = self.dot(y) - plane_origin.dot(y)
         class_name = self.__class__.__name__[:-2] + "2D"
-        return getattr(sys.modules[__name__], class_name)(x2d, y2d)
+        return getattr(sys.modules[self.__module__], class_name)(x2d, y2d)
 
     def random_unit_normal_vector(self):
         """
@@ -1777,8 +1788,7 @@ class Vector3D(Vector):
         return self.__class__(self.x, self.y, self.z)
 
     @classmethod
-    def random(cls, xmin: float, xmax: float, ymin: float, ymax: float,
-               zmin: float, zmax: float):
+    def random(cls, xmin: float, xmax: float, ymin: float, ymax: float, zmin: float, zmax: float):
         """
         Returns a random 2 dimensional point.
 
@@ -3043,9 +3053,12 @@ class Basis3D(Basis):
         :return: None
         :rtype: None
         """
-        self.u.normalize()
-        self.v.normalize()
-        self.w.normalize()
+        if not math.isclose(self.u.norm(), 0.0, abs_tol=1e-10):
+            self.u.normalize()
+        if not math.isclose(self.v.norm(), 0.0, abs_tol=1e-10):
+            self.v.normalize()
+        if not math.isclose(self.w.norm(), 0.0, abs_tol=1e-10):
+            self.w.normalize()
 
 
 class Frame2D(Basis2D):
