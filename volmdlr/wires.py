@@ -483,7 +483,7 @@ class WireMixin:
             else:
                 split_wires.extend([wire.order_wire() for wire in
                                     self.__class__.extract(self, point1, point2, True)])
-            return split_wires
+        return split_wires
 
     @classmethod
     def wires_from_edges(cls, edges, tol=1e-6):
