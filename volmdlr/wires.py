@@ -2028,7 +2028,7 @@ class Contour2D(ContourMixin, Wire2D):
 
         :returns: True or False
         """
-        if contour2.area() > self.area() + 1e-6:
+        if contour2.area() > self.area() and not math.isclose(contour2.area(), self.area(), rel_tol=0.01):
             return False
         points_contour2 = []
         for i, prim in enumerate(contour2.primitives):
