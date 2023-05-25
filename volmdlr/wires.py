@@ -2347,7 +2347,8 @@ class Contour2D(ContourMixin, Wire2D):
                     point1, point2 = [cutting_contour.primitives[0].start,
                                       cutting_contour.primitives[-1].end]
                     cutting_points = []
-                    if base_contour.point_over_contour(point1) and base_contour.point_over_contour(point2):
+                    if  base_contour.point_belongs(cutting_contour.middle_point()) and\
+                            base_contour.point_over_contour(point1) and base_contour.point_over_contour(point2):
                         cutting_points = [point1, point2]
                     if cutting_points:
                         contour1, contour2 = base_contour.get_divided_contours(
