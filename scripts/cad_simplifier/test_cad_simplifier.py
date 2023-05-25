@@ -1,9 +1,13 @@
+import os
 import volmdlr.step as STEP
 import volmdlr.core as vmc
 from volmdlr import cad_simplification
 
-list_file = [
-    "OCIM0KTUJ9 - Ass Compartiment avant.stp",
+
+# files_source_folder = '../step'
+files_source_folder = ''
+
+file_names = [
 ]
 
 
@@ -21,8 +25,8 @@ def simpflier_form():
     return chosen_option
 
 
-for file in list_file:
-    model = STEP.Step.from_file(filepath=file)
+for filename in file_names:
+    model = STEP.Step.from_file(filepath=os.path.join(files_source_folder, filename))
     volume_model = model.to_volume_model()
     simplifier_option = simpflier_form()
     if simplifier_option == 1:
