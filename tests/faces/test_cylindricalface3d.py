@@ -106,6 +106,11 @@ class TestCylindricalFace3D(unittest.TestCase):
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
         self.assertAlmostEqual(face.surface2d.area(), 0.003143137591511259, 3)
 
+    def neutral_fiber(self):
+        face = self.cylindrical_face1
+        neutral_fiber = face.neutral_fiber()
+        self.assertEqual(neutral_fiber.length(), 0.4)
+
     def test_number_triangles(self):
         cylindrical_surface1 = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 0.32)
         cylindrical_face1 = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindrical_surface1,
