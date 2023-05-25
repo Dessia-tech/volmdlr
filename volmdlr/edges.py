@@ -2833,10 +2833,6 @@ class Arc(Edge):
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
-<<<<<<< HEAD
-        points = self.discretization_points(angle_resolution=100)
-        return point.point_distance(point.nearest_point(points))
-=======
         if self.point_belongs(point):
             return 0
         if self.center.is_close(point):
@@ -2854,7 +2850,6 @@ class Arc(Edge):
         if self.point_belongs(projected_point):
             return self.radius - linesegment.length()
         return min(self.start.point_distance(point), self.end.point_distance(point))
->>>>>>> origin/dev
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """

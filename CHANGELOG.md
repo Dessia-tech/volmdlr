@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DisplayMesh3D: triangulation_faces
 - Woodpecker CI setup
 - ContourMixin: primitive_section_over_contour.
+- OpenShell3D: faces_graph
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -118,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
 - Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
+- OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
 
 ### Unittests
 - Arc2D: test_arc_intersections
