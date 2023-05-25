@@ -480,6 +480,7 @@ class WireMixin:
                 if self_start_equal_to_end:
                     split_wires.extend([wire.order_wire() for wire in
                                         self.__class__.extract(self, point1, point2, False)])
+
             else:
                 split_wires.extend([wire.order_wire() for wire in
                                     self.__class__.extract(self, point1, point2, True)])
