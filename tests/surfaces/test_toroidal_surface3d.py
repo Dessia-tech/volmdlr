@@ -87,6 +87,15 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1.3773892114076673, 2)
 
+        surface = surfaces.ToroidalSurface3D.load_from_file(
+            "surfaces/objects_toroidal_tests/buggy_toroidalface_surface.json")
+        contour = wires.Contour3D.load_from_file(
+            "surfaces/objects_toroidal_tests/buggy_toroidalface_contour.json")
+        contour2d = surface.contour3d_to_2d(contour)
+
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 1.0990644259885822, 2)
+
 
 if __name__ == '__main__':
     unittest.main()
