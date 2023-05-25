@@ -3166,22 +3166,6 @@ class Arc2D(Arc):
 
     points = property(_get_points)
 
-    def point_distance(self, point):
-        """
-        Returns the distance between a point and the edge.
-        """
-        vector_start = self.start - self.center
-        vector_point = point - self.center
-        vector_end = self.end - self.center
-        if self.is_trigo:
-            vector_start, vector_end = vector_end, vector_start
-        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
-        point_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
-        if point_angle <= arc_angle:
-            return abs(
-                LineSegment2D(point, self.center).length() - self.radius)
-        return min(point.point_distance(self.start), point.point_distance(self.end))
-
     def point_belongs(self, point, abs_tol=1e-6):
         """
         Check if a Point2D belongs to the Arc2D.
