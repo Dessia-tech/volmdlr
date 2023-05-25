@@ -180,7 +180,6 @@ class Block(shells.ClosedShell3D):
                      self.frame.w.norm())
         self._octree = None
         self._quadtree = None
-
         faces = self.shell_faces()
         for face in faces:
             face.alpha = alpha

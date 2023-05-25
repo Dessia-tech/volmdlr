@@ -397,11 +397,13 @@ class Face3D(volmdlr.core.Primitive3D):
             face2_contour2d = face2.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
             if self_contour2d.is_inside(face2_contour2d):
-                for inner_contour in self.inner_contours3d:
-                    inner_contour2d = inner_contour.to_2d(
-                        self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
-                    if inner_contour2d.is_inside(face2_contour2d) or inner_contour2d.is_superposing(face2_contour2d):
-                        return False
+                if self_contour2d.is_inside(face2_contour2d):
+                    for inner_contour in self.inner_contours3d:
+                        inner_contour2d = inner_contour.to_2d(
+                            self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
+                        if inner_contour2d.is_inside(face2_contour2d) or inner_contour2d.is_superposing(
+                                face2_contour2d):
+                            return False
                 return True
             if self_contour2d.is_superposing(face2_contour2d):
                 return True
@@ -445,12 +447,6 @@ class Face3D(volmdlr.core.Primitive3D):
         for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 linesegment_intersections.append(intersection)
-        # if not linesegment_intersections:
-        #     for prim in self.outer_contour3d.primitives:
-        #         intersections = prim.linesegment_intersections(linesegment)
-        #         for intersection in intersections:
-        #             if intersection not in linesegment_intersections:
-        #                 linesegment_intersections.append(intersection)
         return linesegment_intersections
 
     def fullarc_intersections(self, fullarc: vme.FullArc3D) -> List[volmdlr.Point3D]:
@@ -1482,7 +1478,7 @@ class PlaneFace3D(Face3D):
                                       for contour in current_face.inner_contours3d]
                     inner_contours += merged_contours2d[1:] + face.surface2d.inner_contours
                     new_face = PlaneFace3D(face.surface3d, surfaces.Surface2D(
-                            new_outer_contour, inner_contours))
+                        new_outer_contour, inner_contours))
                     current_face = new_face
                     list_coincident_faces.remove(face)
                     break
@@ -1501,8 +1497,9 @@ class PlaneFace3D(Face3D):
                 if inner_contour_merged:
                     list_coincident_faces.remove(face)
                     inner_contours2d = [inner_contour.to_2d(face.surface3d.frame.origin,
-                                                 face.surface3d.frame.u,
-                                                 face.surface3d.frame.v) for inner_contour in new_inner_contours]
+                                                            face.surface3d.frame.u,
+                                                            face.surface3d.frame.v) for inner_contour in
+                                        new_inner_contours]
                     current_face = PlaneFace3D(face.surface3d, surfaces.Surface2D(
                         face.surface2d.outer_contour, inner_contours2d))
                     break
