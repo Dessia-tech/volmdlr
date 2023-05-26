@@ -1,4 +1,5 @@
 """volmdlr shells module."""
+import math
 import traceback
 import warnings
 from itertools import chain
@@ -917,6 +918,22 @@ class ClosedShell3D(OpenShell3D):
                 return True
         return False
 
+    def get_ray_casting_line_segment(self, point3d):
+        """Gets the best ray for performing ray casting algorithm."""
+        points = self.bounding_box.get_points_inside_bbox(2, 2, 2)
+        points.append(self.bounding_box.center)
+        points = sorted(points, key=point3d.point_distance)
+        point = points[0]
+        for point in points:
+            if point.point_distance(point3d) != 0.0:
+                break
+        ray_direction = point - point3d
+        ray_direction.normalize()
+        min_ray_length = math.sqrt(self.bounding_box.size[0] ** 2 + self.bounding_box.size[1] ** 2 +
+                                   self.bounding_box.size[2] ** 2) * 1.1
+        ray = edges.LineSegment3D(point3d, point3d + ray_direction * min_ray_length)
+        return ray
+
     def point_belongs(self, point3d: volmdlr.Point3D, **kwargs):
         """
         Ray Casting algorithm.
@@ -924,22 +941,28 @@ class ClosedShell3D(OpenShell3D):
         Returns True if the point is inside the Shell, False otherwise
         """
         bbox = self.bounding_box
+
         if not bbox.point_belongs(point3d):
             return False
-        min_ray_length = max((bbox.xmax - bbox.xmin,
-                              bbox.ymax - bbox.ymin,
-                              bbox.zmax - bbox.zmin))
-        ray = edges.LineSegment3D(point3d, point3d + volmdlr.Point3D(min_ray_length, min_ray_length, min_ray_length))
+        if any(face.point_belongs(point3d) for face in self.faces):
+            return True
+        ray = self.get_ray_casting_line_segment(point3d)
         count = 0
         intersections = []
-        is_inside = True
         for face, point_inters in self.linesegment_intersections(ray):
             if point_inters[0].is_close(point3d):
                 continue
             count += len(point_inters)
             intersections.append((face, point_inters))
+        is_inside = True
         if count % 2 == 0:
-            is_inside = False
+            unique_intersections = []
+            for _, point_inters in intersections:
+                for inter in point_inters:
+                    if not volmdlr.core.point_in_list(inter, unique_intersections):
+                        unique_intersections.append(inter)
+            if len(unique_intersections) % 2 == 0:
+                is_inside = False
         return is_inside
 
     def point_in_shell_face(self, point: volmdlr.Point3D):

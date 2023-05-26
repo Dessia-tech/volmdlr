@@ -866,6 +866,27 @@ class BoundingBox(dc.DessiaObject):
         z = volmdlr.Vector3D(0, 0, (self.zmax - self.zmin))
         return volmdlr.Frame3D(self.center, x, y, z)
 
+    def get_points_inside_bbox(self, points_x, points_y, points_z):
+        _size = [self.size[0] / points_x, self.size[1] / points_y,
+                              self.size[2] / points_z]
+        initial_center = self.center.translation(
+            -volmdlr.Vector3D(self.size[0] / 2 - _size[0] / 2,
+                              self.size[1] / 2 - _size[1] / 2,
+                              self.size[2] / 2 - _size[2] / 2))
+        points = []
+        for z_box in range(points_z):
+            for y_box in range(points_y):
+                for x_box in range(points_x):
+                    translation_vector = volmdlr.Vector3D(x_box * _size[0], y_box * _size[1],
+                                                          z_box * _size[2])
+                    point = initial_center.translation(translation_vector)
+                    points.append(point)
+        return points
+
+    @property
+    def size(self):
+        return [self.xmax - self.xmin, self.ymax - self.ymin, self.zmax - self.zmin]
+
     def volume(self) -> float:
         """
         Calculates the volume of a bounding box.
