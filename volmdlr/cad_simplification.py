@@ -11,7 +11,6 @@ class OctreeBlockSimplify(DessiaObject):
     """
     Initializes an instance of OctreeBlockSimplify.
 
-    Parameters:
     :param closed_shell: A closed shell object representing the geometry to simplify.
     :param name: Optional. A name for the OctreeBlockSimplify instance.
 
@@ -25,7 +24,6 @@ class OctreeBlockSimplify(DessiaObject):
         """
         Gets octree blocks outside the given closed shell.
 
-        Parameters:
         :param deepness: Optional. The depth of octree subdivision (default: 3).
 
         Returns:
@@ -84,7 +82,6 @@ class OctreeBlockSimplify(DessiaObject):
         """
         Simplify the given closed shell.
 
-        Parameters:
         :param precision: The precision level of simplification.
 
         Returns:
@@ -107,7 +104,6 @@ class TrippleExtrusionSimplify(DessiaObject):
     """
     Initialize an instance of TrippleExtrusionSimplify.
 
-    Parameters:
     :param volume_model: The volume model to simplify.
     :param name (str): Optional. A name for the TrippleExtrusionSimplify instance.
 
@@ -138,7 +134,6 @@ class TrippleExtrusionSimplify(DessiaObject):
         """
         Simplify a point cloud using extrusion and union operations.
 
-        Parameters:
         :param cloud3d: The 3D point cloud to simplify.
 
         Returns:
