@@ -8,13 +8,30 @@ from volmdlr.cloud import PointCloud3D
 
 
 class OctreeBlockSimplify(DessiaObject):
+    """
+    Initializes an instance of OctreeBlockSimplify.
+
+    Parameters:
+    :param closed_shell: A closed shell object representing the geometry to simplify.
+    :param name: Optional. A name for the OctreeBlockSimplify instance.
+
+    """
     def __init__(self, closed_shell: shells.ClosedShell3D, name: str = ''):
         self.closed_shell = closed_shell
         self.block = primitives3d.Block.from_bounding_box(self.closed_shell.bounding_box)
         DessiaObject.__init__(self, name=name)
 
     def get_outside_blocks(self, deepness: int = 3):
-        """Gets octree blocks outside the given closed shell."""
+        """
+        Gets octree blocks outside the given closed shell.
+
+        Parameters:
+        :param deepness: Optional. The depth of octree subdivision (default: 3).
+
+        Returns:
+        A list of octree blocks that are outside the given closed shell.
+
+        """
         block_volume = self.block.volume()
         min_block_volume = block_volume / (8 ** deepness)
         dict_faces_to_box = {box: [] for box in self.block.octree()}
@@ -64,7 +81,16 @@ class OctreeBlockSimplify(DessiaObject):
         return not_intersecting_boxes
 
     def simplify(self, precision: int):
-        """Simplify the given closed shell."""
+        """
+        Simplify the given closed shell.
+
+        Parameters:
+        :param precision: The precision level of simplification.
+
+        Returns:
+        The simplified closed shell.
+
+        """
         outside_blocks = self.get_outside_blocks(deepness=precision)
         closed_shells = []
         for octant in outside_blocks:
@@ -78,11 +104,26 @@ class OctreeBlockSimplify(DessiaObject):
 
 
 class TrippleExtrusionSimplify(DessiaObject):
+    """
+    Initialize an instance of TrippleExtrusionSimplify.
+
+    Parameters:
+    :param volume_model: The volume model to simplify.
+    :param name (str): Optional. A name for the TrippleExtrusionSimplify instance.
+
+    """
     def __init__(self, volume_model, name: str = ''):
         self.volume_model = volume_model
         DessiaObject.__init__(self, name=name)
 
     def simplify(self):
+        """
+        Simplify the volume model using triple extrusion simplification.
+
+        Returns:
+        The simplified volume model.
+
+        """
         points = []
         for primitive in self.volume_model.primitives:
             tri = primitive.triangulation()
@@ -94,6 +135,16 @@ class TrippleExtrusionSimplify(DessiaObject):
 
     @staticmethod
     def extrusion_union_cloud_simplifier(cloud3d):
+        """
+        Simplify a point cloud using extrusion and union operations.
+
+        Parameters:
+        :param cloud3d: The 3D point cloud to simplify.
+
+        Returns:
+        The simplified shell.
+
+        """
         simplified_shell = None
         list_shells = []
 
