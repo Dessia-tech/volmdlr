@@ -40,8 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Edge: direction_independent_is_close
 - Arcellipse2D, 3D: complementary, translation
 - Arcellipse2D, 3D: complementary
-- Face3D: is_linesegment_crossing
-- BSplineFace3D: linesegment_intersections
+- Face3D: is_linesegment_crossing, linesegment_intersections_approximation.
 - Assembly: define a volmdlr Assembly object.
 - Contour2D: copy
 - LineSegment2D: copy
@@ -137,12 +136,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: point_projection
 - ClosedShel3D: cut_by_plane
 - Arc3D.minimum_distance_points_line
-- New unittests for plane3d
+- New unittests for plane3d.
 - ClosedShel3D: intersection
 - Arcellipse2D: complementary
 - Contour2D: contours_from_edges.
 - PlaneFace3D: merge_faces
 - Contour2D: divide.
+- BSplineFace3D: test_linesegment_intersections_approximation.
+
 v0.10.0 [Released 20/04/2023]
 
 ### New Features
