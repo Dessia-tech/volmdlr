@@ -6,7 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## v0.11.0 [future]
+## v0.12.0 [future]
+
+### New Features
+- New module: cad_simplification - OctreeBlockSimplify, TrippleExtrusionSimplify
+- shells.py : function to performe union operations for a given list of shells.
+- ClosedShell3D: is_face_intersecting, is_intersecting_with
+### Fixed
+- ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces
+
+### Refactor
+- ClosedShell3D: point_belongs, get_non_intersecting_faces
+### Changed
+
+### Unittests
+
+
+## v0.11.0 [unreleased]
 
 
 ### New Features

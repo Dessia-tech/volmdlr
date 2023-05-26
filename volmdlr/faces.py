@@ -439,7 +439,6 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
         linesegment_intersections = []
-        # if not math.isclose(self.bounding_box.distance_to_bbox(linesegment.bounding_box), 0, abs_tol=1e-6):
         if not self.bounding_box.bbox_intersection(linesegment.bounding_box):
             return []
         if not hasattr(self.surface3d, 'linesegment_intersections'):
@@ -698,7 +697,6 @@ class Face3D(volmdlr.core.Primitive3D):
         Divides a Face 3D with a list of cutting contours.
 
         :param list_cutting_contours: list of contours cutting the face.
-
         """
         list_faces = []
         list_open_cutting_contours = []
@@ -1198,7 +1196,6 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def _get_linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D):
         """Generator line segment intersections approximation."""
-
         if self.__class__ == PlaneFace3D:
             faces_triangulation = [self]
         else:
