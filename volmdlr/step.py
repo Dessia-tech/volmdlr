@@ -1056,10 +1056,10 @@ class Step(dc.DessiaObject):
         :return: Shell ID.
         :rtype: int
         """
-        if len(self.functions[id_shape_representation].arg) != 4:
+        if len(self.functions[id_shape_representation].arg) < 4:
             # From the step file, the SHAPE_REPRESENTATION entity has 3 arguments. But we add a 4th argument to
-            # those SHAPE_REPRESENTATION entity that are related to a representation entity. So, if the arg are
-            # different of 4 there is no representation entity related to it and we return None.
+            # those SHAPE_REPRESENTATION entity that are related to a representation entity. So, if the length of arg
+            # is less of 4 there is no representation entity related to it and we return None.
             return None
         id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
         id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
@@ -1088,7 +1088,7 @@ class Step(dc.DessiaObject):
         if id_representation_entity:
             return self.get_shell_node_from_representation_entity(id_representation_entity)
         id_shape_representation = int(arguments[3][1:])
-        if len(self.functions[id_shape_representation].arg) != 4:
+        if len(self.functions[id_shape_representation].arg) < 4:
             id_shape_representation = int(arguments[2][1:])
         if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION":
             return self.get_shell_node_from_shape_representation(id_shape_representation)
@@ -1196,9 +1196,10 @@ class Step(dc.DessiaObject):
             if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION" and \
                     len(self.functions[id_shape_representation].arg) >= 4:
                 # todo: take all the arg starting from index 3 to end ??? needs investigation
-                id_shape = int(self.functions[id_shape_representation].arg[-1][1:])
-                self.connections[id_product_definition].append(id_shape)
-                self.functions[id_product_definition].arg.append(f'#{id_shape}')
+                id_shapes = [int(arg[1:]) for arg in self.functions[id_shape_representation].arg[3:]]
+                self.connections[id_product_definition].extend(id_shapes)
+                for id_shape in id_shapes:
+                    self.functions[id_product_definition].arg.append(f'#{id_shape}')
             elif self.functions[id_shape_representation].name in STEP_REPRESENTATION_ENTITIES:
                 self.connections[id_product_definition].append(id_shape_representation)
                 self.functions[id_product_definition].arg.append(f'#{id_shape_representation}')
@@ -1220,9 +1221,15 @@ class Step(dc.DessiaObject):
                 # block, we want to loop from the last KeyError to the fisrt. This avoids an infinite loop
                 for instanciate_id in instanciate_ids[::-1]:
                     if instanciate_id in object_dict:
+                        instanciate_ids.pop()
                         continue
-                    list_primitives = [object_dict[node][0] if isinstance(object_dict[node], list)
-                                       else object_dict[node] for node in assembly_data[instanciate_id]]
+                    list_primitives = []
+                    for node in assembly_data[instanciate_id]:
+                        primitives = object_dict[node]
+                        if isinstance(primitives, list):
+                            list_primitives.extend(primitives)
+                        else:
+                            list_primitives.append(primitives)
                     product_id = self.shape_definition_representation_to_product_node(instanciate_id)
                     name = self.functions[product_id].arg[0]
                     id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
