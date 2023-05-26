@@ -1835,8 +1835,11 @@ class ContourMixin(WireMixin):
         linesegment_name = 'LineSegment' + points[0].__class__.__name__[-2:]
         edges = []
         for i in range(0, len(points) - 1):
+            if points[i].is_close(points[i + 1]):
+                continue
             edges.append(getattr(volmdlr.edges, linesegment_name)(points[i], points[i + 1]))
-        edges.append(getattr(volmdlr.edges, linesegment_name)(points[-1], points[0]))
+        if not points[-1].is_close(points[0]):
+            edges.append(getattr(volmdlr.edges, linesegment_name)(points[-1], points[0]))
 
         contour = cls(edges)
         return contour

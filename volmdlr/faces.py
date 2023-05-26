@@ -1178,36 +1178,54 @@ class Face3D(volmdlr.core.Primitive3D):
         return (dict_cutting_contour_intersections, dict_inner_contour_intersections,
                 inner_contours_connected_cutting_contour, list_cutting_contours)
 
-    def is_linesegment_crossing(self, linesegment):
-        """Verify if a face 3d is being crossed by a linesegment 3d. """
+    def _is_linesegment_intersection_possible(self, linesegment: vme.LineSegment3D):
+        """
+        Verifies if intersection of face with line segment is possible or not.
+
+        :param linesegment: other line segment.
+        :return: returns True if possible, False otherwise.
+        """
+        if not self.bounding_box.bbox_intersection(linesegment.bounding_box):
+            return False
         if math.isclose(self.area(), 0.0, abs_tol=1e-10):
             return False
         bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
         if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
             return False
-        triangulation = self.triangulation()
-        faces_triangulation = triangulation.triangular_faces()
+        return True
+
+    def _get_linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D):
+        """Generator line segment intersections approximation."""
+        if self.__class__ == PlaneFace3D:
+            faces_triangulation = [self]
+        else:
+            triangulation = self.triangulation()
+            faces_triangulation = triangulation.triangular_faces()
         for face in faces_triangulation:
             inters = face.linesegment_intersections(linesegment)
-            if inters:
+            yield inters
+
+    def is_linesegment_crossing(self, linesegment):
+        """
+        Verify if a face 3d is being crossed by a line segment 3d.
+        """
+        if not self._is_linesegment_intersection_possible(linesegment):
+            return False
+        for inter in self._get_linesegment_intersections_approximation(linesegment):
+            if inter:
                 return True
         return False
 
     def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
-        """Approximation of intersections between a b-spline face 3D and a line segment 3D."""
-        if math.isclose(self.area(), 0.0, abs_tol=1e-10):
-            return False
-        bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
-        if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
+        """Approximation of intersections face 3D and a line segment 3D."""
+        if not self._is_linesegment_intersection_possible(linesegment):
             return []
-        triangulation = self.triangulation()
-        faces_triangulation = triangulation.triangular_faces()
         linesegment_intersections = []
-        for face in faces_triangulation:
-            inters = face.linesegment_intersections(linesegment)
+        for inters in self._get_linesegment_intersections_approximation(linesegment):
             for point in inters:
                 if not volmdlr.core.point_in_list(point, linesegment_intersections):
                     linesegment_intersections.append(point)
+
         return linesegment_intersections
 
 
