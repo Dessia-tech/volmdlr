@@ -985,29 +985,6 @@ class ClosedShell3D(OpenShell3D):
             return False
         return disjoint
 
-    # def intersecting_faces_combinations(self, shell2, list_coincident_faces, tol=1e-8):
-    #     """
-    #     Gets intersecting faces combinations.
-    #
-    #     :param shell2: ClosedShell3D
-    #         for two closed shells, it calculates and return a list of face
-    #         combinations (list = [(face_shell1, face_shell2),...])
-    #         for intersecting faces. if two faces can not be intersected,
-    #         there is no combination for those
-    #     :param tol: Corresponds to the tolerance to consider two faces as intersecting faces
-    #     :param shell2:
-    #     :param list_coincident_faces:
-    #     :param tol:
-    #     :return:
-    #     """
-    #     # todo: delete this method if not used three months from now (25/04/2023)
-    #     face_combinations = []
-    #     for face1 in self.faces:
-    #         for face2 in shell2.faces:
-    #             if face1.is_intersecting(face2, list_coincident_faces, tol):
-    #                 face_combinations.append((face1, face2))
-    #     return face_combinations
-
     def intersecting_faces_combinations(self, shell2, tol=1e-8):
         """
         Gets intersecting faces combinations.
@@ -1026,39 +1003,6 @@ class ClosedShell3D(OpenShell3D):
                 if face_intersections:
                     face_combinations[(face1, face2)] = face_intersections
         return face_combinations
-
-    # @staticmethod
-    # def dict_intersecting_combinations(intersecting_faces_combinations, tol=1e-8):
-    #     """
-    #     Gets a Dictionary with the intersecting combinations.
-    #
-    #     :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...])
-    #     for intersecting faces.
-    #     :type intersecting_faces_combinations: list of face objects combinations
-    #     :param tol: tolerance
-    #     returns a dictionary containing as keys the combination of intersecting faces
-    #     and as the values the resulting primitive from the two intersecting faces.
-    #     It is done so it is not needed to calculate the same intersecting primitive twice.
-    #     """
-    #     # todo: delete this method if not used three months from now (25/04/2023)
-    #     intersecting_combinations = {}
-    #     for combination in intersecting_faces_combinations:
-    #         face_intersections = combination[0].face_intersections(combination[1], tol)
-    #         combination_face_intersections = []
-    #         for face_intersection in face_intersections:
-    #             for contour1 in [combination[0].outer_contour3d] + combination[0].inner_contours3d:
-    #                 if contour1.is_superposing(face_intersection):
-    #                     for contour2 in [combination[1].outer_contour3d] + combination[1].inner_contours3d:
-    #                         if contour2.is_superposing(face_intersection):
-    #                             break
-    #                     else:
-    #                         continue
-    #                     break
-    #             else:
-    #                 combination_face_intersections.append(face_intersection)
-    #         if combination_face_intersections:
-    #             intersecting_combinations[combination] = combination_face_intersections
-    #     return intersecting_combinations
 
     @staticmethod
     def get_intersecting_faces(dict_intersecting_combinations):
