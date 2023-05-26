@@ -26,8 +26,7 @@ class OctreeBlockSimplify(DessiaObject):
 
         :param deepness: Optional. The depth of octree subdivision (default: 3).
 
-        Returns:
-        A list of octree blocks that are outside the given closed shell.
+        :return: A list of octree blocks that are outside the given closed shell.
 
         """
         block_volume = self.block.volume()
@@ -84,8 +83,7 @@ class OctreeBlockSimplify(DessiaObject):
 
         :param precision: The precision level of simplification.
 
-        Returns:
-        The simplified closed shell.
+        :return: The simplified closed shell.
 
         """
         outside_blocks = self.get_outside_blocks(deepness=precision)
@@ -116,8 +114,7 @@ class TrippleExtrusionSimplify(DessiaObject):
         """
         Simplify the volume model using triple extrusion simplification.
 
-        Returns:
-        The simplified volume model.
+        :return: The simplified volume model.
 
         """
         points = []
@@ -136,8 +133,7 @@ class TrippleExtrusionSimplify(DessiaObject):
 
         :param cloud3d: The 3D point cloud to simplify.
 
-        Returns:
-        The simplified shell.
+        :return: The simplified shell.
 
         """
         simplified_shell = None
