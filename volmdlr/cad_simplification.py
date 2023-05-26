@@ -94,7 +94,7 @@ class TrippleExtrusionSimplify(DessiaObject):
         simplified_shell = None
         list_shells = []
 
-        bbox = cloud3d._bounding_box()
+        bbox = cloud3d.bounding_box
         lx = bbox.xmax - bbox.xmin
         ly = bbox.ymax - bbox.ymin
         lz = bbox.zmax - bbox.zmin

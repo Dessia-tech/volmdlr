@@ -32,6 +32,7 @@ class PointCloud3D(dc.DessiaObject):
 
     def __init__(self, points: List[vm.Point3D], name: str = ''):
         self.points = points
+        self._bounding_box = None
         dc.DessiaObject.__init__(self, name=name)
 
     @classmethod
@@ -48,6 +49,12 @@ class PointCloud3D(dc.DessiaObject):
 
     def _bounding_box(self):
         return vm.core.BoundingBox.from_points(self.points)
+
+    @property
+    def bounding_box(self):
+        if not self._bounding_box:
+            self._bounding_box = self._bounding_box()
+        return self._bounding_box
 
     def to_2d(self, plane_origin, x, y):
         list_points2d = [pt3d.to_2d(plane_origin, x, y) for pt3d in self.points]

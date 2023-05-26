@@ -9,8 +9,7 @@ import networkx as nx
 import numpy as npy
 from trimesh import Trimesh
 
-import dessia_common.core
-from dessia_common.core import DessiaObject, PhysicalObject
+from dessia_common.core import DessiaObject
 import volmdlr.bspline_compiled
 import volmdlr.core_compiled
 import volmdlr.core
@@ -36,14 +35,14 @@ def union_list_of_shells(list_shells):
             len_previous_shells_list = len(list_shells)
             union_shells = [list_shells.pop(0)]
 
-        for union_shell in union_shells:
-            for octant_box in list_shells:
+        for i, union_shell in enumerate(union_shells[:]):
+            for j, octant_box in enumerate(list_shells[:]):
                 union = union_shell.union(octant_box)
                 if len(union) != 2:
-                    union_shells.remove(union_shell)
+                    union_shells.pop(i)
                     union[0].merge_faces()
                     union_shells.insert(0, union[0])
-                    list_shells.remove(octant_box)
+                    list_shells.pop(j)
                     break
                 if len(list_shells) != len_previous_shells_list - 1:
                     union_shells.insert(0, union[1])
@@ -51,7 +50,7 @@ def union_list_of_shells(list_shells):
                     break
             else:
                 shells.append(union_shell)
-                union_shells.remove(union_shell)
+                union_shells.pop(i)
                 if not union_shells and list_shells:
                     union_shells = [list_shells.pop(0)]
                 break
@@ -105,7 +104,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         self._faces_graph = None
         self._vertices_points = None
-        self._shell_octree = None
 
         volmdlr.core.CompositePrimitive3D.__init__(self,
                                                    primitives=faces, color=color, alpha=alpha,
