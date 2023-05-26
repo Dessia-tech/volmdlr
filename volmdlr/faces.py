@@ -1181,6 +1181,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def _is_linesegment_intersection_possible(self, linesegment: vme.LineSegment3D):
         """
         Verifies if intersection of face with line segment is possible or not.
+
         :param linesegment: other line segment.
         :return: returns True if possible, False otherwise.
         """
