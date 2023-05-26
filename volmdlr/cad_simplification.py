@@ -1,3 +1,6 @@
+"""
+volmdlr cad simplification module.
+"""
 from dessia_common.core import DessiaObject
 import volmdlr
 from volmdlr import shells, primitives3d, wires
