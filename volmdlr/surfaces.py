@@ -3149,7 +3149,11 @@ class SphericalSurface3D(PeriodicalSurface):
         contour2d = wires.Contour2D(primitives2d)
         if contour2d.is_ordered(1e-2):
             return contour2d
-        primitives2d = self.repair_primitives_periodicity(primitives2d)
+        try:
+            primitives2d = self.repair_primitives_periodicity(primitives2d)
+        except IndexError:
+            self.save_to_file("sphericalsurface_contour3d_to_2d_surface.json")
+            contour3d.save_to_file("sphericalsurface_contour3d_to_2d_contour.json")
         return wires.Contour2D(primitives2d)
 
     def is_lat_long_curve(self, arc):
@@ -4862,9 +4866,6 @@ class BSplineSurface3D(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        self.save_to_file("bspline_surface_with_arcellipse.json")
-        arcellipse3d.save_to_file("arcellipse_bspline_surface.json")
-        print("Got test to BSplineSurface3D.arcellipse3d_to_2d")
         # todo: Is this right? Needs detailed investigation
         number_points = max(self.nb_u, self.nb_v)
         degree = max(self.degree_u, self.degree_v)

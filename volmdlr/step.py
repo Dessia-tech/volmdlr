@@ -1013,8 +1013,6 @@ class Step(dc.DessiaObject):
 
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
-        if step_id == 265407 or step_id == 265406:
-            print(True)
         try:
             if hasattr(volmdlr.step, fun_name):
                 volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
@@ -1223,11 +1221,11 @@ class Step(dc.DessiaObject):
             assemblies_shapes.setdefault(assembly_node, []).extend(ids_shape_definition_representation)
             id_context_dependent_shape_representation = int(function.arg[-1][1:])
             id_transformation = int(self.functions[id_context_dependent_shape_representation].arg[0][1:])
-            id_item_defined_transformation = int(self.functions[id_transformation].arg[1][1:])
-            assembly_frame = int(self.functions[id_item_defined_transformation].arg[3][1:])
-            component_frame = int(self.functions[id_item_defined_transformation].arg[4][1:])
-            assemblies_positions.setdefault(assembly_node, [assembly_frame]).append(
-                component_frame)
+            id_item_defined_transformation = int(self.functions[id_transformation].arg[4][1:])
+            assembly_frame = int(self.functions[id_item_defined_transformation].arg[2][1:])
+            component_frame = [int(self.functions[id_item_defined_transformation].arg[3][1:])]
+            assemblies_positions.setdefault(assembly_node, [assembly_frame]).extend(
+                component_frame * len(ids_shape_definition_representation))
         return assemblies_shapes, assemblies_positions
 
     def context_dependent_shape_representation_to_next_assembly_usage_occurrence(self, node):
@@ -1240,8 +1238,6 @@ class Step(dc.DessiaObject):
             # Associate each step representation entity to its SHAPE_REPRESENTATION
             function = self.functions[node]
             id_shape_representation = int(function.arg[2][1:])
-            if id_shape_representation == 393:
-                print(True)
             id_shape = int(function.arg[3][1:])
             self.connections[id_shape_representation].append(id_shape)
             self.functions[id_shape_representation].arg.append(f'#{id_shape}')
@@ -1277,7 +1273,7 @@ class Step(dc.DessiaObject):
             self.functions[next_assembly_usage_occurrence].arg.append(f'#{node}')
 
     def instatiate_assembly(self, object_dict):
-        assemblies_shapes, assemblies_positions= self.get_assembly_data()
+        assemblies_shapes, assemblies_positions = self.get_assembly_data()
         instanciate_ids = list(assemblies_shapes.keys())
         error = True
         while error:
@@ -1307,9 +1303,9 @@ class Step(dc.DessiaObject):
                 # Sometimes the bfs search don't instanciate the nodes of a
                 # depth in the right order, leading to error
                 print(key.args[0])
-                if key.args[0] in assembly_data:
+                if key.args[0] in assemblies_shapes:
                     instanciate_ids.append(key.args[0])
-                    instanciate_ids.extend(assembly_data[key.args[0]])
+                    instanciate_ids.extend(assemblies_shapes[key.args[0]])
                 else:
                     instanciate_ids.append(key.args[0])
         return volmdlr_object
@@ -1361,7 +1357,15 @@ class Step(dc.DessiaObject):
 
         if self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             return volmdlr.core.VolumeModel([self.instatiate_assembly(object_dict)])
-        volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
+        primitives = []
+        shapes = [object_dict[shape] for shape in shape_representations]
+        for shape in shapes:
+            if isinstance(shape, list):
+                primitives.extend(shape)
+            else:
+                primitives.append(shape)
+        volume_model = volmdlr.core.VolumeModel(primitives)
+        #volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
         return volume_model
 
     def _helper_instantiate(self, node, object_dict, times, show_times):

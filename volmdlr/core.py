@@ -1278,7 +1278,7 @@ class Compound(dc.PhysicalObject):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Changes frame_mapping and return a new VolumeModel.
+        Changes frame_mapping and return a new Compound.
 
         side = 'old' or 'new'
         """
