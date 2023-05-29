@@ -3659,7 +3659,7 @@ class Frame3D(Basis3D):
         :rtype: :class:`volmdlr.Frame3D`
         """
         origin = object_dict[arguments[1]]
-        if arguments[2] == "$" or arguments[3] == "$":
+        if arguments[2] == "$" and arguments[3] == "$":
             u = Z3D
             v = X3D
         elif arguments[2] == "$":
