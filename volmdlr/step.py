@@ -506,6 +506,8 @@ def advanced_brep_shape_representation(arguments, object_dict):
         if isinstance(object_dict[int(arg[1:])],
                       vmshells.OpenShell3D):
             shells.append(object_dict[int(arg[1:])])
+    if len(shells) > 1:
+        return volmdlr.core.Compound(shells, name=arguments[0])
     return shells
 
 
@@ -524,6 +526,8 @@ def geometrically_bounded_surface_shape_representation(arguments, object_dict):
     primitives = []
     for arg in arguments[1]:
         primitives.extend(object_dict[int(arg[1:])])
+    if len(primitives) > 1:
+        return volmdlr.core.Compound(primitives, name=arguments[0])
     return primitives
 
 
@@ -1170,7 +1174,7 @@ class Step(dc.DessiaObject):
         shell_nodes = []
         geometric_representation_context = {}
         not_shell_nodes = []
-
+        context_dependent_shape_representation = []
         for function in self.functions.values():
             if function.name == "NEXT_ASSEMBLY_USAGE_OCCURRENCE":
                 next_assembly_usage_occurrence.append(function.id)
@@ -1189,9 +1193,12 @@ class Step(dc.DessiaObject):
             elif function.name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(function.id)
                 not_shell_nodes.append(int(function.arg[1][1:]))
+            elif function.name == "CONTEXT_DEPENDENT_SHAPE_REPRESENTATION":
+                context_dependent_shape_representation.append(function.id)
         for node in not_shell_nodes:
             shell_nodes.remove(node)
         return {"NEXT_ASSEMBLY_USAGE_OCCURRENCE": next_assembly_usage_occurrence,
+                "CONTEXT_DEPENDENT_SHAPE_REPRESENTATION": context_dependent_shape_representation,
                 "PRODUCT_DEFINITION": product_definitions,
                 "SHAPE_REPRESENTATION_RELATIONSHIP": shape_representation_relationship,
                 "SHAPE_REPRESENTATION": shape_representations,
@@ -1201,7 +1208,8 @@ class Step(dc.DessiaObject):
 
     def get_assembly_data(self):
         root_nodes = self.root_nodes
-        assemblies = {}
+        assemblies_shapes = {}
+        assemblies_positions = {}
         for node in root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             function = self.functions[node]
             assembly_product_definition = int(function.arg[3][1:])
@@ -1212,8 +1220,20 @@ class Step(dc.DessiaObject):
             else:
                 ids_shape_definition_representation = [int(arg[1:]) for
                                                           arg in self.functions[id_product_definition].arg[5:]]
-            assemblies.setdefault(assembly_node, []).extend(ids_shape_definition_representation)
-        return assemblies
+            assemblies_shapes.setdefault(assembly_node, []).extend(ids_shape_definition_representation)
+            id_context_dependent_shape_representation = int(function.arg[-1][1:])
+            id_transformation = int(self.functions[id_context_dependent_shape_representation].arg[0][1:])
+            id_item_defined_transformation = int(self.functions[id_transformation].arg[1][1:])
+            assembly_frame = int(self.functions[id_item_defined_transformation].arg[3][1:])
+            component_frame = int(self.functions[id_item_defined_transformation].arg[4][1:])
+            assemblies_positions.setdefault(assembly_node, [assembly_frame]).append(
+                component_frame)
+        return assemblies_shapes, assemblies_positions
+
+    def context_dependent_shape_representation_to_next_assembly_usage_occurrence(self, node):
+        arg = self.functions[node].arg
+        id_product_definition_shape = int(arg[1][1:])
+        return int(self.functions[id_product_definition_shape].arg[2][1:])
 
     def create_connections(self):
         for node in self.root_nodes['SHAPE_REPRESENTATION_RELATIONSHIP']:
@@ -1250,10 +1270,15 @@ class Step(dc.DessiaObject):
                 self.connections[shell_node].append(product_node)
                 self.functions[shell_node].arg.append(f'#{product_node}')
 
+        for node in self.root_nodes['CONTEXT_DEPENDENT_SHAPE_REPRESENTATION']:
+            next_assembly_usage_occurrence = \
+                self.context_dependent_shape_representation_to_next_assembly_usage_occurrence(node)
+            self.connections[next_assembly_usage_occurrence].append(node)
+            self.functions[next_assembly_usage_occurrence].arg.append(f'#{node}')
+
     def instatiate_assembly(self, object_dict):
-        assembly_data = self.get_assembly_data()
-        list_instatiated_assemblies = []
-        instanciate_ids = list(assembly_data.keys())
+        assemblies_shapes, assemblies_positions= self.get_assembly_data()
+        instanciate_ids = list(assemblies_shapes.keys())
         error = True
         while error:
             try:
@@ -1264,7 +1289,7 @@ class Step(dc.DessiaObject):
                         instanciate_ids.pop()
                         continue
                     list_primitives = []
-                    for node in assembly_data[instanciate_id]:
+                    for node in assemblies_shapes[instanciate_id]:
                         primitives = object_dict[node]
                         if isinstance(primitives, list):
                             list_primitives.extend(primitives)
@@ -1272,17 +1297,10 @@ class Step(dc.DessiaObject):
                             list_primitives.append(primitives)
                     product_id = self.shape_definition_representation_to_product_node(instanciate_id)
                     name = self.functions[product_id].arg[0]
-                    id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
-                    ids_frames = self.functions[id_shape_representation].arg[1]
-                    self.parse_arguments(ids_frames)
+                    ids_frames = assemblies_positions[instanciate_id]
                     frames = [object_dict[id_frame] for id_frame in ids_frames]
-                    try:
-                        volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
-                    except Exception:
-                        print(True)
+                    volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
                     object_dict[instanciate_id] = volmdlr_object
-                    if instanciate_id in assembly_data:
-                        list_instatiated_assemblies.append(instanciate_id)
 
                 error = False
             except KeyError as key:
