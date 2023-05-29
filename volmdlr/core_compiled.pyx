@@ -3663,11 +3663,11 @@ class Frame3D(Basis3D):
             u = Z3D
             v = X3D
         elif arguments[2] == "$":
-            frame = cls.from_point_and_vector(origin, arguments[3], main_axis=Z3D)
+            frame = cls.from_point_and_vector(origin, object_dict[arguments[3]], main_axis=Z3D)
             u = frame.u
             v = frame.v
         elif arguments[3] == "$":
-            frame = cls.from_point_and_vector(origin, arguments[2], main_axis=Z3D)
+            frame = cls.from_point_and_vector(origin, object_dict[arguments[2]], main_axis=Z3D)
             u = frame.u
             v = frame.v
         else:
