@@ -844,12 +844,17 @@ class Surface3D(DessiaObject):
             delta = previous_primitive.end - primitives2d[i].start
             is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-3)
             if not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
-                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-5):
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2) and \
+                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
             elif not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3):
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
+            elif not is_connected and math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
+                math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
+                new_primitive = primitives2d[i].reverse()
+                new_delta = previous_primitive.end - new_primitive.start
+                primitives2d[i] = new_primitive.translation(new_delta)
             elif not is_connected:
                 primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
@@ -1209,7 +1214,7 @@ class Plane3D(Surface3D):
         u_vector = linesegment.end - linesegment.start
         w_vector = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u_vector)
-        if math.isclose(normaldotu, 0, abs_tol=1e-08):
+        if normaldotu == 0.0:
             return []
         intersection_abscissea = - self.frame.w.dot(w_vector) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:

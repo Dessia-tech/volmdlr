@@ -2,6 +2,7 @@
 Tests for places faces
 """
 import math
+import os
 import unittest
 
 import dessia_common.core as dc
@@ -24,6 +25,11 @@ class TestPlaneFace3D(unittest.TestCase):
                                         volmdlr.Vector3D(0, 0.5, 0), volmdlr.Vector3D(0, 0, 0.5)), 'old')
         self.assertEqual(self.face.face_inside(face2), True)
         self.assertEqual(face2.face_inside(self.face), False)
+        face1, face2 = dc.DessiaObject.load_from_file('faces/objects_planeface_tests/test_face_inside.json').primitives
+        self.assertTrue(face1.face_inside(face2))
+        face1, face2 = dc.DessiaObject.load_from_file(
+            'faces/objects_planeface_tests/test_face3_face_inside.json').primitives
+        self.assertFalse(face1.face_inside(face2))
 
     def test_face_intersections_with_holes(self):
         face_intersections = self.face.face_intersections(self.face_with_3holes)
@@ -52,6 +58,29 @@ class TestPlaneFace3D(unittest.TestCase):
         expected_areas = [0.125, 1.4320458460875176, 0.05704584608751772, 0.125]
         for i, face in enumerate(divided_faces):
             self.assertAlmostEqual(expected_areas[i], face.area())
+        source_folder = 'faces/objects_planeface_tests/test_planeface_divide_face_json_files'
+        expected_faces_areas = [[0.0055788043593624215, 0.23430978309161565, 0.005578804359415823, 0.0948396741089057],
+                                [0.0855613934860544, 0.032085522557644186, 0.01069517418574345],
+                                [0.002005345159845676, 0.002005345159820638, 0.0033422419331328506,
+                                 0.0006684483866419249], [0.3403070659192998, 0.005578804359415823],
+                                [0.0427806967433878, 0.010695174185850198, 0.08556139348605463],
+                                [0.07754001284661505, 0.002673793546460905]]
+        file_names = ['test_face_divide_face5.json', 'test_face_divide_face2.json',
+                      'test_planeface3d_divide_face.json', 'test_face_divide_face3.json', 'test_face_divide_face.json',
+                      'test_face_divide_face6.json']
+        faces_areas = []
+        for filename in file_names:
+            file_path = os.path.join(source_folder, filename)
+            obj = dc.DessiaObject.load_from_file(file_path)
+            face = obj.primitives[0]
+            list_cutting_contours = obj.primitives[1:]
+            divide_faces = face.divide_face(list_cutting_contours)
+            areas = [face.area() for face in divide_faces]
+            faces_areas.append(areas)
+        for solution, expected_solution in zip(faces_areas, expected_faces_areas):
+            self.assertEqual(len(solution), len(expected_solution))
+            for solution_area, expected_solution_area in zip(solution, expected_solution):
+                self.assertAlmostEqual(solution_area, expected_solution_area)
 
     def test_cylindricalface_intersections(self):
         R = 0.15
@@ -121,6 +150,30 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertTrue(self.plane_face_cylindricalface_intersec.circle_inside(circle))
         circle2 = volmdlr.wires.Circle3D(volmdlr.OYZX, 0.1)
         self.assertFalse(self.plane_face_cylindricalface_intersec.circle_inside(circle2))
+
+    def test_merges_faces(self):
+        source_folder = 'faces/objects_planeface_tests/test_planeface3d_merge_faces_json_files'
+        faces_areas = []
+        file_names = ['test_merge_faces4.json', 'test_merge_faces5.json', 'faces_merge_faces2.json',
+                      'faces_merge_faces3.json', 'faces_merge_faces4.json']
+        for filename in file_names:
+            file_path = os.path.join(source_folder, filename)
+            obj = dc.DessiaObject.load_from_file(file_path)
+            faces_ = obj.primitives
+            merged_faces = faces.PlaneFace3D.merge_faces(faces_)
+            areas = []
+            for face in merged_faces:
+                areas.append(face.area())
+            faces_areas.append(areas)
+        expected_faces_areas = [[0.1621764423452034], [0.15508002569387766],
+                                [0.005347587092921799, 0.032085522557310564, 0.18181796115851334],
+                                [0.08021380639307588],
+                                [0.05578804359331602, 0.005578804359362449, 0.011157608718620371,
+                                 0.022315217437398727, 0.05020923923410867]]
+        for solution, expected_solution in zip(faces_areas, expected_faces_areas):
+            self.assertEqual(len(solution), len(expected_solution))
+            for solution_area, expected_solution_area in zip(solution, expected_solution):
+                self.assertAlmostEqual(solution_area, expected_solution_area)
 
 
 if __name__ == '__main__':
