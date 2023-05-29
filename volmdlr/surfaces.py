@@ -183,9 +183,16 @@ class Surface2D(volmdlr.core.Primitive2D):
         if math.isclose(area, 0., abs_tol=1e-6):
             return display.DisplayMesh2D([], triangles=[])
 
-        triangulates_with_grid = number_points_x > 0 or number_points_y > 0
+        triangulates_with_grid = number_points_x > 0 and number_points_y > 0
+        discretize_line = number_points_x > 0 or number_points_y > 0
+        if not triangulates_with_grid:
+            tri_opt = "pq"
 
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=11, discretize_line=triangulates_with_grid)
+        discretize_line_direction = "xy"
+        if number_points_y == 0:
+            discretize_line_direction = "x"
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
+                                                      discretize_line_direction=discretize_line_direction)
 
         if not self.inner_contours and not triangulates_with_grid:
             return outer_polygon.triangulation()
@@ -204,7 +211,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=triangulates_with_grid)
+            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
+                                                      discretize_line_direction=discretize_line_direction)
             inner_polygon_nodes = [display.Node2D.from_point(p) for p in inner_polygon.points]
             for point in inner_polygon_nodes:
                 if point not in point_index:
@@ -836,12 +844,17 @@ class Surface3D(DessiaObject):
             delta = previous_primitive.end - primitives2d[i].start
             is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-3)
             if not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3) and \
-                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-5):
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2) and \
+                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
             elif not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-3):
+                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
+            elif not is_connected and math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
+                math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
+                new_primitive = primitives2d[i].reverse()
+                new_delta = previous_primitive.end - new_primitive.start
+                primitives2d[i] = new_primitive.translation(new_delta)
             elif not is_connected:
                 primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
@@ -1201,7 +1214,7 @@ class Plane3D(Surface3D):
         u_vector = linesegment.end - linesegment.start
         w_vector = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u_vector)
-        if math.isclose(normaldotu, 0, abs_tol=1e-08):
+        if normaldotu == 0.0:
             return []
         intersection_abscissea = - self.frame.w.dot(w_vector) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
@@ -3521,9 +3534,6 @@ class SphericalSurface3D(PeriodicalSurface):
                 point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi2)
             elif theta1 < theta3:
                 point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
-            else:
-                self.save_to_file("fullarc3d_to_2d_sphericalsurface.json")
-                fullarc3d.save_to_file("fullarc3d_to_2d_sphericalsurface_fullarc.json")
             return [edges.LineSegment2D(point1, point2)]
 
         if self.frame.w.is_perpendicular_to(fullarc3d.normal, abs_tol=1e-4):
@@ -4237,7 +4247,7 @@ class BSplineSurface3D(Surface3D):
     :type name: str
     """
     face_class = "BSplineFace3D"
-    _non_serializable_attributes = ["surface", "curves"]
+    _non_serializable_attributes = ["surface", "curves", "control_points_table"]
 
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
@@ -4565,13 +4575,10 @@ class BSplineSurface3D(Surface3D):
         if len(points) == 2:
             return [volmdlr.edges.LineSegment3D(points[0], points[-1])]
         periodic = points[0].is_close(points[-1], 1e-6)
-        if len(points) < min(self.degree_u, self.degree_v) + 2:
-            try:
-                bspline = edges.BSplineCurve3D.from_points_interpolation(
-                    points, 2, periodic=periodic)
-                return [bspline.simplify]
-            except Exception:
-                return None
+        if len(points) < min(self.degree_u, self.degree_v) + 1:
+            bspline = edges.BSplineCurve3D.from_points_interpolation(
+                points, 2, periodic=periodic)
+            return [bspline]
 
         bspline = edges.BSplineCurve3D.from_points_interpolation(
                             points, min(self.degree_u, self.degree_v), periodic=periodic)
@@ -4816,7 +4823,7 @@ class BSplineSurface3D(Surface3D):
             point3d = self.point2d_to_3d(point)
             if not volmdlr.core.point_in_list(point3d, points):
                 points.append(point3d)
-        if len(points) < bspline_curve2d.degree + 2:
+        if len(points) < bspline_curve2d.degree + 1:
             return None
         return [edges.BSplineCurve3D.from_points_interpolation(
             points, bspline_curve2d.degree, bspline_curve2d.periodic)]

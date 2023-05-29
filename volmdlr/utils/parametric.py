@@ -183,7 +183,8 @@ def arc3d_to_cylindrical_coordinates_verification(start, end, angle3d, theta3, t
     if abs(theta2) == math.pi or abs(theta2) == 0.5 * math.pi:
         theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
-    theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d, volmdlr.TWO_PI)
+    if not math.isclose(abs(theta1 - theta2), angle3d, abs_tol=1e-3):
+        theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d, volmdlr.TWO_PI)
 
     start = volmdlr.Point2D(theta1, z1)
     end = volmdlr.Point2D(theta2, z2)
@@ -253,11 +254,11 @@ def arc3d_to_toroidal_coordinates_verification(start, end, angle3d, reference_po
     start, end = toroidal_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end)
     theta1, phi1 = start
     theta2, phi2 = end
-    if math.isclose(phi1, phi2, abs_tol=1e-4):
+    if math.isclose(phi1, phi2, abs_tol=1e-4) and not math.isclose(abs(theta1 - theta2), angle3d, abs_tol=1e-3):
         theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2,
                                                        angle3d, periodicity[0])
 
-    if math.isclose(theta1, theta2, abs_tol=1e-4):
+    if math.isclose(theta1, theta2, abs_tol=1e-4) and not math.isclose(abs(phi1 - phi2), angle3d, abs_tol=1e-3):
         phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2,
                                                    angle3d, periodicity[1])
 
@@ -274,7 +275,7 @@ def arc3d_to_spherical_coordinates_verification(start, end, angle3d, reference_p
     start, end = spherical_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end)
     theta1, phi1 = start
     theta2, phi2 = end
-    if math.isclose(phi1, phi2, abs_tol=1e-4):
+    if math.isclose(phi1, phi2, abs_tol=1e-4)  and not math.isclose(abs(theta1 - theta2), angle3d, abs_tol=1e-3):
         theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2,
                                                        angle3d, periodicity[0])
 
