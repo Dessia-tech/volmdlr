@@ -428,7 +428,7 @@ def faceted_brep_shape_representation(arguments, object_dict):
 
 def manifold_solid_brep(arguments, object_dict):
     """
-    Returns the data in case of a fix  with voids.
+    Returns the data in case of a manifold_solid_brep with voids.
     """
     return object_dict[arguments[1]]
 
