@@ -961,19 +961,20 @@ class BoundingBox(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def point_belongs(self, point: volmdlr.Point3D) -> bool:
+    def point_belongs(self, point: volmdlr.Point3D, tol = 1e-6) -> bool:
         """
         Determines if a point belongs to the bounding box.
 
         :param point: The point to check for inclusion.
         :type point: volmdlr.Point3D
+        :param tol: tolerance.
         :return: True if the point belongs to the bounding box, False otherwise.
         :rtype: bool
         """
         return (
-                self.xmin < point[0] < self.xmax
-                and self.ymin < point[1] < self.ymax
-                and self.zmin < point[2] < self.zmax
+                self.xmin - tol <= point[0] <= self.xmax + tol
+                and self.ymin - tol <= point[1] <= self.ymax + tol
+                and self.zmin - tol <= point[2] <= self.zmax + tol
         )
 
     def distance_to_point(self, point: volmdlr.Point3D) -> float:
@@ -2210,26 +2211,18 @@ class VolumeModel(dc.PhysicalObject):
         """
 
         list_shells = []
-        list_assembly = []
+        def unpack_assembly(assembly):
+            for prim in assembly.primitives:
+                if prim.__class__.__name__ == 'Assembly':
+                    unpack_assembly(prim)
+                elif prim.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                    list_shells.append(prim)
+
         for primitive in self.primitives:
             if primitive.__class__.__name__ == 'Assembly':
-                list_assembly.append(primitive)
-            elif (primitive.__class__.__name__ == 'OpenShell3D'
-                  or primitive.__class__.__name__ == 'ClosedShell3D'):
+                unpack_assembly(primitive)
+            elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
                 list_shells.append(primitive)
-
-        while list_assembly:
-            for i, assembly in enumerate(list_assembly):
-                for primitive in assembly.primitives:
-                    if primitive.__class__.__name__ == 'Assembly':
-                        list_assembly.append(primitive)
-
-                    elif (primitive.__class__.__name__ == 'OpenShell3D'
-                          or primitive.__class__.__name__ == 'ClosedShell3D'):
-
-                        list_shells.append(primitive)
-
-                list_assembly.pop(i)
 
         return list_shells
 

@@ -187,6 +187,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         discretize_line = number_points_x > 0 or number_points_y > 0
         if not discretize_line:
             tri_opt = "pq"
+
         discretize_line_direction = "xy"
         if number_points_y == 0:
             discretize_line_direction = "x"

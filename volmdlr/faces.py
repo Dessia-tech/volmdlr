@@ -2015,7 +2015,7 @@ class CylindricalFace3D(Face3D):
                                     volmdlr.Point2D(theta, zmax)))
         return lines, []
 
-    def point_belongs(self, point3d: volmdlr.Point3D):
+    def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6):
         """
         Tells you if a point is on the 3D Cylindrical face and inside its contour.
         """
@@ -2023,7 +2023,7 @@ class CylindricalFace3D(Face3D):
         point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
         point2d_minus_2pi = point2d.translation(volmdlr.Point2D(-volmdlr.TWO_PI, 0))
         check_point3d = self.surface3d.point2d_to_3d(point2d)
-        if check_point3d.point_distance(point3d) > 1e-6:
+        if check_point3d.point_distance(point3d) > tol:
             return False
 
         return any(self.surface2d.point_belongs(pt2d) for pt2d in [point2d, point2d_plus_2pi, point2d_minus_2pi])
@@ -2805,9 +2805,9 @@ class BSplineFace3D(Face3D):
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
         if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
-            resolution = 10
+            resolution = 25
         else:
-            resolution = 10
+            resolution = 15
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
         number_points_x = int(delta_u * resolution)

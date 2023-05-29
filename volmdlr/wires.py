@@ -1421,46 +1421,58 @@ class ContourMixin(WireMixin):
             return []
         if len(edges) == 1:
             return [cls(edges)]
-        # touching_primitives = cls.touching_edges_pairs(edges)
-        # for prims in touching_primitives:
-        #     if prims[0] in edges:
-        #         edges.remove(prims[0])
-        #     if prims[1] in edges:
-        #         edges.remove(prims[1])
-        # contours_primitives_lists = cls.contours_primitives_touching_primitives(touching_primitives)
-        # contours_list = [cls(primitives) for primitives in contours_primitives_lists]
-        # if not edges:
-        #     return contours_list
-        contours_primitives_lists = []
-        contours_list = []
         list_contours = []
-        finished = False
-        contour_primitives = []
-
-        while not finished:
-            len1 = len(edges)
-            edges, contour_primitives, contours_list = cls.find_connected_edges(
-                edges, contours_list, contour_primitives, tol)
-            if not edges:
-                finished = True
-            valid = False
-
-            if edges and len(edges) == len1 and len(contour_primitives) != 0:
-                valid = True
-            elif len(edges) == 0 and len(contour_primitives) != 0:
-                valid = True
-                finished = True
-            if valid:
-                contour_primitives, edges, finished = cls.get_edges_bifurcations(contour_primitives,
-                                                                                 edges, finished)
-                if len(contour_primitives[:]) != 0:
-                    contour_n = cls(contour_primitives[:])
-                    contour_n.order_contour()
-                    list_contours.append(contour_n)
-                contour_primitives = []
-        list_contours = list_contours + [cls(primitives).order_contour()
-                                         for primitives
-                                         in contours_primitives_lists]
+        points = [edges[0].start, edges[0].end]
+        contour_primitives = [edges.pop(0)]
+        while True:
+            if not contour_primitives:
+                print(True)
+            for i, edge in enumerate(edges):
+                if edge.is_point_edge_extremity(contour_primitives[-1].end, tol):
+                    if contour_primitives[-1].end.is_close(edge.start, tol):
+                        contour_primitives.append(edge)
+                    else:
+                        contour_primitives.append(edge.reverse())
+                    edges.pop(i)
+                    validating_points = points[:]
+                    validating_point = contour_primitives[-1].end
+                    points.append(contour_primitives[-1].end)
+                    break
+                if edge.is_point_edge_extremity(contour_primitives[0].start, tol):
+                    if contour_primitives[0].start.is_close(edge.end, tol):
+                        contour_primitives.insert(0, edge)
+                    else:
+                        contour_primitives.insert(0, edge.reverse())
+                    validating_points = points[:]
+                    validating_point = contour_primitives[0].start
+                    points.insert(0, contour_primitives[0].start)
+                    edges.pop(i)
+                    break
+            else:
+                list_contours.append(cls(contour_primitives))
+                if not edges:
+                    break
+                points = [edges[0].start, edges[0].end]
+                contour_primitives = [edges.pop(0)]
+                continue
+            if volmdlr.core.point_in_list(validating_point, validating_points):
+                if not validating_point.is_close(validating_points[0]):
+                    spliting_primitives_index = volmdlr.core.get_point_index_in_list(
+                        validating_point, validating_points)
+                    if validating_point == points[0]:
+                        new_contour = cls(contour_primitives[:spliting_primitives_index + 1])
+                        contour_primitives = contour_primitives[spliting_primitives_index + 1:]
+                        points = points[spliting_primitives_index + 1:]
+                    else:
+                        new_contour = cls(contour_primitives[spliting_primitives_index:])
+                        contour_primitives = contour_primitives[:spliting_primitives_index]
+                        points = points[:spliting_primitives_index + 1]
+                    list_contours.append(new_contour)
+                else:
+                    list_contours.append(cls(contour_primitives))
+                    if edges:
+                        points = [edges[0].start, edges[0].end]
+                        contour_primitives = [edges.pop(0)]
         valid_contours = [list_contours[0]]
         list_contours.remove(list_contours[0])
         for contour in list_contours:
@@ -1641,8 +1653,13 @@ class ContourMixin(WireMixin):
                         new_primitives_contour1.remove(prim1)
                     if prim2 in new_primitives_contour2:
                         new_primitives_contour2.remove(prim2)
-                    new_primitives_contour1.extend(prim1_delete_shared_section)
-                    new_primitives_contour2.extend(prim2_delete_shared_section)
+                    for primitive1 in prim1_delete_shared_section:
+                        if contour.primitive_section_over_contour(primitive1):
+                            continue
+                        new_primitives_contour1.append(primitive1)
+                    for primitive2 in prim2_delete_shared_section:
+                        if not self.primitive_section_over_contour(primitive2):
+                            new_primitives_contour2.append(primitive2)
 
         return new_primitives_contour1 + new_primitives_contour2
 
@@ -1720,7 +1737,20 @@ class ContourMixin(WireMixin):
         return points
 
     def primitive_over_contour(self, primitive, tol: float = 1e-6):
+        """
+        Verifies if the entire primitive is over a contour.
+        """
         return self.primitive_over_wire(primitive, tol)
+
+    def primitive_section_over_contour(self, primitive, abs_tol: float=1e-6):
+        """
+        Verifies if at least a small section of a primitive is over a contour, not necessarilly the entire primitive.
+        """
+        for prim in self.primitives:
+            shared_section = prim.get_shared_section(primitive, abs_tol)
+            if shared_section:
+                return True
+        return False
 
     def point_over_contour(self, point, abs_tol=1e-6):
         return self.point_over_wire(point, abs_tol)
@@ -2456,8 +2486,10 @@ class Contour2D(ContourMixin, Wire2D):
             else:
                 resulting_primitives.extend(primitives2_inside)
             return [Contour2D(resulting_primitives).order_contour()]
-
-        return self.merge_with(contour2)
+        merged_contours = self.merge_with(contour2)[::-1]
+        merged_contours = sorted(merged_contours, key=lambda contour: contour.area(),
+                                 reverse=True)
+        return merged_contours
 
     def cut_by_wire(self, wire: Wire2D):
         """
