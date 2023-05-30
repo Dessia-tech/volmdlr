@@ -212,7 +212,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         holes = []
         for inner_contour in self.inner_contours:
             inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
-                                                      discretize_line_direction=discretize_line_direction)
+                                                     discretize_line_direction=discretize_line_direction)
             inner_polygon_nodes = [display.Node2D.from_point(p) for p in inner_polygon.points]
             for point in inner_polygon_nodes:
                 if point not in point_index:
@@ -843,20 +843,23 @@ class Surface3D(DessiaObject):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
             is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-3)
-            if not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2) and \
-                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2):
-                primitives2d[i] = primitives2d[i].reverse()
-            elif not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
-                primitives2d[i] = primitives2d[i].reverse()
-            elif not is_connected and math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
-                math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
-                new_primitive = primitives2d[i].reverse()
-                new_delta = previous_primitive.end - new_primitive.start
-                primitives2d[i] = new_primitive.translation(new_delta)
-            elif not is_connected:
-                primitives2d[i] = primitives2d[i].translation(delta)
+            if not is_connected:
+                if primitives2d[i].end.is_close(previous_primitive.end, tol=1e-2) and \
+                        math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2):
+                    primitives2d[i] = primitives2d[i].reverse()
+                elif i == 1 and primitives2d[i].start.is_close(previous_primitive.start, 1e-3) and \
+                        math.isclose(previous_primitive.length(), x_periodicity, abs_tol=1e-2):
+                    primitives2d[i - 1] = previous_primitive.translation(-delta)
+                elif primitives2d[i].end.is_close(previous_primitive.end, tol=1e-2):
+                    primitives2d[i] = primitives2d[i].reverse()
+
+                elif math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
+                        math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
+                    new_primitive = primitives2d[i].reverse()
+                    new_delta = previous_primitive.end - new_primitive.start
+                    primitives2d[i] = new_primitive.translation(new_delta)
+                else:
+                    primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
 
         return primitives2d
@@ -1602,8 +1605,8 @@ class PeriodicalSurface(Surface3D):
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = old_outer_contour_positioned.primitives + [closing_linesegment1] + \
-                    old_innner_contour_positioned.primitives + \
-                    [closing_linesegment2]
+                                               old_innner_contour_positioned.primitives + \
+                                               [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:
@@ -2020,7 +2023,7 @@ class CylindricalSurface3D(PeriodicalSurface):
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
-        content += f"#{current_id} = CYLINDRICAL_SURFACE('{self.name}',#{frame_id},{round(1000 * self.radius, 3)});\n"
+        content += f"#{current_id} = CYLINDRICAL_SURFACE('{self.name}',#{frame_id},{round(1000 * self.radius, 4)});\n"
         return content, [current_id]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -2280,21 +2283,21 @@ class ToroidalSurface3D(PeriodicalSurface):
     def _bounding_box(self):
         distance = self.tore_radius + self.small_radius
         point1 = self.frame.origin + \
-            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point2 = self.frame.origin + \
-            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point3 = self.frame.origin + \
-            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point4 = self.frame.origin + \
-            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
         point5 = self.frame.origin - \
-            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point6 = self.frame.origin - \
-            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point7 = self.frame.origin - \
-            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point8 = self.frame.origin - \
-            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
 
         return volmdlr.core.BoundingBox.from_points(
             [point1, point2, point3, point4, point5, point6, point7, point8])
@@ -2385,7 +2388,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = TOROIDAL_SURFACE('{self.name}',#{frame_id}," \
-                   f"{round(1000 * self.tore_radius, 3)},{round(1000 * self.small_radius, 3)});\n"
+                   f"{round(1000 * self.tore_radius, 4)},{round(1000 * self.small_radius, 4)});\n"
         return content, [current_id]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -2478,9 +2481,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         point_after_start, point_before_end = self._reference_points(fullarc3d)
 
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(start, end, angle3d,
-                                                                               [point_after_start, point_before_end],
-                                                                               [self.x_periodicity,
-                                                                                self.y_periodicity])
+                                                                              [point_after_start, point_before_end],
+                                                                              [self.x_periodicity,
+                                                                               self.y_periodicity])
         theta1, phi1 = start
         # theta2, phi2 = end
         theta3, phi3 = point_after_start
@@ -2510,9 +2513,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         point_after_start, point_before_end = self._reference_points(arc3d)
 
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(start, end, angle3d,
-                                                                               [point_after_start, point_before_end],
-                                                                               [self.x_periodicity,
-                                                                                self.y_periodicity])
+                                                                              [point_after_start, point_before_end],
+                                                                              [self.x_periodicity,
+                                                                               self.y_periodicity])
 
         return [edges.LineSegment2D(start, end)]
 
@@ -2747,7 +2750,7 @@ class ConicalSurface3D(PeriodicalSurface):
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
-        content += f"#{current_id} = CONICAL_SURFACE('{self.name}',#{frame_id},{0.},{round(self.semi_angle, 3)});\n"
+        content += f"#{current_id} = CONICAL_SURFACE('{self.name}',#{frame_id},{0.},{round(self.semi_angle, 4)});\n"
         return content, [current_id]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -3074,6 +3077,17 @@ class SphericalSurface3D(PeriodicalSurface):
         radius = float(arguments[2]) * length_conversion_factor
         return cls(frame_direct, radius, arguments[0][1:-1])
 
+    def to_step(self, current_id):
+        """
+        Translate volmdlr primitive to step syntax.
+        """
+        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
+                                self.frame.v)
+        content, frame_id = frame.to_step(current_id)
+        current_id = frame_id + 1
+        content += f"#{current_id} = SPHERICAL_SURFACE('{self.name}',#{frame_id},{round(1000 * self.radius, 4)});\n"
+        return content, [current_id]
+
     def point2d_to_3d(self, point2d):
         """
         Coverts a parametric coordinate on the surface into a 3D spatial point (x, y, z).
@@ -3250,10 +3264,10 @@ class SphericalSurface3D(PeriodicalSurface):
                 theta2 = -math.pi
 
             primitives = [edges.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
-                edges.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta2, half_pi),
-                                    name="construction"),
-                edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
-                ]
+                          edges.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta2, half_pi),
+                                              name="construction"),
+                          edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
+                          ]
             return primitives
 
     def arc3d_to_2d_with_singularity(self, arc3d, start, end, singularity_points):
@@ -3290,7 +3304,7 @@ class SphericalSurface3D(PeriodicalSurface):
                                         volmdlr.Point2D(theta2, -0.5 * math.pi),
                                         name="construction"),
                     edges.LineSegment2D(volmdlr.Point2D(theta2, -0.5 * math.pi), volmdlr.Point2D(theta2, phi2))
-                    ]
+                ]
             if arc3d.is_point_edge_extremity(point_negative_singularity):
                 return [
                     edges.LineSegment2D(start, volmdlr.Point2D(start.x, 0.5 * math.pi)),
@@ -3298,7 +3312,7 @@ class SphericalSurface3D(PeriodicalSurface):
                                         volmdlr.Point2D(theta2, 0.5 * math.pi),
                                         name="construction"),
                     edges.LineSegment2D(volmdlr.Point2D(theta2, 0.5 * math.pi), volmdlr.Point2D(theta2, phi2))
-                    ]
+                ]
             return [edges.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
                     edges.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(thetai, half_pi),
                                         name="construction"),
@@ -3363,7 +3377,7 @@ class SphericalSurface3D(PeriodicalSurface):
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[1:]
             else:
-                number_points = int(distance/maximum_linear_distance_reference_point)
+                number_points = int(distance / maximum_linear_distance_reference_point)
 
                 local_discretization = [self.point3d_to_2d(point)
                                         for point in edge3d.local_discretization(
@@ -3387,7 +3401,7 @@ class SphericalSurface3D(PeriodicalSurface):
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[:-1]
             else:
-                number_points = int(distance/maximum_linear_distance_reference_point)
+                number_points = int(distance / maximum_linear_distance_reference_point)
 
                 local_discretization = [self.point3d_to_2d(point)
                                         for point in edge3d.local_discretization(
@@ -3412,7 +3426,7 @@ class SphericalSurface3D(PeriodicalSurface):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         singularity_points = self.edge_passes_on_singularity_point(arc3d)
-        half_pi = 0.5 * math.pi # this variable avoid doing this multiplication several times (performance)
+        half_pi = 0.5 * math.pi  # this variable avoid doing this multiplication several times (performance)
         point_positive_singularity, point_negative_singularity = singularity_points
 
         if point_positive_singularity and point_negative_singularity:
@@ -3606,7 +3620,7 @@ class SphericalSurface3D(PeriodicalSurface):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
             if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
-                if primitives2d[i].end == primitives2d[i - 1].end and \
+                if primitives2d[i].end.is_close(previous_primitive.end, 1e-3) and \
                         primitives2d[i].length() == volmdlr.TWO_PI:
                     primitives2d[i] = primitives2d[i].reverse()
                 elif self.is_point2d_on_sphere_singularity(previous_primitive.end, 1e-5):
@@ -3866,6 +3880,18 @@ class ExtrusionSurface3D(Surface3D):
             surface = cls(edge=edge, direction=direction, name=name)
         return surface
 
+    def to_step(self, current_id):
+        """
+        Translate volmdlr primitive to step syntax.
+        """
+        content_edge, edge_id = self.edge.to_step(current_id)
+        current_id = edge_id + 1
+        content_vector, vector_id = self.direction.to_step(current_id)
+        current_id = vector_id + 1
+        content = content_edge + content_vector
+        content += f"#{current_id} = SURFACE_OF_LINEAR_EXTRUSION('{self.name}',#{edge_id},#{vector_id});\n"
+        return content, [current_id]
+
     def arc3d_to_2d(self, arc3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
@@ -4067,13 +4093,35 @@ class RevolutionSurface3D(PeriodicalSurface):
         :return: The corresponding RevolutionSurface3D object.
         :rtype: :class:`volmdlr.faces.RevolutionSurface3D`
         """
+        x_periodicity = None
         name = arguments[0][1:-1]
-        contour3d = object_dict[arguments[1]]
-        if hasattr(contour3d, "simplify"):
-            contour3d = contour3d.simplify
+        wire = object_dict[arguments[1]]
+        if wire.__class__ is wires.Circle3D:
+            start_end = wire.center + wire.frame.u * wire.radius
+            wire = edges.FullArc3D(wire.frame.origin, start_end, wire.frame.w)
+            x_periodicity = 1
+
+        if hasattr(wire, "simplify"):
+            wire = wire.simplify
         axis_point, axis = object_dict[arguments[2]]
-        surface = cls(wire=contour3d, axis_point=axis_point, axis=axis, name=name)
+        surface = cls(wire=wire, axis_point=axis_point, axis=axis, name=name)
         return surface
+
+    def to_step(self, current_id):
+        """
+        Translate volmdlr primitive to step syntax.
+        """
+        content_wire, wire_id = self.wire.to_step(current_id)
+        current_id = wire_id + 1
+        content_axis_point, axis_point_id = self.axis_point.to_step(current_id)
+        current_id = axis_point_id + 1
+        content_axis, axis_id = self.axis.to_step(current_id)
+        current_id = axis_id + 1
+        content = content_wire + content_axis_point + content_axis
+        content += f"#{current_id} = AXIS1_PLACEMENT('',#{axis_point_id},#{axis_id});\n"
+        current_id += 1
+        content += f"#{current_id} = SURFACE_OF_REVOLUTION('{self.name}',#{wire_id},#{current_id - 1});\n"
+        return content, [current_id]
 
     def arc3d_to_2d(self, arc3d):
         """
@@ -4135,7 +4183,6 @@ class RevolutionSurface3D(PeriodicalSurface):
                     edges.LineSegment2D(point2, point3, name="parametric.singularity"),
                     edges.LineSegment2D(point3, point4, name="parametric.arc")
                     ]
-
 
         raise NotImplementedError
 
@@ -4577,7 +4624,7 @@ class BSplineSurface3D(Surface3D):
             return [bspline]
 
         bspline = edges.BSplineCurve3D.from_points_interpolation(
-                            points, min(self.degree_u, self.degree_v), periodic=periodic)
+            points, min(self.degree_u, self.degree_v), periodic=periodic)
         return [bspline.simplify]
 
     def linesegment3d_to_2d(self, linesegment3d):
@@ -4642,7 +4689,7 @@ class BSplineSurface3D(Surface3D):
         points[-1] = end
 
         if all((math.isclose(p[i], max_bound, abs_tol=1e-4) or math.isclose(p[i], min_bound, abs_tol=1e-4)) for
-                    p in points):
+               p in points):
             # if the line is at the boundary of the surface domain, we take the first point as reference
             t_param = max_bound if math.isclose(points[0][i], max_bound, abs_tol=1e-4) else min_bound
             if direction_periodicity == 'x':
@@ -6451,8 +6498,8 @@ class BSplineSurface3D(Surface3D):
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
-                    inner_contour.primitives + \
-                    [closing_linesegment2]
+                                               inner_contour.primitives + \
+                                               [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:
