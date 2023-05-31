@@ -5151,9 +5151,8 @@ class Circle3D(Contour3D):
         try:
             vector_u1.normalize()
             vector_u2.normalize()
-        except ZeroDivisionError:
-            raise ZeroDivisionError(
-                'the 3 points must be distincts')
+        except ZeroDivisionError as exc:
+            raise ZeroDivisionError('the 3 points must be distincts') from exc
 
         normal = vector_u2.cross(vector_u1)
         normal.normalize()
@@ -5173,9 +5172,8 @@ class Circle3D(Contour3D):
 
         try:
             center, _ = line1.minimum_distance_points(line2)
-        except ZeroDivisionError:
-            raise ZeroDivisionError(
-                'Start, end and interior points  of an arc must be distincts')
+        except ZeroDivisionError as exc:
+            raise ZeroDivisionError('Start, end and interior points  of an arc must be distincts') from exc
 
         radius = (center - point1).norm()
         return cls(frame=volmdlr.Frame3D(center, vector_u1, normal.cross(vector_u1), normal),
