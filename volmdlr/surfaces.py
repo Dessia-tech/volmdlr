@@ -1454,7 +1454,7 @@ class Plane3D(Surface3D):
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
-        Converts a 3D B-Spline in spatial domain intoa 2D B-Spline in parametric domain.
+        Converts a 3D B-Spline in spatial domain into a 2D B-Spline in parametric domain.
 
         :param bspline_curve3d: The B-Spline curve to perform the transformation.
         :type bspline_curve3d: edges.BSplineCurve3D
@@ -3250,6 +3250,7 @@ class SphericalSurface3D(PeriodicalSurface):
         theta2, phi2 = end
         if arc3d.is_point_edge_extremity(point_singularity):
             return [edges.LineSegment2D(start, end)]
+        primitives = []
         if math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
             if theta1 == math.pi and theta2 != math.pi:
                 theta1 = -math.pi
@@ -3262,6 +3263,7 @@ class SphericalSurface3D(PeriodicalSurface):
                 edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
                 ]
             return primitives
+        return primitives
 
     def arc3d_to_2d_with_singularity(self, arc3d, start, end, singularity_points):
         """

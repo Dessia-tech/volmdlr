@@ -1345,7 +1345,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Return the sum of volumes of the primitives.
 
-        It does not make any boolean operation in case of overlapping.
+        It does not make any Boolean operation in case of overlapping.
 
         """
         volume = 0

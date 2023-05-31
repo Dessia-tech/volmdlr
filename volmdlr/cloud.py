@@ -64,7 +64,7 @@ class PointCloud3D(dc.DessiaObject):
         extracted_points = []
         for points in self.points:
             dist_to_plane = points.dot(u)
-            if dist_to_plane > umin and dist_to_plane < umax:
+            if umin < dist_to_plane < umax:
                 extracted_points.append(points)
         return PointCloud3D(extracted_points)
 

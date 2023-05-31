@@ -144,7 +144,7 @@ def bspline_intersections_initial_conditions(edge2d, bsplinecurve2d, resolution:
 
     :param edge2d: edge to verify intersection with bspline
     :param bsplinecurve2d: bsplinecurve2d to search for intersections.
-    :param resolution: bspline discretization resolution, to search for inital intersection conditions.
+    :param resolution: bspline discretization resolution, to search for initial intersection conditions.
     :return: a list with all initial sections where there may exist an intersection.
     """
     bspline_discretized_points = bsplinecurve2d.discretization_points(number_points=resolution)

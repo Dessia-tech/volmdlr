@@ -4,7 +4,6 @@ Surfaces & faces.
 """
 
 import math
-import sys
 import warnings
 from itertools import chain
 from typing import List

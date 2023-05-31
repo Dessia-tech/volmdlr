@@ -272,7 +272,7 @@ class WireMixin:
             current_abscissa += primitive.length()
         return primitives1, primitives2
 
-    def abscissa(self, point, tol=1e-6):
+    def abscissa(self, point, tol:float=1e-6):
         """
         Compute the curvilinear abscissa of a point on a wire.
 
@@ -493,7 +493,7 @@ class WireMixin:
     @classmethod
     def wires_from_edges(cls, edges, tol=1e-6):
         """
-        Defines a list of wires from edges, by ordering successives edges.
+        Defines a list of wires from edges, by ordering successive edges.
 
         :param edges: A list of edges
         :type edges: List[edges.Edge]
@@ -1176,7 +1176,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     def is_inside(self, contour2):
         """
-        Verifies if a contour is inside another contour perimiter, including the edges.
+        Verifies if a contour is inside another contour perimeter, including the edges.
 
         :returns: True or False
         """
@@ -1682,8 +1682,8 @@ class ContourMixin(WireMixin):
         new_primitives_contour1 = self.primitives[:]
         new_primitives_contour2 = contour.primitives[:]
         while True:
-            for prim1 in new_primitives_contour1:
-                for prim2 in new_primitives_contour2:
+            for prim1 in new_primitives_contour1[:]:
+                for prim2 in new_primitives_contour2[:]:
                     shared_section = prim1.get_shared_section(prim2, abs_tol)
                     if shared_section:
                         prim1_delete_shared_section = prim1.delete_shared_section(shared_section[0], abs_tol)
@@ -2094,7 +2094,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def is_inside(self, contour2):
         """
-        Verifies if a contour is inside another contour perimiter, including the edges.
+        Verifies if a contour is inside another contour perimeter, including the edges.
 
         :returns: True or False
         """
@@ -3186,8 +3186,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                         point_x_rel_pos = int(point.x / scale_factor)
                         point_y_rel_pos = int(point.y / scale_factor)
                         if boundary[0] <= point_x_rel_pos <= boundary[1] \
-                                and point_y_rel_pos >= boundary[2] \
-                                and point_y_rel_pos <= boundary[3]:
+                                and boundary[2] <= point_y_rel_pos <= boundary[3]:
                             nearby_points.append(point)
 
                 scale_factor *= 4 / 3
@@ -3935,7 +3934,7 @@ class Triangle(ClosedPolygonMixin):
         self._line_segments = None
 
 
-class Triangle2D(ClosedPolygon2D):
+class Triangle2D(Triangle, ClosedPolygon2D):
     """
     Defines a triangle 2D.
 
@@ -3953,11 +3952,8 @@ class Triangle2D(ClosedPolygon2D):
         # self.name = name
 
         ClosedPolygon2D.__init__(self, points=[point1, point2, point3], name=name)
-        #
-        # Triangle.__init__(self, point1,
-        #                   point2,
-        #                   point3,
-        #                   name)
+
+        Triangle.__init__(self, point1, point2, point3, name)
 
     def area(self):
         u = self.point2 - self.point1
@@ -4471,14 +4467,15 @@ class Ellipse2D(Contour2D):
         discretization_points = [point.rotation(self.center, self.theta) for point in discretization_points]
         return discretization_points
 
-    def abscissa(self, point: volmdlr.Point2D):
+    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-3):
         """
         Calculates the abscissa for a given point.
 
         :param point: point to calculate the abscissa.
+        :param tol: tolerance.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
-        if self.point_over_ellipse(point, 1e-3):
+        if self.point_over_ellipse(point, tol):
             angle_abscissa = self.point_angle_with_major_dir(point)
 
             def arc_length(theta):
@@ -4938,13 +4935,16 @@ class Circle3D(Contour3D):
                                     npy.linspace(0, volmdlr.TWO_PI, angle_resolution + 1)][:-1]
         return discretization_points_3d
 
-    def abscissa(self, point: volmdlr.Point3D):
+    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
         """
         Calculates the abscissa a given point.
 
         :param point: point to calculate abscissa.
+        :param tol: tolerance.
         :return: abscissa
         """
+        if not math.isclose(self.center.point_distance(point), self.radius, abs_tol=tol):
+            raise ValueError('Point is not on circle')
         x, y, _ = self.frame.global_to_local_coordinates(point)
         u1 = x / self.radius
         u2 = y / self.radius
@@ -5287,16 +5287,17 @@ class Ellipse3D(Contour3D):
             self._frame = volmdlr.Frame3D(self.center, self.major_dir, self.normal.cross(self.major_dir), self.normal)
         return self._frame
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, tol: float = 1e-6):
         """
         Verifies if a given point lies on the Ellipse3D.
 
         :param point: point to be verified.
+        :param tol: tolerance.
         :return: True is point lies on the Ellipse, False otherwise
         """
         new_point = self.frame.global_to_local_coordinates(point)
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
-                            new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=1e-6)
+                            new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=tol)
 
     def length(self):
         """
@@ -5345,13 +5346,16 @@ class Ellipse3D(Contour3D):
         major_dir_d2 = self.major_dir.to_2d(plane_origin, x, y)
         return Ellipse2D(self.major_axis, self.minor_axis, center, major_dir_d2)
 
-    def abscissa(self, point: volmdlr.Point3D):
+    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6 ):
         """
         Calculates the abscissa a given point.
 
         :param point: point to calculate abscissa.
+        :param tol: tolerance.
         :return: abscissa
         """
+        if not self.point_belongs(point, tol):
+            raise ValueError('Point is not on ellipse.')
         vector_2 = self.normal.cross(self.major_dir)
         ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
         point2d = point.to_2d(self.center, self.major_dir, vector_2)

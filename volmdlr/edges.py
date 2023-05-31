@@ -2092,7 +2092,7 @@ class BSplineCurve2D(BSplineCurve):
 
         :param position: The parameter at which the tangent is computed.
         :type position: float
-        :return: A 2 dimensional point representing the tangent
+        :return: A 2-dimensional point representing the tangent
         :rtype: :class:`volmdlr.Point2D`
         """
         _, tangent = operations.tangent(self.curve, position,
@@ -3573,8 +3573,8 @@ class Arc2D(Arc):
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
-        self.__init__(*[point.frame_mapping(frame, side) for point in
-                        [self.start, self.interior, self.end]])
+        self.__class__(*[point.frame_mapping(frame, side) for point in
+                         [self.start, self.interior, self.end]])
 
     def second_moment_area(self, point):
         """
@@ -6126,7 +6126,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Returns a new Revolution Surface positionned in the specified frame.
+        Returns a new Revolution Surface positioned in the specified frame.
 
         :param frame: Frame of reference
         :type frame: `volmdlr.Frame3D`
@@ -7480,7 +7480,7 @@ class ArcEllipse3D(Edge):
         """
         Checks if two arc-elipse are the same considering the Euclidean distance.
 
-        :param other_edge: other arc-elipse.
+        :param other_edge: other arc-ellipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """

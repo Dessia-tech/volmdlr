@@ -1,5 +1,4 @@
 """volmdlr shells module."""
-import math
 import random
 import traceback
 import warnings
