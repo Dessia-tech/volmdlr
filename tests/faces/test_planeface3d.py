@@ -5,6 +5,7 @@ import math
 import os
 import unittest
 
+import dessia_common.core
 import dessia_common.core as dc
 
 import volmdlr
@@ -81,6 +82,18 @@ class TestPlaneFace3D(unittest.TestCase):
             self.assertEqual(len(solution), len(expected_solution))
             for solution_area, expected_solution_area in zip(solution, expected_solution):
                 self.assertAlmostEqual(solution_area, expected_solution_area)
+
+    def test_set_operations_new_faces(self):
+        volumemodel = dessia_common.core.DessiaObject.load_from_file(
+            'faces/objects_planeface_tests/test_set_operations_new_faces.json')
+        plane_face, cutting_contours3d = volumemodel.primitives[0], volumemodel.primitives[1:]
+        divide_face = plane_face.set_operations_new_faces({(plane_face, plane_face): cutting_contours3d})
+        divide_face = sorted(divide_face, key=lambda face: face.area())
+        self.assertEqual(len(divide_face), 7)
+        expected_areas = [0.05000000000000002, 0.25, 0.4375, 0.5, 1.0621681469282045, 1.29875, 2.4002627208849607]
+        areas = [f.area() for f in divide_face]
+        for area, expected_area in zip(areas, expected_areas):
+            self.assertAlmostEqual(area, expected_area)
 
     def test_cylindricalface_intersections(self):
         R = 0.15

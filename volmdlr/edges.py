@@ -3030,6 +3030,22 @@ class FullArc(Arc):
         """Angle of Full Arc. """
         return volmdlr.TWO_PI
 
+    def split(self, split_point):
+        """
+        Splits arc at a given point.
+
+        :param split_point: splitting point.
+        :return: list of two Arc.
+        """
+        if split_point.is_close(self.start, 1e-6):
+            return [None, self.copy()]
+        if split_point.is_close(self.end, 1e-6):
+            return [self.copy(), None]
+        abscissa = self.abscissa(split_point)
+        class_ = getattr(sys.modules[__name__], 'Arc'+self.__class__.__name__[-2:])
+        return [class_(self.start, self.point_at_abscissa(0.5 * abscissa), split_point),
+                class_(split_point, self.point_at_abscissa(abscissa+(self.length() - abscissa) / 2), self.end)]
+
 
 class Arc2D(Arc):
     """

@@ -109,6 +109,8 @@ def get_circle_intersections(circle1, circle2):
     :param circle2: circle 2 to search for intersections.
     :return: a list with all intersections between the two circles.
     """
+    if circle1.center.is_close(circle2.center):
+        return []
     x0, y0 = circle1.center
     x1, y1 = circle2.center
 

@@ -91,7 +91,8 @@ class OctreeBlockSimplify(DessiaObject):
         for octant in outside_blocks:
             if not octant:
                 continue
-            closed_shells.extend(shells.union_list_of_shells(octant))
+            list_shells = shells.union_list_of_shells(octant)
+            closed_shells.extend(list_shells)
         closed_shells_ = shells.union_list_of_shells(closed_shells.copy())
         closed_shells_ = sorted(closed_shells_, key=lambda shell: shell.volume(), reverse=True)
         simplified_closed_shell = self.block.subtract_to_closed_shell(closed_shells_[0])[0]

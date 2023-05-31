@@ -103,7 +103,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             center -= contour.area() * contour.center_of_mass()
         return center / self.area()
 
-    def point_belongs(self, point2d: volmdlr.Point2D):
+    def point_belongs(self, point2d: volmdlr.Point2D, include_edge_points: bool = True):
         """
         Check whether a point belongs to the 2D surface.
 
@@ -112,7 +112,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         :return: True if the point belongs to the surface, False otherwise.
         :rtype: bool
         """
-        if not self.outer_contour.point_belongs(point2d, include_edge_points=True):
+        if not self.outer_contour.point_belongs(point2d, include_edge_points=include_edge_points):
             return False
 
         for inner_contour in self.inner_contours:
@@ -131,7 +131,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         point_inside_outer_contour = None
         center_of_mass = self.center_of_mass()
-        if self.point_belongs(center_of_mass):
+        if self.point_belongs(center_of_mass, False):
             point_inside_outer_contour = center_of_mass
         if not point_inside_outer_contour:
             point_inside_outer_contour = self.outer_contour.random_point_inside()
@@ -1217,10 +1217,14 @@ class Plane3D(Surface3D):
         u_vector = linesegment.end - linesegment.start
         w_vector = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u_vector)
-        if normaldotu == 0.0:
+        if math.isclose(self.frame.w.unit_vector().dot(u_vector.unit_vector()), 0.0, abs_tol=1e-6):
             return []
         intersection_abscissea = - self.frame.w.dot(w_vector) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
+            if math.isclose(abs(intersection_abscissea), 0, abs_tol=1e-6):
+                return [linesegment.start]
+            if math.isclose(intersection_abscissea, 1, abs_tol=1e-6):
+                return [linesegment.end]
             return []
         return [linesegment.start + intersection_abscissea * u_vector]
 

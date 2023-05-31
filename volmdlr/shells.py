@@ -1,5 +1,6 @@
 """volmdlr shells module."""
 import math
+import random
 import traceback
 import warnings
 from itertools import chain
@@ -453,12 +454,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :param linesegment3d: other line segment.
         :return: List of tuples (face, intersections).
         """
-        intersections = []
+        # intersections = []
         for face in self.faces:
             face_intersections = face.linesegment_intersections(linesegment3d)
             if face_intersections:
-                intersections.append((face, face_intersections))
-        return intersections
+                yield face, face_intersections
+        # return intersections
 
     def line_intersections(self,
                            line3d: edges.Line3D) \
@@ -610,14 +611,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         :return: return True or False.
         """
         for face in self.faces:
-            if face.point_belongs(point) or face.outer_contour3d.point_over_contour(point, abs_tol=1e-7):
+            if face.point_belongs(point):
                 return True
         return False
-
-    def point_in_shell_face(self, point: volmdlr.Point3D):
-        warnings.warn('point_in_shell_face is deprecated, please use point_on_shell instead',
-                      DeprecationWarning)
-        return self.point_on_shell(point)
 
     def triangulation(self):
         """
@@ -836,11 +832,10 @@ class ClosedShell3D(OpenShell3D):
     def is_face_inside(self, face: volmdlr.faces.Face3D):
         if not face.bounding_box.is_inside_bbox(self.bounding_box):
             return False
-        if face.area() > 1e-8:
-            random_point_inside = face.random_point_inside()
-            if not self.point_belongs(random_point_inside):
-                return False
         points = []
+        if face.area() > 1e-8:
+            points.append(face.random_point_inside())
+
         for prim in face.outer_contour3d.primitives:
             points.extend([prim.middle_point(), prim.end])
         for point in points:
@@ -851,7 +846,7 @@ class ClosedShell3D(OpenShell3D):
 
     def is_face_intersecting(self, face: volmdlr.faces.Face3D):
         """Verifies if face is intersecting shell somehow."""
-        if not self.bounding_box.bbox_intersection(face.bounding_box):
+        if not self.bounding_box.is_intersecting(face.bounding_box):
             return False
         for i_face in self.faces:
             if i_face.face_intersections(face):
@@ -872,7 +867,7 @@ class ClosedShell3D(OpenShell3D):
             (1, 0) or (0, 1) with no face intersection  => 1
         """
         # Check if boundary boxes don't intersect
-        if not self.bounding_box.bbox_intersection(shell2.bounding_box):
+        if not self.bounding_box.is_intersecting(shell2.bounding_box):
             return None
 
         # Check if any point of the first shell is in the second shell
@@ -920,19 +915,26 @@ class ClosedShell3D(OpenShell3D):
 
     def get_ray_casting_line_segment(self, point3d):
         """Gets the best ray for performing ray casting algorithm."""
-        points = self.bounding_box.get_points_inside_bbox(2, 2, 2)
-        points.append(self.bounding_box.center)
-        points = sorted(points, key=point3d.point_distance)
-        point = points[0]
-        for point in points:
-            if point.point_distance(point3d) != 0.0:
-                break
-        ray_direction = point - point3d
-        ray_direction.normalize()
-        min_ray_length = math.sqrt(self.bounding_box.size[0] ** 2 + self.bounding_box.size[1] ** 2 +
-                                   self.bounding_box.size[2] ** 2) * 1.1
-        ray = edges.LineSegment3D(point3d, point3d + ray_direction * min_ray_length)
-        return ray
+        boxes_size = [self.bounding_box.size[0] / 2, self.bounding_box.size[1] / 2, self.bounding_box.size[2] / 2]
+        xyz = [volmdlr.Vector3D(boxes_size[0], 0, 0), volmdlr.Vector3D(0, boxes_size[1], 0),
+               volmdlr.Vector3D(0, 0, boxes_size[2])]
+        points = sorted(self.bounding_box.get_points_inside_bbox(2, 2, 2), key=point3d.point_distance)
+        bbox_outside_points = []
+        for vector in xyz:
+            for direction in [1, -1]:
+                bbox_outside_point = points[0] + direction * vector
+                if not self.bounding_box.point_belongs(bbox_outside_point):
+                    bbox_outside_points.append(bbox_outside_point)
+        bbox_outside_points = sorted(bbox_outside_points, key=point3d.point_distance)
+        vec1 = bbox_outside_points[0] - point3d
+        vec1 = vec1.to_vector()
+        vec2 = bbox_outside_points[1] - point3d
+        vec2 = vec2.to_vector()
+        vec3 = bbox_outside_points[2] - point3d
+        vec3 = vec3.to_vector()
+        rays = [edges.LineSegment3D(
+                point3d, point3d + 2 * vec1 + random.random()*vec2 + random.random()*vec3) for _ in range(10)]
+        return rays
 
     def point_belongs(self, point3d: volmdlr.Point3D, **kwargs):
         """
@@ -944,41 +946,30 @@ class ClosedShell3D(OpenShell3D):
 
         if not bbox.point_belongs(point3d):
             return False
-        if any(face.point_belongs(point3d) for face in self.faces):
-            return True
-        ray = self.get_ray_casting_line_segment(point3d)
+        rays = self.get_ray_casting_line_segment(point3d)
+
         count = 0
-        intersections = []
-        for face, point_inters in self.linesegment_intersections(ray):
-            if point_inters[0].is_close(point3d):
-                continue
-            count += len(point_inters)
-            intersections.append((face, point_inters))
+        for ray in rays:
+            count = 0
+            intersections = []
+            for _, point_inters in self.linesegment_intersections(ray):
+                if point_inters[0].is_close(point3d):
+                    return True
+                for inter in point_inters:
+                    if volmdlr.core.point_in_list(inter, intersections):
+                        break
+                    intersections.append(inter)
+                    count += 1
+                else:
+                    continue
+                break
+            else:
+                break
+            continue
         is_inside = True
         if count % 2 == 0:
-            unique_intersections = []
-            for _, point_inters in intersections:
-                for inter in point_inters:
-                    if not volmdlr.core.point_in_list(inter, unique_intersections):
-                        unique_intersections.append(inter)
-            if len(unique_intersections) % 2 == 0:
-                is_inside = False
+            is_inside = False
         return is_inside
-
-    def point_in_shell_face(self, point: volmdlr.Point3D):
-        """
-        Verifies if a given point belongs to some shell face.
-
-        :param point: The point to check.
-        :type point: volmdlr.Point3D
-        :return: True if point belongs to some shell face. False otherwise.
-        :rtype: bool
-        """
-        for face in self.faces:
-            if (face.surface3d.point_on_surface(point) and face.point_belongs(point)) or \
-                    face.outer_contour3d.point_over_contour(point, abs_tol=1e-7):
-                return True
-        return False
 
     def is_inside_shell(self, shell2):
         """
@@ -1001,8 +992,7 @@ class ClosedShell3D(OpenShell3D):
 
         """
         disjoint = True
-        if self.bounding_box.bbox_intersection(shell2.bounding_box) or \
-                self.bounding_box.distance_to_bbox(shell2.bounding_box) <= tol:
+        if self.bounding_box.is_intersecting(shell2.bounding_box, tol):
             return False
         return disjoint
 
@@ -1249,8 +1239,8 @@ class ClosedShell3D(OpenShell3D):
                         reference_shell == shell2 and self.face_on_shell(new_face)):
                     point3d = new_face.random_point_inside()
                     if new_face.point_belongs(point3d):
-                        normal1 = point3d - 0.00001 * new_face.surface3d.frame.w
-                        normal2 = point3d + 0.00001 * new_face.surface3d.frame.w
+                        normal1 = point3d - 0.00001 * new_face.surface3d.frame.w.unit_vector()
+                        normal2 = point3d + 0.00001 * new_face.surface3d.frame.w.unit_vector()
                         if (self.point_belongs(normal1) and shell2.point_belongs(normal1)) or \
                                 (shell2.point_belongs(normal2) and self.point_belongs(normal2)):
                             faces.append(new_face)

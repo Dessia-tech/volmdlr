@@ -449,10 +449,15 @@ class WireMixin:
 
     @classmethod
     def extract(cls, contour, point1, point2, inside=False):
-        """Extracts a contour from another contour, given two points."""
+        """Extracts a wire from another contour/wire, given two points."""
         new_primitives = contour.extract_with_points(point1, point2, inside)
-        contours = [cls(new_primitives)]
-        return contours
+
+        if cls.__name__[:-2] in ['Contour', 'Wire']:
+            wires = [cls(new_primitives)]
+        else:
+            wire_class_ = getattr(sys.modules[__name__], 'Wire'+cls.__name__[-2:])
+            wires = [wire_class_(new_primitives)]
+        return wires
 
     def split_with_sorted_points(self, sorted_points):
         """
@@ -561,6 +566,39 @@ class WireMixin:
                 primitives.append(primitive)
 
         return class_(primitives)
+
+    def get_connected_wire(self, list_wires):
+        """
+        Searches a wire in list_contour connected to self.
+
+        :param list_wires: list of wires.
+        :return:
+        """
+        connecting_contour_end = self.primitives[-1].end
+        connecting_contour_start = self.primitives[0].start
+        connected_contour = None
+        for contour in list_wires:
+            if connecting_contour_end.is_close(contour.primitives[0].start) or\
+                    connecting_contour_end.is_close(contour.primitives[-1].end):
+                connected_contour = contour
+                break
+            if connecting_contour_start.is_close(contour.primitives[0].start) or\
+                    connecting_contour_start.is_close(contour.primitives[-1].end):
+                connected_contour = contour
+                break
+        return connected_contour
+
+    def is_sharing_primitives_with(self, contour, abs_tol: float = 1e-6):
+        """
+        Check if two contour are sharing primitives.
+
+        """
+        for prim1 in self.primitives:
+            for prim2 in contour.primitives:
+                shared_section = prim1.get_shared_section(prim2, abs_tol)
+                if shared_section:
+                    return True
+        return False
 
 
 class EdgeCollection3D(WireMixin):
@@ -1136,6 +1174,13 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
     def middle_point(self):
         return self.point_at_abscissa(self.length() / 2)
 
+    def is_inside(self, contour2):
+        """
+        Verifies if a contour is inside another contour perimiter, including the edges.
+
+        :returns: True or False
+        """
+        return False
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     """
@@ -1563,19 +1608,6 @@ class ContourMixin(WireMixin):
             return True
         return False
 
-    def is_sharing_primitives_with(self, contour, abs_tol: float = 1e-6):
-        """
-        Check if two contour are sharing primitives.
-
-        """
-
-        for prim1 in self.primitives:
-            for prim2 in contour.primitives:
-                shared_section = prim1.get_shared_section(prim2, abs_tol)
-                if shared_section:
-                    return True
-        return False
-
     def shared_primitives_extremities(self, contour):
         """
         #todo: is this description correct?.
@@ -1649,23 +1681,32 @@ class ContourMixin(WireMixin):
         """
         new_primitives_contour1 = self.primitives[:]
         new_primitives_contour2 = contour.primitives[:]
-        for prim1 in self.primitives:
-            for prim2 in contour.primitives:
-                shared_section = prim1.get_shared_section(prim2, abs_tol)
-                if shared_section:
-                    prim1_delete_shared_section = prim1.delete_shared_section(shared_section[0], abs_tol)
-                    prim2_delete_shared_section = prim2.delete_shared_section(shared_section[0], abs_tol)
-                    if prim1 in new_primitives_contour1:
-                        new_primitives_contour1.remove(prim1)
-                    if prim2 in new_primitives_contour2:
-                        new_primitives_contour2.remove(prim2)
-                    for primitive1 in prim1_delete_shared_section:
-                        if contour.primitive_section_over_contour(primitive1):
-                            continue
-                        new_primitives_contour1.append(primitive1)
-                    for primitive2 in prim2_delete_shared_section:
-                        if not self.primitive_section_over_contour(primitive2):
-                            new_primitives_contour2.append(primitive2)
+        while True:
+            for prim1 in new_primitives_contour1:
+                for prim2 in new_primitives_contour2:
+                    shared_section = prim1.get_shared_section(prim2, abs_tol)
+                    if shared_section:
+                        prim1_delete_shared_section = prim1.delete_shared_section(shared_section[0], abs_tol)
+                        prim2_delete_shared_section = prim2.delete_shared_section(shared_section[0], abs_tol)
+                        if prim1 in new_primitives_contour1:
+                            new_primitives_contour1.remove(prim1)
+                        if prim2 in new_primitives_contour2:
+                            new_primitives_contour2.remove(prim2)
+                        # for primitive1 in prim1_delete_shared_section:
+                        #     if contour.primitive_section_over_contour(primitive1):
+                        #         continue
+                        #     new_primitives_contour1.append(primitive1)
+                        new_primitives_contour1.extend(prim1_delete_shared_section)
+                        # for primitive2 in prim2_delete_shared_section:
+                        #     if not self.primitive_section_over_contour(primitive2):
+                        #         new_primitives_contour2.append(primitive2)
+                        new_primitives_contour2.extend(prim2_delete_shared_section)
+                        break
+                else:
+                    continue
+                break
+            else:
+                break
 
         return new_primitives_contour1 + new_primitives_contour2
 
@@ -1843,6 +1884,32 @@ class ContourMixin(WireMixin):
 
         contour = cls(edges)
         return contour
+
+    def reorder_contour_at_point(self, point):
+        """
+        Create a new contour from self, but starting at given point.
+
+        :param point: othe point.
+        :return: new contour
+        """
+        new_primitives_order = []
+        for i, primitive in enumerate(self.primitives):
+            if primitive.start.is_close(point, 1e-6):
+                if i == 0:
+                    return self
+                new_primitives_order = self.primitives[i:] + self.primitives[:i]
+                break
+        new_contour = self.__class__(new_primitives_order)
+        return new_contour
+
+    def are_extremity_points_touching(self, wire):
+        """
+        Verifies if the extremities points of wire are touching contour.
+
+        :param wire: other wire.
+        :return: True if other contour is touching
+        """
+        return self.point_over_contour(wire.primitives[0].start) and self.point_over_contour(wire.primitives[-1].end)
 
 
 class Contour2D(ContourMixin, Wire2D):
