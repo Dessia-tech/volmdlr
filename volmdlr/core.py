@@ -1244,7 +1244,7 @@ class Assembly(dc.PhysicalObject):
 
 class Compound(dc.PhysicalObject):
     """
-    A class that can be the collection of any volmdlr primitives.
+    A class that can be a collection of any volmdlr primitives.
     """
     def __init__(self, primitives, name: str = ""):
         self.primitives = primitives
