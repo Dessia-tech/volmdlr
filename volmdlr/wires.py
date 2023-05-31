@@ -1692,14 +1692,7 @@ class ContourMixin(WireMixin):
                             new_primitives_contour1.remove(prim1)
                         if prim2 in new_primitives_contour2:
                             new_primitives_contour2.remove(prim2)
-                        # for primitive1 in prim1_delete_shared_section:
-                        #     if contour.primitive_section_over_contour(primitive1):
-                        #         continue
-                        #     new_primitives_contour1.append(primitive1)
                         new_primitives_contour1.extend(prim1_delete_shared_section)
-                        # for primitive2 in prim2_delete_shared_section:
-                        #     if not self.primitive_section_over_contour(primitive2):
-                        #         new_primitives_contour2.append(primitive2)
                         new_primitives_contour2.extend(prim2_delete_shared_section)
                         break
                 else:
