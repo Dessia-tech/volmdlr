@@ -53,6 +53,7 @@ steps:
 - name: check code complexity
   image: dessia/python-ci:3.9
   commands:
+  - git fetch --tags
   - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
   - python setup.py build_ext --inplace
   - pip install pylint==2.17.3 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
