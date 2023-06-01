@@ -3,7 +3,7 @@
 """
 Edges related classes.
 """
-
+import copy
 import math
 import sys
 import warnings
@@ -5229,11 +5229,19 @@ class LineSegment3D(LineSegment):
         edge2d.plot(ax=ax, edge_style=EdgeStyle(color=color, width=width))
         return ax
 
-    def plot_data(self, x_3d, y_3d, marker=None, color='black', stroke_width=1,
-                  dash=False, opacity=1, arrow=False):
+    def plot_data(self, x_3d, y_3d, **kwargs):
+        """
+        2D plot of the line segment.
+        """
+        marker = kwargs.get("marker", None)
+        color = kwargs.get("color", 'black')
+        stroke_width = kwargs.get("stroke_width", 1)
+        dash = kwargs.get("dash", False)
+        opacity = kwargs.get("opacity", 1)
+        arrow = kwargs.get("arrow", False)
+        style = EdgeStyle(color=color, alpha=opacity, width=marker, arrow=arrow, dashed=dash, linewidth=stroke_width)
         edge2d = self.plane_projection2d(volmdlr.O3D, x_3d, y_3d)
-        return edge2d.plot_data(marker, color, stroke_width,
-                                dash, opacity, arrow)
+        return edge2d.plot_data(edge_style=style)
 
     def to_line(self):
         """
@@ -5973,7 +5981,7 @@ class BSplineCurve3D(BSplineCurve):
         Returns a new BSplineCurve3D.
 
         """
-        curve_copy = self.curve.__deepcopy__({})
+        curve_copy = copy.deepcopy(self.curve)
         modified_curve = operations.insert_knot(curve_copy, [knot], num=[num])
         return self.from_geomdl_curve(modified_curve)
 
