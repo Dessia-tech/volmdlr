@@ -600,6 +600,9 @@ class WireMixin:
                     return True
         return False
 
+    def middle_point(self):
+        return self.point_at_abscissa(self.length() / 2)
+
 
 class EdgeCollection3D(WireMixin):
     """
@@ -1170,9 +1173,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
             y_min = min(y_min, ymin_edge)
             y_max = max(y_max, ymax_edge)
         return volmdlr.core.BoundingRectangle(x_min, x_max, y_min, y_max)
-
-    def middle_point(self):
-        return self.point_at_abscissa(self.length() / 2)
 
     def is_inside(self, contour2):
         """
