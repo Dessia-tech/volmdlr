@@ -87,7 +87,7 @@ steps:
     - bash code_changelog.sh
 
 - name: install, build doc run scripts and tutorials
-  image: python:3.8
+  image: python:3.9
   commands:
   - git fetch --tags
   - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
