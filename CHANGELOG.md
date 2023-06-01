@@ -12,14 +12,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New module: cad_simplification - OctreeBlockSimplify, TrippleExtrusionSimplify
 - shells.py : function to performe union operations for a given list of shells.
 - ClosedShell3D: is_face_intersecting, is_intersecting_with
+- BoundingBox: get_points_inside_bbox, size
+- Vector3D: unit_vector
+- Face3D: split_inner_contour_intersecting_cutting_contours
+- Shell3D: get_ray_casting_line_segment
+- WireMixin: get_connected_wire, is_sharing_primitives_with
 ### Fixed
-- ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces
+- ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
+- ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
+- BoundingBox: bbox_intersection
+- face3D: get_face_cutting_contours
 ### Changed
 
 ### Unittests
+- FullArc2D: split_between_two_points
+- Face3D: set_operations_new_faces
+- ClosedShell3D: point_belongs
 
 
 ## v0.11.0 [unreleased]
