@@ -127,15 +127,14 @@ setup(
     install_requires=[
         "packaging",
         "dessia_common>=0.10.0",
-        "plot_data>=0.10.0"
         "Cython",
-        "numpy",
+        "numpy<=1.24.0",
         "matplotlib",
         "scipy",
         "geomdl",
         "networkx",
         "triangle",
-        "numpy<=1.24.0",
+        "plot_data>=0.10.9",
         "kaitaistruct",
         "binaryornot",
         "sympy",
