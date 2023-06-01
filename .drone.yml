@@ -51,7 +51,7 @@ steps:
     from: technical@dessia.tech
 
 - name: check code complexity
-  image: dessia/python-ci:3.8
+  image: dessia/python-ci:3.9
   commands:
   - git fetch --tags
   - pip install Cython
@@ -68,7 +68,7 @@ steps:
 
 
 - name: check pep8 formatting
-  image: python:3.8
+  image: python:3.9
   commands:
     - git fetch --tags
     - pip3 install -U pip autopep8==2.0.0
@@ -91,7 +91,7 @@ steps:
   commands:
   - git fetch --tags
   - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
-  - python setup.py install
+  - python setup.py build_ext --inplace
   - cd doc
   - make html
   - cd ../tests
