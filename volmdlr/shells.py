@@ -829,6 +829,11 @@ class ClosedShell3D(OpenShell3D):
     STEP_FUNCTION = 'CLOSED_SHELL'
 
     def is_face_inside(self, face: volmdlr.faces.Face3D):
+        """
+        Verifies if a face is inside the closed shell 3D.
+        :param face: other face.
+        :return: returns True if face is inside, and False otherwise
+        """
         if not face.bounding_box.is_inside_bbox(self.bounding_box):
             return False
         points = []

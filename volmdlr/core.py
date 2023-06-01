@@ -869,8 +869,16 @@ class BoundingBox(dc.DessiaObject):
         return volmdlr.Frame3D(self.center, x, y, z)
 
     def get_points_inside_bbox(self, points_x, points_y, points_z):
+        """
+        Gets points inside the BoudingBox.
+
+        :param points_x: Number of points in x direction.
+        :param points_y: Number of points in y direction.
+        :param points_z: Number of points in z direction.
+        :return: list of points inside bounding box.
+        """
         _size = [self.size[0] / points_x, self.size[1] / points_y,
-                              self.size[2] / points_z]
+                 self.size[2] / points_z]
         initial_center = self.center.translation(
             -volmdlr.Vector3D(self.size[0] / 2 - _size[0] / 2,
                               self.size[1] / 2 - _size[1] / 2,
@@ -887,6 +895,8 @@ class BoundingBox(dc.DessiaObject):
 
     @property
     def size(self):
+        """Gets the Size of the Bounding Box."""
+
         if not self._size:
             self._size = [self.xmax - self.xmin, self.ymax - self.ymin, self.zmax - self.zmin]
         return self._size

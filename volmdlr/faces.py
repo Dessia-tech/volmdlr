@@ -662,6 +662,13 @@ class Face3D(volmdlr.core.Primitive3D):
         return self_copy.divide_face(list_cutting_contours)
 
     def split_inner_contour_intersecting_cutting_contours(self, list_cutting_contours):
+        """
+        Given a list contours cutting the face, it calculates inner contours intersections with these contours.
+
+        Then, these inner contours were split at the found intrsecting points.
+        :param list_cutting_contours: list of contours cutting face.
+        :return:
+        """
         list_split_inner_contours = []
         for inner_contour in self.surface2d.inner_contours:
             list_intersecting_points_with_inner_contour = []

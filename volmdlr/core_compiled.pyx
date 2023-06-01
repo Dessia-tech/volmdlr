@@ -224,6 +224,7 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False):
 
 # =============================================================================
 def bbox_is_intersecting(bbox1, bbox2, tol):
+    """Verifies if the two bouding boxes are intersecting, or touching."""
     cdef float x1_min, x1_max, y1_min, y1_max, z1_min, z1_max, x2_min, x2_max, y2_min, y2_max, z2_min, z2_max
     x1_min = bbox1.xmin - tol
     x1_max = bbox1.xmax + tol
