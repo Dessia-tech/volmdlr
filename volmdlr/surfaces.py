@@ -6403,10 +6403,10 @@ class BSplineSurface3D(Surface3D):
         """
         if self.surface.rational:
             # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
-            derivatives = volmdlr.bspline_compiled.rational_derivatives(self.surface.data, (u, v), order)
+            derivatives = volmdlr.rational_derivatives(self.surface.data, (u, v), order)
         else:
             # derivatives = self._derivatives(self.surface.data, (u, v), order)
-            derivatives = volmdlr.bspline_compiled.derivatives(self.surface.data, (u, v), order)
+            derivatives = volmdlr.derivatives(self.surface.data, (u, v), order)
         for i in range(order + 1):
             for j in range(order + 1):
                 derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])

@@ -1264,7 +1264,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
         """
 
-        discretized_points = self.discretization_points(discretization_parameter)
+        discretized_points = self.discretization_points(number_points=discretization_parameter)
         bspline_curve = volmdlr.edges.BSplineCurve3D.from_points_interpolation(discretized_points, degree)
 
         return bspline_curve
