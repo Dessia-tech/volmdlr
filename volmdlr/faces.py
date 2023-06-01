@@ -708,10 +708,13 @@ class Face3D(volmdlr.core.Primitive3D):
         valid_cutting_contours = []
 
         # remove split_inner_contour connected to a cutting_contour at two points.
-        connected_at_two_ends = [split_contour for split_contour in list_split_inner_contours
-                                 for cutting_contour in list_cutting_contours
-                                 if split_contour.point_over_wire(cutting_contour.primitives[0].start) and
-                                 split_contour.point_over_wire(cutting_contour.primitives[-1].end)]
+        connected_at_two_ends = []
+        for cutting_contour in list_cutting_contours:
+            for split_contour in list_split_inner_contours:
+                if split_contour.point_over_wire(cutting_contour.primitives[0].start) and \
+                        split_contour.point_over_wire(cutting_contour.primitives[-1].end):
+                    connected_at_two_ends.append(split_contour)
+                    break
         list_split_inner_contours = [split_contour for split_contour in list_split_inner_contours
                                      if split_contour not in connected_at_two_ends]
         while list_cutting_contours:
@@ -722,8 +725,6 @@ class Face3D(volmdlr.core.Primitive3D):
                     valid_cutting_contours.append(cutting_contour)
                     list_cutting_contours.pop(i)
                     break
-                if not self.surface2d.outer_contour.intersection_points(cutting_contour):
-                    continue
                 list_cutting_contours.pop(i)
                 while True:
                     connecting_split_contour = cutting_contour.get_connected_wire(list_split_inner_contours)
@@ -731,7 +732,8 @@ class Face3D(volmdlr.core.Primitive3D):
                     new_contour = volmdlr.wires.Contour2D.contours_from_edges(
                         cutting_contour.primitives + connecting_split_contour.primitives)[0]
 
-                    if self.surface2d.outer_contour.are_extremity_points_touching(new_contour):
+                    if self.surface2d.outer_contour.are_extremity_points_touching(new_contour) or\
+                            new_contour.is_contour_closed():
                         valid_cutting_contours.append(new_contour)
                         break
 
@@ -766,7 +768,7 @@ class Face3D(volmdlr.core.Primitive3D):
         list_faces = []
         list_open_cutting_contours = []
         list_closed_cutting_contours = []
-        face_inner_contours = self.surface2d.inner_contours
+        face_inner_contours = self.surface2d.inner_contours[:]
         list_cutting_contours_ = []
         while list_cutting_contours:
             cutting_contour = list_cutting_contours[0]
@@ -776,15 +778,23 @@ class Face3D(volmdlr.core.Primitive3D):
                 continue
             for inner_contour in face_inner_contours:
                 if cutting_contour.is_inside(inner_contour):
+                    if cutting_contour.is_sharing_primitives_with(inner_contour):
+                        merged_contours = cutting_contour.merge_with(inner_contour)
+                        list_cutting_contours.remove(cutting_contour)
+                        cutting_contour = merged_contours[0]
+                    # list_cutting_contours = merged_contours + list_cutting_contours
+                    # break
                     continue
                 if cutting_contour.is_sharing_primitives_with(inner_contour):
                     merged_contours = cutting_contour.merge_with(inner_contour)
                     list_cutting_contours.remove(cutting_contour)
+                    face_inner_contours.remove(inner_contour)
                     list_cutting_contours = merged_contours + list_cutting_contours
                     break
             else:
                 list_cutting_contours_.append(cutting_contour)
-                list_cutting_contours.remove(cutting_contour)
+                if cutting_contour in list_cutting_contours:
+                    list_cutting_contours.remove(cutting_contour)
 
         list_cutting_contours = list_cutting_contours_
         list_cutting_contours_ = []

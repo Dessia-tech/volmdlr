@@ -52,7 +52,7 @@ class PointCloud3D(dc.DessiaObject):
 
     @property
     def bounding_box(self):
-        if not self._bounding_box:
+        if not self.__bounding_box:
             self.__bounding_box = self._bounding_box()
         return self.__bounding_box
 

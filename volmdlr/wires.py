@@ -1904,6 +1904,9 @@ class ContourMixin(WireMixin):
         """
         return self.point_over_contour(wire.primitives[0].start) and self.point_over_contour(wire.primitives[-1].end)
 
+    def is_contour_closed(self):
+        return self.primitives[0].start.is_close(self.primitives[-1].end)
+
 
 class Contour2D(ContourMixin, Wire2D):
     """
