@@ -55,11 +55,21 @@ def step_split_arguments(function_arg):
     if len(function_arg) > 0 and function_arg[0] == "(":
         function_arg += ")"
     parenthesis = 1
+    is_str = False
     for char in function_arg:
         if char == "(":
             parenthesis += 1
 
-        if char != "," or parenthesis > 1:
+        if char == "'" and not is_str:
+            is_str = True
+        elif char == "'" and is_str:
+            is_str = False
+        # if char != "," or parenthesis > 1 or is_str:
+        #     argument += char
+
+        if parenthesis > 1 or is_str:
+            argument += char
+        elif char != ",":
             argument += char
         else:
             arguments.append(argument)
@@ -773,7 +783,8 @@ class Step(dc.DessiaObject):
             function_arg = function_name_arg[1].split("#")
             function_connections = []
             connections = []
-            # print(function_id, function_name)
+            if function_id == 7252:
+                print(function_id, function_name, function_arg)
             for connec in function_arg[1:]:
                 connec = connec.split(",")
                 connec = connec[0].split(")")
@@ -782,7 +793,6 @@ class Step(dc.DessiaObject):
                     connections.append(function_connection)
                     function_connections.append(
                         (function_id, function_connection))
-            # print(function_connections)
             dict_connections[function_id] = connections
             all_connections.extend(function_connections)
 
@@ -805,7 +815,6 @@ class Step(dc.DessiaObject):
                     if arg[0] == '#':
                         function_connections.append(
                             (function_id, int(arg[1:])))
-            # print('=', function_connections)
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
@@ -1502,7 +1511,8 @@ SI_PREFIX = {'.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9, '.MEG
              '.HECTO.': 1e2, '.DECA.': 1e1, '$': 1, '.DECI.': 1e-1, '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6,
              '.NANO.': 1e-9, '.PICO.': 1e-12, '.FEMTO.': 1e-15, '.ATTO.': 1e-18}
 
-STEP_REPRESENTATION_ENTITIES = {"ADVANCED_BREP_SHAPE_REPRESENTATION", "FACETED_BREP_SHAPE_REPRESENTATION",
+STEP_REPRESENTATION_ENTITIES = {"ADVANCED_BREP_SHAPE_REPRESENTATION",
+                                "FACETED_BREP_SHAPE_REPRESENTATION",
                                 "MANIFOLD_SURFACE_SHAPE_REPRESENTATION",
                                 "GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION",
                                 "GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION",
