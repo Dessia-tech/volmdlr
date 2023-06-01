@@ -4304,6 +4304,7 @@ class BSplineSurface3D(Surface3D):
         self._grids2d = None
         self._grids2d_deformed = None
         self._bbox = None
+        self._surface_curves = None
 
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
@@ -4357,6 +4358,33 @@ class BSplineSurface3D(Surface3D):
         xmin, ymin, zmin = min_bounds
         xmax, ymax, zmax = max_bounds
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    @property
+    def surface_curves(self):
+        """
+        Extracts curves from a surface.
+        """
+        if not self._surface_curves:
+            self._surface_curves = self.get_surface_curves()
+        return self._surface_curves
+
+    def get_surface_curves(self):
+        """
+        Converts the surface curves from geomdl curve to volmdlr.
+        """
+        # v-direction
+        crvlist_v = []
+        v_curves = self.curves["v"]
+        for curve in v_curves:
+            crvlist_v.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+        # u-direction
+        crvlist_u = []
+        u_curves = self.curves["u"]
+        for curve in u_curves:
+            crvlist_u.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+
+        # Return shapes as a dict object
+        return {"u": crvlist_u, "v": crvlist_v}
 
     def control_points_matrix(self, coordinates):
         """

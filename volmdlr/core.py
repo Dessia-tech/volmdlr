@@ -1038,7 +1038,7 @@ class Assembly(dc.PhysicalObject):
         self.frame = frame
         self.positions = positions
         self.primitives = [self.map_primitive(primitive, frame, frame_primitive)
-                                      for primitive, frame_primitive in zip(components, positions)]
+                           for primitive, frame_primitive in zip(components, positions)]
         self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)
 
@@ -1101,7 +1101,7 @@ class Assembly(dc.PhysicalObject):
         side = 'old' or 'new'
         """
         new_positions = [position.frame_mapping(frame, side)
-                          for position in self.positions]
+                         for position in self.positions]
         return Assembly(self.components, new_positions, self.frame, self.name)
 
     @staticmethod
@@ -1122,11 +1122,11 @@ class Assembly(dc.PhysicalObject):
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
         matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
-                       [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
-                       [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+                              [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                              [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
         matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
-                       [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
-                       [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+                              [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                              [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
         transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
