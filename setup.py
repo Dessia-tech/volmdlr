@@ -127,6 +127,7 @@ setup(
     install_requires=[
         "packaging",
         "dessia_common>=0.10.0",
+        "plot_data>=0.10.0"
         "Cython",
         "numpy",
         "matplotlib",
