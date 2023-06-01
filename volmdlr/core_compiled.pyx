@@ -222,6 +222,7 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False):
                 inside = not inside
     return inside
 
+
 # =============================================================================
 def bbox_is_intersecting(bbox1, bbox2, tol):
     """Verifies if the two bouding boxes are intersecting, or touching."""
