@@ -1,6 +1,7 @@
 import math
 import unittest
 
+import dessia_common.core
 import volmdlr
 from volmdlr import edges, faces, primitives3d, wires, surfaces, shells
 
@@ -160,6 +161,15 @@ class TestClosedShell3D(unittest.TestCase):
             volmdlr.Frame3D(volmdlr.Point3D(.5, 0, 0), volmdlr.Vector3D(0.3, 0, 0),
                             volmdlr.Vector3D(0, 0.3, 0), volmdlr.Vector3D(0, 0, 0.3)), color=(.1, 0.2, 1), alpha=0.6)
         self.assertFalse(box1.intersection(box4))
+
+    def test_point_belongs(self):
+        closed_shell = dessia_common.core.DessiaObject.load_from_file('shells/test_closed_shell_point_belongs2.json').primitives[0]
+        points = [volmdlr.Point3D(-.2, -0.6, 0.08), volmdlr.Point3D(-0.340920128805, -0.418071198223, 0.007036661148),
+                  volmdlr.Point3D(-0.287522562519, -0.574786328164, 0.157256628036),
+                  volmdlr.Point3D(-0.314221345662, -0.522547951517, 0.057109983444)]
+        expected_results = [True, True, False, True]
+        for i, expected_result in enumerate(expected_results):
+            self.assertEqual(closed_shell.point_belongs(points[i]), expected_result)
 
 
 if __name__ == '__main__':
