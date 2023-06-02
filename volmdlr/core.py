@@ -24,6 +24,7 @@ import dessia_common.core as dc
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
+from volmdlr.core_compiled import bbox_is_intersecting
 
 npy.seterr(divide='raise')
 
@@ -704,6 +705,7 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
+        self._size = None
 
         # disabling super init call for efficiency, put back when dc disable kwargs
         # dc.DessiaObject.__init__(self, name=name)
@@ -866,6 +868,39 @@ class BoundingBox(dc.DessiaObject):
         z = volmdlr.Vector3D(0, 0, (self.zmax - self.zmin))
         return volmdlr.Frame3D(self.center, x, y, z)
 
+    def get_points_inside_bbox(self, points_x, points_y, points_z):
+        """
+        Gets points inside the BoudingBox.
+
+        :param points_x: Number of points in x direction.
+        :param points_y: Number of points in y direction.
+        :param points_z: Number of points in z direction.
+        :return: list of points inside bounding box.
+        """
+        _size = [self.size[0] / points_x, self.size[1] / points_y,
+                 self.size[2] / points_z]
+        initial_center = self.center.translation(
+            -volmdlr.Vector3D(self.size[0] / 2 - _size[0] / 2,
+                              self.size[1] / 2 - _size[1] / 2,
+                              self.size[2] / 2 - _size[2] / 2))
+        points = []
+        for z_box in range(points_z):
+            for y_box in range(points_y):
+                for x_box in range(points_x):
+                    translation_vector = volmdlr.Vector3D(x_box * _size[0], y_box * _size[1],
+                                                          z_box * _size[2])
+                    point = initial_center.translation(translation_vector)
+                    points.append(point)
+        return points
+
+    @property
+    def size(self):
+        """Gets the Size of the Bounding Box."""
+
+        if not self._size:
+            self._size = [self.xmax - self.xmin, self.ymax - self.ymin, self.zmax - self.zmin]
+        return self._size
+
     def volume(self) -> float:
         """
         Calculates the volume of a bounding box.
@@ -876,24 +911,39 @@ class BoundingBox(dc.DessiaObject):
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
                 self.zmax - self.zmin)
 
-    def bbox_intersection(self, bbox2: "BoundingBox") -> bool:
+    def bbox_intersection(self, bbox2: "BoundingBox", tol: float = 1e-6) -> bool:
         """
         Calculates if there is an intersection between two bounding boxes.
 
         :param bbox2: The second bounding box to compare with the current bounding box (self).
         :type bbox2: BoundingBox
+        :param tol: tolerance to be considered.
         :return: A boolean value indicating whether the two bounding boxes intersect (True) or not (False).
         :rtype: bool
         """
-        if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
-            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                    and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-                return True
-        if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
-            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                    and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-                return True
-        return False
+        # if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
+        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
+        #         return True
+        # if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
+        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
+        #         return True
+        # return False
+        warnings.warn('bbox_intersection is deprecated, please use is_intersecting instead')
+        return self.is_intersecting(bbox2, tol)
+
+    def is_intersecting(self, bbox2, tol: float = 1e-6):
+        """
+        Checks if two bounding boxes are intersecting or touching.
+
+        :param self: BoundingBox object representing the first bounding box.
+        :param bbox2: BoundingBox object representing the second bounding box.
+        :param tol: tolerance to be considered.
+
+        :return: True if the bounding boxes are intersecting or touching, False otherwise.
+        """
+        return bbox_is_intersecting(self, bbox2, tol)
 
     def is_inside_bbox(self, bbox2: "BoundingBox") -> bool:
         """
@@ -1305,7 +1355,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Return the sum of volumes of the primitives.
 
-        It does not make any boolean operation in case of overlapping.
+        It does not make any Boolean operation in case of overlapping.
 
         """
         volume = 0
