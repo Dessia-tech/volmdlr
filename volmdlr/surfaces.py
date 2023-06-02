@@ -3971,24 +3971,8 @@ class ExtrusionSurface3D(Surface3D):
         n = len(bspline_curve3d.control_points)
         points = [self.point3d_to_2d(point)
                   for point in bspline_curve3d.discretization_points(number_points=n)]
-        start = points[0]
-        end = points[-1]
-        if not start.is_close(end):
-            linesegment = edges.LineSegment2D(start, end)
-            flag = True
-            for point in points:
-                if not linesegment.point_belongs(point):
-                    flag = False
-                    break
-            if flag:
-                return [linesegment]
-
-        # Is this always True?
-        n = len(bspline_curve3d.control_points)
-        points = [self.point3d_to_2d(p)
-                  for p in bspline_curve3d.discretization_points(number_points=n)]
         return [edges.BSplineCurve2D.from_points_interpolation(
-            points, bspline_curve3d.degree, bspline_curve3d.periodic)]
+            points, bspline_curve3d.degree, bspline_curve3d.periodic).simplify]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
