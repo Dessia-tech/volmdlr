@@ -254,6 +254,7 @@ def arc3d_to_toroidal_coordinates_verification(start, end, angle3d, reference_po
     start, end = toroidal_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end)
     theta1, phi1 = start
     theta2, phi2 = end
+
     has_theta_discontinuity, has_phi_discontinuity = discontinuity
     if math.isclose(phi1, phi2, abs_tol=1e-2) and has_theta_discontinuity:
         theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2,

@@ -178,12 +178,23 @@ class Block(shells.ClosedShell3D):
         self.size = (self.frame.u.norm(),
                      self.frame.v.norm(),
                      self.frame.w.norm())
-
+        self._octree = None
+        self._quadtree = None
         faces = self.shell_faces()
         for face in faces:
             face.alpha = alpha
             face.color = color
         shells.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
+
+    def __eq__(self, other):
+        if self.__class__.__name__ != other.__class__.__name__:
+            return False
+        if self.frame != other.frame:
+            return False
+        return True
+
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.frame))
 
     def to_dict(self, *args, **kwargs):
         """
@@ -462,6 +473,40 @@ class Block(shells.ClosedShell3D):
 
         return fig, ax
 
+    def octree(self):
+        """Subdivide block into eight other blocks."""
+        if not self._octree:
+            self._octree = self.subdivide_block(2, 2, 2)
+        return self._octree
+
+    def quadtree(self):
+        """Subdivide block into four other blocks."""
+        if not self._quadtree:
+            self._quadtree = self.subdivide_block(2, 2, 1)
+        return self._quadtree
+
+    def subdivide_block(self, number_blocks_x, number_blocks_y, number_blocks_z):
+        """Divide block into sub blocks."""
+        filling_boxes_size = [self.size[0] / number_blocks_x, self.size[1] / number_blocks_y,
+                              self.size[2] / number_blocks_z]
+        initial_frame_center = self.frame.origin.copy(deep=True).translation(
+            -volmdlr.Vector3D(self.size[0] / 2 - filling_boxes_size[0] / 2,
+                              self.size[1] / 2 - filling_boxes_size[1] / 2,
+                              self.size[2] / 2 - filling_boxes_size[2] / 2))
+        xyz = [volmdlr.Vector3D(filling_boxes_size[0], 0, 0), volmdlr.Vector3D(0, filling_boxes_size[1], 0),
+               volmdlr.Vector3D(0, 0, filling_boxes_size[2])]
+
+        dividing_blocks = []
+        for z_box in range(number_blocks_z):
+            for y_box in range(number_blocks_y):
+                for x_box in range(number_blocks_x):
+                    translation_vector = volmdlr.Vector3D(x_box * filling_boxes_size[0], y_box * filling_boxes_size[1],
+                                                          z_box * filling_boxes_size[2])
+                    origin_point = initial_frame_center.translation(translation_vector)
+                    block = Block(frame=volmdlr.Frame3D(origin_point, *xyz))
+                    dividing_blocks.append(block)
+        return dividing_blocks
+
 
 class ExtrudedProfile(shells.ClosedShell3D):
     """
@@ -721,7 +766,7 @@ class RevolvedProfile(shells.ClosedShell3D):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of Revolvedprofile.
+        Creates a copy of Revolved-profile.
 
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),

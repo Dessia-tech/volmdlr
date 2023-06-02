@@ -109,6 +109,8 @@ def get_circle_intersections(circle1, circle2):
     :param circle2: circle 2 to search for intersections.
     :return: a list with all intersections between the two circles.
     """
+    if circle1.center.is_close(circle2.center):
+        return []
     x0, y0 = circle1.center
     x1, y1 = circle2.center
 
@@ -142,7 +144,7 @@ def bspline_intersections_initial_conditions(edge2d, bsplinecurve2d, resolution:
 
     :param edge2d: edge to verify intersection with bspline
     :param bsplinecurve2d: bsplinecurve2d to search for intersections.
-    :param resolution: bspline discretization resolution, to search for inital intersection conditions.
+    :param resolution: bspline discretization resolution, to search for initial intersection conditions.
     :return: a list with all initial sections where there may exist an intersection.
     """
     bspline_discretized_points = bsplinecurve2d.discretization_points(number_points=resolution)

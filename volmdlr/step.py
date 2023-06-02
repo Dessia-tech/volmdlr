@@ -99,7 +99,7 @@ def conversion_based_unit_length_unit_named_unit(arguments, object_dict):
 
 def length_measure_with_unit(arguments, object_dict):
     """
-    Calculates the step file's si unit conversion factor.
+    Calculates the step file's SI unit conversion factor.
 
     :param arguments: step primitive arguments
     :param object_dict: dictionary containing already instantiated objects.
@@ -1122,7 +1122,7 @@ class Step(dc.DessiaObject):
         return self.product_definition_to_product(id_product_definition)
 
     def get_root_nodes(self):
-        """Returns a dictionnary containing the nodes of the step file function that are used as start points."""
+        """Returns a dictionary containing the nodes of the step file function that are used as start points."""
         next_assembly_usage_occurrence = []
         product_definitions = []
         shape_representation_relationship = []
@@ -1236,10 +1236,7 @@ class Step(dc.DessiaObject):
                     ids_frames = self.functions[id_shape_representation].arg[1]
                     self.parse_arguments(ids_frames)
                     frames = [object_dict[id_frame] for id_frame in ids_frames]
-                    try:
-                        volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
-                    except Exception:
-                        print(True)
+                    volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
                     object_dict[instanciate_id] = volmdlr_object
                     if instanciate_id in assembly_data:
                         list_instatiated_assemblies.append(instanciate_id)
