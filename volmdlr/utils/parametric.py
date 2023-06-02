@@ -135,13 +135,13 @@ def repair_start_end_angle_periodicity(angle, ref_angle):
     :rtype: float
     """
     # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-    if math.isclose(angle, math.pi, abs_tol=1e-6) and ref_angle < 0:
+    if math.isclose(angle, math.pi, abs_tol=1e-4) and ref_angle < 0:
         angle = -math.pi
-    elif math.isclose(angle, -math.pi, abs_tol=1e-6) and ref_angle > 0:
+    elif math.isclose(angle, -math.pi, abs_tol=1e-4) and ref_angle > 0:
         angle = math.pi
-    elif math.isclose(angle, 0.5 * math.pi, abs_tol=1e-6) and ref_angle < 0:
+    elif math.isclose(angle, 0.5 * math.pi, abs_tol=1e-4) and ref_angle < 0:
         angle = -0.5 * math.pi
-    elif math.isclose(angle, -0.5 * math.pi, abs_tol=1e-6) and ref_angle > 0:
+    elif math.isclose(angle, -0.5 * math.pi, abs_tol=1e-4) and ref_angle > 0:
         angle = 0.5 * math.pi
     return angle
 
@@ -171,19 +171,19 @@ def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, ang
     return angle_start, angle_end
 
 
-def arc3d_to_cylindrical_coordinates_verification(start, end, angle3d, theta3, theta4):
+def arc3d_to_cylindrical_coordinates_verification(start, end, angle3d, theta3, theta4, has_angle_discontinuity):
     """
     Verifies theta from start and end of an Arc3D after transformation from spatial to parametric coordinates.
     """
     theta1, z1 = start
     theta2, z2 = end
 
-    if abs(theta1) == math.pi or abs(theta1) == 0.5 * math.pi:
+    if math.isclose(abs(theta1), math.pi, abs_tol=1e-4) or abs(theta1) == 0.5 * math.pi:
         theta1 = repair_start_end_angle_periodicity(theta1, theta3)
-    if abs(theta2) == math.pi or abs(theta2) == 0.5 * math.pi:
+    if math.isclose(abs(theta2), math.pi, abs_tol=1e-4) or abs(theta2) == 0.5 * math.pi:
         theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
-    if not math.isclose(abs(theta1 - theta2), angle3d, abs_tol=1e-3):
+    if has_angle_discontinuity:
         theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2, angle3d, volmdlr.TWO_PI)
 
     start = volmdlr.Point2D(theta1, z1)

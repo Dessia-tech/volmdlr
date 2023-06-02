@@ -843,7 +843,7 @@ class Surface3D(DessiaObject):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
             distance = delta.norm()
-            is_connected = math.isclose(distance, 0, abs_tol=1e-3)
+            is_connected = math.isclose(distance, 0, abs_tol=1e-2)
             if not is_connected and \
                     math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
                         math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
@@ -860,9 +860,24 @@ class Surface3D(DessiaObject):
             elif not is_connected and \
                     primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
+            elif not is_connected and hasattr(self, "is_singularity_point") and \
+                    self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
+                    self.is_singularity_point(self.point2d_to_3d(primitives2d[i].start)):
+                primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+                                                           name="construction"))
+                i += 1
             elif not is_connected:
                 primitives2d[i] = primitives2d[i].translation(delta)
             i += 1
+        previous_primitive = primitives2d[-1]
+        delta = previous_primitive.end - primitives2d[0].start
+        distance = delta.norm()
+        is_connected = math.isclose(distance, 0, abs_tol=1e-2)
+        if not is_connected and hasattr(self, "is_singularity_point") and \
+                self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
+                self.is_singularity_point(self.point2d_to_3d(primitives2d[0].start)):
+            primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start,
+                                                       name="construction"))
 
         return primitives2d
 
@@ -932,6 +947,8 @@ class Surface3D(DessiaObject):
         """
         primitives3d = []
         for primitive2d in contour2d.primitives:
+            if primitive2d.name == "construction":
+                continue
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
             if hasattr(self, method_name):
                 try:
@@ -1672,12 +1689,12 @@ class PeriodicalSurface(Surface3D):
 
         # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
         # And also atan2 discontinuity in 0.5 * math.pi
-        if abs(theta1) == math.pi or abs(theta1) == 0.5 * math.pi:
+        if math.isclose(abs(theta1), math.pi, abs_tol=1e-4) or abs(theta1) == 0.5 * math.pi:
             theta1 = repair_start_end_angle_periodicity(theta1, theta3)
         if abs(theta2) == math.pi or abs(theta2) == 0.5 * math.pi:
             theta4, _ = self.point3d_to_2d(edge.point_at_abscissa(0.98 * length))
             # make sure that the reference angle is not undefined
-            if abs(theta4) == math.pi or abs(theta4) == 0.5 * math.pi:
+            if math.isclose(abs(theta2), math.pi, abs_tol=1e-4) or abs(theta4) == 0.5 * math.pi:
                 theta4, _ = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
             theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
@@ -1727,9 +1744,13 @@ class PeriodicalSurface(Surface3D):
         angle3d = arc3d.angle
         point_after_start, point_before_end = self._reference_points(arc3d)
 
+        point_on_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
+        has_angle_discontinuity = arc3d.point_belongs(point_on_discontinuity) and \
+                                  not arc3d.is_point_edge_extremity(point_on_discontinuity)
         start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, angle3d,
                                                                                  point_after_start.x,
-                                                                                 point_before_end.x)
+                                                                                 point_before_end.x,
+                                                                                 has_angle_discontinuity)
         return [edges.LineSegment2D(start, end, name="arc")]
 
     def fullarc3d_to_2d(self, fullarc3d):
@@ -3036,6 +3057,8 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         primitives3d = []
         for primitive2d in contour2d.primitives:
+            if primitive2d.name == "construction":
+                continue
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
             if hasattr(self, method_name):
                 try:
@@ -3659,7 +3682,7 @@ class SphericalSurface3D(PeriodicalSurface):
                              ]
                     primitives2d.extend(lines)
             else:
-                primitives2d.append(edges.LineSegment2D(last_end, first_start))
+                primitives2d.append(edges.LineSegment2D(last_end, first_start, name="construction"))
         return primitives2d
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -3981,8 +4004,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         self.axis = axis
 
         point1 = wire.point_at_abscissa(0)
-        if point1 == axis_point:
-            point1 = wire.point_at_abscissa(wire.length())
+        if point1.is_close(axis_point):
+            point1 = wire.point_at_abscissa(0.5 * wire.length())
         vector1 = point1 - axis_point
         w_vector = axis
         w_vector.normalize()
@@ -4057,12 +4080,21 @@ class RevolutionSurface3D(PeriodicalSurface):
         :return: The corresponding RevolutionSurface3D object.
         :rtype: :class:`volmdlr.faces.RevolutionSurface3D`
         """
+        y_periodicity = None
         name = arguments[0][1:-1]
-        contour3d = object_dict[arguments[1]]
-        if hasattr(contour3d, "simplify"):
-            contour3d = contour3d.simplify
+        wire = object_dict[arguments[1]]
+        if wire.__class__ is wires.Circle3D:
+            start_end = wire.center + wire.frame.u * wire.radius
+            wire = edges.FullArc3D(wire.frame.origin, start_end, wire.frame.w)
+            y_periodicity = 1
+        # elif wire.__class__ is edges.Line3D:
+        #     wire = edges.LineSegment3D(wire.point1, wire.point2)
+
+        if hasattr(wire, "simplify"):
+            wire = wire.simplify
         axis_point, axis = object_dict[arguments[2]]
-        surface = cls(wire=contour3d, axis_point=axis_point, axis=axis, name=name)
+        surface = cls(wire=wire, axis_point=axis_point, axis=axis, name=name)
+        surface.y_periodicity = y_periodicity
         return surface
 
     def arc3d_to_2d(self, arc3d):
@@ -4071,15 +4103,33 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        if math.isclose(start.y, end.y, abs_tol=1e-4):
+        if hasattr(self.wire, "radius") and math.isclose(self.wire.radius, arc3d.radius, rel_tol=0.01):
+            if self.wire.is_point_edge_extremity(arc3d.start):
+                start = self.point3d_to_2d(arc3d.start)
+                interior = self.point3d_to_2d(arc3d.interior)
+                start = volmdlr.Point2D(interior.x, start.y)
+            if self.wire.is_point_edge_extremity(arc3d.end):
+                end = self.point3d_to_2d(arc3d.end)
+                interior = self.point3d_to_2d(arc3d.interior)
+                end = volmdlr.Point2D(interior.x, end.y)
+        if math.isclose(start.y, end.y, rel_tol=0.01):
             angle3d = arc3d.angle
             point_after_start, point_before_end = self._reference_points(arc3d)
-
+            point_on_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
+            has_angle_discontinuity = arc3d.point_belongs(point_on_discontinuity) and \
+                                      not arc3d.is_point_edge_extremity(point_on_discontinuity)
             start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, angle3d,
                                                                                      point_after_start.x,
-                                                                                     point_before_end.x)
-
-        return [edges.LineSegment2D(start, end, name="arc")]
+                                                                                     point_before_end.x, has_angle_discontinuity)
+        if math.isclose(start.y, end.y, rel_tol=0.01) or math.isclose(start.x, end.x, rel_tol=0.01):
+            return [edges.LineSegment2D(start, end, name="arc")]
+        n = 10
+        degree = 3
+        points = [self.point3d_to_2d(point3d) for point3d in arc3d.discretization_points(number_points=n)]
+        # points[0] = start
+        # points[-1] = end
+        periodic = points[0].is_close(points[-1])
+        return [edges.BSplineCurve2D.from_points_interpolation(points, degree, periodic)]
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
@@ -4175,11 +4225,11 @@ class RevolutionSurface3D(PeriodicalSurface):
 
     def simplify(self):
         line3d = edges.Line3D(self.axis_point, self.axis_point + self.axis)
-        if isinstance(self.wire, edges.Arc3D):
-            tore_center, _ = line3d.point_projection(self.wire.center)
-            # Sphere
-            if math.isclose(tore_center.point_distance(self.wire.center), 0., abs_tol=1e-6):
-                return SphericalSurface3D(self.frame, self.wire.radius, self.name)
+        # if isinstance(self.wire, edges.Arc3D):
+        #     tore_center, _ = line3d.point_projection(self.wire.center)
+        #     # Sphere
+        #     if math.isclose(tore_center.point_distance(self.wire.center), 0., abs_tol=1e-6):
+        #         return SphericalSurface3D(self.frame, self.wire.radius, self.name)
         if isinstance(self.wire, edges.LineSegment3D):
             generatrix_line = edges.Line3D(self.wire.start, self.wire.end)
             intersections = line3d.intersection(generatrix_line)
@@ -4192,6 +4242,11 @@ class RevolutionSurface3D(PeriodicalSurface):
             return CylindricalSurface3D(self.frame, radius, self.name)
         return self
 
+    def is_singularity_point(self, point):
+        """Verifies if point is on the surface singularity."""
+        if self.wire.__class__.__name__ == "Line3D":
+            return False
+        return self.wire.is_point_edge_extremity(point)
 
 class BSplineSurface3D(Surface3D):
     """
