@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: split_inner_contour_intersecting_cutting_contours
 - Shell3D: get_ray_casting_line_segment
 - WireMixin: get_connected_wire, is_sharing_primitives_with
+- OpenShell3D: faces_graph
+
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
 - ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
@@ -25,7 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
 - BoundingBox: bbox_intersection
 - face3D: get_face_cutting_contours
+
 ### Changed
+- OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
 
 ### Unittests
 - FullArc2D: split_between_two_points
