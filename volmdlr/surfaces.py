@@ -2531,11 +2531,17 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         angle3d = arc3d.angle
         point_after_start, point_before_end = self._reference_points(arc3d)
-
+        point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
+        has_theta_discontinuity = arc3d.point_belongs(point_theta_discontinuity) and \
+                                  not arc3d.is_point_edge_extremity(point_theta_discontinuity)
+        point_phi_discontinuity = self.point2d_to_3d(volmdlr.Point2D(start.x, math.pi))
+        has_phi_discontinuity = arc3d.point_belongs(point_phi_discontinuity) and \
+                                  not arc3d.is_point_edge_extremity(point_phi_discontinuity)
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(start, end, angle3d,
                                                                                [point_after_start, point_before_end],
                                                                                [self.x_periodicity,
-                                                                                self.y_periodicity])
+                                                                                self.y_periodicity],
+                                                                              [has_theta_discontinuity, has_phi_discontinuity])
 
         return [edges.LineSegment2D(start, end)]
 
