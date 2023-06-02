@@ -4079,15 +4079,36 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        if math.isclose(start.y, end.y, abs_tol=1e-4):
+        if hasattr(self.wire, "radius") and math.isclose(self.wire.radius, arc3d.radius, rel_tol=0.01):
+            if self.wire.is_point_edge_extremity(arc3d.start):
+                start = self.point3d_to_2d(arc3d.start)
+                interior = self.point3d_to_2d(arc3d.interior)
+                start = volmdlr.Point2D(interior.x, start.y)
+            if self.wire.is_point_edge_extremity(arc3d.end):
+                end = self.point3d_to_2d(arc3d.end)
+                interior = self.point3d_to_2d(arc3d.interior)
+                end = volmdlr.Point2D(interior.x, end.y)
+        if math.isclose(start.y, end.y, rel_tol=0.01):
             angle3d = arc3d.angle
             point_after_start, point_before_end = self._reference_points(arc3d)
+            point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
+            discontinuity = arc3d.point_belongs(point_theta_discontinuity) and not \
+                arc3d.is_point_edge_extremity(point_theta_discontinuity)
 
-            start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, angle3d,
-                                                                                     point_after_start.x,
-                                                                                     point_before_end.x)
-
-        return [edges.LineSegment2D(start, end, name="arc")]
+            undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
+            undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
+            start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(
+                start, end, angle3d, [undefined_start_theta, undefined_end_theta],
+                [point_after_start.x, point_before_end.x], discontinuity)
+        if math.isclose(start.y, end.y, rel_tol=0.01) or math.isclose(start.x, end.x, rel_tol=0.01):
+            return [edges.LineSegment2D(start, end, name="arc")]
+        n = 10
+        degree = 3
+        points = [self.point3d_to_2d(point3d) for point3d in arc3d.discretization_points(number_points=n)]
+        # points[0] = start
+        # points[-1] = end
+        periodic = points[0].is_close(points[-1])
+        return [edges.BSplineCurve2D.from_points_interpolation(points, degree, periodic)]
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
