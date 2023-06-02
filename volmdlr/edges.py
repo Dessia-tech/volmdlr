@@ -1063,7 +1063,7 @@ class BSplineCurve(Edge):
         if point.is_close(self.end):
             return self.length()
         length = self.length()
-        initial_condition_list = [0, 0.25, 0.5, 0.75, 1]
+        initial_condition_list = [0, 0.15, 0.25, 0.35, 0.5, 0.65, 0.75, 0.9, 1]
 
         def evaluate_point_distance(u):
             return (point - self.evaluate_single(u)).norm()
