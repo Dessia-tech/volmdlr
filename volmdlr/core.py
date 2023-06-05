@@ -24,6 +24,7 @@ import dessia_common.core as dc
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
+from volmdlr.core_compiled import bbox_is_intersecting
 
 npy.seterr(divide='raise')
 
@@ -704,6 +705,7 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
+        self._size = None
 
         # disabling super init call for efficiency, put back when dc disable kwargs
         # dc.DessiaObject.__init__(self, name=name)
@@ -866,6 +868,39 @@ class BoundingBox(dc.DessiaObject):
         z = volmdlr.Vector3D(0, 0, (self.zmax - self.zmin))
         return volmdlr.Frame3D(self.center, x, y, z)
 
+    def get_points_inside_bbox(self, points_x, points_y, points_z):
+        """
+        Gets points inside the BoudingBox.
+
+        :param points_x: Number of points in x direction.
+        :param points_y: Number of points in y direction.
+        :param points_z: Number of points in z direction.
+        :return: list of points inside bounding box.
+        """
+        _size = [self.size[0] / points_x, self.size[1] / points_y,
+                 self.size[2] / points_z]
+        initial_center = self.center.translation(
+            -volmdlr.Vector3D(self.size[0] / 2 - _size[0] / 2,
+                              self.size[1] / 2 - _size[1] / 2,
+                              self.size[2] / 2 - _size[2] / 2))
+        points = []
+        for z_box in range(points_z):
+            for y_box in range(points_y):
+                for x_box in range(points_x):
+                    translation_vector = volmdlr.Vector3D(x_box * _size[0], y_box * _size[1],
+                                                          z_box * _size[2])
+                    point = initial_center.translation(translation_vector)
+                    points.append(point)
+        return points
+
+    @property
+    def size(self):
+        """Gets the Size of the Bounding Box."""
+
+        if not self._size:
+            self._size = [self.xmax - self.xmin, self.ymax - self.ymin, self.zmax - self.zmin]
+        return self._size
+
     def volume(self) -> float:
         """
         Calculates the volume of a bounding box.
@@ -876,24 +911,39 @@ class BoundingBox(dc.DessiaObject):
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
                 self.zmax - self.zmin)
 
-    def bbox_intersection(self, bbox2: "BoundingBox") -> bool:
+    def bbox_intersection(self, bbox2: "BoundingBox", tol: float = 1e-6) -> bool:
         """
         Calculates if there is an intersection between two bounding boxes.
 
         :param bbox2: The second bounding box to compare with the current bounding box (self).
         :type bbox2: BoundingBox
+        :param tol: tolerance to be considered.
         :return: A boolean value indicating whether the two bounding boxes intersect (True) or not (False).
         :rtype: bool
         """
-        if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
-            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                    and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-                return True
-        if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
-            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                    and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-                return True
-        return False
+        # if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
+        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
+        #         return True
+        # if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
+        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
+        #         return True
+        # return False
+        warnings.warn('bbox_intersection is deprecated, please use is_intersecting instead')
+        return self.is_intersecting(bbox2, tol)
+
+    def is_intersecting(self, bbox2, tol: float = 1e-6):
+        """
+        Checks if two bounding boxes are intersecting or touching.
+
+        :param self: BoundingBox object representing the first bounding box.
+        :param bbox2: BoundingBox object representing the second bounding box.
+        :param tol: tolerance to be considered.
+
+        :return: True if the bounding boxes are intersecting or touching, False otherwise.
+        """
+        return bbox_is_intersecting(self, bbox2, tol)
 
     def is_inside_bbox(self, bbox2: "BoundingBox") -> bool:
         """
@@ -1038,7 +1088,7 @@ class Assembly(dc.PhysicalObject):
         self.frame = frame
         self.positions = positions
         self.primitives = [self.map_primitive(primitive, frame, frame_primitive)
-                                      for primitive, frame_primitive in zip(components, positions)]
+                           for primitive, frame_primitive in zip(components, positions)]
         self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)
 
@@ -1101,7 +1151,7 @@ class Assembly(dc.PhysicalObject):
         side = 'old' or 'new'
         """
         new_positions = [position.frame_mapping(frame, side)
-                          for position in self.positions]
+                         for position in self.positions]
         return Assembly(self.components, new_positions, self.frame, self.name)
 
     @staticmethod
@@ -1122,11 +1172,11 @@ class Assembly(dc.PhysicalObject):
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
         matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
-                       [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
-                       [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+                              [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                              [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
         matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
-                       [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
-                       [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+                              [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                              [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
         transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
@@ -1242,6 +1292,81 @@ class Assembly(dc.PhysicalObject):
         return ax
 
 
+class Compound(dc.PhysicalObject):
+    """
+    A class that can be a collection of any volmdlr primitives.
+    """
+    def __init__(self, primitives, name: str = ""):
+        self.primitives = primitives
+        self._bbox = None
+        dc.PhysicalObject.__init__(self, name=name)
+
+    @property
+    def bounding_box(self):
+        """
+        Returns the bounding box.
+
+        """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model.
+        """
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Compound.
+
+        side = 'old' or 'new'
+        """
+        new_primitives = [primitive.frame_mapping(frame, side)
+                          for primitive in self.primitives]
+        return Compound(new_primitives, self.name)
+
+    def babylon_data(self, merge_meshes=True):
+        """
+        Get babylonjs data.
+
+        :return: Dictionary with babylon data.
+        """
+
+        meshes = []
+        lines = []
+        for primitive in self.primitives:
+            if hasattr(primitive, 'babylon_meshes'):
+                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                if hasattr(primitive, 'babylon_curves'):
+                    lines.append(primitive.babylon_curves())
+            elif hasattr(primitive, 'babylon_data'):
+                data = primitive.babylon_data(merge_meshes=merge_meshes)
+                meshes.extend(mesh for mesh in data["meshes"])
+                lines.extend(line for line in data["lines"])
+
+        bbox = self.bounding_box
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
+
+        babylon_data = {'meshes': meshes,
+                        'lines': lines,
+                        'max_length': max_length,
+                        'center': list(center)}
+
+        return babylon_data
+
+    def volmdlr_primitives(self):
+        return [self]
+
+
 class VolumeModel(dc.PhysicalObject):
     """
     A class containing one or several :class:`volmdlr.core.Primitive3D`.
@@ -1305,7 +1430,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Return the sum of volumes of the primitives.
 
-        It does not make any boolean operation in case of overlapping.
+        It does not make any Boolean operation in case of overlapping.
 
         """
         volume = 0
@@ -2213,14 +2338,14 @@ class VolumeModel(dc.PhysicalObject):
         list_shells = []
 
         def unpack_assembly(assembly):
-            for primitive in assembly.primitives:
-                if primitive.__class__.__name__ == 'Assembly':
-                    unpack_assembly(primitive)
+            for prim in assembly.primitives:
+                if primitive.__class__.__name__ in ('Assembly', "Compound"):
+                    unpack_assembly(prim)
                 elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-                    list_shells.append(primitive)
+                    list_shells.append(prim)
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'Assembly':
+            if primitive.__class__.__name__ in ('Assembly', "Compound"):
                 unpack_assembly(primitive)
             elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
                 list_shells.append(primitive)

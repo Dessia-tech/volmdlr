@@ -1,24 +1,21 @@
 """
 Unit tests for CylindriSurface3D
 """
-import numpy as npy
-import math
 import unittest
+import math
+import numpy as npy
 
 import dessia_common.core
 import volmdlr
-from volmdlr import OXYZ, Z3D, Point2D, Point3D, edges, faces, wires, surfaces
+from volmdlr import Z3D, Point2D, Point3D, edges, wires, surfaces
+from volmdlr.models import cylindrical_surfaces
 
 
 class TestCylindricalSurface3D(unittest.TestCase):
-    cylindrical_surface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 0.32)
-    cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 1.0)
-    frame = volmdlr.Frame3D(volmdlr.Point3D(-0.005829, 0.000765110438227, -0.0002349369830163),
-                            volmdlr.Vector3D(-0.6607898454031987, 0.562158151695499, -0.4973278523210991),
-                            volmdlr.Vector3D(-0.7505709694705869, -0.4949144228333324, 0.43783893597935386),
-                            volmdlr.Vector3D(-0.0, 0.6625993710787045, 0.748974013865705))
-    cylindrical_surface3 = surfaces.CylindricalSurface3D(frame, 0.003)
-    cylindrical_surface4 = surfaces.CylindricalSurface3D(OXYZ, radius=0.03)
+    cylindrical_surface = cylindrical_surfaces.cylindrical_surface
+    cylindrical_surface2 = cylindrical_surfaces.cylindrical_surface2
+    cylindrical_surface3 = cylindrical_surfaces.cylindrical_surface3
+    cylindrical_surface4 = cylindrical_surfaces.cylindrical_surface4
 
     def test_line_intersections(self):
         line3d = edges.Line3D(volmdlr.O3D, volmdlr.Point3D(0.3, 0.3, .3))
@@ -32,13 +29,13 @@ class TestCylindricalSurface3D(unittest.TestCase):
         parallel_plane_secant_cylinder = plane_surface.frame_mapping(volmdlr.Frame3D(
             volmdlr.O3D, volmdlr.Point3D(.5, 0, 0), volmdlr.Point3D(0, .5, 0), volmdlr.Point3D(0, 0, .2)), 'new')
         cylinder_tanget_plane = plane_surface.frame_mapping(volmdlr.Frame3D(
-            volmdlr.Point3D(0, 0.32/2, 0), volmdlr.Point3D(.5, 0, 0),
+            volmdlr.Point3D(0, 0.32 / 2, 0), volmdlr.Point3D(.5, 0, 0),
             volmdlr.Point3D(0, .5, 0), volmdlr.Point3D(0, 0, .2)), 'new')
         not_intersecting_cylinder_parallel_plane = plane_surface.frame_mapping(volmdlr.Frame3D(
             volmdlr.Point3D(0, 0.32, 0), volmdlr.Point3D(.5, 0, 0),
             volmdlr.Point3D(0, .5, 0), volmdlr.Point3D(0, 0, .2)), 'new')
-        cylinder_concurrent_plane = plane_surface.rotation(volmdlr.O3D, volmdlr.X3D, math.pi/4)
-        cylinder_perpendicular_plane = plane_surface.rotation(volmdlr.O3D, volmdlr.X3D, math.pi/2)
+        cylinder_concurrent_plane = plane_surface.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 4)
+        cylinder_perpendicular_plane = plane_surface.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2)
 
         cylinder_surface_secant_parallel_plane_intersec = self.cylindrical_surface.plane_intersection(
             parallel_plane_secant_cylinder)
@@ -81,12 +78,12 @@ class TestCylindricalSurface3D(unittest.TestCase):
         pass
 
     def test_arc3d_to_2d(self):
-        arc1 = edges.Arc3D(volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(1/math.sqrt(2), 1/math.sqrt(2), 0),
+        arc1 = edges.Arc3D(volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(1 / math.sqrt(2), 1 / math.sqrt(2), 0),
                            volmdlr.Point3D(0, 1, 0))
-        arc2 = edges.Arc3D(volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(1/math.sqrt(2), -1/math.sqrt(2), 0),
+        arc2 = edges.Arc3D(volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(1 / math.sqrt(2), -1 / math.sqrt(2), 0),
                            volmdlr.Point3D(0, -1, 0))
-        arc3 = edges.Arc3D(volmdlr.Point3D(-1/math.sqrt(2), 1/math.sqrt(2), 0), volmdlr.Point3D(-1, 0, 0),
-                           volmdlr.Point3D(-1/math.sqrt(2), -1/math.sqrt(2), 0))
+        arc3 = edges.Arc3D(volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 0), volmdlr.Point3D(-1, 0, 0),
+                           volmdlr.Point3D(-1 / math.sqrt(2), -1 / math.sqrt(2), 0))
         arc4 = edges.Arc3D(volmdlr.Point3D(0, -1, 0), volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 0),
                            volmdlr.Point3D(1, 0, 0))
         test1 = self.cylindrical_surface2.arc3d_to_2d(arc3d=arc1)[0]
@@ -104,11 +101,11 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
         # Assert that the returned object is right on the parametric domain (take into account periodicity)
         self.assertEqual(test1.start, volmdlr.Point2D(0, 0))
-        self.assertEqual(test1.end, volmdlr.Point2D(0.5*math.pi, 0))
+        self.assertEqual(test1.end, volmdlr.Point2D(0.5 * math.pi, 0))
         self.assertEqual(test2.start, volmdlr.Point2D(0, 0))
-        self.assertEqual(test2.end, volmdlr.Point2D(-0.5*math.pi, 0))
-        self.assertEqual(test3.start, volmdlr.Point2D(0.75*math.pi, 0))
-        self.assertEqual(test3.end, volmdlr.Point2D(1.25*math.pi, 0))
+        self.assertEqual(test2.end, volmdlr.Point2D(-0.5 * math.pi, 0))
+        self.assertEqual(test3.start, volmdlr.Point2D(0.75 * math.pi, 0))
+        self.assertEqual(test3.end, volmdlr.Point2D(1.25 * math.pi, 0))
         self.assertEqual(test4.start, volmdlr.Point2D(-0.5 * math.pi, 0))
         self.assertEqual(test4.end, volmdlr.Point2D(-2 * math.pi, 0))
 
@@ -133,7 +130,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
         linesegment2d = contour2d_cylinder.primitives[3]
         fullarc2d = contour2d_cylinder.primitives[2]
 
-        self.assertEqual(area, 0.02*math.pi)
+        self.assertEqual(area, 0.02 * math.pi)
         self.assertEqual(fullarc2d.start, Point2D(volmdlr.TWO_PI, 0.003))
         self.assertEqual(fullarc2d.end, Point2D(0, 0.003))
         self.assertEqual(linesegment2d.start, Point2D(0, 0.003))
@@ -147,7 +144,6 @@ class TestCylindricalSurface3D(unittest.TestCase):
         contour2d = surface.contour3d_to_2d(contour)
         self.assertEqual(len(contour2d.primitives), 2)
         self.assertFalse(contour2d.is_ordered())
-
 
     def test_bsplinecurve3d_to_2d(self):
         surface = dessia_common.core.DessiaObject.load_from_file(

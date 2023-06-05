@@ -109,7 +109,7 @@ def conversion_based_unit_length_unit_named_unit(arguments, object_dict):
 
 def length_measure_with_unit(arguments, object_dict):
     """
-    Calculates the step file's si unit conversion factor.
+    Calculates the step file's SI unit conversion factor.
 
     :param arguments: step primitive arguments
     :param object_dict: dictionary containing already instantiated objects.
@@ -319,19 +319,6 @@ def composite_curve_segment(arguments, object_dict):
     return edge
 
 
-# def composite_curve(arguments, *args, **kwargs):
-#     """
-#     Returns the data in case of a COMPOSITE_CURVE.
-#     """
-#     name = arguments[0]
-#     list_primitives = arguments[1]
-#     first_primitive = list_primitives[0]
-#     last_primitive = list_primitives[-1]
-#     if first_primitive.start.is_close(last_primitive.end):
-#         return volmdlr.wires.Contour3D(list_primitives, name)
-#     return volmdlr.wires.Wire3D(list_primitives, name)
-
-
 def composite_curve(arguments, object_dict):
     """
     Returns the data in case of a COMPOSITE_CURVE.
@@ -387,7 +374,14 @@ def geometric_set(arguments, object_dict):
     for argument in arguments[1]:
         sub_obj = object_dict[int(argument[1:])]
         sub_objects.append(sub_obj)
+        print('GEOMETRIC_SET', sub_obj)
     return sub_objects
+# =======
+#     TODO: IS THIS RIGHT?
+    # primitives = [object_dict[int(node[1:])]
+    #               for node in arguments[1] if not isinstance(object_dict[int(node[1:])], volmdlr.Point3D)]
+    # return primitives
+# >>>>>>> enhance_step_reader
 
 
 def shell_based_surface_model(arguments, object_dict):
@@ -549,7 +543,29 @@ def advanced_brep_shape_representation(arguments, object_dict):
         if isinstance(object_dict[int(arg[1:])],
                       vmshells.OpenShell3D):
             shells.append(object_dict[int(arg[1:])])
+    if len(shells) > 1:
+        return volmdlr.core.Compound(shells, name=arguments[0])
     return shells
+
+
+def geometrically_bounded_surface_shape_representation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    primitives = []
+    for arg in arguments[1]:
+        primitives.extend(object_dict[int(arg[1:])])
+    if len(primitives) > 1:
+        return volmdlr.core.Compound(primitives, name=arguments[0])
+    return primitives
 
 
 def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, shape_representation_frames):
@@ -1047,18 +1063,19 @@ class Step(dc.DessiaObject):
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
         return volmdlr_object
 
-    def create_node_list(self, stack):
+    def create_node_list(self, initial_nodes):
         """
         Step functions graph as a list of nodes.
 
-        :param stack: Initial list of shell nodes and assemblies entities.
-        :type stack: List[int]
+        :param initial_nodes: Initial list of shell nodes and assemblies entities.
+        :type initial_nodes: List[int]
         :return: A list of nodes in the right order of dependency.
         :rtype: List[int]
         """
         list_head = []
         list_nodes = []
         visited_set = set()
+        stack = initial_nodes.copy()
         while stack:
             node = stack.pop(0)
             name = self.functions[node].name
@@ -1114,10 +1131,10 @@ class Step(dc.DessiaObject):
         :return: Shell ID.
         :rtype: int
         """
-        if len(self.functions[id_shape_representation].arg) != 4:
+        if len(self.functions[id_shape_representation].arg) < 4:
             # From the step file, the SHAPE_REPRESENTATION entity has 3 arguments. But we add a 4th argument to
-            # those SHAPE_REPRESENTATION entity that are related to a representation entity. So, if the arg are
-            # different of 4 there is no representation entity related to it and we return None.
+            # those SHAPE_REPRESENTATION entity that are related to a representation entity. So, if the length of arg
+            # is less of 4 there is no representation entity related to it and we return None.
             return None
         id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
         id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
@@ -1146,7 +1163,7 @@ class Step(dc.DessiaObject):
         if id_representation_entity:
             return self.get_shell_node_from_representation_entity(id_representation_entity)
         id_shape_representation = int(arguments[3][1:])
-        if len(self.functions[id_shape_representation].arg) != 4:
+        if len(self.functions[id_shape_representation].arg) < 4:
             id_shape_representation = int(arguments[2][1:])
         if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION":
             return self.get_shell_node_from_shape_representation(id_shape_representation)
@@ -1180,7 +1197,7 @@ class Step(dc.DessiaObject):
         return self.product_definition_to_product(id_product_definition)
 
     def get_root_nodes(self):
-        """Returns a dictionnary containing the nodes of the step file function that are used as start points."""
+        """Returns a dictionary containing the nodes of the step file function that are used as start points."""
         next_assembly_usage_occurrence = []
         product_definitions = []
         shape_representation_relationship = []
@@ -1189,7 +1206,7 @@ class Step(dc.DessiaObject):
         shell_nodes = []
         geometric_representation_context = {}
         not_shell_nodes = []
-
+        context_dependent_shape_representation = []
         for function in self.functions.values():
             if function.name == "NEXT_ASSEMBLY_USAGE_OCCURRENCE":
                 next_assembly_usage_occurrence.append(function.id)
@@ -1208,9 +1225,12 @@ class Step(dc.DessiaObject):
             elif function.name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(function.id)
                 not_shell_nodes.append(int(function.arg[1][1:]))
+            elif function.name == "CONTEXT_DEPENDENT_SHAPE_REPRESENTATION":
+                context_dependent_shape_representation.append(function.id)
         for node in not_shell_nodes:
             shell_nodes.remove(node)
         return {"NEXT_ASSEMBLY_USAGE_OCCURRENCE": next_assembly_usage_occurrence,
+                "CONTEXT_DEPENDENT_SHAPE_REPRESENTATION": context_dependent_shape_representation,
                 "PRODUCT_DEFINITION": product_definitions,
                 "SHAPE_REPRESENTATION_RELATIONSHIP": shape_representation_relationship,
                 "SHAPE_REPRESENTATION": shape_representations,
@@ -1220,29 +1240,41 @@ class Step(dc.DessiaObject):
 
     def get_assembly_data(self):
         root_nodes = self.root_nodes
-        assemblies = {}
+        assemblies_shapes = {}
+        assemblies_positions = {}
         for node in root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             function = self.functions[node]
             assembly_product_definition = int(function.arg[3][1:])
             assembly_node = int(self.functions[assembly_product_definition].arg[4][1:])
             id_product_definition = int(function.arg[4][1:])
-            id_shape_definition_representation = int(self.functions[id_product_definition].arg[4][1:])
-            if len(self.functions[id_product_definition].arg) == 6:
-                id_shape_definition_representation = int(self.functions[id_product_definition].arg[5][1:])
-            if assembly_node in assemblies:
-                assemblies[assembly_node].append(id_shape_definition_representation)
+            if len(self.functions[id_product_definition].arg) == 5:
+                ids_shape_definition_representation = [int(self.functions[id_product_definition].arg[4][1:])]
             else:
-                assemblies[assembly_node] = [id_shape_definition_representation]
-        return assemblies
+                ids_shape_definition_representation = [int(arg[1:]) for
+                                                          arg in self.functions[id_product_definition].arg[5:]]
+            assemblies_shapes.setdefault(assembly_node, []).extend(ids_shape_definition_representation)
+            id_context_dependent_shape_representation = int(function.arg[-1][1:])
+            id_transformation = int(self.functions[id_context_dependent_shape_representation].arg[0][1:])
+            id_item_defined_transformation = int(self.functions[id_transformation].arg[4][1:])
+            assembly_frame = int(self.functions[id_item_defined_transformation].arg[2][1:])
+            component_frame = [int(self.functions[id_item_defined_transformation].arg[3][1:])]
+            assemblies_positions.setdefault(assembly_node, [assembly_frame]).extend(
+                component_frame * len(ids_shape_definition_representation))
+        return assemblies_shapes, assemblies_positions
+
+    def context_dependent_shape_representation_to_next_assembly_usage_occurrence(self, node):
+        arg = self.functions[node].arg
+        id_product_definition_shape = int(arg[1][1:])
+        return int(self.functions[id_product_definition_shape].arg[2][1:])
 
     def create_connections(self):
         for node in self.root_nodes['SHAPE_REPRESENTATION_RELATIONSHIP']:
             # Associate each step representation entity to its SHAPE_REPRESENTATION
             function = self.functions[node]
-            id1 = int(function.arg[2][1:])
-            id2 = int(function.arg[3][1:])
-            self.connections[id1].append(id2)
-            self.functions[id1].arg.append(f'#{id2}')
+            id_shape_representation = int(function.arg[2][1:])
+            id_shape = int(function.arg[3][1:])
+            self.connections[id_shape_representation].append(id_shape)
+            self.functions[id_shape_representation].arg.append(f'#{id_shape}')
         for node in self.root_nodes['SHAPE_DEFINITION_REPRESENTATION']:
             # Associate each step representation entity to its SHAPE_REPRESENTATION
             function = self.functions[node]
@@ -1254,9 +1286,10 @@ class Step(dc.DessiaObject):
             if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION" and \
                     len(self.functions[id_shape_representation].arg) >= 4:
                 # todo: take all the arg starting from index 3 to end ??? needs investigation
-                id_shape = int(self.functions[id_shape_representation].arg[-1][1:])
-                self.connections[id_product_definition].append(id_shape)
-                self.functions[id_product_definition].arg.append(f'#{id_shape}')
+                id_shapes = [int(arg[1:]) for arg in self.functions[id_shape_representation].arg[3:]]
+                self.connections[id_product_definition].extend(id_shapes)
+                for id_shape in id_shapes:
+                    self.functions[id_product_definition].arg.append(f'#{id_shape}')
             elif self.functions[id_shape_representation].name in STEP_REPRESENTATION_ENTITIES:
                 self.connections[id_product_definition].append(id_shape_representation)
                 self.functions[id_product_definition].arg.append(f'#{id_shape_representation}')
@@ -1267,10 +1300,15 @@ class Step(dc.DessiaObject):
                 self.connections[shell_node].append(product_node)
                 self.functions[shell_node].arg.append(f'#{product_node}')
 
+        for node in self.root_nodes['CONTEXT_DEPENDENT_SHAPE_REPRESENTATION']:
+            next_assembly_usage_occurrence = \
+                self.context_dependent_shape_representation_to_next_assembly_usage_occurrence(node)
+            self.connections[next_assembly_usage_occurrence].append(node)
+            self.functions[next_assembly_usage_occurrence].arg.append(f'#{node}')
+
     def instatiate_assembly(self, object_dict):
-        assembly_data = self.get_assembly_data()
-        list_instatiated_assemblies = []
-        instanciate_ids = list(assembly_data.keys())
+        assemblies_shapes, assemblies_positions = self.get_assembly_data()
+        instanciate_ids = list(assemblies_shapes.keys())
         error = True
         while error:
             try:
@@ -1278,28 +1316,30 @@ class Step(dc.DessiaObject):
                 # block, we want to loop from the last KeyError to the fisrt. This avoids an infinite loop
                 for instanciate_id in instanciate_ids[::-1]:
                     if instanciate_id in object_dict:
+                        instanciate_ids.pop()
                         continue
-                    list_primitives = [object_dict[node][0] if isinstance(object_dict[node], list)
-                                       else object_dict[node] for node in assembly_data[instanciate_id]]
+                    list_primitives = []
+                    for node in assemblies_shapes[instanciate_id]:
+                        primitives = object_dict[node]
+                        if isinstance(primitives, list):
+                            list_primitives.extend(primitives)
+                        else:
+                            list_primitives.append(primitives)
                     product_id = self.shape_definition_representation_to_product_node(instanciate_id)
                     name = self.functions[product_id].arg[0]
-                    id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
-                    ids_frames = self.functions[id_shape_representation].arg[1]
-                    self.parse_arguments(ids_frames)
+                    ids_frames = assemblies_positions[instanciate_id]
                     frames = [object_dict[id_frame] for id_frame in ids_frames]
                     volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
                     object_dict[instanciate_id] = volmdlr_object
-                    if instanciate_id in assembly_data:
-                        list_instatiated_assemblies.append(instanciate_id)
 
                 error = False
             except KeyError as key:
                 # Sometimes the bfs search don't instanciate the nodes of a
                 # depth in the right order, leading to error
                 print('keyerror', key.args[0])
-                if key.args[0] in assembly_data:
+                if key.args[0] in assemblies_shapes:
                     instanciate_ids.append(key.args[0])
-                    instanciate_ids.extend(assembly_data[key.args[0]])
+                    instanciate_ids.extend(assemblies_shapes[key.args[0]])
                 else:
                     instanciate_ids.append(key.args[0])
         return volmdlr_object
@@ -1353,7 +1393,15 @@ class Step(dc.DessiaObject):
 
         if self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             return volmdlr.core.VolumeModel([self.instatiate_assembly(object_dict)])
-        volume_model = volmdlr.core.VolumeModel([object_dict[shell_nodes[0]]])
+        primitives = []
+        shapes = [object_dict[shape] for shape in shape_representations]
+        for shape in shapes:
+            if isinstance(shape, list):
+                primitives.extend(shape)
+            else:
+                primitives.append(shape)
+        volume_model = volmdlr.core.VolumeModel(primitives)
+        #volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
         return volume_model
 
     def _helper_instantiate(self, node, object_dict, times, show_times):
@@ -1502,6 +1550,7 @@ STEP_TO_VOLMDLR = {
 
     'EDGE_CURVE': volmdlr.edges.Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
     'ORIENTED_EDGE': None,  # TOPOLOGICAL EDGE
+    "GEOMETRIC_SET": None,
     # The one above can influence the direction with their last argument
     # TODO : maybe take them into consideration
 
@@ -1540,6 +1589,10 @@ STEP_TO_VOLMDLR = {
     'SHAPE_REPRESENTATION': None,
     'GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION': None,
     'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
+    "FACETED_BREP_SHAPE_REPRESENTATION": None,
+    "GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION": None,
+    "GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION": None,
+    "EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION": None,
     'ITEM_DEFINED_TRANSFORMATION': None,
     'SHAPE_REPRESENTATION_RELATIONSHIP': None,
     "NEXT_ASSEMBLY_USAGE_OCCURRENCE": None,

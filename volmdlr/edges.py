@@ -15,6 +15,7 @@ import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as npy
 import plot_data.core as plot_data
+import plot_data.colors
 import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
 from geomdl import NURBS, BSpline, fitting, operations, utilities
@@ -28,7 +29,6 @@ import volmdlr.core_compiled
 import volmdlr.geometry
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
-from volmdlr import bspline_fitting
 from volmdlr.core import EdgeStyle
 
 
@@ -170,7 +170,7 @@ class Edge(dc.DessiaObject):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
+        return self.discretization_points(number_points=discretization_resolution)
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
@@ -828,10 +828,10 @@ class LineSegment(Edge):
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
-        Checks if two line segments are the same considering the euclidean distance.
+        Checks if two line segments are the same considering the Euclidean distance.
 
         :param other_edge: other line segment.
-        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6.
+        :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional.
         """
 
@@ -996,6 +996,7 @@ class BSplineCurve(Edge):
 
         :param curve:
         :type curve:
+        :param name: curve name.
         :return: A reversed B-spline curve
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
@@ -1198,8 +1199,7 @@ class BSplineCurve(Edge):
         :param offset: The translation vector
         :type offset: Union[:class:`volmdlr.Vector2D`,
             :class:`volmdlr.Vector3D`]
-        :return: None
-        :rtype: None
+        :return: None.
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
@@ -1345,10 +1345,11 @@ class BSplineCurve(Edge):
         :param periodic: `True` if the curve should be periodic. Default value
             is `False`
         :type periodic: bool, optional
+        :param name: curve name.
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
-        curve = bspline_fitting.interpolate_curve([[*point] for point in points], degree, centripetal=True)
+        curve = volmdlr.interpolate_curve([[*point] for point in points], degree, centripetal=True)
 
         bsplinecurve = cls.from_geomdl_curve(curve, name=name)
         if not periodic:
@@ -1469,6 +1470,8 @@ class BSplineCurve(Edge):
 
         :param list_abscissas: list of abscissas to verify the closest point.
         :param intersections: intersection with discretized line.
+        :param line: other line.
+        :param abs_tol: tolerance allowed.
         :return:
         """
         distance = npy.inf
@@ -1658,7 +1661,7 @@ class BSplineCurve(Edge):
         Checks if two bsplines are the same considering the Euclidean distance.
 
         :param other_edge: other bspline.
-        :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6
+        :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
         if isinstance(other_edge, self.__class__):
@@ -2029,14 +2032,14 @@ class Line2D(Line):
 
 class BSplineCurve2D(BSplineCurve):
     """
-    A class for 2 dimensional B-spline curves.
+    A class for 2-dimensional B-spline curves.
 
     The following rule must be
     respected : `number of knots = number of control points + degree + 1`.
 
-    :param degree: The degree of the 2 dimensional B-spline curve
+    :param degree: The degree of the 2-dimensional B-spline curve
     :type degree: int
-    :param control_points: A list of 2 dimensional points
+    :param control_points: A list of 2-dimensional points
     :type control_points: List[:class:`volmdlr.Point2D`]
     :param knot_multiplicities: The vector of multiplicities for each knot
     :type knot_multiplicities: List[int]
@@ -2077,7 +2080,7 @@ class BSplineCurve2D(BSplineCurve):
     @property
     def bounding_rectangle(self):
         """
-        Computes the bounding rectangle of the 2 dimensional B-spline curve.
+        Computes the bounding rectangle of the 2-dimensional B-spline curve.
 
         :return: The bounding rectangle.
         :rtype: :class:`volmdlr.core.BoundingRectangle`
@@ -2092,7 +2095,7 @@ class BSplineCurve2D(BSplineCurve):
 
         :param position: The parameter at which the tangent is computed.
         :type position: float
-        :return: A 2 dimensional point representing the tangent
+        :return: A 2-dimensional point representing the tangent
         :rtype: :class:`volmdlr.Point2D`
         """
         _, tangent = operations.tangent(self.curve, position,
@@ -2306,11 +2309,11 @@ class BSplineCurve2D(BSplineCurve):
 
 class BezierCurve2D(BSplineCurve2D):
     """
-    A class for 2 dimensional Bezier curves.
+    A class for 2-dimensional Bezier curves.
 
     :param degree: The degree of the Bezier curve.
     :type degree: int
-    :param control_points: A list of 2 dimensional points
+    :param control_points: A list of 2-dimensional points
     :type control_points: List[:class:`volmdlr.Point2D`]
     :param name: The name of the B-spline curve. Default value is ''
     :type name: str, optional
@@ -2334,7 +2337,7 @@ class LineSegment2D(LineSegment):
     """
 
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
-        if start.is_close(end):
+        if start.is_close(end, 1e-6):
             raise NotImplementedError('Start & end of linesegment2D are equal')
         self._bounding_rectangle = None
         LineSegment.__init__(self, start, end, name=name)
@@ -2913,7 +2916,6 @@ class Arc(Edge):
         Gets the reverse version of an arc.
 
         :return: An arc
-        :rtype: Arc
         """
 
         return self.__class__(start=self.end, interior=self.interior, end=self.start)
@@ -2990,10 +2992,10 @@ class Arc(Edge):
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
-        Checks if two arc are the same considering the euclidean distance.
+        Checks if two arc are the same considering the Euclidean distance.
 
         :param other_edge: other arc.
-        :param tol: The tolerance under which the euclidean distance is considered equal to 0, defaults to 1e-6
+        :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6
         :type tol: float, optional
         """
 
@@ -3029,6 +3031,22 @@ class FullArc(Arc):
     def angle(self):
         """Angle of Full Arc. """
         return volmdlr.TWO_PI
+
+    def split(self, split_point):
+        """
+        Splits arc at a given point.
+
+        :param split_point: splitting point.
+        :return: list of two Arc.
+        """
+        if split_point.is_close(self.start, 1e-6):
+            return [None, self.copy()]
+        if split_point.is_close(self.end, 1e-6):
+            return [self.copy(), None]
+        abscissa = self.abscissa(split_point)
+        class_ = getattr(sys.modules[__name__], 'Arc'+self.__class__.__name__[-2:])
+        return [class_(self.start, self.point_at_abscissa(0.5 * abscissa), split_point),
+                class_(split_point, self.point_at_abscissa(abscissa+(self.length() - abscissa) / 2), self.end)]
 
 
 class Arc2D(Arc):
@@ -3557,8 +3575,8 @@ class Arc2D(Arc):
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
-        self.__init__(*[point.frame_mapping(frame, side) for point in
-                        [self.start, self.interior, self.end]])
+        self.__class__(*[point.frame_mapping(frame, side) for point in
+                         [self.start, self.interior, self.end]])
 
     def second_moment_area(self, point):
         """
@@ -4788,8 +4806,8 @@ class Line3D(Line):
         """
         Calculates the intersection between to Line3D, if there is an intersection.
 
-        :param line: other Line3D
-        :return: None if there is no intersection between Lines. A volmdlr.Point3D if there existes an intersection
+        :param line2: other Line3D
+        :return: None if there is no intersection between Lines. A volmdlr.Point3D if there exists an intersection.
         """
         direction_vector1 = self.direction_vector()
         direction_vector2 = line2.direction_vector()
@@ -5199,8 +5217,6 @@ class LineSegment3D(LineSegment):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig = ax.figure
 
         points = [self.start, self.end]
         x = [point.x for point in points]
@@ -5222,18 +5238,14 @@ class LineSegment3D(LineSegment):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig = ax.figure
 
         edge2d = self.plane_projection2d(volmdlr.O3D, x_3d, y_3d)
         edge2d.plot(ax=ax, edge_style=EdgeStyle(color=color, width=width))
         return ax
 
-    def plot_data(self, x_3d, y_3d, marker=None, color='black', stroke_width=1,
-                  dash=False, opacity=1, arrow=False):
+    def plot_data(self, x_3d, y_3d, color=plot_data.colors.BLACK, stroke_width=1):
         edge2d = self.plane_projection2d(volmdlr.O3D, x_3d, y_3d)
-        return edge2d.plot_data(marker, color, stroke_width,
-                                dash, opacity, arrow)
+        return edge2d.plot_data(plot_data.EdgeStyle(color_stroke=color, line_width=stroke_width))
 
     def to_line(self):
         """
@@ -5596,13 +5608,13 @@ class LineSegment3D(LineSegment):
 
 class BSplineCurve3D(BSplineCurve):
     """
-    A class for 3 dimensional B-spline curves.
+    A class for 3-dimensional B-spline curves.
 
     The following rule must be respected : `number of knots = number of control points + degree + 1`
 
-    :param degree: The degree of the 3 dimensional B-spline curve
+    :param degree: The degree of the 3-dimensional B-spline curve
     :type degree: int
-    :param control_points: A list of 3 dimensional points
+    :param control_points: A list of 3-dimensional points
     :type control_points: List[:class:`volmdlr.Point3D`]
     :param knot_multiplicities: The vector of multiplicities for each knot
     :type knot_multiplicities: List[int]
@@ -6110,7 +6122,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
-        Returns a new Revolution Surface positionned in the specified frame.
+        Returns a new Revolution Surface positioned in the specified frame.
 
         :param frame: Frame of reference
         :type frame: `volmdlr.Frame3D`
@@ -6123,11 +6135,11 @@ class BSplineCurve3D(BSplineCurve):
 
 class BezierCurve3D(BSplineCurve3D):
     """
-    A class for 3 dimensional Bezier curves.
+    A class for 3-dimensional Bezier curves.
 
     :param degree: The degree of the Bézier curve
     :type degree: int
-    :param control_points: A list of 3 dimensional points
+    :param control_points: A list of 3-dimensional points
     :type control_points: List[:class:`volmdlr.Point3D`]
     :param name: The name of the B-spline curve. Default value is ''
     :type name: str, optional
@@ -6479,8 +6491,6 @@ class Arc3D(Arc):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig = ax.figure
 
         # TODO: Enhance this plot
         length = self.length()
@@ -6787,7 +6797,8 @@ class Arc3D(Arc):
         """
         Check if a point 3d belongs to the arc_3d or not.
 
-        :param point: point to be verified is on arc
+        :param point: point to be verified is on arc.
+        :param abs_tol: tolerance allowed.
         :return: True if point is on Arc, False otherwise.
         """
         if not math.isclose(point.point_distance(self.center), self.radius, abs_tol=abs_tol):
@@ -6815,7 +6826,7 @@ class Arc3D(Arc):
         """
         Calculates intersections between an Arc3D and a Line3D.
 
-        :param linesegment3d: linesegment to verify intersections.
+        :param line3d: line to verify intersections.
         :return: list with intersections points between line and Arc3D.
         """
         circle3d_lineseg_inters = vm_utils_intersections.circle_3d_line_intersections(self, line3d)
@@ -7292,6 +7303,7 @@ class ArcEllipse3D(Edge):
         Calculates the abscissa a given point.
 
         :param point: point to calculate abscissa.
+        :param tol: tolerance allowed.
         :return: abscissa
         """
         if point.point_distance(self.start) < tol:
@@ -7326,8 +7338,6 @@ class ArcEllipse3D(Edge):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
-        else:
-            fig = None
 
         ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
                 color='b')
@@ -7358,8 +7368,6 @@ class ArcEllipse3D(Edge):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig = ax.figure
 
         # TODO: Enhance this plot
         length = self.length()
@@ -7464,7 +7472,7 @@ class ArcEllipse3D(Edge):
         """
         Checks if two arc-elipse are the same considering the Euclidean distance.
 
-        :param other_edge: other arc-elipse.
+        :param other_edge: other arc-ellipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
@@ -7634,6 +7642,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         Calculates the abscissa a given point.
 
         :param point: point to calculate abscissa.
+        :param tol: tolerance allowed.
         :return: abscissa
         """
         vector_2 = self.normal.cross(self.major_dir)
@@ -7686,8 +7695,6 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
-        else:
-            fig = None
 
         x = []
         y = []
