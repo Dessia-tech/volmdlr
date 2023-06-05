@@ -3736,9 +3736,9 @@ class SphericalSurface3D(PeriodicalSurface):
 
         :Example:
         >>> from volmdlr import Point3D, edges, surfaces, OXYZ
-        >>> spherical_surface3D = SphericalSurface3D(OXYZ, 1)
+        >>> spherical_surface3d = SphericalSurface3D(OXYZ, 1)
         >>> line2 = edges.Line3D(Point3D(0, 1, -0.5), Point3D(0, 1, 0.5))
-        >>> line_intersections2 = spherical_surface3D.line_intersections(line2) #returns [Point3D(0.0, 1.0, 0.0)]
+        >>> line_intersections2 = spherical_surface3d.line_intersections(line2) #returns [Point3D(0.0, 1.0, 0.0)]
         """
         line_direction_vector = line3d.direction_vector()
         vector_linept1_center = self.frame.origin - line3d.point1
@@ -3775,12 +3775,14 @@ class SphericalSurface3D(PeriodicalSurface):
         The list may be empty if there are no intersections.
         :rtype: List[volmdlr.Point3D]:
 
-        Example:
-            linesegment = edges.LineSegment3D(edges.Point3D(0, 0, 0), edges.Point3D(1, 1, 1))
-            sphere = Sphere(edges.Point3D(0, 0, 0), 1)
-            intersections = linesegment_intersections(sphere)  # Returns [Point3D(1, 1, 1)]
+        :Example:
+        >>> from volmdlr import Point3D, edges, surfaces, OXYZ
+        >>> spherical_surface3d = SphericalSurface3D(OXYZ, 1)
+        >>> linesegment2 = edges.LineSegment3D(Point3D(-0.8, -0.8, -0.8), Point3D(0.8, 0.8, 0.8))
+        >>> linesegment2_intersections = spherical_surface3d.linesegment_intersections(linesegment2)
+            '[Point3D: [0.5773502691896257, 0.5773502691896257, 0.5773502691896257],
+              Point3D: [-0.5773502691896257, -0.5773502691896257, -0.5773502691896257]]'
         """
-
         line_intersections = self.line_intersections(linesegment3d.to_line())
         intersections = []
         for intersection in line_intersections:
