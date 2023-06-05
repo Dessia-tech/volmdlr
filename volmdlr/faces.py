@@ -3061,7 +3061,7 @@ class BSplineFace3D(Face3D):
         radius = []
         centers = []
         for curve in curve_list:
-            if curve.simplify.__class__.__name__ == "Arc3D":
+            if curve.simplify.__class__.__name__ in ("Arc3D", "FullArc3D"):
                 arc = curve.simplify
             else:
                 arc = self.approximate_with_arc(curve)
@@ -3106,7 +3106,12 @@ class BSplineFace3D(Face3D):
         Returns the faces' neutral fiber.
         """
         neutral_fiber_points = self.neutral_fiber_points()
-        neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
+        if not neutral_fiber_points:
+            print(True)
+        if len(neutral_fiber_points) == 2:
+            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[1])
+        else:
+            neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
                                                                      min(self.surface3d.degree_u,
                                                                          self.surface3d.degree_v))
         return volmdlr.wires.Wire3D([neutral_fiber])
