@@ -43,3 +43,8 @@ def plot_circle(circle, ax=None, edge_style: EdgeStyle = EdgeStyle()):
 def random_color():
     """Random color generator."""
     return random.random(), random.random(), random.random()
+
+def split_wire_by_plane(wire, plane3d):
+    wire_plane_intersections = None
+    for primitive in wire.primitives:
+        intersections = plane3d.edge_intersections(primitive)

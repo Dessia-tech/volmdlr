@@ -1032,6 +1032,13 @@ class Surface3D(DessiaObject):
         proj_point = self.point_projection(point3d)
         return proj_point.point_distance(point3d)
 
+    def edge_intersections(self, edge):
+        intersections = []
+        method_name = f'{edge.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(self, method_name):
+            intersections = getattr(self, method_name)(edge)
+        return intersections
+
 
 class Plane3D(Surface3D):
     """
@@ -1246,6 +1253,9 @@ class Plane3D(Surface3D):
         for inter in fullarc2d_inters_line2d:
             intersections.append(inter.to_3d(fullarc.center, fullarc_plane.frame.u, fullarc_plane.frame.v))
         return intersections
+
+    def arc_intersections(self, arc):
+        return self.fullarc_intersections(arc)
 
     def equation_coefficients(self):
         """
