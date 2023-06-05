@@ -4822,9 +4822,9 @@ class Line3D(Line):
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
-        v1 = self.point1 - 3 * u
+        v1 = self.point1 - u*3
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = self.point2 - 3 * u
+        v2 = self.point2 - u*3
         x2, y2, z2 = v2.x, v2.y, v2.z
         if dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
@@ -6818,6 +6818,10 @@ class Arc3D(Arc):
         :param linesegment3d: linesegment to verify intersections.
         :return: list with intersections points between line and Arc3D.
         """
+        if line3d.point_belongs(self.start):
+            return [self.start]
+        if line3d.point_belongs(self.end):
+            return [self.end]
         circle3d_lineseg_inters = vm_utils_intersections.circle_3d_line_intersections(self, line3d)
         linesegment_intersections = []
         for intersection in circle3d_lineseg_inters:

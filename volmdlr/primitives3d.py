@@ -1708,7 +1708,7 @@ class Sweep(shells.ClosedShell3D):
         """
         Generates the shell faces.
 
-        For now it does not take into account rotation of sections.
+        For now, it does not take into account rotation of sections.
         """
 
         # End  planar faces
@@ -1740,17 +1740,30 @@ class Sweep(shells.ClosedShell3D):
                  volmdlr.faces.PlaneFace3D(
             end_plane,
             surfaces.Surface2D(self.contour2d, []))]
-
-        for wire_primitive in self.wire3d.primitives:
+        max_brectangle = max(self.contour2d.bounding_rectangle.bounds()) * 2
+        cutting_face_contour = volmdlr.wires.Contour2D.from_points(
+                    [volmdlr.Point2D(-max_brectangle, -max_brectangle),
+                     volmdlr.Point2D(max_brectangle, -max_brectangle),
+                     volmdlr.Point2D(max_brectangle, max_brectangle),
+                     volmdlr.Point2D(-max_brectangle,max_brectangle)])
+        for i, wire_primitive in enumerate(self.wire3d.primitives):
             # tangent, normal = wire_primitive.frenet(0.)
             tangent = wire_primitive.unit_direction_vector(0.)
             normal = wire_primitive.unit_normal_vector(0.)
-
             if normal is None:
                 normal = tangent.deterministic_unit_normal_vector()
             n2 = tangent.cross(normal)
-            contour3d = self.contour2d.to_3d(wire_primitive.start, normal, n2)
-
+            if i == 0:
+                contour3d = self.contour2d.to_3d(wire_primitive.start, normal, n2)
+            else:
+                plane = surfaces.Plane3D(volmdlr.Frame3D(wire_primitive.start, normal, n2, tangent))
+                cutting_face = volmdlr.faces.PlaneFace3D(plane, surfaces.Surface2D(cutting_face_contour, []))
+                intersections = []
+                for face in faces:
+                    for prim in face.outer_contour3d.primitives:
+                        if cutting_face.edge3d_inside(prim):
+                            intersections.append(prim)
+                contour3d = volmdlr.wires.Contour3D.contours_from_edges(intersections)[0]
             if wire_primitive.__class__ is volmdlr.edges.LineSegment3D:
                 for contour_primitive in contour3d.primitives:
                     faces.extend(contour_primitive.extrusion(
@@ -1780,8 +1793,7 @@ class Sweep(shells.ClosedShell3D):
                 circles = []
                 for pt, tan in zip(wire_primitive.points, tangents):
                     # TODO: replace circle by real contour!
-                    circles.append(volmdlr.wires.Circle3D.from_center_normal(center=pt,
-                                                                             normal=tan,
+                    circles.append(volmdlr.wires.Circle3D.from_center_normal(center=pt, normal=tan,
                                                                              radius=self.contour2d.radius))
 
                 polys = [volmdlr.wires.ClosedPolygon3D(c.discretization_points()) for c in circles]
@@ -1794,11 +1806,7 @@ class Sweep(shells.ClosedShell3D):
                     points_3d.extend(poly.points)
                     points_3d.append(poly.points[0])
 
-                bezier_surface3d = surfaces.BezierSurface3D(degree_u,
-                                                            degree_v,
-                                                            points_3d,
-                                                            size_u,
-                                                            size_v)
+                bezier_surface3d = surfaces.BezierSurface3D(degree_u, degree_v, points_3d, size_u, size_v)
 
                 outer_contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D),
                                                          volmdlr.edges.LineSegment2D(
