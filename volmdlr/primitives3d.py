@@ -1710,6 +1710,14 @@ class Sweep(shells.ClosedShell3D):
 
         For now, it does not take into account rotation of sections.
         """
+        def get_sweep_profile_section(profile_section_face, touching_faces):
+            primitives_on_section_face = []
+            for face in touching_faces:
+                for prim in face.outer_contour3d.primitives:
+                    if profile_section_face.edge3d_inside(prim):
+                        primitives_on_section_face.append(prim)
+            contour3d_ = volmdlr.wires.Contour3D.contours_from_edges(primitives_on_section_face)[0]
+            return contour3d_
 
         # End  planar faces
         w = self.wire3d.primitives[0].unit_direction_vector(0.)
@@ -1734,18 +1742,16 @@ class Sweep(shells.ClosedShell3D):
                 l_last_primitive),
                             u, v, w))
 
-        faces = [volmdlr.faces.PlaneFace3D(
-            start_plane,
-            surfaces.Surface2D(self.contour2d, [])),
-                 volmdlr.faces.PlaneFace3D(
-            end_plane,
-            surfaces.Surface2D(self.contour2d, []))]
+        faces = [volmdlr.faces.PlaneFace3D(start_plane, surfaces.Surface2D(self.contour2d, []))]
+
         max_brectangle = max(self.contour2d.bounding_rectangle.bounds()) * 2
         cutting_face_contour = volmdlr.wires.Contour2D.from_points(
                     [volmdlr.Point2D(-max_brectangle, -max_brectangle),
                      volmdlr.Point2D(max_brectangle, -max_brectangle),
                      volmdlr.Point2D(max_brectangle, max_brectangle),
-                     volmdlr.Point2D(-max_brectangle,max_brectangle)])
+                     volmdlr.Point2D(-max_brectangle, max_brectangle)])
+        new_faces = None
+
         for i, wire_primitive in enumerate(self.wire3d.primitives):
             # tangent, normal = wire_primitive.frenet(0.)
             tangent = wire_primitive.unit_direction_vector(0.)
@@ -1758,29 +1764,20 @@ class Sweep(shells.ClosedShell3D):
             else:
                 plane = surfaces.Plane3D(volmdlr.Frame3D(wire_primitive.start, normal, n2, tangent))
                 cutting_face = volmdlr.faces.PlaneFace3D(plane, surfaces.Surface2D(cutting_face_contour, []))
-                intersections = []
-                for face in faces:
-                    for prim in face.outer_contour3d.primitives:
-                        if cutting_face.edge3d_inside(prim):
-                            intersections.append(prim)
-                contour3d = volmdlr.wires.Contour3D.contours_from_edges(intersections)[0]
+                contour3d = get_sweep_profile_section(cutting_face, new_faces)
+            new_faces = []
             if wire_primitive.__class__ is volmdlr.edges.LineSegment3D:
                 for contour_primitive in contour3d.primitives:
-                    faces.extend(contour_primitive.extrusion(
-                        wire_primitive.length()
-                        * wire_primitive.unit_direction_vector()))
+                    new_faces.extend(contour_primitive.extrusion(wire_primitive.length()
+                                                                 * wire_primitive.unit_direction_vector()))
             elif wire_primitive.__class__ is volmdlr.edges.Arc3D:
                 for contour_primitive in contour3d.primitives:
-                    faces.extend(contour_primitive.revolution(
-                        wire_primitive.center,
-                        wire_primitive.normal,
-                        wire_primitive.angle))
+                    new_faces.extend(contour_primitive.revolution(
+                        wire_primitive.center, wire_primitive.normal, wire_primitive.angle))
             elif wire_primitive.__class__ is volmdlr.wires.Circle3D:
                 for contour_primitive in contour3d.primitives:
-                    faces.extend(contour_primitive.revolution(
-                        wire_primitive.center,
-                        wire_primitive.normal,
-                        volmdlr.TWO_PI))
+                    new_faces.extend(contour_primitive.revolution(
+                        wire_primitive.center, wire_primitive.normal, volmdlr.TWO_PI))
 
             elif wire_primitive.__class__ is volmdlr.edges.BSplineCurve3D or \
                     wire_primitive.__class__ is volmdlr.edges.BezierCurve3D:
@@ -1817,11 +1814,16 @@ class Sweep(shells.ClosedShell3D):
                 surf2d = surfaces.Surface2D(outer_contour, [])
 
                 bsface3d = volmdlr.faces.BSplineFace3D(bezier_surface3d, surf2d)
-                faces.append(bsface3d)
+                new_faces.append(bsface3d)
 
             else:
                 raise NotImplementedError(f'Unimplemented primitive for sweep: {wire_primitive.__class__.__name__}')
-
+            faces.extend(new_faces)
+        cutting_face = volmdlr.faces.PlaneFace3D(end_plane, surfaces.Surface2D(cutting_face_contour, []))
+        contour3d = get_sweep_profile_section(cutting_face, new_faces)
+        contour2d = cutting_face.surface3d.contour3d_to_2d(contour3d)
+        end_face = volmdlr.faces.PlaneFace3D(end_plane, surfaces.Surface2D(contour2d, []))
+        faces.append(end_face)
         return faces
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
