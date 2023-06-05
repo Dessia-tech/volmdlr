@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shell3D: get_ray_casting_line_segment
 - WireMixin: get_connected_wire, is_sharing_primitives_with
 - OpenShell3D: faces_graph
+- SphericalSurface3D: line_intersections, linesegment_intersections.
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
@@ -35,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FullArc2D: split_between_two_points
 - Face3D: set_operations_new_faces
 - ClosedShell3D: point_belongs
-
+- SphericalSurface3D: line_intersections, linesegment_intersections.
 
 ## v0.11.0 [unreleased]
 
