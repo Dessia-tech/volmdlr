@@ -1627,7 +1627,29 @@ class PeriodicalSurface(Surface3D):
                     old_innner_contour_positioned = old_innner_contour_positioned.invert()
                     point3 = old_innner_contour_positioned.primitives[0].start
                     point4 = old_innner_contour_positioned.primitives[-1].end
-
+                if not math.isclose(point2.x, point3.x, abs_tol=1e-4) or \
+                    not math.isclose(point4.x, point1.x, abs_tol=1e-4):
+                    ideal_x = []
+                    delta = math.inf
+                    found = False
+                    for x1 in [point2.x, point3.x]:
+                        for x2 in [point4.x, point1.x]:
+                            delta_x = abs(abs(x1 - x2) - volmdlr.TWO_PI)
+                            if delta_x == 0.0:
+                                ideal_x = [x1, x2]
+                                found =True
+                                break
+                            else:
+                                if delta_x < delta:
+                                    delta = delta_x
+                                    ideal_x = [x1, x2]
+                        if found:
+                            break
+                    x1, x2 = ideal_x
+                    point2.x = x1
+                    point3.x = x1
+                    point4.x = x2
+                    point1.x = x2
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = old_outer_contour_positioned.primitives + [closing_linesegment1] + \
@@ -1730,6 +1752,18 @@ class PeriodicalSurface(Surface3D):
                 points = temp_points + points[next_angle_discontinuity_index:]
         return points
 
+    def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, z):
+        """"
+        Verifies if arc 3D contains discontinuity and undefined start/end points on parametric domain.
+        """
+        point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, z))
+        discontinuity = arc3d.point_belongs(point_theta_discontinuity) and not \
+            arc3d.is_point_edge_extremity(point_theta_discontinuity)
+
+        undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
+        undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
+        return discontinuity, undefined_start_theta, undefined_end_theta
+
     def linesegment3d_to_2d(self, linesegment3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
@@ -1750,15 +1784,13 @@ class PeriodicalSurface(Surface3D):
         end = self.point3d_to_2d(arc3d.end)
         angle3d = arc3d.angle
         point_after_start, point_before_end = self._reference_points(arc3d)
-
-        point_on_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
-        has_angle_discontinuity = arc3d.point_belongs(point_on_discontinuity) and \
-                                  not arc3d.is_point_edge_extremity(point_on_discontinuity)
-        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, angle3d,
-                                                                                 point_after_start.x,
-                                                                                 point_before_end.x,
-                                                                                 has_angle_discontinuity)
-        return [edges.LineSegment2D(start, end, name="arc")]
+        discontinuity, undefined_start_theta, undefined_end_theta = self._helper_arc3d_to_2d_periodicity_verifications(
+            arc3d, z=start.y
+        )
+        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(
+            [start, end], angle3d, [undefined_start_theta, undefined_end_theta],
+            [point_after_start.x, point_before_end.x], discontinuity)
+        return [edges.LineSegment2D(start, end, name="parametric.arc")]
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
@@ -1769,9 +1801,12 @@ class PeriodicalSurface(Surface3D):
 
         point_after_start, point_before_end = self._reference_points(fullarc3d)
 
-        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, volmdlr.TWO_PI,
-                                                                                 point_after_start.x,
-                                                                                 point_before_end.x)
+        discontinuity, undefined_start_theta, undefined_end_theta = self._helper_arc3d_to_2d_periodicity_verifications(
+            fullarc3d, z=start.y
+        )
+        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(
+            [start, end], volmdlr.TWO_PI, [undefined_start_theta, undefined_end_theta],
+            [point_after_start.x, point_before_end.x], discontinuity)
         theta1, z1 = start
         # _, z2 = end
         theta3, z3 = point_after_start
@@ -2497,6 +2532,25 @@ class ToroidalSurface3D(PeriodicalSurface):
         return [edges.BSplineCurve3D.from_points_interpolation(
             points, bspline_curve2d.degree, bspline_curve2d.periodic)]
 
+    def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start):
+        """"
+        Verifies if arc 3D contains discontinuity and undefined start/end points on parametric domain.
+        """
+
+        point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
+        theta_discontinuity = arc3d.point_belongs(point_theta_discontinuity) and \
+                                  not arc3d.is_point_edge_extremity(point_theta_discontinuity)
+        point_phi_discontinuity = self.point2d_to_3d(volmdlr.Point2D(start.x, math.pi))
+        phi_discontinuity = arc3d.point_belongs(point_phi_discontinuity) and \
+                                  not arc3d.is_point_edge_extremity(point_phi_discontinuity)
+        undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
+        undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
+        undefined_start_phi = arc3d.start.is_close(point_phi_discontinuity)
+        undefined_end_phi = arc3d.end.is_close(point_phi_discontinuity)
+
+        return theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta,\
+            undefined_start_phi, undefined_end_phi
+
     def fullarc3d_to_2d(self, fullarc3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
@@ -2507,10 +2561,15 @@ class ToroidalSurface3D(PeriodicalSurface):
         angle3d = fullarc3d.angle
         point_after_start, point_before_end = self._reference_points(fullarc3d)
 
-        start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(start, end, angle3d,
-                                                                               [point_after_start, point_before_end],
-                                                                               [self.x_periodicity,
-                                                                                self.y_periodicity])
+        theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
+            undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(
+            fullarc3d, start
+        )
+        start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(
+            [start, end], angle3d,
+            [undefined_start_theta, undefined_end_theta, undefined_start_phi, undefined_end_phi],
+            [point_after_start, point_before_end],
+            [theta_discontinuity, phi_discontinuity])
         theta1, phi1 = start
         # theta2, phi2 = end
         theta3, phi3 = point_after_start
@@ -2538,17 +2597,15 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         angle3d = arc3d.angle
         point_after_start, point_before_end = self._reference_points(arc3d)
-        point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
-        has_theta_discontinuity = arc3d.point_belongs(point_theta_discontinuity) and \
-                                  not arc3d.is_point_edge_extremity(point_theta_discontinuity)
-        point_phi_discontinuity = self.point2d_to_3d(volmdlr.Point2D(start.x, math.pi))
-        has_phi_discontinuity = arc3d.point_belongs(point_phi_discontinuity) and \
-                                  not arc3d.is_point_edge_extremity(point_phi_discontinuity)
-        start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(start, end, angle3d,
-                                                                               [point_after_start, point_before_end],
-                                                                               [self.x_periodicity,
-                                                                                self.y_periodicity],
-                                                                              [has_theta_discontinuity, has_phi_discontinuity])
+        theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
+            undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(
+            arc3d, start
+        )
+        start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(
+            [start, end], angle3d,
+            [undefined_start_theta, undefined_end_theta, undefined_start_phi, undefined_end_phi],
+            [point_after_start, point_before_end],
+            [theta_discontinuity, phi_discontinuity])
 
         return [edges.LineSegment2D(start, end)]
 
@@ -2892,6 +2949,7 @@ class ConicalSurface3D(PeriodicalSurface):
                     volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
                 self.point2d_to_3d(linesegment2d.end))
             ]
+        print(True)
         raise NotImplementedError('Ellipse?')
 
     def contour3d_to_2d(self, contour3d):
@@ -3241,11 +3299,13 @@ class SphericalSurface3D(PeriodicalSurface):
                 and math.isclose(theta3, theta_i, abs_tol=1e-2) and math.isclose(theta4, theta_i, abs_tol=1e-2):
             theta2 = theta_i
             end = volmdlr.Point2D(theta2, phi2)
+        discontinuity, undefined_start_theta, undefined_end_theta = self._helper_arc3d_to_2d_periodicity_verifications(
+            arc3d, z=phi1
+        )
 
-        start, end = vm_parametric.arc3d_to_spherical_coordinates_verification(start, end, arc3d.angle,
-                                                                               [point_after_start, point_before_end],
-                                                                               [self.x_periodicity,
-                                                                                self.y_periodicity])
+        start, end = vm_parametric.arc3d_to_spherical_coordinates_verification(
+            [start, end], arc3d.angle, [undefined_start_theta, undefined_end_theta],
+            [point_after_start, point_before_end], discontinuity)
         return start, end
 
     def edge_passes_on_singularity_point(self, edge):
@@ -4130,19 +4190,20 @@ class RevolutionSurface3D(PeriodicalSurface):
         if math.isclose(start.y, end.y, rel_tol=0.01):
             angle3d = arc3d.angle
             point_after_start, point_before_end = self._reference_points(arc3d)
-            point_on_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
-            has_angle_discontinuity = arc3d.point_belongs(point_on_discontinuity) and \
-                                      not arc3d.is_point_edge_extremity(point_on_discontinuity)
-            start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, angle3d,
-                                                                                     point_after_start.x,
-                                                                                     point_before_end.x, has_angle_discontinuity)
+            point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
+            discontinuity = arc3d.point_belongs(point_theta_discontinuity) and not \
+                arc3d.is_point_edge_extremity(point_theta_discontinuity)
+
+            undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
+            undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
+            start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(
+                start, end, angle3d, [undefined_start_theta, undefined_end_theta],
+                [point_after_start.x, point_before_end.x], discontinuity)
         if math.isclose(start.y, end.y, rel_tol=0.01) or math.isclose(start.x, end.x, rel_tol=0.01):
             return [edges.LineSegment2D(start, end, name="arc")]
         n = 10
         degree = 3
         points = [self.point3d_to_2d(point3d) for point3d in arc3d.discretization_points(number_points=n)]
-        # points[0] = start
-        # points[-1] = end
         periodic = points[0].is_close(points[-1])
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree, periodic)]
 
