@@ -3273,13 +3273,12 @@ class SphericalSurface3D(PeriodicalSurface):
                 and math.isclose(theta3, theta_i, abs_tol=1e-2) and math.isclose(theta4, theta_i, abs_tol=1e-2):
             theta2 = theta_i
             end = volmdlr.Point2D(theta2, phi2)
-        discontinuity, undefined_start_theta, undefined_end_theta = self._helper_arc3d_to_2d_periodicity_verifications(
+        discontinuity, _,_ = self._helper_arc3d_to_2d_periodicity_verifications(
             arc3d, z=phi1
         )
 
         start, end = vm_parametric.arc3d_to_spherical_coordinates_verification(
-            [start, end], arc3d.angle, [undefined_start_theta, undefined_end_theta],
-            [point_after_start, point_before_end], discontinuity)
+            [start, end], arc3d.angle, [point_after_start, point_before_end], discontinuity)
         return start, end
 
     def edge_passes_on_singularity_point(self, edge):

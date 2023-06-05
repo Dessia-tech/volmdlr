@@ -135,13 +135,13 @@ def repair_start_end_angle_periodicity(angle, ref_angle):
     :rtype: float
     """
     # Verify if theta1 or theta2 point should be -pi because atan2() -> ]-pi, pi]
-    if math.isclose(angle, math.pi, abs_tol=1e-2) and ref_angle < 0:
+    if math.isclose(angle, math.pi, abs_tol=1e-3) and ref_angle < 0:
         angle = -math.pi
-    elif math.isclose(angle, -math.pi, abs_tol=1e-2) and ref_angle > 0:
+    elif math.isclose(angle, -math.pi, abs_tol=1e-3) and ref_angle > 0:
         angle = math.pi
-    elif math.isclose(angle, 0.5 * math.pi, abs_tol=1e-2) and ref_angle < 0:
+    elif math.isclose(angle, 0.5 * math.pi, abs_tol=1e-3) and ref_angle < 0:
         angle = -0.5 * math.pi
-    elif math.isclose(angle, -0.5 * math.pi, abs_tol=1e-2) and ref_angle > 0:
+    elif math.isclose(angle, -0.5 * math.pi, abs_tol=1e-3) and ref_angle > 0:
         angle = 0.5 * math.pi
     return angle
 
@@ -150,23 +150,10 @@ def repair_arc3d_angle_continuity(angle_start, angle_after_start, angle_end, ang
     """
     Repairs Arc3D continuity after conversion of points to parametric 2D space.
     """
-    ref_low = angle_start - angle3d
-    ref_up = angle_start + angle3d
-
-    # angle_after_start < angle_start --> angle coordinate axis going clockwise
-    # ref_low < -math.pi -> crossing lower bound of atan2  [-math.pi, math.pi]
-    if angle_after_start < angle_start and ref_low < -math.pi:
-        angle_end = ref_low
-
-    # angle_after_start > angle_start --> angle coordinate axis going trigo wise
-    #  ref_up > math.pi -> crossing lower bound of atan2  [-math.pi, math.pi]
-    elif angle_after_start > angle_start and ref_up > math.pi:
-        angle_end = ref_up
-    if not math.isclose(angle_start, 0, abs_tol=1e-4):
-        if angle_start > 0 > angle_after_start:
-            angle_start -= periodicity
-        elif angle_start < 0 < angle_after_start:
-            angle_start += periodicity
+    if angle_start < angle_end:
+        angle_end -= periodicity
+    else:
+        angle_end += periodicity
 
     return angle_start, angle_end
 
@@ -233,7 +220,7 @@ def toroidal_repair_start_end_angle_periodicity(start, end, start_end_angles_sta
     return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
 
 
-def spherical_repair_start_end_angle_periodicity(start, end, start_end_theta_state,
+def spherical_repair_start_end_angle_periodicity(start, end,
                                                  point_after_start, point_before_end):
     """
     Verifies theta and phi from start and end of an arc 3D after transformation from spatial to parametric coordinates.
@@ -242,11 +229,10 @@ def spherical_repair_start_end_angle_periodicity(start, end, start_end_theta_sta
     theta2, phi2 = end
     theta3, _ = point_after_start
     theta4, _ = point_before_end
-    undefined_start_theta, undefined_end_theta = start_end_theta_state
     # Verify if theta1 or theta2 point should be -pi or pi because atan2() -> ]-pi, pi]
-    if undefined_start_theta or abs(theta1) == 0.5 * math.pi:
+    if abs(theta1) == math.pi or abs(theta1) == 0.5 * math.pi:
         theta1 = repair_start_end_angle_periodicity(theta1, theta3)
-    if undefined_end_theta or abs(theta2) == 0.5 * math.pi:
+    if abs(theta2) == math.pi or abs(theta2) == 0.5 * math.pi:
         theta2 = repair_start_end_angle_periodicity(theta2, theta4)
 
     return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
@@ -264,19 +250,19 @@ def arc3d_to_toroidal_coordinates_verification(start_end, angle3d, start_end_ang
                                                              point_before_end)
     theta1, phi1 = start
     theta2, phi2 = end
-    if discontinuity and math.isclose(phi1, phi2, abs_tol=1e-3):
+    theta_discontinuity, phi_discontinuity = discontinuity
+    if theta_discontinuity:
         theta1, theta2 = repair_arc3d_angle_continuity(theta1, theta3, theta2,
                                                        angle3d, volmdlr.TWO_PI)
 
-    if  discontinuity and  math.isclose(theta1, theta2, abs_tol=1e-4):
+    if phi_discontinuity:
         phi1, phi2 = repair_arc3d_angle_continuity(phi1, phi3, phi2,
                                                    angle3d, volmdlr.TWO_PI)
 
     return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
 
 
-def arc3d_to_spherical_coordinates_verification(start_end, angle3d, start_end_theta_state, reference_points,
-                                                  discontinuity):
+def arc3d_to_spherical_coordinates_verification(start_end, angle3d, reference_points, discontinuity):
     """
     Verifies theta and phi from start and end of an arc 3D after transformation from spatial to parametric coordinates.
     """
@@ -284,9 +270,7 @@ def arc3d_to_spherical_coordinates_verification(start_end, angle3d, start_end_th
     point_after_start = reference_points[0]
     point_before_end = reference_points[1]
     theta3, _ = point_after_start
-    start, end = spherical_repair_start_end_angle_periodicity(start, end,
-                                                              start_end_theta_state,
-                                                              point_after_start, point_before_end)
+    start, end = spherical_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end)
     theta1, phi1 = start
     theta2, phi2 = end
     if discontinuity and math.isclose(phi1, phi2, abs_tol=1e-4):
