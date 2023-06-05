@@ -319,14 +319,27 @@ def composite_curve_segment(arguments, object_dict):
     return edge
 
 
-def composite_curve(arguments, *args, **kwargs):
+# def composite_curve(arguments, *args, **kwargs):
+#     """
+#     Returns the data in case of a COMPOSITE_CURVE.
+#     """
+#     name = arguments[0]
+#     list_primitives = arguments[1]
+#     first_primitive = list_primitives[0]
+#     last_primitive = list_primitives[-1]
+#     if first_primitive.start.is_close(last_primitive.end):
+#         return volmdlr.wires.Contour3D(list_primitives, name)
+#     return volmdlr.wires.Wire3D(list_primitives, name)
+
+
+def composite_curve(arguments, object_dict):
     """
     Returns the data in case of a COMPOSITE_CURVE.
     """
     name = arguments[0]
     list_primitives = arguments[1]
-    first_primitive = list_primitives[0]
-    last_primitive = list_primitives[-1]
+    first_primitive = object_dict[int(list_primitives[0][1:])]
+    last_primitive = object_dict[int(list_primitives[-1][1:])]
     if first_primitive.start.is_close(last_primitive.end):
         return volmdlr.wires.Contour3D(list_primitives, name)
     return volmdlr.wires.Wire3D(list_primitives, name)
@@ -340,6 +353,25 @@ def pcurve(arguments, object_dict):
 
 
 def geometric_curve_set(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    sub_objects = []
+    for argument in arguments[1]:
+        sub_obj = object_dict[int(argument[1:])]
+        sub_objects.append(sub_obj)
+    return sub_objects
+
+
+def geometric_set(arguments, object_dict):
     """
     Returns xx.
 
@@ -383,6 +415,25 @@ def item_defined_transformation(arguments, object_dict):
     # TODO : how to frame map properly from these two Frame3D ?
     # return volmdlr_object2 - volmdlr_object1
     return [volmdlr_object1, volmdlr_object2]
+
+
+def geometrically_bounded_surface_shape_representation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    sub_objects = []
+    for argument in arguments[1]:
+        sub_obj = object_dict[int(argument[1:])]
+        sub_objects.append(sub_obj)
+    return sub_objects
 
 
 def manifold_surface_shape_representation(arguments, object_dict):
@@ -783,8 +834,6 @@ class Step(dc.DessiaObject):
             function_arg = function_name_arg[1].split("#")
             function_connections = []
             connections = []
-            if function_id == 7252:
-                print(function_id, function_name, function_arg)
             for connec in function_arg[1:]:
                 connec = connec.split(",")
                 connec = connec[0].split(")")
@@ -1247,7 +1296,7 @@ class Step(dc.DessiaObject):
             except KeyError as key:
                 # Sometimes the bfs search don't instanciate the nodes of a
                 # depth in the right order, leading to error
-                print(key.args[0])
+                print('keyerror', key.args[0])
                 if key.args[0] in assembly_data:
                     instanciate_ids.append(key.args[0])
                     instanciate_ids.extend(assembly_data[key.args[0]])
@@ -1269,6 +1318,7 @@ class Step(dc.DessiaObject):
         object_dict = {}
         times = {}
         self.create_connections()
+        print('step - graph created')
         root_nodes = self.root_nodes
         # ------------------------------------------------------
         # TODO: This isn't a 100% right. Each SHAPE_REPRESENTATION has its own geometric context
@@ -1285,6 +1335,7 @@ class Step(dc.DessiaObject):
         shape_representations = root_nodes["SHAPE_REPRESENTATION"]
         nodes = self.create_node_list(shape_representations)
         errors = set()
+        print('step - instanciating')
         for node in nodes:
 
             if node is None:
@@ -1470,6 +1521,7 @@ STEP_TO_VOLMDLR = {
     #        'ORIENTED_CLOSED_SHELL': None,
     'CONNECTED_FACE_SET': vmshells.OpenShell3D,
     'GEOMETRIC_CURVE_SET': None,
+    'GEOMETRIC_SET': None,
 
     # step subfunctions
     'UNCERTAINTY_MEASURE_WITH_UNIT': None,
@@ -1486,6 +1538,7 @@ STEP_TO_VOLMDLR = {
     'MANIFOLD_SOLID_BREP': None,
     'BREP_WITH_VOIDS': None,
     'SHAPE_REPRESENTATION': None,
+    'GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION': None,
     'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
     'ITEM_DEFINED_TRANSFORMATION': None,
     'SHAPE_REPRESENTATION_RELATIONSHIP': None,
