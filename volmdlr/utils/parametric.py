@@ -218,8 +218,7 @@ def toroidal_repair_start_end_angle_periodicity(start, end, start_end_angles_sta
     return volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta2, phi2)
 
 
-def spherical_repair_start_end_angle_periodicity(start, end,
-                                                 point_after_start, point_before_end):
+def spherical_repair_start_end_angle_periodicity(start, end, point_after_start, point_before_end):
     """
     Verifies theta and phi from start and end of an arc 3D after transformation from spatial to parametric coordinates.
     """
