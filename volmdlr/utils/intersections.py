@@ -17,11 +17,11 @@ def circle_3d_line_intersections(circle_3d, line):
     :param line: Line3D to verify intersections
     :return: list of points intersecting Circle
     """
+    intersections = []
     if not math.isclose(abs(circle_3d.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=1e-6):
         frame_mapped_circle = circle_3d.frame_mapping(circle_3d.frame, 'new')
         frame_mapped_line = line.frame_mapping(circle_3d.frame, 'new')
         circle_linseg_intersections = circle_3d_line_intersections(frame_mapped_circle, frame_mapped_line)
-        intersections = []
         for inter in circle_linseg_intersections:
             intersections.append(circle_3d.frame.local_to_global_coordinates(inter))
         return intersections
@@ -53,8 +53,8 @@ def circle_3d_line_intersections(circle_3d, line):
     y_coordinate = constant * direction_vector.y + line.point1.y
     if math.isclose((x_coordinate - circle_3d.frame.origin.x) ** 2 + (y_coordinate - circle_3d.frame.origin.y) ** 2,
                     circle_3d.radius ** 2, abs_tol=1e-6):
-        return [volmdlr.Point3D(x_coordinate, y_coordinate, z_constant)]
-    return []
+        intersections = [volmdlr.Point3D(x_coordinate, y_coordinate, z_constant)]
+    return intersections
 
 
 def ellipse2d_line_intersections(ellipse2d, line2d):
