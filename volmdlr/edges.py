@@ -1373,7 +1373,8 @@ class BSplineCurve(Edge):
             number_points = int(math.pi * angle_resolution)
 
         if len(self.points) == number_points or (not number_points and not angle_resolution):
-            return self.points
+            number_points = 20
+            # return self.points
         curve = self.curve
         curve.delta = 1 / number_points
         curve_points = curve.evalpts
