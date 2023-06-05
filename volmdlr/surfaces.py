@@ -3747,7 +3747,8 @@ class SphericalSurface3D(PeriodicalSurface):
         b_param = -2 * (line_direction_vector[0]*vector_linept1_center[0] +
                         line_direction_vector[1]*vector_linept1_center[1] +
                         line_direction_vector[2]*vector_linept1_center[2])
-        c_param = vector_linept1_center[0]**2 + vector_linept1_center[1]**2 + vector_linept1_center[2]**2 - self.radius**2
+        c_param = (vector_linept1_center[0]**2 + vector_linept1_center[1]**2 +
+                   vector_linept1_center[2]**2 - self.radius**2)
         b2_minus4ac = b_param**2 - 4*a_param*c_param
         if math.isclose(b2_minus4ac, 0, abs_tol=1e-8):
             t_param = -b_param / (2 * a_param)
