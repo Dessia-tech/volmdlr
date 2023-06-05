@@ -14,7 +14,7 @@
     "end": {
       "object_class": "volmdlr.Point3D",
       "x": 0.597825969484,
-      "y": 0.645846712927,
+      "y": 0.64589672659,
       "z": 0.000771852970123
     }
   },
@@ -27,8 +27,8 @@
   "axis": {
     "object_class": "volmdlr.Vector3D",
     "x": 1.0,
-    "y": -8e-17,
-    "z": 3.08e-15
+    "y": 0.0,
+    "z": 0.0
   },
   "frame": {
     "object_class": "volmdlr.Frame3D",
@@ -43,19 +43,19 @@
       "object_class": "volmdlr.Point3D",
       "x": 0.0,
       "y": 1.0,
-      "z": -4.191972472328795e-14
+      "z": 0.0
     },
     "v": {
       "object_class": "volmdlr.Vector3D",
-      "x": -3.0799999999999964e-15,
-      "y": 4.191972472328795e-14,
+      "x": 0.0,
+      "y": 0.0,
       "z": 1.0
     },
     "w": {
       "object_class": "volmdlr.Vector3D",
       "x": 1.0,
-      "y": -8e-17,
-      "z": 3.08e-15
+      "y": 0.0,
+      "z": 0.0
     }
   }
 }

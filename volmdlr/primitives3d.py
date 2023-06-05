@@ -766,7 +766,7 @@ class RevolvedProfile(shells.ClosedShell3D):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of Revolvedprofile.
+        Creates a copy of Revolved-profile.
 
         """
         return self.__class__(plane_origin=self.plane_origin.copy(),

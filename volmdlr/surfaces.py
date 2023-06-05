@@ -103,7 +103,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             center -= contour.area() * contour.center_of_mass()
         return center / self.area()
 
-    def point_belongs(self, point2d: volmdlr.Point2D):
+    def point_belongs(self, point2d: volmdlr.Point2D, include_edge_points: bool = True):
         """
         Check whether a point belongs to the 2D surface.
 
@@ -112,13 +112,11 @@ class Surface2D(volmdlr.core.Primitive2D):
         :return: True if the point belongs to the surface, False otherwise.
         :rtype: bool
         """
-        if not self.outer_contour.point_belongs(point2d):
-            if self.outer_contour.point_over_contour(point2d):
-                return True
+        if not self.outer_contour.point_belongs(point2d, include_edge_points=include_edge_points):
             return False
 
         for inner_contour in self.inner_contours:
-            if inner_contour.point_belongs(point2d) and not inner_contour.point_over_contour(point2d):
+            if inner_contour.point_belongs(point2d, include_edge_points=False):
                 return False
         return True
 
@@ -131,17 +129,21 @@ class Surface2D(volmdlr.core.Primitive2D):
         :return: A random point inside the surface.
         :rtype: :class:`volmdlr.Point2D`
         """
-        valid_point = False
         point_inside_outer_contour = None
-        while not valid_point:
+        center_of_mass = self.center_of_mass()
+        if self.point_belongs(center_of_mass, False):
+            point_inside_outer_contour = center_of_mass
+        if not point_inside_outer_contour:
             point_inside_outer_contour = self.outer_contour.random_point_inside()
+        while True:
             inside_inner_contour = False
             for inner_contour in self.inner_contours:
                 if inner_contour.point_belongs(point_inside_outer_contour):
                     inside_inner_contour = True
             if not inside_inner_contour and \
                     point_inside_outer_contour is not None:
-                valid_point = True
+                break
+            point_inside_outer_contour = self.outer_contour.random_point_inside()
 
         return point_inside_outer_contour
 
@@ -180,7 +182,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
-        if math.isclose(area, 0., abs_tol=1e-6):
+        if math.isclose(area, 0., abs_tol=1e-8):
             return display.DisplayMesh2D([], triangles=[])
 
         triangulates_with_grid = number_points_x > 0 and number_points_y > 0
@@ -941,7 +943,8 @@ class Surface3D(DessiaObject):
             else:
                 raise AttributeError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
-
+        if not primitives3d:
+            raise ValueError("no primitives to create contour")
         return wires.Contour3D(primitives3d)
 
     def linesegment3d_to_2d(self, linesegment3d):
@@ -1214,10 +1217,14 @@ class Plane3D(Surface3D):
         u_vector = linesegment.end - linesegment.start
         w_vector = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u_vector)
-        if normaldotu == 0.0:
+        if math.isclose(self.frame.w.unit_vector().dot(u_vector.unit_vector()), 0.0, abs_tol=1e-6):
             return []
         intersection_abscissea = - self.frame.w.dot(w_vector) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
+            if math.isclose(abs(intersection_abscissea), 0, abs_tol=1e-6):
+                return [linesegment.start]
+            if math.isclose(intersection_abscissea, 1, abs_tol=1e-6):
+                return [linesegment.end]
             return []
         return [linesegment.start + intersection_abscissea * u_vector]
 
@@ -1447,7 +1454,7 @@ class Plane3D(Surface3D):
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
-        Converts a 3D B-Spline in spatial domain intoa 2D B-Spline in parametric domain.
+        Converts a 3D B-Spline in spatial domain into a 2D B-Spline in parametric domain.
 
         :param bspline_curve3d: The B-Spline curve to perform the transformation.
         :type bspline_curve3d: edges.BSplineCurve3D
@@ -3243,6 +3250,7 @@ class SphericalSurface3D(PeriodicalSurface):
         theta2, phi2 = end
         if arc3d.is_point_edge_extremity(point_singularity):
             return [edges.LineSegment2D(start, end)]
+        primitives = []
         if math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
             if theta1 == math.pi and theta2 != math.pi:
                 theta1 = -math.pi
@@ -3255,6 +3263,7 @@ class SphericalSurface3D(PeriodicalSurface):
                 edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
                 ]
             return primitives
+        return primitives
 
     def arc3d_to_2d_with_singularity(self, arc3d, start, end, singularity_points):
         """
@@ -3936,24 +3945,8 @@ class ExtrusionSurface3D(Surface3D):
         n = len(bspline_curve3d.control_points)
         points = [self.point3d_to_2d(point)
                   for point in bspline_curve3d.discretization_points(number_points=n)]
-        start = points[0]
-        end = points[-1]
-        if not start.is_close(end):
-            linesegment = edges.LineSegment2D(start, end)
-            flag = True
-            for point in points:
-                if not linesegment.point_belongs(point):
-                    flag = False
-                    break
-            if flag:
-                return [linesegment]
-
-        # Is this always True?
-        n = len(bspline_curve3d.control_points)
-        points = [self.point3d_to_2d(p)
-                  for p in bspline_curve3d.discretization_points(number_points=n)]
         return [edges.BSplineCurve2D.from_points_interpolation(
-            points, bspline_curve3d.degree, bspline_curve3d.periodic)]
+            points, bspline_curve3d.degree, bspline_curve3d.periodic).simplify]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -4304,6 +4297,7 @@ class BSplineSurface3D(Surface3D):
         self._grids2d = None
         self._grids2d_deformed = None
         self._bbox = None
+        self._surface_curves = None
 
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
@@ -4357,6 +4351,33 @@ class BSplineSurface3D(Surface3D):
         xmin, ymin, zmin = min_bounds
         xmax, ymax, zmax = max_bounds
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    @property
+    def surface_curves(self):
+        """
+        Extracts curves from a surface.
+        """
+        if not self._surface_curves:
+            self._surface_curves = self.get_surface_curves()
+        return self._surface_curves
+
+    def get_surface_curves(self):
+        """
+        Converts the surface curves from geomdl curve to volmdlr.
+        """
+        # v-direction
+        crvlist_v = []
+        v_curves = self.curves["v"]
+        for curve in v_curves:
+            crvlist_v.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+        # u-direction
+        crvlist_u = []
+        u_curves = self.curves["u"]
+        for curve in u_curves:
+            crvlist_u.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+
+        # Return shapes as a dict object
+        return {"u": crvlist_u, "v": crvlist_v}
 
     def control_points_matrix(self, coordinates):
         """
@@ -6394,10 +6415,10 @@ class BSplineSurface3D(Surface3D):
         """
         if self.surface.rational:
             # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
-            derivatives = volmdlr.bspline_compiled.rational_derivatives(self.surface.data, (u, v), order)
+            derivatives = volmdlr.rational_derivatives(self.surface.data, (u, v), order)
         else:
             # derivatives = self._derivatives(self.surface.data, (u, v), order)
-            derivatives = volmdlr.bspline_compiled.derivatives(self.surface.data, (u, v), order)
+            derivatives = volmdlr.derivatives(self.surface.data, (u, v), order)
         for i in range(order + 1):
             for j in range(order + 1):
                 derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])
