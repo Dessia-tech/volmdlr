@@ -3791,7 +3791,6 @@ class SphericalSurface3D(PeriodicalSurface):
         return intersections
 
 
-
 class RuledSurface3D(Surface3D):
     """
     Defines a ruled surface between two wires.
