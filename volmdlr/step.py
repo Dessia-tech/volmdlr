@@ -1208,16 +1208,29 @@ class Step(dc.DessiaObject):
         root_nodes = self.root_nodes
         assemblies_shapes = {}
         assemblies_positions = {}
+        assemblies = set()
+        shapes = set()
+        for node in root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
+            function = self.functions[node]
+            assembly_product_definition = int(function.arg[3][1:])
+            assembly_node = int(self.functions[assembly_product_definition].arg[4][1:])
+            assemblies.add(assembly_node)
+            id_product_definition = int(function.arg[4][1:])
+            if len(self.functions[id_product_definition].arg) > 5:
+                for arg in self.functions[id_product_definition].arg[5:]:
+                    shapes.add(int(arg[1:]))
+        valid_entities = assemblies.union(shapes)
         for node in root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             function = self.functions[node]
             assembly_product_definition = int(function.arg[3][1:])
             assembly_node = int(self.functions[assembly_product_definition].arg[4][1:])
             id_product_definition = int(function.arg[4][1:])
-            if len(self.functions[id_product_definition].arg) == 5:
-                ids_shape_definition_representation = [int(self.functions[id_product_definition].arg[4][1:])]
-            else:
-                ids_shape_definition_representation = [int(arg[1:]) for
-                                                          arg in self.functions[id_product_definition].arg[5:]]
+            # if len(self.functions[id_product_definition].arg) == 5:
+            #     ids_shape_definition_representation = [int(self.functions[id_product_definition].arg[4][1:])]
+            # else:
+            ids_shape_definition_representation = [int(arg[1:]) for
+                                                          arg in self.functions[id_product_definition].arg[4:]
+                                                   if int(arg[1:]) in valid_entities]
             assemblies_shapes.setdefault(assembly_node, []).extend(ids_shape_definition_representation)
             id_context_dependent_shape_representation = int(function.arg[-1][1:])
             id_transformation = int(self.functions[id_context_dependent_shape_representation].arg[0][1:])
@@ -1226,7 +1239,7 @@ class Step(dc.DessiaObject):
             component_frame = [int(self.functions[id_item_defined_transformation].arg[3][1:])]
             assemblies_positions.setdefault(assembly_node, [assembly_frame]).extend(
                 component_frame * len(ids_shape_definition_representation))
-        return assemblies_shapes, assemblies_positions
+        return assemblies_shapes  #, assemblies_positions
 
     def context_dependent_shape_representation_to_next_assembly_usage_occurrence(self, node):
         arg = self.functions[node].arg
@@ -1273,8 +1286,11 @@ class Step(dc.DessiaObject):
             self.functions[next_assembly_usage_occurrence].arg.append(f'#{node}')
 
     def instatiate_assembly(self, object_dict):
-        assemblies_shapes, assemblies_positions = self.get_assembly_data()
-        instanciate_ids = list(assemblies_shapes.keys())
+        # assemblies_shapes, assemblies_positions = self.get_assembly_data()
+        # instanciate_ids = list(assemblies_shapes.keys())
+
+        assembly_data = self.get_assembly_data()
+        instanciate_ids = list(assembly_data.keys())
         error = True
         while error:
             try:
@@ -1285,7 +1301,7 @@ class Step(dc.DessiaObject):
                         instanciate_ids.pop()
                         continue
                     list_primitives = []
-                    for node in assemblies_shapes[instanciate_id]:
+                    for node in assembly_data[instanciate_id]:
                         primitives = object_dict[node]
                         if isinstance(primitives, list):
                             list_primitives.extend(primitives)
@@ -1293,7 +1309,9 @@ class Step(dc.DessiaObject):
                             list_primitives.append(primitives)
                     product_id = self.shape_definition_representation_to_product_node(instanciate_id)
                     name = self.functions[product_id].arg[0]
-                    ids_frames = assemblies_positions[instanciate_id]
+                    id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
+                    ids_frames = self.functions[id_shape_representation].arg[1]
+                    self.parse_arguments(ids_frames)
                     frames = [object_dict[id_frame] for id_frame in ids_frames]
                     volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
                     object_dict[instanciate_id] = volmdlr_object
