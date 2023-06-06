@@ -25,6 +25,7 @@ import volmdlr.utils.parametric as vm_parametric
 from volmdlr.core import EdgeStyle
 from volmdlr.core import point_in_list
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
+import volmdlr.utils.intersections as vm_utils_intersections
 
 
 def knots_vector_inv(knots_vector):
@@ -1033,6 +1034,12 @@ class Surface3D(DessiaObject):
         return proj_point.point_distance(point3d)
 
     def edge_intersections(self, edge):
+        """
+        Gets intersections between a Surface 3D, and an edge 3D.
+
+        :param edge: any 3D edge.
+        :return: list of points.
+        """
         intersections = []
         method_name = f'{edge.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(self, method_name):
@@ -1213,24 +1220,25 @@ class Plane3D(Surface3D):
         intersection_abscissea = - self.frame.w.dot(w_vector) / self.frame.w.dot(u_vector)
         return [line.point1 + intersection_abscissea * u_vector]
 
-    def linesegment_intersections(self, linesegment: edges.LineSegment3D) \
+    def linesegment_intersections(self, linesegment: edges.LineSegment3D, abs_tol: float = 1e-6) \
             -> List[volmdlr.Point3D]:
         """
         Gets the intersections of a plane a line segment 3d.
 
         :param linesegment: other line segment.
+        :param abs_tol: tolerance allowed.
         :return: a list with the intersecting point.
         """
         u_vector = linesegment.end - linesegment.start
         w_vector = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u_vector)
-        if math.isclose(self.frame.w.unit_vector().dot(u_vector.unit_vector()), 0.0, abs_tol=1e-6):
+        if math.isclose(self.frame.w.unit_vector().dot(u_vector.unit_vector()), 0.0, abs_tol=abs_tol):
             return []
         intersection_abscissea = - self.frame.w.dot(w_vector) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
-            if math.isclose(abs(intersection_abscissea), 0, abs_tol=1e-6):
+            if math.isclose(abs(intersection_abscissea), 0, abs_tol=abs_tol):
                 return [linesegment.start]
-            if math.isclose(intersection_abscissea, 1, abs_tol=1e-6):
+            if math.isclose(intersection_abscissea, 1, abs_tol=abs_tol):
                 return [linesegment.end]
             return []
         return [linesegment.start + intersection_abscissea * u_vector]
@@ -1255,7 +1263,22 @@ class Plane3D(Surface3D):
         return intersections
 
     def arc_intersections(self, arc):
+        """
+        Calculates the intersections between a Plane 3D and an Arc 3D.
+
+        :param arc: arc to verify intersections.
+        :return: list of intersections: List[volmdlr.Point3D].
+        """
         return self.fullarc_intersections(arc)
+
+    def bsplinecurve_intersections(self, bspline_curve):
+        """
+        Calculates the intersections between a Plane 3D and a Bspline Curve 3D.
+
+        :param bspline_curve: bspline_curve to verify intersections.
+        :return: list of intersections: List[volmdlr.Point3D].
+        """
+        return vm_utils_intersections.get_bsplinecurve_intersections(self, bspline_curve)
 
     def equation_coefficients(self):
         """
