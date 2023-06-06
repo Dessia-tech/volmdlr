@@ -1727,24 +1727,21 @@ class Sweep(shells.ClosedShell3D):
         v = w.cross(u)
 
         start_plane = surfaces.Plane3D(
-            volmdlr.Frame3D(self.wire3d.point_at_abscissa(0.), u, v, w)
-        )
+            volmdlr.Frame3D(self.wire3d.point_at_abscissa(0.), u, v, w))
 
-        l_last_primitive = self.wire3d.primitives[-1].length()
-        w = self.wire3d.primitives[-1].unit_direction_vector(l_last_primitive)
-        u = self.wire3d.primitives[-1].unit_normal_vector(l_last_primitive)
+        length_last_primitive = self.wire3d.primitives[-1].length()
+        w = self.wire3d.primitives[-1].unit_direction_vector(length_last_primitive)
+        u = self.wire3d.primitives[-1].unit_normal_vector(length_last_primitive)
         if not u:
             u = w.deterministic_unit_normal_vector()
         v = w.cross(u)
 
         end_plane = surfaces.Plane3D(
-            volmdlr.Frame3D(self.wire3d.primitives[-1].point_at_abscissa(
-                l_last_primitive),
-                            u, v, w))
+            volmdlr.Frame3D(self.wire3d.primitives[-1].point_at_abscissa(length_last_primitive), u, v, w))
 
         faces = [volmdlr.faces.PlaneFace3D(start_plane, surfaces.Surface2D(self.contour2d, []))]
 
-        max_brectangle = max(self.contour2d.bounding_rectangle.bounds()) * 2
+        max_brectangle = max(self.contour2d.bounding_rectangle.bounds()) * 4
         cutting_face_contour = volmdlr.wires.Contour2D.from_points(
                     [volmdlr.Point2D(-max_brectangle, -max_brectangle),
                      volmdlr.Point2D(max_brectangle, -max_brectangle),
@@ -1785,7 +1782,7 @@ class Sweep(shells.ClosedShell3D):
                 tangents = []
                 for k, _ in enumerate(wire_primitive.points):
                     position = k / (len(wire_primitive.points) - 1)
-                    tangents.append(wire_primitive.tangent(position))
+                    tangents.append(wire_primitive.unit_direction_vector(position*wire_primitive.length()))
 
                 circles = []
                 for pt, tan in zip(wire_primitive.points, tangents):

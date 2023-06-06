@@ -77,8 +77,8 @@ class Edge(dc.DessiaObject):
         self.start = start
         self.end = end
         self._length = None
-        self._direction_vector = None
-        self._unit_direction_vector = None
+        self._direction_vector_memo = None
+        self._unit_direction_vector_memo = None
         self._reverse = None
         self._middle_point = None
         # Disabling super init call for performance
@@ -242,11 +242,13 @@ class Edge(dc.DessiaObject):
         :param abscissa: edge abscissa
         :return: unit direction vector
         """
-        if not self._unit_direction_vector:
+        if not self._unit_direction_vector_memo:
+            self._unit_direction_vector_memo = {}
+        if abscissa not in self._unit_direction_vector_memo:
             vector = self.direction_vector(abscissa).copy(deep=True)
             vector.normalize()
-            self._unit_direction_vector = vector
-        return self._unit_direction_vector
+            self._unit_direction_vector_memo[abscissa] = vector
+        return self._unit_direction_vector_memo[abscissa]
 
     def straight_line_point_belongs(self, point):
         """
@@ -633,9 +635,11 @@ class LineSegment(Edge):
             direction vector is to be calculated.
         :return: The direction vector of the LineSegment.
         """
-        if not self._direction_vector:
-            self._direction_vector = self.end - self.start
-        return self._direction_vector
+        if not self._direction_vector_memo:
+            self._direction_vector_memo = {}
+        if abscissa not in self._direction_vector_memo:
+            self._direction_vector_memo[abscissa] = self.end - self.start
+        return self._direction_vector_memo[abscissa]
 
     def normal_vector(self, abscissa=0.):
         """
@@ -5701,10 +5705,10 @@ class BSplineCurve3D(BSplineCurve):
 
     def normal(self, position: float = 0.0):
         _, normal = operations.normal(self.curve, position, normalize=True)
-        normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
+        normal = volmdlr.Vector3D(normal[0], normal[1], normal[2])
         return normal
 
-    def direction_vector(self, abscissa=0.):
+    def get_direction_vector(self, abscissa=0.0):
         length = self.length()
         if abscissa >= length:
             abscissa2 = length
@@ -5716,6 +5720,13 @@ class BSplineCurve3D(BSplineCurve):
         tangent = self.point_at_abscissa(abscissa2) - self.point_at_abscissa(
             abscissa)
         return tangent
+
+    def direction_vector(self, abscissa=0.):
+        if not self._direction_vector_memo:
+            self._direction_vector_memo = {}
+        if abscissa not in self._direction_vector_memo:
+            self._direction_vector_memo[abscissa] = self.get_direction_vector(abscissa)
+        return self._direction_vector_memo[abscissa]
 
     def point3d_to_parameter(self, point: volmdlr.Point3D):
         """
