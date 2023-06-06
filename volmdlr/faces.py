@@ -1530,7 +1530,7 @@ class Triangle3D(PlaneFace3D):
         self._inner_contours3d = None
         # self.bounding_box = self._bounding_box()
 
-        # DessiaObject.__init__(self, name=name)
+        PlaneFace3D.__init__(self, self.surface3d, self.surface2d)
 
     def _data_hash(self):
         """

@@ -695,14 +695,14 @@ class LineSegment(Edge):
         """
         return self.start + self.unit_direction_vector() * abscissa
 
-    def get_geo_lines(self, tag: int, start_point_tag: int, end_point_tag: int):
+    def get_geo_lines(self, tag: int, volmdlrpoint_tag: int, end_point_tag: int):
         """
         Gets the lines that define a LineSegment in a .geo file.
 
         :param tag: The linesegment index
         :type tag: int
-        :param start_point_tag: The linesegment' start point index
-        :type start_point_tag: int
+        :param volmdlrpoint_tag: The linesegment' start point index
+        :type volmdlrpoint_tag: int
         :param end_point_tag: The linesegment' end point index
         :type end_point_tag: int
 
@@ -710,7 +710,7 @@ class LineSegment(Edge):
         :rtype: str
         """
 
-        return 'Line(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + str(end_point_tag) + '};'
+        return 'Line(' + str(tag) + ') = {' + str(volmdlrpoint_tag) + ', ' + str(end_point_tag) + '};'
 
     def get_geo_points(self):
         return [self.start, self.end]
@@ -818,12 +818,12 @@ class LineSegment(Edge):
         line = self.to_line()
         content, (line_id,) = line.to_step(current_id)
         current_id = line_id + 1
-        start_content, start_id = self.start.to_step(current_id, vertex=True)
-        current_id = start_id + 1
+        volmdlrcontent, volmdlrid = self.start.to_step(current_id, vertex=True)
+        current_id = volmdlrid + 1
         end_content, end_id = self.end.to_step(current_id + 1, vertex=True)
-        content += start_content + end_content
+        content += volmdlrcontent + end_content
         current_id = end_id + 1
-        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
+        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{volmdlrid},#{end_id},#{line_id},.T.);\n"
         return content, [current_id]
 
     def is_close(self, other_edge, tol: float = 1e-6):
@@ -1416,8 +1416,8 @@ class BSplineCurve(Edge):
 
         :param tag: The BsplineCurve index
         :type tag: int
-        :param start_point_tag: The linesegment' start point index
-        :type start_point_tag: int
+        :param volmdlrpoint_tag: The linesegment' start point index
+        :type volmdlrpoint_tag: int
         :param end_point_tag: The linesegment' end point index
         :type end_point_tag: int
 
@@ -2881,14 +2881,14 @@ class Arc(Edge):
                       DeprecationWarning)
         return self.discretization_points(number_points=discretization_resolution)
 
-    def get_geo_lines(self, tag: int, start_point_tag: int, center_point_tag: int, end_point_tag: int):
+    def get_geo_lines(self, tag: int, volmdlrpoint_tag: int, center_point_tag: int, end_point_tag: int):
         """
         Gets the lines that define an Arc in a .geo file.
 
         :param tag: The linesegment index
         :type tag: int
-        :param start_point_tag: The linesegment' start point index
-        :type start_point_tag: int
+        :param volmdlrpoint_tag: The linesegment' start point index
+        :type volmdlrpoint_tag: int
         :param center_point_tag: The linesegment' center point index
         :type center_point_tag: int
         :param end_point_tag: The line segment's end point index
@@ -2898,7 +2898,7 @@ class Arc(Edge):
         :rtype: str
         """
 
-        return 'Circle(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + \
+        return 'Circle(' + str(tag) + ') = {' + str(volmdlrpoint_tag) + ', ' + \
             str(center_point_tag) + ', ' + str(end_point_tag) + '};'
 
     def get_geo_points(self):
@@ -3012,10 +3012,10 @@ class FullArc(Arc):
     """
 
     def __init__(self, center: Union[volmdlr.Point2D, volmdlr.Point3D],
-                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
+                 volmdlrend: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
         self.__center = center
-        self.start_end = start_end
-        Arc.__init__(self, start=start_end, interior=self.interior, end=start_end, name=name)  # !!! this is dangerous
+        self.volmdlrend = volmdlrend
+        Arc.__init__(self, start=volmdlrend, interior=self.interior, end=volmdlrend, name=name)  # !!! this is dangerous
 
     @property
     def is_trigo(self):
@@ -3067,9 +3067,9 @@ class Arc2D(Arc):
         self._angle = None
         self._bounding_rectangle = None
         Arc.__init__(self, start=start, end=end, interior=interior, name=name)
-        start_to_center = start - self.center
+        volmdlrto_center = start - self.center
         end_to_center = end - self.center
-        angle1 = math.atan2(start_to_center.y, start_to_center.x)
+        angle1 = math.atan2(volmdlrto_center.y, volmdlrto_center.x)
         angle2 = math.atan2(end_to_center.y, end_to_center.x)
         if self.is_trigo:
             self.angle1 = angle1
@@ -3199,9 +3199,9 @@ class Arc2D(Arc):
         vector_end = clockwise_arc.end - clockwise_arc.center
         vector_point = point - clockwise_arc.center
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
-        point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
+        point_volmdlrangle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
-        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=abs_tol):
+        if math.isclose(arc_angle, point_volmdlrangle + point_end_angle, abs_tol=abs_tol):
             return True
         return False
 
@@ -3210,7 +3210,7 @@ class Arc2D(Arc):
         Convert to a full arc2d.
         """
         return FullArc2D(center=self.center,
-                         start_end=self.point_at_abscissa(0),
+                         volmdlrend=self.point_at_abscissa(0),
                          name=self.name)
 
     def line_intersections(self, line2d: Line2D):
@@ -3294,12 +3294,12 @@ class Arc2D(Arc):
         vector_end = clockwise_arc.end - clockwise_arc.center
         vector_point = point - clockwise_arc.center
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
-        point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
+        point_volmdlrangle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
-        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=tol):
+        if math.isclose(arc_angle, point_volmdlrangle + point_end_angle, abs_tol=tol):
             if self.is_trigo:
-                return self.length() - self.radius * point_start_angle
-            return self.radius * point_start_angle
+                return self.length() - self.radius * point_volmdlrangle
+            return self.radius * point_volmdlrangle
         raise ValueError('Point not in arc')
 
     def area(self):
@@ -3615,7 +3615,7 @@ class Arc2D(Arc):
         return plot_data.Arc2D(cx=self.center.x,
                                cy=self.center.y,
                                r=self.radius,
-                               start_angle=self.angle1,
+                               volmdlrangle=self.angle1,
                                end_angle=self.angle2,
                                edge_style=edge_style,
                                data=data,
@@ -3638,8 +3638,8 @@ class Arc2D(Arc):
         raise NotImplementedError
 
     def infinite_primitive(self, offset):
-        vector_start_center = self.start - self.center
-        vector_start_center.normalize()
+        vector_volmdlrcenter = self.start - self.center
+        vector_volmdlrcenter.normalize()
         vector_end_center = self.end - self.center
         vector_end_center.normalize()
         vector_interior_center = self.interior - self.center
@@ -3658,7 +3658,7 @@ class Arc2D(Arc):
             # vec1.normalize()
             # vec1 = 2 * offset * math.sqrt(2) * vec1
             # center = self.center.translation(vec1)
-        start = center + radius * vector_start_center
+        start = center + radius * vector_volmdlrcenter
         end = center + radius * vector_end_center
         interior = center + radius * vector_interior_center
         return Arc2D(start, interior, end)
@@ -3678,14 +3678,14 @@ class Arc2D(Arc):
 
 
 class FullArc2D(FullArc, Arc2D):
-    """ An edge that starts at start_end, ends at the same point after having described a circle. """
+    """ An edge that starts at volmdlrend, ends at the same point after having described a circle. """
 
-    def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
+    def __init__(self, center: volmdlr.Point2D, volmdlrend: volmdlr.Point2D,
                  name: str = ''):
-        self.interior = start_end.rotation(center, math.pi)
+        self.interior = volmdlrend.rotation(center, math.pi)
         self._bounding_rectangle = None
-        FullArc.__init__(self, center=center, start_end=start_end, name=name)
-        Arc2D.__init__(self, start=start_end, interior=self.interior, end=start_end)
+        FullArc.__init__(self, center=center, volmdlrend=volmdlrend, name=name)
+        Arc2D.__init__(self, start=volmdlrend, interior=self.interior, end=volmdlrend)
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
 
@@ -3695,7 +3695,7 @@ class FullArc2D(FullArc, Arc2D):
         dict_['radius'] = self.radius
         dict_['angle'] = self.angle
         dict_['is_trigo'] = self.is_trigo
-        dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
+        dict_['volmdlrend'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/volmdlrend')
         return dict_
 
     def copy(self, *args, **kwargs):
@@ -3704,18 +3704,18 @@ class FullArc2D(FullArc, Arc2D):
     @classmethod
     def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
         center = volmdlr.Point2D.dict_to_object(dict_['center'])
-        start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
+        volmdlrend = volmdlr.Point2D.dict_to_object(dict_['volmdlrend'])
 
-        return cls(center, start_end, name=dict_['name'])
+        return cls(center, volmdlrend, name=dict_['name'])
 
     def __hash__(self):
-        return hash((self.__class__.__name__, self.center, self.radius, self.start_end))
+        return hash((self.__class__.__name__, self.center, self.radius, self.volmdlrend))
 
     def __eq__(self, other_arc):
         if self.__class__.__name__ != other_arc.__class__.__name__:
             return False
         return (self.center == other_arc.center) \
-            and (self.start_end == other_arc.start_end)
+            and (self.volmdlrend == other_arc.volmdlrend)
 
     @property
     def bounding_rectangle(self):
@@ -3777,8 +3777,8 @@ class FullArc2D(FullArc, Arc2D):
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """Rotation of a full arc 2D."""
         new_center = self._center.rotation(center, angle, True)
-        new_start_end = self.start.rotation(center, angle, True)
-        return FullArc2D(new_center, new_start_end)
+        new_volmdlrend = self.start.rotation(center, angle, True)
+        return FullArc2D(new_center, new_volmdlrend)
 
     def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
@@ -3791,8 +3791,8 @@ class FullArc2D(FullArc, Arc2D):
     def translation(self, offset: volmdlr.Vector2D):
         """Translation of a full arc 2D."""
         new_center = self._center.translation(offset)
-        new_start_end = self.start.translation(offset)
-        return FullArc2D(new_center, new_start_end)
+        new_volmdlrend = self.start.translation(offset)
+        return FullArc2D(new_center, new_volmdlrend)
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
@@ -3968,7 +3968,7 @@ class ArcEllipse2D(Edge):
         self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
         frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
         self.frame = frame
-        start_new = frame.global_to_local_coordinates(self.start)
+        volmdlrnew = frame.global_to_local_coordinates(self.start)
         end_new = frame.global_to_local_coordinates(self.end)
         interior_new = frame.global_to_local_coordinates(self.interior)
         center_new = frame.global_to_local_coordinates(self.center)
@@ -3978,12 +3978,12 @@ class ArcEllipse2D(Edge):
         if abs(self.end.x) == abs(self.interior.x) == abs(self.start.x):
             raise ValueError(f"Interior point{self.interior} is not valid. Try specifying another interior point.")
         major_axis, minor_axis = self.get_major_minor_axis_with_formula(
-            start_new, interior_new, end_new, center_new)
+            volmdlrnew, interior_new, end_new, center_new)
         self.major_axis = major_axis
         self.minor_axis = minor_axis
 
         # Angle pour start
-        u1, u2 = start_new.x / self.major_axis, start_new.y / self.minor_axis
+        u1, u2 = volmdlrnew.x / self.major_axis, volmdlrnew.y / self.minor_axis
         angle1 = volmdlr.geometry.sin_cos_angle(u1, u2)
         self.angle_start = angle1
         # Angle pour end
@@ -4026,17 +4026,17 @@ class ArcEllipse2D(Edge):
         else:
             self.offset_angle = angle2
 
-    def get_major_minor_axis_with_formula(self, start_, interior_, end_, center_):
-        vector_center_start = start_ - center_
+    def get_major_minor_axis_with_formula(self, volmdlr, interior_, end_, center_):
+        vector_center_start = volmdlr - center_
         vector_center_end = end_ - center_
         if vector_center_start.norm() >= vector_center_end.norm():
-            x1 = start_.x - center_.x
-            y1 = start_.y - center_.y
+            x1 = volmdlr.x - center_.x
+            y1 = volmdlr.y - center_.y
             x2 = end_.x - center_.x
             y2 = end_.y - center_.y
         else:
-            x2 = start_.x - center_.x
-            y2 = start_.y - center_.y
+            x2 = volmdlr.x - center_.x
+            y2 = volmdlr.y - center_.y
             x1 = end_.x - center_.x
             y1 = end_.y - center_.y
         if vector_center_start.is_colinear_to(vector_center_end) or abs(x1) == abs(x2):
@@ -4088,13 +4088,13 @@ class ArcEllipse2D(Edge):
         vector_end = clockwise_arcellipse.end - clockwise_arcellipse.center
         vector_point = point - clockwise_arcellipse.center
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
-        point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
+        point_volmdlrangle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
-        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=1e-5):
+        if math.isclose(arc_angle, point_volmdlrangle + point_end_angle, abs_tol=1e-5):
             return True
         return False
 
-    def valid_abscissa_start_end_angle(self, angle_abscissa):
+    def valid_abscissa_volmdlrend_angle(self, angle_abscissa):
         """Get valid abscissa angle for start and end."""
         angle_start = self.angle_start
         angle_end = angle_abscissa
@@ -4131,7 +4131,7 @@ class ArcEllipse2D(Edge):
         initial_point = self.frame.global_to_local_coordinates(aproximation_point)
         u1, u2 = initial_point.x / self.major_axis, initial_point.y / self.minor_axis
         initial_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
-        angle_start, initial_angle = self.valid_abscissa_start_end_angle(initial_angle)
+        angle_start, initial_angle = self.valid_abscissa_volmdlrend_angle(initial_angle)
 
         def ellipse_arc_length(theta):
             return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
@@ -4180,7 +4180,7 @@ class ArcEllipse2D(Edge):
             new_point = self.frame.global_to_local_coordinates(point)
             u1, u2 = new_point.x / self.major_axis, new_point.y / self.minor_axis
             angle_abscissa = volmdlr.geometry.sin_cos_angle(u1, u2)
-            angle_start, angle_end = self.valid_abscissa_start_end_angle(angle_abscissa)
+            angle_start, angle_end = self.valid_abscissa_volmdlrend_angle(angle_abscissa)
 
             def ellipse_arc_length(theta):
                 return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
@@ -4485,10 +4485,10 @@ class FullArcEllipse(Edge):
     Abstract class to define an ellipse.
     """
 
-    def __init__(self, start_end: Union[volmdlr.Point2D, volmdlr.Point3D], major_axis: float, minor_axis: float,
+    def __init__(self, volmdlrend: Union[volmdlr.Point2D, volmdlr.Point3D], major_axis: float, minor_axis: float,
                  center: Union[volmdlr.Point2D, volmdlr.Point3D],
                  major_dir: Union[volmdlr.Vector2D, volmdlr.Vector3D], name: str = ''):
-        self.start_end = start_end
+        self.volmdlrend = volmdlrend
         self.major_axis = major_axis
         self.minor_axis = minor_axis
         self.center = center
@@ -4496,7 +4496,7 @@ class FullArcEllipse(Edge):
         self.is_trigo = True
         self.angle_start = self.theta
         self.angle_end = self.theta + volmdlr.TWO_PI
-        Edge.__init__(self, start=start_end, end=start_end, name=name)
+        Edge.__init__(self, start=volmdlrend, end=volmdlrend, name=name)
 
     def length(self):
         """
@@ -4578,7 +4578,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
     Defines a FullArcEllipse2D.
     """
 
-    def __init__(self, start_end: volmdlr.Point2D, major_axis: float, minor_axis: float,
+    def __init__(self, volmdlrend: volmdlr.Point2D, major_axis: float, minor_axis: float,
                  center: volmdlr.Point2D, major_dir: volmdlr.Vector2D, name: str = ''):
         major_dir.normalize()
         self.minor_dir = major_dir.deterministic_unit_normal_vector()
@@ -4588,7 +4588,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
             self.theta = 0.0
         self._bounding_rectangle = None
 
-        FullArcEllipse.__init__(self, start_end, major_axis, minor_axis, center, major_dir, name)
+        FullArcEllipse.__init__(self, volmdlrend, major_axis, minor_axis, center, major_dir, name)
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
@@ -4620,7 +4620,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         :return: A 3D full arc of ellipse.
         :rtype: FullArcEllipse3D
         """
-        point_start_end3d = self.start_end.to_3d(plane_origin, x, y)
+        point_volmdlrend3d = self.volmdlrend.to_3d(plane_origin, x, y)
         point_center3d = self.center.to_3d(plane_origin, x, y)
 
         a_max2d = self.center + self.major_dir * self.major_axis
@@ -4628,7 +4628,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         new_major_dir = (a_max3d - point_center3d).to_vector()
         new_major_dir.normalize()
         normal = x.cross(y)
-        return FullArcEllipse3D(point_start_end3d, self.major_axis, self.minor_axis,
+        return FullArcEllipse3D(point_volmdlrend3d, self.major_axis, self.minor_axis,
                                 point_center3d, normal, new_major_dir, name=self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
@@ -4644,7 +4644,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         :rtype: FullArcEllipse2D
         """
         if side == 'old':
-            return FullArcEllipse2D(frame.local_to_global_coordinates(self.start_end),
+            return FullArcEllipse2D(frame.local_to_global_coordinates(self.volmdlrend),
                                     self.major_axis, self.minor_axis,
                                     frame.local_to_global_coordinates(self.center),
                                     self.major_dir, self.name)
@@ -4652,7 +4652,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
             point_major_dir = self.center + self.major_dir * self.major_axis
             major_dir = frame.global_to_local_coordinates(point_major_dir).to_vector()
             major_dir.normalize()
-            return FullArcEllipse2D(frame.global_to_local_coordinates(self.start_end),
+            return FullArcEllipse2D(frame.global_to_local_coordinates(self.volmdlrend),
                                     self.major_axis, self.minor_axis,
                                     frame.global_to_local_coordinates(self.center),
                                     major_dir, self.name)
@@ -4667,7 +4667,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         :return: A new translated FullArcEllipse2D.
         :rtype: FullArcEllipse2D
         """
-        return FullArcEllipse2D(self.start_end.translation(offset), self.major_axis, self.minor_axis,
+        return FullArcEllipse2D(self.volmdlrend.translation(offset), self.major_axis, self.minor_axis,
                                 self.center.translation(offset), self.major_dir, self.name)
 
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], tol: float = 1e-6):
@@ -5666,7 +5666,7 @@ class BSplineCurve3D(BSplineCurve):
                                         bbox[0][1], bbox[1][1],
                                         bbox[0][2], bbox[1][2])
 
-    def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
+    def look_up_table(self, resolution: int = 20, volmdlrparameter: float = 0,
                       end_parameter: float = 1):
         """
         Creates a table of equivalence between the parameter t (eval. of the BSplineCurve) and the cumulative distance.
@@ -5674,26 +5674,26 @@ class BSplineCurve3D(BSplineCurve):
         :param resolution: The precision of the table. Auto-adjusted by the
             algorithm. Default value set to 20
         :type resolution: int, optional
-        :param start_parameter: First parameter evaluated in the table.
+        :param volmdlrparameter: First parameter evaluated in the table.
             Default value set to 0
-        :type start_parameter: float, optional
+        :type volmdlrparameter: float, optional
         :param end_parameter: Last parameter evaluated in the table.
             Default value set to 1
-        :type start_parameter: float, optional
+        :type volmdlrparameter: float, optional
         :return: Yields a list of tuples containing the parameter and the
             cumulated distance along the BSplineCruve3D from the evaluation of
-            start_parameter
+            volmdlrparameter
         :rtype: Tuple[float, float]
         """
         resolution = max(10, min(resolution, int(self.length() / 1e-4)))
-        delta_param = 1 / resolution * (end_parameter - start_parameter)
+        delta_param = 1 / resolution * (end_parameter - volmdlrparameter)
         distance = 0
         for i in range(resolution + 1):
             if i == 0:
-                yield start_parameter, 0
+                yield volmdlrparameter, 0
             else:
-                param1 = start_parameter + (i - 1) * delta_param
-                param2 = start_parameter + i * delta_param
+                param1 = volmdlrparameter + (i - 1) * delta_param
+                param2 = volmdlrparameter + i * delta_param
                 point1 = volmdlr.Point3D(*self.curve.evaluate_single(param1))
                 point2 = volmdlr.Point3D(*self.curve.evaluate_single(param2))
                 distance += point1.point_distance(point2)
@@ -5813,15 +5813,15 @@ class BSplineCurve3D(BSplineCurve):
         else:
             current_id = curve_id + 1
 
-        start_content, start_id = self.start.to_step(current_id, vertex=True)
-        current_id = start_id + 1
+        volmdlrcontent, volmdlrid = self.start.to_step(current_id, vertex=True)
+        current_id = volmdlrid + 1
         end_content, end_id = self.end.to_step(current_id + 1, vertex=True)
-        content += start_content + end_content
+        content += volmdlrcontent + end_content
         current_id = end_id + 1
         if surface_id:
-            content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id + 1},.T.);\n"
+            content += f"#{current_id} = EDGE_CURVE('{self.name}',#{volmdlrid},#{end_id},#{curve_id + 1},.T.);\n"
         else:
-            content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
+            content += f"#{current_id} = EDGE_CURVE('{self.name}',#{volmdlrid},#{end_id},#{curve_id},.T.);\n"
         return content, [current_id]
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -6219,9 +6219,9 @@ class Arc3D(Arc):
     def from_angle(cls, start: volmdlr.Point3D, angle: float,
                    axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D):
         """Gives the arc3D from a start, an angle and an axis."""
-        start_gen = start
-        int_gen = start_gen.rotation(axis_point, axis, angle / 2)
-        end_gen = start_gen.rotation(axis_point, axis, angle)
+        volmdlrgen = start
+        int_gen = volmdlrgen.rotation(axis_point, axis, angle / 2)
+        end_gen = volmdlrgen.rotation(axis_point, axis, angle)
         if angle == volmdlr.TWO_PI:
             line = Line3D(axis_point, axis_point + axis)
             center, _ = line.point_projection(start)
@@ -6230,7 +6230,7 @@ class Arc3D(Arc):
             v = axis.cross(u)
             return volmdlr.wires.Circle3D(volmdlr.Frame3D(center, u, v, axis),
                                           radius)
-        return cls(start_gen, int_gen, end_gen, axis)
+        return cls(volmdlrgen, int_gen, end_gen, axis)
 
     @property
     def normal(self):
@@ -6720,8 +6720,8 @@ class Arc3D(Arc):
         if math.isclose(tore_center.point_distance(self.center), 0.,
                         abs_tol=1e-6):
 
-            start_p, _ = line3d.point_projection(self.start)
-            u = self.start - start_p
+            volmdlrp, _ = line3d.point_projection(self.start)
+            u = self.start - volmdlrp
 
             if math.isclose(u.norm(), 0, abs_tol=1e-6):
                 end_p, _ = line3d.point_projection(self.end)
@@ -6786,11 +6786,11 @@ class Arc3D(Arc):
             curve_id += 1
 
         current_id = curve_id + 1
-        start_content, start_id = self.start.to_step(current_id, vertex=True)
-        end_content, end_id = self.end.to_step(start_id + 1, vertex=True)
-        content += start_content + end_content
+        volmdlrcontent, volmdlrid = self.start.to_step(current_id, vertex=True)
+        end_content, end_id = self.end.to_step(volmdlrid + 1, vertex=True)
+        content += volmdlrcontent + end_content
         current_id = end_id + 1
-        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
+        content += f"#{current_id} = EDGE_CURVE('{self.name}',#{volmdlrid},#{end_id},#{curve_id},.T.);\n"
         return content, [current_id]
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
@@ -6857,22 +6857,22 @@ class Arc3D(Arc):
 
 class FullArc3D(FullArc, Arc3D):
     """
-    An edge that starts at start_end, ends at the same point after having described a circle.
+    An edge that starts at volmdlrend, ends at the same point after having described a circle.
 
     """
 
-    def __init__(self, center: volmdlr.Point3D, start_end: volmdlr.Point3D,
+    def __init__(self, center: volmdlr.Point3D, volmdlrend: volmdlr.Point3D,
                  normal: volmdlr.Vector3D,
                  name: str = ''):
         self._utd_frame = None
         self._bbox = None
         self.__normal = normal
-        self.interior = start_end.rotation(center, normal, math.pi)
-        FullArc.__init__(self, center=center, start_end=start_end, name=name)
-        Arc3D.__init__(self, start=start_end, interior=self.interior, end=start_end)
+        self.interior = volmdlrend.rotation(center, normal, math.pi)
+        FullArc.__init__(self, center=center, volmdlrend=volmdlrend, name=name)
+        Arc3D.__init__(self, start=volmdlrend, interior=self.interior, end=volmdlrend)
 
     def __hash__(self):
-        return hash(self.center) + 5 * hash(self.start_end)
+        return hash(self.center) + 5 * hash(self.volmdlrend)
 
     def __eq__(self, other_arc):
         return (self.center == other_arc.center) \
@@ -6891,7 +6891,7 @@ class FullArc3D(FullArc, Arc3D):
         dict_['radius'] = self.radius
         dict_['angle'] = self.angle
         dict_['is_trigo'] = self.is_trigo
-        dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
+        dict_['volmdlrend'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/volmdlrend')
         dict_['normal'] = self.normal.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/normal')
         dict_['name'] = self.name
         return dict_
@@ -6906,8 +6906,8 @@ class FullArc3D(FullArc, Arc3D):
         :return: FullArc2D.
         """
         center = self.center.to_2d(plane_origin, x, y)
-        start_end = self.start.to_2d(plane_origin, x, y)
-        return FullArc2D(center, start_end)
+        volmdlrend = self.start.to_2d(plane_origin, x, y)
+        return FullArc2D(center, volmdlrend)
 
     def to_step(self, current_id, surface_id=None):
         """Exports to STEP format."""
@@ -6965,10 +6965,10 @@ class FullArc3D(FullArc, Arc3D):
         return ax
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
-        new_start_end = self.start.rotation(center, axis, angle)
+        new_volmdlrend = self.start.rotation(center, axis, angle)
         new_center = self._center.rotation(center, axis, angle)
         new_normal = self._normal.rotation(center, axis, angle)
-        return FullArc3D(new_center, new_start_end,
+        return FullArc3D(new_center, new_volmdlrend,
                          new_normal, name=self.name)
 
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -6981,10 +6981,10 @@ class FullArc3D(FullArc, Arc3D):
         self._bbox = None
 
     def translation(self, offset: volmdlr.Vector3D):
-        new_start_end = self.start.translation(offset, True)
+        new_volmdlrend = self.start.translation(offset, True)
         new_center = self._center.translation(offset, True)
         new_normal = self._normal.translation(offset, True)
-        return FullArc3D(new_center, new_start_end,
+        return FullArc3D(new_center, new_volmdlrend,
                          new_normal, name=self.name)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
@@ -7077,7 +7077,7 @@ class FullArc3D(FullArc, Arc3D):
             center, _ = line1.minimum_distance_points(line2)
         except ZeroDivisionError as error:
             raise ValueError('Start, end and interior points  of an arc must be distincts') from error
-        return cls(center=center, start_end=point1, normal=normal)
+        return cls(center=center, volmdlrend=point1, normal=normal)
 
     def split(self, split_point):
         """
@@ -7128,7 +7128,7 @@ class ArcEllipse3D(Edge):
 
         frame = volmdlr.Frame3D(self.center, self.major_dir, self.minor_dir, self.normal)
         self.frame = frame
-        start_new, end_new = frame.global_to_local_coordinates(
+        volmdlrnew, end_new = frame.global_to_local_coordinates(
             self.start), frame.global_to_local_coordinates(self.end)
         interior_new, center_new = frame.global_to_local_coordinates(
             self.interior), frame.global_to_local_coordinates(self.center)
@@ -7137,7 +7137,7 @@ class ArcEllipse3D(Edge):
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
 
-        def theta_a_b(start_, iterior_, end_, center_):
+        def theta_a_b(volmdlr, iterior_, end_, center_):
             """
             center-and-3-arbitrary-points-on-it-are-given.
 
@@ -7145,7 +7145,7 @@ class ArcEllipse3D(Edge):
             (clockwise),a=semi major axis, B=semi minor axis.
 
             """
-            x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1], \
+            x_start, y_start, x_interior, y_interior, x_end, y_end = volmdlr[0] - center_[0], volmdlr[1] - center_[1], \
                 iterior_[0] - center_[0], iterior_[1] - center_[
                                                                          1], end_[0] - center_[0], end_[1] - center_[1]
             matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
@@ -7163,23 +7163,23 @@ class ArcEllipse3D(Edge):
 
         if start.is_close(end):
             extra_new = frame.global_to_local_coordinates(self.extra)
-            theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, extra_new, center_new)
+            theta, major_axis, minor_axis = theta_a_b(volmdlrnew, interior_new, extra_new, center_new)
 
         else:
             if not self.extra:
-                theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, end_new, center_new)
+                theta, major_axis, minor_axis = theta_a_b(volmdlrnew, interior_new, end_new, center_new)
             else:
                 extra_new = frame.global_to_local_coordinates(self.extra)
-                theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, extra_new, center_new)
+                theta, major_axis, minor_axis = theta_a_b(volmdlrnew, interior_new, extra_new, center_new)
 
         self.Gradius = major_axis
         self.Sradius = minor_axis
         self.theta = theta
 
         # Angle start
-        start_u1, start_u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
-        # angle1 = volmdlr.geometry.sin_cos_angle(start_u1, start_u2)
-        angle1 = math.atan2(start_u2, start_u1)
+        volmdlru1, volmdlru2 = volmdlrnew.x / self.Gradius, volmdlrnew.y / self.Sradius
+        # angle1 = volmdlr.geometry.sin_cos_angle(volmdlru1, volmdlru2)
+        angle1 = math.atan2(volmdlru2, volmdlru1)
         self.angle_start = angle1
         # Angle end
         end_u3, end_u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
@@ -7543,7 +7543,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
     Defines a FullArcEllipse3D.
     """
 
-    def __init__(self, start_end: volmdlr.Point3D, major_axis: float, minor_axis: float,
+    def __init__(self, volmdlrend: volmdlr.Point3D, major_axis: float, minor_axis: float,
                  center: volmdlr.Point3D, normal: volmdlr.Vector3D, major_dir: volmdlr.Vector3D, name: str = ''):
         normal.normalize()
         self.normal = normal
@@ -7560,7 +7560,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
             self.theta = 0.0
         self._bbox = None
 
-        FullArcEllipse.__init__(self, start_end, major_axis, minor_axis, center, major_dir, name)
+        FullArcEllipse.__init__(self, volmdlrend, major_axis, minor_axis, center, major_dir, name)
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
@@ -7593,13 +7593,13 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :param y: plane v vector.
         :return: FullArcEllipse2D.
         """
-        point_start_end2d = self.start_end.to_2d(plane_origin, x, y)
+        point_volmdlrend2d = self.volmdlrend.to_2d(plane_origin, x, y)
         center2d = self.center.to_2d(plane_origin, x, y)
         point_major_dir = self.center + self.major_axis * self.major_dir
         point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
         vector_major_dir_2d = (point_major_dir_2d - center2d).to_vector()
         vector_major_dir_2d.normalize()
-        return FullArcEllipse2D(point_start_end2d, self.major_axis, self.minor_axis, center2d,
+        return FullArcEllipse2D(point_volmdlrend2d, self.major_axis, self.minor_axis, center2d,
                                 vector_major_dir_2d, name=self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -7615,7 +7615,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :rtype: FullArcEllipse3D
         """
         if side == 'old':
-            return FullArcEllipse3D(frame.local_to_global_coordinates(self.start_end),
+            return FullArcEllipse3D(frame.local_to_global_coordinates(self.volmdlrend),
                                     self.major_axis, self.minor_axis,
                                     frame.local_to_global_coordinates(self.center),
                                     frame.local_to_global_coordinates(self.normal), self.major_dir, self.name)
@@ -7623,7 +7623,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
             point_major_dir = self.center + self.major_dir * self.major_axis
             major_dir = frame.global_to_local_coordinates(point_major_dir).to_vector()
             major_dir.normalize()
-            return FullArcEllipse3D(frame.global_to_local_coordinates(self.start_end),
+            return FullArcEllipse3D(frame.global_to_local_coordinates(self.volmdlrend),
                                     self.major_axis, self.minor_axis,
                                     frame.global_to_local_coordinates(self.center),
                                     frame.global_to_local_coordinates(self.normal), major_dir, self.name)
@@ -7638,7 +7638,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: A new translated FullArcEllipse3D.
         :rtype: FullArcEllipse3D
         """
-        return FullArcEllipse3D(self.start_end.translation(offset), self.major_axis, self.minor_axis,
+        return FullArcEllipse3D(self.volmdlrend.translation(offset), self.major_axis, self.minor_axis,
                                 self.center.translation(offset), self.normal, self.major_dir, self.name)
 
     def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
@@ -7691,8 +7691,8 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
                                        + self.minor_axis * math.sin(theta_1) * self.major_dir.cross(self.normal)
         interior_2 = self.center + self.major_axis * math.cos(theta_2) * self.major_dir \
                                        + self.minor_axis * math.sin(theta_2) * self.major_dir.cross(self.normal)
-        return [ArcEllipse3D(self.start_end, interior_1, split_point, self.center, self.major_dir, self.normal),
-                ArcEllipse3D(split_point, interior_2, self.start_end, self.center, self.major_dir, self.normal)]
+        return [ArcEllipse3D(self.volmdlrend, interior_1, split_point, self.center, self.major_dir, self.normal),
+                ArcEllipse3D(split_point, interior_2, self.volmdlrend, self.center, self.major_dir, self.normal)]
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Ellipse plot."""
