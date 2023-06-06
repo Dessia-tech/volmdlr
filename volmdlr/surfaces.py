@@ -3200,7 +3200,7 @@ class SphericalSurface3D(PeriodicalSurface):
             return True
         return False
 
-    def arc_start_end_3d_to_2d(self, arc3d):
+    def _arc_start_end_3d_to_2d(self, arc3d):
         """
         Helper function to fix periodicity issues while performing transformations into parametric domain.
         """
@@ -3210,8 +3210,8 @@ class SphericalSurface3D(PeriodicalSurface):
         theta1, phi1 = start
         theta2, phi2 = end
         point_after_start, point_before_end = self._reference_points(arc3d)
-        theta3, phi3 = point_after_start
-        theta4, phi4 = point_before_end
+        theta3, _ = point_after_start
+        theta4, _ = point_before_end
 
         # Fix sphere singularity point
         if math.isclose(abs(phi1), 0.5 * math.pi, abs_tol=1e-2) and theta1 == 0.0 \
@@ -3250,7 +3250,7 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         is_lat_long_curve = self.is_lat_long_curve(arc3d)
         if is_lat_long_curve:
-            start, end = self.arc_start_end_3d_to_2d(arc3d)
+            start, end = self._arc_start_end_3d_to_2d(arc3d)
             singularity_points = self.edge_passes_on_singularity_point(arc3d)
             if any(singularity_points):
                 return self.arc3d_to_2d_with_singularity(arc3d, start, end, singularity_points)
@@ -3539,7 +3539,7 @@ class SphericalSurface3D(PeriodicalSurface):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         # TODO: On a spherical surface we can have fullarc3d in any plane
-        start, end = self.arc_start_end_3d_to_2d(fullarc3d)
+        start, end = self._arc_start_end_3d_to_2d(fullarc3d)
         theta1, phi1 = start
         theta2, phi2 = end
 
