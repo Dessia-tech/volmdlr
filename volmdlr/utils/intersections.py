@@ -38,7 +38,7 @@ def circle_3d_line_intersections(circle_3d, line):
         delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c
         if delta < 0:  # No real solutions, no intersection
             return []
-        elif delta == 0:  # One real solution, tangent intersection
+        if delta == 0:  # One real solution, tangent intersection
             x = -quadratic_equation_b / (2 * quadratic_equation_a)
             y = (direction_vector.y / direction_vector.x) * (x - line.point1.x) + line.point1.y
             return [volmdlr.Point3D(x, y, circle_3d.frame.origin.z)]
