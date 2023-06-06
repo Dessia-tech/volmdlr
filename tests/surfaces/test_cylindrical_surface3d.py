@@ -152,7 +152,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
             'surfaces/objects_cylindrical_tests/test_contour3d_to_2d_contour.json')
 
         contour2d = surface.contour3d_to_2d(contour)
-        self.assertAlmostEqual(contour2d.area, 0.29361767646954695, 2)
+        self.assertAlmostEqual(contour2d.area(), 0.29361767646954695, 2)
         self.assertTrue(contour2d.is_ordered())
 
     def test_bsplinecurve3d_to_2d(self):
