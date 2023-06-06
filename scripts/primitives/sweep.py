@@ -6,6 +6,7 @@ A sweep example.
 
 import random
 import matplotlib.pyplot as plt
+import volmdlr
 
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
@@ -18,10 +19,10 @@ p1 = vm.Point3D(0, 0, 0)
 p2 = vm.Point3D(-0.150, 0, 0)
 p3 = vm.Point3D(-0.150, 0.215, 0)
 p4 = vm.Point3D(-0.150, 0.215, -0.058)
-p5 = vm.Point3D(-0.175, 0.186, -0.042)
+p5 = vm.Point3D(-0.220, 0.186, -0.042)
 
 points = [p1, p2, p3, p4, p5]
-radius = {1: 0.015, 2: 0.020, 3: 0.005}
+radius = {1: 0.015, 2: 0.020, 3: 0.03}
 
 current_point = p5
 
@@ -30,7 +31,10 @@ for i in range(6):
     points.append(current_point)
     radius[4 + i] = 0.01 + 0.03 * random.random()
 
-contour = wires.Circle2D(vm.O2D, 0.008)
+# contour = wires.Circle2D(vm.O2D, 0.008)
+contour = wires.ClosedPolygon2D([volmdlr.Point2D(-0.004, -0.004), volmdlr.Point2D(0.004, -0.004),
+                                 volmdlr.Point2D(0.004, 0.004), volmdlr.Point2D(-0.004, 0.004)])
+
 
 rl = primitives3d.OpenRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
 
