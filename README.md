@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="https://partage.dessia.tech/thumbnail/7861a783126742be8fe8/1024/Logo_Dessia_transparent_web.png" style="width:300px"><br/>Volmdlr
+  <img src="https://seafile.dessia.tech/seafhttp/files/477ec716-0348-466b-8b53-54cc775379d3/Logo_Dessia_transparent_web.png" style="width:300px"><br/>Volmdlr
 </h1>
 
 <h4 align="center">
