@@ -2387,6 +2387,22 @@ class ToroidalSurface3D(PeriodicalSurface):
         return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
 
     def to_step(self, current_id):
+        """
+        Converts the object to a STEP representation.
+
+        This method converts the object to a STEP (Standard for the Exchange of Product model data) representation.
+        It first creates a copy of the object's frame using the `volmdlr.Frame3D` constructor. Then, it converts
+        the frame to a STEP representation using the `to_step` method of the `Frame3D` class. The resulting content
+        and updated ID are stored in the `content` variable and the `current_id` variable, respectively. Next,
+        the method constructs a STEP string representing the toroidal surface using the object's attributes and
+        the generated frame ID. The content is updated with the toroidal surface representation. Finally, the
+        updated content and a list containing the updated current ID are returned as a tuple.
+
+        :param current_id: The current ID counter for generating unique STEP entity IDs.
+
+        :return: A tuple containing the STEP representation of the object and the updated current ID.
+        """
+
         frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
@@ -3972,6 +3988,25 @@ class ExtrusionSurface3D(Surface3D):
         return [bsplinecurve2d]
 
     def fullarcellipse3d_to_2d(self, fullarcellipse3d):
+        """
+        Converts a 3D full elliptical arc to a 2D line segment in the current plane.
+
+        This method converts a 3D full elliptical arc to a 2D line segment in the current plane.
+        It first calculates the length of the arc using the `length` method of the `fullarcellipse3d`
+        object. Then, it converts the start and end points of the arc to 2D points using the `point3d_to_2d`
+        method. Additionally, it calculates a point on the arc at a small abscissa value (0.01 * length)
+        and converts it to a 2D point. Based on the relative position of this point, the method determines
+        the start and end points of the line segment in 2D. If the abscissa point is closer to the start
+        point, the line segment starts from (0, start.y) and ends at (1, end.y). If the abscissa point is
+        closer to the end point, the line segment starts from (1, start.y) and ends at (0, end.y). If the
+        abscissa point lies exactly at the midpoint of the arc, a NotImplementedError is raised. The resulting
+        line segment is returned as a list.
+
+        :param fullarcellipse3d: The 3D full elliptical arc object to convert.
+        :return: A list containing a 2D line segment representing the converted arc.
+        :raises: NotImplementedError: If the abscissa point lies exactly at the midpoint of the arc.
+        """
+
         length = fullarcellipse3d.length()
         start = self.point3d_to_2d(fullarcellipse3d.start)
         end = self.point3d_to_2d(fullarcellipse3d.end)
