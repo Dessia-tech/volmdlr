@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * LICENSE changed from GPL to Lesser GPL 
+* Readme logo updated
 
 ## v0.10.0 [Released 20/04/2023]
 
