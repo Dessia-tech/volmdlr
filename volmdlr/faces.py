@@ -3038,13 +3038,14 @@ class BSplineFace3D(Face3D):
         :return: An arc if possible, otherwise None.
         """
         if edge.start.is_close(edge.end):
-            interior = edge.point_at_abscissa(0.25 * edge.length())
-            end = edge.point_at_abscissa(0.5 * edge.length())
-            vector1 = interior - edge.start
+            start = edge.point_at_abscissa(0.25 * edge.length())
+            interior = edge.point_at_abscissa(0.5 * edge.length())
+            end = edge.point_at_abscissa(0.75 * edge.length())
+            vector1 = interior - start
             vector2 = interior - end
             if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
                 return None
-            return vme.Arc3D(edge.start, interior, end)
+            return vme.Arc3D(start, interior, end)
         interior = edge.point_at_abscissa(0.5 * edge.length())
         vector1 = interior - edge.start
         vector2 = interior - edge.end
