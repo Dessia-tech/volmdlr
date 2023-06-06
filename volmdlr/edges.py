@@ -43,7 +43,7 @@ def standardize_knot_vector(knot_vector):
         x = 1 / (last_knot - first_knot)
         y = first_knot / (first_knot - last_knot)
         for u in knot_vector:
-            standard_u_knots.append(u * x + y)
+            standard_u_knots.append(round(u * x + y, 7))
         return standard_u_knots
     return knot_vector
 
@@ -1648,7 +1648,7 @@ class BSplineCurve(Edge):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         # special case periodical bsplinecurve
-        if self.periodic and abscissa2 == 0.0:
+        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=1e-6):
             abscissa2 = self.length()
         discretized_points_between_1_2 = []
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
@@ -5755,17 +5755,9 @@ class BSplineCurve3D(BSplineCurve):
             dir_vector = lines[0].unit_direction_vector()
             if all(line.unit_direction_vector() == dir_vector for line in lines):
                 return LineSegment3D(points[0], points[-1])
-        # curve_form = arguments[3]
-        if arguments[4] == '.F.':
-            closed_curve = False
-        elif arguments[4] == '.T.':
-            closed_curve = True
-        else:
-            raise ValueError
-        # self_intersect = arguments[5]
+
         knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
         knots = [float(i) for i in arguments[7][1:-1].split(",")]
-        # knot_spec = arguments[8]
         knot_vector = []
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
@@ -5775,10 +5767,8 @@ class BSplineCurve3D(BSplineCurve):
         else:
             weight_data = None
 
-        # FORCING CLOSED_CURVE = FALSE:
-        # closed_curve = False
-        return cls(degree, points, knot_multiplicities, knots, weight_data,
-                   closed_curve, name)
+        closed_curve = points[0].is_close(points[-1])
+        return cls(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
 
     def to_step(self, current_id, surface_id=None, curve2d=None):
         """Exports to STEP format."""
@@ -5960,7 +5950,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
-        curves = operations.split_curve(self.curve, round(parameter, 7))
+        curves = operations.split_curve(self.curve, round(parameter, 6))
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
@@ -5978,7 +5968,10 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-        curves = operations.split_curve(self.curve, round(parameter, 7))
+        try:
+            curves = operations.split_curve(self.curve, round(parameter, 6))
+        except Exception:
+            print(True)
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
