@@ -126,6 +126,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - utils.parametric: fix contour2d_healing
 - BSplineSurface3D: ban useless attr in serialization
 - BSplineCurve: simplify
+- SphericalSurface3D: contour3d_to_2d
 - WireMixin: to_wire_with_linesegments (use new methods, for 2D and 3D)
 - ArcEllipse2d: point_belongs, abscissa, init.
 - Face3D: face_inside - now considers inners_contours

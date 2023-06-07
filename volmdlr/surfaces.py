@@ -845,11 +845,19 @@ class Surface3D(DessiaObject):
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
             delta = previous_primitive.end - primitives2d[i].start
-            is_connected = math.isclose(delta.norm(), 0, abs_tol=1e-3)
+            distance = delta.norm()
+            is_connected = math.isclose(distance, 0, abs_tol=1e-3)
             if not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2) and \
                     math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2):
-                primitives2d[i] = primitives2d[i].reverse()
+                delta_end = previous_primitive.end - primitives2d[i].end
+                delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
+                if primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
+                    primitives2d[i] = primitives2d[i].reverse()
+                elif delta_min_index == 0:
+                    primitives2d[i] = primitives2d[i].translation(delta)
+                else:
+                    new_primitive = primitives2d[i].reverse()
+                    primitives2d[i] = new_primitive.translation(delta_end)
             elif not is_connected and \
                     primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
@@ -3202,9 +3210,11 @@ class SphericalSurface3D(PeriodicalSurface):
 
         # Transform the contour's primitives to parametric domain
         for primitive3d in contour3d.primitives:
-            method_name = f'{primitive3d.simplify.__class__.__name__.lower()}_to_2d'
+            primitive3d = primitive3d.simplify if primitive3d.simplify.__class__.__name__ != "LineSegment3D" else \
+                            primitive3d
+            method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
             if hasattr(self, method_name):
-                primitives = getattr(self, method_name)(primitive3d.simplify)
+                primitives = getattr(self, method_name)(primitive3d)
 
                 if primitives is None:
                     continue
@@ -3297,7 +3307,7 @@ class SphericalSurface3D(PeriodicalSurface):
         if arc3d.is_point_edge_extremity(point_singularity):
             return [edges.LineSegment2D(start, end)]
         primitives = []
-        if math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
+        if math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-2):
             if theta1 == math.pi and theta2 != math.pi:
                 theta1 = -math.pi
             if theta2 == math.pi and theta1 != math.pi:
@@ -3309,7 +3319,8 @@ class SphericalSurface3D(PeriodicalSurface):
                 edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
                 ]
             return primitives
-        return primitives
+        warnings.warn("Could not find BREP of the Arc3D on the sphere domain")
+        return None
 
     def arc3d_to_2d_with_singularity(self, arc3d, start, end, singularity_points):
         """
@@ -3667,11 +3678,12 @@ class SphericalSurface3D(PeriodicalSurface):
                 elif self.is_point2d_on_sphere_singularity(previous_primitive.end, 1e-5):
                     primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                name="construction"))
+                    i += 1
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
             elif self.is_point2d_on_sphere_singularity(primitives2d[i].start, 1e-5) and \
-                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-2) and \
-                    math.isclose(primitives2d[i].start.x, previous_primitive.start.x, abs_tol=1e-2):
+                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-3) and \
+                    math.isclose(primitives2d[i].start.x, previous_primitive.start.x, abs_tol=1e-3):
 
                 if primitives2d[i + 1].end.x < primitives2d[i].end.x:
                     theta_offset = volmdlr.TWO_PI
