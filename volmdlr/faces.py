@@ -1530,7 +1530,7 @@ class Triangle3D(PlaneFace3D):
         self._inner_contours3d = None
         # self.bounding_box = self._bounding_box()
 
-        # DessiaObject.__init__(self, name=name)
+        PlaneFace3D.__init__(self, self.surface3d, self.surface2d)
 
     def _data_hash(self):
         """
@@ -1572,6 +1572,10 @@ class Triangle3D(PlaneFace3D):
             self._surface3d = surfaces.Plane3D.from_3_points(self.point1, self.point2, self.point3)
         return self._surface3d
 
+    @surface3d.setter
+    def surface3d(self, new_surface3d):
+        self._surface3d = new_surface3d
+
     @property
     def surface2d(self):
         if self._surface2d is None:
@@ -1585,6 +1589,10 @@ class Triangle3D(PlaneFace3D):
             self._surface2d = surfaces.Surface2D(outer_contour=contour2d, inner_contours=[])
 
         return self._surface2d
+
+    @surface2d.setter
+    def surface2d(self, new_surface2d):
+        self._surface2d = new_surface2d
 
     def to_dict(self, *args, **kwargs):
         dict_ = {'object_class': 'volmdlr.faces.Triangle3D',
