@@ -6,13 +6,17 @@ A sweep example.
 
 import random
 import matplotlib.pyplot as plt
+import volmdlr
 
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
 import volmdlr.wires as wires
 from volmdlr.models.open_rounded_line_segments import open_rounded_line_segements
 
-contour = wires.Circle2D(vm.O2D, 0.008)
+# contour = wires.Circle2D(vm.O2D, 0.008)
+contour = wires.ClosedPolygon2D([volmdlr.Point2D(-0.004, -0.004), volmdlr.Point2D(0.004, -0.004),
+                                 volmdlr.Point2D(0.004, 0.004), volmdlr.Point2D(-0.004, 0.004)])
+
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 

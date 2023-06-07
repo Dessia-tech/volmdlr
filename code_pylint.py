@@ -37,7 +37,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-ancestors': 9,
                      'too-few-public-methods': 3,
                      'non-parent-init-called': 3,
-                     'too-many-public-methods': 12,
+                     'too-many-public-methods': 13,
                      'too-many-instance-attributes': 16,
                      'protected-access': 4,
                      'undefined-loop-variable': 2,

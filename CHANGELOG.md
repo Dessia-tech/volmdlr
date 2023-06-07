@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenShell3D: faces_graph
 - Plane3D: arc_intersections, bsplinecurve_intersections
 - common_operations: split_wire_by_plane
+- SphericalSurface3D: line_intersections, linesegment_intersections.
+- Sweep with muitiform profile contour.
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
@@ -41,7 +43,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - ClosedShell3D: point_belongs
 - Plane3D: arc_intersections, bsplinecurve_intersections
 - common_operations: split_wire_by_plane
-
+- SphericalSurface3D: line_intersections, linesegment_intersections.
 
 ## v0.11.0 [unreleased]
 
