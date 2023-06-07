@@ -558,11 +558,11 @@ class Face3D(volmdlr.core.Primitive3D):
 
         lines = self.geo_lines()
 
-        with open(file_name + '.geo', 'w', encoding="utf-8") as f:
+        with open(file_name + '.geo', 'w', encoding="utf-8") as file:
             for line in lines:
-                f.write(line)
-                f.write('\n')
-        f.close()
+                file.write(line)
+                file.write('\n')
+        file.close()
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
         """
@@ -1530,7 +1530,7 @@ class Triangle3D(PlaneFace3D):
         self._inner_contours3d = None
         # self.bounding_box = self._bounding_box()
 
-        # DessiaObject.__init__(self, name=name)
+        PlaneFace3D.__init__(self, self.surface3d, self.surface2d)
 
     def _data_hash(self):
         """
@@ -1572,6 +1572,10 @@ class Triangle3D(PlaneFace3D):
             self._surface3d = surfaces.Plane3D.from_3_points(self.point1, self.point2, self.point3)
         return self._surface3d
 
+    @surface3d.setter
+    def surface3d(self, new_surface3d):
+        self._surface3d = new_surface3d
+
     @property
     def surface2d(self):
         if self._surface2d is None:
@@ -1585,6 +1589,10 @@ class Triangle3D(PlaneFace3D):
             self._surface2d = surfaces.Surface2D(outer_contour=contour2d, inner_contours=[])
 
         return self._surface2d
+
+    @surface2d.setter
+    def surface2d(self, new_surface2d):
+        self._surface2d = new_surface2d
 
     def to_dict(self, *args, **kwargs):
         dict_ = {'object_class': 'volmdlr.faces.Triangle3D',
@@ -1988,7 +1996,7 @@ class CylindricalFace3D(Face3D):
 
     @classmethod
     def from_surface_rectangular_cut(cls, cylindrical_surface, theta1: float, theta2: float,
-                                     z1: float, z2: float, name: str = ''):
+                                     param_z1: float, param_z2: float, name: str = ''):
         """
         Cut a rectangular piece of the CylindricalSurface3D object and return a CylindricalFace3D object.
 
@@ -1997,10 +2005,10 @@ class CylindricalFace3D(Face3D):
         if theta1 == theta2:
             theta2 += volmdlr.TWO_PI
 
-        point1 = volmdlr.Point2D(theta1, z1)
-        point2 = volmdlr.Point2D(theta2, z1)
-        point3 = volmdlr.Point2D(theta2, z2)
-        point4 = volmdlr.Point2D(theta1, z2)
+        point1 = volmdlr.Point2D(theta1, param_z1)
+        point2 = volmdlr.Point2D(theta2, param_z1)
+        point3 = volmdlr.Point2D(theta2, param_z2)
+        point4 = volmdlr.Point2D(theta1, param_z2)
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(cylindrical_surface, surface2d, name)
